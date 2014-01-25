@@ -1,0 +1,55 @@
+
+* Various
+	- TODO screenshot
+	- TODO toggle fog
+	- TODO phong shading for impostors
+	- TODO postprocessing using WEBGL_draw_buffers
+	- TODO periodic object display (re-render with translation)
+	- TODO fill impostors with solid color (see in proteinvis shaders)
+
+* Model
+	- load from .json
+	- center on load
+	- imposter use optional on load
+
+* Surface
+	- load from .obj
+	- center on load
+	- TODO interior with secondary color
+		+ custom shader with interior color
+		+ gl_FrontFacing
+
+* Cylinder imposter
+	- dual color
+	- TODO double/triple bonds
+	- TODO tweak dashed appearance
+
+* Cylinder group
+	- TODO dual color
+	- TODO ANGLE_instanced_arrays
+
+* Sphere impostor
+	- TODO lighting texture optional
+
+* Sphere group
+	- TODO ANGLE_instanced_arrays
+
+* Particle sprite
+	- TODO round
+
+* Line
+	- dual color
+
+* Line sprite
+	- dual color
+
+* Helix impostor
+	- TODO pitch, width uniforms
+    - TODO x_dir vector attribute
+    - TODO fix view dir flip
+
+* Bezier
+
+
+
+
