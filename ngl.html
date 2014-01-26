@@ -141,18 +141,18 @@
                         function( value ){ NGL.updateDisplay = value; }
                     );
                     
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Bezier';
+                    oNgl.count = 500;
+                    oNgl.primitiveType = 'Text';
+                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'Text';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'CylinderImpostor';
                     // oNgl.addPrimitive();
                     
-                    oNgl.randomColor = true;
-                    
-                    oNgl.modelId = '1crn_ca';
-                    oNgl.modelType = 'ribbon';
-                    oNgl.addModel();
-
+                    // oNgl.randomColor = true;
+                    // oNgl.modelId = '3sn6_ca';
+                    // oNgl.modelType = 'ribbon';
+                    // oNgl.addModel();
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
@@ -457,7 +457,7 @@
                             }
                             break;
                         case "ribbon":
-                            // new NGL.TextBuffer( position, radius );
+                            new NGL.TextBuffer( position, radius );
                             var pd = NGL.getPathData( position, color, radius, 10 );
                             console.log(pd);
                             new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );

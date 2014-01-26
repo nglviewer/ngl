@@ -2326,10 +2326,10 @@ NGL.TextBuffer = function ( position, radius, text ) {
         vertexShader: NGL.getShader( 'shader/SDFFont.vert' ),
         fragmentShader: NGL.getShader( 'shader/SDFFont.frag' ),
         depthTest: true,
-        transparent: true,
+        transparent: false,
         alphaTest: 0.1,
         blending: THREE.AdditiveBlending,
-        depthWrite: false,
+        depthWrite: true,
         fog: NGL.fog
     });
     material.needsUpdate = true;
