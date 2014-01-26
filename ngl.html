@@ -157,6 +157,9 @@
                     // options.add(oNgl, 'cameraPerspective').onChange(
                     //     function( value ){ NGL.setCamera( value ); }
                     // );
+                    options.add(oNgl, 'cameraFov').min(10).max(140).step(1).onChange(
+                        function( value ){ NGL.setCamera( null, value ); }
+                    );
                     
                     oNgl.count = 500;
                     oNgl.primitiveType = 'Text';
@@ -200,6 +203,7 @@
                 this.fogColor = '#000000';
                 this.backgroundColor = '#000000';
                 this.cameraPerspective = true;
+                this.cameraFov = 40;
                 
 
                 this.clear = function(){
