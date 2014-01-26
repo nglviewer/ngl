@@ -44,6 +44,7 @@ $.loadImage = function(url) {
 
 
 NGL = {
+    fog: false,
     eps: 0.00001,
 	//chunkSize: 65536,
     chunkSize: 65520, // divisible by 4 (quad mapping) and 6 (box mapping) and 8 (box mapping 2)
@@ -513,6 +514,15 @@ NGL.calculateChunkSize = function( nVertex ){
 }
 
 
+NGL.setFog = function( value ){
+    NGL.fog = value;
+    _.each( NGL.group.children, function( o ){
+        o.material.fog = value;
+        o.material.needsUpdate = true;
+    })
+};
+
+
 NGL.getMaterial = function( params ) {
     var key = JSON.stringify( params );
     if (!NGL.materialCache[ key ]) {
@@ -668,7 +678,7 @@ NGL.BufferVectorHelper = function( position, vector, color ){
     var n2 = n * 2;
     var n6 = n * 6;
 
-    material = new THREE.LineBasicMaterial({ color: color });
+    material = new THREE.LineBasicMaterial({ color: color, fog: NGL.fog });
     geometry = new THREE.BufferGeometry();
     geometry.addAttribute( 'position', Float32Array, n2, 3 );
 
@@ -761,7 +771,7 @@ NGL.BezierRaymarchBuffer = function ( p0, p1, p2, color, radius ) {
         lights: true,
         //blending: THREE.CustomBlending,
         // blendSrc: THREE.OneFactor,
-        //fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -1035,7 +1045,8 @@ NGL.BezierGroup = function ( p0, p1, p2, color, radius ) {
                 specular: 0x00FFFF, 
                 visible: true,
                 wireframe: false,
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide, 
+                fog: NGL.fog
             })
         );
         group.add( mesh );
@@ -1118,7 +1129,8 @@ NGL.TubeGroup = function( position, color, radius, segments ){
             specular: 0x00FFFF, 
             visible: true,
             wireframe: false,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            fog: NGL.fog
         })
     );
     group.add( mesh );
@@ -1162,7 +1174,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
         fragmentShader: NGL.getShader( 'shader/Ribbon.frag' ),
         side: THREE.DoubleSide,
         lights: true,
-        fog: false
+        fog: NGL.fog
     });
 
 
@@ -1316,7 +1328,7 @@ NGL.RibbonBufferBAK = function( position, normal, dir, color, size ){
         fragmentShader: NGL.getShader( 'shader/Ribbon.frag' ),
         side: THREE.DoubleSide,
         lights: true,
-        fog: false
+        fog: NGL.fog
     });
 
 
@@ -1466,7 +1478,7 @@ NGL.HelixImpostorBuffer = function ( from, to, dir, color, color2, radius ) {
         depthWrite: true,
         lights: true,
         side: THREE.DoubleSide,
-        //fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -1663,7 +1675,7 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
         depthWrite: true,
         lights: true,
         side: THREE.DoubleSide,
-        //fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -1824,7 +1836,7 @@ NGL.MeshBuffer = function ( position, color, index, normal ) {
 
     material = new THREE.MeshBasicMaterial({
         vertexColors: true,
-        fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -1876,7 +1888,7 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
         attributes: attributes,
         vertexShader: NGL.getShader( 'shader/ParticleSprite.vert' ),
         fragmentShader: NGL.getShader( 'shader/ParticleSprite.frag' ),
-        fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -1965,7 +1977,7 @@ NGL.ParticleBuffer = function ( position, color, size ) {
         vertexColors: true,
         size: size,
         sizeAttenuation: false,
-        fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -2024,7 +2036,7 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
         attributes: attributes,
         vertexShader: NGL.getShader( 'shader/LineSprite.vert' ),
         fragmentShader: NGL.getShader( 'shader/LineSprite.frag' ),
-        fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -2158,7 +2170,7 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     material = new THREE.LineBasicMaterial({
         vertexColors: true,
-        fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -2318,7 +2330,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
         alphaTest: 0.1,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        fog: true
+        fog: NGL.fog
     });
     material.needsUpdate = true;
 
@@ -2457,7 +2469,7 @@ NGL.HaloBuffer = function ( position, radius, ortho ) {
         depthWrite: true,
         lights: false,
         blending: THREE.NormalBlending,
-        fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -2546,7 +2558,8 @@ NGL.SphereGroup = function ( position, color, radius ) {
                 color: colr, 
                 specular: 0x00FFFF, 
                 visible: true,
-                wireframe: false
+                wireframe: false,
+                fog: NGL.fog
             })
         );
         sphere.scale.x = sphere.scale.y = sphere.scale.z = radius[ v ];
@@ -2596,7 +2609,8 @@ NGL.makeUnitSphere = function ( radius ) {
         depthTest: true,
         transparent: false,
         depthWrite: true,
-        lights: true
+        lights: true,
+        foag: false
     });
 
     // make geometry and populate buffer
@@ -2663,7 +2677,7 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
         transparent: false,
         depthWrite: true,
         lights: true,
-        //fog: true
+        fog: NGL.fog
     });
     material.needsUpdate = true;
 
@@ -2782,7 +2796,7 @@ NGL.CylinderGroup = function ( from, to, color, radius ) {
         colr.b = color[ i + 2 ];
         cylinder = new THREE.Mesh(
             NGL.cylinderGeometry, 
-            NGL.getMaterial({ color: colr, specular: 0x00FFFF, visible: true })
+            NGL.getMaterial({ color: colr, specular: 0x00FFFF, fog: NGL.fog })
         );
 
         vFrom.set( from[ i + 0 ], from[ i + 1 ], from[ i + 2 ] );
@@ -2845,7 +2859,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
         transparent: false,
         depthWrite: true,
         lights: true,
-        //fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
@@ -3077,7 +3091,7 @@ NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube )
         depthWrite: true,
         lights: true,
         side: THREE.DoubleSide,
-        //fog: true
+        fog: NGL.fog
     });
 
     // make geometry and populate buffer
