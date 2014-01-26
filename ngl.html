@@ -143,23 +143,26 @@
                         function( value ){ NGL.setFog( value ); }
                     );
                     options.add(oNgl, 'fogNear').min(0).max(3000).step(10).onChange(
-                        function( value ){ NGL.setFog( oNgl.fog, { 'near': value } ); }
+                        function( value ){ NGL.setFog( null, null, value ); }
                     );
                     options.add(oNgl, 'fogFar').min(0).max(3000).step(10).onChange(
-                        function( value ){ NGL.setFog( oNgl.fog, { 'far': value } ); }
+                        function( value ){ NGL.setFog( null, null, null, value ); }
                     );
                     options.addColor(oNgl, 'fogColor').onChange(
-                        function( value ){ NGL.setFog( oNgl.fog, { 'color': value } ); }
+                        function( value ){ NGL.setFog( null, value ); }
                     );
                     options.addColor(oNgl, 'backgroundColor').onChange(
                         function( value ){ NGL.setBackground( value ); }
                     );
+                    // options.add(oNgl, 'cameraPerspective').onChange(
+                    //     function( value ){ NGL.setCamera( value ); }
+                    // );
                     
                     oNgl.count = 500;
                     oNgl.primitiveType = 'Text';
                     oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Text';
-                    // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'Sphere';
+                    oNgl.addPrimitive();
                     // oNgl.primitiveType = 'CylinderImpostor';
                     // oNgl.addPrimitive();
                     
@@ -189,12 +192,14 @@
                 this.useImpostor = true;
                 this.surfaceId = '1crn';
                 this.depthTestSphere = false;
+                this.updateDisplay = true;
+
                 this.fog = false;
                 this.fogNear = 0;
                 this.fogFar = 1000;
                 this.fogColor = '#000000';
                 this.backgroundColor = '#000000';
-                this.updateDisplay = true;
+                this.cameraPerspective = true;
                 
 
                 this.clear = function(){
