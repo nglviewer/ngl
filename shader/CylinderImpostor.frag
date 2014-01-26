@@ -247,7 +247,6 @@ void main()
         vec3 pt_r    = plane_line_ixn(qrs,r,qr,pt);  
         float wt     = length(pt-pt_q)/length(pt_r-pt_q);  
         normal = (1.0-wt)*normalize(pt_q - q) + wt*normalize(pt_r-r);
-        // normal = normalize(normalMatrix*normal);
     }
 
 

@@ -12,7 +12,7 @@ void main(void){
 
     color = inputColor;
     //normalx = normalize( inputNormal * normalMatrix );;
-    normalx = normalize( normalMatrix * normal );;
+    normalx = normalize( normalMatrix * normal * -1.0 );;
 
     vec3 cameraPos = ( modelViewMatrix * vec4( position + ( normalize(inputDir)*inputSize ), 1.0 ) ).xyz;
     gl_Position = projectionMatrix * vec4( cameraPos, 1.0 );
