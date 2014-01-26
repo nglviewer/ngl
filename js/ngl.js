@@ -250,8 +250,8 @@ NGL.init = function ( eid ) {
         'shader/HelixImpostor.frag': '',
         'shader/HelixImpostor2.vert': '',
         'shader/HelixImpostor2.frag': '',
-        'shader/Sheet.vert': '',
-        'shader/Sheet.frag': '',
+        'shader/Ribbon.vert': '',
+        'shader/Ribbon.frag': '',
         'shader/SphereImpostor.vert': '',
         'shader/SphereImpostor.frag': '',
         'shader/SphereImpostorOrtho.vert': '',
@@ -1132,7 +1132,161 @@ NGL.TubeGroup = function( position, color, radius, segments ){
 }
 
 
-NGL.SheetBuffer = function( position, normal, dir, color, size ){
+NGL.RibbonBuffer = function( position, normal, dir, color, size ){
+
+    var geometry, material, mesh;
+    var n = ( position.length/3 ) - 1;
+    var n4 = n * 4;
+
+
+    // make shader material
+    var attributes = {
+        inputDir: { type: 'v3', value: null },
+        inputSize: { type: 'f', value: null },
+        inputNormal: { type: 'v3', value: null },
+        inputColor: { type: 'v3', value: null }
+    };
+    var uniforms = THREE.UniformsUtils.merge( [
+        THREE.UniformsLib[ "fog" ],
+        THREE.UniformsLib[ "lights" ],
+        {
+            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
+            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
+        }
+    ]);
+
+    material = new THREE.ShaderMaterial( {
+        uniforms: uniforms,
+        attributes: attributes,
+        vertexShader: NGL.getShader( 'shader/Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'shader/Ribbon.frag' ),
+        side: THREE.DoubleSide,
+        lights: true,
+        fog: false
+    });
+
+
+    // make geometry and populate buffer
+    geometry = new THREE.BufferGeometry();
+
+    geometry.addAttribute( 'position', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputDir', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputSize', Float32Array, n4, 1 );
+    geometry.addAttribute( 'normal', Float32Array, n4, 3 );
+    //geometry.addAttribute( 'inputNormal', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+
+    var aPosition = geometry.attributes.position.array;
+    var inputDir = geometry.attributes.inputDir.array;
+    var inputSize = geometry.attributes.inputSize.array;
+    var inputNormal = geometry.attributes.normal.array;
+    //var inputNormal = geometry.attributes.inputNormal.array;
+    var inputColor = geometry.attributes.inputColor.array;
+
+    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    var indices = geometry.attributes.index.array;
+
+    geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
+    var chunkSize = NGL.calculateChunkSize( 4 );
+
+    var i, k, p, l, it, ix, v3;
+    for( var v = 0; v < n; ++v ){
+        v3 = v * 3;
+        k = v * 3 * 4;
+        l = v * 4;
+
+        aPosition[ k + 0 ] = position[ v3 + 0 ];
+        aPosition[ k + 1 ] = position[ v3 + 1 ];
+        aPosition[ k + 2 ] = position[ v3 + 2 ];
+
+        aPosition[ k + 3 ] = position[ v3 + 0 ];
+        aPosition[ k + 4 ] = position[ v3 + 1 ];
+        aPosition[ k + 5 ] = position[ v3 + 2 ];
+
+        aPosition[ k + 6 ] = position[ v3 + 3 ];
+        aPosition[ k + 7 ] = position[ v3 + 4 ];
+        aPosition[ k + 8 ] = position[ v3 + 5 ];
+
+        aPosition[ k + 9 ] = position[ v3 + 3 ];
+        aPosition[ k + 10 ] = position[ v3 + 4 ];
+        aPosition[ k + 11 ] = position[ v3 + 5 ];
+
+        inputNormal[ k + 0 ] = normal[ v3 + 0 ];
+        inputNormal[ k + 1 ] = normal[ v3 + 1 ];
+        inputNormal[ k + 2 ] = normal[ v3 + 2 ];
+
+        inputNormal[ k + 3 ] = normal[ v3 + 0 ];
+        inputNormal[ k + 4 ] = normal[ v3 + 1 ];
+        inputNormal[ k + 5 ] = normal[ v3 + 2 ];
+
+        inputNormal[ k + 6 ] = normal[ v3 + 3 ];
+        inputNormal[ k + 7 ] = normal[ v3 + 4 ];
+        inputNormal[ k + 8 ] = normal[ v3 + 5 ];
+
+        inputNormal[ k + 9 ] = normal[ v3 + 3 ];
+        inputNormal[ k + 10 ] = normal[ v3 + 4 ];
+        inputNormal[ k + 11 ] = normal[ v3 + 5 ];
+
+
+        for( i = 0; i<4; ++i ){
+            p = k + 3 * i;
+
+            inputColor[ p + 0 ] = color[ v3 + 0 ];
+            inputColor[ p + 1 ] = color[ v3 + 1 ];
+            inputColor[ p + 2 ] = color[ v3 + 2 ];
+
+            inputSize[ l + i ] = size[ v ];
+        }
+
+        inputDir[ k + 0 ] = dir[ v3 + 0 ];
+        inputDir[ k + 1 ] = dir[ v3 + 1 ];
+        inputDir[ k + 2 ] = dir[ v3 + 2 ];
+
+        inputDir[ k + 3 ] = -dir[ v3 + 0 ];
+        inputDir[ k + 4 ] = -dir[ v3 + 1 ];
+        inputDir[ k + 5 ] = -dir[ v3 + 2 ];
+
+        inputDir[ k + 6 ] = dir[ v3 + 3 ];
+        inputDir[ k + 7 ] = dir[ v3 + 4 ];
+        inputDir[ k + 8 ] = dir[ v3 + 5 ];
+
+        inputDir[ k + 9 ] = -dir[ v3 + 3 ];
+        inputDir[ k + 10 ] = -dir[ v3 + 4 ];
+        inputDir[ k + 11 ] = -dir[ v3 + 5 ];
+
+
+        ix = v * 6;
+        it = v * 4;
+
+        indices.set( NGL.QuadIndices, ix );
+        for( var s=0; s<6; ++s ){
+            indices[ix + s] = (it + indices[ix + s]) % chunkSize;
+        }
+    }
+
+    // console.log( "inputDir", inputDir );
+    // console.log( "inputNormal", inputNormal );
+    // console.log( "RibbonBuffer aPosition", aPosition, aPosition.length );
+    // console.log( position );
+    // console.log( "inputSize", inputSize, size );
+    // console.log( "inputColor", inputColor );
+    // console.log( "indices", indices );
+
+    mesh = new THREE.Mesh( geometry, material );
+    NGL.group.add( mesh );
+
+    // new NGL.BufferVectorHelper( position, normal, new THREE.Color("rgb(255,0,0)") );
+    // new NGL.BufferVectorHelper( position, dir, new THREE.Color("rgb(255,255,0)") );
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = mesh;
+    this.n = n;
+}
+
+
+NGL.RibbonBufferBAK = function( position, normal, dir, color, size ){
 
     var geometry, material, mesh;
     var n = position.length/3;
@@ -1158,8 +1312,8 @@ NGL.SheetBuffer = function( position, normal, dir, color, size ){
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/Sheet.vert' ),
-        fragmentShader: NGL.getShader( 'shader/Sheet.frag' ),
+        vertexShader: NGL.getShader( 'shader/Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'shader/Ribbon.frag' ),
         side: THREE.DoubleSide,
         lights: true,
         fog: false
@@ -1238,7 +1392,7 @@ NGL.SheetBuffer = function( position, normal, dir, color, size ){
 
     // console.log( "inputDir", inputDir );
     // console.log( "inputNormal", inputNormal );
-    // console.log( "SheetBuffer aPosition", aPosition, aPosition.length );
+    // console.log( "RibbonBuffer aPosition", aPosition, aPosition.length );
     // console.log( "inputSize", inputSize, size );
     // console.log( "inputColor", inputColor );
     // console.log( "indices", indices );
