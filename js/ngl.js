@@ -46,6 +46,9 @@ $.loadImage = function(url) {
 NGL = {
     fog: false,
     fogParams: { color: 0x000000, near: 0, far: 1000 },
+    backgroundColor: 0x000000,
+
+
     eps: 0.00001,
 	//chunkSize: 65536,
     chunkSize: 65520, // divisible by 4 (quad mapping) and 6 (box mapping) and 8 (box mapping 2)
@@ -152,7 +155,6 @@ NGL.lineLineIntersect = function( p1, p2, p3, p4 ){
 }
 
 
-
 NGL.ShaderLib = {
     'depthSphereRGBA': {
         uniforms: {},
@@ -182,6 +184,7 @@ NGL.ShaderLib = {
         ].join("\n")
     }
 };
+
 
 NGL.init = function ( eid ) {
     
@@ -381,8 +384,6 @@ NGL.init = function ( eid ) {
         }
     );
 
-
-
     // exports
     this.camera = camera;
     this.width = width;
@@ -446,6 +447,8 @@ NGL.render = function() {
     NGL.camera.updateProjectionMatrix();
     NGL.renderer.setSize( window.innerWidth, window.innerHeight );
 
+    // NGL.renderer.clear();
+    NGL.renderer.autoClear = true;
     NGL.renderer.render( NGL.scene, NGL.camera );
     // NGL.unitSphereControls.update();
     // NGL.renderer.render( NGL.unitSphereScene, NGL.unitSphereCamera );
@@ -530,6 +533,12 @@ NGL.setFog = function( value, params ){
     }
     // console.log( value, params, NGL.fogParams, NGL.scene.fog );
 };
+
+
+NGL.setBackground = function( color ){
+    NGL.setFog( NGL.fog, { 'color': color } );
+    NGL.renderer.setClearColor( color, 1 );
+}
 
 
 NGL.getMaterial = function( params ) {
