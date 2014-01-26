@@ -45,6 +45,7 @@ $.loadImage = function(url) {
 
 NGL = {
     fog: false,
+    fogParams: { color: 0x000000, near: 0, far: 1000 },
     eps: 0.00001,
 	//chunkSize: 65536,
     chunkSize: 65520, // divisible by 4 (quad mapping) and 6 (box mapping) and 8 (box mapping 2)
@@ -514,12 +515,20 @@ NGL.calculateChunkSize = function( nVertex ){
 }
 
 
-NGL.setFog = function( value ){
+NGL.setFog = function( value, params ){
     NGL.fog = value;
     _.each( NGL.group.children, function( o ){
         o.material.fog = value;
         o.material.needsUpdate = true;
-    })
+    });
+    _.extend( NGL.fogParams, params || {} );
+    if( NGL.fog ){
+        var p = NGL.fogParams;
+        NGL.scene.fog = new THREE.Fog( p.color, p.near, p.far );
+    }else{
+        NGL.scene.fog = null;
+    }
+    // console.log( value, params, NGL.fogParams, NGL.scene.fog );
 };
 
 

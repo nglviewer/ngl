@@ -134,11 +134,22 @@
                     gui.add(oNgl, 'depthTestSphere').onChange(
                         function( value ){ NGL.manualDepthTest = value; }
                     );
-                    gui.add(oNgl, 'fog').onChange(
-                        function( value ){ NGL.setFog( value ); }
-                    );
                     gui.add(oNgl, 'updateDisplay').onChange(
                         function( value ){ NGL.updateDisplay = value; }
+                    );
+
+                    var options = gui.addFolder( 'Options ' );
+                    options.add(oNgl, 'fog').onChange(
+                        function( value ){ NGL.setFog( value ); }
+                    );
+                    options.add(oNgl, 'fogNear').min(0).max(3000).step(10).onChange(
+                        function( value ){ NGL.setFog( oNgl.fog, { 'near': value } ); }
+                    );
+                    options.add(oNgl, 'fogFar').min(0).max(3000).step(10).onChange(
+                        function( value ){ NGL.setFog( oNgl.fog, { 'far': value } ); }
+                    );
+                    options.addColor(oNgl, 'fogColor').onChange(
+                        function( value ){ NGL.setFog( oNgl.fog, { 'color': value } ); }
                     );
                     
                     oNgl.count = 500;
@@ -176,6 +187,9 @@
                 this.surfaceId = '1crn';
                 this.depthTestSphere = false;
                 this.fog = false;
+                this.fogNear = 0;
+                this.fogFar = 1000;
+                this.fogColor = '#000000';
                 this.updateDisplay = true;
                 
 
