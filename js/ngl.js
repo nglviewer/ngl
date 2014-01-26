@@ -550,7 +550,10 @@ NGL.setFog = function( type, color, near, far ){
         NGL.scene.fog = null;
     }
     _.each( NGL.group.children, function( o ){
-        o.material.needsUpdate = true;
+        if( o.material ) o.material.needsUpdate = true;
+    });
+    _.each( NGL.materialCache, function( m ){
+        m.needsUpdate = true;
     });
 };
 
