@@ -566,20 +566,26 @@ NGL.setBackground = function( color ){
 }
 
 
-// NGL.setCamera = function( type ){
-//     var p = NGL.params;
-//     if( !_.isNull(type) ) p.cameraType = type;
+NGL.setCamera = function( type, fov ){
+    var p = NGL.params;
+    if( !_.isNull(type) ) p.cameraType = type;
+    if( fov ) p.cameraFov = fov;
     
-//     if( p.cameraType ){
-//         NGL.camera.toPerspective();
-//         NGL.camera.position.z = 300;
-//     }else{
-//         NGL.camera.toOrthographic();
-//         NGL.camera.position.z = 300;
-//     }
-//     // NGL.controls = NGL.makeControls( NGL.camera, NGL.renderer.domElement );
-//     // console.log( type, p, NGL.camera );
-// };
+    NGL.camera.fov = p.cameraFov;
+    NGL.camera.updateProjectionMatrix();
+    
+    return;
+    
+    if( p.cameraType ){
+        NGL.camera.toPerspective();
+        NGL.camera.position.z = 300;
+    }else{
+        NGL.camera.toOrthographic();
+        NGL.camera.position.z = 300;
+    }
+    // NGL.controls = NGL.makeControls( NGL.camera, NGL.renderer.domElement );
+    // console.log( type, p, NGL.camera );
+};
 
 
 NGL.getMaterial = function( params ) {
