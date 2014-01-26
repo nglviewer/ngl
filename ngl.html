@@ -150,9 +150,9 @@
                     );
                     options.addColor(oNgl, 'fogColor').onChange(
                         function( value ){ NGL.setFog( null, value ); }
-                    );
+                    ).listen();
                     options.addColor(oNgl, 'backgroundColor').onChange(
-                        function( value ){ NGL.setBackground( value ); }
+                        function( value ){ NGL.setBackground( value ); oNgl.fogColor = value; }
                     );
                     // options.add(oNgl, 'cameraPerspective').onChange(
                     //     function( value ){ NGL.setCamera( value ); }
