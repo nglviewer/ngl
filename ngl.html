@@ -151,6 +151,9 @@
                     options.addColor(oNgl, 'fogColor').onChange(
                         function( value ){ NGL.setFog( oNgl.fog, { 'color': value } ); }
                     );
+                    options.addColor(oNgl, 'backgroundColor').onChange(
+                        function( value ){ NGL.setBackground( value ); }
+                    );
                     
                     oNgl.count = 500;
                     oNgl.primitiveType = 'Text';
@@ -190,6 +193,7 @@
                 this.fogNear = 0;
                 this.fogFar = 1000;
                 this.fogColor = '#000000';
+                this.backgroundColor = '#000000';
                 this.updateDisplay = true;
                 
 
