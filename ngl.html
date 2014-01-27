@@ -161,11 +161,11 @@
                         function( value ){ NGL.setCamera( null, value ); }
                     );
                     
-                    oNgl.count = 500;
-                    oNgl.primitiveType = 'Text';
-                    oNgl.addPrimitive();
-                    oNgl.primitiveType = 'Sphere';
-                    oNgl.addPrimitive();
+                    // oNgl.count = 500;
+                    // oNgl.primitiveType = 'Text';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'Sphere';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'CylinderImpostor';
                     // oNgl.addPrimitive();
                     
@@ -177,7 +177,7 @@
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
                     
-                    //oNgl.addSurface();
+                    oNgl.addSurface();
 
                     NGL.animate();
                     NGL.render();
@@ -385,7 +385,20 @@
                             specular: 0x00FFFF, 
                             visible: true,
                             wireframe: false,
-                            side: THREE.DoubleSide
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.1,
+                            depthWrite: false,
+                            
+                            // multiply blending
+                            blending: THREE.CustomBlending,
+                            blendSrc: THREE.ZeroFactor,
+                            blendDst: THREE.SrcColorFactor,
+
+                            // additive blending
+                            // blending: THREE.CustomBlending,
+                            // blendSrc: THREE.OneFactor,
+                            // blendDst: THREE.OneFactor
                         })
                     ));
 
