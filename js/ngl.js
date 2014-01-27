@@ -100,11 +100,11 @@ NGL = {
 
 NGL.params = {
     fogType: 0,
-    fogColor: 0x000000,
+    fogColor: 0xFFFFFF,
     fogNear: 0,
     fogFar: 1000,
 
-    backgroundColor: 0x000000,
+    backgroundColor: 0xFFFFFF,
 
     cameraType: 1,
     cameraWidth: -1,
@@ -228,7 +228,7 @@ NGL.init = function ( eid ) {
     unitSphereScene.add( unitSphereGroup );
 
     // renderer
-    renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
+    renderer = new THREE.WebGLRenderer( { alpha: true, antialias: false } );
     renderer.setSize( width, height );
     renderer.autoClear = true;
 
@@ -421,8 +421,9 @@ NGL.init = function ( eid ) {
     this.manualDepthTest = false;
 
     // fog & background
-    NGL.setBackground( NGL.backgroundColor );
-    NGL.setFog( NGL.fog, NGL.fogParams );
+    var p = NGL.params;
+    NGL.setBackground( p.backgroundColor );
+    NGL.setFog( p.fogType, p.fogColor, p.fogNear, p.fogFar );
 }
 
 
@@ -533,6 +534,7 @@ NGL.calculateOffsets = function ( n, nTriangle, nVertex ) {
     return offsets;
 }
 
+
 NGL.calculateChunkSize = function( nVertex ){
     return NGL.chunkSize - ( NGL.chunkSize % nVertex );
 }
@@ -573,16 +575,14 @@ NGL.setCamera = function( type, fov ){
     
     NGL.camera.fov = p.cameraFov;
     NGL.camera.updateProjectionMatrix();
-    
-    return;
-    
-    if( p.cameraType ){
-        NGL.camera.toPerspective();
-        NGL.camera.position.z = 300;
-    }else{
-        NGL.camera.toOrthographic();
-        NGL.camera.position.z = 300;
-    }
+
+    // if( p.cameraType ){
+    //     NGL.camera.toPerspective();
+    //     NGL.camera.position.z = 300;
+    // }else{
+    //     NGL.camera.toOrthographic();
+    //     NGL.camera.position.z = 300;
+    // }
     // NGL.controls = NGL.makeControls( NGL.camera, NGL.renderer.domElement );
     // console.log( type, p, NGL.camera );
 };
