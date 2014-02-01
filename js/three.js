@@ -22972,14 +22972,49 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			this.setBlending( THREE.NoBlending );
 
+			////////// foobar
+			var ctx = this.context;
+
+			//ctx.colorMask( ctx.FALSE, ctx.FALSE, ctx.FALSE, ctx.FALSE );
+			//ctx.depthMask( ctx.FALSE );
+			// ctx.stencilFunc( ctx.NEVER, 1, 0xffffffff );
+			// ctx.stencilOp( ctx.REPLACE, ctx.KEEP, ctx.KEEP );
+			// ctx.stencilMask( 0xffffffff );
+			// ctx.clear( ctx.STENCIL_BUFFER_BIT );
+
+			// Clear your framebuffer
+			// glClearColor(0, 0, 0, 0);
+			// glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+			// ctx.clearColor( 1, 1, 1, 1 );
+			// ctx.clear( ctx.STENCIL_BUFFER_BIT | ctx.COLOR_BUFFER_BIT );
+			//////////
+
 			renderObjects( scene.__webglObjects, true, "opaque", camera, lights, fog, false, material );
 			renderObjectsImmediate( scene.__webglObjectsImmediate, "opaque", camera, lights, fog, false, material );
 
 			// transparent pass (back-to-front order)
 
+			//////////
+			// Set the stencil function to only draw against non-zero values and to not modify
+			// the stencil buffer on failure
+			// glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+			// glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+			// ctx.stencilFunc( ctx.NOTEQUAL, 0, 0xffffffff );
+			// ctx.stencilOp( ctx.KEEP, ctx.KEEP, ctx.KEEP );
+
+
+
+			//////////
+
+			//ctx.clearColor( 1, 1, 1, 1 );
+			//ctx.clear( ctx.STENCIL_BUFFER_BIT | ctx.COLOR_BUFFER_BIT );
+
 			renderObjects( scene.__webglObjects, false, "transparent", camera, lights, fog, true, material );
 			renderObjectsImmediate( scene.__webglObjectsImmediate, "transparent", camera, lights, fog, true, material );
 
+			//ctx.stencilMask( 0x00000000 );
+
+			//glStencilFunc(GL_EQUAL, 0, 0xFF);
 		}
 
 		// custom render plugins (post pass)

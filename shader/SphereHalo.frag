@@ -20,14 +20,14 @@ void main(void)
     if(det < 0.0)
         discard;
 
-    float r2 = sphereRadius*0.82;
-    B = -2.0 * dot(rayDirection, cameraSpherePos);
-    C = dot(cameraSpherePos, cameraSpherePos) - (r2*r2);
-    det = (B * B) - (4.0 * C);
-    if(det >= 0.0)
-        discard;
+    // float r2 = sphereRadius*0.82;
+    // B = -2.0 * dot(rayDirection, cameraSpherePos);
+    // C = dot(cameraSpherePos, cameraSpherePos) - (r2*r2);
+    // det = (B * B) - (4.0 * C);
+    // if(det >= 0.0)
+    //     discard;
 
-    r2 = sphereRadius*0.97;
+    float r2 = sphereRadius*0.97;
     B = -2.0 * dot(rayDirection, cameraSpherePos);
     C = dot(cameraSpherePos, cameraSpherePos) - (r2*r2);
     det = (B * B) - (4.0 * C);

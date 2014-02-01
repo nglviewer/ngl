@@ -26,7 +26,7 @@ void main2() {
 
 
 
-const float smoothness = 8.0;
+const float smoothness = 16.0;
 const float gamma = 2.2;
 
 void main() {
@@ -37,11 +37,13 @@ void main() {
 	float w = clamp( smoothness * (abs(dFdx(texCoord.x)) + abs(dFdy(texCoord.y))), 0.0, 0.5);
 	float a = smoothstep(0.5-w, 0.5+w, sdf);
 
+	// if( a<=0.6 )
+	// 	discard;
+	// gl_FragColor = vec4( colorx*a, 1.0 );
+
 	// gamma correction for linear attenuation
-	// a = pow(a, 1.0/gamma);
-	if( a<=0.6 )
-		discard;
-	gl_FragColor = vec4( colorx*a, a );
+	a = pow(a, 1.0/gamma);
+	gl_FragColor = vec4( colorx, a );
 
     #include fog_fragment
 }

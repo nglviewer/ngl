@@ -100,11 +100,12 @@ NGL = {
 
 NGL.params = {
     fogType: 0,
-    fogColor: 0xFFFFFF,
+    fogColor: 0x000000,
     fogNear: 0,
     fogFar: 1000,
 
-    backgroundColor: 0xFFFFFF,
+    // backgroundColor: 0xFFFFFF,
+    backgroundColor: 0x000000,
 
     cameraType: 1,
     cameraWidth: -1,
@@ -112,6 +113,8 @@ NGL.params = {
     cameraFov: 40,
     cameraNear: 1,
     cameraFar: 10000,
+
+    specular: 0x050505,
 };
 
 
@@ -228,7 +231,7 @@ NGL.init = function ( eid ) {
     unitSphereScene.add( unitSphereGroup );
 
     // renderer
-    renderer = new THREE.WebGLRenderer( { alpha: true, antialias: false } );
+    renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
     renderer.setSize( width, height );
     renderer.autoClear = true;
 
@@ -493,12 +496,12 @@ NGL.makeLights = function( scene ){
     // lights
     var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
     directionalLight.position = new THREE.Vector3( 1, 1, -2.5 ).normalize();
-    directionalLight.intensity = 1.0;
+    directionalLight.intensity = 0.5;
     var ambientLight = new THREE.AmbientLight( 0x101010 );
-    var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0.1)
+    var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0.01)
     scene.add( directionalLight );
     scene.add( ambientLight );
-    scene.add( hemisphereLight );
+    //scene.add( hemisphereLight );
 }
 
 
@@ -1107,7 +1110,7 @@ NGL.BezierGroup = function ( p0, p1, p2, color, radius ) {
             geometry,
             NGL.getMaterial({ 
                 color: colr, 
-                specular: 0x00FFFF, 
+                specular: 0x050505, 
                 visible: true,
                 wireframe: false,
                 side: THREE.DoubleSide, 
@@ -1191,7 +1194,7 @@ NGL.TubeGroup = function( position, color, radius, segments ){
         geometry,
         NGL.getMaterial({ 
             //color: new THREE.Color( 0.5, 0.5, 0.5 ), 
-            specular: 0x00FFFF, 
+            specular: 0x050505, 
             visible: true,
             wireframe: false,
             side: THREE.DoubleSide,
@@ -2340,17 +2343,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
     var type = 'Arial';
     var font = NGL.getFont( type );
     var tex = new THREE.Texture( res[ 'font/' + type + '.png' ] );
-    // tex = THREE.ImageUtils.loadTexture( 'font/' + type + '.png' );
-    // tex = TEXX;
-    // console.log( tex );
-    // console.log( res[ 'font/' + type + '.png' ] );
-    // tex.magFilter = THREE.LinearFilter;
-    // tex.minFilter = THREE.LinearMipMapLinearFilter;
-    // tex.format = THREE.LuminanceAlphaFormat;
-    // tex.generateMipmaps = false;
-    // tex.flipY = false;
     tex.needsUpdate = true;
-    // console.log( tex );
 
     var geometry, material, mesh;
     var n = position.length/3;
@@ -2391,13 +2384,12 @@ NGL.TextBuffer = function ( position, radius, text ) {
         vertexShader: NGL.getShader( 'shader/SDFFont.vert' ),
         fragmentShader: NGL.getShader( 'shader/SDFFont.frag' ),
         depthTest: true,
-        transparent: false,
-        alphaTest: 0.1,
+        transparent: true,
+        //alphaTest: 0.1,
         blending: THREE.AdditiveBlending,
-        depthWrite: true,
+        depthWrite: false,
         fog: true
     });
-    material.needsUpdate = true;
 
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
@@ -2531,9 +2523,9 @@ NGL.HaloBuffer = function ( position, radius, ortho ) {
         fragmentShader: NGL.getShader( 'shader/SphereHalo' + ortho + '.frag' ),
         depthTest: true,
         transparent: true,
-        depthWrite: true,
+        depthWrite: false,
         lights: false,
-        blending: THREE.NormalBlending,
+        blending: THREE.AdditiveBlending,
         fog: true
     });
 
@@ -2621,7 +2613,7 @@ NGL.SphereGroup = function ( position, color, radius ) {
             NGL.sphereGeometry, 
             NGL.getMaterial({ 
                 color: colr, 
-                specular: 0x00FFFF, 
+                specular: 0x050505, 
                 visible: true,
                 wireframe: false,
                 fog: true
@@ -2744,7 +2736,6 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
         lights: true,
         fog: true
     });
-    material.needsUpdate = true;
 
     if( ortho ){
         depthMaterial = new THREE.ShaderMaterial( {
@@ -2861,7 +2852,7 @@ NGL.CylinderGroup = function ( from, to, color, radius ) {
         colr.b = color[ i + 2 ];
         cylinder = new THREE.Mesh(
             NGL.cylinderGeometry, 
-            NGL.getMaterial({ color: colr, specular: 0x00FFFF, fog: true })
+            NGL.getMaterial({ color: colr, specular: 0x050505, fog: true })
         );
 
         vFrom.set( from[ i + 0 ], from[ i + 1 ], from[ i + 2 ] );
@@ -3099,7 +3090,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
 
     mesh = new THREE.Mesh( geometry, material );
     NGL.group.add( mesh );
-
+    console.log("fsdfmsdofns", n, geometry)
     //new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius, false );
     //new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius, false );
     //console.log( "inputP", inputP );
