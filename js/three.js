@@ -22973,7 +22973,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			this.setBlending( THREE.NoBlending );
 
 			////////// foobar
-			var ctx = this.context;
+			// var ctx = this.context;
 
 			//ctx.colorMask( ctx.FALSE, ctx.FALSE, ctx.FALSE, ctx.FALSE );
 			//ctx.depthMask( ctx.FALSE );
