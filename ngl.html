@@ -284,7 +284,7 @@
                         },
                         'CylinderImpostor': function(){
                             new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius, false
+                                c1.from, c1.to, c1.color, c1.color, c1.radius, true
                             );
                         },
                         'Cylinder': function(){
@@ -306,7 +306,7 @@
                             new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
                             new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius, ortho );
                             new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius, false
+                                c1.from, c1.to, c1.color, c1.color, c1.radius, true
                             );
                             new NGL.HaloBuffer( c1.from, r1, ortho );
                             new NGL.TextBuffer( c1.to, c1.radius );
