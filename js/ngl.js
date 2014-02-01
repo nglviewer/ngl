@@ -625,8 +625,8 @@ NGL.getFont = function( name ){
     // chnl - The color channel, if color channels are used for separate characters. 
     var fnt = res[ 'font/' + name + '.fnt' ].split('\n');
     var font = {};
-    var tWidth = 512;
-    var tHeight = 512;
+    var tWidth = 1024;
+    var tHeight = 1024;
     var base = 29;
     var lineHeight = 37;
     _.each( fnt, function( line, i ){
@@ -3090,7 +3090,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
 
     mesh = new THREE.Mesh( geometry, material );
     NGL.group.add( mesh );
-    console.log("fsdfmsdofns", n, geometry)
+    
     //new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius, false );
     //new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius, false );
     //console.log( "inputP", inputP );
