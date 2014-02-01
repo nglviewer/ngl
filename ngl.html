@@ -168,6 +168,8 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'CylinderImpostor';
                     // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'SceneImpostor';
+                    oNgl.addPrimitive();
                     
                     // oNgl.randomColor = true;
                     // oNgl.modelId = '3sn6_ca';
@@ -177,7 +179,7 @@
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
                     
-                    oNgl.addSurface();
+                    // oNgl.addSurface();
 
                     NGL.animate();
                     NGL.render();
@@ -222,9 +224,9 @@
                             var bd = makeBezierData( this.count, this.size );
                             new NGL.BezierRaymarchBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
 
-                            new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
-                            new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
-                            new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
                         },
                         'BezierImpostor': function(){
                             var bd = makeBezierData( this.count, this.size );
@@ -282,7 +284,7 @@
                         },
                         'CylinderImpostor': function(){
                             new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius, true
+                                c1.from, c1.to, c1.color, c1.color, c1.radius, false
                             );
                         },
                         'Cylinder': function(){
@@ -304,7 +306,7 @@
                             new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
                             new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius, ortho );
                             new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius
+                                c1.from, c1.to, c1.color, c1.color, c1.radius, false
                             );
                             new NGL.HaloBuffer( c1.from, r1, ortho );
                             new NGL.TextBuffer( c1.to, c1.radius );
@@ -380,20 +382,24 @@
                     
                     surface.add( new THREE.Mesh( 
                         geo, 
-                        new THREE.MeshLambertMaterial({
+                        new THREE.MeshPhongMaterial({
                             color: new THREE.Color('skyblue'),
-                            specular: 0x00FFFF, 
-                            visible: true,
+                            specular: 0x050505, 
                             wireframe: false,
                             side: THREE.DoubleSide,
+                            //side: THREE.FrontSide,
                             transparent: true,
-                            opacity: 0.1,
+                            opacity: 0.9,
                             depthWrite: false,
+                            fog: true,
                             
+                            // blending: THREE.MultiplyBlending,
+                            blending: THREE.AdditiveBlending,
+
                             // multiply blending
-                            blending: THREE.CustomBlending,
-                            blendSrc: THREE.ZeroFactor,
-                            blendDst: THREE.SrcColorFactor,
+                            // blending: THREE.CustomBlending,
+                            // blendSrc: THREE.ZeroFactor,
+                            // blendDst: THREE.SrcColorFactor,
 
                             // additive blending
                             // blending: THREE.CustomBlending,

@@ -47,10 +47,10 @@ uniform vec3 ambientLightColor;
 #include fog_pars_fragment
 
 
-// void main2(void)
-// {
-//     gl_FragColor = vec4( color, 1.0 );
-// }
+void main()
+{
+    gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+}
 
 
 
@@ -93,7 +93,7 @@ const float plane_shift_eps = 0.0001;
 
 
 
-void main()
+void main2()
 {   
 
     float radius = cylinderRadius;
