@@ -168,13 +168,13 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'CylinderImpostor';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'SceneImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'SceneImpostor';
+                    // oNgl.addPrimitive();
                     
                     // oNgl.randomColor = true;
-                    // oNgl.modelId = '3sn6_ca';
-                    // oNgl.modelType = 'ribbon';
-                    // oNgl.addModel();
+                    oNgl.modelId = '3dqb_ca';
+                    oNgl.modelType = 'ribbon';
+                    oNgl.addModel();
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
@@ -428,6 +428,7 @@
                     var mol = data['mol'];
                     var atoms = mol['a'];
                     var bonds = mol['b'];
+                    var ss = mol['ss'];
                     var na = atoms.length;
                     var na3 = na * 3;
                     var nb = bonds.length;
@@ -464,6 +465,11 @@
                         radius[ i ] = type=="spacefill" ? 10.0 : 3.0;
                         if( type=="sprite" ) radius[ i ] = 1.0;
                         // if( type=="ribbon" ) radius[ i ] = 1.0 + 0.1*i;
+                        if( type=="ribbon" && ss && i<na-1 ){
+                            if( ss[i]>0 && ss[i]!=ss[i+1] ){
+                                radius[ i ] *= -1;
+                            }
+                        }
                     }
 
                     // calculate center
@@ -505,9 +511,8 @@
                         case "ribbon":
                             new NGL.TextBuffer( position, radius );
                             var pd = NGL.getPathData( position, color, radius, 10 );
-                            console.log(pd);
                             new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
-                            new NGL.SphereImpostorBuffer( position, color, radius, ortho );
+                            //new NGL.SphereImpostorBuffer( position, color, radius, ortho );
                             break;
                         case "stick":
                         case "ball+stick":

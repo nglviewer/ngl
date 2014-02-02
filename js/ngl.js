@@ -352,7 +352,7 @@ NGL.init = function ( eid ) {
     // depth
     // var depthShader = THREE.ShaderLib[ "depthRGBA" ];
     var depthShader = NGL.ShaderLib[ "depthSphereRGBA" ];
-    console.log( depthShader );
+    //console.log( depthShader );
     var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
     var depthAttributes = {
         inputMapping: { type: 'v2', value: null },
@@ -367,7 +367,7 @@ NGL.init = function ( eid ) {
         blending: THREE.NoBlending
     });
     this.depthMaterial.needsUpdate = true;
-    console.log( this.depthMaterial );
+    //console.log( this.depthMaterial );
 
     // var composer = new THREE.EffectComposer( renderer );
     // composer.addPass( new THREE.RenderPass( scene, camera ) );
@@ -514,7 +514,7 @@ NGL.makeLights = function( scene ){
     var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0.01)
     scene.add( directionalLight );
     scene.add( ambientLight );
-    //scene.add( hemisphereLight );
+    scene.add( hemisphereLight );
 }
 
 
@@ -736,14 +736,18 @@ NGL.getPathData = function( position, color, size, segments ){
     for ( var i = 0; i < n1; i++ ) {
         j = i * segments;
         curSize = size[ i ];
-        stepSize = (prevSize-curSize)/segments;
-        for ( var l = 0; l < segments; l++ ) {
-            aSize[ j + l ] = curSize - l * stepSize;
-            
+        if( curSize<0 ){
+            prevSize = curSize * -1.5;
+            curSize = 0;
         }
-        prevSize = curSize;
+        stepSize = (prevSize-curSize)/(segments-1);
+        for ( var l = 0; l < segments; l++ ) {
+            aSize[ j + l ] = prevSize - l * stepSize;
+            if( curSize==0 ) aSize[ j + l ] *= -1;
+        }
+        prevSize = curSize==0 ? Math.abs( size[ i ] ) : curSize;
     }
-
+    
     return {
         "position": aPoints,
         "normal": aNormals,
@@ -1285,6 +1289,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     var chunkSize = NGL.calculateChunkSize( 4 );
 
     var i, k, p, l, it, ix, v3;
+    var prevSize = size[0];
     for( var v = 0; v < n; ++v ){
         v3 = v * 3;
         k = v * 3 * 4;
@@ -1330,8 +1335,21 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
             inputColor[ p + 1 ] = color[ v3 + 1 ];
             inputColor[ p + 2 ] = color[ v3 + 2 ];
 
-            inputSize[ l + i ] = size[ v ];
+            // inputSize[ l + i ] = size[ v ];
         }
+
+        if( prevSize!=size[ v ] && prevSize<0 ){
+            inputSize[ l + 0 ] = Math.abs( prevSize );
+            inputSize[ l + 1 ] = Math.abs( prevSize );
+            inputSize[ l + 2 ] = Math.abs( size[ v ] );
+            inputSize[ l + 3 ] = Math.abs( size[ v ] );
+        }else{
+            inputSize[ l + 0 ] = Math.abs( size[ v ] );
+            inputSize[ l + 1 ] = Math.abs( size[ v ] );
+            inputSize[ l + 2 ] = Math.abs( size[ v ] );
+            inputSize[ l + 3 ] = Math.abs( size[ v ] );
+        }
+        prevSize = size[ v ];
 
         inputDir[ k + 0 ] = dir[ v3 + 0 ];
         inputDir[ k + 1 ] = dir[ v3 + 1 ];
@@ -2352,7 +2370,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
                 aPosition[ j + 1 ] = y;
                 aPosition[ j + 2 ] = z;
 
-                inputSphereRadius[ (iCharAll * 4) + m ] = radius[ v ];
+                inputSphereRadius[ (iCharAll * 4) + m ] = Math.abs(radius[ v ]);
             }
 
             ix = iCharAll * 6;

@@ -1,10 +1,11 @@
 
 TODO
-	+ tube shader
 	+ secondary structure definition
-	+ performance testing framework
-	+ attribute and uniform changing framework
+		+ ribbon arrows (encoded as negative size)
 	+ quadric shader
+	+ tube shader
+	+ attribute and uniform changing framework
+	+ performance testing framework
 
 
 
