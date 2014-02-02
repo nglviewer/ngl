@@ -118,6 +118,50 @@ NGL.params = {
 };
 
 
+NGL.resources = {
+    'font/Arial.png': 'image',
+    'font/Arial.fnt': '',
+
+    'shader/BezierRaymarch.vert': '',
+    'shader/BezierRaymarch.frag': '',
+    'shader/HelixImpostor.vert': '',
+    'shader/HelixImpostor.frag': '',
+    'shader/HelixImpostor2.vert': '',
+    'shader/HelixImpostor2.frag': '',
+    'shader/Ribbon.vert': '',
+    'shader/Ribbon.frag': '',
+    'shader/SphereImpostor.vert': '',
+    'shader/SphereImpostor.frag': '',
+    'shader/SphereImpostorOrtho.vert': '',
+    'shader/SphereImpostorOrtho.frag': '',
+    'shader/SphereImpostorOrthoUnit.vert': '',
+    'shader/SphereImpostorOrthoUnit.frag': '',
+    'shader/SphereImpostorOrthoDepth.vert': '',
+    'shader/SphereImpostorOrthoDepth.frag': '',
+    'shader/SphereHalo.vert': '',
+    'shader/SphereHalo.frag': '',
+    'shader/SphereHaloOrtho.vert': '',
+    'shader/SphereHaloOrtho.frag': '',
+    'shader/CylinderImpostor.vert': '',
+    'shader/CylinderImpostor.frag': '',
+    'shader/CylinderImpostor2.vert': '',
+    'shader/CylinderImpostor2.frag': '',
+    'shader/SDFFont.vert': '',
+    'shader/SDFFont.frag': '',
+    'shader/LineSprite.vert': '',
+    'shader/LineSprite.frag': '',
+    'shader/ParticleSprite.vert': '',
+    'shader/ParticleSprite.frag': '',
+    'shader/Quad.vert': '',
+    'shader/Quad.frag': '',
+
+    'shader/chunk/light_params.glsl': '',
+    'shader/chunk/light.glsl': '',
+    'shader/chunk/fog.glsl': '',
+    'shader/chunk/fog_params.glsl': '',
+};
+
+
 NGL.lineLineIntersect = function( p1, p2, p3, p4 ){
     // converted from http://paulbourke.net/geometry/pointlineplane/lineline.c
     var p13 = new THREE.Vector3(),
@@ -265,53 +309,23 @@ NGL.init = function ( eid ) {
     controls.handleResize();
 
     // resources
-    res = {
-        'font/Arial.png': 'image',
-        'font/Arial.fnt': '',
-        'shader/BezierRaymarch.vert': '',
-        'shader/BezierRaymarch.frag': '',
-        'shader/HelixImpostor.vert': '',
-        'shader/HelixImpostor.frag': '',
-        'shader/HelixImpostor2.vert': '',
-        'shader/HelixImpostor2.frag': '',
-        'shader/Ribbon.vert': '',
-        'shader/Ribbon.frag': '',
-        'shader/SphereImpostor.vert': '',
-        'shader/SphereImpostor.frag': '',
-        'shader/SphereImpostorOrtho.vert': '',
-        'shader/SphereImpostorOrtho.frag': '',
-        'shader/SphereImpostorOrthoUnit.vert': '',
-        'shader/SphereImpostorOrthoUnit.frag': '',
-        'shader/SphereImpostorOrthoDepth.vert': '',
-        'shader/SphereImpostorOrthoDepth.frag': '',
-        'shader/SphereHalo.vert': '',
-        'shader/SphereHalo.frag': '',
-        'shader/SphereHaloOrtho.vert': '',
-        'shader/SphereHaloOrtho.frag': '',
-        'shader/CylinderImpostor.vert': '',
-        'shader/CylinderImpostor.frag': '',
-        'shader/CylinderImpostor2.vert': '',
-        'shader/CylinderImpostor2.frag': '',
-        'shader/SDFFont.vert': '',
-        'shader/SDFFont.frag': '',
-        'shader/LineSprite.vert': '',
-        'shader/LineSprite.frag': '',
-        'shader/ParticleSprite.vert': '',
-        'shader/ParticleSprite.frag': '',
-        'shader/Quad.vert': '',
-        'shader/Quad.frag': ''
-    };
     var deferreds = [];
-    _.each( res, function( v, url ){
+    _.each( NGL.resources, function( v, url ){
         var d;
         if( v=="image" ){
             d = $.loadImage( url ).done( 
-                function( image ){ res[ url ] = image; }
+                function( image ){ NGL.resources[ url ] = image; }
             );
         }else{
             d = $.ajax({
                 url: url,
-                success: function( data ){ res[ url ] = data; },
+                success: function( data ){
+                    if( v=="chunk" ){
+                        NGL.resources[ url ] = data;
+                    }else{
+                        NGL.resources[ url ] = data;
+                    }
+                },
                 dataType: "text"
             });
         }
@@ -417,7 +431,6 @@ NGL.init = function ( eid ) {
     this.controls = controls;
     this.stats = stats;
     this.rendererStats = rendererStats;
-    this.res = res;
 
     // params
     this.updateDisplay = true;
@@ -600,12 +613,14 @@ NGL.getMaterial = function( params ) {
 };
 
 
-NGL.getShader = function( name ) {
-    var shader = NGL.res[ name ];
-    return shader.replace( /#include\s+(\S+)/gi, function( match, p1 ){
-        var chunk = THREE.ShaderChunk[ p1 ];
+NGL.getShader = function( name, defines ) {
+    var shader = NGL.resources[ 'shader/' + name ];
+    shader = shader.replace( /^(?!\/\/)\s*#include\s+(\S+)/gmi, function( match, p1 ){
+        var path = 'shader/chunk/' + p1 + '.glsl';
+        var chunk = NGL.resources[ path ] || THREE.ShaderChunk[ p1 ];
         return chunk ? chunk : "";
     });
+    return _.map( defines, function( def ){ return "#define " + def }).join("") + shader;
 };
 
 
@@ -623,7 +638,7 @@ NGL.getFont = function( name ){
     // xadvance - Number of pixels to jump right after drawing this character.
     // page - The image to use if characters are split across multiple images.
     // chnl - The color channel, if color channels are used for separate characters. 
-    var fnt = res[ 'font/' + name + '.fnt' ].split('\n');
+    var fnt = NGL.resources[ 'font/' + name + '.fnt' ].split('\n');
     var font = {};
     var tWidth = 1024;
     var tHeight = 1024;
@@ -831,8 +846,8 @@ NGL.BezierRaymarchBuffer = function ( p0, p1, p2, color, radius ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/BezierRaymarch.vert' ),
-        fragmentShader: NGL.getShader( 'shader/BezierRaymarch.frag' ),
+        vertexShader: NGL.getShader( 'BezierRaymarch.vert' ),
+        fragmentShader: NGL.getShader( 'BezierRaymarch.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -1238,8 +1253,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'shader/Ribbon.frag' ),
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
         side: THREE.DoubleSide,
         lights: true,
         fog: true
@@ -1392,8 +1407,8 @@ NGL.RibbonBufferBAK = function( position, normal, dir, color, size ){
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'shader/Ribbon.frag' ),
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
         side: THREE.DoubleSide,
         lights: true,
         fog: true
@@ -1539,8 +1554,8 @@ NGL.HelixImpostorBuffer = function ( from, to, dir, color, color2, radius ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/HelixImpostor.vert' ),
-        fragmentShader: NGL.getShader( 'shader/HelixImpostor.frag' ),
+        vertexShader: NGL.getShader( 'HelixImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'HelixImpostor.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -1736,8 +1751,8 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/HelixImpostor2.vert' ),
-        fragmentShader: NGL.getShader( 'shader/HelixImpostor2.frag' ),
+        vertexShader: NGL.getShader( 'HelixImpostor2.vert' ),
+        fragmentShader: NGL.getShader( 'HelixImpostor2.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -1954,8 +1969,8 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/ParticleSprite.vert' ),
-        fragmentShader: NGL.getShader( 'shader/ParticleSprite.frag' ),
+        vertexShader: NGL.getShader( 'ParticleSprite.vert' ),
+        fragmentShader: NGL.getShader( 'ParticleSprite.frag' ),
         fog: true
     });
 
@@ -2102,8 +2117,8 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/LineSprite.vert' ),
-        fragmentShader: NGL.getShader( 'shader/LineSprite.frag' ),
+        vertexShader: NGL.getShader( 'LineSprite.vert' ),
+        fragmentShader: NGL.getShader( 'LineSprite.frag' ),
         fog: true
     });
 
@@ -2342,7 +2357,7 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
 NGL.TextBuffer = function ( position, radius, text ) {
     var type = 'Arial';
     var font = NGL.getFont( type );
-    var tex = new THREE.Texture( res[ 'font/' + type + '.png' ] );
+    var tex = new THREE.Texture( NGL.resources[ 'font/' + type + '.png' ] );
     tex.needsUpdate = true;
 
     var geometry, material, mesh;
@@ -2381,8 +2396,8 @@ NGL.TextBuffer = function ( position, radius, text ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/SDFFont.vert' ),
-        fragmentShader: NGL.getShader( 'shader/SDFFont.frag' ),
+        vertexShader: NGL.getShader( 'SDFFont.vert' ),
+        fragmentShader: NGL.getShader( 'SDFFont.frag' ),
         depthTest: true,
         transparent: true,
         //alphaTest: 0.1,
@@ -2519,8 +2534,8 @@ NGL.HaloBuffer = function ( position, radius, ortho ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/SphereHalo' + ortho + '.vert' ),
-        fragmentShader: NGL.getShader( 'shader/SphereHalo' + ortho + '.frag' ),
+        vertexShader: NGL.getShader( 'SphereHalo' + ortho + '.vert' ),
+        fragmentShader: NGL.getShader( 'SphereHalo' + ortho + '.frag' ),
         depthTest: true,
         transparent: true,
         depthWrite: false,
@@ -2661,8 +2676,8 @@ NGL.makeUnitSphere = function ( radius ) {
         attributes: {
             inputMapping: { type: 'v2', value: null }
         },
-        vertexShader: NGL.getShader( 'shader/SphereImpostorOrthoUnit.vert' ),
-        fragmentShader: NGL.getShader( 'shader/SphereImpostorOrthoUnit.frag' ),
+        vertexShader: NGL.getShader( 'SphereImpostorOrthoUnit.vert' ),
+        fragmentShader: NGL.getShader( 'SphereImpostorOrthoUnit.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -2728,8 +2743,8 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/SphereImpostor' + ortho + '.vert' ),
-        fragmentShader: NGL.getShader( 'shader/SphereImpostor' + ortho + '.frag' ),
+        vertexShader: NGL.getShader( 'SphereImpostor' + ortho + '.vert' ),
+        fragmentShader: NGL.getShader( 'SphereImpostor' + ortho + '.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -2741,8 +2756,8 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
         depthMaterial = new THREE.ShaderMaterial( {
             //uniforms: uniforms,
             attributes: attributes,
-            vertexShader: NGL.getShader( 'shader/SphereImpostor' + ortho + 'Depth.vert' ),
-            fragmentShader: NGL.getShader( 'shader/SphereImpostor' + ortho + 'Depth.frag' ),
+            vertexShader: NGL.getShader( 'SphereImpostor' + ortho + 'Depth.vert' ),
+            fragmentShader: NGL.getShader( 'SphereImpostor' + ortho + 'Depth.frag' ),
             depthTest: true,
             transparent: false,
             depthWrite: true,
@@ -2909,8 +2924,8 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/CylinderImpostor.vert' ),
-        fragmentShader: NGL.getShader( 'shader/CylinderImpostor.frag' ),
+        vertexShader: NGL.getShader( 'CylinderImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'CylinderImpostor.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -3140,8 +3155,8 @@ NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube )
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'shader/CylinderImpostor2.vert' ),
-        fragmentShader: NGL.getShader( 'shader/CylinderImpostor2.frag' ),
+        vertexShader: NGL.getShader( 'CylinderImpostor2.vert' ),
+        fragmentShader: NGL.getShader( 'CylinderImpostor2.frag' ),
         depthTest: true,
         transparent: true,
         depthWrite: true,

@@ -5,7 +5,7 @@ varying lowp float sphereRadius;
 
 uniform lowp vec3 colorx;
 
-#include fog_pars_fragment
+#include fog_params
 
 
 void main(void)
@@ -24,7 +24,7 @@ void main(void)
         gl_FragColor = vec4( colorx, 1.0 );
     }
 
-    #include fog_fragment
+    #include fog
 }
 
 

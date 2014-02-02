@@ -6,7 +6,7 @@ uniform lowp vec3 colorx;
 
 varying lowp vec2 texCoord;
 
-#include fog_pars_fragment
+#include fog_params
 
 // The right value for crisp fonts is 0.25 / (spread * scale), 
 // where spread is the value you used when generating the font, 
@@ -45,5 +45,5 @@ void main() {
 	a = pow(a, 1.0/gamma);
 	gl_FragColor = vec4( colorx, a );
 
-    #include fog_fragment
+    #include fog
 }
