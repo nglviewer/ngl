@@ -1,11 +1,27 @@
 
+TODO
+	+ tube shader
+	+ secondary structure definition
+	+ performance testing framework
+	+ attribute and uniform changing framework
+	+ quadric shader
+
+
+
 * Various
-	- TODO screenshot
-	- TODO toggle fog
-	- TODO phong shading for impostors
-	- TODO postprocessing using WEBGL_draw_buffers
-	- TODO periodic object display (re-render with translation)
-	- TODO fill impostors with solid color (see in proteinvis shaders)
+	- toggle fog
+	- TODO
+		+ screenshot
+		+ phong shading for impostors
+		+ postprocessing using WEBGL_draw_buffers
+		+ periodic object display (re-render with translation)
+		+ fill impostors with solid color (see in proteinvis shaders)
+
+* Transparency/Blending
+	- TODO
+		+ mutiply with white background
+		+ additive with black background
+		+ change non occluded background via stencil buffer (or another way?)
 
 * Model
 	- load from .json
@@ -34,8 +50,13 @@
 * Sphere group
 	- TODO ANGLE_instanced_arrays
 
+* Halo
+	- TODO
+		+ correct depth value or tilt quad for perspective correction
+		+ fixed pixel width border
+
 * Particle sprite
-	- TODO round
+	- TODO round optional
 
 * Line
 	- dual color
@@ -48,8 +69,9 @@
     - TODO x_dir vector attribute
     - TODO fix view dir flip
 
-* Bezier
-
+* Tube
+	- via spline frames
+	
 
 
 
