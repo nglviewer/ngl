@@ -32,11 +32,13 @@ highp vec3 cameraNormal;
 //   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;
 
 
-vec3 Impostor(out vec3 cameraPos, out vec3 cameraNormal)
+void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 {
     highp vec3 cameraPlanePos = vec3(mapping * sphereRadius, 0.0) + cameraSpherePos;
     highp vec3 rayDirection = normalize(cameraPlanePos);
     
+    // gl_FragColor = vec4( rayDirection, 1.0 );
+
     float B = -2.0 * dot(rayDirection, cameraSpherePos);
     float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);
     
@@ -51,7 +53,6 @@ vec3 Impostor(out vec3 cameraPos, out vec3 cameraNormal)
     float intersectT = min(posT, negT);
     cameraPos = rayDirection * intersectT;
     cameraNormal = normalize(cameraPos - cameraSpherePos);
-    return cameraPos;
 }
 
 

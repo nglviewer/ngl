@@ -83,6 +83,7 @@
                         'ParticleSprite',
                         'CylinderImpostor',
                         'Cylinder',
+                        'QuadricImpostor',
                         'Line',
                         'LineSprite',
                         'Halo',
@@ -164,17 +165,19 @@
                     // oNgl.count = 500;
                     // oNgl.primitiveType = 'Text';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Sphere';
+                    // oNgl.primitiveType = 'SphereImpostor';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'CylinderImpostor';
-                    // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'QuadricImpostor';
+                    oNgl.addPrimitive();
+                    oNgl.primitiveType = 'Particle';
+                    oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SceneImpostor';
                     // oNgl.addPrimitive();
                     
                     // oNgl.randomColor = true;
-                    oNgl.modelId = '3dqb_ca';
-                    oNgl.modelType = 'ribbon';
-                    oNgl.addModel();
+                    // oNgl.modelId = '1crn_ca';
+                    // oNgl.modelType = 'ribbon';
+                    // oNgl.addModel();
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
@@ -185,9 +188,10 @@
                     NGL.render();
                 });
             });
+
             
             var NglExample = function() {
-                this.count = 50;
+                this.count = 10000;
                 this.size = 2.0;
                 this.orthoSphere = false;
                 this.primitiveType = 'BezierImpostor';
@@ -290,6 +294,14 @@
                         'Cylinder': function(){
                             new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
                         },
+                        'QuadricImpostor': function(){
+                            c1.from[0] = 0;
+                            c1.from[1] = 0;
+                            c1.from[2] = 0;
+                            new NGL.QuadricImpostorBuffer( 
+                                c1.from, c1.color, c1.radius
+                            );
+                        },
                         'Line': function(){
                             new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
                         },
@@ -367,6 +379,7 @@
                 };
             };
 
+
             function loadSurface( url ){
                 var manager = new THREE.LoadingManager();
                 manager.onProgress = function ( item, loaded, total ) {
@@ -422,6 +435,7 @@
                     NGL.group.add( surface );
                 } );
             }
+
 
             function loadModel( url, type, ortho, impostor, randomColor ){
                 var _load = function( data ){
@@ -510,7 +524,7 @@
                             break;
                         case "ribbon":
                             new NGL.TextBuffer( position, radius );
-                            var pd = NGL.getPathData( position, color, radius, 10 );
+                            var pd = NGL.getPathData( position, color, radius, 20 );
                             new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
                             //new NGL.SphereImpostorBuffer( position, color, radius, ortho );
                             break;
@@ -581,7 +595,6 @@
             }
 
 
-
             function makeSphereData( n, size ){
                 var cube = 100;
                 var n3 = n * 3;
@@ -608,6 +621,7 @@
                     "position": position
                 }
             }
+
 
             function makeCylinderData( n, size ){
                 var cube = 100;
@@ -655,6 +669,7 @@
                     "to": to
                 }
             }
+
 
             function makeHelixData( n, size ){
                 var cube = 100;
@@ -736,6 +751,7 @@
                 }
             }
 
+
             function makeBezierData( n, size ){
                 var cube = 100;
                 var n3 = n * 3;
@@ -789,6 +805,7 @@
                 }
             }
 
+
             function makeMeshData( n ){
                 var cube = 100;
                 var n3 = n * 3;
@@ -805,6 +822,7 @@
                     "normal": normal
                 }
             }
+
 
         </script>
 

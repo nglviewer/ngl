@@ -1,7 +1,5 @@
 
 TODO
-	+ secondary structure definition
-		+ ribbon arrows (encoded as negative size)
 	+ quadric shader
 	+ tube shader
 	+ attribute and uniform changing framework
@@ -74,5 +72,6 @@ TODO
 	- via spline frames
 	
 
-
+* Text
+	- java -cp gdx.jar:gdx-natives.jar:gdx-backend-lwjgl.jar:gdx-backend-lwjgl-natives.jar:extensions/gdx-tools/gdx-tools.jar com.badlogic.gdx.tools.hiero.Hiero
 

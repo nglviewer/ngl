@@ -154,11 +154,20 @@ NGL.resources = {
     'shader/ParticleSprite.frag': '',
     'shader/Quad.vert': '',
     'shader/Quad.frag': '',
+    'shader/QuadricImpostor.vert': '',
+    'shader/QuadricImpostor.frag': '',
+    'shader/QuadricImpostor2.vert': '',
+    'shader/QuadricImpostor2.frag': '',
 
     'shader/chunk/light_params.glsl': '',
     'shader/chunk/light.glsl': '',
     'shader/chunk/fog.glsl': '',
     'shader/chunk/fog_params.glsl': '',
+};
+
+
+NGL.uniforms = {
+    'projectionMatrix': new THREE.Matrix4(),
 };
 
 
@@ -465,6 +474,61 @@ NGL.animate = function() {
 
 
 NGL.render = function() {
+
+    // custom uniforms
+    var i, o, u;
+    var matrix = new THREE.Matrix4();
+    var nObjects = NGL.group.children.length;
+
+    for( i = 0; i < nObjects; i ++ ) {
+        o = NGL.group.children[i];
+        u = o.material.uniforms;
+
+        if( !u ) continue;
+
+
+        TODO check again
+
+        if( u.modelViewMatrix2 ){
+            u.modelViewMatrix2.value.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+        }
+
+        if( u.modelViewMatrixInverse ){
+            matrix.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewMatrixInverse.value.getInverse( matrix );
+            //console.log( "mvi", matrix.elements, u.modelViewMatrixInverse.value.elements );
+        }
+
+        if( u.modelViewMatrixInverseTranspose ){
+            matrix.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewMatrixInverseTranspose.value.getInverse( matrix ).transpose();
+            //console.log( "mvit", matrix.elements, u.modelViewMatrixInverseTranspose.value.elements );
+        }
+
+        if( u.projectionMatrixInverse ){
+            u.projectionMatrixInverse.value.getInverse(
+                NGL.camera.projectionMatrix
+            );
+            //console.log( "pi", NGL.camera.projectionMatrix.elements, u.projectionMatrixInverse.value.elements );
+        }
+
+        if( u.projectionMatrixTranspose ){
+            u.projectionMatrixTranspose.value.copy(
+                NGL.camera.projectionMatrix
+            ).transpose();
+            //console.log( "pt", NGL.camera.projectionMatrix.elements, u.projectionMatrixTranspose.value.elements );
+        }
+        //o.material.needsUpdate;
+    }
+    
+    
+
     // needed for font texture, but I don't know why
     _.each( NGL.textures, function( v ){
         v.uniform.value = v.tex;
@@ -1399,7 +1463,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
 }
 
 
-NGL.QuadricImpostorBuffer = function( position, color ){
+NGL.QuadricImpostorBuffer = function( position, color, radius ){
 
     // http://www.bmsc.washington.edu/people/merritt/graphics/quadrics.html
     // http://people.eecs.ku.edu/~miller/Papers/GeomAppNPQSIC.pdf
@@ -1409,6 +1473,134 @@ NGL.QuadricImpostorBuffer = function( position, color ){
 
     // https://www.shadertoy.com/view/lssGDX
     // https://www.shadertoy.com/view/MssGzn
+
+    var geometry, material, mesh;
+    var n = position.length/3;
+    var n2 = n * 2;
+    var n4 = n * 4;
+    
+    // make shader material
+    // #ifndef SPHERE
+    // // columns of inverse transform
+    // attribute vec4 Ti1;
+    // attribute vec4 Ti2;
+    // attribute vec4 Ti3;
+    // attribute vec4 Ti4;
+
+    // // columns of transform
+    // attribute vec4 T1;
+    // attribute vec4 T2;
+    // attribute vec4 T3;
+    // attribute vec4 T4;
+    // #endif
+    var attributes = {
+        inputMapping: { type: 'v2', value: null },
+        inputSphereRadius: { type: 'f', value: null },
+        inputColor: { type: 'v3', value: null }
+    };
+    var uniforms = THREE.UniformsUtils.merge( [
+        THREE.UniformsLib[ "fog" ],
+        {
+            'viewport': { type: "v2", value: new THREE.Vector2( NGL.width, NGL.height ) },
+            'pointSizeThreshold': { type: "f", value: 1 },
+            'MaxPixelSize': { type: "f", value: 64 },
+            'modelViewMatrix2': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
+            'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+            'projectionMatrixTranspose': { type: "m4", value: new THREE.Matrix4() },
+        }
+    ]);
+
+    material = new THREE.ShaderMaterial( {
+        uniforms: uniforms,
+        attributes: attributes,
+        vertexShader: NGL.getShader( 'QuadricImpostor2.vert' ),
+        fragmentShader: NGL.getShader( 'QuadricImpostor2.frag' ),
+        fog: true,
+        depthTest: true,
+        //transparent: true,
+        depthWrite: false,
+        lights: false,
+        blending: THREE.AdditiveBlending,
+    });
+
+    // make geometry and populate buffer
+    geometry = new THREE.BufferGeometry();
+
+    geometry.addAttribute( 'position', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
+    geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
+    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+
+    var aPosition = geometry.attributes.position.array;
+    var inputMapping = geometry.attributes.inputMapping.array;
+    var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
+    var inputColor = geometry.attributes.inputColor.array;
+
+    // geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    // var indices = geometry.attributes.index.array;
+
+    // geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
+
+    var x, y, z;
+    var r, g, b;
+    var i, j, k, ix, it;
+    //var chunkSize = NGL.calculateChunkSize( 4 );
+
+    for( var v = 0; v < n; v++ ) {
+        i = v * 2 * 4;
+        k = v * 3;
+
+        inputMapping.set( NGL.QuadMapping, i );
+
+        r = color[ k + 0 ];
+        g = color[ k + 1 ];
+        b = color[ k + 2 ];
+
+        x = position[ k + 0 ];
+        y = position[ k + 1 ];
+        z = position[ k + 2 ];
+
+        for( var m = 0; m < 4; m++ ) {
+            j = v * 4 * 3 + (3 * m);
+
+            inputColor[ j + 0 ] = r;
+            inputColor[ j + 1 ] = g;
+            inputColor[ j + 2 ] = b;
+
+            aPosition[ j + 0 ] = x;
+            aPosition[ j + 1 ] = y;
+            aPosition[ j + 2 ] = z;
+
+            inputSphereRadius[ (v * 4) + m ] = radius[ v ];
+        }
+
+        // ix = v * 6;
+        // it = v * 4;
+        //
+        // indices.set( NGL.QuadIndices, ix );
+        // for( var s=0; s<6; ++s ){
+        //     indices[ix + s] = (it + indices[ix + s]) % chunkSize;
+        // }
+    }
+
+    // console.log( "inputMapping", inputMapping );
+    // console.log( "ParticleSprite aPosition", aPosition, aPosition.length );
+    // console.log( "inputSize", inputSize );
+    // console.log( "inputColor", inputColor );
+    // console.log( "indices", indices );
+
+    //mesh = new THREE.Mesh( geometry, material );
+    mesh = new THREE.ParticleSystem( geometry, material );
+    NGL.group.add( mesh );
+
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = mesh;
+    this.n = n;
 }
 
 
@@ -1973,7 +2165,7 @@ NGL.ParticleBuffer = function ( position, color, size ) {
     // console.log( "aPosition", aPosition );
     // console.log( "aColor", aColor );
 
-    particle = new THREE.ParticleSystem( geometry, material, THREE.LinePieces );
+    particle = new THREE.ParticleSystem( geometry, material );
     NGL.group.add( particle );
 
 
@@ -2628,7 +2820,12 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
             'tDepth': { type: "t", value: NGL.depthTarget },
             'tUnitSphere': { type: "t", value: NGL.unitSphereTarget },
             'viewWidth': { type: "f", value: NGL.width },
-            'viewHeight': { type: "f", value: NGL.height }
+            'viewHeight': { type: "f", value: NGL.height },
+            'modelViewMatrix2': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
+            'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+            'projectionMatrixTranspose': { type: "m4", value: new THREE.Matrix4() },
         }
     ]);
 
@@ -3010,6 +3207,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
     this.mesh = mesh;
     this.n = n;
 }
+
 
 NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube ) {
 

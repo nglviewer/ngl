@@ -7,13 +7,15 @@ varying lowp vec3 color;
 varying highp vec3 cameraSpherePos;
 varying lowp float sphereRadius;
 
+uniform mat4 modelViewMatrix2;
+
 const lowp float g_boxCorrection = 1.5;
 
 void main(void){
     lowp vec2 offset;
 
     color = inputColor;
-    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
+    cameraSpherePos = ( modelViewMatrix2 * vec4( position, 1.0 ) ).xyz;
     sphereRadius = inputSphereRadius;
 
     mapping = inputMapping * g_boxCorrection;
