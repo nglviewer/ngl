@@ -1,0 +1,77 @@
+
+TODO
+	+ quadric shader
+	+ tube shader
+	+ attribute and uniform changing framework
+	+ performance testing framework
+
+
+
+* Various
+	- toggle fog
+	- TODO
+		+ screenshot
+		+ phong shading for impostors
+		+ postprocessing using WEBGL_draw_buffers
+		+ periodic object display (re-render with translation)
+		+ fill impostors with solid color (see in proteinvis shaders)
+
+* Transparency/Blending
+	- TODO
+		+ mutiply with white background
+		+ additive with black background
+		+ change non occluded background via stencil buffer (or another way?)
+
+* Model
+	- load from .json
+	- center on load
+	- imposter use optional on load
+
+* Surface
+	- load from .obj
+	- center on load
+	- TODO interior with secondary color
+		+ custom shader with interior color
+		+ gl_FrontFacing
+
+* Cylinder imposter
+	- dual color
+	- TODO double/triple bonds
+	- TODO tweak dashed appearance
+
+* Cylinder group
+	- TODO dual color
+	- TODO ANGLE_instanced_arrays
+
+* Sphere impostor
+	- TODO lighting texture optional
+
+* Sphere group
+	- TODO ANGLE_instanced_arrays
+
+* Halo
+	- TODO
+		+ correct depth value or tilt quad for perspective correction
+		+ fixed pixel width border
+
+* Particle sprite
+	- TODO round optional
+
+* Line
+	- dual color
+
+* Line sprite
+	- dual color
+
+* Helix impostor
+	- TODO pitch, width uniforms
+    - TODO x_dir vector attribute
+    - TODO fix view dir flip
+
+* Tube
+	- via spline frames
+	
+
+* Text
+	- java -cp gdx.jar:gdx-natives.jar:gdx-backend-lwjgl.jar:gdx-backend-lwjgl-natives.jar:extensions/gdx-tools/gdx-tools.jar com.badlogic.gdx.tools.hiero.Hiero
+
