@@ -257,7 +257,7 @@ void main()
     gl_FragColor.xyz *= vLightFront;
     //gl_FragColor.w = 0.5;
     //gl_FragColor.xyz = transformedNormal;
-    gl_FragColor.xyz = point;
+    //gl_FragColor.xyz = point;
 
     //gl_FragColor = vec4( normalize(ray_origin - ray_target), 1.0 );
 
