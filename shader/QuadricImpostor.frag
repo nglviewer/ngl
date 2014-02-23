@@ -295,7 +295,7 @@ void propFuncFS(void)
     }else{
         gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
     }
-    gl_FragColor = vec4( normalize(raydir), 1.0 );
+    //gl_FragColor = vec4( normalize(raydir), 1.0 );
 
     // compute color
     // gl_FragColor = ComputeColor(color, i.N, i.P);
@@ -334,7 +334,7 @@ void main()
         gl_FragColor = vec4( 1.0, 0.0, 1.0, 1.0 );
     }
     propFuncFS();
-
+    gl_FragColor = vec4( projectionMatrixInverse[1].xyz, 1.0 );
     //gl_FragColor = vec4( normalize(raydir), 1.0 );
     //gl_FragColor = vec4( ((gl_FragCoord.xy/viewport)*2.0)-1.0, gl_FragCoord.z, 1.0 );
 }

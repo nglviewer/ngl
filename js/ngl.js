@@ -487,7 +487,7 @@ NGL.render = function() {
         if( !u ) continue;
 
 
-        TODO check again
+        //TODO check again
 
         if( u.modelViewMatrix2 ){
             u.modelViewMatrix2.value.multiplyMatrices( 
@@ -1515,11 +1515,11 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'QuadricImpostor2.vert' ),
-        fragmentShader: NGL.getShader( 'QuadricImpostor2.frag' ),
+        vertexShader: NGL.getShader( 'QuadricImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'QuadricImpostor.frag' ),
         fog: true,
         depthTest: true,
-        //transparent: true,
+        transparent: true,
         depthWrite: false,
         lights: false,
         blending: THREE.AdditiveBlending,
