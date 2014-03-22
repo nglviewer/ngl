@@ -3,12 +3,17 @@
 
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 modelViewMatrix2;
 
 
 uniform mat4 projectionMatrixInverse;
 uniform mat4 projectionMatrixTranspose;
 uniform mat4 modelViewMatrixInverse;
 
+#include light_params
+
+#include fog_params
 
 // varying vec3 cameraPos;
 // varying vec2 mapping;
@@ -177,7 +182,7 @@ I ComputeRayQuadricIntersection()
     else
     {
         A = c;
-        //B = -2.0 * dot(  vec4( c, e, f, 1. ), vec4( P.zxy, 1.0 ) );
+        // B = -2.0 * dot(  vec4( c, e, f, 1. ), vec4( P.zxy, 1.0 ) );
         B = -2.0 * dot(vec4(d, e, f, i), vec4(P.zxy, 1.0));
         C = dot(vec3(a, b, c), P * P) + 2.0 * (dot(vec3(d, e, f), P.xxy * P.yzz)
                 + dot(vec3(g, h, i), P)) + j;
@@ -270,7 +275,7 @@ void propFuncFS(void)
     fc -= 1.0;
     
     vec4 p = projectionMatrixInverse * vec4(fc, 1.0);
-    // vec4 p = projectionMatrixInverse * vec4(fc.xy, 0.0, 1.0);
+    //vec4 p = projectionMatrixInverse * vec4(fc.xy, 0.0, 1.0);
 
     if (bool(perspective))
     {
@@ -289,19 +294,7 @@ void propFuncFS(void)
 
     // compute intersection
     I i = ComputeRayQuadricIntersection();
-    if (i.t < 0.0){
-        //discard;
-        gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );
-    }else{
-        gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-    }
-    //gl_FragColor = vec4( normalize(raydir), 1.0 );
-
-    // compute color
-    // gl_FragColor = ComputeColor(color, i.N, i.P);
-    // gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-    // gl_FragColor = vec4( i.N, 1.0 );
-
+    
     // update depth by projecting point and updating depth coordinate
     // the transposed version of the projection matrix is used to
     // perform vector, matrix row product in one line:
@@ -313,6 +306,17 @@ void propFuncFS(void)
     float z = dot(vec4(i.P, 1.0), projectionMatrixTranspose[2]);
     float w = dot(vec4(i.P, 1.0), projectionMatrixTranspose[3]);
     gl_FragDepthEXT = 0.5 * (z / w + 1.0);
+
+    vec3 transformedNormal = i.N;
+    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+    
+    #include light
+
+    gl_FragColor = vec4( vColor.xyz, 1.0 );
+    gl_FragColor.xyz *= vLightFront;
+    // gl_FragColor = vec4( i.N, 1.0 );
+
+    #include fog
 
     // //Set the depth based on the new cameraPos.
     // vec4 clipPos = projectionMatrix * vec4(i.P, 1.0);
@@ -328,15 +332,9 @@ void propFuncFS(void)
 
 void main()
 {  
-    if (bool(perspective)){
-        gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-    }else{
-        gl_FragColor = vec4( 1.0, 0.0, 1.0, 1.0 );
-    }
+    
     propFuncFS();
-    gl_FragColor = vec4( projectionMatrixInverse[1].xyz, 1.0 );
-    //gl_FragColor = vec4( normalize(raydir), 1.0 );
-    //gl_FragColor = vec4( ((gl_FragCoord.xy/viewport)*2.0)-1.0, gl_FragCoord.z, 1.0 );
+
 }
 
 

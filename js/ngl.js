@@ -40,6 +40,9 @@ $.loadImage = function(url) {
 };
 
 
+var log = _.throttle( function(x,y){ console.log(x,y); }, 1000 );
+
+
 // https://github.com/cryos/avogadro/tree/master/libavogadro/src/extensions/shaders
 
 
@@ -158,6 +161,8 @@ NGL.resources = {
     'shader/QuadricImpostor.frag': '',
     'shader/QuadricImpostor2.vert': '',
     'shader/QuadricImpostor2.frag': '',
+    'shader/QuadricImpostor3.vert': '',
+    'shader/QuadricImpostor3.frag': '',
 
     'shader/chunk/light_params.glsl': '',
     'shader/chunk/light.glsl': '',
@@ -168,6 +173,18 @@ NGL.resources = {
 
 NGL.uniforms = {
     'projectionMatrix': new THREE.Matrix4(),
+};
+
+
+NGL.UniformsLib = {
+    'fog': THREE.UniformsLib[ "fog" ],
+    'lights': THREE.UniformsUtils.merge( [
+        THREE.UniformsLib[ "lights" ],
+        {
+            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
+            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
+        }
+    ])
 };
 
 
@@ -475,59 +492,7 @@ NGL.animate = function() {
 
 NGL.render = function() {
 
-    // custom uniforms
-    var i, o, u;
-    var matrix = new THREE.Matrix4();
-    var nObjects = NGL.group.children.length;
-
-    for( i = 0; i < nObjects; i ++ ) {
-        o = NGL.group.children[i];
-        u = o.material.uniforms;
-
-        if( !u ) continue;
-
-
-        //TODO check again
-
-        if( u.modelViewMatrix2 ){
-            u.modelViewMatrix2.value.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-        }
-
-        if( u.modelViewMatrixInverse ){
-            matrix.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewMatrixInverse.value.getInverse( matrix );
-            //console.log( "mvi", matrix.elements, u.modelViewMatrixInverse.value.elements );
-        }
-
-        if( u.modelViewMatrixInverseTranspose ){
-            matrix.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewMatrixInverseTranspose.value.getInverse( matrix ).transpose();
-            //console.log( "mvit", matrix.elements, u.modelViewMatrixInverseTranspose.value.elements );
-        }
-
-        if( u.projectionMatrixInverse ){
-            u.projectionMatrixInverse.value.getInverse(
-                NGL.camera.projectionMatrix
-            );
-            //console.log( "pi", NGL.camera.projectionMatrix.elements, u.projectionMatrixInverse.value.elements );
-        }
-
-        if( u.projectionMatrixTranspose ){
-            u.projectionMatrixTranspose.value.copy(
-                NGL.camera.projectionMatrix
-            ).transpose();
-            //console.log( "pt", NGL.camera.projectionMatrix.elements, u.projectionMatrixTranspose.value.elements );
-        }
-        //o.material.needsUpdate;
-    }
-    
-    
+    NGL.updateDynamicUniforms();
 
     // needed for font texture, but I don't know why
     _.each( NGL.textures, function( v ){
@@ -555,6 +520,54 @@ NGL.render = function() {
     // NGL.renderer.render( NGL.unitSphereScene, NGL.unitSphereCamera );
 
     NGL.rendererStats.update( NGL.renderer );
+}
+
+
+NGL.updateDynamicUniforms = function(){
+    var i, o, u;
+    var matrix = new THREE.Matrix4();
+    var nObjects = NGL.group.children.length;
+
+    for( i = 0; i < nObjects; i ++ ) {
+        o = NGL.group.children[i];
+
+        if( !o.material ) continue;
+        u = o.material.uniforms;
+        if( !u ) continue;
+
+        if( u.modelViewMatrix2 ){
+            u.modelViewMatrix2.value.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+        }
+
+        if( u.modelViewMatrixInverse ){
+            matrix.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+            //matrix.copy( NGL.camera.matrixWorldInverse );
+            u.modelViewMatrixInverse.value.getInverse( matrix );
+        }
+
+        if( u.modelViewMatrixInverseTranspose ){
+            matrix.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewMatrixInverseTranspose.value.getInverse( matrix ).transpose();
+        }
+
+        if( u.projectionMatrixInverse ){
+            u.projectionMatrixInverse.value.getInverse(
+                NGL.camera.projectionMatrix
+            );
+        }
+
+        if( u.projectionMatrixTranspose ){
+            u.projectionMatrixTranspose.value.copy(
+                NGL.camera.projectionMatrix
+            ).transpose();
+        }
+    }
 }
 
 
@@ -903,12 +916,8 @@ NGL.BezierRaymarchBuffer = function ( p0, p1, p2, color, radius ) {
     };
     
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
     ]);
 
     material = new THREE.ShaderMaterial( {
@@ -1310,12 +1319,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
         inputColor: { type: 'v3', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
     ]);
 
     material = new THREE.ShaderMaterial( {
@@ -1499,7 +1504,8 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
         inputColor: { type: 'v3', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
         {
             'viewport': { type: "v2", value: new THREE.Vector2( NGL.width, NGL.height ) },
             'pointSizeThreshold': { type: "f", value: 1 },
@@ -1521,20 +1527,20 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
         depthTest: true,
         transparent: true,
         depthWrite: false,
-        lights: false,
-        blending: THREE.AdditiveBlending,
+        lights: true,
+        //blending: THREE.AdditiveBlending,
     });
 
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
     geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
+    //geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
     geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
     geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
 
     var aPosition = geometry.attributes.position.array;
-    var inputMapping = geometry.attributes.inputMapping.array;
+    //var inputMapping = geometry.attributes.inputMapping.array;
     var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
     var inputColor = geometry.attributes.inputColor.array;
 
@@ -1552,7 +1558,7 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
         i = v * 2 * 4;
         k = v * 3;
 
-        inputMapping.set( NGL.QuadMapping, i );
+        //inputMapping.set( NGL.QuadMapping, i );
 
         r = color[ k + 0 ];
         g = color[ k + 1 ];
@@ -1628,12 +1634,8 @@ NGL.HelixImpostorBuffer = function ( from, to, dir, color, color2, radius ) {
         attributes['inputColor2'] = { type: 'c', value: null };
     }
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
     ]);
 
     material = new THREE.ShaderMaterial( {
@@ -1825,12 +1827,8 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
         attributes['inputColor2'] = { type: 'c', value: null };
     }
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
     ]);
 
     material = new THREE.ShaderMaterial( {
@@ -2195,7 +2193,7 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
         attributes['inputColor2'] = { type: 'v3', value: null };
     }
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "fog" ],
         {}
     ]);
 
@@ -2469,7 +2467,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
         inputSphereRadius: { type: 'f', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "fog" ],
         {
             "colorx"  : { type: "c", value: new THREE.Color( 0xFFFFFF ) },
             "fontTexture"  : { type: "t", value: tex }
@@ -2609,7 +2607,7 @@ NGL.HaloBuffer = function ( position, radius, ortho ) {
         inputSphereRadius: { type: 'f', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "fog" ],
         {
             "colorx"  : { type: "c", value: new THREE.Color( 0x007700 ) }
         }
@@ -2745,10 +2743,8 @@ NGL.makeUnitSphere = function ( radius ) {
     // make shader material
 
     var uniforms = THREE.UniformsUtils.merge([
-        THREE.UniformsLib[ "lights" ],
+        NGL.UniformsLib[ "lights" ],
         {
-            'ambient': { type: "c", value: new THREE.Color( 0xffffff ) },
-            'emissive': { type: "c", value: new THREE.Color( 0x000000 ) },
             'color': { type: "c", value: new THREE.Color( 0xFFFFFF ) },
             'sphereRadius': { type: "f", value: radius },
             'viewWidth': { type: "f", value: NGL.width },
@@ -2812,11 +2808,9 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
         inputSphereRadius: { type: 'f', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
         {
-            'ambient': { type: "c", value: new THREE.Color( 0xffffff ) },
-            'emissive': { type: "c", value: new THREE.Color( 0x000000 ) },
             'tDepth': { type: "t", value: NGL.depthTarget },
             'tUnitSphere': { type: "t", value: NGL.unitSphereTarget },
             'viewWidth': { type: "f", value: NGL.width },
@@ -3003,12 +2997,8 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
         attributes['inputS'] = { type: 'v3', value: null };
     }
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
     ]);
 
     material = new THREE.ShaderMaterial( {
@@ -3235,12 +3225,8 @@ NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube )
         attributes['inputColor2'] = { type: 'c', value: null };
     }
     var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "fog" ],
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
     ]);
 
     material = new THREE.ShaderMaterial( {

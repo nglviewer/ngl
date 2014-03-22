@@ -21,9 +21,9 @@ mat4 transpose( in mat4 inMatrix ) {
 
     mat4 outMatrix = mat4(
         vec4(i0.x, i1.x, i2.x, i3.x),
-        vec4(i0.y, i1.y, i3.y, i3.y),
-        vec4(i0.z, i1.z, i3.z, i3.z),
-        vec4(i0.w, i1.w, i3.w, i3.w)
+        vec4(i0.y, i1.y, i2.y, i3.y),
+        vec4(i0.z, i1.z, i2.z, i3.z),
+        vec4(i0.w, i1.w, i2.w, i3.w)
     );
     return outMatrix;
 }
@@ -251,36 +251,36 @@ const float DEF_Z = 1.0 - FEPS;
 /// Compute point size and center using the technique described in:
 /// "GPU-Based Ray-Casting of Quadratic Surfaces"
 /// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.
-// void ComputePointSizeAndPositionInClipCoordEllipsoid()
-// {
-//     mat4 R = transpose( projectionMatrix * modelViewMatrix * T );
-//     float A = dot( R[ 3 ], D * R[ 3 ] );
-//     float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );
-//     float C = dot( R[ 0 ], D * R[ 0 ] );
-//     xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
-//     xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
-//     float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5 * viewport.x;
+void ComputePointSizeAndPositionInClipCoordEllipsoid()
+{
+    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );
+    float A = dot( R[ 3 ], D * R[ 3 ] );
+    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );
+    float C = dot( R[ 0 ], D * R[ 0 ] );
+    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
+    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
+    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5 * viewport.x;
 
-//     A = dot( R[ 3 ], D * R[ 3 ] );
-//     B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );
-//     C = dot( R[ 1 ], D * R[ 1 ] );
-//     ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
-//     ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
-//     float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5 * viewport.y;
+    A = dot( R[ 3 ], D * R[ 3 ] );
+    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );
+    C = dot( R[ 1 ], D * R[ 1 ] );
+    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
+    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
+    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5 * viewport.y;
 
-//     pointSize = ceil( max( sx, sy ) );
-//     gl_PointSize = pointSize;
+    pointSize = ceil( max( sx, sy ) );
+    gl_PointSize = pointSize;
 
-//     #ifdef CORRECT_POINT_Z
-//         // gl_Position has to be precomputed before getting here
-//         // the reason for which we want the z coordinate to be correct is for debugging
-//         // purpose only: when displaying point shapes as quads the point center will match
-//         // the the quadric center
-//         gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) ) * gl_Position.w;
-//     #else
-//         gl_Position = vec4( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ), DEF_Z, 1. );
-//     #endif
-// }
+    #ifdef CORRECT_POINT_Z
+        // gl_Position has to be precomputed before getting here
+        // the reason for which we want the z coordinate to be correct is for debugging
+        // purpose only: when displaying point shapes as quads the point center will match
+        // the the quadric center
+        gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) ) * gl_Position.w;
+    #else
+        gl_Position = vec4( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ), DEF_Z, 1. );
+    #endif
+}
 
 
 //------------------------------------------------------------------------------
@@ -465,8 +465,8 @@ void ComputePointSizeAndPositionWithProjection()
 void  ComputePointSizeAndPosition()
 {
     #if defined( ELLIPSOID )
-        ComputePointSizeAndPositionWithProjection();
-        //ComputePointSizeAndPositionInClipCoordEllipsoid();
+        //ComputePointSizeAndPositionWithProjection();
+        ComputePointSizeAndPositionInClipCoordEllipsoid();
     #elif defined( CYLINDER ) || defined( CONE ) || defined( HYPERBOLOID1 ) || defined( HYPERBOLOID2 )  || defined( PARABOLOID )
         ComputePointSizeAndPositionInClipCoord();
     #else
@@ -494,7 +494,7 @@ void propFuncVS()
 
     #ifdef SPHERE
         // float radius = GetRadius();
-        float radius = 1.0;//inputSphereRadius;
+        float radius = inputSphereRadius;
 
         float iradius;
         if(radius < FEPS)
