@@ -295,12 +295,8 @@
                             new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
                         },
                         'QuadricImpostor': function(){
-                            c1.from[0] = 0;
-                            c1.from[1] = 0;
-                            c1.from[2] = 0;
-                            new NGL.QuadricImpostorBuffer( 
-                                c1.from, c1.color, c1.radius
-                            );
+                            //new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
+                            new NGL.QuadricImpostorBuffer( c1.from, c1.color, r1 );
                         },
                         'Line': function(){
                             new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
