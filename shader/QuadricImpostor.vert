@@ -1,17 +1,11 @@
+
 attribute vec2 inputMapping;
 attribute vec3 inputColor;
 attribute float inputSphereRadius;
 
 uniform mat4 modelViewMatrixInverse;
 uniform mat4 modelViewMatrixInverseTranspose;
-
-//vec3 cameraPos;
-varying vec3 cameraPos;
-varying vec2 mapping;
-varying float vRadius;
-
-vec4 cameraCornerPos;
-
+uniform mat4 projectionMatrixInverse;
 
 mat4 transpose( in mat4 inMatrix ) {
     vec4 i0 = inMatrix[0];
@@ -102,8 +96,6 @@ mat4 transpose( in mat4 inMatrix ) {
 #endif
 
 uniform vec2 viewport; // only width and height passed, no origin
-uniform float pointSizeThreshold; // minimum point size
-uniform float MaxPixelSize;
 
 // quadric coefficients
 // | a d e g |
@@ -123,7 +115,6 @@ varying float i;
 varying float j;
 
 varying vec4 vColor; // primitive color
-varying float pointSize; // computed point size
 varying float perspective; // perspective flag
 
 #ifndef SPHERE
@@ -243,7 +234,6 @@ mat4 T;
 varying mat4 Ti;
 
 const float FEPS = 0.000001;
-
 const float DEF_Z = 1.0 - FEPS;
 
 
@@ -259,26 +249,29 @@ void ComputePointSizeAndPositionInClipCoordEllipsoid()
     float C = dot( R[ 0 ], D * R[ 0 ] );
     xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
     xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
-    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5 * viewport.x;
+    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;
 
     A = dot( R[ 3 ], D * R[ 3 ] );
     B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );
     C = dot( R[ 1 ], D * R[ 1 ] );
     ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
     ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
-    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5 * viewport.y;
+    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;
 
-    pointSize = ceil( max( sx, sy ) );
-    gl_PointSize = pointSize;
+    // pointSize = ceil( max( sx, sy ) );
+    // gl_PointSize = pointSize;
 
     #ifdef CORRECT_POINT_Z
         // gl_Position has to be precomputed before getting here
         // the reason for which we want the z coordinate to be correct is for debugging
         // purpose only: when displaying point shapes as quads the point center will match
         // the the quadric center
-        gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) ) * gl_Position.w;
+        gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );
+        gl_Position.xy -= inputMapping * vec2( sx, sy );
+        gl_Position.xy *= gl_Position.w;
     #else
-        gl_Position = vec4( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ), DEF_Z, 1. );
+        gl_Position = vec4( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ), DEF_Z, 1.0 );
+        gl_Position.xy -= inputMapping * vec2( sx, sy );
     #endif
 }
 
@@ -309,7 +302,6 @@ void ComputePointSizeAndPositionInClipCoordEllipsoid()
 #if defined( CYLINDER ) || defined( CONE ) || defined( HYPERBOLOID1 ) || defined( HYPERBOLOID2 )  || defined( PARABOLOID )
 void ComputePointSizeAndPositionInClipCoord()
 {
-
     // always use ellipse to compute bounds
     const mat4 D  = mat4( 1.0, 0.0, 0.0, 0.0,
                           0.0, 1.0, 0.0, 0.0,
@@ -346,28 +338,26 @@ void ComputePointSizeAndPositionInClipCoord()
     ybc2[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
     ybc2[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );
 
-
     xbc[ 0 ] = min( xbc1[ 0 ], min( xbc1[ 1 ], min( xbc2[ 0 ], xbc2[ 1 ] ) ) );
     xbc[ 1 ] = max( xbc1[ 0 ], max( xbc1[ 1 ], max( xbc2[ 0 ], xbc2[ 1 ] ) ) );
 
     ybc[ 0 ] = min( ybc1[ 0 ], min( ybc1[ 1 ], min( ybc2[ 0 ], ybc2[ 1 ] ) ) );
     ybc[ 1 ] = max( ybc1[ 0 ], max( ybc1[ 1 ], max( ybc2[ 0 ], ybc2[ 1 ] ) ) );
 
-    // TODO what is this???
-    float sx = ( xbc[ 1 ] - xbc[ 0 ] ) * 0.5 * viewport.x;
-    float sy = ( ybc[ 1 ] - ybc[ 0 ] ) * 0.5 * viewport.y;
-
-    pointSize =  ceil( max( sx, sy ) );
-    gl_PointSize = pointSize;
+    float sx = ( xbc[ 1 ] - xbc[ 0 ] ) * 0.5;
+    float sy = ( ybc[ 1 ] - ybc[ 0 ] ) * 0.5;
 
     #ifdef CORRECT_POINT_Z
         // gl_Position has to be precomputed before getting here
         // the reason for which we want the z coordinate to be correct is for debugging
         // purpose only: when displaying point shapes as quads the point center will match
         // the the quadric center
-        gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) ) * gl_Position.w;
+        gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );
+        gl_Position.xy -= inputMapping * vec2( sx, sy );
+        gl_Position.xy *= gl_Position.w;
     #else
         gl_Position = vec4( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ), DEF_Z, 1.0 );
+        gl_Position.xy -= inputMapping * vec2( sx, sy );
     #endif
 }
 #endif
@@ -379,7 +369,6 @@ void ComputePointSizeAndPositionInClipCoord()
 // in most cases you'll have to use a point scaling factor from 1.05 to 1.5
 void ComputePointSizeAndPositionWithProjection()
 {
-
     mat4 M = ( projectionMatrix * modelViewMatrix ) * T;
 
     const float dxm = -1.0;
@@ -437,29 +426,22 @@ void ComputePointSizeAndPositionWithProjection()
                            max( P6.y,
                              max( P7.y, P8.y ) ) ) ) ) ) );
 
-    // TODO what is this???
-    float sx = ( xmax - xmin ) * 0.5 * viewport.x;
-    float sy = ( ymax - ymin ) * 0.5 * viewport.y;
-
-    //  gl_PointSize =  ceil( pointScaling * max( sx, sy ) );
-    pointSize =  ceil( max( sx, sy ) );
-    gl_PointSize = pointSize;
+    float sx = ( xmax - xmin ) * 0.5;
+    float sy = ( ymax - ymin ) * 0.5;
 
     #ifdef CORRECT_POINT_Z
         // gl_Position has to be precomputed before getting here
         // the reason for which we want the z coordinate to be correct is for debugging
         // purpose only: when displaying point shapes as quads the point center will match
         // the the quadric center
-        gl_Position.xy = vec2( 0.5 * ( xmin + xmax ), 0.5 * ( ymin + ymax ) ) * gl_Position.w;
+        gl_Position.xy = vec2( 0.5 * ( xmin + xmax ), 0.5 * ( ymin + ymax ) );
+        gl_Position.xy -= inputMapping * vec2( sx, sy );
+        gl_Position.xy *= gl_Position.w;
     #else
         gl_Position = vec4( 0.5 * ( xmin + xmax ), 0.5 * ( ymin + ymax ), DEF_Z, 1.0 );
+        gl_Position.xy -= inputMapping * vec2( sx, sy );
     #endif
 }
-
-
-// #ifdef SPHERE
-// float GetRadius();
-// #endif
 
 
 void  ComputePointSizeAndPosition()
@@ -475,25 +457,19 @@ void  ComputePointSizeAndPosition()
 }
 
 
-//------------------------------------------------------------------------------
-// MAIN
-void propFuncVS()
+void main()
 {  
-    //color = gl_Color;
     vColor = vec4( inputColor, 1.0 );
 
     // compute position, this is required only when displaying the point quad
     #ifdef CORRECT_POINT_Z
-        // gl_Position = ftransform();
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        // gl_Position = projectionMatrix * cameraCornerPos;
     #endif
 
     //set perspective flag by inspecting the projection matrix
     perspective = float( projectionMatrix[ 3 ][ 3 ] < FEPS && abs( projectionMatrix[ 2 ][ 3 ] ) > FEPS );
 
-    #ifdef SPHERE
-        // float radius = GetRadius();
+    #if defined( SPHERE )
         float radius = inputSphereRadius;
 
         float iradius;
@@ -504,14 +480,23 @@ void propFuncVS()
 
         T =   mat4( radius, 0.0, 0.0, 0.0,
                     0.0, radius, 0.0, 0.0,
-                    0.0, 0., radius, 0.0,
+                    0.0, 0.0, radius, 0.0,
                     position.x, position.y, position.z, 1.0 );
 
         Ti =  mat4( iradius, 0.0, 0.0, 0.0,
                     0.0, iradius, 0.0, 0.0,
-                    0.0, 0.0, iradius, 0.0,
+                    0.0, 0.0, 1.0/radius, 0.0,
                     -position.x*iradius, -position.y*iradius, -position.z*iradius, 1.0 );
 
+        // T =   mat4( radius, 0.0, 0.0, 0.0,
+        //             0.0, 1.5*radius, 0.0, 0.0,
+        //             0.0, 0.0, 0.5*radius, 0.0,
+        //             position.x, position.y, position.z, 1.0 );
+
+        // Ti =  mat4( iradius, 0.0, 0.0, 0.0,
+        //             0.0, (1.0/(radius*1.5)), 0.0, 0.0,
+        //             0.0, 0.0, (1.0/(radius*0.75)), 0.0,
+        //             -position.x*iradius, -position.y*(1.0/(radius*1.5)), -position.z*(1.0/(radius*0.75)), 1.0 );
     #else
         // inverse of transformation matrix
         Ti = mat4( Ti1, Ti2, Ti3, Ti4 );
@@ -522,73 +507,29 @@ void propFuncVS()
     // compute point size and gl_Position; uses Ti and T which have to be
     // computed before calling the function
     ComputePointSizeAndPosition();
-    //ComputePointSizeAndPositionWithProjection();
-    //ComputePointSizeAndPositionInClipCoord();
 
-    if(pointSize > MaxPixelSize)
-    {
-        gl_PointSize = MaxPixelSize;
-        float factor = gl_PointSize / pointSize;
-        float realRadius = radius*factor;
-        float realIRadius = 1.0/realRadius;
-        T =  mat4(  realRadius, 0.0, 0.0, 0.0,
-                    0.0, realRadius, 0.0, 0.0,
-                    0.0, 0.0, realRadius, 0.0,
-                    position.x, position.y, position.z, 1.0 );
-
-        Ti =  mat4( realIRadius, 0.0, 0.0, 0.0,
-                    0.0, realIRadius, 0.0, 0.0,
-                    0.0, 0.0, realIRadius, 0.0,
-                    -position.x*realIRadius, -position.y*realIRadius, -position.z*realIRadius, 1.0 );
-
-        ComputePointSizeAndPosition();
-    }
-
-    // if pixel size valid set quadric's coefficients
-    if( pointSize > pointSizeThreshold )
-    {
-        // transposed inverse of transformation matrix
-        mat4 Tit = transpose( Ti );
-        // transform quadric matrix into world coordinates and
-        // assign values to coefficients to be passed to fragment shader
-        mat4 Q = modelViewMatrixInverseTranspose * ( Tit * D * Ti ) * modelViewMatrixInverse;
-             //////////////////
-        // | a d e g |
-        // | d b f h |
-        // | e f c i |
-        // | g h i j |
-        // ax^2 + by^2 + cz^2 + 2dxy +2exz + 2fyz + 2gx + 2hy + 2iz + j = 0
-        a = Q[ 0 ][ 0 ];
-        b = Q[ 1 ][ 1 ];
-        c = Q[ 2 ][ 2 ];
-        d = Q[ 1 ][ 0 ];
-        e = Q[ 2 ][ 0 ];
-        f = Q[ 2 ][ 1 ];
-        g = Q[ 3 ][ 0 ];
-        h = Q[ 3 ][ 1 ];
-        i = Q[ 3 ][ 2 ];
-        j = Q[ 3 ][ 3 ];
-    }
-}
-
-
-
-void main()
-{  
-    cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
-    //cameraPos = position;
-
-    cameraCornerPos = vec4( cameraPos, 1.0 );
-    cameraCornerPos.xy += inputSphereRadius * inputMapping;
-    
-    mapping = inputMapping;
-    vRadius = inputSphereRadius;
-
-    propFuncVS();
-
-    //gl_PointSize = 64.0;
-
-    //gl_Position = projectionMatrix * cameraCornerPos;
+    // set quadric's coefficients
+    // transposed inverse of transformation matrix
+    mat4 Tit = transpose( Ti );
+    // transform quadric matrix into world coordinates and
+    // assign values to coefficients to be passed to fragment shader
+    mat4 Q = modelViewMatrixInverseTranspose * ( Tit * D * Ti ) * modelViewMatrixInverse;
+         //////////////////
+    // | a d e g |
+    // | d b f h |
+    // | e f c i |
+    // | g h i j |
+    // ax^2 + by^2 + cz^2 + 2dxy +2exz + 2fyz + 2gx + 2hy + 2iz + j = 0
+    a = Q[ 0 ][ 0 ];
+    b = Q[ 1 ][ 1 ];
+    c = Q[ 2 ][ 2 ];
+    d = Q[ 1 ][ 0 ];
+    e = Q[ 2 ][ 0 ];
+    f = Q[ 2 ][ 1 ];
+    g = Q[ 3 ][ 0 ];
+    h = Q[ 3 ][ 1 ];
+    i = Q[ 3 ][ 2 ];
+    j = Q[ 3 ][ 3 ];
 }
 
 

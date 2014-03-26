@@ -4,8 +4,6 @@
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 modelViewMatrix;
-uniform mat4 modelViewMatrix2;
-
 
 uniform mat4 projectionMatrixInverse;
 uniform mat4 projectionMatrixTranspose;
@@ -14,10 +12,6 @@ uniform mat4 modelViewMatrixInverse;
 #include light_params
 
 #include fog_params
-
-// varying vec3 cameraPos;
-// varying vec2 mapping;
-// varying float vRadius;
 
 
 /*=========================================================================
@@ -79,7 +73,6 @@ uniform mat4 modelViewMatrixInverse;
 //#define HYPER_PARABOLOID
 
 uniform vec2 viewport; // only width and height passed, no origin
-uniform float pointSizeThreshold; // minimum point size
 
 varying float a;
 varying float b;
@@ -93,7 +86,6 @@ varying float i;
 varying float j;
 
 varying vec4 vColor;
-varying float pointSize;
 varying float perspective;
 
 vec3 raydir; // ray direction in screen space
@@ -104,14 +96,11 @@ vec3 rayorigin; // ray origin in screen space
 #endif
 
 const float FLAT_SHADE_POINT_SIZE = 1.0; //if point size < 1 use flat shading
-
 const float FEPS = 0.0001;
-
 const float BOUND = 1.0 + FEPS;
-
 const vec3 MIN_BOUND = vec3(-BOUND);
-
 const vec3 MAX_BOUND = vec3(BOUND);
+
 
 //------------------------------------------------------------------------------
 // BOUNDS CHECK
@@ -134,7 +123,8 @@ bool InBounds( vec3 P )
     #endif
 }
 #endif
-//------------------------------------------------------------------------------
+
+
 // INTERSECTION
 struct I
 {
@@ -142,6 +132,7 @@ struct I
     vec3 N;
     float t;
 };
+
 
 // compute unit normal from gradient
 vec3 ComputeNormal(vec3 P)
@@ -191,8 +182,7 @@ I ComputeRayQuadricIntersection()
     float delta = B * B - 4.0 * A * C;
 
     if (delta < 0.0)
-        discard;
-        //return ip;
+        return ip;
 
     float d = sqrt(delta);
     A = 1.0 / A;
@@ -224,72 +214,26 @@ I ComputeRayQuadricIntersection()
     return ip;
 }
 
-// //------------------------------------------------------------------------------
-// // LIGHTING, standard phong lighting model
-// vec3 lightDir = normalize(vec3(0.1, 0.1, 1.));
-// float kd = 1.0;
-// float ka = 0.01;
-// float ks = 0.5;
-// float sh = 90.0;
-// vec4 refcolor = vec4(1.0, 1.0, 1.0, 1.0);
-// vec4 ComputeColor(vec4 color, vec3 n, vec3 P)
-// {
-//  if (pointSize < FLAT_SHADE_POINT_SIZE)
-//      return color;
 
-//  vec3 col = vec3(0.0, 0.0, 0.0);
-//  vec3 N;
-//  float d;
-//  vec3 viewdir;
-//  float vl;
-//  float s;
-
-//  for (int li = 0; li < 4; li++)
-//      {
-//      lightDir = normalize(gl_LightSource[li].position);
-//      N = faceforward(-n, lightDir, n);
-//      d = dot(N, lightDir);
-//      viewdir = normalize(-P);
-//      vl = max(0.0, dot(reflect(-lightDir, N), viewdir));
-//      s = pow(vl, gl_FrontMaterial.shininess);
-//      col += gl_FrontMaterial.specular * s * gl_LightSource[li].specular.rgb + kd
-//              * d * color.rgb * gl_LightSource[li].diffuse.rgb + ka * color.rgb
-//              * gl_LightSource[li].ambient.rgb;
-//      }
-
-//  return vec4(col, color.a);
-
-// }
-
-//------------------------------------------------------------------------------
-// MAIN
-void propFuncFS(void)
-{
-    if (pointSize < pointSizeThreshold || vColor.a <= 0.0)
-        discard;
+void main(void)
+{   
     vec3 fc = gl_FragCoord.xyz;
-
-    //
     fc.xy /= viewport;
     fc *= 2.0;
     fc -= 1.0;
-    
-    vec4 p = projectionMatrixInverse * vec4(fc, 1.0);
-    //vec4 p = projectionMatrixInverse * vec4(fc.xy, 0.0, 1.0);
+    vec4 p = projectionMatrixInverse * vec4( fc, 1.0 );
 
     if (bool(perspective))
     {
         // in perspective mode, rayorigin is always at (0.0, 0.0, 0.0)
-        rayorigin = vec3(0.0, 0.0, 0.0);
+        rayorigin = vec3( 0.0, 0.0, 0.0 );
         raydir = p.xyz / p.w;
-        // raydir = mix(normalize(rayorigin - p.xyz), vec3(0.0, 0.0, 1.0), 0.0);
-        // raydir = mix(normalize(p.xyz), vec3(0.0, 0.0, 1.0), 0.0);
     }
     else
     {
         // in orthographic mode, raydir is always ( 0.0, 0.0, -1.0 );
-        raydir = vec3(0.0, 0.0, -1.0);
-        rayorigin = vec3(p.x / p.w, p.y / p.w, 0.0);
+        raydir = vec3( 0.0, 0.0, -1.0 );
+        rayorigin = vec3( p.x / p.w, p.y / p.w, 0.0 );
     }
 
     // compute intersection
@@ -303,8 +247,8 @@ void propFuncFS(void)
     //   % Vt is a row vector
     //   % M is a square matrix
     //   % Mt is the transpose of M
-    float z = dot(vec4(i.P, 1.0), projectionMatrixTranspose[2]);
-    float w = dot(vec4(i.P, 1.0), projectionMatrixTranspose[3]);
+    float z = dot( vec4( i.P, 1.0 ), projectionMatrixTranspose[2] );
+    float w = dot( vec4( i.P, 1.0 ), projectionMatrixTranspose[3] );
     gl_FragDepthEXT = 0.5 * (z / w + 1.0);
 
     vec3 transformedNormal = i.N;
@@ -318,23 +262,17 @@ void propFuncFS(void)
 
     #include fog
 
-    // //Set the depth based on the new cameraPos.
-    // vec4 clipPos = projectionMatrix * vec4(i.P, 1.0);
-    // float ndcDepth = clipPos.z / clipPos.w;
-    // float depth = ((gl_DepthRange.diff * ndcDepth) + gl_DepthRange.near + gl_DepthRange.far) / 2.0;
-    // gl_FragDepthEXT = depth;
-
-    // vec2 clipZW = i.P.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
-    // float depth2 = 0.5 + 0.5 * clipZW.x / clipZW.y;
-    // gl_FragDepthEXT = depth2;
+    if( i.t<0.0 ){
+        discard;
+        gl_FragColor = vec4( vColor.xyz, 1.0 );
+        gl_FragDepthEXT = gl_FragCoord.z;
+    }
 }
 
 
-void main()
-{  
-    
-    propFuncFS();
-
+void main2(void)
+{
+    gl_FragColor = vColor;
 }
 
 
