@@ -295,8 +295,11 @@
                             new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
                         },
                         'QuadricImpostor': function(){
+                            var qd = makeQuadricData( this.count, this.size );
                             //new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
-                            new NGL.QuadricImpostorBuffer( c1.from, c1.color, r1 );
+                            new NGL.EllipsoidImpostorBuffer( 
+                                qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                            );
                         },
                         'Line': function(){
                             new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
@@ -663,6 +666,62 @@
                     "color": color,
                     "from": from,
                     "to": to
+                }
+            }
+
+
+            function makeQuadricData( n, size ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var position = new Float32Array( n3 );
+                var color = new Float32Array( n3 );
+                var xdir = new Float32Array( n3 );
+                var ydir = new Float32Array( n3 );
+                var zdir = new Float32Array( n3 );
+
+                var vx = new THREE.Vector3();
+                var vy = new THREE.Vector3();
+                var vz = new THREE.Vector3();
+
+                var j;
+                for( var i = 0; i < n; i++ ) {
+                    j = 3 * i;
+                    
+                    position[ j + 0 ] = (Math.random() * 2 - 1) * cube;
+                    position[ j + 1 ] = (Math.random() * 2 - 1) * cube;
+                    position[ j + 2 ] = (Math.random() * 2 - 1) * cube;
+
+                    color[ j + 0 ] = Math.random();
+                    color[ j + 1 ] = Math.random();
+                    color[ j + 2 ] = Math.random();
+
+                    vx.set( Math.random(), Math.random(), Math.random() )
+                        .setLength( 0.5 + Math.random() * 10 );
+                    vy.set( Math.random(), Math.random(), Math.random() )
+                        .setLength( 0.5 + Math.random() * 10 );
+                    vz.set( Math.random(), Math.random(), Math.random() )
+                        .setLength( 0.5 + Math.random() * 10 );
+
+                    xdir[ j + 0 ] = vx.x;
+                    xdir[ j + 1 ] = vx.y;
+                    xdir[ j + 2 ] = vx.z;
+
+                    ydir[ j + 0 ] = vy.x;
+                    ydir[ j + 1 ] = vy.y;
+                    ydir[ j + 2 ] = vy.z;
+
+                    zdir[ j + 0 ] = vz.x;
+                    zdir[ j + 1 ] = vz.y;
+                    zdir[ j + 2 ] = vz.z;
+                }
+
+                return {
+                    "position": position,
+                    "color": color,
+                    "xdir": xdir,
+                    "ydir": ydir,
+                    "zdir": zdir
                 }
             }
 

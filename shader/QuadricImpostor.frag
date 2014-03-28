@@ -91,9 +91,7 @@ varying float perspective;
 vec3 raydir; // ray direction in screen space
 vec3 rayorigin; // ray origin in screen space
 
-#ifndef ELLIPSOID
-    varying mat4 Ti;
-#endif
+varying mat4 Ti;
 
 const float FLAT_SHADE_POINT_SIZE = 1.0; //if point size < 1 use flat shading
 const float FEPS = 0.0001;

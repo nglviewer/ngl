@@ -1466,7 +1466,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
 }
 
 
-NGL.QuadricImpostorBuffer = function( position, color, radius ){
+NGL.QuadricImpostorBuffer = function( position, T, color ){
 
     // http://www.bmsc.washington.edu/people/merritt/graphics/quadrics.html
     // http://people.eecs.ku.edu/~miller/Papers/GeomAppNPQSIC.pdf
@@ -1482,32 +1482,24 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
     var n2 = n * 2;
     var n4 = n * 4;
     
-    // make shader material
-    // #ifndef SPHERE
-    // // columns of inverse transform
-    // attribute vec4 Ti1;
-    // attribute vec4 Ti2;
-    // attribute vec4 Ti3;
-    // attribute vec4 Ti4;
-
-    // // columns of transform
-    // attribute vec4 T1;
-    // attribute vec4 T2;
-    // attribute vec4 T3;
-    // attribute vec4 T4;
-    // #endif
     var attributes = {
         inputMapping: { type: 'v2', value: null },
         inputSphereRadius: { type: 'f', value: null },
-        inputColor: { type: 'v3', value: null }
+        inputColor: { type: 'v3', value: null },
+        T1: { type: 'v4', value: null },
+        T2: { type: 'v4', value: null },
+        T3: { type: 'v4', value: null },
+        T4: { type: 'v4', value: null },
+        Ti1: { type: 'v4', value: null },
+        Ti2: { type: 'v4', value: null },
+        Ti3: { type: 'v4', value: null },
+        Ti4: { type: 'v4', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
         {
             'viewport': { type: "v2", value: new THREE.Vector2( NGL.width, NGL.height ) },
-            'pointSizeThreshold': { type: "f", value: 1 },
-            'MaxPixelSize': { type: "f", value: 4096 },
             'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
             'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
             'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
@@ -1533,13 +1525,27 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
 
     geometry.addAttribute( 'position', Float32Array, n4, 3 );
     geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
     geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+    geometry.addAttribute( 'T1', Float32Array, n4, 4 );
+    geometry.addAttribute( 'T2', Float32Array, n4, 4 );
+    geometry.addAttribute( 'T3', Float32Array, n4, 4 );
+    geometry.addAttribute( 'T4', Float32Array, n4, 4 );
+    geometry.addAttribute( 'Ti1', Float32Array, n4, 4 );
+    geometry.addAttribute( 'Ti2', Float32Array, n4, 4 );
+    geometry.addAttribute( 'Ti3', Float32Array, n4, 4 );
+    geometry.addAttribute( 'Ti4', Float32Array, n4, 4 );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
-    var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
     var inputColor = geometry.attributes.inputColor.array;
+    var T1 = geometry.attributes.T1.array;
+    var T2 = geometry.attributes.T2.array;
+    var T3 = geometry.attributes.T3.array;
+    var T4 = geometry.attributes.T4.array;
+    var Ti1 = geometry.attributes.Ti1.array;
+    var Ti2 = geometry.attributes.Ti2.array;
+    var Ti3 = geometry.attributes.Ti3.array;
+    var Ti4 = geometry.attributes.Ti4.array;
 
     geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
     var indices = geometry.attributes.index.array;
@@ -1550,10 +1556,17 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
     var r, g, b;
     var i, j, k, ix, it;
     var chunkSize = NGL.calculateChunkSize( 4 );
+    var mat = new THREE.Matrix4(), e;
+    var mati = new THREE.Matrix4(), ei;
+    var eye = new THREE.Vector3( 0, 0, 0 );
+    var target = new THREE.Vector3();
+    var up = new THREE.Vector3( 0, 1, 0 );
+    var rot = new THREE.Matrix4();
 
     for( var v = 0; v < n; v++ ) {
         i = v * 2 * 4;
         k = v * 3;
+        t = v * 16;
 
         inputMapping.set( NGL.QuadMapping, i );
 
@@ -1565,8 +1578,14 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
         y = position[ k + 1 ];
         z = position[ k + 2 ];
 
+        mat.elements.set( T.subarray( t, t + 16 ) );
+        e = mat.elements;
+        mati.getInverse( mat );
+        ei = mati.elements;
+
         for( var m = 0; m < 4; m++ ) {
             j = v * 4 * 3 + (3 * m);
+            tt = v * 4 * 4 + (4 * m);
 
             inputColor[ j + 0 ] = r;
             inputColor[ j + 1 ] = g;
@@ -1576,7 +1595,45 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
             aPosition[ j + 1 ] = y;
             aPosition[ j + 2 ] = z;
 
-            inputSphereRadius[ (v * 4) + m ] = radius[ v ];
+            T1[ tt + 0 ] = e[  0 ];
+            T1[ tt + 1 ] = e[  4 ];
+            T1[ tt + 2 ] = e[  8 ];
+            T1[ tt + 3 ] = e[  12 ];
+
+            T2[ tt + 0 ] = e[  1 ];
+            T2[ tt + 1 ] = e[  5 ];
+            T2[ tt + 2 ] = e[  9 ];
+            T2[ tt + 3 ] = e[ 13 ];
+
+            T3[ tt + 0 ] = e[  2 ];
+            T3[ tt + 1 ] = e[  6 ];
+            T3[ tt + 2 ] = e[ 10 ];
+            T3[ tt + 3 ] = e[ 14 ];
+
+            T4[ tt + 0 ] = e[  3 ];
+            T4[ tt + 1 ] = e[  7 ];
+            T4[ tt + 2 ] = e[ 11 ];
+            T4[ tt + 3 ] = e[ 15 ];
+
+            Ti1[ tt + 0 ] = ei[  0 ];
+            Ti1[ tt + 1 ] = ei[  4 ];
+            Ti1[ tt + 2 ] = ei[  8 ];
+            Ti1[ tt + 3 ] = ei[  12 ];
+
+            Ti2[ tt + 0 ] = ei[  1 ];
+            Ti2[ tt + 1 ] = ei[  5 ];
+            Ti2[ tt + 2 ] = ei[  9 ];
+            Ti2[ tt + 3 ] = ei[ 13 ];
+
+            Ti3[ tt + 0 ] = ei[  2 ];
+            Ti3[ tt + 1 ] = ei[  6 ];
+            Ti3[ tt + 2 ] = ei[ 10 ];
+            Ti3[ tt + 3 ] = ei[ 14 ];
+
+            Ti4[ tt + 0 ] = ei[  3 ];
+            Ti4[ tt + 1 ] = ei[  7 ];
+            Ti4[ tt + 2 ] = ei[ 11 ];
+            Ti4[ tt + 3 ] = ei[ 15 ];
         }
 
         ix = v * 6;
@@ -1589,15 +1646,20 @@ NGL.QuadricImpostorBuffer = function( position, color, radius ){
     }
 
     // console.log( "inputMapping", inputMapping );
-    // console.log( "ParticleSprite aPosition", aPosition, aPosition.length );
-    // console.log( "inputSize", inputSize );
+    // console.log( "aPosition", aPosition, aPosition.length );
     // console.log( "inputColor", inputColor );
     // console.log( "indices", indices );
+    // console.log( "T1", T1 );
+    // console.log( "T2", T2 );
+    // console.log( "T3", T3 );
+    // console.log( "T4", T4 );
+    // console.log( "Ti1", Ti1 );
+    // console.log( "Ti2", Ti2 );
+    // console.log( "Ti3", Ti3 );
+    // console.log( "Ti4", Ti4 );
 
     mesh = new THREE.Mesh( geometry, material );
-    //mesh = new THREE.ParticleSystem( geometry, material );
     NGL.group.add( mesh );
-
 
     // public attributes
     this.geometry = geometry;
@@ -1990,6 +2052,63 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
     this.material = material;
     this.mesh = mesh;
     this.n = n;
+}
+
+
+NGL.EllipsoidImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+    // xdir, ydir, zdir must be mutually perpendicular
+    // direction and length are used
+
+    var n = position.length/3;
+    var n3 = n * 3;
+    var n16 = n * 16;
+
+    var aPosition = new Float32Array( n3 );
+    var aColor = new Float32Array( n3 );
+    var T = new Float32Array( n16 );
+
+    var i, x, y, z;
+    var mat = new THREE.Matrix4();
+    var rot = new THREE.Matrix4();
+    var eye = new THREE.Vector3( 0, 0, 0 );
+    var target = new THREE.Vector3();
+    var vx = new THREE.Vector3();
+    var vy = new THREE.Vector3();
+    var vz = new THREE.Vector3();
+
+    aPosition.set( position );
+    aColor.set( color );
+
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+        t = 16 * v;
+
+        x = position[ i + 0 ];
+        y = position[ i + 1 ];
+        z = position[ i + 2 ];
+
+        vx.set( xdir[ i + 0 ], xdir[ i + 1 ], xdir[ i + 2 ] );
+        vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
+        vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
+        target.set( x, y, z ).add( vx );
+
+        mat.set(
+            vx.length(), 0.0, 0.0, 0.0,
+            0.0, vy.length(), 0.0, 0.0,
+            0.0, 0.0, vz.length(), 0.0,
+            x, y, z, 1.0
+        );
+        rot.lookAt( eye, vx, vz );
+        mat.multiply( rot );
+
+        T.set( mat.elements, t );
+    }
+
+    // console.log( "aPosition", aPosition );
+    // console.log( "T", T );
+    // console.log( "aColor", aColor );
+
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor );
 }
 
 
