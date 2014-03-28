@@ -1,3 +1,4 @@
+
 attribute vec2 inputMapping;
 attribute vec3 inputColor;
 attribute float inputSphereRadius;

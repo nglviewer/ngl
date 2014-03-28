@@ -1,7 +1,6 @@
 
 attribute vec2 inputMapping;
 attribute vec3 inputColor;
-attribute float inputSphereRadius;
 
 uniform mat4 modelViewMatrixInverse;
 uniform mat4 modelViewMatrixInverseTranspose;
@@ -74,11 +73,12 @@ mat4 transpose( in mat4 inMatrix ) {
 //       and intersection point
 /// @todo try to pass attributes through texture coordinates/normal/secondary color...
 
+// needed for fog to work and usefull for debugging
 #define CORRECT_POINT_Z
 
 // OPTIMAL
-#define SPHERE
-//#define ELLIPSOID
+//#define SPHERE
+#define ELLIPSOID
 //#define CYLINDER
 //#define CONE
 //#define HYPERBOLOID1
@@ -114,26 +114,27 @@ varying float h;
 varying float i;
 varying float j;
 
+// columns of transform
+attribute vec4 T1;
+attribute vec4 T2;
+attribute vec4 T3;
+attribute vec4 T4;
+
+// columns of inverse transform
+attribute vec4 Ti1;
+attribute vec4 Ti2;
+attribute vec4 Ti3;
+attribute vec4 Ti4;
+
 varying vec4 vColor; // primitive color
 varying float perspective; // perspective flag
-
-#ifndef SPHERE
-    // columns of inverse transform
-    attribute vec4 Ti1;
-    attribute vec4 Ti2;
-    attribute vec4 Ti3;
-    attribute vec4 Ti4;
-
-    // columns of transform
-    attribute vec4 T1;
-    attribute vec4 T2;
-    attribute vec4 T3;
-    attribute vec4 T4;
-#endif
 
 // bounds in clip coordinates
 vec2 xbc;
 vec2 ybc;
+
+const float SQRT2 = 1.41421356237;
+const float ISQRT2 = 0.70710678118;
 
 // Matrices in canonical form + trasformation matrices applied to
 // bounding ellipsoids used to compute the point size: bounds are
@@ -180,12 +181,12 @@ vec2 ybc;
                           0.0,  1.0,  0.0,  0.0,
                           0.0,  0.0, -1.0,  0.0,
                           0.0,  0.0,  0.0, -1.0 );
-    const mat4 t1 = mat4( sqrt( 2.0 ), 0.0, 0.0, 0.0,
-                          0.0, sqrt( 2.0 ), 0.0, 0.0,
+    const mat4 t1 = mat4( SQRT2, 0.0, 0.0, 0.0,
+                          0.0, SQRT2, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 1.0, 1.0 );
-    const mat4 t2 = mat4( sqrt( 2.0 ), 0.0, 0.0, 0.0,
-                          0.0, sqrt( 2.0 ), 0.0, 0.0,
+    const mat4 t2 = mat4( SQRT2, 0.0, 0.0, 0.0,
+                          0.0, SQRT2, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, -1.0, 1.0 );
 #elif defined( HYPERBOLOID2 )
@@ -196,12 +197,12 @@ vec2 ybc;
                            0.0, -1.0,  0.0,  0.0,
                            0.0,  0.0,  1.0,  0.0,
                            0.0,  0.0,  0.0,  -0.5 );
-    const mat4 t1 = mat4( inversesqrt( 2.0 ), 0.0, 0.0, 0.0,
-                          0.0, inversesqrt( 2.0 ), 0.0, 0.0,
+    const mat4 t1 = mat4( ISQRT2, 0.0, 0.0, 0.0,
+                          0.0, ISQRT2, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 1.0, 1.0 );
-    const mat4 t2 = mat4( inversesqrt( 2.0 ), 0.0, 0.0, 0.0,
-                          0.0, inversesqrt( 2.0 ), 0.0, 0.0,
+    const mat4 t2 = mat4( ISQRT2, 0.0, 0.0, 0.0,
+                          0.0, ISQRT2, 0.0, 0.0,
                           0.0, 0.0,  0.0, 0.0,
                           0.0, 0.0, -1.0, 1.0 );
 #elif defined( PARABOLOID )
@@ -457,8 +458,11 @@ void  ComputePointSizeAndPosition()
 }
 
 
-void main()
-{  
+void main(void)
+{
+    T = mat4( T1, T2, T3, T4 );
+    Ti = mat4( Ti1, Ti2, Ti3, Ti4 );
+
     vColor = vec4( inputColor, 1.0 );
 
     // compute position, this is required only when displaying the point quad
@@ -468,41 +472,6 @@ void main()
 
     //set perspective flag by inspecting the projection matrix
     perspective = float( projectionMatrix[ 3 ][ 3 ] < FEPS && abs( projectionMatrix[ 2 ][ 3 ] ) > FEPS );
-
-    #if defined( SPHERE )
-        float radius = inputSphereRadius;
-
-        float iradius;
-        if(radius < FEPS)
-            iradius = 1.0/FEPS;
-        else
-            iradius = 1.0/radius;
-
-        T =   mat4( radius, 0.0, 0.0, 0.0,
-                    0.0, radius, 0.0, 0.0,
-                    0.0, 0.0, radius, 0.0,
-                    position.x, position.y, position.z, 1.0 );
-
-        Ti =  mat4( iradius, 0.0, 0.0, 0.0,
-                    0.0, iradius, 0.0, 0.0,
-                    0.0, 0.0, 1.0/radius, 0.0,
-                    -position.x*iradius, -position.y*iradius, -position.z*iradius, 1.0 );
-
-        // T =   mat4( radius, 0.0, 0.0, 0.0,
-        //             0.0, 1.5*radius, 0.0, 0.0,
-        //             0.0, 0.0, 0.5*radius, 0.0,
-        //             position.x, position.y, position.z, 1.0 );
-
-        // Ti =  mat4( iradius, 0.0, 0.0, 0.0,
-        //             0.0, (1.0/(radius*1.5)), 0.0, 0.0,
-        //             0.0, 0.0, (1.0/(radius*0.75)), 0.0,
-        //             -position.x*iradius, -position.y*(1.0/(radius*1.5)), -position.z*(1.0/(radius*0.75)), 1.0 );
-    #else
-        // inverse of transformation matrix
-        Ti = mat4( Ti1, Ti2, Ti3, Ti4 );
-        // transformation matrix
-        T  = mat4( T1, T2, T3, T4 );
-    #endif
 
     // compute point size and gl_Position; uses Ti and T which have to be
     // computed before calling the function
