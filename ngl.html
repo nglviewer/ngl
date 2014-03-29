@@ -167,8 +167,8 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereImpostor';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'QuadricImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'QuadricImpostor';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'Particle';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SceneImpostor';
@@ -181,6 +181,9 @@
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
+                    oNgl.modelId = '1crn';
+                    oNgl.modelType = 'ball+stick';
+                    oNgl.addModel();
                     
                     // oNgl.addSurface();
 
@@ -191,7 +194,7 @@
 
             
             var NglExample = function() {
-                this.count = 1000;
+                this.count = 100;
                 this.size = 2.0;
                 this.orthoSphere = false;
                 this.primitiveType = 'BezierImpostor';
@@ -295,11 +298,44 @@
                             new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
                         },
                         'QuadricImpostor': function(){
-                            var qd = makeQuadricData( this.count, this.size );
-                            //new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
-                            new NGL.EllipsoidImpostorBuffer( 
+                            var n = 1;
+                            var qd;
+                            
+                            // qd = makeQuadricData( this.count, Math.floor(this.size/n) );
+                            // new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
+                            // new NGL.EllipsoidImpostorBuffer( 
+                            //     qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                            // );
+
+                            qd = makeQuadricData( this.count, Math.floor(this.size/n) );
+                            new NGL.HyperboloidOneImpostorBuffer( 
                                 qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
                             );
+                            new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
+                            new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
+                            new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
+                            new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
+
+                            // qd = makeQuadricData( this.count, Math.floor(this.size/n) );
+                            // new NGL.HyperballOneImpostorBuffer( 
+                            //     qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                            // );
+                            // new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
+
+                            // qd = makeQuadricData( this.count, Math.floor(this.size/n) );
+                            // new NGL.HyperboloidTwoImpostorBuffer( 
+                            //     qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                            // );
+                            // new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
+                            //new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
                         },
                         'Line': function(){
                             new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
@@ -545,10 +581,27 @@
 
                     var from = new Float32Array( nb3 );
                     var to = new Float32Array( nb3 );
+                    
+                    var xdir = new Float32Array( nb3 );
+                    var ydir = new Float32Array( nb3 );
+                    var zdir = new Float32Array( nb3 );
+
+                    var pos = new Float32Array( nb3 );
+                    
                     var bColor = new Float32Array( nb3 );
                     var bColor2 = new Float32Array( nb3 );
                     var bRadius = new Float32Array( nb );
+                    
                     var beg, end;
+                    
+                    var vx = new THREE.Vector3();
+                    var vy = new THREE.Vector3();
+                    var vz = new THREE.Vector3();
+
+                    var p = new THREE.Vector3();
+                    var vf = new THREE.Vector3();
+                    var vt = new THREE.Vector3();
+
                     for( var i=0, j; i<nb; i++ ){
                         j = 3*i;
                         beg = bonds[i].b * 3;
@@ -560,6 +613,32 @@
                         to[ j + 0 ] = position[ end + 0 ];
                         to[ j + 1 ] = position[ end + 1 ];
                         to[ j + 2 ] = position[ end + 2 ];
+
+                        vf.set( from[ j + 0 ], from[ j + 1 ], from[ j + 2 ] );
+                        vt.set( to[ j + 0 ], to[ j + 1 ], to[ j + 2 ] );
+
+                        p.addVectors( vf, vt ).divideScalar( 2.0 );
+                        pos[ j + 0 ] = p.x;
+                        pos[ j + 1 ] = p.y;
+                        pos[ j + 2 ] = p.z;
+
+                        vx.subVectors( vf, vt ).divideScalar( 2.0 );
+                        vy.set( 0.0, 1.0, 0.0 ).cross( vx )
+                            .setLength( 2.11 );
+                        vz.crossVectors( vx, vy )
+                            .setLength( 2.11 );
+
+                        xdir[ j + 0 ] = vx.x;
+                        xdir[ j + 1 ] = vx.y;
+                        xdir[ j + 2 ] = vx.z;
+
+                        ydir[ j + 0 ] = vy.x;
+                        ydir[ j + 1 ] = vy.y;
+                        ydir[ j + 2 ] = vy.z;
+
+                        zdir[ j + 0 ] = vz.x;
+                        zdir[ j + 1 ] = vz.y;
+                        zdir[ j + 2 ] = vz.z;
                         
                         bColor[ j + 0 ] = color[ beg + 0 ];
                         bColor[ j + 1 ] = color[ beg + 1 ];
@@ -575,7 +654,10 @@
                         case "stick":
                         case "ball+stick":
                             if( impostor ){
-                                new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
+                                //new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
+                                new NGL.HyperboloidOneImpostorBuffer( 
+                                    pos, zdir, ydir, xdir, bColor
+                                );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );
                             }
@@ -592,6 +674,9 @@
 
                 $.ajax({ url: url, dataType: "json", success: _load });
             }
+
+
+            var RAND = Math.random;
 
 
             function makeSphereData( n, size ){
@@ -676,32 +761,53 @@
 
                 var position = new Float32Array( n3 );
                 var color = new Float32Array( n3 );
+
                 var xdir = new Float32Array( n3 );
                 var ydir = new Float32Array( n3 );
                 var zdir = new Float32Array( n3 );
+
+                var xpos = new Float32Array( n3 );
+                var ypos = new Float32Array( n3 );
+                var zpos = new Float32Array( n3 );
+
+                var px = new THREE.Vector3();
+                var py = new THREE.Vector3();
+                var pz = new THREE.Vector3();
 
                 var vx = new THREE.Vector3();
                 var vy = new THREE.Vector3();
                 var vz = new THREE.Vector3();
 
-                var j;
+                var j, x, y, z;
+
                 for( var i = 0; i < n; i++ ) {
                     j = 3 * i;
                     
-                    position[ j + 0 ] = (Math.random() * 2 - 1) * cube;
-                    position[ j + 1 ] = (Math.random() * 2 - 1) * cube;
-                    position[ j + 2 ] = (Math.random() * 2 - 1) * cube;
+                    x = (RAND() * 2 - 1) * cube;
+                    y = (RAND() * 2 - 1) * cube;
+                    z = (RAND() * 2 - 1) * cube;
 
-                    color[ j + 0 ] = Math.random();
-                    color[ j + 1 ] = Math.random();
-                    color[ j + 2 ] = Math.random();
+                    position[ j + 0 ] = x;
+                    position[ j + 1 ] = y;
+                    position[ j + 2 ] = z;
 
-                    vx.set( Math.random(), Math.random(), Math.random() )
-                        .setLength( 0.5 + Math.random() * 10 );
-                    vy.set( Math.random(), Math.random(), Math.random() )
-                        .setLength( 0.5 + Math.random() * 10 );
-                    vz.set( Math.random(), Math.random(), Math.random() )
-                        .setLength( 0.5 + Math.random() * 10 );
+                    color[ j + 0 ] = RAND();
+                    color[ j + 1 ] = RAND();
+                    color[ j + 2 ] = RAND();
+
+                    // vx.set( RAND(), RAND(), RAND() )
+                    //     .setLength( size * 8 );
+                    // vy.set( RAND(), RAND(), RAND() ).cross( vx )
+                    //     .setLength( size * 4 );
+                    // vz.crossVectors( vx, vy )
+                    //     .setLength( size * 2 );
+
+                    vx.set( RAND(), RAND(), RAND() )
+                        .setLength( 0.5 + RAND() * 10 );
+                    vy.set( RAND(), RAND(), RAND() ).cross( vx )
+                        .setLength( 0.5 + RAND() * 10 );
+                    vz.crossVectors( vx, vy )
+                        .setLength( 0.5 + RAND() * 10 );
 
                     xdir[ j + 0 ] = vx.x;
                     xdir[ j + 1 ] = vx.y;
@@ -714,6 +820,22 @@
                     zdir[ j + 0 ] = vz.x;
                     zdir[ j + 1 ] = vz.y;
                     zdir[ j + 2 ] = vz.z;
+
+                    px.set( x, y, z ).add( vx );
+                    py.set( x, y, z ).add( vy );
+                    pz.set( x, y, z ).add( vz );
+
+                    xpos[ j + 0 ] = px.x;
+                    xpos[ j + 1 ] = px.y;
+                    xpos[ j + 2 ] = px.z;
+
+                    ypos[ j + 0 ] = py.x;
+                    ypos[ j + 1 ] = py.y;
+                    ypos[ j + 2 ] = py.z;
+
+                    zpos[ j + 0 ] = pz.x;
+                    zpos[ j + 1 ] = pz.y;
+                    zpos[ j + 2 ] = pz.z;
                 }
 
                 return {
@@ -721,7 +843,10 @@
                     "color": color,
                     "xdir": xdir,
                     "ydir": ydir,
-                    "zdir": zdir
+                    "zdir": zdir,
+                    "xpos": xpos,
+                    "ypos": ypos,
+                    "zpos": zpos
                 }
             }
 

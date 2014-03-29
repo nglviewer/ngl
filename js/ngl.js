@@ -690,12 +690,14 @@ NGL.getMaterial = function( params ) {
 
 NGL.getShader = function( name, defines ) {
     var shader = NGL.resources[ 'shader/' + name ];
-    shader = shader.replace( /^(?!\/\/)\s*#include\s+(\S+)/gmi, function( match, p1 ){
+    var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
+    shader = shader.replace( re, function( match, p1 ){
         var path = 'shader/chunk/' + p1 + '.glsl';
         var chunk = NGL.resources[ path ] || THREE.ShaderChunk[ p1 ];
         return chunk ? chunk : "";
     });
-    return _.map( defines, function( def ){ return "#define " + def }).join("") + shader;
+    return _.map( defines, function( def ){ return "#define " + def })
+                .join("\n") + "\n" + shader;
 };
 
 
@@ -1466,7 +1468,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
 }
 
 
-NGL.QuadricImpostorBuffer = function( position, T, color ){
+NGL.QuadricImpostorBuffer = function( position, T, color, type ){
 
     // http://www.bmsc.washington.edu/people/merritt/graphics/quadrics.html
     // http://people.eecs.ku.edu/~miller/Papers/GeomAppNPQSIC.pdf
@@ -1506,12 +1508,13 @@ NGL.QuadricImpostorBuffer = function( position, T, color ){
             'projectionMatrixTranspose': { type: "m4", value: new THREE.Matrix4() },
         }
     ]);
+    var defines = [ type || "ELLIPSOID" ];
 
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'QuadricImpostor.vert' ),
-        fragmentShader: NGL.getShader( 'QuadricImpostor.frag' ),
+        vertexShader: NGL.getShader( 'QuadricImpostor.vert', defines ),
+        fragmentShader: NGL.getShader( 'QuadricImpostor.frag', defines ),
         fog: true,
         depthTest: true,
         transparent: true,
@@ -2069,9 +2072,8 @@ NGL.EllipsoidImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
 
     var i, x, y, z;
     var mat = new THREE.Matrix4();
-    var rot = new THREE.Matrix4();
-    var eye = new THREE.Vector3( 0, 0, 0 );
-    var target = new THREE.Vector3();
+    var m1 = new THREE.Matrix4();
+    var o = new THREE.Vector3( 0, 0, 0 );
     var vx = new THREE.Vector3();
     var vy = new THREE.Vector3();
     var vz = new THREE.Vector3();
@@ -2090,16 +2092,18 @@ NGL.EllipsoidImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
         vx.set( xdir[ i + 0 ], xdir[ i + 1 ], xdir[ i + 2 ] );
         vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
         vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
-        target.set( x, y, z ).add( vx );
 
         mat.set(
             vx.length(), 0.0, 0.0, 0.0,
             0.0, vy.length(), 0.0, 0.0,
             0.0, 0.0, vz.length(), 0.0,
-            x, y, z, 1.0
+            //x, y, z, 1.0
+            0.0, 0.0, 0.0, 1.0
         );
-        rot.lookAt( eye, vx, vz );
-        mat.multiply( rot );
+        m1.identity().lookAt( vz, o, vy ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+        m1.makeTranslation( x, y, z ).transpose();
+        mat.multiplyMatrices( mat, m1 );
 
         T.set( mat.elements, t );
     }
@@ -2108,7 +2112,201 @@ NGL.EllipsoidImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
     // console.log( "T", T );
     // console.log( "aColor", aColor );
 
-    new NGL.QuadricImpostorBuffer( aPosition, T, aColor );
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "ELLIPSOID" );
+}
+
+
+NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+    // xdir, ydir, zdir must be mutually perpendicular
+    // direction and length are used
+
+    var n = position.length/3;
+    var n3 = n * 3;
+    var n16 = n * 16;
+
+    var aPosition = new Float32Array( n3 );
+    var aColor = new Float32Array( n3 );
+    var T = new Float32Array( n16 );
+
+    var i, x, y, z;
+    var mat = new THREE.Matrix4();
+    var m1 = new THREE.Matrix4();
+    var o = new THREE.Vector3( 0, 0, 0 );
+    var vx = new THREE.Vector3();
+    var vy = new THREE.Vector3();
+    var vz = new THREE.Vector3();
+
+    var p = new THREE.Vector3();
+
+    aPosition.set( position );
+    aColor.set( color );
+
+    var s = 0.15;
+
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+        t = 16 * v;
+
+        x = position[ i + 0 ];
+        y = position[ i + 1 ];
+        z = position[ i + 2 ];
+
+        vx.set( xdir[ i + 0 ], xdir[ i + 1 ], xdir[ i + 2 ] );
+        vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
+        vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
+
+        p.set( x, y, z );
+
+        // mat.set(
+        //     vx.length(), 0.0, 0.0, 0.0,
+        //     0.0, vy.length(), 0.0, 0.0,
+        //     0.0, 0.0, vz.length(), 0.0,
+        //     //x, y, z, 1.0
+        //     0.0, 0.0, 0.0, 1.0
+        // );
+        mat.set(
+            vx.length(), 0.0, 0.0, 0.0,
+            0.0, vx.length(), 0.0, 0.0,
+            0.0, 0.0, vz.length(), 0.0,
+            //x, y, z, 1.0
+            0.0, 0.0, 0.0, ( vz.length()/s ) - ( vx.length() * vx.length() )
+        );
+        // mat.set(
+        //     1.0, 0.0, 0.0, 0.0,
+        //     0.0, 1.0, 0.0, 0.0,
+        //     0.0, 0.0, 1.0, 0.0,
+        //     //0.0, 0.0, 0.0, ( vy.length()/s ) - ( vx.length() * vx.length() )
+        //     0.0, 0.0, 0.0, 1.1
+        // );
+        m1.identity().lookAt( vz, o, vy ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+        m1.makeTranslation( x, y, z ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+
+        T.set( mat.elements, t );
+    }
+
+    // console.log( "aPosition", aPosition );
+    // console.log( "T", T );
+    // console.log( "aColor", aColor );
+
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "HYPERBALL1" );
+}
+
+
+NGL.HyperboloidOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+    // xdir, ydir, zdir must be mutually perpendicular
+    // direction and length are used
+
+    var n = position.length/3;
+    var n3 = n * 3;
+    var n16 = n * 16;
+
+    var aPosition = new Float32Array( n3 );
+    var aColor = new Float32Array( n3 );
+    var T = new Float32Array( n16 );
+
+    var i, x, y, z;
+    var mat = new THREE.Matrix4();
+    var m1 = new THREE.Matrix4();
+    var o = new THREE.Vector3( 0, 0, 0 );
+    var vx = new THREE.Vector3();
+    var vy = new THREE.Vector3();
+    var vz = new THREE.Vector3();
+
+    aPosition.set( position );
+    aColor.set( color );
+
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+        t = 16 * v;
+
+        x = position[ i + 0 ];
+        y = position[ i + 1 ];
+        z = position[ i + 2 ];
+
+        vx.set( xdir[ i + 0 ], xdir[ i + 1 ], xdir[ i + 2 ] );
+        vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
+        vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
+
+        mat.set(
+            vx.length(), 0.0, 0.0, 0.0,
+            0.0, vy.length(), 0.0, 0.0,
+            0.0, 0.0, vz.length(), 0.0,
+            //x, y, z, 1.0
+            0.0, 0.0, 0.0, 1.0
+        );
+        m1.identity().lookAt( vz, o, vy ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+        m1.makeTranslation( x, y, z ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+
+        T.set( mat.elements, t );
+    }
+
+    // console.log( "aPosition", aPosition );
+    // console.log( "T", T );
+    // console.log( "aColor", aColor );
+
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "HYPERBOLOID1" );
+}
+
+
+NGL.HyperboloidTwoImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+    // xdir, ydir, zdir must be mutually perpendicular
+    // direction and length are used
+
+    var n = position.length/3;
+    var n3 = n * 3;
+    var n16 = n * 16;
+
+    var aPosition = new Float32Array( n3 );
+    var aColor = new Float32Array( n3 );
+    var T = new Float32Array( n16 );
+
+    var i, x, y, z;
+    var mat = new THREE.Matrix4();
+    var m1 = new THREE.Matrix4();
+    var o = new THREE.Vector3( 0, 0, 0 );
+    var vx = new THREE.Vector3();
+    var vy = new THREE.Vector3();
+    var vz = new THREE.Vector3();
+
+    aPosition.set( position );
+    aColor.set( color );
+
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+        t = 16 * v;
+
+        x = position[ i + 0 ];
+        y = position[ i + 1 ];
+        z = position[ i + 2 ];
+
+        vx.set( xdir[ i + 0 ], xdir[ i + 1 ], xdir[ i + 2 ] );
+        vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
+        vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
+
+        mat.set(
+            vx.length(), 0.0, 0.0, 0.0,
+            0.0, vy.length(), 0.0, 0.0,
+            0.0, 0.0, vz.length(), 0.0,
+            //x, y, z, 1.0
+            0.0, 0.0, 0.0, 1.0
+        );
+        m1.identity().lookAt( vz, o, vy ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+        m1.makeTranslation( x, y, z ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+
+        T.set( mat.elements, t );
+    }
+
+    // console.log( "aPosition", aPosition );
+    // console.log( "T", T );
+    // console.log( "aColor", aColor );
+
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "HYPERBOLOID2" );
 }
 
 

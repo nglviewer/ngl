@@ -78,7 +78,7 @@ mat4 transpose( in mat4 inMatrix ) {
 
 // OPTIMAL
 //#define SPHERE
-#define ELLIPSOID
+//#define ELLIPSOID
 //#define CYLINDER
 //#define CONE
 //#define HYPERBOLOID1
@@ -173,6 +173,21 @@ const float ISQRT2 = 0.70710678118;
                           0.0, 0.0, 1.0, 1.0 );
     const mat4 t2 = mat4( 1.0, 0.0, 0.0, 0.0,
                           0.0, 1.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, -1.0, 1.0 );
+#elif defined( HYPERBALL1 )
+    // quadric matrix for hyperballs of one sheet
+    const float s = 0.15;
+    const mat4 D  = mat4( 1.0/s,  0.0,  0.0,  0.0,
+                          0.0,  1.0/s,  0.0,  0.0,
+                          0.0,  0.0, -1.0/(1.0-s),  0.0,
+                          0.0,  0.0,  0.0, -1.0 );
+    const mat4 t1 = mat4( SQRT2, 0.0, 0.0, 0.0,
+                          0.0, SQRT2, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 1.0, 1.0 );
+    const mat4 t2 = mat4( SQRT2, 0.0, 0.0, 0.0,
+                          0.0, SQRT2, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, -1.0, 1.0 );
 #elif defined( HYPERBOLOID1 )
