@@ -62,7 +62,7 @@ uniform mat4 modelViewMatrixInverse;
 
 
 // OPTIMAL
-#define ELLIPSOID
+//#define ELLIPSOID
 //#define CYLINDER
 //#define CONE
 //#define HYPERBOLOID1
