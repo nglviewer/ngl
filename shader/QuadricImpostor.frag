@@ -143,6 +143,13 @@ vec3 ComputeNormal(vec3 P)
     );
 }
 
+//
+// | a d e g |
+// | d b f h |
+// | e f c i |
+// | g h i j |
+// f(x,y,z) = ax^2 + by^2 + cz^2 + 2dxy + 2exz + 2fyz + 2gx + 2hy + 2iz + j = 0
+
 // compute ray quadric intersection; if no intersection occurs I.t is < 0
 // main axis length and orientation are used to clip the quadric; not
 // required for closed quadrics (ellipsoids)
@@ -176,7 +183,7 @@ I ComputeRayQuadricIntersection()
         C = dot(vec3(a, b, c), P * P) + 2.0 * (dot(vec3(d, e, f), P.xxy * P.yzz)
                 + dot(vec3(g, h, i), P)) + j;
     }
-
+    
     float delta = B * B - 4.0 * A * C;
 
     if (delta < 0.0)

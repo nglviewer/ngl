@@ -174,16 +174,16 @@
                     // oNgl.primitiveType = 'SceneImpostor';
                     // oNgl.addPrimitive();
                     
-                    // oNgl.randomColor = true;
-                    // oNgl.modelId = '1crn_ca';
-                    // oNgl.modelType = 'ribbon';
-                    // oNgl.addModel();
+                    oNgl.randomColor = true;
+                    oNgl.modelId = '1crn_ca';
+                    oNgl.modelType = 'ribbon';
+                    oNgl.addModel();
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
-                    oNgl.modelId = '1crn';
-                    oNgl.modelType = 'ball+stick';
-                    oNgl.addModel();
+                    // oNgl.modelId = '1crn';
+                    // oNgl.modelType = 'ball+stick';
+                    // oNgl.addModel();
                     
                     // oNgl.addSurface();
 
@@ -194,7 +194,7 @@
 
             
             var NglExample = function() {
-                this.count = 100;
+                this.count = 1;
                 this.size = 2.0;
                 this.orthoSphere = false;
                 this.primitiveType = 'BezierImpostor';
@@ -310,19 +310,19 @@
                             //     qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
                             // );
 
-                            qd = makeQuadricData( this.count, Math.floor(this.size/n) );
-                            new NGL.HyperboloidOneImpostorBuffer( 
-                                qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
-                            );
-                            new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
-                            new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
-                            new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
-                            new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
-
                             // qd = makeQuadricData( this.count, Math.floor(this.size/n) );
-                            // new NGL.HyperballOneImpostorBuffer( 
+                            // new NGL.HyperboloidOneImpostorBuffer( 
                             //     qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
                             // );
+                            // new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
+
+                            qd = makeQuadricData( this.count, Math.floor(this.size/n) );
+                            new NGL.HyperballOneImpostorBuffer( 
+                                qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                            );
                             // new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
                             // new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
                             // new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
@@ -335,7 +335,7 @@
                             // new NGL.SphereImpostorBuffer( qd.xpos, qd.color, c1.radius, ortho );
                             // new NGL.SphereImpostorBuffer( qd.ypos, qd.color, c1.radius, ortho );
                             // new NGL.SphereImpostorBuffer( qd.zpos, qd.color, c1.radius, ortho );
-                            //new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( qd.position, qd.color, c1.radius, ortho );
                         },
                         'Line': function(){
                             new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
@@ -494,6 +494,7 @@
                     var position = new Float32Array( na3 );
                     var color = new Float32Array( na3 );
                     var radius = new Float32Array( na3 );
+                    var radius2 = new Float32Array( na3 );
                     var c, j;
                     for( var i=0, j; i<na; i++ ){
                         j = 3*i;
@@ -512,6 +513,7 @@
                             color[ j + 2 ] = c[2];
                         }
                         radius[ i ] = type=="spacefill" ? 10.0 : 3.0;
+                        radius2[ i ] = radius[ i ] / 2;
                         if( type=="sprite" ) radius[ i ] = 1.0;
                         // if( type=="ribbon" ) radius[ i ] = 1.0 + 0.1*i;
                         if( type=="ribbon" && ss && i<na-1 ){
@@ -559,9 +561,9 @@
                             break;
                         case "ribbon":
                             new NGL.TextBuffer( position, radius );
-                            var pd = NGL.getPathData( position, color, radius, 20 );
+                            var pd = NGL.getPathData( position, color, radius, 2 );
                             new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
-                            //new NGL.SphereImpostorBuffer( position, color, radius, ortho );
+                            new NGL.SphereImpostorBuffer( position, color, radius2, ortho );
                             break;
                         case "stick":
                         case "ball+stick":
@@ -654,10 +656,10 @@
                         case "stick":
                         case "ball+stick":
                             if( impostor ){
-                                //new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
-                                new NGL.HyperboloidOneImpostorBuffer( 
-                                    pos, zdir, ydir, xdir, bColor
-                                );
+                                new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
+                                // new NGL.HyperboloidOneImpostorBuffer( 
+                                //     pos, zdir, ydir, xdir, bColor
+                                // );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );
                             }
@@ -698,6 +700,10 @@
                     position[ j + 1 ] = (Math.random() * 2 - 1) * cube;
                     position[ j + 2 ] = (Math.random() * 2 - 1) * cube;
                 }
+
+                position[ 0 ] = 0.0;
+                position[ 1 ] = 0.0;
+                position[ 2 ] = 0.0;
 
                 return {
                     "radius": radius,
@@ -782,10 +788,16 @@
 
                 for( var i = 0; i < n; i++ ) {
                     j = 3 * i;
-                    
-                    x = (RAND() * 2 - 1) * cube;
-                    y = (RAND() * 2 - 1) * cube;
-                    z = (RAND() * 2 - 1) * cube;
+
+                    if( i==0 ){
+                        x = 0;
+                        y = 0;
+                        z = 0;
+                    }else{
+                        x = (RAND() * 2 - 1) * cube;
+                        y = (RAND() * 2 - 1) * cube;
+                        z = (RAND() * 2 - 1) * cube;
+                    }
 
                     position[ j + 0 ] = x;
                     position[ j + 1 ] = y;

@@ -131,6 +131,10 @@ NGL.resources = {
     'shader/HelixImpostor.frag': '',
     'shader/HelixImpostor2.vert': '',
     'shader/HelixImpostor2.frag': '',
+    'shader/HyperballSphereImpostor.vert': '',
+    'shader/HyperballSphereImpostor.frag': '',
+    'shader/HyperballStickImpostor.vert': '',
+    'shader/HyperballStickImpostor.frag': '',
     'shader/Ribbon.vert': '',
     'shader/Ribbon.frag': '',
     'shader/SphereImpostor.vert': '',
@@ -758,7 +762,7 @@ NGL.getFont = function( name ){
 NGL.getPathData = function( position, color, size, segments ){
     var n = position.length/3;
     var n1 = n - 1;
-    var numpoints = segments*n1;
+    var numpoints = segments*n1 + 2;
     var numpoints3 = numpoints * 3;
     var numpoints1 = numpoints - 1;
     
@@ -2161,15 +2165,19 @@ NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) 
         //     vx.length(), 0.0, 0.0, 0.0,
         //     0.0, vy.length(), 0.0, 0.0,
         //     0.0, 0.0, vz.length(), 0.0,
-        //     //x, y, z, 1.0
         //     0.0, 0.0, 0.0, 1.0
         // );
+        // mat.set(
+        //     vx.length(), 0.0, 0.0, 0.0,
+        //     0.0, vx.length(), 0.0, 0.0,
+        //     0.0, 0.0, vz.length(), 0.0,
+        //     0.0, 0.0, 0.0, ( vz.length()/s ) - ( vx.length() * vx.length() )
+        // );
         mat.set(
-            vx.length(), 0.0, 0.0, 0.0,
-            0.0, vx.length(), 0.0, 0.0,
-            0.0, 0.0, vz.length(), 0.0,
-            //x, y, z, 1.0
-            0.0, 0.0, 0.0, ( vz.length()/s ) - ( vx.length() * vx.length() )
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.9
         );
         // mat.set(
         //     1.0, 0.0, 0.0, 0.0,
@@ -2178,10 +2186,10 @@ NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) 
         //     //0.0, 0.0, 0.0, ( vy.length()/s ) - ( vx.length() * vx.length() )
         //     0.0, 0.0, 0.0, 1.1
         // );
-        m1.identity().lookAt( vz, o, vy ).transpose();
-        mat.multiplyMatrices( mat, m1 );
-        m1.makeTranslation( x, y, z ).transpose();
-        mat.multiplyMatrices( mat, m1 );
+        // m1.identity().lookAt( vz, o, vy ).transpose();
+        // mat.multiplyMatrices( mat, m1 );
+        // m1.makeTranslation( x, y, z ).transpose();
+        // mat.multiplyMatrices( mat, m1 );
 
         T.set( mat.elements, t );
     }
