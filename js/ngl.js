@@ -43,6 +43,7 @@ $.loadImage = function(url) {
 var log = _.throttle( function(x,y){ console.log(x,y); }, 1000 );
 
 
+// X-ray shader
 // https://github.com/cryos/avogadro/tree/master/libavogadro/src/extensions/shaders
 
 
@@ -87,6 +88,30 @@ NGL = {
         7, 3, 1,
         2, 6, 0,
         6, 4, 0
+    ]),
+    BoxMapping3: new Float32Array([
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0,
+        -1.0, -1.0,  1.0,
+        -1.0,  1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0
+    ]),
+    BoxIndices3: new Uint16Array([
+        0, 1, 2,
+        0, 2, 3,
+        1, 5, 6,
+        1, 6, 2,
+        4, 6, 5,
+        4, 7, 6,
+        0, 7, 4,
+        0, 3, 7,
+        0, 5, 1,
+        0, 4, 5,
+        3, 2, 6,
+        3, 6, 7
     ]),
     QuadMapping: new Float32Array([
         -1.0,  1.0,
@@ -568,6 +593,27 @@ NGL.updateDynamicUniforms = function(){
             u.projectionMatrixTranspose.value.copy(
                 NGL.camera.projectionMatrix
             ).transpose();
+        }
+
+        if( u.modelViewProjectionMatrix ){
+            matrix.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewProjectionMatrix.value.multiplyMatrices(
+                NGL.camera.projectionMatrix, matrix
+            )
+        }
+
+        if( u.modelViewProjectionMatrixInverse ){
+            matrix.multiplyMatrices( 
+                NGL.camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
+                NGL.camera.projectionMatrix, matrix
+            )
+            u.modelViewProjectionMatrixInverse.value.getInverse( 
+                u.modelViewProjectionMatrixInverse.value
+            );
         }
     }
 }
@@ -1880,7 +1926,7 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
 
     // make shader material
     var attributes = {
-        inputMapping: { type: 'v2', value: null },
+        inputMapping: { type: 'v3', value: null },
         inputColor: { type: 'c', value: null },
         inputAxis: { type: 'v3', value: null },
         inputDir: { type: 'v3', value: null },
@@ -3054,6 +3100,292 @@ NGL.SphereGroup = function ( position, color, radius ) {
     this.group = group;
     this.n = n;
 }
+
+
+NGL.HyperballSphereImpostorBuffer = function ( position, color, radius ) {
+
+    var geometry, material, mesh;
+    var n = position.length/3;
+    var n2 = n * 2;
+    var n4 = n * 4;
+
+    // make shader material
+    var attributes = {
+        inputMapping: { type: 'v2', value: null },
+        inputColor: { type: 'c', value: null },
+        inputSphereRadius: { type: 'f', value: null }
+    };
+    var uniforms = THREE.UniformsUtils.merge( [
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
+        {
+            'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
+        }
+    ]);
+
+    material = new THREE.ShaderMaterial( {
+        uniforms: uniforms,
+        attributes: attributes,
+        vertexShader: NGL.getShader( 'HyperballSphereImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'HyperballSphereImpostor.frag' ),
+        depthTest: true,
+        transparent: true,
+        depthWrite: true,
+        lights: true,
+        fog: true
+    });
+
+    // make geometry and populate buffer
+    geometry = new THREE.BufferGeometry();
+
+    geometry.addAttribute( 'position', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
+    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
+
+    var aPosition = geometry.attributes.position.array;
+    var inputMapping = geometry.attributes.inputMapping.array;
+    var inputColor = geometry.attributes.inputColor.array;
+    var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
+
+    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    var indices = geometry.attributes.index.array;
+
+    geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
+    
+    var r, g, b;
+    var x, y, z;
+    var i, j, k, ix, it;
+    var chunkSize = NGL.calculateChunkSize( 4 );
+
+    for( var v = 0; v < n; v++ ) {
+        i = v * 2 * 4;
+        k = v * 3;
+
+        inputMapping.set( NGL.QuadMapping, i );
+
+        r = color[ k + 0 ];
+        g = color[ k + 1 ];
+        b = color[ k + 2 ];
+
+        x = position[ k + 0 ];
+        y = position[ k + 1 ];
+        z = position[ k + 2 ];
+
+        for( var m = 0; m < 4; m++ ) {
+            j = v * 4 * 3 + (3 * m);
+
+            inputColor[ j + 0 ] = r;
+            inputColor[ j + 1 ] = g;
+            inputColor[ j + 2 ] = b;
+
+            aPosition[ j + 0 ] = x;
+            aPosition[ j + 1 ] = y;
+            aPosition[ j + 2 ] = z;
+
+            inputSphereRadius[ (v * 4) + m ] = radius[ v ];
+        }
+
+        ix = v * 6;
+        it = v * 4;
+        
+        indices.set( NGL.QuadIndices, ix );
+        for( var s=0; s<6; ++s ){
+            indices[ix + s] = (it + indices[ix + s]) % chunkSize;
+        }
+    }
+
+    // console.log( "inputMapping", inputMapping );
+    // console.log( "inputColor", inputColor );
+    // console.log( "aPosition", aPosition );
+    // console.log( "inputSphereRadius", inputSphereRadius );
+    // console.log( "indices", indices );
+
+    mesh = new THREE.Mesh( geometry, material );
+    NGL.group.add( mesh );
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = mesh;
+    this.n = n;
+};
+
+
+NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, color2, radius1, radius2, shrink ) {
+
+    var geometry, material, mesh;
+    var n = position1.length/3;
+    var n2 = n * 2;
+    //var n4 = n * 4;
+    var n4 = n * 8;
+
+    // make shader material
+    var attributes = {
+        inputMapping: { type: 'v3', value: null },
+        inputColor1: { type: 'c', value: null },
+        inputColor2: { type: 'c', value: null },
+        inputRadius1: { type: 'f', value: null },
+        inputRadius2: { type: 'f', value: null },
+        inputPosition1: { type: 'v3', value: null },
+        inputPosition2: { type: 'v3', value: null },
+        inputShrink: { type: 'f', value: null },
+    };
+    var uniforms = THREE.UniformsUtils.merge( [
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
+        {
+            'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+            'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
+        }
+    ]);
+
+    material = new THREE.ShaderMaterial( {
+        uniforms: uniforms,
+        attributes: attributes,
+        vertexShader: NGL.getShader( 'HyperballStickImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'HyperballStickImpostor.frag' ),
+        depthTest: true,
+        transparent: true,
+        depthWrite: true,
+        lights: true,
+        fog: true
+    });
+
+    // make geometry and populate buffer
+    geometry = new THREE.BufferGeometry();
+
+    geometry.addAttribute( 'position', Float32Array, n4, 3 );
+    //geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
+    geometry.addAttribute( 'inputMapping', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputColor1', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputColor2', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputRadius1', Float32Array, n4, 1 );
+    geometry.addAttribute( 'inputRadius2', Float32Array, n4, 1 );
+    geometry.addAttribute( 'inputPosition1', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputPosition2', Float32Array, n4, 3 );
+    geometry.addAttribute( 'inputShrink', Float32Array, n4, 1 );
+
+    var aPosition = geometry.attributes.position.array;
+    var inputMapping = geometry.attributes.inputMapping.array;
+    var inputColor1 = geometry.attributes.inputColor1.array;
+    var inputColor2 = geometry.attributes.inputColor2.array;
+    var inputRadius1 = geometry.attributes.inputRadius1.array;
+    var inputRadius2 = geometry.attributes.inputRadius2.array;
+    var inputPosition1 = geometry.attributes.inputPosition1.array;
+    var inputPosition2 = geometry.attributes.inputPosition2.array;
+    var inputShrink = geometry.attributes.inputShrink.array;
+
+    // geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    // var indices = geometry.attributes.index.array;
+
+    // geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
+
+    geometry.addAttribute( 'index', Uint16Array, n * 36, 1 );
+    var indices = geometry.attributes.index.array;
+
+    geometry.offsets = NGL.calculateOffsets( n4, 12, 8 );
+    
+    var r1, g1, b1, r2, g2, b2;
+    var x1, y1, z1, x2, y2, z2;
+    var i, j, k, ix, it;
+    //var chunkSize = NGL.calculateChunkSize( 4 );
+    var chunkSize = NGL.calculateChunkSize( 8 );
+
+    for( var v = 0; v < n; v++ ) {
+        //i = v * 2 * 4;
+        i = v * 3 * 8;
+        k = v * 3;
+
+        //inputMapping.set( NGL.QuadMapping, i );
+        inputMapping.set( NGL.BoxMapping3, i );
+
+        r1 = color1[ k + 0 ];
+        g1 = color1[ k + 1 ];
+        b1 = color1[ k + 2 ];
+
+        r2 = color2[ k + 0 ];
+        g2 = color2[ k + 1 ];
+        b2 = color2[ k + 2 ];
+
+        x1 = position1[ k + 0 ];
+        y1 = position1[ k + 1 ];
+        z1 = position1[ k + 2 ];
+
+        x2 = position2[ k + 0 ];
+        y2 = position2[ k + 1 ];
+        z2 = position2[ k + 2 ];
+
+        rad1 = radius1[ v ];
+        rad2 = radius2[ v ];
+
+        // shr = shrink[ v ];
+        shr = shrink;
+
+
+        //for( var m = 0; m < 4; m++ ) {
+        for( var m = 0; m < 8; m++ ) {
+            //j = v * 4 * 3 + (3 * m);
+            j = v * 8 * 3 + (3 * m);
+
+            inputColor1[ j + 0 ] = r1;
+            inputColor1[ j + 1 ] = g1;
+            inputColor1[ j + 2 ] = b1;
+
+            inputColor2[ j + 0 ] = r2;
+            inputColor2[ j + 1 ] = g2;
+            inputColor2[ j + 2 ] = b2;
+
+            inputPosition1[ j + 0 ] = x1;
+            inputPosition1[ j + 1 ] = y1;
+            inputPosition1[ j + 2 ] = z1;
+
+            inputPosition2[ j + 0 ] = x2;
+            inputPosition2[ j + 1 ] = y2;
+            inputPosition2[ j + 2 ] = z2;
+
+            aPosition[ j + 0 ] = x1;
+            aPosition[ j + 1 ] = y1;
+            aPosition[ j + 2 ] = z1;
+
+            //inputSphereRadius[ (v * 4) + m ] = radius[ v ];
+            inputRadius1[ (v * 8) + m ] = rad1;
+            inputRadius2[ (v * 8) + m ] = rad2;
+
+            inputShrink[ (v * 8) + m ] = shr;
+        }
+
+        // ix = v * 6;
+        // it = v * 4;
+        ix = v * 36;
+        it = v * 8;
+
+        //indices.set( NGL.QuadIndices, ix );
+        //for( var s=0; s<6; ++s ){
+        indices.set( NGL.BoxIndices3, ix );
+        for( var s=0; s<36; ++s ){
+            indices[ix + s] = (it + indices[ix + s]) % chunkSize;
+        }
+    }
+
+    // console.log( "inputMapping", inputMapping );
+    // console.log( "inputColor", inputColor );
+    // console.log( "aPosition", aPosition );
+    // console.log( "inputSphereRadius", inputSphereRadius );
+    // console.log( "indices", indices );
+
+    mesh = new THREE.Mesh( geometry, material );
+    NGL.group.add( mesh );
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = mesh;
+    this.n = n;
+};
 
 
 NGL.makeUnitSphere = function ( radius ) {
