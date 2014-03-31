@@ -175,8 +175,8 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SceneImpostor';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'HyperballSphereImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'HyperballSphereImpostor';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'HyperballStickImpostor';
                     // oNgl.addPrimitive();
                     
@@ -188,9 +188,9 @@
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
-                    // oNgl.modelId = '1crn';
-                    // oNgl.modelType = 'ball+stick';
-                    // oNgl.addModel();
+                    oNgl.modelId = '1crn';
+                    oNgl.modelType = 'ball+stick';
+                    oNgl.addModel();
                     
                     // oNgl.addSurface();
 
@@ -608,6 +608,7 @@
                     var bColor = new Float32Array( nb3 );
                     var bColor2 = new Float32Array( nb3 );
                     var bRadius = new Float32Array( nb );
+                    var bRadius2 = new Float32Array( nb );
                     
                     var beg, end;
                     
@@ -665,16 +666,20 @@
                         bColor2[ j + 2 ] = color[ end + 2 ];
                         
                         bRadius[ i ] = type=="stick" ? 3.0 : 1.0;
+                        bRadius2[ i ] = 3.0;
                     }
 
                     switch( type ){
                         case "stick":
                         case "ball+stick":
                             if( impostor ){
-                                new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
+                                //new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
                                 // new NGL.HyperboloidOneImpostorBuffer( 
                                 //     pos, zdir, ydir, xdir, bColor
                                 // );
+                                new NGL.HyperballStickImpostorBuffer(
+                                    from, to, bColor, bColor2, bRadius2, bRadius2, 0.2
+                                );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );
                             }

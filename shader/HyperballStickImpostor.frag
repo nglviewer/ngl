@@ -14,20 +14,15 @@ varying vec4 prime2;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 
+#include light_params
+
+#include fog_params
+
 
 struct Ray {
     vec3 origin ;
     vec3 direction ;
 };
-
-vec4 lit(float NdotL, float NdotH, float m) {
-    float ambient = 1.0;
-    float diffuse = max(NdotL, 0.0);
-    float specular = pow(NdotH,m);
-    if(NdotL < 0.0 || NdotH < 0.0)
-        specular = 0.0;
-    return vec4(ambient, diffuse, specular, 1.0);
-}
 
 
 bool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){
@@ -48,8 +43,11 @@ vec3 isect_surf(Ray r, mat4 matrix_coef){
     float b = dot(origin,(matrix_coef*direction));
     float c = dot(origin,(matrix_coef*origin));
     float delta =b*b-a*c;
-    if (delta<0.0)
+    gl_FragColor.a = 1.0;
+    if (delta<0.0){
         discard;
+        gl_FragColor.a = 0.5;
+    }
     float t1 =(-b-sqrt(delta))/a;
 
     // Second solution not necessary if you don't want
@@ -145,7 +143,7 @@ void main()
     gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
 
     // cut the extremities of bonds to superimpose bond and spheres surfaces
-    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){discard;}
+    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }
 
 
     // Transform normal to model space to view-space
@@ -153,31 +151,30 @@ void main()
     vec4 M2 =  mat*M1;
     vec3 normal = normalize((modelViewMatrixInverseTranspose*M2).xyz);
 
-    // Give light vector position perpendicular to the screen
-    vec3 lightvec = normalize(vec3(0.0,0.0,1.2));
-    vec3 eyepos = vec3(0.0,0.0,1.0);
-
-    // calculate half-angle vector
-    vec3 halfvec = normalize(lightvec + eyepos);
-
-    // Parameters used to calculate per pixel lighting
-    // see http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html
-    float diffuse = dot(normal,lightvec);
-    float specular = dot(normal, halfvec);
-    vec4 lighting = lit(diffuse, specular, 32.0);
 
     // Mix the color bond in function of the two atom colors
-    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z)/distance(prime2.xyz,prime1.xyz);
+    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /
+                                distance(prime2.xyz,prime1.xyz);
     // lerp function not in GLSL. Find something else ...
     vec3 diffusecolor = mix( color_atom2.xyz, color_atom1.xyz, distance_ratio );
+    if( distance_ratio>0.5 ){
+        diffusecolor = color_atom1.xyz;
+    }else{
+        diffusecolor = color_atom2.xyz;
+    }
 
-
-
-    vec3 specularcolor = vec3(1.0,1.0,1.0);
-
+    
     // Give color parameters to the Graphic card
-    gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
-    gl_FragColor.a = 1.0;
+    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
+    //gl_FragColor.a = 1.0;
+
+    vec3 transformedNormal = normal;
+    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+    
+    #include light
+
+    gl_FragColor = vec4( diffusecolor, 1.0 );
+    gl_FragColor.xyz *= vLightFront;
 
     // ############## Fog effect #####################################################
     // To use fog comment the two previous lines: ie  gl_FragColor.rgb = É and   gl_FragColor.a = 1.0;
