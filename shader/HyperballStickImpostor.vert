@@ -1,19 +1,29 @@
 
-#extension GL_ARB_texture_rectangle : enable
+attribute vec3 inputMapping;
+attribute float inputRadius1;
+attribute float inputRadius2;
+attribute vec3 inputColor1;
+attribute vec3 inputColor2;
+attribute float inputShrink;
+attribute vec3 inputPosition1;
+attribute vec3 inputPosition2;
 
-varying mat4    matrix_near;
-varying vec4        color_atom1;
-varying vec4        color_atom2;
-varying float       shrink;
+varying mat4 matrix_near;
+varying vec4 color_atom1;
+varying vec4 color_atom2;
+varying float shrink;
 
-varying vec4        prime1;
-varying vec4        prime2;
+varying vec4 prime1;
+varying vec4 prime2;
 
-uniform sampler2DRect texturePosition;
-uniform sampler2DRect textureColors;
-uniform sampler2DRect textureSizes;
-uniform sampler2DRect textureShrink;
-uniform sampler2DRect textureScale;
+uniform mat4 modelViewProjectionMatrix;
+uniform mat4 modelViewProjectionMatrixInverse;
+
+// uniform sampler2DRect texturePosition;
+// uniform sampler2DRect textureColors;
+// uniform sampler2DRect textureSizes;
+// uniform sampler2DRect textureShrink;
+// uniform sampler2DRect textureScale;
 
 void main()
 {
@@ -23,33 +33,32 @@ void main()
     vec3 position_atom2;
     vec4 vertex_position;
 
-    color_atom1 = texture2DRect(textureColors, gl_MultiTexCoord0.xy);
-    color_atom2 = texture2DRect(textureColors, gl_MultiTexCoord1.xy);
+    color_atom1 = vec4( inputColor1, 1.0 );
+    color_atom2 = vec4( inputColor2, 1.0 );
 
-    shrink = texture2DRect(textureShrink, gl_MultiTexCoord2.xy).x;
+    shrink = inputShrink;
 
-    float radius1, radius2;
-    float size, scale;
-    size = texture2DRect(textureSizes, gl_MultiTexCoord0.xy).x;
-    scale = texture2DRect(textureScale, gl_MultiTexCoord2.xy).x;
-    radius1 = size * scale * 10.0;
-    size = texture2DRect(textureSizes, gl_MultiTexCoord1.xy).x;
-    radius2 = size * scale * 10.0;
+    float radius1 = inputRadius1;
+    float radius2 = inputRadius2;
 
-    position_atom1 = texture2DRect(texturePosition, gl_MultiTexCoord0.xy).xyz;
-    position_atom2 = texture2DRect(texturePosition, gl_MultiTexCoord1.xy).xyz;
+    position_atom1 = inputPosition1;
+    position_atom2 = inputPosition2;
 
     // ??? distance( position_atom1, position_atom2 );
-    float distance = sqrt( (position_atom1.x - position_atom2.x)*(position_atom1.x - position_atom2.x) + (position_atom1.y - position_atom2.y)*(position_atom1.y - position_atom2.y) + (position_atom1.z - position_atom2.z)*(position_atom1.z - position_atom2.z) );
+    float distance = sqrt( 
+        (position_atom1.x - position_atom2.x)*(position_atom1.x - position_atom2.x) + 
+        (position_atom1.y - position_atom2.y)*(position_atom1.y - position_atom2.y) + 
+        (position_atom1.z - position_atom2.z)*(position_atom1.z - position_atom2.z)
+    );
 
-    spaceposition.z = gl_Vertex.z * distance;
+    spaceposition.z = inputMapping.z * distance;
 
     if (radius1 > radius2) {
-        spaceposition.y = gl_Vertex.y * 1.5 * radius1;
-        spaceposition.x = gl_Vertex.x * 1.5 * radius1;
+        spaceposition.y = inputMapping.y * 1.5 * radius1;
+        spaceposition.x = inputMapping.x * 1.5 * radius1;
     } else {
-        spaceposition.y = gl_Vertex.y * 1.5 * radius2;
-        spaceposition.x = gl_Vertex.x * 1.5 * radius2;
+        spaceposition.y = inputMapping.y * 1.5 * radius2;
+        spaceposition.x = inputMapping.x * 1.5 * radius2;
     }
     spaceposition.w = 1.0;
 
@@ -70,35 +79,38 @@ void main()
 
     // Focus calculation
     vec4 focus;
-    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x + ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));
-    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y + ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));
-    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z + ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));
+    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x + 
+        ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));
+    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y + 
+        ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));
+    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z + 
+        ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));
 
-     // e1 calculation
-     e1.x = 1.0;
-     e1.y = 1.0;
-     e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;
-     e1_temp = e1 - focus.xyz;
-     e1 = normalize(e1_temp);
+    // e1 calculation
+    e1.x = 1.0;
+    e1.y = 1.0;
+    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;
+    e1_temp = e1 - focus.xyz;
+    e1 = normalize(e1_temp);
 
-     // e2 calculation
-     e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;
-     e2 = normalize(e2_temp);
+    // e2 calculation
+    e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;
+    e2 = normalize(e2_temp);
 
-     //ROTATION:
-     // final form of change of basis matrix:
-     mat3 R= mat3(e1.xyz, e2.xyz, e3.xyz);
-     // Apply rotation and translation to the bond primitive
-     vertex_position.xyz = R*spaceposition.xyz;
-     vertex_position.w = 1.0;
+    //ROTATION:
+    // final form of change of basis matrix:
+    mat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );
+    // Apply rotation and translation to the bond primitive
+    vertex_position.xyz = R * spaceposition.xyz;
+    vertex_position.w = 1.0;
 
     // TRANSLATION:
-    vertex_position.x +=  (position_atom1.x+position_atom2.x)/2.0;
-    vertex_position.y +=  (position_atom1.y+position_atom2.y)/2.0;
-    vertex_position.z +=  (position_atom1.z+position_atom2.z)/2.0;
+    vertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;
+    vertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;
+    vertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;
 
     // New position
-    gl_Position = (gl_ModelViewProjectionMatrix*vertex_position);
+    gl_Position = modelViewProjectionMatrix * vertex_position;
 
 
 
@@ -106,24 +118,28 @@ void main()
 
     vec4 i_near, i_far;
 
-    // Calcul near from position
+    // Calculate near from position
     vec4 near = gl_Position ;
     near.z = 0.0 ;
-    near = (gl_ModelViewProjectionMatrixInverse*near) ;
+    near = modelViewProjectionMatrixInverse * near;
     i_near = near;
     //i_near = vec4(1.0,1.0,1.0,1.0);
 
-    // Calcul far from position
+    // Calculate far from position
     vec4 far = gl_Position ;
     far.z = far.w ;
-    i_far = (gl_ModelViewProjectionMatrixInverse*far) ;
+    i_far = modelViewProjectionMatrixInverse * far;
     //i_far = vec4(1.0,1.0,1.0,1.0);
 
 
     prime1.xyz = position_atom1 - (position_atom1 - focus.xyz)*shrink;
     prime2.xyz = position_atom2 - (position_atom2 - focus.xyz)*shrink;
 
-    float Rsquare  = (radius1*radius1/shrink) - ( (position_atom1.x - focus.x)*(position_atom1.x - focus.x) + (position_atom1.y - focus.y)*(position_atom1.y - focus.y) + (position_atom1.z - focus.z)*(position_atom1.z - focus.z) );
+    float Rsquare = (radius1*radius1/shrink) - (
+                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) + 
+                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) + 
+                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z) 
+                    );
 
     focus.w = Rsquare;
 
