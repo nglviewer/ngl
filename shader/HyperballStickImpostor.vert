@@ -19,11 +19,6 @@ varying vec4 prime2;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewProjectionMatrixInverse;
 
-// uniform sampler2DRect texturePosition;
-// uniform sampler2DRect textureColors;
-// uniform sampler2DRect textureSizes;
-// uniform sampler2DRect textureShrink;
-// uniform sampler2DRect textureScale;
 
 void main()
 {
@@ -123,13 +118,11 @@ void main()
     near.z = 0.0 ;
     near = modelViewProjectionMatrixInverse * near;
     i_near = near;
-    //i_near = vec4(1.0,1.0,1.0,1.0);
 
     // Calculate far from position
     vec4 far = gl_Position ;
     far.z = far.w ;
     i_far = modelViewProjectionMatrixInverse * far;
-    //i_far = vec4(1.0,1.0,1.0,1.0);
 
 
     prime1.xyz = position_atom1 - (position_atom1 - focus.xyz)*shrink;

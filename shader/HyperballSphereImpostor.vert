@@ -14,11 +14,6 @@ varying float radius;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewProjectionMatrixInverse;
 
-// uniform sampler2DRect texturePosition;
-// uniform sampler2DRect textureColors;
-// uniform sampler2DRect textureSizes;
-// uniform sampler2DRect textureScale;
-
 
 const float FEPS = 0.000001;
 const float DEF_Z = 1.0 - FEPS;
@@ -87,7 +82,7 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
 
 
 void main(){
-    
+
     radius = inputSphereRadius;
     vColor = vec4( inputColor, 1.0 );
     sphereposition = vec4( position, 1.0 );

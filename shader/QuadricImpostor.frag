@@ -256,6 +256,12 @@ void main(void)
     float w = dot( vec4( i.P, 1.0 ), projectionMatrixTranspose[3] );
     gl_FragDepthEXT = 0.5 * (z / w + 1.0);
 
+    // bugfix (mac only?)
+    if (gl_FragDepthEXT <= 0.0)
+        discard;
+    if (gl_FragDepthEXT >= 1.0)
+        discard;
+
     vec3 transformedNormal = i.N;
     vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
     
@@ -263,7 +269,7 @@ void main(void)
 
     gl_FragColor = vec4( vColor.xyz, 1.0 );
     gl_FragColor.xyz *= vLightFront;
-    // gl_FragColor = vec4( i.N, 1.0 );
+    //gl_FragColor = vec4( i.N, 1.0 );
 
     #include fog
 
