@@ -12,6 +12,10 @@ varying float radius;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 
+#include light_params
+
+#include fog_params
+
 
 struct Ray{
     vec3 origin;
@@ -50,15 +54,6 @@ float update_z_buffer(vec3 M, mat4 ModelViewP){
     float  depth1;
     vec4 Ms=(ModelViewP*vec4(M,1.0));
     return depth1=(1.0+Ms.z/Ms.w)/2.0;
-}
-
-vec4 lit(float NdotL, float NdotH, float m) {
-    float ambient = 1.0;
-    float diffuse = max(NdotL, 0.0);
-    float specular = pow(NdotH,m);
-    if(NdotL < 0.0 || NdotH < 0.0)
-        specular = 0.0;
-    return vec4(ambient, diffuse, specular, 1.0);
 }
 
 
@@ -101,26 +96,37 @@ void main()
     vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );
 
     // Give light vector position perpendicular to the screen
-    vec3 lightvec = normalize(vec3(0.0,0.0,1.2));
-    vec3 eyepos = vec3(0.0,0.0,1.0);
+    // vec3 lightvec = normalize(vec3(0.0,0.0,1.2));
+    // vec3 eyepos = vec3(0.0,0.0,1.0);
 
     // calculate half-angle vector
-    vec3 halfvec = normalize(lightvec + eyepos);
+    // vec3 halfvec = normalize(lightvec + eyepos);
 
     // Parameters used to calculate per pixel lighting
     // see http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html
 
-    float shininess = 0.5;
-    float diffuse = dot(normal,lightvec);
-    float specular = dot(halfvec, normal);
-    vec4 lighting = lit(diffuse, specular, 256.0) ;
+    // float shininess = 0.5;
+    // float diffuse = dot(normal,lightvec);
+    // float specular = dot(halfvec, normal);
+    // vec4 lighting = lit(diffuse, specular, 256.0) ;
 
     vec3 diffusecolor = vColor.xyz;
-    vec3 specularcolor = vec3(1.0,1.0,1.0);
+    //vec3 specularcolor = vec3(1.0,1.0,1.0);
 
     // Give color parameters to the Graphic card
-    gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
+    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
     //gl_FragColor.a = 1.0;
+
+    vec3 transformedNormal = normal;
+    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+    
+    #include light
+
+    gl_FragColor = vec4( diffusecolor, 1.0 );
+    gl_FragColor.xyz *= vLightFront;
+
+    #include fog
+
 
     // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
     // gl_FragColor.rgb = normalize( ray.direction - ray.origin );

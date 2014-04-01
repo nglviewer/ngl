@@ -913,6 +913,8 @@ NGL.BufferVectorHelper = function( position, vector, color ){
         aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * 5;
     }
 
+    // console.log( "position", aPosition );
+
     line = new THREE.Line( geometry, material, THREE.LinePieces );
     NGL.group.add( line );
 
@@ -1221,6 +1223,99 @@ NGL.BezierImpostorBuffer = function ( p0, p1, p2, color, radius, segments ) {
     // new NGL.SphereImpostorBuffer( cylFrom, cylColor, cylRadius, false );
     // new NGL.SphereImpostorBuffer( cylTo, cylColor, cylRadius, false );
     // new NGL.SphereImpostorBuffer( spherePos, cylColor, cylRadius, false );
+}
+
+
+NGL.EllipticBezierImpostorBuffer = function ( p0, p1, p2, color, radius, segments ) {
+
+    var n = p0.length/3;
+    var n3 = n * 3;
+    var nx = n * segments;
+    var nx3 = nx * 3;
+
+    var position = new Float32Array( nx3 );
+    var xdir = new Float32Array( nx3 );
+    var ydir = new Float32Array( nx3 );
+    var zdir = new Float32Array( nx3 );
+    var inputColor = new Float32Array( nx3 );
+
+    var frames, tangents, normals, binormals;
+
+    var path, i, j, k, l, rad, s, j1;
+    var pPrev, pNext;
+    var p0, p1, p2;
+    var r, g, b;
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+        k = i * segments;
+        l = v * segments;
+
+        r = color[ i + 0 ];
+        g = color[ i + 1 ];
+        b = color[ i + 2 ];
+
+        rad = radius[ v ];
+
+        path = new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3( p0[ i + 0 ], p0[ i + 1 ], p0[ i + 2 ] ),
+            new THREE.Vector3( p1[ i + 0 ], p1[ i + 1 ], p1[ i + 2 ] ),
+            new THREE.Vector3( p2[ i + 0 ], p2[ i + 1 ], p2[ i + 2 ] )
+        );
+
+        frames = new THREE.TubeGeometry.FrenetFrames( path, segments, false );
+        tangents = frames.tangents;
+        normals = frames.normals;
+        binormals = frames.binormals;
+        
+        pPrev = path.getPointAt( 0 );
+
+        for ( j = 1; j <= segments; j++ ) {
+
+            j1 = j - 1;
+            s = k + 3 * j1;
+            t = k + 3 * j;
+
+            pNext = path.getPoint( j / ( segments ) );
+
+            position[ s + 0 ] = pPrev.x;
+            position[ s + 1 ] = pPrev.y;
+            position[ s + 2 ] = pPrev.z;
+
+            binormals[ j1 ].setLength( 3.0 );
+            normals[ j1 ].setLength( 1.0 );
+            tangents[ j1 ].setLength( pPrev.distanceTo( pNext ) / 1.0 );
+
+            xdir[ s + 0 ] = binormals[ j1 ].x;
+            xdir[ s + 1 ] = binormals[ j1 ].y;
+            xdir[ s + 2 ] = binormals[ j1 ].z;
+
+            ydir[ s + 0 ] = normals[ j1 ].x;
+            ydir[ s + 1 ] = normals[ j1 ].y;
+            ydir[ s + 2 ] = normals[ j1 ].z;
+
+            zdir[ s + 0 ] = tangents[ j1 ].x;
+            zdir[ s + 1 ] = tangents[ j1 ].y;
+            zdir[ s + 2 ] = tangents[ j1 ].z;
+
+            inputColor[ s + 0 ] = r;
+            inputColor[ s + 1 ] = g;
+            inputColor[ s + 2 ] = b;
+
+            pPrev = pNext;
+        }
+    }
+
+    // console.log( "position", position );
+    // console.log( "binormals", binormals );
+    // console.log( "cylColor", cylColor );
+    // console.log( "cylRadius", cylRadius );
+    // console.log( "frenetNormal", frenetNormal );
+
+    new NGL.BufferVectorHelper( position, xdir, new THREE.Color( "blue" ) );
+    new NGL.BufferVectorHelper( position, ydir, new THREE.Color( "green" ) );
+    new NGL.BufferVectorHelper( position, zdir, new THREE.Color( "red" ) );
+
+    new NGL.EllipticCylinderImpostorBuffer( position, xdir, ydir, zdir, inputColor )
 }
 
 
@@ -2166,7 +2261,7 @@ NGL.EllipsoidImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
 }
 
 
-NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+NGL.EllipticCylinderImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
     // xdir, ydir, zdir must be mutually perpendicular
     // direction and length are used
 
@@ -2186,12 +2281,8 @@ NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) 
     var vy = new THREE.Vector3();
     var vz = new THREE.Vector3();
 
-    var p = new THREE.Vector3();
-
     aPosition.set( position );
     aColor.set( color );
-
-    var s = 0.15;
 
     for( var v = 0; v < n; v++ ) {
         i = 3 * v;
@@ -2205,37 +2296,17 @@ NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) 
         vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
         vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
 
-        p.set( x, y, z );
-
-        // mat.set(
-        //     vx.length(), 0.0, 0.0, 0.0,
-        //     0.0, vy.length(), 0.0, 0.0,
-        //     0.0, 0.0, vz.length(), 0.0,
-        //     0.0, 0.0, 0.0, 1.0
-        // );
-        // mat.set(
-        //     vx.length(), 0.0, 0.0, 0.0,
-        //     0.0, vx.length(), 0.0, 0.0,
-        //     0.0, 0.0, vz.length(), 0.0,
-        //     0.0, 0.0, 0.0, ( vz.length()/s ) - ( vx.length() * vx.length() )
-        // );
         mat.set(
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.9
+            vx.length(), 0.0, 0.0, 0.0,
+            0.0, vy.length(), 0.0, 0.0,
+            0.0, 0.0, vz.length(), 0.0,
+            //x, y, z, 1.0
+            0.0, 0.0, 0.0, 1.0
         );
-        // mat.set(
-        //     1.0, 0.0, 0.0, 0.0,
-        //     0.0, 1.0, 0.0, 0.0,
-        //     0.0, 0.0, 1.0, 0.0,
-        //     //0.0, 0.0, 0.0, ( vy.length()/s ) - ( vx.length() * vx.length() )
-        //     0.0, 0.0, 0.0, 1.1
-        // );
-        // m1.identity().lookAt( vz, o, vy ).transpose();
-        // mat.multiplyMatrices( mat, m1 );
-        // m1.makeTranslation( x, y, z ).transpose();
-        // mat.multiplyMatrices( mat, m1 );
+        m1.identity().lookAt( vz, o, vy ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+        m1.makeTranslation( x, y, z ).transpose();
+        mat.multiplyMatrices( mat, m1 );
 
         T.set( mat.elements, t );
     }
@@ -2244,7 +2315,65 @@ NGL.HyperballOneImpostorBuffer = function ( position, xdir, ydir, zdir, color ) 
     // console.log( "T", T );
     // console.log( "aColor", aColor );
 
-    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "HYPERBALL1" );
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "CYLINDER" );
+}
+
+
+NGL.ConeImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+    // xdir, ydir, zdir must be mutually perpendicular
+    // direction and length are used
+
+    var n = position.length/3;
+    var n3 = n * 3;
+    var n16 = n * 16;
+
+    var aPosition = new Float32Array( n3 );
+    var aColor = new Float32Array( n3 );
+    var T = new Float32Array( n16 );
+
+    var i, x, y, z;
+    var mat = new THREE.Matrix4();
+    var m1 = new THREE.Matrix4();
+    var o = new THREE.Vector3( 0, 0, 0 );
+    var vx = new THREE.Vector3();
+    var vy = new THREE.Vector3();
+    var vz = new THREE.Vector3();
+
+    aPosition.set( position );
+    aColor.set( color );
+
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+        t = 16 * v;
+
+        x = position[ i + 0 ];
+        y = position[ i + 1 ];
+        z = position[ i + 2 ];
+
+        vx.set( xdir[ i + 0 ], xdir[ i + 1 ], xdir[ i + 2 ] );
+        vy.set( ydir[ i + 0 ], ydir[ i + 1 ], ydir[ i + 2 ] );
+        vz.set( zdir[ i + 0 ], zdir[ i + 1 ], zdir[ i + 2 ] );
+
+        mat.set(
+            vx.length(), 0.0, 0.0, 0.0,
+            0.0, vy.length(), 0.0, 0.0,
+            0.0, 0.0, vz.length(), 0.0,
+            //x, y, z, 1.0
+            0.0, 0.0, 0.0, 1.0
+        );
+        m1.identity().lookAt( vz, o, vy ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+        m1.makeTranslation( x, y, z ).transpose();
+        mat.multiplyMatrices( mat, m1 );
+
+        T.set( mat.elements, t );
+    }
+
+    // console.log( "aPosition", aPosition );
+    // console.log( "T", T );
+    // console.log( "aColor", aColor );
+
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "CONE" );
 }
 
 

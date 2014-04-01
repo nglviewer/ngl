@@ -98,6 +98,7 @@ void main()
     float shrinkfactor = shrink;
     float t1 = -1.0/(1.0-shrinkfactor);
     float t2 = 1.0/(shrinkfactor);
+    // float t3 = 2.0/(shrinkfactor);
 
     vec4 colonne1, colonne2, colonne3, colonne4;
     mat4 mat;
@@ -175,6 +176,8 @@ void main()
 
     gl_FragColor = vec4( diffusecolor, 1.0 );
     gl_FragColor.xyz *= vLightFront;
+
+    #include fog
 
     // ############## Fog effect #####################################################
     // To use fog comment the two previous lines: ie  gl_FragColor.rgb = É and   gl_FragColor.a = 1.0;
