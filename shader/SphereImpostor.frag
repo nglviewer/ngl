@@ -34,7 +34,7 @@ vec3 cameraNormal;
 //   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;
 
 
-float Impostor(out vec3 cameraPos, out vec3 cameraNormal)
+void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 {
     // highp vec3 cameraPlanePos = vec3(mapping * sphereRadius, 0.0) + cameraSpherePos;
     // highp vec3 rayDirection = normalize(cameraPlanePos);
@@ -52,9 +52,7 @@ float Impostor(out vec3 cameraPos, out vec3 cameraNormal)
     float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);
     
     float det = (B * B) - (4.0 * C);
-    float foo = 1.0;
     if(det < 0.0){
-        foo = 0.0;
         discard;
     }else{
         float sqrtDet = sqrt(det);
@@ -65,40 +63,35 @@ float Impostor(out vec3 cameraPos, out vec3 cameraNormal)
         cameraPos = rayDirection * intersectT;
         cameraNormal = normalize(cameraPos - cameraSpherePos);
     }
-    return foo;
 }
 
 
 void main(void)
 {   
-    float foo = Impostor(cameraPos, cameraNormal);
+    Impostor(cameraPos, cameraNormal);
 
-    if( foo>0.0 ){
+    //Set the depth based on the new cameraPos.
+    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
+    gl_FragDepthEXT = 0.5 + 0.5 * clipZW.x / clipZW.y;
 
-        //Set the depth based on the new cameraPos.
-        vec4 clipPos = projectionMatrix * vec4(cameraPos, 1.0);
-        float ndcDepth = clipPos.z / clipPos.w;
-        float depth2 = ((gl_DepthRange.diff * ndcDepth) + gl_DepthRange.near + gl_DepthRange.far) / 2.0;
-        gl_FragDepthEXT = depth2;
+    // bugfix (mac only?)
+    if (gl_FragDepthEXT <= 0.0)
+        discard;
+    if (gl_FragDepthEXT >= 1.0)
+        discard;
 
-        vec3 transformedNormal = cameraNormal;
-        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-        
-        #include light
+    vec3 transformedNormal = cameraNormal;
+    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+    
+    #include light
 
-        gl_FragColor = vec4( color, 1.0 );
-        gl_FragColor.xyz *= vLightFront;
-        // gl_FragColor.xyz = transformedNormal;
+    gl_FragColor = vec4( color, 1.0 );
+    gl_FragColor.xyz *= vLightFront;
+    //gl_FragColor.xyz = transformedNormal;
 
-        // highp vec3 cameraPlanePos = vec3(mapping * sphereRadius, 0.0) + cameraSpherePos;
-        // highp vec3 rayDirection = normalize(cameraPlanePos);
-        // gl_FragColor = vec4( rayDirection, 1.0 );
-
-        
-    }else{
-        gl_FragColor = vec4( color, 1.0 );
-        gl_FragDepthEXT = 1.0;
-    }
+    // highp vec3 cameraPlanePos = vec3(mapping * sphereRadius, 0.0) + cameraSpherePos;
+    // highp vec3 rayDirection = normalize(cameraPlanePos);
+    // gl_FragColor = vec4( rayDirection, 1.0 );
 
     #include fog
 }

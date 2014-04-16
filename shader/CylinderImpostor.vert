@@ -196,6 +196,9 @@ void main()
     // point = w5.xyz / w5.w;
     // gl_Position = PMatrix  * w5;
     
+    // move out of viewing frustum to avoid clipping artifacts
+    if( gl_Position.z<=5.0 )
+        gl_Position.z = -10.0;
 }
 
 

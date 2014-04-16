@@ -1,6 +1,22 @@
 
 attribute vec2 inputMapping;
-attribute vec3 inputColor;
+//attribute vec3 inputColor;
+
+attribute vec3 inputP;
+attribute vec3 inputQ;
+attribute vec3 inputR;
+attribute vec3 inputS;
+
+attribute vec3 inputAxisA;
+attribute vec3 inputAxisB;
+
+varying vec3 p;
+varying vec3 q;
+varying vec3 r;
+varying vec3 s;
+
+varying vec3 axisA;
+varying vec3 axisB;
 
 uniform mat4 modelViewMatrixInverse;
 uniform mat4 modelViewMatrixInverseTranspose;
@@ -167,14 +183,22 @@ const float ISQRT2 = 0.70710678118;
                           0.0,  1.0,  0.0,  0.0,
                           0.0,  0.0, -1.0,  0.0,
                           0.0,  0.0,  0.0,  0.0 );
+    // const mat4 t1 = mat4( 1.0, 0.0, 0.0, 0.0,
+    //                       0.0, 1.0, 0.0, 0.0,
+    //                       0.0, 0.0, 0.0, 0.0,
+    //                       0.0, 0.0, 1.0, 1.0 );
+    // const mat4 t2 = mat4( 1.0, 0.0, 0.0, 0.0,
+    //                       0.0, 1.0, 0.0, 0.0,
+    //                       0.0, 0.0, 0.0, 0.0,
+    //                       0.0, 0.0, 1.0, 1.0 );
     const mat4 t1 = mat4( 1.0, 0.0, 0.0, 0.0,
                           0.0, 1.0, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 1.0, 1.0 );
-    const mat4 t2 = mat4( 1.0, 0.0, 0.0, 0.0,
-                          0.0, 1.0, 0.0, 0.0,
+    const mat4 t2 = mat4( 0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, -1.0, 1.0 );
+                          0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 1.0 );
 #elif defined( HYPERBOLOID1 )
     // quadric matrix in canonical form for hyperboloids of one sheet
     const mat4 D  = mat4( 1.0,  0.0,  0.0,  0.0,
@@ -463,7 +487,8 @@ void main(void)
     T = mat4( T1, T2, T3, T4 );
     Ti = mat4( Ti1, Ti2, Ti3, Ti4 );
 
-    vColor = vec4( inputColor, 1.0 );
+    //vColor = vec4( inputColor, 1.0 );
+    vColor = vec4( 0.6, 0.1, 0.1, 1.0 );
 
     // compute position, this is required only when displaying the point quad
     #ifdef CORRECT_POINT_Z
@@ -499,6 +524,30 @@ void main(void)
     h = Q[ 3 ][ 1 ];
     i = Q[ 3 ][ 2 ];
     j = Q[ 3 ][ 3 ];
+
+    vec4 p4 = modelViewMatrix*(vec4(inputP,1.0));
+    p = p4.xyz / p4.w;
+    vec4 q4 = modelViewMatrix*(vec4(inputQ,1.0));
+    q = q4.xyz / q4.w;
+    vec4 r4 = modelViewMatrix*(vec4(inputR,1.0));
+    r = r4.xyz / r4.w;
+    vec4 s4 = modelViewMatrix*(vec4(inputS,1.0));
+    s = s4.xyz / s4.w;
+
+    // vec4 a4 = modelViewMatrix*(vec4(inputAxisA,1.0));
+    // axisA = a4.xyz/a4.w;
+    // vec4 b4 = modelViewMatrix*(vec4(inputAxisB,1.0));
+    // axisB = b4.xyz/b4.w;
+
+    // axisA = inputAxisB;
+    // axisB = inputAxisA;
+
+    axisA = normalMatrix * inputAxisA;
+    axisB = normalMatrix * inputAxisB;
+
+    // move out of viewing frustum to avoid clipping artifacts
+    if( gl_Position.z<=5.0 )
+        gl_Position.z = -10.0;
 }
 
 

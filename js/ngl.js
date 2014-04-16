@@ -830,6 +830,7 @@ NGL.getPathData = function( position, color, size, segments ){
     var aPoints = new Float32Array( numpoints3 );
     var aNormals = new Float32Array( numpoints3 );
     var aBinormals = new Float32Array( numpoints3 );
+    var aTangents = new Float32Array( numpoints3 );
     var aColor = new Float32Array( numpoints3 );
     var aSize = new Float32Array( numpoints );
 
@@ -850,6 +851,10 @@ NGL.getPathData = function( position, color, size, segments ){
         aBinormals[ i3 + 0 ] = binormals[ i ].x;
         aBinormals[ i3 + 1 ] = binormals[ i ].y;
         aBinormals[ i3 + 2 ] = binormals[ i ].z;
+
+        aTangents[ i3 + 0 ] = tangents[ i ].x;
+        aTangents[ i3 + 1 ] = tangents[ i ].y;
+        aTangents[ i3 + 2 ] = tangents[ i ].z;
         
         j = Math.min( Math.floor( i / segments ), n1 );
         j3 = j * 3;
@@ -881,6 +886,9 @@ NGL.getPathData = function( position, color, size, segments ){
         "dir": aBinormals,
         "color": aColor,
         "size": aSize,
+        "binormals": aBinormals,
+        "normals": aNormals,
+        "tangents": aTangents
     }
 }
 
@@ -1219,10 +1227,8 @@ NGL.BezierImpostorBuffer = function ( p0, p1, p2, color, radius, segments ) {
     // console.log( "frenetNormal", frenetNormal );
 
     new NGL.CylinderImpostorBuffer( cylFrom, cylTo, cylColor, cylColor, cylRadius, segments );
-    // new NGL.CylinderGroup( cylFrom, cylTo, cylColor, cylRadius );
-    // new NGL.SphereImpostorBuffer( cylFrom, cylColor, cylRadius, false );
-    // new NGL.SphereImpostorBuffer( cylTo, cylColor, cylRadius, false );
-    // new NGL.SphereImpostorBuffer( spherePos, cylColor, cylRadius, false );
+    new NGL.SphereImpostorBuffer( cylFrom, cylColor, cylRadius, false );
+    new NGL.SphereImpostorBuffer( cylTo, cylColor, cylRadius, false );
 }
 
 
@@ -1242,6 +1248,8 @@ NGL.EllipticBezierImpostorBuffer = function ( p0, p1, p2, color, radius, segment
     var frames, tangents, normals, binormals;
 
     var path, i, j, k, l, rad, s, j1;
+    var p = new THREE.Vector3();
+    var pv = new THREE.Vector3();
     var pPrev, pNext;
     var p0, p1, p2;
     var r, g, b;
@@ -1276,14 +1284,15 @@ NGL.EllipticBezierImpostorBuffer = function ( p0, p1, p2, color, radius, segment
             t = k + 3 * j;
 
             pNext = path.getPoint( j / ( segments ) );
+            p.copy( pPrev ).add( pNext ).divideScalar( 2.0 );
 
-            position[ s + 0 ] = pPrev.x;
-            position[ s + 1 ] = pPrev.y;
-            position[ s + 2 ] = pPrev.z;
+            position[ s + 0 ] = p.x;
+            position[ s + 1 ] = p.y;
+            position[ s + 2 ] = p.z;
 
             binormals[ j1 ].setLength( 3.0 );
             normals[ j1 ].setLength( 1.0 );
-            tangents[ j1 ].setLength( pPrev.distanceTo( pNext ) / 1.0 );
+            tangents[ j1 ].setLength( pPrev.distanceTo( pNext ) / 2.0 );
 
             xdir[ s + 0 ] = binormals[ j1 ].x;
             xdir[ s + 1 ] = binormals[ j1 ].y;
@@ -1293,9 +1302,11 @@ NGL.EllipticBezierImpostorBuffer = function ( p0, p1, p2, color, radius, segment
             ydir[ s + 1 ] = normals[ j1 ].y;
             ydir[ s + 2 ] = normals[ j1 ].z;
 
-            zdir[ s + 0 ] = tangents[ j1 ].x;
-            zdir[ s + 1 ] = tangents[ j1 ].y;
-            zdir[ s + 2 ] = tangents[ j1 ].z;
+            pv.copy( pNext ).sub( pPrev ).divideScalar( 2.0 );
+
+            zdir[ s + 0 ] = pv.x;
+            zdir[ s + 1 ] = pv.y;
+            zdir[ s + 2 ] = pv.z;
 
             inputColor[ s + 0 ] = r;
             inputColor[ s + 1 ] = g;
@@ -1311,11 +1322,11 @@ NGL.EllipticBezierImpostorBuffer = function ( p0, p1, p2, color, radius, segment
     // console.log( "cylRadius", cylRadius );
     // console.log( "frenetNormal", frenetNormal );
 
-    new NGL.BufferVectorHelper( position, xdir, new THREE.Color( "blue" ) );
-    new NGL.BufferVectorHelper( position, ydir, new THREE.Color( "green" ) );
-    new NGL.BufferVectorHelper( position, zdir, new THREE.Color( "red" ) );
+    // new NGL.BufferVectorHelper( position, xdir, new THREE.Color( "blue" ) );
+    // new NGL.BufferVectorHelper( position, ydir, new THREE.Color( "green" ) );
+    // new NGL.BufferVectorHelper( position, zdir, new THREE.Color( "red" ) );
 
-    new NGL.EllipticCylinderImpostorBuffer( position, xdir, ydir, zdir, inputColor )
+    new NGL.EllipticCylinderImpostorBuffer( position, xdir, ydir, zdir, inputColor, segments );
 }
 
 
@@ -1602,8 +1613,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     mesh = new THREE.Mesh( geometry, material );
     NGL.group.add( mesh );
 
-    // new NGL.BufferVectorHelper( position, normal, new THREE.Color("rgb(255,0,0)") );
-    // new NGL.BufferVectorHelper( position, dir, new THREE.Color("rgb(255,255,0)") );
+    new NGL.BufferVectorHelper( position, normal, new THREE.Color("rgb(255,0,0)") );
+    new NGL.BufferVectorHelper( position, dir, new THREE.Color("rgb(255,255,0)") );
 
     // public attributes
     this.geometry = geometry;
@@ -1613,7 +1624,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
 }
 
 
-NGL.QuadricImpostorBuffer = function( position, T, color, type ){
+NGL.QuadricImpostorBuffer = function( position, T, color, type, tubeData ){
 
     // http://www.bmsc.washington.edu/people/merritt/graphics/quadrics.html
     // http://people.eecs.ku.edu/~miller/Papers/GeomAppNPQSIC.pdf
@@ -1642,6 +1653,14 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type ){
         Ti3: { type: 'v4', value: null },
         Ti4: { type: 'v4', value: null }
     };
+    if( tubeData ){
+        attributes['inputP'] = { type: 'v3', value: null };
+        attributes['inputQ'] = { type: 'v3', value: null };
+        attributes['inputR'] = { type: 'v3', value: null };
+        attributes['inputS'] = { type: 'v3', value: null };
+        attributes['inputAxisA'] = { type: 'v3', value: null };
+        attributes['inputAxisB'] = { type: 'v3', value: null };
+    }
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
@@ -1682,6 +1701,14 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type ){
     geometry.addAttribute( 'Ti2', Float32Array, n4, 4 );
     geometry.addAttribute( 'Ti3', Float32Array, n4, 4 );
     geometry.addAttribute( 'Ti4', Float32Array, n4, 4 );
+    if( tubeData ){
+        geometry.addAttribute( 'inputP', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputQ', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputR', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputS', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputAxisA', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputAxisB', Float32Array, n4, 3 );
+    }
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
@@ -1694,6 +1721,14 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type ){
     var Ti2 = geometry.attributes.Ti2.array;
     var Ti3 = geometry.attributes.Ti3.array;
     var Ti4 = geometry.attributes.Ti4.array;
+    if( tubeData ){
+        var inputP = geometry.attributes.inputP.array;
+        var inputQ = geometry.attributes.inputQ.array;
+        var inputR = geometry.attributes.inputR.array;
+        var inputS = geometry.attributes.inputS.array;
+        var inputAxisA = geometry.attributes.inputAxisA.array;
+        var inputAxisB = geometry.attributes.inputAxisB.array;
+    }
 
     geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
     var indices = geometry.attributes.index.array;
@@ -1782,6 +1817,32 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type ){
             Ti4[ tt + 1 ] = ei[  7 ];
             Ti4[ tt + 2 ] = ei[ 11 ];
             Ti4[ tt + 3 ] = ei[ 15 ];
+
+            if( tubeData ){
+                inputP[ j + 0 ] = tubeData.p[ k + 0 ];
+                inputP[ j + 1 ] = tubeData.p[ k + 1 ];
+                inputP[ j + 2 ] = tubeData.p[ k + 2 ];
+
+                inputQ[ j + 0 ] = tubeData.q[ k + 0 ];
+                inputQ[ j + 1 ] = tubeData.q[ k + 1 ];
+                inputQ[ j + 2 ] = tubeData.q[ k + 2 ];
+
+                inputR[ j + 0 ] = tubeData.r[ k + 0 ];
+                inputR[ j + 1 ] = tubeData.r[ k + 1 ];
+                inputR[ j + 2 ] = tubeData.r[ k + 2 ];
+
+                inputS[ j + 0 ] = tubeData.s[ k + 0 ];
+                inputS[ j + 1 ] = tubeData.s[ k + 1 ];
+                inputS[ j + 2 ] = tubeData.s[ k + 2 ];
+
+                inputAxisA[ j + 0 ] = tubeData.axisA[ k + 0 ];
+                inputAxisA[ j + 1 ] = tubeData.axisA[ k + 1 ];
+                inputAxisA[ j + 2 ] = tubeData.axisA[ k + 2 ];
+
+                inputAxisB[ j + 0 ] = tubeData.axisB[ k + 0 ];
+                inputAxisB[ j + 1 ] = tubeData.axisB[ k + 1 ];
+                inputAxisB[ j + 2 ] = tubeData.axisB[ k + 2 ];
+            }
         }
 
         ix = v * 6;
@@ -2261,7 +2322,7 @@ NGL.EllipsoidImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
 }
 
 
-NGL.EllipticCylinderImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+NGL.EllipticCylinderImpostorBuffer = function ( position, xdir, ydir, zdir, color, tube ) {
     // xdir, ydir, zdir must be mutually perpendicular
     // direction and length are used
 
@@ -2273,13 +2334,30 @@ NGL.EllipticCylinderImpostorBuffer = function ( position, xdir, ydir, zdir, colo
     var aColor = new Float32Array( n3 );
     var T = new Float32Array( n16 );
 
-    var i, x, y, z;
+    if( tube ){
+        var aP = new Float32Array( n3 );
+        var aQ = new Float32Array( n3 );
+        var aR = new Float32Array( n3 );
+        var aS = new Float32Array( n3 );
+        var aX = new Float32Array( n3 );
+        var aY = new Float32Array( n3 );
+        var aRadius = new Float32Array( n );
+    }
+
+    var i, x, y, z, x1, y1, z1;
     var mat = new THREE.Matrix4();
     var m1 = new THREE.Matrix4();
     var o = new THREE.Vector3( 0, 0, 0 );
+    var p = new THREE.Vector3();
     var vx = new THREE.Vector3();
     var vy = new THREE.Vector3();
     var vz = new THREE.Vector3();
+    var from = new THREE.Vector3();
+    var to = new THREE.Vector3();
+    var fromPrev = new THREE.Vector3( 0, 0, 0 );
+    var pNext = new THREE.Vector3( 0, 0, 0 );
+    var vxNext = new THREE.Vector3( 0, 0, 0 );
+    var toNext = new THREE.Vector3( 0, 0, 0 );
 
     aPosition.set( position );
     aColor.set( color );
@@ -2299,7 +2377,7 @@ NGL.EllipticCylinderImpostorBuffer = function ( position, xdir, ydir, zdir, colo
         mat.set(
             vx.length(), 0.0, 0.0, 0.0,
             0.0, vy.length(), 0.0, 0.0,
-            0.0, 0.0, vz.length(), 0.0,
+            0.0, 0.0, vz.length()*(tube ? 1.7 : 1.0), 0.0,
             //x, y, z, 1.0
             0.0, 0.0, 0.0, 1.0
         );
@@ -2309,13 +2387,128 @@ NGL.EllipticCylinderImpostorBuffer = function ( position, xdir, ydir, zdir, colo
         mat.multiplyMatrices( mat, m1 );
 
         T.set( mat.elements, t );
+
+        if( tube ){
+            p.set( x, y, z );
+            from.copy( p ).sub( vz );
+            to.copy( p ).add( vz );
+
+            if( v%tube==0 ){
+                fromPrev.copy( from ).sub( vz );
+            }
+
+            if( v%tube==tube-1 ){
+                toNext.copy( to ).add( vz );
+            }else{
+                pNext.set( position[ i + 3 ], position[ i + 4 ], position[ i + 5 ] );
+                vxNext.set( zdir[ i + 3 ], zdir[ i + 4 ], zdir[ i + 5 ] );
+                toNext.copy( pNext ).add( vxNext );
+            }
+
+            aP[ i + 0 ] = fromPrev.x;
+            aP[ i + 1 ] = fromPrev.y;
+            aP[ i + 2 ] = fromPrev.z;
+
+            aQ[ i + 0 ] = from.x;
+            aQ[ i + 1 ] = from.y;
+            aQ[ i + 2 ] = from.z;
+
+            aR[ i + 0 ] = to.x;
+            aR[ i + 1 ] = to.y;
+            aR[ i + 2 ] = to.z;
+
+            aS[ i + 0 ] = toNext.x;
+            aS[ i + 1 ] = toNext.y;
+            aS[ i + 2 ] = toNext.z;
+
+            aX[ i + 0 ] = vx.x;
+            aX[ i + 1 ] = vx.y;
+            aX[ i + 2 ] = vx.z;
+
+            aY[ i + 0 ] = vy.x;
+            aY[ i + 1 ] = vy.y;
+            aY[ i + 2 ] = vy.z;
+            
+            fromPrev.copy( from );
+            aRadius[ v ] = 2.0;
+        }
     }
 
     // console.log( "aPosition", aPosition );
     // console.log( "T", T );
     // console.log( "aColor", aColor );
+    // if( tube ){
+    //     console.log( "aP", aP );
+    //     console.log( "aQ", aQ );
+    //     console.log( "aR", aR );
+    //     console.log( "aS", aS );
+    //     console.log( "aX", aX );
+    //     console.log( "aY", aY );
+    // }
 
-    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "CYLINDER" );
+    if( tube ){
+        var tubeData = { "p": aP, "q": aQ, "r": aR, "s": aS, "axisA": aX, "axisB": aY };
+        // new NGL.SphereImpostorBuffer( aP, aColor, aRadius );
+        // new NGL.SphereImpostorBuffer( aQ, aColor, aRadius );
+        // new NGL.SphereImpostorBuffer( aR, aColor, aRadius );
+        // new NGL.SphereImpostorBuffer( aS, aColor, aRadius );
+    }
+
+    new NGL.QuadricImpostorBuffer( aPosition, T, aColor, "CYLINDER", tubeData );
+}
+
+
+NGL.EllipticTubeImpostorBuffer = function ( position, xdir, ydir, zdir, color ) {
+
+    var n = ( position.length/3 ) - 1;
+    var n3 = n * 3;
+
+    var aPosition = new Float32Array( n3 );
+    var aColor = new Float32Array( n3 );
+    var aXdir = new Float32Array( n3 );
+    var aYdir = new Float32Array( n3 );
+    var aZdir = new Float32Array( n3 );
+
+
+    var i;
+    var p = new THREE.Vector3( 0, 0, 0 );
+    var pv = new THREE.Vector3( 0, 0, 0 );
+    var pPrev = new THREE.Vector3( 0, 0, 0 );
+    var pNext = new THREE.Vector3( 0, 0, 0 );
+
+    for( var v = 0; v < n; v++ ) {
+        i = 3 * v;
+
+        pPrev.set( position[ i + 0 ], position[ i + 1 ], position[ i + 2 ] );
+        pNext.set( position[ i + 3 ], position[ i + 4 ], position[ i + 5 ] );
+        p.copy( pPrev ).add( pNext ).divideScalar( 2.0 );
+
+        aPosition[ i + 0 ] = p.x;
+        aPosition[ i + 1 ] = p.y;
+        aPosition[ i + 2 ] = p.z;
+
+        aXdir[ i + 0 ] = xdir[ i + 0 ] * 3;
+        aXdir[ i + 1 ] = xdir[ i + 1 ] * 3;
+        aXdir[ i + 2 ] = xdir[ i + 2 ] * 3;
+
+        aYdir[ i + 0 ] = ydir[ i + 0 ] * 0.7;
+        aYdir[ i + 1 ] = ydir[ i + 1 ] * 0.7;
+        aYdir[ i + 2 ] = ydir[ i + 2 ] * 0.7;
+
+        pv.copy( pNext ).sub( pPrev ).divideScalar( 2.0 );
+
+        aZdir[ i + 0 ] = pv.x;
+        aZdir[ i + 1 ] = pv.y;
+        aZdir[ i + 2 ] = pv.z;
+
+
+        aColor[ i + 0 ] = color[ i + 0 ];
+        aColor[ i + 1 ] = color[ i + 1 ];
+        aColor[ i + 2 ] = color[ i + 2 ];
+
+    }
+
+    new NGL.EllipticCylinderImpostorBuffer( aPosition, aXdir, aYdir, aZdir, aColor, n );
 }
 
 
@@ -3759,6 +3952,8 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
     var n = from.length/3;
     var n6 = n * 6;
 
+    var aRadius = new Float32Array( n6 );
+
     // make shader material
     var attributes = {
         inputMapping: { type: 'v2', value: null },
@@ -3944,6 +4139,8 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
 
             inputCylinderRadius[ (v * 6) + m ] = radius[ v ];
             inputCylinderHeight[ (v * 6) + m ] = height;
+
+            aRadius[ (v * 6) + m ] = 2.0;
         }
 
         ix = v * 12;
@@ -3962,6 +4159,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
     // console.log( "inputCylinderRadius", inputCylinderRadius );
     // console.log( "inputCylinderHeight", inputCylinderHeight );
     // console.log( "indices", indices );
+    console.log( "n, tube", n, tube );
 
     mesh = new THREE.Mesh( geometry, material );
     NGL.group.add( mesh );
@@ -3976,6 +4174,11 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, tube ) 
     this.material = material;
     this.mesh = mesh;
     this.n = n;
+
+    // new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius );
+    // new NGL.SphereImpostorBuffer( inputQ, inputColor, inputCylinderRadius );
+    // new NGL.SphereImpostorBuffer( inputR, inputColor, inputCylinderRadius );
+    // new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius );
 }
 
 

@@ -208,10 +208,8 @@ void main()
 
     // this is a workaround necessary for Mac
     // otherwise the modified fragment won't clip properly
-
     if (depth2 <= 0.0)
         discard;
-
     if (depth2 >= 1.0)
         discard;
 

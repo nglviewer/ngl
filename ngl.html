@@ -74,6 +74,7 @@
                     primitives.add(oNgl, 'primitiveType', [
                         'BezierRaymarch',
                         'BezierImpostor',
+                        'EllipticBezierImpostor',
                         'Bezier',
                         'HelixImpostor',
                         'HelixImpostor2',
@@ -120,6 +121,7 @@
                     models.add(oNgl, 'modelType', [
                         'spacefill',
                         'tube',
+                        'elliptic-tube',
                         'ribbon',
                         'ball+stick',
                         'stick',
@@ -185,9 +187,9 @@
                     
                     
                     // oNgl.randomColor = true;
-                    // oNgl.modelId = '1crn_ca';
-                    // oNgl.modelType = 'ribbon';
-                    // oNgl.addModel();
+                    oNgl.modelId = '1crn_ca';
+                    oNgl.modelType = 'elliptic-tube';
+                    oNgl.addModel();
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
@@ -204,7 +206,7 @@
 
             
             var NglExample = function() {
-                this.count = 100;
+                this.count = 1;
                 this.size = 2.0;
                 this.orthoSphere = false;
                 this.primitiveType = 'EllipticBezierImpostor';
@@ -247,13 +249,23 @@
                         },
                         'BezierImpostor': function(){
                             var bd = makeBezierData( this.count, this.size );
-                            new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 10 );
+                            new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
+
+                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
                         },
                         'EllipticBezierImpostor': function(){
                             var bd = makeBezierData( this.count, this.size );
                             new NGL.EllipticBezierImpostorBuffer( 
-                                bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 10
+                                bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 3
                             );
+                            
+                            // new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
+
+                            new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
+                            new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
+                            new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
                         },
                         'Bezier': function(){
                             var bd = makeBezierData( this.count, this.size );
@@ -315,9 +327,10 @@
                         },
                         'QuadricImpostor': function(){
                             var qlist = [
-                                "EllipsoidImpostorBuffer", "HyperboloidOneImpostorBuffer",
-                                "HyperboloidTwoImpostorBuffer", "ConeImpostorBuffer",
-                                "EllipticCylinderImpostorBuffer"
+                                // "EllipsoidImpostorBuffer", "HyperboloidOneImpostorBuffer",
+                                // "HyperboloidTwoImpostorBuffer", 
+                                "ConeImpostorBuffer",
+                                // "EllipticCylinderImpostorBuffer"
                             ]
                             var n = qlist.length;
                             var m = Math.floor( this.size / n );
@@ -568,6 +581,14 @@
                             }else{
                                 new NGL.TubeGroup( position, color, radius, 10 );
                             }
+                            break;
+                        case "elliptic-tube":
+                            var pd = NGL.getPathData( position, color, radius, 20 );
+                            new NGL.EllipticTubeImpostorBuffer(
+                                pd.position,
+                                pd.binormals, pd.normals, pd.tangents,
+                                pd.color
+                            );
                             break;
                         case "ribbon":
                             new NGL.TextBuffer( position, radius );
@@ -982,9 +1003,15 @@
                     color[ j + 1 ] = Math.random();
                     color[ j + 2 ] = Math.random();
 
-                    x = (Math.random() * 2 - 1) * cube;
-                    y = (Math.random() * 2 - 1) * cube;
-                    z = (Math.random() * 2 - 1) * cube;
+                    if( i==0 ){
+                        x = 0;
+                        y = 0;
+                        z = 0;
+                    }else{
+                        x = (Math.random() * 2 - 1) * cube;
+                        y = (Math.random() * 2 - 1) * cube;
+                        z = (Math.random() * 2 - 1) * cube;
+                    }
 
                     a = Math.random() * 10;
                     b = Math.random() * 10;
