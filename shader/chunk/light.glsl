@@ -3,7 +3,6 @@
 // IN: transformedNormal, vLightFront
 // OUT: vLightFront
 
-//vec3 vLightFront = color;
 // #if MAX_DIR_LIGHTS > 0
 //     for( int i = 0; i < MAX_DIR_LIGHTS; i ++ ) {
 //         vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );
