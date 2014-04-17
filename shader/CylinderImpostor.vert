@@ -11,15 +11,9 @@ attribute highp vec3 inputQ;
 attribute highp vec3 inputR;
 attribute highp vec3 inputS;
 
-varying lowp vec3 mapping;
-varying mat3 cameraToCylinder;
 varying lowp vec3 color;
 varying lowp vec3 color2;
-varying highp vec3 cameraCylinderPos;
-varying highp vec3 cylinderCenter;
-varying highp vec3 cylinderAxis;
-varying lowp float cylinderRadius;
-varying lowp float cylinderHeight;
+varying lowp float cylinderRadius;  
 
 varying vec3 point;
 varying vec3 axis;
@@ -58,7 +52,6 @@ void main()
     color  = inputColor;
     color2  = inputColor2;
     cylinderRadius = inputCylinderRadius;
-    cylinderHeight = inputCylinderHeight;
 
 
 
