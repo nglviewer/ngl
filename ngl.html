@@ -79,6 +79,7 @@
                         'HelixImpostor',
                         'HelixImpostor2',
                         'SphereImpostor',
+                        'SphereMesh',
                         'Sphere',
                         'Particle',
                         'ParticleSprite',
@@ -170,12 +171,16 @@
                     // oNgl.count = 500;
                     // oNgl.primitiveType = 'Text';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'SphereImpostor';
-                    // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'SphereImpostor';
+                    oNgl.addPrimitive();
+                    oNgl.primitiveType = 'SphereMesh';
+                    oNgl.addPrimitive();
+                    oNgl.primitiveType = 'Sphere';
+                    oNgl.addPrimitive();
                     // oNgl.primitiveType = 'QuadricImpostor';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'EllipticBezierImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'EllipticBezierImpostor';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'Particle';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SceneImpostor';
@@ -187,9 +192,9 @@
                     
                     
                     // oNgl.randomColor = true;
-                    oNgl.modelId = '1crn_ca';
-                    oNgl.modelType = 'elliptic-tube';
-                    oNgl.addModel();
+                    // oNgl.modelId = '1crn_ca';
+                    // oNgl.modelType = 'elliptic-tube';
+                    // oNgl.addModel();
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
@@ -206,7 +211,7 @@
 
             
             var NglExample = function() {
-                this.count = 1;
+                this.count = 100;
                 this.size = 2.0;
                 this.orthoSphere = false;
                 this.primitiveType = 'EllipticBezierImpostor';
@@ -307,6 +312,9 @@
                         },
                         'SphereImpostor': function(){
                             new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
+                        },
+                        'SphereMesh': function(){
+                            new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
                         },
                         'Sphere': function(){
                             new NGL.SphereGroup( c1.to, c1.color, r1 );
