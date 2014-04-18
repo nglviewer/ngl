@@ -8,7 +8,6 @@ attribute lowp float inputWidth;
 varying float dist;
 varying lowp vec3 color;
 varying lowp vec3 color2;
-varying vec3 vNormal;
 
 
 // void main2(void){
@@ -72,9 +71,7 @@ void main(void){
 
     color = inputColor;
     color2 = inputColor2;
-    vNormal = normalize( cross( ldir, left ) );
-    if( dot(cam_dir, vNormal)>=0.0 )
-        vNormal *= -1.0;
+    
     // TODO compare without sqrt
     if( distance( point, end ) < distance( point, base ) ){
         dist = b > 0.0 ? 1.0 : 0.0;

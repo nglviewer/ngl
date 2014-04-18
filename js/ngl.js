@@ -906,7 +906,7 @@ NGL.BufferVectorHelper = function( position, vector, color ){
 
     material = new THREE.LineBasicMaterial({ color: color, fog: true });
     geometry = new THREE.BufferGeometry();
-    geometry.addAttribute( 'position', Float32Array, n2, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n2, 3 ) );
 
     var aPosition = geometry.attributes.position.array;
 
@@ -1001,16 +1001,16 @@ NGL.BezierRaymarchBuffer = function ( p0, p1, p2, color, radius ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputP0', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputP1', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputP2', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputColor', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputAxis', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputCylinderRadius', Float32Array, n6, 1 );
-    geometry.addAttribute( 'inputCylinderHeight', Float32Array, n6, 1 );
-    geometry.addAttribute( 'inputBezierRadius', Float32Array, n6, 1 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputP0', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputP1', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputP2', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputAxis', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputCylinderRadius', new THREE.Float32Attribute( n6, 1 ) );
+    geometry.addAttribute( 'inputCylinderHeight', new THREE.Float32Attribute( n6, 1 ) );
+    geometry.addAttribute( 'inputBezierRadius', new THREE.Float32Attribute( n6, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var aP0 = geometry.attributes.inputP0.array;
@@ -1023,7 +1023,7 @@ NGL.BezierRaymarchBuffer = function ( p0, p1, p2, color, radius ) {
     var inputCylinderHeight = geometry.attributes.inputCylinderHeight.array;
     var inputBezierRadius = geometry.attributes.inputBezierRadius.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 12, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 12, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n6, 4, 6 );
@@ -1497,12 +1497,12 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputDir', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputSize', Float32Array, n4, 1 );
-    geometry.addAttribute( 'normal', Float32Array, n4, 3 );
-    //geometry.addAttribute( 'inputNormal', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputDir', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputSize', new THREE.Float32Attribute( n4, 1 ) );
+    geometry.addAttribute( 'normal', new THREE.Float32Attribute( n4, 3 ) );
+    //geometry.addAttribute( 'inputNormal', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n4, 3 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputDir = geometry.attributes.inputDir.array;
@@ -1511,7 +1511,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     //var inputNormal = geometry.attributes.inputNormal.array;
     var inputColor = geometry.attributes.inputColor.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -1694,24 +1694,24 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type, tubeData ){
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
-    geometry.addAttribute( 'T1', Float32Array, n4, 4 );
-    geometry.addAttribute( 'T2', Float32Array, n4, 4 );
-    geometry.addAttribute( 'T3', Float32Array, n4, 4 );
-    geometry.addAttribute( 'T4', Float32Array, n4, 4 );
-    geometry.addAttribute( 'Ti1', Float32Array, n4, 4 );
-    geometry.addAttribute( 'Ti2', Float32Array, n4, 4 );
-    geometry.addAttribute( 'Ti3', Float32Array, n4, 4 );
-    geometry.addAttribute( 'Ti4', Float32Array, n4, 4 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'T1', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'T2', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'T3', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'T4', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'Ti1', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'Ti2', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'Ti3', new THREE.Float32Attribute( n4, 4 ) );
+    geometry.addAttribute( 'Ti4', new THREE.Float32Attribute( n4, 4 ) );
     if( tubeData ){
-        geometry.addAttribute( 'inputP', Float32Array, n4, 3 );
-        geometry.addAttribute( 'inputQ', Float32Array, n4, 3 );
-        geometry.addAttribute( 'inputR', Float32Array, n4, 3 );
-        geometry.addAttribute( 'inputS', Float32Array, n4, 3 );
-        geometry.addAttribute( 'inputAxisA', Float32Array, n4, 3 );
-        geometry.addAttribute( 'inputAxisB', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputP', new THREE.Float32Attribute( n4, 3 ) );
+        geometry.addAttribute( 'inputQ', new THREE.Float32Attribute( n4, 3 ) );
+        geometry.addAttribute( 'inputR', new THREE.Float32Attribute( n4, 3 ) );
+        geometry.addAttribute( 'inputS', new THREE.Float32Attribute( n4, 3 ) );
+        geometry.addAttribute( 'inputAxisA', new THREE.Float32Attribute( n4, 3 ) );
+        geometry.addAttribute( 'inputAxisB', new THREE.Float32Attribute( n4, 3 ) );
     }
 
     var aPosition = geometry.attributes.position.array;
@@ -1734,7 +1734,7 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type, tubeData ){
         var inputAxisB = geometry.attributes.inputAxisB.array;
     }
 
-    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -1926,18 +1926,18 @@ NGL.HelixImpostorBuffer = function ( from, to, dir, color, color2, radius ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputColor', Float32Array, n6, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n6, 3 ) );
     if( color2 ){
-        geometry.addAttribute( 'inputColor2', Float32Array, n6, 3 );
+        geometry.addAttribute( 'inputColor2', new THREE.Float32Attribute( n6, 3 ) );
     }
-    geometry.addAttribute( 'inputAxis', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputDir', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputQ', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputR', Float32Array, n6, 3 );
-    geometry.addAttribute( 'inputCylinderRadius', Float32Array, n6, 1 );
-    geometry.addAttribute( 'inputCylinderHeight', Float32Array, n6, 1 );
+    geometry.addAttribute( 'inputAxis', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputDir', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputQ', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputR', new THREE.Float32Attribute( n6, 3 ) );
+    geometry.addAttribute( 'inputCylinderRadius', new THREE.Float32Attribute( n6, 1 ) );
+    geometry.addAttribute( 'inputCylinderHeight', new THREE.Float32Attribute( n6, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
@@ -1952,7 +1952,7 @@ NGL.HelixImpostorBuffer = function ( from, to, dir, color, color2, radius ) {
     var inputCylinderRadius = geometry.attributes.inputCylinderRadius.array;
     var inputCylinderHeight = geometry.attributes.inputCylinderHeight.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 12, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 12, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n6, 4, 6 );
@@ -2119,18 +2119,18 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n8, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n8, 3 );
-    geometry.addAttribute( 'inputColor', Float32Array, n8, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n8, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n8, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n8, 3 ) );
     if( color2 ){
-        geometry.addAttribute( 'inputColor2', Float32Array, n8, 3 );
+        geometry.addAttribute( 'inputColor2', new THREE.Float32Attribute( n8, 3 ) );
     }
-    geometry.addAttribute( 'inputAxis', Float32Array, n8, 3 );
-    geometry.addAttribute( 'inputDir', Float32Array, n8, 3 );
-    geometry.addAttribute( 'inputQ', Float32Array, n8, 3 );
-    geometry.addAttribute( 'inputR', Float32Array, n8, 3 );
-    geometry.addAttribute( 'inputCylinderRadius', Float32Array, n8, 1 );
-    geometry.addAttribute( 'inputCylinderHeight', Float32Array, n8, 1 );
+    geometry.addAttribute( 'inputAxis', new THREE.Float32Attribute( n8, 3 ) );
+    geometry.addAttribute( 'inputDir', new THREE.Float32Attribute( n8, 3 ) );
+    geometry.addAttribute( 'inputQ', new THREE.Float32Attribute( n8, 3 ) );
+    geometry.addAttribute( 'inputR', new THREE.Float32Attribute( n8, 3 ) );
+    geometry.addAttribute( 'inputCylinderRadius', new THREE.Float32Attribute( n8, 1 ) );
+    geometry.addAttribute( 'inputCylinderHeight', new THREE.Float32Attribute( n8, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
@@ -2145,7 +2145,7 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
     var inputCylinderRadius = geometry.attributes.inputCylinderRadius.array;
     var inputCylinderHeight = geometry.attributes.inputCylinderHeight.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 36, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 36, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n8, 12, 8 );
@@ -2702,15 +2702,15 @@ NGL.MeshBuffer = function ( position, color, index, normal ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n, 3 );
-    geometry.addAttribute( 'color', Float32Array, n, 3 );
-    geometry.addAttribute( 'normal', Float32Array, n, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n, 3 ) );
+    geometry.addAttribute( 'color', new THREE.Float32Attribute( n, 3 ) );
+    geometry.addAttribute( 'normal', new THREE.Float32Attribute( n, 3 ) );
 
     geometry.attributes.position.array = position;
     geometry.attributes.color.array = color;
     geometry.attributes.normal.array = normal;
 
-    geometry.addAttribute( 'index', Uint16Array, n*3, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n*3, 1 ) );
     geometry.attributes.index.array = index;
 
     mesh = new THREE.Mesh( geometry, material );
@@ -2754,17 +2754,17 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
-    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
+    geometry.addAttribute( 'inputSphereRadius', new THREE.Float32Attribute( n4, 1 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n4, 3 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
     var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
     var inputColor = geometry.attributes.inputColor.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -2843,8 +2843,8 @@ NGL.ParticleBuffer = function ( position, color, size ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n, 3 );
-    geometry.addAttribute( 'color', Float32Array, n, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n, 3 ) );
+    geometry.addAttribute( 'color', new THREE.Float32Attribute( n, 3 ) );
 
     var aPosition = geometry.attributes.position.array;
     var aColor = geometry.attributes.color.array;
@@ -2902,18 +2902,16 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'normal', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputWidth', Float32Array, n4, 1 );
-    geometry.addAttribute( 'inputAxis', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
+    geometry.addAttribute( 'inputWidth', new THREE.Float32Attribute( n4, 1 ) );
+    geometry.addAttribute( 'inputAxis', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n4, 3 ) );
     if( color2 ){
-        geometry.addAttribute( 'inputColor2', Float32Array, n4, 3 );
+        geometry.addAttribute( 'inputColor2', new THREE.Float32Attribute( n4, 3 ) );
     }
 
     var aPosition = geometry.attributes.position.array;
-    var aNormal = geometry.attributes.normal.array;
     var inputMapping = geometry.attributes.inputMapping.array;
     var inputWidth = geometry.attributes.inputWidth.array;
     var inputAxis = geometry.attributes.inputAxis.array;
@@ -2922,7 +2920,7 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
         var inputColor2 = geometry.attributes.inputColor2.array;
     }
 
-    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -2935,8 +2933,6 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
         var r2, g2, b2;
     }
     var i, j, k, ix, it;
-    var v1 = new THREE.Vector3();
-    var v2 = new THREE.Vector3();
 
     var chunkSize = NGL.calculateChunkSize( 4 );
 
@@ -2962,9 +2958,6 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
         x2 = to[ k + 0 ];
         y2 = to[ k + 1 ];
         z2 = to[ k + 2 ];
-
-        v1.set( x1, y1, z1 );
-        v2.set( x2, y2, z2 ).cross( v1 ).normalize();
 
         x = ( x1 + x2 ) / 2.0;
         y = ( y1 + y2 ) / 2.0;
@@ -2994,10 +2987,6 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
             inputAxis[ j + 0 ] = vx;
             inputAxis[ j + 1 ] = vy;
             inputAxis[ j + 2 ] = vz;
-
-            aNormal[ j + 0 ] = v2.x;
-            aNormal[ j + 1 ] = v2.y;
-            aNormal[ j + 2 ] = v2.z;
 
             inputWidth[ (v * 4) + m ] = width[ v ]/4.0;
         }
@@ -3048,8 +3037,8 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, nX, 3 );
-    geometry.addAttribute( 'color', Float32Array, nX, 3 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( nX, 3 ) );
+    geometry.addAttribute( 'color', new THREE.Float32Attribute( nX, 3 ) );
 
     var aPosition = geometry.attributes.position.array;
     var aColor = geometry.attributes.color.array;
@@ -3198,17 +3187,17 @@ NGL.TextBuffer = function ( position, radius, text ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, nc4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, nc4, 2 );
-    geometry.addAttribute( 'inputTexCoord', Float32Array, nc4, 2 );
-    geometry.addAttribute( 'inputSphereRadius', Float32Array, nc4, 1 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( nc4, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( nc4, 2 ) );
+    geometry.addAttribute( 'inputTexCoord', new THREE.Float32Attribute( nc4, 2 ) );
+    geometry.addAttribute( 'inputSphereRadius', new THREE.Float32Attribute( nc4, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
     var inputTexCoord = geometry.attributes.inputTexCoord.array;
     var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
 
-    geometry.addAttribute( 'index', Uint16Array, nc * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( nc * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( nc4, 2, 4 );
@@ -3336,15 +3325,15 @@ NGL.HaloBuffer = function ( position, radius, ortho ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
+    geometry.addAttribute( 'inputSphereRadius', new THREE.Float32Attribute( n4, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
     var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -3478,17 +3467,17 @@ NGL.HyperballSphereImpostorBuffer = function ( position, color, radius ) {
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputColor', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputSphereRadius', Float32Array, n4, 1 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
+    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputSphereRadius', new THREE.Float32Attribute( n4, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
     var inputColor = geometry.attributes.inputColor.array;
     var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
 
-    geometry.addAttribute( 'index', Uint16Array, n * 6, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -3596,16 +3585,16 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', Float32Array, n4, 3 );
-    //geometry.addAttribute( 'inputMapping', Float32Array, n4, 2 );
-    geometry.addAttribute( 'inputMapping', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputColor1', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputColor2', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputRadius1', Float32Array, n4, 1 );
-    geometry.addAttribute( 'inputRadius2', Float32Array, n4, 1 );
-    geometry.addAttribute( 'inputPosition1', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputPosition2', Float32Array, n4, 3 );
-    geometry.addAttribute( 'inputShrink', Float32Array, n4, 1 );
+    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
+    //geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputColor1', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputColor2', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputRadius1', new THREE.Float32Attribute( n4, 1 ) );
+    geometry.addAttribute( 'inputRadius2', new THREE.Float32Attribute( n4, 1 ) );
+    geometry.addAttribute( 'inputPosition1', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputPosition2', new THREE.Float32Attribute( n4, 3 ) );
+    geometry.addAttribute( 'inputShrink', new THREE.Float32Attribute( n4, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
@@ -3622,7 +3611,7 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
 
     // geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
 
-    geometry.addAttribute( 'index', Uint16Array, n * 36, 1 );
+    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 36, 1 ) );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 12, 8 );

@@ -1,3 +1,4 @@
+
 #extension GL_EXT_frag_depth : enable
 
 uniform mat4 projectionMatrix;
@@ -12,22 +13,10 @@ varying vec3 p0;
 varying vec3 p1;
 varying vec3 p2;
 
-varying vec3 mapping;
-varying mat3 cameraToCylinder;
 varying vec3 color;
-varying vec3 cylinderCenter;
-varying vec3 cylinderAxis;
-varying float cylinderRadius;
+varying vec3 point;
 varying float cylinderHeight;
 varying float bezierRadius;
-
-varying vec3 point;
-varying vec3 axis;
-varying vec3 base;
-varying vec3 end;
-varying vec3 U;
-varying vec3 V;
-varying float b;
 
 
 #define PI     3.14159265358979323846264338
@@ -51,29 +40,28 @@ float det(vec2 a, vec2 b)
 // https://www.shadertoy.com/view/ldj3Wh
 vec3 get_distance_vector3( vec2 b0, vec2 b1, vec2 b2 ) 
 {
-  float a =     det(b0,b2);
-  float b = 2.0*det(b1,b0);
-  float d = 2.0*det(b2,b1);
-  float f = b*d - a*a;
-  vec2  d21 = b2-b1;
-  vec2  d10 = b1-b0;
-  vec2  d20 = b2-b0;
-  vec2  gf = 2.0*(b*d21+d*d10+a*d20);
-        gf = vec2(gf.y,-gf.x);
-  vec2  pp = -f*gf/dot(gf,gf);
-  vec2  d0p = b0-pp;
-  float ap = det(d0p,d20);
-  float bp = 2.0*det(d10,d0p);
-  float t = clamp( (ap+bp)/(2.0*a+b+d), 0.0 ,1.0 );
-  return vec3( mix(mix(b0,b1,t), mix(b1,b2,t),t), t );
+    float a =     det(b0,b2);
+    float b = 2.0*det(b1,b0);
+    float d = 2.0*det(b2,b1);
+    float f = b*d - a*a;
+    vec2  d21 = b2-b1;
+    vec2  d10 = b1-b0;
+    vec2  d20 = b2-b0;
+    vec2  gf = 2.0*(b*d21+d*d10+a*d20);
+    gf = vec2(gf.y,-gf.x);
+    vec2  pp = -f*gf/dot(gf,gf);
+    vec2  d0p = b0-pp;
+    float ap = det(d0p,d20);
+    float bp = 2.0*det(d10,d0p);
+    float t = clamp( (ap+bp)/(2.0*a+b+d), 0.0 ,1.0 );
+    return vec3( mix(mix(b0,b1,t), mix(b1,b2,t),t), t );
 }
 
 
 const int MAX_RAYMARCH_ITER = 200;
 const float MIN_RAYMARCH_DELTA = 0.001;
 
-void raymarch(in vec3 ray_start, in vec3 ray_dir, 
-                out float dist, out vec3 p, out int iterations, out vec3 normal) {
+void raymarch(in vec3 ray_start, in vec3 ray_dir, out float dist, out vec3 p, out int iterations, out vec3 normal) {
 
     // put into vertex shader
     vec3 a = p0;

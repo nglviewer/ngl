@@ -3,15 +3,10 @@
 
 uniform mat4 projectionMatrix;
 
-varying lowp vec3 mapping;
-varying mat3 cameraToCylinder;
 varying lowp vec3 color;
 varying lowp vec3 color2;
-varying highp vec3 cameraCylinderPos;
-varying highp vec3 cylinderCenter;
 varying highp vec3 cylinderAxis;
 varying lowp float cylinderRadius;
-varying lowp float cylinderHeight;
 
 varying vec3 point;
 varying vec3 axis;

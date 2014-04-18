@@ -3,8 +3,6 @@ attribute vec2 inputMapping;
 attribute float inputSphereRadius;
 attribute vec3 inputColor;
 
-varying vec2 mapping;
-
 varying vec4 i_near;
 varying vec4 i_far;
 varying vec4 sphereposition;
