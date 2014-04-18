@@ -39,9 +39,6 @@ vec3 line_plane_ixn(vec3 pn, vec3 pp, vec3 ld, vec3 lp)
 void main()
 {
 
-    mat4 MVMatrix = modelViewMatrix;
-    mat4 PMatrix = projectionMatrix;
-    mat3 NormalMatrix = normalMatrix;
     vec4 EyePoint = vec4( cameraPosition, 1.0 );
 
     vec3 center = position.xyz;   
@@ -122,41 +119,41 @@ void main()
     up = cylinderRadius*normalize(up);
 
     // transform to modelview coordinates
-    axis =  normalize(NormalMatrix * ldir);
-    U = normalize(NormalMatrix * up);
-    V = normalize(NormalMatrix * left);
+    axis =  normalize(normalMatrix * ldir);
+    U = normalize(normalMatrix * up);
+    V = normalize(normalMatrix * left);
 
-    vec4 base4 = MVMatrix * vec4(center-ldir, 1.0);
+    vec4 base4 = modelViewMatrix * vec4(center-ldir, 1.0);
     base = base4.xyz / base4.w;
 
-    vec4 top_position = MVMatrix*(vec4(center+ldir,1.0));
+    vec4 top_position = modelViewMatrix*(vec4(center+ldir,1.0));
     vec4 end4 = top_position;
     end = end4.xyz / end4.w;
 
 
-    vec4 p4 = MVMatrix*(vec4(inputP,1.0));
+    vec4 p4 = modelViewMatrix*(vec4(inputP,1.0));
     p = p4.xyz / p4.w;
-    vec4 q4 = MVMatrix*(vec4(inputQ,1.0));
+    vec4 q4 = modelViewMatrix*(vec4(inputQ,1.0));
     q = q4.xyz / q4.w;
-    vec4 r4 = MVMatrix*(vec4(inputR,1.0));
+    vec4 r4 = modelViewMatrix*(vec4(inputR,1.0));
     r = r4.xyz / r4.w;
-    vec4 s4 = MVMatrix*(vec4(inputS,1.0));
+    vec4 s4 = modelViewMatrix*(vec4(inputS,1.0));
     s = s4.xyz / s4.w;
 
 
-    vec4 w = MVMatrix * vec4( 
+    vec4 w = modelViewMatrix * vec4( 
         center + inputMapping.x*ldir + inputMapping.y*left + inputMapping.z*up, 1.0 
     );
     point = w.xyz / w.w;
 
-    gl_Position = PMatrix * w;
+    gl_Position = projectionMatrix * w;
 
-    // // vec4 xf0 = MVMatrix*vec4(center-ldir+left-up,1.0);
-    // // vec4 xf2 = MVMatrix*vec4(center-ldir-left-up,1.0);
-    // vec4 xc0 = MVMatrix*vec4(center+ldir+left-up,1.0);
-    // vec4 xc1 = MVMatrix*vec4(center+ldir+left+up,1.0);
-    // vec4 xc2 = MVMatrix*vec4(center+ldir-left-up,1.0);
-    // vec4 xc3 = MVMatrix*vec4(center+ldir-left+up,1.0);
+    // // vec4 xf0 = modelViewMatrix*vec4(center-ldir+left-up,1.0);
+    // // vec4 xf2 = modelViewMatrix*vec4(center-ldir-left-up,1.0);
+    // vec4 xc0 = modelViewMatrix*vec4(center+ldir+left-up,1.0);
+    // vec4 xc1 = modelViewMatrix*vec4(center+ldir+left+up,1.0);
+    // vec4 xc2 = modelViewMatrix*vec4(center+ldir-left-up,1.0);
+    // vec4 xc3 = modelViewMatrix*vec4(center+ldir-left+up,1.0);
 
     // vec4 w0 = xf0;
     // vec4 w1 = xf2;
@@ -167,27 +164,27 @@ void main()
 
     // // Vertex 1
     // point = w0.xyz / w0.w;
-    // gl_Position = PMatrix  * w0;
+    // gl_Position = projectionMatrix  * w0;
 
     // // Vertex 2
     // point = w1.xyz / w1.w;
-    // gl_Position = PMatrix  * w1;
+    // gl_Position = projectionMatrix  * w1;
 
     // // Vertex 3
     // point = w2.xyz / w2.w;
-    // gl_Position = PMatrix  * w2;
+    // gl_Position = projectionMatrix  * w2;
 
     // // Vertex 4
     // point = w3.xyz / w3.w;
-    // gl_Position = PMatrix  * w3;
+    // gl_Position = projectionMatrix  * w3;
 
     // // Vertex 5
     // point = w4.xyz / w4.w;
-    // gl_Position = PMatrix  * w4;
+    // gl_Position = projectionMatrix  * w4;
 
     // // Vertex 6
     // point = w5.xyz / w5.w;
-    // gl_Position = PMatrix  * w5;
+    // gl_Position = projectionMatrix  * w5;
     
     // move out of viewing frustum to avoid clipping artifacts
     if( gl_Position.z<=5.0 )

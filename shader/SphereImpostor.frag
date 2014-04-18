@@ -6,19 +6,19 @@
 // layout(depth_less) out float gl_FragDepthEXT;
 
 uniform mat4 projectionMatrix;
-uniform mat4 projectionMatrixInverse;
-uniform vec2 viewport;
 
-varying lowp vec3 color;
-varying highp vec3 cameraSpherePos;
-varying lowp float sphereRadius;
-
-vec3 cameraPos;
-vec3 cameraNormal;
+varying vec3 point;
+varying vec3 color;
+varying vec3 cameraSpherePos;
+varying float sphereRadius;
 
 #include light_params
 
 #include fog_params
+
+
+vec3 cameraPos;
+vec3 cameraNormal;
 
 
 // vec4 poly_color = gl_Color;
@@ -36,17 +36,7 @@ vec3 cameraNormal;
 
 void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 {
-    // highp vec3 cameraPlanePos = vec3(mapping * sphereRadius, 0.0) + cameraSpherePos;
-    // highp vec3 rayDirection = normalize(cameraPlanePos);
-    
-    vec3 fc = gl_FragCoord.xyz;
-    fc.xy /= viewport;
-    fc *= 2.0;
-    fc -= 1.0;
-    vec4 p = projectionMatrixInverse * vec4(fc, 1.0);
-    vec3 rayDirection = normalize(p.xyz);
-
-    // gl_FragColor = vec4( rayDirection, 1.0 );
+    vec3 rayDirection = normalize( point );
 
     float B = -2.0 * dot(rayDirection, cameraSpherePos);
     float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);
@@ -88,10 +78,6 @@ void main(void)
     gl_FragColor = vec4( color, 1.0 );
     gl_FragColor.xyz *= vLightFront;
     //gl_FragColor.xyz = transformedNormal;
-
-    // highp vec3 cameraPlanePos = vec3(mapping * sphereRadius, 0.0) + cameraSpherePos;
-    // highp vec3 rayDirection = normalize(cameraPlanePos);
-    // gl_FragColor = vec4( rayDirection, 1.0 );
 
     #include fog
 }
