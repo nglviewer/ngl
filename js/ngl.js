@@ -165,18 +165,10 @@ NGL.resources = {
     'shader/Ribbon.frag': '',
     'shader/SphereImpostor.vert': '',
     'shader/SphereImpostor.frag': '',
-    'shader/SphereImpostorOrtho.vert': '',
-    'shader/SphereImpostorOrtho.frag': '',
-    'shader/SphereImpostorOrthoUnit.vert': '',
-    'shader/SphereImpostorOrthoUnit.frag': '',
-    'shader/SphereImpostorOrthoDepth.vert': '',
-    'shader/SphereImpostorOrthoDepth.frag': '',
     'shader/SphereMesh.vert': '',
     'shader/SphereMesh.frag': '',
     'shader/SphereHalo.vert': '',
     'shader/SphereHalo.frag': '',
-    'shader/SphereHaloOrtho.vert': '',
-    'shader/SphereHaloOrtho.frag': '',
     'shader/CylinderImpostor.vert': '',
     'shader/CylinderImpostor.frag': '',
     'shader/CylinderImpostor2.vert': '',
@@ -575,16 +567,6 @@ NGL.setCamera = function( type, fov ){
     
     NGL.camera.fov = p.cameraFov;
     NGL.camera.updateProjectionMatrix();
-
-    // if( p.cameraType ){
-    //     NGL.camera.toPerspective();
-    //     NGL.camera.position.z = 300;
-    // }else{
-    //     NGL.camera.toOrthographic();
-    //     NGL.camera.position.z = 300;
-    // }
-    // NGL.controls = NGL.makeControls( NGL.camera, NGL.renderer.domElement );
-    // console.log( type, p, NGL.camera );
 };
 
 
@@ -3144,7 +3126,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
 }
 
 
-NGL.HaloBuffer = function ( position, radius, ortho ) {
+NGL.HaloBuffer = function ( position, radius ) {
 
     var geometry, material, mesh;
     var n = position.length/3;
@@ -3163,12 +3145,11 @@ NGL.HaloBuffer = function ( position, radius, ortho ) {
         }
     ]);
 
-    ortho = ortho ? 'Ortho' : '';
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'SphereHalo' + ortho + '.vert' ),
-        fragmentShader: NGL.getShader( 'SphereHalo' + ortho + '.frag' ),
+        vertexShader: NGL.getShader( 'SphereHalo.vert' ),
+        fragmentShader: NGL.getShader( 'SphereHalo.frag' ),
         depthTest: true,
         transparent: true,
         depthWrite: false,
@@ -3589,10 +3570,6 @@ NGL.SphereImpostorBuffer = function ( position, color, radius ) {
         {
             'viewport': { type: "v2", value: new THREE.Vector2( NGL.width, NGL.height ) },
             'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-            'tDepth': { type: "t", value: NGL.depthTarget },
-            'tUnitSphere': { type: "t", value: NGL.unitSphereTarget },
-            'viewWidth': { type: "f", value: NGL.width },
-            'viewHeight': { type: "f", value: NGL.height },
         }
     ]);
 
@@ -3685,7 +3662,7 @@ NGL.SphereImpostorBuffer = function ( position, color, radius ) {
 };
 
 
-NGL.SphereMeshBuffer = function ( position, color, radius, ortho ) {
+NGL.SphereMeshBuffer = function ( position, color, radius ) {
     var sphereGeometry = new THREE.IcosahedronGeometry( 1, 1 );
     console.log( "vertices", sphereGeometry.vertices );
     console.log( "faces", sphereGeometry.faces );
