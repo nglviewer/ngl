@@ -78,10 +78,8 @@ const float plane_shift_eps = 0.01;
 //   - vertex position
 //   - point size
 //   - ray origin
-//   - perspective flag
 //   - quadric equation coefficients
 //   - color
-//   - viewport (width and height only)
 //   - min point size (pointThreshold)
 //
 // OUT:
@@ -102,8 +100,6 @@ const float plane_shift_eps = 0.01;
 // SUB OPTIMAL
 //#define HYPER_PARABOLOID
 
-uniform vec2 viewport; // only width and height passed, no origin
-
 varying float a;
 varying float b;
 varying float c;
@@ -116,7 +112,7 @@ varying float i;
 varying float j;
 
 varying vec4 vColor;
-varying float perspective;
+varying vec3 point;
 
 vec3 raydir; // ray direction in screen space
 vec3 rayorigin; // ray origin in screen space
@@ -199,20 +195,9 @@ I ComputeRayQuadricIntersection()
     float B = 0.0;
     float C = 0.0;
 
-    if (bool(perspective))
-    {
-        A = dot(vec3(a, b, c), D * D) + 2.0 * dot(vec3(d, e, f), D.xxy * D.yzz);
-        B = 2.0 * dot(vec3(g, h, i), D);
-        C = j;
-    }
-    else
-    {
-        A = c;
-        // B = -2.0 * dot(  vec4( c, e, f, 1. ), vec4( P.zxy, 1.0 ) );
-        B = -2.0 * dot(vec4(d, e, f, i), vec4(P.zxy, 1.0));
-        C = dot(vec3(a, b, c), P * P) + 2.0 * (dot(vec3(d, e, f), P.xxy * P.yzz)
-                + dot(vec3(g, h, i), P)) + j;
-    }
+    A = dot(vec3(a, b, c), D * D) + 2.0 * dot(vec3(d, e, f), D.xxy * D.yzz);
+    B = 2.0 * dot(vec3(g, h, i), D);
+    C = j;
     
     float delta = B * B - 4.0 * A * C;
 
@@ -264,25 +249,9 @@ vec3 ellipse_normal( vec3 point, vec3 axis_a, vec3 axis_b, vec3 center )
 
 void main(void)
 {   
-    vec3 fc = gl_FragCoord.xyz;
-    fc.xy /= viewport;
-    fc *= 2.0;
-    fc -= 1.0;
-    vec4 point = projectionMatrixInverse * vec4( fc, 1.0 );
-
-    if (bool(perspective))
-    {
-        // in perspective mode, rayorigin is always at (0.0, 0.0, 0.0)
-        rayorigin = vec3( 0.0, 0.0, 0.0 );
-        raydir = point.xyz / point.w;
-    }
-    else
-    {
-        // in orthographic mode, raydir is always ( 0.0, 0.0, -1.0 );
-        raydir = vec3( 0.0, 0.0, -1.0 );
-        rayorigin = vec3( point.x / point.w, point.y / point.w, 0.0 );
-    }
-
+    rayorigin = vec3( 0.0, 0.0, 0.0 );
+    raydir = normalize( point );
+    
     // compute intersection
     I i = ComputeRayQuadricIntersection();
     

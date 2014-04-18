@@ -71,7 +71,6 @@ mat4 transpose( in mat4 inMatrix ) {
 // IN:
 //   - vertex
 //   - quadric transformation matrix
-//   - viewport (width and height only)
 //   - point scaling factor
 //   - min point size (pointThreshold)
 //
@@ -79,7 +78,6 @@ mat4 transpose( in mat4 inMatrix ) {
 //   - vertex position
 //   - point size
 //   - ray origin
-//   - perspective flag
 //   - quadric equation coefficients
 //   - color
 //
@@ -111,7 +109,6 @@ mat4 transpose( in mat4 inMatrix ) {
     #endif
 #endif
 
-uniform vec2 viewport; // only width and height passed, no origin
 
 // quadric coefficients
 // | a d e g |
@@ -143,7 +140,7 @@ attribute vec4 Ti3;
 attribute vec4 Ti4;
 
 varying vec4 vColor; // primitive color
-varying float perspective; // perspective flag
+varying vec3 point;
 
 // bounds in clip coordinates
 vec2 xbc;
@@ -495,9 +492,6 @@ void main(void)
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     #endif
 
-    //set perspective flag by inspecting the projection matrix
-    perspective = float( projectionMatrix[ 3 ][ 3 ] < FEPS && abs( projectionMatrix[ 2 ][ 3 ] ) > FEPS );
-
     // compute point size and gl_Position; uses Ti and T which have to be
     // computed before calling the function
     ComputePointSizeAndPosition();
@@ -544,6 +538,8 @@ void main(void)
 
     axisA = normalMatrix * inputAxisA;
     axisB = normalMatrix * inputAxisB;
+
+    point = ( projectionMatrixInverse * gl_Position ).xyz;
 
     // move out of viewing frustum to avoid clipping artifacts
     if( gl_Position.z<=5.0 )

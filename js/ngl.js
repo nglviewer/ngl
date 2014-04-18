@@ -1514,7 +1514,6 @@ NGL.QuadricImpostorBuffer = function( position, T, color, type, tubeData ){
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
         {
-            'viewport': { type: "v2", value: new THREE.Vector2( NGL.width, NGL.height ) },
             'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
             'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
             'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
