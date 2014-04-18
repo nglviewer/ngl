@@ -148,9 +148,11 @@ NGL.params = {
 
 
 NGL.resources = {
+    // fonts
     'font/Arial.png': 'image',
     'font/Arial.fnt': '',
 
+    // shaders
     'shader/BezierRaymarch.vert': '',
     'shader/BezierRaymarch.frag': '',
     'shader/HelixImpostor.vert': '',
@@ -183,11 +185,8 @@ NGL.resources = {
     'shader/Quad.frag': '',
     'shader/QuadricImpostor.vert': '',
     'shader/QuadricImpostor.frag': '',
-    'shader/QuadricImpostor2.vert': '',
-    'shader/QuadricImpostor2.frag': '',
-    'shader/QuadricImpostor3.vert': '',
-    'shader/QuadricImpostor3.frag': '',
 
+    // shader chunks
     'shader/chunk/light_params.glsl': '',
     'shader/chunk/light.glsl': '',
     'shader/chunk/fog.glsl': '',
