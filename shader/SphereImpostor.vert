@@ -3,14 +3,13 @@ attribute vec2 inputMapping;
 attribute vec3 inputColor;
 attribute float inputSphereRadius;
 
+varying vec3 point;
 varying vec3 color;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
-uniform vec2 viewport;
+uniform mat4 projectionMatrixInverse;
 
-const float FEPS = 0.000001;
-const float DEF_Z = 1.0 - FEPS;
 const mat4 D = mat4(
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
@@ -48,9 +47,9 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
     vec2 ybc;
 
     mat4 T = mat4(
-        inputSphereRadius, 0.0, 0.0, 0.0,
-        0.0, inputSphereRadius, 0.0, 0.0,
-        0.0, 0.0, inputSphereRadius, 0.0,
+        sphereRadius, 0.0, 0.0, 0.0,
+        0.0, sphereRadius, 0.0, 0.0,
+        0.0, 0.0, sphereRadius, 0.0,
         position.x, position.y, position.z, 1.0
     );
 
@@ -84,8 +83,10 @@ void main(void){
     gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();
 
+    point = ( projectionMatrixInverse * gl_Position ).xyz;
+
     // move out of viewing frustum to avoid clipping artifacts
-    if( gl_Position.z-inputSphereRadius<=1.0 )
+    if( gl_Position.z-sphereRadius<=1.0 )
         gl_Position.z = -10.0;
 }
 

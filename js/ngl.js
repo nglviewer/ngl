@@ -341,7 +341,15 @@ NGL.init = function ( eid ) {
     });
     $.when.apply( $, deferreds ).then( function() {
         $( NGL ).triggerHandler( "initialized" );
-    })
+    });
+
+    // geometries
+    this.sphereGeometry = new THREE.IcosahedronGeometry( 2, 1 );
+    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
+    this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
+    this.cylinderGeometry.applyMatrix( matrix );
+    this.cylinderCappedGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
+    this.cylinderCappedGeometry.applyMatrix( matrix );
     
     // materials
     this.materialCache = {};
@@ -2969,7 +2977,7 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
 }
 
 
-NGL.TextBuffer = function ( position, radius, text ) {
+NGL.TextBuffer = function ( position, size, text ) {
     var type = 'Arial';
     var font = NGL.getFont( type );
     var tex = new THREE.Texture( NGL.resources[ 'font/' + type + '.png' ] );
@@ -2996,7 +3004,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
         position: { type: 'v3', value: null },
         inputMapping: { type: 'v2', value: null },
         inputTexCoord: { type: 'v2', value: null },
-        inputSphereRadius: { type: 'f', value: null }
+        inputSize: { type: 'f', value: null }
     };
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
@@ -3027,12 +3035,12 @@ NGL.TextBuffer = function ( position, radius, text ) {
     geometry.addAttribute( 'position', new THREE.Float32Attribute( nc4, 3 ) );
     geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( nc4, 2 ) );
     geometry.addAttribute( 'inputTexCoord', new THREE.Float32Attribute( nc4, 2 ) );
-    geometry.addAttribute( 'inputSphereRadius', new THREE.Float32Attribute( nc4, 1 ) );
+    geometry.addAttribute( 'inputSize', new THREE.Float32Attribute( nc4, 1 ) );
 
     var aPosition = geometry.attributes.position.array;
     var inputMapping = geometry.attributes.inputMapping.array;
     var inputTexCoord = geometry.attributes.inputTexCoord.array;
-    var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
+    var inputSize = geometry.attributes.inputSize.array;
 
     geometry.addAttribute( 'index', new THREE.Uint16Attribute( nc * 6, 1 ) );
     var indices = geometry.attributes.index.array;
@@ -3092,7 +3100,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
                 aPosition[ j + 1 ] = y;
                 aPosition[ j + 2 ] = z;
 
-                inputSphereRadius[ (iCharAll * 4) + m ] = Math.abs(radius[ v ]);
+                inputSize[ (iCharAll * 4) + m ] = size[ v ];
             }
 
             ix = iCharAll * 6;
@@ -3112,7 +3120,7 @@ NGL.TextBuffer = function ( position, radius, text ) {
     // console.log( "inputMapping", inputMapping );
     // console.log( "inputTexCoord", inputTexCoord );
     // console.log( "aPosition", aPosition );
-    // console.log( "inputSphereRadius", inputSphereRadius );
+    // console.log( "inputSize", inputSize );
     // console.log( "indices", indices );
 
     mesh = new THREE.Mesh( geometry, material );
@@ -3141,7 +3149,8 @@ NGL.HaloBuffer = function ( position, radius ) {
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         {
-            "colorx"  : { type: "c", value: new THREE.Color( 0x007700 ) }
+            "colorx"  : { type: "c", value: new THREE.Color( 0x007700 ) },
+            'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() }
         }
     ]);
 
@@ -3568,7 +3577,6 @@ NGL.SphereImpostorBuffer = function ( position, color, radius ) {
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
         {
-            'viewport': { type: "v2", value: new THREE.Vector2( NGL.width, NGL.height ) },
             'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         }
     ]);

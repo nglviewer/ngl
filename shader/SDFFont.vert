@@ -1,23 +1,18 @@
 
-attribute lowp vec2 inputMapping;
-attribute lowp vec2 inputTexCoord;
-attribute lowp float inputSphereRadius;
+attribute vec2 inputMapping;
+attribute vec2 inputTexCoord;
+attribute float inputSize;
 
-varying lowp vec2 texCoord;
+varying vec2 texCoord;
 
-const lowp float g_boxCorrection = 1.5;
 
 void main(void){
-    lowp vec2 offset;
-    highp vec3 cameraSpherePos;
 
-    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
-    texCoord = inputTexCoord;
+	texCoord = inputTexCoord;
 
-    offset = inputMapping * inputSphereRadius;
-
-    vec4 cameraCornerPos = vec4( cameraSpherePos, 1.0 );
-    cameraCornerPos.xy += offset * g_boxCorrection;
+    vec3 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
+    vec4 cameraCornerPos = vec4( cameraPos, 1.0 );
+    cameraCornerPos.xy += inputMapping * inputSize;
 
     gl_Position = projectionMatrix * cameraCornerPos;
 }
