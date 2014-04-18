@@ -43,7 +43,6 @@
         <script src="js/three/libs/stats.min.js"></script>
         <script src="js/three/controls/TrackballControls.js"></script>
         <script src="js/three/loaders/OBJLoader.js"></script>
-        <script src="js/three/shaders/UnpackDepthRGBAShader.js"></script>
 
         <script type="text/javascript" src="js/threex.rendererstats.js"></script>
 
@@ -98,7 +97,6 @@
                         'SceneSprite',
                         'Surface'
                     ]).listen();
-                    primitives.add(oNgl, 'orthoSphere', true).listen();
                     primitives.add(oNgl, 'addPrimitive');
 
                     var surfaces = gui.addFolder( 'Surfaces' );
@@ -132,15 +130,11 @@
                         'line',
                         'line-sprite',
                     ]).listen();
-                    models.add(oNgl, 'orthoSphere', true).listen();
                     models.add(oNgl, 'useImpostor', true).listen();
                     models.add(oNgl, 'randomColor', true).listen();
                     models.add(oNgl, 'addModel');
 
                     gui.add(oNgl, 'clear');
-                    gui.add(oNgl, 'depthTestSphere').onChange(
-                        function( value ){ NGL.manualDepthTest = value; }
-                    );
                     gui.add(oNgl, 'updateDisplay').onChange(
                         function( value ){ NGL.updateDisplay = value; }
                     );
@@ -213,14 +207,12 @@
             var NglExample = function() {
                 this.count = 100;
                 this.size = 2.0;
-                this.orthoSphere = false;
                 this.primitiveType = 'EllipticBezierImpostor';
                 this.modelId = '1crn';
                 this.modelType = 'ball+stick';
                 this.randomColor = false;
                 this.useImpostor = true;
                 this.surfaceId = '1crn';
-                this.depthTestSphere = false;
                 this.updateDisplay = true;
 
                 this.fog = false;
@@ -239,7 +231,6 @@
                 this.addPrimitive = function(){
                     var c1 = makeCylinderData( this.count, this.size );
                     var r1 = new Float32Array( c1.radius.length );
-                    var ortho = this.orthoSphere;
                     for( var i = 0; i < c1.radius.length; i++ ){
                         r1[ i ] = this.size * 2.5;
                     }
@@ -248,17 +239,17 @@
                             var bd = makeBezierData( this.count, this.size );
                             new NGL.BezierRaymarchBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
 
-                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
-                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
-                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
                         },
                         'BezierImpostor': function(){
                             var bd = makeBezierData( this.count, this.size );
                             new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
 
-                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
-                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
-                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
+                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
                         },
                         'EllipticBezierImpostor': function(){
                             var bd = makeBezierData( this.count, this.size );
@@ -268,9 +259,9 @@
                             
                             // new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
 
-                            new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius, ortho );
-                            new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius, ortho );
-                            new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius, ortho );
+                            new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                            new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                            new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
                         },
                         'Bezier': function(){
                             var bd = makeBezierData( this.count, this.size );
@@ -290,8 +281,8 @@
                             for( var i = 0; i < hd.radius.length; i++ ){
                                 sr[ i ] = this.size / 4.0;
                             }
-                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr, ortho );
-                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr, ortho );
+                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
+                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
                         },
                         'HelixImpostor2': function(){
                             var hd = makeHelixData( this.count, this.size );
@@ -307,11 +298,11 @@
                             for( var i = 0; i < hd.radius.length; i++ ){
                                 sr[ i ] = this.size / 4.0;
                             }
-                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr, ortho );
-                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr, ortho );
+                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
+                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
                         },
                         'SphereImpostor': function(){
-                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
                         },
                         'SphereMesh': function(){
                             new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
@@ -351,10 +342,10 @@
                             
                             for( var i = 0; i < n; ++i ){
                                 qd = makeQuadricData( this.count, m );
-                                new NGL.SphereImpostorBuffer( qd.xpos, qd.color, r1, ortho );
-                                new NGL.SphereImpostorBuffer( qd.ypos, qd.color, r1, ortho );
-                                new NGL.SphereImpostorBuffer( qd.zpos, qd.color, r1, ortho );
-                                new NGL.SphereImpostorBuffer( qd.position, qd.color, r1, ortho );
+                                new NGL.SphereImpostorBuffer( qd.xpos, qd.color, r1 );
+                                new NGL.SphereImpostorBuffer( qd.ypos, qd.color, r1 );
+                                new NGL.SphereImpostorBuffer( qd.zpos, qd.color, r1 );
+                                new NGL.SphereImpostorBuffer( qd.position, qd.color, r1 );
                                 new NGL[ qlist[i] ]( 
                                     qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
                                 );
@@ -375,22 +366,22 @@
                             new NGL.LineSpriteBuffer( c1.from, c1.to, c1.color, c1.color, c1.radius );
                         },
                         'Halo': function(){
-                            new NGL.HaloBuffer( c1.from, r1, ortho );
+                            new NGL.HaloBuffer( c1.from, r1 );
                         },
                         'Text': function(){
                             new NGL.TextBuffer( c1.to, c1.radius );
                         },
                         'SceneImpostor': function(){
-                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
-                            new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius, ortho );
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                            new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius );
                             new NGL.CylinderImpostorBuffer( 
                                 c1.from, c1.to, c1.color, c1.color, c1.radius, true
                             );
-                            new NGL.HaloBuffer( c1.from, r1, ortho );
+                            new NGL.HaloBuffer( c1.from, r1 );
                             new NGL.TextBuffer( c1.to, c1.radius );
                         },
                         'SceneSphereTest': function(){
-                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1, ortho );
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
                             new NGL.SphereGroup( c1.to, c1.color, r1 );
                         },
                         'Scene': function(){
@@ -399,7 +390,7 @@
                             new NGL.CylinderGroup( 
                                 c1.from, c1.to, c1.color, c1.radius
                             );
-                            new NGL.HaloBuffer( c1.from, r1, ortho );
+                            new NGL.HaloBuffer( c1.from, r1 );
                             new NGL.TextBuffer( c1.to, c1.radius );
                         },
                         'SceneSimple': function(){
@@ -429,7 +420,6 @@
                     loadModel( 
                         'data/' + this.modelId + '.json', 
                         this.modelType,
-                        this.orthoSphere,
                         this.useImpostor,
                         this.randomColor
                     );    
@@ -438,8 +428,7 @@
 
                 this.addSurface = function(){
                     loadSurface( 
-                        'data/' + this.surfaceId + '.obj', 
-                        this.orthoSphere
+                        'data/' + this.surfaceId + '.obj'
                     );    
                     NGL.render();
                 };
@@ -503,7 +492,7 @@
             }
 
 
-            function loadModel( url, type, ortho, impostor, randomColor ){
+            function loadModel( url, type, impostor, randomColor ){
                 var _load = function( data ){
                     var mol = data['mol'];
                     var atoms = mol['a'];
@@ -576,7 +565,7 @@
                     switch( type ){
                         case "spacefill":
                             if( impostor ){
-                                new NGL.SphereImpostorBuffer( position, color, radius, ortho );
+                                new NGL.SphereImpostorBuffer( position, color, radius );
                             }else{
                                 new NGL.SphereGroup( position, color, radius );
                             }
@@ -602,13 +591,13 @@
                             new NGL.TextBuffer( position, radius );
                             var pd = NGL.getPathData( position, color, radius, 2 );
                             new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
-                            new NGL.SphereImpostorBuffer( position, color, radius2, ortho );
+                            new NGL.SphereImpostorBuffer( position, color, radius2 );
                             break;
                         case "stick":
                         case "hyperball":
                         case "ball+stick":
                             if( impostor ){
-                                new NGL.SphereImpostorBuffer( position, color, radius, ortho );
+                                new NGL.SphereImpostorBuffer( position, color, radius );
                             }else{
                                 new NGL.SphereGroup( position, color, radius );
                             }

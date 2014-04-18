@@ -272,37 +272,6 @@ NGL.lineLineIntersect = function( p1, p2, p3, p4 ){
 }
 
 
-NGL.ShaderLib = {
-    'depthSphereRGBA': {
-        uniforms: {},
-        vertexShader: [
-            "attribute lowp vec2 inputMapping;",
-            "attribute lowp vec3 inputColor;",
-            "attribute lowp float inputSphereRadius;",
-            "void main() {",
-                "vec4 cameraCornerPos = modelViewMatrix * vec4( position, 1.0 );",
-                "cameraCornerPos.xy += inputMapping * inputSphereRadius;",
-                "gl_Position = projectionMatrix * cameraCornerPos;",
-            "}"
-        ].join("\n"),
-        fragmentShader: [
-            "vec4 pack_depth( const in float depth ) {",
-                "const vec4 bit_shift = vec4( 256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0 );",
-                "const vec4 bit_mask  = vec4( 0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0 );",
-                "vec4 res = fract( depth * bit_shift );",
-                "res -= res.xxyz * bit_mask;",
-                "return res;",
-            "}",
-            "void main() {",
-                //"gl_FragData[ 0 ] = pack_depth( gl_FragCoord.z );",
-                //"gl_FragColor = pack_depth( gl_FragCoord.z );",
-                "gl_FragColor = vec4( 0.5, 0.5, 1.0, 1.0 );",
-            "}"
-        ].join("\n")
-    }
-};
-
-
 NGL.init = function ( eid ) {
 
     var p = NGL.params;
@@ -314,23 +283,12 @@ NGL.init = function ( eid ) {
 
     // camera
 	camera = new THREE.PerspectiveCamera( 40, width / height, 1, 10000 );
-    // camera = new THREE.CombinedCamera( 
-    //     width, height, p.cameraFov, p.cameraNear, p.cameraFar, p.cameraNear, 1000
-    // );
-    //camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, -10000, 10000 );
     camera.position.z = -300;
-    //camera.toOrthographic();
 
     // scene
     scene = new THREE.Scene();
     group = new THREE.Object3D();
     scene.add( group );
-    depthGroup = new THREE.Object3D();
-    depthScene = new THREE.Scene();
-    depthScene.add( depthGroup );
-    unitSphereGroup = new THREE.Object3D();
-    unitSphereScene = new THREE.Scene();
-    unitSphereScene.add( unitSphereGroup );
 
     // renderer
     renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
@@ -344,7 +302,6 @@ NGL.init = function ( eid ) {
 
     // lights
     NGL.makeLights( scene );
-    NGL.makeLights( unitSphereScene );
 
     // controls
     controls = NGL.makeControls( camera, renderer.domElement );
@@ -393,14 +350,6 @@ NGL.init = function ( eid ) {
     $.when.apply( $, deferreds ).then( function() {
         $( NGL ).triggerHandler( "initialized" );
     })
-
-    // geometries
-    this.sphereGeometry = new THREE.IcosahedronGeometry( 2, 1 );
-    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
-    this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
-    this.cylinderGeometry.applyMatrix( matrix );
-    this.cylinderCappedGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
-    this.cylinderCappedGeometry.applyMatrix( matrix );
     
     // materials
     this.materialCache = {};
@@ -408,84 +357,12 @@ NGL.init = function ( eid ) {
     // textures
     this.textures = [];
 
-    // depth
-    // var depthShader = THREE.ShaderLib[ "depthRGBA" ];
-    var depthShader = NGL.ShaderLib[ "depthSphereRGBA" ];
-    //console.log( depthShader );
-    var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
-    var depthAttributes = {
-        inputMapping: { type: 'v2', value: null },
-        inputColor: { type: 'c', value: null },
-        inputSize: { type: 'f', value: null }
-    };
-    this.depthMaterial = new THREE.ShaderMaterial({ 
-        fragmentShader: depthShader.fragmentShader, 
-        vertexShader: depthShader.vertexShader, 
-        uniforms: depthUniforms,
-        attributes: depthAttributes,
-        blending: THREE.NoBlending
-    });
-    this.depthMaterial.needsUpdate = true;
-    //console.log( this.depthMaterial );
-
-    // var composer = new THREE.EffectComposer( renderer );
-    // composer.addPass( new THREE.RenderPass( scene, camera ) );
-
-    this.depthTarget = new THREE.WebGLRenderTarget( 
-        width, height,
-        {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat
-        }
-    );
-    
-    // this.depthPassPlugin = new THREE.DepthPassPlugin();
-    // this.depthPassPlugin.renderTarget = this.depthTarget;
-    // renderer.addPrePlugin( this.depthPassPlugin );
-
-    // screen quad
-    var cameraScreen = new THREE.OrthographicCamera( 
-        width / - 2, width / 2, height / 2, height / - 2, -10000, 10000
-    );
-    cameraScreen.position.z = 100;
-    var materialScreen = new THREE.ShaderMaterial( THREE.UnpackDepthRGBAShader );
-    materialScreen.uniforms['tDiffuse'].value = this.depthTarget;
-    var plane = new THREE.PlaneGeometry( width, height );
-    quad = new THREE.Mesh( plane, materialScreen );
-    quad.position.z = -100;
-    var sceneScreen = new THREE.Scene();
-    sceneScreen.add( quad );
-
-    this.cameraScreen = cameraScreen;
-    this.sceneScreen = sceneScreen;
-
-    // unit sphere (orthographic)
-    $( NGL ).bind( 'initialized', function(){
-        unitSphereGroup.add( NGL.makeUnitSphere( 256 ) );
-        // NGL.group.add( NGL.makeUnitSphere( 256 ) );
-        // console.log( NGL.unitSphereGroup );
-    });
-
-    this.unitSphereTarget = new THREE.WebGLRenderTarget( 
-        512, 512, //width, height,
-        {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat
-        }
-    );
-
     // exports
     this.camera = camera;
     this.width = width;
     this.height = height;
     this.scene = scene;
     this.group = group;
-    this.depthScene = depthScene;
-    this.depthGroup = depthGroup;
-    this.unitSphereScene = unitSphereScene;
-    this.unitSphereGroup = unitSphereGroup;
     this.renderer = renderer;
     this.controls = controls;
     this.stats = stats;
@@ -493,7 +370,6 @@ NGL.init = function ( eid ) {
 
     // params
     this.updateDisplay = true;
-    this.manualDepthTest = false;
 
     // fog & background
     var p = NGL.params;
@@ -531,26 +407,8 @@ NGL.render = function() {
     _.each( NGL.textures, function( v ){
         v.uniform.value = v.tex;
     });
-    
-    if( NGL.manualDepthTest ){
-        NGL.renderer.render( NGL.depthScene, NGL.camera, NGL.depthTarget, true );
-    }
-
-    if( false ){
-        NGL.camera.aspect = 1.0;
-        NGL.camera.updateProjectionMatrix();
-        NGL.renderer.setSize( 256, 256 );
-        //NGL.renderer.render( NGL.unitSphereScene, NGL.camera );
-        NGL.renderer.render( NGL.unitSphereScene, NGL.camera, NGL.unitSphereTarget, true );
-
-        NGL.camera.aspect = window.innerWidth / window.innerHeight;
-        NGL.camera.updateProjectionMatrix();
-        NGL.renderer.setSize( window.innerWidth, window.innerHeight );
-    }
 
     NGL.renderer.render( NGL.scene, NGL.camera );
-    // NGL.unitSphereControls.update();
-    // NGL.renderer.render( NGL.unitSphereScene, NGL.unitSphereCamera );
 
     NGL.rendererStats.update( NGL.renderer );
 }
@@ -627,9 +485,6 @@ NGL.clear = function(){
     NGL.scene.remove( NGL.group );
     NGL.group = new THREE.Object3D();
     NGL.scene.add( NGL.group );
-    NGL.depthScene.remove( NGL.depthGroup );
-    NGL.depthGroup = new THREE.Object3D();
-    NGL.depthScene.add( NGL.depthGroup );
     NGL.renderer.clear();
 }
 
@@ -3715,67 +3570,7 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
 };
 
 
-NGL.makeUnitSphere = function ( radius ) {
-
-    var geometry, material, mesh;
-    var n = 1;
-    var n4 = n * 4;
-
-    // make shader material
-
-    var uniforms = THREE.UniformsUtils.merge([
-        NGL.UniformsLib[ "lights" ],
-        {
-            'color': { type: "c", value: new THREE.Color( 0xFFFFFF ) },
-            'sphereRadius': { type: "f", value: radius },
-            'viewWidth': { type: "f", value: NGL.width },
-            'viewHeight': { type: "f", value: NGL.height }
-        }
-    ]);
-
-    material = new THREE.ShaderMaterial({
-        uniforms: uniforms,
-        attributes: {
-            inputMapping: { type: 'v2', value: null }
-        },
-        vertexShader: NGL.getShader( 'SphereImpostorOrthoUnit.vert' ),
-        fragmentShader: NGL.getShader( 'SphereImpostorOrthoUnit.frag' ),
-        depthTest: true,
-        transparent: false,
-        depthWrite: true,
-        lights: true,
-        fog: false
-    });
-
-    // make geometry and populate buffer
-    geometry = new THREE.BufferGeometry();
-    geometry.addAttribute( 'position', new THREE.Float32Attribute( n4, 3 ) );
-    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n4, 2 ) );
-
-    var aPosition = geometry.attributes.position.array;
-    var inputMapping = geometry.attributes.inputMapping.array;
-
-    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
-    var indices = geometry.attributes.index.array;
-
-    geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
-    console.log(inputMapping, NGL.QuadMapping, geometry.attributes);
-    inputMapping.set( NGL.QuadMapping );
-
-    for( var m = 0, j; m < 4; m++ ) {
-        j = 3 * m;
-        aPosition[ j + 0 ] = 0;
-        aPosition[ j + 1 ] = 0;
-        aPosition[ j + 2 ] = 0;
-    }
-
-    indices.set( NGL.QuadIndices );
-
-    return new THREE.Mesh( geometry, material );
-};
-
-
-NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
+NGL.SphereImpostorBuffer = function ( position, color, radius ) {
 
 	var geometry, material, mesh;
 	var n = position.length/3;
@@ -3801,34 +3596,17 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
         }
     ]);
 
-    ortho = ortho ? 'Ortho' : '';
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'SphereImpostor' + ortho + '.vert' ),
-        fragmentShader: NGL.getShader( 'SphereImpostor' + ortho + '.frag' ),
+        vertexShader: NGL.getShader( 'SphereImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'SphereImpostor.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
         lights: true,
         fog: true
     });
-
-    if( ortho ){
-        depthMaterial = new THREE.ShaderMaterial( {
-            //uniforms: uniforms,
-            attributes: attributes,
-            vertexShader: NGL.getShader( 'SphereImpostor' + ortho + 'Depth.vert' ),
-            fragmentShader: NGL.getShader( 'SphereImpostor' + ortho + 'Depth.frag' ),
-            depthTest: true,
-            transparent: false,
-            depthWrite: true,
-            lights: false,
-            //fog: true
-        });
-    }
-    //material.uniforms['tDepth'].value = NGL.depthTarget;
-    //NGL.textures.push({ uniform: material.uniforms.tDepth, tex: NGL.depthTarget });
 
 	// make geometry and populate buffer
 	geometry = new THREE.BufferGeometry();
@@ -3844,7 +3622,6 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
     var inputSphereRadius = geometry.attributes.inputSphereRadius.array;
 
     geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 6, 1 ) );
-    // geometry.addAttribute( 'index', Uint32Array, n * 6, 1 );
     var indices = geometry.attributes.index.array;
 
     geometry.offsets = NGL.calculateOffsets( n4, 2, 4 );
@@ -3899,10 +3676,6 @@ NGL.SphereImpostorBuffer = function ( position, color, radius, ortho ) {
 
     mesh = new THREE.Mesh( geometry, material );
     NGL.group.add( mesh );
-    if( ortho ){
-        depthMesh = new THREE.Mesh( geometry, depthMaterial );
-        NGL.depthGroup.add( depthMesh );
-    }
 
     // public attributes
 	this.geometry = geometry;
