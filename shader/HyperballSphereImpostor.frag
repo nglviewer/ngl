@@ -1,8 +1,6 @@
 
 #extension GL_EXT_frag_depth : enable
 
-varying vec2 mapping;
-
 varying vec4 i_near;
 varying vec4 i_far;
 varying vec4 sphereposition;
