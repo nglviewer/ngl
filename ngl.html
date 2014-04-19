@@ -140,7 +140,7 @@
                     );
 
                     var options = gui.addFolder( 'Options ' );
-                    options.add(oNgl, 'fog').onChange(
+                    options.add(oNgl, 'fogType', ['', 'linear', 'exp2']).onChange(
                         function( value ){ NGL.setFog( value ); }
                     );
                     options.add(oNgl, 'fogNear').min(0).max(3000).step(10).onChange(
@@ -148,6 +148,9 @@
                     );
                     options.add(oNgl, 'fogFar').min(0).max(3000).step(10).onChange(
                         function( value ){ NGL.setFog( null, null, null, value ); }
+                    );
+                    options.add(oNgl, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
+                        function( value ){ NGL.setFog( null, null, null, null, value ); }
                     );
                     options.addColor(oNgl, 'fogColor').onChange(
                         function( value ){ NGL.setFog( null, value ); }
@@ -158,8 +161,14 @@
                     // options.add(oNgl, 'cameraPerspective').onChange(
                     //     function( value ){ NGL.setCamera( value ); }
                     // );
-                    options.add(oNgl, 'cameraFov').min(10).max(140).step(1).onChange(
+                    options.add(oNgl, 'cameraFov').min(0).max(180).step(1).onChange(
                         function( value ){ NGL.setCamera( null, value ); }
+                    );
+                    options.add(oNgl, 'cameraNear').min(1).max(10000).step(10).onChange(
+                        function( value ){ NGL.setCamera( null, null, value ); }
+                    );
+                    options.add(oNgl, 'cameraFar').min(1).max(10000).step(10).onChange(
+                        function( value ){ NGL.setCamera( null, null, null, value ); }
                     );
                     
                     // oNgl.count = 500;
@@ -215,13 +224,16 @@
                 this.surfaceId = '1crn';
                 this.updateDisplay = true;
 
-                this.fog = false;
+                this.fogType = "";
                 this.fogNear = 0;
                 this.fogFar = 1000;
+                this.fogDensity = 0.00025;
                 this.fogColor = '#000000';
                 this.backgroundColor = '#000000';
                 this.cameraPerspective = true;
                 this.cameraFov = 40;
+                this.cameraNear = 1;
+                this.cameraFar = 10000;
                 
 
                 this.clear = function(){
