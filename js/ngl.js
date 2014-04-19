@@ -132,6 +132,7 @@ NGL.params = {
     fogColor: 0x000000,
     fogNear: 0,
     fogFar: 1000,
+    fogDensity: 0.00025,
 
     // backgroundColor: 0xFFFFFF,
     backgroundColor: 0x000000,
@@ -539,14 +540,18 @@ NGL.calculateChunkSize = function( nVertex ){
 }
 
 
-NGL.setFog = function( type, color, near, far ){
+NGL.setFog = function( type, color, near, far, density ){
     var p = NGL.params;
     if( !_.isNull(type) ) p.fogType = type;
     if( color ) p.fogColor = color;
     if( near ) p.fogNear = near;
     if( far ) p.fogFar = far;
-    if( p.fogType ){
+    if( density ) p.fogDensity = density;
+
+    if( p.fogType=="linear" ){
         NGL.scene.fog = new THREE.Fog( p.fogColor, p.fogNear, p.fogFar );
+    }else if( p.fogType=="exp2" ){
+        NGL.scene.fog = new THREE.FogExp2( p.fogColor, p.fogDensity );
     }else{
         NGL.scene.fog = null;
     }
@@ -567,12 +572,16 @@ NGL.setBackground = function( color ){
 }
 
 
-NGL.setCamera = function( type, fov ){
+NGL.setCamera = function( type, fov, near, far ){
     var p = NGL.params;
     if( !_.isNull(type) ) p.cameraType = type;
     if( fov ) p.cameraFov = fov;
+    if( near ) p.cameraNear = near;
+    if( far ) p.cameraFar = far;
     
     NGL.camera.fov = p.cameraFov;
+    NGL.camera.near = p.cameraNear;
+    NGL.camera.far = p.cameraFar;
     NGL.camera.updateProjectionMatrix();
 };
 
