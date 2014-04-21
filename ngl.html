@@ -174,16 +174,16 @@
                     // oNgl.count = 500;
                     // oNgl.primitiveType = 'Text';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'SphereImpostor';
-                    // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'SphereImpostor';
+                    oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereMesh';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'Sphere';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'QuadricImpostor';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'EllipticBezierImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'EllipticBezierImpostor';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'Particle';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SceneImpostor';
@@ -214,7 +214,7 @@
 
             
             var NglExample = function() {
-                this.count = 100;
+                this.count = 10;
                 this.size = 2.0;
                 this.primitiveType = 'EllipticBezierImpostor';
                 this.modelId = '1crn';
@@ -315,6 +315,8 @@
                         },
                         'SphereImpostor': function(){
                             new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                            // new NGL.SphereGroup( c1.from, c1.color, r1 );
+                            //new NGL.SphereImpostorBuffer2( c1.from, c1.color, r1 );
                         },
                         'SphereMesh': function(){
                             new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
