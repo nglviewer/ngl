@@ -1,10 +1,10 @@
 
-attribute vec2 inputMapping;
-attribute vec3 inputColor;
-attribute float inputSphereRadius;
+attribute vec2 mapping;
+attribute vec3 color;
+attribute float radius;
 
 varying vec3 point;
-varying vec3 color;
+varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
@@ -69,16 +69,16 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
     float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;
 
     gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );
-    gl_Position.xy -= inputMapping * vec2( sx, sy );
+    gl_Position.xy -= mapping * vec2( sx, sy );
     gl_Position.xy *= gl_Position.w;
 }
 
 
 void main(void){
 
-    color = inputColor;
+    vColor = color;
     cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
-    sphereRadius = inputSphereRadius;
+    sphereRadius = radius;
 
     gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();

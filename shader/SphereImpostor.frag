@@ -8,7 +8,7 @@
 uniform mat4 projectionMatrix;
 
 varying vec3 point;
-varying vec3 color;
+varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
@@ -43,7 +43,7 @@ void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
     
     float det = (B * B) - (4.0 * C);
     if(det < 0.0){
-        discard;
+        //discard;
     }else{
         float sqrtDet = sqrt(det);
         float posT = (-B + sqrtDet)/2.0;
@@ -75,9 +75,9 @@ void main(void)
     
     #include light
 
-    gl_FragColor = vec4( color, 1.0 );
+    gl_FragColor = vec4( vColor, 1.0 );
     gl_FragColor.xyz *= vLightFront;
-    //gl_FragColor.xyz = transformedNormal;
+    // gl_FragColor.xyz = transformedNormal;
 
     #include fog
 }
@@ -85,7 +85,7 @@ void main(void)
 
 void main2(void)
 {
-    gl_FragColor = vec4( color, 1.0 );
+    gl_FragColor = vec4( vColor, 1.0 );
 }
 
 
