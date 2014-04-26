@@ -47,84 +47,7 @@ var log = _.throttle( function(x,y){ console.log(x,y); }, 1000 );
 // https://github.com/cryos/avogadro/tree/master/libavogadro/src/extensions/shaders
 
 
-NGL = {
-    eps: 0.00001,
-	//chunkSize: 65536,
-    chunkSize: 65520, // divisible by 4 (quad mapping) and 6 (box mapping) and 8 (box mapping 2)
-    //chunkSize: 4294967296,
-    BoxMapping: new Float32Array([
-        -1.0,  1.0, -1.0,
-        -1.0, -1.0, -1.0,
-         1.0,  1.0, -1.0,
-         1.0,  1.0,  1.0,
-         1.0, -1.0, -1.0,
-         1.0, -1.0,  1.0
-    ]),
-    BoxIndices: new Uint16Array([
-        0, 1, 2,
-        1, 4, 2,
-        2, 4, 3,
-        4, 5, 3
-    ]),
-    BoxMapping2: new Float32Array([
-        -1.0,  1.0, -1.0,
-         1.0,  1.0, -1.0,
-        -1.0, -1.0, -1.0,
-         1.0, -1.0, -1.0,
-        -1.0,  1.0,  1.0,
-         1.0,  1.0,  1.0,
-        -1.0, -1.0,  1.0,
-         1.0, -1.0,  1.0
-    ]),
-    BoxIndices2: new Uint16Array([
-        0, 1, 2,
-        1, 3, 2,
-        4, 6, 5,
-        5, 6, 7,
-        4, 5, 0,
-        5, 0, 1,
-        6, 2, 7,
-        2, 3, 7,
-        1, 5, 7,
-        7, 3, 1,
-        2, 6, 0,
-        6, 4, 0
-    ]),
-    BoxMapping3: new Float32Array([
-        -1.0, -1.0, -1.0,
-         1.0, -1.0, -1.0,
-         1.0, -1.0,  1.0,
-        -1.0, -1.0,  1.0,
-        -1.0,  1.0, -1.0,
-         1.0,  1.0, -1.0,
-         1.0,  1.0,  1.0,
-        -1.0,  1.0,  1.0
-    ]),
-    BoxIndices3: new Uint16Array([
-        0, 1, 2,
-        0, 2, 3,
-        1, 5, 6,
-        1, 6, 2,
-        4, 6, 5,
-        4, 7, 6,
-        0, 7, 4,
-        0, 3, 7,
-        0, 5, 1,
-        0, 4, 5,
-        3, 2, 6,
-        3, 6, 7
-    ]),
-    QuadMapping: new Float32Array([
-        -1.0,  1.0,
-        -1.0, -1.0,
-         1.0,  1.0,
-         1.0, -1.0
-    ]),
-    QuadIndices: new Uint16Array([
-        0, 1, 2,
-        1, 3, 2
-    ])
-};
+NGL = { REVISION: '1dev' };
 
 
 NGL.params = {
@@ -522,30 +445,6 @@ NGL.makeControls = function( camera, domElement ){
 }
 
 
-NGL.calculateOffsets = function ( n, nTriangle, nVertex ) {
-    var ratio = nTriangle / nVertex;
-	var offsets = [];
-    var offsetCount = n / NGL.chunkSize;
-    for (var i = 0; i < offsetCount; i++) {
-        var offset = {
-            start: i * NGL.chunkSize * ratio * 3,
-            index: i * NGL.chunkSize,
-            count: Math.min(
-            	n*ratio - (i * NGL.chunkSize * ratio), 
-            	NGL.chunkSize * ratio
-        	) * 3
-        };
-        offsets.push( offset );
-    }
-    return offsets;
-}
-
-
-NGL.calculateChunkSize = function( nVertex ){
-    return NGL.chunkSize - ( NGL.chunkSize % nVertex );
-}
-
-
 NGL.setFog = function( type, color, near, far, density ){
     var p = NGL.params;
     if( !_.isNull(type) ) p.fogType = type;
@@ -614,6 +513,26 @@ NGL.getShader = function( name, defines ) {
 };
 
 
+//////////
+// Scene
+
+NGL.Scene = function(){
+
+}
+
+NGL.Scene.prototype = {
+    
+    constructor: NGL.Scene,
+
+    add: function( buffer ){
+
+        this.group.add( buffer.mesh );
+
+    }
+
+}
+
+
 ////////////////
 // Buffer Core
 
@@ -628,7 +547,6 @@ NGL.Buffer = function () {
     this.addAttributes({
         "position": { type: "v3", value: null },
         "color": { type: "c", value: null },
-        "index": { type: "f", value: null },
     });
     
     this.uniforms = THREE.UniformsUtils.merge( [
@@ -692,41 +610,13 @@ NGL.Buffer.prototype = {
 
     },
 
-    // TODO
     setAttributes: function( data ){
 
         var attributes = this.geometry.attributes;
-        var size = this.size;
-
-        var a, d, itemSize, array, n, i, j;
 
         _.each( data, function( d, name ){
             
-            d = data[ name ];
-            a = attributes[ name ];
-            itemSize = a.itemSize;
-            array = a.array;
-            
-            array.set( d );
-
-            // for( var k = 0; k < size; ++k ) {
-                
-            //     n = k * itemSize;
-            //     i = n * mappingSize;
-                
-            //     for( var l = 0; l < mappingSize; ++l ) {
-                    
-            //         j = i + (itemSize * l);
-
-            //         for( var m = 0; m < itemSize; ++m ) {
-                        
-            //             array[ j + m ] = d[ n + m ];
-
-            //         }
-
-            //     }
-
-            // }
+            attributes[ name ].set( data[ name ] );
 
         }, this );
 
@@ -738,15 +628,13 @@ NGL.Buffer.prototype = {
             "index", new THREE.Uint16Attribute( this.index.length, 1 )
         );
 
-        var index = this.geometry.attributes[ "index" ].array;
-        index.set( this.index );
+        this.geometry.attributes[ "index" ].array.set( this.index );
 
     }
 
 };
 
 
-// TODO
 NGL.MeshBuffer = function ( position, color, index, normal ) {
 
     this.size = position.length / 3;
@@ -769,7 +657,7 @@ NGL.MeshBuffer = function ( position, color, index, normal ) {
     });
     
     this.finalize();
-    console.log( "FOOBAR", this );
+    
 }
 
 NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
@@ -863,11 +751,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
     var mappingItemSize = this.mappingItemSize;
 
     this.geometry.addAttribute( 
-        "index", new THREE.Uint16Attribute( size * mappingIndicesSize, 1 )
-    );
-
-    this.geometry.offsets = NGL.calculateOffsets( 
-        this.mappedSize, mappingIndicesSize / 3, mappingSize
+        "index", new THREE.Uint32Attribute( size * mappingIndicesSize, 1 )
     );
 
     var index = this.geometry.attributes[ "index" ].array;
@@ -883,7 +767,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
         index.set( mappingIndices, ix );
 
         for( var s=0; s<mappingIndicesSize; ++s ){
-            index[ix + s] = (it + index[ix + s]) % chunkSize;
+            index[ ix + s ] += it;
         }
 
     }
@@ -893,8 +777,18 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 
 NGL.QuadBuffer = function () {
 
-    this.mapping = NGL.QuadMapping;
-    this.mappingIndices = NGL.QuadIndices;
+    this.mapping = new Float32Array([
+        -1.0,  1.0,
+        -1.0, -1.0,
+         1.0,  1.0,
+         1.0, -1.0
+    ]);
+
+    this.mappingIndices = new Uint32Array([
+        0, 1, 2,
+        1, 3, 2
+    ]);
+
     this.mappingIndicesSize = 6;
     this.mappingType = "v2";
     this.mappingSize = 4;
@@ -909,8 +803,32 @@ NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
 NGL.BoxBuffer = function () {
 
-    this.mapping = NGL.BoxMapping3;
-    this.mappingIndices = NGL.BoxIndices3;
+    this.mapping = new Float32Array([
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0,
+        -1.0, -1.0,  1.0,
+        -1.0,  1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0
+    ]);
+
+    this.mappingIndices = new Uint32Array([
+        0, 1, 2,
+        0, 2, 3,
+        1, 5, 6,
+        1, 6, 2,
+        4, 6, 5,
+        4, 7, 6,
+        0, 7, 4,
+        0, 3, 7,
+        0, 5, 1,
+        0, 4, 5,
+        3, 2, 6,
+        3, 6, 7
+    ]);
+
     this.mappingIndicesSize = 36;
     this.mappingType = "v3";
     this.mappingSize = 8;
@@ -925,8 +843,22 @@ NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
 NGL.AlignedBoxBuffer = function () {
 
-    this.mapping = NGL.BoxMapping;
-    this.mappingIndices = NGL.BoxIndices;
+    this.mapping = new Float32Array([
+        -1.0,  1.0, -1.0,
+        -1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0
+    ]);
+
+    this.mappingIndices = new Uint32Array([
+        0, 1, 2,
+        1, 4, 2,
+        2, 4, 3,
+        4, 5, 3
+    ]);
+
     this.mappingIndicesSize = 12;
     this.mappingType = "v3";
     this.mappingSize = 6;
@@ -1600,6 +1532,34 @@ NGL.CrossBuffer = function ( position, color, size ) {
 
 /////////
 // Todo
+
+// NGL.chunkSize = 65536;
+NGL.chunkSize = 65520; // divisible by 4 (quad mapping) and 6 (box mapping) and 8 (box mapping 2)
+// NGL.chunkSize = 4294967296;
+
+
+NGL.calculateOffsets = function ( n, nTriangle, nVertex ) {
+    var ratio = nTriangle / nVertex;
+    var offsets = [];
+    var offsetCount = n / NGL.chunkSize;
+    for (var i = 0; i < offsetCount; i++) {
+        var offset = {
+            start: i * NGL.chunkSize * ratio * 3,
+            index: i * NGL.chunkSize,
+            count: Math.min(
+                n*ratio - (i * NGL.chunkSize * ratio), 
+                NGL.chunkSize * ratio
+            ) * 3
+        };
+        offsets.push( offset );
+    }
+    return offsets;
+}
+
+
+NGL.calculateChunkSize = function( nVertex ){
+    return NGL.chunkSize - ( NGL.chunkSize % nVertex );
+}
 
 
 NGL.BufferVectorHelper = function( position, vector, color ){
@@ -2866,11 +2826,37 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
     var i, j, k, ix, it;
     var chunkSize = NGL.calculateChunkSize( 8 );
 
+    var BoxMapping2 = new Float32Array([
+        -1.0,  1.0, -1.0,
+         1.0,  1.0, -1.0,
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+        -1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+        -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0
+    ]);
+
+    var BoxIndices2 = new Uint16Array([
+        0, 1, 2,
+        1, 3, 2,
+        4, 6, 5,
+        5, 6, 7,
+        4, 5, 0,
+        5, 0, 1,
+        6, 2, 7,
+        2, 3, 7,
+        1, 5, 7,
+        7, 3, 1,
+        2, 6, 0,
+        6, 4, 0
+    ]);
+
     for( var v = 0; v < n; v++ ) {
         i = v * 3 * 8;
         k = v * 3;
 
-        inputMapping.set( NGL.BoxMapping2, i );
+        inputMapping.set( BoxMapping2, i );
 
         r = color[ k + 0 ];
         g = color[ k + 1 ];
@@ -2944,7 +2930,7 @@ NGL.HelixImpostorBuffer2 = function ( from, to, dir, color, color2, radius ) {
         ix = v * 36;
         it = v * 8;
 
-        indices.set( NGL.BoxIndices2, ix );
+        indices.set( BoxIndices2, ix );
         for( var s=0; s<36; ++s ){
             indices[ix + s] = (it + indices[ix + s]) % chunkSize;
         }
@@ -3394,41 +3380,6 @@ NGL.HyperboloidTwoImpostorBuffer = function ( position, xdir, ydir, zdir, color 
 }
 
 
-NGL.MeshBuffer2 = function ( position, color, index, normal ) {
-    var geometry, material, mesh;
-    var n = position.length/3;
-
-    material = new THREE.MeshBasicMaterial({
-        vertexColors: true,
-        fog: true
-    });
-
-    // make geometry and populate buffer
-    geometry = new THREE.BufferGeometry();
-
-    geometry.addAttribute( 'position', new THREE.Float32Attribute( n, 3 ) );
-    geometry.addAttribute( 'color', new THREE.Float32Attribute( n, 3 ) );
-    geometry.addAttribute( 'normal', new THREE.Float32Attribute( n, 3 ) );
-
-    geometry.attributes.position.array = position;
-    geometry.attributes.color.array = color;
-    geometry.attributes.normal.array = normal;
-
-    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n*3, 1 ) );
-    geometry.attributes.index.array = index;
-
-    mesh = new THREE.Mesh( geometry, material );
-    NGL.group.add( mesh );
-
-
-    // public attributes
-    this.geometry = geometry;
-    this.material = material;
-    this.mesh = mesh;
-    this.n = n;
-}
-
-
 NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
 
     var geometry, material, mesh;
@@ -3667,7 +3618,7 @@ NGL.CylinderGroup = function ( from, to, color, radius ) {
 }
 
 
-NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube ) {
+NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube ) {
 
     var geometry, material, mesh;
     var n = from.length/3;
@@ -3996,11 +3947,37 @@ NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube )
     var i, j, k, ix, it;
     var chunkSize = NGL.calculateChunkSize( 8 );
 
+    var BoxMapping2 = new Float32Array([
+        -1.0,  1.0, -1.0,
+         1.0,  1.0, -1.0,
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+        -1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+        -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0
+    ]);
+    
+    var BoxIndices2 = new Uint16Array([
+        0, 1, 2,
+        1, 3, 2,
+        4, 6, 5,
+        5, 6, 7,
+        4, 5, 0,
+        5, 0, 1,
+        6, 2, 7,
+        2, 3, 7,
+        1, 5, 7,
+        7, 3, 1,
+        2, 6, 0,
+        6, 4, 0
+    ]);
+
     for( var v = 0; v < n; v++ ) {
         i = v * 3 * 8;
         k = v * 3;
 
-        inputMapping.set( NGL.BoxMapping2, i );
+        inputMapping.set( BoxMapping2, i );
 
         r = color[ k + 0 ];
         g = color[ k + 1 ];
@@ -4102,7 +4079,7 @@ NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube )
         ix = v * 36;
         it = v * 8;
 
-        indices.set( NGL.BoxIndices2, ix );
+        indices.set( BoxIndices2, ix );
         for( var s=0; s<36; ++s ){
             indices[ix + s] = (it + indices[ix + s]) % chunkSize;
         }
