@@ -1,21 +1,20 @@
 
-attribute vec3 inputMapping;
+attribute vec3 mapping;
 attribute float inputRadius1;
 attribute float inputRadius2;
 attribute vec3 inputColor1;
 attribute vec3 inputColor2;
-attribute float inputShrink;
 attribute vec3 inputPosition1;
 attribute vec3 inputPosition2;
 
 varying mat4 matrix_near;
 varying vec4 color_atom1;
 varying vec4 color_atom2;
-varying float shrink;
 
 varying vec4 prime1;
 varying vec4 prime2;
 
+uniform float shrink;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewProjectionMatrixInverse;
 
@@ -31,8 +30,6 @@ void main()
     color_atom1 = vec4( inputColor1, 1.0 );
     color_atom2 = vec4( inputColor2, 1.0 );
 
-    shrink = inputShrink;
-
     float radius1 = inputRadius1;
     float radius2 = inputRadius2;
 
@@ -46,14 +43,14 @@ void main()
         (position_atom1.z - position_atom2.z)*(position_atom1.z - position_atom2.z)
     );
 
-    spaceposition.z = inputMapping.z * distance;
+    spaceposition.z = mapping.z * distance;
 
     if (radius1 > radius2) {
-        spaceposition.y = inputMapping.y * 1.5 * radius1;
-        spaceposition.x = inputMapping.x * 1.5 * radius1;
+        spaceposition.y = mapping.y * 1.5 * radius1;
+        spaceposition.x = mapping.x * 1.5 * radius1;
     } else {
-        spaceposition.y = inputMapping.y * 1.5 * radius2;
-        spaceposition.x = inputMapping.x * 1.5 * radius2;
+        spaceposition.y = mapping.y * 1.5 * radius2;
+        spaceposition.x = mapping.x * 1.5 * radius2;
     }
     spaceposition.w = 1.0;
 

@@ -53,8 +53,6 @@
 
         <script>
 
-            // http://benaadams.github.io/three.js/examples/webgl_interleavedbuffergeometry.html
-
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 
@@ -174,8 +172,10 @@
                     // oNgl.count = 500;
                     // oNgl.primitiveType = 'Text';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'SphereImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'SphereImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'CylinderImpostor';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereMesh';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'Sphere';
@@ -205,7 +205,8 @@
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
                     
-                    // oNgl.addSurface();
+                    oNgl.surfaceId = '1crn';
+                    oNgl.addSurface();
 
                     NGL.animate();
                     NGL.render();
@@ -449,6 +450,112 @@
             };
 
 
+
+            function computeVertexNormals( vertices, faces, areaWeighted ){
+
+                var v, vl, f, fl;
+
+                var normals = new Array( vertices.length );
+
+                for ( v = 0, vl = vertices.length; v < vl; v ++ ) {
+
+                    normals[ v ] = new THREE.Vector3();
+
+                }
+
+                if ( areaWeighted ) {
+
+                    // vertex normals weighted by triangle areas
+                    // http://www.iquilezles.org/www/articles/normals/normals.htm
+
+                    var vA, vB, vC;
+                    var cb = new THREE.Vector3(), ab = new THREE.Vector3();
+
+                    for ( f = 0, fl = faces.length; f < fl; f ++ ) {
+
+                        face = faces[ f ];
+
+                        vA = vertices[ face.a ];
+                        vB = vertices[ face.b ];
+                        vC = vertices[ face.c ];
+
+                        cb.subVectors( vC, vB );
+                        ab.subVectors( vA, vB );
+                        cb.cross( ab );
+
+                        normals[ face.a ].add( cb );
+                        normals[ face.b ].add( cb );
+                        normals[ face.c ].add( cb );
+
+                    }
+
+                } else {
+
+                    for ( f = 0, fl = faces.length; f < fl; f ++ ) {
+
+                        face = faces[ f ];
+
+                        normals[ face.a ].add( face.normal );
+                        normals[ face.b ].add( face.normal );
+                        normals[ face.c ].add( face.normal );
+
+                    }
+
+                }
+
+                for ( v = 0, vl = vertices.length; v < vl; v ++ ) {
+
+                    normals[ v ].normalize();
+
+                }
+
+                return convertVector3ArrayToFloat32Array( normals );
+
+            }
+
+            function getIndicesFromFaces( faces ){
+
+                var j, f;
+                var n = faces.length;
+                var indices = new Uint16Array( n * 3 );
+
+                for( var v = 0; v < n; v++ ){
+
+                    j = v * 3;
+                    f = faces[ v ];
+
+                    indices[ j + 0 ] = f.a;
+                    indices[ j + 1 ] = f.b;
+                    indices[ j + 2 ] = f.c;
+                    
+                }
+
+                return indices;
+
+            }
+
+            function convertVector3ArrayToFloat32Array( vector3array ){
+
+                var j, v3;
+                var n = vector3array.length;
+                var float32array = new Float32Array( n * 3 );
+
+                for( var v = 0; v < n; v++ ){
+
+                    j = v * 3;
+                    v3 = vector3array[ v ];
+
+                    float32array[ j + 0 ] = v3.x;
+                    float32array[ j + 1 ] = v3.y;
+                    float32array[ j + 2 ] = v3.z;
+                    
+                }
+
+                return float32array;
+
+            }
+
+
             function loadSurface( url ){
                 var manager = new THREE.LoadingManager();
                 manager.onProgress = function ( item, loaded, total ) {
@@ -462,33 +569,44 @@
                     geo.applyMatrix( new THREE.Matrix4().makeScale( 7, 7, 7 ) );
                     THREE.GeometryUtils.center( geo );
                     
-                    surface.add( new THREE.Mesh( 
-                        geo, 
-                        new THREE.MeshLambertMaterial({
-                            color: new THREE.Color('skyblue'),
-                            specular: 0x050505, 
-                            wireframe: false,
-                            side: THREE.DoubleSide,
-                            //side: THREE.FrontSide,
-                            transparent: true,
-                            opacity: 0.9,
-                            depthWrite: false,
-                            fog: true,
+                    console.log( geo );
+                    
+                    var position = convertVector3ArrayToFloat32Array( geo.vertices );
+                    var color = new Float32Array( position.length );
+                    var index = getIndicesFromFaces( geo.faces );
+                    var normal = computeVertexNormals( geo.vertices, geo.faces, true );
+
+                    console.log( normal.length, position.length, index.length );
+                    
+                    new NGL.MeshBuffer( position, color, index, normal );
+
+                    // surface.add( new THREE.Mesh( 
+                    //     geo, 
+                    //     new THREE.MeshLambertMaterial({
+                    //         color: new THREE.Color('skyblue'),
+                    //         specular: 0x050505, 
+                    //         wireframe: false,
+                    //         side: THREE.DoubleSide,
+                    //         //side: THREE.FrontSide,
+                    //         transparent: true,
+                    //         opacity: 0.9,
+                    //         depthWrite: false,
+                    //         fog: true,
                             
-                            // blending: THREE.MultiplyBlending,
-                            blending: THREE.AdditiveBlending,
+                    //         // blending: THREE.MultiplyBlending,
+                    //         blending: THREE.AdditiveBlending,
 
-                            // multiply blending
-                            // blending: THREE.CustomBlending,
-                            // blendSrc: THREE.ZeroFactor,
-                            // blendDst: THREE.SrcColorFactor,
+                    //         // multiply blending
+                    //         // blending: THREE.CustomBlending,
+                    //         // blendSrc: THREE.ZeroFactor,
+                    //         // blendDst: THREE.SrcColorFactor,
 
-                            // additive blending
-                            // blending: THREE.CustomBlending,
-                            // blendSrc: THREE.OneFactor,
-                            // blendDst: THREE.OneFactor
-                        })
-                    ));
+                    //         // additive blending
+                    //         // blending: THREE.CustomBlending,
+                    //         // blendSrc: THREE.OneFactor,
+                    //         // blendDst: THREE.OneFactor
+                    //     })
+                    // ));
 
                     // surface.add( new THREE.Mesh( 
                     //     geo, 
@@ -501,7 +619,7 @@
                     //     })
                     // ));
 
-                    NGL.group.add( surface );
+                    //NGL.group.add( surface );
                 } );
             }
 

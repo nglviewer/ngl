@@ -1,5 +1,5 @@
 
-attribute vec2 inputMapping;
+attribute vec2 mapping;
 attribute vec2 inputTexCoord;
 attribute float inputSize;
 
@@ -12,7 +12,7 @@ void main(void){
 
     vec3 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
     vec4 cameraCornerPos = vec4( cameraPos, 1.0 );
-    cameraCornerPos.xy += inputMapping * inputSize;
+    cameraCornerPos.xy += mapping * inputSize;
 
     gl_Position = projectionMatrix * cameraCornerPos;
 }

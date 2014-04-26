@@ -1,16 +1,16 @@
 
 #extension GL_EXT_frag_depth : enable
 
-varying vec3 mapping;
+// varying vec3 mapping;
 
 varying mat4 matrix_near;
 varying vec4 color_atom1;
 varying vec4 color_atom2;
-varying float shrink;
 
 varying vec4 prime1;
 varying vec4 prime2;
 
+uniform float shrink;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 
@@ -199,7 +199,7 @@ void main()
 
 void main2(void)
 {
-    gl_FragColor = color_atom1;
+    gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
 }
 
 
