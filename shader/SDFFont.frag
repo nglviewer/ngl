@@ -2,7 +2,7 @@
 #extension GL_OES_standard_derivatives : enable
 
 uniform sampler2D fontTexture;
-uniform vec3 colorx;
+uniform vec3 color;
 
 varying vec2 texCoord;
 
@@ -43,7 +43,7 @@ void main() {
 
 	// gamma correction for linear attenuation
 	a = pow(a, 1.0/gamma);
-	gl_FragColor = vec4( colorx, a );
+	gl_FragColor = vec4( color, a );
 
     #include fog
 }

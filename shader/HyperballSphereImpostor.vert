@@ -1,7 +1,7 @@
 
-attribute vec2 inputMapping;
-attribute float inputSphereRadius;
-attribute vec3 inputColor;
+attribute vec2 mapping;
+attribute vec3 color;
+attribute float aRadius;
 
 varying vec4 i_near;
 varying vec4 i_far;
@@ -52,9 +52,9 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
     vec2 ybc;
 
     mat4 T = mat4(
-        inputSphereRadius, 0.0, 0.0, 0.0,
-        0.0, inputSphereRadius, 0.0, 0.0,
-        0.0, 0.0, inputSphereRadius, 0.0,
+        aRadius, 0.0, 0.0, 0.0,
+        0.0, aRadius, 0.0, 0.0,
+        0.0, 0.0, aRadius, 0.0,
         position.x, position.y, position.z, 1.0
     );
 
@@ -74,15 +74,15 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
     float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;
 
     gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );
-    gl_Position.xy -= inputMapping * vec2( sx, sy );
+    gl_Position.xy -= mapping * vec2( sx, sy );
     gl_Position.xy *= gl_Position.w;
 }
 
 
 void main(){
 
-    radius = inputSphereRadius;
-    vColor = vec4( inputColor, 1.0 );
+    radius = aRadius;
+    vColor = vec4( color, 1.0 );
     sphereposition = vec4( position, 1.0 );
 
     gl_Position = modelViewProjectionMatrix * sphereposition;

@@ -3,7 +3,7 @@ varying vec3 point;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
-uniform vec3 colorx;
+uniform vec3 color;
 
 #include fog_params
 
@@ -24,10 +24,10 @@ void main(void)
     det = (B * B) - (4.0 * C);
 
     if(det < 0.0){
-        gl_FragColor = vec4( colorx, 1.0 );
+        gl_FragColor = vec4( color, 1.0 );
 
     }else{
-    	gl_FragColor = vec4( colorx, 0.5 );
+    	gl_FragColor = vec4( color, 0.5 );
     }
     
     #include fog
