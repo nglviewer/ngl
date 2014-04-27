@@ -282,11 +282,17 @@ NGL.Viewer = function( eid ){
 
     this.container = document.getElementById( eid );
 
-    // TODO
-    // this.width = this.container.innerWidth;
-    // this.height = this.container.innerHeight;
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
+    console.log( "Viewer container", this.container );
+
+    if ( this.container === document ) {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+    } else {
+        var box = this.container.getBoundingClientRect();
+        this.width = box.width;
+        this.height = box.height;
+    }
+
     this.aspect = this.width / this.height;
 
     this.initParams();
@@ -332,6 +338,7 @@ NGL.Viewer.prototype = {
             cameraFov: 40,
             cameraNear: 1,
             cameraFar: 10000,
+            cameraZ: -300,
 
             specular: 0x050505,
 
@@ -344,20 +351,19 @@ NGL.Viewer.prototype = {
     initCamera: function(){
 
         var p = this.params;
-        var z = -300;
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
         this.perspectiveCamera = new THREE.PerspectiveCamera( 
             p.cameraFov, this.aspect, p.cameraNear, p.cameraFar
         );
-        this.perspectiveCamera.position.z = z;
+        this.perspectiveCamera.position.z = p.cameraZ;
         this.perspectiveCamera.lookAt( lookAt );
 
         this.orthographicCamera = new THREE.OrthographicCamera(
             this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 
             p.cameraNear, p.cameraFar
         );
-        this.orthographicCamera.position.z = z/2;
+        this.orthographicCamera.position.z = p.cameraZ/2;
         this.orthographicCamera.lookAt( lookAt );
 
         if( p.cameraType ){
@@ -474,7 +480,7 @@ NGL.Viewer.prototype = {
             if( o.material ) o.material.needsUpdate = true;
         });
 
-        _.each( this.materialCache, function( m ){
+        _.each( NGL.materialCache, function( m ){
             m.needsUpdate = true;
         });
 
@@ -520,12 +526,14 @@ NGL.Viewer.prototype = {
 
     onWindowResize: function(){
 
-        // TODO
-        // this.width = this.container.innerWidth;
-        // this.height = this.container.innerHeight;
-        
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;        
+        if ( this.container === document ) {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+        } else {
+            var box = this.container.getBoundingClientRect();
+            this.width = box.width;
+            this.height = box.height;
+        }
         this.aspect = this.width / this.height;
 
         this.perspectiveCamera.aspect = this.aspect;
@@ -550,7 +558,6 @@ NGL.Viewer.prototype = {
             
             this.controls.update();
             this.render();
-            this.stats.update();
 
         }
 
@@ -565,8 +572,15 @@ NGL.Viewer.prototype = {
             v.uniform.value = v.tex;
         });
 
+        this.rotationGroup.updateMatrix();
+        this.rotationGroup.updateMatrixWorld( true );
+
+        this.modelGroup.updateMatrix();
+        this.modelGroup.updateMatrixWorld( true );
+
         this.renderer.render( this.scene, this.camera );
 
+        this.stats.update();
         this.rendererStats.update( this.renderer );
 
     },
@@ -578,9 +592,9 @@ NGL.Viewer.prototype = {
         var objects = this.modelGroup.children;
         var nObjects = objects.length;
         var camera = this.camera;
-
+        
         camera.updateMatrix();
-        camera.updateMatrixWorld();
+        camera.updateMatrixWorld( true );
         camera.matrixWorldInverse.getInverse( camera.matrixWorld );
         camera.updateProjectionMatrix();
 
@@ -591,6 +605,9 @@ NGL.Viewer.prototype = {
 
             u = o.material.uniforms;
             if( !u ) continue;
+
+            o.updateMatrix();
+            o.updateMatrixWorld( true );
 
             if( u.modelViewMatrixInverse ){
                 matrix.multiplyMatrices( 
@@ -644,6 +661,8 @@ NGL.Viewer.prototype = {
     },
 
     clear: function(){
+
+        console.log( "scene cleared" );
 
         this.scene.remove( this.rotationGroup );
         
