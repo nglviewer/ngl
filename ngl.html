@@ -392,7 +392,7 @@
                             new NGL.HaloBuffer( c1.from, r1 );
                         },
                         'Text': function(){
-                            new NGL.TextBuffer( c1.to, c1.radius );
+                            viewer.add( new NGL.TextBuffer( c1.to, c1.radius ) );
                         },
                         'SceneImpostor': function(){
                             new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
