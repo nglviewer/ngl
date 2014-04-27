@@ -180,6 +180,8 @@ NGL.init = function () {
 
     NGL.materialCache = {};
 
+    this.textures = [];
+
 }
 
 
@@ -303,9 +305,6 @@ NGL.Viewer = function( eid ){
 
     window.addEventListener( 'resize', _.bind( this.onWindowResize, this ), false );
 
-    // textures
-    this.textures = [];
-
     // fog & background
     this.setBackground();
     this.setFog();
@@ -390,8 +389,12 @@ NGL.Viewer.prototype = {
     initScene: function(){
 
         this.scene = new THREE.Scene();
-        this.group = new THREE.Object3D();
-        this.scene.add( this.group );
+
+        this.modelGroup = new THREE.Object3D();
+        this.rotationGroup = new THREE.Object3D();
+
+        this.rotationGroup.add( this.modelGroup );
+        this.scene.add( this.rotationGroup );
 
     },
 
@@ -445,7 +448,7 @@ NGL.Viewer.prototype = {
     add: function( buffer ){
 
         console.log( buffer );
-        this.group.add( buffer.mesh );
+        this.modelGroup.add( buffer.mesh );
 
     },
 
@@ -467,7 +470,7 @@ NGL.Viewer.prototype = {
             this.scene.fog = null;
         }
 
-        _.each( this.group.children, function( o ){
+        _.each( this.modelGroup.children, function( o ){
             if( o.material ) o.material.needsUpdate = true;
         });
 
@@ -558,7 +561,7 @@ NGL.Viewer.prototype = {
         this.updateDynamicUniforms();
 
         // needed for font texture, but I don't know why
-        _.each( this.textures, function( v ){
+        _.each( NGL.textures, function( v ){
             v.uniform.value = v.tex;
         });
 
@@ -572,7 +575,7 @@ NGL.Viewer.prototype = {
 
         var i, o, u;
         var matrix = new THREE.Matrix4();
-        var objects = this.group.children;
+        var objects = this.modelGroup.children;
         var nObjects = objects.length;
         var camera = this.camera;
 
@@ -642,9 +645,14 @@ NGL.Viewer.prototype = {
 
     clear: function(){
 
-        this.scene.remove( this.group );
-        this.group = new THREE.Object3D();
-        this.scene.add( this.group );
+        this.scene.remove( this.rotationGroup );
+        
+        this.modelGroup = new THREE.Object3D();
+        this.rotationGroup = new THREE.Object3D();
+
+        this.rotationGroup.add( this.modelGroup );
+        this.scene.add( this.rotationGroup );
+
         this.renderer.clear();
 
     },
@@ -698,7 +706,6 @@ NGL.Buffer.prototype = {
         });
 
         this.mesh = new THREE.Mesh( this.geometry, this.material );
-        //NGL.group.add( this.mesh );
 
     },
 
@@ -1134,6 +1141,7 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
 //////////////////////
 // Pixel Primitives
 
+// TODO
 NGL.ParticleBuffer = function ( position, color, size ) {
     
     this.size = position.length / 3;
@@ -1158,7 +1166,7 @@ NGL.ParticleBuffer = function ( position, color, size ) {
 
 }
 
-
+// TODO
 NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     this.size = from.length / 3;
