@@ -249,6 +249,30 @@ NGL.getShader = function( name, defines ) {
 };
 
 
+NGL.JSmolControls = function ( viewer ) {
+
+    this.handleResize();
+
+    // force an update at start
+    this.update();
+
+
+
+}
+
+NGL.JSmolControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+
+NGL.JSmolControls.prototype.update = function( jsmolView ){
+
+
+
+};
+
+NGL.JSmolControls.prototype.handleResize = function(){
+
+};
+
+
 ///////////
 // Viewer
 
@@ -306,8 +330,6 @@ NGL.Viewer.prototype = {
             backgroundColor: 0x000000,
 
             cameraType: 1,
-            cameraWidth: -1,
-            cameraHeight: -1,
             cameraFov: 40,
             cameraNear: 1,
             cameraFar: 10000,
@@ -323,12 +345,29 @@ NGL.Viewer.prototype = {
     initCamera: function(){
 
         var p = this.params;
+        var z = -300;
+        var lookAt = new THREE.Vector3( 0, 0, 0 );
 
-        this.camera = new THREE.PerspectiveCamera( 
+        this.perspectiveCamera = new THREE.PerspectiveCamera( 
             p.cameraFov, this.aspect, p.cameraNear, p.cameraFar
         );
+        this.perspectiveCamera.position.z = z;
+        this.perspectiveCamera.lookAt( lookAt );
 
-        this.camera.position.z = -300;
+        this.orthographicCamera = new THREE.OrthographicCamera(
+            this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 
+            p.cameraNear, p.cameraFar
+        );
+        this.orthographicCamera.position.z = z/2;
+        this.orthographicCamera.lookAt( lookAt );
+
+        if( p.cameraType ){
+            this.camera = this.perspectiveCamera;
+        }else{
+            this.camera = this.orthographicCamera;
+        }
+
+        this.camera.updateProjectionMatrix();
 
     },
 
@@ -457,25 +496,45 @@ NGL.Viewer.prototype = {
         if( fov ) p.cameraFov = fov;
         if( near ) p.cameraNear = near;
         if( far ) p.cameraFar = far;
+
+        if( p.cameraType ){
+            this.camera = this.perspectiveCamera;
+        }else{
+            this.camera = this.orthographicCamera;
+        }
         
-        this.camera.fov = p.cameraFov;
-        this.camera.near = p.cameraNear;
-        this.camera.far = p.cameraFar;
+        this.perspectiveCamera.fov = p.cameraFov;
+        this.perspectiveCamera.near = p.cameraNear;
+        this.perspectiveCamera.far = p.cameraFar;
+
+        this.orthographicCamera.near = p.cameraNear;
+        this.orthographicCamera.far = p.cameraFar;
+        
+        this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
 
     },
 
     onWindowResize: function(){
 
-        this.width = this.container.innerWidth;
-        this.height = this.container.innerHeight;
+        // TODO
+        // this.width = this.container.innerWidth;
+        // this.height = this.container.innerHeight;
+        
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;        
         this.aspect = this.width / this.height;
 
-        this.camera.aspect = this.aspect;
-        this.camera.updateProjectionMatrix();
-        
-        this.controls.handleResize();
+        this.perspectiveCamera.aspect = this.aspect;
 
+        var az = this.controls.accumulatedZoom;
+        this.orthographicCamera.left = az * -this.width / 2;
+        this.orthographicCamera.right = az * this.width / 2;
+        this.orthographicCamera.top = az * this.height / 2;
+        this.orthographicCamera.bottom = az * -this.height / 2;
+
+        this.camera.updateProjectionMatrix();
+        this.controls.handleResize();
         this.renderer.setSize( this.width, this.height );
 
     },
@@ -3607,6 +3666,7 @@ NGL.SphereGroup = function ( position, color, radius ) {
 
     var group;
     var n = position.length/3;
+    var sphereGeometry = new THREE.IcosahedronGeometry( 2, 1 );
 
     group = new THREE.Object3D();
 
@@ -3618,7 +3678,7 @@ NGL.SphereGroup = function ( position, color, radius ) {
         colr.g = color[ i + 1 ];
         colr.b = color[ i + 2 ];
         sphere = new THREE.Mesh(
-            NGL.sphereGeometry, 
+            sphereGeometry, 
             NGL.getMaterial({ 
                 color: colr, 
                 specular: 0x050505, 
@@ -3636,10 +3696,10 @@ NGL.SphereGroup = function ( position, color, radius ) {
         group.add( sphere );
     }
 
-    NGL.group.add( group );
+    // NGL.group.add( group );
 
     // public attributes
-    this.group = group;
+    this.mesh = group;
     this.n = n;
 }
 
