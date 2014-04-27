@@ -56,9 +56,13 @@
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 
+            var viewer;
+
             $(document).ready( function(){
-                NGL.init( 'container' );
+
                 $( NGL ).bind( 'initialized', function(){
+
+                    viewer = new NGL.Viewer( 'container' );
 
                     var oNgl = new NglExample();
                     var gui = new dat.GUI();
@@ -134,7 +138,7 @@
 
                     gui.add(oNgl, 'clear');
                     gui.add(oNgl, 'updateDisplay').onChange(
-                        function( value ){ NGL.updateDisplay = value; }
+                        function( value ){ viewer.params.updateDisplay = value; }
                     );
 
                     var options = gui.addFolder( 'Options ' );
@@ -201,20 +205,24 @@
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
-                    oNgl.modelId = '3l5q';
+                    oNgl.modelId = '1crn';
                     oNgl.modelType = 'ball+stick';
                     oNgl.addModel();
                     
                     // oNgl.surfaceId = '1crn';
                     // oNgl.addSurface();
 
-                    NGL.animate();
-                    NGL.render();
+                    viewer.animate();
+                    viewer.render();
                 });
+
+                NGL.init();
+
             });
 
             
             var NglExample = function() {
+
                 this.count = 10;
                 this.size = 2.0;
                 this.primitiveType = 'EllipticBezierImpostor';
@@ -238,7 +246,7 @@
                 
 
                 this.clear = function(){
-                    NGL.clear();
+                    viewer.clear();
                 }
 
                 this.addPrimitive = function(){
@@ -428,7 +436,7 @@
                         }
                     }
                     types[ this.primitiveType ].call( this );
-                    NGL.render();
+                    viewer.render();
                 };
 
                 this.addModel = function(){
@@ -438,14 +446,14 @@
                         this.useImpostor,
                         this.randomColor
                     );    
-                    NGL.render();
+                    viewer.render();
                 };
 
                 this.addSurface = function(){
                     loadSurface( 
                         'data/' + this.surfaceId + '.obj'
                     );    
-                    NGL.render();
+                    viewer.render();
                 };
             };
 
@@ -729,7 +737,7 @@
                         case "hyperball":
                         case "ball+stick":
                             if( impostor ){
-                                new NGL.SphereImpostorBuffer( position, color, radius );
+                                viewer.add( new NGL.SphereImpostorBuffer( position, color, radius ) );
                             }else{
                                 new NGL.SphereGroup( position, color, radius );
                             }
@@ -819,7 +827,7 @@
                         case "stick":
                         case "ball+stick":
                             if( impostor ){
-                                new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true );
+                                viewer.add( new NGL.CylinderImpostorBuffer( from, to, bColor, bColor2, bRadius, true ) );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );
                             }

@@ -50,28 +50,8 @@ var log = _.throttle( function(x,y){ console.log(x,y); }, 1000 );
 NGL = { REVISION: '1dev' };
 
 
-NGL.params = {
-    fogType: 0,
-    fogColor: 0x000000,
-    fogNear: 0,
-    fogFar: 1000,
-    fogDensity: 0.00025,
+NGL.Resources = {
 
-    // backgroundColor: 0xFFFFFF,
-    backgroundColor: 0x000000,
-
-    cameraType: 1,
-    cameraWidth: -1,
-    cameraHeight: -1,
-    cameraFov: 40,
-    cameraNear: 1,
-    cameraFar: 10000,
-
-    specular: 0x050505,
-};
-
-
-NGL.resources = {
     // fonts
     'font/Arial.png': 'image',
     'font/Arial.fnt': '',
@@ -117,29 +97,29 @@ NGL.resources = {
     'shader/chunk/light.glsl': '',
     'shader/chunk/fog.glsl': '',
     'shader/chunk/fog_params.glsl': '',
-};
 
-
-NGL.uniforms = {
-    'projectionMatrix': new THREE.Matrix4(),
 };
 
 
 NGL.UniformsLib = {
+
     'fog': THREE.UniformsLib[ "fog" ],
-    'lights': THREE.UniformsUtils.merge( [
+
+    'lights': THREE.UniformsUtils.merge([
         THREE.UniformsLib[ "lights" ],
         {
             "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
             "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
         }
     ])
+
 };
 
 
 NGL.Utils = {
 
     lineLineIntersect: function( p1, p2, p3, p4 ){
+
         // converted from http://paulbourke.net/geometry/pointlineplane/lineline.c
         var p13 = new THREE.Vector3(),
             p43 = new THREE.Vector3(),
@@ -188,79 +168,39 @@ NGL.Utils = {
         );
 
         return [ pa, pb ];
+
     },
 
 };
 
 
-NGL.init = function ( eid ) {
+NGL.init = function () {
 
-    var p = NGL.params;
-    
-	var width = window.innerWidth;
-	var height = window.innerHeight
+    NGL.initResources();
 
-	var camera, scene, renderer, controls, stats;
+    NGL.materialCache = {};
 
-    // camera
-	camera = new THREE.PerspectiveCamera( 40, width / height, 1, 10000 );
-    camera.position.z = -300;
+}
 
-    // scene
-    scene = new THREE.Scene();
-    group = new THREE.Object3D();
-    scene.add( group );
 
-    // renderer
-    renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
-    renderer.setSize( width, height );
-    renderer.autoClear = true;
+NGL.initResources = function(){
 
-    var _glExtensionFragDepth = renderer.context.getExtension('EXT_frag_depth');
-    //if(!_glExtensionFragDepth) { throw "ERROR getting 'EXT_frag_depth'" }
-    renderer.context.getExtension('OES_standard_derivatives');
-    renderer.context.getExtension('OES_element_index_uint');
-
-    // lights
-    NGL.makeLights( scene );
-
-    // controls
-    controls = NGL.makeControls( camera, renderer.domElement );
-
-    // stats
-    var container = document.getElementById( eid );
-    container.appendChild( renderer.domElement );
-
-    stats = new Stats();
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.top = '0px';
-    container.appendChild( stats.domElement );
-
-    var rendererStats = new THREEx.RendererStats();
-    rendererStats.domElement.style.position = 'absolute'
-    rendererStats.domElement.style.bottom   = '0px'
-    document.body.appendChild( rendererStats.domElement )
-
-    // window
-    window.addEventListener( 'resize', NGL.onWindowResize, false );
-    controls.handleResize();
-
-    // resources
     var deferreds = [];
-    _.each( NGL.resources, function( v, url ){
+
+    _.each( NGL.Resources, function( v, url ){
         var d;
         if( v=="image" ){
             d = $.loadImage( url ).done( 
-                function( image ){ NGL.resources[ url ] = image; }
+                function( image ){ NGL.Resources[ url ] = image; }
             );
         }else{
             d = $.ajax({
                 url: url,
                 success: function( data ){
                     if( v=="chunk" ){
-                        NGL.resources[ url ] = data;
+                        NGL.Resources[ url ] = data;
                     }else{
-                        NGL.resources[ url ] = data;
+                        NGL.Resources[ url ] = data;
                     }
                 },
                 dataType: "text"
@@ -268,267 +208,387 @@ NGL.init = function ( eid ) {
         }
         deferreds.push( d );
     });
+
     $.when.apply( $, deferreds ).then( function() {
         $( NGL ).triggerHandler( "initialized" );
     });
 
-    // geometries
-    this.sphereGeometry = new THREE.IcosahedronGeometry( 2, 1 );
-    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
-    this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
-    this.cylinderGeometry.applyMatrix( matrix );
-    this.cylinderCappedGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
-    this.cylinderCappedGeometry.applyMatrix( matrix );
-    
-    // materials
-    this.materialCache = {};
-
-    // textures
-    this.textures = [];
-
-    // exports
-    this.camera = camera;
-    this.width = width;
-    this.height = height;
-    this.scene = scene;
-    this.group = group;
-    this.renderer = renderer;
-    this.controls = controls;
-    this.stats = stats;
-    this.rendererStats = rendererStats;
-
-    // params
-    this.updateDisplay = true;
-
-    // fog & background
-    var p = NGL.params;
-    NGL.setBackground( p.backgroundColor );
-    NGL.setFog( p.fogType, p.fogColor, p.fogNear, p.fogFar );
-}
+},
 
 
-NGL.onWindowResize = function() {
-    NGL.camera.aspect = window.innerWidth / window.innerHeight;
-    NGL.camera.updateProjectionMatrix();
-    
-    NGL.controls.handleResize();
+NGL.getMaterial = function( params ){
 
-    NGL.renderer.setSize( window.innerWidth, window.innerHeight );
-}
-
-
-NGL.animate = function() {
-    requestAnimationFrame( NGL.animate );
-
-    if( NGL.updateDisplay ){
-        NGL.controls.update();
-        NGL.render();
-        NGL.stats.update();
-    }
-}
-
-
-NGL.render = function() {
-
-    NGL.updateDynamicUniforms();
-
-    // needed for font texture, but I don't know why
-    _.each( NGL.textures, function( v ){
-        v.uniform.value = v.tex;
-    });
-
-    NGL.renderer.render( NGL.scene, NGL.camera );
-
-    NGL.rendererStats.update( NGL.renderer );
-}
-
-
-NGL.updateDynamicUniforms = function(){
-    var i, o, u;
-    var matrix = new THREE.Matrix4();
-    var nObjects = NGL.group.children.length;
-
-    NGL.camera.updateMatrix();
-    NGL.camera.updateMatrixWorld();
-    NGL.camera.matrixWorldInverse.getInverse( NGL.camera.matrixWorld );
-    NGL.camera.updateProjectionMatrix();
-
-    for( i = 0; i < nObjects; i ++ ) {
-        o = NGL.group.children[i];
-
-        if( !o.material ) continue;
-        u = o.material.uniforms;
-        if( !u ) continue;
-
-        if( u.modelViewMatrixInverse ){
-            matrix.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewMatrixInverse.value.getInverse( matrix );
-        }
-
-        if( u.modelViewMatrixInverseTranspose ){
-            matrix.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewMatrixInverseTranspose.value.getInverse( matrix ).transpose();
-        }
-
-        if( u.projectionMatrixInverse ){
-            u.projectionMatrixInverse.value.getInverse(
-                NGL.camera.projectionMatrix
-            );
-        }
-
-        if( u.projectionMatrixTranspose ){
-            u.projectionMatrixTranspose.value.copy(
-                NGL.camera.projectionMatrix
-            ).transpose();
-        }
-
-        if( u.modelViewProjectionMatrix ){
-            matrix.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewProjectionMatrix.value.multiplyMatrices(
-                NGL.camera.projectionMatrix, matrix
-            )
-        }
-
-        if( u.modelViewProjectionMatrixInverse ){
-            matrix.multiplyMatrices( 
-                NGL.camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
-                NGL.camera.projectionMatrix, matrix
-            )
-            u.modelViewProjectionMatrixInverse.value.getInverse( 
-                u.modelViewProjectionMatrixInverse.value
-            );
-        }
-    }
-}
-
-
-NGL.clear = function(){
-    NGL.scene.remove( NGL.group );
-    NGL.group = new THREE.Object3D();
-    NGL.scene.add( NGL.group );
-    NGL.renderer.clear();
-}
-
-
-NGL.makeLights = function( scene ){
-    // lights
-    var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
-    directionalLight.position = new THREE.Vector3( 1, 1, -2.5 ).normalize();
-    directionalLight.intensity = 0.5;
-    var ambientLight = new THREE.AmbientLight( 0x101010 );
-    var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0.01)
-    scene.add( directionalLight );
-    scene.add( ambientLight );
-    scene.add( hemisphereLight );
-}
-
-
-NGL.makeControls = function( camera, domElement ){
-    var controls = new THREE.TrackballControls( camera, domElement );
-    controls.rotateSpeed = 1.0;
-    controls.zoomSpeed = 1.2;
-    controls.panSpeed = 0.8;
-    controls.noZoom = false;
-    controls.noPan = false;
-    controls.staticMoving = true;
-    controls.dynamicDampingFactor = 0.3;
-    controls.keys = [65, 83, 68];
-    return controls;
-}
-
-
-NGL.setFog = function( type, color, near, far, density ){
-    var p = NGL.params;
-    if( !_.isNull(type) ) p.fogType = type;
-    if( color ) p.fogColor = color;
-    if( near ) p.fogNear = near;
-    if( far ) p.fogFar = far;
-    if( density ) p.fogDensity = density;
-
-    if( p.fogType=="linear" ){
-        NGL.scene.fog = new THREE.Fog( p.fogColor, p.fogNear, p.fogFar );
-    }else if( p.fogType=="exp2" ){
-        NGL.scene.fog = new THREE.FogExp2( p.fogColor, p.fogDensity );
-    }else{
-        NGL.scene.fog = null;
-    }
-    _.each( NGL.group.children, function( o ){
-        if( o.material ) o.material.needsUpdate = true;
-    });
-    _.each( NGL.materialCache, function( m ){
-        m.needsUpdate = true;
-    });
-};
-
-
-NGL.setBackground = function( color ){
-    if( !color ) return;
-    NGL.params.backgroundColor = color;
-    NGL.setFog( null, color );
-    NGL.renderer.setClearColor( color, 1 );
-}
-
-
-NGL.setCamera = function( type, fov, near, far ){
-    var p = NGL.params;
-    if( !_.isNull(type) ) p.cameraType = type;
-    if( fov ) p.cameraFov = fov;
-    if( near ) p.cameraNear = near;
-    if( far ) p.cameraFar = far;
-    
-    NGL.camera.fov = p.cameraFov;
-    NGL.camera.near = p.cameraNear;
-    NGL.camera.far = p.cameraFar;
-    NGL.camera.updateProjectionMatrix();
-};
-
-
-NGL.getMaterial = function( params ) {
     var key = JSON.stringify( params );
+
     if (!NGL.materialCache[ key ]) {
         NGL.materialCache[ key ] = new THREE.MeshLambertMaterial( params )
     }
+
     return NGL.materialCache[ key ];
+
 };
 
 
 NGL.getShader = function( name, defines ) {
-    var shader = NGL.resources[ 'shader/' + name ];
+
+    var shader = NGL.Resources[ 'shader/' + name ];
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
+
     shader = shader.replace( re, function( match, p1 ){
+
         var path = 'shader/chunk/' + p1 + '.glsl';
-        var chunk = NGL.resources[ path ] || THREE.ShaderChunk[ p1 ];
+        var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
+
         return chunk ? chunk : "";
+
     });
+
     return _.map( defines, function( def ){ return "#define " + def })
                 .join("\n") + "\n" + shader;
+
 };
 
 
-//////////
-// Scene
+///////////
+// Viewer
 
-NGL.Scene = function(){
+NGL.Viewer = function( eid ){
+
+    this.container = document.getElementById( eid );
+
+    // TODO
+    // this.width = this.container.innerWidth;
+    // this.height = this.container.innerHeight;
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.aspect = this.width / this.height;
+
+    this.initParams();
+
+    this.initCamera();
+
+    this.initRenderer();
+
+    this.initScene();
+
+    this.initLights();
+
+    this.initControls();
+
+    this.initStats();
+
+    window.addEventListener( 'resize', _.bind( this.onWindowResize, this ), false );
+
+    // textures
+    this.textures = [];
+
+    // fog & background
+    this.setBackground();
+    this.setFog();
 
 }
 
-NGL.Scene.prototype = {
+NGL.Viewer.prototype = {
     
-    constructor: NGL.Scene,
+    constructor: NGL.Viewer,
+
+    initParams: function(){
+
+        this.params = {
+        
+            fogType: null,
+            fogColor: 0x000000,
+            fogNear: 0,
+            fogFar: 1000,
+            fogDensity: 0.00025,
+
+            // backgroundColor: 0xFFFFFF,
+            backgroundColor: 0x000000,
+
+            cameraType: 1,
+            cameraWidth: -1,
+            cameraHeight: -1,
+            cameraFov: 40,
+            cameraNear: 1,
+            cameraFar: 10000,
+
+            specular: 0x050505,
+
+            updateDisplay: true,
+
+        };
+
+    },
+
+    initCamera: function(){
+
+        var p = this.params;
+
+        this.camera = new THREE.PerspectiveCamera( 
+            p.cameraFov, this.aspect, p.cameraNear, p.cameraFar
+        );
+
+        this.camera.position.z = -300;
+
+    },
+
+    initRenderer: function(){
+
+        this.renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
+        this.renderer.setSize( this.width, this.height );
+        this.renderer.autoClear = true;
+
+        var _glExtensionFragDepth = this.renderer.context.getExtension('EXT_frag_depth');
+        //if(!_glExtensionFragDepth) { throw "ERROR getting 'EXT_frag_depth'" }
+
+        this.renderer.context.getExtension('OES_standard_derivatives');
+        this.renderer.context.getExtension('OES_element_index_uint');
+
+        this.container.appendChild( this.renderer.domElement );
+
+    },
+
+    initScene: function(){
+
+        this.scene = new THREE.Scene();
+        this.group = new THREE.Object3D();
+        this.scene.add( this.group );
+
+    },
+
+    initLights: function(){
+        
+        var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
+        directionalLight.position = new THREE.Vector3( 1, 1, -2.5 ).normalize();
+        directionalLight.intensity = 0.5;
+        
+        var ambientLight = new THREE.AmbientLight( 0x101010 );
+        
+        var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0.01)
+        
+        this.scene.add( directionalLight );
+        this.scene.add( ambientLight );
+        this.scene.add( hemisphereLight );
+
+    },
+
+    initControls: function(){
+
+        this.controls = new THREE.TrackballControls( 
+            this.camera, this.renderer.domElement 
+        );
+
+        this.controls.rotateSpeed = 1.0;
+        this.controls.zoomSpeed = 1.2;
+        this.controls.panSpeed = 0.8;
+        this.controls.noZoom = false;
+        this.controls.noPan = false;
+        this.controls.staticMoving = true;
+        this.controls.dynamicDampingFactor = 0.3;
+        this.controls.keys = [65, 83, 68];
+
+    },
+
+    initStats: function(){
+
+        this.stats = new Stats();
+        this.stats.domElement.style.position = 'absolute';
+        this.stats.domElement.style.top = '0px';
+        this.container.appendChild( this.stats.domElement );
+
+        this.rendererStats = new THREEx.RendererStats();
+        this.rendererStats.domElement.style.position = 'absolute';
+        this.rendererStats.domElement.style.bottom = '0px';
+        this.container.appendChild( this.rendererStats.domElement );
+
+    },
 
     add: function( buffer ){
 
+        console.log( buffer );
         this.group.add( buffer.mesh );
 
-    }
+    },
+
+    setFog: function( type, color, near, far, density ){
+
+        var p = this.params;
+
+        if( !_.isNull(type) ) p.fogType = type;
+        if( color ) p.fogColor = color;
+        if( near ) p.fogNear = near;
+        if( far ) p.fogFar = far;
+        if( density ) p.fogDensity = density;
+
+        if( p.fogType=="linear" ){
+            this.scene.fog = new THREE.Fog( p.fogColor, p.fogNear, p.fogFar );
+        }else if( p.fogType=="exp2" ){
+            this.scene.fog = new THREE.FogExp2( p.fogColor, p.fogDensity );
+        }else{
+            this.scene.fog = null;
+        }
+
+        _.each( this.group.children, function( o ){
+            if( o.material ) o.material.needsUpdate = true;
+        });
+
+        _.each( this.materialCache, function( m ){
+            m.needsUpdate = true;
+        });
+
+    },
+
+    setBackground: function( color ){
+
+        var p = this.params;
+
+        if( color ) p.backgroundColor = color;
+
+        this.setFog( null, p.backgroundColor );
+        this.renderer.setClearColor( p.backgroundColor, 1 );
+
+    },
+
+    setCamera: function( type, fov, near, far ){
+
+        var p = this.params;
+
+        if( !_.isNull(type) ) p.cameraType = type;
+        if( fov ) p.cameraFov = fov;
+        if( near ) p.cameraNear = near;
+        if( far ) p.cameraFar = far;
+        
+        this.camera.fov = p.cameraFov;
+        this.camera.near = p.cameraNear;
+        this.camera.far = p.cameraFar;
+        this.camera.updateProjectionMatrix();
+
+    },
+
+    onWindowResize: function(){
+
+        this.width = this.container.innerWidth;
+        this.height = this.container.innerHeight;
+        this.aspect = this.width / this.height;
+
+        this.camera.aspect = this.aspect;
+        this.camera.updateProjectionMatrix();
+        
+        this.controls.handleResize();
+
+        this.renderer.setSize( this.width, this.height );
+
+    },
+
+    animate: function(){
+
+        requestAnimationFrame( _.bind( this.animate, this ) );
+
+        if( this.params.updateDisplay ){
+            
+            this.controls.update();
+            this.render();
+            this.stats.update();
+
+        }
+
+    },
+
+    render: function(){
+
+        this.updateDynamicUniforms();
+
+        // needed for font texture, but I don't know why
+        _.each( this.textures, function( v ){
+            v.uniform.value = v.tex;
+        });
+
+        this.renderer.render( this.scene, this.camera );
+
+        this.rendererStats.update( this.renderer );
+
+    },
+
+    updateDynamicUniforms: function(){
+
+        var i, o, u;
+        var matrix = new THREE.Matrix4();
+        var objects = this.group.children;
+        var nObjects = objects.length;
+        var camera = this.camera;
+
+        camera.updateMatrix();
+        camera.updateMatrixWorld();
+        camera.matrixWorldInverse.getInverse( camera.matrixWorld );
+        camera.updateProjectionMatrix();
+
+        for( i = 0; i < nObjects; i ++ ) {
+
+            o = objects[i];
+            if( !o.material ) continue;
+
+            u = o.material.uniforms;
+            if( !u ) continue;
+
+            if( u.modelViewMatrixInverse ){
+                matrix.multiplyMatrices( 
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                u.modelViewMatrixInverse.value.getInverse( matrix );
+            }
+
+            if( u.modelViewMatrixInverseTranspose ){
+                matrix.multiplyMatrices( 
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                u.modelViewMatrixInverseTranspose.value.getInverse( matrix ).transpose();
+            }
+
+            if( u.projectionMatrixInverse ){
+                u.projectionMatrixInverse.value.getInverse(
+                    camera.projectionMatrix
+                );
+            }
+
+            if( u.projectionMatrixTranspose ){
+                u.projectionMatrixTranspose.value.copy(
+                    camera.projectionMatrix
+                ).transpose();
+            }
+
+            if( u.modelViewProjectionMatrix ){
+                matrix.multiplyMatrices( 
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                u.modelViewProjectionMatrix.value.multiplyMatrices(
+                    camera.projectionMatrix, matrix
+                )
+            }
+
+            if( u.modelViewProjectionMatrixInverse ){
+                matrix.multiplyMatrices( 
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
+                    camera.projectionMatrix, matrix
+                )
+                u.modelViewProjectionMatrixInverse.value.getInverse( 
+                    u.modelViewProjectionMatrixInverse.value
+                );
+            }
+
+        }
+
+    },
+
+    clear: function(){
+
+        this.scene.remove( this.group );
+        this.group = new THREE.Object3D();
+        this.scene.add( this.group );
+        this.renderer.clear();
+
+    },
 
 }
 
@@ -579,7 +639,7 @@ NGL.Buffer.prototype = {
         });
 
         this.mesh = new THREE.Mesh( this.geometry, this.material );
-        NGL.group.add( this.mesh );
+        //NGL.group.add( this.mesh );
 
     },
 
@@ -1200,7 +1260,7 @@ NGL.getFont = function( name ){
     // page - The image to use if characters are split across multiple images.
     // chnl - The color channel, if color channels are used for separate characters.
 
-    var fnt = NGL.resources[ 'font/' + name + '.fnt' ].split('\n');
+    var fnt = NGL.Resources[ 'font/' + name + '.fnt' ].split('\n');
     var font = {};
     var tWidth = 1024;
     var tHeight = 1024;
@@ -1252,7 +1312,7 @@ NGL.TextBuffer = function ( position, size, text ) {
 
     var type = 'Arial';
     var font = NGL.getFont( type );
-    var tex = new THREE.Texture( NGL.resources[ 'font/' + type + '.png' ] );
+    var tex = new THREE.Texture( NGL.Resources[ 'font/' + type + '.png' ] );
     tex.needsUpdate = true;
 
     var n = position.length / 3;
@@ -1361,8 +1421,19 @@ NGL.TextBuffer.prototype.makeMapping = function(){
 }
 
 
-//////////
-// Group
+/////////////
+// Geometry
+
+// NGL.GeometryBuffer
+
+// // geometries
+// this.sphereGeometry = new THREE.IcosahedronGeometry( 2, 1 );
+// var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
+// this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
+// this.cylinderGeometry.applyMatrix( matrix );
+// this.cylinderCappedGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
+// this.cylinderCappedGeometry.applyMatrix( matrix );
+
 
 
 
@@ -1558,7 +1629,9 @@ NGL.calculateOffsets = function ( n, nTriangle, nVertex ) {
 
 
 NGL.calculateChunkSize = function( nVertex ){
+
     return NGL.chunkSize - ( NGL.chunkSize % nVertex );
+
 }
 
 
