@@ -143,34 +143,34 @@
 
                     var options = gui.addFolder( 'Options ' );
                     options.add(oNgl, 'fogType', ['', 'linear', 'exp2']).onChange(
-                        function( value ){ NGL.setFog( value ); }
+                        function( value ){ viewer.setFog( value ); }
                     );
                     options.add(oNgl, 'fogNear').min(0).max(3000).step(10).onChange(
-                        function( value ){ NGL.setFog( null, null, value ); }
+                        function( value ){ viewer.setFog( null, null, value ); }
                     );
                     options.add(oNgl, 'fogFar').min(0).max(3000).step(10).onChange(
-                        function( value ){ NGL.setFog( null, null, null, value ); }
+                        function( value ){ viewer.setFog( null, null, null, value ); }
                     );
                     options.add(oNgl, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
-                        function( value ){ NGL.setFog( null, null, null, null, value ); }
+                        function( value ){ viewer.setFog( null, null, null, null, value ); }
                     );
                     options.addColor(oNgl, 'fogColor').onChange(
-                        function( value ){ NGL.setFog( null, value ); }
+                        function( value ){ viewer.setFog( null, value ); }
                     ).listen();
                     options.addColor(oNgl, 'backgroundColor').onChange(
-                        function( value ){ NGL.setBackground( value ); oNgl.fogColor = value; }
+                        function( value ){ viewer.setBackground( value ); oNgl.fogColor = value; }
                     );
-                    // options.add(oNgl, 'cameraPerspective').onChange(
-                    //     function( value ){ NGL.setCamera( value ); }
-                    // );
+                    options.add(oNgl, 'cameraPerspective').onChange(
+                        function( value ){ viewer.setCamera( value ); }
+                    );
                     options.add(oNgl, 'cameraFov').min(0).max(180).step(1).onChange(
-                        function( value ){ NGL.setCamera( null, value ); }
+                        function( value ){ viewer.setCamera( null, value ); }
                     );
                     options.add(oNgl, 'cameraNear').min(1).max(10000).step(10).onChange(
-                        function( value ){ NGL.setCamera( null, null, value ); }
+                        function( value ){ viewer.setCamera( null, null, value ); }
                     );
                     options.add(oNgl, 'cameraFar').min(1).max(10000).step(10).onChange(
-                        function( value ){ NGL.setCamera( null, null, null, value ); }
+                        function( value ){ viewer.setCamera( null, null, null, value ); }
                     );
                     
                     // oNgl.count = 500;
@@ -182,8 +182,8 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereMesh';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Sphere';
-                    // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'Sphere';
+                    oNgl.addPrimitive();
                     // oNgl.primitiveType = 'QuadricImpostor';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'EllipticBezierImpostor';
@@ -223,7 +223,7 @@
             
             var NglExample = function() {
 
-                this.count = 10;
+                this.count = 100;
                 this.size = 2.0;
                 this.primitiveType = 'EllipticBezierImpostor';
                 this.modelId = '1crn';
@@ -331,7 +331,7 @@
                             new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
                         },
                         'Sphere': function(){
-                            new NGL.SphereGroup( c1.to, c1.color, r1 );
+                            viewer.add( new NGL.SphereGroup( c1.to, c1.color, r1 ) );
                         },
                         'Particle': function(){
                             new NGL.ParticleBuffer( c1.from, c1.color, this.size );
@@ -705,7 +705,7 @@
                     switch( type ){
                         case "spacefill":
                             if( impostor ){
-                                new NGL.SphereImpostorBuffer( position, color, radius );
+                                viewer.add( new NGL.SphereImpostorBuffer( position, color, radius ) );
                             }else{
                                 new NGL.SphereGroup( position, color, radius );
                             }
@@ -833,9 +833,9 @@
                             }
                             break;
                         case "hyperball":
-                            new NGL.HyperballStickImpostorBuffer(
+                            viewer.add(  new NGL.HyperballStickImpostorBuffer(
                                 from, to, bColor, bColor2, bRadius2, bRadius2, 0.2
-                            );
+                            ) );
                             break;
                         case "sprite":
                         case "line-sprite":
