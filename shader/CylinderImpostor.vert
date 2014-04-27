@@ -32,6 +32,9 @@ void main()
     vRadius = radius;
 
     vec3 cam_dir = normalize( cameraPosition - center );
+    // vec3 cam_dir = normalize( center - cameraPosition );
+    // vec3 cam_dir = normalize( ( modelViewMatrix *vec4( cameraPosition, 1.0 ) ).xyz - center );
+
     b = dot( cam_dir, dir );
     if( b < 0.0 ) // direction vector looks away, so flip
         ldir = -ext * dir;

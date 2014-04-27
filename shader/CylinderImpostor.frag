@@ -25,6 +25,12 @@ varying float b;
 // http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs
 
 
+void main2(void)
+{
+    gl_FragColor = vec4( vColor, 1.0 );
+}
+
+
 void main()
 {   
 
@@ -151,10 +157,6 @@ void main()
 }
 
 
-void main2(void)
-{
-    gl_FragColor = vec4( vColor, 1.0 );
-}
 
 
 
