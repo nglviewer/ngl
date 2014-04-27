@@ -3,3 +3,4 @@ syntax: glob
 *.sublime-project
 *.sublime-workspace
 
+jsmol/*
