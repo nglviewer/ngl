@@ -128,6 +128,11 @@
                 applet._GLmol.cylinderColor = [];
                 applet._GLmol.cylinderRadius = [];
 
+                applet._GLmol.meshPosition = [];
+                applet._GLmol.meshColor = [];
+                applet._GLmol.meshIndex = [];
+                applet._GLmol.meshNormal = [];
+
                 applet._GLmol.nglViewer.clear();
 
             }
@@ -172,8 +177,8 @@
 
             }
 
-            exporter.jsSurface = function(applet, vertices, normals, indices, nVertices, nPolygons, nFaces, bsPolygons, faceVertexMax, color, vertexColors, polygonColors) {
-                // notes: Color is only used if both vertexColors and polygonColors are null.
+            exporter.jsSurface = function(applet, vertices, normals, indices, nVertices, nPolygons, nFaces, bsPolygons, faceVertexMax, uniformColor, vertexColors, polygonColors) {
+                // notes: uniformColor is only used if both vertexColors and polygonColors are null.
                 //        Only one of vertexColors or polygonColors will NOT be null.
                 //        Int facevertexMax is either 3 or 4; indices may have MORE than that number
                 //        of vertex indices, because the last one may be a flag indicating which 
@@ -190,53 +195,79 @@
                 //    } else {
                 //      for (int i = bsPolygons.nextSetBit(0); i >= 0; i = bsPolygons.nextSetBit(i + 1))
                 //        nFaces += (faceVertexMax == 4 && indices[i].length == 4 ? 2 : 1);      
+                
+                var vertexCount = applet._GLmol.meshPosition.length / 3;
 
-                console.log( "jsSurface" );
+                if( !vertexColors && !polygonColors ){
 
-                return
+                    color.set( uniformColor );
 
-                var params = {};
-                if (vertexColors != null) {
-                    params.vertexColors = THREE.VertexColors;
-                    var vc = new Array(vertexColors.length);
-                    for (var i = vertexColors.length; --i >= 0;)
-                        vc[i] = new THREE.Color(vertexColors[i]);
-                } else if (polygonColors != null) {
-                    params.vertexColors = THREE.FaceColors;
-                } else {
-                    params.color = color;
                 }
-                var geo = new THREE.Geometry();
-                for (var i = 0; i < nVertices; i++)
-                    geo.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
-                for (var i = 0; i < nPolygons; i++) {
-                    var h = indices[i][0], k = indices[i][1], l = indices[i][2];
-                    var m = indices[i][3];
-                    var is3 = (faceVertexMax == 3 || indices[i].length == 3);
-                    var f = (is3 ? new THREE.Face3(h, k, l) : new THREE.Face4(h, k, l, m));
-                    // we can use the normals themselves, because they have .x .y .z
-                    f.vertexNormals[0] = normals[h];
-                    f.vertexNormals[1] = normals[k];
-                    f.vertexNormals[2] = normals[l];
-                    if (is3) {
-                        if (vertexColors != null)
-                            f.vertexColors = [vc[h], vc[k], vc[l]];
-                    } else {
-                        f.vertexNormals[3] = normals[m];
+                
+                for( var i = 0; i < nVertices; i++ ){
+
+                    applet._GLmol.meshPosition.push( vertices[i].x );
+                    applet._GLmol.meshPosition.push( vertices[i].y );
+                    applet._GLmol.meshPosition.push( vertices[i].z );
+
+                    applet._GLmol.meshNormal.push( normals[i].x );
+                    applet._GLmol.meshNormal.push( normals[i].y );
+                    applet._GLmol.meshNormal.push( normals[i].z );
+
+                    if( vertexColors ){
+
+                        color.set( vertexColors[i] );
+                        applet._GLmol.meshColor.push( color.r );
+                        applet._GLmol.meshColor.push( color.g );
+                        applet._GLmol.meshColor.push( color.b );
+
+                    }else if( polygonColors ){
+
+                        // ???
+
+                    }else{
+                        
+                        applet._GLmol.meshColor.push( color.r );
+                        applet._GLmol.meshColor.push( color.g );
+                        applet._GLmol.meshColor.push( color.b );
+
                     }
 
-                    if (polygonColors != null)
-                        f.color = new THREE.Color(polygonColors[i]);
-                    geo.faces.push(f);
                 }
 
-                var obj = new THREE.Mesh(geo, new THREE.MeshLambertMaterial(params));
-                obj.doubleSided = true; // generally?
-              //obj.material.wireframe = true;
-                applet._GLmol.modelGroup.add(obj);
+                var is3;
+                var h, k, l, m;
+
+                for( var i = 0; i < nPolygons; i++ ){
+
+                    h = indices[i][0] + vertexCount;
+                    k = indices[i][1] + vertexCount;
+                    l = indices[i][2] + vertexCount;
+                    m = indices[i][3] + vertexCount;
+
+                    if( faceVertexMax == 3 || indices[i].length == 3 ){
+
+                        applet._GLmol.meshIndex.push( h );
+                        applet._GLmol.meshIndex.push( k );
+                        applet._GLmol.meshIndex.push( l );
+
+                    }else{
+
+                        applet._GLmol.meshIndex.push( h );
+                        applet._GLmol.meshIndex.push( k );
+                        applet._GLmol.meshIndex.push( m );
+
+                        applet._GLmol.meshIndex.push( k );
+                        applet._GLmol.meshIndex.push( l );
+                        applet._GLmol.meshIndex.push( m );
+
+                    }
+
+                }
+
             }
 
-            exporter.jsEndExport = function(applet) {
+            exporter.jsEndExport = function(applet) {                
 
                 applet._GLmol.nglViewer.add( 
                     new NGL.SphereImpostorBuffer(
@@ -276,9 +307,20 @@
                 //     )
                 // );
 
+                applet._GLmol.nglViewer.add( 
+                    new NGL.MeshBuffer(
+                        new Float32Array( applet._GLmol.meshPosition ),
+                        new Float32Array( applet._GLmol.meshColor ),
+                        new Uint32Array( applet._GLmol.meshIndex ),
+                        new Float32Array( applet._GLmol.meshNormal )
+                    )
+                );
+
                 applet._GLmol.nglViewer.render();
 
                 applet._refresh();
+
+                console.log( "jsEndExport" );
 
             }
 
@@ -311,6 +353,11 @@
                 this.cylinderTo = [];
                 this.cylinderColor = [];
                 this.cylinderRadius = [];
+
+                this.meshPosition = [];
+                this.meshColor = [];
+                this.meshIndex = [];
+                this.meshNormal = [];
                 
                 var canvas = this.nglViewer.renderer.domElement;
                 canvas.width = this.container.width();
