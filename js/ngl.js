@@ -770,7 +770,7 @@ NGL.Buffer.prototype = {
     makeIndex: function(){
 
         this.geometry.addAttribute( 
-            "index", new THREE.Uint16Attribute( this.index.length, 1 )
+            "index", new THREE.Uint32Attribute( this.index.length, 1 )
         );
 
         this.geometry.attributes[ "index" ].array.set( this.index );
