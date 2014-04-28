@@ -114,6 +114,11 @@
             // GLmol and THREE.  
             
             var color = new THREE.Color();
+            var v1 = new THREE.Vector3( 0, 0, 0 );
+            var v2 = new THREE.Vector3( 0, 0, 0 );
+            var v3 = new THREE.Vector3( 0, 0, 0 );
+            var v4 = new THREE.Vector3( 0, 0, 0 );
+            var v5 = new THREE.Vector3( 0, 0, 0 );
 
             exporter.jsInitExport = function(applet) {
                 
@@ -171,9 +176,56 @@
 
             }
 
-            exporter.jsTriangle = function(applet, color, pt1, pt2, pt3) {
-                
-                console.log( "jsTriangle" );
+            exporter.jsTriangle = function(applet, uniformColor, pt1, pt2, pt3) {
+
+                var vertexCount = applet._GLmol.meshPosition.length / 3;
+
+                applet._GLmol.meshPosition.push( pt1.x );
+                applet._GLmol.meshPosition.push( pt1.y );
+                applet._GLmol.meshPosition.push( pt1.z );
+
+                applet._GLmol.meshPosition.push( pt2.x );
+                applet._GLmol.meshPosition.push( pt2.y );
+                applet._GLmol.meshPosition.push( pt2.z );
+
+                applet._GLmol.meshPosition.push( pt3.x );
+                applet._GLmol.meshPosition.push( pt3.y );
+                applet._GLmol.meshPosition.push( pt3.z );
+
+                v1.set( pt1.x, pt1.y, pt1.z );
+                v2.set( pt2.x, pt2.y, pt2.z );
+                v3.set( pt3.x, pt3.y, pt3.z );
+                v1.sub( v2 );
+                v2.sub( v3 );
+                v1.cross( v2 ).normalize();
+                applet._GLmol.meshNormal.push( v1.x );
+                applet._GLmol.meshNormal.push( v1.y );
+                applet._GLmol.meshNormal.push( v1.z );
+
+                applet._GLmol.meshNormal.push( v1.x );
+                applet._GLmol.meshNormal.push( v1.y );
+                applet._GLmol.meshNormal.push( v1.z );
+
+                applet._GLmol.meshNormal.push( v1.x );
+                applet._GLmol.meshNormal.push( v1.y );
+                applet._GLmol.meshNormal.push( v1.z );
+
+                color.set( uniformColor );
+                applet._GLmol.meshColor.push( color.r );
+                applet._GLmol.meshColor.push( color.g );
+                applet._GLmol.meshColor.push( color.b );
+
+                applet._GLmol.meshColor.push( color.r );
+                applet._GLmol.meshColor.push( color.g );
+                applet._GLmol.meshColor.push( color.b );
+
+                applet._GLmol.meshColor.push( color.r );
+                applet._GLmol.meshColor.push( color.g );
+                applet._GLmol.meshColor.push( color.b );
+
+                applet._GLmol.meshIndex.push( vertexCount + 0 );
+                applet._GLmol.meshIndex.push( vertexCount + 1 );
+                applet._GLmol.meshIndex.push( vertexCount + 2 );
 
             }
 
