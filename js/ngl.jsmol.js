@@ -117,26 +117,12 @@
             var v1 = new THREE.Vector3( 0, 0, 0 );
             var v2 = new THREE.Vector3( 0, 0, 0 );
             var v3 = new THREE.Vector3( 0, 0, 0 );
-            var v4 = new THREE.Vector3( 0, 0, 0 );
-            var v5 = new THREE.Vector3( 0, 0, 0 );
 
             exporter.jsInitExport = function(applet) {
                 
                 console.log( "jsInitExport" );
 
-                applet._GLmol.spherePosition = [];
-                applet._GLmol.sphereColor = [];
-                applet._GLmol.sphereRadius = [];
-
-                applet._GLmol.cylinderFrom = [];
-                applet._GLmol.cylinderTo = [];
-                applet._GLmol.cylinderColor = [];
-                applet._GLmol.cylinderRadius = [];
-
-                applet._GLmol.meshPosition = [];
-                applet._GLmol.meshColor = [];
-                applet._GLmol.meshIndex = [];
-                applet._GLmol.meshNormal = [];
+                applet._GLmol.resetArrays();
 
                 applet._GLmol.nglViewer.clear();
 
@@ -275,7 +261,7 @@
 
                     }else if( polygonColors ){
 
-                        // ???
+                        // ASR Do not know how polygonColors look like
 
                     }else{
                         
@@ -397,19 +383,7 @@
 
                 this.nglViewer = new NGL.Viewer( this.container.attr( "id" ) );
 
-                this.spherePosition = [];
-                this.sphereColor = [];
-                this.sphereRadius = [];
-
-                this.cylinderFrom = [];
-                this.cylinderTo = [];
-                this.cylinderColor = [];
-                this.cylinderRadius = [];
-
-                this.meshPosition = [];
-                this.meshColor = [];
-                this.meshIndex = [];
-                this.meshNormal = [];
+                this.resetArrays();
                 
                 var canvas = this.nglViewer.renderer.domElement;
                 canvas.width = this.container.width();
@@ -423,14 +397,39 @@
              
             };
 
+            gp.resetArrays = function(){
+
+                this.spherePosition = [];
+                this.sphereColor = [];
+                this.sphereRadius = [];
+
+                this.cylinderFrom = [];
+                this.cylinderTo = [];
+                this.cylinderColor = [];
+                this.cylinderRadius = [];
+
+                this.meshPosition = [];
+                this.meshColor = [];
+                this.meshIndex = [];
+                this.meshNormal = [];
+
+            };
+
             gp.getView = function() {
+
+                console.log( "getView" );
+
                 if (!this.modelGroup) return [0, 0, 0, 0, 0, 0, 0, 1];
                 var pos = this.modelGroup.position;
                 var q = this.rotationGroup.quaternion;
                 return [pos.x, pos.y, pos.z, this.rotationGroup.position.z, q.x, q.y, q.z, q.w];
+
             };
 
             gp.setView = function(arg) {
+
+                console.log( "setView", arg );
+
                 if (!this.modelGroup || !this.rotationGroup) return;
                 this.modelGroup.position.x = arg[0];
                 this.modelGroup.position.y = arg[1];
@@ -441,16 +440,24 @@
                 this.rotationGroup.quaternion.z = arg[6];
                 this.rotationGroup.quaternion.w = arg[7];
                 this.show();
+
             };
 
             gp.setBackground = function(hex, a) {
+
+                console.log( "setBackground", hex, a );
+
                 a = a | 1.0;
                 this.bgColor = hex;
                 this.renderer.setClearColorHex(hex, a);
                 this.scene.fog.color = new THREE.Color(hex);
+
             };
 
             gp.setSlabAndFog = function() {
+
+                console.log( "setSlabAndFog" );
+
                 var center = this.rotationGroup.position.z - this.camera.position.z;
                 if (center < 1) center = 1;
                 this.camera.near = center + this.slabNear;
@@ -461,6 +468,7 @@
                 //   if (this.scene.fog.near > center) this.scene.fog.near = center;
                 this.scene.fog.far = this.camera.far;
                 this.camera.updateProjectionMatrix();
+
             };
 
 
