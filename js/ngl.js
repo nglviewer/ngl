@@ -77,8 +77,8 @@ NGL.Resources = {
     'shader/SphereHalo.frag': '',
     'shader/CylinderImpostor.vert': '',
     'shader/CylinderImpostor.frag': '',
-    'shader/CylinderImpostor2.vert': '',
-    'shader/CylinderImpostor2.frag': '',
+    'shader/CylinderBoxImpostor.vert': '',
+    'shader/CylinderBoxImpostor.frag': '',
     'shader/SDFFont.vert': '',
     'shader/SDFFont.frag': '',
     'shader/LineSprite.vert': '',
@@ -565,18 +565,18 @@ NGL.Viewer.prototype = {
 
     render: function(){
 
+        this.rotationGroup.updateMatrix();
+        this.rotationGroup.updateMatrixWorld( true );
+
+        this.modelGroup.updateMatrix();
+        this.modelGroup.updateMatrixWorld( true );
+
         this.updateDynamicUniforms();
 
         // needed for font texture, but I don't know why
         _.each( NGL.textures, function( v ){
             v.uniform.value = v.tex;
         });
-
-        this.rotationGroup.updateMatrix();
-        this.rotationGroup.updateMatrixWorld( true );
-
-        this.modelGroup.updateMatrix();
-        this.modelGroup.updateMatrixWorld( true );
 
         this.renderer.render( this.scene, this.camera );
 
@@ -1147,7 +1147,7 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
         "inputPosition1": position1,
         "inputPosition2": position2,
 
-        //"position": position1,
+        "position": position1,
     });
 
     this.finalize();
@@ -1155,6 +1155,42 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
 }
 
 NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
+
+
+NGL.CylinderBoxImpostorBuffer = function ( from, to, color, color2, radius ) {
+
+    this.size = from.length / 3;
+    this.vertexShader = 'CylinderBoxImpostor.vert';
+    this.fragmentShader = 'CylinderBoxImpostor.frag';
+
+    NGL.BoxBuffer.call( this );
+
+    this.addUniforms({
+        'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+    });
+    
+    this.addAttributes({
+        "color2": { type: "c", value: null },
+        "radius": { type: "f", value: null },
+        "inputQ": { type: "v3", value: null },
+        "inputR": { type: "v3", value: null },
+    });
+
+    this.setAttributes({
+        "color": color,
+        "color2": color2,
+        "radius": radius,
+        "inputQ": from,
+        "inputR": to,
+
+        "position": from,
+    });
+
+    this.finalize();
+
+}
+
+NGL.CylinderBoxImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
 
 
 //////////////////////

@@ -64,7 +64,7 @@ void main()
     e3.xyz = normalize(position_atom1-position_atom2);
 
     // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon
-    if (e3.z == 0.0) { e3.z = 0.0000000000001;}
+    //if (e3.z == 0.0) { e3.z = 0.0000000000001;}
     if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}
     if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}
     if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}
