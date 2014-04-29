@@ -22,7 +22,7 @@ varying float b;
 void main()
 {
 
-    vec3 center = ( position + position2 ) / 2.0;   
+    vec3 center = ( position + position2 ) / 2.0;
     vec3 dir = normalize( position2 - position );
     float ext = length( position2 - position ) / 2.0;
     vec3 ldir;
@@ -57,7 +57,7 @@ void main()
     end = end4.xyz / end4.w;
 
     vec4 w = modelViewMatrix * vec4( 
-        center + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0 
+        center + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
     );
     point = w.xyz / w.w;
 

@@ -73,6 +73,12 @@ float update_z_buffer(vec3 M, mat4 ModelViewP){
 }
 
 
+void main2(void)
+{
+    gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+}
+
+
 void main()
 {
 
@@ -196,11 +202,6 @@ void main()
 
 }
 
-
-void main2(void)
-{
-    gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-}
 
 
 

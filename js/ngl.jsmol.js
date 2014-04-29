@@ -71,7 +71,7 @@
                 //model "position" is moved such that {0 0 0} is the fixedRotationCenter 
                 mg.position.x = -view.center.x; 
                 mg.position.y = -view.center.y;
-                mg.position.z = -view.center.z; 
+                mg.position.z = -view.center.z;
 
                 //there is also the fixedTranslation to worry about (from CTRL-ALT-drag)
 
@@ -317,7 +317,7 @@
 
                 var cylinderColor = new Float32Array( applet._GLmol.cylinderColor );
                 applet._GLmol.nglViewer.add( 
-                    new NGL.CylinderImpostorBuffer(
+                    new NGL.CylinderBoxImpostorBuffer(
                         new Float32Array( applet._GLmol.cylinderFrom ),
                         new Float32Array( applet._GLmol.cylinderTo ),
                         cylinderColor,
@@ -334,7 +334,7 @@
                 //         cylinderColor,
                 //         new Float32Array( applet._GLmol.cylinderRadius ),
                 //         new Float32Array( applet._GLmol.cylinderRadius ),
-                //         0.01
+                //         0.2
                 //     )
                 // );
 

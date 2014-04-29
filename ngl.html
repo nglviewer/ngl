@@ -195,12 +195,12 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereImpostor';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'CylinderImpostor';
-                    // oNgl.addPrimitive();
+                    oNgl.primitiveType = 'CylinderImpostor';
+                    oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereMesh';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'Sphere';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'Sphere';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'QuadricImpostor';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'EllipticBezierImpostor';
@@ -222,9 +222,9 @@
                     // oNgl.modelId = '1crn_ca';
                     // oNgl.modelType = 'ball+stick';
                     // oNgl.addModel();
-                    oNgl.modelId = '1crn';
-                    oNgl.modelType = 'ball+stick';
-                    oNgl.addModel();
+                    // oNgl.modelId = '1crn';
+                    // oNgl.modelType = 'ball+stick';
+                    // oNgl.addModel();
                     
                     // oNgl.surfaceId = '1crn';
                     // oNgl.addSurface();
@@ -357,9 +357,12 @@
                             new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
                         },
                         'CylinderImpostor': function(){
-                            new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius, true
-                            );
+                            // viewer.add( new NGL.CylinderImpostorBuffer( 
+                            //     c1.from, c1.to, c1.color, c1.color, c1.radius
+                            // ) );
+                            viewer.add( new NGL.CylinderBoxImpostorBuffer( 
+                                c1.from, c1.to, c1.color, c1.color, c1.radius
+                            ) );
                         },
                         'Cylinder': function(){
                             new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
