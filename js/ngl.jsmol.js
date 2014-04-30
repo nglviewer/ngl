@@ -113,6 +113,7 @@
             // GLmol and THREE.  
             
             var color = new THREE.Color();
+            var radius = null;
             var v1 = new THREE.Vector3( 0, 0, 0 );
             var v2 = new THREE.Vector3( 0, 0, 0 );
             var v3 = new THREE.Vector3( 0, 0, 0 );
@@ -129,35 +130,71 @@
 
             exporter.jsSphere = function(applet, id, found, pt, o) {
                 
-                applet._GLmol.spherePosition.push( pt.x );
-                applet._GLmol.spherePosition.push( pt.y );
-                applet._GLmol.spherePosition.push( pt.z );
-
+                radius = o[1].valueOf();
                 color.set( o[0].valueOf() );
-                applet._GLmol.sphereColor.push( color.r );
-                applet._GLmol.sphereColor.push( color.g );
-                applet._GLmol.sphereColor.push( color.b );
 
-                applet._GLmol.sphereRadius.push( o[1].valueOf() );
+                if( Math.floor(radius)<=0.1 ){
+
+                    applet._GLmol.particlePosition.push( pt.x );
+                    applet._GLmol.particlePosition.push( pt.y );
+                    applet._GLmol.particlePosition.push( pt.z );
+
+                    applet._GLmol.particleColor.push( color.r );
+                    applet._GLmol.particleColor.push( color.g );
+                    applet._GLmol.particleColor.push( color.b );
+
+                }else{
+
+                    applet._GLmol.spherePosition.push( pt.x );
+                    applet._GLmol.spherePosition.push( pt.y );
+                    applet._GLmol.spherePosition.push( pt.z );
+
+                    applet._GLmol.sphereColor.push( color.r );
+                    applet._GLmol.sphereColor.push( color.g );
+                    applet._GLmol.sphereColor.push( color.b );
+
+                    applet._GLmol.sphereRadius.push( radius );
+
+                }
 
             }
 
             exporter.jsCylinder = function(applet, id, found, pt1, pt2, o) {
                 
-                applet._GLmol.cylinderFrom.push( pt1.x );
-                applet._GLmol.cylinderFrom.push( pt1.y );
-                applet._GLmol.cylinderFrom.push( pt1.z );
-
-                applet._GLmol.cylinderTo.push( pt2.x );
-                applet._GLmol.cylinderTo.push( pt2.y );
-                applet._GLmol.cylinderTo.push( pt2.z );
-
+                radius = o[2].valueOf();
                 color.set( o[0].valueOf() );
-                applet._GLmol.cylinderColor.push( color.r );
-                applet._GLmol.cylinderColor.push( color.g );
-                applet._GLmol.cylinderColor.push( color.b );
 
-                applet._GLmol.cylinderRadius.push( o[2].valueOf() );
+                if( radius<=0.1 ){
+
+                    applet._GLmol.lineFrom.push( pt1.x );
+                    applet._GLmol.lineFrom.push( pt1.y );
+                    applet._GLmol.lineFrom.push( pt1.z );
+
+                    applet._GLmol.lineTo.push( pt2.x );
+                    applet._GLmol.lineTo.push( pt2.y );
+                    applet._GLmol.lineTo.push( pt2.z );
+                    
+                    applet._GLmol.lineColor.push( color.r );
+                    applet._GLmol.lineColor.push( color.g );
+                    applet._GLmol.lineColor.push( color.b );
+
+                }else{
+
+                    applet._GLmol.cylinderFrom.push( pt1.x );
+                    applet._GLmol.cylinderFrom.push( pt1.y );
+                    applet._GLmol.cylinderFrom.push( pt1.z );
+
+                    applet._GLmol.cylinderTo.push( pt2.x );
+                    applet._GLmol.cylinderTo.push( pt2.y );
+                    applet._GLmol.cylinderTo.push( pt2.z );
+                    
+                    applet._GLmol.cylinderColor.push( color.r );
+                    applet._GLmol.cylinderColor.push( color.g );
+                    applet._GLmol.cylinderColor.push( color.b );
+
+                    applet._GLmol.cylinderRadius.push( radius );
+
+                }
 
             }
 
@@ -306,55 +343,74 @@
 
             exporter.jsEndExport = function(applet) {                
 
-                applet._GLmol.nglViewer.add( 
+                var gl = applet._GLmol;
+
+                gl.nglViewer.add( 
                     new NGL.SphereImpostorBuffer(
-                        new Float32Array( applet._GLmol.spherePosition ),
-                        new Float32Array( applet._GLmol.sphereColor ),
-                        new Float32Array( applet._GLmol.sphereRadius )
+                        new Float32Array( gl.spherePosition ),
+                        new Float32Array( gl.sphereColor ),
+                        new Float32Array( gl.sphereRadius )
                     )
                 );
 
-                var cylinderColor = new Float32Array( applet._GLmol.cylinderColor );
-                applet._GLmol.nglViewer.add( 
+                var cylinderColor = new Float32Array( gl.cylinderColor );
+                gl.nglViewer.add( 
                     new NGL.CylinderImpostorBuffer(
                     // new NGL.CylinderBoxImpostorBuffer(
-                        new Float32Array( applet._GLmol.cylinderFrom ),
-                        new Float32Array( applet._GLmol.cylinderTo ),
+                        new Float32Array( gl.cylinderFrom ),
+                        new Float32Array( gl.cylinderTo ),
                         cylinderColor,
                         cylinderColor,
-                        new Float32Array( applet._GLmol.cylinderRadius )
+                        new Float32Array( gl.cylinderRadius )
                     )
                 );
 
-                // applet._GLmol.nglViewer.add( 
+                // gl.nglViewer.add( 
                 //     new NGL.HyperballStickImpostorBuffer(
-                //         new Float32Array( applet._GLmol.cylinderFrom ),
-                //         new Float32Array( applet._GLmol.cylinderTo ),
+                //         new Float32Array( gl.cylinderFrom ),
+                //         new Float32Array( gl.cylinderTo ),
                 //         cylinderColor,
                 //         cylinderColor,
-                //         new Float32Array( applet._GLmol.cylinderRadius ),
-                //         new Float32Array( applet._GLmol.cylinderRadius ),
+                //         new Float32Array( gl.cylinderRadius ),
+                //         new Float32Array( gl.cylinderRadius ),
                 //         0.2
                 //     )
                 // );
 
-                // applet._GLmol.nglViewer.add( 
+                // gl.nglViewer.add( 
                 //     new NGL.TextBuffer(
-                //         new Float32Array( applet._GLmol.spherePosition ),
-                //         new Float32Array( applet._GLmol.sphereRadius )
+                //         new Float32Array( gl.spherePosition ),
+                //         new Float32Array( gl.sphereRadius )
                 //     )
                 // );
 
-                applet._GLmol.nglViewer.add( 
+                gl.nglViewer.add( 
                     new NGL.MeshBuffer(
-                        new Float32Array( applet._GLmol.meshPosition ),
-                        new Float32Array( applet._GLmol.meshColor ),
-                        new Uint32Array( applet._GLmol.meshIndex ),
-                        new Float32Array( applet._GLmol.meshNormal )
+                        new Float32Array( gl.meshPosition ),
+                        new Float32Array( gl.meshColor ),
+                        new Uint32Array( gl.meshIndex ),
+                        new Float32Array( gl.meshNormal )
                     )
                 );
 
-                applet._GLmol.nglViewer.render();
+                gl.nglViewer.add( 
+                    new NGL.ParticleBuffer(
+                        new Float32Array( gl.particlePosition ),
+                        new Float32Array( gl.particleColor )
+                    )
+                );
+
+                var lineColor = new Float32Array( gl.lineColor );
+                gl.nglViewer.add( 
+                    new NGL.LineBuffer(
+                        new Float32Array( gl.lineFrom ),
+                        new Float32Array( gl.lineTo ),
+                        lineColor,
+                        lineColor
+                    )
+                );
+
+                gl.nglViewer.render();
 
                 applet._refresh();
 
@@ -412,6 +468,13 @@
                 this.meshColor = [];
                 this.meshIndex = [];
                 this.meshNormal = [];
+
+                this.particlePosition = [];
+                this.particleColor = [];
+
+                this.lineFrom = [];
+                this.lineTo = [];
+                this.lineColor = [];
 
             };
 

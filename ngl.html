@@ -351,7 +351,7 @@
                             viewer.add( new NGL.SphereGroup( c1.to, c1.color, r1 ) );
                         },
                         'Particle': function(){
-                            new NGL.ParticleBuffer( c1.from, c1.color, this.size );
+                            viewer.add( new NGL.ParticleBuffer( c1.from, c1.color, this.size ) );
                         },
                         'ParticleSprite': function(){
                             new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
