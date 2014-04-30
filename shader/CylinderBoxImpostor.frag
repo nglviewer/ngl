@@ -22,10 +22,8 @@ varying vec3 r;
 
 
 
-// #define ENABLE_CAPS
-
-#define PI     3.14159265358979323846264338
-#define TWOPI (2.0*PI)
+#define NEED_CAP // not working
+#define NEED_INNER_HIT
 
 
 
@@ -65,29 +63,29 @@ bool ray_cylinder_ixn(vec3 c, vec3 cdir, float R, vec3 l, vec3 ldir,
 }
 
 
-float side_of_plane(vec3 pt,vec3 n,vec3 ppt)
+float side_of_plane( vec3 pt, vec3 n, vec3 ppt )
 {
-  return dot(n,pt) - dot(n,ppt);
+    return dot( n, pt ) - dot( n, ppt );
 }
 
 
 // line: l(t) = u + t(v-u) .. 
 // returns the coeff (t) of the point on l to which p is closest
-float pt_line_proj_coeff(vec3 u,vec3 v,vec3 p)
+float pt_line_proj_coeff( vec3 u, vec3 v, vec3 p )
 {
-    return dot(p-u,v-u)/dot(v-u,v-u);
+    return dot( p-u, v-u ) / dot( v-u, v-u );
 }
 
 
-vec3 closest_line_pt(vec3 l,vec3 ldir,vec3 p)
+vec3 closest_line_pt( vec3 l, vec3 ldir, vec3 p )
 {
-  return l+ldir*dot(p-l,ldir)/dot(ldir,ldir);
+    return l + ldir * dot( p-l, ldir ) / dot( ldir, ldir );
 }
 
 
-vec3 plane_line_ixn(vec3 pn, vec3 pp, vec3 ldir, vec3 l)
+vec3 plane_line_ixn( vec3 pn, vec3 pp, vec3 ldir, vec3 l )
 {
-  return l + ldir*dot(pp-l,pn)/dot(ldir,pn);
+    return l + ldir * dot( pp-l, pn ) / dot( ldir, pn );
 }
 
 
@@ -108,7 +106,8 @@ void main()
     vec3    e    = (modelViewMatrixInverse*vec4(0,0,0,1)).xyz;
     vec3 edir    = normalize(mc_pos-e);
 
-    vec3 pnear   =vec3(0,0,0),pfar=vec3(0,0,0);
+    vec3 pnear   = vec3(0,0,0);
+    vec3 pfar    = vec3(0,0,0);
 
     if(ray_cylinder_ixn(q,r-q,vRadius,e,edir,pnear,pfar) == false)
         discard;
@@ -145,19 +144,19 @@ void main()
         {
             float u  = pt_line_proj_coeff(q,r,pfar);
 
-            if( u <0.0 || u >= 1.0 || dot(edir,qr) < 0.0000001)
+            if( u <0.0 || u > 1.0 || dot( edir, qr ) < 0.0000001 )
                 discard; 
               
             vec3 cap_ctr = r;
             normal       = qr;
               
-            if( t < 0) 
+            if( t < 0.0 ) 
             {
                 cap_ctr = q;
                 normal  = -qr;
             }
 
-            pt = plane_line_ixn(qr,cap_ctr,edir,e);    
+            pt = plane_line_ixn( qr, cap_ctr, edir, e );    
         }
     #endif
 
@@ -171,7 +170,13 @@ void main()
     
     #include light
 
-    gl_FragColor = vec4( vColor, 1.0 );
+    vec3 pt_l = closest_line_pt( q, qr, pt );
+    if( distance( pt_l, q ) < distance( pt_l, r ) ){
+        gl_FragColor = vec4( vColor, 1.0 );
+    }else{
+        gl_FragColor = vec4( vColor2, 1.0 );
+    }
+
     gl_FragColor.xyz *= vLightFront;
 
     #include fog

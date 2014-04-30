@@ -87,10 +87,9 @@
                     nv.camera.top = view.height * 0.5 / sppa;
                     nv.camera.bottom = -nv.camera.top;
                 }
-
                 nv.camera.updateProjectionMatrix();
 
-                requestAnimationFrame( _.bind( nv.render, nv ) );
+                nv.render();
 
                 // console.log( view );
                 // console.log( nv.camera );
