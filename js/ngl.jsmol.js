@@ -316,7 +316,8 @@
 
                 var cylinderColor = new Float32Array( applet._GLmol.cylinderColor );
                 applet._GLmol.nglViewer.add( 
-                    new NGL.CylinderBoxImpostorBuffer(
+                    new NGL.CylinderImpostorBuffer(
+                    // new NGL.CylinderBoxImpostorBuffer(
                         new Float32Array( applet._GLmol.cylinderFrom ),
                         new Float32Array( applet._GLmol.cylinderTo ),
                         cylinderColor,

@@ -357,12 +357,12 @@
                             new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
                         },
                         'CylinderImpostor': function(){
-                            // viewer.add( new NGL.CylinderImpostorBuffer( 
-                            //     c1.from, c1.to, c1.color, c1.color, c1.radius
-                            // ) );
-                            viewer.add( new NGL.CylinderBoxImpostorBuffer( 
+                            viewer.add( new NGL.CylinderImpostorBuffer( 
                                 c1.from, c1.to, c1.color, c1.color, c1.radius
                             ) );
+                            // viewer.add( new NGL.CylinderBoxImpostorBuffer( 
+                            //     c1.from, c1.to, c1.color, c1.color, c1.radius
+                            // ) );
                         },
                         'Cylinder': function(){
                             new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );

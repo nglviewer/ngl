@@ -1091,7 +1091,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius ) {
     NGL.AlignedBoxBuffer.call( this );
 
     this.addUniforms({
-        
+        'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
     });
     
     this.addAttributes({
