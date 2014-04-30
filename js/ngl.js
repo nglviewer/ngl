@@ -1196,14 +1196,12 @@ NGL.CylinderBoxImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype
 //////////////////////
 // Pixel Primitives
 
-// TODO
-NGL.ParticleBuffer = function ( position, color, size ) {
+NGL.ParticleBuffer = function ( position, color ) {
     
     this.size = position.length / 3;
 
     this.material = new THREE.ParticleSystemMaterial({
         vertexColors: true,
-        size: size,
         sizeAttenuation: false,
         fog: true
     });
@@ -1216,29 +1214,24 @@ NGL.ParticleBuffer = function ( position, color, size ) {
     this.geometry.attributes.position.array.set( position );
     this.geometry.attributes.color.set( color );
 
-    var particle = new THREE.ParticleSystem( this.geometry, this.material );
-    NGL.group.add( particle );
+    this.mesh = new THREE.ParticleSystem( this.geometry, this.material );
 
 }
 
-// TODO
+
 NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     this.size = from.length / 3;
 
     var n = this.size;
     var n6 = n * 6;
-    var nX = n * 2;
-    if( color2 ){
-        nX *= 2;
-    }
+    var nX = n * 2 * 2;
 
     this.material = new THREE.LineBasicMaterial({
         vertexColors: true,
         fog: true
     });
 
-    // make geometry and populate buffer
     this.geometry = new THREE.BufferGeometry();
 
     this.geometry.addAttribute( 'position', new THREE.Float32Attribute( nX, 3 ) );
@@ -1249,80 +1242,55 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     var i, j;
 
-    if( !color2 ){
+    var x, y, z, x1, y1, z1, x2, y2, z2;
 
-        for( var v = 0; v < n; v++ ){
-            
-            i = v * 2 * 3;
-            j = v * 3;
+    for( var v = 0; v < n; v++ ){
 
-            aPosition[ i + 0 ] = from[ j + 0 ];
-            aPosition[ i + 1 ] = from[ j + 1 ];
-            aPosition[ i + 2 ] = from[ j + 2 ];
-            aPosition[ i + 3 ] = to[ j + 0 ];
-            aPosition[ i + 4 ] = to[ j + 1 ];
-            aPosition[ i + 5 ] = to[ j + 2 ];
+        j = v * 3;
 
-            aColor[ i + 0 ] = color[ j + 0 ];
-            aColor[ i + 1 ] = color[ j + 1 ];
-            aColor[ i + 2 ] = color[ j + 2 ];
-            aColor[ i + 3 ] = color[ j + 0 ];
-            aColor[ i + 4 ] = color[ j + 1 ];
-            aColor[ i + 5 ] = color[ j + 2 ];
-        }
+        x1 = from[ j + 0 ];
+        y1 = from[ j + 1 ];
+        z1 = from[ j + 2 ];
 
-    }else{
+        x2 = to[ j + 0 ];
+        y2 = to[ j + 1 ];
+        z2 = to[ j + 2 ];
 
-        var x, y, z, x1, y1, z1, x2, y2, z2;
+        x = ( x1 + x2 ) / 2.0;
+        y = ( y1 + y2 ) / 2.0;
+        z = ( z1 + z2 ) / 2.0;
 
-        for( var v = 0; v < n; v++ ){
+        i = v * 2 * 3;
+        aPosition[ i + 0 ] = from[ j + 0 ];
+        aPosition[ i + 1 ] = from[ j + 1 ];
+        aPosition[ i + 2 ] = from[ j + 2 ];
+        aPosition[ i + 3 ] = x;
+        aPosition[ i + 4 ] = y;
+        aPosition[ i + 5 ] = z;
+        aColor[ i + 0 ] = color[ j + 0 ];
+        aColor[ i + 1 ] = color[ j + 1 ];
+        aColor[ i + 2 ] = color[ j + 2 ];
+        aColor[ i + 3 ] = color[ j + 0 ];
+        aColor[ i + 4 ] = color[ j + 1 ];
+        aColor[ i + 5 ] = color[ j + 2 ];
 
-            j = v * 3;
+        i2 = i + n6;
+        aPosition[ i2 + 0 ] = x;
+        aPosition[ i2 + 1 ] = y;
+        aPosition[ i2 + 2 ] = z;
+        aPosition[ i2 + 3 ] = to[ j + 0 ];
+        aPosition[ i2 + 4 ] = to[ j + 1 ];
+        aPosition[ i2 + 5 ] = to[ j + 2 ];
+        aColor[ i2 + 0 ] = color2[ j + 0 ];
+        aColor[ i2 + 1 ] = color2[ j + 1 ];
+        aColor[ i2 + 2 ] = color2[ j + 2 ];
+        aColor[ i2 + 3 ] = color2[ j + 0 ];
+        aColor[ i2 + 4 ] = color2[ j + 1 ];
+        aColor[ i2 + 5 ] = color2[ j + 2 ];
 
-            x1 = from[ j + 0 ];
-            y1 = from[ j + 1 ];
-            z1 = from[ j + 2 ];
-
-            x2 = to[ j + 0 ];
-            y2 = to[ j + 1 ];
-            z2 = to[ j + 2 ];
-
-            x = ( x1 + x2 ) / 2.0;
-            y = ( y1 + y2 ) / 2.0;
-            z = ( z1 + z2 ) / 2.0;
-
-            i = v * 2 * 3;
-            aPosition[ i + 0 ] = from[ j + 0 ];
-            aPosition[ i + 1 ] = from[ j + 1 ];
-            aPosition[ i + 2 ] = from[ j + 2 ];
-            aPosition[ i + 3 ] = x;
-            aPosition[ i + 4 ] = y;
-            aPosition[ i + 5 ] = z;
-            aColor[ i + 0 ] = color[ j + 0 ];
-            aColor[ i + 1 ] = color[ j + 1 ];
-            aColor[ i + 2 ] = color[ j + 2 ];
-            aColor[ i + 3 ] = color[ j + 0 ];
-            aColor[ i + 4 ] = color[ j + 1 ];
-            aColor[ i + 5 ] = color[ j + 2 ];
-
-            i2 = i + n6;
-            aPosition[ i2 + 0 ] = x;
-            aPosition[ i2 + 1 ] = y;
-            aPosition[ i2 + 2 ] = z;
-            aPosition[ i2 + 3 ] = to[ j + 0 ];
-            aPosition[ i2 + 4 ] = to[ j + 1 ];
-            aPosition[ i2 + 5 ] = to[ j + 2 ];
-            aColor[ i2 + 0 ] = color2[ j + 0 ];
-            aColor[ i2 + 1 ] = color2[ j + 1 ];
-            aColor[ i2 + 2 ] = color2[ j + 2 ];
-            aColor[ i2 + 3 ] = color2[ j + 0 ];
-            aColor[ i2 + 4 ] = color2[ j + 1 ];
-            aColor[ i2 + 5 ] = color2[ j + 2 ];
-        }
     }
 
-    var line = new THREE.Line( this.geometry, this.material, THREE.LinePieces );
-    NGL.group.add( line );
+    this.mesh = new THREE.Line( this.geometry, this.material, THREE.LinePieces );
 
 }
 
