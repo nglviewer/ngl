@@ -5,6 +5,7 @@ attribute vec3 color;
 attribute vec3 color2;
 attribute float radius;
 
+
 varying vec3 vColor;
 varying vec3 vColor2;
 varying float vRadius;  
@@ -16,6 +17,9 @@ varying vec3 end;
 varying vec3 U;
 varying vec3 V;
 varying float b;
+
+
+uniform mat4 modelViewMatrixInverse;
 
 
 
@@ -31,9 +35,9 @@ void main()
     vColor2 = color2;
     vRadius = radius;
 
-    vec3 cam_dir = normalize( cameraPosition - center );
-    // vec3 cam_dir = normalize( center - cameraPosition );
-    // vec3 cam_dir = normalize( ( modelViewMatrix *vec4( cameraPosition, 1.0 ) ).xyz - center );
+    // vec3 cam_dir = normalize( cameraPosition - center );
+    // needed for jsmol which rotes the model not the camera
+    vec3 cam_dir = normalize( (modelViewMatrixInverse*vec4(0,0,0,1)).xyz - center ); 
 
     b = dot( cam_dir, dir );
     if( b < 0.0 ) // direction vector looks away, so flip
