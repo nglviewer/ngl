@@ -6,20 +6,26 @@
 
 ;(function(Jmol) {
 
-    Jmol._Canvas3D = function(id, Info, type, checkOnly){
+    Jmol._Canvas3D = function( id, Info, type, checkOnly ){
+
         this._uniqueId = ("" + Math.random()).substring(3);
         this._id = id;
         this._is2D = false;
         this._isJava = false;
         this._jmolType = "Jmol._Canvas3D (Jmol/GLmol)";
         this._platform = "J.awtjs.Platform";
+
         if (checkOnly)
             return this;
+
         window[id] = this;
         this._createCanvas(id, Info, new Jmol.GLmol);
+
         if (!Jmol._document || this._deferApplet)
             return this;
+
         this._init();
+
         return this;
     };
 
@@ -34,7 +40,7 @@
     ;(function(GLmol) {
 
 
-        GLmol.extendApplet = function(applet) {
+        GLmol.extendApplet = function( applet ) {
 
             applet._refresh = function() {
             
@@ -101,7 +107,7 @@
 
         }
 
-        GLmol.extendJSExporter = function(exporter){
+        GLmol.extendJSExporter = function( exporter ){
 
             // This method will be called just after org.jmol.export.JSExporter has loaded,
             //  as one of its static calls.  
@@ -109,8 +115,8 @@
             // exporter is org.jmol.export.JSExporter.protothpe
             
             // What we are doing here is overriding methods of org.jmol.export.JSExporter.
-            // These methods are called by that general class and implemened here usring
-            // GLmol and THREE.  
+            // These methods are called by that general class and implemened here using
+            // NGL (based on THREE).
             
             var color = new THREE.Color();
             var radius = null;
@@ -128,7 +134,7 @@
 
             }
 
-            exporter.jsSphere = function(applet, id, found, pt, o) {
+            exporter.jsSphere = function( applet, id, found, pt, o ) {
                 
                 radius = o[1].valueOf();
                 color.set( o[0].valueOf() );
@@ -159,7 +165,7 @@
 
             }
 
-            exporter.jsCylinder = function(applet, id, found, pt1, pt2, o) {
+            exporter.jsCylinder = function( applet, id, found, pt1, pt2, o ) {
                 
                 radius = o[2].valueOf();
                 color.set( o[0].valueOf() );
@@ -198,7 +204,7 @@
 
             }
 
-            exporter.jsTriangle = function(applet, uniformColor, pt1, pt2, pt3) {
+            exporter.jsTriangle = function( applet, uniformColor, pt1, pt2, pt3 ) {
 
                 var vertexCount = applet._GLmol.meshPosition.length / 3;
 
@@ -251,7 +257,7 @@
 
             }
 
-            exporter.jsSurface = function(applet, vertices, normals, indices, nVertices, nPolygons, nFaces, bsPolygons, faceVertexMax, uniformColor, vertexColors, polygonColors) {
+            exporter.jsSurface = function( applet, vertices, normals, indices, nVertices, nPolygons, nFaces, bsPolygons, faceVertexMax, uniformColor, vertexColors, polygonColors ) {
                 // notes: uniformColor is only used if both vertexColors and polygonColors are null.
                 //        Only one of vertexColors or polygonColors will NOT be null.
                 //        Int facevertexMax is either 3 or 4; indices may have MORE than that number
@@ -446,6 +452,7 @@
                 canvas.style.width = "100%";
                 canvas.style.height = "100%";
                 canvas.id = this.id+"_canvas";
+
                 canvas.applet = this.applet;
                 Jmol._jsSetMouse(canvas);
                 this.applet._canvas = canvas;

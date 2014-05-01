@@ -687,7 +687,11 @@ NGL.Buffer = function () {
     // required properties:
     // - size
     // - attributeSize
+    // - vertexShader
+    // - fragmentShader
 
+    this.defines = [];
+    this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
 
     this.addAttributes({
@@ -706,8 +710,6 @@ NGL.Buffer.prototype = {
     
     constructor: NGL.Buffer,
 
-    attributes: {},
-
     finalize: function(){
 
         this.makeIndex();
@@ -715,8 +717,8 @@ NGL.Buffer.prototype = {
         this.material = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
             attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
+            vertexShader: NGL.getShader( this.vertexShader, this.defines ),
+            fragmentShader: NGL.getShader( this.fragmentShader, this.defines ),
             depthTest: true,
             transparent: false,
             depthWrite: true,
@@ -1082,7 +1084,9 @@ NGL.HaloBuffer = function ( position, radius ) {
 NGL.HaloBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift ) {
+// shift - moves the cylinder in camera space to i.e. get multiple aligned cylinders
+// cap - if true the cylinders are capped
+NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift, cap ) {
 
     if( !shift ) shift = 0;
 
@@ -1091,6 +1095,8 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift )
     this.fragmentShader = 'CylinderImpostor.frag';
 
     NGL.AlignedBoxBuffer.call( this );
+
+    if( cap ) this.defines.push( "CAP" );
 
     this.addUniforms({
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },

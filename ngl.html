@@ -848,10 +848,10 @@
                         case "ball+stick":
                             if( impostor ){
                                 viewer.add( new NGL.CylinderImpostorBuffer(
-                                    from, to, bColor, bColor2, bRadius, 1.0
+                                    from, to, bColor, bColor2, bRadius, 1.0, false
                                 ) );
                                 viewer.add( new NGL.CylinderImpostorBuffer(
-                                    from, to, bColor, bColor2, bRadius, -1.0
+                                    from, to, bColor, bColor2, bRadius, -1.0, false
                                 ) );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );

@@ -85,6 +85,11 @@ void main()
     // if the angle < 0, the point is outside of cylinder
     // test front cap
 
+    #ifndef CAP
+        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;
+        vec3 tmp_point2 = new_point2 - base;
+    #endif
+
     // flat
     if (cap_test < 0.0) 
     {
@@ -97,7 +102,12 @@ void main()
         // within the cap radius?
         if (dot(new_point - base, new_point-base) > radius2) 
             discard;
-        normal = -axis;
+
+        #ifdef CAP
+            normal = axis;
+        #else
+            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
+        #endif
     }
 
     // test end cap
@@ -115,7 +125,12 @@ void main()
         // within the cap radius?
         if( dot(new_point - end_cyl, new_point-base) > radius2 ) 
             discard;
-        normal = axis;
+        
+        #ifdef CAP
+            normal = axis;
+        #else
+            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
+        #endif
     }
 
     vec2 clipZW = new_point.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
