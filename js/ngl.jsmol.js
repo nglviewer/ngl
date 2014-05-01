@@ -133,7 +133,7 @@
                 radius = o[1].valueOf();
                 color.set( o[0].valueOf() );
 
-                if( Math.floor(radius)<=0.1 ){
+                if( Math.floor(radius*10)<=1 ){
 
                     applet._GLmol.particlePosition.push( pt.x );
                     applet._GLmol.particlePosition.push( pt.y );
@@ -356,7 +356,6 @@
                 var cylinderColor = new Float32Array( gl.cylinderColor );
                 gl.nglViewer.add( 
                     new NGL.CylinderImpostorBuffer(
-                    // new NGL.CylinderBoxImpostorBuffer(
                         new Float32Array( gl.cylinderFrom ),
                         new Float32Array( gl.cylinderTo ),
                         cylinderColor,
@@ -364,25 +363,6 @@
                         new Float32Array( gl.cylinderRadius )
                     )
                 );
-
-                // gl.nglViewer.add( 
-                //     new NGL.HyperballStickImpostorBuffer(
-                //         new Float32Array( gl.cylinderFrom ),
-                //         new Float32Array( gl.cylinderTo ),
-                //         cylinderColor,
-                //         cylinderColor,
-                //         new Float32Array( gl.cylinderRadius ),
-                //         new Float32Array( gl.cylinderRadius ),
-                //         0.2
-                //     )
-                // );
-
-                // gl.nglViewer.add( 
-                //     new NGL.TextBuffer(
-                //         new Float32Array( gl.spherePosition ),
-                //         new Float32Array( gl.sphereRadius )
-                //     )
-                // );
 
                 gl.nglViewer.add( 
                     new NGL.MeshBuffer(
@@ -409,6 +389,25 @@
                         lineColor
                     )
                 );
+
+                // gl.nglViewer.add( 
+                //     new NGL.HyperballStickImpostorBuffer(
+                //         new Float32Array( gl.cylinderFrom ),
+                //         new Float32Array( gl.cylinderTo ),
+                //         cylinderColor,
+                //         cylinderColor,
+                //         new Float32Array( gl.cylinderRadius ),
+                //         new Float32Array( gl.cylinderRadius ),
+                //         0.2
+                //     )
+                // );
+
+                // gl.nglViewer.add( 
+                //     new NGL.TextBuffer(
+                //         new Float32Array( gl.spherePosition ),
+                //         new Float32Array( gl.sphereRadius )
+                //     )
+                // );
 
                 gl.nglViewer.render();
 

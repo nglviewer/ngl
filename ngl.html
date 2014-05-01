@@ -859,10 +859,10 @@
                             break;
                         case "sprite":
                         case "line-sprite":
-                            new NGL.LineSpriteBuffer( from, to, bColor, bColor2, bRadius );
+                            viewer.add( new NGL.LineSpriteBuffer( from, to, bColor, bColor2, bRadius ) );
                             break;
                         case "line":
-                            new NGL.LineBuffer( from, to, bColor, bColor2 );
+                            viewer.add( new NGL.LineBuffer( from, to, bColor, bColor2 ) );
                             break
                     }
                 }
