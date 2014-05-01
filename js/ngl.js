@@ -1082,7 +1082,9 @@ NGL.HaloBuffer = function ( position, radius ) {
 NGL.HaloBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius ) {
+NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift ) {
+
+    if( !shift ) shift = 0;
 
     this.size = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
@@ -1092,6 +1094,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius ) {
 
     this.addUniforms({
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+        'shift': { type: "f", value: shift },
     });
     
     this.addAttributes({

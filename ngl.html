@@ -195,8 +195,8 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereImpostor';
                     // oNgl.addPrimitive();
-                    oNgl.primitiveType = 'CylinderImpostor';
-                    oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'CylinderImpostor';
+                    // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SphereMesh';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'Sphere';
@@ -847,7 +847,12 @@
                         case "stick":
                         case "ball+stick":
                             if( impostor ){
-                                viewer.add( new NGL.CylinderBoxImpostorBuffer( from, to, bColor, bColor2, bRadius ) );
+                                viewer.add( new NGL.CylinderImpostorBuffer(
+                                    from, to, bColor, bColor2, bRadius, 1.0
+                                ) );
+                                viewer.add( new NGL.CylinderImpostorBuffer(
+                                    from, to, bColor, bColor2, bRadius, -1.0
+                                ) );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );
                             }
