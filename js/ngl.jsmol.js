@@ -443,6 +443,7 @@
                 this.CAMERA_Z = -300;
 
                 this.nglViewer = new NGL.Viewer( this.container.attr( "id" ) );
+                new NGL.GUI( this.nglViewer );
 
                 this.resetArrays();
                 

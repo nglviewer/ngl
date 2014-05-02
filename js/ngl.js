@@ -300,6 +300,64 @@ NGL.getShader = function( name, defines ) {
 };
 
 
+////////
+// GUI
+
+/**
+ * A dat.GUI {@link https://code.google.com/p/dat-gui/} based GUI
+ * for a viewer instance.
+ * @class
+ * @param {NGL.Viewer} viewer
+ */
+NGL.GUI = function( viewer ){
+
+    this.viewer = viewer;
+
+    this.updateDisplay = true;
+    this.dotScreenEffect = false;
+    this.fxaaEffect = false;
+    this.ssaoEffect = false;
+
+    var gui = new dat.GUI({ autoPlace: false });
+    gui.domElement.style.position = 'absolute';
+    gui.domElement.style.top = '0px';
+    gui.domElement.style.right = '0px';
+    this.viewer.container.appendChild( gui.domElement );
+
+    gui.add( this, 'clear' );
+    gui.add( this, 'updateDisplay' ).onChange(
+        function( value ){ viewer.params.updateDisplay = value; }
+    );
+    gui.add( this, 'dotScreenEffect' ).onChange(
+        function( value ){ 
+            viewer.dotScreenEffect.enabled = value;
+            viewer.render();
+        }
+    );
+    gui.add( this, 'fxaaEffect' ).onChange(
+        function( value ){ 
+            viewer.fxaaEffect.enabled = value;
+            viewer.render();
+        }
+    );
+    gui.add( this, 'ssaoEffect' ).onChange(
+        function( value ){ 
+            viewer.ssaoEffect.enabled = value;
+            viewer.render();
+        }
+    );
+
+}
+
+NGL.GUI.prototype = {
+
+    clear: function(){
+        this.viewer.clear();
+    }
+
+}
+
+
 ///////////
 // Viewer
 
@@ -311,8 +369,6 @@ NGL.getShader = function( name, defines ) {
 NGL.Viewer = function( eid ){
 
     this.container = document.getElementById( eid );
-
-    console.log( "Viewer container", this.container );
 
     if ( this.container === document ) {
         this.width = window.innerWidth;
@@ -424,6 +480,7 @@ NGL.Viewer.prototype = {
 
         // postprocessing
         this.composer = new THREE.EffectComposer( this.renderer );
+        this.composer.setSize( this.width, this.height );
         this.composer.addPass( new THREE.RenderPass( this.scene, this.camera ) );
 
         this.depthScale = 0.5;
@@ -432,20 +489,20 @@ NGL.Viewer.prototype = {
             { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter }
         );
 
-        var ssaoEffect = new THREE.ShaderPass( THREE.SSAOShader );
-        ssaoEffect.uniforms[ 'tDepth' ].value = this.depthTarget;
-        ssaoEffect.uniforms[ 'size' ].value.set( 
+        this.ssaoEffect = new THREE.ShaderPass( THREE.SSAOShader );
+        this.ssaoEffect.uniforms[ 'tDepth' ].value = this.depthTarget;
+        this.ssaoEffect.uniforms[ 'size' ].value.set( 
             this.width * this.depthScale, this.height * this.depthScale
         );
-        ssaoEffect.uniforms[ 'cameraNear' ].value = this.camera.near;
-        ssaoEffect.uniforms[ 'cameraFar' ].value = this.camera.far;
-        ssaoEffect.enabled = false;
-        // this.composer.addPass( ssaoEffect );
+        this.ssaoEffect.uniforms[ 'cameraNear' ].value = this.camera.near;
+        this.ssaoEffect.uniforms[ 'cameraFar' ].value = this.camera.far;
+        this.ssaoEffect.enabled = false;
+        this.composer.addPass( this.ssaoEffect );
 
-        var dotScreenEffect = new THREE.ShaderPass( THREE.DotScreenShader );
-        dotScreenEffect.uniforms[ 'scale' ].value = 4;
-        dotScreenEffect.enabled = false;
-        this.composer.addPass( dotScreenEffect );
+        this.dotScreenEffect = new THREE.ShaderPass( THREE.DotScreenShader );
+        this.dotScreenEffect.uniforms[ 'scale' ].value = 4;
+        this.dotScreenEffect.enabled = false;
+        this.composer.addPass( this.dotScreenEffect );
 
         this.fxaaEffect = new THREE.ShaderPass( THREE.FXAAShader );
         this.fxaaEffect.uniforms[ 'resolution' ].value = new THREE.Vector2( 
@@ -462,7 +519,7 @@ NGL.Viewer.prototype = {
         this.depthPassPlugin = new THREE.DepthPassPlugin();
         this.depthPassPlugin.renderTarget = this.depthTarget;
 
-        // this.renderer.addPrePlugin( this.depthPassPlugin );
+        this.renderer.addPrePlugin( this.depthPassPlugin );
 
     },
 
@@ -528,6 +585,10 @@ NGL.Viewer.prototype = {
     /**
      * Adds a buffer to the scene
      * @param {NGL.Buffer} buffer
+     * @example
+     * var viewer = new NGL.Viewer( "eid" );
+     * var buffer = new NGL.Buffer();
+     * viewer.add( buffer );
      */
     add: function( buffer ){
 
@@ -637,6 +698,9 @@ NGL.Viewer.prototype = {
         this.camera.updateProjectionMatrix();
         this.controls.handleResize();
         this.renderer.setSize( this.width, this.height );
+        this.composer.setSize( this.width, this.height );
+
+        console.log( "composer", this.composer );
 
         this.fxaaEffect.uniforms[ 'resolution' ].value.set( 
             1 / this.width, 1 / this.height
@@ -678,10 +742,12 @@ NGL.Viewer.prototype = {
         // this.renderer.render( this.scene, this.camera );
 
         // -------
-        // this.depthPassPlugin.enabled = true;
-        // this.renderer.autoClear = false;
-        // this.renderer.render( this.scene, this.camera );
-        // this.depthPassPlugin.enabled = false;
+        if( this.ssaoEffect.enabled ){
+            this.depthPassPlugin.enabled = true;
+            this.renderer.autoClear = false;
+            this.renderer.render( this.scene, this.camera );
+        }
+        this.depthPassPlugin.enabled = false;
         this.composer.render();
         // -------
 
