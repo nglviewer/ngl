@@ -880,6 +880,9 @@ NGL.Buffer.prototype = {
      * Sets buffer attributes
      * @param {Object} data - An object where the keys are the attribute names
      *      and the values are the attribute data.
+     * @example
+     * var buffer = new NGL.Buffer();
+     * buffer.setAttributes({ attrName: attrData });
      */
     setAttributes: function( data ){
 
