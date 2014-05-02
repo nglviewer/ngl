@@ -40,9 +40,6 @@ $.loadImage = function(url) {
 };
 
 
-var log = _.throttle( function(x,y){ console.log(x,y); }, 1000 );
-
-
 // X-ray shader
 // https://github.com/cryos/avogadro/tree/master/libavogadro/src/extensions/shaders
 
@@ -299,9 +296,9 @@ NGL.Viewer = function( eid ){
 
     this.initCamera();
 
-    this.initRenderer();
-
     this.initScene();
+
+    this.initRenderer();
 
     this.initLights();
 
@@ -378,17 +375,61 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new THREE.WebGLRenderer( { alpha: true, antialias: false } );
+        this.renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
 
         var _glExtensionFragDepth = this.renderer.context.getExtension('EXT_frag_depth');
-        //if(!_glExtensionFragDepth) { throw "ERROR getting 'EXT_frag_depth'" }
+        if( !_glExtensionFragDepth ){ 
+            console.error( "ERROR getting 'EXT_frag_depth'" );
+        }
 
         this.renderer.context.getExtension('OES_standard_derivatives');
         this.renderer.context.getExtension('OES_element_index_uint');
 
         this.container.appendChild( this.renderer.domElement );
+
+        // postprocessing
+        this.composer = new THREE.EffectComposer( this.renderer );
+        this.composer.addPass( new THREE.RenderPass( this.scene, this.camera ) );
+
+        this.depthScale = 0.5;
+        this.depthTarget = new THREE.WebGLRenderTarget( 
+            this.width * this.depthScale, this.height * this.depthScale, 
+            { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter }
+        );
+
+        var ssaoEffect = new THREE.ShaderPass( THREE.SSAOShader );
+        ssaoEffect.uniforms[ 'tDepth' ].value = this.depthTarget;
+        ssaoEffect.uniforms[ 'size' ].value.set( 
+            this.width * this.depthScale, this.height * this.depthScale
+        );
+        ssaoEffect.uniforms[ 'cameraNear' ].value = this.camera.near;
+        ssaoEffect.uniforms[ 'cameraFar' ].value = this.camera.far;
+        ssaoEffect.enabled = false;
+        // this.composer.addPass( ssaoEffect );
+
+        var dotScreenEffect = new THREE.ShaderPass( THREE.DotScreenShader );
+        dotScreenEffect.uniforms[ 'scale' ].value = 4;
+        dotScreenEffect.enabled = false;
+        this.composer.addPass( dotScreenEffect );
+
+        this.fxaaEffect = new THREE.ShaderPass( THREE.FXAAShader );
+        this.fxaaEffect.uniforms[ 'resolution' ].value = new THREE.Vector2( 
+            1 / this.width, 1 / this.height
+        );
+        this.fxaaEffect.enabled = false;
+        this.composer.addPass( this.fxaaEffect );
+
+        var effect = new THREE.ShaderPass( THREE.CopyShader );
+        effect.renderToScreen = true;
+        this.composer.addPass( effect );
+
+        // depth pass
+        this.depthPassPlugin = new THREE.DepthPassPlugin();
+        this.depthPassPlugin.renderTarget = this.depthTarget;
+
+        // this.renderer.addPrePlugin( this.depthPassPlugin );
 
     },
 
@@ -548,6 +589,10 @@ NGL.Viewer.prototype = {
         this.controls.handleResize();
         this.renderer.setSize( this.width, this.height );
 
+        this.fxaaEffect.uniforms[ 'resolution' ].value.set( 
+            1 / this.width, 1 / this.height
+        );
+
     },
 
     animate: function(){
@@ -578,7 +623,15 @@ NGL.Viewer.prototype = {
             v.uniform.value = v.tex;
         });
 
-        this.renderer.render( this.scene, this.camera );
+        // this.renderer.render( this.scene, this.camera );
+
+        // -------
+        // this.depthPassPlugin.enabled = true;
+        // this.renderer.autoClear = false;
+        // this.renderer.render( this.scene, this.camera );
+        // this.depthPassPlugin.enabled = false;
+        this.composer.render();
+        // -------
 
         this.stats.update();
         this.rendererStats.update( this.renderer );
@@ -721,6 +774,12 @@ NGL.Buffer.prototype = {
             fragmentShader: NGL.getShader( this.fragmentShader, this.defines ),
             depthTest: true,
             transparent: false,
+            // opacity: 1.0,
+            // blending: THREE.AdditiveBlending,
+            // blending: THREE.MultiplyBlending,
+            // blending: THREE.CustomBlending,
+            // blendSrc: THREE.OneFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
             depthWrite: true,
             lights: true,
             fog: true
@@ -1166,46 +1225,10 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
 NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
 
 
-NGL.CylinderBoxImpostorBuffer = function ( from, to, color, color2, radius ) {
-
-    this.size = from.length / 3;
-    this.vertexShader = 'CylinderBoxImpostor.vert';
-    this.fragmentShader = 'CylinderBoxImpostor.frag';
-
-    NGL.BoxBuffer.call( this );
-
-    this.addUniforms({
-        'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-    });
-    
-    this.addAttributes({
-        "color2": { type: "c", value: null },
-        "radius": { type: "f", value: null },
-        "inputQ": { type: "v3", value: null },
-        "inputR": { type: "v3", value: null },
-    });
-
-    this.setAttributes({
-        "color": color,
-        "color2": color2,
-        "radius": radius,
-        "inputQ": from,
-        "inputR": to,
-
-        "position": from,
-    });
-
-    this.finalize();
-
-}
-
-NGL.CylinderBoxImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
-
-
 //////////////////////
 // Pixel Primitives
 
-NGL.ParticleBuffer = function ( position, color ) {
+NGL.PointBuffer = function ( position, color ) {
     
     this.size = position.length / 3;
 
@@ -1534,6 +1557,74 @@ NGL.TextBuffer.prototype.makeMapping = function(){
 // this.cylinderCappedGeometry.applyMatrix( matrix );
 
 
+/////////////////
+// Alternatives 
+
+NGL.CylinderBoxImpostorBuffer = function ( from, to, color, color2, radius ) {
+
+    this.size = from.length / 3;
+    this.vertexShader = 'CylinderBoxImpostor.vert';
+    this.fragmentShader = 'CylinderBoxImpostor.frag';
+
+    NGL.BoxBuffer.call( this );
+
+    this.addUniforms({
+        'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+    });
+    
+    this.addAttributes({
+        "color2": { type: "c", value: null },
+        "radius": { type: "f", value: null },
+        "inputQ": { type: "v3", value: null },
+        "inputR": { type: "v3", value: null },
+    });
+
+    this.setAttributes({
+        "color": color,
+        "color2": color2,
+        "radius": radius,
+        "inputQ": from,
+        "inputR": to,
+
+        "position": from,
+    });
+
+    this.finalize();
+
+}
+
+NGL.CylinderBoxImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
+
+
+NGL.HyperballSphereImpostorBuffer = function ( position, color, radius ) {
+
+    this.size = position.length / 3;
+    this.vertexShader = 'HyperballSphereImpostor.vert';
+    this.fragmentShader = 'HyperballSphereImpostor.frag';
+
+    NGL.QuadBuffer.call( this );
+
+    this.addUniforms({
+        'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
+        'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+        'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
+    });
+    
+    this.addAttributes({
+        "aRadius": { type: "f", value: null },
+    });
+
+    this.setAttributes({
+        "position": position,
+        "color": color,
+        "aRadius": radius,
+    });
+
+    this.finalize();
+
+}
+
+NGL.HyperballSphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
 /////////////////
@@ -1659,37 +1750,6 @@ NGL.TubeImpostorBufferX = function ( position, normal, dir, color, radius ) {
 }
 
 NGL.TubeImpostorBufferX.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
-
-
-NGL.HyperballSphereImpostorBuffer = function ( position, color, radius ) {
-
-    this.size = position.length / 3;
-    this.vertexShader = 'HyperballSphereImpostor.vert';
-    this.fragmentShader = 'HyperballSphereImpostor.frag';
-
-    NGL.QuadBuffer.call( this );
-
-    this.addUniforms({
-        'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
-        'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
-    });
-    
-    this.addAttributes({
-        "aRadius": { type: "f", value: null },
-    });
-
-    this.setAttributes({
-        "position": position,
-        "color": color,
-        "aRadius": radius,
-    });
-
-    this.finalize();
-
-}
-
-NGL.HyperballSphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
 // TODO
@@ -4024,264 +4084,6 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
     // new NGL.SphereImpostorBuffer( inputR, inputColor, inputCylinderRadius );
     // new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius );
 }
-
-
-NGL.CylinderImpostorBuffer2 = function ( from, to, color, color2, radius, tube ) {
-
-    // http://math.stackexchange.com/questions/13341/shortest-distance-between-a-point-and-a-helix
-    // https://github.com/nithins/proteinvis/tree/master/pv_app/resources
-
-    var geometry, material, mesh;
-    var n = from.length/3;
-    var n8 = n * 8;
-
-    // make shader material
-    var attributes = {
-        inputMapping: { type: 'v2', value: null },
-        inputColor: { type: 'c', value: null },
-        inputAxis: { type: 'v3', value: null },
-        inputDir: { type: 'v3', value: null },
-        inputP: { type: 'v3', value: null },
-        inputQ: { type: 'v3', value: null },
-        inputR: { type: 'v3', value: null },
-        inputS: { type: 'v3', value: null },
-        inputCylinderRadius: { type: 'f', value: null },
-        inputCylinderHeight: { type: 'f', value: null }
-    };
-    if( color2 ){
-        attributes['inputColor2'] = { type: 'c', value: null };
-    }
-    var uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-    ]);
-
-    material = new THREE.ShaderMaterial( {
-        uniforms: uniforms,
-        attributes: attributes,
-        vertexShader: NGL.getShader( 'CylinderImpostor2.vert' ),
-        fragmentShader: NGL.getShader( 'CylinderImpostor2.frag' ),
-        depthTest: true,
-        transparent: true,
-        depthWrite: true,
-        lights: true,
-        side: THREE.DoubleSide,
-        fog: true
-    });
-
-    // make geometry and populate buffer
-    geometry = new THREE.BufferGeometry();
-
-    geometry.addAttribute( 'position', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n8, 3 ) );
-    if( color2 ){
-        geometry.addAttribute( 'inputColor2', new THREE.Float32Attribute( n8, 3 ) );
-    }
-    geometry.addAttribute( 'inputAxis', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputDir', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputP', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputQ', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputR', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputS', new THREE.Float32Attribute( n8, 3 ) );
-    geometry.addAttribute( 'inputCylinderRadius', new THREE.Float32Attribute( n8, 1 ) );
-    geometry.addAttribute( 'inputCylinderHeight', new THREE.Float32Attribute( n8, 1 ) );
-
-    var aPosition = geometry.attributes.position.array;
-    var inputMapping = geometry.attributes.inputMapping.array;
-    var inputColor = geometry.attributes.inputColor.array;
-    if( color2 ){
-        var inputColor2 = geometry.attributes.inputColor2.array;
-    }
-    var inputAxis = geometry.attributes.inputAxis.array;
-    var inputDir = geometry.attributes.inputDir.array;
-    var inputP = geometry.attributes.inputP.array;
-    var inputQ = geometry.attributes.inputQ.array;
-    var inputR = geometry.attributes.inputR.array;
-    var inputS = geometry.attributes.inputS.array;
-    var inputCylinderRadius = geometry.attributes.inputCylinderRadius.array;
-    var inputCylinderHeight = geometry.attributes.inputCylinderHeight.array;
-
-    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 36, 1 ) );
-    var indices = geometry.attributes.index.array;
-
-    geometry.offsets = NGL.calculateOffsets( n8, 12, 8 );
-
-    var r, g, b;
-    if( color2 ){
-        var r2, g2, b2;
-    }
-    var x, y, z;
-    var x1, y1, z1, x2, y2, z2;
-    var xp, yp, zp, xn, yn, zn;
-    var vx, vy, vz;
-    var dx, dy, dz;
-    var height;
-    var i, j, k, ix, it;
-    var chunkSize = NGL.calculateChunkSize( 8 );
-
-    var BoxMapping2 = new Float32Array([
-        -1.0,  1.0, -1.0,
-         1.0,  1.0, -1.0,
-        -1.0, -1.0, -1.0,
-         1.0, -1.0, -1.0,
-        -1.0,  1.0,  1.0,
-         1.0,  1.0,  1.0,
-        -1.0, -1.0,  1.0,
-         1.0, -1.0,  1.0
-    ]);
-    
-    var BoxIndices2 = new Uint16Array([
-        0, 1, 2,
-        1, 3, 2,
-        4, 6, 5,
-        5, 6, 7,
-        4, 5, 0,
-        5, 0, 1,
-        6, 2, 7,
-        2, 3, 7,
-        1, 5, 7,
-        7, 3, 1,
-        2, 6, 0,
-        6, 4, 0
-    ]);
-
-    for( var v = 0; v < n; v++ ) {
-        i = v * 3 * 8;
-        k = v * 3;
-
-        inputMapping.set( BoxMapping2, i );
-
-        r = color[ k + 0 ];
-        g = color[ k + 1 ];
-        b = color[ k + 2 ];
-
-        if( color2 ){
-            r2 = color2[ k + 0 ];
-            g2 = color2[ k + 1 ];
-            b2 = color2[ k + 2 ];
-        }
-
-        if( v%tube==0 ){
-            xp = from[ k + 0 ];// + ( from[ k + 0 ] - to[ k + 0 ] );
-            yp = from[ k + 1 ];// + ( from[ k + 1 ] - to[ k + 1 ] );
-            zp = from[ k + 2 ];// + ( from[ k + 2 ] - to[ k + 2 ] );
-        }else{
-            xp = from[ k - 3 + 0 ];
-            yp = from[ k - 3 + 1 ];
-            zp = from[ k - 3 + 2 ];
-        }
-
-        x1 = from[ k + 0 ];
-        y1 = from[ k + 1 ];
-        z1 = from[ k + 2 ];
-
-        x2 = to[ k + 0 ];
-        y2 = to[ k + 1 ];
-        z2 = to[ k + 2 ];
-
-        if( v%tube==tube-1 ){
-            xn = to[ k + 0 ];// + ( to[ k + 0 ] - from[ k + 0 ] );
-            yn = to[ k + 1 ];// + ( to[ k + 1 ] - from[ k + 1 ] );
-            zn = to[ k + 2 ];// + ( to[ k + 2 ] - from[ k + 2 ] );
-        }else{
-            xn = to[ k + 3 + 0 ];
-            yn = to[ k + 3 + 1 ];
-            zn = to[ k + 3 + 2 ];
-        }
-
-        // dx = dir[ k + 0 ];
-        // dy = dir[ k + 1 ];
-        // dz = dir[ k + 2 ];
-
-        x = ( x1 + x2 ) / 2.0;
-        y = ( y1 + y2 ) / 2.0;
-        z = ( z1 + z2 ) / 2.0;
-
-        vx = x1 - x2;
-        vy = y1 - y2;
-        vz = z1 - z2;
-
-        height = Math.sqrt( vx*vx + vy*vy + vz*vz ); 
-
-        for( var m = 0; m < 8; m++ ) {
-            j = v * 8 * 3 + (3 * m);
-
-            inputColor[ j + 0 ] = r;
-            inputColor[ j + 1 ] = g;
-            inputColor[ j + 2 ] = b;
-
-            if( color2 ){
-                inputColor2[ j + 0 ] = r2;
-                inputColor2[ j + 1 ] = g2;
-                inputColor2[ j + 2 ] = b2;
-            }
-
-            aPosition[ j + 0 ] = x;
-            aPosition[ j + 1 ] = y;
-            aPosition[ j + 2 ] = z;
-
-            inputAxis[ j + 0 ] = vx;
-            inputAxis[ j + 1 ] = vy;
-            inputAxis[ j + 2 ] = vz;
-
-            // inputDir[ j + 0 ] = dx;
-            // inputDir[ j + 1 ] = dy;
-            // inputDir[ j + 2 ] = dz;
-
-            inputP[ j + 0 ] = xp;
-            inputP[ j + 1 ] = yp;
-            inputP[ j + 2 ] = zp;
-
-            inputQ[ j + 0 ] = x1;
-            inputQ[ j + 1 ] = y1;
-            inputQ[ j + 2 ] = z1;
-
-            inputR[ j + 0 ] = x2;
-            inputR[ j + 1 ] = y2;
-            inputR[ j + 2 ] = z2;
-
-            inputS[ j + 0 ] = xn;
-            inputS[ j + 1 ] = yn;
-            inputS[ j + 2 ] = zn;
-
-            inputCylinderRadius[ (v * 8) + m ] = radius[ v ];
-            inputCylinderHeight[ (v * 8) + m ] = height;
-        }
-
-        ix = v * 36;
-        it = v * 8;
-
-        indices.set( BoxIndices2, ix );
-        for( var s=0; s<36; ++s ){
-            indices[ix + s] = (it + indices[ix + s]) % chunkSize;
-        }
-    }
-
-    // console.log( "inputMapping", inputMapping );
-    // console.log( "inputColor", inputColor );
-    // console.log( "aPosition", aPosition );
-    // console.log( "inputP", inputP );
-    // console.log( "inputQ", inputQ );
-    // console.log( "inputR", inputR );
-    // console.log( "inputS", inputS );
-    // console.log( "inputCylinderRadius", inputCylinderRadius );
-    // console.log( "inputCylinderHeight", inputCylinderHeight );
-    // console.log( "indices", indices );
-
-    // mesh = new THREE.Line( geometry, material, THREE.LinePieces );
-    mesh = new THREE.Mesh( geometry, material );
-    NGL.group.add( mesh );
-
-
-    // public attributes
-    this.geometry = geometry;
-    this.material = material;
-    this.mesh = mesh;
-    this.n = n;
-}
-
-
 
 
 

@@ -61,7 +61,17 @@
         <script src="js/three/controls/TrackballControls.js"></script>
         <script src="js/three/loaders/OBJLoader.js"></script>
 
-        <script type="text/javascript" src="js/threex.rendererstats.js"></script>
+        <script src="js/three/shaders/CopyShader.js"></script>
+        <script src="js/three/shaders/SSAOShader.js"></script>
+        <script src="js/three/shaders/FXAAShader.js"></script>
+        <script src="js/three/shaders/DotScreenShader.js"></script>
+
+        <script src="js/three/postprocessing/EffectComposer.js"></script>
+        <script src="js/three/postprocessing/RenderPass.js"></script>
+        <script src="js/three/postprocessing/MaskPass.js"></script>
+        <script src="js/three/postprocessing/ShaderPass.js"></script>
+
+        <script src="js/threex.rendererstats.js"></script>
 
         <script src="js/ngl.js"></script>
 
@@ -99,7 +109,7 @@
                         'SphereImpostor',
                         'SphereMesh',
                         'Sphere',
-                        'Particle',
+                        'Point',
                         'ParticleSprite',
                         'CylinderImpostor',
                         'Cylinder',
@@ -205,7 +215,7 @@
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'EllipticBezierImpostor';
                     // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Particle';
+                    // oNgl.primitiveType = 'Point';
                     // oNgl.addPrimitive();
                     // oNgl.primitiveType = 'SceneImpostor';
                     // oNgl.addPrimitive();
@@ -350,8 +360,8 @@
                         'Sphere': function(){
                             viewer.add( new NGL.SphereGroup( c1.to, c1.color, r1 ) );
                         },
-                        'Particle': function(){
-                            viewer.add( new NGL.ParticleBuffer( c1.from, c1.color, this.size ) );
+                        'Point': function(){
+                            viewer.add( new NGL.PointBuffer( c1.from, c1.color, this.size ) );
                         },
                         'ParticleSprite': function(){
                             new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
@@ -437,8 +447,8 @@
                             new NGL.TextBuffer( c1.to, c1.radius );
                         },
                         'SceneSimple': function(){
-                            new NGL.ParticleBuffer( c1.from, c1.color, this.size );
-                            new NGL.ParticleBuffer( c1.to, c1.color, this.size );
+                            new NGL.PointBuffer( c1.from, c1.color, this.size );
+                            new NGL.PointBuffer( c1.to, c1.color, this.size );
                             new NGL.LineBuffer( 
                                 c1.from, c1.to, c1.color, c1.color, c1.radius
                             );
@@ -562,6 +572,38 @@
 
             }
 
+            function getColorsFromFaces( faces, vn ){
+
+                var j, f, c;
+                var n = faces.length;
+                var colors = new Float32Array( vn * 3 );
+
+                for( var v = 0; v < n; v++ ){
+
+                    f = faces[ v ];
+                    c = f.color;
+
+                    j = f.a * 3;
+                    colors[ j + 0 ] = c.r;
+                    colors[ j + 1 ] = c.g;
+                    colors[ j + 2 ] = c.b;
+
+                    j = f.b * 3;
+                    colors[ j + 0 ] = c.r;
+                    colors[ j + 1 ] = c.g;
+                    colors[ j + 2 ] = c.b;
+
+                    j = f.c * 3;
+                    colors[ j + 0 ] = c.r;
+                    colors[ j + 1 ] = c.g;
+                    colors[ j + 2 ] = c.b;
+                    
+                }
+
+                return colors;
+
+            }
+
             function convertVector3ArrayToFloat32Array( vector3array ){
 
                 var j, v3;
@@ -585,70 +627,30 @@
 
 
             function loadSurface( url ){
+                
                 var manager = new THREE.LoadingManager();
                 manager.onProgress = function ( item, loaded, total ) {
                     console.log( item, loaded, total );
                 };
+
                 var loader = new THREE.OBJLoader( manager );
                 loader.load( url, function ( object ) {
+
                     var surface = new THREE.Object3D();
 
                     var geo = object.children[0].geometry;
                     geo.applyMatrix( new THREE.Matrix4().makeScale( 7, 7, 7 ) );
                     THREE.GeometryUtils.center( geo );
                     
-                    console.log( geo );
-                    
                     var position = convertVector3ArrayToFloat32Array( geo.vertices );
-                    var color = new Float32Array( position.length );
+                    var color = getColorsFromFaces( geo.faces, geo.vertices.length );
                     var index = getIndicesFromFaces( geo.faces );
                     var normal = computeVertexNormals( geo.vertices, geo.faces, true );
-
-                    console.log( normal.length, position.length, index.length );
                     
-                    new NGL.MeshBuffer( position, color, index, normal );
+                    viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
 
-                    // surface.add( new THREE.Mesh( 
-                    //     geo, 
-                    //     new THREE.MeshLambertMaterial({
-                    //         color: new THREE.Color('skyblue'),
-                    //         specular: 0x050505, 
-                    //         wireframe: false,
-                    //         side: THREE.DoubleSide,
-                    //         //side: THREE.FrontSide,
-                    //         transparent: true,
-                    //         opacity: 0.9,
-                    //         depthWrite: false,
-                    //         fog: true,
-                            
-                    //         // blending: THREE.MultiplyBlending,
-                    //         blending: THREE.AdditiveBlending,
-
-                    //         // multiply blending
-                    //         // blending: THREE.CustomBlending,
-                    //         // blendSrc: THREE.ZeroFactor,
-                    //         // blendDst: THREE.SrcColorFactor,
-
-                    //         // additive blending
-                    //         // blending: THREE.CustomBlending,
-                    //         // blendSrc: THREE.OneFactor,
-                    //         // blendDst: THREE.OneFactor
-                    //     })
-                    // ));
-
-                    // surface.add( new THREE.Mesh( 
-                    //     geo, 
-                    //     new THREE.MeshLambertMaterial({
-                    //         color: new THREE.Color('#222222'),
-                    //         specular: 0x00FFFF, 
-                    //         visible: true,
-                    //         wireframe: false,
-                    //         side: THREE.BackSide
-                    //     })
-                    // ));
-
-                    //NGL.group.add( surface );
                 } );
+
             }
 
 
@@ -766,7 +768,7 @@
                             new NGL.ParticleSpriteBuffer( position, color, radius );
                             break;
                         case "dot":
-                            new NGL.ParticleBuffer( position, color, 3 );
+                            new NGL.PointBuffer( position, color, 3 );
                             break;
                     }
 
@@ -848,10 +850,10 @@
                         case "ball+stick":
                             if( impostor ){
                                 viewer.add( new NGL.CylinderImpostorBuffer(
-                                    from, to, bColor, bColor2, bRadius, 1.0, false
+                                    from, to, bColor, bColor2, bRadius, 1.5, false
                                 ) );
                                 viewer.add( new NGL.CylinderImpostorBuffer(
-                                    from, to, bColor, bColor2, bRadius, -1.0, false
+                                    from, to, bColor, bColor2, bRadius, -1.5, false
                                 ) );
                             }else{
                                 new NGL.CylinderGroup( from, to, bColor, bRadius );

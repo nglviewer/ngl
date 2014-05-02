@@ -46,7 +46,7 @@ void main()
         ldir = ext * dir;
 
     vec3 left = normalize( cross( cam_dir, ldir ) );
-    vec3 leftShift = shift * left * 1.5 * radius;
+    vec3 leftShift = shift * left * radius;
     if( b < 0.0 )
         leftShift *= -1.0;
     left = radius * left;
