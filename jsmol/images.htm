@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>JSmol -- Jmol/HTML5 Demo</title>
+<script type="text/javascript" src="JSmol.min.js"></script>
+
+<script type="text/javascript">
+
+Images = [["image", "model", "scale", "caption"]
+	,["data/Sr2Nb2O7_working2.gif","data/Sr2Nb2O7_working2.png", "60%", "<a href='http://www.crystal.uni-bayreuth.de/en/research/incommensurately_modulated_Sr2Nb2O7/'>Sr2Nb2O7</a>, View 1"]
+	,["data/Sr2Nb2O7_working.gif","data/Sr2Nb2O7_working.png", "60%", "<a href='http://www.crystal.uni-bayreuth.de/en/research/incommensurately_modulated_Sr2Nb2O7/'>Sr2Nb2O7</a>, View 2"]
+	]
+
+function setImages() {
+  var s = ""
+  for (var i = 1; i < Images.length; i++) {
+    var img = Images[i];
+    var src = img[0];
+    var scale = img[2];
+    var caption = img[3];
+    s += "<img src='SRC' id='img_IMG' onclick='getImage(this.id)' style='width:SCALE;height:SCALE'/></br>CAPTION</br></br>";
+    s = s.replace(/SRC/, src).replace(/IMG/, i).replace(/SCALE/g,scale).replace(/CAPTION/,caption);
+  }
+  $("#leftpanel").html(s);
+}
+
+function getImage(id) {
+  var d = Images[parseInt(id.substring(4))];
+  Jmol.script(jmol, 'script "' + d[1] + '"');
+}
+
+function myPickCallback(a,b,c,d) {
+  var d = $("#console");
+  var s = d.html();
+  if (s.indexOf("plott(a)") >= 0)s = "";
+  d.html(s + b + "\n");
+  
+  d[0].scrollTop = 0;//d[0].scrollHeight
+  setTimeout(doTPlotCheck,100)
+}
+
+function doTPlotCheck() {
+  var n = Jmol.evaluate(jmol,"{picked}.count");
+  if (n> 0)doTPlot();
+}
+
+function doTPlot() {
+  switch (Jmol.evaluate(jmol,"{picked}.count")) {
+  case 0:
+    alert("Pick two atoms first; the data tabulation is automatic now. (Sorry, no graph yet!)");
+    Jmol.script(jmol,"vibration off");
+    return;
+  case 1:
+    $("#console").html(Jmol.evaluate(jmol,"script('if (!af){script spt/ext/xtal/plott.spt};plott(pickedList[0]);')"))
+    break;
+  default:
+    $("#console").html(Jmol.evaluate(jmol,"script('if (!af){script spt/ext/xtal/plott.spt};plott(pickedList[-1] pickedList[0]);')"))
+  }
+}
+
+////// every page will need one variable and one Info object for each applet object
+
+var Info = {
+	width: 700,
+	height: 450,
+	script: "set echo top left;echo click on an image",
+	use: "JAVA",
+	jarPath: "java",
+	j2sPath: "j2s",
+  pickCallback: "myPickCallback",
+	jarFile: "JmolAppletSigned.jar",
+	isSigned: true,
+	addSelectionOptions: false,
+	serverURL: "http://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php",
+	readyFunction: null,
+	console: "jmol_infodiv",
+  color:"#A0A0A0",
+	disableInitialConsole: true,
+	defaultModel: null,
+	debug: false
+}
+
+$(document).ready(function(){	
+
+	Jmol.setDocument(0);
+	
+	setImages();
+
+  	$("#middlepanel").html(Jmol.getAppletHtml("jmol", Info));
+
+  // right panel
+  
+  var isApplet = true;
+	Jmol.setButtonCss(null, "style='width:160px'");	
+	$("#rightpanel").html(
+		Jmol.jmolButton(jmol,"if (!molname) { molname = 'tylenol'};var x = prompt('Enter the name or identifier (SMILES, InChI, CAS) of a molecule',molname);if (!x) { quit }; molname = x; load @{'$' + molname} #alt:LOAD $??Enter a model name","Load MOL (NCI)")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"if (!molname) { molname = 'tylenol'};var x = prompt('Enter the name of a compound',molname);if (!x) { quit }; molname = x; load @{':' + molname} #alt:LOAD :??Enter a model name","Load MOL (PubChem)")
+ 		+ "<br />"
+		+ Jmol.jmolButton(jmol,"load ? ","Load URL")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"load ? ","Load FILE")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"write FILE ?","Save FILE")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"write PNGJ ?.png","Save 3D-PNG")
+		+ "<br /><br />" + Jmol.jmolLink(jmol, "JSCONSOLE", "show info")
+		+ "<br /><br /><a href=images.htm?_USE=JAVA>JAVA version</a>"
+		+ "<br /><br /><a href=images.htm?_USE=HTML5>HTML5 version</a>"
+		+ "<br />"
+	);
+
+  // button panel:
+  
+	Jmol.setButtonCss(null,"style='width:100px'");
+  $("#btnpanel").html(
+		Jmol.jmolButton(jmol,"modulation off", "no modulation")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"modulation scale 1.0", "mod x 1")
+ 		+ "<br />"
+		+ Jmol.jmolButton(jmol,"modulation scale 5.0", "mod x 5")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"vibration off", "motion off")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"vibration on", "motion on")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"set measurementunits angstroms;x= {within(4.0, @144) and( O7 or O3)}; measure @144 @x all;moveto /* time, axisAngle */ 1.0 { 333 598 -729 107.8} /* zoom, translation */  305.81 0.35 -1.91  /* center, rotationRadius */ {-9.536743E-7 13.3745 8.550301} 17.275505 /* navigation center, translation, depth */ {0 0 0} 0 0 0 /* cameraDepth, cameraX, cameraY */  3.0 0.0 0.0;", "measurements")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"load '' {3 1 1};rotate z 90;unitcell off", "3x1x1 block")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"unitcell off;axes off", "unit cell off")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"unitcell on;axes on", "unit cell on")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,doTPlot, "t-plot")
+		+ "<br />"
+	);
+	
+	// lower panel:
+			
+	Jmol.setButtonCss(null,"style='width:120px'");
+	var s = "<br />"
+		+ Jmol.jmolButton(jmol,"wireframe -0.1 #alt:SETTING Line", "wireframe")
+		+ Jmol.jmolButton(jmol,"spacefill only;spacefill 23%;wireframe 0.15 #alt:SETTING Ball and Stick","ball&stick");
+		s += Jmol.jmolButton(jmol,"spacefill #alt:SETTING van der Waals Spheres", "spacefill");	
+		Jmol.setButtonCss(null,"style='width:100px'");
+	
+		s += "<br />"
+
+    s += Jmol.jmolButton(jmol,"console");
+		
+    s += Jmol.jmolCommandInput(jmol);
+    
+    
+	$("#lowerpanel").html(s);
+})
+
+</script>
+</head>
+<body>
+<table>
+	<tr>
+    <td><table><tr>
+		<td><div id="leftpanel"></div></td>
+		<td><div id="btnpanel"></div></td>
+  </tr>
+  <tr>
+    <td colspan=2 valign=top>
+    <div id="console" style="white-space:pre;font-family:sanSerif;background-color:#E0E0A0;overflow:auto;width:450px;height:225px">
+    This page demonstrates some relatively new capabilities
+    in Jmol relating to <a href=http://reference.iucr.org/dictionary/Incommensurate_modulated_structure target=_blank>incommensurately modulated structures</a>
+    (msCIF data). Some interesting features highlighted include
+    easy manipulation of data arrays for tabulation, the animated
+    GIFS created using the CAPTURE command, the dynamic 
+    measurements, and a few more goodies that you can find 
+    in <a href=spt/ext/xtal/plott.spt target=_blank>plott.spt</a>. Oh -- and the modulations being visualized as 
+    phased "vibrations." See <a href=http://chemapps.stolaf.edu/jmol/zip/Jmol.zip>Jmol.zip</a>
+
+    -- Bob Hanson Dec 12, 2013
+    </div>
+    </td>
+  </tr></table>
+    </td>
+    <td><table><tr>
+		<td valign=top><div id="middlepanel"></div></td>
+	</tr><tr>
+		<td style="text-align:center" valign=top><div id="lowerpanel"></div></td>
+	</tr></table></td>
+		<td><div id="rightpanel"></div></td>
+	</tr>
+</table>
+</body>
+</html>
