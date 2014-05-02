@@ -1,4 +1,7 @@
-
+/**
+ * @file Core
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
 
 $.loadImage = function(url) {
     // from: http://aboutcode.net/2013/01/09/load-images-with-jquery-deferred.html
