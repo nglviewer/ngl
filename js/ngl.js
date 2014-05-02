@@ -43,10 +43,21 @@ $.loadImage = function(url) {
 // X-ray shader
 // https://github.com/cryos/avogadro/tree/master/libavogadro/src/extensions/shaders
 
+/**
+ * [NGL description]
+ * @namespace NGL
+ * @type {Object}
+ */
+NGL = {
+    REVISION: '1dev'
+};
 
-NGL = { REVISION: '1dev' };
 
-
+/**
+ * [Resources description]
+ * @type {Object}
+ * @private
+ */
 NGL.Resources = {
 
     // fonts
@@ -98,6 +109,11 @@ NGL.Resources = {
 };
 
 
+/**
+ * [UniformsLib description]
+ * @type {Object}
+ * @private
+ */
 NGL.UniformsLib = {
 
     'fog': THREE.UniformsLib[ "fog" ],
@@ -113,11 +129,25 @@ NGL.UniformsLib = {
 };
 
 
+/**
+ * [Utils description]
+ * @namespace NGL.Utils
+ * @type {Object}
+ */
 NGL.Utils = {
 
+    /**
+     * Converted to JavaScript from 
+     * {@link http://paulbourke.net/geometry/pointlineplane/lineline.c}
+     * 
+     * @param  {THREE.Vector3} p1
+     * @param  {THREE.Vector3} p2
+     * @param  {THREE.Vector3} p3
+     * @param  {THREE.Vector3} p4
+     * @return {Array.<THREE.Vector3, THREE.Vector3>}
+     */
     lineLineIntersect: function( p1, p2, p3, p4 ){
 
-        // converted from http://paulbourke.net/geometry/pointlineplane/lineline.c
         var p13 = new THREE.Vector3(),
             p43 = new THREE.Vector3(),
             p21 = new THREE.Vector3();
@@ -171,6 +201,9 @@ NGL.Utils = {
 };
 
 
+/**
+ * Initialize the global NGL object, i.e. get resources
+ */
 NGL.init = function () {
 
     NGL.initResources();
@@ -179,9 +212,15 @@ NGL.init = function () {
 
     this.textures = [];
 
+    return this;
+
 }
 
 
+/**
+ * Get resources for the global NGL object
+ * @private
+ */
 NGL.initResources = function(){
 
     var deferreds = [];
@@ -215,6 +254,12 @@ NGL.initResources = function(){
 },
 
 
+/**
+ * [getMaterial description]
+ * @private
+ * @param  {Object} params
+ * @return {THREE.Material}
+ */
 NGL.getMaterial = function( params ){
 
     var key = JSON.stringify( params );
@@ -228,6 +273,13 @@ NGL.getMaterial = function( params ){
 };
 
 
+/**
+ * [getShader description]
+ * @private
+ * @param  {String} name
+ * @param  {String[]} defines
+ * @return {String}
+ */
 NGL.getShader = function( name, defines ) {
 
     var shader = NGL.Resources[ 'shader/' + name ];
@@ -248,33 +300,14 @@ NGL.getShader = function( name, defines ) {
 };
 
 
-NGL.JSmolControls = function ( viewer ) {
-
-    this.handleResize();
-
-    // force an update at start
-    this.update();
-
-
-
-}
-
-NGL.JSmolControls.prototype = Object.create( THREE.EventDispatcher.prototype );
-
-NGL.JSmolControls.prototype.update = function( jsmolView ){
-
-
-
-};
-
-NGL.JSmolControls.prototype.handleResize = function(){
-
-};
-
-
 ///////////
 // Viewer
 
+/**
+ * [Viewer description]
+ * @class
+ * @param {String} eid
+ */
 NGL.Viewer = function( eid ){
 
     this.container = document.getElementById( eid );
@@ -492,6 +525,10 @@ NGL.Viewer.prototype = {
 
     },
 
+    /**
+     * Adds a buffer to the scene
+     * @param {NGL.Buffer} buffer
+     */
     add: function( buffer ){
 
         console.log( buffer );
@@ -499,6 +536,14 @@ NGL.Viewer.prototype = {
 
     },
 
+    /**
+     * [setFog description]
+     * @param {String} type - Either 'linear' or 'exp2'.
+     * @param {String} color - Fog color.
+     * @param {Number} near - Where the fog effect starts (only 'linear').
+     * @param {Number} far - Where the fog effect ends (only 'linear').
+     * @param {Number} density - Density of the fog (only 'exp2').
+     */
     setFog: function( type, color, near, far, density ){
 
         var p = this.params;
@@ -527,6 +572,10 @@ NGL.Viewer.prototype = {
 
     },
 
+    /**
+     * Sets the background color (and also the fog color).
+     * @param {String} color
+     */
     setBackground: function( color ){
 
         var p = this.params;
@@ -608,6 +657,9 @@ NGL.Viewer.prototype = {
 
     },
 
+    /**
+     * Renders the scene.
+     */
     render: function(){
 
         this.rotationGroup.updateMatrix();
@@ -713,6 +765,9 @@ NGL.Viewer.prototype = {
 
     },
 
+    /**
+     * Clears the scene.
+     */
     clear: function(){
 
         console.log( "scene cleared" );
@@ -735,6 +790,11 @@ NGL.Viewer.prototype = {
 ////////////////
 // Buffer Core
 
+/**
+ * The core buffer class.
+ * @class
+ * @private
+ */
 NGL.Buffer = function () {
 
     // required properties:
@@ -816,6 +876,11 @@ NGL.Buffer.prototype = {
 
     },
 
+    /**
+     * Sets buffer attributes
+     * @param {Object} data - An object where the keys are the attribute names
+     *      and the values are the attribute data.
+     */
     setAttributes: function( data ){
 
         var attributes = this.geometry.attributes;
@@ -841,6 +906,15 @@ NGL.Buffer.prototype = {
 };
 
 
+/**
+ * [MeshBuffer description]
+ * @class
+ * @augments {NGL.Buffer}
+ * @param {Float32Array} position
+ * @param {Float32Array} color
+ * @param {Float32Array} index
+ * @param {Float32Array} normal
+ */
 NGL.MeshBuffer = function ( position, color, index, normal ) {
 
     this.size = position.length / 3;
@@ -869,6 +943,12 @@ NGL.MeshBuffer = function ( position, color, index, normal ) {
 NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 
+/**
+ * [MappedBuffer description]
+ * @class
+ * @private
+ * @augments {NGL.Buffer}
+ */
 NGL.MappedBuffer = function () {
 
     this.mappedSize = this.size * this.mappingSize;
@@ -981,6 +1061,12 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 }
 
 
+/**
+ * [QuadBuffer description]
+ * @class 
+ * @private
+ * @augments {NGL.MappedBuffer}
+ */
 NGL.QuadBuffer = function () {
 
     this.mapping = new Float32Array([
@@ -1007,6 +1093,12 @@ NGL.QuadBuffer = function () {
 NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
 
+/**
+ * [BoxBuffer description]
+ * @class 
+ * @private
+ * @augments {NGL.MappedBuffer}
+ */
 NGL.BoxBuffer = function () {
 
     this.mapping = new Float32Array([
@@ -1047,6 +1139,12 @@ NGL.BoxBuffer = function () {
 NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
 
+/**
+ * [AlignedBoxBuffer description]
+ * @class
+ * @private
+ * @augments {NGL.MappedBuffer}
+ */
 NGL.AlignedBoxBuffer = function () {
 
     this.mapping = new Float32Array([
@@ -1080,6 +1178,14 @@ NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 ////////////////////////
 // Impostor Primitives
 
+/**
+ * [SphereImpostorBuffer description]
+ * @class 
+ * @augments {NGL.MappedBuffer}
+ * @param {Float32Array} position
+ * @param {Float32Array} color
+ * @param {Float32Array} radius
+ */
 NGL.SphereImpostorBuffer = function ( position, color, radius ) {
 
     this.size = position.length / 3;
@@ -1143,8 +1249,19 @@ NGL.HaloBuffer = function ( position, radius ) {
 NGL.HaloBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-// shift - moves the cylinder in camera space to i.e. get multiple aligned cylinders
-// cap - if true the cylinders are capped
+/**
+ * [CylinderImpostorBuffer description]
+ * @class 
+ * @augments {NGL.AlignedBoxBuffer}
+ * @param {Float32Array} from
+ * @param {Float32Array} to
+ * @param {Float32Array} color
+ * @param {Float32Array} color2
+ * @param {Float32Array} radius
+ * @param {Float} shift - Moves the cylinder in camera space 
+ *      to i.e. get multiple aligned cylinders.
+ * @param {Boolean} cap - If true the cylinders are capped.
+ */
 NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift, cap ) {
 
     if( !shift ) shift = 0;
@@ -1228,6 +1345,13 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
 //////////////////////
 // Pixel Primitives
 
+/**
+ * [PointBuffer description]
+ * @class 
+ * @todo  Inherit from NGL.Buffer
+ * @param {Float32Array} position
+ * @param {Float32Array} color
+ */
 NGL.PointBuffer = function ( position, color ) {
     
     this.size = position.length / 3;
@@ -1251,6 +1375,15 @@ NGL.PointBuffer = function ( position, color ) {
 }
 
 
+/**
+ * [LineBuffer description]
+ * @class 
+ * @todo  Inherit from NGL.Buffer
+ * @param {Float32Array} from
+ * @param {Float32Array} to
+ * @param {Float32Array} color
+ * @param {Float32Array} color2
+ */
 NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     this.size = from.length / 3;
@@ -1430,6 +1563,14 @@ NGL.getFont = function( name ){
 }
 
 
+/**
+ * [TextBuffer description]
+ * @class 
+ * @augments {NGL.QuadBuffer}
+ * @param {Float32Array} position
+ * @param {Float32Array} size
+ * @param {String[]} text
+ */
 NGL.TextBuffer = function ( position, size, text ) {
 
     var type = 'Arial';
@@ -1438,9 +1579,12 @@ NGL.TextBuffer = function ( position, size, text ) {
     tex.needsUpdate = true;
 
     var n = position.length / 3;
-    text = [];
-    for( var i = 0; i < n; i++ ){
-        text.push( "#" + i );
+    
+    if( !text ){
+        text = [];
+        for( var i = 0; i < n; i++ ){
+            text.push( "#" + i );
+        }
     }
 
     var charCount = _.reduce( text, function( memo, t ){ return memo + t.length; }, 0 );
