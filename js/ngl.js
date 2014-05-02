@@ -43,9 +43,6 @@ $.loadImage = function(url) {
 };
 
 
-// X-ray shader
-// https://github.com/cryos/avogadro/tree/master/libavogadro/src/extensions/shaders
-
 /**
  * [NGL description]
  * @namespace NGL
@@ -1575,8 +1572,7 @@ NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 // Text & Font
 
 /**
- * See also {@link https://github.com/libgdx/libgdx/wiki/Distance-field-fonts}.
- * See {@tutorial font} for more info.
+ * See {@tutorial font} for background info.
  *
  * @param {String} name - Font name, e.g. 'Arial'.
  *
