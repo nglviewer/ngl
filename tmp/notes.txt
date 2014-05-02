@@ -1,0 +1,15 @@
+
+Example implementations
+
+Quadrics
+- Sigg
+- VTK PointSprite
+- Hyperballs
+- PyMOL
+- Ballview
+
+Trace
+- GLmol
+
+
+
