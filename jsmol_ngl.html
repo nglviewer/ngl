@@ -27,7 +27,17 @@
         <script src="js/three/controls/TrackballControls.js"></script>
         <script src="js/three/loaders/OBJLoader.js"></script>
 
-        <script type="text/javascript" src="js/threex.rendererstats.js"></script>
+        <script src="js/three/shaders/CopyShader.js"></script>
+        <script src="js/three/shaders/SSAOShader.js"></script>
+        <script src="js/three/shaders/FXAAShader.js"></script>
+        <script src="js/three/shaders/DotScreenShader.js"></script>
+
+        <script src="js/three/postprocessing/EffectComposer.js"></script>
+        <script src="js/three/postprocessing/RenderPass.js"></script>
+        <script src="js/three/postprocessing/MaskPass.js"></script>
+        <script src="js/three/postprocessing/ShaderPass.js"></script>
+
+        <script src="js/threex.rendererstats.js"></script>
 
         <script src="js/ngl.js"></script>
         <script src="js/ngl.jsmol.js"></script>
@@ -41,8 +51,9 @@
 			// use ?_USE=JAVA or _USE=SIGNED or _USE=HTML5
 
 			jmol_isReady = function(applet) {
-				document.title = (applet._id + " is ready")
-				Jmol._getElement(applet, "appletdiv").style.border="1px solid blue"
+
+				document.title = (applet._id + " is ready");
+				Jmol._getElement(applet, "appletdiv").style.border="1px solid blue";
 			 
 			}		
 

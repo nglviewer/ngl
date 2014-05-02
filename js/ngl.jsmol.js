@@ -141,13 +141,13 @@
 
                 if( Math.floor(radius*10)<=1 ){
 
-                    applet._GLmol.particlePosition.push( pt.x );
-                    applet._GLmol.particlePosition.push( pt.y );
-                    applet._GLmol.particlePosition.push( pt.z );
+                    applet._GLmol.pointPosition.push( pt.x );
+                    applet._GLmol.pointPosition.push( pt.y );
+                    applet._GLmol.pointPosition.push( pt.z );
 
-                    applet._GLmol.particleColor.push( color.r );
-                    applet._GLmol.particleColor.push( color.g );
-                    applet._GLmol.particleColor.push( color.b );
+                    applet._GLmol.pointColor.push( color.r );
+                    applet._GLmol.pointColor.push( color.g );
+                    applet._GLmol.pointColor.push( color.b );
 
                 }else{
 
@@ -380,9 +380,9 @@
                 );
 
                 gl.nglViewer.add( 
-                    new NGL.ParticleBuffer(
-                        new Float32Array( gl.particlePosition ),
-                        new Float32Array( gl.particleColor )
+                    new NGL.PointBuffer(
+                        new Float32Array( gl.pointPosition ),
+                        new Float32Array( gl.pointColor )
                     )
                 );
 
@@ -475,8 +475,8 @@
                 this.meshIndex = [];
                 this.meshNormal = [];
 
-                this.particlePosition = [];
-                this.particleColor = [];
+                this.pointPosition = [];
+                this.pointColor = [];
 
                 this.lineFrom = [];
                 this.lineTo = [];
