@@ -52,7 +52,8 @@ $.loadImage = function(url) {
  * @type {Object}
  */
 NGL = {
-    REVISION: '1dev'
+    REVISION: '1dev',
+    EPS: 0.0000001,
 };
 
 
@@ -151,6 +152,8 @@ NGL.Utils = {
      */
     lineLineIntersect: function( p1, p2, p3, p4 ){
 
+        var EPS = NGP.EPS;
+
         var p13 = new THREE.Vector3(),
             p43 = new THREE.Vector3(),
             p21 = new THREE.Vector3();
@@ -163,13 +166,13 @@ NGL.Utils = {
         p43.x = p4.x - p3.x;
         p43.y = p4.y - p3.y;
         p43.z = p4.z - p3.z;
-        if( Math.abs(p43.x) < NGL.eps && Math.abs(p43.y) < NGL.eps && Math.abs(p43.z) < NGL.eps )
+        if( Math.abs(p43.x) < EPS && Math.abs(p43.y) < EPS && Math.abs(p43.z) < EPS )
             return null;
 
         p21.x = p2.x - p1.x;
         p21.y = p2.y - p1.y;
         p21.z = p2.z - p1.z;
-        if( Math.abs(p21.x) < NGL.eps && Math.abs(p21.y) < NGL.eps && Math.abs(p21.z) < NGL.eps )
+        if( Math.abs(p21.x) < EPS && Math.abs(p21.y) < EPS && Math.abs(p21.z) < EPS )
             return null;
 
         d1343 = p13.x * p43.x + p13.y * p43.y + p13.z * p43.z;
@@ -179,7 +182,7 @@ NGL.Utils = {
         d2121 = p21.x * p21.x + p21.y * p21.y + p21.z * p21.z;
 
         denom = d2121 * d4343 - d4321 * d4321;
-        if( Math.abs(denom) < NGL.eps )
+        if( Math.abs(denom) < EPS )
             return null;
         numer = d1343 * d4321 - d1321 * d4343;
 
@@ -1571,21 +1574,14 @@ NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 ////////////////
 // Text & Font
 
+/**
+ * See also {@link https://github.com/libgdx/libgdx/wiki/Distance-field-fonts}.
+ * See {@tutorial font} for more info.
+ *
+ * @param {String} name - Font name, e.g. 'Arial'.
+ *
+ */
 NGL.getFont = function( name ){
-
-    // see also https://github.com/libgdx/libgdx/wiki/Distance-field-fonts
-    //
-    // fnt format
-    // id -  The ID of the character from the font file.
-    // x - X position within the bitmap image file.
-    // y - Y position within the bitmap image file.
-    // width - Width of the character in the image file.
-    // height - Height of the character in the image file.
-    // xoffset - Number of pixels to move right before drawing this character.
-    // yoffset - Number of pixels to move down before drawing this character.
-    // xadvance - Number of pixels to jump right after drawing this character.
-    // page - The image to use if characters are split across multiple images.
-    // chnl - The color channel, if color channels are used for separate characters.
 
     var fnt = NGL.Resources[ 'font/' + name + '.fnt' ].split('\n');
     var font = {};
