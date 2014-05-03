@@ -307,7 +307,7 @@ NGL.getShader = function( name, defines ) {
 // GUI
 
 /**
- * A dat.GUI {@link https://code.google.com/p/dat-gui/} based GUI
+ * A {@link https://code.google.com/p/dat-gui/|dat.GUI } based GUI
  * for a viewer instance.
  * @class
  * @param {NGL.Viewer} viewer
