@@ -90,6 +90,7 @@
                 $( NGL ).bind( 'initialized', function(){
 
                     viewer = new NGL.Viewer( 'container' );
+                    viewer.animate();
 
                     var oNgl = new NglExample();
                     var gui = new dat.GUI();
@@ -239,8 +240,6 @@
                     // oNgl.surfaceId = '1crn';
                     // oNgl.addSurface();
 
-                    viewer.animate();
-                    viewer.render();
                 });
 
                 NGL.init();
@@ -476,14 +475,12 @@
                         this.useImpostor,
                         this.randomColor
                     );    
-                    viewer.render();
                 };
 
                 this.addSurface = function(){
                     loadSurface( 
                         'data/' + this.surfaceId + '.obj'
                     );    
-                    viewer.render();
                 };
             };
 
@@ -648,6 +645,8 @@
                     var normal = computeVertexNormals( geo.vertices, geo.faces, true );
                     
                     viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
+
+                    viewer.render();
 
                 } );
 
@@ -872,6 +871,9 @@
                             viewer.add( new NGL.LineBuffer( from, to, bColor, bColor2 ) );
                             break
                     }
+
+                    viewer.render();
+
                 }
 
                 $.ajax({ url: url, dataType: "json", success: _load });

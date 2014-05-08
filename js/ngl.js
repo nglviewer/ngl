@@ -328,6 +328,7 @@ NGL.GUI = function( viewer ){
     this.viewer.container.appendChild( gui.domElement );
 
     gui.add( this, 'clear' );
+    gui.add( this, 'screenshot' );
     gui.add( this, 'updateDisplay' ).onChange(
         function( value ){ viewer.params.updateDisplay = value; }
     );
@@ -356,6 +357,13 @@ NGL.GUI.prototype = {
 
     clear: function(){
         this.viewer.clear();
+    },
+
+    screenshot: function(){
+        window.open(
+            this.viewer.renderer.domElement.toDataURL("image/png"),
+            "NGL_screenshot_" + THREE.Math.generateUUID()
+        );
     }
 
 }
@@ -467,7 +475,11 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
+        this.renderer = new THREE.WebGLRenderer({
+            preserveDrawingBuffer: true,
+            alpha: false,
+            antialias: false
+        });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
 
@@ -568,6 +580,11 @@ NGL.Viewer.prototype = {
         this.controls.staticMoving = true;
         this.controls.dynamicDampingFactor = 0.3;
         this.controls.keys = [65, 83, 68];
+
+        this.controls.addEventListener( 'change', this.render.bind( this ) );
+
+        /*var self = this;
+        this.controls.addEventListener( 'change', function(){ self.render() } );*/
 
     },
 
@@ -713,14 +730,9 @@ NGL.Viewer.prototype = {
 
     animate: function(){
 
-        requestAnimationFrame( _.bind( this.animate, this ) );
+        requestAnimationFrame( this.animate.bind( this ) );
 
-        if( this.params.updateDisplay ){
-            
-            this.controls.update();
-            this.render();
-
-        }
+        this.controls.update();
 
     },
 
@@ -728,6 +740,8 @@ NGL.Viewer.prototype = {
      * Renders the scene.
      */
     render: function(){
+
+        if( !this.params.updateDisplay ) return;
 
         this.rotationGroup.updateMatrix();
         this.rotationGroup.updateMatrixWorld( true );
