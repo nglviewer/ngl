@@ -92,15 +92,46 @@
                     viewer = new NGL.Viewer( 'container' );
                     viewer.animate();
 
-                    var oNgl = new NglExample();
-                    var gui = new dat.GUI();
+                    nglGui = new NGL.GUI( viewer );
+                    var gui = nglGui.gui;
+
+                    nglGui.count = 100;
+                    nglGui.size = 2.0;
+                    nglGui.primitiveType = 'SphereImpostor';
+                    nglGui.modelId = '1crn';
+                    nglGui.modelType = 'ball+stick';
+                    nglGui.randomColor = false;
+                    nglGui.useImpostor = true;
+                    nglGui.surfaceId = '1crn';
+
+                    nglGui.addPrimitive = function(){
+                        loadPrimitive(
+                            this.count, this.size, this.primitiveType
+                        );
+                    };
+
+                    nglGui.addModel = function(){
+                        loadModel( 
+                            'data/' + this.modelId + '.json', 
+                            this.modelType,
+                            this.useImpostor,
+                            this.randomColor
+                        );    
+                    };
+
+                    nglGui.addSurface = function(){
+                        loadSurface( 
+                            'data/' + this.surfaceId + '.obj'
+                        );    
+                    };
+                    
                     var primitives = gui.addFolder( 'Primitives' );
-                    primitives.add(oNgl, 'count', [ 
+                    primitives.add(nglGui, 'count', [ 
                         1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
                         100000, 200000, 500000, 1000000, 2000000
                     ]);
-                    primitives.add(oNgl, 'size', 2.0).min(0.1).max(10.0).step(0.1);
-                    primitives.add(oNgl, 'primitiveType', [
+                    primitives.add(nglGui, 'size', 2.0).min(0.1).max(10.0).step(0.1);
+                    primitives.add(nglGui, 'primitiveType', [
                         'BezierRaymarch',
                         'BezierImpostor',
                         'EllipticBezierImpostor',
@@ -127,17 +158,17 @@
                         'SceneSprite',
                         'Surface'
                     ]).listen();
-                    primitives.add(oNgl, 'addPrimitive');
+                    primitives.add(nglGui, 'addPrimitive');
 
                     var surfaces = gui.addFolder( 'Surfaces' );
-                    surfaces.add(oNgl, 'surfaceId', [ 
+                    surfaces.add(nglGui, 'surfaceId', [ 
                         '1crn',
                         '3dqb'
                     ]).listen();
-                    surfaces.add(oNgl, 'addSurface');
+                    surfaces.add(nglGui, 'addSurface');
 
                     var models = gui.addFolder( 'Models' );
-                    models.add(oNgl, 'modelId', [
+                    models.add(nglGui, 'modelId', [
                         '1crn',
                         '3dqb',
                         '3sn6',
@@ -147,7 +178,7 @@
                         '3sn6_ca',
                         '3l5q_ca',
                     ]).listen();
-                    models.add(oNgl, 'modelType', [
+                    models.add(nglGui, 'modelType', [
                         'spacefill',
                         'tube',
                         'elliptic-tube',
@@ -160,85 +191,17 @@
                         'line',
                         'line-sprite',
                     ]).listen();
-                    models.add(oNgl, 'useImpostor', true).listen();
-                    models.add(oNgl, 'randomColor', true).listen();
-                    models.add(oNgl, 'addModel');
+                    models.add(nglGui, 'useImpostor', true).listen();
+                    models.add(nglGui, 'randomColor', true).listen();
+                    models.add(nglGui, 'addModel');
 
-                    gui.add(oNgl, 'clear');
-                    gui.add(oNgl, 'updateDisplay').onChange(
-                        function( value ){ viewer.params.updateDisplay = value; }
-                    );
-
-                    var options = gui.addFolder( 'Options ' );
-                    options.add(oNgl, 'fogType', ['', 'linear', 'exp2']).onChange(
-                        function( value ){ viewer.setFog( value ); }
-                    );
-                    options.add(oNgl, 'fogNear').min(0).max(3000).step(10).onChange(
-                        function( value ){ viewer.setFog( null, null, value ); }
-                    );
-                    options.add(oNgl, 'fogFar').min(0).max(3000).step(10).onChange(
-                        function( value ){ viewer.setFog( null, null, null, value ); }
-                    );
-                    options.add(oNgl, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
-                        function( value ){ viewer.setFog( null, null, null, null, value ); }
-                    );
-                    options.addColor(oNgl, 'fogColor').onChange(
-                        function( value ){ viewer.setFog( null, value ); }
-                    ).listen();
-                    options.addColor(oNgl, 'backgroundColor').onChange(
-                        function( value ){ viewer.setBackground( value ); oNgl.fogColor = value; }
-                    );
-                    options.add(oNgl, 'cameraPerspective').onChange(
-                        function( value ){ viewer.setCamera( value ); }
-                    );
-                    options.add(oNgl, 'cameraFov').min(0).max(180).step(1).onChange(
-                        function( value ){ viewer.setCamera( null, value ); }
-                    );
-                    options.add(oNgl, 'cameraNear').min(1).max(10000).step(10).onChange(
-                        function( value ){ viewer.setCamera( null, null, value ); }
-                    );
-                    options.add(oNgl, 'cameraFar').min(1).max(10000).step(10).onChange(
-                        function( value ){ viewer.setCamera( null, null, null, value ); }
-                    );
                     
-                    // oNgl.count = 500;
-                    // oNgl.primitiveType = 'Text';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'SphereImpostor';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'CylinderImpostor';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'SphereMesh';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Sphere';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'QuadricImpostor';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'EllipticBezierImpostor';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'Point';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'SceneImpostor';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'HyperballSphereImpostor';
-                    // oNgl.addPrimitive();
-                    // oNgl.primitiveType = 'HyperballStickImpostor';
-                    // oNgl.addPrimitive();
+                    nglGui.modelId = '1crn';
+                    nglGui.modelType = 'ball+stick';
+                    nglGui.addModel();
                     
-                    
-                    // oNgl.randomColor = true;
-                    // oNgl.modelId = '1crn_ca';
-                    // oNgl.modelType = 'elliptic-tube';
-                    // oNgl.addModel();
-                    // oNgl.modelId = '1crn_ca';
-                    // oNgl.modelType = 'ball+stick';
-                    // oNgl.addModel();
-                    oNgl.modelId = '1crn';
-                    oNgl.modelType = 'ball+stick';
-                    oNgl.addModel();
-                    
-                    // oNgl.surfaceId = '1crn';
-                    // oNgl.addSurface();
+                    // nglGui.surfaceId = '1crn';
+                    // nglGui.addSurface();
 
                 });
 
@@ -246,245 +209,201 @@
 
             });
 
-            
-            var NglExample = function() {
 
-                this.count = 100;
-                this.size = 2.0;
-                this.primitiveType = 'EllipticBezierImpostor';
-                this.modelId = '1crn';
-                this.modelType = 'ball+stick';
-                this.randomColor = false;
-                this.useImpostor = true;
-                this.surfaceId = '1crn';
-                this.updateDisplay = true;
+            function loadPrimitive( count, size, primitiveType ){
 
-                this.fogType = "";
-                this.fogNear = 0;
-                this.fogFar = 1000;
-                this.fogDensity = 0.00025;
-                this.fogColor = '#000000';
-                this.backgroundColor = '#000000';
-                this.cameraPerspective = true;
-                this.cameraFov = 40;
-                this.cameraNear = 1;
-                this.cameraFar = 10000;
-                
-
-                this.clear = function(){
-                    viewer.clear();
+                var c1 = makeCylinderData( count, size );
+                var r1 = new Float32Array( c1.radius.length );
+                for( var i = 0; i < c1.radius.length; i++ ){
+                    r1[ i ] = size * 2.5;
                 }
+                var types = {
+                    'BezierRaymarch': function(){
+                        var bd = makeBezierData( count, size );
+                        new NGL.BezierRaymarchBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
 
-                this.addPrimitive = function(){
-                    var c1 = makeCylinderData( this.count, this.size );
-                    var r1 = new Float32Array( c1.radius.length );
-                    for( var i = 0; i < c1.radius.length; i++ ){
-                        r1[ i ] = this.size * 2.5;
-                    }
-                    var types = {
-                        'BezierRaymarch': function(){
-                            var bd = makeBezierData( this.count, this.size );
-                            new NGL.BezierRaymarchBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
+                        // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                        // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                        // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
+                    },
+                    'BezierImpostor': function(){
+                        var bd = makeBezierData( count, size );
+                        new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
 
-                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
-                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
-                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
-                        },
-                        'BezierImpostor': function(){
-                            var bd = makeBezierData( this.count, this.size );
-                            new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
+                        // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                        // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                        // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
+                    },
+                    'EllipticBezierImpostor': function(){
+                        var bd = makeBezierData( count, size );
+                        new NGL.EllipticBezierImpostorBuffer( 
+                            bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 3
+                        );
+                        
+                        // new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
 
-                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
-                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
-                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
-                        },
-                        'EllipticBezierImpostor': function(){
-                            var bd = makeBezierData( this.count, this.size );
-                            new NGL.EllipticBezierImpostorBuffer( 
-                                bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 3
-                            );
-                            
-                            // new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
+                        new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                        new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                        new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
+                    },
+                    'Bezier': function(){
+                        var bd = makeBezierData( count, size );
+                        new NGL.BezierGroup( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
+                    },
+                    'HelixImpostor': function(){
+                        var hd = makeHelixData( count, size );
+                        new NGL.HelixImpostorBuffer( 
+                            hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
+                        );
 
-                            new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
-                            new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
-                            new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
-                        },
-                        'Bezier': function(){
-                            var bd = makeBezierData( this.count, this.size );
-                            new NGL.BezierGroup( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
-                        },
-                        'HelixImpostor': function(){
-                            var hd = makeHelixData( this.count, this.size );
-                            new NGL.HelixImpostorBuffer( 
-                                hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
-                            );
+                        // new NGL.CylinderImpostorBuffer( 
+                        //     hd.from, hd.to, hd.color, hd.color, hd.radius
+                        // );
 
-                            // new NGL.CylinderImpostorBuffer( 
-                            //     hd.from, hd.to, hd.color, hd.color, hd.radius
-                            // );
-
-                            var sr = new Float32Array( hd.radius.length );
-                            for( var i = 0; i < hd.radius.length; i++ ){
-                                sr[ i ] = this.size / 4.0;
-                            }
-                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
-                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
-                        },
-                        'HelixImpostor2': function(){
-                            var hd = makeHelixData( this.count, this.size );
-                            new NGL.HelixImpostorBuffer2( 
-                                hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
-                            );
-
-                            // new NGL.CylinderImpostorBuffer( 
-                            //     hd.from, hd.to, hd.color, hd.color, hd.radius
-                            // );
-
-                            var sr = new Float32Array( hd.radius.length );
-                            for( var i = 0; i < hd.radius.length; i++ ){
-                                sr[ i ] = this.size / 4.0;
-                            }
-                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
-                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
-                        },
-                        'SphereImpostor': function(){
-                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
-                            // new NGL.SphereGroup( c1.from, c1.color, r1 );
-                            //new NGL.SphereImpostorBuffer2( c1.from, c1.color, r1 );
-                        },
-                        'SphereMesh': function(){
-                            new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
-                        },
-                        'Sphere': function(){
-                            viewer.add( new NGL.SphereGroup( c1.to, c1.color, r1 ) );
-                        },
-                        'Point': function(){
-                            viewer.add( new NGL.PointBuffer( c1.from, c1.color, this.size ) );
-                        },
-                        'ParticleSprite': function(){
-                            new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
-                        },
-                        'CylinderImpostor': function(){
-                            viewer.add( new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius
-                            ) );
-                            // viewer.add( new NGL.CylinderBoxImpostorBuffer( 
-                            //     c1.from, c1.to, c1.color, c1.color, c1.radius
-                            // ) );
-                        },
-                        'Cylinder': function(){
-                            new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
-                        },
-                        'QuadricImpostor': function(){
-                            var qlist = [
-                                // "EllipsoidImpostorBuffer", "HyperboloidOneImpostorBuffer",
-                                // "HyperboloidTwoImpostorBuffer", 
-                                "ConeImpostorBuffer",
-                                // "EllipticCylinderImpostorBuffer"
-                            ]
-                            var n = qlist.length;
-                            var m = Math.floor( this.size / n );
-                            var qd;
-
-                            var r1 = new Float32Array( this.count );
-                            for( var i = 0; i < this.count; i++ ){
-                                r1[ i ] = this.size / 3.0;
-                            }
-                            
-                            for( var i = 0; i < n; ++i ){
-                                qd = makeQuadricData( this.count, m );
-                                new NGL.SphereImpostorBuffer( qd.xpos, qd.color, r1 );
-                                new NGL.SphereImpostorBuffer( qd.ypos, qd.color, r1 );
-                                new NGL.SphereImpostorBuffer( qd.zpos, qd.color, r1 );
-                                new NGL.SphereImpostorBuffer( qd.position, qd.color, r1 );
-                                new NGL[ qlist[i] ]( 
-                                    qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
-                                );
-                            }
-                        },
-                        'HyperballSphereImpostor': function(){
-                            new NGL.HyperballSphereImpostorBuffer( c1.from, c1.color, r1 );
-                        },
-                        'HyperballStickImpostor': function(){
-                            new NGL.HyperballStickImpostorBuffer(
-                                c1.from, c1.to, c1.color, c1.color, c1.radius, c1.radius, 0.05
-                            );
-                        },
-                        'Line': function(){
-                            new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
-                        },
-                        'LineSprite': function(){
-                            new NGL.LineSpriteBuffer( c1.from, c1.to, c1.color, c1.color, c1.radius );
-                        },
-                        'Halo': function(){
-                            new NGL.HaloBuffer( c1.from, r1 );
-                        },
-                        'Text': function(){
-                            viewer.add( new NGL.TextBuffer( c1.to, c1.radius ) );
-                        },
-                        'SceneImpostor': function(){
-                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
-                            new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius );
-                            new NGL.CylinderImpostorBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius, true
-                            );
-                            new NGL.HaloBuffer( c1.from, r1 );
-                            new NGL.TextBuffer( c1.to, c1.radius );
-                        },
-                        'SceneSphereTest': function(){
-                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
-                            new NGL.SphereGroup( c1.to, c1.color, r1 );
-                        },
-                        'Scene': function(){
-                            new NGL.SphereGroup( c1.from, c1.color, r1 );
-                            new NGL.SphereGroup( c1.to, c1.color, r1 );
-                            new NGL.CylinderGroup( 
-                                c1.from, c1.to, c1.color, c1.radius
-                            );
-                            new NGL.HaloBuffer( c1.from, r1 );
-                            new NGL.TextBuffer( c1.to, c1.radius );
-                        },
-                        'SceneSimple': function(){
-                            new NGL.PointBuffer( c1.from, c1.color, this.size );
-                            new NGL.PointBuffer( c1.to, c1.color, this.size );
-                            new NGL.LineBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius
-                            );
-                            new NGL.HaloBuffer( c1.from, r1, true );
-                            new NGL.TextBuffer( c1.to, c1.radius );
-                        },
-                        'SceneSprite': function(){
-                            new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
-                            new NGL.ParticleSpriteBuffer( c1.to, c1.color, r1 );
-                            new NGL.LineSpriteBuffer( 
-                                c1.from, c1.to, c1.color, c1.color, c1.radius
-                            );
-                            new NGL.HaloBuffer( c1.from, r1, true );
-                            new NGL.TextBuffer( c1.to, c1.radius );
+                        var sr = new Float32Array( hd.radius.length );
+                        for( var i = 0; i < hd.radius.length; i++ ){
+                            sr[ i ] = size / 4.0;
                         }
+                        new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
+                        new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
+                    },
+                    'HelixImpostor2': function(){
+                        var hd = makeHelixData( count, size );
+                        new NGL.HelixImpostorBuffer2( 
+                            hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
+                        );
+
+                        // new NGL.CylinderImpostorBuffer( 
+                        //     hd.from, hd.to, hd.color, hd.color, hd.radius
+                        // );
+
+                        var sr = new Float32Array( hd.radius.length );
+                        for( var i = 0; i < hd.radius.length; i++ ){
+                            sr[ i ] = size / 4.0;
+                        }
+                        new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
+                        new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
+                    },
+                    'SphereImpostor': function(){
+                        viewer.add(
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 )
+                        );
+                    },
+                    'SphereMesh': function(){
+                        new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
+                    },
+                    'Sphere': function(){
+                        viewer.add( new NGL.SphereGroup( c1.to, c1.color, r1 ) );
+                    },
+                    'Point': function(){
+                        viewer.add( new NGL.PointBuffer( c1.from, c1.color, size ) );
+                    },
+                    'ParticleSprite': function(){
+                        new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
+                    },
+                    'CylinderImpostor': function(){
+                        viewer.add( new NGL.CylinderImpostorBuffer( 
+                            c1.from, c1.to, c1.color, c1.color, c1.radius
+                        ) );
+                        // viewer.add( new NGL.CylinderBoxImpostorBuffer( 
+                        //     c1.from, c1.to, c1.color, c1.color, c1.radius
+                        // ) );
+                    },
+                    'Cylinder': function(){
+                        new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
+                    },
+                    'QuadricImpostor': function(){
+                        var qlist = [
+                            // "EllipsoidImpostorBuffer", "HyperboloidOneImpostorBuffer",
+                            // "HyperboloidTwoImpostorBuffer", 
+                            "ConeImpostorBuffer",
+                            // "EllipticCylinderImpostorBuffer"
+                        ]
+                        var n = qlist.length;
+                        var m = Math.floor( size / n );
+                        var qd;
+
+                        var r1 = new Float32Array( count );
+                        for( var i = 0; i < count; i++ ){
+                            r1[ i ] = size / 3.0;
+                        }
+                        
+                        for( var i = 0; i < n; ++i ){
+                            qd = makeQuadricData( count, m );
+                            new NGL.SphereImpostorBuffer( qd.xpos, qd.color, r1 );
+                            new NGL.SphereImpostorBuffer( qd.ypos, qd.color, r1 );
+                            new NGL.SphereImpostorBuffer( qd.zpos, qd.color, r1 );
+                            new NGL.SphereImpostorBuffer( qd.position, qd.color, r1 );
+                            new NGL[ qlist[i] ]( 
+                                qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                            );
+                        }
+                    },
+                    'HyperballSphereImpostor': function(){
+                        new NGL.HyperballSphereImpostorBuffer( c1.from, c1.color, r1 );
+                    },
+                    'HyperballStickImpostor': function(){
+                        new NGL.HyperballStickImpostorBuffer(
+                            c1.from, c1.to, c1.color, c1.color, c1.radius, c1.radius, 0.05
+                        );
+                    },
+                    'Line': function(){
+                        new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
+                    },
+                    'LineSprite': function(){
+                        new NGL.LineSpriteBuffer( c1.from, c1.to, c1.color, c1.color, c1.radius );
+                    },
+                    'Halo': function(){
+                        new NGL.HaloBuffer( c1.from, r1 );
+                    },
+                    'Text': function(){
+                        viewer.add( new NGL.TextBuffer( c1.to, c1.radius ) );
+                    },
+                    'SceneImpostor': function(){
+                        new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                        new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius );
+                        new NGL.CylinderImpostorBuffer( 
+                            c1.from, c1.to, c1.color, c1.color, c1.radius, true
+                        );
+                        new NGL.HaloBuffer( c1.from, r1 );
+                        new NGL.TextBuffer( c1.to, c1.radius );
+                    },
+                    'SceneSphereTest': function(){
+                        new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                        new NGL.SphereGroup( c1.to, c1.color, r1 );
+                    },
+                    'Scene': function(){
+                        new NGL.SphereGroup( c1.from, c1.color, r1 );
+                        new NGL.SphereGroup( c1.to, c1.color, r1 );
+                        new NGL.CylinderGroup( 
+                            c1.from, c1.to, c1.color, c1.radius
+                        );
+                        new NGL.HaloBuffer( c1.from, r1 );
+                        new NGL.TextBuffer( c1.to, c1.radius );
+                    },
+                    'SceneSimple': function(){
+                        new NGL.PointBuffer( c1.from, c1.color, size );
+                        new NGL.PointBuffer( c1.to, c1.color, size );
+                        new NGL.LineBuffer( 
+                            c1.from, c1.to, c1.color, c1.color, c1.radius
+                        );
+                        new NGL.HaloBuffer( c1.from, r1, true );
+                        new NGL.TextBuffer( c1.to, c1.radius );
+                    },
+                    'SceneSprite': function(){
+                        new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
+                        new NGL.ParticleSpriteBuffer( c1.to, c1.color, r1 );
+                        new NGL.LineSpriteBuffer( 
+                            c1.from, c1.to, c1.color, c1.color, c1.radius
+                        );
+                        new NGL.HaloBuffer( c1.from, r1, true );
+                        new NGL.TextBuffer( c1.to, c1.radius );
                     }
-                    types[ this.primitiveType ].call( this );
-                    viewer.render();
-                };
+                }
+                types[ primitiveType ]();
+                viewer.render();
 
-                this.addModel = function(){
-                    loadModel( 
-                        'data/' + this.modelId + '.json', 
-                        this.modelType,
-                        this.useImpostor,
-                        this.randomColor
-                    );    
-                };
-
-                this.addSurface = function(){
-                    loadSurface( 
-                        'data/' + this.surfaceId + '.obj'
-                    );    
-                };
-            };
-
-
+            }
 
             function computeVertexNormals( vertices, faces, areaWeighted ){
 

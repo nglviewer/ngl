@@ -317,38 +317,86 @@ NGL.GUI = function( viewer ){
     this.viewer = viewer;
 
     this.updateDisplay = true;
+
     this.dotScreenEffect = false;
     this.fxaaEffect = false;
     this.ssaoEffect = false;
+
+    this.fogType = "";
+    this.fogNear = 0;
+    this.fogFar = 1000;
+    this.fogDensity = 0.00025;
+    this.fogColor = '#000000';
+    this.backgroundColor = '#000000';
+    this.cameraPerspective = true;
+    this.cameraFov = 40;
+    this.cameraNear = 1;
+    this.cameraFar = 10000;
 
     var gui = new dat.GUI({ autoPlace: false });
     gui.domElement.style.position = 'absolute';
     gui.domElement.style.top = '0px';
     gui.domElement.style.right = '0px';
     this.viewer.container.appendChild( gui.domElement );
+    this.gui = gui;
 
-    gui.add( this, 'clear' );
-    gui.add( this, 'screenshot' );
-    gui.add( this, 'updateDisplay' ).onChange(
-        function( value ){ viewer.params.updateDisplay = value; }
-    );
-    gui.add( this, 'dotScreenEffect' ).onChange(
+    var tools = gui.addFolder( 'Tools' );
+    tools.add( this, 'clear' );
+    tools.add( this, 'screenshot' );
+
+    var effects = gui.addFolder( 'Effects' );
+    effects.add( this, 'dotScreenEffect' ).onChange(
         function( value ){ 
             viewer.dotScreenEffect.enabled = value;
             viewer.render();
         }
     );
-    gui.add( this, 'fxaaEffect' ).onChange(
+    effects.add( this, 'fxaaEffect' ).onChange(
         function( value ){ 
             viewer.fxaaEffect.enabled = value;
             viewer.render();
         }
     );
-    gui.add( this, 'ssaoEffect' ).onChange(
+    effects.add( this, 'ssaoEffect' ).onChange(
         function( value ){ 
             viewer.ssaoEffect.enabled = value;
             viewer.render();
         }
+    );
+
+    var options = gui.addFolder( 'Options ' );
+    options.add( this, 'updateDisplay' ).onChange(
+        function( value ){ viewer.params.updateDisplay = value; }
+    );
+    options.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
+        function( value ){ viewer.setFog( value ); }
+    );
+    options.add(this, 'fogNear').min(0).max(3000).step(10).onChange(
+        function( value ){ viewer.setFog( null, null, value ); }
+    );
+    options.add(this, 'fogFar').min(0).max(3000).step(10).onChange(
+        function( value ){ viewer.setFog( null, null, null, value ); }
+    );
+    options.add(this, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
+        function( value ){ viewer.setFog( null, null, null, null, value ); }
+    );
+    options.addColor(this, 'fogColor').onChange(
+        function( value ){ viewer.setFog( null, value ); }
+    ).listen();
+    options.addColor(this, 'backgroundColor').onChange(
+        function( value ){ viewer.setBackground( value ); this.fogColor = value; }
+    );
+    options.add(this, 'cameraPerspective').onChange(
+        function( value ){ viewer.setCamera( value ); }
+    );
+    options.add(this, 'cameraFov').min(0).max(180).step(1).onChange(
+        function( value ){ viewer.setCamera( null, value ); }
+    );
+    options.add(this, 'cameraNear').min(1).max(10000).step(10).onChange(
+        function( value ){ viewer.setCamera( null, null, value ); }
+    );
+    options.add(this, 'cameraFar').min(1).max(10000).step(10).onChange(
+        function( value ){ viewer.setCamera( null, null, null, value ); }
     );
 
 }
@@ -583,9 +631,6 @@ NGL.Viewer.prototype = {
 
         this.controls.addEventListener( 'change', this.render.bind( this ) );
 
-        /*var self = this;
-        this.controls.addEventListener( 'change', function(){ self.render() } );*/
-
     },
 
     initStats: function(){
@@ -651,6 +696,8 @@ NGL.Viewer.prototype = {
             m.needsUpdate = true;
         });
 
+        this.render();
+
     },
 
     /**
@@ -665,6 +712,8 @@ NGL.Viewer.prototype = {
 
         this.setFog( null, p.backgroundColor );
         this.renderer.setClearColor( p.backgroundColor, 1 );
+
+        this.render();
 
     },
 
@@ -692,6 +741,8 @@ NGL.Viewer.prototype = {
         
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
+
+        this.render();
 
     },
 
