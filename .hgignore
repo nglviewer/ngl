@@ -4,3 +4,4 @@ syntax: glob
 *.sublime-workspace
 
 build/jsdoc/.*
+doc/*
