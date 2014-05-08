@@ -467,7 +467,11 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new THREE.WebGLRenderer( { alpha: false, antialias: false } );
+        this.renderer = new THREE.WebGLRenderer({ 
+            alpha: false,
+            antialias: false,
+            preserveDrawingBuffer: true, // for screenshots
+        });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
 
