@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>NGL</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            
+            html {
+                height: 100%;
+            }
+
+            body {
+                color: #ffffff;
+                font-family:Monospace;
+                font-size:13px;
+                font-weight: bold;
+
+                background-color: #000000;
+                margin: 0px;
+                overflow: hidden;
+
+                width: 100%;
+                height: 100%;
+            }
+            
+            #info {
+                color: #fff;
+                background-color: rgba( 0, 0, 0, 0.75 );
+                position: relative;
+                text-align:center;
+                top: 0px; 
+                width: 100%;
+                padding: 5px;
+                z-index:100;
+                width:33em;
+                margin:0 auto -2em;
+            }
+            
+            a { color: #ff0000 }
+
+            #container {
+                width: 100%;
+                height: 100%;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div id="info">NGL</div>
+        <div id="container"></div>
+
+        <script src="js/underscore.js"></script>
+        <script src="js/jquery.js"></script>
+
+        <script src="js/three.js"></script>
+        <script src="js/three/Detector.js"></script>
+        <script src="js/three/libs/dat.gui.min.js"></script>
+        <script src="js/three/libs/stats.min.js"></script>
+        <script src="js/three/controls/TrackballControls.js"></script>
+        <script src="js/three/loaders/OBJLoader.js"></script>
+
+        <script src="js/three/shaders/CopyShader.js"></script>
+        <script src="js/three/shaders/SSAOShader.js"></script>
+        <script src="js/three/shaders/FXAAShader.js"></script>
+        <script src="js/three/shaders/DotScreenShader.js"></script>
+
+        <script src="js/three/postprocessing/EffectComposer.js"></script>
+        <script src="js/three/postprocessing/RenderPass.js"></script>
+        <script src="js/three/postprocessing/MaskPass.js"></script>
+        <script src="js/three/postprocessing/ShaderPass.js"></script>
+
+        <script src="js/threex.rendererstats.js"></script>
+
+        <script src="js/ngl.js"></script>
+
+
+
+
+        <script>
+
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+
+            var viewer;
+
+            $(document).ready( function(){
+
+                $( NGL ).bind( 'initialized', function(){
+
+                    viewer = new NGL.Viewer( 'container' );
+
+                    var oNgl = new NglExample();
+                    var gui = new dat.GUI();
+                    var primitives = gui.addFolder( 'Primitives' );
+                    primitives.add(oNgl, 'count', [ 
+                        1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
+                        100000, 200000, 500000, 1000000, 2000000
+                    ]);
+                    primitives.add(oNgl, 'size', 2.0).min(0.1).max(10.0).step(0.1);
+                    primitives.add(oNgl, 'primitiveType', [
+                        'BezierRaymarch',
+                        'BezierImpostor',
+                        'EllipticBezierImpostor',
+                        'Bezier',
+                        'HelixImpostor',
+                        'HelixImpostor2',
+                        'SphereImpostor',
+                        'SphereMesh',
+                        'Sphere',
+                        'Point',
+                        'ParticleSprite',
+                        'CylinderImpostor',
+                        'Cylinder',
+                        'QuadricImpostor',
+                        'HyperballSphereImpostor',
+                        'HyperballStickImpostor',
+                        'Line',
+                        'LineSprite',
+                        'Halo',
+                        'Text',
+                        'SceneImpostor',
+                        'Scene',
+                        'SceneSimple',
+                        'SceneSprite',
+                        'Surface'
+                    ]).listen();
+                    primitives.add(oNgl, 'addPrimitive');
+
+                    var surfaces = gui.addFolder( 'Surfaces' );
+                    surfaces.add(oNgl, 'surfaceId', [ 
+                        '1crn',
+                        '3dqb'
+                    ]).listen();
+                    surfaces.add(oNgl, 'addSurface');
+
+                    var models = gui.addFolder( 'Models' );
+                    models.add(oNgl, 'modelId', [
+                        '1crn',
+                        '3dqb',
+                        '3sn6',
+                        '3l5q',
+                        '1crn_ca',
+                        '3dqb_ca',
+                        '3sn6_ca',
+                        '3l5q_ca',
+                    ]).listen();
+                    models.add(oNgl, 'modelType', [
+                        'spacefill',
+                        'tube',
+                        'elliptic-tube',
+                        'ribbon',
+                        'ball+stick',
+                        'stick',
+                        'hyperball',
+                        'sprite',
+                        'dot',
+                        'line',
+                        'line-sprite',
+                    ]).listen();
+                    models.add(oNgl, 'useImpostor', true).listen();
+                    models.add(oNgl, 'randomColor', true).listen();
+                    models.add(oNgl, 'addModel');
+
+                    gui.add(oNgl, 'clear');
+                    gui.add(oNgl, 'updateDisplay').onChange(
+                        function( value ){ viewer.params.updateDisplay = value; }
+                    );
+
+                    var options = gui.addFolder( 'Options ' );
+                    options.add(oNgl, 'fogType', ['', 'linear', 'exp2']).onChange(
+                        function( value ){ viewer.setFog( value ); }
+                    );
+                    options.add(oNgl, 'fogNear').min(0).max(3000).step(10).onChange(
+                        function( value ){ viewer.setFog( null, null, value ); }
+                    );
+                    options.add(oNgl, 'fogFar').min(0).max(3000).step(10).onChange(
+                        function( value ){ viewer.setFog( null, null, null, value ); }
+                    );
+                    options.add(oNgl, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
+                        function( value ){ viewer.setFog( null, null, null, null, value ); }
+                    );
+                    options.addColor(oNgl, 'fogColor').onChange(
+                        function( value ){ viewer.setFog( null, value ); }
+                    ).listen();
+                    options.addColor(oNgl, 'backgroundColor').onChange(
+                        function( value ){ viewer.setBackground( value ); oNgl.fogColor = value; }
+                    );
+                    options.add(oNgl, 'cameraPerspective').onChange(
+                        function( value ){ viewer.setCamera( value ); }
+                    );
+                    options.add(oNgl, 'cameraFov').min(0).max(180).step(1).onChange(
+                        function( value ){ viewer.setCamera( null, value ); }
+                    );
+                    options.add(oNgl, 'cameraNear').min(1).max(10000).step(10).onChange(
+                        function( value ){ viewer.setCamera( null, null, value ); }
+                    );
+                    options.add(oNgl, 'cameraFar').min(1).max(10000).step(10).onChange(
+                        function( value ){ viewer.setCamera( null, null, null, value ); }
+                    );
+                    
+                    // oNgl.count = 500;
+                    // oNgl.primitiveType = 'Text';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'SphereImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'CylinderImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'SphereMesh';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'Sphere';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'QuadricImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'EllipticBezierImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'Point';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'SceneImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'HyperballSphereImpostor';
+                    // oNgl.addPrimitive();
+                    // oNgl.primitiveType = 'HyperballStickImpostor';
+                    // oNgl.addPrimitive();
+                    
+                    
+                    // oNgl.randomColor = true;
+                    // oNgl.modelId = '1crn_ca';
+                    // oNgl.modelType = 'elliptic-tube';
+                    // oNgl.addModel();
+                    // oNgl.modelId = '1crn_ca';
+                    // oNgl.modelType = 'ball+stick';
+                    // oNgl.addModel();
+                    oNgl.modelId = '1crn';
+                    oNgl.modelType = 'ball+stick';
+                    oNgl.addModel();
+                    
+                    // oNgl.surfaceId = '1crn';
+                    // oNgl.addSurface();
+
+                    viewer.animate();
+                    viewer.render();
+                });
+
+                NGL.init();
+
+            });
+
+            
+            var NglExample = function() {
+
+                this.count = 100;
+                this.size = 2.0;
+                this.primitiveType = 'EllipticBezierImpostor';
+                this.modelId = '1crn';
+                this.modelType = 'ball+stick';
+                this.randomColor = false;
+                this.useImpostor = true;
+                this.surfaceId = '1crn';
+                this.updateDisplay = true;
+
+                this.fogType = "";
+                this.fogNear = 0;
+                this.fogFar = 1000;
+                this.fogDensity = 0.00025;
+                this.fogColor = '#000000';
+                this.backgroundColor = '#000000';
+                this.cameraPerspective = true;
+                this.cameraFov = 40;
+                this.cameraNear = 1;
+                this.cameraFar = 10000;
+                
+
+                this.clear = function(){
+                    viewer.clear();
+                }
+
+                this.addPrimitive = function(){
+                    var c1 = makeCylinderData( this.count, this.size );
+                    var r1 = new Float32Array( c1.radius.length );
+                    for( var i = 0; i < c1.radius.length; i++ ){
+                        r1[ i ] = this.size * 2.5;
+                    }
+                    var types = {
+                        'BezierRaymarch': function(){
+                            var bd = makeBezierData( this.count, this.size );
+                            new NGL.BezierRaymarchBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
+
+                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
+                        },
+                        'BezierImpostor': function(){
+                            var bd = makeBezierData( this.count, this.size );
+                            new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
+
+                            // new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                            // new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
+                        },
+                        'EllipticBezierImpostor': function(){
+                            var bd = makeBezierData( this.count, this.size );
+                            new NGL.EllipticBezierImpostorBuffer( 
+                                bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 3
+                            );
+                            
+                            // new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
+
+                            new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
+                            new NGL.SphereImpostorBuffer( bd.p1, bd.color, bd.radius );
+                            new NGL.SphereImpostorBuffer( bd.p2, bd.color, bd.radius );
+                        },
+                        'Bezier': function(){
+                            var bd = makeBezierData( this.count, this.size );
+                            new NGL.BezierGroup( bd.p0, bd.p1, bd.p2, bd.color, bd.radius );
+                        },
+                        'HelixImpostor': function(){
+                            var hd = makeHelixData( this.count, this.size );
+                            new NGL.HelixImpostorBuffer( 
+                                hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
+                            );
+
+                            // new NGL.CylinderImpostorBuffer( 
+                            //     hd.from, hd.to, hd.color, hd.color, hd.radius
+                            // );
+
+                            var sr = new Float32Array( hd.radius.length );
+                            for( var i = 0; i < hd.radius.length; i++ ){
+                                sr[ i ] = this.size / 4.0;
+                            }
+                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
+                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
+                        },
+                        'HelixImpostor2': function(){
+                            var hd = makeHelixData( this.count, this.size );
+                            new NGL.HelixImpostorBuffer2( 
+                                hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
+                            );
+
+                            // new NGL.CylinderImpostorBuffer( 
+                            //     hd.from, hd.to, hd.color, hd.color, hd.radius
+                            // );
+
+                            var sr = new Float32Array( hd.radius.length );
+                            for( var i = 0; i < hd.radius.length; i++ ){
+                                sr[ i ] = this.size / 4.0;
+                            }
+                            new NGL.SphereImpostorBuffer( hd.pFrom, hd.color, sr );
+                            new NGL.SphereImpostorBuffer( hd.pTo, hd.color, sr );
+                        },
+                        'SphereImpostor': function(){
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                            // new NGL.SphereGroup( c1.from, c1.color, r1 );
+                            //new NGL.SphereImpostorBuffer2( c1.from, c1.color, r1 );
+                        },
+                        'SphereMesh': function(){
+                            new NGL.SphereMeshBuffer( c1.to, c1.color, r1 );
+                        },
+                        'Sphere': function(){
+                            viewer.add( new NGL.SphereGroup( c1.to, c1.color, r1 ) );
+                        },
+                        'Point': function(){
+                            viewer.add( new NGL.PointBuffer( c1.from, c1.color, this.size ) );
+                        },
+                        'ParticleSprite': function(){
+                            new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
+                        },
+                        'CylinderImpostor': function(){
+                            viewer.add( new NGL.CylinderImpostorBuffer( 
+                                c1.from, c1.to, c1.color, c1.color, c1.radius
+                            ) );
+                            // viewer.add( new NGL.CylinderBoxImpostorBuffer( 
+                            //     c1.from, c1.to, c1.color, c1.color, c1.radius
+                            // ) );
+                        },
+                        'Cylinder': function(){
+                            new NGL.CylinderGroup( c1.from, c1.to, c1.color, c1.radius );
+                        },
+                        'QuadricImpostor': function(){
+                            var qlist = [
+                                // "EllipsoidImpostorBuffer", "HyperboloidOneImpostorBuffer",
+                                // "HyperboloidTwoImpostorBuffer", 
+                                "ConeImpostorBuffer",
+                                // "EllipticCylinderImpostorBuffer"
+                            ]
+                            var n = qlist.length;
+                            var m = Math.floor( this.size / n );
+                            var qd;
+
+                            var r1 = new Float32Array( this.count );
+                            for( var i = 0; i < this.count; i++ ){
+                                r1[ i ] = this.size / 3.0;
+                            }
+                            
+                            for( var i = 0; i < n; ++i ){
+                                qd = makeQuadricData( this.count, m );
+                                new NGL.SphereImpostorBuffer( qd.xpos, qd.color, r1 );
+                                new NGL.SphereImpostorBuffer( qd.ypos, qd.color, r1 );
+                                new NGL.SphereImpostorBuffer( qd.zpos, qd.color, r1 );
+                                new NGL.SphereImpostorBuffer( qd.position, qd.color, r1 );
+                                new NGL[ qlist[i] ]( 
+                                    qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
+                                );
+                            }
+                        },
+                        'HyperballSphereImpostor': function(){
+                            new NGL.HyperballSphereImpostorBuffer( c1.from, c1.color, r1 );
+                        },
+                        'HyperballStickImpostor': function(){
+                            new NGL.HyperballStickImpostorBuffer(
+                                c1.from, c1.to, c1.color, c1.color, c1.radius, c1.radius, 0.05
+                            );
+                        },
+                        'Line': function(){
+                            new NGL.LineBuffer( c1.from, c1.to, c1.color, c1.color );
+                        },
+                        'LineSprite': function(){
+                            new NGL.LineSpriteBuffer( c1.from, c1.to, c1.color, c1.color, c1.radius );
+                        },
+                        'Halo': function(){
+                            new NGL.HaloBuffer( c1.from, r1 );
+                        },
+                        'Text': function(){
+                            viewer.add( new NGL.TextBuffer( c1.to, c1.radius ) );
+                        },
+                        'SceneImpostor': function(){
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                            new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius );
+                            new NGL.CylinderImpostorBuffer( 
+                                c1.from, c1.to, c1.color, c1.color, c1.radius, true
+                            );
+                            new NGL.HaloBuffer( c1.from, r1 );
+                            new NGL.TextBuffer( c1.to, c1.radius );
+                        },
+                        'SceneSphereTest': function(){
+                            new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
+                            new NGL.SphereGroup( c1.to, c1.color, r1 );
+                        },
+                        'Scene': function(){
+                            new NGL.SphereGroup( c1.from, c1.color, r1 );
+                            new NGL.SphereGroup( c1.to, c1.color, r1 );
+                            new NGL.CylinderGroup( 
+                                c1.from, c1.to, c1.color, c1.radius
+                            );
+                            new NGL.HaloBuffer( c1.from, r1 );
+                            new NGL.TextBuffer( c1.to, c1.radius );
+                        },
+                        'SceneSimple': function(){
+                            new NGL.PointBuffer( c1.from, c1.color, this.size );
+                            new NGL.PointBuffer( c1.to, c1.color, this.size );
+                            new NGL.LineBuffer( 
+                                c1.from, c1.to, c1.color, c1.color, c1.radius
+                            );
+                            new NGL.HaloBuffer( c1.from, r1, true );
+                            new NGL.TextBuffer( c1.to, c1.radius );
+                        },
+                        'SceneSprite': function(){
+                            new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
+                            new NGL.ParticleSpriteBuffer( c1.to, c1.color, r1 );
+                            new NGL.LineSpriteBuffer( 
+                                c1.from, c1.to, c1.color, c1.color, c1.radius
+                            );
+                            new NGL.HaloBuffer( c1.from, r1, true );
+                            new NGL.TextBuffer( c1.to, c1.radius );
+                        }
+                    }
+                    types[ this.primitiveType ].call( this );
+                    viewer.render();
+                };
+
+                this.addModel = function(){
+                    loadModel( 
+                        'data/' + this.modelId + '.json', 
+                        this.modelType,
+                        this.useImpostor,
+                        this.randomColor
+                    );    
+                    viewer.render();
+                };
+
+                this.addSurface = function(){
+                    loadSurface( 
+                        'data/' + this.surfaceId + '.obj'
+                    );    
+                    viewer.render();
+                };
+            };
+
+
+
+            function computeVertexNormals( vertices, faces, areaWeighted ){
+
+                var v, vl, f, fl;
+
+                var normals = new Array( vertices.length );
+
+                for ( v = 0, vl = vertices.length; v < vl; v ++ ) {
+
+                    normals[ v ] = new THREE.Vector3();
+
+                }
+
+                if ( areaWeighted ) {
+
+                    // vertex normals weighted by triangle areas
+                    // http://www.iquilezles.org/www/articles/normals/normals.htm
+
+                    var vA, vB, vC;
+                    var cb = new THREE.Vector3(), ab = new THREE.Vector3();
+
+                    for ( f = 0, fl = faces.length; f < fl; f ++ ) {
+
+                        face = faces[ f ];
+
+                        vA = vertices[ face.a ];
+                        vB = vertices[ face.b ];
+                        vC = vertices[ face.c ];
+
+                        cb.subVectors( vC, vB );
+                        ab.subVectors( vA, vB );
+                        cb.cross( ab );
+
+                        normals[ face.a ].add( cb );
+                        normals[ face.b ].add( cb );
+                        normals[ face.c ].add( cb );
+
+                    }
+
+                } else {
+
+                    for ( f = 0, fl = faces.length; f < fl; f ++ ) {
+
+                        face = faces[ f ];
+
+                        normals[ face.a ].add( face.normal );
+                        normals[ face.b ].add( face.normal );
+                        normals[ face.c ].add( face.normal );
+
+                    }
+
+                }
+
+                for ( v = 0, vl = vertices.length; v < vl; v ++ ) {
+
+                    normals[ v ].normalize();
+
+                }
+
+                return convertVector3ArrayToFloat32Array( normals );
+
+            }
+
+            function getIndicesFromFaces( faces ){
+
+                var j, f;
+                var n = faces.length;
+                var indices = new Uint16Array( n * 3 );
+
+                for( var v = 0; v < n; v++ ){
+
+                    j = v * 3;
+                    f = faces[ v ];
+
+                    indices[ j + 0 ] = f.a;
+                    indices[ j + 1 ] = f.b;
+                    indices[ j + 2 ] = f.c;
+                    
+                }
+
+                return indices;
+
+            }
+
+            function getColorsFromFaces( faces, vn ){
+
+                var j, f, c;
+                var n = faces.length;
+                var colors = new Float32Array( vn * 3 );
+
+                for( var v = 0; v < n; v++ ){
+
+                    f = faces[ v ];
+                    c = f.color;
+
+                    j = f.a * 3;
+                    colors[ j + 0 ] = c.r;
+                    colors[ j + 1 ] = c.g;
+                    colors[ j + 2 ] = c.b;
+
+                    j = f.b * 3;
+                    colors[ j + 0 ] = c.r;
+                    colors[ j + 1 ] = c.g;
+                    colors[ j + 2 ] = c.b;
+
+                    j = f.c * 3;
+                    colors[ j + 0 ] = c.r;
+                    colors[ j + 1 ] = c.g;
+                    colors[ j + 2 ] = c.b;
+                    
+                }
+
+                return colors;
+
+            }
+
+            function convertVector3ArrayToFloat32Array( vector3array ){
+
+                var j, v3;
+                var n = vector3array.length;
+                var float32array = new Float32Array( n * 3 );
+
+                for( var v = 0; v < n; v++ ){
+
+                    j = v * 3;
+                    v3 = vector3array[ v ];
+
+                    float32array[ j + 0 ] = v3.x;
+                    float32array[ j + 1 ] = v3.y;
+                    float32array[ j + 2 ] = v3.z;
+                    
+                }
+
+                return float32array;
+
+            }
+
+
+            function loadSurface( url ){
+                
+                var manager = new THREE.LoadingManager();
+                manager.onProgress = function ( item, loaded, total ) {
+                    console.log( item, loaded, total );
+                };
+
+                var loader = new THREE.OBJLoader( manager );
+                loader.load( url, function ( object ) {
+
+                    var surface = new THREE.Object3D();
+
+                    var geo = object.children[0].geometry;
+                    geo.applyMatrix( new THREE.Matrix4().makeScale( 7, 7, 7 ) );
+                    THREE.GeometryUtils.center( geo );
+                    
+                    var position = convertVector3ArrayToFloat32Array( geo.vertices );
+                    var color = getColorsFromFaces( geo.faces, geo.vertices.length );
+                    var index = getIndicesFromFaces( geo.faces );
+                    var normal = computeVertexNormals( geo.vertices, geo.faces, true );
+                    
+                    viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
+
+                } );
+
+            }
+
+
+            function loadModel( url, type, impostor, randomColor ){
+                var _load = function( data ){
+                    var mol = data['mol'];
+                    var atoms = mol['a'];
+                    var bonds = mol['b'];
+                    var ss = mol['ss'];
+                    var na = atoms.length;
+                    var na3 = na * 3;
+                    var nb = bonds.length;
+                    var nb3 = nb * 3
+
+                    var colrs = {
+                        "O": [ 1.0, 0.0, 0.0 ],
+                        "N": [ 0.0, 0.0, 1.0 ],
+                        "C": [ 0.5, 0.5, 0.5 ],
+                        "H": [ 0.0, 0.0, 0.0 ],
+                        "S": [ 1.0, 1.0, 0.0 ],
+                    }
+
+                    var position = new Float32Array( na3 );
+                    var color = new Float32Array( na3 );
+                    var radius = new Float32Array( na3 );
+                    var radius2 = new Float32Array( na3 );
+                    var c, j;
+                    for( var i=0, j; i<na; i++ ){
+                        j = 3*i;
+                        c = colrs[ atoms[i].l ];
+                        if( !c ) c = [ 0.5, 0.5, 0.5 ];
+                        position[ j + 0 ] = atoms[i].x * 7;
+                        position[ j + 1 ] = atoms[i].y * 7;
+                        position[ j + 2 ] = atoms[i].z * 7;
+                        if( randomColor ){
+                            color[ j + 0 ] = Math.random();
+                            color[ j + 1 ] = Math.random();
+                            color[ j + 2 ] = Math.random();
+                        }else{
+                            color[ j + 0 ] = c[0];
+                            color[ j + 1 ] = c[1];
+                            color[ j + 2 ] = c[2];
+                        }
+                        radius[ i ] = type=="spacefill" ? 10.0 : 3.0;
+                        radius2[ i ] = radius[ i ] / 2;
+                        if( type=="sprite" ) radius[ i ] = 1.0;
+                        // if( type=="ribbon" ) radius[ i ] = 1.0 + 0.1*i;
+                        if( type=="ribbon" && ss && i<na-1 ){
+                            if( ss[i]>0 && ss[i]!=ss[i+1] ){
+                                radius[ i ] *= -1;
+                            }
+                        }
+                    }
+
+                    // calculate center
+                    var x=0, y=0, z=0;
+                    for( var i=0, j; i<na; i++ ){
+                        j = 3*i;
+                        x += position[ j + 0 ];
+                        y += position[ j + 1 ];
+                        z += position[ j + 2 ];
+                    }
+                    x /= na;
+                    y /= na;
+                    z /= na;
+                    // translate center to origin
+                    for( var i=0, j; i<na; i++ ){
+                        j = 3*i;
+                        position[ j + 0 ] -= x;
+                        position[ j + 1 ] -= y;
+                        position[ j + 2 ] -= z;
+                    }
+
+                    switch( type ){
+                        case "spacefill":
+                            if( impostor ){
+                                viewer.add( new NGL.SphereImpostorBuffer( position, color, radius ) );
+                            }else{
+                                new NGL.SphereGroup( position, color, radius );
+                            }
+                            break;
+                        case "tube":
+                            new NGL.TextBuffer( position, radius );
+                            if( impostor ){
+                                var pd = NGL.getPathData( position, color, radius, 10 );
+                                new NGL.TubeImpostorBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
+                            }else{
+                                new NGL.TubeGroup( position, color, radius, 10 );
+                            }
+                            break;
+                        case "elliptic-tube":
+                            var pd = NGL.getPathData( position, color, radius, 20 );
+                            new NGL.EllipticTubeImpostorBuffer(
+                                pd.position,
+                                pd.binormals, pd.normals, pd.tangents,
+                                pd.color
+                            );
+                            break;
+                        case "ribbon":
+                            new NGL.TextBuffer( position, radius );
+                            var pd = NGL.getPathData( position, color, radius, 2 );
+                            new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
+                            new NGL.SphereImpostorBuffer( position, color, radius2 );
+                            break;
+                        case "stick":
+                        case "hyperball":
+                        case "ball+stick":
+                            if( impostor ){
+                                viewer.add( new NGL.SphereImpostorBuffer( position, color, radius ) );
+                            }else{
+                                new NGL.SphereGroup( position, color, radius );
+                            }
+                            break;
+                        case "sprite":
+                            new NGL.ParticleSpriteBuffer( position, color, radius );
+                            break;
+                        case "dot":
+                            new NGL.PointBuffer( position, color, 3 );
+                            break;
+                    }
+
+                    var from = new Float32Array( nb3 );
+                    var to = new Float32Array( nb3 );
+                    
+                    var xdir = new Float32Array( nb3 );
+                    var ydir = new Float32Array( nb3 );
+                    var zdir = new Float32Array( nb3 );
+
+                    var pos = new Float32Array( nb3 );
+                    
+                    var bColor = new Float32Array( nb3 );
+                    var bColor2 = new Float32Array( nb3 );
+                    var bRadius = new Float32Array( nb );
+                    var bRadius2 = new Float32Array( nb );
+                    
+                    var beg, end;
+                    
+                    var vx = new THREE.Vector3();
+                    var vy = new THREE.Vector3();
+                    var vz = new THREE.Vector3();
+
+                    var p = new THREE.Vector3();
+                    var vf = new THREE.Vector3();
+                    var vt = new THREE.Vector3();
+
+                    for( var i=0, j; i<nb; i++ ){
+                        j = 3*i;
+                        beg = bonds[i].b * 3;
+                        end = bonds[i].e * 3;
+
+                        from[ j + 0 ] = position[ beg + 0 ];
+                        from[ j + 1 ] = position[ beg + 1 ];
+                        from[ j + 2 ] = position[ beg + 2 ];
+                        to[ j + 0 ] = position[ end + 0 ];
+                        to[ j + 1 ] = position[ end + 1 ];
+                        to[ j + 2 ] = position[ end + 2 ];
+
+                        vf.set( from[ j + 0 ], from[ j + 1 ], from[ j + 2 ] );
+                        vt.set( to[ j + 0 ], to[ j + 1 ], to[ j + 2 ] );
+
+                        p.addVectors( vf, vt ).divideScalar( 2.0 );
+                        pos[ j + 0 ] = p.x;
+                        pos[ j + 1 ] = p.y;
+                        pos[ j + 2 ] = p.z;
+
+                        vx.subVectors( vf, vt ).divideScalar( 2.0 );
+                        vy.set( 0.0, 1.0, 0.0 ).cross( vx )
+                            .setLength( 2.11 );
+                        vz.crossVectors( vx, vy )
+                            .setLength( 2.11 );
+
+                        xdir[ j + 0 ] = vx.x;
+                        xdir[ j + 1 ] = vx.y;
+                        xdir[ j + 2 ] = vx.z;
+
+                        ydir[ j + 0 ] = vy.x;
+                        ydir[ j + 1 ] = vy.y;
+                        ydir[ j + 2 ] = vy.z;
+
+                        zdir[ j + 0 ] = vz.x;
+                        zdir[ j + 1 ] = vz.y;
+                        zdir[ j + 2 ] = vz.z;
+                        
+                        bColor[ j + 0 ] = color[ beg + 0 ];
+                        bColor[ j + 1 ] = color[ beg + 1 ];
+                        bColor[ j + 2 ] = color[ beg + 2 ];
+                        bColor2[ j + 0 ] = color[ end + 0 ];
+                        bColor2[ j + 1 ] = color[ end + 1 ];
+                        bColor2[ j + 2 ] = color[ end + 2 ];
+                        
+                        bRadius[ i ] = type=="stick" ? 3.0 : 1.0;
+                        bRadius2[ i ] = 3.0;
+                    }
+
+                    switch( type ){
+                        case "stick":
+                        case "ball+stick":
+                            if( impostor ){
+                                viewer.add( new NGL.CylinderImpostorBuffer(
+                                    from, to, bColor, bColor2, bRadius, 1.5, false
+                                ) );
+                                viewer.add( new NGL.CylinderImpostorBuffer(
+                                    from, to, bColor, bColor2, bRadius, -1.5, false
+                                ) );
+                            }else{
+                                new NGL.CylinderGroup( from, to, bColor, bRadius );
+                            }
+                            break;
+                        case "hyperball":
+                            viewer.add(  new NGL.HyperballStickImpostorBuffer(
+                                from, to, bColor, bColor2, bRadius2, bRadius2, 0.2
+                            ) );
+                            break;
+                        case "sprite":
+                        case "line-sprite":
+                            viewer.add( new NGL.LineSpriteBuffer( from, to, bColor, bColor2, bRadius ) );
+                            break;
+                        case "line":
+                            viewer.add( new NGL.LineBuffer( from, to, bColor, bColor2 ) );
+                            break
+                    }
+                }
+
+                $.ajax({ url: url, dataType: "json", success: _load });
+            }
+
+
+            var RAND = Math.random;
+
+
+            function makeSphereData( n, size ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var radius = new Float32Array( n );
+                var color = new Float32Array( n3 );
+                var position = new Float32Array( n3 );
+
+                var j;
+                for( var i = 0; i < n; i++ ) {
+                    j = 3 * i;
+                    radius[ i ] = size;
+                    color[ j + 0 ] = Math.random();
+                    color[ j + 1 ] = Math.random();
+                    color[ j + 2 ] = Math.random();
+                    position[ j + 0 ] = (Math.random() * 2 - 1) * cube;
+                    position[ j + 1 ] = (Math.random() * 2 - 1) * cube;
+                    position[ j + 2 ] = (Math.random() * 2 - 1) * cube;
+                }
+
+                position[ 0 ] = 0.0;
+                position[ 1 ] = 0.0;
+                position[ 2 ] = 0.0;
+
+                return {
+                    "radius": radius,
+                    "color": color,
+                    "position": position
+                }
+            }
+
+
+            function makeCylinderData( n, size ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var radius = new Float32Array( n );
+                var color = new Float32Array( n3 );
+                var from = new Float32Array( n3 );
+                var to = new Float32Array( n3 );
+
+                var x, y, z;
+                var a, b, c;
+
+                var vPos = new THREE.Vector3();
+
+                var j;
+                for( var i = 0; i < n; i++ ) {
+                    j = 3 * i;
+                    radius[ i ] = size;
+                    color[ j + 0 ] = Math.random();
+                    color[ j + 1 ] = Math.random();
+                    color[ j + 2 ] = Math.random();
+
+                    x = (Math.random() * 2 - 1) * cube;
+                    y = (Math.random() * 2 - 1) * cube;
+                    z = (Math.random() * 2 - 1) * cube;
+
+                    a = Math.random() * 10;
+                    b = Math.random() * 10;
+                    c = Math.random() * 10;
+
+                    from[ j + 0 ] = x + a;
+                    from[ j + 1 ] = y + b;
+                    from[ j + 2 ] = z + c;
+
+                    to[ j + 0 ] = x - a;
+                    to[ j + 1 ] = y - b;
+                    to[ j + 2 ] = z - c;
+                }
+
+                return {
+                    "radius": radius,
+                    "color": color,
+                    "from": from,
+                    "to": to
+                }
+            }
+
+
+            function makeQuadricData( n, size ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var position = new Float32Array( n3 );
+                var color = new Float32Array( n3 );
+
+                var xdir = new Float32Array( n3 );
+                var ydir = new Float32Array( n3 );
+                var zdir = new Float32Array( n3 );
+
+                var xpos = new Float32Array( n3 );
+                var ypos = new Float32Array( n3 );
+                var zpos = new Float32Array( n3 );
+
+                var px = new THREE.Vector3();
+                var py = new THREE.Vector3();
+                var pz = new THREE.Vector3();
+
+                var vx = new THREE.Vector3();
+                var vy = new THREE.Vector3();
+                var vz = new THREE.Vector3();
+
+                var j, x, y, z;
+
+                for( var i = 0; i < n; i++ ) {
+                    j = 3 * i;
+
+                    if( i==0 ){
+                        x = 0;
+                        y = 0;
+                        z = 0;
+                    }else{
+                        x = (RAND() * 2 - 1) * cube;
+                        y = (RAND() * 2 - 1) * cube;
+                        z = (RAND() * 2 - 1) * cube;
+                    }
+
+                    position[ j + 0 ] = x;
+                    position[ j + 1 ] = y;
+                    position[ j + 2 ] = z;
+
+                    color[ j + 0 ] = RAND();
+                    color[ j + 1 ] = RAND();
+                    color[ j + 2 ] = RAND();
+
+                    // vx.set( RAND(), RAND(), RAND() )
+                    //     .setLength( size * 8 );
+                    // vy.set( RAND(), RAND(), RAND() ).cross( vx )
+                    //     .setLength( size * 4 );
+                    // vz.crossVectors( vx, vy )
+                    //     .setLength( size * 2 );
+
+                    vx.set( RAND(), RAND(), RAND() )
+                        .setLength( 0.5 + RAND() * 10 );
+                    vy.set( RAND(), RAND(), RAND() ).cross( vx )
+                        .setLength( 0.5 + RAND() * 10 );
+                    vz.crossVectors( vx, vy )
+                        .setLength( 0.5 + RAND() * 10 );
+
+                    xdir[ j + 0 ] = vx.x;
+                    xdir[ j + 1 ] = vx.y;
+                    xdir[ j + 2 ] = vx.z;
+
+                    ydir[ j + 0 ] = vy.x;
+                    ydir[ j + 1 ] = vy.y;
+                    ydir[ j + 2 ] = vy.z;
+
+                    zdir[ j + 0 ] = vz.x;
+                    zdir[ j + 1 ] = vz.y;
+                    zdir[ j + 2 ] = vz.z;
+
+                    px.set( x, y, z ).add( vx );
+                    py.set( x, y, z ).add( vy );
+                    pz.set( x, y, z ).add( vz );
+
+                    xpos[ j + 0 ] = px.x;
+                    xpos[ j + 1 ] = px.y;
+                    xpos[ j + 2 ] = px.z;
+
+                    ypos[ j + 0 ] = py.x;
+                    ypos[ j + 1 ] = py.y;
+                    ypos[ j + 2 ] = py.z;
+
+                    zpos[ j + 0 ] = pz.x;
+                    zpos[ j + 1 ] = pz.y;
+                    zpos[ j + 2 ] = pz.z;
+                }
+
+                return {
+                    "position": position,
+                    "color": color,
+                    "xdir": xdir,
+                    "ydir": ydir,
+                    "zdir": zdir,
+                    "xpos": xpos,
+                    "ypos": ypos,
+                    "zpos": zpos
+                }
+            }
+
+
+            function makeHelixData( n, size ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var radius = new Float32Array( n );
+                var color = new Float32Array( n3 );
+                var from = new Float32Array( n3 );
+                var to = new Float32Array( n3 );
+                
+                var vFrom = new Float32Array( n3 );
+                var vTo = new Float32Array( n3 );
+                var pFrom = new Float32Array( n3 );
+                var pTo = new Float32Array( n3 );
+
+                var x, y, z;
+                var a, b, c;
+
+                var vAxis = new THREE.Vector3();
+                var vRand = new THREE.Vector3();
+                var vCross = new THREE.Vector3();
+
+                var j;
+                for( var i = 0; i < n; i++ ) {
+                    j = 3 * i;
+                    radius[ i ] = size;
+                    color[ j + 0 ] = Math.random();
+                    color[ j + 1 ] = Math.random();
+                    color[ j + 2 ] = Math.random();
+
+                    x = (Math.random() * 2 - 1) * cube;
+                    y = (Math.random() * 2 - 1) * cube;
+                    z = (Math.random() * 2 - 1) * cube;
+
+                    a = Math.random() * 10;
+                    b = Math.random() * 10;
+                    c = Math.random() * 10;
+
+                    from[ j + 0 ] = x + a;
+                    from[ j + 1 ] = y + b;
+                    from[ j + 2 ] = z + c;
+
+                    to[ j + 0 ] = x - a;
+                    to[ j + 1 ] = y - b;
+                    to[ j + 2 ] = z - c;
+
+                    vAxis.set( x + a - (x - a), y + b - (y - b), z + c - (z - c) );
+                    vRand.set( Math.random(), Math.random(), Math.random() );
+                    vCross.crossVectors( vAxis, vRand );
+
+                    vFrom[ j + 0 ] = vCross.x;
+                    vFrom[ j + 1 ] = vCross.y;
+                    vFrom[ j + 2 ] = vCross.z;
+
+                    vTo[ j + 0 ] = -vCross.x;
+                    vTo[ j + 1 ] = -vCross.y;
+                    vTo[ j + 2 ] = -vCross.z;
+
+                    vCross.normalize().multiplyScalar( size );
+
+                    pFrom[ j + 0 ] = from[ j + 0 ] + vCross.x;
+                    pFrom[ j + 1 ] = from[ j + 1 ] + vCross.y;
+                    pFrom[ j + 2 ] = from[ j + 2 ] + vCross.z;
+
+                    pTo[ j + 0 ] = to[ j + 0 ] - vCross.x;
+                    pTo[ j + 1 ] = to[ j + 1 ] - vCross.y;
+                    pTo[ j + 2 ] = to[ j + 2 ] - vCross.z;
+                }
+
+                return {
+                    "radius": radius,
+                    "color": color,
+                    "from": from,
+                    "to": to,
+                    "vFrom": vFrom,
+                    "vTo": vTo,
+                    "pFrom": pFrom,
+                    "pTo": pTo
+                }
+            }
+
+
+            function makeBezierData( n, size ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var radius = new Float32Array( n );
+                var color = new Float32Array( n3 );
+                var p0 = new Float32Array( n3 );
+                var p1 = new Float32Array( n3 );
+                var p2 = new Float32Array( n3 );
+
+                var x, y, z;
+                var a, b, c;
+
+                var vPos = new THREE.Vector3();
+
+                var j;
+                for( var i = 0; i < n; i++ ) {
+                    j = 3 * i;
+                    radius[ i ] = size;
+                    color[ j + 0 ] = Math.random();
+                    color[ j + 1 ] = Math.random();
+                    color[ j + 2 ] = Math.random();
+
+                    if( i==0 ){
+                        x = 0;
+                        y = 0;
+                        z = 0;
+                    }else{
+                        x = (Math.random() * 2 - 1) * cube;
+                        y = (Math.random() * 2 - 1) * cube;
+                        z = (Math.random() * 2 - 1) * cube;
+                    }
+
+                    a = Math.random() * 10;
+                    b = Math.random() * 10;
+                    c = Math.random() * 10;
+
+                    p0[ j + 0 ] = x + a;
+                    p0[ j + 1 ] = y + b;
+                    p0[ j + 2 ] = z + c;
+
+                    p1[ j + 0 ] = x;
+                    p1[ j + 1 ] = y;
+                    p1[ j + 2 ] = z;
+
+                    p2[ j + 0 ] = x - 1.41*a;
+                    p2[ j + 1 ] = y;
+                    p2[ j + 2 ] = z;
+                }
+
+                return {
+                    "radius": radius,
+                    "color": color,
+                    "p0": p0,
+                    "p1": p1,
+                    "p2": p2
+                }
+            }
+
+
+            function makeMeshData( n ){
+                var cube = 100;
+                var n3 = n * 3;
+
+                var position = new Float32Array( n3 );
+                var color = new Float32Array( n3 );
+                var index = new Uint16Array( n3 );
+                var normal = new Float32Array( n3 );
+
+                return{
+                    "position": position,
+                    "color": color,
+                    "index": index,
+                    "normal": normal
+                }
+            }
+
+
+        </script>
+
+    </body>
+
+</html>

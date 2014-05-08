@@ -1,0 +1,28 @@
+
+varying vec3 color;
+varying vec3 normalx;
+
+
+#include light_params
+
+#include fog_params
+
+
+void main() {
+
+	vec3 transformedNormal = normalize( normalx );
+	#ifdef DOUBLE_SIDED,
+		transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
+	#endif
+
+    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+    
+    #include light
+
+    gl_FragColor = vec4( color, 1.0 );
+    //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+    gl_FragColor.xyz *= vLightFront;
+    //gl_FragColor.xyz = normalx;
+
+    #include fog
+}
