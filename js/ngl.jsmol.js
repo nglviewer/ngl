@@ -95,7 +95,7 @@
                 }
                 nv.camera.updateProjectionMatrix();
 
-                nv.render();
+                requestAnimationFrame( nv.render.bind( nv ) );
 
                 // console.log( view );
                 // console.log( nv.camera );
