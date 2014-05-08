@@ -343,6 +343,7 @@ NGL.GUI = function( viewer ){
     var tools = gui.addFolder( 'Tools' );
     tools.add( this, 'clear' );
     tools.add( this, 'screenshot' );
+    tools.add( this, 'fullscreen' );
 
     var effects = gui.addFolder( 'Effects' );
     effects.add( this, 'dotScreenEffect' ).onChange(
@@ -404,14 +405,34 @@ NGL.GUI = function( viewer ){
 NGL.GUI.prototype = {
 
     clear: function(){
+        
         this.viewer.clear();
+
     },
 
     screenshot: function(){
+        
         window.open(
             this.viewer.renderer.domElement.toDataURL("image/png"),
             "NGL_screenshot_" + THREE.Math.generateUUID()
         );
+
+    },
+
+    fullscreen: function(){
+        
+        var elem = this.viewer.container;
+
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
+
     }
 
 }
