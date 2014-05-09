@@ -45,6 +45,7 @@ NGL.PDBobject = function( pdbFile, onLoad ){
 NGL.PDBobject.prototype.parse = function( str ) {
 
     var atoms = [];
+    var bonds = [];
     var protein = {
         pdbID: '', title: '',
         sheet: [], helix: [],
@@ -54,7 +55,9 @@ NGL.PDBobject.prototype.parse = function( str ) {
     var atoms_cnt = 0;
     lines = str.split("\n");
 
-    for (var i = 0; i < lines.length; i++) {
+    var i, j;
+
+    for( i = 0; i < lines.length; i++ ){
 
         line = lines[i].replace(/^\s*/, ''); // remove indent
         var recordName = line.substr(0, 6);
@@ -110,6 +113,7 @@ NGL.PDBobject.prototype.parse = function( str ) {
                     atoms[from].bonds.push(to);
                     atoms[from].bondOrder.push(1);
                 }
+                bonds.push([ from, to ]);
             }
 
         } else if (recordName == 'HELIX ') {
@@ -183,15 +187,36 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
     }
 
-    // Assign secondary structures 
-    for (i = 0; i < atoms.length; i++) {
-        
-        atom = atoms[i]; if (atom == undefined) continue;
+    function isConnected( atom1, atom2 ) {
 
-        var found = false;
+        var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) + 
+                          ( atom1.y - atom2.y ) * ( atom1.y - atom2.y ) + 
+                          ( atom1.z - atom2.z ) * ( atom1.z - atom2.z );
+
+        //   if (atom1.altLoc != atom2.altLoc) return false;
+        if( isNaN( distSquared ) ) return 0;
+        if( distSquared < 0.5 ) return 0; // maybe duplicate position.
+
+        if( distSquared > 1.3 && ( atom1.elem == 'H' || atom2.elem == 'H' || atom1.elem == 'D' || atom2.elem == 'D' ) ) return 0;
+        if( distSquared < 3.42 && ( atom1.elem == 'S' || atom2.elem == 'S' ) ) return 1;
+        if( distSquared > 2.78) return 0;
+
+        return 1;
+
+    }
+
+    var atom, atom2
+    var nAtoms = atoms.length;
+
+    // Assign secondary structures & bonds
+    for( i = 0; i < nAtoms; i++ ){
+        
+        atom = atoms[ i ];
+        if( atom == undefined ) continue;
+
         
         // MEMO: Can start chain and end chain differ?
-        for (j = 0; j < protein.sheet.length; j++) {
+        for( j = 0; j < protein.sheet.length; j++ ){
 
             if (atom.chain != protein.sheet[j][0]) continue;
             if (atom.resi < protein.sheet[j][1]) continue;
@@ -202,7 +227,7 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
         }
 
-        for (j = 0; j < protein.helix.length; j++) {
+        for( j = 0; j < protein.helix.length; j++ ){
 
             if (atom.chain != protein.helix[j][0]) continue;
             if (atom.resi < protein.helix[j][1]) continue;
@@ -213,17 +238,80 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
         }
 
+        for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
+
+            atom2 = atoms[ j ];
+            if( atom2 == undefined ) continue;
+            
+            if( isConnected( atom, atom2 ) ){
+                bonds.push([ i, j ]);
+            }
+
+        }
+
     }
 
     this.atoms = atoms;
+    this.bonds = bonds;
     this.protein = protein;
-
+    
 };
 
 /**
  * Adds a representation of the PDB to a viewer instance.
  */
-NGL.PDBobject.prototype.add = function( viewer, center ) {
+NGL.PDBobject.prototype.add = function( viewer, type, center ) {
+
+    var sphereScale = 0.2;
+    var sphereSize = false;
+    var cylinderSize = 0.12;
+
+    var sphereBuffer, cylinderBuffer;
+
+    if( type==="spacefill" ){
+        sphereScale = 1.0;
+        sphereSize = false;
+        cylinderSize = false;
+    }else if( type==="ball+stick" ){
+        sphereScale = 0.2;
+        sphereSize = false;
+        cylinderSize = 0.12;
+    }else if( type==="stick" ){
+        sphereScale = false;
+        sphereSize = 0.15;
+        cylinderSize = 0.15;
+    }
+
+
+    sphereBuffer = this.getSphereBuffer( sphereScale, sphereSize );
+    if( cylinderSize ) cylinderBuffer = this.getCylinderBuffer( cylinderSize );
+
+    if( center ){
+
+        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+
+        if( cylinderSize ){
+
+            var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
+
+            cylinderBuffer.geometry.applyMatrix( matrix );
+
+            matrix.applyToVector3Array( cylinderBuffer.geometry.attributes.position2.array );
+            cylinderBuffer.geometry.attributes.position2.needsUpdate = true;
+
+            sphereBuffer.mesh.geometry.computeBoundingBox();
+            cylinderBuffer.mesh.geometry.computeBoundingBox();
+
+        }
+
+    }
+
+    viewer.add( sphereBuffer );
+    if( cylinderSize ) viewer.add( cylinderBuffer );
+
+};
+
+NGL.PDBobject.prototype.getSphereBuffer = function( scale, size ) {
 
     var atoms = this.atoms;
     var na = atoms.length;
@@ -239,7 +327,7 @@ NGL.PDBobject.prototype.add = function( viewer, center ) {
 
     for( var i = 0; i < na; ++i ){
 
-        a = atoms[i];
+        a = atoms[ i ];
         if( a === undefined ) continue;
 
         j = i * 3;
@@ -255,21 +343,84 @@ NGL.PDBobject.prototype.add = function( viewer, center ) {
         color[ j + 1 ] = ( c >> 8 & 255 ) / 255;
         color[ j + 2 ] = ( c & 255 ) / 255;
 
-        r = radii[ a.elem ];
-        radius[ i ] = r ? r : 1.5;
+        if( size ){
+            radius[ i ] = size;
+        }else{
+            r = radii[ a.elem ];
+            radius[ i ] = ( r ? r : 1.5 ) * scale;
+        }
 
     }
 
-    var sphereBuffer = new NGL.SphereImpostorBuffer(
+    return new NGL.SphereImpostorBuffer(
         position, color, radius
     );
 
-    if( center ){
-        THREE.GeometryUtils.center( sphereBuffer.mesh.geometry );
+}
+
+NGL.PDBobject.prototype.getCylinderBuffer = function( size ) {
+
+    var atoms = this.atoms;
+    var bonds = this.bonds
+    var nb = bonds.length;
+    var colors = NGL.ElementColors;
+    var radii = NGL.VdwRadii;
+
+    var from = new Float32Array( nb * 3 );
+    var to = new Float32Array( nb * 3 );
+    var color = new Float32Array( nb * 3 );
+    var color2 = new Float32Array( nb * 3 );
+    var radius = new Float32Array( nb );
+
+    var a1, a2, c1, c2, r;
+    var j = 0;
+
+    for( var i = 0; i < nb; ++i ){
+
+        b = bonds[ i ];
+
+        a1 = atoms[ b[ 0 ] ];
+        a2 = atoms[ b[ 1 ] ];
+
+        j = i * 3;
+
+        from[ j + 0 ] = a1.x;
+        from[ j + 1 ] = a1.y;
+        from[ j + 2 ] = a1.z;
+
+        to[ j + 0 ] = a2.x;
+        to[ j + 1 ] = a2.y;
+        to[ j + 2 ] = a2.z;
+
+        c1 = colors[ a1.elem ];
+        if( !c1 ) c1 = 0xCCCCCC;
+
+        color[ j + 0 ] = ( c1 >> 16 & 255 ) / 255;
+        color[ j + 1 ] = ( c1 >> 8 & 255 ) / 255;
+        color[ j + 2 ] = ( c1 & 255 ) / 255;
+
+        c2 = colors[ a2.elem ];
+        if( !c2 ) c2 = 0xCCCCCC;
+
+        color2[ j + 0 ] = ( c2 >> 16 & 255 ) / 255;
+        color2[ j + 1 ] = ( c2 >> 8 & 255 ) / 255;
+        color2[ j + 2 ] = ( c2 & 255 ) / 255;
+
+        radius[ i ] = size;
+
     }
 
-    viewer.add( sphereBuffer );
+    var shift = 0;
+    var cap = false;
 
-}
+    return new NGL.CylinderImpostorBuffer(
+        from, to, color, color2, radius, shift, cap
+    );
+
+};
+
+
+
+
 
 

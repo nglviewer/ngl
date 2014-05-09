@@ -72,7 +72,7 @@ void main()
     gl_Position = projectionMatrix * w;
     
     // move out of viewing frustum to avoid clipping artifacts
-    if( gl_Position.z<=5.0 )
+    if( gl_Position.z<=1.0 )
         gl_Position.z = -10.0;
 
 }

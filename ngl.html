@@ -118,7 +118,7 @@
                             //"data/1JJ2.pdb",
                             //"data/1crn.pdb",
                             'data/' + this.modelId + '.pdb', 
-                            function( pdb ){ pdb.add( viewer, true ); }
+                            function( pdb ){ pdb.add( viewer, nglGui.modelType, true ); }
                         );
                         /*loadModel( 
                             'data/' + this.modelId + '.json', 
@@ -206,9 +206,9 @@
                     models.add(nglGui, 'addModel');
 
                     
-                    /*nglGui.modelId = '1crn';
+                    nglGui.modelId = '1crn';
                     nglGui.modelType = 'ball+stick';
-                    nglGui.addModel();*/
+                    nglGui.addModel();
                     
                     // nglGui.surfaceId = '1crn';
                     // nglGui.addSurface();
