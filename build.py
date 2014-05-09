@@ -12,7 +12,8 @@ def main( argv=None ):
 		'-u data/tutorial/ '
 		'-t build/docstrap/template/ '
 		'-c build/jsdoc.conf.json '
-		'js/ngl.js README.md'
+		'js/ngl.js js/ngl.extra.js js/ngl.wip.js '
+		'README.md'
 	)
 	os.system( cmd )
 
