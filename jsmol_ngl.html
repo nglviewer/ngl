@@ -116,7 +116,7 @@ Jmol code conversion to JavaScript by <b>Bob Hanson</b>.
 
 	$( NGL ).bind( 'initialized', function(){
 		
-		Jmol.script( jmolApplet0, 'set antialiasDisplay;load jsmol/data/1crn.pdb;' );
+		Jmol.script( jmolApplet0, 'unbind _slideZoom; load jsmol/data/1crn.pdb;' );
 
 	});
 
