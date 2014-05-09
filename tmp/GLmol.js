@@ -421,7 +421,7 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
                      (atom1.y - atom2.y) * (atom1.y - atom2.y) + 
                      (atom1.z - atom2.z) * (atom1.z - atom2.z);
 
-//   if (atom1.altLoc != atom2.altLoc) return false;
+   //   if (atom1.altLoc != atom2.altLoc) return false;
    if (isNaN(distSquared)) return 0;
    if (distSquared < 0.5) return 0; // maybe duplicate position.
 

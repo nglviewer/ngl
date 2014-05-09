@@ -673,7 +673,7 @@ NGL.Viewer.prototype = {
             this.camera, this.renderer.domElement 
         );
 
-        this.controls.rotateSpeed = 1.0;
+        this.controls.rotateSpeed = 2.0;
         this.controls.zoomSpeed = 1.2;
         this.controls.panSpeed = 0.8;
         this.controls.noZoom = false;
