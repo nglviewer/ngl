@@ -74,6 +74,8 @@
         <script src="js/threex.rendererstats.js"></script>
 
         <script src="js/ngl.js"></script>
+        <script src="js/ngl.wip.js"></script>
+        <script src="js/ngl.extra.js"></script>
 
 
 
@@ -86,6 +88,7 @@
             var viewer;
 
             $(document).ready( function(){
+
 
                 $( NGL ).bind( 'initialized', function(){
 
@@ -111,12 +114,18 @@
                     };
 
                     nglGui.addModel = function(){
-                        loadModel( 
+                        new NGL.PDBobject( 
+                            //"data/1JJ2.pdb",
+                            //"data/1crn.pdb",
+                            'data/' + this.modelId + '.pdb', 
+                            function( pdb ){ pdb.add( viewer, true ); }
+                        );
+                        /*loadModel( 
                             'data/' + this.modelId + '.json', 
                             this.modelType,
                             this.useImpostor,
                             this.randomColor
-                        );    
+                        );*/
                     };
 
                     nglGui.addSurface = function(){
@@ -172,6 +181,7 @@
                         '1crn',
                         '3dqb',
                         '3sn6',
+                        '1jj2',
                         '3l5q',
                         '1crn_ca',
                         '3dqb_ca',
@@ -196,9 +206,9 @@
                     models.add(nglGui, 'addModel');
 
                     
-                    nglGui.modelId = '1crn';
+                    /*nglGui.modelId = '1crn';
                     nglGui.modelType = 'ball+stick';
-                    nglGui.addModel();
+                    nglGui.addModel();*/
                     
                     // nglGui.surfaceId = '1crn';
                     // nglGui.addSurface();

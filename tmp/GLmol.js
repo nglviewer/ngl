@@ -253,8 +253,8 @@ GLmol.prototype.parsePDB2 = function(str) {
          var endResi = parseInt(line.substr(33, 4));
          protein.sheet.push([startChain, startResi, endChain, endResi]);
      } else if (recordName == 'CONECT') {
-// MEMO: We don't have to parse SSBOND, LINK because both are also 
-// described in CONECT. But what about 2JYT???
+   // MEMO: We don't have to parse SSBOND, LINK because both are also 
+   // described in CONECT. But what about 2JYT???
          var from = parseInt(line.substr(6, 5));
          for (var j = 0; j < 4; j++) {
             var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
@@ -673,7 +673,7 @@ GLmol.prototype.drawSmoothTube = function(group, _points, colors, radii) {
          delta = new TV3().sub(points[i], points[i + 1]);
          axis1 = new TV3(0, - delta.z, delta.y).normalize().multiplyScalar(r);
          axis2 = new TV3().cross(delta, axis1).normalize().multiplyScalar(r);
-//      var dir = 1, offset = 0;
+   //      var dir = 1, offset = 0;
          if (prevAxis1.dot(axis1) < 0) {
                  axis1.negate(); axis2.negate();  //dir = -1;//offset = 2 * Math.PI / axisDiv;
          }
@@ -949,7 +949,7 @@ GLmol.prototype.drawStrand = function(group, atomlist, num, div, fill, coilWidth
 };
 
 GLmol.prototype.drawNucleicAcidLadderSub = function(geo, lineGeo, atoms, color) {
-//        color.r *= 0.9; color.g *= 0.9; color.b *= 0.9;
+   //        color.r *= 0.9; color.g *= 0.9; color.b *= 0.9;
    if (atoms[0] != undefined && atoms[1] != undefined && atoms[2] != undefined &&
        atoms[3] != undefined && atoms[4] != undefined && atoms[5] != undefined) {
       var baseFaceId = geo.vertices.length;
@@ -1595,7 +1595,7 @@ GLmol.prototype.setSlabAndFog = function() {
    }
    this.camera.updateProjectionMatrix();
    this.scene.fog.near = this.camera.near + this.fogStart * (this.camera.far - this.camera.near);
-//   if (this.scene.fog.near > center) this.scene.fog.near = center;
+   //   if (this.scene.fog.near > center) this.scene.fog.near = center;
    this.scene.fog.far = this.camera.far;
 };
 
