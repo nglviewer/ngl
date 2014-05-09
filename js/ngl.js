@@ -424,13 +424,13 @@ NGL.GUI.prototype = {
         var elem = this.viewer.container;
 
         if (elem.requestFullscreen) {
-          elem.requestFullscreen();
+            elem.requestFullscreen();
         } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
+            elem.msRequestFullscreen();
         } else if (elem.mozRequestFullScreen) {
-          elem.mozRequestFullScreen();
+            elem.mozRequestFullScreen();
         } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
+            elem.webkitRequestFullscreen();
         }
 
     }
