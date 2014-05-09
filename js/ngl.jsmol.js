@@ -3,6 +3,14 @@
 // Interface based on JSmolGLmol.js by Bob Hanson and biochem_fan
 
 
+// Swing.setMenu = function(menu) {
+    // ...
+    // // Jmol.$after("body",'<ul id="' + menu.id + '" class="jmolPopupMenu"></ul>');
+    // Jmol.$(menu.applet, "appletdiv")
+    //     .append('<ul id="' + menu.id + '" class="jmolPopupMenu"></ul>');
+    // ...
+// }
+
 
 ;(function(Jmol) {
 
