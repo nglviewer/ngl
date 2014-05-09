@@ -13,7 +13,7 @@
 		"footer"          : "",
 		"copyright"       : "NGL Copyright © 2013-2014 The contributors to the NGL project.",
 		"navType"         : "vertical",
-		"theme"           : "flatly",
+		"theme"           : "readable",
 		"linenums"        : true,
 		"collapseSymbols" : false,
 		"inverseNav"      : true
