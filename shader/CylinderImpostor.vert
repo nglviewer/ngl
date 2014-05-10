@@ -1,5 +1,6 @@
 
 attribute vec3 mapping;
+attribute vec3 position1;
 attribute vec3 position2;
 attribute vec3 color;
 attribute vec3 color2;
@@ -26,9 +27,9 @@ uniform float shift;
 void main()
 {
 
-    vec3 center = ( position + position2 ) / 2.0;
-    vec3 dir = normalize( position2 - position );
-    float ext = length( position2 - position ) / 2.0;
+    vec3 center = position;
+    vec3 dir = normalize( position2 - position1 );
+    float ext = length( position2 - position1 ) / 2.0;
     vec3 ldir;
 
     vColor = color;

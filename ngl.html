@@ -75,6 +75,7 @@
 
         <script src="js/ngl.js"></script>
         <script src="js/ngl.wip.js"></script>
+        <script src="js/ngl.alt.js"></script>
         <script src="js/ngl.extra.js"></script>
 
 
@@ -115,8 +116,6 @@
 
                     nglGui.addModel = function(){
                         new NGL.PDBobject( 
-                            //"data/1JJ2.pdb",
-                            //"data/1crn.pdb",
                             'data/' + this.modelId + '.pdb', 
                             function( pdb ){ pdb.add( viewer, nglGui.modelType, true ); }
                         );
@@ -184,23 +183,23 @@
                         '3sn6',
                         '1jj2',
                         '3l5q',
-                        '1crn_ca',
-                        '3dqb_ca',
-                        '3sn6_ca',
-                        '3l5q_ca',
+                        // '1crn_ca',
+                        // '3dqb_ca',
+                        // '3sn6_ca',
+                        // '3l5q_ca',
                     ]).listen();
                     models.add(nglGui, 'modelType', [
                         'spacefill',
-                        'tube',
-                        'elliptic-tube',
-                        'ribbon',
+                        // 'tube',
+                        // 'elliptic-tube',
+                        // 'ribbon',
                         'ball+stick',
                         'stick',
-                        'hyperball',
-                        'sprite',
-                        'dot',
+                        // 'hyperball',
+                        // 'sprite',
+                        // 'dot',
                         'line',
-                        'line-sprite',
+                        // 'line-sprite',
                     ]).listen();
                     models.add(nglGui, 'useImpostor', true).listen();
                     models.add(nglGui, 'randomColor', true).listen();
@@ -566,7 +565,6 @@
                     var surface = new THREE.Object3D();
 
                     var geo = object.children[0].geometry;
-                    geo.applyMatrix( new THREE.Matrix4().makeScale( 7, 7, 7 ) );
                     THREE.GeometryUtils.center( geo );
                     
                     var position = convertVector3ArrayToFloat32Array( geo.vertices );
