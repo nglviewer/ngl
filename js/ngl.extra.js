@@ -46,6 +46,8 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
     var atoms = [];
     var bonds = [];
+    var doubleBonds = [];
+    var tripleBonds = [];
     var protein = {
         pdbID: '', title: '',
         sheet: [], helix: [],
@@ -106,14 +108,24 @@ NGL.PDBobject.prototype.parse = function( str ) {
             // MEMO: We don't have to parse SSBOND, LINK because both are also 
             // described in CONECT. But what about 2JYT???
             var from = parseInt(line.substr(6, 5));
+            var bondOrder = 0;
+            var to;
             for (var j = 0; j < 4; j++) {
-                var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
-                if (isNaN(to)) continue;
+                var toTemp = parseInt(line.substr([11, 16, 21, 26][j], 5));
+                if (isNaN(toTemp)) continue;
                 if (atoms[from] != undefined) {
                     atoms[from].bonds.push(to);
                     atoms[from].bondOrder.push(1);
                 }
+                to = toTemp;
+                bondOrder += 1;
+            }
+            if( bondOrder==1 ){
                 bonds.push([ from, to ]);
+            }else if( bondOrder==2 ){
+                doubleBonds.push([ from, to ]);
+            }else{
+                console.warn( "bond order > 2 is not implemented" );
             }
 
         } else if (recordName == 'HELIX ') {
@@ -238,21 +250,25 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
         }
 
-        for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
+        // TODO ugly hack
+        if( nAtoms>100 ){
+            for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
 
-            atom2 = atoms[ j ];
-            if( atom2 == undefined ) continue;
-            
-            if( isConnected( atom, atom2 ) ){
-                bonds.push([ i, j ]);
+                atom2 = atoms[ j ];
+                if( atom2 == undefined ) continue;
+                
+                if( isConnected( atom, atom2 ) ){
+                    bonds.push([ i, j ]);
+                }
+
             }
-
         }
 
     }
 
     this.atoms = atoms;
     this.bonds = bonds;
+    this.doubleBonds = doubleBonds;
     this.protein = protein;
     
 };
@@ -266,25 +282,32 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ) {
     var sphereSize = false;
     var cylinderSize = 0.12;
 
-    var sphereBuffer, cylinderBuffer;
+    var sphereBuffer, cylinderBuffer, cylinderBuffer2a, cylinderBuffer2b;
 
-    if( type==="spacefill" ){
+    if( type=="spacefill" ){
         sphereScale = 1.0;
         sphereSize = false;
         cylinderSize = false;
-    }else if( type==="ball+stick" ){
+    }else if( type=="ball+stick" ){
         sphereScale = 0.2;
         sphereSize = false;
         cylinderSize = 0.12;
-    }else if( type==="stick" ){
+    }else if( type=="stick" ){
         sphereScale = false;
         sphereSize = 0.15;
         cylinderSize = 0.15;
     }
 
-
     sphereBuffer = this.getSphereBuffer( sphereScale, sphereSize );
-    if( cylinderSize ) cylinderBuffer = this.getCylinderBuffer( cylinderSize );
+
+    if( cylinderSize ){
+
+        cylinderBuffer = this.getCylinderBuffer( cylinderSize );
+
+        cylinderBuffer2a = this.getCylinderBuffer( cylinderSize, this.doubleBonds, 1.5, type=="stick" );
+        cylinderBuffer2b = this.getCylinderBuffer( cylinderSize, this.doubleBonds, -1.5, type=="stick" );
+
+    } 
 
     if( center ){
 
@@ -294,20 +317,34 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ) {
 
             var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
 
-            cylinderBuffer.geometry.applyMatrix( matrix );
+            function centerCylinder( geo ){
 
-            matrix.applyToVector3Array( cylinderBuffer.geometry.attributes.position2.array );
-            cylinderBuffer.geometry.attributes.position2.needsUpdate = true;
+                geo.applyMatrix( matrix );
+                matrix.applyToVector3Array( geo.attributes.position2.array );
+                geo.attributes.position2.needsUpdate = true;
+                geo.computeBoundingBox();
 
-            sphereBuffer.mesh.geometry.computeBoundingBox();
-            cylinderBuffer.mesh.geometry.computeBoundingBox();
+            }
+
+            centerCylinder( cylinderBuffer.geometry );
+
+            centerCylinder( cylinderBuffer2a.geometry );
+            centerCylinder( cylinderBuffer2b.geometry );
+            
 
         }
 
     }
 
     viewer.add( sphereBuffer );
-    if( cylinderSize ) viewer.add( cylinderBuffer );
+
+    if( cylinderSize ){
+
+        viewer.add( cylinderBuffer );
+        viewer.add( cylinderBuffer2a );
+        viewer.add( cylinderBuffer2b );
+
+    }
 
 };
 
@@ -358,10 +395,10 @@ NGL.PDBobject.prototype.getSphereBuffer = function( scale, size ) {
 
 }
 
-NGL.PDBobject.prototype.getCylinderBuffer = function( size ) {
+NGL.PDBobject.prototype.getCylinderBuffer = function( size, bonds, shift, cap ) {
 
     var atoms = this.atoms;
-    var bonds = this.bonds
+    if( !bonds ) bonds = this.bonds;
     var nb = bonds.length;
     var colors = NGL.ElementColors;
     var radii = NGL.VdwRadii;
@@ -409,9 +446,6 @@ NGL.PDBobject.prototype.getCylinderBuffer = function( size ) {
         radius[ i ] = size;
 
     }
-
-    var shift = 0;
-    var cap = false;
 
     return new NGL.CylinderImpostorBuffer(
         from, to, color, color2, radius, shift, cap
