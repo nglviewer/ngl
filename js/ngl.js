@@ -850,20 +850,25 @@ NGL.Viewer.prototype = {
             v.uniform.value = v.tex;
         });
 
-        // this.renderer.render( this.scene, this.camera );
+        if( this.ssaoEffect.enabled || this.fxaaEffect.enabled || 
+            this.dotScreenEffect.enabled ){
 
-        // -------
-        if( this.ssaoEffect.enabled ){
-            this.depthPassPlugin.enabled = true;
-            this.renderer.autoClear = false;
+            if( this.ssaoEffect.enabled ){
+                this.depthPassPlugin.enabled = true;
+                this.renderer.autoClear = false;
+                this.renderer.render( this.scene, this.camera );
+            }
+            this.depthPassPlugin.enabled = false;
+            this.composer.render();
+            
+        }else{
+
             this.renderer.render( this.scene, this.camera );
+
         }
-        this.depthPassPlugin.enabled = false;
-        this.composer.render();
-        // -------
 
         this.stats.update();
-        this.rendererStats.update( this.composer.renderer );
+        this.rendererStats.update( this.renderer );
 
     },
 
@@ -1210,7 +1215,6 @@ NGL.MappedBuffer.prototype.makeMapping = function(){
 NGL.MappedBuffer.prototype.makeIndex = function(){
 
     var size = this.size;
-    var chunkSize = NGL.calculateChunkSize( this.mappingSize );
     var mappingSize = this.mappingSize;
     var mappingIndices = this.mappingIndices;
     var mappingIndicesSize = this.mappingIndicesSize;
