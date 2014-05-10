@@ -44,6 +44,8 @@ NGL.PDBobject = function( pdbFile, onLoad ){
  */
 NGL.PDBobject.prototype.parse = function( str ) {
 
+    // var s = Date.now()
+
     var atoms = [];
     var bonds = [];
     var doubleBonds = [];
@@ -55,43 +57,45 @@ NGL.PDBobject.prototype.parse = function( str ) {
     };
 
     var atoms_cnt = 0;
-    lines = str.split("\n");
+    var lines = str.split("\n");
 
     var i, j;
+    var line, recordName, altloc, serial, elem;
 
     for( i = 0; i < lines.length; i++ ){
 
-        line = lines[i].replace(/^\s*/, ''); // remove indent
-        var recordName = line.substr(0, 6);
+        line = lines[i];
+        recordName = line.substr(0, 6);
 
         if (recordName == 'ATOM  ' || recordName == 'HETATM') {
 
-            var atom, resn, chain, resi, x, y, z, hetflag, elem, serial, altLoc, b;
             altLoc = line.substr(16, 1);
             if (altLoc != ' ' && altLoc != 'A') continue; // FIXME: ad hoc
+
             serial = parseInt(line.substr(6, 5));
-            atom = line.substr(12, 4).replace(/ /g, "");
-            resn = line.substr(17, 3);
-            chain = line.substr(21, 1);
-            resi = parseInt(line.substr(22, 5)); 
-            x = parseFloat(line.substr(30, 8));
-            y = parseFloat(line.substr(38, 8));
-            z = parseFloat(line.substr(46, 8));
-            b = parseFloat(line.substr(60, 8));
-            elem = line.substr(76, 2).replace(/ /g, "");
+            elem = line.substr(76, 2).trim();
 
             if (elem == '') { // for some incorrect PDB files
-                elem = line.substr(12, 4).replace(/ /g,"");
+                elem = line.substr(12, 4).trim();
             }
 
-            if (line[0] == 'H') hetflag = true;
-            else hetflag = false;
-
             atoms[serial] = {
-                'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem,
-                'hetflag': hetflag, 'chain': chain, 'resi': resi, 
-                'serial': serial, 'atom': atom, 'bonds': [], 'ss': 'c', 
-                'color': 0xFFFFFF, 'bonds': [], 'bondOrder': [], 'b': b 
+                'resn': line.substr(17, 3), 
+                'x': parseFloat(line.substr(30, 8)), 
+                'y': parseFloat(line.substr(38, 8)), 
+                'z': parseFloat(line.substr(46, 8)), 
+                'elem': elem,
+                'hetflag': ( line[0]=='H' ) ? true : false, 
+                'chain': line.substr(21, 1), 
+                'resi': parseInt(line.substr(22, 5)), 
+                'serial': serial, 
+                'atom': line.substr(12, 4).trim(), 
+                'bonds': [], 
+                'ss': 'c', 
+                'color': 0xFFFFFF, 
+                'bonds': [], 
+                'bondOrder': [], 
+                'b': parseFloat(line.substr(60, 8)) 
                 // , altLoc': altLoc
             };
 
@@ -125,7 +129,7 @@ NGL.PDBobject.prototype.parse = function( str ) {
             }else if( bondOrder==2 ){
                 doubleBonds.push([ from, to ]);
             }else{
-                console.warn( "bond order > 2 is not implemented" );
+                // console.warn( "bond order > 2 is not implemented" );
             }
 
         } else if (recordName == 'HELIX ') {
@@ -199,6 +203,9 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
     }
 
+    // var parseTime = Date.now();
+    // console.log( "Parse time: " + ( parseTime - s ) + "ms" );
+
     function isConnected( atom1, atom2 ) {
 
         var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) + 
@@ -219,6 +226,12 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
     var atom, atom2
     var nAtoms = atoms.length;
+
+    // TODO ugly hack
+    if( nAtoms>100 ){
+        bonds = [];
+        doubleBonds = [];
+    }
 
     // Assign secondary structures & bonds
     for( i = 0; i < nAtoms; i++ ){
@@ -281,68 +294,107 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ) {
     var sphereScale = 0.2;
     var sphereSize = false;
     var cylinderSize = 0.12;
+    var line = false;
 
-    var sphereBuffer, cylinderBuffer, cylinderBuffer2a, cylinderBuffer2b;
+    var sphereBuffer;
+    var cylinderBuffer, cylinderBuffer2a, cylinderBuffer2b;
+    var lineBuffer, lineBuffer2;
 
     if( type=="spacefill" ){
+
         sphereScale = 1.0;
         sphereSize = false;
         cylinderSize = false;
+
     }else if( type=="ball+stick" ){
+
         sphereScale = 0.2;
         sphereSize = false;
         cylinderSize = 0.12;
+
     }else if( type=="stick" ){
+
         sphereScale = false;
         sphereSize = 0.15;
         cylinderSize = 0.15;
+
+    }else if( type=="line" ){
+
+        sphereScale = false;
+        sphereSize = false;
+        cylinderSize = false;
+        line = true;
+
     }
 
     sphereBuffer = this.getSphereBuffer( sphereScale, sphereSize );
 
+    var bd = this.getBondData( cylinderSize );
+
     if( cylinderSize ){
 
-        cylinderBuffer = this.getCylinderBuffer( cylinderSize );
+        cylinderBuffer = new NGL.CylinderImpostorBuffer(
+            bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
+        );
 
-        cylinderBuffer2a = this.getCylinderBuffer( cylinderSize, this.doubleBonds, 1.5, type=="stick" );
-        cylinderBuffer2b = this.getCylinderBuffer( cylinderSize, this.doubleBonds, -1.5, type=="stick" );
+        var bd2 = this.getBondData( cylinderSize, this.doubleBonds );
+        cylinderBuffer2a = new NGL.CylinderImpostorBuffer(
+            bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, 1.5, type=="stick"
+        );
+        cylinderBuffer2b = new NGL.CylinderImpostorBuffer(
+            bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, -1.5, type=="stick"
+        );
 
-    } 
+    }else if( line ){
+
+        lineBuffer = new NGL.LineBuffer(
+            bd.from, bd.to, bd.color, bd.color2
+        );
+
+        var bd2 = this.getBondData( cylinderSize, this.doubleBonds );
+        lineBuffer2 = new NGL.LineBuffer(
+            bd2.from, bd2.to, bd2.color, bd2.color2
+        );
+
+    }
 
     if( center ){
 
         var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+        var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
 
         if( cylinderSize ){
 
-            var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
+            cylinderBuffer.geometry.applyMatrix( matrix );
 
-            function centerCylinder( geo ){
+            cylinderBuffer2a.geometry.applyMatrix( matrix );
+            cylinderBuffer2b.geometry.applyMatrix( matrix );
 
-                geo.applyMatrix( matrix );
-                matrix.applyToVector3Array( geo.attributes.position2.array );
-                geo.attributes.position2.needsUpdate = true;
-                geo.computeBoundingBox();
+        }else if( line ){
 
-            }
-
-            centerCylinder( cylinderBuffer.geometry );
-
-            centerCylinder( cylinderBuffer2a.geometry );
-            centerCylinder( cylinderBuffer2b.geometry );
-            
+            lineBuffer.geometry.applyMatrix( matrix );
+            lineBuffer2.geometry.applyMatrix( matrix );
 
         }
 
     }
 
-    viewer.add( sphereBuffer );
+    if( sphereSize || sphereScale ){
+
+        viewer.add( sphereBuffer );
+
+    }
 
     if( cylinderSize ){
 
         viewer.add( cylinderBuffer );
         viewer.add( cylinderBuffer2a );
         viewer.add( cylinderBuffer2b );
+
+    }else if( line ){
+
+        viewer.add( lineBuffer );
+        viewer.add( lineBuffer2 );
 
     }
 
@@ -395,7 +447,7 @@ NGL.PDBobject.prototype.getSphereBuffer = function( scale, size ) {
 
 }
 
-NGL.PDBobject.prototype.getCylinderBuffer = function( size, bonds, shift, cap ) {
+NGL.PDBobject.prototype.getBondData = function( size, bonds ) {
 
     var atoms = this.atoms;
     if( !bonds ) bonds = this.bonds;
@@ -447,11 +499,12 @@ NGL.PDBobject.prototype.getCylinderBuffer = function( size, bonds, shift, cap ) 
 
     }
 
-    return new NGL.CylinderImpostorBuffer(
-        from, to, color, color2, radius, shift, cap
-    );
+    return {
+        "from": from, "to": to, "color": color, "color2": color2, "radius": radius
+    }
 
-};
+}
+
 
 
 

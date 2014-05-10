@@ -7,16 +7,22 @@ Ideas
 * [WEBGL_draw_buffers (aka multiple render targets)](https://hacks.mozilla.org/2014/01/webgl-deferred-shading/)
 * [WEBGL_depth_texture](http://blog.tojicode.com/2012/07/using-webgldepthtexture.html)
 * Transparency
-    * Weighted, Blended Order-Independent Transparency:
-      [Cesium](http://cesiumjs.org/2014/03/14/Weighted-Blended-Order-Independent-Transparency/),
-      [Blog](http://casual-effects.blogspot.de/2014/03/weighted-blended-order-independent.html),
-      [Demo](http://bagnell.github.io/cesium/Apps/Sandcastle/gallery/OIT.html),
-      [Article](http://jcgt.org/published/0002/02/09/)
+  * Weighted, Blended Order-Independent Transparency:
+    [Cesium](http://cesiumjs.org/2014/03/14/Weighted-Blended-Order-Independent-Transparency/),
+    [Blog](http://casual-effects.blogspot.de/2014/03/weighted-blended-order-independent.html),
+    [Demo](http://bagnell.github.io/cesium/Apps/Sandcastle/gallery/OIT.html),
+    [Article](http://jcgt.org/published/0002/02/09/)
 * Ambient occlusion
-    * pre-computed for static scenes (see Molecules app & cited paper)
+  * pre-computed for static scenes (see Molecules app & cited paper)
 * Toonshader
 * Depth material (what for?)
-    * use the same shaders but with lighting removed (via defines)
+  * use the same shaders but with lighting removed (via defines)
+* Export & import of NGL scenes
+  * load multiple scenes
+  * allows for fast static scene loading
+  * workflow: export from Jmol with NGL as renderer => import in standalone NGL
+  * re-use three.js export & import functions - possible?
+
 
 
 Todo
@@ -31,7 +37,7 @@ Todo
     * OIT (see above)
     * pre-multiplied alpha
     * physically based material parameters
-        * where to get?
+      * where to get?
     * static light in three.js, i.e. move with camera
 * Implement SphereMeshBuffer
 * Make viewer stats optional (hide/show)
@@ -52,7 +58,7 @@ Todo
 	* allow higher resolution
 	* test for max resolution
 * NGL.PDBobject
-  * hyperball type
+  * hyperball type (show every bond as single bond)
 * Picking
   * CPU: Raycaster
     * Imposter types would need extra handling
@@ -60,6 +66,7 @@ Todo
     * requires extra rendering pass (or multiple render targets)
 * NGL.Buffer attributes update mechanism
 * Better bondOrder > 1 handling
+* Spin (needs animation) button
 
 
 Jmol

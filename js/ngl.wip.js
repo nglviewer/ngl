@@ -3,6 +3,179 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+
+// NGL.chunkSize = 65536;
+NGL.chunkSize = 65520; // divisible by 4 (quad mapping) and 6 (box mapping) and 8 (box mapping 2)
+// NGL.chunkSize = 4294967296;
+
+
+NGL.calculateOffsets = function ( n, nTriangle, nVertex ) {
+    var ratio = nTriangle / nVertex;
+    var offsets = [];
+    var offsetCount = n / NGL.chunkSize;
+    for (var i = 0; i < offsetCount; i++) {
+        var offset = {
+            start: i * NGL.chunkSize * ratio * 3,
+            index: i * NGL.chunkSize,
+            count: Math.min(
+                n*ratio - (i * NGL.chunkSize * ratio), 
+                NGL.chunkSize * ratio
+            ) * 3
+        };
+        offsets.push( offset );
+    }
+    return offsets;
+}
+
+
+NGL.calculateChunkSize = function( nVertex ){
+
+    return NGL.chunkSize - ( NGL.chunkSize % nVertex );
+
+}
+
+
+
+
+/////////////////
+// Experimental
+
+NGL.getPathData = function( position, color, size, segments ){
+    var n = position.length/3;
+    var n1 = n - 1;
+    var numpoints = segments*n1 + 2;
+    var numpoints3 = numpoints * 3;
+    var numpoints1 = numpoints - 1;
+    
+    var points = [];
+    var j;
+    for( var v = 0; v < n; ++v ) {
+        j = 3 * v;
+        points.push( new THREE.Vector3( 
+            position[ j + 0 ], position[ j + 1 ], position[ j + 2 ] )
+        );
+    }
+    var path = new THREE.SplineCurve3( points )
+    
+    var frames = new THREE.TubeGeometry.FrenetFrames( path, numpoints, false );
+    var tangents = frames.tangents;
+    var normals = frames.normals;
+    var binormals = frames.binormals;
+
+    var aPoints = new Float32Array( numpoints3 );
+    var aNormals = new Float32Array( numpoints3 );
+    var aBinormals = new Float32Array( numpoints3 );
+    var aTangents = new Float32Array( numpoints3 );
+    var aColor = new Float32Array( numpoints3 );
+    var aSize = new Float32Array( numpoints );
+
+    var i3, p, j;
+    for ( var i = 0; i < numpoints; i++ ) {
+        i3 = i*3;
+        p = path.getPointAt( i / numpoints1 );
+        // p = path.getPoint( i / numpoints1 );
+        
+        aPoints[ i3 + 0 ] = p.x;
+        aPoints[ i3 + 1 ] = p.y;
+        aPoints[ i3 + 2 ] = p.z;
+        
+        aNormals[ i3 + 0 ] = normals[ i ].x;
+        aNormals[ i3 + 1 ] = normals[ i ].y;
+        aNormals[ i3 + 2 ] = normals[ i ].z;
+        
+        aBinormals[ i3 + 0 ] = binormals[ i ].x;
+        aBinormals[ i3 + 1 ] = binormals[ i ].y;
+        aBinormals[ i3 + 2 ] = binormals[ i ].z;
+
+        aTangents[ i3 + 0 ] = tangents[ i ].x;
+        aTangents[ i3 + 1 ] = tangents[ i ].y;
+        aTangents[ i3 + 2 ] = tangents[ i ].z;
+        
+        j = Math.min( Math.floor( i / segments ), n1 );
+        j3 = j * 3;
+        aColor[ i3 + 0 ] = color[ j3 + 0 ];
+        aColor[ i3 + 1 ] = color[ j3 + 1 ];
+        aColor[ i3 + 2 ] = color[ j3 + 2 ];
+    }
+
+    var curSize, stepSize, l;
+    var prevSize = size[0];
+    for ( var i = 0; i < n1; i++ ) {
+        j = i * segments;
+        curSize = size[ i ];
+        if( curSize<0 ){
+            prevSize = curSize * -1.5;
+            curSize = 0;
+        }
+        stepSize = (prevSize-curSize)/(segments-1);
+        for ( var l = 0; l < segments; l++ ) {
+            aSize[ j + l ] = prevSize - l * stepSize;
+            if( curSize==0 ) aSize[ j + l ] *= -1;
+        }
+        prevSize = curSize==0 ? Math.abs( size[ i ] ) : curSize;
+    }
+    
+    return {
+        "position": aPoints,
+        "normal": aNormals,
+        "dir": aBinormals,
+        "color": aColor,
+        "size": aSize,
+        "binormals": aBinormals,
+        "normals": aNormals,
+        "tangents": aTangents
+    }
+}
+
+
+// TODO
+NGL.TubeImpostorBufferX = function ( position, normal, dir, color, radius ) {
+
+    this.size = from.length / 3;
+    this.vertexShader = 'TubeImpostor.vert';
+    this.fragmentShader = 'TubeImpostor.frag';
+
+    NGL.AlignedBoxBuffer.call( this );
+
+    this.addUniforms({
+        
+    });
+    
+    this.addAttributes({
+        "radius": { type: "f", value: null },
+    });
+
+    this.setAttributes({
+        "position": position,
+        "radius": radius,
+    });
+
+    this.finalize();
+
+    this.material.transparent = true;
+    this.material.depthWrite = false;
+    this.material.lights = false;
+    this.material.blending = THREE.AdditiveBlending;
+
+}
+
+NGL.TubeImpostorBufferX.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
+
+
+// TODO
+NGL.CrossBuffer = function ( position, color, size ) {
+    
+    // screen aligned; pixel buffer
+
+}
+
+
+
+
+
+
+
+
 /////////
 // Todo
 
