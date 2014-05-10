@@ -35,6 +35,7 @@ Todo
     * static light in three.js, i.e. move with camera
 * Implement SphereMeshBuffer
 * Make viewer stats optional (hide/show)
+* rendererStats do not play well with a Composer
 * Create distance fields for [Computer modern fonts](http://checkmyworking.com/cm-web-fonts/)
 * Slab and fog	
 	* should be relative to the scene (molecule) extent
@@ -50,8 +51,15 @@ Todo
 	* make a viewer method
 	* allow higher resolution
 	* test for max resolution
-* Move currently not working code into `ngl.wip.js`
-* Use PDB reader from GLmol (put into `ngl.extra.js`)
+* NGL.PDBobject
+  * hyperball type
+* Picking
+  * CPU: Raycaster
+    * Imposter types would need extra handling
+  * GPU: color texture with colors as object ids
+    * requires extra rendering pass (or multiple render targets)
+* NGL.Buffer attributes update mechanism
+* Better bondOrder > 1 handling
 
 
 Jmol

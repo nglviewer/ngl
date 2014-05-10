@@ -875,7 +875,7 @@ NGL.Viewer.prototype = {
         // -------
 
         this.stats.update();
-        this.rendererStats.update( this.renderer );
+        this.rendererStats.update( this.composer.renderer );
 
     },
 
