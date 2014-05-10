@@ -117,19 +117,17 @@ NGL.PDBobject.prototype.parse = function( str ) {
             for (var j = 0; j < 4; j++) {
                 var toTemp = parseInt(line.substr([11, 16, 21, 26][j], 5));
                 if (isNaN(toTemp)) continue;
-                if (atoms[from] != undefined) {
-                    atoms[from].bonds.push(to);
-                    atoms[from].bondOrder.push(1);
-                }
                 to = toTemp;
                 bondOrder += 1;
             }
-            if( bondOrder==1 ){
-                bonds.push([ from, to ]);
-            }else if( bondOrder==2 ){
-                doubleBonds.push([ from, to ]);
-            }else{
-                // console.warn( "bond order > 2 is not implemented" );
+            if( atoms[from].hetflag || atoms[to].hetflag ){
+                if( bondOrder==1 ){
+                    bonds.push([ from, to ]);
+                }else if( bondOrder==2 ){
+                    doubleBonds.push([ from, to ]);
+                }else{
+                    // console.warn( "bond order > 2 is not implemented" );
+                }
             }
 
         } else if (recordName == 'HELIX ') {
@@ -208,6 +206,8 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
     function isConnected( atom1, atom2 ) {
 
+        if( atom1.hetflag && atom2.hetflag ) return 0;
+
         var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) + 
                           ( atom1.y - atom2.y ) * ( atom1.y - atom2.y ) + 
                           ( atom1.z - atom2.z ) * ( atom1.z - atom2.z );
@@ -228,10 +228,10 @@ NGL.PDBobject.prototype.parse = function( str ) {
     var nAtoms = atoms.length;
 
     // TODO ugly hack
-    if( nAtoms>100 ){
-        bonds = [];
-        doubleBonds = [];
-    }
+    // if( nAtoms>100 ){
+    //     bonds = [];
+    //     doubleBonds = [];
+    // }
 
     // Assign secondary structures & bonds
     for( i = 0; i < nAtoms; i++ ){
@@ -263,18 +263,15 @@ NGL.PDBobject.prototype.parse = function( str ) {
 
         }
 
-        // TODO ugly hack
-        if( nAtoms>100 ){
-            for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
+        for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
 
-                atom2 = atoms[ j ];
-                if( atom2 == undefined ) continue;
-                
-                if( isConnected( atom, atom2 ) ){
-                    bonds.push([ i, j ]);
-                }
-
+            atom2 = atoms[ j ];
+            if( atom2 == undefined ) continue;
+            
+            if( isConnected( atom, atom2 ) ){
+                bonds.push([ i, j ]);
             }
+
         }
 
     }
