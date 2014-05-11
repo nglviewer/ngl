@@ -16,6 +16,8 @@ varying vec3 U;
 varying vec3 V;
 varying float b;
 
+const float opacity = 0.5;
+
 #include light_params
 
 #include fog_params
@@ -154,15 +156,15 @@ void main()
     // TODO compare without sqrt
     if( distance( new_point, end_cyl) < distance( new_point, base ) ){
         if( b < 0.0 ){
-            gl_FragColor = vec4( vColor, 1.0 );
+            gl_FragColor = vec4( vColor, opacity );
         }else{
-            gl_FragColor = vec4( vColor2, 1.0 );    
+            gl_FragColor = vec4( vColor2, opacity );    
         }
     }else{
         if( b > 0.0 ){
-            gl_FragColor = vec4( vColor, 1.0 );
+            gl_FragColor = vec4( vColor, opacity );
         }else{
-            gl_FragColor = vec4( vColor2, 1.0 );    
+            gl_FragColor = vec4( vColor2, opacity );    
         }
     }
     gl_FragColor.xyz *= vLightFront;

@@ -12,6 +12,8 @@ varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
+const float opacity = 0.5;
+
 #include light_params
 
 #include fog_params
@@ -75,7 +77,7 @@ void main(void)
     
     #include light
 
-    gl_FragColor = vec4( vColor, 1.0 );
+    gl_FragColor = vec4( vColor, opacity );
     gl_FragColor.xyz *= vLightFront;
     //gl_FragColor.a = 0.5;
     // gl_FragColor.xyz = transformedNormal;

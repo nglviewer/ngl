@@ -1123,6 +1123,13 @@ NGL.MeshBuffer = function ( position, color, index, normal ) {
     
     this.finalize();
     
+    this.material.transparent = true;
+    this.material.depthWrite = true;
+    // this.material.lights = false;
+    this.material.side = THREE.DoubleSide;
+    // this.material.blending = THREE.AdditiveBlending;
+    // this.material.blending = THREE.MultiplyBlending;
+
 }
 
 NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
