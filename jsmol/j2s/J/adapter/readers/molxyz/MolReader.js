@@ -205,8 +205,8 @@ if (this.isV3000) {
 this.checkLineContinuation ();
 var tokens = this.getTokens ();
 order = this.parseIntStr (tokens[3]);
-iAtom1 = this.parseIntStr (tokens[4]);
-iAtom2 = this.parseIntStr (tokens[5]);
+iAtom1 = tokens[4];
+iAtom2 = tokens[5];
 for (var j = 6; j < tokens.length; j++) {
 var s = tokens[j].toUpperCase ();
 if (s.startsWith ("CFG=")) {
@@ -218,19 +218,19 @@ tokens = J.adapter.smarter.AtomSetCollectionReader.getTokensAt (this.line, this.
 var n = this.parseIntStr (tokens[0]);
 order = this.fixOrder (order, 0);
 for (var k = 1; k <= n; k++) {
-iAtom2 = this.parseIntStr (tokens[k]);
-this.asc.addNewBondWithMappedSerialNumbers (iAtom1, iAtom2, order);
+iAtom2 = tokens[k];
+this.asc.addNewBondFromNames (iAtom1, iAtom2, order);
 }
 break;
 }}
 } else {
-iAtom1 = this.parseIntRange (this.line, 0, 3);
-iAtom2 = this.parseIntRange (this.line, 3, 6);
+iAtom1 = this.line.substring (0, 3).trim ();
+iAtom2 = this.line.substring (3, 6).trim ();
 order = this.parseIntRange (this.line, 6, 9);
 if (this.is2D && order == 1 && this.line.length >= 12) stereo = this.parseIntRange (this.line, 9, 12);
 }order = this.fixOrder (order, stereo);
-if (this.haveAtomSerials) this.asc.addNewBondWithMappedSerialNumbers (iAtom1, iAtom2, order);
- else this.asc.addNewBondWithOrder (this.iatom0 + iAtom1 - 1, this.iatom0 + iAtom2 - 1, order);
+if (this.haveAtomSerials) this.asc.addNewBondFromNames (iAtom1, iAtom2, order);
+ else this.asc.addNewBondWithOrder (this.iatom0 + this.parseIntStr (iAtom1) - 1, this.iatom0 + this.parseIntStr (iAtom2) - 1, order);
 }
 if (this.isV3000) this.discardLinesUntilContains ("END BOND");
 }, "~N");

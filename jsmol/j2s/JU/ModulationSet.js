@@ -135,6 +135,10 @@ if (this.qtOffset != null && this.qtOffset.length () > 0) s += "; modulation " +
 s += "modulation {selected} " + (this.enabled ? "ON" : "OFF");
 return s;
 });
+Clazz.overrideMethod (c$, "getModPoint", 
+function (asEnabled) {
+return (asEnabled ? this : this.r0);
+}, "~B");
 Clazz.overrideMethod (c$, "getModulation", 
 function (type, t456) {
 this.getModTemp ();

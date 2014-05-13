@@ -3,6 +3,7 @@
 // Interface based on JSmolGLmol.js by Bob Hanson and biochem_fan
 
 
+// in jsmol/js/JSnolMenu.js
 // Swing.setMenu = function(menu) {
     // ...
     // // Jmol.$after("body",'<ul id="' + menu.id + '" class="jmolPopupMenu"></ul>');

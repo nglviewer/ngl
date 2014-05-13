@@ -174,7 +174,7 @@ case '.':
 if (count++ != 0) return f;
 continue;
 case '-':
-if (i != 1) return f;
+if (i != 1 && f.charAt (i - 1) != '.') return f;
 continue;
 default:
 return f;

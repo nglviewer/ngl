@@ -102,7 +102,7 @@ this.rd ();
 this.parseLineParameters (J.adapter.readers.quantum.CsfReader.connectorFields, J.adapter.readers.quantum.CsfReader.connectorFieldMap);
 out : for (; this.rd () != null; ) {
 if (this.line.startsWith ("property_flags:")) break;
-var thisAtomID = -2147483648;
+var thisAtomID = null;
 var thisBondID = null;
 var tokens = this.getTokens ();
 var field2 = "";
@@ -121,7 +121,7 @@ if (field.equals ("sto_basis_fxn")) this.nSlaters++;
  else if (!field.equals ("bond")) continue out;
 break;
 case 2:
-thisAtomID = JU.PT.parseInt (field);
+thisAtomID = field;
 break;
 case 4:
 thisBondID = field2 + field;
@@ -130,21 +130,21 @@ break;
 default:
 }
 }
-if (thisAtomID != -2147483648 && thisBondID != null) {
+if (thisAtomID != null && thisBondID != null) {
 if (this.connectors.containsKey (thisBondID)) {
 var connect = this.connectors.get (thisBondID);
 connect[1] = thisAtomID;
 if (this.htBonds != null) this.setBond (this.htBonds.get (thisBondID), connect);
 } else {
-var connect =  Clazz.newIntArray (2, 0);
+var connect =  new Array (2);
 connect[0] = thisAtomID;
 this.connectors.put (thisBondID, connect);
 }}}
 });
 Clazz.defineMethod (c$, "setBond", 
  function (bond, connect) {
-bond.atomIndex1 = this.asc.getAtomIndexFromSerial (connect[0]);
-bond.atomIndex2 = this.asc.getAtomIndexFromSerial (connect[1]);
+bond.atomIndex1 = this.asc.getAtomIndex (connect[0]);
+bond.atomIndex2 = this.asc.getAtomIndex (connect[1]);
 this.asc.addBond (bond);
 }, "J.adapter.smarter.Bond,~A");
 Clazz.defineMethod (c$, "processAtomObject", 
@@ -371,7 +371,7 @@ for (var ipt = 0; ipt < this.nGaussians; ipt++) {
 if (shells[ipt] != iShell) {
 iShell = shells[ipt];
 var slater =  Clazz.newIntArray (4, 0);
-var iAtom = this.asc.getAtomIndexFromSerial ((this.connectors.get (sto_gto + "_basis_fxn" + (ipt + 1)))[0]);
+var iAtom = this.asc.getAtomIndex (this.connectors.get (sto_gto + "_basis_fxn" + (ipt + 1))[0]);
 slater[0] = iAtom;
 slater[1] = J.api.JmolAdapter.getQuantumShellTagID (types[ipt].substring (0, 1));
 var nZ = 0;
@@ -391,7 +391,7 @@ this.moData.put ("shells", sdata);
 this.moData.put ("gaussians", garray);
 } else {
 for (var ipt = 0; ipt < this.nSlaters; ipt++) {
-var iAtom = this.asc.getAtomIndexFromSerial ((this.connectors.get (sto_gto + "_basis_fxn" + (ipt + 1)))[0]);
+var iAtom = this.asc.getAtomIndex (this.connectors.get (sto_gto + "_basis_fxn" + (ipt + 1))[0]);
 for (var i = 0; i < nZetas; i++) {
 if (zetas[ipt][i] == 0) break;
 this.createSphericalSlaterByType (iAtom, this.atomicNumbers[iAtom], types[ipt], zetas[ipt][i] * (i == 0 ? 1 : -1), contractionCoefs == null ? 1 : contractionCoefs[ipt][i]);

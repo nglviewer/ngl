@@ -45,19 +45,7 @@ bs.setBits (this.monomers[0].firstAtomIndex, this.monomers[this.monomerCount - 1
 }, "JU.BS");
 Clazz.defineMethod (c$, "clearStructures", 
 function () {
-for (var i = 0; i < this.monomerCount; i++) this.monomers[i].setStructure (null);
-
 });
-Clazz.defineMethod (c$, "removeProteinStructure", 
-function (monomerIndex, count) {
-var m = this.monomers[monomerIndex];
-var type = m.getProteinStructureType ();
-var mLast = -1;
-for (var i = 0, pt = monomerIndex; i < count && pt < this.monomerCount; i++, pt++) {
-this.monomers[pt].setStructure (null);
-mLast = this.monomers[pt].setProteinStructureType (type, mLast);
-}
-}, "~N,~N");
 Clazz.defineMethod (c$, "getLeadAtomIndices", 
 function () {
 if (this.leadAtomIndices == null) {
@@ -91,13 +79,13 @@ Clazz.defineMethod (c$, "getTerminatorPoint",
 return this.monomers[this.monomerCount - 1].getTerminatorAtom ();
 });
 Clazz.defineMethod (c$, "getLeadMidPoint", 
-function (groupIndex, midPoint) {
-if (groupIndex == this.monomerCount) {
---groupIndex;
-} else if (groupIndex > 0) {
-midPoint.ave (this.getLeadPoint (groupIndex), this.getLeadPoint (groupIndex - 1));
+function (i, midPoint) {
+if (i == this.monomerCount) {
+--i;
+} else if (i > 0) {
+midPoint.ave (this.getLeadPoint (i), this.getLeadPoint (i - 1));
 return;
-}midPoint.setT (this.getLeadPoint (groupIndex));
+}midPoint.setT (this.getLeadPoint (i));
 }, "~N,JU.P3");
 Clazz.defineMethod (c$, "getWingPoint", 
 function (polymerIndex) {
@@ -301,7 +289,7 @@ for (var i = Math.min (this.monomerCount, group1 + nGroups); --i >= group1; ) th
 }, "~N,~N,JU.BS,JU.BS");
 Clazz.defineMethod (c$, "getProteinStructure", 
 function (monomerIndex) {
-return this.monomers[monomerIndex].getProteinStructure ();
+return null;
 }, "~N");
 Clazz.defineMethod (c$, "calcParameters", 
 function () {

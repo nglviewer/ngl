@@ -20,18 +20,13 @@ Clazz.defineMethod (c$, "isAlphaMonomer",
 function () {
 return true;
 });
-Clazz.overrideMethod (c$, "getProteinStructure", 
+Clazz.overrideMethod (c$, "getStructure", 
 function () {
 return this.proteinStructure;
 });
-Clazz.overrideMethod (c$, "getStructure", 
-function () {
-return this.getProteinStructure ();
-});
-Clazz.overrideMethod (c$, "setStructure", 
+Clazz.defineMethod (c$, "setStructure", 
 function (proteinStructure) {
-this.proteinStructure = proteinStructure;
-if (proteinStructure == null) this.nitrogenHydrogenPoint = null;
+if ((this.proteinStructure = proteinStructure) == null) this.nitrogenHydrogenPoint = null;
 }, "JM.ProteinStructure");
 Clazz.overrideMethod (c$, "setStrucNo", 
 function (n) {
@@ -59,11 +54,9 @@ return this.proteinStructure != null && this.proteinStructure.type === J.c.STR.S
 });
 Clazz.overrideMethod (c$, "setProteinStructureType", 
 function (type, monomerIndexCurrent) {
+if (this.proteinStructure != null) this.proteinStructure.removeMonomer (this.monomerIndex);
 if (monomerIndexCurrent < 0 || monomerIndexCurrent > 0 && this.monomerIndex == 0) {
-if (this.proteinStructure != null) {
-var nAbandoned = this.proteinStructure.removeMonomer (this.monomerIndex);
-if (nAbandoned > 0) this.getBioPolymer ().removeProteinStructure (this.monomerIndex + 1, nAbandoned);
-}switch (type) {
+switch (type) {
 case J.c.STR.HELIX:
 case J.c.STR.HELIXALPHA:
 case J.c.STR.HELIX310:
@@ -80,7 +73,7 @@ case J.c.STR.NONE:
 this.setStructure (null);
 }
 } else {
-this.setStructure (this.getBioPolymer ().getProteinStructure (monomerIndexCurrent));
+this.setStructure (this.bioPolymer.getProteinStructure (monomerIndexCurrent));
 if (this.proteinStructure != null) this.proteinStructure.addMonomer (this.monomerIndex);
 }return this.monomerIndex;
 }, "J.c.STR,~N");
@@ -105,8 +98,7 @@ return this.getQuaternionFrameCenterAlpha (qType);
 }, "~S");
 Clazz.overrideMethod (c$, "isWithinStructure", 
 function (type) {
-var s = this.getStructure ();
-return (s != null && s.type === type && s.isWithin (this.monomerIndex));
+return (this.proteinStructure != null && this.proteinStructure.type === type && this.proteinStructure.isWithin (this.monomerIndex));
 }, "J.c.STR");
 Clazz.defineMethod (c$, "getQuaternionFrameCenterAlpha", 
 function (qType) {

@@ -58,9 +58,9 @@
 ){
 var $t$;
 //var c$;
-___JmolDate="$Date: 2014-04-28 21:55:28 -0500 (Mon, 28 Apr 2014) $"
+___JmolDate="$Date: 2014-05-06 15:22:26 -0500 (Tue, 06 May 2014) $"
 ___fullJmolProperties="src/org/jmol/viewer/Jmol.properties"
-___JmolVersion="14.1.14"
+___JmolVersion="14.1.15_2014.05.06"
 // JSmolJavaExt.js
 // will be wrapped by anonymous function using ANT in build_03_tojs.xml
 
@@ -13328,6 +13328,10 @@ var k = e.getKey ();
 if (JU.PT.isLike (k, key)) h2.put (k, e.getValue ());
 }
 }, "java.util.Map,~S,java.util.Map");
+c$.clean = Clazz_defineMethod (c$, "clean", 
+function (s) {
+return JU.PT.rep (JU.PT.replaceAllCharacters (s, " \t\n\r", " "), "  ", " ").trim ();
+}, "~S");
 Clazz_defineStatics (c$,
 "tensScale", [10, 100, 1000, 10000, 100000, 1000000],
 "decimalScale", [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001],
@@ -19629,8 +19633,8 @@ c$ = Clazz_p0p ();
 Clazz_defineStatics (c$,
 "MAXABS", 4);
 });
-___date="$Date: 2014-02-11 07:36:18 -0600 (Tue, 11 Feb 2014) $"
-___svnRev="$LastChangedRevision: 1528 $"
+___date="$Date: 2014-05-04 07:49:01 -0500 (Sun, 04 May 2014) $"
+___svnRev="$LastChangedRevision: 1649 $"
 ___version="2.1.1"
 Clazz_declarePackage ("JSV.common");
 c$ = Clazz_declareType (JSV.common, "JSVersion");

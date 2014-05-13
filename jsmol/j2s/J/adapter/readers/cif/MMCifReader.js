@@ -507,18 +507,18 @@ return false;
 var order = 0;
 var isAromatic = false;
 while (this.cr.parser.getData ()) {
-var atomIndex1 = -1;
-var atomIndex2 = -1;
+var atom1 = null;
+var atom2 = null;
 order = 0;
 isAromatic = false;
 var n = this.cr.parser.getFieldCount ();
 for (var i = 0; i < n; ++i) {
 switch (this.fieldProperty (i)) {
 case 0:
-atomIndex1 = this.cr.asc.getAtomIndexFromName (this.field);
+atom1 = this.cr.asc.getAtomFromName (this.field);
 break;
 case 1:
-atomIndex2 = this.cr.asc.getAtomIndexFromName (this.field);
+atom2 = this.cr.asc.getAtomFromName (this.field);
 break;
 case 3:
 isAromatic = (this.field.charAt (0) == 'Y');
@@ -528,7 +528,6 @@ order = this.cr.getBondOrder (this.field);
 break;
 }
 }
-if (atomIndex1 < 0 || atomIndex2 < 0) continue;
 if (isAromatic) switch (order) {
 case 1:
 order = 513;
@@ -537,7 +536,7 @@ case 2:
 order = 514;
 break;
 }
-this.cr.asc.addNewBondWithOrder (atomIndex1, atomIndex2, order);
+this.cr.asc.addNewBondWithOrderA (atom1, atom2, order);
 }
 return true;
 });

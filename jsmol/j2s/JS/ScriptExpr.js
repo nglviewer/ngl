@@ -195,6 +195,7 @@ case 8:
 case 9:
 case 11:
 case 12:
+case 7:
 case 10:
 case 6:
 case 14:
@@ -681,7 +682,7 @@ return bs;
 var comparisonFloat = NaN;
 var isModel = (tokWhat == 1095766030);
 var isIntProperty = JS.T.tokAttr (tokWhat, 1095761920);
-var isFloatProperty = JS.T.tokAttr (tokWhat, 1112539136);
+var isFloatProperty = (JS.T.tokAttr (tokWhat, 1112539136) || (tokWhat & 1137704960) == 1078984704);
 var isIntOrFloat = isIntProperty && isFloatProperty;
 var isStringProperty = !isIntProperty && JS.T.tokAttr (tokWhat, 1087373312);
 if (tokWhat == 1087375365) isIntProperty = !(isStringProperty = false);
@@ -689,7 +690,7 @@ var val = t.value;
 if (JS.T.tokAttr (tokValue, 1073741824)) {
 if ("_modelNumber".equalsIgnoreCase (val)) {
 var modelIndex = this.vwr.am.cmi;
-val = Integer.$valueOf (modelIndex < 0 ? 0 : this.vwr.getModelFileNumber (modelIndex));
+val = Integer.$valueOf (comparisonInt = (modelIndex < 0 ? 0 : this.vwr.getModelFileNumber (modelIndex)));
 } else {
 var v = this.getParameter (val, 1073742190, false);
 if (v != null) {
@@ -1602,7 +1603,7 @@ break;
 }
 switch (tokenValue.tok) {
 case 7:
-if (isStrProperty) list = JS.SV.listValue (tokenValue);
+if (isStrProperty) list = JS.SV.strListValue (tokenValue);
  else fvalues = JS.SV.flistValue (tokenValue, nValues);
 break;
 case 4:

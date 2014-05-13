@@ -1034,6 +1034,13 @@ case 1112541204:
 return atom.getVibrationCoord ('Z');
 case 1313866249:
 return atom.getVolume (vwr, J.c.VDW.AUTO);
+case 1146095627:
+case 1146095629:
+case 1146093582:
+case 1146095628:
+case 1146095631:
+case 1146095626:
+return JM.Atom.atomPropertyTuple (atom, tokWhat).length ();
 }
 return JM.Atom.atomPropertyInt (atom, tokWhat);
 }, "JV.Viewer,JM.Atom,~N");

@@ -66,7 +66,7 @@ this.ptConnect.ave (this.controlPoints[i], this.controlPoints[i + 1]);
 } else {
 this.ptConnectScr.setT (this.controlPointScreens[i + 1]);
 this.ptConnect.setT (this.controlPoints[i + 1]);
-}this.renderHermiteConic (i, false);
+}this.renderHermiteConic (i, false, 4);
 this.colix = this.getLeadColix (i);
 if (this.setBioColix (this.colix)) this.renderNucleicBaseStep (this.monomers[i], this.mads[i], this.ptConnectScr, this.ptConnect);
 }
@@ -78,7 +78,7 @@ var lastWasHelix = false;
 var previousStructure = null;
 var thisStructure;
 for (var i = this.monomerCount; --i >= 0; ) {
-thisStructure = this.monomers[i].getProteinStructure ();
+thisStructure = this.monomers[i].getStructure ();
 if (thisStructure !== previousStructure) {
 if (this.renderAsRockets) lastWasHelix = false;
 lastWasSheet = false;
@@ -94,7 +94,7 @@ this.renderHermiteRibbon (true, i, true);
 } else {
 this.renderHermiteArrowHead (i);
 }} else {
-this.renderHermiteConic (i, true);
+this.renderHermiteConic (i, true, 7);
 }}lastWasSheet = isSheet;
 lastWasHelix = isHelix;
 }

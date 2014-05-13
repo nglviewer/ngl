@@ -41,10 +41,6 @@ Clazz.overrideMethod (c$, "getSelectedMonomerIndex",
 function () {
 return (this.monomerIndex >= 0 && this.bioPolymer.isMonomerSelected (this.monomerIndex) ? this.monomerIndex : -1);
 });
-Clazz.defineMethod (c$, "getBioPolymer", 
-function () {
-return this.bioPolymer;
-});
 Clazz.overrideMethod (c$, "getBioPolymerLength", 
 function () {
 return this.bioPolymer == null ? 0 : this.bioPolymer.monomerCount;
@@ -95,13 +91,6 @@ offset = 255;
 }
 return offsets;
 }, "~N,~A,~A");
-Clazz.defineMethod (c$, "setStructure", 
-function (proteinstructure) {
-}, "JM.ProteinStructure");
-Clazz.defineMethod (c$, "getProteinStructure", 
-function () {
-return null;
-});
 Clazz.overrideMethod (c$, "getProteinStructureType", 
 function () {
 return J.c.STR.NONE;
@@ -195,7 +184,7 @@ f = this.getGroupParameter (1112539141);
 if (!Float.isNaN (f)) info.put ("mu", Float.$valueOf (f));
 f = this.getGroupParameter (1112539152);
 if (!Float.isNaN (f)) info.put ("theta", Float.$valueOf (f));
-var structure = this.getProteinStructure ();
+var structure = this.getStructure ();
 if (structure != null) {
 info.put ("structureId", Integer.$valueOf (structure.strucNo));
 info.put ("structureType", structure.type.getBioStructureTypeName (false));
@@ -204,7 +193,7 @@ return info;
 });
 Clazz.overrideMethod (c$, "getStructureId", 
 function () {
-var structure = this.getProteinStructure ();
+var structure = this.getStructure ();
 return (structure == null ? "" : structure.type.getBioStructureTypeName (false));
 });
 Clazz.defineMethod (c$, "getConformation", 

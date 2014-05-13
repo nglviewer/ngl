@@ -221,7 +221,7 @@ return propertyCount;
 }, "~A,~A,~A");
 Clazz.defineMethod (c$, "fixKey", 
  function (key) {
-return JU.PT.rep (key, ".", "_").toLowerCase ();
+return (key.startsWith ("_magnetic") ? key.substring (9) : JU.PT.rep (key, ".", "_").toLowerCase ());
 }, "~S");
 Clazz.defineMethod (c$, "setString", 
  function (str) {

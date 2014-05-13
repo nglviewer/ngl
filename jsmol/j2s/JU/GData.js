@@ -488,8 +488,7 @@ var h4 = s3 - s2;
 var x = (h1 * x1 + h2 * x2 + h3 * xT1 + h4 * xT2);
 var y = (h1 * y1 + h2 * y2 + h3 * yT1 + h4 * yT2);
 var z = (h1 * z1 + h2 * z2 + h3 * zT1 + h4 * zT2);
-if (isPt) list[index0 + i] = JU.P3.new3 (x, y, z);
- else list[index0 + i] = JU.V3.new3 (x, y, z);
+list[index0 + i] = (isPt ? JU.P3.new3 (x, y, z) : JU.V3.new3 (x, y, z));
 }
 }, "~N,JU.T3,JU.T3,JU.T3,JU.T3,JU.T3,~A,~N,~N,~B");
 Clazz.defineStatics (c$,

@@ -969,7 +969,7 @@ Clazz.defineMethod (c$, "getVibrationPoint",
 function (v, pt, scale) {
 v.setTempPoint (pt, this.vibrationT, (Float.isNaN (scale) ? this.vibrationScale : scale), this.vwr.g.modulationScale);
 return pt;
-}, "JU.Vibration,JU.Point3fi,~N");
+}, "JU.Vibration,JU.T3,~N");
 Clazz.defineMethod (c$, "transformPt3f", 
 function (ptXYZ, screen) {
 this.applyPerspective (ptXYZ, ptXYZ);
@@ -1407,9 +1407,11 @@ if (this.vibrationThread != null) {
 this.vibrationThread.interrupt ();
 this.vibrationThread = null;
 }this.vibrationOn = false;
+this.vibrationT.x = 0;
 return;
 }if (this.vwr.getModelCount () < 1) {
 this.vibrationOn = false;
+this.vibrationT.x = 0;
 return;
 }if (this.vibrationThread == null) {
 this.vibrationThread = J.api.Interface.getOption ("thread.VibrationThread");

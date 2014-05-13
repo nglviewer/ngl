@@ -150,13 +150,13 @@ return this.fractionalOffset;
 });
 Clazz.defineMethod (c$, "getTensor", 
 function (parBorU) {
-if (parBorU == null) return null;
 var t = (J.api.Interface.getUtil ("Tensor"));
-if (parBorU[0] == 0) {
+if (parBorU[0] == 0 && parBorU[1] == 0 && parBorU[2] == 0) {
 var f = parBorU[7];
 var eigenValues = [f, f, f];
-return t.setFromEigenVectors (JS.UnitCell.unitVectors, eigenValues, "iso", "Uiso=" + f);
-}var Bcart =  Clazz.newDoubleArray (6, 0);
+return t.setFromEigenVectors (JS.UnitCell.unitVectors, eigenValues, "iso", "Uiso=" + f, null);
+}t.parBorU = parBorU;
+var Bcart =  Clazz.newDoubleArray (6, 0);
 var ortepType = Clazz.floatToInt (parBorU[6]);
 if (ortepType == 12) {
 Bcart[0] = parBorU[0] * 19.739208802178716;

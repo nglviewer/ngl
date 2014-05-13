@@ -653,6 +653,10 @@ var k = e.getKey ();
 if (JU.PT.isLike (k, key)) h2.put (k, e.getValue ());
 }
 }, "java.util.Map,~S,java.util.Map");
+c$.clean = Clazz.defineMethod (c$, "clean", 
+function (s) {
+return JU.PT.rep (JU.PT.replaceAllCharacters (s, " \t\n\r", " "), "  ", " ").trim ();
+}, "~S");
 Clazz.defineStatics (c$,
 "tensScale", [10, 100, 1000, 10000, 100000, 1000000],
 "decimalScale", [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001],

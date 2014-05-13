@@ -3,7 +3,6 @@ Clazz.load (["J.adapter.smarter.AtomSetCollectionReader"], "J.adapter.readers.xt
 c$ = Clazz.decorateAsClass (function () {
 this.lattvecs = null;
 this.thisSub = 0;
-this.modAverage = false;
 this.modAxes = null;
 this.modDim = 0;
 this.haveM40Data = false;
@@ -26,7 +25,6 @@ this.floats =  Clazz.newFloatArray (6, 0);
 });
 Clazz.overrideMethod (c$, "initializeReader", 
 function () {
-this.modAverage = this.checkFilterKey ("MODAVE");
 this.modAxes = this.getFilter ("MODAXES=");
 this.setFractionalCoordinates (true);
 this.asc.newAtomSet ();
@@ -59,7 +57,7 @@ case 25:
 this.symmetry ();
 break;
 case 15:
-if (!this.modAverage) this.qi ();
+this.qi ();
 break;
 case 35:
 while (this.rd () != null) {
@@ -317,11 +315,11 @@ this.readLines (tType - 1);
 this.appendLoadNote ("Skipping temperature factors with order > 2");
 case 2:
 case -1:
-for (var j = 0; j < 6; j++) this.setU (atom, j, this.floats[j]);
+for (var j = 0; j < 6; j++) this.asc.setU (atom, j, this.floats[j]);
 
 break;
 case 1:
-if (this.floats[0] != 0) this.setU (atom, 7, this.floats[0]);
+if (this.floats[0] != 0) this.asc.setU (atom, 7, this.floats[0]);
 break;
 case 0:
 this.molHasTLS = true;

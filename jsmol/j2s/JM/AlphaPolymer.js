@@ -1,6 +1,10 @@
 Clazz.declarePackage ("JM");
 Clazz.load (["java.lang.Enum", "JM.BioPolymer"], "JM.AlphaPolymer", ["JU.BS", "$.Lst", "$.P3", "J.c.STR", "JM.Helix", "$.Sheet", "$.Turn", "JU.Logger", "$.Measure"], function () {
 c$ = Clazz.declareType (JM, "AlphaPolymer", JM.BioPolymer);
+Clazz.overrideMethod (c$, "getProteinStructure", 
+function (monomerIndex) {
+return this.monomers[monomerIndex].getStructure ();
+}, "~N");
 Clazz.overrideMethod (c$, "getControlPoint", 
 function (i, v) {
 if (!this.monomers[i].isSheet ()) return this.leadPoints[i];
@@ -59,9 +63,14 @@ proteinstructure.structureID = structureID;
 proteinstructure.serialID = serialID;
 proteinstructure.strandCount = strandCount;
 for (var i = indexStart; i <= indexEnd; ++i) {
-this.monomers[i].setStructure (proteinstructure);
+(this.monomers[i]).setStructure (proteinstructure);
 }
 }, "J.c.STR,~S,~N,~N,~N,~N");
+Clazz.overrideMethod (c$, "clearStructures", 
+function () {
+for (var i = 0; i < this.monomerCount; i++) (this.monomers[i]).setStructure (null);
+
+});
 Clazz.overrideMethod (c$, "calculateStruts", 
 function (modelSet, bs1, bs2, vCA, thresh, delta, allowMultiple) {
 return this.calculateStrutsStatic (modelSet, bs1, bs2, vCA, thresh, delta, allowMultiple);

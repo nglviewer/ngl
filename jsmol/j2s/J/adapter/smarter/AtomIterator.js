@@ -69,7 +69,7 @@ return (this.atom.vib == null || Float.isNaN (this.atom.vib.z) ? null : this.ato
 });
 Clazz.overrideMethod (c$, "getBfactor", 
 function () {
-return Float.isNaN (this.atom.bfactor) && this.atom.anisoBorU != null ? this.atom.anisoBorU[7] * 100 : this.atom.bfactor;
+return this.atom.bfactor;
 });
 Clazz.overrideMethod (c$, "getOccupancy", 
 function () {

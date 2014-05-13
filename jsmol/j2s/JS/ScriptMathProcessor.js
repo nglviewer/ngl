@@ -1013,7 +1013,7 @@ if (n == -9999) return this.addXStr (s.toLowerCase ());
 if (n > 0) return this.addXStr (JU.PT.formatS (s, n, n, false, false));
 return this.addXStr (JU.PT.formatS (s, n, n - 1, true, false));
 case 7:
-var list = JS.SV.listValue (x1);
+var list = JS.SV.strListValue (x1);
 for (var i = 0; i < list.length; i++) {
 if (n == 0) list[i] = list[i].trim ();
  else if (n > 0) list[i] = JU.PT.formatS (list[i], n, n, true, false);

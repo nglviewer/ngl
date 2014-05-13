@@ -103,8 +103,6 @@ this.$compnd = null;
 this.conformationIndex = 0;
 this.fileAtomIndex = 0;
 this.lastAltLoc = '\0';
-this.lastAtomData = null;
-this.lastAtomIndex = 0;
 this.lastGroup = -2147483648;
 this.lastInsertion = '\0';
 this.lastSourceSerial = -2147483648;
@@ -347,9 +345,9 @@ anisou[0] += resid;
 anisou[1] += resid;
 anisou[2] += resid;
 entry.getKey ().addTensor (symmetry.getTensor (anisou).setType (null), "TLS-R", false);
-System.out.println ("TLS-U:  " + JU.Escape.eAF (anisou));
+JU.Logger.info ("TLS-U:  " + JU.Escape.eAF (anisou));
 anisou = (entry.getKey ().anisoBorU);
-if (anisou != null) System.out.println ("ANISOU: " + JU.Escape.eAF (anisou));
+if (anisou != null) JU.Logger.info ("ANISOU: " + JU.Escape.eAF (anisou));
 }
 this.tlsU = null;
 }, "J.api.SymmetryInterface");
@@ -881,18 +879,17 @@ Clazz_defineMethod (c$, "anisou",
  function () {
 var data =  Clazz_newFloatArray (8, 0);
 data[6] = 1;
-var serial = this.parseIntRange (this.line, 6, 11);
-var index;
-if (this.line.substring (6, 26).equals (this.lastAtomData)) {
-index = this.lastAtomIndex;
-} else {
-if (!this.haveMappedSerials) this.asc.createAtomSerialMap ();
-index = this.asc.getAtomIndexFromSerial (serial);
+var serial = this.line.substring (6, 11).trim ();
+if (!this.haveMappedSerials && this.asc.ac > 0) {
+for (var i = this.asc.getAtomSetAtomIndex (this.asc.iSet); i < this.asc.ac; i++) {
+var atomSerial = this.asc.atoms[i].atomSerial;
+if (atomSerial != -2147483648) this.asc.atomSymbolicMap.put ("" + atomSerial, this.asc.atoms[i]);
+}
 this.haveMappedSerials = true;
-}if (index < 0) {
+}var atom = this.asc.getAtomFromName (serial);
+if (atom == null) {
 return;
-}var atom = this.asc.atoms[index];
-for (var i = 28, pt = 0; i < 70; i += 7, pt++) data[pt] = this.parseFloatRange (this.line, i, i + 7);
+}for (var i = 28, pt = 0; i < 70; i += 7, pt++) data[pt] = this.parseFloatRange (this.line, i, i + 7);
 
 for (var i = 0; i < 6; i++) {
 if (Float.isNaN (data[i])) {
@@ -1769,10 +1766,6 @@ Clazz_overrideMethod (c$, "getSelectedMonomerIndex",
 function () {
 return (this.monomerIndex >= 0 && this.bioPolymer.isMonomerSelected (this.monomerIndex) ? this.monomerIndex : -1);
 });
-Clazz_defineMethod (c$, "getBioPolymer", 
-function () {
-return this.bioPolymer;
-});
 Clazz_overrideMethod (c$, "getBioPolymerLength", 
 function () {
 return this.bioPolymer == null ? 0 : this.bioPolymer.monomerCount;
@@ -1823,13 +1816,6 @@ offset = 255;
 }
 return offsets;
 }, "~N,~A,~A");
-Clazz_defineMethod (c$, "setStructure", 
-function (proteinstructure) {
-}, "JM.ProteinStructure");
-Clazz_defineMethod (c$, "getProteinStructure", 
-function () {
-return null;
-});
 Clazz_overrideMethod (c$, "getProteinStructureType", 
 function () {
 return J.c.STR.NONE;
@@ -1923,7 +1909,7 @@ f = this.getGroupParameter (1112539141);
 if (!Float.isNaN (f)) info.put ("mu", Float.$valueOf (f));
 f = this.getGroupParameter (1112539152);
 if (!Float.isNaN (f)) info.put ("theta", Float.$valueOf (f));
-var structure = this.getProteinStructure ();
+var structure = this.getStructure ();
 if (structure != null) {
 info.put ("structureId", Integer.$valueOf (structure.strucNo));
 info.put ("structureType", structure.type.getBioStructureTypeName (false));
@@ -1932,7 +1918,7 @@ return info;
 });
 Clazz_overrideMethod (c$, "getStructureId", 
 function () {
-var structure = this.getProteinStructure ();
+var structure = this.getStructure ();
 return (structure == null ? "" : structure.type.getBioStructureTypeName (false));
 });
 Clazz_defineMethod (c$, "getConformation", 
@@ -2118,18 +2104,13 @@ Clazz_defineMethod (c$, "isAlphaMonomer",
 function () {
 return true;
 });
-Clazz_overrideMethod (c$, "getProteinStructure", 
+Clazz_overrideMethod (c$, "getStructure", 
 function () {
 return this.proteinStructure;
 });
-Clazz_overrideMethod (c$, "getStructure", 
-function () {
-return this.getProteinStructure ();
-});
-Clazz_overrideMethod (c$, "setStructure", 
+Clazz_defineMethod (c$, "setStructure", 
 function (proteinStructure) {
-this.proteinStructure = proteinStructure;
-if (proteinStructure == null) this.nitrogenHydrogenPoint = null;
+if ((this.proteinStructure = proteinStructure) == null) this.nitrogenHydrogenPoint = null;
 }, "JM.ProteinStructure");
 Clazz_overrideMethod (c$, "setStrucNo", 
 function (n) {
@@ -2157,11 +2138,9 @@ return this.proteinStructure != null && this.proteinStructure.type === J.c.STR.S
 });
 Clazz_overrideMethod (c$, "setProteinStructureType", 
 function (type, monomerIndexCurrent) {
+if (this.proteinStructure != null) this.proteinStructure.removeMonomer (this.monomerIndex);
 if (monomerIndexCurrent < 0 || monomerIndexCurrent > 0 && this.monomerIndex == 0) {
-if (this.proteinStructure != null) {
-var nAbandoned = this.proteinStructure.removeMonomer (this.monomerIndex);
-if (nAbandoned > 0) this.getBioPolymer ().removeProteinStructure (this.monomerIndex + 1, nAbandoned);
-}switch (type) {
+switch (type) {
 case J.c.STR.HELIX:
 case J.c.STR.HELIXALPHA:
 case J.c.STR.HELIX310:
@@ -2178,7 +2157,7 @@ case J.c.STR.NONE:
 this.setStructure (null);
 }
 } else {
-this.setStructure (this.getBioPolymer ().getProteinStructure (monomerIndexCurrent));
+this.setStructure (this.bioPolymer.getProteinStructure (monomerIndexCurrent));
 if (this.proteinStructure != null) this.proteinStructure.addMonomer (this.monomerIndex);
 }return this.monomerIndex;
 }, "J.c.STR,~N");
@@ -2203,8 +2182,7 @@ return this.getQuaternionFrameCenterAlpha (qType);
 }, "~S");
 Clazz_overrideMethod (c$, "isWithinStructure", 
 function (type) {
-var s = this.getStructure ();
-return (s != null && s.type === type && s.isWithin (this.monomerIndex));
+return (this.proteinStructure != null && this.proteinStructure.type === type && this.proteinStructure.isWithin (this.monomerIndex));
 }, "J.c.STR");
 Clazz_defineMethod (c$, "getQuaternionFrameCenterAlpha", 
 function (qType) {
@@ -2260,7 +2238,7 @@ Clazz_defineStatics (c$,
 "alphaOffsets", [0]);
 });
 Clazz_declarePackage ("JM");
-Clazz_load (["JU.V3"], "JM.ProteinStructure", ["JU.AU", "$.P3", "JU.Logger"], function () {
+Clazz_load (["JU.V3"], "JM.ProteinStructure", ["java.util.Hashtable", "JU.AU", "$.P3", "JU.Logger"], function () {
 c$ = Clazz_decorateAsClass (function () {
 this.type = null;
 this.subtype = null;
@@ -2270,13 +2248,14 @@ this.serialID = 0;
 this.strandCount = 0;
 this.apolymer = null;
 this.monomerIndexFirst = 0;
-this.monomerCount = 0;
+this.nRes = 0;
 this.axisA = null;
 this.axisB = null;
 this.axisUnitVector = null;
 this.vectorProjection = null;
 this.monomerIndexLast = 0;
 this.segments = null;
+this.resMap = null;
 Clazz_instantialize (this, arguments);
 }, JM, "ProteinStructure");
 Clazz_prepareFields (c$, function () {
@@ -2289,22 +2268,37 @@ this.apolymer = apolymer;
 this.type = type;
 this.monomerIndexFirst = monomerIndex;
 this.addMonomer (monomerIndex + monomerCount - 1);
-if (JU.Logger.debugging) JU.Logger.debug ("Creating ProteinStructure " + this.strucNo + " " + type.getBioStructureTypeName (false) + " from " + this.monomerIndexFirst + " through " + this.monomerIndexLast + " in polymer " + apolymer);
+if (JU.Logger.debugging) JU.Logger.info ("Creating ProteinStructure " + this.strucNo + " " + type.getBioStructureTypeName (false) + " from " + this.monomerIndexFirst + " through " + this.monomerIndexLast + " in polymer " + apolymer);
 }, "JM.AlphaPolymer,J.c.STR,~N,~N");
 Clazz_defineMethod (c$, "addMonomer", 
 function (index) {
+this.resMap = null;
 this.monomerIndexFirst = Math.min (this.monomerIndexFirst, index);
 this.monomerIndexLast = Math.max (this.monomerIndexLast, index);
-this.monomerCount = this.monomerIndexLast - this.monomerIndexFirst + 1;
+this.nRes = this.monomerIndexLast - this.monomerIndexFirst + 1;
 }, "~N");
 Clazz_defineMethod (c$, "removeMonomer", 
-function (monomerIndex) {
-if (monomerIndex > this.monomerIndexLast || monomerIndex < this.monomerIndexFirst) return 0;
-var ret = this.monomerIndexLast - monomerIndex;
-this.monomerIndexLast = Math.max (this.monomerIndexFirst, monomerIndex) - 1;
-this.monomerCount = this.monomerIndexLast - this.monomerIndexFirst + 1;
-return ret;
-}, "~N");
+function (index) {
+this.resMap = null;
+if (index > this.monomerIndexLast || index < this.monomerIndexFirst) return;
+if (index == this.monomerIndexFirst) {
+this.monomerIndexFirst++;
+this.nRes--;
+} else if (index == this.monomerIndexLast) {
+this.monomerIndexLast--;
+this.nRes--;
+} else {
+var n = this.monomerIndexLast - index;
+this.monomerIndexLast = index - 1;
+this.nRes = index - this.monomerIndexFirst;
+var monomers = this.apolymer.monomers;
+var type = monomers[++index].getProteinStructureType ();
+var mLast = -1;
+for (var i = 0, pt = index; i < n; i++, pt++) {
+(monomers[pt]).setStructure (null);
+mLast = monomers[pt].setProteinStructureType (type, mLast);
+}
+}}, "~N");
 Clazz_defineMethod (c$, "calcAxis", 
 function () {
 });
@@ -2312,12 +2306,12 @@ Clazz_defineMethod (c$, "calcSegments",
 function () {
 if (this.segments != null) return;
 this.calcAxis ();
-this.segments =  new Array (this.monomerCount + 1);
-this.segments[this.monomerCount] = this.axisB;
+this.segments =  new Array (this.nRes + 1);
+this.segments[this.nRes] = this.axisB;
 this.segments[0] = this.axisA;
 var axis = JU.V3.newV (this.axisUnitVector);
-axis.scale (this.axisB.distance (this.axisA) / this.monomerCount);
-for (var i = 1; i < this.monomerCount; i++) {
+axis.scale (this.axisB.distance (this.axisA) / this.nRes);
+for (var i = 1; i < this.nRes; i++) {
 var point = this.segments[i] =  new JU.P3 ();
 point.add2 (this.segments[i - 1], axis);
 }
@@ -2329,13 +2323,13 @@ return this.apolymer.monomers[this.monomerIndexFirst - 1].isHelix () || this.apo
 });
 Clazz_defineMethod (c$, "upperNeighborIsHelixOrSheet", 
 function () {
-var upperNeighborIndex = this.monomerIndexFirst + this.monomerCount;
+var upperNeighborIndex = this.monomerIndexFirst + this.nRes;
 if (upperNeighborIndex == this.apolymer.monomerCount) return false;
 return this.apolymer.monomers[upperNeighborIndex].isHelix () || this.apolymer.monomers[upperNeighborIndex].isSheet ();
 });
 Clazz_defineMethod (c$, "getMonomerCount", 
 function () {
-return this.monomerCount;
+return this.nRes;
 });
 Clazz_defineMethod (c$, "isWithin", 
 function (monomerIndex) {
@@ -2347,11 +2341,12 @@ return this.monomerIndexFirst;
 });
 Clazz_defineMethod (c$, "getIndex", 
 function (monomer) {
-var monomers = this.apolymer.monomers;
-var i;
-for (i = this.monomerCount; --i >= 0; ) if (monomers[this.monomerIndexFirst + i] === monomer) break;
+if (this.resMap == null) {
+this.resMap =  new java.util.Hashtable ();
+for (var i = this.nRes; --i >= 0; ) this.resMap.put (this.apolymer.monomers[this.monomerIndexFirst + i], Integer.$valueOf (i));
 
-return i;
+}var ii = this.resMap.get (monomer);
+return (ii == null ? -1 : ii.intValue ());
 }, "JM.Monomer");
 Clazz_defineMethod (c$, "getSegments", 
 function () {
@@ -2377,7 +2372,7 @@ Clazz_defineMethod (c$, "getInfo",
 function (info) {
 info.put ("type", this.type.getBioStructureTypeName (false));
 var leadAtomIndices = this.apolymer.getLeadAtomIndices ();
-var iArray = JU.AU.arrayCopyRangeI (leadAtomIndices, this.monomerIndexFirst, this.monomerIndexFirst + this.monomerCount);
+var iArray = JU.AU.arrayCopyRangeI (leadAtomIndices, this.monomerIndexFirst, this.monomerIndexFirst + this.nRes);
 info.put ("leadAtomIndices", iArray);
 this.calcAxis ();
 if (this.axisA == null) return;
@@ -2405,15 +2400,13 @@ this.subtype = subtype;
 Clazz_overrideMethod (c$, "calcAxis", 
 function () {
 if (this.axisA != null) return;
-var points =  new Array (this.monomerCount + 1);
-for (var i = 0; i <= this.monomerCount; i++) {
-points[i] =  new JU.P3 ();
-this.apolymer.getLeadMidPoint (this.monomerIndexFirst + i, points[i]);
-}
+var points =  new Array (this.nRes + 1);
+for (var i = 0; i <= this.nRes; i++) this.apolymer.getLeadMidPoint (this.monomerIndexFirst + i, points[i] =  new JU.P3 ());
+
 this.axisA =  new JU.P3 ();
 this.axisUnitVector =  new JU.V3 ();
 JU.Measure.calcBestAxisThroughPoints (points, this.axisA, this.axisUnitVector, this.vectorProjection, 4);
-this.axisB = JU.P3.newP (points[this.monomerCount]);
+this.axisB = JU.P3.newP (points[this.nRes]);
 JU.Measure.projectOntoAxis (this.axisB, this.axisA, this.axisUnitVector, this.vectorProjection);
 });
 });
@@ -2435,14 +2428,14 @@ this.subtype = subtype;
 Clazz_overrideMethod (c$, "calcAxis", 
 function () {
 if (this.axisA != null) return;
-if (this.monomerCount == 2) {
+if (this.nRes == 2) {
 this.axisA = this.alphaPolymer.getLeadPoint (this.monomerIndexFirst);
 this.axisB = this.alphaPolymer.getLeadPoint (this.monomerIndexFirst + 1);
 } else {
 this.axisA =  new JU.P3 ();
 this.alphaPolymer.getLeadMidPoint (this.monomerIndexFirst + 1, this.axisA);
 this.axisB =  new JU.P3 ();
-this.alphaPolymer.getLeadMidPoint (this.monomerIndexFirst + this.monomerCount - 1, this.axisB);
+this.alphaPolymer.getLeadMidPoint (this.monomerIndexFirst + this.nRes - 1, this.axisB);
 }this.axisUnitVector =  new JU.V3 ();
 this.axisUnitVector.sub2 (this.axisB, this.axisA);
 this.axisUnitVector.normalize ();
@@ -2452,7 +2445,7 @@ if (this.lowerNeighborIsHelixOrSheet ()) {
 } else {
 JU.Measure.projectOntoAxis (tempA, this.axisA, this.axisUnitVector, this.vectorProjection);
 }var tempB =  new JU.P3 ();
-this.alphaPolymer.getLeadMidPoint (this.monomerIndexFirst + this.monomerCount, tempB);
+this.alphaPolymer.getLeadMidPoint (this.monomerIndexFirst + this.nRes, tempB);
 if (this.upperNeighborIsHelixOrSheet ()) {
 } else {
 JU.Measure.projectOntoAxis (tempB, this.axisA, this.axisUnitVector, this.vectorProjection);
@@ -2467,7 +2460,7 @@ var vectorCO =  new JU.V3 ();
 var vectorCOSum =  new JU.V3 ();
 var amino = this.alphaPolymer.monomers[this.monomerIndexFirst];
 vectorCOSum.sub2 (amino.getCarbonylOxygenAtom (), amino.getCarbonylCarbonAtom ());
-for (var i = this.monomerCount; --i > this.monomerIndexFirst; ) {
+for (var i = this.nRes; --i > this.monomerIndexFirst; ) {
 amino = this.alphaPolymer.monomers[i];
 vectorCO.sub2 (amino.getCarbonylOxygenAtom (), amino.getCarbonylCarbonAtom ());
 if (vectorCOSum.angle (vectorCO) < 1.5707964) vectorCOSum.add (vectorCO);
@@ -2547,19 +2540,7 @@ bs.setBits (this.monomers[0].firstAtomIndex, this.monomers[this.monomerCount - 1
 }, "JU.BS");
 Clazz_defineMethod (c$, "clearStructures", 
 function () {
-for (var i = 0; i < this.monomerCount; i++) this.monomers[i].setStructure (null);
-
 });
-Clazz_defineMethod (c$, "removeProteinStructure", 
-function (monomerIndex, count) {
-var m = this.monomers[monomerIndex];
-var type = m.getProteinStructureType ();
-var mLast = -1;
-for (var i = 0, pt = monomerIndex; i < count && pt < this.monomerCount; i++, pt++) {
-this.monomers[pt].setStructure (null);
-mLast = this.monomers[pt].setProteinStructureType (type, mLast);
-}
-}, "~N,~N");
 Clazz_defineMethod (c$, "getLeadAtomIndices", 
 function () {
 if (this.leadAtomIndices == null) {
@@ -2593,13 +2574,13 @@ Clazz_defineMethod (c$, "getTerminatorPoint",
 return this.monomers[this.monomerCount - 1].getTerminatorAtom ();
 });
 Clazz_defineMethod (c$, "getLeadMidPoint", 
-function (groupIndex, midPoint) {
-if (groupIndex == this.monomerCount) {
---groupIndex;
-} else if (groupIndex > 0) {
-midPoint.ave (this.getLeadPoint (groupIndex), this.getLeadPoint (groupIndex - 1));
+function (i, midPoint) {
+if (i == this.monomerCount) {
+--i;
+} else if (i > 0) {
+midPoint.ave (this.getLeadPoint (i), this.getLeadPoint (i - 1));
 return;
-}midPoint.setT (this.getLeadPoint (groupIndex));
+}midPoint.setT (this.getLeadPoint (i));
 }, "~N,JU.P3");
 Clazz_defineMethod (c$, "getWingPoint", 
 function (polymerIndex) {
@@ -2803,7 +2784,7 @@ for (var i = Math.min (this.monomerCount, group1 + nGroups); --i >= group1; ) th
 }, "~N,~N,JU.BS,JU.BS");
 Clazz_defineMethod (c$, "getProteinStructure", 
 function (monomerIndex) {
-return this.monomers[monomerIndex].getProteinStructure ();
+return null;
 }, "~N");
 Clazz_defineMethod (c$, "calcParameters", 
 function () {
@@ -3090,6 +3071,10 @@ Clazz_defineStatics (c$,
 Clazz_declarePackage ("JM");
 Clazz_load (["java.lang.Enum", "JM.BioPolymer"], "JM.AlphaPolymer", ["JU.BS", "$.Lst", "$.P3", "J.c.STR", "JM.Helix", "$.Sheet", "$.Turn", "JU.Logger", "$.Measure"], function () {
 c$ = Clazz_declareType (JM, "AlphaPolymer", JM.BioPolymer);
+Clazz_overrideMethod (c$, "getProteinStructure", 
+function (monomerIndex) {
+return this.monomers[monomerIndex].getStructure ();
+}, "~N");
 Clazz_overrideMethod (c$, "getControlPoint", 
 function (i, v) {
 if (!this.monomers[i].isSheet ()) return this.leadPoints[i];
@@ -3148,9 +3133,14 @@ proteinstructure.structureID = structureID;
 proteinstructure.serialID = serialID;
 proteinstructure.strandCount = strandCount;
 for (var i = indexStart; i <= indexEnd; ++i) {
-this.monomers[i].setStructure (proteinstructure);
+(this.monomers[i]).setStructure (proteinstructure);
 }
 }, "J.c.STR,~S,~N,~N,~N,~N");
+Clazz_overrideMethod (c$, "clearStructures", 
+function () {
+for (var i = 0; i < this.monomerCount; i++) (this.monomers[i]).setStructure (null);
+
+});
 Clazz_overrideMethod (c$, "calculateStruts", 
 function (modelSet, bs1, bs2, vCA, thresh, delta, allowMultiple) {
 return this.calculateStrutsStatic (modelSet, bs1, bs2, vCA, thresh, delta, allowMultiple);
@@ -4075,14 +4065,14 @@ groupCount = groups.length;
 var group = groups[i];
 if (Clazz_instanceOf (group, JM.Monomer)) {
 var monomer = group;
-if (monomer.getBioPolymer () != null && (!modelsExcluded.get (monomer.getModelIndex ()))) monomer.setBioPolymer (null, -1);
+if (monomer.bioPolymer != null && (!modelsExcluded.get (monomer.getModelIndex ()))) monomer.setBioPolymer (null, -1);
 }}
 for (var i = baseGroupIndex; i < groupCount; ++i) {
 var g = groups[i];
 var model = g.getModel ();
 if (!model.isBioModel || !(Clazz_instanceOf (g, JM.Monomer))) continue;
 var doCheck = checkConnections && !this.ms.isJmolDataFrameForModel (this.ms.at[g.firstAtomIndex].mi);
-var bp = ((g).getBioPolymer () == null ? JM.Resolver.allocateBioPolymer (groups, i, doCheck) : null);
+var bp = ((g).bioPolymer == null ? JM.Resolver.allocateBioPolymer (groups, i, doCheck) : null);
 if (bp == null || bp.monomerCount == 0) continue;
 (model).addBioPolymer (bp);
 i += bp.monomerCount - 1;
@@ -6302,13 +6292,13 @@ this.setNeighbors (i);
 this.g3d.drawHermite4 (this.isNucleic ? 4 : 7, screens[this.iPrev], screens[i], screens[this.iNext], screens[this.iNext2]);
 }, "~A,~N");
 Clazz_defineMethod (c$, "renderHermiteConic", 
-function (i, thisTypeOnly) {
+function (i, thisTypeOnly, tension) {
 this.setNeighbors (i);
 this.colix = this.getLeadColix (i);
 if (!this.setBioColix (this.colix)) return;
 if (this.setMads (i, thisTypeOnly) || this.isExport) {
 try {
-if ((this.meshes[i] == null || !this.meshReady[i]) && !this.createMesh (i, this.madBeg, this.madMid, this.madEnd, 1)) return;
+if ((this.meshes[i] == null || !this.meshReady[i]) && !this.createMesh (i, this.madBeg, this.madMid, this.madEnd, 1, tension)) return;
 this.meshes[i].setColix (this.colix);
 this.bsRenderMesh.set (i);
 return;
@@ -6324,7 +6314,7 @@ throw e;
 }if (this.diameterBeg == 0 && this.diameterEnd == 0 || this.wireframeOnly) this.g3d.drawLineAB (this.controlPointScreens[i], this.controlPointScreens[this.iNext]);
  else {
 this.g3d.fillHermite (this.isNucleic ? 4 : 7, this.diameterBeg, this.diameterMid, this.diameterEnd, this.controlPointScreens[this.iPrev], this.controlPointScreens[i], this.controlPointScreens[this.iNext], this.controlPointScreens[this.iNext2]);
-}}, "~N,~B");
+}}, "~N,~B,~N");
 Clazz_defineMethod (c$, "renderHermiteRibbon", 
 function (doFill, i, thisTypeOnly) {
 this.setNeighbors (i);
@@ -6334,7 +6324,7 @@ this.colixBack = this.getLeadColixBack (i);
 if (doFill && (this.aspectRatio != 0 || this.isExport)) {
 if (this.setMads (i, thisTypeOnly) || this.isExport) {
 try {
-if ((this.meshes[i] == null || !this.meshReady[i]) && !this.createMesh (i, this.madBeg, this.madMid, this.madEnd, this.aspectRatio)) return;
+if ((this.meshes[i] == null || !this.meshReady[i]) && !this.createMesh (i, this.madBeg, this.madMid, this.madEnd, this.aspectRatio, this.isNucleic ? 4 : 7)) return;
 this.meshes[i].setColix (this.colix);
 this.meshes[i].setColixBack (this.colixBack);
 this.bsRenderMesh.set (i);
@@ -6360,7 +6350,7 @@ if (this.setMads (i, false) || this.isExport) {
 try {
 this.doCap0 = true;
 this.doCap1 = false;
-if ((this.meshes[i] == null || !this.meshReady[i]) && !this.createMesh (i, Clazz_doubleToInt (Math.floor (this.madBeg * 1.2)), Clazz_doubleToInt (Math.floor (this.madBeg * 0.6)), 0, (this.aspectRatio == 1 ? this.aspectRatio : this.aspectRatio / 2))) return;
+if ((this.meshes[i] == null || !this.meshReady[i]) && !this.createMesh (i, Clazz_doubleToInt (Math.floor (this.madBeg * 1.2)), Clazz_doubleToInt (Math.floor (this.madBeg * 0.6)), 0, (this.aspectRatio == 1 ? this.aspectRatio : this.aspectRatio / 2), 7)) return;
 this.meshes[i].setColix (this.colix);
 this.bsRenderMesh.set (i);
 return;
@@ -6382,7 +6372,7 @@ if (this.ribbonBorder && this.aspectRatio == 0) {
 this.g3d.fillCylinderXYZ (this.colix, this.colix, 3, (this.exportType == 1 ? 50 : 3), this.screenArrowTop.x, this.screenArrowTop.y, this.screenArrowTop.z, this.screenArrowBot.x, this.screenArrowBot.y, this.screenArrowBot.z);
 }}, "~N");
 Clazz_defineMethod (c$, "createMesh", 
- function (i, madBeg, madMid, madEnd, aspectRatio) {
+ function (i, madBeg, madMid, madEnd, aspectRatio, tension) {
 this.setNeighbors (i);
 if (this.controlPoints[i].distance (this.controlPoints[this.iNext]) == 0) return false;
 var isEccentric = (aspectRatio != 1 && this.wingVectors != null);
@@ -6395,12 +6385,12 @@ var mesh = this.meshes[i] =  new J.shape.Mesh ().mesh1 ("mesh_" + this.shapeID +
 var variableRadius = (madBeg != madMid || madMid != madEnd);
 if (this.controlHermites == null || this.controlHermites.length < nHermites + 1) {
 this.controlHermites =  new Array (nHermites + 1);
-}JU.GData.getHermiteList (this.isNucleic ? 4 : 7, this.controlPoints[this.iPrev], this.controlPoints[i], this.controlPoints[this.iNext], this.controlPoints[this.iNext2], this.controlPoints[this.iNext3], this.controlHermites, 0, nHermites, true);
+}JU.GData.getHermiteList (tension, this.controlPoints[this.iPrev], this.controlPoints[i], this.controlPoints[this.iNext], this.controlPoints[this.iNext2], this.controlPoints[this.iNext3], this.controlHermites, 0, nHermites, true);
 if (this.wingHermites == null || this.wingHermites.length < nHermites + 1) {
 this.wingHermites =  new Array (nHermites + 1);
 }this.wing.setT (this.wingVectors[this.iPrev]);
 if (madEnd == 0) this.wing.scale (2.0);
-JU.GData.getHermiteList (this.isNucleic ? 4 : 7, this.wing, this.wingVectors[i], this.wingVectors[this.iNext], this.wingVectors[this.iNext2], this.wingVectors[this.iNext3], this.wingHermites, 0, nHermites, false);
+JU.GData.getHermiteList (tension, this.wing, this.wingVectors[i], this.wingVectors[this.iNext], this.wingVectors[this.iNext2], this.wingVectors[this.iNext3], this.wingHermites, 0, nHermites, false);
 var radius1 = madBeg / 2000;
 var radius2 = madMid / 2000;
 var radius3 = madEnd / 2000;
@@ -6501,7 +6491,7 @@ for (var k = this.hermiteLevel * 2; --k >= 0; ) mesh.addQuad (nPoints - k - 1, n
 this.adjustCartoonSeamNormals (i, nPer);
 mesh.setVisibilityFlags (1);
 return true;
-}, "~N,~N,~N,~N,~N");
+}, "~N,~N,~N,~N,~N,~N");
 Clazz_defineMethod (c$, "adjustCartoonSeamNormals", 
 function (i, nPer) {
 if (this.bsTemp == null) this.bsTemp = JU.Normix.newVertexBitSet ();
@@ -6689,26 +6679,33 @@ var midPointCount = this.monomerCount + 1;
 this.cordMidPoints = this.vwr.allocTempPoints (midPointCount);
 var proteinstructurePrev = null;
 var point;
+var ptLastRocket = -10;
+var pt1 =  new JU.P3 ();
+var pt2 =  new JU.P3 ();
 for (var i = 0; i < this.monomerCount; ++i) {
 point = this.cordMidPoints[i];
 var residue = this.monomers[i];
 if (isNewStyle && this.renderArrowHeads) {
 point.setT (this.controlPoints[i]);
 } else if (this.isHelix (i) || !isNewStyle && this.isSheet (i)) {
-var proteinstructure = residue.getProteinStructure ();
-point.setT (i - 1 != proteinstructure.getMonomerIndex () ? proteinstructure.getAxisStartPoint () : proteinstructure.getAxisEndPoint ());
-proteinstructurePrev = proteinstructure;
+var proteinstructure = residue.getStructure ();
+if (proteinstructure === proteinstructurePrev) {
+pt1.add (pt2);
+ptLastRocket = i;
 } else {
-if (proteinstructurePrev != null) point.setT (proteinstructurePrev.getAxisEndPoint ());
- else {
-point.setT (this.controlPoints[i]);
-}proteinstructurePrev = null;
+proteinstructurePrev = proteinstructure;
+pt1.setT (proteinstructure.getAxisStartPoint ());
+pt2.sub2 (proteinstructure.getAxisEndPoint (), pt1);
+pt2.scale (1 / (proteinstructure.getMonomerCount () - 1));
+if (ptLastRocket == i - 3) {
+this.cordMidPoints[i - 1].ave (this.cordMidPoints[i - 2], pt1);
+}}point.setT (pt1);
+} else {
+point.setT (proteinstructurePrev == null ? this.controlPoints[i] : proteinstructurePrev.getAxisEndPoint ());
+proteinstructurePrev = null;
 }}
-point = this.cordMidPoints[this.monomerCount];
-if (proteinstructurePrev != null) point.setT (proteinstructurePrev.getAxisEndPoint ());
- else {
-point.setT (this.controlPoints[this.monomerCount]);
-}}, "~B");
+this.cordMidPoints[this.monomerCount].setT (proteinstructurePrev == null ? this.controlPoints[this.monomerCount] : proteinstructurePrev.getAxisEndPoint ());
+}, "~B");
 Clazz_defineMethod (c$, "renderRockets", 
 function () {
 this.tPending = false;
@@ -6718,13 +6715,13 @@ if (this.isHelix (i) || this.isSheet (i)) {
 this.renderSpecialSegment (monomer, this.getLeadColix (i), this.mads[i]);
 } else {
 this.renderPending ();
-this.renderHermiteConic (i, true);
+this.renderHermiteConic (i, true, 7);
 }}
 this.renderPending ();
 });
 Clazz_defineMethod (c$, "renderSpecialSegment", 
 function (monomer, thisColix, thisMad) {
-var proteinstructure = monomer.getProteinStructure ();
+var proteinstructure = monomer.proteinStructure;
 if (this.tPending) {
 if (proteinstructure === this.proteinstructurePending && thisMad == this.mad && thisColix == this.colix && proteinstructure.getIndex (monomer) == this.endIndexPending + 1) {
 ++this.endIndexPending;
@@ -6735,7 +6732,7 @@ this.startIndexPending = this.endIndexPending = proteinstructure.getIndex (monom
 this.colix = thisColix;
 this.mad = thisMad;
 this.tPending = true;
-}, "JM.Monomer,~N,~N");
+}, "JM.AlphaMonomer,~N,~N");
 Clazz_defineMethod (c$, "renderPending", 
 function () {
 if (!this.tPending) return;
@@ -6906,7 +6903,7 @@ this.ptConnect.ave (this.controlPoints[i], this.controlPoints[i + 1]);
 } else {
 this.ptConnectScr.setT (this.controlPointScreens[i + 1]);
 this.ptConnect.setT (this.controlPoints[i + 1]);
-}this.renderHermiteConic (i, false);
+}this.renderHermiteConic (i, false, 4);
 this.colix = this.getLeadColix (i);
 if (this.setBioColix (this.colix)) this.renderNucleicBaseStep (this.monomers[i], this.mads[i], this.ptConnectScr, this.ptConnect);
 }
@@ -6918,7 +6915,7 @@ var lastWasHelix = false;
 var previousStructure = null;
 var thisStructure;
 for (var i = this.monomerCount; --i >= 0; ) {
-thisStructure = this.monomers[i].getProteinStructure ();
+thisStructure = this.monomers[i].getStructure ();
 if (thisStructure !== previousStructure) {
 if (this.renderAsRockets) lastWasHelix = false;
 lastWasSheet = false;
@@ -6934,7 +6931,7 @@ this.renderHermiteRibbon (true, i, true);
 } else {
 this.renderHermiteArrowHead (i);
 }} else {
-this.renderHermiteConic (i, true);
+this.renderHermiteConic (i, true, 7);
 }}lastWasSheet = isSheet;
 lastWasHelix = isHelix;
 }
@@ -7125,7 +7122,7 @@ if (this.wireframeOnly) this.renderStrands ();
 Clazz_defineMethod (c$, "renderTrace", 
 function () {
 this.getScreenControlPoints ();
-for (var i = this.bsVisible.nextSetBit (0); i >= 0; i = this.bsVisible.nextSetBit (i + 1)) this.renderHermiteConic (i, false);
+for (var i = this.bsVisible.nextSetBit (0); i >= 0; i = this.bsVisible.nextSetBit (i + 1)) this.renderHermiteConic (i, false, 7);
 
 });
 });

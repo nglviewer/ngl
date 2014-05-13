@@ -1760,7 +1760,7 @@ havePoints = true;
 break;
 case 7:
 propertyName = "modelBasedPoints";
-propertyValue = JS.SV.listValue (eval.theToken);
+propertyValue = JS.SV.strListValue (eval.theToken);
 havePoints = true;
 break;
 case 1073742195:
@@ -3879,8 +3879,10 @@ return;
 default:
 this.invArg ();
 }
-if (!this.chk) this.vwr.setModulation (bs, mod, qtOffset, isQ);
-});
+if (!this.chk) {
+this.vwr.setVibrationOff ();
+this.vwr.setModulation (bs, mod, qtOffset, isQ);
+}});
 Clazz.defineMethod (c$, "navigate", 
 function () {
 var eval = this.e;

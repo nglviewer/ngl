@@ -108,8 +108,8 @@ Swing.setMenu = function(menu) {
 	menu.applet._menus || (menu.applet._menus = {});
 	menu.applet._menus[menu.name] = menu;
 	// Jmol.$after("body",'<ul id="' + menu.id + '" class="jmolPopupMenu"></ul>');
-	Jmol.$(menu.applet, "appletdiv")
-		.append('<ul id="' + menu.id + '" class="jmolPopupMenu"></ul>');
+    Jmol.$(menu.applet, "appletdiv")
+        .append('<ul id="' + menu.id + '" class="jmolPopupMenu"></ul>');
 	menu.setContainer(Jmol.$('#' + menu.id));
 }
 

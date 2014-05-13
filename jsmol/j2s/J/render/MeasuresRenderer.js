@@ -67,8 +67,16 @@ Clazz.defineMethod (c$, "getModAtom",
 var ii = Integer.$valueOf (i);
 var pt = this.mpts.get (ii);
 if (pt != null) ii = null;
-pt = this.ms.getDynamicAtom (i, pt);
-if (ii != null) this.mpts.put (ii, pt);
+var v = this.ms.getVibration (i, false);
+var a = this.ms.at[i];
+if (v == null) {
+pt = a;
+} else {
+if (pt == null) pt =  new JU.Point3fi ();
+pt.setT (a);
+if (this.vwr.tm.vibrationOn) this.vwr.tm.getVibrationPoint (v, pt, NaN);
+pt.sD = -1;
+}if (ii != null) this.mpts.put (ii, pt);
 return pt;
 }, "~N");
 Clazz.defineMethod (c$, "renderMeasurement", 

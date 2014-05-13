@@ -595,14 +595,17 @@ function (a, t, iSym, reset, symmetry) {
 if (this.ptTemp == null) {
 this.ptTemp =  new JU.P3 ();
 this.mTemp =  new JU.M3 ();
-}return a.addTensor ((J.api.Interface.getUtil ("Tensor")).setFromEigenVectors (symmetry.rotateAxes (iSym, t.eigenVectors, this.ptTemp, this.mTemp), t.eigenValues, t.isIsotropic ? "iso" : t.type, t.id), null, reset);
+}return a.addTensor ((J.api.Interface.getUtil ("Tensor")).setFromEigenVectors (symmetry.rotateAxes (iSym, t.eigenVectors, this.ptTemp, this.mTemp), t.eigenValues, t.isIsotropic ? "iso" : t.type, t.id, t), null, reset);
 }, "J.adapter.smarter.Atom,JU.Tensor,~N,~B,J.api.SymmetryInterface");
 Clazz.defineMethod (c$, "setTensors", 
 function () {
 var n = this.asc.ac;
 for (var i = this.asc.getLastAtomSetAtomIndex (); i < n; i++) {
 var a = this.asc.atoms[i];
+if (a.anisoBorU == null) continue;
 a.addTensor (this.symmetry.getTensor (a.anisoBorU), null, false);
+if (Float.isNaN (a.bfactor)) a.bfactor = a.anisoBorU[7] * 100;
+a.anisoBorU = null;
 }
 });
 Clazz.defineStatics (c$,

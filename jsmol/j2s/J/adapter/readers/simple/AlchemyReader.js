@@ -45,8 +45,8 @@ Clazz.defineMethod (c$, "readBonds",
  function () {
 for (var i = this.bondCount; --i >= 0; ) {
 var tokens = J.adapter.smarter.AtomSetCollectionReader.getTokensStr (this.rd ());
-var atomSerial1 = this.parseIntStr (tokens[1]);
-var atomSerial2 = this.parseIntStr (tokens[2]);
+var atomSerial1 = tokens[1];
+var atomSerial2 = tokens[2];
 var sOrder = (tokens.length < 4 ? "1" : tokens[3].toUpperCase ());
 var order = 0;
 switch (sOrder.charAt (0)) {
@@ -70,7 +70,7 @@ case 'H':
 order = 2048;
 break;
 }
-this.asc.addNewBondWithMappedSerialNumbers (atomSerial1, atomSerial2, order);
+this.asc.addNewBondFromNames (atomSerial1, atomSerial2, order);
 }
 });
 });

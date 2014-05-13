@@ -22,7 +22,6 @@ if (cr.key.equals ("_cell_subsystem_code")) {
 this.processSubsystemLoopBlock ();
 return 1;
 }if (!cr.key.startsWith ("_cell_wave") && !cr.key.contains ("fourier") && !cr.key.contains ("_special_func")) return 0;
-if (this.modAverage) return -1;
 if (cr.asc.iSet < 0) cr.asc.newAtomSet ();
 cr.parseLoopParameters (J.adapter.readers.cif.MSCifReader.modulationFields);
 var tok;
@@ -89,8 +88,8 @@ case 33:
 atomLabel = this.field;
 break;
 case 12:
-if (this.modAxes != null && this.modAxes.indexOf (axis.toUpperCase ()) < 0) ignore = true;
 axis = this.field;
+if (this.modAxes != null && this.modAxes.indexOf (axis.toUpperCase ()) < 0) ignore = true;
 break;
 case 34:
 axis = this.field.toUpperCase ();

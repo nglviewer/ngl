@@ -346,8 +346,7 @@ while (this.rd ().indexOf ('=') < 0) this.getTensor (atoms[this.readOutputAtomIn
 Clazz.defineMethod (c$, "readOutputAtomIndex", 
  function () {
 this.tokens = J.adapter.smarter.AtomSetCollectionReader.getTokensStr (this.line);
-var name = this.tokens[0] + this.tokens[1];
-return this.asc.getAtomIndexFromName (name);
+return this.asc.getAtomIndex (this.tokens[0] + this.tokens[1]);
 });
 Clazz.defineMethod (c$, "getTensor", 
  function (atom, line0) {

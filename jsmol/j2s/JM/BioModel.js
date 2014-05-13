@@ -247,14 +247,14 @@ groupCount = groups.length;
 var group = groups[i];
 if (Clazz.instanceOf (group, JM.Monomer)) {
 var monomer = group;
-if (monomer.getBioPolymer () != null && (!modelsExcluded.get (monomer.getModelIndex ()))) monomer.setBioPolymer (null, -1);
+if (monomer.bioPolymer != null && (!modelsExcluded.get (monomer.getModelIndex ()))) monomer.setBioPolymer (null, -1);
 }}
 for (var i = baseGroupIndex; i < groupCount; ++i) {
 var g = groups[i];
 var model = g.getModel ();
 if (!model.isBioModel || !(Clazz.instanceOf (g, JM.Monomer))) continue;
 var doCheck = checkConnections && !this.ms.isJmolDataFrameForModel (this.ms.at[g.firstAtomIndex].mi);
-var bp = ((g).getBioPolymer () == null ? JM.Resolver.allocateBioPolymer (groups, i, doCheck) : null);
+var bp = ((g).bioPolymer == null ? JM.Resolver.allocateBioPolymer (groups, i, doCheck) : null);
 if (bp == null || bp.monomerCount == 0) continue;
 (model).addBioPolymer (bp);
 i += bp.monomerCount - 1;
