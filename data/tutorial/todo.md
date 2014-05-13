@@ -22,7 +22,7 @@ Ideas
   * allows for fast static scene loading
   * workflow: export from Jmol with NGL as renderer => import in standalone NGL
   * re-use three.js export & import functions - possible?
-* rendererStats do not play well with a Composer
+* [rendererStats](https://github.com/jeromeetienne/threex.rendererstats/blob/master/threex.rendererstats.js) do not play well with a Composer
 * Alternative GUI
   * [xgui](https://github.com/oosmoxiecode/xgui.js)
 
