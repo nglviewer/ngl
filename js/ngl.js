@@ -1530,7 +1530,7 @@ NGL.PointBuffer = function ( position, color ) {
     
     this.size = position.length / 3;
 
-    this.material = new THREE.ParticleSystemMaterial({
+    this.material = new THREE.PointCloudMaterial({
         vertexColors: true,
         sizeAttenuation: false,
         fog: true
@@ -1542,10 +1542,10 @@ NGL.PointBuffer = function ( position, color ) {
         'position', new THREE.BufferAttribute( position, 3 )
     );
     this.geometry.addAttribute(
-        'color', new THREE.Float32Attribute( color, 3 )
+        'color', new THREE.BufferAttribute( color, 3 )
     );
 
-    this.mesh = new THREE.ParticleSystem( this.geometry, this.material );
+    this.mesh = new THREE.PointCloud( this.geometry, this.material );
 
 }
 
