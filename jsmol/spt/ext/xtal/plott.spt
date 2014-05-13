@@ -1,0 +1,88 @@
+// plott.spt
+// author: Bob Hanson 12/10/2013 9:47:25 AM
+// Requires bugfix Jmol 14.0.1_12.10.13
+
+// plott(@1) 
+// returns list of t fa fb fc ua ub uc  mx my mz  px py pz
+// where t runs from 0 to 1 by 0.02
+// fa fb fc are modulations using basis { a, b, and c } (fractional)
+// ua ub uc are modulations using basis { a/|a|, b/|b|, and c/|c| } (skew Cartesian)
+// mx my mz are modulations using basis { x, y, z } (Cartesian)
+// px py pz is the modulated position (Cartesian)
+
+// plott(@1,@2) 
+// returns list of t d
+// where t runs from 0 to 1 by 0.02
+// d is the Cartesian distance between the two modulated atoms
+
+//load c:/temp/sr2.cif {1 1 1}
+//spacefill 0.1;wireframe 0.05
+//moveto /* time, axisAngle */ 1.0 { 620 604 -501 123.42} /* zoom, translation */  56.76 -4.42 3.18  /* center, rotationRadius */ {1.9768493 13.3745 2.8501} 10.011758 /* navigation center, translation, depth */ {0 0 0} 0 0 0 /* cameraDepth, cameraX, cameraY */  3.0 0.0 0.0;
+
+
+function plott(a, a2) {
+    d = []       // data to clipboard
+    at = []      // times
+  
+  if (a2) {
+  
+  print "plott for distance: " + a.label() + " --- "  + a2.label()
+
+    select ON a or a2
+    //measure delete
+    //set measurementunits angstroms
+    //measure @a @a2    
+    am = [] // distance measurements
+    
+    var p1 = a.modulation(1e10)[1]
+    var p2 = a2.modulation(1e10)[1]
+    for (var i = 0; i <= 50; i++) {
+      var t = i / 50.0;
+      at.push(t);
+      var b1 = a.modulation(t)[1];
+      var b2 = b.modulation(t)[1];
+      var m = distance((p1 + b1).xyz, (p2 + b2).xyz);
+      am.push(m);      
+    }
+
+    d = at.add("\t", am)
+    
+    print "min: " + am.min + " max: " + am.max + " ave: " + am.average + " stddev: " + am.stddev
+    
+  } else {
+  
+    select ON a 
+    
+  print "plott for atom " + a.label();
+  
+    // sloppily leaving several globals, as they might be useful
+    
+    af = []      // fractional coord modulations
+    au = []      // fractional scaled by a, b, and c
+    am = []      // Cartesian modulations (same as au if a, b, and c are orthogonal)
+    f0 = {0 0 0} // unmodulated position (t >= 1e6)
+    ap = []      // modulated positions
+    
+    f0 = a.modulation(1e10)[1]    
+    for (var i = 0; i <= 50; i++) {
+      var t = i / 50.0;
+      at.push(t);
+      af.push(a.modulation(t)[1]);
+    }
+    au = af.mul3({1 1 1/1})
+    am = af.xyz
+    ap = af.add(f0).xyz
+    d = at.add("\t", af).add("\t", au).add("\t",am).add("\t",ap)
+  }
+  d = d.replace("}","").replace("{","");
+  print d
+}
+
+print "plott(a) or plott(a,b)"
+
+//plott(@1)
+
+//plott(@1, @9)
+
+//plott(@1 @30)
+

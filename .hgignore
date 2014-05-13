@@ -1,0 +1,7 @@
+syntax: glob
+
+*.sublime-project
+*.sublime-workspace
+
+build/jsdoc/.*
+doc/*

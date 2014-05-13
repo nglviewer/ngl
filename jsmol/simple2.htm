@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>JSmol -- platform-aware Jmol using jQuery</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<script type="text/javascript" src="JSmol.min.js"></script>
+
+<script type="text/javascript">
+//<![CDATA[
+
+// simple2.htm: demonstration of using platform-aware Jmol with jQuery
+// author: Bob Hanson hansonr@stolaf.edu 8/11/2012 8:21:03 AM
+
+// ---------------------------------------------------------------------------------
+
+////// special stuff just for this particular page
+
+var s = unescape(document.location.search);
+var xxxx = s.split("_USE=")[0]
+if (xxxx.length < 2) {
+	xxxx = "ethanol"
+	script = 'set errorCallback "myCallback";'
+	+'set zoomlarge false;set echo top left;echo loading XXXX...;refresh;'
+	+'load ":XXXX";set echo top center;echo XXXX;'
+	+''
+	script = script.replace(/XXXX/g, xxxx)
+} else {
+	script = xxxx.substring(1)
+}
+
+// ---------------------------------------------------------------------------------
+
+////// every page will need one variable and one Info object for each applet object
+
+var Info = {
+	width: 450,
+	height: 450,
+	script: script,
+	use: "HTML5",
+	jarPath: "java",
+	j2sPath: "j2s",
+	jarFile: "JmolApplet.jar",
+	isSigned: false,
+	addSelectionOptions: false,
+	serverURL: "http://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php",
+	readyFunction: null,
+	console: "jmol_infodiv",
+	disableInitialConsole: true,
+	defaultModel: null,
+	debug: false
+}
+
+	// this next bit just allows us to see what platform we are on
+	// based on our decisions indicated in Info
+
+	// "true" here indicates just a check
+
+	Jmol.getApplet("appletCheck", Info, true);
+	var isApplet = (appletCheck._jmolType.indexOf("_Applet") >= 0);
+	var is2D = appletCheck._is2D;
+
+	if (!isApplet && !Info.script) {
+
+		// JSmol or image
+
+		Info.defaultModel = "$tylenol";
+		Info.script = "#alt:LOAD :tylenol";
+
+	}
+
+
+var jmol = "jmol"; // the JavaScript applet object
+
+// The actual applet will be jmol._applet (if it turns out to be an actual Applet),
+// but we will never access that directly.
+
+$(document).ready(function(){	
+	
+	// set Jmol to simply create the code and not use document.write
+	
+	Jmol.setDocument(0);
+	// now we have a JavaScript Object "jmol" and jmol._code is the HTML
+	// we will need later
+	
+	// This demonstration shows that
+	// what is put on the page can depend upon the platform.
+
+  // It may seem strange or uncessary in what is below to use the syntax  
+	// 
+	//  Jmol.jmolXXXX(jmol,...)
+	//
+	// instead of just 
+	//
+	//  jmol.XXXX(...)
+	//
+	// This was an intentional design decision. 
+	// The reason has to do with flexibility, organization, and legacy:
+	// 
+	// It allows us to be much more flexible in that jmol is allowed to be just the string "jmol"
+	// (which allows us to create controls on the page before the applet wrapper object is created
+	//  when using more traditional in-body scripting if we are not interested in platforms).
+	//
+	// It allowed me to put all the controls in (optional) Jmol.controls, which is a bit cleaner
+	// than just having all the controls in the jmol applet wrapper prototype (which would be OK, 
+	// but would require copying, possibly with modification, in the case we have other 
+	// related prototypes such as glMol, ChemDoodle, JSpecView, or JME
+	//
+	// It allows users of Jmol.js to easily migrate to this system -- just add "Jmol." in front of 
+	// the legacy call jmolXXXX(...) and add the applet reference as the first parameter.
+	// 
+	// Note that the use of $(document.ready()) is completely optional. 
+	// You can do the traditional in-body coding if you want. See also simple2-nojq.htm.
+	// But as Gusts Kaksis pointed out, if we are using jQuery for database lookups, we might
+	// as well use it for more than that. 
+	// If you do not use $(document.ready()), be sure to define jmol this way:
+	//
+	// jmol = "jmol"
+	//
+	// prior to calling any of the methods that create controls -- jmolButton, jmolLink, etc.
+	// and, if you do that, realize that you cannot implement any platform-aware features. 
+	//
+  
+  var radios = [
+		["set background white", "white", true],
+		["set background black", "black"]
+		];
+
+		$("#leftpanel").html(
+		  '<a target="_blank" href="data/chairflip.png">images</a> '
+			+ '<a target="_blank" href="simple2.htm?cd%20data%3Bscript%20cyclflip2.spt;//&_USE=' + Info.use + '">cyclohexane ring flip</a> '
+			+ '<a href="simple2.htm?_USE=' + Info.use + '">back</a><br />'
+			+ (true || isApplet ? 
+			'Drag-Minimize '
+			+ Jmol.jmolLink(jmol,"set picking dragMinimize", "on")  
+			+ "    " + Jmol.jmolLink(jmol,"set picking ident", "off")
+			: "")
+
+			+ "<br />Model Kit Mode "
+			+ Jmol.jmolLink(jmol,"set modelkitmode", "on")
+			+ "    "
+			+ Jmol.jmolLink(jmol,"set modelkitmode off", "off")
+			+ "<br />Display calculated MMFF94 energy "
+			+ Jmol.jmolLink(jmol,"set minimizationSteps 200;set loadstructcallback 'minimize energy';set minimizationcallback '';set echo top left;echo @{'' + _minimizationEnergy + ' ' + energyUnits + '/mol'};minimize energy", "on")
+			+ "    "
+			+ Jmol.jmolLink(jmol,"echo @{''};set minimizationCallback '';set loadstructcallback ''", "off")
+			+ "<br />Energy Units "
+			+ Jmol.jmolLink(jmol,"set energyunits kcal;minimize energy", "kcal/mol")
+			+ "    "
+			+ Jmol.jmolLink(jmol,"set energyunits kJ;minimize energy", "kJ/mol")
+			+ "<br />Background: "
+			+ Jmol.jmolRadioGroup(jmol, radios)
+		);
+
+  // the HTML code is in jmol._code since we are using Jmol.setDocument(0)
+			Jmol.getApplet("jmol", Info);
+
+  	$("#middlepanel").html(Jmol.getAppletHtml(jmol));
+
+  // right panel
+  
+	Jmol.setButtonCss(null, "style='width:160px'");	
+	$("#rightpanel").html(
+		Jmol.jmolButton(jmol,"if (!molname) { molname = 'tylenol'};var x = prompt('Enter the name or identifier (SMILES, InChI, CAS) of a molecule',molname);if (!x) { quit }; molname = x; load @{'$' + molname} #alt:LOAD $??Enter a model name","Load MOL (NCI)")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"if (!molname) { molname = 'tylenol'};var x = prompt('Enter the name of a compound',molname);if (!x) { quit }; molname = x; load @{':' + molname} #alt:LOAD :??Enter a model name","Load MOL (PubChem)")
+		+ (isApplet ? 
+		"<br />"
+		+ Jmol.jmolButton(jmol,(isApplet ? "minimize" : "set forceField UFF;minimize"),"Minimize (MMFF94)")
+		: "")
+ 		+ (isApplet ?
+		"<br />"
+		+ Jmol.jmolButton(jmol,"load ? ","Load URL")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"load ? ","Load FILE")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"script ?.spt","Load SCRIPT")
+		: "")
+		+ "<br /><br />"
+		+ Jmol.jmolButton(jmol,"select *;if ($s1) {isosurface s1 delete} else {calculate partialcharge;isosurface s1 vdw map MEP translucent}","show/hide MEP")
+		+ "<br /><br />"
+		+ (isApplet ?
+		Jmol.jmolButton(jmol,"show NMR","Predict NMR")
+		+ "<br /><br />"
+		+ Jmol.jmolButton(jmol,"write FILE ?","Save FILE")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"write PNGJ ?.png","Save PNG")
+		+ "<br /><br /><a href=simple2.htm?_USE=HTML5>HTML5 version</a>"
+		+ "<br /><br /><a href=simple2.htm?_USE=SIGNED>(Signed) Java version</a>"
+		+ "<br /><br />" + Jmol.jmolLink(jmol, "JSCONSOLE", "show info")
+		: 
+		"<br /><br />"
+		+ Jmol.jmolButton(jmol,"write FILE ?","Save FILE")
+		+ "<br />"
+		+ Jmol.jmolButton(jmol,"write PNGJ ?.png","Save PNG")
+		+ "<br /><br /><a href=simple2.htm?_USE=SIGNED>JAVA version</a>"
+    + "<br /><br /><a href=javascript:Jmol.showInfo(jmol,true)>show info</a>"
+    )
+	);
+	
+	// lower panel:
+			
+	Jmol.setButtonCss(null,"style='width:120px'");
+	var s = "<br />"
+		+ Jmol.jmolButton(jmol,"wireframe -0.1 #alt:SETTING Line", "wireframe")
+		+ Jmol.jmolButton(jmol,"spacefill only;spacefill 23%;wireframe 0.15 #alt:SETTING Ball and Stick","ball&stick");
+		s += Jmol.jmolButton(jmol,"spacefill #alt:SETTING van der Waals Spheres", "spacefill");	
+		Jmol.setButtonCss(null,"style='width:100px'");
+	
+		s += "<br />"
+
+    s += Jmol.jmolButton(jmol,"console");
+		
+    s += Jmol.jmolCommandInput(jmol);
+    
+    
+	$("#lowerpanel").html(s);
+})
+
+//]]>
+
+</script>
+</head>
+<body>
+<table style="margin-left:auto; margin-right:auto;">
+	<tr>
+		<td><div id="leftpanel"></div></td>
+		<td><div id="middlepanel"></div></td>
+		<td><div id="rightpanel"></div></td>
+	</tr>
+	<tr>
+		<td></td>
+		<td style="text-align:center"><div id="lowerpanel"></div></td>
+		<td></td>
+	</tr>
+</table>
+<div id="console"></div>
+</body>
+</html>
