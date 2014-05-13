@@ -1,25 +1,23 @@
 #!/usr/bin/env python
 
-import sys
 import BaseHTTPServer
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
+import argparse
 
-HandlerClass = SimpleHTTPRequestHandler
-ServerClass  = BaseHTTPServer.HTTPServer
-Protocol     = "HTTP/1.0"
+parser = argparse.ArgumentParser( description='NGL development server.' )
+parser.add_argument( '-p', '--port', type=int, default=8010 )
+parser.add_argument( '-g', '--globally', action='store_true' )
 
-if sys.argv[1:]:
-    port = int(sys.argv[1])
-else:
-    port = 8010
-server_address = ('127.0.0.1', port)
-# server_address = ('0.0.0.0', port)
+args = parser.parse_args()
 
-HandlerClass.protocol_version = Protocol
-httpd = ServerClass(server_address, HandlerClass)
+server_address = ( '0.0.0.0' if args.globally else '127.0.0.1', args.port )
+
+SimpleHTTPRequestHandler.protocol_version = "HTTP/1.0"
+httpd = BaseHTTPServer.HTTPServer( server_address, SimpleHTTPRequestHandler )
 
 sa = httpd.socket.getsockname()
 print "Serving HTTP on", sa[0], "port", sa[1], "..."
+
 httpd.serve_forever()
 
