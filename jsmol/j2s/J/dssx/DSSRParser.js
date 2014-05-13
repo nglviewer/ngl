@@ -593,7 +593,7 @@ Clazz.defineMethod (c$, "setRes",
 bs.clearAll ();
 this.getBsAtoms (vwr, res, null, bs, htChains);
 var group = vwr.ms.at[bs.nextSetBit (0)].getGroup ();
-(group.getBioPolymer ()).isDssrSet = true;
+(group.bioPolymer).isDssrSet = true;
 return group;
 }, "JV.Viewer,~S,JU.BS,java.util.Map");
 Clazz.overrideMethod (c$, "getHBonds", 

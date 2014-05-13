@@ -58,9 +58,9 @@
 ){
 var $t$;
 //var c$;
-___JmolDate="$Date: 2014-04-28 21:55:28 -0500 (Mon, 28 Apr 2014) $"
+___JmolDate="$Date: 2014-05-06 15:22:26 -0500 (Tue, 06 May 2014) $"
 ___fullJmolProperties="src/org/jmol/viewer/Jmol.properties"
-___JmolVersion="14.1.14"
+___JmolVersion="14.1.15_2014.05.06"
 // JSmolJavaExt.js
 // will be wrapped by anonymous function using ANT in build_03_tojs.xml
 
@@ -13328,6 +13328,10 @@ var k = e.getKey ();
 if (JU.PT.isLike (k, key)) h2.put (k, e.getValue ());
 }
 }, "java.util.Map,~S,java.util.Map");
+c$.clean = Clazz_defineMethod (c$, "clean", 
+function (s) {
+return JU.PT.rep (JU.PT.replaceAllCharacters (s, " \t\n\r", " "), "  ", " ").trim ();
+}, "~S");
 Clazz_defineStatics (c$,
 "tensScale", [10, 100, 1000, 10000, 100000, 1000000],
 "decimalScale", [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001],
@@ -15145,8 +15149,8 @@ if (this.isV3000) {
 this.checkLineContinuation ();
 var tokens = this.getTokens ();
 order = this.parseIntStr (tokens[3]);
-iAtom1 = this.parseIntStr (tokens[4]);
-iAtom2 = this.parseIntStr (tokens[5]);
+iAtom1 = tokens[4];
+iAtom2 = tokens[5];
 for (var j = 6; j < tokens.length; j++) {
 var s = tokens[j].toUpperCase ();
 if (s.startsWith ("CFG=")) {
@@ -15158,19 +15162,19 @@ tokens = J.adapter.smarter.AtomSetCollectionReader.getTokensAt (this.line, this.
 var n = this.parseIntStr (tokens[0]);
 order = this.fixOrder (order, 0);
 for (var k = 1; k <= n; k++) {
-iAtom2 = this.parseIntStr (tokens[k]);
-this.asc.addNewBondWithMappedSerialNumbers (iAtom1, iAtom2, order);
+iAtom2 = tokens[k];
+this.asc.addNewBondFromNames (iAtom1, iAtom2, order);
 }
 break;
 }}
 } else {
-iAtom1 = this.parseIntRange (this.line, 0, 3);
-iAtom2 = this.parseIntRange (this.line, 3, 6);
+iAtom1 = this.line.substring (0, 3).trim ();
+iAtom2 = this.line.substring (3, 6).trim ();
 order = this.parseIntRange (this.line, 6, 9);
 if (this.is2D && order == 1 && this.line.length >= 12) stereo = this.parseIntRange (this.line, 9, 12);
 }order = this.fixOrder (order, stereo);
-if (this.haveAtomSerials) this.asc.addNewBondWithMappedSerialNumbers (iAtom1, iAtom2, order);
- else this.asc.addNewBondWithOrder (this.iatom0 + iAtom1 - 1, this.iatom0 + iAtom2 - 1, order);
+if (this.haveAtomSerials) this.asc.addNewBondFromNames (iAtom1, iAtom2, order);
+ else this.asc.addNewBondWithOrder (this.iatom0 + this.parseIntStr (iAtom1) - 1, this.iatom0 + this.parseIntStr (iAtom2) - 1, order);
 }
 if (this.isV3000) this.discardLinesUntilContains ("END BOND");
 }, "~N");
@@ -15469,7 +15473,7 @@ return (this.atom.vib == null || Float.isNaN (this.atom.vib.z) ? null : this.ato
 });
 Clazz_overrideMethod (c$, "getBfactor", 
 function () {
-return Float.isNaN (this.atom.bfactor) && this.atom.anisoBorU != null ? this.atom.anisoBorU[7] * 100 : this.atom.bfactor;
+return this.atom.bfactor;
 });
 Clazz_overrideMethod (c$, "getOccupancy", 
 function () {
@@ -15547,7 +15551,6 @@ this.xtalSymmetry = null;
 this.bondIndex0 = 0;
 this.checkSpecial = true;
 this.atomSymbolicMap = null;
-this.haveMappedSerials = false;
 this.haveUnitCell = false;
 Clazz_instantialize (this, arguments);
 }, J.adapter.smarter, "AtomSetCollection");
@@ -15928,14 +15931,22 @@ return atom;
 Clazz_defineMethod (c$, "addAtomWithMappedName", 
 function (atom) {
 var atomName = this.addAtom (atom).atomName;
-if (atomName != null) this.atomSymbolicMap.put (atomName, Integer.$valueOf (atom.index));
+if (atomName != null) this.atomSymbolicMap.put (atomName, atom);
 }, "J.adapter.smarter.Atom");
 Clazz_defineMethod (c$, "addAtomWithMappedSerialNumber", 
 function (atom) {
 var atomSerial = this.addAtom (atom).atomSerial;
-if (atomSerial != -2147483648) this.atomSymbolicMap.put (Integer.$valueOf (atomSerial), Integer.$valueOf (atom.index));
-this.haveMappedSerials = true;
+if (atomSerial != -2147483648) this.atomSymbolicMap.put ("" + atomSerial, atom);
 }, "J.adapter.smarter.Atom");
+Clazz_defineMethod (c$, "getAtomFromName", 
+function (atomName) {
+return this.atomSymbolicMap.get (atomName);
+}, "~S");
+Clazz_defineMethod (c$, "getAtomIndex", 
+function (name) {
+var a = this.atomSymbolicMap.get (name);
+return (a == null ? -1 : a.index);
+}, "~S");
 Clazz_defineMethod (c$, "addNewBondWithOrder", 
 function (atomIndex1, atomIndex2, order) {
 if (atomIndex1 < 0 || atomIndex1 >= this.ac || atomIndex2 < 0 || atomIndex2 >= this.ac) return null;
@@ -15945,12 +15956,12 @@ return bond;
 }, "~N,~N,~N");
 Clazz_defineMethod (c$, "addNewBondFromNames", 
 function (atomName1, atomName2, order) {
-return this.addNewBondWithOrder (this.getAtomIndexFromName (atomName1), this.getAtomIndexFromName (atomName2), order);
+return this.addNewBondWithOrderA (this.getAtomFromName (atomName1), this.getAtomFromName (atomName2), order);
 }, "~S,~S,~N");
-Clazz_defineMethod (c$, "addNewBondWithMappedSerialNumbers", 
-function (atomSerial1, atomSerial2, order) {
-return this.addNewBondWithOrder (this.getAtomIndexFromSerial (atomSerial1), this.getAtomIndexFromSerial (atomSerial2), order);
-}, "~N,~N,~N");
+Clazz_defineMethod (c$, "addNewBondWithOrderA", 
+function (atom1, atom2, order) {
+return (atom1 == null || atom2 == null ? null : this.addNewBondWithOrder (atom1.index, atom2.index, order));
+}, "J.adapter.smarter.Atom,J.adapter.smarter.Atom,~N");
 Clazz_defineMethod (c$, "addBond", 
 function (bond) {
 if (this.trajectoryStepCount > 0) return;
@@ -16003,7 +16014,7 @@ if (this.atoms[i].atomSite == atomSite) this.addVibrationVector (i, vx, vy, vz);
 Clazz_defineMethod (c$, "addVibrationVector", 
 function (iatom, x, y, z) {
 if (!this.allowMultiple) iatom = iatom % this.ac;
-this.atoms[iatom].vib = JU.V3.new3 (x, y, z);
+return (this.atoms[iatom].vib = JU.V3.new3 (x, y, z));
 }, "~N,~N,~N,~N");
 Clazz_defineMethod (c$, "setAtomSetSpaceGroupName", 
 function (spaceGroupName) {
@@ -16021,10 +16032,12 @@ this.haveAnisou = true;
 atom.anisoBorU = data;
 data[6] = type;
 }, "J.adapter.smarter.Atom,~A,~N");
-Clazz_defineMethod (c$, "getAnisoBorU", 
-function (atom) {
-return atom.anisoBorU;
-}, "J.adapter.smarter.Atom");
+Clazz_defineMethod (c$, "setU", 
+function (atom, i, val) {
+var data = atom.anisoBorU;
+if (data == null) this.setAnisoBorU (atom, data =  Clazz_newFloatArray (8, 0), 8);
+data[i] = val;
+}, "J.adapter.smarter.Atom,~N,~N");
 Clazz_defineMethod (c$, "getXSymmetry", 
 function () {
 if (this.xtalSymmetry == null) this.xtalSymmetry = (J.api.Interface.getOption ("adapter.smarter.XtalSymmetry")).set (this);
@@ -16049,30 +16062,7 @@ this.checkSpecial = TF;
 Clazz_defineMethod (c$, "clearSymbolicMap", 
 function () {
 this.atomSymbolicMap.clear ();
-this.haveMappedSerials = false;
 });
-Clazz_defineMethod (c$, "createAtomSerialMap", 
-function () {
-if (this.haveMappedSerials || this.iSet < 0) return;
-for (var i = this.getLastAtomSetAtomCount (); i < this.ac; i++) {
-var atomSerial = this.atoms[i].atomSerial;
-if (atomSerial != -2147483648) this.atomSymbolicMap.put (Integer.$valueOf (atomSerial), Integer.$valueOf (i));
-}
-this.haveMappedSerials = true;
-});
-Clazz_defineMethod (c$, "getAtomIndexFromName", 
-function (atomName) {
-return this.getMapIndex (atomName);
-}, "~S");
-Clazz_defineMethod (c$, "getAtomIndexFromSerial", 
-function (serialNumber) {
-return this.getMapIndex (Integer.$valueOf (serialNumber));
-}, "~N");
-Clazz_defineMethod (c$, "getMapIndex", 
- function (nameOrNum) {
-var value = this.atomSymbolicMap.get (nameOrNum);
-return (value == null ? -1 : value.intValue ());
-}, "~O");
 Clazz_defineMethod (c$, "setInfo", 
 function (key, value) {
 if (value == null) this.ascAuxiliaryInfo.remove (key);
@@ -16090,7 +16080,7 @@ return true;
 }, "~S");
 Clazz_defineMethod (c$, "mapPartialCharge", 
 function (atomName, charge) {
-this.atoms[this.getAtomIndexFromName (atomName)].partialCharge = charge;
+this.getAtomFromName (atomName).partialCharge = charge;
 }, "~S,~N");
 Clazz_defineMethod (c$, "getAtomSetCollectionAuxiliaryInfo", 
 function (key) {
@@ -17030,6 +17020,7 @@ Clazz_defineMethod (c$, "applySymTrajASCR",
 function () {
 if (this.forcePacked) this.initializeSymmetryOptions ();
 var sym = (this.iHaveUnitCell && this.doCheckUnitCell ? this.asc.getXSymmetry ().applySymmetryFromReader (this, this.getSymmetry ()) : null);
+if (sym == null) this.asc.setTensors ();
 if (this.isTrajectory) this.asc.setTrajectory ();
 this.initializeSymmetry ();
 return sym;
@@ -17392,12 +17383,6 @@ Clazz_defineMethod (c$, "setChainID",
 function (atom, ch) {
 atom.chainID = this.vwr.getChainID ("" + ch);
 }, "J.adapter.smarter.Atom,~S");
-Clazz_defineMethod (c$, "setU", 
-function (atom, i, val) {
-var data = this.asc.getAnisoBorU (atom);
-if (data == null) this.asc.setAnisoBorU (atom, data =  Clazz_newFloatArray (8, 0), 8);
-data[i] = val;
-}, "J.adapter.smarter.Atom,~N,~N");
 Clazz_overrideMethod (c$, "readNextLine", 
 function () {
 if (this.rd () != null && this.line.indexOf ("#jmolscript:") >= 0) this.checkCurrentLineForScript ();
@@ -25323,13 +25308,15 @@ case 4:
 if ((x.value).indexOf (".") >= 0) return Float.$valueOf (JS.SV.toFloat (x.value));
 iValue = Clazz_floatToInt (JS.SV.toFloat (x.value));
 break;
+case 8:
+return Float.$valueOf ((x.value).length ());
 default:
 iValue = 0;
 }
 return Integer.$valueOf (iValue);
 }, "JS.T");
 c$.bValue = Clazz_defineMethod (c$, "bValue", 
- function (x) {
+function (x) {
 switch (x == null ? 0 : x.tok) {
 case 1048589:
 case 6:
@@ -25827,13 +25814,14 @@ c$.sprintf = Clazz_defineMethod (c$, "sprintf",
 function (strFormat, $var) {
 if ($var == null) return strFormat;
 var vd = (strFormat.indexOf ("d") >= 0 || strFormat.indexOf ("i") >= 0 ?  Clazz_newIntArray (1, 0) : null);
+var isArray = ($var.tok == 7);
 var vf = (strFormat.indexOf ("f") >= 0 ?  Clazz_newFloatArray (1, 0) : null);
 var ve = (strFormat.indexOf ("e") >= 0 ?  Clazz_newDoubleArray (1, 0) : null);
 var getS = (strFormat.indexOf ("s") >= 0);
-var getP = (strFormat.indexOf ("p") >= 0 && $var.tok == 8);
-var getQ = (strFormat.indexOf ("q") >= 0 && $var.tok == 9);
+var getP = (strFormat.indexOf ("p") >= 0 && (isArray || $var.tok == 8));
+var getQ = (strFormat.indexOf ("q") >= 0 && (isArray || $var.tok == 9));
 var of = [vd, vf, ve, null, null, null];
-if ($var.tok != 7) return JS.SV.sprintf (strFormat, $var, of, vd, vf, ve, getS, getP, getQ);
+if (!isArray) return JS.SV.sprintf (strFormat, $var, of, vd, vf, ve, getS, getP, getQ);
 var sv = $var.getList ();
 var list2 =  new Array (sv.size ());
 for (var i = 0; i < list2.length; i++) list2[i] = JS.SV.sprintf (strFormat, sv.get (i), of, vd, vf, ve, getS, getP, getQ);
@@ -25956,7 +25944,7 @@ for (var i = 0; i < x.size (); i++) if (!x.get (i).unEscapeBitSetArray (bs) && a
 
 return bs;
 }, "java.util.ArrayList,~B");
-c$.listValue = Clazz_defineMethod (c$, "listValue", 
+c$.strListValue = Clazz_defineMethod (c$, "strListValue", 
 function (x) {
 if (x.tok != 7) return [JS.SV.sValue (x)];
 var sv = (x).getList ();
@@ -26709,7 +26697,6 @@ JS.T.astrType = "nada identifier integer decimal string seqcode hash array point
 "contact", 135402505,
 "add", 1276118017,
 "distance", 1276118018,
-"replace", 1276118019,
 "hkl", 135267841,
 "intersection", 135267842,
 "prompt", 135304707,
@@ -26717,6 +26704,7 @@ JS.T.astrType = "nada identifier integer decimal string seqcode hash array point
 "bin", 1276118529,
 "symop", 1297090050,
 "find", 1276118531,
+"replace", 1276120577,
 "bondmode", 1610612737,
 "fontsize", 1610612738,
 "measurementnumbers", 1610612739,
@@ -26992,7 +26980,8 @@ JS.T.astrType = "nada identifier integer decimal string seqcode hash array point
 "twistedsheets", 603979968,
 "usearcball", 603979969,
 "useminimizationthread", 603979970,
-"usenumberlocalization", 603979972,
+"usenumberlocalization", 603979971,
+"vectorscentered", 603979972,
 "vectorsymmetry", 603979973,
 "waitformoveto", 603979974,
 "windowcentered", 603979975,
@@ -27290,8 +27279,8 @@ JS.T.tokenMap.put (lcase, tokenThis);
 tokenLast = tokenThis;
 }
 arrayPairs = null;
-var sTokens = ["+=", "-=", "*=", "/=", "\\=", "&=", "|=", "not", "!", "xor", "tog", "<", "<=", ">=", ">", "!=", "<>", "LIKE", "within", ".", "..", "[", "]", "{", "}", "$", "%", ";", "++", "--", "**", "\\", "animation", "anim", "assign", "axes", "backbone", "background", "bind", "bondorder", "boundbox", "boundingBox", "break", "calculate", "capture", "cartoon", "cartoons", "case", "catch", "cd", "center", "centre", "centerat", "cgo", "color", "colour", "compare", "configuration", "conformation", "config", "connect", "console", "contact", "contacts", "continue", "data", "default", "define", "@", "delay", "delete", "density", "depth", "dipole", "dipoles", "display", "dot", "dots", "draw", "echo", "ellipsoid", "ellipsoids", "else", "elseif", "end", "endif", "exit", "file", "files", "font", "for", "format", "frame", "frames", "frank", "function", "functions", "geosurface", "getProperty", "goto", "halo", "halos", "helix", "helixalpha", "helix310", "helixpi", "hbond", "hbonds", "help", "hide", "history", "hover", "if", "in", "initialize", "invertSelected", "isosurface", "javascript", "label", "labels", "lcaoCartoon", "lcaoCartoons", "load", "log", "loop", "measure", "measures", "monitor", "monitors", "meshribbon", "meshribbons", "message", "minimize", "minimization", "mo", "model", "models", "modulation", "move", "moveTo", "navigate", "navigation", "origin", "out", "parallel", "pause", "wait", "plot", "plot3d", "pmesh", "polygon", "polyhedra", "print", "process", "prompt", "quaternion", "quaternions", "quit", "ramachandran", "rama", "refresh", "reset", "unset", "restore", "restrict", "return", "ribbon", "ribbons", "rocket", "rockets", "rotate", "rotateSelected", "save", "select", "selectionHalos", "selectionHalo", "showSelections", "sheet", "show", "slab", "spacefill", "cpk", "spin", "ssbond", "ssbonds", "star", "stars", "step", "steps", "stereo", "strand", "strands", "structure", "_structure", "strucNo", "struts", "strut", "subset", "synchronize", "sync", "trace", "translate", "translateSelected", "try", "unbind", "unitcell", "var", "vector", "vectors", "vibration", "while", "wireframe", "write", "zap", "zoom", "zoomTo", "atom", "atoms", "axis", "axisangle", "basepair", "basepairs", "orientation", "orientations", "pdbheader", "polymer", "polymers", "residue", "residues", "rotation", "row", "sequence", "shape", "state", "symbol", "symmetry", "spaceGroup", "transform", "translation", "url", "abs", "absolute", "acos", "add", "adpmax", "adpmin", "align", "altloc", "altlocs", "ambientOcclusion", "amino", "angle", "array", "as", "atomID", "_atomID", "_a", "atomIndex", "atomName", "atomno", "atomType", "atomX", "atomY", "atomZ", "average", "babel", "babel21", "back", "backlit", "balls", "baseModel", "best", "bin", "bondCount", "bottom", "branch", "brillouin", "bzone", "wignerSeitz", "cache", "carbohydrate", "cell", "chain", "chains", "chainNo", "chemicalShift", "cs", "clash", "clear", "clickable", "clipboard", "connected", "context", "constraint", "contourLines", "coord", "coordinates", "coords", "cos", "cross", "covalentRadius", "covalent", "direction", "displacement", "displayed", "distance", "div", "DNA", "dotted", "DSSP", "DSSR", "element", "elemno", "_e", "error", "exportScale", "fill", "find", "fixedTemperature", "forcefield", "formalCharge", "charge", "eta", "front", "frontlit", "frontOnly", "fullylit", "fx", "fy", "fz", "fxyz", "fux", "fuy", "fuz", "fuxyz", "group", "groups", "group1", "groupID", "_groupID", "_g", "groupIndex", "hidden", "highlight", "hkl", "hydrophobicity", "hydrophobic", "hydro", "id", "identify", "ident", "image", "info", "inline", "insertion", "insertions", "intramolecular", "intra", "intermolecular", "inter", "bondingRadius", "ionicRadius", "ionic", "isAromatic", "Jmol", "JSON", "join", "keys", "last", "left", "length", "lines", "list", "magneticShielding", "ms", "mass", "max", "mep", "mesh", "middle", "min", "mlp", "mode", "modify", "modifyOrCreate", "molecule", "molecules", "modelIndex", "monomer", "morph", "movie", "mouse", "mul", "mul3", "nci", "next", "noDots", "noFill", "noMesh", "none", "null", "inherit", "normal", "noContourLines", "nonequivalent", "notFrontOnly", "noTriangles", "now", "nucleic", "occupancy", "omega", "only", "opaque", "options", "partialCharge", "phi", "plane", "planar", "play", "playRev", "point", "points", "pointGroup", "polymerLength", "pop", "previous", "prev", "probe", "property", "properties", "protein", "psi", "purine", "push", "PyMOL", "pyrimidine", "random", "range", "rasmol", "replace", "resno", "resume", "rewind", "reverse", "right", "RNA", "rock", "rubberband", "saSurface", "saved", "scale", "scene", "search", "smarts", "selected", "shapely", "sidechain", "sin", "site", "size", "smiles", "substructure", "solid", "sort", "specialPosition", "sqrt", "split", "starScale", "stddev", "straightness", "structureId", "supercell", "sub", "sum", "sum2", "surface", "surfaceDistance", "symop", "sx", "sy", "sz", "sxyz", "temperature", "relativeTemperature", "tensor", "theta", "thisModel", "ticks", "top", "torsion", "trajectory", "trajectories", "translucent", "triangles", "trim", "type", "ux", "uy", "uz", "uxyz", "user", "valence", "vanderWaals", "vdw", "vdwRadius", "visible", "volume", "vx", "vy", "vz", "vxyz", "xyz", "w", "x", "y", "z", "addHydrogens", "allConnected", "angstroms", "anisotropy", "append", "arc", "area", "aromatic", "arrow", "auto", "barb", "binary", "blockData", "cancel", "cap", "cavity", "centroid", "check", "chemical", "circle", "collapsed", "col", "colorScheme", "command", "commands", "contour", "contours", "corners", "count", "criterion", "create", "crossed", "curve", "cutoff", "cylinder", "diameter", "discrete", "distanceFactor", "downsample", "drawing", "eccentricity", "ed", "edges", "energy", "exitJmol", "faceCenterOffset", "filter", "first", "fixed", "fix", "flat", "fps", "from", "frontEdges", "full", "fullPlane", "functionXY", "functionXYZ", "gridPoints", "homo", "ignore", "InChI", "InChIKey", "increment", "insideout", "interior", "intersection", "intersect", "internal", "lattice", "line", "lineData", "link", "lobe", "lonePair", "lp", "lumo", "manifest", "mapProperty", "map", "maxSet", "menu", "minSet", "modelBased", "molecular", "mrc", "msms", "name", "nmr", "noCross", "noDebug", "noEdges", "noHead", "noLoad", "noPlane", "object", "obj", "offset", "offsetSide", "once", "orbital", "atomicOrbital", "packed", "palindrome", "parameters", "path", "pdb", "period", "periodic", "perpendicular", "perp", "phase", "pocket", "pointsPerAngstrom", "radical", "rad", "reference", "remove", "resolution", "reverseColor", "rotate45", "selection", "sigma", "sign", "silent", "sphere", "squared", "stdInChI", "stdInChIKey", "stop", "title", "titleFormat", "to", "value", "variable", "variables", "vertices", "width", "backgroundModel", "celShading", "celShadingPower", "debug", "defaultLattice", "measurements", "measurement", "scale3D", "toggleLabel", "userColorScheme", "throw", "timeout", "timeouts", "animationMode", "appletProxy", "atomTypes", "axesColor", "axis1Color", "axis2Color", "axis3Color", "backgroundColor", "bondmode", "boundBoxColor", "boundingBoxColor", "currentLocalPath", "dataSeparator", "defaultAngleLabel", "defaultColorScheme", "defaultColors", "defaultDirectory", "defaultDistanceLabel", "defaultDropScript", "defaultLabelPDB", "defaultLabelXYZ", "defaultLoadFilter", "defaultLoadScript", "defaults", "defaultTorsionLabel", "defaultVDW", "drawFontSize", "edsUrlCutoff", "edsUrlFormat", "energyUnits", "fileCacheDirectory", "fontsize", "helpPath", "hoverLabel", "language", "loadFormat", "loadLigandFormat", "logFile", "measurementUnits", "nmrPredictFormat", "nmrUrlFormat", "pathForAllFiles", "picking", "pickingStyle", "pickLabel", "platformSpeed", "propertyColorScheme", "quaternionFrame", "smilesUrlFormat", "smiles2dImageFormat", "unitCellColor", "axesScale", "axisScale", "bondTolerance", "cameraDepth", "defaultDrawArrowScale", "defaultTranslucent", "dipoleScale", "ellipsoidAxisDiameter", "gestureSwipeFactor", "hbondsAngleMinimum", "hbondsDistanceMaximum", "hoverDelay", "loadAtomDataTolerance", "minBondDistance", "minimizationCriterion", "modulationScale", "mouseDragFactor", "mouseWheelFactor", "navFPS", "navigationDepth", "navigationSlab", "navigationSpeed", "navX", "navY", "navZ", "particleRadius", "pointGroupDistanceTolerance", "pointGroupLinearTolerance", "radius", "rotationRadius", "scaleAngstromsPerInch", "sheetSmoothing", "slabRange", "solventProbeRadius", "spinFPS", "spinX", "spinY", "spinZ", "stereoDegrees", "strutDefaultRadius", "strutLengthMaximum", "vectorScale", "vectorSymmetry", "vibrationPeriod", "vibrationScale", "visualRange", "ambientPercent", "ambient", "animationFps", "axesMode", "bondRadiusMilliAngstroms", "bondingVersion", "delayMaximumMs", "diffusePercent", "diffuse", "dotDensity", "dotScale", "ellipsoidDotCount", "helixStep", "hermiteLevel", "historyLevel", "lighting", "logLevel", "meshScale", "minimizationSteps", "minPixelSelRadius", "percentVdwAtom", "perspectiveModel", "phongExponent", "pickingSpinRate", "propertyAtomNumberField", "propertyAtomNumberColumnCount", "propertyDataColumnCount", "propertyDataField", "repaintWaitMs", "ribbonAspectRatio", "scriptReportingLevel", "showScript", "smallMoleculeMaxAtoms", "specular", "specularExponent", "specularPercent", "specPercent", "specularPower", "specpower", "strandCount", "strandCountForMeshRibbon", "strandCountForStrands", "strutSpacing", "zDepth", "zSlab", "zshadePower", "allowEmbeddedScripts", "allowGestures", "allowKeyStrokes", "allowModelKit", "allowMoveAtoms", "allowMultiTouch", "allowRotateSelected", "antialiasDisplay", "antialiasImages", "antialiasTranslucent", "appendNew", "applySymmetryToBonds", "atomPicking", "autobond", "autoFPS", "axesMolecular", "axesOrientationRasmol", "axesUnitCell", "axesWindow", "backboneSteps", "bondModeOr", "bondPicking", "bonds", "bond", "cartoonBaseEdges", "cartoonsFancy", "cartoonFancy", "cartoonLadders", "cartoonRibose", "cartoonRockets", "chainCaseSensitive", "colorRasmol", "debugScript", "defaultStructureDssp", "disablePopupMenu", "displayCellParameters", "dotsSelectedOnly", "dotSurface", "dragSelected", "drawHover", "drawPicking", "dsspCalculateHydrogenAlways", "ellipsoidArcs", "ellipsoidArrows", "ellipsoidAxes", "ellipsoidBall", "ellipsoidDots", "ellipsoidFill", "fileCaching", "fontCaching", "fontScaling", "forceAutoBond", "fractionalRelative", "greyscaleRendering", "hbondsBackbone", "hbondsRasmol", "hbondsSolid", "hetero", "hideNameInPopup", "hideNavigationPoint", "hideNotSelected", "highResolution", "hydrogen", "hydrogens", "imageState", "isKiosk", "isosurfaceKey", "isosurfacePropertySmoothing", "isosurfacePropertySmoothingPower", "justifyMeasurements", "languageTranslation", "leadAtom", "leadAtoms", "legacyAutoBonding", "legacyHAddition", "logCommands", "logGestures", "measureAllModels", "measurementLabels", "measurementNumbers", "messageStyleChime", "minimizationRefresh", "minimizationSilent", "modelkitMode", "monitorEnergy", "multipleBondRadiusFactor", "multipleBondSpacing", "multiProcessor", "navigateSurface", "navigationMode", "navigationPeriodic", "partialDots", "pdbAddHydrogens", "pdbGetHeader", "pdbSequential", "perspectiveDepth", "preserveState", "rangeSelected", "redoMove", "refreshing", "ribbonBorder", "rocketBarrels", "saveProteinStructureState", "scriptQueue", "selectAllModels", "selectHetero", "selectHydrogen", "showAxes", "showBoundBox", "showBoundingBox", "showFrank", "showHiddenSelectionHalos", "showHydrogens", "showKeyStrokes", "showMeasurements", "showMultipleBonds", "showNavigationPointAlways", "showTiming", "showUnitcell", "slabByAtom", "slabByMolecule", "slabEnabled", "smartAromatic", "solvent", "solventProbe", "ssBondsBackbone", "statusReporting", "strutsMultiple", "syncMouse", "syncScript", "testFlag1", "testFlag2", "testFlag3", "testFlag4", "traceAlpha", "twistedSheets", "undo", "undoMove", "useArcBall", "useMinimizationThread", "useNumberLocalization", "waitForMoveTo", "windowCentered", "wireframeRotation", "zeroBasedXyzRasmol", "zoomEnabled", "zoomHeight", "zoomLarge", "zShade"];
-var iTokens = [269484242, -1, -1, -1, -1, -1, -1, 269484144, -1, 269484113, 269484114, 269484435, 269484434, 269484433, 269484432, 269484437, -1, 269484438, 135266325, 1048583, 1048584, 269484096, 269484097, 1048586, 1048590, 1048582, 269484210, 1048591, 269484226, 269484225, 269484227, 269484211, 4097, -1, 4098, 1611272194, 1115297793, 1610616835, 4100, 4101, 1679429641, -1, 102407, 4102, 4103, 1113200642, -1, 102411, 102412, 1069064, 12289, -1, 4105, 135174, 1766856708, -1, 135270405, 1095766024, -1, -1, 4106, 528395, 135402505, -1, 102408, 135270408, 102413, 1060866, -1, 528397, 12291, 1073741914, 554176526, 135175, -1, 1610625028, 1276117505, 1113198595, 135176, 537022465, 1113198596, -1, 364547, 102402, 1150985, 364548, 266255, 1229984263, -1, 4114, 135369224, 1288701959, 4115, -1, 1611272202, 135368713, -1, 1113198597, 1276121098, 20500, 1113200646, -1, 137363467, 3145735, 3145736, 3145738, 1612189718, -1, 20482, 12294, 1610616855, 544771, 135369225, 1073741980, 266264, 4121, 135180, 135287308, 1826248716, -1, 135182, -1, 135271426, 36869, 528410, 1746538509, -1, -1, -1, 1113200647, -1, 20485, 4126, -1, 1183762, 1095766030, -1, 1276121113, 4128, 4130, 4131, -1, 1073742078, 1073742079, 102436, 20487, -1, 4133, 135190, 135188, 1073742106, 135192, 36865, 102439, 135304707, 135270418, -1, 266281, 1052714, -1, 266284, 4141, -1, 4142, 12295, 36866, 1113200649, -1, 1113200650, -1, 528432, 4145, 4146, 135280132, 1611141171, -1, -1, 3145760, 4148, 554176565, 1113200651, -1, 1611141175, 1611141176, -1, 1113200652, -1, 266298, -1, 528443, 1650071565, -1, 1641025539, -1, 1095761941, 1708058, -1, 3158024, 4156, -1, 1113200654, 4160, 4162, 364558, 4164, 1614417948, 36868, 135198, -1, 4166, 102406, 659488, 135270422, 1060873, 4168, 4170, 1141899265, -1, 1073741854, 135266307, 1073741864, -1, 1073742077, -1, 1073742088, 1095761937, -1, 1073742120, -1, 1073742132, 1276117515, 1087373320, 1087373323, 1073742158, 1087375373, 1089470478, 1073742152, 1073742176, 1073742178, 1074790760, 135266826, 1073741826, 135266819, 1276118017, 1112539137, 1112539138, 1073741832, 1087373315, -1, 553648129, 3145730, 135266305, 135266306, 1073741848, 1095761922, -1, -1, 1095761923, 1087375362, 1095763969, 1087375361, 1112541185, 1112541186, 1112541187, 96, 1073741856, 1073741858, 1073741859, 1073741862, 1073741860, 3145776, 1073741863, 1276118529, 1095761924, 1073741871, 1048580, 1073741872, -1, -1, 135270423, 3145764, 1095761925, 1087373316, -1, 1095761927, 1112539139, -1, 1073741881, 1073741882, 3145766, 1073741884, 135266310, 14, 1073741894, 1073741898, 1048581, -1, -1, 135266821, 135267329, 1112539140, -1, 1073741918, 1073741922, 3145768, 1276118018, 1276117504, 3145732, 1073741926, 1073741915, 1073741916, 1087375365, 1095763978, 1095761929, 1073741935, 570425358, 1073741938, 1276118531, 1073741946, 545259560, 1632634891, -1, 1112539141, 1073741954, 1073741958, 1073741960, 1073741964, 1112541188, 1112541189, 1112541190, 1146095627, 1112541191, 1112541192, 1112541193, 1146095629, 1087373318, -1, 1087373319, 1095761932, -1, -1, 1095761933, 3145770, 536870920, 135267841, 1114638362, -1, -1, 1074790550, 1087373321, -1, 1073741979, 1073741982, 1073741983, 1087373322, -1, 1073741989, -1, 1073741990, -1, 1112541195, -1, -1, 1048585, 1073741991, 1073741992, 1276117506, 1141899281, 1073741993, 1073741996, 1141899267, 1141899268, 1073742001, 1112539142, -1, 1112539143, 64, 1073742016, 1073742018, 1073742019, 32, 1073742022, 1073742024, 1073742025, 1073742026, 1095761936, -1, 1095761935, 1073742029, 1073742030, 1073742032, 1073742031, 1276117507, 1276117508, 1073742036, 1073742037, 1073742042, 1073742046, 1073742052, 1048587, -1, -1, 1073742056, 1073742039, 3145778, 1073742058, 1073742060, 135266318, 3145742, 1129318401, 1112539144, 1073742072, 1073742074, 1073742075, 1112541196, 1112539145, 135266319, -1, 1073742096, 1073742098, 135266320, -1, 1073742102, 1095761938, 1276383249, 1073742108, -1, 1073742109, 1716520985, -1, 3145744, 1112539146, 3145746, 1276383749, 1073742110, 3145748, 135267332, 1073742114, 1073742116, 1276118019, 1095761939, 4143, 1073742126, 1141899269, 1073742128, 3145750, 1073742129, 1073742134, 1073742135, 1073742136, 1073742138, 1073742139, 135267335, -1, 1114638363, 1073742144, 3145754, 135266820, 1095761940, 1141899270, 135267336, 1238369286, 1073742150, 1276117011, 3145772, 135266822, 1276117510, 570425403, 192, 1112539150, 1087373324, 1073742163, 1276117511, 128, 160, 3145756, 1112539151, 1297090050, 1112539147, 1112539148, 1112539149, 1146095628, 1112541199, -1, 1276117016, 1112539152, 3145758, 1073742164, 1074790748, 1073742174, 536870926, -1, 603979967, 1073742182, 1276117512, 1141899272, 1112539153, 1112539154, 1112539155, 1146093582, 1073742186, 1095763990, 1649412120, -1, -1, 3145774, 1313866249, 1112541202, 1112541203, 1112541204, 1146095631, 1146095626, 1141899280, 1112541205, 1112541206, 1112541207, 1073741828, 1073741834, 1073741836, 1073741838, 1073741839, 1074790416, 1073741842, 1076887572, 1073741846, 1073741852, 1073741861, 1073741866, 1073741868, 1073741874, 1074790451, 1073741876, 1095761926, 1073741878, 1073741879, 1073741880, 1073741886, 1276117514, 1073741888, 1073741890, 1073741892, 1073741896, 1073741900, 1073741902, 1276117012, 1073741905, 1073741904, 1073741906, 1073741908, 1073741910, 1073741912, 1073741917, 1073741920, 1073741924, 1073741928, 1073741929, 1073741930, 1074790508, 1073741933, 1073741934, 266256, 1073741937, 1073741940, 1073741942, 1060869, -1, 1073741948, 1074790526, 1073741952, 1073741956, 1073741961, 1073741962, 1073741966, 1073741968, 1073741970, 1073741973, 1073741976, 1073741977, 1073741978, 1073741981, 1073741984, 1073741986, 135267842, -1, 1073741988, 1073741994, 1073741998, 1073742000, 1073741999, 1073742002, 1073742004, 1073742006, 1073742008, 1073742010, 1052700, -1, 1073742014, 1073742015, 1073742020, 1073742027, 1073742028, 1073742033, 1073742034, 1073742035, 1073742038, 1073742040, 1073742041, 1073742044, 1073742048, 1073742050, 1073742054, 1073742064, 1073742062, 1073742066, 1073742068, 1073742070, 1073742076, 1073741850, 1073742080, 1073742082, 1073742083, 1073742084, 1074790662, 1073742090, -1, 1073742092, -1, 1073742094, 1073742100, 1073742104, 1073742112, 1073742111, 1073742118, 1073742119, 1073742122, 1073742124, 1073742130, 1073742140, 1073742146, 1073742147, 1073742148, 1073742154, 1073742156, 1073742159, 1073742160, 1073742162, 1073742166, 1073742168, 1074790746, 1073742188, 1073742190, 1073742192, 1073742194, 1073742196, 536870914, 603979822, 553648137, 536870916, 536870918, 537006096, -1, 1610612740, 1610612741, 536870930, 36870, 536875070, -1, 545259521, 545259522, 545259524, 545259526, 545259528, 545259530, 545259532, 545259534, 1610612737, 545259536, -1, 545259538, 545259540, 545259542, 545259545, -1, 545259546, 545259547, 545259548, 545259543, 545259544, 545259549, 545259550, 545259552, 545259554, 545259555, 570425356, 545259556, 545259557, 545259558, 545259559, 1610612738, 545259561, 545259562, 545259564, 545259565, 545259566, 545259567, 545259568, 545259569, 545259570, 545259571, 545259572, 545259574, 545259576, 553648158, 545259578, 545259580, 545259582, 545259584, 545259586, 570425346, -1, 570425348, 570425350, 570425352, 570425354, 570425355, 570425357, 570425359, 570425360, 570425361, 570425362, 570425363, 570425364, 570425365, 570425366, 570425367, 570425368, 570425371, 570425372, 570425373, 570425374, 570425376, 570425378, 570425380, 570425381, 570425382, 570425384, 1666189314, 570425388, 570425390, 570425392, 570425393, 570425394, 570425396, 570425398, 570425400, 570425402, 570425404, 570425406, 570425408, 1649410049, 603979973, 570425412, 570425414, 570425416, 553648130, -1, 553648132, 553648134, 553648136, 553648138, 553648140, 553648142, -1, 553648143, 553648144, 553648145, 553648146, 553648147, 553648148, 1073741995, 553648150, 553648151, 553648152, 553648153, 553648154, 553648155, 553648156, 553648157, 553648159, 553648160, 553648162, 553648164, 553648165, 553648166, 553648168, 536870922, 553648170, 536870924, 553648172, 553648174, -1, 553648176, -1, 553648178, 553648180, 553648182, 553648184, 553648186, 553648188, 553648190, 603979778, 603979780, 603979781, 603979782, 603979783, 603979784, 603979785, 603979786, 603979788, 603979790, 603979792, 603979794, 603979796, 603979798, 603979800, 603979804, 603979806, 603979808, 603979810, 603979811, 603979812, 603979814, 1678770178, -1, 603979816, 603979817, -1, 603979818, 603979819, 603979820, 603979823, 603979824, 603979825, 603979826, 603979827, 603979828, 603979829, 603979830, 603979831, 603979832, 603979833, 603979834, 603979836, 603979837, 603979838, 603979839, 603979840, 603979841, 603979842, 603979844, 603979845, 603979846, 603979848, 603979850, 603979852, 603979853, 603979854, 1613758470, 603979858, 603979860, 603979862, 603979864, 1613758476, -1, 603979868, 603979869, 603979870, 603979871, 553648149, 603979872, 603979873, 3145741, -1, 603979874, 603979875, 603979876, 603979877, 603979878, 603979879, 1610612739, 603979880, 603979881, 603979882, 603979883, 603979884, 570425369, 570425370, 603979885, 603979886, 603979887, 603979888, 603979889, 603979890, 603979891, 603979892, 603979893, 603979894, 603979895, 4139, 603979896, 603979898, 603979900, 603979902, 603979904, 603979906, 603979908, 603979910, 603979914, 603979916, -1, 603979918, 603979920, 603979922, 603979924, 603979926, 603979928, 603979930, 603979934, 603979936, 603979938, 603979940, 603979942, 603979944, 1613758488, 603979948, 603979952, 603979954, 603979955, 603979956, 603979958, 603979960, 603979962, 603979964, 603979965, 603979966, 603979968, 536870928, 4165, 603979969, 603979970, 603979972, 603979974, 603979975, 603979976, 603979978, 603979980, 603979982, 603979983, 603979984];
+var sTokens = ["+=", "-=", "*=", "/=", "\\=", "&=", "|=", "not", "!", "xor", "tog", "<", "<=", ">=", ">", "!=", "<>", "LIKE", "within", ".", "..", "[", "]", "{", "}", "$", "%", ";", "++", "--", "**", "\\", "animation", "anim", "assign", "axes", "backbone", "background", "bind", "bondorder", "boundbox", "boundingBox", "break", "calculate", "capture", "cartoon", "cartoons", "case", "catch", "cd", "center", "centre", "centerat", "cgo", "color", "colour", "compare", "configuration", "conformation", "config", "connect", "console", "contact", "contacts", "continue", "data", "default", "define", "@", "delay", "delete", "density", "depth", "dipole", "dipoles", "display", "dot", "dots", "draw", "echo", "ellipsoid", "ellipsoids", "else", "elseif", "end", "endif", "exit", "file", "files", "font", "for", "format", "frame", "frames", "frank", "function", "functions", "geosurface", "getProperty", "goto", "halo", "halos", "helix", "helixalpha", "helix310", "helixpi", "hbond", "hbonds", "help", "hide", "history", "hover", "if", "in", "initialize", "invertSelected", "isosurface", "javascript", "label", "labels", "lcaoCartoon", "lcaoCartoons", "load", "log", "loop", "measure", "measures", "monitor", "monitors", "meshribbon", "meshribbons", "message", "minimize", "minimization", "mo", "model", "models", "modulation", "move", "moveTo", "navigate", "navigation", "origin", "out", "parallel", "pause", "wait", "plot", "plot3d", "pmesh", "polygon", "polyhedra", "print", "process", "prompt", "quaternion", "quaternions", "quit", "ramachandran", "rama", "refresh", "reset", "unset", "restore", "restrict", "return", "ribbon", "ribbons", "rocket", "rockets", "rotate", "rotateSelected", "save", "select", "selectionHalos", "selectionHalo", "showSelections", "sheet", "show", "slab", "spacefill", "cpk", "spin", "ssbond", "ssbonds", "star", "stars", "step", "steps", "stereo", "strand", "strands", "structure", "_structure", "strucNo", "struts", "strut", "subset", "synchronize", "sync", "trace", "translate", "translateSelected", "try", "unbind", "unitcell", "var", "vector", "vectors", "vibration", "while", "wireframe", "write", "zap", "zoom", "zoomTo", "atom", "atoms", "axis", "axisangle", "basepair", "basepairs", "orientation", "orientations", "pdbheader", "polymer", "polymers", "residue", "residues", "rotation", "row", "sequence", "shape", "state", "symbol", "symmetry", "spaceGroup", "transform", "translation", "url", "abs", "absolute", "acos", "add", "adpmax", "adpmin", "align", "altloc", "altlocs", "ambientOcclusion", "amino", "angle", "array", "as", "atomID", "_atomID", "_a", "atomIndex", "atomName", "atomno", "atomType", "atomX", "atomY", "atomZ", "average", "babel", "babel21", "back", "backlit", "balls", "baseModel", "best", "bin", "bondCount", "bottom", "branch", "brillouin", "bzone", "wignerSeitz", "cache", "carbohydrate", "cell", "chain", "chains", "chainNo", "chemicalShift", "cs", "clash", "clear", "clickable", "clipboard", "connected", "context", "constraint", "contourLines", "coord", "coordinates", "coords", "cos", "cross", "covalentRadius", "covalent", "direction", "displacement", "displayed", "distance", "div", "DNA", "dotted", "DSSP", "DSSR", "element", "elemno", "_e", "error", "exportScale", "fill", "find", "fixedTemperature", "forcefield", "formalCharge", "charge", "eta", "front", "frontlit", "frontOnly", "fullylit", "fx", "fy", "fz", "fxyz", "fux", "fuy", "fuz", "fuxyz", "group", "groups", "group1", "groupID", "_groupID", "_g", "groupIndex", "hidden", "highlight", "hkl", "hydrophobicity", "hydrophobic", "hydro", "id", "identify", "ident", "image", "info", "inline", "insertion", "insertions", "intramolecular", "intra", "intermolecular", "inter", "bondingRadius", "ionicRadius", "ionic", "isAromatic", "Jmol", "JSON", "join", "keys", "last", "left", "length", "lines", "list", "magneticShielding", "ms", "mass", "max", "mep", "mesh", "middle", "min", "mlp", "mode", "modify", "modifyOrCreate", "molecule", "molecules", "modelIndex", "monomer", "morph", "movie", "mouse", "mul", "mul3", "nci", "next", "noDots", "noFill", "noMesh", "none", "null", "inherit", "normal", "noContourLines", "nonequivalent", "notFrontOnly", "noTriangles", "now", "nucleic", "occupancy", "omega", "only", "opaque", "options", "partialCharge", "phi", "plane", "planar", "play", "playRev", "point", "points", "pointGroup", "polymerLength", "pop", "previous", "prev", "probe", "property", "properties", "protein", "psi", "purine", "push", "PyMOL", "pyrimidine", "random", "range", "rasmol", "replace", "resno", "resume", "rewind", "reverse", "right", "RNA", "rock", "rubberband", "saSurface", "saved", "scale", "scene", "search", "smarts", "selected", "shapely", "sidechain", "sin", "site", "size", "smiles", "substructure", "solid", "sort", "specialPosition", "sqrt", "split", "starScale", "stddev", "straightness", "structureId", "supercell", "sub", "sum", "sum2", "surface", "surfaceDistance", "symop", "sx", "sy", "sz", "sxyz", "temperature", "relativeTemperature", "tensor", "theta", "thisModel", "ticks", "top", "torsion", "trajectory", "trajectories", "translucent", "triangles", "trim", "type", "ux", "uy", "uz", "uxyz", "user", "valence", "vanderWaals", "vdw", "vdwRadius", "visible", "volume", "vx", "vy", "vz", "vxyz", "xyz", "w", "x", "y", "z", "addHydrogens", "allConnected", "angstroms", "anisotropy", "append", "arc", "area", "aromatic", "arrow", "auto", "barb", "binary", "blockData", "cancel", "cap", "cavity", "centroid", "check", "chemical", "circle", "collapsed", "col", "colorScheme", "command", "commands", "contour", "contours", "corners", "count", "criterion", "create", "crossed", "curve", "cutoff", "cylinder", "diameter", "discrete", "distanceFactor", "downsample", "drawing", "eccentricity", "ed", "edges", "energy", "exitJmol", "faceCenterOffset", "filter", "first", "fixed", "fix", "flat", "fps", "from", "frontEdges", "full", "fullPlane", "functionXY", "functionXYZ", "gridPoints", "homo", "ignore", "InChI", "InChIKey", "increment", "insideout", "interior", "intersection", "intersect", "internal", "lattice", "line", "lineData", "link", "lobe", "lonePair", "lp", "lumo", "manifest", "mapProperty", "map", "maxSet", "menu", "minSet", "modelBased", "molecular", "mrc", "msms", "name", "nmr", "noCross", "noDebug", "noEdges", "noHead", "noLoad", "noPlane", "object", "obj", "offset", "offsetSide", "once", "orbital", "atomicOrbital", "packed", "palindrome", "parameters", "path", "pdb", "period", "periodic", "perpendicular", "perp", "phase", "pocket", "pointsPerAngstrom", "radical", "rad", "reference", "remove", "resolution", "reverseColor", "rotate45", "selection", "sigma", "sign", "silent", "sphere", "squared", "stdInChI", "stdInChIKey", "stop", "title", "titleFormat", "to", "value", "variable", "variables", "vertices", "width", "backgroundModel", "celShading", "celShadingPower", "debug", "defaultLattice", "measurements", "measurement", "scale3D", "toggleLabel", "userColorScheme", "throw", "timeout", "timeouts", "animationMode", "appletProxy", "atomTypes", "axesColor", "axis1Color", "axis2Color", "axis3Color", "backgroundColor", "bondmode", "boundBoxColor", "boundingBoxColor", "currentLocalPath", "dataSeparator", "defaultAngleLabel", "defaultColorScheme", "defaultColors", "defaultDirectory", "defaultDistanceLabel", "defaultDropScript", "defaultLabelPDB", "defaultLabelXYZ", "defaultLoadFilter", "defaultLoadScript", "defaults", "defaultTorsionLabel", "defaultVDW", "drawFontSize", "edsUrlCutoff", "edsUrlFormat", "energyUnits", "fileCacheDirectory", "fontsize", "helpPath", "hoverLabel", "language", "loadFormat", "loadLigandFormat", "logFile", "measurementUnits", "nmrPredictFormat", "nmrUrlFormat", "pathForAllFiles", "picking", "pickingStyle", "pickLabel", "platformSpeed", "propertyColorScheme", "quaternionFrame", "smilesUrlFormat", "smiles2dImageFormat", "unitCellColor", "axesScale", "axisScale", "bondTolerance", "cameraDepth", "defaultDrawArrowScale", "defaultTranslucent", "dipoleScale", "ellipsoidAxisDiameter", "gestureSwipeFactor", "hbondsAngleMinimum", "hbondsDistanceMaximum", "hoverDelay", "loadAtomDataTolerance", "minBondDistance", "minimizationCriterion", "modulationScale", "mouseDragFactor", "mouseWheelFactor", "navFPS", "navigationDepth", "navigationSlab", "navigationSpeed", "navX", "navY", "navZ", "particleRadius", "pointGroupDistanceTolerance", "pointGroupLinearTolerance", "radius", "rotationRadius", "scaleAngstromsPerInch", "sheetSmoothing", "slabRange", "solventProbeRadius", "spinFPS", "spinX", "spinY", "spinZ", "stereoDegrees", "strutDefaultRadius", "strutLengthMaximum", "vectorScale", "vectorsCentered", "vectorSymmetry", "vibrationPeriod", "vibrationScale", "visualRange", "ambientPercent", "ambient", "animationFps", "axesMode", "bondRadiusMilliAngstroms", "bondingVersion", "delayMaximumMs", "diffusePercent", "diffuse", "dotDensity", "dotScale", "ellipsoidDotCount", "helixStep", "hermiteLevel", "historyLevel", "lighting", "logLevel", "meshScale", "minimizationSteps", "minPixelSelRadius", "percentVdwAtom", "perspectiveModel", "phongExponent", "pickingSpinRate", "propertyAtomNumberField", "propertyAtomNumberColumnCount", "propertyDataColumnCount", "propertyDataField", "repaintWaitMs", "ribbonAspectRatio", "scriptReportingLevel", "showScript", "smallMoleculeMaxAtoms", "specular", "specularExponent", "specularPercent", "specPercent", "specularPower", "specpower", "strandCount", "strandCountForMeshRibbon", "strandCountForStrands", "strutSpacing", "zDepth", "zSlab", "zshadePower", "allowEmbeddedScripts", "allowGestures", "allowKeyStrokes", "allowModelKit", "allowMoveAtoms", "allowMultiTouch", "allowRotateSelected", "antialiasDisplay", "antialiasImages", "antialiasTranslucent", "appendNew", "applySymmetryToBonds", "atomPicking", "autobond", "autoFPS", "axesMolecular", "axesOrientationRasmol", "axesUnitCell", "axesWindow", "backboneSteps", "bondModeOr", "bondPicking", "bonds", "bond", "cartoonBaseEdges", "cartoonsFancy", "cartoonFancy", "cartoonLadders", "cartoonRibose", "cartoonRockets", "chainCaseSensitive", "colorRasmol", "debugScript", "defaultStructureDssp", "disablePopupMenu", "displayCellParameters", "dotsSelectedOnly", "dotSurface", "dragSelected", "drawHover", "drawPicking", "dsspCalculateHydrogenAlways", "ellipsoidArcs", "ellipsoidArrows", "ellipsoidAxes", "ellipsoidBall", "ellipsoidDots", "ellipsoidFill", "fileCaching", "fontCaching", "fontScaling", "forceAutoBond", "fractionalRelative", "greyscaleRendering", "hbondsBackbone", "hbondsRasmol", "hbondsSolid", "hetero", "hideNameInPopup", "hideNavigationPoint", "hideNotSelected", "highResolution", "hydrogen", "hydrogens", "imageState", "isKiosk", "isosurfaceKey", "isosurfacePropertySmoothing", "isosurfacePropertySmoothingPower", "justifyMeasurements", "languageTranslation", "leadAtom", "leadAtoms", "legacyAutoBonding", "legacyHAddition", "logCommands", "logGestures", "measureAllModels", "measurementLabels", "measurementNumbers", "messageStyleChime", "minimizationRefresh", "minimizationSilent", "modelkitMode", "monitorEnergy", "multipleBondRadiusFactor", "multipleBondSpacing", "multiProcessor", "navigateSurface", "navigationMode", "navigationPeriodic", "partialDots", "pdbAddHydrogens", "pdbGetHeader", "pdbSequential", "perspectiveDepth", "preserveState", "rangeSelected", "redoMove", "refreshing", "ribbonBorder", "rocketBarrels", "saveProteinStructureState", "scriptQueue", "selectAllModels", "selectHetero", "selectHydrogen", "showAxes", "showBoundBox", "showBoundingBox", "showFrank", "showHiddenSelectionHalos", "showHydrogens", "showKeyStrokes", "showMeasurements", "showMultipleBonds", "showNavigationPointAlways", "showTiming", "showUnitcell", "slabByAtom", "slabByMolecule", "slabEnabled", "smartAromatic", "solvent", "solventProbe", "ssBondsBackbone", "statusReporting", "strutsMultiple", "syncMouse", "syncScript", "testFlag1", "testFlag2", "testFlag3", "testFlag4", "traceAlpha", "twistedSheets", "undo", "undoMove", "useArcBall", "useMinimizationThread", "useNumberLocalization", "waitForMoveTo", "windowCentered", "wireframeRotation", "zeroBasedXyzRasmol", "zoomEnabled", "zoomHeight", "zoomLarge", "zShade"];
+var iTokens = [269484242, -1, -1, -1, -1, -1, -1, 269484144, -1, 269484113, 269484114, 269484435, 269484434, 269484433, 269484432, 269484437, -1, 269484438, 135266325, 1048583, 1048584, 269484096, 269484097, 1048586, 1048590, 1048582, 269484210, 1048591, 269484226, 269484225, 269484227, 269484211, 4097, -1, 4098, 1611272194, 1115297793, 1610616835, 4100, 4101, 1679429641, -1, 102407, 4102, 4103, 1113200642, -1, 102411, 102412, 1069064, 12289, -1, 4105, 135174, 1766856708, -1, 135270405, 1095766024, -1, -1, 4106, 528395, 135402505, -1, 102408, 135270408, 102413, 1060866, -1, 528397, 12291, 1073741914, 554176526, 135175, -1, 1610625028, 1276117505, 1113198595, 135176, 537022465, 1113198596, -1, 364547, 102402, 1150985, 364548, 266255, 1229984263, -1, 4114, 135369224, 1288701959, 4115, -1, 1611272202, 135368713, -1, 1113198597, 1276121098, 20500, 1113200646, -1, 137363467, 3145735, 3145736, 3145738, 1612189718, -1, 20482, 12294, 1610616855, 544771, 135369225, 1073741980, 266264, 4121, 135180, 135287308, 1826248716, -1, 135182, -1, 135271426, 36869, 528410, 1746538509, -1, -1, -1, 1113200647, -1, 20485, 4126, -1, 1183762, 1095766030, -1, 1276121113, 4128, 4130, 4131, -1, 1073742078, 1073742079, 102436, 20487, -1, 4133, 135190, 135188, 1073742106, 135192, 36865, 102439, 135304707, 135270418, -1, 266281, 1052714, -1, 266284, 4141, -1, 4142, 12295, 36866, 1113200649, -1, 1113200650, -1, 528432, 4145, 4146, 135280132, 1611141171, -1, -1, 3145760, 4148, 554176565, 1113200651, -1, 1611141175, 1611141176, -1, 1113200652, -1, 266298, -1, 528443, 1650071565, -1, 1641025539, -1, 1095761941, 1708058, -1, 3158024, 4156, -1, 1113200654, 4160, 4162, 364558, 4164, 1614417948, 36868, 135198, -1, 4166, 102406, 659488, 135270422, 1060873, 4168, 4170, 1141899265, -1, 1073741854, 135266307, 1073741864, -1, 1073742077, -1, 1073742088, 1095761937, -1, 1073742120, -1, 1073742132, 1276117515, 1087373320, 1087373323, 1073742158, 1087375373, 1089470478, 1073742152, 1073742176, 1073742178, 1074790760, 135266826, 1073741826, 135266819, 1276118017, 1112539137, 1112539138, 1073741832, 1087373315, -1, 553648129, 3145730, 135266305, 135266306, 1073741848, 1095761922, -1, -1, 1095761923, 1087375362, 1095763969, 1087375361, 1112541185, 1112541186, 1112541187, 96, 1073741856, 1073741858, 1073741859, 1073741862, 1073741860, 3145776, 1073741863, 1276118529, 1095761924, 1073741871, 1048580, 1073741872, -1, -1, 135270423, 3145764, 1095761925, 1087373316, -1, 1095761927, 1112539139, -1, 1073741881, 1073741882, 3145766, 1073741884, 135266310, 14, 1073741894, 1073741898, 1048581, -1, -1, 135266821, 135267329, 1112539140, -1, 1073741918, 1073741922, 3145768, 1276118018, 1276117504, 3145732, 1073741926, 1073741915, 1073741916, 1087375365, 1095763978, 1095761929, 1073741935, 570425358, 1073741938, 1276118531, 1073741946, 545259560, 1632634891, -1, 1112539141, 1073741954, 1073741958, 1073741960, 1073741964, 1112541188, 1112541189, 1112541190, 1146095627, 1112541191, 1112541192, 1112541193, 1146095629, 1087373318, -1, 1087373319, 1095761932, -1, -1, 1095761933, 3145770, 536870920, 135267841, 1114638362, -1, -1, 1074790550, 1087373321, -1, 1073741979, 1073741982, 1073741983, 1087373322, -1, 1073741989, -1, 1073741990, -1, 1112541195, -1, -1, 1048585, 1073741991, 1073741992, 1276117506, 1141899281, 1073741993, 1073741996, 1141899267, 1141899268, 1073742001, 1112539142, -1, 1112539143, 64, 1073742016, 1073742018, 1073742019, 32, 1073742022, 1073742024, 1073742025, 1073742026, 1095761936, -1, 1095761935, 1073742029, 1073742030, 1073742032, 1073742031, 1276117507, 1276117508, 1073742036, 1073742037, 1073742042, 1073742046, 1073742052, 1048587, -1, -1, 1073742056, 1073742039, 3145778, 1073742058, 1073742060, 135266318, 3145742, 1129318401, 1112539144, 1073742072, 1073742074, 1073742075, 1112541196, 1112539145, 135266319, -1, 1073742096, 1073742098, 135266320, -1, 1073742102, 1095761938, 1276383249, 1073742108, -1, 1073742109, 1716520985, -1, 3145744, 1112539146, 3145746, 1276383749, 1073742110, 3145748, 135267332, 1073742114, 1073742116, 1276120577, 1095761939, 4143, 1073742126, 1141899269, 1073742128, 3145750, 1073742129, 1073742134, 1073742135, 1073742136, 1073742138, 1073742139, 135267335, -1, 1114638363, 1073742144, 3145754, 135266820, 1095761940, 1141899270, 135267336, 1238369286, 1073742150, 1276117011, 3145772, 135266822, 1276117510, 570425403, 192, 1112539150, 1087373324, 1073742163, 1276117511, 128, 160, 3145756, 1112539151, 1297090050, 1112539147, 1112539148, 1112539149, 1146095628, 1112541199, -1, 1276117016, 1112539152, 3145758, 1073742164, 1074790748, 1073742174, 536870926, -1, 603979967, 1073742182, 1276117512, 1141899272, 1112539153, 1112539154, 1112539155, 1146093582, 1073742186, 1095763990, 1649412120, -1, -1, 3145774, 1313866249, 1112541202, 1112541203, 1112541204, 1146095631, 1146095626, 1141899280, 1112541205, 1112541206, 1112541207, 1073741828, 1073741834, 1073741836, 1073741838, 1073741839, 1074790416, 1073741842, 1076887572, 1073741846, 1073741852, 1073741861, 1073741866, 1073741868, 1073741874, 1074790451, 1073741876, 1095761926, 1073741878, 1073741879, 1073741880, 1073741886, 1276117514, 1073741888, 1073741890, 1073741892, 1073741896, 1073741900, 1073741902, 1276117012, 1073741905, 1073741904, 1073741906, 1073741908, 1073741910, 1073741912, 1073741917, 1073741920, 1073741924, 1073741928, 1073741929, 1073741930, 1074790508, 1073741933, 1073741934, 266256, 1073741937, 1073741940, 1073741942, 1060869, -1, 1073741948, 1074790526, 1073741952, 1073741956, 1073741961, 1073741962, 1073741966, 1073741968, 1073741970, 1073741973, 1073741976, 1073741977, 1073741978, 1073741981, 1073741984, 1073741986, 135267842, -1, 1073741988, 1073741994, 1073741998, 1073742000, 1073741999, 1073742002, 1073742004, 1073742006, 1073742008, 1073742010, 1052700, -1, 1073742014, 1073742015, 1073742020, 1073742027, 1073742028, 1073742033, 1073742034, 1073742035, 1073742038, 1073742040, 1073742041, 1073742044, 1073742048, 1073742050, 1073742054, 1073742064, 1073742062, 1073742066, 1073742068, 1073742070, 1073742076, 1073741850, 1073742080, 1073742082, 1073742083, 1073742084, 1074790662, 1073742090, -1, 1073742092, -1, 1073742094, 1073742100, 1073742104, 1073742112, 1073742111, 1073742118, 1073742119, 1073742122, 1073742124, 1073742130, 1073742140, 1073742146, 1073742147, 1073742148, 1073742154, 1073742156, 1073742159, 1073742160, 1073742162, 1073742166, 1073742168, 1074790746, 1073742188, 1073742190, 1073742192, 1073742194, 1073742196, 536870914, 603979822, 553648137, 536870916, 536870918, 537006096, -1, 1610612740, 1610612741, 536870930, 36870, 536875070, -1, 545259521, 545259522, 545259524, 545259526, 545259528, 545259530, 545259532, 545259534, 1610612737, 545259536, -1, 545259538, 545259540, 545259542, 545259545, -1, 545259546, 545259547, 545259548, 545259543, 545259544, 545259549, 545259550, 545259552, 545259554, 545259555, 570425356, 545259556, 545259557, 545259558, 545259559, 1610612738, 545259561, 545259562, 545259564, 545259565, 545259566, 545259567, 545259568, 545259569, 545259570, 545259571, 545259572, 545259574, 545259576, 553648158, 545259578, 545259580, 545259582, 545259584, 545259586, 570425346, -1, 570425348, 570425350, 570425352, 570425354, 570425355, 570425357, 570425359, 570425360, 570425361, 570425362, 570425363, 570425364, 570425365, 570425366, 570425367, 570425368, 570425371, 570425372, 570425373, 570425374, 570425376, 570425378, 570425380, 570425381, 570425382, 570425384, 1666189314, 570425388, 570425390, 570425392, 570425393, 570425394, 570425396, 570425398, 570425400, 570425402, 570425404, 570425406, 570425408, 1649410049, 603979972, 603979973, 570425412, 570425414, 570425416, 553648130, -1, 553648132, 553648134, 553648136, 553648138, 553648140, 553648142, -1, 553648143, 553648144, 553648145, 553648146, 553648147, 553648148, 1073741995, 553648150, 553648151, 553648152, 553648153, 553648154, 553648155, 553648156, 553648157, 553648159, 553648160, 553648162, 553648164, 553648165, 553648166, 553648168, 536870922, 553648170, 536870924, 553648172, 553648174, -1, 553648176, -1, 553648178, 553648180, 553648182, 553648184, 553648186, 553648188, 553648190, 603979778, 603979780, 603979781, 603979782, 603979783, 603979784, 603979785, 603979786, 603979788, 603979790, 603979792, 603979794, 603979796, 603979798, 603979800, 603979804, 603979806, 603979808, 603979810, 603979811, 603979812, 603979814, 1678770178, -1, 603979816, 603979817, -1, 603979818, 603979819, 603979820, 603979823, 603979824, 603979825, 603979826, 603979827, 603979828, 603979829, 603979830, 603979831, 603979832, 603979833, 603979834, 603979836, 603979837, 603979838, 603979839, 603979840, 603979841, 603979842, 603979844, 603979845, 603979846, 603979848, 603979850, 603979852, 603979853, 603979854, 1613758470, 603979858, 603979860, 603979862, 603979864, 1613758476, -1, 603979868, 603979869, 603979870, 603979871, 553648149, 603979872, 603979873, 3145741, -1, 603979874, 603979875, 603979876, 603979877, 603979878, 603979879, 1610612739, 603979880, 603979881, 603979882, 603979883, 603979884, 570425369, 570425370, 603979885, 603979886, 603979887, 603979888, 603979889, 603979890, 603979891, 603979892, 603979893, 603979894, 603979895, 4139, 603979896, 603979898, 603979900, 603979902, 603979904, 603979906, 603979908, 603979910, 603979914, 603979916, -1, 603979918, 603979920, 603979922, 603979924, 603979926, 603979928, 603979930, 603979934, 603979936, 603979938, 603979940, 603979942, 603979944, 1613758488, 603979948, 603979952, 603979954, 603979955, 603979956, 603979958, 603979960, 603979962, 603979964, 603979965, 603979966, 603979968, 536870928, 4165, 603979969, 603979970, 603979971, 603979974, 603979975, 603979976, 603979978, 603979980, 603979982, 603979983, 603979984];
 if (sTokens.length != iTokens.length) JU.Logger.error ("sTokens.length (" + sTokens.length + ") != iTokens.length! (" + iTokens.length + ")");
 n = sTokens.length;
 for (var i = 0; i < n; i++) {
@@ -29299,6 +29288,13 @@ case 1112541204:
 return atom.getVibrationCoord ('Z');
 case 1313866249:
 return atom.getVolume (vwr, J.c.VDW.AUTO);
+case 1146095627:
+case 1146095629:
+case 1146093582:
+case 1146095628:
+case 1146095631:
+case 1146095626:
+return JM.Atom.atomPropertyTuple (atom, tokWhat).length ();
 }
 return JM.Atom.atomPropertyInt (atom, tokWhat);
 }, "JV.Viewer,JM.Atom,~N");
@@ -35036,7 +35032,7 @@ Clazz_defineStatics (c$,
 "defaultGroupCount", 32);
 });
 Clazz_declarePackage ("JM");
-Clazz_load (["JM.BondCollection", "JU.BS", "$.Lst", "$.M3", "$.M4", "$.P3", "$.V3", "JU.BoxInfo"], "JM.ModelSet", ["java.lang.Boolean", "$.Float", "java.util.Hashtable", "JU.A4", "$.AU", "$.P4", "$.PT", "$.Quat", "$.SB", "J.api.Interface", "$.JmolModulationSet", "J.atomdata.RadiusData", "J.bspt.Bspf", "J.c.PAL", "$.VDW", "JM.Atom", "$.AtomIteratorWithinModel", "$.AtomIteratorWithinModelSet", "$.Bond", "$.BondSet", "$.HBond", "$.Model", "$.StateScript", "JS.SV", "JU.BSUtil", "$.Elements", "$.Escape", "$.JmolMolecule", "$.Logger", "$.Measure", "$.Point3fi", "$.Txt", "JV.JC"], function () {
+Clazz_load (["JM.BondCollection", "JU.BS", "$.Lst", "$.M3", "$.M4", "$.P3", "$.V3", "JU.BoxInfo"], "JM.ModelSet", ["java.lang.Boolean", "$.Float", "java.util.Hashtable", "JU.A4", "$.AU", "$.P4", "$.PT", "$.Quat", "$.SB", "J.api.Interface", "$.JmolModulationSet", "J.atomdata.RadiusData", "J.bspt.Bspf", "J.c.PAL", "$.VDW", "JM.Atom", "$.AtomIteratorWithinModel", "$.AtomIteratorWithinModelSet", "$.Bond", "$.BondSet", "$.HBond", "$.Model", "$.StateScript", "JS.SV", "JU.BSUtil", "$.Elements", "$.Escape", "$.JmolMolecule", "$.Logger", "$.Measure", "$.Txt", "JV.JC"], function () {
 c$ = Clazz_decorateAsClass (function () {
 this.selectionHaloEnabled = false;
 this.echoShapeActive = false;
@@ -35461,13 +35457,13 @@ mpt++;
 continue;
 }var nAtoms = oldModels[i].ac;
 if (nAtoms == 0) continue;
-var bs = oldModels[i].bsAtoms;
+var bsModelAtoms = oldModels[i].bsAtoms;
 var firstAtomIndex = oldModels[i].firstAtomIndex;
-JU.BSUtil.deleteBits (this.bsSymmetry, bs);
-this.deleteModel (mpt, firstAtomIndex, nAtoms, bs, bsBonds);
-for (var j = oldModelCount; --j > i; ) oldModels[j].fixIndices (mpt, nAtoms, bs);
+JU.BSUtil.deleteBits (this.bsSymmetry, bsModelAtoms);
+this.deleteModel (mpt, firstAtomIndex, nAtoms, bsModelAtoms, bsBonds);
+for (var j = oldModelCount; --j > i; ) oldModels[j].fixIndices (mpt, nAtoms, bsModelAtoms);
 
-this.vwr.shm.deleteShapeAtoms ([newModels, this.at, [mpt, firstAtomIndex, nAtoms]], bs);
+this.vwr.shm.deleteShapeAtoms ([newModels, this.at, [mpt, firstAtomIndex, nAtoms]], bsModelAtoms);
 this.mc--;
 }
 this.deleteModel (-1, 0, 0, null, null);
@@ -37241,7 +37237,7 @@ this.am = newModels;
 this.mc = newModelCount;
 }, "~N");
 Clazz_defineMethod (c$, "deleteModel", 
-function (modelIndex, firstAtomIndex, nAtoms, bsAtoms, bsBonds) {
+function (modelIndex, firstAtomIndex, nAtoms, bsModelAtoms, bsBonds) {
 if (modelIndex < 0) {
 this.validateBspf (false);
 this.bsAll = null;
@@ -37269,11 +37265,11 @@ this.msInfo.put ("group3Counts", JU.AU.deleteElements (group3Counts, modelIndex,
 }if (this.unitCells != null) {
 this.unitCells = JU.AU.deleteElements (this.unitCells, modelIndex, 1);
 }for (var i = this.stateScripts.size (); --i >= 0; ) {
-if (!this.stateScripts.get (i).deleteAtoms (modelIndex, bsBonds, bsAtoms)) {
+if (!this.stateScripts.get (i).deleteAtoms (modelIndex, bsBonds, bsModelAtoms)) {
 this.stateScripts.remove (i);
 }}
-this.deleteModelAtoms (firstAtomIndex, nAtoms, bsAtoms);
-this.vwr.deleteModelAtoms (modelIndex, firstAtomIndex, nAtoms, bsAtoms);
+this.deleteModelAtoms (firstAtomIndex, nAtoms, bsModelAtoms);
+this.vwr.deleteModelAtoms (modelIndex, firstAtomIndex, nAtoms, bsModelAtoms);
 }, "~N,~N,~N,JU.BS,JU.BS");
 Clazz_defineMethod (c$, "getMoInfo", 
 function (modelIndex) {
@@ -37619,16 +37615,6 @@ if (!(Clazz_instanceOf (v, J.api.JmolModulationSet))) continue;
 if (this.bsModulated != null) this.bsModulated.setBitTo (i, isOn);
 }
 }, "JU.BS,~B,JU.P3,~B");
-Clazz_defineMethod (c$, "getDynamicAtom", 
-function (i, pt) {
-var v = this.getVibration (i, false);
-if (v == null) return this.at[i];
-if (pt == null) pt =  new JU.Point3fi ();
-pt.setT (this.at[i]);
-pt = this.vwr.tm.getVibrationPoint (v, pt, NaN);
-pt.sD = -1;
-return pt;
-}, "~N,JU.Point3fi");
 Clazz_defineMethod (c$, "getBoundBoxOrientation", 
 function (type, bsAtoms) {
 var j0 = bsAtoms.nextSetBit (0);
@@ -40370,8 +40356,7 @@ var h4 = s3 - s2;
 var x = (h1 * x1 + h2 * x2 + h3 * xT1 + h4 * xT2);
 var y = (h1 * y1 + h2 * y2 + h3 * yT1 + h4 * yT2);
 var z = (h1 * z1 + h2 * z2 + h3 * zT1 + h4 * zT2);
-if (isPt) list[index0 + i] = JU.P3.new3 (x, y, z);
- else list[index0 + i] = JU.V3.new3 (x, y, z);
+list[index0 + i] = (isPt ? JU.P3.new3 (x, y, z) : JU.V3.new3 (x, y, z));
 }
 }, "~N,JU.T3,JU.T3,JU.T3,JU.T3,JU.T3,~A,~N,~N,~B");
 Clazz_defineStatics (c$,
@@ -43926,7 +43911,7 @@ case '.':
 if (count++ != 0) return f;
 continue;
 case '-':
-if (i != 1) return f;
+if (i != 1 && f.charAt (i - 1) != '.') return f;
 continue;
 default:
 return f;
@@ -47206,7 +47191,7 @@ c$.isLocal = Clazz_defineMethod (c$, "isLocal",
 function (fileName) {
 if (fileName == null) return false;
 var itype = JV.FileManager.urlTypeIndex (fileName);
-return (itype < 0 || itype == 3);
+return (itype < 0 || itype == 4);
 }, "~S");
 Clazz_defineMethod (c$, "getClassifiedName", 
  function (name, isFullLoad) {
@@ -47260,7 +47245,7 @@ names[1] = JV.FileManager.stripPath (names[0]);
 var name0 = names[0];
 names[0] = this.pathForAllFiles + names[1];
 JU.Logger.info ("FileManager substituting " + name0 + " --> " + names[0]);
-}if (isFullLoad && (file != null || JV.FileManager.urlTypeIndex (names[0]) == 3)) {
+}if (isFullLoad && (file != null || JV.FileManager.urlTypeIndex (names[0]) == 4)) {
 var path = (file == null ? JU.PT.trim (names[0].substring (5), "/") : names[0]);
 var pt = path.length - names[1].length - 1;
 if (pt > 0) {
@@ -47484,8 +47469,8 @@ return (ret == null ? "" : JU.Rdr.fixUTF (ret));
 }, "~S,~A");
 Clazz_defineStatics (c$,
 "SIMULATION_PROTOCOL", "http://SIMULATION/",
-"URL_LOCAL", 3,
-"urlPrefixes", ["http:", "https:", "ftp:", "file:"]);
+"URL_LOCAL", 4,
+"urlPrefixes", ["http:", "https:", "sftp:", "ftp:", "file:"]);
 c$.scriptFilePrefixes = c$.prototype.scriptFilePrefixes = ["/*file*/\"", "FILE0=\"", "FILE1=\""];
 });
 Clazz_declarePackage ("JV");
@@ -47689,6 +47674,7 @@ this.useScriptQueue = true;
 this.waitForMoveTo = true;
 this.vectorScale = 1;
 this.vectorSymmetry = false;
+this.vectorsCentered = false;
 this.vibrationPeriod = 1;
 this.vibrationScale = 1;
 this.wireframeRotation = false;
@@ -48057,6 +48043,7 @@ this.setB ("twistedSheets", this.twistedSheets);
 this.setB ("useArcBall", this.useArcBall);
 this.setB ("useMinimizationThread", this.useMinimizationThread);
 this.setB ("useNumberLocalization", this.useNumberLocalization);
+this.setB ("vectorsCentered", this.vectorsCentered);
 this.setF ("vectorScale", this.vectorScale);
 this.setB ("vectorSymmetry", this.vectorSymmetry);
 this.setF ("vibrationPeriod", this.vibrationPeriod);
@@ -48612,7 +48599,7 @@ function (script) {
 return (script.length < 7 ? -1 : ("JSPECVIPEAKS: SELECT:JSVSTR:H1SIMUL").indexOf (script.substring (0, 7).toUpperCase ()));
 }, "~S");
 Clazz_defineStatics (c$,
-"databases", ["dssr", "http://x3dna.bio.columbia.edu/dssr/report.php?id=%FILE&opts=--jmol%20--more", "dssrModel", "http://x3dna.bio.columbia.edu/dssr/report.php?POST?opts=--jmol --more&model=", "ligand", "http://www.rcsb.org/pdb/files/ligand/%FILE.cif", "mp", "http://www.materialsproject.org/materials/%FILE/cif", "nci", "http://cactus.nci.nih.gov/chemical/structure/%FILE", "nmr", "http://www.nmrdb.org/predictor?POST?molfile=", "nmrdb", "http://www.nmrdb.org/service/predictor?POST?molfile=", "pdb", "http://www.rcsb.org/pdb/files/%FILE.pdb.gz", "pubchem", "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/%FILE/SDF?record_type=3d"],
+"databases", ["dssr", "http://x3dna.bio.columbia.edu/dssr/report.php?id=%FILE&opts=--jmol%20--more", "dssrModel", "http://x3dna.bio.columbia.edu/dssr/report.php?POST?opts=--jmol --more&model=", "ligand", "http://www.rcsb.org/pdb/files/ligand/%FILE.cif", "mp", "http://www.materialsproject.org/materials/%FILE/cif", "nci", "http://cactus.nci.nih.gov/chemical/structure/%FILE", "nmr", "http://www.nmrdb.org/predictor?POST?molfile=", "nmrdb", "http://www.nmrdb.org/service/predictor?POST?molfile=", "pdb", "http://www.rcsb.org/pdb/files/%FILE.pdb.gz", "pubchem", "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound /%FILE/SDF?record_type=3d"],
 "copyright", "(C) 2012 Jmol Development",
 "version", null,
 "date", null,
@@ -49038,13 +49025,15 @@ Clazz_makeConstructor (c$,
 function (vwr) {
 this.vwr = vwr;
 }, "JV.Viewer");
-Clazz_defineMethod (c$, "deleteModelAtoms", 
-function (bsDeleted) {
-JU.BSUtil.deleteBits (this.bsHidden, bsDeleted);
-JU.BSUtil.deleteBits (this.bsSelection, bsDeleted);
-JU.BSUtil.deleteBits (this.bsSubset, bsDeleted);
-JU.BSUtil.deleteBits (this.bsFixed, bsDeleted);
-JU.BSUtil.deleteBits (this.bsDeleted, bsDeleted);
+Clazz_defineMethod (c$, "processDeletedModelAtoms", 
+function (bsAtoms) {
+if (this.bsDeleted != null) JU.BSUtil.deleteBits (this.bsDeleted, bsAtoms);
+if (this.bsSubset != null) JU.BSUtil.deleteBits (this.bsSubset, bsAtoms);
+JU.BSUtil.deleteBits (this.bsFixed, bsAtoms);
+JU.BSUtil.deleteBits (this.bsHidden, bsAtoms);
+var bs = JU.BSUtil.copy (this.bsSelection);
+JU.BSUtil.deleteBits (bs, bsAtoms);
+this.setSelectionSet (bs, 0);
 }, "JU.BS");
 Clazz_defineMethod (c$, "clear", 
 function () {
@@ -49252,16 +49241,6 @@ function (bs, ignoreSubset) {
 if (this.bsDeleted != null) bs.andNot (this.bsDeleted);
 if (!ignoreSubset && this.bsSubset != null) bs.and (this.bsSubset);
 }, "JU.BS,~B");
-Clazz_defineMethod (c$, "processDeletedModelAtoms", 
-function (bsAtoms) {
-if (this.bsDeleted != null) JU.BSUtil.deleteBits (this.bsDeleted, bsAtoms);
-if (this.bsSubset != null) JU.BSUtil.deleteBits (this.bsSubset, bsAtoms);
-JU.BSUtil.deleteBits (this.bsFixed, bsAtoms);
-JU.BSUtil.deleteBits (this.bsHidden, bsAtoms);
-var bs = JU.BSUtil.copy (this.bsSelection);
-JU.BSUtil.deleteBits (bs, bsAtoms);
-this.setSelectionSet (bs, 0);
-}, "JU.BS");
 Clazz_defineMethod (c$, "setMotionFixedAtoms", 
 function (bs) {
 this.bsFixed.clearAll ();
@@ -51342,7 +51321,7 @@ Clazz_defineMethod (c$, "getVibrationPoint",
 function (v, pt, scale) {
 v.setTempPoint (pt, this.vibrationT, (Float.isNaN (scale) ? this.vibrationScale : scale), this.vwr.g.modulationScale);
 return pt;
-}, "JU.Vibration,JU.Point3fi,~N");
+}, "JU.Vibration,JU.T3,~N");
 Clazz_defineMethod (c$, "transformPt3f", 
 function (ptXYZ, screen) {
 this.applyPerspective (ptXYZ, ptXYZ);
@@ -51780,9 +51759,11 @@ if (this.vibrationThread != null) {
 this.vibrationThread.interrupt ();
 this.vibrationThread = null;
 }this.vibrationOn = false;
+this.vibrationT.x = 0;
 return;
 }if (this.vwr.getModelCount () < 1) {
 this.vibrationOn = false;
+this.vibrationT.x = 0;
 return;
 }if (this.vibrationThread == null) {
 this.vibrationThread = J.api.Interface.getOption ("thread.VibrationThread");
@@ -55602,6 +55583,8 @@ case 603979967:
 return this.g.translucent;
 case 603979968:
 return this.g.twistedSheets;
+case 603979972:
+return this.g.vectorsCentered;
 case 603979973:
 return this.g.vectorSymmetry;
 case 603979974:
@@ -56252,6 +56235,9 @@ Clazz_defineMethod (c$, "setBooleanPropertyTok",
  function (key, tok, value) {
 var doRepaint = true;
 switch (tok) {
+case 603979972:
+this.g.vectorsCentered = value;
+break;
 case 603979811:
 this.g.backboneSteps = value;
 break;
@@ -56458,7 +56444,7 @@ break;
 case 603979800:
 this.g.autoFps = value;
 break;
-case 603979972:
+case 603979971:
 JU.DF.setUseNumberLocalization (this.g.useNumberLocalization = value);
 break;
 case 603979918:
@@ -57838,14 +57824,14 @@ if (type === J.c.VDW.USER && this.bsUserVdws == null) this.setUserVdw (this.defa
 return this.getDataManager ().getDefaultVdwNameOrData (type, bs);
 }, "~N,J.c.VDW,JU.BS");
 Clazz_defineMethod (c$, "deleteAtoms", 
-function (bs, fullModels) {
-var atomIndex = (bs == null ? -1 : bs.nextSetBit (0));
+function (bsAtoms, fullModels) {
+var atomIndex = (bsAtoms == null ? -1 : bsAtoms.nextSetBit (0));
 if (atomIndex < 0) return 0;
 this.clearModelDependentObjects ();
 if (!fullModels) {
 this.sm.modifySend (atomIndex, this.ms.at[atomIndex].mi, 4, "deleting atom " + this.getAtomName (atomIndex));
-this.ms.deleteAtoms (bs);
-var n = this.slm.deleteAtoms (bs);
+this.ms.deleteAtoms (bsAtoms);
+var n = this.slm.deleteAtoms (bsAtoms);
 this.setTainted (true);
 this.sm.modifySend (atomIndex, this.ms.at[atomIndex].mi, -4, "OK");
 return n;
@@ -57854,7 +57840,7 @@ this.sm.modifySend (-1, modelIndex, 5, "deleting model " + this.getModelNumberDo
 this.setCurrentModelIndexClear (0, false);
 this.am.setAnimationOn (false);
 var bsD0 = JU.BSUtil.copy (this.getDeletedAtoms ());
-var bsDeleted = this.ms.deleteModels (bs);
+var bsDeleted = this.ms.deleteModels (bsAtoms);
 this.slm.processDeletedModelAtoms (bsDeleted);
 this.setAnimationRange (0, 0);
 if (this.eval != null) this.eval.deleteAtomsInVariables (bsDeleted);
@@ -57877,12 +57863,11 @@ this.ms.deleteBonds (bsDeleted, false);
 this.sm.modifySend (-1, modelIndex, -2, "OK");
 }, "JU.BS");
 Clazz_defineMethod (c$, "deleteModelAtoms", 
-function (modelIndex, firstAtomIndex, nAtoms, bsDeleted) {
-this.sm.modifySend (-1, modelIndex, 1, "delete atoms " + JU.Escape.eBS (bsDeleted));
-this.slm.deleteModelAtoms (bsDeleted);
-JU.BSUtil.deleteBits (this.getFrameOffsets (), bsDeleted);
+function (modelIndex, firstAtomIndex, nAtoms, bsModelAtoms) {
+this.sm.modifySend (-1, modelIndex, 1, "delete atoms " + JU.Escape.eBS (bsModelAtoms));
+JU.BSUtil.deleteBits (this.getFrameOffsets (), bsModelAtoms);
 this.setFrameOffsets (this.getFrameOffsets ());
-this.getDataManager ().deleteModelAtoms (firstAtomIndex, nAtoms, bsDeleted);
+this.getDataManager ().deleteModelAtoms (firstAtomIndex, nAtoms, bsModelAtoms);
 this.sm.modifySend (-1, modelIndex, -1, "OK");
 }, "~N,~N,~N,JU.BS");
 Clazz_defineMethod (c$, "getDeletedAtoms", 
@@ -58624,10 +58609,6 @@ function (info) {
 this.shm.loadShape (23);
 this.shm.setShapePropertyBs (23, "setCGO", info, null);
 }, "JU.Lst");
-Clazz_defineMethod (c$, "setFrame", 
-function (i) {
-this.am.setFrame (i - 1);
-}, "~N");
 Clazz_defineMethod (c$, "movePyMOL", 
 function (eval, floatSecondsTotal, pymolView) {
 this.tm.moveToPyMOL (eval, floatSecondsTotal, pymolView);

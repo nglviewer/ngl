@@ -1933,7 +1933,7 @@ Clazz_load (null, "J.render.TextRenderer", ["java.lang.Float", "JM.Text"], funct
 c$ = Clazz_declareType (J.render, "TextRenderer");
 c$.render = Clazz_defineMethod (c$, "render", 
 function (text, vwr, g3d, scalePixelsPerMicron, imageFontScaling, isExact, boxXY, temp) {
-if (text == null || text.image == null && text.lines == null) return;
+if (text == null || text.image == null && !text.doFormatText && text.lines == null) return;
 var showText = g3d.setC (text.colix);
 if (!showText && (text.image == null && (text.bgcolix == 0 || !g3d.setC (text.bgcolix)))) return;
 text.setPosition (vwr, g3d.getRenderWidth (), g3d.getRenderHeight (), scalePixelsPerMicron, imageFontScaling, isExact, boxXY);
@@ -2205,8 +2205,16 @@ Clazz_defineMethod (c$, "getModAtom",
 var ii = Integer.$valueOf (i);
 var pt = this.mpts.get (ii);
 if (pt != null) ii = null;
-pt = this.ms.getDynamicAtom (i, pt);
-if (ii != null) this.mpts.put (ii, pt);
+var v = this.ms.getVibration (i, false);
+var a = this.ms.at[i];
+if (v == null) {
+pt = a;
+} else {
+if (pt == null) pt =  new JU.Point3fi ();
+pt.setT (a);
+if (this.vwr.tm.vibrationOn) this.vwr.tm.getVibrationPoint (v, pt, NaN);
+pt.sD = -1;
+}if (ii != null) this.mpts.put (ii, pt);
 return pt;
 }, "~N");
 Clazz_defineMethod (c$, "renderMeasurement", 

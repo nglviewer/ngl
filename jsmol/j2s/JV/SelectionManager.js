@@ -24,13 +24,15 @@ Clazz.makeConstructor (c$,
 function (vwr) {
 this.vwr = vwr;
 }, "JV.Viewer");
-Clazz.defineMethod (c$, "deleteModelAtoms", 
-function (bsDeleted) {
-JU.BSUtil.deleteBits (this.bsHidden, bsDeleted);
-JU.BSUtil.deleteBits (this.bsSelection, bsDeleted);
-JU.BSUtil.deleteBits (this.bsSubset, bsDeleted);
-JU.BSUtil.deleteBits (this.bsFixed, bsDeleted);
-JU.BSUtil.deleteBits (this.bsDeleted, bsDeleted);
+Clazz.defineMethod (c$, "processDeletedModelAtoms", 
+function (bsAtoms) {
+if (this.bsDeleted != null) JU.BSUtil.deleteBits (this.bsDeleted, bsAtoms);
+if (this.bsSubset != null) JU.BSUtil.deleteBits (this.bsSubset, bsAtoms);
+JU.BSUtil.deleteBits (this.bsFixed, bsAtoms);
+JU.BSUtil.deleteBits (this.bsHidden, bsAtoms);
+var bs = JU.BSUtil.copy (this.bsSelection);
+JU.BSUtil.deleteBits (bs, bsAtoms);
+this.setSelectionSet (bs, 0);
 }, "JU.BS");
 Clazz.defineMethod (c$, "clear", 
 function () {
@@ -238,16 +240,6 @@ function (bs, ignoreSubset) {
 if (this.bsDeleted != null) bs.andNot (this.bsDeleted);
 if (!ignoreSubset && this.bsSubset != null) bs.and (this.bsSubset);
 }, "JU.BS,~B");
-Clazz.defineMethod (c$, "processDeletedModelAtoms", 
-function (bsAtoms) {
-if (this.bsDeleted != null) JU.BSUtil.deleteBits (this.bsDeleted, bsAtoms);
-if (this.bsSubset != null) JU.BSUtil.deleteBits (this.bsSubset, bsAtoms);
-JU.BSUtil.deleteBits (this.bsFixed, bsAtoms);
-JU.BSUtil.deleteBits (this.bsHidden, bsAtoms);
-var bs = JU.BSUtil.copy (this.bsSelection);
-JU.BSUtil.deleteBits (bs, bsAtoms);
-this.setSelectionSet (bs, 0);
-}, "JU.BS");
 Clazz.defineMethod (c$, "setMotionFixedAtoms", 
 function (bs) {
 this.bsFixed.clearAll ();

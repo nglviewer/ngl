@@ -528,7 +528,12 @@ while (this.rd () != null && this.line.startsWith (" *** ATOM")) {
 var tokens = this.getTokens ();
 var index = this.parseIntStr (tokens[3]) - 1;
 tokens = J.adapter.smarter.AtomSetCollectionReader.getTokensStr (this.readLines (3));
-atoms[index].addTensor ( new JU.Tensor ().setFromEigenVectors (this.directLatticeVectors, [this.parseFloatStr (tokens[1]), this.parseFloatStr (tokens[3]), this.parseFloatStr (tokens[5])], "quadrupole", atoms[index].atomName), null, false);
+var vectors =  new Array (3);
+for (var i = 0; i < 3; i++) {
+vectors[i] = JU.V3.newV (this.directLatticeVectors[i]);
+vectors[i].normalize ();
+}
+atoms[index].addTensor ( new JU.Tensor ().setFromEigenVectors (vectors, [this.parseFloatStr (tokens[1]), this.parseFloatStr (tokens[3]), this.parseFloatStr (tokens[5])], "quadrupole", atoms[index].atomName, null), null, false);
 this.rd ();
 }
 this.appendLoadNote ("Ellipsoids set \"quadrupole\": Quadrupole tensors");

@@ -19,6 +19,7 @@ this.atomIndex1 = -1;
 this.atomIndex2 = -1;
 this.isModulated = false;
 this.isUnmodulated = false;
+this.parBorU = null;
 Clazz.instantialize (this, arguments);
 }, JU, "Tensor");
 c$.getType = Clazz.defineMethod (c$, "getType", 
@@ -193,7 +194,7 @@ this.id = id;
 return this;
 }, "~A,~S,~S");
 Clazz.defineMethod (c$, "setFromEigenVectors", 
-function (eigenVectors, eigenValues, type, id) {
+function (eigenVectors, eigenValues, type, id, t) {
 var values =  Clazz.newFloatArray (3, 0);
 var vectors =  new Array (3);
 for (var i = 0; i < 3; i++) {
@@ -201,8 +202,12 @@ vectors[i] = JU.V3.newV (eigenVectors[i]);
 values[i] = eigenValues[i];
 }
 this.newTensorType (vectors, values, type, id);
-return this;
-}, "~A,~A,~S,~S");
+if (t != null) {
+this.isModulated = t.isModulated;
+this.isUnmodulated = t.isUnmodulated;
+this.parBorU = t.parBorU;
+}return this;
+}, "~A,~A,~S,~S,JU.Tensor");
 Clazz.defineMethod (c$, "setFromAxes", 
 function (axes) {
 this.eigenValues =  Clazz.newFloatArray (3, 0);

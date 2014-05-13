@@ -73,16 +73,10 @@ this.cr.latticeCells[2] = 1;
 });
 Clazz.defineMethod (c$, "setModDim", 
 function (ndim) {
-if (this.modAverage) return;
-this.modDim = ndim;
-if (this.modDim > 3) {
-this.cr.appendLoadNote ("Too high modulation dimension (" + this.modDim + ") -- reading average structure");
-this.modDim = 0;
-this.modAverage = true;
-} else {
-this.cr.appendLoadNote ("Modulation dimension = " + this.modDim);
 this.htModulation =  new java.util.Hashtable ();
-}}, "~N");
+this.modDim = ndim;
+this.cr.appendLoadNote ("Modulation dimension = " + this.modDim);
+}, "~N");
 Clazz.overrideMethod (c$, "addModulation", 
 function (map, id, pt, iModel) {
 var ch = id.charAt (0);
@@ -143,6 +137,7 @@ if (!isPost) {
 this.initModForStructure (iModel);
 return;
 }this.htModulation.put ("X_" + this.atModel,  Clazz.newDoubleArray (0, 0));
+this.cr.appendLoadNote (this.modCount + " modulations for " + this.ac + " modulated atoms");
 if (!this.haveAtomMods) return;
 var n = this.cr.asc.ac;
 this.atoms = this.cr.asc.atoms;
@@ -153,7 +148,6 @@ var sb =  new JU.SB ();
 for (var i = this.cr.asc.getLastAtomSetAtomIndex (); i < n; i++) this.modulateAtom (this.atoms[i], sb);
 
 this.cr.asc.setAtomSetAtomProperty ("modt", sb.toString (), -1);
-this.cr.appendLoadNote (this.modCount + " modulations for " + this.ac + " atoms");
 this.htAtomMods = null;
 if (this.minXYZ0 != null) this.trimAtomSet ();
 this.htSubsystems = null;
@@ -239,6 +233,7 @@ case 'U':
 utens = key.substring (4, key.indexOf (";"));
 case 'O':
 case 'D':
+if (this.modAverage) break;
 var axis = key.charAt (pt_);
 type = this.getModType (key);
 if (this.htAtomMods == null) this.htAtomMods =  new java.util.Hashtable ();
@@ -353,8 +348,7 @@ Clazz.defineMethod (c$, "addUStr",
  function (atom, id, val) {
 var i = Clazz.doubleToInt ("U11U22U33U12U13U23UISO".indexOf (id) / 3);
 if (JU.Logger.debuggingHigh) JU.Logger.debug ("MOD RDR adding " + id + " " + i + " " + val + " to " + atom.anisoBorU[i]);
-if (atom.anisoBorU == null) JU.Logger.error ("MOD RDR cannot modulate nonexistent atom anisoBorU for atom " + atom.atomName);
- else this.cr.setU (atom, i, val + atom.anisoBorU[i]);
+this.cr.asc.setU (atom, i, val + atom.anisoBorU[i]);
 }, "J.adapter.smarter.Atom,~S,~N");
 Clazz.defineMethod (c$, "modulateAtom", 
  function (a, sb) {
@@ -392,21 +386,31 @@ occ = o_site * (pt[1] + ms.vOcc);
 } else {
 occ = pt[0] * (pt[1] + ms.vOcc);
 }a.foccupancy = (occ > 0.49 && occ < 0.50 ? 0.489 : Math.min (1, Math.max (0, occ)));
-JU.Logger.info ("atom " + a.atomName + " occupancy = " + a.foccupancy);
 }if (ms.htUij != null) {
+var t = (a.tensors == null ? null : a.tensors.get (0));
+if (t != null && t.parBorU != null) {
+a.anisoBorU =  Clazz.newFloatArray (8, 0);
+for (var i = 0; i < 8; i++) a.anisoBorU[i] = t.parBorU[i];
+
+t.isUnmodulated = true;
+}if (a.anisoBorU == null) {
+JU.Logger.error ("MOD RDR cannot modulate nonexistent atom anisoBorU for atom " + a.atomName);
+} else {
 if (JU.Logger.debuggingHigh) {
 JU.Logger.debug ("setModulation Uij(initial)=" + JU.Escape.eAF (a.anisoBorU));
 JU.Logger.debug ("setModulation tensor=" + JU.Escape.e ((a.tensors.get (0)).getInfo ("all")));
 }for (var e, $e = ms.htUij.entrySet ().iterator (); $e.hasNext () && ((e = $e.next ()) || true);) this.addUStr (a, e.getKey (), e.getValue ().floatValue ());
 
-if (a.tensors != null) (a.tensors.get (0)).isUnmodulated = true;
 var symmetry = this.getAtomSymmetry (a, this.cr.symmetry);
-var t = this.cr.asc.getXSymmetry ().addRotatedTensor (a, symmetry.getTensor (a.anisoBorU), iop, false, symmetry);
+t = this.cr.asc.getXSymmetry ().addRotatedTensor (a, symmetry.getTensor (a.anisoBorU), iop, false, symmetry);
 t.isModulated = true;
+t.id = JU.Escape.e (a.anisoBorU);
+a.bfactor = a.anisoBorU[7] * 100;
+a.anisoBorU = null;
 if (JU.Logger.debuggingHigh) {
 JU.Logger.debug ("setModulation Uij(final)=" + JU.Escape.eAF (a.anisoBorU) + "\n");
-JU.Logger.debug ("setModulation tensor=" + (a.tensors.get (0)).getInfo ("all"));
-}}if (Float.isNaN (ms.x)) ms.set (0, 0, 0);
+JU.Logger.debug ("setModulation tensor=" + JU.Escape.e ((a.tensors.get (1)).getInfo ("all")));
+}}}if (Float.isNaN (ms.x)) ms.set (0, 0, 0);
 a.vib = ms;
 if (this.modVib || a.foccupancy != 0) {
 var t = this.q1Norm.dot (a);
@@ -484,10 +488,10 @@ if (bs == null) bs = asc.bsAtoms = JU.BSUtil.newBitSet2 (0, asc.ac);
 for (var i = bs.nextSetBit (0); i >= 0; i = bs.nextSetBit (i + 1)) {
 var a = atoms[i];
 pt.setT (a);
-pt.add (a.vib);
+if (a.vib != null) pt.add (a.vib);
 this.getSymmetry (a).toCartesian (pt, false);
 sym.toFractional (pt, false);
-if (!asc.xtalSymmetry.isWithinCell (3, pt, this.minXYZ0.x, this.maxXYZ0.x, this.minXYZ0.y, this.maxXYZ0.y, this.minXYZ0.z, this.maxXYZ0.z, 0.001) || this.isCommensurate && a.foccupancy < 0.5) bs.clear (i);
+if (!asc.xtalSymmetry.isWithinCell (3, pt, this.minXYZ0.x, this.maxXYZ0.x, this.minXYZ0.y, this.maxXYZ0.y, this.minXYZ0.z, this.maxXYZ0.z, 0.001) || this.isCommensurate && !this.modAverage && a.foccupancy < 0.5) bs.clear (i);
 }
 });
 Clazz.defineMethod (c$, "getDefaultUnitCell", 

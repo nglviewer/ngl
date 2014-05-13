@@ -3,7 +3,7 @@ Clazz.load (null, "J.render.TextRenderer", ["java.lang.Float", "JM.Text"], funct
 c$ = Clazz.declareType (J.render, "TextRenderer");
 c$.render = Clazz.defineMethod (c$, "render", 
 function (text, vwr, g3d, scalePixelsPerMicron, imageFontScaling, isExact, boxXY, temp) {
-if (text == null || text.image == null && text.lines == null) return;
+if (text == null || text.image == null && !text.doFormatText && text.lines == null) return;
 var showText = g3d.setC (text.colix);
 if (!showText && (text.image == null && (text.bgcolix == 0 || !g3d.setC (text.bgcolix)))) return;
 text.setPosition (vwr, g3d.getRenderWidth (), g3d.getRenderHeight (), scalePixelsPerMicron, imageFontScaling, isExact, boxXY);

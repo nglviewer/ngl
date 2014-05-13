@@ -43,8 +43,6 @@ this.$compnd = null;
 this.conformationIndex = 0;
 this.fileAtomIndex = 0;
 this.lastAltLoc = '\0';
-this.lastAtomData = null;
-this.lastAtomIndex = 0;
 this.lastGroup = -2147483648;
 this.lastInsertion = '\0';
 this.lastSourceSerial = -2147483648;
@@ -287,9 +285,9 @@ anisou[0] += resid;
 anisou[1] += resid;
 anisou[2] += resid;
 entry.getKey ().addTensor (symmetry.getTensor (anisou).setType (null), "TLS-R", false);
-System.out.println ("TLS-U:  " + JU.Escape.eAF (anisou));
+JU.Logger.info ("TLS-U:  " + JU.Escape.eAF (anisou));
 anisou = (entry.getKey ().anisoBorU);
-if (anisou != null) System.out.println ("ANISOU: " + JU.Escape.eAF (anisou));
+if (anisou != null) JU.Logger.info ("ANISOU: " + JU.Escape.eAF (anisou));
 }
 this.tlsU = null;
 }, "J.api.SymmetryInterface");
@@ -821,18 +819,17 @@ Clazz.defineMethod (c$, "anisou",
  function () {
 var data =  Clazz.newFloatArray (8, 0);
 data[6] = 1;
-var serial = this.parseIntRange (this.line, 6, 11);
-var index;
-if (this.line.substring (6, 26).equals (this.lastAtomData)) {
-index = this.lastAtomIndex;
-} else {
-if (!this.haveMappedSerials) this.asc.createAtomSerialMap ();
-index = this.asc.getAtomIndexFromSerial (serial);
+var serial = this.line.substring (6, 11).trim ();
+if (!this.haveMappedSerials && this.asc.ac > 0) {
+for (var i = this.asc.getAtomSetAtomIndex (this.asc.iSet); i < this.asc.ac; i++) {
+var atomSerial = this.asc.atoms[i].atomSerial;
+if (atomSerial != -2147483648) this.asc.atomSymbolicMap.put ("" + atomSerial, this.asc.atoms[i]);
+}
 this.haveMappedSerials = true;
-}if (index < 0) {
+}var atom = this.asc.getAtomFromName (serial);
+if (atom == null) {
 return;
-}var atom = this.asc.atoms[index];
-for (var i = 28, pt = 0; i < 70; i += 7, pt++) data[pt] = this.parseFloatRange (this.line, i, i + 7);
+}for (var i = 28, pt = 0; i < 70; i += 7, pt++) data[pt] = this.parseFloatRange (this.line, i, i + 7);
 
 for (var i = 0; i < 6; i++) {
 if (Float.isNaN (data[i])) {

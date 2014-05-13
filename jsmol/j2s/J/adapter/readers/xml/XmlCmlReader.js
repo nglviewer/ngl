@@ -113,11 +113,11 @@ for (var i = this.tokenCount; --i >= 0; ) this.bondArray[i].order = this.parseBo
 
 }if (this.atts.containsKey ("atomRef1")) {
 this.breakOutBondTokens (this.atts.get ("atomRef1"));
-for (var i = this.tokenCount; --i >= 0; ) this.bondArray[i].atomIndex1 = this.asc.getAtomIndexFromName (this.tokens[i]);
+for (var i = this.tokenCount; --i >= 0; ) this.bondArray[i].atomIndex1 = this.asc.getAtomIndex (this.tokens[i]);
 
 }if (this.atts.containsKey ("atomRef2")) {
 this.breakOutBondTokens (this.atts.get ("atomRef2"));
-for (var i = this.tokenCount; --i >= 0; ) this.bondArray[i].atomIndex2 = this.asc.getAtomIndexFromName (this.tokens[i]);
+for (var i = this.tokenCount; --i >= 0; ) this.bondArray[i].atomIndex2 = this.asc.getAtomIndex (this.tokens[i]);
 
 }}if (name.equalsIgnoreCase ("atomArray")) {
 this.state = 7;
@@ -356,7 +356,7 @@ break;
 Clazz.defineMethod (c$, "addNewBond", 
  function (a1, a2, order) {
 this.parent.applySymmetryToBonds = true;
-if (this.isSerial) this.asc.addNewBondWithMappedSerialNumbers (JU.PT.parseInt (a1.substring (1)), JU.PT.parseInt (a2.substring (1)), order);
+if (this.isSerial) this.asc.addNewBondFromNames (a1.substring (1), a2.substring (1), order);
  else this.asc.addNewBondFromNames (a1, a2, order);
 }, "~S,~S,~N");
 Clazz.defineMethod (c$, "getDictRefValue", 

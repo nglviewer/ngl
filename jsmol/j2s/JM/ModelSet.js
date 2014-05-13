@@ -1,5 +1,5 @@
 Clazz.declarePackage ("JM");
-Clazz.load (["JM.BondCollection", "JU.BS", "$.Lst", "$.M3", "$.M4", "$.P3", "$.V3", "JU.BoxInfo"], "JM.ModelSet", ["java.lang.Boolean", "$.Float", "java.util.Hashtable", "JU.A4", "$.AU", "$.P4", "$.PT", "$.Quat", "$.SB", "J.api.Interface", "$.JmolModulationSet", "J.atomdata.RadiusData", "J.bspt.Bspf", "J.c.PAL", "$.VDW", "JM.Atom", "$.AtomIteratorWithinModel", "$.AtomIteratorWithinModelSet", "$.Bond", "$.BondSet", "$.HBond", "$.Model", "$.StateScript", "JS.SV", "JU.BSUtil", "$.Elements", "$.Escape", "$.JmolMolecule", "$.Logger", "$.Measure", "$.Point3fi", "$.Txt", "JV.JC"], function () {
+Clazz.load (["JM.BondCollection", "JU.BS", "$.Lst", "$.M3", "$.M4", "$.P3", "$.V3", "JU.BoxInfo"], "JM.ModelSet", ["java.lang.Boolean", "$.Float", "java.util.Hashtable", "JU.A4", "$.AU", "$.P4", "$.PT", "$.Quat", "$.SB", "J.api.Interface", "$.JmolModulationSet", "J.atomdata.RadiusData", "J.bspt.Bspf", "J.c.PAL", "$.VDW", "JM.Atom", "$.AtomIteratorWithinModel", "$.AtomIteratorWithinModelSet", "$.Bond", "$.BondSet", "$.HBond", "$.Model", "$.StateScript", "JS.SV", "JU.BSUtil", "$.Elements", "$.Escape", "$.JmolMolecule", "$.Logger", "$.Measure", "$.Txt", "JV.JC"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.selectionHaloEnabled = false;
 this.echoShapeActive = false;
@@ -424,13 +424,13 @@ mpt++;
 continue;
 }var nAtoms = oldModels[i].ac;
 if (nAtoms == 0) continue;
-var bs = oldModels[i].bsAtoms;
+var bsModelAtoms = oldModels[i].bsAtoms;
 var firstAtomIndex = oldModels[i].firstAtomIndex;
-JU.BSUtil.deleteBits (this.bsSymmetry, bs);
-this.deleteModel (mpt, firstAtomIndex, nAtoms, bs, bsBonds);
-for (var j = oldModelCount; --j > i; ) oldModels[j].fixIndices (mpt, nAtoms, bs);
+JU.BSUtil.deleteBits (this.bsSymmetry, bsModelAtoms);
+this.deleteModel (mpt, firstAtomIndex, nAtoms, bsModelAtoms, bsBonds);
+for (var j = oldModelCount; --j > i; ) oldModels[j].fixIndices (mpt, nAtoms, bsModelAtoms);
 
-this.vwr.shm.deleteShapeAtoms ([newModels, this.at, [mpt, firstAtomIndex, nAtoms]], bs);
+this.vwr.shm.deleteShapeAtoms ([newModels, this.at, [mpt, firstAtomIndex, nAtoms]], bsModelAtoms);
 this.mc--;
 }
 this.deleteModel (-1, 0, 0, null, null);
@@ -2204,7 +2204,7 @@ this.am = newModels;
 this.mc = newModelCount;
 }, "~N");
 Clazz.defineMethod (c$, "deleteModel", 
-function (modelIndex, firstAtomIndex, nAtoms, bsAtoms, bsBonds) {
+function (modelIndex, firstAtomIndex, nAtoms, bsModelAtoms, bsBonds) {
 if (modelIndex < 0) {
 this.validateBspf (false);
 this.bsAll = null;
@@ -2232,11 +2232,11 @@ this.msInfo.put ("group3Counts", JU.AU.deleteElements (group3Counts, modelIndex,
 }if (this.unitCells != null) {
 this.unitCells = JU.AU.deleteElements (this.unitCells, modelIndex, 1);
 }for (var i = this.stateScripts.size (); --i >= 0; ) {
-if (!this.stateScripts.get (i).deleteAtoms (modelIndex, bsBonds, bsAtoms)) {
+if (!this.stateScripts.get (i).deleteAtoms (modelIndex, bsBonds, bsModelAtoms)) {
 this.stateScripts.remove (i);
 }}
-this.deleteModelAtoms (firstAtomIndex, nAtoms, bsAtoms);
-this.vwr.deleteModelAtoms (modelIndex, firstAtomIndex, nAtoms, bsAtoms);
+this.deleteModelAtoms (firstAtomIndex, nAtoms, bsModelAtoms);
+this.vwr.deleteModelAtoms (modelIndex, firstAtomIndex, nAtoms, bsModelAtoms);
 }, "~N,~N,~N,JU.BS,JU.BS");
 Clazz.defineMethod (c$, "getMoInfo", 
 function (modelIndex) {
@@ -2582,16 +2582,6 @@ if (!(Clazz.instanceOf (v, J.api.JmolModulationSet))) continue;
 if (this.bsModulated != null) this.bsModulated.setBitTo (i, isOn);
 }
 }, "JU.BS,~B,JU.P3,~B");
-Clazz.defineMethod (c$, "getDynamicAtom", 
-function (i, pt) {
-var v = this.getVibration (i, false);
-if (v == null) return this.at[i];
-if (pt == null) pt =  new JU.Point3fi ();
-pt.setT (this.at[i]);
-pt = this.vwr.tm.getVibrationPoint (v, pt, NaN);
-pt.sD = -1;
-return pt;
-}, "~N,JU.Point3fi");
 Clazz.defineMethod (c$, "getBoundBoxOrientation", 
 function (type, bsAtoms) {
 var j0 = bsAtoms.nextSetBit (0);

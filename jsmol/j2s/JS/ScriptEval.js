@@ -3264,7 +3264,7 @@ return;
 }switch (this.tokAt (1)) {
 case 2:
 if (isFrame && this.slen == 2) {
-if (!this.chk) this.vwr.setFrame (this.intParameter (1) - 1);
+if (!this.chk) this.vwr.am.setFrame (this.intParameter (1) - 1);
 return;
 }break;
 case 1048577:
@@ -3301,7 +3301,7 @@ this.error (20);
 if (!this.chk) this.vwr.setFrameDelayMs (millis);
 return;
 case 1073742166:
-if (this.checkLength23 () > 0) if (!this.chk) this.vwr.setFrameTitleObj (this.slen == 2 ? "@{_modelName}" : (this.tokAt (2) == 7 ? JS.SV.listValue (this.st[2]) : this.paramAsStr (2)));
+if (this.checkLength23 () > 0) if (!this.chk) this.vwr.setFrameTitleObj (this.slen == 2 ? "@{_modelName}" : (this.tokAt (2) == 7 ? JS.SV.strListValue (this.st[2]) : this.paramAsStr (2)));
 return;
 case 1073741832:
 var bs = (this.slen == 2 || this.tokAt (2) == 1048587 ? null : this.atomExpressionAt (2));
@@ -3626,6 +3626,9 @@ if (this.slen == 1) {
 this.vwr.reset (false);
 return;
 }switch (this.tokAt (1)) {
+case 36865:
+if (!this.chk && this.outputBuffer != null) this.outputBuffer.setLength (0);
+return;
 case 135270423:
 this.vwr.cacheClear ();
 return;
@@ -5488,15 +5491,15 @@ min = range[0];
 max = range[1];
 }} else if (min == max) {
 max = 3.4028235E38;
-}}if (!this.chk) {
-if (isIsosurface) {
+}}if (isIsosurface) {
 } else if (data == null) {
-this.vwr.setCurrentColorRange (name);
+if (!this.chk) this.vwr.setCurrentColorRange (name);
 index++;
 } else {
-this.vwr.cm.setPropertyColorRangeData (data, bsSelected);
+if (!this.chk) this.vwr.cm.setPropertyColorRangeData (data, bsSelected);
 }if (isIsosurface) {
 this.checkLength (index);
+if (this.chk) return;
 isColor = false;
 var ce = this.vwr.cm.getColorEncoder (scheme);
 if (ce == null) return;
@@ -5508,7 +5511,7 @@ this.showString (this.getIsosurfaceDataRange (shapeType, ""));
 if (translucentLevel == 3.4028235E38) return;
 } else if (max != 3.4028235E38) {
 this.vwr.cm.setPropertyColorRange (min, max);
-}}} else {
+}} else {
 index++;
 }this.checkLength (index);
 colorvalue = pal;

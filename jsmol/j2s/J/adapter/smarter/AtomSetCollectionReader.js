@@ -661,6 +661,7 @@ Clazz.defineMethod (c$, "applySymTrajASCR",
 function () {
 if (this.forcePacked) this.initializeSymmetryOptions ();
 var sym = (this.iHaveUnitCell && this.doCheckUnitCell ? this.asc.getXSymmetry ().applySymmetryFromReader (this, this.getSymmetry ()) : null);
+if (sym == null) this.asc.setTensors ();
 if (this.isTrajectory) this.asc.setTrajectory ();
 this.initializeSymmetry ();
 return sym;
@@ -1023,12 +1024,6 @@ Clazz.defineMethod (c$, "setChainID",
 function (atom, ch) {
 atom.chainID = this.vwr.getChainID ("" + ch);
 }, "J.adapter.smarter.Atom,~S");
-Clazz.defineMethod (c$, "setU", 
-function (atom, i, val) {
-var data = this.asc.getAnisoBorU (atom);
-if (data == null) this.asc.setAnisoBorU (atom, data =  Clazz.newFloatArray (8, 0), 8);
-data[i] = val;
-}, "J.adapter.smarter.Atom,~N,~N");
 Clazz.overrideMethod (c$, "readNextLine", 
 function () {
 if (this.rd () != null && this.line.indexOf ("#jmolscript:") >= 0) this.checkCurrentLineForScript ();

@@ -162,16 +162,17 @@ var a =  Clazz.newDoubleArray (3, 3, 0);
 for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) a[i][j] = Double.$valueOf (tokens[pt++]).doubleValue ();
 
 
-var index1 = this.asc.getAtomIndexFromName (atomName1);
-var index2;
+var a1 = this.asc.getAtomFromName (atomName1);
+if (a1 == null) return true;
+var a2 = null;
 var t =  new JU.Tensor ().setFromAsymmetricTensor (a, type, id);
 if (atomName2 == null) {
-index2 = -1;
-this.asc.atoms[index1].addTensor (t, null, false);
+a1.addTensor (t, null, false);
 } else {
-index2 = this.asc.getAtomIndexFromName (atomName2);
+a2 = this.asc.getAtomFromName (atomName2);
+if (a2 == null) return true;
 this.interactionTensors.addLast (t);
-}t.setAtomIndexes (index1, index2);
+}t.setAtomIndexes (a1.index, (a2 == null ? -1 : a2.index));
 return true;
 });
 Clazz.defineStatics (c$,

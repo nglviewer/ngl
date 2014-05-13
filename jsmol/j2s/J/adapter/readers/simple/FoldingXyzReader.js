@@ -1,5 +1,5 @@
 Clazz.declarePackage ("J.adapter.readers.simple");
-Clazz.load (["J.adapter.smarter.AtomSetCollectionReader"], "J.adapter.readers.simple.FoldingXyzReader", ["java.util.Hashtable", "JU.AU", "$.PT", "J.adapter.smarter.Atom"], function () {
+Clazz.load (["J.adapter.smarter.AtomSetCollectionReader"], "J.adapter.readers.simple.FoldingXyzReader", ["java.util.Hashtable", "JU.PT", "J.adapter.smarter.Atom"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.haveBonds = false;
 Clazz.instantialize (this, arguments);
@@ -31,7 +31,7 @@ return readLine;
 Clazz.defineMethod (c$, "readAtoms", 
 function (ac, addAtoms) {
 var htBondCounts =  new java.util.Hashtable ();
-var bonds = JU.AU.newInt2 (ac);
+var bonds =  new Array (ac);
 var haveAtomTypes = true;
 var checking = true;
 var lastAtom = null;
@@ -54,12 +54,12 @@ if (!this.filterAtom (atom, i)) continue;
 this.setAtomCoordTokens (atom, tokens, 2);
 this.asc.addAtomWithMappedSerialNumber (atom);
 var n = tokens.length - 5;
-bonds[i] =  Clazz.newIntArray (n + 1, 0);
-bonds[i][n] = atom.atomSerial;
+bonds[i] =  new Array (n + 1);
+bonds[i][n] = sIndex;
 for (var j = 0; j < n; j++) {
 var t = tokens[j + 5];
 var i2 = this.parseIntStr (t);
-bonds[i][j] = i2;
+bonds[i][j] = t;
 if (checking) {
 if (n == 0 || t.equals (sIndex) || i2 <= 0 || i2 > ac) {
 haveAtomTypes = (n > 0);
@@ -77,15 +77,16 @@ this.applySymmetryAndSetTrajectory ();
 }, "~N,~B");
 Clazz.defineMethod (c$, "makeBonds", 
  function (bonds, haveAtomTypes) {
-var atoms = this.asc.atoms;
 for (var i = bonds.length; --i >= 0; ) {
 var b = bonds[i];
 if (b == null) continue;
-var a1 = atoms[this.asc.getAtomIndexFromSerial (b[b.length - 1])];
+var a1 = this.asc.getAtomFromName (b[b.length - 1]);
 var b0 = 0;
-if (haveAtomTypes) a1.atomName += "\0" + (b[b0++]);
-for (var j = b.length - 1; --j >= b0; ) if (b[j] > i && this.asc.addNewBondWithOrder (a1.index, this.asc.getAtomIndexFromSerial (b[j]), 1) != null) this.haveBonds = true;
-
+if (haveAtomTypes) a1.atomName += "\0" + b[b0++];
+for (var j = b.length - 1; --j >= b0; ) {
+var a2 = this.asc.getAtomFromName (b[j]);
+if (a1.index < a2.index && this.asc.addNewBondWithOrderA (a1, a2, 1) != null) this.haveBonds = true;
+}
 }
 }, "~A,~B");
 Clazz.defineMethod (c$, "getElement", 

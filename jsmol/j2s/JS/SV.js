@@ -304,13 +304,15 @@ case 4:
 if ((x.value).indexOf (".") >= 0) return Float.$valueOf (JS.SV.toFloat (x.value));
 iValue = Clazz.floatToInt (JS.SV.toFloat (x.value));
 break;
+case 8:
+return Float.$valueOf ((x.value).length ());
 default:
 iValue = 0;
 }
 return Integer.$valueOf (iValue);
 }, "JS.T");
 c$.bValue = Clazz.defineMethod (c$, "bValue", 
- function (x) {
+function (x) {
 switch (x == null ? 0 : x.tok) {
 case 1048589:
 case 6:
@@ -808,13 +810,14 @@ c$.sprintf = Clazz.defineMethod (c$, "sprintf",
 function (strFormat, $var) {
 if ($var == null) return strFormat;
 var vd = (strFormat.indexOf ("d") >= 0 || strFormat.indexOf ("i") >= 0 ?  Clazz.newIntArray (1, 0) : null);
+var isArray = ($var.tok == 7);
 var vf = (strFormat.indexOf ("f") >= 0 ?  Clazz.newFloatArray (1, 0) : null);
 var ve = (strFormat.indexOf ("e") >= 0 ?  Clazz.newDoubleArray (1, 0) : null);
 var getS = (strFormat.indexOf ("s") >= 0);
-var getP = (strFormat.indexOf ("p") >= 0 && $var.tok == 8);
-var getQ = (strFormat.indexOf ("q") >= 0 && $var.tok == 9);
+var getP = (strFormat.indexOf ("p") >= 0 && (isArray || $var.tok == 8));
+var getQ = (strFormat.indexOf ("q") >= 0 && (isArray || $var.tok == 9));
 var of = [vd, vf, ve, null, null, null];
-if ($var.tok != 7) return JS.SV.sprintf (strFormat, $var, of, vd, vf, ve, getS, getP, getQ);
+if (!isArray) return JS.SV.sprintf (strFormat, $var, of, vd, vf, ve, getS, getP, getQ);
 var sv = $var.getList ();
 var list2 =  new Array (sv.size ());
 for (var i = 0; i < list2.length; i++) list2[i] = JS.SV.sprintf (strFormat, sv.get (i), of, vd, vf, ve, getS, getP, getQ);
@@ -937,7 +940,7 @@ for (var i = 0; i < x.size (); i++) if (!x.get (i).unEscapeBitSetArray (bs) && a
 
 return bs;
 }, "java.util.ArrayList,~B");
-c$.listValue = Clazz.defineMethod (c$, "listValue", 
+c$.strListValue = Clazz.defineMethod (c$, "strListValue", 
 function (x) {
 if (x.tok != 7) return [JS.SV.sValue (x)];
 var sv = (x).getList ();

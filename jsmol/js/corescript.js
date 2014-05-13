@@ -5722,7 +5722,7 @@ return;
 }switch (this.tokAt (1)) {
 case 2:
 if (isFrame && this.slen == 2) {
-if (!this.chk) this.vwr.setFrame (this.intParameter (1) - 1);
+if (!this.chk) this.vwr.am.setFrame (this.intParameter (1) - 1);
 return;
 }break;
 case 1048577:
@@ -5759,7 +5759,7 @@ this.error (20);
 if (!this.chk) this.vwr.setFrameDelayMs (millis);
 return;
 case 1073742166:
-if (this.checkLength23 () > 0) if (!this.chk) this.vwr.setFrameTitleObj (this.slen == 2 ? "@{_modelName}" : (this.tokAt (2) == 7 ? JS.SV.listValue (this.st[2]) : this.paramAsStr (2)));
+if (this.checkLength23 () > 0) if (!this.chk) this.vwr.setFrameTitleObj (this.slen == 2 ? "@{_modelName}" : (this.tokAt (2) == 7 ? JS.SV.strListValue (this.st[2]) : this.paramAsStr (2)));
 return;
 case 1073741832:
 var bs = (this.slen == 2 || this.tokAt (2) == 1048587 ? null : this.atomExpressionAt (2));
@@ -6084,6 +6084,9 @@ if (this.slen == 1) {
 this.vwr.reset (false);
 return;
 }switch (this.tokAt (1)) {
+case 36865:
+if (!this.chk && this.outputBuffer != null) this.outputBuffer.setLength (0);
+return;
 case 135270423:
 this.vwr.cacheClear ();
 return;
@@ -7946,15 +7949,15 @@ min = range[0];
 max = range[1];
 }} else if (min == max) {
 max = 3.4028235E38;
-}}if (!this.chk) {
-if (isIsosurface) {
+}}if (isIsosurface) {
 } else if (data == null) {
-this.vwr.setCurrentColorRange (name);
+if (!this.chk) this.vwr.setCurrentColorRange (name);
 index++;
 } else {
-this.vwr.cm.setPropertyColorRangeData (data, bsSelected);
+if (!this.chk) this.vwr.cm.setPropertyColorRangeData (data, bsSelected);
 }if (isIsosurface) {
 this.checkLength (index);
+if (this.chk) return;
 isColor = false;
 var ce = this.vwr.cm.getColorEncoder (scheme);
 if (ce == null) return;
@@ -7966,7 +7969,7 @@ this.showString (this.getIsosurfaceDataRange (shapeType, ""));
 if (translucentLevel == 3.4028235E38) return;
 } else if (max != 3.4028235E38) {
 this.vwr.cm.setPropertyColorRange (min, max);
-}}} else {
+}} else {
 index++;
 }this.checkLength (index);
 colorvalue = pal;
@@ -8831,6 +8834,7 @@ case 8:
 case 9:
 case 11:
 case 12:
+case 7:
 case 10:
 case 6:
 case 14:
@@ -9317,7 +9321,7 @@ return bs;
 var comparisonFloat = NaN;
 var isModel = (tokWhat == 1095766030);
 var isIntProperty = JS.T.tokAttr (tokWhat, 1095761920);
-var isFloatProperty = JS.T.tokAttr (tokWhat, 1112539136);
+var isFloatProperty = (JS.T.tokAttr (tokWhat, 1112539136) || (tokWhat & 1137704960) == 1078984704);
 var isIntOrFloat = isIntProperty && isFloatProperty;
 var isStringProperty = !isIntProperty && JS.T.tokAttr (tokWhat, 1087373312);
 if (tokWhat == 1087375365) isIntProperty = !(isStringProperty = false);
@@ -9325,7 +9329,7 @@ var val = t.value;
 if (JS.T.tokAttr (tokValue, 1073741824)) {
 if ("_modelNumber".equalsIgnoreCase (val)) {
 var modelIndex = this.vwr.am.cmi;
-val = Integer.$valueOf (modelIndex < 0 ? 0 : this.vwr.getModelFileNumber (modelIndex));
+val = Integer.$valueOf (comparisonInt = (modelIndex < 0 ? 0 : this.vwr.getModelFileNumber (modelIndex)));
 } else {
 var v = this.getParameter (val, 1073742190, false);
 if (v != null) {
@@ -10238,7 +10242,7 @@ break;
 }
 switch (tokenValue.tok) {
 case 7:
-if (isStrProperty) list = JS.SV.listValue (tokenValue);
+if (isStrProperty) list = JS.SV.strListValue (tokenValue);
  else fvalues = JS.SV.flistValue (tokenValue, nValues);
 break;
 case 4:
@@ -12026,7 +12030,7 @@ if (n == -9999) return this.addXStr (s.toLowerCase ());
 if (n > 0) return this.addXStr (JU.PT.formatS (s, n, n, false, false));
 return this.addXStr (JU.PT.formatS (s, n, n - 1, true, false));
 case 7:
-var list = JS.SV.listValue (x1);
+var list = JS.SV.strListValue (x1);
 for (var i = 0; i < list.length; i++) {
 if (n == 0) list[i] = list[i].trim ();
  else if (n > 0) list[i] = JU.PT.formatS (list[i], n, n, true, false);
@@ -12495,7 +12499,7 @@ case 269484096:
 ++i;
 break;
 case 7:
-return JS.SV.listValue (this.getToken (i));
+return JS.SV.strListValue (this.getToken (i));
 default:
 this.invArg ();
 }

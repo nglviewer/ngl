@@ -190,6 +190,7 @@ return this.unitCell.getUnitCellAsArray (vectorsOnly);
 }, "~B");
 Clazz.overrideMethod (c$, "getTensor", 
 function (parBorU) {
+if (parBorU == null) return null;
 if (this.unitCell == null) this.unitCell = JS.UnitCell.newA ([1, 1, 1, 90, 90, 90]);
 return this.unitCell.getTensor (parBorU);
 }, "~A");

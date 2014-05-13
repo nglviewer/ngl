@@ -653,7 +653,7 @@ c$.isLocal = Clazz.defineMethod (c$, "isLocal",
 function (fileName) {
 if (fileName == null) return false;
 var itype = JV.FileManager.urlTypeIndex (fileName);
-return (itype < 0 || itype == 3);
+return (itype < 0 || itype == 4);
 }, "~S");
 Clazz.defineMethod (c$, "getClassifiedName", 
  function (name, isFullLoad) {
@@ -707,7 +707,7 @@ names[1] = JV.FileManager.stripPath (names[0]);
 var name0 = names[0];
 names[0] = this.pathForAllFiles + names[1];
 JU.Logger.info ("FileManager substituting " + name0 + " --> " + names[0]);
-}if (isFullLoad && (file != null || JV.FileManager.urlTypeIndex (names[0]) == 3)) {
+}if (isFullLoad && (file != null || JV.FileManager.urlTypeIndex (names[0]) == 4)) {
 var path = (file == null ? JU.PT.trim (names[0].substring (5), "/") : names[0]);
 var pt = path.length - names[1].length - 1;
 if (pt > 0) {
@@ -931,7 +931,7 @@ return (ret == null ? "" : JU.Rdr.fixUTF (ret));
 }, "~S,~A");
 Clazz.defineStatics (c$,
 "SIMULATION_PROTOCOL", "http://SIMULATION/",
-"URL_LOCAL", 3,
-"urlPrefixes", ["http:", "https:", "ftp:", "file:"]);
+"URL_LOCAL", 4,
+"urlPrefixes", ["http:", "https:", "sftp:", "ftp:", "file:"]);
 c$.scriptFilePrefixes = c$.prototype.scriptFilePrefixes = ["/*file*/\"", "FILE0=\"", "FILE1=\""];
 });

@@ -66,6 +66,10 @@ if (haveID) this.typeSelected = null;
 this.selectedAtoms = null;
 return haveID;
 }, "~O");
+Clazz.overrideMethod (c$, "initShape", 
+function () {
+this.setProperty ("thisID", null, null);
+});
 Clazz.overrideMethod (c$, "setProperty", 
 function (propertyName, value, bs) {
 if (propertyName === "thisID") {

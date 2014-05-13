@@ -155,7 +155,7 @@ case 135304707:
 return this.evaluatePrompt (mp, args);
 case 135267332:
 return this.evaluateRandom (mp, args);
-case 1276118019:
+case 1276120577:
 return this.evaluateReplace (mp, args);
 case 135267335:
 case 135267336:
@@ -710,7 +710,7 @@ this.e.evalError (ex.toString (), null);
 throw ex;
 }
 }
-var list = JS.SV.listValue (x1);
+var list = JS.SV.strListValue (x1);
 if (JU.Logger.debugging) JU.Logger.debug ("finding " + sFind);
 var bs =  new JU.BS ();
 var ipt = 0;
@@ -825,9 +825,9 @@ var sList3 = null;
 if (len == 2) {
 var itab = (args[0].tok == 4 ? 0 : 1);
 var tab = JS.SV.sValue (args[itab]);
-sList1 = (isArray1 ? JS.SV.listValue (x1) : JU.PT.split (JS.SV.sValue (x1), "\n"));
+sList1 = (isArray1 ? JS.SV.strListValue (x1) : JU.PT.split (JS.SV.sValue (x1), "\n"));
 x2 = args[1 - itab];
-sList2 = (x2.tok == 7 ? JS.SV.listValue (x2) : JU.PT.split (JS.SV.sValue (x2), "\n"));
+sList2 = (x2.tok == 7 ? JS.SV.strListValue (x2) : JU.PT.split (JS.SV.sValue (x2), "\n"));
 sList3 =  new Array (len = Math.max (sList1.length, sList2.length));
 for (var i = 0; i < len; i++) sList3[i] = (i >= sList1.length ? "" : sList1[i]) + tab + (i >= sList2.length ? "" : sList2[i]);
 
@@ -1185,7 +1185,7 @@ Clazz_defineMethod (c$, "evaluatePrompt",
  function (mp, args) {
 if (args.length != 1 && args.length != 2 && args.length != 3) return false;
 var label = JS.SV.sValue (args[0]);
-var buttonArray = (args.length > 1 && args[1].tok == 7 ? JS.SV.listValue (args[1]) : null);
+var buttonArray = (args.length > 1 && args[1].tok == 7 ? JS.SV.strListValue (args[1]) : null);
 var asButtons = (buttonArray != null || args.length == 1 || args.length == 3 && args[2].asBoolean ());
 var input = (buttonArray != null ? null : args.length >= 2 ? JS.SV.sValue (args[1]) : "OK");
 var s = "" + this.vwr.prompt (label, input, buttonArray, asButtons);
@@ -1346,16 +1346,32 @@ return false;
 }, "JS.ScriptMathProcessor,~A,~N");
 Clazz_defineMethod (c$, "evaluateReplace", 
  function (mp, args) {
-if (args.length != 2) return false;
+var isAll = false;
+var sFind;
+var sReplace;
+switch (args.length) {
+case 0:
+isAll = true;
+sFind = sReplace = null;
+break;
+case 3:
+isAll = JS.SV.bValue (args[2]);
+case 2:
+sFind = JS.SV.sValue (args[0]);
+sReplace = JS.SV.sValue (args[1]);
+break;
+default:
+return false;
+}
 var x = mp.getX ();
-var sFind = JS.SV.sValue (args[0]);
-var sReplace = JS.SV.sValue (args[1]);
-var s = (x.tok == 7 ? null : JS.SV.sValue (x));
-if (s != null) return mp.addXStr (JU.PT.rep (s, sFind, sReplace));
-var list = JS.SV.listValue (x);
-for (var i = list.length; --i >= 0; ) list[i] = JU.PT.rep (list[i], sFind, sReplace);
+if (x.tok == 7) {
+var list = JS.SV.strListValue (x);
+var l =  new Array (list.length);
+for (var i = list.length; --i >= 0; ) l[i] = (sFind == null ? JU.PT.clean (list[i]) : isAll ? JU.PT.replaceAllCharacters (list[i], sFind, sReplace) : JU.PT.rep (list[i], sFind, sReplace));
 
-return mp.addXAS (list);
+return mp.addXAS (l);
+}var s = JS.SV.sValue (x);
+return mp.addXStr (sFind == null ? JU.PT.clean (s) : isAll ? JU.PT.replaceAllCharacters (s, sFind, sReplace) : JU.PT.rep (s, sFind, sReplace));
 }, "JS.ScriptMathProcessor,~A");
 Clazz_defineMethod (c$, "evaluateScript", 
  function (mp, args, tok) {
@@ -1447,7 +1463,7 @@ if (s.length > 0 && s.charAt (s.length - 1) == '\n') s = s.substring (0, s.lengt
 return mp.addXStr (JU.PT.rep (s, "\n", sArg));
 case 1276117512:
 if (s != null) return mp.addXStr (JU.PT.trim (s, sArg));
-var list = JS.SV.listValue (x);
+var list = JS.SV.strListValue (x);
 for (var i = list.length; --i >= 0; ) list[i] = JU.PT.trim (list[i], sArg);
 
 return mp.addXAS (list);

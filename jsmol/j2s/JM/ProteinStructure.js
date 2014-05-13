@@ -1,5 +1,5 @@
 Clazz.declarePackage ("JM");
-Clazz.load (["JU.V3"], "JM.ProteinStructure", ["JU.AU", "$.P3", "JU.Logger"], function () {
+Clazz.load (["JU.V3"], "JM.ProteinStructure", ["java.util.Hashtable", "JU.AU", "$.P3", "JU.Logger"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.type = null;
 this.subtype = null;
@@ -9,13 +9,14 @@ this.serialID = 0;
 this.strandCount = 0;
 this.apolymer = null;
 this.monomerIndexFirst = 0;
-this.monomerCount = 0;
+this.nRes = 0;
 this.axisA = null;
 this.axisB = null;
 this.axisUnitVector = null;
 this.vectorProjection = null;
 this.monomerIndexLast = 0;
 this.segments = null;
+this.resMap = null;
 Clazz.instantialize (this, arguments);
 }, JM, "ProteinStructure");
 Clazz.prepareFields (c$, function () {
@@ -28,22 +29,37 @@ this.apolymer = apolymer;
 this.type = type;
 this.monomerIndexFirst = monomerIndex;
 this.addMonomer (monomerIndex + monomerCount - 1);
-if (JU.Logger.debugging) JU.Logger.debug ("Creating ProteinStructure " + this.strucNo + " " + type.getBioStructureTypeName (false) + " from " + this.monomerIndexFirst + " through " + this.monomerIndexLast + " in polymer " + apolymer);
+if (JU.Logger.debugging) JU.Logger.info ("Creating ProteinStructure " + this.strucNo + " " + type.getBioStructureTypeName (false) + " from " + this.monomerIndexFirst + " through " + this.monomerIndexLast + " in polymer " + apolymer);
 }, "JM.AlphaPolymer,J.c.STR,~N,~N");
 Clazz.defineMethod (c$, "addMonomer", 
 function (index) {
+this.resMap = null;
 this.monomerIndexFirst = Math.min (this.monomerIndexFirst, index);
 this.monomerIndexLast = Math.max (this.monomerIndexLast, index);
-this.monomerCount = this.monomerIndexLast - this.monomerIndexFirst + 1;
+this.nRes = this.monomerIndexLast - this.monomerIndexFirst + 1;
 }, "~N");
 Clazz.defineMethod (c$, "removeMonomer", 
-function (monomerIndex) {
-if (monomerIndex > this.monomerIndexLast || monomerIndex < this.monomerIndexFirst) return 0;
-var ret = this.monomerIndexLast - monomerIndex;
-this.monomerIndexLast = Math.max (this.monomerIndexFirst, monomerIndex) - 1;
-this.monomerCount = this.monomerIndexLast - this.monomerIndexFirst + 1;
-return ret;
-}, "~N");
+function (index) {
+this.resMap = null;
+if (index > this.monomerIndexLast || index < this.monomerIndexFirst) return;
+if (index == this.monomerIndexFirst) {
+this.monomerIndexFirst++;
+this.nRes--;
+} else if (index == this.monomerIndexLast) {
+this.monomerIndexLast--;
+this.nRes--;
+} else {
+var n = this.monomerIndexLast - index;
+this.monomerIndexLast = index - 1;
+this.nRes = index - this.monomerIndexFirst;
+var monomers = this.apolymer.monomers;
+var type = monomers[++index].getProteinStructureType ();
+var mLast = -1;
+for (var i = 0, pt = index; i < n; i++, pt++) {
+(monomers[pt]).setStructure (null);
+mLast = monomers[pt].setProteinStructureType (type, mLast);
+}
+}}, "~N");
 Clazz.defineMethod (c$, "calcAxis", 
 function () {
 });
@@ -51,12 +67,12 @@ Clazz.defineMethod (c$, "calcSegments",
 function () {
 if (this.segments != null) return;
 this.calcAxis ();
-this.segments =  new Array (this.monomerCount + 1);
-this.segments[this.monomerCount] = this.axisB;
+this.segments =  new Array (this.nRes + 1);
+this.segments[this.nRes] = this.axisB;
 this.segments[0] = this.axisA;
 var axis = JU.V3.newV (this.axisUnitVector);
-axis.scale (this.axisB.distance (this.axisA) / this.monomerCount);
-for (var i = 1; i < this.monomerCount; i++) {
+axis.scale (this.axisB.distance (this.axisA) / this.nRes);
+for (var i = 1; i < this.nRes; i++) {
 var point = this.segments[i] =  new JU.P3 ();
 point.add2 (this.segments[i - 1], axis);
 }
@@ -68,13 +84,13 @@ return this.apolymer.monomers[this.monomerIndexFirst - 1].isHelix () || this.apo
 });
 Clazz.defineMethod (c$, "upperNeighborIsHelixOrSheet", 
 function () {
-var upperNeighborIndex = this.monomerIndexFirst + this.monomerCount;
+var upperNeighborIndex = this.monomerIndexFirst + this.nRes;
 if (upperNeighborIndex == this.apolymer.monomerCount) return false;
 return this.apolymer.monomers[upperNeighborIndex].isHelix () || this.apolymer.monomers[upperNeighborIndex].isSheet ();
 });
 Clazz.defineMethod (c$, "getMonomerCount", 
 function () {
-return this.monomerCount;
+return this.nRes;
 });
 Clazz.defineMethod (c$, "isWithin", 
 function (monomerIndex) {
@@ -86,11 +102,12 @@ return this.monomerIndexFirst;
 });
 Clazz.defineMethod (c$, "getIndex", 
 function (monomer) {
-var monomers = this.apolymer.monomers;
-var i;
-for (i = this.monomerCount; --i >= 0; ) if (monomers[this.monomerIndexFirst + i] === monomer) break;
+if (this.resMap == null) {
+this.resMap =  new java.util.Hashtable ();
+for (var i = this.nRes; --i >= 0; ) this.resMap.put (this.apolymer.monomers[this.monomerIndexFirst + i], Integer.$valueOf (i));
 
-return i;
+}var ii = this.resMap.get (monomer);
+return (ii == null ? -1 : ii.intValue ());
 }, "JM.Monomer");
 Clazz.defineMethod (c$, "getSegments", 
 function () {
@@ -116,7 +133,7 @@ Clazz.defineMethod (c$, "getInfo",
 function (info) {
 info.put ("type", this.type.getBioStructureTypeName (false));
 var leadAtomIndices = this.apolymer.getLeadAtomIndices ();
-var iArray = JU.AU.arrayCopyRangeI (leadAtomIndices, this.monomerIndexFirst, this.monomerIndexFirst + this.monomerCount);
+var iArray = JU.AU.arrayCopyRangeI (leadAtomIndices, this.monomerIndexFirst, this.monomerIndexFirst + this.nRes);
 info.put ("leadAtomIndices", iArray);
 this.calcAxis ();
 if (this.axisA == null) return;

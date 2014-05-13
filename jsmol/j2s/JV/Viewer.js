@@ -3440,6 +3440,8 @@ case 603979967:
 return this.g.translucent;
 case 603979968:
 return this.g.twistedSheets;
+case 603979972:
+return this.g.vectorsCentered;
 case 603979973:
 return this.g.vectorSymmetry;
 case 603979974:
@@ -4090,6 +4092,9 @@ Clazz.defineMethod (c$, "setBooleanPropertyTok",
  function (key, tok, value) {
 var doRepaint = true;
 switch (tok) {
+case 603979972:
+this.g.vectorsCentered = value;
+break;
 case 603979811:
 this.g.backboneSteps = value;
 break;
@@ -4296,7 +4301,7 @@ break;
 case 603979800:
 this.g.autoFps = value;
 break;
-case 603979972:
+case 603979971:
 JU.DF.setUseNumberLocalization (this.g.useNumberLocalization = value);
 break;
 case 603979918:
@@ -5676,14 +5681,14 @@ if (type === J.c.VDW.USER && this.bsUserVdws == null) this.setUserVdw (this.defa
 return this.getDataManager ().getDefaultVdwNameOrData (type, bs);
 }, "~N,J.c.VDW,JU.BS");
 Clazz.defineMethod (c$, "deleteAtoms", 
-function (bs, fullModels) {
-var atomIndex = (bs == null ? -1 : bs.nextSetBit (0));
+function (bsAtoms, fullModels) {
+var atomIndex = (bsAtoms == null ? -1 : bsAtoms.nextSetBit (0));
 if (atomIndex < 0) return 0;
 this.clearModelDependentObjects ();
 if (!fullModels) {
 this.sm.modifySend (atomIndex, this.ms.at[atomIndex].mi, 4, "deleting atom " + this.getAtomName (atomIndex));
-this.ms.deleteAtoms (bs);
-var n = this.slm.deleteAtoms (bs);
+this.ms.deleteAtoms (bsAtoms);
+var n = this.slm.deleteAtoms (bsAtoms);
 this.setTainted (true);
 this.sm.modifySend (atomIndex, this.ms.at[atomIndex].mi, -4, "OK");
 return n;
@@ -5692,7 +5697,7 @@ this.sm.modifySend (-1, modelIndex, 5, "deleting model " + this.getModelNumberDo
 this.setCurrentModelIndexClear (0, false);
 this.am.setAnimationOn (false);
 var bsD0 = JU.BSUtil.copy (this.getDeletedAtoms ());
-var bsDeleted = this.ms.deleteModels (bs);
+var bsDeleted = this.ms.deleteModels (bsAtoms);
 this.slm.processDeletedModelAtoms (bsDeleted);
 this.setAnimationRange (0, 0);
 if (this.eval != null) this.eval.deleteAtomsInVariables (bsDeleted);
@@ -5715,12 +5720,11 @@ this.ms.deleteBonds (bsDeleted, false);
 this.sm.modifySend (-1, modelIndex, -2, "OK");
 }, "JU.BS");
 Clazz.defineMethod (c$, "deleteModelAtoms", 
-function (modelIndex, firstAtomIndex, nAtoms, bsDeleted) {
-this.sm.modifySend (-1, modelIndex, 1, "delete atoms " + JU.Escape.eBS (bsDeleted));
-this.slm.deleteModelAtoms (bsDeleted);
-JU.BSUtil.deleteBits (this.getFrameOffsets (), bsDeleted);
+function (modelIndex, firstAtomIndex, nAtoms, bsModelAtoms) {
+this.sm.modifySend (-1, modelIndex, 1, "delete atoms " + JU.Escape.eBS (bsModelAtoms));
+JU.BSUtil.deleteBits (this.getFrameOffsets (), bsModelAtoms);
 this.setFrameOffsets (this.getFrameOffsets ());
-this.getDataManager ().deleteModelAtoms (firstAtomIndex, nAtoms, bsDeleted);
+this.getDataManager ().deleteModelAtoms (firstAtomIndex, nAtoms, bsModelAtoms);
 this.sm.modifySend (-1, modelIndex, -1, "OK");
 }, "~N,~N,~N,JU.BS");
 Clazz.defineMethod (c$, "getDeletedAtoms", 
@@ -6462,10 +6466,6 @@ function (info) {
 this.shm.loadShape (23);
 this.shm.setShapePropertyBs (23, "setCGO", info, null);
 }, "JU.Lst");
-Clazz.defineMethod (c$, "setFrame", 
-function (i) {
-this.am.setFrame (i - 1);
-}, "~N");
 Clazz.defineMethod (c$, "movePyMOL", 
 function (eval, floatSecondsTotal, pymolView) {
 this.tm.moveToPyMOL (eval, floatSecondsTotal, pymolView);

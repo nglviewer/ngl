@@ -21769,6 +21769,6 @@ Clazz.binaryFolders =  Clazz._Loader.binaryFolders = [ Clazz._Loader.getJ2SLibBa
 })(Clazz);
 
 };
-___JmolDate="$Date: 2014-04-28 21:55:28 -0500 (Mon, 28 Apr 2014) $"
+___JmolDate="$Date: 2014-05-06 15:22:26 -0500 (Tue, 06 May 2014) $"
 ___fullJmolProperties="src/org/jmol/viewer/Jmol.properties"
-___JmolVersion="14.1.14"
+___JmolVersion="14.1.15_2014.05.06"

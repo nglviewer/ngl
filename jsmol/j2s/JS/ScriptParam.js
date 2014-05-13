@@ -88,7 +88,7 @@ case 269484096:
 ++i;
 break;
 case 7:
-return JS.SV.listValue (this.getToken (i));
+return JS.SV.strListValue (this.getToken (i));
 default:
 this.invArg ();
 }

@@ -37,7 +37,6 @@ this.xtalSymmetry = null;
 this.bondIndex0 = 0;
 this.checkSpecial = true;
 this.atomSymbolicMap = null;
-this.haveMappedSerials = false;
 this.haveUnitCell = false;
 Clazz.instantialize (this, arguments);
 }, J.adapter.smarter, "AtomSetCollection");
@@ -418,14 +417,22 @@ return atom;
 Clazz.defineMethod (c$, "addAtomWithMappedName", 
 function (atom) {
 var atomName = this.addAtom (atom).atomName;
-if (atomName != null) this.atomSymbolicMap.put (atomName, Integer.$valueOf (atom.index));
+if (atomName != null) this.atomSymbolicMap.put (atomName, atom);
 }, "J.adapter.smarter.Atom");
 Clazz.defineMethod (c$, "addAtomWithMappedSerialNumber", 
 function (atom) {
 var atomSerial = this.addAtom (atom).atomSerial;
-if (atomSerial != -2147483648) this.atomSymbolicMap.put (Integer.$valueOf (atomSerial), Integer.$valueOf (atom.index));
-this.haveMappedSerials = true;
+if (atomSerial != -2147483648) this.atomSymbolicMap.put ("" + atomSerial, atom);
 }, "J.adapter.smarter.Atom");
+Clazz.defineMethod (c$, "getAtomFromName", 
+function (atomName) {
+return this.atomSymbolicMap.get (atomName);
+}, "~S");
+Clazz.defineMethod (c$, "getAtomIndex", 
+function (name) {
+var a = this.atomSymbolicMap.get (name);
+return (a == null ? -1 : a.index);
+}, "~S");
 Clazz.defineMethod (c$, "addNewBondWithOrder", 
 function (atomIndex1, atomIndex2, order) {
 if (atomIndex1 < 0 || atomIndex1 >= this.ac || atomIndex2 < 0 || atomIndex2 >= this.ac) return null;
@@ -435,12 +442,12 @@ return bond;
 }, "~N,~N,~N");
 Clazz.defineMethod (c$, "addNewBondFromNames", 
 function (atomName1, atomName2, order) {
-return this.addNewBondWithOrder (this.getAtomIndexFromName (atomName1), this.getAtomIndexFromName (atomName2), order);
+return this.addNewBondWithOrderA (this.getAtomFromName (atomName1), this.getAtomFromName (atomName2), order);
 }, "~S,~S,~N");
-Clazz.defineMethod (c$, "addNewBondWithMappedSerialNumbers", 
-function (atomSerial1, atomSerial2, order) {
-return this.addNewBondWithOrder (this.getAtomIndexFromSerial (atomSerial1), this.getAtomIndexFromSerial (atomSerial2), order);
-}, "~N,~N,~N");
+Clazz.defineMethod (c$, "addNewBondWithOrderA", 
+function (atom1, atom2, order) {
+return (atom1 == null || atom2 == null ? null : this.addNewBondWithOrder (atom1.index, atom2.index, order));
+}, "J.adapter.smarter.Atom,J.adapter.smarter.Atom,~N");
 Clazz.defineMethod (c$, "addBond", 
 function (bond) {
 if (this.trajectoryStepCount > 0) return;
@@ -493,7 +500,7 @@ if (this.atoms[i].atomSite == atomSite) this.addVibrationVector (i, vx, vy, vz);
 Clazz.defineMethod (c$, "addVibrationVector", 
 function (iatom, x, y, z) {
 if (!this.allowMultiple) iatom = iatom % this.ac;
-this.atoms[iatom].vib = JU.V3.new3 (x, y, z);
+return (this.atoms[iatom].vib = JU.V3.new3 (x, y, z));
 }, "~N,~N,~N,~N");
 Clazz.defineMethod (c$, "setAtomSetSpaceGroupName", 
 function (spaceGroupName) {
@@ -511,10 +518,12 @@ this.haveAnisou = true;
 atom.anisoBorU = data;
 data[6] = type;
 }, "J.adapter.smarter.Atom,~A,~N");
-Clazz.defineMethod (c$, "getAnisoBorU", 
-function (atom) {
-return atom.anisoBorU;
-}, "J.adapter.smarter.Atom");
+Clazz.defineMethod (c$, "setU", 
+function (atom, i, val) {
+var data = atom.anisoBorU;
+if (data == null) this.setAnisoBorU (atom, data =  Clazz.newFloatArray (8, 0), 8);
+data[i] = val;
+}, "J.adapter.smarter.Atom,~N,~N");
 Clazz.defineMethod (c$, "getXSymmetry", 
 function () {
 if (this.xtalSymmetry == null) this.xtalSymmetry = (J.api.Interface.getOption ("adapter.smarter.XtalSymmetry")).set (this);
@@ -539,30 +548,7 @@ this.checkSpecial = TF;
 Clazz.defineMethod (c$, "clearSymbolicMap", 
 function () {
 this.atomSymbolicMap.clear ();
-this.haveMappedSerials = false;
 });
-Clazz.defineMethod (c$, "createAtomSerialMap", 
-function () {
-if (this.haveMappedSerials || this.iSet < 0) return;
-for (var i = this.getLastAtomSetAtomCount (); i < this.ac; i++) {
-var atomSerial = this.atoms[i].atomSerial;
-if (atomSerial != -2147483648) this.atomSymbolicMap.put (Integer.$valueOf (atomSerial), Integer.$valueOf (i));
-}
-this.haveMappedSerials = true;
-});
-Clazz.defineMethod (c$, "getAtomIndexFromName", 
-function (atomName) {
-return this.getMapIndex (atomName);
-}, "~S");
-Clazz.defineMethod (c$, "getAtomIndexFromSerial", 
-function (serialNumber) {
-return this.getMapIndex (Integer.$valueOf (serialNumber));
-}, "~N");
-Clazz.defineMethod (c$, "getMapIndex", 
- function (nameOrNum) {
-var value = this.atomSymbolicMap.get (nameOrNum);
-return (value == null ? -1 : value.intValue ());
-}, "~O");
 Clazz.defineMethod (c$, "setInfo", 
 function (key, value) {
 if (value == null) this.ascAuxiliaryInfo.remove (key);
@@ -580,7 +566,7 @@ return true;
 }, "~S");
 Clazz.defineMethod (c$, "mapPartialCharge", 
 function (atomName, charge) {
-this.atoms[this.getAtomIndexFromName (atomName)].partialCharge = charge;
+this.getAtomFromName (atomName).partialCharge = charge;
 }, "~S,~N");
 Clazz.defineMethod (c$, "getAtomSetCollectionAuxiliaryInfo", 
 function (key) {

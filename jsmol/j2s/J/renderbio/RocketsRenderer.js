@@ -60,26 +60,33 @@ var midPointCount = this.monomerCount + 1;
 this.cordMidPoints = this.vwr.allocTempPoints (midPointCount);
 var proteinstructurePrev = null;
 var point;
+var ptLastRocket = -10;
+var pt1 =  new JU.P3 ();
+var pt2 =  new JU.P3 ();
 for (var i = 0; i < this.monomerCount; ++i) {
 point = this.cordMidPoints[i];
 var residue = this.monomers[i];
 if (isNewStyle && this.renderArrowHeads) {
 point.setT (this.controlPoints[i]);
 } else if (this.isHelix (i) || !isNewStyle && this.isSheet (i)) {
-var proteinstructure = residue.getProteinStructure ();
-point.setT (i - 1 != proteinstructure.getMonomerIndex () ? proteinstructure.getAxisStartPoint () : proteinstructure.getAxisEndPoint ());
-proteinstructurePrev = proteinstructure;
+var proteinstructure = residue.getStructure ();
+if (proteinstructure === proteinstructurePrev) {
+pt1.add (pt2);
+ptLastRocket = i;
 } else {
-if (proteinstructurePrev != null) point.setT (proteinstructurePrev.getAxisEndPoint ());
- else {
-point.setT (this.controlPoints[i]);
-}proteinstructurePrev = null;
+proteinstructurePrev = proteinstructure;
+pt1.setT (proteinstructure.getAxisStartPoint ());
+pt2.sub2 (proteinstructure.getAxisEndPoint (), pt1);
+pt2.scale (1 / (proteinstructure.getMonomerCount () - 1));
+if (ptLastRocket == i - 3) {
+this.cordMidPoints[i - 1].ave (this.cordMidPoints[i - 2], pt1);
+}}point.setT (pt1);
+} else {
+point.setT (proteinstructurePrev == null ? this.controlPoints[i] : proteinstructurePrev.getAxisEndPoint ());
+proteinstructurePrev = null;
 }}
-point = this.cordMidPoints[this.monomerCount];
-if (proteinstructurePrev != null) point.setT (proteinstructurePrev.getAxisEndPoint ());
- else {
-point.setT (this.controlPoints[this.monomerCount]);
-}}, "~B");
+this.cordMidPoints[this.monomerCount].setT (proteinstructurePrev == null ? this.controlPoints[this.monomerCount] : proteinstructurePrev.getAxisEndPoint ());
+}, "~B");
 Clazz.defineMethod (c$, "renderRockets", 
 function () {
 this.tPending = false;
@@ -89,13 +96,13 @@ if (this.isHelix (i) || this.isSheet (i)) {
 this.renderSpecialSegment (monomer, this.getLeadColix (i), this.mads[i]);
 } else {
 this.renderPending ();
-this.renderHermiteConic (i, true);
+this.renderHermiteConic (i, true, 7);
 }}
 this.renderPending ();
 });
 Clazz.defineMethod (c$, "renderSpecialSegment", 
 function (monomer, thisColix, thisMad) {
-var proteinstructure = monomer.getProteinStructure ();
+var proteinstructure = monomer.proteinStructure;
 if (this.tPending) {
 if (proteinstructure === this.proteinstructurePending && thisMad == this.mad && thisColix == this.colix && proteinstructure.getIndex (monomer) == this.endIndexPending + 1) {
 ++this.endIndexPending;
@@ -106,7 +113,7 @@ this.startIndexPending = this.endIndexPending = proteinstructure.getIndex (monom
 this.colix = thisColix;
 this.mad = thisMad;
 this.tPending = true;
-}, "JM.Monomer,~N,~N");
+}, "JM.AlphaMonomer,~N,~N");
 Clazz.defineMethod (c$, "renderPending", 
 function () {
 if (!this.tPending) return;
