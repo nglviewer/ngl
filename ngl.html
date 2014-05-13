@@ -52,7 +52,6 @@
         <div id="container"></div>
 
         <script src="js/underscore.js"></script>
-        <script src="js/jquery.js"></script>
 
         <script src="js/three.js"></script>
         <script src="js/three/Detector.js"></script>
@@ -88,10 +87,9 @@
 
             var viewer;
 
-            $(document).ready( function(){
+            document.addEventListener("DOMContentLoaded", function() {
 
-
-                $( NGL ).bind( 'initialized', function(){
+                NGL.init( function(){
 
                     viewer = new NGL.Viewer( 'container' );
                     viewer.animate();
@@ -216,8 +214,6 @@
                     // nglGui.addSurface();
 
                 });
-
-                NGL.init();
 
             });
 

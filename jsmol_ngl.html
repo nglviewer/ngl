@@ -114,13 +114,11 @@ Jmol code conversion to JavaScript by <b>Bob Hanson</b>.
 
 	jmolApplet0 = Jmol.getApplet("jmolApplet0", Info);
 
-	$( NGL ).bind( 'initialized', function(){
+	NGL.init( function(){
 		
 		Jmol.script( jmolApplet0, 'unbind _slideZoom; load jsmol/data/1crn.pdb;' );
 
 	});
-
-	NGL.init();
 
 	// note that now scripts can be sent immediately after the _Applet object is created
 
