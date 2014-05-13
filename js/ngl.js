@@ -495,7 +495,7 @@ NGL.Viewer = function( eid ){
 
     this.initStats();
 
-    window.addEventListener( 'resize', _.bind( this.onWindowResize, this ), false );
+    window.addEventListener( 'resize', this.onWindowResize.bind( this ), false );
 
     // fog & background
     this.setBackground();
