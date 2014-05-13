@@ -642,7 +642,7 @@ NGL.Viewer.prototype = {
     initLights: function(){
         
         var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
-        directionalLight.position = new THREE.Vector3( 1, 1, -2.5 ).normalize();
+        directionalLight.position.copy( new THREE.Vector3( 1, 1, -2.5 ).normalize() );
         directionalLight.intensity = 0.5;
         
         var ambientLight = new THREE.AmbientLight( 0x101010 );
@@ -1051,7 +1051,10 @@ NGL.Buffer.prototype = {
 
             this.geometry.addAttribute( 
                 name, 
-                new THREE.Float32Attribute( this.attributeSize, itemSize[ a.type ] )
+                new THREE.BufferAttribute(
+                    new Float32Array( this.attributeSize * itemSize[ a.type ] ),
+                    itemSize[ a.type ]
+                )
             );
 
         }, this );
@@ -1081,7 +1084,10 @@ NGL.Buffer.prototype = {
     makeIndex: function(){
 
         this.geometry.addAttribute( 
-            "index", new THREE.Uint32Attribute( this.index.length, 1 )
+            "index",
+            new THREE.BufferAttribute(
+                new Uint32Array( this.index.length ), 1
+            )
         );
 
         this.geometry.attributes[ "index" ].array.set( this.index );
@@ -1123,8 +1129,8 @@ NGL.MeshBuffer = function ( position, color, index, normal ) {
     
     this.finalize();
     
-    this.material.transparent = true;
-    this.material.depthWrite = true;
+    // this.material.transparent = true;
+    // this.material.depthWrite = true;
     // this.material.lights = false;
     this.material.side = THREE.DoubleSide;
     // this.material.blending = THREE.AdditiveBlending;
@@ -1228,7 +1234,10 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
     var mappingItemSize = this.mappingItemSize;
 
     this.geometry.addAttribute( 
-        "index", new THREE.Uint32Attribute( size * mappingIndicesSize, 1 )
+        "index",
+        new THREE.BufferAttribute(
+            new Uint32Array( size * mappingIndicesSize ), 1
+        )
     );
 
     var index = this.geometry.attributes[ "index" ].array;
@@ -1558,11 +1567,12 @@ NGL.PointBuffer = function ( position, color ) {
 
     this.geometry = new THREE.BufferGeometry();
 
-    this.geometry.addAttribute( 'position', new THREE.Float32Attribute( this.size, 3 ) );
-    this.geometry.addAttribute( 'color', new THREE.Float32Attribute( this.size, 3 ) );
-
-    this.geometry.attributes.position.array.set( position );
-    this.geometry.attributes.color.set( color );
+    this.geometry.addAttribute(
+        'position', new THREE.BufferAttribute( position, 3 )
+    );
+    this.geometry.addAttribute(
+        'color', new THREE.Float32Attribute( color, 3 )
+    );
 
     this.mesh = new THREE.ParticleSystem( this.geometry, this.material );
 
@@ -1593,11 +1603,15 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     this.geometry = new THREE.BufferGeometry();
 
-    this.geometry.addAttribute( 'position', new THREE.Float32Attribute( nX, 3 ) );
-    this.geometry.addAttribute( 'color', new THREE.Float32Attribute( nX, 3 ) );
+    var aPosition = new Float32Array( nX * 3 );
+    var aColor = new Float32Array( nX * 3 );
 
-    var aPosition = this.geometry.attributes.position.array;
-    var aColor = this.geometry.attributes.color.array;
+    this.geometry.addAttribute( 
+        'position', new THREE.BufferAttribute( aPosition, 3 )
+    );
+    this.geometry.addAttribute( 
+        'color', new THREE.BufferAttribute( aColor, 3 )
+    );
 
     var i, j;
 
