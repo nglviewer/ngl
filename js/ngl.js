@@ -190,11 +190,11 @@ NGL.Utils = {
  */
 NGL.init = function ( onload ) {
 
-    NGL.initResources( onload );
-
     NGL.materialCache = {};
 
     this.textures = [];
+
+    NGL.initResources( onload );
 
     return this;
 
@@ -209,6 +209,8 @@ NGL.initResources = function( onLoad ){
 
     var loadingManager = new THREE.LoadingManager( function(){
 
+        console.log( "NGL initialized" );
+
         if( onLoad !== undefined ){
 
             onLoad();
@@ -221,8 +223,10 @@ NGL.initResources = function( onLoad ){
 
     var xhrLoader = new THREE.XHRLoader( loadingManager );
 
-    _.each( NGL.Resources, function( v, url ){
+    Object.keys( NGL.Resources ).forEach( function( url ){
         
+        var v = NGL.Resources[ url ];
+
         if( v=="image" ){
 
             imageLoader.load( url, function( image ){
@@ -256,7 +260,7 @@ NGL.getMaterial = function( params ){
 
     var key = JSON.stringify( params );
 
-    if (!NGL.materialCache[ key ]) {
+    if( !NGL.materialCache[ key ] ){
         NGL.materialCache[ key ] = new THREE.MeshLambertMaterial( params )
     }
 
@@ -269,15 +273,14 @@ NGL.getMaterial = function( params ){
  * [getShader description]
  * @private
  * @param  {String} name
- * @param  {String[]} defines
  * @return {String}
  */
-NGL.getShader = function( name, defines ) {
+NGL.getShader = function( name ) {
 
     var shader = NGL.Resources[ 'shader/' + name ];
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
 
-    shader = shader.replace( re, function( match, p1 ){
+    return shader.replace( re, function( match, p1 ){
 
         var path = 'shader/chunk/' + p1 + '.glsl';
         var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
@@ -285,9 +288,6 @@ NGL.getShader = function( name, defines ) {
         return chunk ? chunk : "";
 
     });
-
-    return _.map( defines, function( def ){ return "#define " + def })
-                .join("\n") + "\n" + shader;
 
 };
 
@@ -464,7 +464,7 @@ NGL.Viewer = function( eid ){
 
     this.initStats();
 
-    window.addEventListener( 'resize', _.bind( this.onWindowResize, this ), false );
+    window.addEventListener( 'resize', this.onWindowResize.bind( this ), false );
 
     // fog & background
     this.setBackground();
@@ -686,7 +686,7 @@ NGL.Viewer.prototype = {
 
         var p = this.params;
 
-        if( !_.isNull(type) ) p.fogType = type;
+        if( type!==null ) p.fogType = type;
         if( color ) p.fogColor = color;
         if( near ) p.fogNear = near;
         if( far ) p.fogFar = far;
@@ -700,11 +700,12 @@ NGL.Viewer.prototype = {
             this.scene.fog = null;
         }
 
-        _.each( this.modelGroup.children, function( o ){
+        this.modelGroup.children.forEach( function( o ){
             if( o.material ) o.material.needsUpdate = true;
         });
-
-        _.each( NGL.materialCache, function( m ){
+console.log(NGL.materialCache, NGL);
+        Object.keys( NGL.materialCache ).forEach( function( key ){
+            var m = NGL.materialCache[ key ];
             m.needsUpdate = true;
         });
 
@@ -733,7 +734,7 @@ NGL.Viewer.prototype = {
 
         var p = this.params;
 
-        if( !_.isNull(type) ) p.cameraType = type;
+        if( type!==null ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
         if( near ) p.cameraNear = near;
         if( far ) p.cameraFar = far;
@@ -815,7 +816,7 @@ NGL.Viewer.prototype = {
         this.updateDynamicUniforms();
 
         // needed for font texture, but I don't know why
-        _.each( NGL.textures, function( v ){
+        NGL.textures.forEach( function( v ){
             v.uniform.value = v.tex;
         });
 
@@ -954,7 +955,6 @@ NGL.Buffer = function () {
     // - vertexShader
     // - fragmentShader
 
-    this.defines = [];
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
 
@@ -981,8 +981,8 @@ NGL.Buffer.prototype = {
         this.material = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
             attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader, this.defines ),
-            fragmentShader: NGL.getShader( this.fragmentShader, this.defines ),
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
             depthTest: true,
             transparent: false,
             // opacity: 1.0,
@@ -1012,7 +1012,9 @@ NGL.Buffer.prototype = {
             "f": 1, "v2": 2, "v3": 3, "c": 3
         };
 
-        _.each( attributes, function( a, name ){
+        Object.keys( attributes ).forEach( function( name ){
+
+            var a = attributes[ name ];
 
             this.attributes[ name ] = { 
                 "type": a.type, "value": null
@@ -1042,7 +1044,7 @@ NGL.Buffer.prototype = {
 
         var attributes = this.geometry.attributes;
 
-        _.each( data, function( d, name ){
+        Object.keys( data ).forEach( function( name ){
             
             attributes[ name ].set( data[ name ] );
 
@@ -1147,7 +1149,7 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
     var a, d, itemSize, array, n, i, j;
 
-    _.each( data, function( d, name ){
+    Object.keys( data ).forEach( function( name ){
         
         d = data[ name ];
         a = attributes[ name ];
@@ -1441,8 +1443,6 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift, 
 
     NGL.AlignedBoxBuffer.call( this );
 
-    if( cap ) this.defines.push( "CAP" );
-
     this.addUniforms({
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'shift': { type: "f", value: shift },
@@ -1466,6 +1466,8 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift, 
     });
 
     this.finalize();
+
+    this.material.defines[ "CAP" ] = 1;
 
 }
 
@@ -1691,13 +1693,13 @@ NGL.getFont = function( name ){
     var base = 29;
     var lineHeight = 37;
 
-    _.each( fnt, function( line, i ){
+    fnt.forEach( function( line ){
 
         if( line.substr( 0, 5 )=='char ' ){
 
             var character = {};
             var ls = line.substr(5).split( /\s+/ );
-            _.each( ls, function( field, i ){
+            ls.forEach( function( field ){
                 var fs = field.split('=');
                 character[ fs[0] ] = parseInt( fs[1] );
             });
@@ -1756,7 +1758,8 @@ NGL.TextBuffer = function ( position, size, text ) {
         }
     }
 
-    var charCount = _.reduce( text, function( memo, t ){ return memo + t.length; }, 0 );
+    var charCount = 0;
+    text.forEach( function( t ){ charCount += t.length; } );
 
     this.size = charCount;
     this.vertexShader = 'SDFFont.vert';
