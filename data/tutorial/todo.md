@@ -22,7 +22,7 @@ Ideas
   * allows for fast static scene loading
   * workflow: export from Jmol with NGL as renderer => import in standalone NGL
   * re-use three.js export & import functions - possible?
-
+* rendererStats do not play well with a Composer
 
 
 Todo
@@ -31,6 +31,12 @@ Todo
 * Remove underscore dependence
 * Remove jQuery dependence
     * use three.js XHR and image loading functions
+* Implement SphereMeshBuffer
+
+* Use the new THREE.BufferAttribute
+* Use three.js material defines: { "label" : "value" }
+* Use THREE.RawShaderMaterial()
+
 * Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
 * Lighting
     * double sided (looks funny in MeshBuffer)
@@ -39,20 +45,15 @@ Todo
     * physically based material parameters
       * where to get?
     * static light in three.js, i.e. move with camera
-* Implement SphereMeshBuffer
 * Make viewer stats optional (hide/show)
-* rendererStats do not play well with a Composer
 * Create distance fields for [Computer modern fonts](http://checkmyworking.com/cm-web-fonts/)
 * Slab and fog	
 	* should be relative to the scene (molecule) extent
 	* maybe by dynamically setting camera near & far
 	* see also GLmol
 	* Jmol is probably problematic since there the molecule moves not the camera
-* Use the new THREE.BufferAttribute
 * Uint16 and three.js Buffergeometry.computeOffsets() for mobile devices
     * Create NGL.IndexAttribute to globally change the index buffer type
-* Use THREE.RawShaderMaterial()
-* Use three.js material defines: { "label" : "value" }
 * Screenshot tool
 	* make a viewer method
 	* allow higher resolution
