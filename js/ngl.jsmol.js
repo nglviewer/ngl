@@ -312,7 +312,7 @@
 
                     }else if( polygonColors ){
 
-                        // ASR Do not know how polygonColors look like
+                        // ASR do not know how polygonColors look like
 
                     }else{
                         
@@ -324,17 +324,21 @@
 
                 }
 
-                var is3;
+                var idx;
                 var h, k, l, m;
-
+                
                 for( var i = 0; i < nPolygons; i++ ){
 
-                    h = indices[i][0] + vertexCount;
-                    k = indices[i][1] + vertexCount;
-                    l = indices[i][2] + vertexCount;
-                    m = indices[i][3] + vertexCount;
+                    idx = indices[i];
+                    // ASR for molecular surfaces idx is sometimes 'null'
+                    if( !idx ) continue;
 
-                    if( faceVertexMax == 3 || indices[i].length == 3 ){
+                    h = idx[0] + vertexCount;
+                    k = idx[1] + vertexCount;
+                    l = idx[2] + vertexCount;
+                    m = idx[3] + vertexCount;
+
+                    if( faceVertexMax == 3 || idx.length == 3 ){
 
                         applet._GLmol.meshIndex.push( h );
                         applet._GLmol.meshIndex.push( k );

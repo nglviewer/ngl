@@ -703,7 +703,7 @@ NGL.Viewer.prototype = {
         this.modelGroup.children.forEach( function( o ){
             if( o.material ) o.material.needsUpdate = true;
         });
-console.log(NGL.materialCache, NGL);
+        
         Object.keys( NGL.materialCache ).forEach( function( key ){
             var m = NGL.materialCache[ key ];
             m.needsUpdate = true;
