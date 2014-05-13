@@ -23,18 +23,15 @@ Ideas
   * workflow: export from Jmol with NGL as renderer => import in standalone NGL
   * re-use three.js export & import functions - possible?
 * rendererStats do not play well with a Composer
+* Alternative GUI
+  * [xgui](https://github.com/oosmoxiecode/xgui.js)
 
 
 Todo
 ====
 
-* Remove underscore dependence
-* Remove jQuery dependence
-    * use three.js XHR and image loading functions
 * Implement SphereMeshBuffer
 
-* Use the new THREE.BufferAttribute
-* Use three.js material defines: { "label" : "value" }
 * Use THREE.RawShaderMaterial()
 
 * Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
@@ -66,7 +63,6 @@ Todo
   * GPU: color texture with colors as object ids
     * requires extra rendering pass (or multiple render targets)
 * NGL.Buffer attributes update mechanism
-* Better bondOrder > 1 handling
 * Spin (needs animation) button
 
 

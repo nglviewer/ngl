@@ -32,6 +32,7 @@ Links
     * [Github](https://github.com/mrdoob/three.js/)
     * [Examples](http://threejs.org/examples/)
     * [Documentation](http://threejs.org/docs/)
+* [dat.GUI](https://github.com/dataarts/dat.gui)
 
 
 
