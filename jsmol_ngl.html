@@ -18,7 +18,6 @@
 
 		<!-- // following two only necessary for WebGL version: 
 		-->
-		<script src="js/underscore.js"></script>
 
         <script src="js/three.js"></script>
         <script src="js/three/Detector.js"></script>
@@ -110,15 +109,15 @@ Jmol code conversion to JavaScript by <b>Bob Hanson</b>.
 
 <script>
 
-	// note that the variable name MUST match the first parameter in quotes
-
-	jmolApplet0 = Jmol.getApplet("jmolApplet0", Info);
-
 	NGL.init( function(){
-		
+	
 		Jmol.script( jmolApplet0, 'unbind _slideZoom; load jsmol/data/1crn.pdb;' );
 
 	});
+
+	// note that the variable name MUST match the first parameter in quotes
+
+	jmolApplet0 = Jmol.getApplet("jmolApplet0", Info);	
 
 	// note that now scripts can be sent immediately after the _Applet object is created
 
