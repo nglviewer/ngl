@@ -798,6 +798,8 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
+        this.stats.update();
+
     },
 
     /**
@@ -836,8 +838,7 @@ NGL.Viewer.prototype = {
             this.renderer.render( this.scene, this.camera );
 
         }
-
-        this.stats.update();
+        
         this.rendererStats.update( this.renderer );
 
     },
