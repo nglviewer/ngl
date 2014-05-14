@@ -100,8 +100,6 @@
                     nglGui.primitiveType = 'SphereImpostor';
                     nglGui.modelId = '1crn';
                     nglGui.modelType = 'ball+stick';
-                    nglGui.randomColor = false;
-                    nglGui.useImpostor = true;
                     nglGui.surfaceId = '1crn';
 
                     nglGui.addPrimitive = function(){
@@ -115,12 +113,6 @@
                             'data/' + this.modelId + '.pdb', 
                             function( pdb ){ pdb.add( viewer, nglGui.modelType, true ); }
                         );
-                        /*loadModel( 
-                            'data/' + this.modelId + '.json', 
-                            this.modelType,
-                            this.useImpostor,
-                            this.randomColor
-                        );*/
                     };
 
                     nglGui.addSurface = function(){
@@ -199,13 +191,11 @@
                         'line',
                         // 'line-sprite',
                     ]).listen();
-                    models.add(nglGui, 'useImpostor', true).listen();
-                    models.add(nglGui, 'randomColor', true).listen();
                     models.add(nglGui, 'addModel');
 
                     
-                    nglGui.modelId = '1blu';
-                    nglGui.modelType = 'hyperball';
+                    nglGui.modelId = 'hem';
+                    nglGui.modelType = 'ball+stick';
                     nglGui.addModel();
                     
                     // nglGui.surfaceId = '1crn';
@@ -411,142 +401,6 @@
 
             }
 
-            function computeVertexNormals( vertices, faces, areaWeighted ){
-
-                var v, vl, f, fl;
-
-                var normals = new Array( vertices.length );
-
-                for ( v = 0, vl = vertices.length; v < vl; v ++ ) {
-
-                    normals[ v ] = new THREE.Vector3();
-
-                }
-
-                if ( areaWeighted ) {
-
-                    // vertex normals weighted by triangle areas
-                    // http://www.iquilezles.org/www/articles/normals/normals.htm
-
-                    var vA, vB, vC;
-                    var cb = new THREE.Vector3(), ab = new THREE.Vector3();
-
-                    for ( f = 0, fl = faces.length; f < fl; f ++ ) {
-
-                        face = faces[ f ];
-
-                        vA = vertices[ face.a ];
-                        vB = vertices[ face.b ];
-                        vC = vertices[ face.c ];
-
-                        cb.subVectors( vC, vB );
-                        ab.subVectors( vA, vB );
-                        cb.cross( ab );
-
-                        normals[ face.a ].add( cb );
-                        normals[ face.b ].add( cb );
-                        normals[ face.c ].add( cb );
-
-                    }
-
-                } else {
-
-                    for ( f = 0, fl = faces.length; f < fl; f ++ ) {
-
-                        face = faces[ f ];
-
-                        normals[ face.a ].add( face.normal );
-                        normals[ face.b ].add( face.normal );
-                        normals[ face.c ].add( face.normal );
-
-                    }
-
-                }
-
-                for ( v = 0, vl = vertices.length; v < vl; v ++ ) {
-
-                    normals[ v ].normalize();
-
-                }
-
-                return convertVector3ArrayToFloat32Array( normals );
-
-            }
-
-            function getIndicesFromFaces( faces ){
-
-                var j, f;
-                var n = faces.length;
-                var indices = new Uint16Array( n * 3 );
-
-                for( var v = 0; v < n; v++ ){
-
-                    j = v * 3;
-                    f = faces[ v ];
-
-                    indices[ j + 0 ] = f.a;
-                    indices[ j + 1 ] = f.b;
-                    indices[ j + 2 ] = f.c;
-                    
-                }
-
-                return indices;
-
-            }
-
-            function getColorsFromFaces( faces, vn ){
-
-                var j, f, c;
-                var n = faces.length;
-                var colors = new Float32Array( vn * 3 );
-
-                for( var v = 0; v < n; v++ ){
-
-                    f = faces[ v ];
-                    c = f.color;
-
-                    j = f.a * 3;
-                    colors[ j + 0 ] = c.r;
-                    colors[ j + 1 ] = c.g;
-                    colors[ j + 2 ] = c.b;
-
-                    j = f.b * 3;
-                    colors[ j + 0 ] = c.r;
-                    colors[ j + 1 ] = c.g;
-                    colors[ j + 2 ] = c.b;
-
-                    j = f.c * 3;
-                    colors[ j + 0 ] = c.r;
-                    colors[ j + 1 ] = c.g;
-                    colors[ j + 2 ] = c.b;
-                    
-                }
-
-                return colors;
-
-            }
-
-            function convertVector3ArrayToFloat32Array( vector3array ){
-
-                var j, v3;
-                var n = vector3array.length;
-                var float32array = new Float32Array( n * 3 );
-
-                for( var v = 0; v < n; v++ ){
-
-                    j = v * 3;
-                    v3 = vector3array[ v ];
-
-                    float32array[ j + 0 ] = v3.x;
-                    float32array[ j + 1 ] = v3.y;
-                    float32array[ j + 2 ] = v3.z;
-                    
-                }
-
-                return float32array;
-
-            }
-
 
             function loadSurface( url ){
                 
@@ -561,12 +415,13 @@
                     var surface = new THREE.Object3D();
 
                     var geo = object.children[0].geometry;
+                    console.log(geo)
                     THREE.GeometryUtils.center( geo );
                     
-                    var position = convertVector3ArrayToFloat32Array( geo.vertices );
-                    var color = getColorsFromFaces( geo.faces, geo.vertices.length );
-                    var index = getIndicesFromFaces( geo.faces );
-                    var normal = computeVertexNormals( geo.vertices, geo.faces, true );
+                    var position = NGL.Utils.positionFromGeometry( geo );
+                    var color = NGL.Utils.colorFromGeometry( geo );
+                    var index = NGL.Utils.indexFromGeometry( geo );
+                    var normal = NGL.Utils.normalFromGeometry( geo );
                     
                     viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
 

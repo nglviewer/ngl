@@ -410,24 +410,56 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     }
 
-    sphereBuffer = this.getSphereBuffer( sphereScale, sphereSize );
+    var ad = this.getAtomData( sphereScale, sphereSize );
+
+    if( !viewer.params.disableImpostor ){
+
+        sphereBuffer = new NGL.SphereImpostorBuffer(
+            ad.position, ad.color, ad.radius
+        );
+
+    }else{
+
+        sphereBuffer = new NGL.SphereGeometryBuffer(
+            ad.position, ad.color, ad.radius
+        );
+
+    }
+
 
     var bd, bd2;
 
     if( cylinderSize ){
 
         bd = this.getBondData( cylinderSize );
-        cylinderBuffer = new NGL.CylinderImpostorBuffer(
-            bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
-        );
-
         bd2 = this.getBondData( cylinderSize, this.doubleBonds );
-        cylinderBuffer2a = new NGL.CylinderImpostorBuffer(
-            bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, 1.5, type=="stick"
-        );
-        cylinderBuffer2b = new NGL.CylinderImpostorBuffer(
-            bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, -1.5, type=="stick"
-        );
+
+        if( !viewer.params.disableImpostor ){
+
+            cylinderBuffer = new NGL.CylinderImpostorBuffer(
+                bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
+            );
+
+            cylinderBuffer2a = new NGL.CylinderImpostorBuffer(
+                bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, 1.5, type=="stick"
+            );
+            cylinderBuffer2b = new NGL.CylinderImpostorBuffer(
+                bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, -1.5, type=="stick"
+            );
+
+        }else{
+
+            cylinderBuffer = new NGL.CylinderGeometryBuffer(
+                bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
+            );
+
+            cylinderBuffer2a = new NGL.CylinderGeometryBuffer(
+                bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, 0, false
+            );
+
+        }
+
+        
 
     }else if( line ){
 
@@ -447,7 +479,7 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
         cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
             bd.from, bd.to, bd.color, bd.color2, bd.radius, bd.radius2, 0.12
         );
-        console.log(cylinderBuffer)
+        
     }
 
     if( center ){
@@ -459,8 +491,8 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
             cylinderBuffer.geometry.applyMatrix( matrix );
 
-            cylinderBuffer2a.geometry.applyMatrix( matrix );
-            cylinderBuffer2b.geometry.applyMatrix( matrix );
+            if( cylinderBuffer2a ) cylinderBuffer2a.geometry.applyMatrix( matrix );
+            if( cylinderBuffer2b ) cylinderBuffer2b.geometry.applyMatrix( matrix );
 
         }else if( line ){
 
@@ -491,8 +523,9 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
     if( cylinderSize ){
 
         viewer.add( cylinderBuffer );
-        viewer.add( cylinderBuffer2a );
-        viewer.add( cylinderBuffer2b );
+
+        if( cylinderBuffer2a ) viewer.add( cylinderBuffer2a );
+        if( cylinderBuffer2b ) viewer.add( cylinderBuffer2b );
 
     }else if( line ){
 
@@ -507,7 +540,7 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
 };
 
-NGL.PDBobject.prototype.getSphereBuffer = function( scale, size ) {
+NGL.PDBobject.prototype.getAtomData = function( scale, size ) {
 
     var atoms = this.atoms;
     var na = atoms.length;
@@ -548,9 +581,11 @@ NGL.PDBobject.prototype.getSphereBuffer = function( scale, size ) {
 
     }
 
-    return new NGL.SphereImpostorBuffer(
-        position, color, radius
-    );
+    return {
+        "position": position,
+        "color": color,
+        "radius": radius
+    }
 
 }
 

@@ -177,6 +177,142 @@ NGL.Utils = {
 
         return center;
 
+    },
+
+    calculateDirectionArray: function( array1, array2 ){
+
+        var n = array1.length;
+        var direction = new Float32Array( n );
+
+        for( var i = 0; i < n; i+=3 ){
+
+            direction[ i + 0 ] = array2[ i + 0 ] - array1[ i + 0 ];
+            direction[ i + 1 ] = array2[ i + 1 ] - array1[ i + 1 ];
+            direction[ i + 2 ] = array2[ i + 2 ] - array1[ i + 2 ];
+
+        }
+
+        return direction;
+
+    },
+
+    positionFromGeometry: function( geometry ){
+
+        var vertices = geometry.vertices;
+
+        var j, v3;
+        var n = vertices.length;
+        var position = new Float32Array( n * 3 );
+
+        for( var v = 0; v < n; v++ ){
+
+            j = v * 3;
+            v3 = vertices[ v ];
+
+            position[ j + 0 ] = v3.x;
+            position[ j + 1 ] = v3.y;
+            position[ j + 2 ] = v3.z;
+            
+        }
+
+        return position;
+
+    },
+
+    colorFromGeometry: function( geometry ){
+
+        var faces = geometry.faces;
+        var vn = geometry.vertices.length;
+
+        var j, f, c;
+        var n = faces.length;
+        var color = new Float32Array( vn * 3 );
+
+        for( var v = 0; v < n; v++ ){
+
+            f = faces[ v ];
+            c = f.color;
+
+            j = f.a * 3;
+            color[ j + 0 ] = c.r;
+            color[ j + 1 ] = c.g;
+            color[ j + 2 ] = c.b;
+
+            j = f.b * 3;
+            color[ j + 0 ] = c.r;
+            color[ j + 1 ] = c.g;
+            color[ j + 2 ] = c.b;
+
+            j = f.c * 3;
+            color[ j + 0 ] = c.r;
+            color[ j + 1 ] = c.g;
+            color[ j + 2 ] = c.b;
+            
+        }
+
+        return color;
+
+    },
+
+    indexFromGeometry: function( geometry ){
+
+        var faces = geometry.faces;
+
+        var j, f;
+        var n = faces.length;
+        var index = new Uint32Array( n * 3 );
+
+        for( var v = 0; v < n; v++ ){
+
+            j = v * 3;
+            f = faces[ v ];
+
+            index[ j + 0 ] = f.a;
+            index[ j + 1 ] = f.b;
+            index[ j + 2 ] = f.c;
+            
+        }
+
+        return index;
+
+    },
+
+    normalFromGeometry: function( geometry ){
+
+        var faces = geometry.faces;
+        var vn = geometry.vertices.length;
+
+        var j, f, nn, n1, n2, n3;
+        var n = faces.length;
+        var normal = new Float32Array( vn * 3 );
+
+        for( var v = 0; v < n; v++ ){
+
+            f = faces[ v ];
+            nn = f.vertexNormals;
+            n1 = nn[ 0 ];
+            n2 = nn[ 1 ];
+            n3 = nn[ 2 ];
+
+            j = f.a * 3;
+            normal[ j + 0 ] = n1.x;
+            normal[ j + 1 ] = n1.y;
+            normal[ j + 2 ] = n1.z;
+
+            j = f.b * 3;
+            normal[ j + 0 ] = n2.x;
+            normal[ j + 1 ] = n2.y;
+            normal[ j + 2 ] = n2.z;
+
+            j = f.c * 3;
+            normal[ j + 0 ] = n3.x;
+            normal[ j + 1 ] = n3.y;
+            normal[ j + 2 ] = n3.z;
+            
+        }
+
+        return normal;
+
     }
 
 };
@@ -188,7 +324,7 @@ NGL.Utils = {
 /**
  * Initialize the global NGL object, i.e. get resources
  */
-NGL.init = function ( onload ) {
+NGL.init = function( onload ){
 
     NGL.materialCache = {};
 
@@ -275,7 +411,7 @@ NGL.getMaterial = function( params ){
  * @param  {String} name
  * @return {String}
  */
-NGL.getShader = function( name ) {
+NGL.getShader = function( name ){
 
     var shader = NGL.Resources[ 'shader/' + name ];
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
@@ -306,6 +442,7 @@ NGL.GUI = function( viewer ){
     this.viewer = viewer;
 
     this.updateDisplay = true;
+    this.disableImpostor = false;
 
     this.dotScreenEffect = false;
     this.fxaaEffect = false;
@@ -357,6 +494,9 @@ NGL.GUI = function( viewer ){
     var options = gui.addFolder( 'Options ' );
     options.add( this, 'updateDisplay' ).onChange(
         function( value ){ viewer.params.updateDisplay = value; }
+    );
+    options.add( this, 'disableImpostor' ).onChange(
+        function( value ){ viewer.params.disableImpostor = value; }
     );
     options.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
         function( value ){ viewer.setFog( value ); }
@@ -498,6 +638,7 @@ NGL.Viewer.prototype = {
             specular: 0x050505,
 
             updateDisplay: true,
+            disableImpostor: false
 
         };
 
@@ -1078,7 +1219,7 @@ NGL.Buffer.prototype = {
  * @param {Float32Array} index
  * @param {Float32Array} normal
  */
-NGL.MeshBuffer = function ( position, color, index, normal ) {
+NGL.MeshBuffer = function( position, color, index, normal ){
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -1358,7 +1499,7 @@ NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
  * @param {Float32Array} color
  * @param {Float32Array} radius
  */
-NGL.SphereImpostorBuffer = function ( position, color, radius ) {
+NGL.SphereImpostorBuffer = function( position, color, radius ){
 
     this.size = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
@@ -1387,7 +1528,7 @@ NGL.SphereImpostorBuffer = function ( position, color, radius ) {
 NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-NGL.HaloBuffer = function ( position, radius ) {
+NGL.HaloBuffer = function( position, radius ){
 
     this.size = position.length / 3;
     this.vertexShader = 'SphereHalo.vert';
@@ -1434,7 +1575,7 @@ NGL.HaloBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
  *      to i.e. get multiple aligned cylinders.
  * @param {Boolean} cap - If true the cylinders are capped.
  */
-NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift, cap ) {
+NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap ){
 
     if( !shift ) shift = 0;
 
@@ -1475,7 +1616,7 @@ NGL.CylinderImpostorBuffer = function ( from, to, color, color2, radius, shift, 
 NGL.CylinderImpostorBuffer.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
 
 
-NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, color2, radius1, radius2, shrink ) {
+NGL.HyperballStickImpostorBuffer = function( position1, position2, color1, color2, radius1, radius2, shrink ){
 
     this.size = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
@@ -1515,6 +1656,174 @@ NGL.HyperballStickImpostorBuffer = function ( position1, position2, color1, colo
 }
 
 NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
+
+
+////////////////////////
+// Geometry Primitives
+
+
+/**
+ * [GeometryBuffer description]
+ * @class 
+ * @private
+ * @augments {NGL.MappedBuffer}
+ */
+NGL.GeometryBuffer = function( position, color ){
+
+    updateNormals = this.updateNormals;
+
+    var geo = this.geo;
+    geo.computeVertexNormals( true );
+
+    var n = position.length / 3;
+    var m = geo.vertices.length;
+    var o = geo.faces.length;
+
+    this.size = n * m;
+
+    var geoPosition = NGL.Utils.positionFromGeometry( geo );
+    var geoNormal = NGL.Utils.normalFromGeometry( geo );
+    var geoIndex = NGL.Utils.indexFromGeometry( geo );
+
+    var bufferPosition = new Float32Array( this.size * 3 );
+    var bufferNormal = new Float32Array( this.size * 3 );
+    var bufferIndex = new Uint32Array( n * o * 3 );
+    var bufferColor = new Float32Array( this.size * 3 );
+
+    var _geoPosition = new Float32Array( m * 3 );
+    var _geoIndex = new Uint32Array( o * 3 );
+    var _geoNormal = new Float32Array( m * 3 );
+
+    var i, j, k, l, i3, p;
+    var o3 = o * 3;
+    var r;
+
+    var matrix = new THREE.Matrix4();
+    var normalMatrix = new THREE.Matrix3();
+
+    for( i = 0; i < n; ++i ){
+
+        k = i * m * 3;
+        i3 = i * 3;
+
+        _geoPosition.set( geoPosition );
+        matrix.makeTranslation(
+            position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
+        );
+        this.applyPositionTransform( matrix, i, i3 );
+        matrix.applyToVector3Array( _geoPosition );
+
+        _geoNormal.set( geoNormal );
+        if( updateNormals ){
+            normalMatrix.getNormalMatrix( matrix );
+            normalMatrix.applyToVector3Array( _geoNormal );
+        }
+
+        _geoIndex.set( geoIndex );
+        for( p = 0; p < o3; ++p ) _geoIndex[ p ] += i * m;
+
+        bufferPosition.set( _geoPosition, k );
+        bufferNormal.set( _geoNormal, k );
+        bufferIndex.set( _geoIndex, i * o * 3 );
+
+        for( j = 0; j < m; ++j ){
+
+            l = k + 3 * j;
+
+            bufferColor[ l + 0 ] = color[ i3 + 0 ];
+            bufferColor[ l + 1 ] = color[ i3 + 1 ];
+            bufferColor[ l + 2 ] = color[ i3 + 2 ];
+
+        }
+
+    }
+
+    this.attributeSize = this.size;
+    this.vertexShader = 'Mesh.vert';
+    this.fragmentShader = 'Mesh.frag';
+    
+    this.index = bufferIndex;
+
+    NGL.Buffer.call( this );
+    
+    this.addAttributes({
+        "normal": { type: "v3", value: null },
+    });
+    
+    this.setAttributes({
+        "position": bufferPosition,
+        "color": bufferColor,
+        "normal": bufferNormal,
+    });
+    
+    this.finalize();
+
+}
+
+NGL.GeometryBuffer.prototype = Object.create( NGL.Buffer.prototype );
+
+NGL.GeometryBuffer.prototype.applyPositionTransform = function(){}
+
+NGL.GeometryBuffer.prototype.applyNormalTransform = function(){}
+
+
+NGL.SphereGeometryBuffer = function( position, color, radius ){
+
+    this.geo = new THREE.IcosahedronGeometry( 1, 2 );
+
+    var r;
+    var scale = new THREE.Vector3();
+
+    this.applyPositionTransform = function( matrix, i ){
+
+        r = radius[ i ];
+        scale.set( r, r, r );
+        matrix.scale( scale );
+
+    }
+
+    NGL.GeometryBuffer.call( this, position, color );
+
+}
+
+NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+
+
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius ){
+
+    this.updateNormals = true;
+
+    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
+    this.geo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
+    this.geo.applyMatrix( matrix );
+
+    var position = NGL.Utils.calculateCenterArray( from, to );
+    // var direction = NGL.Utils.calculateDirectionArray( from, to );
+
+    var r;
+    var scale = new THREE.Vector3();
+    var eye = new THREE.Vector3();
+    var target = new THREE.Vector3();
+    var up = new THREE.Vector3( 0, 1, 0 );
+
+    this.applyPositionTransform = function( matrix, i, i3 ){
+
+        eye.set( from[ i3 + 0 ], from[ i3 + 1 ], from[ i3 + 2 ] );
+        target.set( to[ i3 + 0 ], to[ i3 + 1 ], to[ i3 + 2 ] );
+        matrix.lookAt( eye, target, up );
+
+        r = radius[ i ];
+        scale.set( r, r, eye.distanceTo( target ) );
+        matrix.scale( scale );
+
+    }
+
+    NGL.GeometryBuffer.call( this, position, color );
+
+}
+
+NGL.CylinderGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+
 
 
 //////////////////////
@@ -1859,19 +2168,6 @@ NGL.TextBuffer.prototype.makeMapping = function(){
 
 }
 
-
-/////////////
-// Geometry
-
-// NGL.GeometryBuffer
-
-// // geometries
-// this.sphereGeometry = new THREE.IcosahedronGeometry( 2, 1 );
-// var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
-// this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
-// this.cylinderGeometry.applyMatrix( matrix );
-// this.cylinderCappedGeometry = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
-// this.cylinderCappedGeometry.applyMatrix( matrix );
 
 
 
