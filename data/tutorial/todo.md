@@ -34,6 +34,8 @@ Todo
 
 * Use THREE.RawShaderMaterial()
 
+* Cartoon style
+
 * Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
 * Lighting
     * double sided (looks funny in MeshBuffer)
@@ -55,8 +57,6 @@ Todo
 	* make a viewer method
 	* allow higher resolution
 	* test for max resolution
-* NGL.PDBobject
-  * hyperball type (show every bond as single bond)
 * Picking
   * CPU: Raycaster
     * Imposter types would need extra handling
@@ -73,4 +73,13 @@ Jmol
 	* Workaround: `unbind _slideZoom;`
 * Menu (and console) do not show in fullscreen mode
 	* Workaround (menu): in Swing.setMenu make the menu a child of the applet container
+
+
+Other Viewers
+=============
+
+* [iMolecule](https://github.com/patrickfuller/imolecule)
+* [pv](https://github.com/biasmv/pv)
+* [GLmol](https://github.com/biochem-fan/GLmol)
+* [Chem Doodle Web Components](http://web.chemdoodle.com/)
 
