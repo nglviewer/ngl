@@ -106,6 +106,8 @@
 
                 requestAnimationFrame( nv.render.bind( nv ) );
 
+                nv.stats.update();
+
                 // console.log( view );
                 // console.log( nv.camera );
                 // console.log( rg.quaternion, rQ );
