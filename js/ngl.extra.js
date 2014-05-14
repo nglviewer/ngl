@@ -401,19 +401,27 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
         cylinderSize = false;
         line = true;
 
+    }else if( type=="hyperball" ){
+
+        sphereScale = 0.2;;
+        sphereSize = false;
+        cylinderSize = false;
+        line = false;
+
     }
 
     sphereBuffer = this.getSphereBuffer( sphereScale, sphereSize );
 
-    var bd = this.getBondData( cylinderSize );
+    var bd, bd2;
 
     if( cylinderSize ){
 
+        bd = this.getBondData( cylinderSize );
         cylinderBuffer = new NGL.CylinderImpostorBuffer(
             bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
         );
 
-        var bd2 = this.getBondData( cylinderSize, this.doubleBonds );
+        bd2 = this.getBondData( cylinderSize, this.doubleBonds );
         cylinderBuffer2a = new NGL.CylinderImpostorBuffer(
             bd2.from, bd2.to, bd2.color, bd2.color2, bd2.radius, 1.5, type=="stick"
         );
@@ -423,15 +431,23 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     }else if( line ){
 
+        bd = this.getBondData( cylinderSize );
         lineBuffer = new NGL.LineBuffer(
             bd.from, bd.to, bd.color, bd.color2
         );
 
-        var bd2 = this.getBondData( cylinderSize, this.doubleBonds );
+        bd2 = this.getBondData( cylinderSize, this.doubleBonds );
         lineBuffer2 = new NGL.LineBuffer(
             bd2.from, bd2.to, bd2.color, bd2.color2
         );
 
+    }else if( type=="hyperball" ){
+
+        bd = this.getBondData( cylinderSize, null, sphereScale );
+        cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
+            bd.from, bd.to, bd.color, bd.color2, bd.radius, bd.radius2, 0.12
+        );
+        console.log(cylinderBuffer)
     }
 
     if( center ){
@@ -450,6 +466,17 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
             lineBuffer.geometry.applyMatrix( matrix );
             lineBuffer2.geometry.applyMatrix( matrix );
+
+        }else if( type=="hyperball" ){
+
+            cylinderBuffer.geometry.applyMatrix( matrix );
+
+            matrix.applyToVector3Array( 
+                cylinderBuffer.geometry.attributes.inputPosition1.array
+            );
+            matrix.applyToVector3Array( 
+                cylinderBuffer.geometry.attributes.inputPosition2.array
+            );
 
         }
 
@@ -472,6 +499,10 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
         viewer.add( lineBuffer );
         viewer.add( lineBuffer2 );
 
+    }else if( type=="hyperball" ){
+
+        viewer.add( cylinderBuffer );
+        
     }
 
 };
@@ -523,7 +554,7 @@ NGL.PDBobject.prototype.getSphereBuffer = function( scale, size ) {
 
 }
 
-NGL.PDBobject.prototype.getBondData = function( size, bonds ) {
+NGL.PDBobject.prototype.getBondData = function( size, bonds, scale ) {
 
     var atoms = this.atoms;
     if( !bonds ) bonds = this.singleBonds;
@@ -536,6 +567,8 @@ NGL.PDBobject.prototype.getBondData = function( size, bonds ) {
     var color = new Float32Array( nb * 3 );
     var color2 = new Float32Array( nb * 3 );
     var radius = new Float32Array( nb );
+    var radius2 = null;
+    if( scale ) radius2 = new Float32Array( nb );
 
     var a1, a2, c1, c2, r;
     var j = 0;
@@ -571,12 +604,25 @@ NGL.PDBobject.prototype.getBondData = function( size, bonds ) {
         color2[ j + 1 ] = ( c2 >> 8 & 255 ) / 255;
         color2[ j + 2 ] = ( c2 & 255 ) / 255;
 
-        radius[ i ] = size;
+        if( scale ){
+
+            r = radii[ a1.elem ];
+            radius[ i ] = ( r ? r : 1.5 ) * scale;
+            r = radii[ a2.elem ];
+            radius2[ i ] = ( r ? r : 1.5 ) * scale;
+
+        }else{
+
+            radius[ i ] = size;
+
+        }
 
     }
 
     return {
-        "from": from, "to": to, "color": color, "color2": color2, "radius": radius
+        "from": from, "to": to, 
+        "color": color, "color2": color2, 
+        "radius": radius, "radius2": radius2
     }
 
 }
