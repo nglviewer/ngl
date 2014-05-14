@@ -57,7 +57,7 @@ void main()
 
 
 
-    vec4 e3;
+    vec4 e3 = vec4( 1.0 );
     vec3 e1, e1_temp, e2, e2_temp;
 
     // Calculation of bond direction: e3
@@ -70,7 +70,7 @@ void main()
     if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}
 
     // Focus calculation
-    vec4 focus;
+    vec4 focus = vec4( 1.0 );
     focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x + 
         ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));
     focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y + 
@@ -121,9 +121,8 @@ void main()
     far.z = far.w ;
     i_far = modelViewProjectionMatrixInverse * far;
 
-
-    prime1.xyz = position_atom1 - (position_atom1 - focus.xyz)*shrink;
-    prime2.xyz = position_atom2 - (position_atom2 - focus.xyz)*shrink;
+    prime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );
+    prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );
 
     float Rsquare = (radius1*radius1/shrink) - (
                         (position_atom1.x - focus.x)*(position_atom1.x - focus.x) + 
