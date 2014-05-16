@@ -367,6 +367,8 @@ NGL.PDBobject.prototype.parse = function( str ) {
  */
 NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
+    console.time( "pdb add represention" );
+
     var sphereScale = 0.2;
     var sphereSize = false;
     var cylinderSize = 0.12;
@@ -537,6 +539,8 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
         viewer.add( cylinderBuffer );
         
     }
+
+    console.timeEnd( "pdb add represention" );
 
 };
 

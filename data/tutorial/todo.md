@@ -25,17 +25,23 @@ Ideas
 * [rendererStats](https://github.com/jeromeetienne/threex.rendererstats/blob/master/threex.rendererstats.js) do not play well with a Composer
 * Alternative GUI
   * [xgui](https://github.com/oosmoxiecode/xgui.js)
-
+* Use a texture for atom positions
+  * to render atoms and bonds get the positions from the corresponding texture coordinates
+  * to update the atom positions only the texture needs to be changed
+  * http://stackoverflow.com/questions/17262574/packing-vertex-data-into-a-webgl-texture
+  * http://stackoverflow.com/questions/7709689/webgl-pass-array-shader?rq=1
 
 Todo
 ====
 
-* Implement SphereMeshBuffer
+* AtomView, BondView, CartoonView
+* AtomData, BondData
+* GROobject
+* Cartoon style
+* NGL.Buffer attributes update mechanism
+  * start with positions
 
 * Use THREE.RawShaderMaterial()
-
-* Cartoon style
-
 * Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
 * Lighting
     * double sided (looks funny in MeshBuffer)
@@ -62,7 +68,6 @@ Todo
     * Imposter types would need extra handling
   * GPU: color texture with colors as object ids
     * requires extra rendering pass (or multiple render targets)
-* NGL.Buffer attributes update mechanism
 * Spin (needs animation) button
 
 
