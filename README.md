@@ -27,6 +27,7 @@ Links
 =====
 
 * [WebGL Report](http://webglreport.com/)
+* [WebGL Stats](http://webglstats.com/)
 * [JSdoc](http://usejsdoc.org/) and [DocStrap](https://github.com/terryweiss/docstrap)
 * [three.js](http://threejs.org/)
     * [Github](https://github.com/mrdoob/three.js/)
