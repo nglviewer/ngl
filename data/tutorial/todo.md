@@ -34,9 +34,8 @@ Ideas
 Todo
 ====
 
-* AtomView, BondView, CartoonView
-* AtomData, BondData
-* GROobject
+* Dual color CylinderGeometryBuffer
+* GeometryBuffer quality option
 * Cartoon style
 * NGL.Buffer attributes update mechanism
   * start with positions
