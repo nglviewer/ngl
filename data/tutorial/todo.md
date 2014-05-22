@@ -37,18 +37,18 @@ Todo
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option
 * Cartoon style
-* NGL.Buffer attributes update mechanism
-  * start with positions
+* GeometryBuffer update mechanism
+  * move attribute array filling code to a setAttributes function
 
 * Use THREE.RawShaderMaterial()
 * Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
 * Lighting
-    * double sided (looks funny in MeshBuffer)
-    * OIT (see above)
-    * pre-multiplied alpha
-    * physically based material parameters
-      * where to get?
-    * static light in three.js, i.e. move with camera
+  * double sided (looks funny in MeshBuffer)
+  * OIT (see above)
+  * pre-multiplied alpha
+  * physically based material parameters
+    * where to get?
+  * static light in three.js, i.e. move with camera
 * Make viewer stats optional (hide/show)
 * Create distance fields for [Computer modern fonts](http://checkmyworking.com/cm-web-fonts/)
 * Slab and fog	
