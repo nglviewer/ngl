@@ -367,7 +367,7 @@
                 var gl = applet._GLmol;
 
                 gl.nglViewer.add( 
-                    new NGL.SphereImpostorBuffer(
+                    new NGL.SphereBuffer(
                         new Float32Array( gl.spherePosition ),
                         new Float32Array( gl.sphereColor ),
                         new Float32Array( gl.sphereRadius )
@@ -376,7 +376,7 @@
 
                 var cylinderColor = new Float32Array( gl.cylinderColor );
                 gl.nglViewer.add( 
-                    new NGL.CylinderImpostorBuffer(
+                    new NGL.CylinderBuffer(
                         new Float32Array( gl.cylinderFrom ),
                         new Float32Array( gl.cylinderTo ),
                         cylinderColor,
@@ -458,7 +458,6 @@
                 this.CAMERA_Z = -300;
 
                 this.nglViewer = new NGL.Viewer( this.container.attr( "id" ) );
-                new NGL.GUI( this.nglViewer );
 
                 this.resetArrays();
                 
