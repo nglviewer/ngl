@@ -109,7 +109,7 @@ NGL.PDBobject.prototype.parse = function( str ){
         sheet: [], helix: [],
     };
 
-    var atoms_cnt = 0;
+    var idx = 0;
     var lines = str.split("\n");
 
     var covRadii = NGL.CovalentRadii;
@@ -154,6 +154,7 @@ NGL.PDBobject.prototype.parse = function( str ){
                 'color': 0xFFFFFF, 
                 'vdw': vdwRadii[ elem ],
                 'covalent': covRadii[ elem ],
+                'index': idx++
             };
 
         }else if( recordName == 'CONECT' ){
@@ -290,7 +291,7 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     if( type=="spacefill" ){
 
-        sphereScale = 0.2;//1.0;
+        sphereScale = 1.0;
         sphereSize = false;
         cylinderSize = false;
 
@@ -329,11 +330,11 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
     );
 
 
-    var bd;
+    var bd = this.getBondData( 
+        cylinderSize, type=="hyperball" ? sphereScale : false
+    );
 
     if( cylinderSize ){
-
-        bd = this.getBondData( cylinderSize );
 
         cylinderBuffer = new NGL.CylinderBuffer(
             bd.from, bd.to, bd.color, bd.color2, bd.radius
@@ -341,14 +342,11 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     }else if( line ){
 
-        bd = this.getBondData( cylinderSize );
         lineBuffer = new NGL.LineBuffer(
             bd.from, bd.to, bd.color, bd.color2
         );
 
     }else if( type=="hyperball" ){
-
-        bd = this.getBondData( cylinderSize, sphereScale );
     
         cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
             bd.from, bd.to, bd.color, bd.color2, bd.radius, bd.radius2, 0.12
@@ -406,7 +404,7 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     console.timeEnd( "pdb add represention" );
 
-    viewer
+    this.addGui( viewer, sphereBuffer, cylinderBuffer );
 
 };
 
@@ -532,9 +530,124 @@ NGL.PDBobject.prototype.getBondData = function( size, scale ){
 
 };
 
-NGL.PDBobject.prototype.addGui = function( viewer, sphereBuffer ){
+NGL.PDBobject.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
 
-    var gui = viewer.gui;
+    var gui = viewer.gui2;
+
+    var n = sphereBuffer.size;
+    if( cylinderBuffer ) var nb = cylinderBuffer.size;
+
+    var atoms = this.atoms;
+    var bonds = this.bonds;
+
+    var color = NGL.Utils.uniformArray3( n, 1, 0, 0 );
+    var i = 0;
+            
+    function update( arrayBuffer ) {
+      
+        if( !arrayBuffer ) return;
+        
+        var floatArray = new Float32Array( arrayBuffer );
+        // console.log( floatArray );
+        
+        var position = new Float32Array( n * 3 );
+
+        var a;
+        var j = 0;
+
+        for( var i = 0; i < n; ++i ){
+
+            a = atoms[ i ];
+            if( a === undefined ) continue;
+            a = a.index * 3;
+
+            j = i * 3;
+
+            position[ j + 0 ] = floatArray[ a + 0 ];
+            position[ j + 1 ] = floatArray[ a + 1 ];
+            position[ j + 2 ] = floatArray[ a + 2 ];
+
+        }
+
+        sphereBuffer.setAttributes({ 
+            position: position 
+        });
+
+        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+
+        if( cylinderBuffer ){
+
+            var a1, a2;
+            var j = 0;
+
+            var from = new Float32Array( nb * 3 );
+            var to = new Float32Array( nb * 3 );
+
+            for( var i = 0; i < nb; ++i ){
+
+                b = bonds[ i ];
+
+                a1 = atoms[ b[ 0 ] ].index * 3;
+                a2 = atoms[ b[ 1 ] ].index * 3;
+
+                j = i * 3;
+
+                from[ j + 0 ] = floatArray[ a1 + 0 ];
+                from[ j + 1 ] = floatArray[ a1 + 1 ];
+                from[ j + 2 ] = floatArray[ a1 + 2 ];
+
+                to[ j + 0 ] = floatArray[ a2 + 0 ];
+                to[ j + 1 ] = floatArray[ a2 + 1 ];
+                to[ j + 2 ] = floatArray[ a2 + 2 ];
+
+            }
+
+            cylinderBuffer.setAttributes({ 
+                position: NGL.Utils.calculateCenterArray( from, to ),
+                position1: from,
+                position2: to
+            });
+
+            var matrix = new THREE.Matrix4().makeTranslation( 
+                offset.x, offset.y, offset.z
+            );
+
+            cylinderBuffer.geometry.applyMatrix( matrix );
+
+        }
+
+        viewer.render();
+
+    };
+
+    var params = {
+        test: function(){
+            
+            // console.log( sphereBuffer );
+
+            var oReq = new XMLHttpRequest();
+            oReq.open( "GET", "http://localhost:8080/?" + (i++), true );
+            oReq.responseType = "arraybuffer";
+
+            oReq.onload = function(){ update( oReq.response ); };
+
+            oReq.send(null);
+
+            viewer.render();
+
+        },
+        toggle: function(){
+            
+            sphereBuffer.mesh.visible = !sphereBuffer.mesh.visible;
+
+            viewer.render();
+
+        }
+
+    };
+
+    gui.add( params, 'test' );
+    gui.add( params, 'toggle' );
 
 };
 

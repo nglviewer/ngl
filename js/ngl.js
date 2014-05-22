@@ -314,6 +314,26 @@ NGL.Utils = {
 
         return normal;
 
+    },
+
+    uniformArray3: function( n, a, b, c ){
+
+        var array = new Float32Array( n * 3 );
+
+        var j;
+
+        for( var i = 0; i < n; ++i ){
+
+            j = i * 3;
+
+            array[ j + 0 ] = a;
+            array[ j + 1 ] = b;
+            array[ j + 2 ] = c;
+
+        }
+
+        return array;
+
     }
 
 };
@@ -608,6 +628,12 @@ NGL.Viewer = function( eid ){
     this.setFog();
 
     this.gui = new NGL.GUI( this );
+
+    this.gui2 = new dat.GUI({ autoPlace: false });
+    this.gui2.domElement.style.position = 'absolute';
+    this.gui2.domElement.style.top = '0px';
+    this.gui2.domElement.style.left = '100px';
+    this.container.appendChild( this.gui2.domElement );
 
 }
 
@@ -1190,6 +1216,9 @@ NGL.Buffer.prototype = {
             
             attributes[ name ].set( data[ name ] );
 
+            attributes[ name ].needsUpdate = true;
+            this.attributes[ name ].needsUpdate = true;
+
         }, this );
 
     },
@@ -1316,6 +1345,9 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
             }
 
         }
+
+        a.needsUpdate = true;
+        this.attributes[ name ].needsUpdate = true;
 
     }, this );
 
