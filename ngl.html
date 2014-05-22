@@ -92,7 +92,7 @@
                     viewer = new NGL.Viewer( 'container' );
                     viewer.animate();
 
-                    nglGui = new NGL.GUI( viewer );
+                    nglGui = viewer.gui;
                     var gui = nglGui.gui;
 
                     nglGui.count = 100;
@@ -195,8 +195,8 @@
                     models.add(nglGui, 'addModel');
 
                     
-                    nglGui.modelId = '1jj2';
-                    nglGui.modelType = 'ball+stick';
+                    nglGui.modelId = 'md';
+                    nglGui.modelType = 'spacefill';
                     nglGui.addModel();
                     
                     // nglGui.surfaceId = '1crn';

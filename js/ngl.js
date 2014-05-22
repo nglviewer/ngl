@@ -12,6 +12,7 @@
 NGL = {
     REVISION: '1dev',
     EPS: 0.0000001,
+    disableImpostor: false
 };
 
 
@@ -442,7 +443,6 @@ NGL.GUI = function( viewer ){
     this.viewer = viewer;
 
     this.updateDisplay = true;
-    this.disableImpostor = false;
 
     this.dotScreenEffect = false;
     this.fxaaEffect = false;
@@ -494,9 +494,6 @@ NGL.GUI = function( viewer ){
     var options = gui.addFolder( 'Options ' );
     options.add( this, 'updateDisplay' ).onChange(
         function( value ){ viewer.params.updateDisplay = value; }
-    );
-    options.add( this, 'disableImpostor' ).onChange(
-        function( value ){ viewer.params.disableImpostor = value; }
     );
     options.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
         function( value ){ viewer.setFog( value ); }
@@ -610,6 +607,8 @@ NGL.Viewer = function( eid ){
     this.setBackground();
     this.setFog();
 
+    this.gui = new NGL.GUI( this );
+
 }
 
 NGL.Viewer.prototype = {
@@ -683,7 +682,8 @@ NGL.Viewer.prototype = {
         this.renderer.autoClear = true;
 
         var _glExtensionFragDepth = this.renderer.context.getExtension('EXT_frag_depth');
-        if( !_glExtensionFragDepth ){ 
+        if( !_glExtensionFragDepth ){
+            NGL.disableImpostor = true;
             console.error( "ERROR getting 'EXT_frag_depth'" );
         }
 
@@ -1983,6 +1983,37 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
+///////////////////
+// API Primitives
+
+NGL.SphereBuffer = function( position, color, radius ){
+
+    if( NGL.disableImpostor ){
+
+        return new NGL.SphereGeometryBuffer( position, color, radius );
+
+    }else{
+
+        return new NGL.SphereImpostorBuffer( position, color, radius );
+
+    }
+
+}
+
+
+NGL.CylinderBuffer = function( from, to, color, color2, radius ){
+
+    if( NGL.disableImpostor ){
+
+        return new NGL.CylinderGeometryBuffer( from, to, color, color2, radius );
+
+    }else{
+
+        return new NGL.CylinderImpostorBuffer( from, to, color, color2, radius );
+
+    }
+
+}
 
 
 ////////////////

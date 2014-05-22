@@ -92,13 +92,13 @@ NGL.PDBobject = function( pdbFile, onLoad ){
 
     } );
 
-}
+};
 
 /**
  * Parses a pdb string. Copied from GLmol.parsePDB2.
  * @param  {String} str
  */
-NGL.PDBobject.prototype.parse = function( str ) {
+NGL.PDBobject.prototype.parse = function( str ){
 
     console.time( "pdb parsing" );
 
@@ -290,7 +290,7 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     if( type=="spacefill" ){
 
-        sphereScale = 1.0;
+        sphereScale = 0.2;//1.0;
         sphereSize = false;
         cylinderSize = false;
 
@@ -315,40 +315,18 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     }else if( type=="hyperball" ){
 
-        if( !viewer.params.disableImpostor ){
-
-            sphereScale = 0.2;;
-            sphereSize = false;
-            cylinderSize = false;
-            line = false;
-
-        }else{
-
-            // no geometry-based hyperball representation - use cylinders
-            
-            sphereScale = false;
-            sphereSize = 0.15;
-            cylinderSize = 0.15;
-            
-        }
+        sphereScale = 0.2;;
+        sphereSize = false;
+        cylinderSize = false;
+        line = false;
 
     }
 
     var ad = this.getAtomData( sphereScale, sphereSize );
 
-    if( !viewer.params.disableImpostor ){
-
-        sphereBuffer = new NGL.SphereImpostorBuffer(
-            ad.position, ad.color, ad.radius
-        );
-
-    }else{
-
-        sphereBuffer = new NGL.SphereGeometryBuffer(
-            ad.position, ad.color, ad.radius
-        );
-
-    }
+    sphereBuffer = new NGL.SphereBuffer(
+        ad.position, ad.color, ad.radius
+    );
 
 
     var bd;
@@ -357,19 +335,9 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
         bd = this.getBondData( cylinderSize );
 
-        if( !viewer.params.disableImpostor ){
-
-            cylinderBuffer = new NGL.CylinderImpostorBuffer(
-                bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
-            );
-
-        }else{
-
-            cylinderBuffer = new NGL.CylinderGeometryBuffer(
-                bd.from, bd.to, bd.color, bd.color2, bd.radius, 0, false
-            );
-
-        }
+        cylinderBuffer = new NGL.CylinderBuffer(
+            bd.from, bd.to, bd.color, bd.color2, bd.radius
+        );
 
     }else if( line ){
 
@@ -438,9 +406,11 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
     console.timeEnd( "pdb add represention" );
 
+    viewer
+
 };
 
-NGL.PDBobject.prototype.getAtomData = function( scale, size ) {
+NGL.PDBobject.prototype.getAtomData = function( scale, size ){
 
     var atoms = this.atoms;
     var na = atoms.length;
@@ -487,9 +457,9 @@ NGL.PDBobject.prototype.getAtomData = function( scale, size ) {
         "radius": radius
     }
 
-}
+};
 
-NGL.PDBobject.prototype.getBondData = function( size, scale ) {
+NGL.PDBobject.prototype.getBondData = function( size, scale ){
 
     var atoms = this.atoms;
     var bonds = this.bonds;
@@ -560,8 +530,13 @@ NGL.PDBobject.prototype.getBondData = function( size, scale ) {
         "radius": radius, "radius2": radius2
     }
 
-}
+};
 
+NGL.PDBobject.prototype.addGui = function( viewer, sphereBuffer ){
+
+    var gui = viewer.gui;
+
+};
 
 
 
