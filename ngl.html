@@ -109,10 +109,21 @@
                     };
 
                     nglGui.addModel = function(){
-                        new NGL.PDBobject( 
-                            'data/' + this.modelId + '.pdb', 
-                            function( pdb ){ pdb.add( viewer, nglGui.modelType, true ); }
-                        );
+                        if( this.modelId=="md.gro" ){
+                            new NGL.GroFile( 
+                                'data/' + this.modelId, 
+                                function( pdb ){
+                                    pdb.add( viewer, nglGui.modelType, true );
+                                }
+                            );
+                        }else{
+                            new NGL.PdbFile( 
+                                'data/' + this.modelId + '.pdb', 
+                                function( pdb ){
+                                    pdb.add( viewer, nglGui.modelType, true );
+                                }
+                            );
+                        }
                     };
 
                     nglGui.addSurface = function(){
@@ -174,6 +185,7 @@
                         '1jj2',
                         '3l5q',
                         'md',
+                        'md.gro',
                         // '1crn_ca',
                         // '3dqb_ca',
                         // '3sn6_ca',
@@ -195,7 +207,7 @@
                     models.add(nglGui, 'addModel');
 
                     
-                    nglGui.modelId = 'md';
+                    nglGui.modelId = 'md.gro';
                     nglGui.modelType = 'spacefill';
                     nglGui.addModel();
                     

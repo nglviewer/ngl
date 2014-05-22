@@ -75,30 +75,56 @@ NGL.CovalentRadii = {
 };
 
 
+
+NGL.StructureFile = function( structureFile, onLoad ){
+
+    var loader = new THREE.XHRLoader();
+
+    loader.load( structureFile, function( str ){
+        
+        this.parse( str );
+        
+        // parse must create atomSet and bondSet
+
+        onLoad( this );
+
+    }.bind( this ) );
+
+};
+
+NGL.StructureFile.prototype.updatePosition = function( position ){
+
+    // how to trigger the update of associated representations
+    // 
+    // save list of representations - update each
+
+}
+
+
+
 /**
  * An object fro representing a PDB file.
  * @class
  */
-NGL.PDBobject = function( pdbFile, onLoad ){
+NGL.PdbFile = function( pdbFile, onLoad ){
 
     var loader = new THREE.XHRLoader();
-    var self = this;
 
     loader.load( pdbFile, function( str ){
         
-        self.parse( str );
+        this.parse( str );
         
-        onLoad( self );
+        onLoad( this );
 
-    } );
+    }.bind( this ) );
 
 };
 
 /**
- * Parses a pdb string. Copied from GLmol.parsePDB2.
+ * Parses a pdb string. Based on GLmol.parsePDB2.
  * @param  {String} str
  */
-NGL.PDBobject.prototype.parse = function( str ){
+NGL.PdbFile.prototype.parse = function( str ){
 
     console.time( "pdb parsing" );
 
@@ -137,21 +163,21 @@ NGL.PDBobject.prototype.parse = function( str ){
 
             atoms[serial] = {
                 'resn': line.substr( 17, 3 ),
-                'x': parseFloat( line.substr( 30, 8 ) ), 
-                'y': parseFloat( line.substr( 38, 8 ) ), 
-                'z': parseFloat( line.substr( 46, 8 ) ), 
+                'x': parseFloat( line.substr( 30, 8 ) ),
+                'y': parseFloat( line.substr( 38, 8 ) ),
+                'z': parseFloat( line.substr( 46, 8 ) ),
                 'elem': elem,
-                'hetflag': ( line[ 0 ]=='H' ) ? true : false, 
-                'chain': line[  21 ], 
-                'resi': parseInt( line.substr( 22, 5 ) ), 
-                'serial': serial, 
-                'atom': line.substr( 12, 4 ).trim(), 
-                'bonds': [], 
-                'ss': 'c', 
+                'hetflag': ( line[ 0 ]=='H' ) ? true : false,
+                'chain': line[  21 ],
+                'resi': parseInt( line.substr( 22, 5 ) ),
+                'serial': serial,
+                'atom': line.substr( 12, 4 ).trim(),
+                'bonds': [],
+                'ss': 'c',
                 'b': parseFloat( line.substr( 60, 8 ) ),
                 // altLoc': altLoc,
 
-                'color': 0xFFFFFF, 
+                'color': 0xFFFFFF,
                 'vdw': vdwRadii[ elem ],
                 'covalent': covRadii[ elem ],
                 'index': idx++
@@ -276,7 +302,7 @@ NGL.PDBobject.prototype.parse = function( str ){
 /**
  * Adds a representation of the PDB to a viewer instance.
  */
-NGL.PDBobject.prototype.add = function( viewer, type, center ){
+NGL.PdbFile.prototype.add = function( viewer, type, center ){
 
     console.time( "pdb add represention" );
 
@@ -408,7 +434,7 @@ NGL.PDBobject.prototype.add = function( viewer, type, center ){
 
 };
 
-NGL.PDBobject.prototype.getAtomData = function( scale, size ){
+NGL.PdbFile.prototype.getAtomData = function( scale, size ){
 
     var atoms = this.atoms;
     var na = atoms.length;
@@ -457,7 +483,7 @@ NGL.PDBobject.prototype.getAtomData = function( scale, size ){
 
 };
 
-NGL.PDBobject.prototype.getBondData = function( size, scale ){
+NGL.PdbFile.prototype.getBondData = function( size, scale ){
 
     var atoms = this.atoms;
     var bonds = this.bonds;
@@ -530,7 +556,7 @@ NGL.PDBobject.prototype.getBondData = function( size, scale ){
 
 };
 
-NGL.PDBobject.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
+NGL.PdbFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
 
     var gui = viewer.gui2;
 
@@ -650,6 +676,157 @@ NGL.PDBobject.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer 
     gui.add( params, 'toggle' );
 
 };
+
+
+
+
+NGL.guessElement = ( function(){
+
+    var elm1 = [ "H", "C", "O", "N", "S" ];
+    var elm2 = [ "NA", "CL" ];
+
+    return function( atomName ){
+
+        var at = atomName.trim().toUpperCase();
+        var n = at.length;
+
+        if( n===0 ) return "";
+        
+        if( n===1 ) return at;
+
+        if( n===2 ){
+
+            if( elm2.indexOf( at )!==-1 ) return at;
+
+            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
+
+        }
+
+        if( n===3 ){
+
+            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
+
+        }
+
+        if( n===4 ){
+
+            if( at[0]==="H" ) return "H";
+
+        }
+        
+        return "";
+
+    };
+
+} )();
+
+
+/**
+ * An object fro representing a GRO file.
+ * @class
+ */
+NGL.GroFile = function( groFile, onLoad ){
+
+    var loader = new THREE.XHRLoader();
+
+    loader.load( groFile, function( str ){
+        
+        this.parse( str );
+        
+        onLoad( this );
+
+    }.bind( this ) );
+
+};
+
+/**
+ * Parses a gro string.
+ * @param  {String} str
+ */
+NGL.GroFile.prototype.parse = function( str ){
+
+    console.time( "gro parsing" );
+
+    var atoms = [];
+    var bonds = [];
+    var protein = {
+        title: '', size: 0, box: [ 0, 0, 0 ]
+    };
+
+    var idx = 0;
+    var lines = str.trim().split("\n");
+
+    var guessElem = NGL.guessElement;
+    var covRadii = NGL.CovalentRadii;
+    var vdwRadii = NGL.VdwRadii;
+
+    var i, j;
+    var line, recordName, altloc, serial, atomName, elem;
+
+    protein.title = lines[ 0 ].trim();
+    protein.size = parseInt( lines[ 1 ] );
+    var b = lines[ lines.length-1 ].trim().split(/\s+/);
+    protein.box = [ parseFloat(b[0]), parseFloat(b[1]), parseFloat(b[2]) ];
+
+    for( i = 2; i < lines.length-1; i++ ){
+
+        line = lines[i];
+
+        atom = line.substr( 10, 5 ).trim();
+        elem = guessElem( atom );
+
+        atoms.push({
+
+            'resn': line.substr( 5, 5 ).trim(),
+            'x': parseFloat( line.substr( 20, 8 ) ),
+            'y': parseFloat( line.substr( 28, 8 ) ),
+            'z': parseFloat( line.substr( 36, 8 ) ),
+            'elem': elem,
+            'chain': ' ',
+            'resi': parseInt( line.substr( 0, 5 ) ),
+            'serial': parseInt( line.substr( 15, 5 ) ),
+            'atom': atom,
+            'ss': 'c',
+
+            'color': 0xFFFFFF,
+            'vdw': vdwRadii[ elem ],
+            'covalent': covRadii[ elem ],
+            'index': idx++
+
+        });
+
+    }
+
+    console.timeEnd( "gro parsing" );
+
+
+
+    // console.log( protein );
+    // console.log( atoms.length );
+
+};
+
+NGL.GroFile.prototype.add = function( viewer, type, center ){
+
+
+
+};
+
+
+NGL.AtomSet = function(){
+
+};
+
+
+NGL.BondSet = function(){
+
+};
+
+
+
+
+
+
 
 
 
