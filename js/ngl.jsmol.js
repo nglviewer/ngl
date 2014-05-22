@@ -137,7 +137,7 @@
 
             exporter.jsInitExport = function(applet) {
                 
-                console.log( "jsInitExport" );
+                console.time( "jsExport" );
 
                 applet._GLmol.resetArrays();
 
@@ -434,7 +434,7 @@
 
                 applet._refresh();
 
-                console.log( "jsEndExport" );
+                console.timeEnd( "jsExport" );
 
             }
 
