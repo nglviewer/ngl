@@ -34,6 +34,7 @@ Ideas
 Todo
 ====
 
+* NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option
 * Cartoon style
