@@ -109,7 +109,7 @@
                     };
 
                     nglGui.addModel = function(){
-                        if( this.modelId=="md.gro" ){
+                        if( this.modelId.split('.').pop()==="gro" ){
                             new NGL.GroFile( 
                                 'data/' + this.modelId, 
                                 function( pdb ){
@@ -186,6 +186,7 @@
                         '3l5q',
                         'md',
                         'md.gro',
+                        'md_large.gro',
                         // '1crn_ca',
                         // '3dqb_ca',
                         // '3sn6_ca',
@@ -208,7 +209,7 @@
 
                     
                     nglGui.modelId = 'md.gro';
-                    nglGui.modelType = 'spacefill';
+                    nglGui.modelType = 'ball+stick';
                     nglGui.addModel();
                     
                     // nglGui.surfaceId = '1crn';

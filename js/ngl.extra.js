@@ -74,6 +74,46 @@ NGL.CovalentRadii = {
     "CN": 1.6, "UUT": 1.6, "FL": 1.6, "UUP": 1.6, "LV": 1.6, "UUH": 1.6
 };
 
+NGL.guessElement = ( function(){
+
+    var elm1 = [ "H", "C", "O", "N", "S" ];
+    var elm2 = [ "NA", "CL" ];
+
+    return function( atomName ){
+
+        var at = atomName.trim().toUpperCase();
+        var n = at.length;
+
+        if( n===0 ) return "";
+        
+        if( n===1 ) return at;
+
+        if( n===2 ){
+
+            if( elm2.indexOf( at )!==-1 ) return at;
+
+            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
+
+        }
+
+        if( n===3 ){
+
+            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
+
+        }
+
+        if( n===4 ){
+
+            if( at[0]==="H" ) return "H";
+
+        }
+        
+        return "";
+
+    };
+
+} )();
+
 
 
 NGL.StructureFile = function( structureFile, onLoad ){
@@ -84,21 +124,238 @@ NGL.StructureFile = function( structureFile, onLoad ){
         
         this.parse( str );
         
-        // parse must create atomSet and bondSet
-
         onLoad( this );
 
     }.bind( this ) );
 
 };
 
-NGL.StructureFile.prototype.updatePosition = function( position ){
+NGL.StructureFile.prototype.parse = function( str ){
 
-    // how to trigger the update of associated representations
-    // 
-    // save list of representations - update each
+    // must create:
+    //  this.atomSet
+    //  this.bondSet
 
 }
+
+NGL.StructureFile.prototype.add = function( viewer, type, center ){
+
+    console.time( "NGL.StructureFile.add" );
+
+    var sphereScale = 0.2;
+    var sphereSize = false;
+    var cylinderSize = 0.12;
+    var line = false;
+
+    var sphereBuffer;
+    var cylinderBuffer;
+    var lineBuffer;
+
+    if( type=="spacefill" ){
+
+        sphereScale = 1.0;
+        sphereSize = false;
+        cylinderSize = false;
+
+    }else if( type=="ball+stick" ){
+
+        sphereScale = 0.2;
+        sphereSize = false;
+        cylinderSize = 0.12;
+
+    }else if( type=="stick" ){
+
+        sphereScale = false;
+        sphereSize = 0.15;
+        cylinderSize = 0.15;
+
+    }else if( type=="line" ){
+
+        sphereScale = false;
+        sphereSize = false;
+        cylinderSize = false;
+        line = true;
+
+    }else if( type=="hyperball" ){
+
+        sphereScale = 0.2;;
+        sphereSize = false;
+        cylinderSize = false;
+        line = false;
+
+    }
+
+    sphereBuffer = new NGL.SphereBuffer(
+        this.atomSet.position,
+        this.atomSet.getColor(),
+        this.atomSet.getRadius( sphereSize, sphereScale )
+    );
+
+    if( cylinderSize ){
+
+        cylinderBuffer = new NGL.CylinderBuffer(
+            this.bondSet.from,
+            this.bondSet.to,
+            this.bondSet.getColor( 0 ),
+            this.bondSet.getColor( 1 ),
+            this.bondSet.getRadius( null, cylinderSize, null )
+        );
+
+    }else if( line ){
+
+        lineBuffer = new NGL.LineBuffer(
+            this.bondSet.from,
+            this.bondSet.to,
+            this.bondSet.getColor( 0 ),
+            this.bondSet.getColor( 1 )
+        );
+
+    }else if( type=="hyperball" ){
+    
+        cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
+            this.bondSet.from,
+            this.bondSet.to,
+            this.bondSet.getColor( 0 ),
+            this.bondSet.getColor( 1 ),
+            this.bondSet.getRadius( 0, cylinderSize, sphereScale ),
+            this.bondSet.getRadius( 1, cylinderSize, sphereScale ),
+            0.12
+        );
+
+    }
+
+    if( center ){
+
+        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+        var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
+
+        if( cylinderSize ){
+
+            cylinderBuffer.geometry.applyMatrix( matrix );
+
+        }else if( line ){
+
+            lineBuffer.geometry.applyMatrix( matrix );
+
+        }else if( type=="hyperball" ){
+
+            cylinderBuffer.geometry.applyMatrix( matrix );
+
+            matrix.applyToVector3Array( 
+                cylinderBuffer.geometry.attributes.inputPosition1.array
+            );
+            matrix.applyToVector3Array( 
+                cylinderBuffer.geometry.attributes.inputPosition2.array
+            );
+
+        }
+
+    }
+
+    if( sphereSize || sphereScale ){
+
+        viewer.add( sphereBuffer );
+
+    }
+
+    if( cylinderSize ){
+
+        viewer.add( cylinderBuffer );
+
+    }else if( line ){
+
+        viewer.add( lineBuffer );
+
+    }else if( type=="hyperball" ){
+
+        viewer.add( cylinderBuffer );
+        
+    }
+
+    console.timeEnd( "NGL.StructureFile.add" );
+
+    this.addGui( viewer, sphereBuffer, cylinderBuffer );
+
+};
+
+NGL.StructureFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
+
+    var gui = viewer.gui2;
+
+    var n = sphereBuffer.size;
+    if( cylinderBuffer ) var nb = cylinderBuffer.size;
+
+    var atomSet = this.atomSet;
+    var bondSet = this.bondSet;
+    var bonds = this.bondSet.bonds;
+
+    var color = NGL.Utils.uniformArray3( n, 1, 0, 0 );
+    var i = 0;
+            
+    function update( arrayBuffer ) {
+      
+        if( !arrayBuffer ) return;
+        
+        atomSet.setPosition( new Float32Array( arrayBuffer ) );
+
+        sphereBuffer.setAttributes({ 
+            position: atomSet.position 
+        });
+
+        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+
+        if( cylinderBuffer ){
+
+            bondSet.makeFromTo();
+
+            cylinderBuffer.setAttributes({ 
+                position: NGL.Utils.calculateCenterArray( bondSet.from, bondSet.to ),
+                position1: bondSet.from,
+                position2: bondSet.to
+            });
+
+            var matrix = new THREE.Matrix4().makeTranslation( 
+                offset.x, offset.y, offset.z
+            );
+
+            cylinderBuffer.geometry.applyMatrix( matrix );
+
+        }
+
+        viewer.render();
+
+    };
+
+    var params = {
+        test: function(){
+            
+            // console.log( sphereBuffer );
+
+            var oReq = new XMLHttpRequest();
+            oReq.open( "GET", "http://localhost:8080/?" + (i++), true );
+            oReq.responseType = "arraybuffer";
+
+            oReq.onload = function(){ update( oReq.response ); };
+
+            oReq.send(null);
+
+            viewer.render();
+
+        },
+        toggle: function(){
+            
+            sphereBuffer.mesh.visible = !sphereBuffer.mesh.visible;
+
+            viewer.render();
+
+        }
+
+    };
+
+    gui.add( params, 'test' );
+    gui.add( params, 'toggle' );
+
+};
 
 
 
@@ -108,17 +365,11 @@ NGL.StructureFile.prototype.updatePosition = function( position ){
  */
 NGL.PdbFile = function( pdbFile, onLoad ){
 
-    var loader = new THREE.XHRLoader();
-
-    loader.load( pdbFile, function( str ){
-        
-        this.parse( str );
-        
-        onLoad( this );
-
-    }.bind( this ) );
+    NGL.StructureFile.call( this, pdbFile, onLoad );
 
 };
+
+NGL.PdbFile.prototype = Object.create( NGL.StructureFile.prototype );
 
 /**
  * Parses a pdb string. Based on GLmol.parsePDB2.
@@ -126,15 +377,16 @@ NGL.PdbFile = function( pdbFile, onLoad ){
  */
 NGL.PdbFile.prototype.parse = function( str ){
 
-    console.time( "pdb parsing" );
+    console.time( "NGL.PdbFile.parse" );
 
     var atoms = [];
     var bonds = [];
-    var protein = {
-        pdbID: '', title: '',
-        sheet: [], helix: [],
-    };
 
+    this.title = '';
+    this.id = '';
+    this.sheet = [];
+    this.helix = [];
+    
     var idx = 0;
     var lines = str.split("\n");
 
@@ -204,7 +456,7 @@ NGL.PdbFile.prototype.parse = function( str ){
             var startResi = parseInt( line.substr( 21, 4 ) );
             var endChain = line[ 31 ];
             var endResi = parseInt( line.substr( 33, 4 ) );
-            protein.helix.push([ startChain, startResi, endChain, endResi ]);
+            this.helix.push([ startChain, startResi, endChain, endResi ]);
 
         }else if( recordName == 'SHEET ' ){
 
@@ -212,513 +464,60 @@ NGL.PdbFile.prototype.parse = function( str ){
             var startResi = parseInt( line.substr( 22, 4 ) );
             var endChain = line[ 32 ];
             var endResi = parseInt( line.substr( 33, 4 ) );
-            protein.sheet.push([ startChain, startResi, endChain, endResi ]);
+            this.sheet.push([ startChain, startResi, endChain, endResi ]);
 
         }else if( recordName == 'HEADER' ){
         
-            protein.pdbID = line.substr( 62, 4 );
+            this.id = line.substr( 62, 4 );
         
         }else if( recordName == 'TITLE ' ){
         
-            protein.title += line.substr( 10, 70 ) + "\n"; 
+            this.title += line.substr( 10, 70 ) + "\n"; 
         
         }
-
-    }
-
-    console.timeEnd( "pdb parsing" );
-
-    function isConnected( atom1, atom2 ){
-
-        if( atom1.hetflag && atom2.hetflag ) return 0;
-
-        var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) + 
-                          ( atom1.y - atom2.y ) * ( atom1.y - atom2.y ) + 
-                          ( atom1.z - atom2.z ) * ( atom1.z - atom2.z );
-
-        if( isNaN( distSquared ) ) return 0;
-        if( distSquared < 0.5 ) return 0; // maybe duplicate position.
-
-        var d = atom1.covalent + atom2.covalent + 0.3;
-        return distSquared < ( d * d );
 
     }
 
     var atom, atom2
     var nAtoms = atoms.length;
 
-    console.time( "pdb bonding" );
-
-    // Assign secondary structures & bonds
+    // Assign secondary structures
     for( i = 0; i < nAtoms; i++ ){
         
         atom = atoms[ i ];
         if( atom == undefined ) continue;
 
-        for( j = 0; j < protein.sheet.length; j++ ){
+        for( j = 0; j < this.sheet.length; j++ ){
 
-            if (atom.chain != protein.sheet[j][0]) continue;
-            if (atom.resi < protein.sheet[j][1]) continue;
-            if (atom.resi > protein.sheet[j][3]) continue;
+            if (atom.chain != this.sheet[j][0]) continue;
+            if (atom.resi < this.sheet[j][1]) continue;
+            if (atom.resi > this.sheet[j][3]) continue;
             atom.ss = 's';
-            if (atom.resi == protein.sheet[j][1]) atom.ssbegin = true;
-            if (atom.resi == protein.sheet[j][3]) atom.ssend = true;
+            if (atom.resi == this.sheet[j][1]) atom.ssbegin = true;
+            if (atom.resi == this.sheet[j][3]) atom.ssend = true;
 
         }
 
-        for( j = 0; j < protein.helix.length; j++ ){
+        for( j = 0; j < this.helix.length; j++ ){
 
-            if (atom.chain != protein.helix[j][0]) continue;
-            if (atom.resi < protein.helix[j][1]) continue;
-            if (atom.resi > protein.helix[j][3]) continue;
+            if (atom.chain != this.helix[j][0]) continue;
+            if (atom.resi < this.helix[j][1]) continue;
+            if (atom.resi > this.helix[j][3]) continue;
             atom.ss = 'h';
-            if (atom.resi == protein.helix[j][1]) atom.ssbegin = true;
-            else if (atom.resi == protein.helix[j][3]) atom.ssend = true;
-
-        }
-
-        // bonds
-        for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
-
-            atom2 = atoms[ j ];
-            if( atom2 == undefined ) continue;
-            
-            if( isConnected( atom, atom2 ) ){
-                bonds.push([ i, j ]);
-            }
+            if (atom.resi == this.helix[j][1]) atom.ssbegin = true;
+            else if (atom.resi == this.helix[j][3]) atom.ssend = true;
 
         }
 
     }
 
-    console.timeEnd( "pdb bonding" );
+    console.timeEnd( "NGL.PdbFile.parse" );
 
-    this.atoms = atoms;
-    this.bonds = bonds;
-    this.protein = protein;
+    this.atomSet = new NGL.AtomSet( atoms );
+    this.bondSet = new NGL.BondSet( this.atomSet, bonds );
     
 };
 
-/**
- * Adds a representation of the PDB to a viewer instance.
- */
-NGL.PdbFile.prototype.add = function( viewer, type, center ){
-
-    console.time( "pdb add represention" );
-
-    var sphereScale = 0.2;
-    var sphereSize = false;
-    var cylinderSize = 0.12;
-    var line = false;
-
-    var sphereBuffer;
-    var cylinderBuffer;
-    var lineBuffer;
-
-    if( type=="spacefill" ){
-
-        sphereScale = 1.0;
-        sphereSize = false;
-        cylinderSize = false;
-
-    }else if( type=="ball+stick" ){
-
-        sphereScale = 0.2;
-        sphereSize = false;
-        cylinderSize = 0.12;
-
-    }else if( type=="stick" ){
-
-        sphereScale = false;
-        sphereSize = 0.15;
-        cylinderSize = 0.15;
-
-    }else if( type=="line" ){
-
-        sphereScale = false;
-        sphereSize = false;
-        cylinderSize = false;
-        line = true;
-
-    }else if( type=="hyperball" ){
-
-        sphereScale = 0.2;;
-        sphereSize = false;
-        cylinderSize = false;
-        line = false;
-
-    }
-
-    var ad = this.getAtomData( sphereScale, sphereSize );
-
-    sphereBuffer = new NGL.SphereBuffer(
-        ad.position, ad.color, ad.radius
-    );
-
-
-    var bd = this.getBondData( 
-        cylinderSize, type=="hyperball" ? sphereScale : false
-    );
-
-    if( cylinderSize ){
-
-        cylinderBuffer = new NGL.CylinderBuffer(
-            bd.from, bd.to, bd.color, bd.color2, bd.radius
-        );
-
-    }else if( line ){
-
-        lineBuffer = new NGL.LineBuffer(
-            bd.from, bd.to, bd.color, bd.color2
-        );
-
-    }else if( type=="hyperball" ){
-    
-        cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
-            bd.from, bd.to, bd.color, bd.color2, bd.radius, bd.radius2, 0.12
-        );
-
-    }
-
-    if( center ){
-
-        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
-        var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
-
-        if( cylinderSize ){
-
-            cylinderBuffer.geometry.applyMatrix( matrix );
-
-        }else if( line ){
-
-            lineBuffer.geometry.applyMatrix( matrix );
-
-        }else if( type=="hyperball" ){
-
-            cylinderBuffer.geometry.applyMatrix( matrix );
-
-            matrix.applyToVector3Array( 
-                cylinderBuffer.geometry.attributes.inputPosition1.array
-            );
-            matrix.applyToVector3Array( 
-                cylinderBuffer.geometry.attributes.inputPosition2.array
-            );
-
-        }
-
-    }
-
-    if( sphereSize || sphereScale ){
-
-        viewer.add( sphereBuffer );
-
-    }
-
-    if( cylinderSize ){
-
-        viewer.add( cylinderBuffer );
-
-    }else if( line ){
-
-        viewer.add( lineBuffer );
-
-    }else if( type=="hyperball" ){
-
-        viewer.add( cylinderBuffer );
-        
-    }
-
-    console.timeEnd( "pdb add represention" );
-
-    this.addGui( viewer, sphereBuffer, cylinderBuffer );
-
-};
-
-NGL.PdbFile.prototype.getAtomData = function( scale, size ){
-
-    var atoms = this.atoms;
-    var na = atoms.length;
-    var colors = NGL.ElementColors;
-    var radii = NGL.VdwRadii;
-
-    var position = new Float32Array( na * 3 );
-    var color = new Float32Array( na * 3 );
-    var radius = new Float32Array( na );
-
-    var a, c, r;
-    var j = 0;
-
-    for( var i = 0; i < na; ++i ){
-
-        a = atoms[ i ];
-        if( a === undefined ) continue;
-
-        j = i * 3;
-
-        position[ j + 0 ] = a.x;
-        position[ j + 1 ] = a.y;
-        position[ j + 2 ] = a.z;
-
-        c = colors[ a.elem ];
-        if( !c ) c = 0xCCCCCC;
-
-        color[ j + 0 ] = ( c >> 16 & 255 ) / 255;
-        color[ j + 1 ] = ( c >> 8 & 255 ) / 255;
-        color[ j + 2 ] = ( c & 255 ) / 255;
-
-        if( size ){
-            radius[ i ] = size;
-        }else{
-            r = radii[ a.elem ];
-            radius[ i ] = ( r ? r : 1.5 ) * scale;
-        }
-
-    }
-
-    return {
-        "position": position,
-        "color": color,
-        "radius": radius
-    }
-
-};
-
-NGL.PdbFile.prototype.getBondData = function( size, scale ){
-
-    var atoms = this.atoms;
-    var bonds = this.bonds;
-    var nb = bonds.length;
-    var colors = NGL.ElementColors;
-    var radii = NGL.VdwRadii;
-
-    var from = new Float32Array( nb * 3 );
-    var to = new Float32Array( nb * 3 );
-    var color = new Float32Array( nb * 3 );
-    var color2 = new Float32Array( nb * 3 );
-    var radius = new Float32Array( nb );
-    var radius2 = null;
-    if( scale ) radius2 = new Float32Array( nb );
-
-    var a1, a2, c1, c2, r;
-    var j = 0;
-
-    for( var i = 0; i < nb; ++i ){
-
-        b = bonds[ i ];
-
-        a1 = atoms[ b[ 0 ] ];
-        a2 = atoms[ b[ 1 ] ];
-
-        j = i * 3;
-
-        from[ j + 0 ] = a1.x;
-        from[ j + 1 ] = a1.y;
-        from[ j + 2 ] = a1.z;
-
-        to[ j + 0 ] = a2.x;
-        to[ j + 1 ] = a2.y;
-        to[ j + 2 ] = a2.z;
-
-        c1 = colors[ a1.elem ];
-        if( !c1 ) c1 = 0xCCCCCC;
-
-        color[ j + 0 ] = ( c1 >> 16 & 255 ) / 255;
-        color[ j + 1 ] = ( c1 >> 8 & 255 ) / 255;
-        color[ j + 2 ] = ( c1 & 255 ) / 255;
-
-        c2 = colors[ a2.elem ];
-        if( !c2 ) c2 = 0xCCCCCC;
-
-        color2[ j + 0 ] = ( c2 >> 16 & 255 ) / 255;
-        color2[ j + 1 ] = ( c2 >> 8 & 255 ) / 255;
-        color2[ j + 2 ] = ( c2 & 255 ) / 255;
-
-        if( scale ){
-
-            r = radii[ a1.elem ];
-            radius[ i ] = ( r ? r : 1.5 ) * scale;
-            r = radii[ a2.elem ];
-            radius2[ i ] = ( r ? r : 1.5 ) * scale;
-
-        }else{
-
-            radius[ i ] = size;
-
-        }
-
-    }
-
-    return {
-        "from": from, "to": to, 
-        "color": color, "color2": color2, 
-        "radius": radius, "radius2": radius2
-    }
-
-};
-
-NGL.PdbFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
-
-    var gui = viewer.gui2;
-
-    var n = sphereBuffer.size;
-    if( cylinderBuffer ) var nb = cylinderBuffer.size;
-
-    var atoms = this.atoms;
-    var bonds = this.bonds;
-
-    var color = NGL.Utils.uniformArray3( n, 1, 0, 0 );
-    var i = 0;
-            
-    function update( arrayBuffer ) {
-      
-        if( !arrayBuffer ) return;
-        
-        var floatArray = new Float32Array( arrayBuffer );
-        // console.log( floatArray );
-        
-        var position = new Float32Array( n * 3 );
-
-        var a;
-        var j = 0;
-
-        for( var i = 0; i < n; ++i ){
-
-            a = atoms[ i ];
-            if( a === undefined ) continue;
-            a = a.index * 3;
-
-            j = i * 3;
-
-            position[ j + 0 ] = floatArray[ a + 0 ];
-            position[ j + 1 ] = floatArray[ a + 1 ];
-            position[ j + 2 ] = floatArray[ a + 2 ];
-
-        }
-
-        sphereBuffer.setAttributes({ 
-            position: position 
-        });
-
-        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
-
-        if( cylinderBuffer ){
-
-            var a1, a2;
-            var j = 0;
-
-            var from = new Float32Array( nb * 3 );
-            var to = new Float32Array( nb * 3 );
-
-            for( var i = 0; i < nb; ++i ){
-
-                b = bonds[ i ];
-
-                a1 = atoms[ b[ 0 ] ].index * 3;
-                a2 = atoms[ b[ 1 ] ].index * 3;
-
-                j = i * 3;
-
-                from[ j + 0 ] = floatArray[ a1 + 0 ];
-                from[ j + 1 ] = floatArray[ a1 + 1 ];
-                from[ j + 2 ] = floatArray[ a1 + 2 ];
-
-                to[ j + 0 ] = floatArray[ a2 + 0 ];
-                to[ j + 1 ] = floatArray[ a2 + 1 ];
-                to[ j + 2 ] = floatArray[ a2 + 2 ];
-
-            }
-
-            cylinderBuffer.setAttributes({ 
-                position: NGL.Utils.calculateCenterArray( from, to ),
-                position1: from,
-                position2: to
-            });
-
-            var matrix = new THREE.Matrix4().makeTranslation( 
-                offset.x, offset.y, offset.z
-            );
-
-            cylinderBuffer.geometry.applyMatrix( matrix );
-
-        }
-
-        viewer.render();
-
-    };
-
-    var params = {
-        test: function(){
-            
-            // console.log( sphereBuffer );
-
-            var oReq = new XMLHttpRequest();
-            oReq.open( "GET", "http://localhost:8080/?" + (i++), true );
-            oReq.responseType = "arraybuffer";
-
-            oReq.onload = function(){ update( oReq.response ); };
-
-            oReq.send(null);
-
-            viewer.render();
-
-        },
-        toggle: function(){
-            
-            sphereBuffer.mesh.visible = !sphereBuffer.mesh.visible;
-
-            viewer.render();
-
-        }
-
-    };
-
-    gui.add( params, 'test' );
-    gui.add( params, 'toggle' );
-
-};
-
-
-
-
-NGL.guessElement = ( function(){
-
-    var elm1 = [ "H", "C", "O", "N", "S" ];
-    var elm2 = [ "NA", "CL" ];
-
-    return function( atomName ){
-
-        var at = atomName.trim().toUpperCase();
-        var n = at.length;
-
-        if( n===0 ) return "";
-        
-        if( n===1 ) return at;
-
-        if( n===2 ){
-
-            if( elm2.indexOf( at )!==-1 ) return at;
-
-            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
-
-        }
-
-        if( n===3 ){
-
-            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
-
-        }
-
-        if( n===4 ){
-
-            if( at[0]==="H" ) return "H";
-
-        }
-        
-        return "";
-
-    };
-
-} )();
 
 
 /**
@@ -727,31 +526,17 @@ NGL.guessElement = ( function(){
  */
 NGL.GroFile = function( groFile, onLoad ){
 
-    var loader = new THREE.XHRLoader();
-
-    loader.load( groFile, function( str ){
-        
-        this.parse( str );
-        
-        onLoad( this );
-
-    }.bind( this ) );
+    NGL.StructureFile.call( this, groFile, onLoad );
 
 };
 
-/**
- * Parses a gro string.
- * @param  {String} str
- */
+NGL.GroFile.prototype = Object.create( NGL.StructureFile.prototype );
+
 NGL.GroFile.prototype.parse = function( str ){
 
-    console.time( "gro parsing" );
+    console.time( "NGL.GroFile.parse" );
 
     var atoms = [];
-    var bonds = [];
-    var protein = {
-        title: '', size: 0, box: [ 0, 0, 0 ]
-    };
 
     var idx = 0;
     var lines = str.trim().split("\n");
@@ -763,10 +548,14 @@ NGL.GroFile.prototype.parse = function( str ){
     var i, j;
     var line, recordName, altloc, serial, atomName, elem;
 
-    protein.title = lines[ 0 ].trim();
-    protein.size = parseInt( lines[ 1 ] );
+    this.title = lines[ 0 ].trim();
+    this.size = parseInt( lines[ 1 ] );
     var b = lines[ lines.length-1 ].trim().split(/\s+/);
-    protein.box = [ parseFloat(b[0]), parseFloat(b[1]), parseFloat(b[2]) ];
+    this.box = [ 
+        parseFloat(b[0]) * 10, 
+        parseFloat(b[1]) * 10, 
+        parseFloat(b[2]) * 10
+    ];
 
     for( i = 2; i < lines.length-1; i++ ){
 
@@ -778,9 +567,9 @@ NGL.GroFile.prototype.parse = function( str ){
         atoms.push({
 
             'resn': line.substr( 5, 5 ).trim(),
-            'x': parseFloat( line.substr( 20, 8 ) ),
-            'y': parseFloat( line.substr( 28, 8 ) ),
-            'z': parseFloat( line.substr( 36, 8 ) ),
+            'x': parseFloat( line.substr( 20, 8 ) ) * 10,
+            'y': parseFloat( line.substr( 28, 8 ) ) * 10,
+            'z': parseFloat( line.substr( 36, 8 ) ) * 10,
             'elem': elem,
             'chain': ' ',
             'resi': parseInt( line.substr( 0, 5 ) ),
@@ -797,32 +586,300 @@ NGL.GroFile.prototype.parse = function( str ){
 
     }
 
-    console.timeEnd( "gro parsing" );
+    console.timeEnd( "NGL.GroFile.parse" );
 
-
-
-    // console.log( protein );
-    // console.log( atoms.length );
-
-};
-
-NGL.GroFile.prototype.add = function( viewer, type, center ){
-
-
+    this.atomSet = new NGL.AtomSet( atoms );
+    this.bondSet = new NGL.BondSet( this.atomSet );
 
 };
 
 
-NGL.AtomSet = function(){
+
+
+NGL.AtomSet = function( atoms ){
+
+    this.atoms = atoms;
+    this.size = this.atoms.length;
+
+    this.position = new Float32Array( this.size * 3 );
+    this.makePosition();
+
+};
+
+NGL.AtomSet.prototype = {
+
+    constructor: NGL.AtomSet,
+
+    setPosition: function( position ){
+
+        if( this.position.length!==position.length ){
+            console.error( "NGL.AtomSet.setPosition: length differ" );
+        }
+
+        this.position = position;
+
+    },
+
+    makePosition: function(){
+
+        var na = this.size;
+        var atoms = this.atoms;
+        var position = this.position;
+
+        var a, j;
+
+        for( var i = 0; i < na; ++i ){
+
+            a = atoms[ i ];
+            if( a === undefined ) continue;
+
+            j = i * 3;
+
+            position[ j + 0 ] = a.x;
+            position[ j + 1 ] = a.y;
+            position[ j + 2 ] = a.z;
+
+        }
+
+    },
+
+    getColor: function(){
+
+        var na = this.size;
+        var atoms = this.atoms;
+        var color = new Float32Array( this.size * 3 );
+
+        var a, c, j;
+        var elemColors = NGL.ElementColors;
+
+        for( var i = 0; i < na; ++i ){
+
+            a = atoms[ i ];
+            if( a === undefined ) continue;
+
+            j = i * 3;
+
+            c = elemColors[ a.elem ];
+            if( !c ) c = 0xCCCCCC;
+
+            color[ j + 0 ] = ( c >> 16 & 255 ) / 255;
+            color[ j + 1 ] = ( c >> 8 & 255 ) / 255;
+            color[ j + 2 ] = ( c & 255 ) / 255;
+
+        }
+
+        return color;
+
+    },
+
+    getRadius: function( size, scale ){
+
+        if( !size ) size = null;
+        if( !scale ) scale = null;
+
+        var na = this.size;
+        var atoms = this.atoms;
+        var radius = new Float32Array( this.size );
+
+        var a, r, j;
+        var vdwRadii = NGL.VdwRadii;
+
+        for( var i = 0; i < na; ++i ){
+
+            a = atoms[ i ];
+            if( a === undefined ) continue;
+
+            j = i * 3;
+
+            if( size ){
+                radius[ i ] = size;
+            }else{
+                r = vdwRadii[ a.elem ];
+                radius[ i ] = ( r ? r : 1.5 ) * scale;
+            }
+
+        }
+
+        return radius;
+
+    },
 
 };
 
 
-NGL.BondSet = function(){
+NGL.BondSet = function( atomSet, extraBonds ){
+
+    this.atomSet = atomSet;
+
+    this.calculateBonds();
+    if( extraBonds ) this.bonds = this.bonds.concat( extraBonds );
+    this.size = this.bonds.length;
+
+    this.from = new Float32Array( this.size * 3 );
+    this.to = new Float32Array( this.size * 3 );
+    this.makeFromTo();
 
 };
 
+NGL.BondSet.prototype = {
 
+    constructor: NGL.BondSet,
+
+    isConnected: function( atom1, atom2 ){
+
+        if( atom1.hetflag && atom2.hetflag ) return 0;
+
+        var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) + 
+                          ( atom1.y - atom2.y ) * ( atom1.y - atom2.y ) + 
+                          ( atom1.z - atom2.z ) * ( atom1.z - atom2.z );
+
+        if( isNaN( distSquared ) ) return 0;
+        if( distSquared < 0.5 ) return 0; // duplicate or altloc
+
+        var d = atom1.covalent + atom2.covalent + 0.3;
+        return distSquared < ( d * d );
+
+    },
+
+    calculateBonds: function(){
+
+        console.time( "NGL.BondSet.calculateBonds" );
+
+        var bonds = [];
+
+        var na = this.atomSet.size;
+        var atoms = this.atomSet.atoms;
+        var isConnected = this.isConnected;
+
+        for( i = 0; i < na; i++ ){
+            
+            atom = atoms[ i ];
+            if( atom == undefined ) continue;
+
+            for (j = i + 1; j < i + 30 && j < na; j++ ){
+
+                atom2 = atoms[ j ];
+                if( atom2 == undefined ) continue;
+                
+                if( isConnected( atom, atom2 ) ){
+                    bonds.push([ i, j ]);
+                }
+
+            }
+
+        }
+
+        this.bonds = bonds;
+
+        console.timeEnd( "NGL.BondSet.calculateBonds" );
+
+    },
+
+    makeFromTo: function(){
+
+        var atoms = this.atomSet.atoms;
+        var position = this.atomSet.position;
+        var bonds = this.bonds;
+        var nb = this.size;
+
+        var from = this.from;
+        var to = this.to;
+
+        var a1, a2, j;
+
+        for( var i = 0; i < nb; ++i ){
+
+            b = bonds[ i ];
+
+            a1 = atoms[ b[ 0 ] ].index * 3;
+            a2 = atoms[ b[ 1 ] ].index * 3;
+
+            j = i * 3;
+
+            from[ j + 0 ] = position[ a1 + 0 ];
+            from[ j + 1 ] = position[ a1 + 1 ];
+            from[ j + 2 ] = position[ a1 + 2 ];
+
+            to[ j + 0 ] = position[ a2 + 0 ];
+            to[ j + 1 ] = position[ a2 + 1 ];
+            to[ j + 2 ] = position[ a2 + 2 ];
+
+        }
+
+    },
+
+    /**
+     * [getColor description]
+     * @param  {Int} idx 0 for 'from' colors, 1 for 'to' colors
+     * @return {Float32Array}     color array
+     */
+    getColor: function( idx ){
+
+        var atoms = this.atomSet.atoms;
+        var bonds = this.bonds;
+        var nb = this.size;
+
+        var color = new Float32Array( this.size * 3 );
+
+        var a, c, j;
+        var elemColors = NGL.ElementColors;
+
+        for( var i = 0; i < nb; ++i ){
+
+            a = atoms[ bonds[ i ][ idx ] ];
+
+            j = i * 3;
+
+            c = elemColors[ a.elem ];
+            if( !c ) c = 0xCCCCCC;
+
+            color[ j + 0 ] = ( c >> 16 & 255 ) / 255;
+            color[ j + 1 ] = ( c >> 8 & 255 ) / 255;
+            color[ j + 2 ] = ( c & 255 ) / 255;
+
+        }
+
+        return color
+
+    },
+
+    getRadius: function( idx, size, scale ){
+
+        if( !size ) size = null;
+        if( !scale ) scale = null;
+
+        var atoms = this.atomSet.atoms;
+        var bonds = this.bonds;
+        var nb = this.size;
+
+        var radius = new Float32Array( this.size );
+
+        var a, r, j;
+        var vdwRadii = NGL.VdwRadii;
+
+        for( var i = 0; i < nb; ++i ){
+
+            j = i * 3;
+
+            if( scale ){
+
+                a = atoms[ bonds[ i ][ idx ] ];
+                r = vdwRadii[ a.elem ];
+                radius[ i ] = ( r ? r : 1.5 ) * scale;
+
+            }else{
+
+                radius[ i ] = size;
+
+            }
+
+        }
+
+        return radius;
+
+    },
+
+};
 
 
 
