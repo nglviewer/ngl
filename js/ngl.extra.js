@@ -278,70 +278,70 @@ NGL.StructureFile.prototype.add = function( viewer, type, center ){
 
 };
 
-NGL.StructureFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
-
-    var gui = viewer.gui2;
-
-    var n = sphereBuffer.size;
-    if( cylinderBuffer ) var nb = cylinderBuffer.size;
-
-    var atomSet = this.atomSet;
-    var bondSet = this.bondSet;
-    var bonds = this.bondSet.bonds;
-
-    var color = NGL.Utils.uniformArray3( n, 1, 0, 0 );
-    var i = 0;
-            
-    function update( arrayBuffer ) {
-      
-        if( !arrayBuffer ) return;
+NGL.StructureFile.prototype.update = function( position, sphereBuffer, cylinderBuffer ){
         
-        atomSet.setPosition( new Float32Array( arrayBuffer ) );
+    this.atomSet.setPosition( position );
 
-        sphereBuffer.setAttributes({ 
-            position: atomSet.position 
+    sphereBuffer.setAttributes({ 
+        position: this.atomSet.position 
+    });
+
+    var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+
+    if( cylinderBuffer ){
+
+        this.bondSet.makeFromTo();
+
+        cylinderBuffer.setAttributes({ 
+            position: NGL.Utils.calculateCenterArray( 
+                this.bondSet.from, this.bondSet.to
+            ),
+            position1: this.bondSet.from,
+            position2: this.bondSet.to
         });
 
-        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
+        var matrix = new THREE.Matrix4().makeTranslation( 
+            offset.x, offset.y, offset.z
+        );
 
-        if( cylinderBuffer ){
+        cylinderBuffer.geometry.applyMatrix( matrix );
 
-            bondSet.makeFromTo();
+    }
 
-            cylinderBuffer.setAttributes({ 
-                position: NGL.Utils.calculateCenterArray( bondSet.from, bondSet.to ),
-                position1: bondSet.from,
-                position2: bondSet.to
-            });
+};
 
-            var matrix = new THREE.Matrix4().makeTranslation( 
-                offset.x, offset.y, offset.z
-            );
+NGL.StructureFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
 
-            cylinderBuffer.geometry.applyMatrix( matrix );
+    var i = 0;
+    var gui = viewer.gui2;
 
-        }
-
-        viewer.render();
-
-    };
+    var scope = this;
 
     var params = {
+
         test: function(){
             
-            // console.log( sphereBuffer );
+            var url = "http://localhost:8080/?" + (i++);
 
-            var oReq = new XMLHttpRequest();
-            oReq.open( "GET", "http://localhost:8080/?" + (i++), true );
-            oReq.responseType = "arraybuffer";
+            var loader = new THREE.XHRLoader();
+            loader.setResponseType( "arraybuffer" );
 
-            oReq.onload = function(){ update( oReq.response ); };
+            loader.load( url, function( arrayBuffer ){
 
-            oReq.send(null);
+                if( !arrayBuffer ) return;
+        
+                scope.update(
+                    new Float32Array( arrayBuffer ),
+                    sphereBuffer,
+                    cylinderBuffer
+                );
 
-            viewer.render();
+                viewer.render();
+
+            });
 
         },
+        
         toggle: function(){
             
             sphereBuffer.mesh.visible = !sphereBuffer.mesh.visible;
