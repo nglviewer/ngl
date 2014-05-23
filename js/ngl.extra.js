@@ -114,23 +114,49 @@ NGL.guessElement = ( function(){
 
 } )();
 
+NGL.getNextAvailablePropertyName = function( name, o ){
+
+    var i = 1;
+    var baseName = name;
+
+    while( true ){
+
+        if( o.hasOwnProperty( name ) ){
+
+            name = baseName + " (" + (i++) + ")";
+
+        }else{
+
+            return name;
+
+        }
+
+    }
+
+};
+
 
 /////////
 // File
 
-NGL.StructureFile = function( structureFile, onLoad ){
+NGL.StructureFile = function( structureFile, viewer, onLoad ){
 
     this.reprList = [];
+    this.viewer = viewer;
+    this.name = structureFile.replace( /^.*[\\\/]/, '' );
 
+    var scope = this;
     var loader = new THREE.XHRLoader();
 
     loader.load( structureFile, function( str ){
         
-        this.parse( str );
+        scope.parse( str );
         
-        onLoad( this );
+        scope.addGui();
 
-    }.bind( this ) );
+        if( typeof onLoad === "function" ) onLoad( scope );
+
+    } );
 
 };
 
@@ -142,7 +168,7 @@ NGL.StructureFile.prototype.parse = function( str ){
 
 }
 
-NGL.StructureFile.prototype.add = function( viewer, type ){
+NGL.StructureFile.prototype.add = function( type ){
 
     console.time( "NGL.StructureFile.add" );
 
@@ -150,23 +176,23 @@ NGL.StructureFile.prototype.add = function( viewer, type ){
 
     if( type==="spacefill" ){
 
-        repr = new NGL.SpacefillRepresentation( this.atomSet );
+        repr = new NGL.SpacefillRepresentation( this );
 
     }else if( type==="ball+stick" ){
 
-        repr = new NGL.BallAndStickRepresentation( this.atomSet, this.bondSet );
+        repr = new NGL.BallAndStickRepresentation( this );
 
     }else if( type==="stick" ){
 
-        repr = new NGL.LicoriceRepresentation( this.atomSet, this.bondSet );
+        repr = new NGL.LicoriceRepresentation( this );
 
     }else if( type==="hyperball" ){
 
-        repr = new NGL.HyperballRepresentation( this.atomSet, this.bondSet );
+        repr = new NGL.HyperballRepresentation( this );
 
     }else if( type==="line" ){
 
-        repr = new NGL.LineRepresentation( this.atomSet, this.bondSet );
+        repr = new NGL.LineRepresentation( this );
 
     }else{
 
@@ -175,11 +201,7 @@ NGL.StructureFile.prototype.add = function( viewer, type ){
 
     }
 
-    repr.add( viewer );
-
     this.reprList.push( repr );
-
-    this.addGui( viewer, repr );
 
     console.timeEnd( "NGL.StructureFile.add" );
 
@@ -194,13 +216,17 @@ NGL.StructureFile.prototype.update = function( position ){
 
 };
 
-NGL.StructureFile.prototype.addGui = function( viewer ){
+NGL.StructureFile.prototype.addGui = function(){
 
-    var i = 0;
-    var gui = viewer.gui2;
+    var name = NGL.getNextAvailablePropertyName(
+        this.name, this.viewer.gui2.__folders
+    );
+
+    this.gui = this.viewer.gui2.addFolder( name );
 
     var scope = this;
 
+    var i = 0;
     var params = {
 
         test: function(){
@@ -224,16 +250,14 @@ NGL.StructureFile.prototype.addGui = function( viewer ){
 
         toggle: function(){
             
-            sphereBuffer.mesh.visible = !sphereBuffer.mesh.visible;
-
-            viewer.render();
+            scope.reprList.forEach( function( repr ){ repr.toggle(); });
 
         }
 
     };
 
-    gui.add( params, 'test' );
-    gui.add( params, 'toggle' );
+    this.gui.add( params, 'test' );
+    this.gui.add( params, 'toggle' );
 
 };
 
@@ -243,9 +267,9 @@ NGL.StructureFile.prototype.addGui = function( viewer ){
  * An object fro representing a PDB file.
  * @class
  */
-NGL.PdbFile = function( pdbFile, onLoad ){
+NGL.PdbFile = function( pdbFile, viewer, onLoad ){
 
-    NGL.StructureFile.call( this, pdbFile, onLoad );
+    NGL.StructureFile.call( this, pdbFile, viewer, onLoad );
 
 };
 
@@ -293,7 +317,7 @@ NGL.PdbFile.prototype.parse = function( str ){
                 elem = line.substr(12, 4).trim();
             }
 
-            atoms[serial] = {
+            atoms.push({
                 'resn': line.substr( 17, 3 ),
                 'x': parseFloat( line.substr( 30, 8 ) ),
                 'y': parseFloat( line.substr( 38, 8 ) ),
@@ -313,7 +337,7 @@ NGL.PdbFile.prototype.parse = function( str ){
                 'vdw': vdwRadii[ elem ],
                 'covalent': covRadii[ elem ],
                 'index': idx++
-            };
+            });
 
         }else if( recordName == 'CONECT' ){
 
@@ -326,7 +350,8 @@ NGL.PdbFile.prototype.parse = function( str ){
                 var to = parseInt( line.substr( pos[ j ], 5 ) );
                 if( isNaN( to ) ) continue;
 
-                bonds.push([ from, to ]);
+                // TODO: broken
+                //bonds.push([ from-2, to-2 ]);
 
             }
 
@@ -404,9 +429,9 @@ NGL.PdbFile.prototype.parse = function( str ){
  * An object fro representing a GRO file.
  * @class
  */
-NGL.GroFile = function( groFile, onLoad ){
+NGL.GroFile = function( groFile, viewer, onLoad ){
 
-    NGL.StructureFile.call( this, groFile, onLoad );
+    NGL.StructureFile.call( this, groFile, viewer, onLoad );
 
 };
 
@@ -608,7 +633,7 @@ NGL.BondSet.prototype = {
 
     isConnected: function( atom1, atom2 ){
 
-        if( atom1.hetflag && atom2.hetflag ) return 0;
+        //if( atom1.hetflag && atom2.hetflag ) return 0;
 
         var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) + 
                           ( atom1.y - atom2.y ) * ( atom1.y - atom2.y ) + 
@@ -767,10 +792,14 @@ NGL.BondSet.prototype = {
 ///////////////////
 // Representation
 
-NGL.Representation = function( atomSet, bondSet ){
+NGL.Representation = function( structure ){
 
-    this.atomSet = atomSet;
-    this.bondSet = bondSet;
+    this.structure = structure;
+
+    this.viewer = structure.viewer;
+
+    this.atomSet = structure.atomSet;
+    this.bondSet = structure.bondSet;
 
     this.bufferList = [];
 
@@ -780,30 +809,77 @@ NGL.Representation.prototype = {
 
     constructor: NGL.Representation,
 
+    name: "",
+
+    finalize: function(){
+
+        this.add();
+        this.addGui();
+
+    },
+
     update: function(){
 
         // setAttributes position in each buffer
 
     },
 
-    add: function( viewer ){
+    add: function(){
+        
+        var viewer = this.viewer;
 
         this.bufferList.forEach( function( buffer ){
 
             viewer.add( buffer );
 
-        })
+        });
+
+    },
+
+    toggle: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.mesh.visible = !buffer.mesh.visible;
+
+        });
+
+        this.viewer.render();
+
+    },
+
+    addGui: function(){
+
+        var name = NGL.getNextAvailablePropertyName(
+            this.name, this.structure.gui.__folders
+        );
+
+        var gui = this.structure.gui.addFolder( name );
+
+        var scope = this;
+
+        var params = {
+
+            toggle: function(){
+                
+                scope.toggle();
+
+            }
+
+        };
+
+        gui.add( params, 'toggle' );
 
     }
 
 };
 
 
-NGL.SpacefillRepresentation = function( atomSet, scale ){
+NGL.SpacefillRepresentation = function( structure, scale ){
 
     if( !scale ) scale = 1.0;
 
-    NGL.Representation.call( this, atomSet );
+    NGL.Representation.call( this, structure );
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
@@ -813,9 +889,13 @@ NGL.SpacefillRepresentation = function( atomSet, scale ){
 
     this.bufferList = [ this.sphereBuffer ];
 
+    this.finalize();
+
 };
 
 NGL.SpacefillRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.SpacefillRepresentation.prototype.name = "spacefill";
 
 NGL.SpacefillRepresentation.prototype.update = function(){
 
@@ -826,12 +906,12 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 };
 
 
-NGL.BallAndStickRepresentation = function( atomSet, bondSet, sphereScale, cylinderSize ){
+NGL.BallAndStickRepresentation = function( structure, sphereScale, cylinderSize ){
 
     if( !sphereScale ) sphereScale = 0.2;
     if( !cylinderSize ) cylinderSize = 0.12;
 
-    NGL.Representation.call( this, atomSet, bondSet );
+    NGL.Representation.call( this, structure );
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
@@ -849,9 +929,13 @@ NGL.BallAndStickRepresentation = function( atomSet, bondSet, sphereScale, cylind
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
+    this.finalize();
+
 };
 
 NGL.BallAndStickRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
 
 NGL.BallAndStickRepresentation.prototype.update = function(){
 
@@ -870,11 +954,11 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 };
 
 
-NGL.LicoriceRepresentation = function( atomSet, bondSet, size ){
+NGL.LicoriceRepresentation = function( structure, size ){
 
     if( !size ) size = 0.15;
 
-    NGL.Representation.call( this, atomSet, bondSet );
+    NGL.Representation.call( this, structure );
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
@@ -892,9 +976,13 @@ NGL.LicoriceRepresentation = function( atomSet, bondSet, size ){
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
+    this.finalize();
+
 };
 
 NGL.LicoriceRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.LicoriceRepresentation.prototype.name = "licorice";
 
 NGL.LicoriceRepresentation.prototype.update = function(){
 
@@ -903,9 +991,9 @@ NGL.LicoriceRepresentation.prototype.update = function(){
 };
 
 
-NGL.LineRepresentation = function( atomSet, bondSet ){
+NGL.LineRepresentation = function( structure ){
 
-    NGL.Representation.call( this, atomSet, bondSet );
+    NGL.Representation.call( this, structure );
 
     this.lineBuffer = new NGL.LineBuffer(
         this.bondSet.from,
@@ -916,9 +1004,13 @@ NGL.LineRepresentation = function( atomSet, bondSet ){
 
     this.bufferList = [ this.lineBuffer ];
 
+    this.finalize();
+
 };
 
 NGL.LineRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.LineRepresentation.prototype.name = "line";
 
 NGL.LineRepresentation.prototype.update = function(){
 
@@ -933,12 +1025,12 @@ NGL.LineRepresentation.prototype.update = function(){
 };
 
 
-NGL.HyperballRepresentation = function( atomSet, bondSet, scale, shrink ){
+NGL.HyperballRepresentation = function( structure, scale, shrink ){
 
     if( !scale ) scale = 0.2;
     if( !shrink ) shrink = 0.12;
 
-    NGL.Representation.call( this, atomSet, bondSet );
+    NGL.Representation.call( this, structure );
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
@@ -958,9 +1050,13 @@ NGL.HyperballRepresentation = function( atomSet, bondSet, scale, shrink ){
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
+    this.finalize();
+
 };
 
 NGL.HyperballRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.HyperballRepresentation.prototype.name = "hyperball";
 
 NGL.HyperballRepresentation.prototype.update = function(){
 
@@ -969,15 +1065,17 @@ NGL.HyperballRepresentation.prototype.update = function(){
 };
 
 
-NGL.TraceRepresentation = function( atomSet, bondSet ){
+NGL.TraceRepresentation = function( structure ){
 
-    NGL.Representation.call( this, atomSet, bondSet );
+    NGL.Representation.call( this, structure );
+
+    this.finalize();
 
 };
 
 NGL.TraceRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
-
+NGL.TraceRepresentation.prototype.name = "trace";
 
 
 

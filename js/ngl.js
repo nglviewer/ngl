@@ -632,7 +632,7 @@ NGL.Viewer = function( eid ){
     this.gui2 = new dat.GUI({ autoPlace: false });
     this.gui2.domElement.style.position = 'absolute';
     this.gui2.domElement.style.top = '0px';
-    this.gui2.domElement.style.left = '100px';
+    this.gui2.domElement.style.left = '0px';
     this.container.appendChild( this.gui2.domElement );
 
 }
@@ -814,7 +814,8 @@ NGL.Viewer.prototype = {
 
         this.stats = new Stats();
         this.stats.domElement.style.position = 'absolute';
-        this.stats.domElement.style.top = '0px';
+        this.stats.domElement.style.bottom = '0px';
+        this.stats.domElement.style.right = '0px';
         this.container.appendChild( this.stats.domElement );
 
         this.rendererStats = new THREEx.RendererStats();
