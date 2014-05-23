@@ -115,6 +115,8 @@ NGL.guessElement = ( function(){
 } )();
 
 
+/////////
+// File
 
 NGL.StructureFile = function( structureFile, onLoad ){
 
