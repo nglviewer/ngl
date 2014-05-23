@@ -118,6 +118,8 @@ NGL.guessElement = ( function(){
 
 NGL.StructureFile = function( structureFile, onLoad ){
 
+    this.reprList = [];
+
     var loader = new THREE.XHRLoader();
 
     loader.load( structureFile, function( str ){
@@ -138,179 +140,59 @@ NGL.StructureFile.prototype.parse = function( str ){
 
 }
 
-NGL.StructureFile.prototype.add = function( viewer, type, center ){
+NGL.StructureFile.prototype.add = function( viewer, type ){
 
     console.time( "NGL.StructureFile.add" );
 
-    var sphereScale = 0.2;
-    var sphereSize = false;
-    var cylinderSize = 0.12;
-    var line = false;
+    var repr;
 
-    var sphereBuffer;
-    var cylinderBuffer;
-    var lineBuffer;
+    if( type==="spacefill" ){
 
-    if( type=="spacefill" ){
+        repr = new NGL.SpacefillRepresentation( this.atomSet );
 
-        sphereScale = 1.0;
-        sphereSize = false;
-        cylinderSize = false;
+    }else if( type==="ball+stick" ){
 
-    }else if( type=="ball+stick" ){
+        repr = new NGL.BallAndStickRepresentation( this.atomSet, this.bondSet );
 
-        sphereScale = 0.2;
-        sphereSize = false;
-        cylinderSize = 0.12;
+    }else if( type==="stick" ){
 
-    }else if( type=="stick" ){
+        repr = new NGL.LicoriceRepresentation( this.atomSet, this.bondSet );
 
-        sphereScale = false;
-        sphereSize = 0.15;
-        cylinderSize = 0.15;
+    }else if( type==="hyperball" ){
 
-    }else if( type=="line" ){
+        repr = new NGL.HyperballRepresentation( this.atomSet, this.bondSet );
 
-        sphereScale = false;
-        sphereSize = false;
-        cylinderSize = false;
-        line = true;
+    }else if( type==="line" ){
 
-    }else if( type=="hyperball" ){
+        repr = new NGL.LineRepresentation( this.atomSet, this.bondSet );
 
-        sphereScale = 0.2;;
-        sphereSize = false;
-        cylinderSize = false;
-        line = false;
+    }else{
+
+        console.error( "NGL.StructureFile.add: representation type unknown" );
+        return;
 
     }
 
-    sphereBuffer = new NGL.SphereBuffer(
-        this.atomSet.position,
-        this.atomSet.getColor(),
-        this.atomSet.getRadius( sphereSize, sphereScale )
-    );
+    repr.add( viewer );
 
-    if( cylinderSize ){
+    this.reprList.push( repr );
 
-        cylinderBuffer = new NGL.CylinderBuffer(
-            this.bondSet.from,
-            this.bondSet.to,
-            this.bondSet.getColor( 0 ),
-            this.bondSet.getColor( 1 ),
-            this.bondSet.getRadius( null, cylinderSize, null )
-        );
-
-    }else if( line ){
-
-        lineBuffer = new NGL.LineBuffer(
-            this.bondSet.from,
-            this.bondSet.to,
-            this.bondSet.getColor( 0 ),
-            this.bondSet.getColor( 1 )
-        );
-
-    }else if( type=="hyperball" ){
-    
-        cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
-            this.bondSet.from,
-            this.bondSet.to,
-            this.bondSet.getColor( 0 ),
-            this.bondSet.getColor( 1 ),
-            this.bondSet.getRadius( 0, cylinderSize, sphereScale ),
-            this.bondSet.getRadius( 1, cylinderSize, sphereScale ),
-            0.12
-        );
-
-    }
-
-    if( center ){
-
-        var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
-        var matrix = new THREE.Matrix4().makeTranslation( offset.x, offset.y, offset.z );
-
-        if( cylinderSize ){
-
-            cylinderBuffer.geometry.applyMatrix( matrix );
-
-        }else if( line ){
-
-            lineBuffer.geometry.applyMatrix( matrix );
-
-        }else if( type=="hyperball" ){
-
-            cylinderBuffer.geometry.applyMatrix( matrix );
-
-            matrix.applyToVector3Array( 
-                cylinderBuffer.geometry.attributes.inputPosition1.array
-            );
-            matrix.applyToVector3Array( 
-                cylinderBuffer.geometry.attributes.inputPosition2.array
-            );
-
-        }
-
-    }
-
-    if( sphereSize || sphereScale ){
-
-        viewer.add( sphereBuffer );
-
-    }
-
-    if( cylinderSize ){
-
-        viewer.add( cylinderBuffer );
-
-    }else if( line ){
-
-        viewer.add( lineBuffer );
-
-    }else if( type=="hyperball" ){
-
-        viewer.add( cylinderBuffer );
-        
-    }
+    this.addGui( viewer, repr );
 
     console.timeEnd( "NGL.StructureFile.add" );
 
-    this.addGui( viewer, sphereBuffer, cylinderBuffer );
-
 };
 
-NGL.StructureFile.prototype.update = function( position, sphereBuffer, cylinderBuffer ){
-        
+NGL.StructureFile.prototype.update = function( position ){
+    
     this.atomSet.setPosition( position );
+    this.bondSet.makeFromTo();
 
-    sphereBuffer.setAttributes({ 
-        position: this.atomSet.position 
-    });
-
-    var offset = THREE.GeometryUtils.center( sphereBuffer.geometry );
-
-    if( cylinderBuffer ){
-
-        this.bondSet.makeFromTo();
-
-        cylinderBuffer.setAttributes({ 
-            position: NGL.Utils.calculateCenterArray( 
-                this.bondSet.from, this.bondSet.to
-            ),
-            position1: this.bondSet.from,
-            position2: this.bondSet.to
-        });
-
-        var matrix = new THREE.Matrix4().makeTranslation( 
-            offset.x, offset.y, offset.z
-        );
-
-        cylinderBuffer.geometry.applyMatrix( matrix );
-
-    }
+    this.reprList.forEach( function( repr ){ repr.update(); });
 
 };
 
-NGL.StructureFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuffer ){
+NGL.StructureFile.prototype.addGui = function( viewer ){
 
     var i = 0;
     var gui = viewer.gui2;
@@ -330,18 +212,14 @@ NGL.StructureFile.prototype.addGui = function( viewer, sphereBuffer, cylinderBuf
 
                 if( !arrayBuffer ) return;
         
-                scope.update(
-                    new Float32Array( arrayBuffer ),
-                    sphereBuffer,
-                    cylinderBuffer
-                );
+                scope.update( new Float32Array( arrayBuffer ) );
 
                 viewer.render();
 
             });
 
         },
-        
+
         toggle: function(){
             
             sphereBuffer.mesh.visible = !sphereBuffer.mesh.visible;
@@ -594,7 +472,8 @@ NGL.GroFile.prototype.parse = function( str ){
 };
 
 
-
+////////
+// Set
 
 NGL.AtomSet = function( atoms ){
 
@@ -880,6 +759,224 @@ NGL.BondSet.prototype = {
     },
 
 };
+
+
+
+///////////////////
+// Representation
+
+NGL.Representation = function( atomSet, bondSet ){
+
+    this.atomSet = atomSet;
+    this.bondSet = bondSet;
+
+    this.bufferList = [];
+
+};
+
+NGL.Representation.prototype = {
+
+    constructor: NGL.Representation,
+
+    update: function(){
+
+        // setAttributes position in each buffer
+
+    },
+
+    add: function( viewer ){
+
+        this.bufferList.forEach( function( buffer ){
+
+            viewer.add( buffer );
+
+        })
+
+    }
+
+};
+
+
+NGL.SpacefillRepresentation = function( atomSet, scale ){
+
+    if( !scale ) scale = 1.0;
+
+    NGL.Representation.call( this, atomSet );
+
+    this.sphereBuffer = new NGL.SphereBuffer(
+        this.atomSet.position,
+        this.atomSet.getColor(),
+        this.atomSet.getRadius( null, scale )
+    );
+
+    this.bufferList = [ this.sphereBuffer ];
+
+};
+
+NGL.SpacefillRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.SpacefillRepresentation.prototype.update = function(){
+
+    this.sphereBuffer.setAttributes({ 
+        position: this.atomSet.position 
+    });
+
+};
+
+
+NGL.BallAndStickRepresentation = function( atomSet, bondSet, sphereScale, cylinderSize ){
+
+    if( !sphereScale ) sphereScale = 0.2;
+    if( !cylinderSize ) cylinderSize = 0.12;
+
+    NGL.Representation.call( this, atomSet, bondSet );
+
+    this.sphereBuffer = new NGL.SphereBuffer(
+        this.atomSet.position,
+        this.atomSet.getColor(),
+        this.atomSet.getRadius( null, sphereScale )
+    );
+
+    this.cylinderBuffer = new NGL.CylinderBuffer(
+        this.bondSet.from,
+        this.bondSet.to,
+        this.bondSet.getColor( 0 ),
+        this.bondSet.getColor( 1 ),
+        this.bondSet.getRadius( null, cylinderSize, null )
+    );
+
+    this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+
+};
+
+NGL.BallAndStickRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.BallAndStickRepresentation.prototype.update = function(){
+
+    this.sphereBuffer.setAttributes({ 
+        position: this.atomSet.position 
+    });
+
+    this.cylinderBuffer.setAttributes({ 
+        position: NGL.Utils.calculateCenterArray( 
+            this.bondSet.from, this.bondSet.to
+        ),
+        position1: this.bondSet.from,
+        position2: this.bondSet.to
+    });
+
+};
+
+
+NGL.LicoriceRepresentation = function( atomSet, bondSet, size ){
+
+    if( !size ) size = 0.15;
+
+    NGL.Representation.call( this, atomSet, bondSet );
+
+    this.sphereBuffer = new NGL.SphereBuffer(
+        this.atomSet.position,
+        this.atomSet.getColor(),
+        this.atomSet.getRadius( size, null )
+    );
+
+    this.cylinderBuffer = new NGL.CylinderBuffer(
+        this.bondSet.from,
+        this.bondSet.to,
+        this.bondSet.getColor( 0 ),
+        this.bondSet.getColor( 1 ),
+        this.bondSet.getRadius( null, size, null )
+    );
+
+    this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+
+};
+
+NGL.LicoriceRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.LicoriceRepresentation.prototype.update = function(){
+
+    NGL.BallAndStickRepresentation.prototype.update.call( this );
+
+};
+
+
+NGL.LineRepresentation = function( atomSet, bondSet ){
+
+    NGL.Representation.call( this, atomSet, bondSet );
+
+    this.lineBuffer = new NGL.LineBuffer(
+        this.bondSet.from,
+        this.bondSet.to,
+        this.bondSet.getColor( 0 ),
+        this.bondSet.getColor( 1 )
+    );
+
+    this.bufferList = [ this.lineBuffer ];
+
+};
+
+NGL.LineRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.LineRepresentation.prototype.update = function(){
+
+    this.lineBuffer.setAttributes({ 
+        position: NGL.Utils.calculateCenterArray( 
+            this.bondSet.from, this.bondSet.to
+        ),
+        position1: this.bondSet.from,
+        position2: this.bondSet.to
+    });
+
+};
+
+
+NGL.HyperballRepresentation = function( atomSet, bondSet, scale, shrink ){
+
+    if( !scale ) scale = 0.2;
+    if( !shrink ) shrink = 0.12;
+
+    NGL.Representation.call( this, atomSet, bondSet );
+
+    this.sphereBuffer = new NGL.SphereBuffer(
+        this.atomSet.position,
+        this.atomSet.getColor(),
+        this.atomSet.getRadius( null, scale )
+    );
+
+    this.cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
+        this.bondSet.from,
+        this.bondSet.to,
+        this.bondSet.getColor( 0 ),
+        this.bondSet.getColor( 1 ),
+        this.bondSet.getRadius( 0, null, scale ),
+        this.bondSet.getRadius( 1, null, scale ),
+        shrink
+    );
+
+    this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+
+};
+
+NGL.HyperballRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.HyperballRepresentation.prototype.update = function(){
+
+    NGL.BallAndStickRepresentation.prototype.update.call( this );
+
+};
+
+
+NGL.TraceRepresentation = function( atomSet, bondSet ){
+
+    NGL.Representation.call( this, atomSet, bondSet );
+
+};
+
+NGL.TraceRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+
+
 
 
 
