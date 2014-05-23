@@ -34,6 +34,7 @@ Ideas
 Todo
 ====
 
+* PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option

@@ -111,16 +111,18 @@
                     nglGui.addModel = function(){
                         if( this.modelId.split('.').pop()==="gro" ){
                             new NGL.GroFile( 
-                                'data/' + this.modelId, 
-                                function( pdb ){
-                                    pdb.add( viewer, nglGui.modelType, true );
+                                'data/' + this.modelId,
+                                viewer,
+                                function( gro ){
+                                    gro.add( nglGui.modelType );
                                 }
                             );
                         }else{
                             new NGL.PdbFile( 
-                                'data/' + this.modelId + '.pdb', 
+                                'data/' + this.modelId + '.pdb',
+                                viewer,
                                 function( pdb ){
-                                    pdb.add( viewer, nglGui.modelType, true );
+                                    pdb.add( nglGui.modelType );
                                 }
                             );
                         }
@@ -209,7 +211,7 @@
 
                     
                     nglGui.modelId = 'md.gro';
-                    nglGui.modelType = 'stick';
+                    nglGui.modelType = 'ball+stick';
                     nglGui.addModel();
                     
                     // nglGui.surfaceId = '1crn';
