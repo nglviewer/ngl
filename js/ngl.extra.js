@@ -74,7 +74,7 @@ NGL.CovalentRadii = {
     "CN": 1.6, "UUT": 1.6, "FL": 1.6, "UUP": 1.6, "LV": 1.6, "UUH": 1.6
 };
 
-NGL.guessElement = ( function(){
+NGL.guessElement = function(){
 
     var elm1 = [ "H", "C", "O", "N", "S" ];
     var elm2 = [ "NA", "CL" ];
@@ -112,7 +112,7 @@ NGL.guessElement = ( function(){
 
     };
 
-} )();
+}();
 
 NGL.getNextAvailablePropertyName = function( name, o ){
 
@@ -214,10 +214,25 @@ NGL.Structure.prototype = {
     },
 
     toggle: function(){
-                
+        
         this.reprList.forEach( function( repr ){ repr.toggle(); });
 
     },
+
+    center: function(){
+
+        var t = new THREE.Vector3();
+
+        return function(){
+        
+            t.copy( this.atomSet.center ).multiplyScalar( -1 );
+
+            this.viewer.rotationGroup.position.copy( t );
+            this.viewer.render();
+
+        };
+
+    }(),
 
     dispose: function(){
 
@@ -275,6 +290,7 @@ NGL.Structure.prototype = {
 
         this.gui.add( this, 'test' );
         this.gui.add( this, 'toggle' );
+        this.gui.add( this, 'center' );
         this.gui.add( this, 'dispose' );
 
         var params = {
@@ -588,6 +604,9 @@ NGL.AtomSet = function( atoms ){
     this.position = new Float32Array( this.size * 3 );
     this.makePosition();
 
+    this.center = new THREE.Vector3();
+    this.computeCenter();
+
 };
 
 NGL.AtomSet.prototype = {
@@ -615,7 +634,6 @@ NGL.AtomSet.prototype = {
         for( var i = 0; i < na; ++i ){
 
             a = atoms[ i ];
-            if( a === undefined ) continue;
 
             j = i * 3;
 
@@ -626,6 +644,36 @@ NGL.AtomSet.prototype = {
         }
 
     },
+
+    /**
+     * [computeCenter description]
+     * from THREE.BufferGeometry.computeBoundingSphere
+     * @return {[type]} [description]
+     */
+    computeCenter: function(){
+
+        var box = new THREE.Box3();
+        var vector = new THREE.Vector3();
+
+        return function(){
+
+            box.makeEmpty();
+
+            var positions = this.position;
+            var center = this.center;
+
+            for ( var i = 0, il = positions.length; i < il; i += 3 ) {
+
+                vector.set( positions[ i ], positions[ i + 1 ], positions[ i + 2 ] );
+                box.addPoint( vector );
+
+            }
+
+            box.center( center );
+
+        };
+
+    }(),
 
     getColor: function(){
 
@@ -639,7 +687,6 @@ NGL.AtomSet.prototype = {
         for( var i = 0; i < na; ++i ){
 
             a = atoms[ i ];
-            if( a === undefined ) continue;
 
             j = i * 3;
 
@@ -671,7 +718,6 @@ NGL.AtomSet.prototype = {
         for( var i = 0; i < na; ++i ){
 
             a = atoms[ i ];
-            if( a === undefined ) continue;
 
             j = i * 3;
 
@@ -738,12 +784,10 @@ NGL.BondSet.prototype = {
         for( i = 0; i < na; i++ ){
             
             atom = atoms[ i ];
-            if( atom == undefined ) continue;
 
             for (j = i + 1; j < i + 30 && j < na; j++ ){
 
                 atom2 = atoms[ j ];
-                if( atom2 == undefined ) continue;
                 
                 if( isConnected( atom, atom2 ) ){
                     bonds.push([ i, j ]);

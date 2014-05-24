@@ -30,20 +30,27 @@ Ideas
   * to update the atom positions only the texture needs to be changed
   * http://stackoverflow.com/questions/17262574/packing-vertex-data-into-a-webgl-texture
   * http://stackoverflow.com/questions/7709689/webgl-pass-array-shader?rq=1
+* Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
+
+
 
 Todo
 ====
 
+* Center on Structure
+* load from file, rcsb
+
+* Backbone/trace repr
 * PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option
-* Cartoon style
+* Cartoon repr
 * GeometryBuffer update mechanism
   * move attribute array filling code to a setAttributes function
 
-* Use THREE.RawShaderMaterial()
-* Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
+* Move NGL.GUI into NGL.Viewer
+* Use THREE.RawShaderMaterial()?
 * Lighting
   * double sided (looks funny in MeshBuffer)
   * OIT (see above)
@@ -70,6 +77,7 @@ Todo
   * GPU: color texture with colors as object ids
     * requires extra rendering pass (or multiple render targets)
 * Spin (needs animation) button
+
 
 
 Jmol

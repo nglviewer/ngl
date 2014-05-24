@@ -114,6 +114,7 @@
                             viewer,
                             function( structure ){
                                 structure.add( nglGui.modelType );
+                                structure.center();
                             }
                         );
                     };
@@ -200,7 +201,7 @@
                     models.add(nglGui, 'addModel');
 
                     
-                    nglGui.modelId = 'md.gro';
+                    nglGui.modelId = '1blu.pdb';
                     nglGui.modelType = 'ball+stick';
                     nglGui.addModel();
                     
@@ -409,20 +410,14 @@
 
 
             function loadSurface( url ){
-                
-                var manager = new THREE.LoadingManager();
-                manager.onProgress = function ( item, loaded, total ) {
-                    console.log( item, loaded, total );
-                };
 
-                var loader = new THREE.OBJLoader( manager );
+                var loader = new THREE.OBJLoader();
                 loader.load( url, function ( object ) {
 
                     var surface = new THREE.Object3D();
 
                     var geo = object.children[0].geometry;
-                    console.log(geo)
-                    THREE.GeometryUtils.center( geo );
+                    console.log(geo);
                     
                     var position = NGL.Utils.positionFromGeometry( geo );
                     var color = NGL.Utils.colorFromGeometry( geo );
@@ -439,6 +434,7 @@
 
 
             function loadModel( url, type, impostor, randomColor ){
+                
                 var _load = function( data ){
                     var mol = data['mol'];
                     var atoms = mol['a'];
