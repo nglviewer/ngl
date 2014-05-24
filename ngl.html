@@ -44,6 +44,10 @@
                 height: 100%;
             }
 
+            .dg li:not(.folder) {
+                background: rgba(0, 0, 0, 0.75) !important;
+            }
+
         </style>
     </head>
 
@@ -74,7 +78,6 @@
         <script src="js/ngl.wip.js"></script>
         <script src="js/ngl.alt.js"></script>
         <script src="js/ngl.extra.js"></script>
-
 
 
 
@@ -194,6 +197,17 @@
                     this.addStructure( value.toUpperCase() );
 
                 }.bind( this ) );
+                structure.add( this, 'selectFile' );
+
+                // <input id="myInput" type="file" style="visibility:hidden" />
+                this.fileInput = document.createElement("input");
+                this.fileInput.type = "file";
+                this.fileInput.style = "visibility:hidden";
+                this.fileInput.addEventListener('change', function( e ){
+
+                    this.addStructure( e.target.files[0] );
+
+                }.bind( this ), false);
 
             }
 
@@ -206,6 +220,18 @@
                 pdbId: '',
                 reprType: 'ball+stick',
                 surfaceId: '1crn',
+
+                selectFile: function(){
+
+                    var elm = document.getElementById( "myInput" );
+
+                    this.fileInput.dispatchEvent( new MouseEvent('click', {
+                        'view': window,
+                        'bubbles': true,
+                        'cancelable': true
+                    }));
+
+                },
 
                 addPrimitive: function(){
 
