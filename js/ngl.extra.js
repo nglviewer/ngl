@@ -555,14 +555,70 @@ NGL.GroStructure.prototype.parse = function( str ){
 ///////////
 // Loader
 
+NGL.FileLoader = function ( manager ) {
+
+    this.cache = new THREE.Cache();
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.FileLoader.prototype = {
+
+    constructor: NGL.FileLoader,
+
+    load: function ( file, onLoad ) {
+
+        var scope = this;
+
+        var cached = scope.cache.get( file );
+
+        if ( cached !== undefined ) {
+
+            onLoad( cached );
+            return;
+
+        }
+
+        var reader = new FileReader();
+
+        reader.onload = function( event ){
+
+            scope.cache.add( file, this.response );
+
+            onLoad( event.target.result );
+            scope.manager.itemEnd( file );
+
+        }
+
+        reader.readAsText( file)
+
+        scope.manager.itemStart( file );
+
+    }
+
+};
+
+
 NGL.StructureLoader = function( file, viewer, onLoad ){
 
-    var structure;
-    var loader = new THREE.XHRLoader();
-    var name = file.replace( /^.*[\\\/]/, '' );
-    var ext = file.split('.').pop().toLowerCase();
+    var loader, structure, path;
+    
+    if( file instanceof File ){
 
-    if( file.length===4 ){
+        loader = new NGL.FileLoader();
+        path = file.name;
+
+    }else{
+
+        loader = new THREE.XHRLoader();
+        path = file;
+
+    }
+
+    var name = path.replace( /^.*[\\\/]/, '' );
+    var ext = path.split('.').pop().toLowerCase();
+
+    if( name.length===4 ){
 
         ext = "pdb";
         file = "http://www.rcsb.org/pdb/files/" + file + ".pdb";
@@ -585,7 +641,7 @@ NGL.StructureLoader = function( file, viewer, onLoad ){
 
     }
 
-    loader.load( file, function( str ){
+    function init( str ){
         
         structure.parse( str );
         
@@ -593,7 +649,9 @@ NGL.StructureLoader = function( file, viewer, onLoad ){
 
         if( typeof onLoad === "function" ) onLoad( structure );
 
-    } );
+    }
+
+    loader.load( file, init );
 
     return structure;
 

@@ -37,8 +37,6 @@ Ideas
 Todo
 ====
 
-* load from file, rcsb
-
 * Backbone/trace repr
 * PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
