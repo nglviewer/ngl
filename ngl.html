@@ -82,6 +82,27 @@
 
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+
+            document.addEventListener("DOMContentLoaded", function() {
+
+                NGL.init( function(){
+
+                    var viewer = new NGL.Viewer( 'container' );
+                    viewer.animate();
+
+                    var gui = new NGL.showcaseGui( viewer );
+
+                    gui.reprType = 'ball+stick';
+                    gui.addStructure( "data/1blu.pdb" );
+                    
+                    // gui.surfaceId = '1crn';
+                    // gui.addSurface();
+
+                });
+
+            });
+
+
             NGL.showcaseGui = function( viewer ){
 
                 this.viewer = viewer;
@@ -120,17 +141,17 @@
                     'SceneSprite',
                     'Surface'
                 ]).listen();
-                primitives.add( this, 'addPrimitive');
+                primitives.add( this, 'addPrimitive' );
 
                 var surfaces = this.gui.addFolder( 'Surfaces' );
                 surfaces.add( this, 'surfaceId', [ 
                     '1crn',
                     '3dqb'
                 ]).listen();
-                surfaces.add( this, 'addSurface');
+                surfaces.add( this, 'addSurface' );
 
-                var models = this.gui.addFolder( 'Models' );
-                models.add( this, 'modelId', [
+                var structure = this.gui.addFolder( 'Structure' );
+                structure.add( this, 'structureFile', [
                     'hem.pdb',
                     '1crn.pdb',
                     '1blu.pdb',
@@ -146,8 +167,13 @@
                     // '3dqb_ca',
                     // '3sn6_ca',
                     // '3l5q_ca',
-                ]).listen();
-                models.add( this, 'modelType', [
+                ]).listen().onChange( function( value ){
+
+                    this.structureFile = "";
+                    this.addStructure( 'data/' + value );
+
+                }.bind( this ) );
+                structure.add( this, 'reprType', [
                     'spacefill',
                     // 'tube',
                     // 'elliptic-tube',
@@ -160,7 +186,14 @@
                     'line',
                     // 'line-sprite',
                 ]).listen();
-                models.add( this, 'addModel');
+                structure.add( this, 'pdbId' ).listen().onFinishChange( function( value ){
+                    
+                    if( value.length!==4 ) return;
+
+                    this.pdbId = "";
+                    this.addStructure( value.toUpperCase() );
+
+                }.bind( this ) );
 
             }
 
@@ -169,8 +202,9 @@
                 count: 100,
                 size: 2.0,
                 primitiveType: 'SphereImpostor',
-                modelId: '1crn',
-                modelType: 'ball+stick',
+                structureFile: '',
+                pdbId: '',
+                reprType: 'ball+stick',
                 surfaceId: '1crn',
 
                 addPrimitive: function(){
@@ -181,15 +215,15 @@
 
                 },
 
-                addModel: function(){
+                addStructure: function( path ){
 
-                    var modelType = this.modelType;
+                    var reprType = this.reprType;
 
                     new NGL.StructureLoader( 
-                        'data/' + this.modelId,
+                        path,
                         this.viewer,
                         function( structure ){
-                            structure.add( modelType );
+                            structure.add( reprType );
                             structure.center();
                         }
                     );
@@ -205,26 +239,6 @@
                 }
 
             }
-
-            document.addEventListener("DOMContentLoaded", function() {
-
-                NGL.init( function(){
-
-                    var viewer = new NGL.Viewer( 'container' );
-                    viewer.animate();
-
-                    var gui = new NGL.showcaseGui( viewer );
-
-                    gui.modelId = '1blu.pdb';
-                    gui.modelType = 'ball+stick';
-                    gui.addModel();
-                    
-                    // gui.surfaceId = '1crn';
-                    // gui.addSurface();
-
-                });
-
-            });
 
 
             function loadPrimitive( count, size, primitiveType, viewer ){
