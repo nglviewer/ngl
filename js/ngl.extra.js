@@ -188,6 +188,10 @@ NGL.Structure.prototype = {
 
             repr = new NGL.LineRepresentation( this );
 
+        }else if( type==="backbone" ){
+
+            repr = new NGL.BackboneRepresentation( this );
+
         }else{
 
             console.error( "NGL.Structure.add: representation type unknown" );
@@ -297,7 +301,10 @@ NGL.Structure.prototype = {
             "add repr": "",
         };
 
-        var repr = [ "", "spacefill", "ball+stick", "licorice", "hyperball", "line" ];
+        var repr = [ 
+            "", "spacefill", "ball+stick", "licorice", "hyperball", 
+            "line", "backbone"
+        ];
 
         this.gui.add( params, "add repr", repr ).onChange(
 
@@ -590,7 +597,7 @@ NGL.FileLoader.prototype = {
 
         }
 
-        reader.readAsText( file)
+        reader.readAsText( file );
 
         scope.manager.itemStart( file );
 
@@ -599,6 +606,9 @@ NGL.FileLoader.prototype = {
 };
 
 
+/**
+ * TODO not consistent with the THREE.js Loaders
+ */
 NGL.StructureLoader = function( file, viewer, onLoad ){
 
     var loader, structure, path;
@@ -797,7 +807,7 @@ NGL.AtomSet.prototype = {
 
         return radius;
 
-    },
+    }
 
 };
 
@@ -884,8 +894,8 @@ NGL.BondSet.prototype = {
 
             b = bonds[ i ];
 
-            a1 = atoms[ b[ 0 ] ].index * 3;
-            a2 = atoms[ b[ 1 ] ].index * 3;
+            a1 = b[ 0 ] * 3;
+            a2 = b[ 1 ] * 3;
 
             j = i * 3;
 
@@ -987,6 +997,8 @@ NGL.Representation = function( structure ){
 
     this.atomSet = structure.atomSet;
     this.bondSet = structure.bondSet;
+
+    // this.selection = new NGL.Selection( "*" );
 
     this.bufferList = [];
 
@@ -1258,21 +1270,136 @@ NGL.HyperballRepresentation.prototype.update = function(){
 };
 
 
-NGL.TraceRepresentation = function( structure ){
+NGL.BackboneRepresentation = function( structure, size ){
+
+    if( !size ) size = 0.2;
 
     NGL.Representation.call( this, structure );
+
+    this.makeBackbone();
+
+    this.sphereBuffer = new NGL.SphereBuffer(
+        this.backboneAtomSet.position,
+        this.backboneAtomSet.getColor(),
+        this.backboneAtomSet.getRadius( size, null )
+    );
+
+    this.cylinderBuffer = new NGL.CylinderBuffer(
+        this.backboneBondSet.from,
+        this.backboneBondSet.to,
+        this.backboneBondSet.getColor( 0 ),
+        this.backboneBondSet.getColor( 1 ),
+        this.backboneBondSet.getRadius( null, size, null )
+    );
+
+    this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
     this.finalize();
 
 };
 
-NGL.TraceRepresentation.prototype = Object.create( NGL.Representation.prototype );
+NGL.BackboneRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
-NGL.TraceRepresentation.prototype.name = "trace";
+NGL.BackboneRepresentation.prototype.name = "backbone";
 
+NGL.BackboneRepresentation.prototype.update = function(){
 
+    this.sphereBuffer.setAttributes({ 
+        position: this.backboneAtomSet.position 
+    });
 
+    this.cylinderBuffer.setAttributes({ 
+        position: NGL.Utils.calculateCenterArray( 
+            this.backboneBondSet.from, this.backboneBondSet.to
+        ),
+        position1: this.backboneBondSet.from,
+        position2: this.backboneBondSet.to
+    });
 
+};
+
+NGL.BackboneRepresentation.prototype.makeBackbone = function(){
+
+    var na = this.atomSet.size;
+    var atoms = this.atomSet.atoms;
+
+    var backboneAtoms = [];
+    var backboneBonds = [];
+
+    var j = 0;
+    var a, aPrev, distSquared;
+
+    for( var i = 0; i < na; ++i ){
+
+        a = atoms[ i ];
+
+        if( a.atom==="CA" ){
+
+            backboneAtoms.push( a );
+
+            if( aPrev ){
+
+                distSquared = ( a.x - aPrev.x ) * ( a.x - aPrev.x ) + 
+                              ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
+                              ( a.z - aPrev.z ) * ( a.z - aPrev.z );
+
+                //console.log( distSquared );
+
+                if( distSquared < 16 ){
+
+                    backboneBonds.push([ j, j+1 ]);
+
+                }
+
+                j += 1;
+
+            }
+            
+            aPrev = a;
+
+        }
+
+    }
+
+    aPrev = undefined;
+    j += 1;
+
+    for( var i = 0; i < na; ++i ){
+
+        a = atoms[ i ];
+
+        if( a.atom==="P" ){
+
+            backboneAtoms.push( a );
+
+            if( aPrev ){
+
+                distSquared = ( a.x - aPrev.x ) * ( a.x - aPrev.x ) + 
+                              ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
+                              ( a.z - aPrev.z ) * ( a.z - aPrev.z );
+
+                // console.log( distSquared );
+
+                if( distSquared < 60 ){
+
+                    backboneBonds.push([ j, j+1 ]);
+
+                }
+
+                j += 1;
+
+            }
+            
+            aPrev = a;
+
+        }
+
+    }
+
+    this.backboneAtomSet = new NGL.AtomSet( backboneAtoms );
+    this.backboneBondSet = new NGL.BondSet( this.backboneAtomSet, backboneBonds );
+
+};
 
 
 

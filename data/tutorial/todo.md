@@ -37,14 +37,21 @@ Ideas
 Todo
 ====
 
-* Backbone/trace repr
+* Simple selection as part of repr
+* Coloring
+  * CPK (done)
+  * Secondary structure
+  * Rainbow
 * PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option
+* Trace/tube repr
 * Cartoon repr
 * GeometryBuffer update mechanism
   * move attribute array filling code to a setAttributes function
+* Make StructureLoader consistent with the THREE.js Loaders
+* Add DataLoader that dispatches to specialized loaders depending on file ext
 
 * Move NGL.GUI into NGL.Viewer
 * Use THREE.RawShaderMaterial()?
