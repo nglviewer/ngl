@@ -562,6 +562,13 @@ NGL.StructureLoader = function( file, viewer, onLoad ){
     var name = file.replace( /^.*[\\\/]/, '' );
     var ext = file.split('.').pop().toLowerCase();
 
+    if( file.length===4 ){
+
+        ext = "pdb";
+        file = "http://www.rcsb.org/pdb/files/" + file + ".pdb";
+
+    }
+
     if( ext === "pdb" ){
 
         structure = new NGL.PdbStructure( name, viewer );
