@@ -3,6 +3,19 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+/**
+ * monkey patch for dat.GUI to remove a folder
+ */
+dat.GUI.prototype.removeFolder = function( name ){
+
+    var f = this.__folders[ name ];
+    f.close();
+    f.__ul.parentNode.parentNode.parentNode.removeChild( f.__ul.parentNode.parentNode );
+    this.__folders[ name ] = undefined;
+    this.onResize();
+
+};
+
 
 /**
  * [NGL description]
@@ -835,8 +848,15 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer ){
 
-        console.log( buffer );
         this.modelGroup.add( buffer.mesh );
+
+        this.render();
+
+    },
+
+    remove: function( buffer ){
+
+        this.modelGroup.remove( buffer.mesh );
 
         this.render();
 
@@ -1234,6 +1254,15 @@ NGL.Buffer.prototype = {
         );
 
         this.geometry.attributes[ "index" ].array.set( this.index );
+
+    },
+
+    remove: function(){
+
+        this.geometry.dispose();
+        this.material.dispose();
+
+
 
     }
 

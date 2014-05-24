@@ -136,128 +136,165 @@ NGL.getNextAvailablePropertyName = function( name, o ){
 };
 
 
-/////////
-// File
+//////////////
+// Structure
 
-NGL.StructureFile = function( structureFile, viewer, onLoad ){
+NGL.Structure = function( name, viewer ){
+
+    this.name = name;
+    this.viewer = viewer;
 
     this.reprList = [];
-    this.viewer = viewer;
-    this.name = structureFile.replace( /^.*[\\\/]/, '' );
 
-    var scope = this;
-    var loader = new THREE.XHRLoader();
-
-    loader.load( structureFile, function( str ){
-        
-        scope.parse( str );
-        
-        scope.addGui();
-
-        if( typeof onLoad === "function" ) onLoad( scope );
-
-    } );
+    this.testCounter = 0;
 
 };
 
-NGL.StructureFile.prototype.parse = function( str ){
+NGL.Structure.prototype = {
 
-    // must create:
-    //  this.atomSet
-    //  this.bondSet
+    constructor: NGL.Structure,
 
-}
+    parse: function( str ){
 
-NGL.StructureFile.prototype.add = function( type ){
+        // must create:
+        //  this.atomSet
+        //  this.bondSet
 
-    console.time( "NGL.StructureFile.add" );
+    },
 
-    var repr;
+    add: function( type ){
 
-    if( type==="spacefill" ){
+        console.time( "NGL.Structure.add " + type );
 
-        repr = new NGL.SpacefillRepresentation( this );
+        var repr;
 
-    }else if( type==="ball+stick" ){
+        if( type==="spacefill" ){
 
-        repr = new NGL.BallAndStickRepresentation( this );
+            repr = new NGL.SpacefillRepresentation( this );
 
-    }else if( type==="stick" ){
+        }else if( type==="ball+stick" ){
 
-        repr = new NGL.LicoriceRepresentation( this );
+            repr = new NGL.BallAndStickRepresentation( this );
 
-    }else if( type==="hyperball" ){
+        }else if( type==="licorice" ){
 
-        repr = new NGL.HyperballRepresentation( this );
+            repr = new NGL.LicoriceRepresentation( this );
 
-    }else if( type==="line" ){
+        }else if( type==="hyperball" ){
 
-        repr = new NGL.LineRepresentation( this );
+            repr = new NGL.HyperballRepresentation( this );
 
-    }else{
+        }else if( type==="line" ){
 
-        console.error( "NGL.StructureFile.add: representation type unknown" );
-        return;
+            repr = new NGL.LineRepresentation( this );
 
-    }
+        }else{
 
-    this.reprList.push( repr );
-
-    console.timeEnd( "NGL.StructureFile.add" );
-
-};
-
-NGL.StructureFile.prototype.update = function( position ){
-    
-    this.atomSet.setPosition( position );
-    this.bondSet.makeFromTo();
-
-    this.reprList.forEach( function( repr ){ repr.update(); });
-
-};
-
-NGL.StructureFile.prototype.addGui = function(){
-
-    var name = NGL.getNextAvailablePropertyName(
-        this.name, this.viewer.gui2.__folders
-    );
-
-    this.gui = this.viewer.gui2.addFolder( name );
-
-    var scope = this;
-
-    var i = 0;
-    var params = {
-
-        test: function(){
-            
-            var url = "http://localhost:8080/?" + (i++);
-
-            var loader = new THREE.XHRLoader();
-            loader.setResponseType( "arraybuffer" );
-
-            loader.load( url, function( arrayBuffer ){
-
-                if( !arrayBuffer ) return;
-        
-                scope.update( new Float32Array( arrayBuffer ) );
-
-                viewer.render();
-
-            });
-
-        },
-
-        toggle: function(){
-            
-            scope.reprList.forEach( function( repr ){ repr.toggle(); });
+            console.error( "NGL.Structure.add: representation type unknown" );
+            return;
 
         }
 
-    };
+        this.reprList.push( repr );
 
-    this.gui.add( params, 'test' );
-    this.gui.add( params, 'toggle' );
+        console.timeEnd( "NGL.Structure.add " + type );
+
+    },
+
+    remove: function( repr ){
+
+        var idx = this.reprList.indexOf( repr );
+
+        if( idx !== -1 ){
+
+            this.reprList.splice( idx, 1 );
+
+        }
+
+    },
+
+    toggle: function(){
+                
+        this.reprList.forEach( function( repr ){ repr.toggle(); });
+
+    },
+
+    dispose: function(){
+
+        viewer = this.viewer;
+
+        this.reprList.forEach( function( repr ){
+
+            repr.dispose();
+
+        });
+
+        this.viewer.gui2.removeFolder( this.__guiName );
+
+    },
+
+    update: function( position ){
+    
+        this.atomSet.setPosition( position );
+        this.bondSet.makeFromTo();
+
+        this.reprList.forEach( function( repr ){ repr.update(); });
+
+    },
+
+    test: function(){
+
+        var scope = this;
+
+        var url = "http://localhost:8080/?" + (this.testCounter++);
+
+        var loader = new THREE.XHRLoader();
+        loader.setResponseType( "arraybuffer" );
+
+        loader.load( url, function( arrayBuffer ){
+
+            if( !arrayBuffer ) return;
+    
+            scope.update( new Float32Array( arrayBuffer ) );
+
+            viewer.render();
+
+        });
+
+    },
+
+    initGui: function(){
+
+        var scope = this;
+
+        this.__guiName = NGL.getNextAvailablePropertyName(
+            this.name, this.viewer.gui2.__folders
+        );
+
+        this.gui = this.viewer.gui2.addFolder( this.__guiName );
+
+        this.gui.add( this, 'test' );
+        this.gui.add( this, 'toggle' );
+        this.gui.add( this, 'dispose' );
+
+        var params = {
+            "add repr": "",
+        };
+
+        var repr = [ "", "spacefill", "ball+stick", "licorice", "hyperball", "line" ];
+
+        this.gui.add( params, "add repr", repr ).onChange(
+
+            function( value ){ 
+
+                scope.add( value );
+                params[ "add repr" ] = "";
+
+            }
+
+        );
+
+    },
 
 };
 
@@ -267,21 +304,21 @@ NGL.StructureFile.prototype.addGui = function(){
  * An object fro representing a PDB file.
  * @class
  */
-NGL.PdbFile = function( pdbFile, viewer, onLoad ){
+NGL.PdbStructure = function( name, viewer ){
 
-    NGL.StructureFile.call( this, pdbFile, viewer, onLoad );
+    NGL.Structure.call( this, name, viewer );
 
 };
 
-NGL.PdbFile.prototype = Object.create( NGL.StructureFile.prototype );
+NGL.PdbStructure.prototype = Object.create( NGL.Structure.prototype );
 
 /**
  * Parses a pdb string. Based on GLmol.parsePDB2.
  * @param  {String} str
  */
-NGL.PdbFile.prototype.parse = function( str ){
+NGL.PdbStructure.prototype.parse = function( str ){
 
-    console.time( "NGL.PdbFile.parse" );
+    console.time( "NGL.PdbStructure.parse" );
 
     var atoms = [];
     var bonds = [];
@@ -416,7 +453,7 @@ NGL.PdbFile.prototype.parse = function( str ){
 
     }
 
-    console.timeEnd( "NGL.PdbFile.parse" );
+    console.timeEnd( "NGL.PdbStructure.parse" );
 
     this.atomSet = new NGL.AtomSet( atoms );
     this.bondSet = new NGL.BondSet( this.atomSet, bonds );
@@ -429,17 +466,17 @@ NGL.PdbFile.prototype.parse = function( str ){
  * An object fro representing a GRO file.
  * @class
  */
-NGL.GroFile = function( groFile, viewer, onLoad ){
+NGL.GroStructure = function( name, viewer ){
 
-    NGL.StructureFile.call( this, groFile, viewer, onLoad );
+    NGL.Structure.call( this, name, viewer );
 
 };
 
-NGL.GroFile.prototype = Object.create( NGL.StructureFile.prototype );
+NGL.GroStructure.prototype = Object.create( NGL.Structure.prototype );
 
-NGL.GroFile.prototype.parse = function( str ){
+NGL.GroStructure.prototype.parse = function( str ){
 
-    console.time( "NGL.GroFile.parse" );
+    console.time( "NGL.GroStructure.parse" );
 
     var atoms = [];
 
@@ -491,12 +528,53 @@ NGL.GroFile.prototype.parse = function( str ){
 
     }
 
-    console.timeEnd( "NGL.GroFile.parse" );
+    console.timeEnd( "NGL.GroStructure.parse" );
 
     this.atomSet = new NGL.AtomSet( atoms );
     this.bondSet = new NGL.BondSet( this.atomSet );
 
 };
+
+
+///////////
+// Loader
+
+NGL.StructureLoader = function( file, viewer, onLoad ){
+
+    var structure;
+    var loader = new THREE.XHRLoader();
+    var name = file.replace( /^.*[\\\/]/, '' );
+    var ext = file.split('.').pop().toLowerCase();
+
+    if( ext === "pdb" ){
+
+        structure = new NGL.PdbStructure( name, viewer );
+
+    }else if( ext === "gro" ){
+
+        structure = new NGL.GroStructure( name, viewer );
+
+    }else{
+
+        console.error( "NGL.StructureLoader: ext unknown" );
+
+        return null;
+
+    }
+
+    loader.load( file, function( str ){
+        
+        structure.parse( str );
+        
+        structure.initGui();
+
+        if( typeof onLoad === "function" ) onLoad( structure );
+
+    } );
+
+    return structure;
+
+}
 
 
 ////////
@@ -813,8 +891,8 @@ NGL.Representation.prototype = {
 
     finalize: function(){
 
-        this.add();
-        this.addGui();
+        this.attach();
+        this.initGui();
 
     },
 
@@ -824,7 +902,7 @@ NGL.Representation.prototype = {
 
     },
 
-    add: function(){
+    attach: function(){
         
         var viewer = this.viewer;
 
@@ -848,27 +926,33 @@ NGL.Representation.prototype = {
 
     },
 
-    addGui: function(){
+    dispose: function(){
 
-        var name = NGL.getNextAvailablePropertyName(
+        viewer = this.viewer;
+
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.remove();
+            viewer.remove( buffer );
+
+        });
+
+        this.structure.remove( this );
+
+        this.structure.gui.removeFolder( this.__guiName );
+
+    },
+
+    initGui: function(){
+
+        this.__guiName = NGL.getNextAvailablePropertyName(
             this.name, this.structure.gui.__folders
         );
 
-        var gui = this.structure.gui.addFolder( name );
+        this.gui = this.structure.gui.addFolder( this.__guiName );
 
-        var scope = this;
-
-        var params = {
-
-            toggle: function(){
-                
-                scope.toggle();
-
-            }
-
-        };
-
-        gui.add( params, 'toggle' );
+        this.gui.add( this, 'toggle' );
+        this.gui.add( this, 'dispose' );
 
     }
 
