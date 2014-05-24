@@ -82,138 +82,152 @@
 
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+            NGL.showcaseGui = function( viewer ){
 
-            var viewer;
+                this.viewer = viewer;
+                this.gui = viewer.gui.gui;
+
+                var primitives = this.gui.addFolder( 'Primitives' );
+                primitives.add( this, 'count', [ 
+                    1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
+                    100000, 200000, 500000, 1000000, 2000000
+                ]);
+                primitives.add( this, 'size', 2.0).min(0.1).max(10.0).step(0.1);
+                primitives.add( this, 'primitiveType', [
+                    'BezierRaymarch',
+                    'BezierImpostor',
+                    'EllipticBezierImpostor',
+                    'Bezier',
+                    'HelixImpostor',
+                    'HelixImpostor2',
+                    'SphereImpostor',
+                    'SphereMesh',
+                    'Sphere',
+                    'Point',
+                    'ParticleSprite',
+                    'CylinderImpostor',
+                    'Cylinder',
+                    'QuadricImpostor',
+                    'HyperballSphereImpostor',
+                    'HyperballStickImpostor',
+                    'Line',
+                    'LineSprite',
+                    'Halo',
+                    'Text',
+                    'SceneImpostor',
+                    'Scene',
+                    'SceneSimple',
+                    'SceneSprite',
+                    'Surface'
+                ]).listen();
+                primitives.add( this, 'addPrimitive');
+
+                var surfaces = this.gui.addFolder( 'Surfaces' );
+                surfaces.add( this, 'surfaceId', [ 
+                    '1crn',
+                    '3dqb'
+                ]).listen();
+                surfaces.add( this, 'addSurface');
+
+                var models = this.gui.addFolder( 'Models' );
+                models.add( this, 'modelId', [
+                    'hem.pdb',
+                    '1crn.pdb',
+                    '1blu.pdb',
+                    '3dqb.pdb',
+                    '3pqr.pdb',
+                    '3sn6.pdb',
+                    '1jj2.pdb',
+                    '3l5q.pdb',
+                    'md.pdb',
+                    'md.gro',
+                    'md_large.gro',
+                    // '1crn_ca',
+                    // '3dqb_ca',
+                    // '3sn6_ca',
+                    // '3l5q_ca',
+                ]).listen();
+                models.add( this, 'modelType', [
+                    'spacefill',
+                    // 'tube',
+                    // 'elliptic-tube',
+                    // 'ribbon',
+                    'ball+stick',
+                    'licorice',
+                    'hyperball',
+                    // 'sprite',
+                    // 'dot',
+                    'line',
+                    // 'line-sprite',
+                ]).listen();
+                models.add( this, 'addModel');
+
+            }
+
+            NGL.showcaseGui.prototype = {
+
+                count: 100,
+                size: 2.0,
+                primitiveType: 'SphereImpostor',
+                modelId: '1crn',
+                modelType: 'ball+stick',
+                surfaceId: '1crn',
+
+                addPrimitive: function(){
+
+                    loadPrimitive(
+                        this.count, this.size, this.primitiveType, this.viewer
+                    );
+
+                },
+
+                addModel: function(){
+
+                    var modelType = this.modelType;
+
+                    new NGL.StructureLoader( 
+                        'data/' + this.modelId,
+                        this.viewer,
+                        function( structure ){
+                            structure.add( modelType );
+                            structure.center();
+                        }
+                    );
+
+                },
+
+                addSurface: function(){
+
+                    loadSurface( 
+                        'data/' + this.surfaceId + '.obj', this.viewer
+                    );
+
+                }
+
+            }
 
             document.addEventListener("DOMContentLoaded", function() {
 
                 NGL.init( function(){
 
-                    viewer = new NGL.Viewer( 'container' );
+                    var viewer = new NGL.Viewer( 'container' );
                     viewer.animate();
 
-                    nglGui = viewer.gui;
-                    var gui = nglGui.gui;
+                    var gui = new NGL.showcaseGui( viewer );
 
-                    nglGui.count = 100;
-                    nglGui.size = 2.0;
-                    nglGui.primitiveType = 'SphereImpostor';
-                    nglGui.modelId = '1crn';
-                    nglGui.modelType = 'ball+stick';
-                    nglGui.surfaceId = '1crn';
-
-                    nglGui.addPrimitive = function(){
-                        loadPrimitive(
-                            this.count, this.size, this.primitiveType
-                        );
-                    };
-
-                    nglGui.addModel = function(){
-                        new NGL.StructureLoader( 
-                            'data/' + this.modelId,
-                            viewer,
-                            function( structure ){
-                                structure.add( nglGui.modelType );
-                                structure.center();
-                            }
-                        );
-                    };
-
-                    nglGui.addSurface = function(){
-                        loadSurface( 
-                            'data/' + this.surfaceId + '.obj'
-                        );
-                    };
+                    gui.modelId = '1blu.pdb';
+                    gui.modelType = 'ball+stick';
+                    gui.addModel();
                     
-                    var primitives = gui.addFolder( 'Primitives' );
-                    primitives.add(nglGui, 'count', [ 
-                        1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
-                        100000, 200000, 500000, 1000000, 2000000
-                    ]);
-                    primitives.add(nglGui, 'size', 2.0).min(0.1).max(10.0).step(0.1);
-                    primitives.add(nglGui, 'primitiveType', [
-                        'BezierRaymarch',
-                        'BezierImpostor',
-                        'EllipticBezierImpostor',
-                        'Bezier',
-                        'HelixImpostor',
-                        'HelixImpostor2',
-                        'SphereImpostor',
-                        'SphereMesh',
-                        'Sphere',
-                        'Point',
-                        'ParticleSprite',
-                        'CylinderImpostor',
-                        'Cylinder',
-                        'QuadricImpostor',
-                        'HyperballSphereImpostor',
-                        'HyperballStickImpostor',
-                        'Line',
-                        'LineSprite',
-                        'Halo',
-                        'Text',
-                        'SceneImpostor',
-                        'Scene',
-                        'SceneSimple',
-                        'SceneSprite',
-                        'Surface'
-                    ]).listen();
-                    primitives.add(nglGui, 'addPrimitive');
-
-                    var surfaces = gui.addFolder( 'Surfaces' );
-                    surfaces.add(nglGui, 'surfaceId', [ 
-                        '1crn',
-                        '3dqb'
-                    ]).listen();
-                    surfaces.add(nglGui, 'addSurface');
-
-                    var models = gui.addFolder( 'Models' );
-                    models.add(nglGui, 'modelId', [
-                        'hem.pdb',
-                        '1crn.pdb',
-                        '1blu.pdb',
-                        '3dqb.pdb',
-                        '3pqr.pdb',
-                        '3sn6.pdb',
-                        '1jj2.pdb',
-                        '3l5q.pdb',
-                        'md.pdb',
-                        'md.gro',
-                        'md_large.gro',
-                        // '1crn_ca',
-                        // '3dqb_ca',
-                        // '3sn6_ca',
-                        // '3l5q_ca',
-                    ]).listen();
-                    models.add(nglGui, 'modelType', [
-                        'spacefill',
-                        // 'tube',
-                        // 'elliptic-tube',
-                        // 'ribbon',
-                        'ball+stick',
-                        'licorice',
-                        'hyperball',
-                        // 'sprite',
-                        // 'dot',
-                        'line',
-                        // 'line-sprite',
-                    ]).listen();
-                    models.add(nglGui, 'addModel');
-
-                    
-                    nglGui.modelId = '1blu.pdb';
-                    nglGui.modelType = 'ball+stick';
-                    nglGui.addModel();
-                    
-                    // nglGui.surfaceId = '1crn';
-                    // nglGui.addSurface();
+                    // gui.surfaceId = '1crn';
+                    // gui.addSurface();
 
                 });
 
             });
 
 
-            function loadPrimitive( count, size, primitiveType ){
+            function loadPrimitive( count, size, primitiveType, viewer ){
 
                 var c1 = makeCylinderData( count, size );
                 var r1 = new Float32Array( c1.radius.length );
@@ -409,7 +423,7 @@
             }
 
 
-            function loadSurface( url ){
+            function loadSurface( url, viewer ){
 
                 var loader = new THREE.OBJLoader();
                 loader.load( url, function ( object ) {
@@ -430,234 +444,6 @@
 
                 } );
 
-            }
-
-
-            function loadModel( url, type, impostor, randomColor ){
-                
-                var _load = function( data ){
-                    var mol = data['mol'];
-                    var atoms = mol['a'];
-                    var bonds = mol['b'];
-                    var ss = mol['ss'];
-                    var na = atoms.length;
-                    var na3 = na * 3;
-                    var nb = bonds.length;
-                    var nb3 = nb * 3
-
-                    var colrs = {
-                        "O": [ 1.0, 0.0, 0.0 ],
-                        "N": [ 0.0, 0.0, 1.0 ],
-                        "C": [ 0.5, 0.5, 0.5 ],
-                        "H": [ 0.0, 0.0, 0.0 ],
-                        "S": [ 1.0, 1.0, 0.0 ],
-                    }
-
-                    var position = new Float32Array( na3 );
-                    var color = new Float32Array( na3 );
-                    var radius = new Float32Array( na3 );
-                    var radius2 = new Float32Array( na3 );
-                    var c, j;
-                    for( var i=0, j; i<na; i++ ){
-                        j = 3*i;
-                        c = colrs[ atoms[i].l ];
-                        if( !c ) c = [ 0.5, 0.5, 0.5 ];
-                        position[ j + 0 ] = atoms[i].x * 7;
-                        position[ j + 1 ] = atoms[i].y * 7;
-                        position[ j + 2 ] = atoms[i].z * 7;
-                        if( randomColor ){
-                            color[ j + 0 ] = Math.random();
-                            color[ j + 1 ] = Math.random();
-                            color[ j + 2 ] = Math.random();
-                        }else{
-                            color[ j + 0 ] = c[0];
-                            color[ j + 1 ] = c[1];
-                            color[ j + 2 ] = c[2];
-                        }
-                        radius[ i ] = type=="spacefill" ? 10.0 : 3.0;
-                        radius2[ i ] = radius[ i ] / 2;
-                        if( type=="sprite" ) radius[ i ] = 1.0;
-                        // if( type=="ribbon" ) radius[ i ] = 1.0 + 0.1*i;
-                        if( type=="ribbon" && ss && i<na-1 ){
-                            if( ss[i]>0 && ss[i]!=ss[i+1] ){
-                                radius[ i ] *= -1;
-                            }
-                        }
-                    }
-
-                    // calculate center
-                    var x=0, y=0, z=0;
-                    for( var i=0, j; i<na; i++ ){
-                        j = 3*i;
-                        x += position[ j + 0 ];
-                        y += position[ j + 1 ];
-                        z += position[ j + 2 ];
-                    }
-                    x /= na;
-                    y /= na;
-                    z /= na;
-                    // translate center to origin
-                    for( var i=0, j; i<na; i++ ){
-                        j = 3*i;
-                        position[ j + 0 ] -= x;
-                        position[ j + 1 ] -= y;
-                        position[ j + 2 ] -= z;
-                    }
-
-                    switch( type ){
-                        case "spacefill":
-                            if( impostor ){
-                                viewer.add( new NGL.SphereImpostorBuffer( position, color, radius ) );
-                            }else{
-                                new NGL.SphereGroup( position, color, radius );
-                            }
-                            break;
-                        case "tube":
-                            new NGL.TextBuffer( position, radius );
-                            if( impostor ){
-                                var pd = NGL.getPathData( position, color, radius, 10 );
-                                new NGL.TubeImpostorBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
-                            }else{
-                                new NGL.TubeGroup( position, color, radius, 10 );
-                            }
-                            break;
-                        case "elliptic-tube":
-                            var pd = NGL.getPathData( position, color, radius, 20 );
-                            new NGL.EllipticTubeImpostorBuffer(
-                                pd.position,
-                                pd.binormals, pd.normals, pd.tangents,
-                                pd.color
-                            );
-                            break;
-                        case "ribbon":
-                            new NGL.TextBuffer( position, radius );
-                            var pd = NGL.getPathData( position, color, radius, 2 );
-                            new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
-                            new NGL.SphereImpostorBuffer( position, color, radius2 );
-                            break;
-                        case "stick":
-                        case "hyperball":
-                        case "ball+stick":
-                            if( impostor ){
-                                viewer.add( new NGL.SphereImpostorBuffer( position, color, radius ) );
-                            }else{
-                                new NGL.SphereGroup( position, color, radius );
-                            }
-                            break;
-                        case "sprite":
-                            new NGL.ParticleSpriteBuffer( position, color, radius );
-                            break;
-                        case "dot":
-                            new NGL.PointBuffer( position, color, 3 );
-                            break;
-                    }
-
-                    var from = new Float32Array( nb3 );
-                    var to = new Float32Array( nb3 );
-                    
-                    var xdir = new Float32Array( nb3 );
-                    var ydir = new Float32Array( nb3 );
-                    var zdir = new Float32Array( nb3 );
-
-                    var pos = new Float32Array( nb3 );
-                    
-                    var bColor = new Float32Array( nb3 );
-                    var bColor2 = new Float32Array( nb3 );
-                    var bRadius = new Float32Array( nb );
-                    var bRadius2 = new Float32Array( nb );
-                    
-                    var beg, end;
-                    
-                    var vx = new THREE.Vector3();
-                    var vy = new THREE.Vector3();
-                    var vz = new THREE.Vector3();
-
-                    var p = new THREE.Vector3();
-                    var vf = new THREE.Vector3();
-                    var vt = new THREE.Vector3();
-
-                    for( var i=0, j; i<nb; i++ ){
-                        j = 3*i;
-                        beg = bonds[i].b * 3;
-                        end = bonds[i].e * 3;
-
-                        from[ j + 0 ] = position[ beg + 0 ];
-                        from[ j + 1 ] = position[ beg + 1 ];
-                        from[ j + 2 ] = position[ beg + 2 ];
-                        to[ j + 0 ] = position[ end + 0 ];
-                        to[ j + 1 ] = position[ end + 1 ];
-                        to[ j + 2 ] = position[ end + 2 ];
-
-                        vf.set( from[ j + 0 ], from[ j + 1 ], from[ j + 2 ] );
-                        vt.set( to[ j + 0 ], to[ j + 1 ], to[ j + 2 ] );
-
-                        p.addVectors( vf, vt ).divideScalar( 2.0 );
-                        pos[ j + 0 ] = p.x;
-                        pos[ j + 1 ] = p.y;
-                        pos[ j + 2 ] = p.z;
-
-                        vx.subVectors( vf, vt ).divideScalar( 2.0 );
-                        vy.set( 0.0, 1.0, 0.0 ).cross( vx )
-                            .setLength( 2.11 );
-                        vz.crossVectors( vx, vy )
-                            .setLength( 2.11 );
-
-                        xdir[ j + 0 ] = vx.x;
-                        xdir[ j + 1 ] = vx.y;
-                        xdir[ j + 2 ] = vx.z;
-
-                        ydir[ j + 0 ] = vy.x;
-                        ydir[ j + 1 ] = vy.y;
-                        ydir[ j + 2 ] = vy.z;
-
-                        zdir[ j + 0 ] = vz.x;
-                        zdir[ j + 1 ] = vz.y;
-                        zdir[ j + 2 ] = vz.z;
-                        
-                        bColor[ j + 0 ] = color[ beg + 0 ];
-                        bColor[ j + 1 ] = color[ beg + 1 ];
-                        bColor[ j + 2 ] = color[ beg + 2 ];
-                        bColor2[ j + 0 ] = color[ end + 0 ];
-                        bColor2[ j + 1 ] = color[ end + 1 ];
-                        bColor2[ j + 2 ] = color[ end + 2 ];
-                        
-                        bRadius[ i ] = type=="stick" ? 3.0 : 1.0;
-                        bRadius2[ i ] = 3.0;
-                    }
-
-                    switch( type ){
-                        case "stick":
-                        case "ball+stick":
-                            if( impostor ){
-                                viewer.add( new NGL.CylinderImpostorBuffer(
-                                    from, to, bColor, bColor2, bRadius, 1.5, false
-                                ) );
-                                viewer.add( new NGL.CylinderImpostorBuffer(
-                                    from, to, bColor, bColor2, bRadius, -1.5, false
-                                ) );
-                            }else{
-                                new NGL.CylinderGroup( from, to, bColor, bRadius );
-                            }
-                            break;
-                        case "hyperball":
-                            viewer.add(  new NGL.HyperballStickImpostorBuffer(
-                                from, to, bColor, bColor2, bRadius2, bRadius2, 0.2
-                            ) );
-                            break;
-                        case "sprite":
-                        case "line-sprite":
-                            viewer.add( new NGL.LineSpriteBuffer( from, to, bColor, bColor2, bRadius ) );
-                            break;
-                        case "line":
-                            viewer.add( new NGL.LineBuffer( from, to, bColor, bColor2 ) );
-                            break
-                    }
-
-                    viewer.render();
-
-                }
-
-                $.ajax({ url: url, dataType: "json", success: _load });
             }
 
 
@@ -983,24 +769,6 @@
                     "p0": p0,
                     "p1": p1,
                     "p2": p2
-                }
-            }
-
-
-            function makeMeshData( n ){
-                var cube = 100;
-                var n3 = n * 3;
-
-                var position = new Float32Array( n3 );
-                var color = new Float32Array( n3 );
-                var index = new Uint16Array( n3 );
-                var normal = new Float32Array( n3 );
-
-                return{
-                    "position": position,
-                    "color": color,
-                    "index": index,
-                    "normal": normal
                 }
             }
 

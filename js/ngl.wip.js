@@ -36,6 +36,31 @@ NGL.calculateChunkSize = function( nVertex ){
 
 
 
+// case "tube":
+//     new NGL.TextBuffer( position, radius );
+//     if( impostor ){
+//         var pd = NGL.getPathData( position, color, radius, 10 );
+//         new NGL.TubeImpostorBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
+//     }else{
+//         new NGL.TubeGroup( position, color, radius, 10 );
+//     }
+//     break;
+// case "elliptic-tube":
+//     var pd = NGL.getPathData( position, color, radius, 20 );
+//     new NGL.EllipticTubeImpostorBuffer(
+//         pd.position,
+//         pd.binormals, pd.normals, pd.tangents,
+//         pd.color
+//     );
+//     break;
+// case "ribbon":
+//     new NGL.TextBuffer( position, radius );
+//     var pd = NGL.getPathData( position, color, radius, 2 );
+//     new NGL.RibbonBuffer( pd.position, pd.normal, pd.dir, pd.color, pd.size );
+//     new NGL.SphereImpostorBuffer( position, color, radius2 );
+//     break;
+
+
 
 /////////////////
 // Experimental

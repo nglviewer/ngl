@@ -22,7 +22,7 @@ Ideas
   * allows for fast static scene loading
   * workflow: export from Jmol with NGL as renderer => import in standalone NGL
   * re-use three.js export & import functions - possible?
-* [rendererStats](https://github.com/jeromeetienne/threex.rendererstats/blob/master/threex.rendererstats.js) do not play well with a Composer
+* [rendererStats](https://github.com/jeromeetienne/threex.rendererstats/blob/master/threex.rendererstats.js) does not play well with a Composer
 * Alternative GUI
   * [xgui](https://github.com/oosmoxiecode/xgui.js)
 * Use a texture for atom positions
@@ -37,7 +37,6 @@ Ideas
 Todo
 ====
 
-* Center on Structure
 * load from file, rcsb
 
 * Backbone/trace repr
