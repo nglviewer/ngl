@@ -109,29 +109,19 @@
                     };
 
                     nglGui.addModel = function(){
-                        if( this.modelId.split('.').pop()==="gro" ){
-                            new NGL.GroFile( 
-                                'data/' + this.modelId,
-                                viewer,
-                                function( gro ){
-                                    gro.add( nglGui.modelType );
-                                }
-                            );
-                        }else{
-                            new NGL.PdbFile( 
-                                'data/' + this.modelId + '.pdb',
-                                viewer,
-                                function( pdb ){
-                                    pdb.add( nglGui.modelType );
-                                }
-                            );
-                        }
+                        new NGL.StructureLoader( 
+                            'data/' + this.modelId,
+                            viewer,
+                            function( structure ){
+                                structure.add( nglGui.modelType );
+                            }
+                        );
                     };
 
                     nglGui.addSurface = function(){
                         loadSurface( 
                             'data/' + this.surfaceId + '.obj'
-                        );    
+                        );
                     };
                     
                     var primitives = gui.addFolder( 'Primitives' );
@@ -178,15 +168,15 @@
 
                     var models = gui.addFolder( 'Models' );
                     models.add(nglGui, 'modelId', [
-                        'hem',
-                        '1crn',
-                        '1blu',
-                        '3dqb',
-                        '3pqr',
-                        '3sn6',
-                        '1jj2',
-                        '3l5q',
-                        'md',
+                        'hem.pdb',
+                        '1crn.pdb',
+                        '1blu.pdb',
+                        '3dqb.pdb',
+                        '3pqr.pdb',
+                        '3sn6.pdb',
+                        '1jj2.pdb',
+                        '3l5q.pdb',
+                        'md.pdb',
                         'md.gro',
                         'md_large.gro',
                         // '1crn_ca',
@@ -200,7 +190,7 @@
                         // 'elliptic-tube',
                         // 'ribbon',
                         'ball+stick',
-                        'stick',
+                        'licorice',
                         'hyperball',
                         // 'sprite',
                         // 'dot',
