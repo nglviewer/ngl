@@ -162,7 +162,7 @@ NGL.Structure.prototype = {
 
     },
 
-    add: function( type ){
+    add: function( type, sele ){
 
         console.time( "NGL.Structure.add " + type );
 
@@ -170,27 +170,27 @@ NGL.Structure.prototype = {
 
         if( type==="spacefill" ){
 
-            repr = new NGL.SpacefillRepresentation( this );
+            repr = new NGL.SpacefillRepresentation( this, sele );
 
         }else if( type==="ball+stick" ){
 
-            repr = new NGL.BallAndStickRepresentation( this );
+            repr = new NGL.BallAndStickRepresentation( this, sele );
 
         }else if( type==="licorice" ){
 
-            repr = new NGL.LicoriceRepresentation( this );
+            repr = new NGL.LicoriceRepresentation( this, sele );
 
         }else if( type==="hyperball" ){
 
-            repr = new NGL.HyperballRepresentation( this );
+            repr = new NGL.HyperballRepresentation( this, sele );
 
         }else if( type==="line" ){
 
-            repr = new NGL.LineRepresentation( this );
+            repr = new NGL.LineRepresentation( this, sele );
 
         }else if( type==="backbone" ){
 
-            repr = new NGL.BackboneRepresentation( this );
+            repr = new NGL.BackboneRepresentation( this, sele );
 
         }else{
 
@@ -991,12 +991,15 @@ NGL.BondSet.prototype = {
 
 NGL.Selection = function( selection ){
 
+    this.selectionStr = "";
+
     if( Array.isArray( selection ) ){
         
         this.selection = selection;
 
     }else{
 
+        this.selectionStr = selection;
         this.parse( selection );
 
     }
@@ -1026,7 +1029,7 @@ NGL.Selection.prototype = {
         var selection = [];
         var chunks = str.trim().split(/\s+/);
 
-        var all = [ "*", "", "all" ];
+        var all = [ "*", "", "ALL" ];
 
         var c, sele, atomname, chain, resno, resname;
 
@@ -1036,8 +1039,13 @@ NGL.Selection.prototype = {
 
             sele = {};
 
-            if( all.indexOf( c )!==-1 ){
-                selection.push( "all" );
+            if( c.toUpperCase()==="HETERO" ){
+                selection.push( "HETERO" );
+                continue;
+            }
+
+            if( all.indexOf( c.toUpperCase() )!==-1 ){
+                selection.push( "ALL" );
                 continue;
             }
 
@@ -1091,7 +1099,14 @@ NGL.Selection.prototype = {
 
                 s = selection[ i ];
 
-                if( s==="all" ) return true;
+                if( typeof s === "string" ){
+
+                    if( s==="ALL" ) return true;
+                    if( s==="HETERO" && a.hetflag===true ) return true;
+
+                    return false;
+
+                }
 
                 if( s.resn!==undefined && s.resn!==a.resn ) continue;
                 if( s.resi!==undefined && s.resi!==a.resi ) continue;
@@ -1114,7 +1129,7 @@ NGL.Selection.prototype = {
 ///////////////////
 // Representation
 
-NGL.Representation = function( structure ){
+NGL.Representation = function( structure, sele ){
 
     this.structure = structure;
 
@@ -1122,6 +1137,13 @@ NGL.Representation = function( structure ){
 
     this.atomSet = structure.atomSet;
     this.bondSet = structure.bondSet;
+
+    if( sele ){
+
+        this.selection = new NGL.Selection( sele );
+        this.makeSelection();
+
+    }
 
     this.create();
     this.finalize();
@@ -1233,6 +1255,9 @@ NGL.Representation.prototype = {
         this.gui.add( this, 'dispose' );
 
         var params = { "sele": "" };
+
+        if( this.selection ) params.sele = this.selection.selectionStr;
+
         var oldSele = "";
 
         this.gui.add( params, 'sele' ).listen().onFinishChange( function( sele ){
@@ -1262,11 +1287,11 @@ NGL.Representation.prototype = {
 };
 
 
-NGL.SpacefillRepresentation = function( structure, scale ){
+NGL.SpacefillRepresentation = function( structure, sele, scale ){
 
     this.scale = scale || 1.0;
 
-    NGL.Representation.call( this, structure );
+    NGL.Representation.call( this, structure, sele );
 
 };
 
@@ -1297,12 +1322,12 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 };
 
 
-NGL.BallAndStickRepresentation = function( structure, sphereScale, cylinderSize ){
+NGL.BallAndStickRepresentation = function( structure, sele, sphereScale, cylinderSize ){
 
     this.sphereScale = sphereScale || 0.2;
     this.cylinderSize = cylinderSize || 0.12;
 
-    NGL.Representation.call( this, structure );
+    NGL.Representation.call( this, structure, sele );
 
 };
 
@@ -1347,11 +1372,11 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 };
 
 
-NGL.LicoriceRepresentation = function( structure, size ){
+NGL.LicoriceRepresentation = function( structure, sele, size ){
 
     this.size = size || 0.15;
 
-    NGL.Representation.call( this, structure );
+    NGL.Representation.call( this, structure, sele );
 
 };
 
@@ -1386,9 +1411,9 @@ NGL.LicoriceRepresentation.prototype.update = function(){
 };
 
 
-NGL.LineRepresentation = function( structure ){
+NGL.LineRepresentation = function( structure, sele ){
 
-    NGL.Representation.call( this, structure );
+    NGL.Representation.call( this, structure, sele );
 
 };
 
@@ -1422,12 +1447,12 @@ NGL.LineRepresentation.prototype.update = function(){
 };
 
 
-NGL.HyperballRepresentation = function( structure, scale, shrink ){
+NGL.HyperballRepresentation = function( structure, sele, scale, shrink ){
 
     this.scale = scale || 0.2;
     this.shrink = shrink || 0.12;
 
-    NGL.Representation.call( this, structure );
+    NGL.Representation.call( this, structure, sele );
 
 };
 
@@ -1464,11 +1489,11 @@ NGL.HyperballRepresentation.prototype.update = function(){
 };
 
 
-NGL.BackboneRepresentation = function( structure, size ){
+NGL.BackboneRepresentation = function( structure, sele, size ){
 
     this.size = size || 0.25;
 
-    NGL.Representation.call( this, structure );
+    NGL.Representation.call( this, structure, sele );
 
 };
 
@@ -1559,7 +1584,7 @@ NGL.BackboneRepresentation.prototype.makeBackbone = function(){
 
         a = atoms[ i ];
 
-        if( a.atom==="P" ){
+        if( a.atom==="P" && !a.hetflag ){
 
             backboneAtoms.push( a );
 
