@@ -241,8 +241,9 @@ NGL.Structure.prototype = {
     dispose: function(){
 
         viewer = this.viewer;
-
-        this.reprList.forEach( function( repr ){
+        
+        // copy via .slice as side effects may change reprList
+        this.reprList.slice().forEach( function( repr ){
 
             repr.dispose();
 
@@ -985,6 +986,130 @@ NGL.BondSet.prototype = {
 };
 
 
+//////////////
+// Selection
+
+NGL.Selection = function( selection ){
+
+    if( Array.isArray( selection ) ){
+        
+        this.selection = selection;
+
+    }else{
+
+        this.parse( selection );
+
+    }
+
+    this.size = this.selection.length;
+
+};
+
+
+NGL.Selection.prototype = {
+
+    constructor: NGL.Selection, 
+
+    parse: function( str ){
+
+        // valid examples
+        //     :A
+        //     32
+        //     :A.CA
+        //     32:A.CA
+        //     32-40:A - not implemented yet
+        //     32.CA
+        //     LYS
+        //     
+        // all case insensitive
+        
+        var selection = [];
+        var chunks = str.trim().split(/\s+/);
+
+        var all = [ "*", "", "all" ];
+
+        var c, sele, atomname, chain, resno, resname;
+
+        for( var i = 0; i < chunks.length; i++ ){
+
+            c = chunks[ i ];
+
+            sele = {};
+
+            if( all.indexOf( c )!==-1 ){
+                selection.push( "all" );
+                continue;
+            }
+
+            if( c.length===3 && isNaN( parseInt( c ) ) ){
+                sele.resn = c.toUpperCase();
+                selection.push( sele );
+                continue;
+            }
+
+            atomname = c.split(".");
+            if( atomname.length>1 && atomname[1] ){
+                if( atomname[1].length>4 ){
+                    console.error( "atomname must be one to four characters" );
+                    continue;
+                }
+                sele.atom = atomname[1].substring( 0, 4 ).toUpperCase();
+            }
+
+            chain = atomname[0].split(":");
+            if( chain.length>1 && chain[1] ){
+                if( chain[1].length>1 ){
+                    console.error( "chain identifier must be one character" );
+                    continue;
+                }
+                sele.chain = chain[1][0].toUpperCase();
+            }
+
+            if( chain[0] )
+                sele.resi = parseInt( chain[0] );
+
+            selection.push( sele );
+            
+        }
+
+        // console.log( str, selection );
+
+        this.selection = selection;
+
+    },
+
+    makeTest: function(){
+
+        var n = this.size;
+        var selection = this.selection;
+
+        var i, s;
+
+        return function( a ){
+
+            for( i=0; i<n; ++i ){
+
+                s = selection[ i ];
+
+                if( s==="all" ) return true;
+
+                if( s.resn!==undefined && s.resn!==a.resn ) continue;
+                if( s.resi!==undefined && s.resi!==a.resi ) continue;
+                if( s.chain!==undefined && s.chain!==a.chain ) continue;
+                if( s.atom!==undefined && s.atom!==a.atom ) continue;
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+    },
+
+};
+
 
 ///////////////////
 // Representation
@@ -998,9 +1123,8 @@ NGL.Representation = function( structure ){
     this.atomSet = structure.atomSet;
     this.bondSet = structure.bondSet;
 
-    // this.selection = new NGL.Selection( "*" );
-
-    this.bufferList = [];
+    this.create();
+    this.finalize();
 
 };
 
@@ -1010,6 +1134,32 @@ NGL.Representation.prototype = {
 
     name: "",
 
+    makeSelection: function(){
+
+        var na = this.structure.atomSet.size;
+        var atoms = this.structure.atomSet.atoms;
+
+        var selectionTest = this.selection.makeTest();
+        
+        var selectionAtoms = [];
+
+        var a;
+
+        for( var i = 0; i < na; ++i ){
+
+            a = atoms[ i ];
+
+            if( selectionTest( a ) ) selectionAtoms.push( a );
+
+        }
+
+        // TODO filter bonds instead of re-calculationg
+
+        this.atomSet = new NGL.AtomSet( selectionAtoms );
+        this.bondSet = new NGL.BondSet( this.atomSet );
+
+    },
+
     finalize: function(){
 
         this.attach();
@@ -1017,9 +1167,16 @@ NGL.Representation.prototype = {
 
     },
 
+    create: function(){
+
+        this.bufferList = [];
+
+    },
+
     update: function(){
 
         // setAttributes position in each buffer
+        console.log( "update", this.name );
 
     },
 
@@ -1075,6 +1232,31 @@ NGL.Representation.prototype = {
         this.gui.add( this, 'toggle' );
         this.gui.add( this, 'dispose' );
 
+        var params = { "sele": "" };
+        var oldSele = "";
+
+        this.gui.add( params, 'sele' ).listen().onFinishChange( function( sele ){
+
+            if( sele===oldSele ) return;
+            oldSele = sele;
+
+            this.selection = new NGL.Selection( sele );
+            this.makeSelection();
+
+            viewer = this.viewer;
+
+            this.bufferList.forEach( function( buffer ){
+
+                buffer.remove();
+                viewer.remove( buffer );
+
+            });
+
+            this.create();
+            this.attach();
+
+        }.bind( this ) );
+
     }
 
 };
@@ -1082,19 +1264,9 @@ NGL.Representation.prototype = {
 
 NGL.SpacefillRepresentation = function( structure, scale ){
 
-    if( !scale ) scale = 1.0;
+    this.scale = scale || 1.0;
 
     NGL.Representation.call( this, structure );
-
-    this.sphereBuffer = new NGL.SphereBuffer(
-        this.atomSet.position,
-        this.atomSet.getColor(),
-        this.atomSet.getRadius( null, scale )
-    );
-
-    this.bufferList = [ this.sphereBuffer ];
-
-    this.finalize();
 
 };
 
@@ -1102,7 +1274,21 @@ NGL.SpacefillRepresentation.prototype = Object.create( NGL.Representation.protot
 
 NGL.SpacefillRepresentation.prototype.name = "spacefill";
 
+NGL.SpacefillRepresentation.prototype.create = function(){
+
+    this.sphereBuffer = new NGL.SphereBuffer(
+        this.atomSet.position,
+        this.atomSet.getColor(),
+        this.atomSet.getRadius( null, this.scale )
+    );
+
+    this.bufferList = [ this.sphereBuffer ];
+
+};
+
 NGL.SpacefillRepresentation.prototype.update = function(){
+
+    NGL.Representation.prototype.update.call( this );
 
     this.sphereBuffer.setAttributes({ 
         position: this.atomSet.position 
@@ -1113,15 +1299,23 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
 NGL.BallAndStickRepresentation = function( structure, sphereScale, cylinderSize ){
 
-    if( !sphereScale ) sphereScale = 0.2;
-    if( !cylinderSize ) cylinderSize = 0.12;
+    this.sphereScale = sphereScale || 0.2;
+    this.cylinderSize = cylinderSize || 0.12;
 
     NGL.Representation.call( this, structure );
+
+};
+
+NGL.BallAndStickRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
+
+NGL.BallAndStickRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
         this.atomSet.getColor(),
-        this.atomSet.getRadius( null, sphereScale )
+        this.atomSet.getRadius( null, this.sphereScale )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -1129,18 +1323,12 @@ NGL.BallAndStickRepresentation = function( structure, sphereScale, cylinderSize 
         this.bondSet.to,
         this.bondSet.getColor( 0 ),
         this.bondSet.getColor( 1 ),
-        this.bondSet.getRadius( null, cylinderSize, null )
+        this.bondSet.getRadius( null, this.cylinderSize, null )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
-    this.finalize();
-
 };
-
-NGL.BallAndStickRepresentation.prototype = Object.create( NGL.Representation.prototype );
-
-NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
 
 NGL.BallAndStickRepresentation.prototype.update = function(){
 
@@ -1161,14 +1349,22 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 
 NGL.LicoriceRepresentation = function( structure, size ){
 
-    if( !size ) size = 0.15;
+    this.size = size || 0.15;
 
     NGL.Representation.call( this, structure );
+
+};
+
+NGL.LicoriceRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.LicoriceRepresentation.prototype.name = "licorice";
+
+NGL.LicoriceRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
         this.atomSet.getColor(),
-        this.atomSet.getRadius( size, null )
+        this.atomSet.getRadius( this.size, null )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -1176,18 +1372,12 @@ NGL.LicoriceRepresentation = function( structure, size ){
         this.bondSet.to,
         this.bondSet.getColor( 0 ),
         this.bondSet.getColor( 1 ),
-        this.bondSet.getRadius( null, size, null )
+        this.bondSet.getRadius( null, this.size, null )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
-    this.finalize();
-
 };
-
-NGL.LicoriceRepresentation.prototype = Object.create( NGL.Representation.prototype );
-
-NGL.LicoriceRepresentation.prototype.name = "licorice";
 
 NGL.LicoriceRepresentation.prototype.update = function(){
 
@@ -1200,6 +1390,14 @@ NGL.LineRepresentation = function( structure ){
 
     NGL.Representation.call( this, structure );
 
+};
+
+NGL.LineRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.LineRepresentation.prototype.name = "line";
+
+NGL.LineRepresentation.prototype.create = function(){
+
     this.lineBuffer = new NGL.LineBuffer(
         this.bondSet.from,
         this.bondSet.to,
@@ -1209,13 +1407,7 @@ NGL.LineRepresentation = function( structure ){
 
     this.bufferList = [ this.lineBuffer ];
 
-    this.finalize();
-
 };
-
-NGL.LineRepresentation.prototype = Object.create( NGL.Representation.prototype );
-
-NGL.LineRepresentation.prototype.name = "line";
 
 NGL.LineRepresentation.prototype.update = function(){
 
@@ -1232,15 +1424,23 @@ NGL.LineRepresentation.prototype.update = function(){
 
 NGL.HyperballRepresentation = function( structure, scale, shrink ){
 
-    if( !scale ) scale = 0.2;
-    if( !shrink ) shrink = 0.12;
+    this.scale = scale || 0.2;
+    this.shrink = shrink || 0.12;
 
     NGL.Representation.call( this, structure );
+
+};
+
+NGL.HyperballRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.HyperballRepresentation.prototype.name = "hyperball";
+
+NGL.HyperballRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.position,
         this.atomSet.getColor(),
-        this.atomSet.getRadius( null, scale )
+        this.atomSet.getRadius( null, this.scale )
     );
 
     this.cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
@@ -1248,20 +1448,14 @@ NGL.HyperballRepresentation = function( structure, scale, shrink ){
         this.bondSet.to,
         this.bondSet.getColor( 0 ),
         this.bondSet.getColor( 1 ),
-        this.bondSet.getRadius( 0, null, scale ),
-        this.bondSet.getRadius( 1, null, scale ),
-        shrink
+        this.bondSet.getRadius( 0, null, this.scale ),
+        this.bondSet.getRadius( 1, null, this.scale ),
+        this.shrink
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
-    this.finalize();
-
 };
-
-NGL.HyperballRepresentation.prototype = Object.create( NGL.Representation.prototype );
-
-NGL.HyperballRepresentation.prototype.name = "hyperball";
 
 NGL.HyperballRepresentation.prototype.update = function(){
 
@@ -1272,16 +1466,24 @@ NGL.HyperballRepresentation.prototype.update = function(){
 
 NGL.BackboneRepresentation = function( structure, size ){
 
-    if( !size ) size = 0.2;
+    this.size = size || 0.25;
 
     NGL.Representation.call( this, structure );
+
+};
+
+NGL.BackboneRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.BackboneRepresentation.prototype.name = "backbone";
+
+NGL.BackboneRepresentation.prototype.create = function(){
 
     this.makeBackbone();
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.backboneAtomSet.position,
         this.backboneAtomSet.getColor(),
-        this.backboneAtomSet.getRadius( size, null )
+        this.backboneAtomSet.getRadius( this.size, null )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -1289,18 +1491,12 @@ NGL.BackboneRepresentation = function( structure, size ){
         this.backboneBondSet.to,
         this.backboneBondSet.getColor( 0 ),
         this.backboneBondSet.getColor( 1 ),
-        this.backboneBondSet.getRadius( null, size, null )
+        this.backboneBondSet.getRadius( null, this.size, null )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
 
-    this.finalize();
-
 };
-
-NGL.BackboneRepresentation.prototype = Object.create( NGL.Representation.prototype );
-
-NGL.BackboneRepresentation.prototype.name = "backbone";
 
 NGL.BackboneRepresentation.prototype.update = function(){
 
@@ -1343,14 +1539,9 @@ NGL.BackboneRepresentation.prototype.makeBackbone = function(){
                               ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
                               ( a.z - aPrev.z ) * ( a.z - aPrev.z );
 
-                //console.log( distSquared );
-
                 if( distSquared < 16 ){
-
                     backboneBonds.push([ j, j+1 ]);
-
                 }
-
                 j += 1;
 
             }
@@ -1378,14 +1569,9 @@ NGL.BackboneRepresentation.prototype.makeBackbone = function(){
                               ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
                               ( a.z - aPrev.z ) * ( a.z - aPrev.z );
 
-                // console.log( distSquared );
-
                 if( distSquared < 60 ){
-
                     backboneBonds.push([ j, j+1 ]);
-
                 }
-
                 j += 1;
 
             }
