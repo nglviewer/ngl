@@ -96,7 +96,7 @@
                     var gui = new NGL.showcaseGui( viewer );
 
                     gui.reprType = 'backbone';
-                    gui.addStructure( "data/1d66.pdb" );
+                    gui.addStructure( "data/3pqr.pdb" );
                     
                     // gui.surfaceId = '1crn';
                     // gui.addSurface();
@@ -167,10 +167,6 @@
                     'md.pdb',
                     'md.gro',
                     'md_large.gro',
-                    // '1crn_ca',
-                    // '3dqb_ca',
-                    // '3sn6_ca',
-                    // '3l5q_ca',
                 ]).listen().onChange( function( value ){
 
                     this.structureFile = "";
@@ -201,13 +197,20 @@
                 }.bind( this ) );
                 structure.add( this, 'selectFile' );
 
-                // <input id="myInput" type="file" style="visibility:hidden" />
                 this.fileInput = document.createElement("input");
                 this.fileInput.type = "file";
+                this.fileInput.multiple = true;
                 this.fileInput.style = "visibility:hidden";
                 this.fileInput.addEventListener('change', function( e ){
 
-                    this.addStructure( e.target.files[0] );
+                    var fileList = e.target.files;
+                    var n = fileList.length;
+
+                    for( var i=0; i<n; ++i ){
+
+                        this.addStructure( fileList[ i ] );
+
+                    }
 
                 }.bind( this ), false);
 
