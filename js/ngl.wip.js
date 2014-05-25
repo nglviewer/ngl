@@ -688,7 +688,7 @@ NGL.BezierGroup = function ( p0, p1, p2, color, radius ) {
 }
 
 
-NGL.TubeImpostorBuffer = function ( position, normal, dir, color, radius ) {
+NGL.TubeImpostorBuffer = function( position, normal, dir, color, radius ){
 
     var n = ( position.length/3 ) - 1;
     var n3 = n * 3;
@@ -700,9 +700,10 @@ NGL.TubeImpostorBuffer = function ( position, normal, dir, color, radius ) {
     var cylRadius = new Float32Array( n );
     var spherePos = new Float32Array( n3 );
 
-
     var i;
+
     for( var v = 0; v < n; v++ ) {
+
         i = 3 * v;
 
         cylFrom[ i + 0 ] = position[ i + 0 ];
@@ -721,7 +722,8 @@ NGL.TubeImpostorBuffer = function ( position, normal, dir, color, radius ) {
         cylColor2[ i + 1 ] = color[ i + 4 ];
         cylColor2[ i + 2 ] = color[ i + 5 ];
 
-        cylRadius[ v ] = radius[ v ]
+        cylRadius[ v ] = radius[ v ];
+
     }
 
     // console.log( "cylFrom", cylFrom );
@@ -729,7 +731,12 @@ NGL.TubeImpostorBuffer = function ( position, normal, dir, color, radius ) {
     // console.log( "cylColor", cylColor );
     // console.log( "cylRadius", cylRadius );
 
-    new NGL.CylinderImpostorBuffer( cylFrom, cylTo, cylColor, cylColor, cylRadius, n );
+    this.cylinderBuffer = new NGL.CylinderBuffer(
+        cylFrom, cylTo, cylColor, cylColor, cylRadius, n, false
+    );
+
+    this.mesh = this.cylinderBuffer.mesh;
+
 }
 
 

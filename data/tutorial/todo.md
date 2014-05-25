@@ -89,8 +89,8 @@ Todo
     * Imposter types would need extra handling
   * GPU: color texture with colors as object ids
     * requires extra rendering pass (or multiple render targets)
-* Spin (needs animation) button
-
+* Spin/Rock (needs animation) button
+* Supersampling anti-aliasing
 
 
 Jmol
