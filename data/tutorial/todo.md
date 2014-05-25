@@ -37,19 +37,28 @@ Ideas
 Todo
 ====
 
+* Selection
+  * invert complete sele with not as first chunk
+  * protein
+  * nucleic
+
+* Trace/tube repr
+* Cartoon repr
+
 * Coloring
   * CPK (done)
   * Secondary structure
   * Rainbow
+  * B-factor
+
 * PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option
-* Trace/tube repr
-* Cartoon repr
 * GeometryBuffer and LineBuffer update mechanism
   * move attribute array filling code to a setAttributes function
 * LineBuffer remove method missing
+
 * Make StructureLoader consistent with the THREE.js Loaders
 * Add DataLoader that dispatches to specialized loaders depending on file ext
 
