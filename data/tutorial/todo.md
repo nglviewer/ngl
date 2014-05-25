@@ -37,7 +37,6 @@ Ideas
 Todo
 ====
 
-* Simple selection as part of repr
 * Coloring
   * CPK (done)
   * Secondary structure
@@ -48,8 +47,9 @@ Todo
 * GeometryBuffer quality option
 * Trace/tube repr
 * Cartoon repr
-* GeometryBuffer update mechanism
+* GeometryBuffer and LineBuffer update mechanism
   * move attribute array filling code to a setAttributes function
+* LineBuffer remove method missing
 * Make StructureLoader consistent with the THREE.js Loaders
 * Add DataLoader that dispatches to specialized loaders depending on file ext
 
