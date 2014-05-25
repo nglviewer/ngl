@@ -715,7 +715,7 @@ NGL.Viewer.prototype = {
         this.renderer = new THREE.WebGLRenderer({
             preserveDrawingBuffer: true,
             alpha: false,
-            antialias: false
+            antialias: false, // TODO artifacts in impostor shader
         });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;

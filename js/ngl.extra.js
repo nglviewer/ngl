@@ -166,40 +166,16 @@ NGL.Structure.prototype = {
 
         console.time( "NGL.Structure.add " + type );
 
-        var repr;
+        var reprType = NGL.representationTypes[ type ];
 
-        if( type==="spacefill" ){
-
-            repr = new NGL.SpacefillRepresentation( this, sele );
-
-        }else if( type==="ball+stick" ){
-
-            repr = new NGL.BallAndStickRepresentation( this, sele );
-
-        }else if( type==="licorice" ){
-
-            repr = new NGL.LicoriceRepresentation( this, sele );
-
-        }else if( type==="hyperball" ){
-
-            repr = new NGL.HyperballRepresentation( this, sele );
-
-        }else if( type==="line" ){
-
-            repr = new NGL.LineRepresentation( this, sele );
-
-        }else if( type==="backbone" ){
-
-            repr = new NGL.BackboneRepresentation( this, sele );
-
-        }else{
+        if( !reprType ){
 
             console.error( "NGL.Structure.add: representation type unknown" );
             return;
 
         }
 
-        this.reprList.push( repr );
+        this.reprList.push( new reprType( this, sele ) );
 
         console.timeEnd( "NGL.Structure.add " + type );
 
@@ -302,10 +278,7 @@ NGL.Structure.prototype = {
             "add repr": "",
         };
 
-        var repr = [ 
-            "", "spacefill", "ball+stick", "licorice", "hyperball", 
-            "line", "backbone"
-        ];
+        var repr = [ "" ].concat( Object.keys( NGL.representationTypes ) );
 
         this.gui.add( params, "add repr", repr ).onChange(
 
@@ -986,6 +959,85 @@ NGL.BondSet.prototype = {
 };
 
 
+NGL.makeBackboneSets = function( atomSet ){
+
+    var na = atomSet.size;
+    var atoms = atomSet.atoms;
+
+    var backboneAtoms = [];
+    var backboneBonds = [];
+
+    var j = 0;
+    var a, aPrev, distSquared;
+
+    for( var i = 0; i < na; ++i ){
+
+        a = atoms[ i ];
+
+        if( a.atom==="CA" ){
+
+            backboneAtoms.push( a );
+
+            if( aPrev ){
+
+                distSquared = ( a.x - aPrev.x ) * ( a.x - aPrev.x ) + 
+                              ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
+                              ( a.z - aPrev.z ) * ( a.z - aPrev.z );
+
+                if( distSquared < 16 ){
+                    backboneBonds.push([ j, j+1 ]);
+                }
+                j += 1;
+
+            }
+            
+            aPrev = a;
+
+        }
+
+    }
+
+    aPrev = undefined;
+    j += 1;
+
+    for( var i = 0; i < na; ++i ){
+
+        a = atoms[ i ];
+
+        if( a.atom==="P" && !a.hetflag ){
+
+            backboneAtoms.push( a );
+
+            if( aPrev ){
+
+                distSquared = ( a.x - aPrev.x ) * ( a.x - aPrev.x ) + 
+                              ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
+                              ( a.z - aPrev.z ) * ( a.z - aPrev.z );
+
+                if( distSquared < 60 ){
+                    backboneBonds.push([ j, j+1 ]);
+                }
+                j += 1;
+
+            }
+            
+            aPrev = a;
+
+        }
+
+    }
+
+    var backboneAtomSet = new NGL.AtomSet( backboneAtoms );
+    var backboneBondSet = new NGL.BondSet( backboneAtomSet, backboneBonds );
+
+    return {
+        atomSet: backboneAtomSet,
+        bondSet: backboneBondSet
+    }
+
+}
+
+
 //////////////
 // Selection
 
@@ -1541,76 +1593,85 @@ NGL.BackboneRepresentation.prototype.update = function(){
 
 NGL.BackboneRepresentation.prototype.makeBackbone = function(){
 
-    var na = this.atomSet.size;
-    var atoms = this.atomSet.atoms;
+    var backbone = NGL.makeBackboneSets( this.atomSet );
 
-    var backboneAtoms = [];
-    var backboneBonds = [];
-
-    var j = 0;
-    var a, aPrev, distSquared;
-
-    for( var i = 0; i < na; ++i ){
-
-        a = atoms[ i ];
-
-        if( a.atom==="CA" ){
-
-            backboneAtoms.push( a );
-
-            if( aPrev ){
-
-                distSquared = ( a.x - aPrev.x ) * ( a.x - aPrev.x ) + 
-                              ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
-                              ( a.z - aPrev.z ) * ( a.z - aPrev.z );
-
-                if( distSquared < 16 ){
-                    backboneBonds.push([ j, j+1 ]);
-                }
-                j += 1;
-
-            }
-            
-            aPrev = a;
-
-        }
-
-    }
-
-    aPrev = undefined;
-    j += 1;
-
-    for( var i = 0; i < na; ++i ){
-
-        a = atoms[ i ];
-
-        if( a.atom==="P" && !a.hetflag ){
-
-            backboneAtoms.push( a );
-
-            if( aPrev ){
-
-                distSquared = ( a.x - aPrev.x ) * ( a.x - aPrev.x ) + 
-                              ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
-                              ( a.z - aPrev.z ) * ( a.z - aPrev.z );
-
-                if( distSquared < 60 ){
-                    backboneBonds.push([ j, j+1 ]);
-                }
-                j += 1;
-
-            }
-            
-            aPrev = a;
-
-        }
-
-    }
-
-    this.backboneAtomSet = new NGL.AtomSet( backboneAtoms );
-    this.backboneBondSet = new NGL.BondSet( this.backboneAtomSet, backboneBonds );
+    this.backboneAtomSet = backbone.atomSet;
+    this.backboneBondSet = backbone.bondSet;
 
 };
+
+
+NGL.TubeRepresentation = function( structure, sele, size ){
+
+    this.size = size || 0.25;
+
+    NGL.Representation.call( this, structure, sele );
+
+};
+
+NGL.TubeRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.TubeRepresentation.prototype.name = "tube";
+
+NGL.TubeRepresentation.prototype.create = function(){
+
+    this.makeBackbone();
+
+    var pd = NGL.getPathData(
+        this.backboneAtomSet.position,
+        this.backboneAtomSet.getColor(),
+        this.backboneAtomSet.getRadius( this.size, null ),
+        3
+    );
+
+    this.tubeBuffer = new NGL.TubeImpostorBuffer(
+        pd.position,
+        pd.normal,
+        pd.dir,
+        pd.color,
+        pd.size
+    );
+
+    this.bufferList = [ this.tubeBuffer ];
+
+};
+
+NGL.TubeRepresentation.prototype.update = function(){
+
+    // TODO
+
+};
+
+NGL.TubeRepresentation.prototype.makeBackbone = function(){
+
+    var backbone = NGL.makeBackboneSets( this.atomSet );
+
+    this.backboneAtomSet = backbone.atomSet;
+    this.backboneBondSet = backbone.bondSet;
+
+};
+
+
+NGL.representationTypes = {
+
+    "spacefill":    NGL.SpacefillRepresentation,
+    "ball+stick":   NGL.BallAndStickRepresentation,
+    "licorice":     NGL.LicoriceRepresentation,
+    "hyperball":    NGL.HyperballRepresentation,
+    "line":         NGL.LineRepresentation,
+    "backbone":     NGL.BackboneRepresentation,
+    "tube":         NGL.TubeRepresentation,
+
+};
+
+
+
+
+
+
+
+
+
 
 
 
