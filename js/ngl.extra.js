@@ -253,7 +253,7 @@ NGL.Structure.prototype = {
     
             scope.update( new Float32Array( arrayBuffer ) );
 
-            viewer.render();
+            scope.viewer.render();
 
         });
 
@@ -669,6 +669,23 @@ NGL.AtomSet.prototype = {
         }
 
         this.position = position;
+
+        var na = this.size;
+        var atoms = this.atoms;
+
+        var a, j;
+
+        for( var i = 0; i < na; ++i ){
+
+            a = atoms[ i ];
+
+            j = i * 3;
+
+            a.x = position[ j + 0 ];
+            a.y = position[ j + 1 ];
+            a.z = position[ j + 2 ];
+
+        }
 
     },
 
@@ -1555,7 +1572,7 @@ NGL.BackboneRepresentation.prototype.name = "backbone";
 
 NGL.BackboneRepresentation.prototype.create = function(){
 
-    this.makeBackbone();
+    this.makeBackboneSets();
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.backboneAtomSet.position,
@@ -1577,6 +1594,8 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
 NGL.BackboneRepresentation.prototype.update = function(){
 
+    this.makeBackboneSets();
+
     this.sphereBuffer.setAttributes({ 
         position: this.backboneAtomSet.position 
     });
@@ -1591,7 +1610,7 @@ NGL.BackboneRepresentation.prototype.update = function(){
 
 };
 
-NGL.BackboneRepresentation.prototype.makeBackbone = function(){
+NGL.BackboneRepresentation.prototype.makeBackboneSets = function(){
 
     var backbone = NGL.makeBackboneSets( this.atomSet );
 
@@ -1615,7 +1634,7 @@ NGL.TubeRepresentation.prototype.name = "tube";
 
 NGL.TubeRepresentation.prototype.create = function(){
 
-    this.makeBackbone();
+    this.makeBackboneSets();
 
     var pd = NGL.getPathData(
         this.backboneAtomSet.position,
@@ -1642,7 +1661,7 @@ NGL.TubeRepresentation.prototype.update = function(){
 
 };
 
-NGL.TubeRepresentation.prototype.makeBackbone = function(){
+NGL.TubeRepresentation.prototype.makeBackboneSets = function(){
 
     var backbone = NGL.makeBackboneSets( this.atomSet );
 
