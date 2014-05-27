@@ -475,8 +475,6 @@ NGL.GUI = function( viewer ){
 
     this.viewer = viewer;
 
-    this.updateDisplay = true;
-
     this.dotScreenEffect = false;
     this.fxaaEffect = false;
     this.ssaoEffect = false;
@@ -499,63 +497,58 @@ NGL.GUI = function( viewer ){
     this.viewer.container.appendChild( gui.domElement );
     this.gui = gui;
 
-    var tools = gui.addFolder( 'Tools' );
-    tools.add( this, 'clear' );
-    tools.add( this, 'screenshot' );
-    tools.add( this, 'fullscreen' );
-
-    var effects = gui.addFolder( 'Effects' );
-    effects.add( this, 'dotScreenEffect' ).onChange(
+    var view = gui.addFolder( 'View' );
+    view.add( this, 'clear' );
+    view.add( this, 'screenshot' );
+    view.add( this, 'fullscreen' );
+    view.add( this, 'dotScreenEffect' ).onChange(
         function( value ){ 
             viewer.dotScreenEffect.enabled = value;
             viewer.render();
         }
     );
-    effects.add( this, 'fxaaEffect' ).onChange(
+    view.add( this, 'fxaaEffect' ).onChange(
         function( value ){ 
             viewer.fxaaEffect.enabled = value;
             viewer.render();
         }
     );
-    effects.add( this, 'ssaoEffect' ).onChange(
-        function( value ){ 
-            viewer.ssaoEffect.enabled = value;
-            viewer.render();
-        }
-    );
+    // view.add( this, 'ssaoEffect' ).onChange(
+    //     function( value ){ 
+    //         viewer.ssaoEffect.enabled = value;
+    //         viewer.render();
+    //     }
+    // );
 
-    var options = gui.addFolder( 'Options ' );
-    options.add( this, 'updateDisplay' ).onChange(
-        function( value ){ viewer.params.updateDisplay = value; }
-    );
-    options.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
+    var settings = gui.addFolder( 'Settings' );
+    settings.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
         function( value ){ viewer.setFog( value ); }
     );
-    options.add(this, 'fogNear').min(0).max(3000).step(10).onChange(
+    settings.add(this, 'fogNear').min(0).max(3000).step(10).onChange(
         function( value ){ viewer.setFog( null, null, value ); }
     );
-    options.add(this, 'fogFar').min(0).max(3000).step(10).onChange(
+    settings.add(this, 'fogFar').min(0).max(3000).step(10).onChange(
         function( value ){ viewer.setFog( null, null, null, value ); }
     );
-    options.add(this, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
+    settings.add(this, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
         function( value ){ viewer.setFog( null, null, null, null, value ); }
     );
-    options.addColor(this, 'fogColor').onChange(
+    settings.addColor(this, 'fogColor').onChange(
         function( value ){ viewer.setFog( null, value ); }
     ).listen();
-    options.addColor(this, 'backgroundColor').onChange(
+    settings.addColor(this, 'backgroundColor').onChange(
         function( value ){ viewer.setBackground( value ); this.fogColor = value; }
     );
-    options.add(this, 'cameraPerspective').onChange(
+    settings.add(this, 'cameraPerspective').onChange(
         function( value ){ viewer.setCamera( value ); }
     );
-    options.add(this, 'cameraFov').min(0).max(180).step(1).onChange(
+    settings.add(this, 'cameraFov').min(0).max(180).step(1).onChange(
         function( value ){ viewer.setCamera( null, value ); }
     );
-    options.add(this, 'cameraNear').min(1).max(10000).step(10).onChange(
+    settings.add(this, 'cameraNear').min(1).max(10000).step(10).onChange(
         function( value ){ viewer.setCamera( null, null, value ); }
     );
-    options.add(this, 'cameraFar').min(1).max(10000).step(10).onChange(
+    settings.add(this, 'cameraFar').min(1).max(10000).step(10).onChange(
         function( value ){ viewer.setCamera( null, null, null, value ); }
     );
 
@@ -675,7 +668,6 @@ NGL.Viewer.prototype = {
 
             specular: 0x050505,
 
-            updateDisplay: true,
             disableImpostor: false
 
         };
@@ -994,8 +986,6 @@ NGL.Viewer.prototype = {
      * Renders the scene.
      */
     render: function(){
-
-        if( !this.params.updateDisplay ) return;
 
         this.rotationGroup.updateMatrix();
         this.rotationGroup.updateMatrixWorld( true );

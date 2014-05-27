@@ -96,7 +96,7 @@
 
                     var gui = new NGL.showcaseGui( viewer );
 
-                    gui.addFile( "data/1crn.pdb" );
+                    gui.addFile( "data/304d.pdb" );
 
                 });
 
@@ -146,6 +146,7 @@
                     '3sn6.pdb',
                     '1jj2.pdb',
                     '3l5q.pdb',
+                    '304d.pdb',
                     'md.pdb',
                     'md.gro',
                     'BaceCg.pdb'
@@ -182,14 +183,14 @@
 
                 }.bind( this ), false );
 
-                // primitives
-                var primitives = this.gui.addFolder( 'Primitives' );
-                primitives.add( this, 'count', [ 
+                // testing primitives
+                var test = this.gui.addFolder( 'Test' );
+                test.add( this, 'count', [ 
                     1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
                     100000, 200000, 500000, 1000000, 2000000
                 ]);
-                primitives.add( this, 'size', 2.0).min(0.1).max(10.0).step(0.1);
-                primitives.add( this, 'primitiveType', [
+                test.add( this, 'size', 2.0).min(0.1).max(10.0).step(0.1);
+                test.add( this, 'primitiveType', [
                     'BezierRaymarch',
                     'BezierImpostor',
                     'EllipticBezierImpostor',
@@ -216,7 +217,7 @@
                     'SceneSprite',
                     'Surface'
                 ]).listen();
-                primitives.add( this, 'addPrimitive' );
+                test.add( this, 'addPrimitive' );
 
             }
 
