@@ -533,6 +533,38 @@ NGL.GroStructure.prototype.parse = function( str ){
 };
 
 
+////////////
+// Surface
+
+NGL.initSurface = function( object, viewer, name ){
+
+    if( object instanceof THREE.Geometry ){
+
+        geo = object;
+        geo.computeFaceNormals();
+        geo.computeVertexNormals();
+
+    }else{
+
+        geo = object.children[0].geometry;
+
+    }
+    
+    var position = NGL.Utils.positionFromGeometry( geo );
+    var color = NGL.Utils.colorFromGeometry( geo );
+    var index = NGL.Utils.indexFromGeometry( geo );
+    var normal = NGL.Utils.normalFromGeometry( geo );
+
+    surface = new NGL.MeshBuffer( position, color, index, normal );
+
+    viewer.add( surface );
+    viewer.render();
+
+    return surface;
+
+}
+
+
 ///////////
 // Loader
 
@@ -622,35 +654,6 @@ NGL.GroLoader.prototype.init = function( str, viewer, name ){
 };
 
 
-NGL.initSurface = function( object, viewer, name ){
-
-    if( object instanceof THREE.Geometry ){
-
-        geo = object;
-        geo.computeFaceNormals();
-        geo.computeVertexNormals();
-
-    }else{
-
-        geo = object.children[0].geometry;
-
-    }
-    
-    var position = NGL.Utils.positionFromGeometry( geo );
-    var color = NGL.Utils.colorFromGeometry( geo );
-    var index = NGL.Utils.indexFromGeometry( geo );
-    var normal = NGL.Utils.normalFromGeometry( geo );
-
-    surface = new NGL.MeshBuffer( position, color, index, normal );
-
-    viewer.add( surface );
-    viewer.render();
-
-    return surface;
-
-}
-
-
 NGL.ObjLoader = function ( manager ) {
 
     // this.cache = new THREE.Cache();
@@ -693,7 +696,6 @@ NGL.PlyLoader.prototype.init = function( data, viewer, name ){
     return NGL.initSurface( data, viewer, name );
 
 };
-
 
 
 NGL.autoLoading = function(){
@@ -965,6 +967,8 @@ NGL.BondSet.prototype = {
         var atoms = this.atomSet.atoms;
         var isConnected = this.isConnected;
 
+        var i, j;
+
         for( i = 0; i < na; i++ ){
             
             atom = atoms[ i ];
@@ -1037,7 +1041,7 @@ NGL.BondSet.prototype = {
         var elemColors = NGL.ElementColors;
 
         for( var i = 0; i < nb; ++i ){
-
+            
             a = atoms[ bonds[ i ][ idx ] ];
 
             j = i * 3;
@@ -1133,7 +1137,7 @@ NGL.makeBackboneSets = function( atomSet ){
     }
 
     aPrev = undefined;
-    j += 1;
+    if( j!==0 ) j += 1;
 
     for( var i = 0; i < na; ++i ){
 
