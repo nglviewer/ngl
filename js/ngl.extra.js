@@ -328,6 +328,7 @@ NGL.PdbStructure.prototype.parse = function( str ){
     var idx = 0;
     var lines = str.split("\n");
 
+    var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
     var vdwRadii = NGL.VdwRadii;
 
@@ -345,11 +346,10 @@ NGL.PdbStructure.prototype.parse = function( str ){
             if( altLoc != ' ' && altLoc != 'A' ) continue; // FIXME: ad hoc
 
             serial = parseInt( line.substr( 6, 5 ) );
+            atom = line.substr( 12, 4 ).trim();
             elem = line.substr( 76, 2 ).trim();
 
-            if( elem == '' ){ // for some incorrect PDB files
-                elem = line.substr(12, 4).trim();
-            }
+            if( !elem ) elem = guessElem( atom );
 
             atoms.push({
                 'resn': line.substr( 17, 3 ),
@@ -361,7 +361,7 @@ NGL.PdbStructure.prototype.parse = function( str ){
                 'chain': line[  21 ],
                 'resi': parseInt( line.substr( 22, 5 ) ),
                 'serial': serial,
-                'atom': line.substr( 12, 4 ).trim(),
+                'atom': atom,
                 'bonds': [],
                 'ss': 'c',
                 'b': parseFloat( line.substr( 60, 8 ) ),
@@ -638,6 +638,57 @@ NGL.StructureLoader = function( file, viewer, onLoad ){
     loader.load( file, init );
 
     return structure;
+
+}
+
+NGL.SurfaceLoader = function( file, viewer ){
+
+    var loader, surface, path;
+    
+    var ext = file.split('.').pop().toLowerCase();
+
+    if( ext==="obj" ){
+
+        loader = new THREE.OBJLoader();
+
+    }else if( ext==="ply" ){
+
+        loader = new THREE.PLYLoader();
+
+    }else{
+
+        console.error( "surface ext '" + ext + "' unknown" );
+
+    }
+
+
+    loader.load( file, function ( object ) {
+
+        var geo;
+        var surface = new THREE.Object3D();
+
+        if( object instanceof THREE.Geometry ){
+
+            geo = object;
+            geo.computeFaceNormals();
+            geo.computeVertexNormals();
+
+        }else{
+
+            geo = object.children[0].geometry;
+
+        }
+        
+        var position = NGL.Utils.positionFromGeometry( geo );
+        var color = NGL.Utils.colorFromGeometry( geo );
+        var index = NGL.Utils.indexFromGeometry( geo );
+        var normal = NGL.Utils.normalFromGeometry( geo );
+
+        viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
+
+        viewer.render();
+
+    } );
 
 }
 
@@ -1001,7 +1052,7 @@ NGL.makeBackboneSets = function( atomSet ){
                               ( a.y - aPrev.y ) * ( a.y - aPrev.y ) + 
                               ( a.z - aPrev.z ) * ( a.z - aPrev.z );
 
-                if( distSquared < 16 ){
+                if( distSquared < 18 ){
                     backboneBonds.push([ j, j+1 ]);
                 }
                 j += 1;

@@ -25,20 +25,34 @@ Ideas
 * [rendererStats](https://github.com/jeromeetienne/threex.rendererstats/blob/master/threex.rendererstats.js) does not play well with a Composer
 * Alternative GUI
   * [xgui](https://github.com/oosmoxiecode/xgui.js)
+  * THREE.js Editor UI
 * Use a texture for atom positions
   * to render atoms and bonds get the positions from the corresponding texture coordinates
   * to update the atom positions only the texture needs to be changed
   * http://stackoverflow.com/questions/17262574/packing-vertex-data-into-a-webgl-texture
   * http://stackoverflow.com/questions/7709689/webgl-pass-array-shader?rq=1
 * Potentially better [FXAA](https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Shaders/PostProcessFilters/FXAA.glsl)
-
+* Virtual list
+  * https://github.com/sergi/virtual-list
+* Marching cubes
+  * http://stemkoski.github.io/Three.js/Marching-Cubes.html
+* Coarse graining support
+  * autobonding
+  * backbone determination
+  * secondary structure determination
 
 
 Todo
 ====
 
+* Make StructureLoader consistent with the THREE.js Loaders
+* Add DataLoader that dispatches to specialized loaders depending on file ext
+* Drag over file loading
+
+* AtomSetView, BondSetView
+
 * Selection
-  * invert complete sele with not as first chunk
+  * invert complete sele with 'not' as first chunk
   * protein
   * nucleic
 
@@ -58,9 +72,6 @@ Todo
 * GeometryBuffer and LineBuffer update mechanism
   * move attribute array filling code to a setAttributes function
 * LineBuffer remove method missing
-
-* Make StructureLoader consistent with the THREE.js Loaders
-* Add DataLoader that dispatches to specialized loaders depending on file ext
 
 * Move NGL.GUI into NGL.Viewer
 * Use THREE.RawShaderMaterial()?
@@ -109,4 +120,5 @@ Other Viewers
 * [pv](https://github.com/biasmv/pv)
 * [GLmol](https://github.com/biochem-fan/GLmol)
 * [Chem Doodle Web Components](http://web.chemdoodle.com/)
+* [iview](https://github.com/HongjianLi/istar) (based on GLmol)
 

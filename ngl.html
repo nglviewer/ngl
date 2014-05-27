@@ -61,6 +61,7 @@
         <script src="js/three/libs/stats.min.js"></script>
         <script src="js/three/controls/TrackballControls.js"></script>
         <script src="js/three/loaders/OBJLoader.js"></script>
+        <script src="js/three/loaders/PLYLoader.js"></script>
 
         <script src="js/three/shaders/CopyShader.js"></script>
         <script src="js/three/shaders/SSAOShader.js"></script>
@@ -110,6 +111,31 @@
                 this.viewer = viewer;
                 this.gui = viewer.gui.gui;
 
+                viewer.container.addEventListener( 'dragover', function( e ){
+
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Explicitly show this is a copy.
+                    e.dataTransfer.dropEffect = 'copy';
+
+                }, false );
+
+                viewer.container.addEventListener( 'drop', function( e ){
+
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    var fileList = e.dataTransfer.files;
+                    var n = fileList.length;
+
+                    for( var i=0; i<n; ++i ){
+
+                        this.addStructure( fileList[ i ] );
+
+                    }
+
+                }.bind( this ), false );
+
                 var primitives = this.gui.addFolder( 'Primitives' );
                 primitives.add( this, 'count', [ 
                     1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
@@ -147,8 +173,9 @@
 
                 var surfaces = this.gui.addFolder( 'Surfaces' );
                 surfaces.add( this, 'surfaceId', [ 
-                    '1crn',
-                    '3dqb'
+                    '1crn.obj',
+                    '3dqb.obj',
+                    '1CRN.ply',
                 ]).listen();
                 surfaces.add( this, 'addSurface' );
 
@@ -166,6 +193,7 @@
                     'md.pdb',
                     'md.gro',
                     'md_large.gro',
+                    'BaceCg.pdb'
                 ]).listen().onChange( function( value ){
 
                     this.structureFile = "";
@@ -186,7 +214,7 @@
                 this.fileInput.type = "file";
                 this.fileInput.multiple = true;
                 this.fileInput.style = "visibility:hidden";
-                this.fileInput.addEventListener('change', function( e ){
+                this.fileInput.addEventListener( 'change', function( e ){
 
                     var fileList = e.target.files;
                     var n = fileList.length;
@@ -197,7 +225,7 @@
 
                     }
 
-                }.bind( this ), false);
+                }.bind( this ), false );
 
             }
 
@@ -208,7 +236,7 @@
                 primitiveType: 'SphereImpostor',
                 structureFile: '',
                 pdbId: '',
-                surfaceId: '1crn',
+                surfaceId: '1crn.pdb',
 
                 selectFile: function(){
 
@@ -246,8 +274,8 @@
 
                 addSurface: function(){
 
-                    loadSurface( 
-                        'data/' + this.surfaceId + '.obj', this.viewer
+                    NGL.SurfaceLoader(
+                        'data/' + this.surfaceId, this.viewer
                     );
 
                 }
@@ -447,30 +475,6 @@
                 }
                 types[ primitiveType ]();
                 viewer.render();
-
-            }
-
-
-            function loadSurface( url, viewer ){
-
-                var loader = new THREE.OBJLoader();
-                loader.load( url, function ( object ) {
-
-                    var surface = new THREE.Object3D();
-
-                    var geo = object.children[0].geometry;
-                    console.log(geo);
-                    
-                    var position = NGL.Utils.positionFromGeometry( geo );
-                    var color = NGL.Utils.colorFromGeometry( geo );
-                    var index = NGL.Utils.indexFromGeometry( geo );
-                    var normal = NGL.Utils.normalFromGeometry( geo );
-                    
-                    viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
-
-                    viewer.render();
-
-                } );
 
             }
 
