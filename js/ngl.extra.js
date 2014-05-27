@@ -580,117 +580,184 @@ NGL.FileLoader.prototype = {
 };
 
 
-/**
- * TODO not consistent with the THREE.js Loaders
- */
-NGL.StructureLoader = function( file, viewer, onLoad ){
+NGL.PdbLoader = function ( manager ) {
 
-    var loader, structure, path;
+    this.cache = new THREE.Cache();
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.PdbLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+
+NGL.PdbLoader.prototype.init = function( str, viewer, name ){
+
+    var pdb = new NGL.PdbStructure( name, viewer );
+
+    pdb.parse( str );
+    pdb.initGui();
+
+    return pdb
+
+};
+
+
+NGL.GroLoader = function ( manager ) {
+
+    this.cache = new THREE.Cache();
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.GroLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+
+NGL.GroLoader.prototype.init = function( str, viewer, name ){
+
+    var gro = new NGL.GroStructure( name, viewer );
+
+    gro.parse( str );
+    gro.initGui();
+
+    return gro
+
+};
+
+
+NGL.initSurface = function( object, viewer, name ){
+
+    if( object instanceof THREE.Geometry ){
+
+        geo = object;
+        geo.computeFaceNormals();
+        geo.computeVertexNormals();
+
+    }else{
+
+        geo = object.children[0].geometry;
+
+    }
     
-    if( file instanceof File ){
+    var position = NGL.Utils.positionFromGeometry( geo );
+    var color = NGL.Utils.colorFromGeometry( geo );
+    var index = NGL.Utils.indexFromGeometry( geo );
+    var normal = NGL.Utils.normalFromGeometry( geo );
 
-        loader = new NGL.FileLoader();
-        path = file.name;
+    surface = new NGL.MeshBuffer( position, color, index, normal );
 
-    }else{
+    viewer.add( surface );
+    viewer.render();
 
-        loader = new THREE.XHRLoader();
-        path = file;
-
-    }
-
-    var name = path.replace( /^.*[\\\/]/, '' );
-    var ext = path.split('.').pop().toLowerCase();
-
-    if( name.length===4 ){
-
-        ext = "pdb";
-        file = "http://www.rcsb.org/pdb/files/" + file + ".pdb";
-
-    }
-
-    if( ext === "pdb" ){
-
-        structure = new NGL.PdbStructure( name, viewer );
-
-    }else if( ext === "gro" ){
-
-        structure = new NGL.GroStructure( name, viewer );
-
-    }else{
-
-        console.error( "NGL.StructureLoader: ext unknown" );
-
-        return null;
-
-    }
-
-    function init( str ){
-        
-        structure.parse( str );
-        
-        structure.initGui();
-
-        if( typeof onLoad === "function" ) onLoad( structure );
-
-    }
-
-    loader.load( file, init );
-
-    return structure;
+    return surface;
 
 }
 
-NGL.SurfaceLoader = function( file, viewer ){
 
-    var loader, surface, path;
-    
-    var ext = file.split('.').pop().toLowerCase();
+NGL.ObjLoader = function ( manager ) {
 
-    if( ext==="obj" ){
+    // this.cache = new THREE.Cache();
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
-        loader = new THREE.OBJLoader();
+};
 
-    }else if( ext==="ply" ){
+NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-        loader = new THREE.PLYLoader();
+NGL.ObjLoader.prototype.init = function( data, viewer, name ){
 
-    }else{
+    if( typeof data === "string" ){
 
-        console.error( "surface ext '" + ext + "' unknown" );
+        data = this.parse( data );
 
     }
 
+    return NGL.initSurface( data, viewer, name );
 
-    loader.load( file, function ( object ) {
+};
 
-        var geo;
-        var surface = new THREE.Object3D();
 
-        if( object instanceof THREE.Geometry ){
+NGL.PlyLoader = function ( manager ) {
 
-            geo = object;
-            geo.computeFaceNormals();
-            geo.computeVertexNormals();
+    // this.cache = new THREE.Cache();
+    // this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
+
+NGL.PlyLoader.prototype.init = function( data, viewer, name ){
+
+    if( typeof data === "string" ){
+
+        data = this.parse( data );
+
+    }
+
+    return NGL.initSurface( data, viewer, name );
+
+};
+
+
+
+NGL.autoLoading = function(){
+
+    var loaders = {
+
+        "gro": NGL.GroLoader,
+        "pdb": NGL.PdbLoader,
+
+        "obj": NGL.ObjLoader,
+        "ply": NGL.PlyLoader,
+
+    }
+
+    return function( file, viewer, onLoad ){
+
+        var object;
+
+        var path = ( file instanceof File ) ? file.name : file;
+        var name = path.replace( /^.*[\\\/]/, '' );
+        var ext = path.split('.').pop().toLowerCase();
+
+        if( name.length===4 ){
+
+            ext = "pdb";
+            file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+
+        }
+
+        var loader = new loaders[ ext ];
+
+        if( !loader ){
+        
+            console.error( "NGL.autoLoading: ext '" + ext + "' unknown" );
+            return null;
+
+        }
+
+        function init( data ){
+
+            object = loader.init( data, viewer, name );
+
+            if( typeof onLoad === "function" ) onLoad( object );
+
+        }
+
+        if( file instanceof File ){
+
+            name = file.name;
+            
+            var fileLoader = new NGL.FileLoader();            
+            fileLoader.load( file, init )
 
         }else{
 
-            geo = object.children[0].geometry;
+            loader.load( file, init );
 
         }
-        
-        var position = NGL.Utils.positionFromGeometry( geo );
-        var color = NGL.Utils.colorFromGeometry( geo );
-        var index = NGL.Utils.indexFromGeometry( geo );
-        var normal = NGL.Utils.normalFromGeometry( geo );
 
-        viewer.add( new NGL.MeshBuffer( position, color, index, normal ) );
+        return object;
 
-        viewer.render();
+    }
 
-    } );
-
-}
+}();
 
 
 ////////

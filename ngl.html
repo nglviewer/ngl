@@ -96,10 +96,7 @@
 
                     var gui = new NGL.showcaseGui( viewer );
 
-                    gui.addStructure( "data/md.gro" );
-                    
-                    // gui.surfaceId = '1crn';
-                    // gui.addSurface();
+                    gui.addFile( "data/1crn.pdb" );
 
                 });
 
@@ -115,7 +112,6 @@
 
                     e.stopPropagation();
                     e.preventDefault();
-                    // Explicitly show this is a copy.
                     e.dataTransfer.dropEffect = 'copy';
 
                 }, false );
@@ -130,12 +126,63 @@
 
                     for( var i=0; i<n; ++i ){
 
-                        this.addStructure( fileList[ i ] );
+                        this.addFile( fileList[ i ] );
 
                     }
 
                 }.bind( this ), false );
 
+                var file = this.gui.addFolder( 'File' );
+                file.add( this, 'file', [
+                    'hem.pdb',
+                    '1crn.pdb',
+                    '1crn.obj',
+                    '1crn.ply',
+                    '1blu.pdb',
+                    '1d66.pdb',
+                    '3dqb.pdb',
+                    '3dqb.obj',
+                    '3pqr.pdb',
+                    '3sn6.pdb',
+                    '1jj2.pdb',
+                    '3l5q.pdb',
+                    'md.pdb',
+                    'md.gro',
+                    'BaceCg.pdb'
+                ]).listen().onChange( function( value ){
+
+                    this.file = "";
+                    this.addFile( 'data/' + value );
+
+                }.bind( this ) );
+                file.add( this, 'pdbId' ).listen().onFinishChange( function( value ){
+                    
+                    if( value.length!==4 ) return;
+
+                    this.pdbId = "";
+                    this.addFile( value.toUpperCase() );
+
+                }.bind( this ) );
+                file.add( this, 'selectFile' );
+
+                this.fileInput = document.createElement("input");
+                this.fileInput.type = "file";
+                this.fileInput.multiple = true;
+                this.fileInput.style = "visibility:hidden";
+                this.fileInput.addEventListener( 'change', function( e ){
+
+                    var fileList = e.target.files;
+                    var n = fileList.length;
+
+                    for( var i=0; i<n; ++i ){
+
+                        this.addFile( fileList[ i ] );
+
+                    }
+
+                }.bind( this ), false );
+
+                // primitives
                 var primitives = this.gui.addFolder( 'Primitives' );
                 primitives.add( this, 'count', [ 
                     1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
@@ -171,62 +218,6 @@
                 ]).listen();
                 primitives.add( this, 'addPrimitive' );
 
-                var surfaces = this.gui.addFolder( 'Surfaces' );
-                surfaces.add( this, 'surfaceId', [ 
-                    '1crn.obj',
-                    '3dqb.obj',
-                    '1CRN.ply',
-                ]).listen();
-                surfaces.add( this, 'addSurface' );
-
-                var structure = this.gui.addFolder( 'Structure' );
-                structure.add( this, 'structureFile', [
-                    'hem.pdb',
-                    '1crn.pdb',
-                    '1blu.pdb',
-                    '1d66.pdb',
-                    '3dqb.pdb',
-                    '3pqr.pdb',
-                    '3sn6.pdb',
-                    '1jj2.pdb',
-                    '3l5q.pdb',
-                    'md.pdb',
-                    'md.gro',
-                    'md_large.gro',
-                    'BaceCg.pdb'
-                ]).listen().onChange( function( value ){
-
-                    this.structureFile = "";
-                    this.addStructure( 'data/' + value );
-
-                }.bind( this ) );
-                structure.add( this, 'pdbId' ).listen().onFinishChange( function( value ){
-                    
-                    if( value.length!==4 ) return;
-
-                    this.pdbId = "";
-                    this.addStructure( value.toUpperCase() );
-
-                }.bind( this ) );
-                structure.add( this, 'selectFile' );
-
-                this.fileInput = document.createElement("input");
-                this.fileInput.type = "file";
-                this.fileInput.multiple = true;
-                this.fileInput.style = "visibility:hidden";
-                this.fileInput.addEventListener( 'change', function( e ){
-
-                    var fileList = e.target.files;
-                    var n = fileList.length;
-
-                    for( var i=0; i<n; ++i ){
-
-                        this.addStructure( fileList[ i ] );
-
-                    }
-
-                }.bind( this ), false );
-
             }
 
             NGL.showcaseGui.prototype = {
@@ -234,13 +225,10 @@
                 count: 100,
                 size: 2.0,
                 primitiveType: 'SphereImpostor',
-                structureFile: '',
+                file: '',
                 pdbId: '',
-                surfaceId: '1crn.pdb',
 
                 selectFile: function(){
-
-                    var elm = document.getElementById( "myInput" );
 
                     this.fileInput.dispatchEvent( new MouseEvent('click', {
                         'view': window,
@@ -258,25 +246,19 @@
 
                 },
 
-                addStructure: function( path ){
+                addFile: function( path ){
 
-                    new NGL.StructureLoader( 
-                        path,
-                        this.viewer,
-                        function( structure ){
-                            structure.add( "backbone" );
-                            structure.add( "ball+stick", "hetero" );
-                            structure.center();
+                    NGL.autoLoading( path, this.viewer, function( o ){
+                        
+                        if( o instanceof NGL.Structure ){
+
+                            o.add( "backbone" );
+                            o.add( "ball+stick", "hetero" );
+                            o.center();
+
                         }
-                    );
 
-                },
-
-                addSurface: function(){
-
-                    NGL.SurfaceLoader(
-                        'data/' + this.surfaceId, this.viewer
-                    );
+                    });
 
                 }
 

@@ -45,10 +45,6 @@ Ideas
 Todo
 ====
 
-* Make StructureLoader consistent with the THREE.js Loaders
-* Add DataLoader that dispatches to specialized loaders depending on file ext
-* Drag over file loading
-
 * AtomSetView, BondSetView
 
 * Selection
