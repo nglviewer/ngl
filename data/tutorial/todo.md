@@ -80,7 +80,7 @@ Todo
   * static light in three.js, i.e. move with camera
 * Make viewer stats optional (hide/show)
 * Create distance fields for [Computer modern fonts](http://checkmyworking.com/cm-web-fonts/)
-* Slab and fog	
+* Fog
 	* should be relative to the scene (molecule) extent
 	* maybe by dynamically setting camera near & far
 	* see also GLmol
