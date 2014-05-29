@@ -487,8 +487,6 @@ NGL.GUI = function( viewer ){
     this.backgroundColor = '#000000';
     this.cameraPerspective = true;
     this.cameraFov = 40;
-    this.cameraNear = 1;
-    this.cameraFar = 100;
     this.clipNear = 0;
     this.clipFar = 100;
 
@@ -532,7 +530,7 @@ NGL.GUI = function( viewer ){
     settings.add(this, 'fogFar').min(0).max(100).step(1).onChange(
         function( value ){ viewer.setFog( null, null, null, value ); }
     );
-    settings.add(this, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
+    settings.add(this, 'fogDensity').min(0).max(0.1).step(0.005).onChange(
         function( value ){ viewer.setFog( null, null, null, null, value ); }
     );
     settings.addColor(this, 'fogColor').onChange(
@@ -546,12 +544,6 @@ NGL.GUI = function( viewer ){
     );
     settings.add(this, 'cameraFov').min(0).max(180).step(1).onChange(
         function( value ){ viewer.setCamera( null, value ); }
-    );
-    settings.add(this, 'cameraNear').min(0).max(100).step(1).onChange(
-        function( value ){ viewer.setCamera( null, null, value ); }
-    );
-    settings.add(this, 'cameraFar').min(0).max(100).step(1).onChange(
-        function( value ){ viewer.setCamera( null, null, null, value ); }
     );
     settings.add(this, 'clipNear').min(0).max(100).step(1).onChange(
         function( value ){ viewer.setClip( value, null ); }
@@ -670,8 +662,6 @@ NGL.Viewer.prototype = {
 
             cameraType: 1,
             cameraFov: 40,
-            cameraNear: 1,
-            cameraFar: 100,
             cameraZ: -80, // FIXME initial value should be automatically determined
 
             clipNear: 0,
@@ -691,7 +681,7 @@ NGL.Viewer.prototype = {
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
         this.perspectiveCamera = new THREE.PerspectiveCamera( 
-            p.cameraFov, this.aspect, p.cameraNear, p.cameraFar
+            p.cameraFov, this.aspect, 0.1, 10000
         );
         this.perspectiveCamera.position.z = p.cameraZ;
         this.perspectiveCamera.lookAt( lookAt );
@@ -881,7 +871,7 @@ NGL.Viewer.prototype = {
      * @param {Number} far - Where the fog effect ends (only 'linear').
      * @param {Number} density - Density of the fog (only 'exp2').
      */
-    setFog: function( type, color, near, far, density ){
+    setFog: function( type, color, near, far, density, foo ){
 
         var p = this.params;
 
@@ -890,23 +880,6 @@ NGL.Viewer.prototype = {
         if( near ) p.fogNear = near;
         if( far ) p.fogFar = far;
         if( density ) p.fogDensity = density;
-
-        if( p.fogType=="linear" ){
-            this.scene.fog = new THREE.Fog( p.fogColor, p.fogNear, p.fogFar );
-        }else if( p.fogType=="exp2" ){
-            this.scene.fog = new THREE.FogExp2( p.fogColor, p.fogDensity );
-        }else{
-            this.scene.fog = null;
-        }
-
-        this.modelGroup.children.forEach( function( o ){
-            if( o.material ) o.material.needsUpdate = true;
-        });
-        
-        Object.keys( NGL.materialCache ).forEach( function( key ){
-            var m = NGL.materialCache[ key ];
-            m.needsUpdate = true;
-        });
 
         this.render();
 
@@ -1017,6 +990,13 @@ NGL.Viewer.prototype = {
      */
     render: function(){
 
+        if( this._rendering ){
+            console.warn( "tried to call 'render' from within 'render'" );
+            return;
+        }
+
+        this._rendering = true;
+
         this.rotationGroup.updateMatrix();
         this.rotationGroup.updateMatrixWorld( true );
 
@@ -1055,15 +1035,14 @@ NGL.Viewer.prototype = {
         
         this.rendererStats.update( this.renderer );
 
+        this._rendering = false;
+
     },
 
     updateBoundingBox: function(){
 
-        // traverse modelGroup to get overall bbox
         var box = new THREE.Box3();
         var vec = new THREE.Vector3();
-
-        var scope = this;
 
         var camera = this.camera;
 
@@ -1107,7 +1086,7 @@ NGL.Viewer.prototype = {
         if( !this.boxHelper ){
 
             this.boxHelper = new THREE.BoxHelper( new THREE.Mesh( boxGeo ), 0xff0000 );
-            //this.scene.add( this.boxHelper );
+            // this.scene.add( this.boxHelper );
 
         }else{
 
@@ -1119,17 +1098,23 @@ NGL.Viewer.prototype = {
             this.boxHelper.geometry.attributes.position.array
         );
 
-        var projScreenMatrix = new THREE.Matrix4();
-        projScreenMatrix.multiplyMatrices( 
-            camera.projectionMatrix, camera.matrixWorldInverse
-        );
-
         var modelViewMatrix = new THREE.Matrix4();
         modelViewMatrix.multiplyMatrices( 
             camera.matrixWorldInverse, this.boxHelper.matrixWorld
         );
 
         modelViewMatrix.applyToVector3Array( boxPos );
+
+        // var projScreenMatrix = new THREE.Matrix4();
+        // projScreenMatrix.multiplyMatrices( 
+        //     camera.projectionMatrix, camera.matrixWorldInverse
+        // );
+
+        // var boxPos2 = new Float32Array( boxPos );
+        // var boxMin2 = Infinity;
+        // var boxMax2 = -Infinity;
+        // var z2;
+        // camera.projectionMatrix.applyToVector3Array( boxPos2 );
 
         var boxMin = Infinity;
         var boxMax = -Infinity;
@@ -1139,32 +1124,76 @@ NGL.Viewer.prototype = {
         for( var i = 0, n = boxPos.length; i < n; i += 3 ){
 
             z = boxPos[ i + 2 ];
-
             if( z < boxMin ) boxMin = z;
             if( z > boxMax ) boxMax = z;
 
+            // z2 = boxPos2[ i + 2 ];
+            // if( z2 < boxMin2 ) boxMin2 = z2;
+            // if( z2 > boxMax2 ) boxMax2 = z2;
+
         }
+
+        // console.log( boxMin, boxMax, boxMin2, boxMax2 );
 
         if( boxMin!==Infinity && boxMin!==-Infinity && !isNaN( boxMin ) &&
             boxMax!==Infinity && boxMax!==-Infinity && !isNaN( boxMax ) ){
 
             var boxSize = Math.abs( boxMax - boxMin );
+            // var boxSize2 = Math.abs( boxMax2 - boxMin2 );
 
-            camera.near = Math.max( 0.1, Math.abs( boxMax ) -1 );
+            camera.near = ( boxMax > 0 ) ? 0.1 : Math.abs( boxMax );
             camera.far = Math.abs( boxMin );
+
+            var p = this.params;
+
+            // console.log( camera.near, camera.far, p.fogNear, p.fogFar );
+            // console.log(
+            //     camera.near + boxSize * ( this.params.fogNear / 100 ),
+            //     camera.far - boxSize * ( 1 - ( this.params.fogFar / 100 ) )
+            // );
+
+            // TODO change fog shader
+            if( p.fogType=="linear" ){
+                this.scene.fog = new THREE.Fog( 
+                    p.fogColor,
+                    camera.near + boxSize * ( this.params.fogNear / 100 ),
+                    camera.far - boxSize * ( 1 - ( this.params.fogFar / 100 ) )
+                );
+                // this.scene.fog = new THREE.Fog( 
+                //     p.fogColor,
+                //     boxMax2 * -1 + boxSize2 * ( this.params.fogNear / 100 ),
+                //     boxMin2 * -1 - boxSize2 * ( 1 - ( this.params.fogFar / 100 ) )
+                // );
+            }else if( p.fogType=="exp2" ){
+                this.scene.fog = new THREE.FogExp2( p.fogColor, p.fogDensity );
+            }else{
+                this.scene.fog = null;
+            }
+
+            this.modelGroup.children.forEach( function( o ){
+                if( o.material ) o.material.needsUpdate = true;
+            });
+            
+            Object.keys( NGL.materialCache ).forEach( function( key ){
+                var m = NGL.materialCache[ key ];
+                m.needsUpdate = true;
+            });
 
             camera.near += boxSize * ( this.params.clipNear / 100 );
             camera.far -= boxSize * ( 1 - ( this.params.clipFar / 100 ) );
 
+            // console.log( boxSize * ( this.params.clipNear / 100 ) );
+
+            camera.updateMatrix();
+            camera.updateMatrixWorld( true );
+            camera.matrixWorldInverse.getInverse( camera.matrixWorld );
+            camera.updateProjectionMatrix();
+
         }
 
-        camera.updateMatrix();
-        camera.updateMatrixWorld( true );
-        camera.matrixWorldInverse.getInverse( camera.matrixWorld );
-        camera.updateProjectionMatrix();
-
         // console.log( this.boxHelper );
-        // console.log( boxMin, boxMax, Math.abs( boxMax - boxMin ) );
+        //console.log( camera.near, camera.far, boxMax, boxMin, Math.abs( boxMax - boxMin ) );
+        // console.log( this.scene.fog );
 
     },
 

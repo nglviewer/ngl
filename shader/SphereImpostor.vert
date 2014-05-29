@@ -38,7 +38,7 @@ mat4 transpose( in mat4 inMatrix ) {
 /// "GPU-Based Ray-Casting of Quadratic Surfaces"
 /// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.
 //
-// Code based on ...
+// FIXME Code based on ...
 // 
 // ASR: Adapted to work with quads
 void ComputePointSizeAndPositionInClipCoordSphere(){
