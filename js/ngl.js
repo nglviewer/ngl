@@ -481,14 +481,16 @@ NGL.GUI = function( viewer ){
 
     this.fogType = "";
     this.fogNear = 0;
-    this.fogFar = 1000;
+    this.fogFar = 100;
     this.fogDensity = 0.00025;
     this.fogColor = '#000000';
     this.backgroundColor = '#000000';
     this.cameraPerspective = true;
     this.cameraFov = 40;
     this.cameraNear = 1;
-    this.cameraFar = 10000;
+    this.cameraFar = 100;
+    this.clipNear = 0;
+    this.clipFar = 100;
 
     var gui = new dat.GUI({ autoPlace: false });
     gui.domElement.style.position = 'absolute';
@@ -524,10 +526,10 @@ NGL.GUI = function( viewer ){
     settings.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
         function( value ){ viewer.setFog( value ); }
     );
-    settings.add(this, 'fogNear').min(0).max(3000).step(10).onChange(
+    settings.add(this, 'fogNear').min(0).max(100).step(1).onChange(
         function( value ){ viewer.setFog( null, null, value ); }
     );
-    settings.add(this, 'fogFar').min(0).max(3000).step(10).onChange(
+    settings.add(this, 'fogFar').min(0).max(100).step(1).onChange(
         function( value ){ viewer.setFog( null, null, null, value ); }
     );
     settings.add(this, 'fogDensity').min(0).max(0.01).step(0.00005).onChange(
@@ -545,11 +547,17 @@ NGL.GUI = function( viewer ){
     settings.add(this, 'cameraFov').min(0).max(180).step(1).onChange(
         function( value ){ viewer.setCamera( null, value ); }
     );
-    settings.add(this, 'cameraNear').min(1).max(10000).step(10).onChange(
+    settings.add(this, 'cameraNear').min(0).max(100).step(1).onChange(
         function( value ){ viewer.setCamera( null, null, value ); }
     );
-    settings.add(this, 'cameraFar').min(1).max(10000).step(10).onChange(
+    settings.add(this, 'cameraFar').min(0).max(100).step(1).onChange(
         function( value ){ viewer.setCamera( null, null, null, value ); }
+    );
+    settings.add(this, 'clipNear').min(0).max(100).step(1).onChange(
+        function( value ){ viewer.setClip( value, null ); }
+    );
+    settings.add(this, 'clipFar').min(0).max(100).step(1).onChange(
+        function( value ){ viewer.setClip( null, value ); }
     );
 
 }
@@ -617,7 +625,7 @@ NGL.Viewer = function( eid ){
 
     this.initCamera();
 
-    this.initScene();
+    this.initScene( true );
 
     this.initRenderer();
 
@@ -654,7 +662,7 @@ NGL.Viewer.prototype = {
             fogType: null,
             fogColor: 0x000000,
             fogNear: 0,
-            fogFar: 1000,
+            fogFar: 100,
             fogDensity: 0.00025,
 
             // backgroundColor: 0xFFFFFF,
@@ -663,8 +671,11 @@ NGL.Viewer.prototype = {
             cameraType: 1,
             cameraFov: 40,
             cameraNear: 1,
-            cameraFar: 10000,
-            cameraZ: -300,
+            cameraFar: 100,
+            cameraZ: -80, // FIXME initial value should be automatically determined
+
+            clipNear: 0,
+            clipFar: 100,
 
             specular: 0x050505,
 
@@ -707,7 +718,7 @@ NGL.Viewer.prototype = {
         this.renderer = new THREE.WebGLRenderer({
             preserveDrawingBuffer: true,
             alpha: false,
-            antialias: false, // TODO artifacts in impostor shader
+            antialias: true, // TODO artifacts in impostor shader
         });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
@@ -768,12 +779,16 @@ NGL.Viewer.prototype = {
 
     },
 
-    initScene: function(){
+    initScene: function( makeScene ){
 
-        this.scene = new THREE.Scene();
+        if( makeScene ){
+            this.scene = new THREE.Scene();
+        }
 
         this.modelGroup = new THREE.Object3D();
+        this.modelGroup.name = "modelGroup";
         this.rotationGroup = new THREE.Object3D();
+        this.rotationGroup.name = "rotationGroup";
 
         this.rotationGroup.add( this.modelGroup );
         this.scene.add( this.rotationGroup );
@@ -840,7 +855,11 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer ){
 
+        //console.log( this.modelGroup );
+
         this.modelGroup.add( buffer.mesh );
+
+        
 
         this.render();
 
@@ -939,6 +958,17 @@ NGL.Viewer.prototype = {
 
     },
 
+    setClip: function( near, far ){
+
+        var p = this.params;
+
+        if( near ) p.clipNear = near;
+        if( far ) p.clipFar = far;
+
+        this.render();
+
+    },
+
     onWindowResize: function(){
 
         if ( this.container === document ) {
@@ -993,6 +1023,12 @@ NGL.Viewer.prototype = {
         this.modelGroup.updateMatrix();
         this.modelGroup.updateMatrixWorld( true );
 
+        this.camera.updateMatrix();
+        this.camera.updateMatrixWorld( true );
+        this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
+        this.camera.updateProjectionMatrix();
+
+        this.updateBoundingBox();
         this.updateDynamicUniforms();
 
         // needed for font texture, but I don't know why
@@ -1021,6 +1057,117 @@ NGL.Viewer.prototype = {
 
     },
 
+    updateBoundingBox: function(){
+
+        // traverse modelGroup to get overall bbox
+        var box = new THREE.Box3();
+        var vec = new THREE.Vector3();
+
+        var scope = this;
+
+        var camera = this.camera;
+
+        this.modelGroup.traverse( function ( node ) {
+
+            // console.log( node );
+
+            if ( node.geometry !== undefined ) {
+
+                if ( node.geometry.boundingBox === null ) {
+
+                    node.geometry.computeBoundingBox();
+
+                }
+
+                vec.copy( node.geometry.boundingBox.min );
+                vec.applyMatrix4( node.matrixWorld );
+                box.expandByPoint( vec );
+
+                vec.copy( node.geometry.boundingBox.max );
+                vec.applyMatrix4( node.matrixWorld );
+                box.expandByPoint( vec );
+
+            }
+
+        } );
+
+        if( box.empty() ) return;
+
+        var boxGeo = new THREE.BufferGeometry();
+        boxGeo.addAttribute( 
+            'position', 
+            new THREE.BufferAttribute( new Float32Array([
+
+                box.min.x, box.min.y, box.min.z,
+                box.max.x, box.max.y, box.max.z
+
+            ]), 3 )
+        );
+
+        if( !this.boxHelper ){
+
+            this.boxHelper = new THREE.BoxHelper( new THREE.Mesh( boxGeo ), 0xff0000 );
+            //this.scene.add( this.boxHelper );
+
+        }else{
+
+            this.boxHelper.update( new THREE.Mesh( boxGeo ) );
+
+        }
+
+        var boxPos = new Float32Array( 
+            this.boxHelper.geometry.attributes.position.array
+        );
+
+        var projScreenMatrix = new THREE.Matrix4();
+        projScreenMatrix.multiplyMatrices( 
+            camera.projectionMatrix, camera.matrixWorldInverse
+        );
+
+        var modelViewMatrix = new THREE.Matrix4();
+        modelViewMatrix.multiplyMatrices( 
+            camera.matrixWorldInverse, this.boxHelper.matrixWorld
+        );
+
+        modelViewMatrix.applyToVector3Array( boxPos );
+
+        var boxMin = Infinity;
+        var boxMax = -Infinity;
+
+        var z;
+
+        for( var i = 0, n = boxPos.length; i < n; i += 3 ){
+
+            z = boxPos[ i + 2 ];
+
+            if( z < boxMin ) boxMin = z;
+            if( z > boxMax ) boxMax = z;
+
+        }
+
+        if( boxMin!==Infinity && boxMin!==-Infinity && !isNaN( boxMin ) &&
+            boxMax!==Infinity && boxMax!==-Infinity && !isNaN( boxMax ) ){
+
+            var boxSize = Math.abs( boxMax - boxMin );
+
+            camera.near = Math.max( 0.1, Math.abs( boxMax ) -1 );
+            camera.far = Math.abs( boxMin );
+
+            camera.near += boxSize * ( this.params.clipNear / 100 );
+            camera.far -= boxSize * ( 1 - ( this.params.clipFar / 100 ) );
+
+        }
+
+        camera.updateMatrix();
+        camera.updateMatrixWorld( true );
+        camera.matrixWorldInverse.getInverse( camera.matrixWorld );
+        camera.updateProjectionMatrix();
+
+        // console.log( this.boxHelper );
+        // console.log( boxMin, boxMax, Math.abs( boxMax - boxMin ) );
+
+    },
+
     updateDynamicUniforms: function(){
 
         var i, o, u;
@@ -1028,11 +1175,6 @@ NGL.Viewer.prototype = {
         var objects = this.modelGroup.children;
         var nObjects = objects.length;
         var camera = this.camera;
-        
-        camera.updateMatrix();
-        camera.updateMatrixWorld( true );
-        camera.matrixWorldInverse.getInverse( camera.matrixWorld );
-        camera.updateProjectionMatrix();
 
         for( i = 0; i < nObjects; i ++ ) {
 
@@ -1105,11 +1247,7 @@ NGL.Viewer.prototype = {
 
         this.scene.remove( this.rotationGroup );
         
-        this.modelGroup = new THREE.Object3D();
-        this.rotationGroup = new THREE.Object3D();
-
-        this.rotationGroup.add( this.modelGroup );
-        this.scene.add( this.rotationGroup );
+        this.initScene();
 
         this.renderer.clear();
 

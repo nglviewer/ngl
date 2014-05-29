@@ -45,7 +45,7 @@ void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
     
     float det = (B * B) - (4.0 * C);
     if(det < 0.0){
-        //discard;
+        discard;
     }else{
         float sqrtDet = sqrt(det);
         float posT = (-B + sqrtDet)/2.0;
