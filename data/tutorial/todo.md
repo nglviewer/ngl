@@ -40,10 +40,14 @@ Ideas
   * autobonding
   * backbone determination
   * secondary structure determination
+* Controls that move model/rotation group, not the camera
 
 
 Todo
 ====
+
+* Trace/tube repr
+* Cartoon repr
 
 * AtomSetView, BondSetView
 
@@ -52,14 +56,18 @@ Todo
   * protein
   * nucleic
 
-* Trace/tube repr
-* Cartoon repr
-
 * Coloring
   * CPK (done)
   * Secondary structure
   * Rainbow
   * B-factor
+
+* Fog
+  * adjust fog near/far for zoom
+  * should be relative to the scene (molecule) extent
+  * maybe by dynamically setting camera near & far
+  * see also GLmol
+  * Jmol is probably problematic since there the molecule moves not the camera
 
 * PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
@@ -80,11 +88,6 @@ Todo
   * static light in three.js, i.e. move with camera
 * Make viewer stats optional (hide/show)
 * Create distance fields for [Computer modern fonts](http://checkmyworking.com/cm-web-fonts/)
-* Fog
-	* should be relative to the scene (molecule) extent
-	* maybe by dynamically setting camera near & far
-	* see also GLmol
-	* Jmol is probably problematic since there the molecule moves not the camera
 * Uint16 and three.js Buffergeometry.computeOffsets() for mobile devices
     * Create NGL.IndexAttribute to globally change the index buffer type
 * Screenshot tool
