@@ -5,3 +5,6 @@ syntax: glob
 
 build/jsdoc/.*
 doc/*
+
+*.pyc
+app.cfg

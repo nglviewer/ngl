@@ -55,30 +55,30 @@
         <div id="info">NGL</div>
         <div id="container"></div>
 
-        <script src="js/three.js"></script>
-        <script src="js/three/Detector.js"></script>
-        <script src="js/three/libs/dat.gui.min.js"></script>
-        <script src="js/three/libs/stats.min.js"></script>
-        <script src="js/three/controls/TrackballControls.js"></script>
-        <script src="js/three/loaders/OBJLoader.js"></script>
-        <script src="js/three/loaders/PLYLoader.js"></script>
+        <script src="../js/three.js"></script>
+        <script src="../js/three/Detector.js"></script>
+        <script src="../js/three/libs/dat.gui.min.js"></script>
+        <script src="../js/three/libs/stats.min.js"></script>
+        <script src="../js/three/controls/TrackballControls.js"></script>
+        <script src="../js/three/loaders/OBJLoader.js"></script>
+        <script src="../js/three/loaders/PLYLoader.js"></script>
 
-        <script src="js/three/shaders/CopyShader.js"></script>
-        <script src="js/three/shaders/SSAOShader.js"></script>
-        <script src="js/three/shaders/FXAAShader.js"></script>
-        <script src="js/three/shaders/DotScreenShader.js"></script>
+        <script src="../js/three/shaders/CopyShader.js"></script>
+        <script src="../js/three/shaders/SSAOShader.js"></script>
+        <script src="../js/three/shaders/FXAAShader.js"></script>
+        <script src="../js/three/shaders/DotScreenShader.js"></script>
 
-        <script src="js/three/postprocessing/EffectComposer.js"></script>
-        <script src="js/three/postprocessing/RenderPass.js"></script>
-        <script src="js/three/postprocessing/MaskPass.js"></script>
-        <script src="js/three/postprocessing/ShaderPass.js"></script>
+        <script src="../js/three/postprocessing/EffectComposer.js"></script>
+        <script src="../js/three/postprocessing/RenderPass.js"></script>
+        <script src="../js/three/postprocessing/MaskPass.js"></script>
+        <script src="../js/three/postprocessing/ShaderPass.js"></script>
 
-        <script src="js/threex.rendererstats.js"></script>
+        <script src="../js/threex.rendererstats.js"></script>
 
-        <script src="js/ngl.js"></script>
-        <script src="js/ngl.wip.js"></script>
-        <script src="js/ngl.alt.js"></script>
-        <script src="js/ngl.extra.js"></script>
+        <script src="../js/ngl.js"></script>
+        <script src="../js/ngl.wip.js"></script>
+        <script src="../js/ngl.alt.js"></script>
+        <script src="../js/ngl.extra.js"></script>
 
 
 
@@ -96,7 +96,7 @@
 
                     var gui = new NGL.showcaseGui( viewer );
 
-                    gui.addFile( "data/304d.pdb" );
+                    gui.addFile( "../data/3dqb.pdb" );
 
                 });
 
@@ -153,7 +153,7 @@
                 ]).listen().onChange( function( value ){
 
                     this.file = "";
-                    this.addFile( 'data/' + value );
+                    this.addFile( '../data/' + value );
 
                 }.bind( this ) );
                 file.add( this, 'pdbId' ).listen().onFinishChange( function( value ){
@@ -249,12 +249,12 @@
 
                 addFile: function( path ){
 
-                    NGL.autoLoading( path, this.viewer, function( o ){
+                    NGL.autoLoad( path, this.viewer, function( o ){
                         
                         if( o instanceof NGL.Structure ){
 
                             o.add( "backbone" );
-                            o.add( "ball+stick", "hetero" );
+                            o.add( "licorice", "135-200" );
                             o.center();
 
                         }
