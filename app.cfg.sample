@@ -1,0 +1,20 @@
+import os
+
+DEBUG = True
+HOST = "127.0.0.1"
+PORT = 8010
+
+DATA_DIRS = {
+	"showcase": os.path.abspath("static/data/showcase/"),
+	"projects": os.path.abspath("/home/arose/projects/"),
+	"test_data": os.path.abspath("/home/arose/dev/test_data/"),
+	"test": os.path.abspath("static/data/test/"),
+	"basekit_test": os.path.abspath(
+		"/home/arose/dev/repos/basekit/test/tmp/"
+	),
+	"mppd": os.path.abspath("/home/arose/dev/repos/srv/mppd/data/")
+}
+MAX_CONTENT_LENGTH = 64 * 1024 * 1024
+SEND_FILE_MAX_AGE_DEFAULT = 0
+PROXY = 'proxy.charite.de:888'
+REQUIRE_AUTH = False

@@ -234,15 +234,29 @@ NGL.Structure.prototype = {
         this.atomSet.setPosition( position );
         this.bondSet.makeFromTo();
 
-        this.reprList.forEach( function( repr ){ repr.update(); });
+        this.reprList.forEach( function( repr ){
+            console.log( repr.name, repr );
+            repr.update(); 
+        } );
 
     },
 
-    test: function(){
+    test: function( i ){
 
         var scope = this;
 
-        var url = "http://localhost:8080/?" + (this.testCounter++);
+        var url = "../xtc/frame/" + i +
+            "?path=" + encodeURIComponent( this.xtc );
+
+        if( this.frameCache[ i ] ){
+
+            this.update( this.frameCache[ i ] );
+
+            this.viewer.render();
+
+            return;
+
+        }
 
         var loader = new THREE.XHRLoader();
         loader.setResponseType( "arraybuffer" );
@@ -250,8 +264,10 @@ NGL.Structure.prototype = {
         loader.load( url, function( arrayBuffer ){
 
             if( !arrayBuffer ) return;
-    
-            scope.update( new Float32Array( arrayBuffer ) );
+
+            scope.frameCache[ i ] = new Float32Array( arrayBuffer );
+
+            scope.update( scope.frameCache[ i ] );
 
             scope.viewer.render();
 
@@ -269,14 +285,38 @@ NGL.Structure.prototype = {
 
         this.gui = this.viewer.gui2.addFolder( this.__guiName );
 
-        this.gui.add( this, 'test' );
         this.gui.add( this, 'toggle' );
         this.gui.add( this, 'center' );
         this.gui.add( this, 'dispose' );
 
+        this.frameCache = {};
+        // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
+        this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
         var params = {
             "add repr": "",
+            "xtc": this.xtc,
+            "frame": 0
         };
+
+        var loader = new THREE.XHRLoader();
+        var url = "../xtc/numframes?path=" + encodeURIComponent( this.xtc );
+        loader.load( url, function( n ){
+
+            n = parseInt( n );
+            console.log( "numframes", n );
+
+            scope.gui.add( params, "frame" ).min(0).max(n-1).step(1).onChange(
+
+                function( frame ){ 
+
+                    console.log( frame );
+                    scope.test( frame );
+
+                }
+
+            );
+
+        });
 
         var repr = [ "" ].concat( Object.keys( NGL.representationTypes ) );
 
@@ -290,6 +330,14 @@ NGL.Structure.prototype = {
             }
 
         );
+
+        this.gui.add( params, 'xtc' ).listen().onFinishChange( function( xtc ){
+
+            this.xtc = xtc;
+
+        }.bind( this ) );
+
+        this.gui.add( this, 'test' );
 
     },
 
@@ -352,7 +400,7 @@ NGL.PdbStructure.prototype.parse = function( str ){
             if( !elem ) elem = guessElem( atom );
 
             atoms.push({
-                'resn': line.substr( 17, 3 ),
+                'resn': line.substr( 17, 3 ).trim(),
                 'x': parseFloat( line.substr( 30, 8 ) ),
                 'y': parseFloat( line.substr( 38, 8 ) ),
                 'z': parseFloat( line.substr( 46, 8 ) ),
@@ -700,7 +748,7 @@ NGL.PlyLoader.prototype.init = function( data, viewer, name ){
 };
 
 
-NGL.autoLoading = function(){
+NGL.autoLoad = function(){
 
     var loaders = {
 
@@ -1230,6 +1278,11 @@ NGL.Selection.prototype = {
 
             c = chunks[ i ];
 
+            if( i===0 && c.toUpperCase()==="NOT" ){
+                this.negate = true;
+                continue;
+            }
+
             sele = {};
 
             if( c.toUpperCase()==="HETERO" ){
@@ -1242,7 +1295,10 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( c.length===3 && isNaN( parseInt( c ) ) ){
+            if( ( c.length>=2 || c.length<=4 ) && 
+                    c[0]!==":" && c[0]!=="." && 
+                    isNaN( parseInt( c ) ) ){
+
                 sele.resn = c.toUpperCase();
                 selection.push( sele );
                 continue;
@@ -1266,14 +1322,23 @@ NGL.Selection.prototype = {
                 sele.chain = chain[1][0].toUpperCase();
             }
 
-            if( chain[0] )
-                sele.resi = parseInt( chain[0] );
+            if( chain[0] ){
+                resi = chain[0].split("-");
+                if( resi.length===1 ){
+                    sele.resi = parseInt( resi[0] );
+                }else if( resi.length===2 ){
+                    sele.resi = [ parseInt( resi[0] ), parseInt( resi[1] ) ];
+                }else{
+                    console.error( "resi range must contain one '-'" );
+                    continue;
+                }
+            }
 
             selection.push( sele );
             
         }
 
-        // console.log( str, selection );
+        console.log( str, selection );
 
         this.selection = selection;
 
@@ -1283,10 +1348,21 @@ NGL.Selection.prototype = {
 
         var n = this.size;
         var selection = this.selection;
+        var negate = this.negate;
+
+        var t = true;
+        var f = false;
+
+        if( negate ){
+            t = !t;
+            f = !f;
+        }
 
         var i, s;
 
         return function( a ){
+
+
 
             for( i=0; i<n; ++i ){
 
@@ -1294,23 +1370,30 @@ NGL.Selection.prototype = {
 
                 if( typeof s === "string" ){
 
-                    if( s==="ALL" ) return true;
-                    if( s==="HETERO" && a.hetflag===true ) return true;
+                    if( s==="ALL" ) return t;
+                    if( s==="HETERO" && a.hetflag===true ) return t;
 
-                    return false;
+                    return f;
 
                 }
 
                 if( s.resn!==undefined && s.resn!==a.resn ) continue;
-                if( s.resi!==undefined && s.resi!==a.resi ) continue;
                 if( s.chain!==undefined && s.chain!==a.chain ) continue;
                 if( s.atom!==undefined && s.atom!==a.atom ) continue;
 
-                return true;
+                if( s.resi!==undefined ){
+                    if( Array.isArray( s.resi ) && s.resi.length===2 ){
+                        if( s.resi[0]>a.resi || s.resi[1]<a.resi ) continue;
+                    }else{
+                        if( s.resi!==a.resi ) continue;
+                    }
+                }
+
+                return t;
 
             }
 
-            return false;
+            return f;
 
         }
 
@@ -1334,7 +1417,7 @@ NGL.Representation = function( structure, sele ){
     if( sele ){
 
         this.selection = new NGL.Selection( sele );
-        this.makeSelection();
+        this.applySelection();
 
     }
 
@@ -1349,7 +1432,7 @@ NGL.Representation.prototype = {
 
     name: "",
 
-    makeSelection: function(){
+    applySelection: function(){
 
         var na = this.structure.atomSet.size;
         var atoms = this.structure.atomSet.atoms;
@@ -1390,8 +1473,11 @@ NGL.Representation.prototype = {
 
     update: function(){
 
-        // setAttributes position in each buffer
-        console.log( "update", this.name );
+        if( this.selection ){
+
+            this.applySelection();
+
+        }
 
     },
 
@@ -1459,7 +1545,7 @@ NGL.Representation.prototype = {
             oldSele = sele;
 
             this.selection = new NGL.Selection( sele );
-            this.makeSelection();
+            this.applySelection();
 
             viewer = this.viewer;
 
@@ -1549,6 +1635,14 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
 };
 
 NGL.BallAndStickRepresentation.prototype.update = function(){
+    
+    NGL.Representation.prototype.update.call( this );
+
+    if( this.selection ){
+
+        this.applySelection();
+
+    }
 
     this.sphereBuffer.setAttributes({ 
         position: this.atomSet.position 
@@ -1628,6 +1722,8 @@ NGL.LineRepresentation.prototype.create = function(){
 };
 
 NGL.LineRepresentation.prototype.update = function(){
+
+    NGL.Representation.prototype.update.call( this );
 
     this.lineBuffer.setAttributes({ 
         position: NGL.Utils.calculateCenterArray( 
@@ -1718,6 +1814,8 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
 NGL.BackboneRepresentation.prototype.update = function(){
 
+    NGL.Representation.prototype.update.call( this );
+
     this.makeBackboneSets();
 
     this.sphereBuffer.setAttributes({ 
@@ -1780,6 +1878,8 @@ NGL.TubeRepresentation.prototype.create = function(){
 };
 
 NGL.TubeRepresentation.prototype.update = function(){
+
+    NGL.Representation.prototype.update.call( this );
 
     // TODO
 

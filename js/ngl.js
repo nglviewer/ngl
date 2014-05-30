@@ -37,50 +37,50 @@ NGL = {
 NGL.Resources = {
 
     // fonts
-    'font/Arial.png': 'image',
-    'font/Arial.fnt': '',
+    '../font/Arial.png': 'image',
+    '../font/Arial.fnt': '',
 
     // shaders
-    'shader/BezierRaymarch.vert': '',
-    'shader/BezierRaymarch.frag': '',
-    'shader/HelixImpostor.vert': '',
-    'shader/HelixImpostor.frag': '',
-    'shader/HelixImpostor2.vert': '',
-    'shader/HelixImpostor2.frag': '',
-    'shader/HyperballSphereImpostor.vert': '',
-    'shader/HyperballSphereImpostor.frag': '',
-    'shader/HyperballStickImpostor.vert': '',
-    'shader/HyperballStickImpostor.frag': '',
-    'shader/Ribbon.vert': '',
-    'shader/Ribbon.frag': '',
-    'shader/SphereImpostor.vert': '',
-    'shader/SphereImpostor.frag': '',
-    'shader/SphereMesh.vert': '',
-    'shader/SphereMesh.frag': '',
-    'shader/SphereHalo.vert': '',
-    'shader/SphereHalo.frag': '',
-    'shader/CylinderImpostor.vert': '',
-    'shader/CylinderImpostor.frag': '',
-    'shader/CylinderBoxImpostor.vert': '',
-    'shader/CylinderBoxImpostor.frag': '',
-    'shader/SDFFont.vert': '',
-    'shader/SDFFont.frag': '',
-    'shader/LineSprite.vert': '',
-    'shader/LineSprite.frag': '',
-    'shader/Mesh.vert': '',
-    'shader/Mesh.frag': '',
-    'shader/ParticleSprite.vert': '',
-    'shader/ParticleSprite.frag': '',
-    'shader/Quad.vert': '',
-    'shader/Quad.frag': '',
-    'shader/QuadricImpostor.vert': '',
-    'shader/QuadricImpostor.frag': '',
+    '../shader/BezierRaymarch.vert': '',
+    '../shader/BezierRaymarch.frag': '',
+    '../shader/HelixImpostor.vert': '',
+    '../shader/HelixImpostor.frag': '',
+    '../shader/HelixImpostor2.vert': '',
+    '../shader/HelixImpostor2.frag': '',
+    '../shader/HyperballSphereImpostor.vert': '',
+    '../shader/HyperballSphereImpostor.frag': '',
+    '../shader/HyperballStickImpostor.vert': '',
+    '../shader/HyperballStickImpostor.frag': '',
+    '../shader/Ribbon.vert': '',
+    '../shader/Ribbon.frag': '',
+    '../shader/SphereImpostor.vert': '',
+    '../shader/SphereImpostor.frag': '',
+    '../shader/SphereMesh.vert': '',
+    '../shader/SphereMesh.frag': '',
+    '../shader/SphereHalo.vert': '',
+    '../shader/SphereHalo.frag': '',
+    '../shader/CylinderImpostor.vert': '',
+    '../shader/CylinderImpostor.frag': '',
+    '../shader/CylinderBoxImpostor.vert': '',
+    '../shader/CylinderBoxImpostor.frag': '',
+    '../shader/SDFFont.vert': '',
+    '../shader/SDFFont.frag': '',
+    '../shader/LineSprite.vert': '',
+    '../shader/LineSprite.frag': '',
+    '../shader/Mesh.vert': '',
+    '../shader/Mesh.frag': '',
+    '../shader/ParticleSprite.vert': '',
+    '../shader/ParticleSprite.frag': '',
+    '../shader/Quad.vert': '',
+    '../shader/Quad.frag': '',
+    '../shader/QuadricImpostor.vert': '',
+    '../shader/QuadricImpostor.frag': '',
 
     // shader chunks
-    'shader/chunk/light_params.glsl': '',
-    'shader/chunk/light.glsl': '',
-    'shader/chunk/fog.glsl': '',
-    'shader/chunk/fog_params.glsl': '',
+    '../shader/chunk/light_params.glsl': '',
+    '../shader/chunk/light.glsl': '',
+    '../shader/chunk/fog.glsl': '',
+    '../shader/chunk/fog_params.glsl': '',
 
 };
 
@@ -447,12 +447,12 @@ NGL.getMaterial = function( params ){
  */
 NGL.getShader = function( name ){
 
-    var shader = NGL.Resources[ 'shader/' + name ];
+    var shader = NGL.Resources[ '../shader/' + name ];
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
 
     return shader.replace( re, function( match, p1 ){
 
-        var path = 'shader/chunk/' + p1 + '.glsl';
+        var path = '../shader/chunk/' + p1 + '.glsl';
         var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
 
         return chunk ? chunk : "";
