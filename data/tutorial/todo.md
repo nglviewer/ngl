@@ -45,12 +45,8 @@ Ideas
 Todo
 ====
 
-* Autozoom
-* Slab and fog  
-  * should be relative to the scene (molecule) extent
-  * maybe by dynamically setting camera near & far
-  * see also GLmol
-  * Jmol is probably problematic since there the molecule moves not the camera
+* Trace/tube repr
+* Cartoon repr
 
 * AtomSetView, BondSetView
 
@@ -87,6 +83,11 @@ Todo
   * static light in three.js, i.e. move with camera
 * Make viewer stats optional (hide/show)
 * Create distance fields for [Computer modern fonts](http://checkmyworking.com/cm-web-fonts/)
+* Slab and fog	
+	* should be relative to the scene (molecule) extent
+	* maybe by dynamically setting camera near & far
+	* see also GLmol
+	* Jmol is probably problematic since there the molecule moves not the camera
 * Uint16 and three.js Buffergeometry.computeOffsets() for mobile devices
     * Create NGL.IndexAttribute to globally change the index buffer type
 * Screenshot tool
