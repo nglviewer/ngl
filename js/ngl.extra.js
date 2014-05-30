@@ -541,8 +541,10 @@ NGL.initSurface = function( object, viewer, name ){
     if( object instanceof THREE.Geometry ){
 
         geo = object;
-        geo.computeFaceNormals();
-        geo.computeVertexNormals();
+
+        // TODO check if needed
+        geo.computeFaceNormals( true );
+        geo.computeVertexNormals( true );
 
     }else{
 
@@ -848,10 +850,10 @@ NGL.AtomSet.prototype = {
             var positions = this.position;
             var center = this.center;
 
-            for ( var i = 0, il = positions.length; i < il; i += 3 ) {
+            for( var i = 0, n = positions.length; i < n; i += 3 ){
 
                 vector.set( positions[ i ], positions[ i + 1 ], positions[ i + 2 ] );
-                box.addPoint( vector );
+                box.expandByPoint( vector );
 
             }
 
