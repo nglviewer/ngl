@@ -5,41 +5,41 @@
 		<meta charset="utf-8">
 
 		<!-- breaking out the library for debugging -->
-		<script type="text/javascript" src="jsmol/jquery/jquery.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmoljQueryExt.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmolCore.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmolApplet.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmolApi.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmolControls.js"></script>
-		<script type="text/javascript" src="jsmol/js/j2sjmol.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmol.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmolConsole.js"></script>
-		<script type="text/javascript" src="jsmol/js/JSmolMenu.js"></script>
+		<script type="text/javascript" src="../jsmol/jquery/jquery.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmoljQueryExt.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmolCore.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmolApplet.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmolApi.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmolControls.js"></script>
+		<script type="text/javascript" src="../jsmol/js/j2sjmol.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmol.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmolConsole.js"></script>
+		<script type="text/javascript" src="../jsmol/js/JSmolMenu.js"></script>
 
 		<!-- // following two only necessary for WebGL version: 
 		-->
 
-        <script src="js/three.js"></script>
-        <script src="js/three/Detector.js"></script>
-        <script src="js/three/libs/dat.gui.min.js"></script>
-        <script src="js/three/libs/stats.min.js"></script>
-        <script src="js/three/controls/TrackballControls.js"></script>
-        <script src="js/three/loaders/OBJLoader.js"></script>
+        <script src="../js/three.js"></script>
+        <script src="../js/three/Detector.js"></script>
+        <script src="../js/three/libs/dat.gui.min.js"></script>
+        <script src="../js/three/libs/stats.min.js"></script>
+        <script src="../js/three/controls/TrackballControls.js"></script>
+        <script src="../js/three/loaders/OBJLoader.js"></script>
 
-        <script src="js/three/shaders/CopyShader.js"></script>
-        <script src="js/three/shaders/SSAOShader.js"></script>
-        <script src="js/three/shaders/FXAAShader.js"></script>
-        <script src="js/three/shaders/DotScreenShader.js"></script>
+        <script src="../js/three/shaders/CopyShader.js"></script>
+        <script src="../js/three/shaders/SSAOShader.js"></script>
+        <script src="../js/three/shaders/FXAAShader.js"></script>
+        <script src="../js/three/shaders/DotScreenShader.js"></script>
 
-        <script src="js/three/postprocessing/EffectComposer.js"></script>
-        <script src="js/three/postprocessing/RenderPass.js"></script>
-        <script src="js/three/postprocessing/MaskPass.js"></script>
-        <script src="js/three/postprocessing/ShaderPass.js"></script>
+        <script src="../js/three/postprocessing/EffectComposer.js"></script>
+        <script src="../js/three/postprocessing/RenderPass.js"></script>
+        <script src="../js/three/postprocessing/MaskPass.js"></script>
+        <script src="../js/three/postprocessing/ShaderPass.js"></script>
 
-        <script src="js/threex.rendererstats.js"></script>
+        <script src="../js/threex.rendererstats.js"></script>
 
-        <script src="js/ngl.js"></script>
-        <script src="js/ngl.jsmol.js"></script>
+        <script src="../js/ngl.js"></script>
+        <script src="../js/ngl.jsmol.js"></script>
 
 		<script type="text/javascript">
 
@@ -67,9 +67,9 @@
 				serverURL: "http://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php",
 				use: "WEBGL HTML5",
 			  	//language: "fr", // NOTE: LOCALIZATION REQUIRES <meta charset="utf-8"> (see JSmolCore Jmol.featureDetection.supportsLocalization)
-				jarPath: "jsmol/java",
-				j2sPath: "jsmol/j2s",
-				jarFile: "JmolApplet.jar",
+				jarPath: "../jsmol/java",
+				j2sPath: "../jsmol/j2s",
+				jarFile: "../JmolApplet.jar",
 				isSigned: false,
 				disableJ2SLoadMonitor: false,
 				disableInitialConsole: false,
@@ -111,7 +111,7 @@ Jmol code conversion to JavaScript by <b>Bob Hanson</b>.
 
 	NGL.init( function(){
 	
-		Jmol.script( jmolApplet0, 'unbind _slideZoom; load jsmol/data/1crn.pdb;' );
+		Jmol.script( jmolApplet0, 'unbind _slideZoom; load ../jsmol/data/1crn.pdb;' );
 
 	});
 
