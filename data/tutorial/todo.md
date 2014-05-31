@@ -41,11 +41,18 @@ Ideas
   * backbone determination
   * secondary structure determination
 * Controls that move model/rotation group, not the camera
+* Websockets to lower latency of trajectory serving
+  * http://www.html5rocks.com/en/tutorials/websockets/basics/
+  * http://blog.miguelgrinberg.com/post/easy-websockets-with-flask-and-gevent
+  * seems that you need gevent or similar additionally
+* WebRTC to allow p2p sync
+  * http://www.html5rocks.com/en/tutorials/webrtc/datachannels/
 
 
 Todo
 ====
 
+* Point repr
 * Trace/tube repr
 * Cartoon repr
 
@@ -72,9 +79,8 @@ Todo
 * NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option
-* GeometryBuffer and LineBuffer update mechanism
+* GeometryBuffer update mechanism
   * move attribute array filling code to a setAttributes function
-* LineBuffer remove method missing
 
 * Move NGL.GUI into NGL.Viewer
 * Use THREE.RawShaderMaterial()?
