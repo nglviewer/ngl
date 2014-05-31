@@ -1110,11 +1110,11 @@ NGL.Viewer.prototype = {
         //     camera.projectionMatrix, camera.matrixWorldInverse
         // );
 
-        // var boxPos2 = new Float32Array( boxPos );
-        // var boxMin2 = Infinity;
-        // var boxMax2 = -Infinity;
-        // var z2;
-        // camera.projectionMatrix.applyToVector3Array( boxPos2 );
+        var boxPos2 = new Float32Array( boxPos );
+        var boxMin2 = Infinity;
+        var boxMax2 = -Infinity;
+        var z2;
+        camera.projectionMatrix.applyToVector3Array( boxPos2 );
 
         var boxMin = Infinity;
         var boxMax = -Infinity;
@@ -1127,13 +1127,18 @@ NGL.Viewer.prototype = {
             if( z < boxMin ) boxMin = z;
             if( z > boxMax ) boxMax = z;
 
-            // z2 = boxPos2[ i + 2 ];
-            // if( z2 < boxMin2 ) boxMin2 = z2;
-            // if( z2 > boxMax2 ) boxMax2 = z2;
+            z2 = boxPos2[ i + 2 ];
+            if( z2 < boxMin2 ) boxMin2 = z2;
+            if( z2 > boxMax2 ) boxMax2 = z2;
 
         }
 
+        var cz = camera.position.z;
+        // console.log( camera )
+        // console.log( this.controls )
+        // console.log( cz );
         // console.log( boxMin, boxMax, boxMin2, boxMax2 );
+        // console.log( boxMin + cz, boxMax + cz, boxMin2 + cz, boxMax2 + cz );
 
         if( boxMin!==Infinity && boxMin!==-Infinity && !isNaN( boxMin ) &&
             boxMax!==Infinity && boxMax!==-Infinity && !isNaN( boxMax ) ){
@@ -1154,10 +1159,15 @@ NGL.Viewer.prototype = {
 
             // TODO change fog shader
             if( p.fogType=="linear" ){
+                // this.scene.fog = new THREE.Fog( 
+                //     p.fogColor,
+                //     camera.near + boxSize * ( this.params.fogNear / 100 ),
+                //     camera.far - boxSize * ( 1 - ( this.params.fogFar / 100 ) )
+                // );
                 this.scene.fog = new THREE.Fog( 
                     p.fogColor,
-                    camera.near + boxSize * ( this.params.fogNear / 100 ),
-                    camera.far - boxSize * ( 1 - ( this.params.fogFar / 100 ) )
+                    0 - ( -Math.abs( cz ) + 50 ),
+                    100 - ( -Math.abs( cz ) + 50 )
                 );
                 // this.scene.fog = new THREE.Fog( 
                 //     p.fogColor,
@@ -1418,8 +1428,6 @@ NGL.Buffer.prototype = {
 
         this.geometry.dispose();
         this.material.dispose();
-
-
 
     }
 
@@ -2096,76 +2104,136 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
     var n6 = n * 6;
     var nX = n * 2 * 2;
 
+    this.attributes = {
+        "position": { type: "v3", value: null },
+        "color": { type: "c", value: null },
+    };
+
+    this.geometry = new THREE.BufferGeometry();
+
+    this.geometry.addAttribute( 
+        'position', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
+    );
+    this.geometry.addAttribute( 
+        'color', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
+    );
+
+    this.setAttributes({
+        from: from,
+        to: to,
+        color: color,
+        color2: color2
+    });
+
     this.material = new THREE.LineBasicMaterial({
+        attributes: this.attributes,
         vertexColors: true,
         fog: true
     });
 
-    this.geometry = new THREE.BufferGeometry();
+    this.mesh = new THREE.Line( this.geometry, this.material, THREE.LinePieces );
 
-    var aPosition = new Float32Array( nX * 3 );
-    var aColor = new Float32Array( nX * 3 );
+    console.log( this.mesh );
 
-    this.geometry.addAttribute( 
-        'position', new THREE.BufferAttribute( aPosition, 3 )
-    );
-    this.geometry.addAttribute( 
-        'color', new THREE.BufferAttribute( aColor, 3 )
-    );
+};
 
-    var i, j;
+NGL.LineBuffer.prototype = {
 
-    var x, y, z, x1, y1, z1, x2, y2, z2;
+    setAttributes: function( data ){
 
-    for( var v = 0; v < n; v++ ){
+        var from, to, color, color2;
+        var aPosition, aColor;
 
-        j = v * 3;
+        var attributes = this.geometry.attributes;
 
-        x1 = from[ j + 0 ];
-        y1 = from[ j + 1 ];
-        z1 = from[ j + 2 ];
+        if( data[ "from" ] && data[ "to" ] ){
+            from = data[ "from" ];
+            to = data[ "to" ];
+            aPosition = attributes[ "position" ].array;
+            attributes[ "position" ].needsUpdate = true;
+            this.attributes[ "position" ].needsUpdate = true;
+        }
 
-        x2 = to[ j + 0 ];
-        y2 = to[ j + 1 ];
-        z2 = to[ j + 2 ];
+        if( data[ "color" ] && data[ "color2" ] ){
+            color = data[ "color" ];
+            color2 = data[ "color2" ];
+            aColor = attributes[ "color" ].array;
+            attributes[ "color" ].needsUpdate = true;
+            this.attributes[ "color" ].needsUpdate = true;
+        }
 
-        x = ( x1 + x2 ) / 2.0;
-        y = ( y1 + y2 ) / 2.0;
-        z = ( z1 + z2 ) / 2.0;
+        var n = this.size;
+        var n6 = n * 6;
 
-        i = v * 2 * 3;
-        aPosition[ i + 0 ] = from[ j + 0 ];
-        aPosition[ i + 1 ] = from[ j + 1 ];
-        aPosition[ i + 2 ] = from[ j + 2 ];
-        aPosition[ i + 3 ] = x;
-        aPosition[ i + 4 ] = y;
-        aPosition[ i + 5 ] = z;
-        aColor[ i + 0 ] = color[ j + 0 ];
-        aColor[ i + 1 ] = color[ j + 1 ];
-        aColor[ i + 2 ] = color[ j + 2 ];
-        aColor[ i + 3 ] = color[ j + 0 ];
-        aColor[ i + 4 ] = color[ j + 1 ];
-        aColor[ i + 5 ] = color[ j + 2 ];
+        var i, j;
 
-        i2 = i + n6;
-        aPosition[ i2 + 0 ] = x;
-        aPosition[ i2 + 1 ] = y;
-        aPosition[ i2 + 2 ] = z;
-        aPosition[ i2 + 3 ] = to[ j + 0 ];
-        aPosition[ i2 + 4 ] = to[ j + 1 ];
-        aPosition[ i2 + 5 ] = to[ j + 2 ];
-        aColor[ i2 + 0 ] = color2[ j + 0 ];
-        aColor[ i2 + 1 ] = color2[ j + 1 ];
-        aColor[ i2 + 2 ] = color2[ j + 2 ];
-        aColor[ i2 + 3 ] = color2[ j + 0 ];
-        aColor[ i2 + 4 ] = color2[ j + 1 ];
-        aColor[ i2 + 5 ] = color2[ j + 2 ];
+        var x, y, z, x1, y1, z1, x2, y2, z2;
+
+        for( var v = 0; v < n; v++ ){
+
+            j = v * 3;
+
+            x1 = from[ j + 0 ];
+            y1 = from[ j + 1 ];
+            z1 = from[ j + 2 ];
+
+            x2 = to[ j + 0 ];
+            y2 = to[ j + 1 ];
+            z2 = to[ j + 2 ];
+
+            x = ( x1 + x2 ) / 2.0;
+            y = ( y1 + y2 ) / 2.0;
+            z = ( z1 + z2 ) / 2.0;
+
+            i = v * 2 * 3;
+            if( from && to ){
+                aPosition[ i + 0 ] = from[ j + 0 ];
+                aPosition[ i + 1 ] = from[ j + 1 ];
+                aPosition[ i + 2 ] = from[ j + 2 ];
+                aPosition[ i + 3 ] = x;
+                aPosition[ i + 4 ] = y;
+                aPosition[ i + 5 ] = z;
+            }
+            if( color && color2 ){
+                aColor[ i + 0 ] = color[ j + 0 ];
+                aColor[ i + 1 ] = color[ j + 1 ];
+                aColor[ i + 2 ] = color[ j + 2 ];
+                aColor[ i + 3 ] = color[ j + 0 ];
+                aColor[ i + 4 ] = color[ j + 1 ];
+                aColor[ i + 5 ] = color[ j + 2 ];
+            }
+
+            i2 = i + n6;
+            if( from && to ){
+                aPosition[ i2 + 0 ] = x;
+                aPosition[ i2 + 1 ] = y;
+                aPosition[ i2 + 2 ] = z;
+                aPosition[ i2 + 3 ] = to[ j + 0 ];
+                aPosition[ i2 + 4 ] = to[ j + 1 ];
+                aPosition[ i2 + 5 ] = to[ j + 2 ];
+            }
+            if( color && color2 ){
+                aColor[ i2 + 0 ] = color2[ j + 0 ];
+                aColor[ i2 + 1 ] = color2[ j + 1 ];
+                aColor[ i2 + 2 ] = color2[ j + 2 ];
+                aColor[ i2 + 3 ] = color2[ j + 0 ];
+                aColor[ i2 + 4 ] = color2[ j + 1 ];
+                aColor[ i2 + 5 ] = color2[ j + 2 ];
+            }
+
+        }
+
+    },
+
+    remove: function(){
+
+        this.geometry.dispose();
+        this.material.dispose();
 
     }
 
-    this.mesh = new THREE.Line( this.geometry, this.material, THREE.LinePieces );
+};
 
-}
 
 
 //////////////////////

@@ -291,7 +291,8 @@ NGL.Structure.prototype = {
 
         this.frameCache = {};
         // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
-        this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
+        this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
+        // this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
         var params = {
             "add repr": "",
             "xtc": this.xtc,
@@ -336,8 +337,6 @@ NGL.Structure.prototype = {
             this.xtc = xtc;
 
         }.bind( this ) );
-
-        this.gui.add( this, 'test' );
 
     },
 
@@ -1725,12 +1724,9 @@ NGL.LineRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    this.lineBuffer.setAttributes({ 
-        position: NGL.Utils.calculateCenterArray( 
-            this.bondSet.from, this.bondSet.to
-        ),
-        position1: this.bondSet.from,
-        position2: this.bondSet.to
+    this.lineBuffer.setAttributes({
+        from: this.bondSet.from,
+        to: this.bondSet.to
     });
 
 };
