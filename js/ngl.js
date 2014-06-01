@@ -369,7 +369,7 @@ NGL.Utils = {
 
     },
 
-    replicateArry3Entries: function( array, m ){
+    replicateArray3Entries: function( array, m ){
 
         var n = array.length / 3;
 
