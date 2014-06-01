@@ -347,10 +347,63 @@ NGL.Utils = {
 
         return array;
 
+    },
+
+    randomColorArray: function( n ){
+
+        var array = new Float32Array( n * 3 );
+
+        var j;
+
+        for( var i = 0; i < n; ++i ){
+
+            j = i * 3;
+
+            array[ j + 0 ] = Math.random();
+            array[ j + 1 ] = Math.random();
+            array[ j + 2 ] = Math.random();
+
+        }
+
+        return array;
+
+    },
+
+    replicateArry3Entries: function( array, m ){
+
+        var n = array.length / 3;
+
+        var repArr = new Float32Array( n * m * 3 );
+
+        var i, j, k, l, v;
+        var a, b, c;
+
+        for( i = 0; i < n; ++i ){
+
+            v = i * 3;
+            k = i * m * 3;
+
+            a = array[ v + 0 ];
+            b = array[ v + 1 ];
+            c = array[ v + 2 ];
+
+            for( j = 0; j < m; ++j ){
+
+                l = k + j * 3;
+
+                repArr[ l + 0 ] = a;
+                repArr[ l + 1 ] = b;
+                repArr[ l + 2 ] = c;
+
+            }
+
+        }
+
+        return repArr;
+
     }
 
 };
-
 
 
 
@@ -2133,8 +2186,6 @@ NGL.LineBuffer = function ( from, to, color, color2 ) {
 
     this.mesh = new THREE.Line( this.geometry, this.material, THREE.LinePieces );
 
-    console.log( this.mesh );
-
 };
 
 NGL.LineBuffer.prototype = {
@@ -2234,6 +2285,48 @@ NGL.LineBuffer.prototype = {
 
 };
 
+
+NGL.TraceBuffer = function ( position, color ) {
+
+    this.size = position.length / 3;
+
+    var n = this.size;
+    var n1 = n - 1;
+    
+    from = new Float32Array( n1 * 3 );
+    to = new Float32Array( n1 * 3 );
+    lineColor = new Float32Array( n1 * 3 );
+    lineColor2 = new Float32Array( n1 * 3 );
+
+    for( var i=0, v; i<n1; ++i ){
+
+        v = 3 * i;
+
+        from[ v + 0 ] = position[ v + 0 ];
+        from[ v + 1 ] = position[ v + 1 ];
+        from[ v + 2 ] = position[ v + 2 ];
+
+        to[ v + 0 ] = position[ v + 3 ];
+        to[ v + 1 ] = position[ v + 4 ];
+        to[ v + 2 ] = position[ v + 5 ];
+
+        lineColor[ v + 0 ] = color[ v + 0 ];
+        lineColor[ v + 1 ] = color[ v + 1 ];
+        lineColor[ v + 2 ] = color[ v + 2 ];
+
+        lineColor2[ v + 0 ] = color[ v + 3 ];
+        lineColor2[ v + 1 ] = color[ v + 4 ];
+        lineColor2[ v + 2 ] = color[ v + 5 ];
+
+    }
+
+    this.lineBuffer = new NGL.LineBuffer(
+        from, to, lineColor, lineColor2
+    );
+
+    this.mesh = this.lineBuffer.mesh;
+
+};
 
 
 //////////////////////

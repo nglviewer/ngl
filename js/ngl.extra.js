@@ -1277,7 +1277,7 @@ NGL.Selection.prototype = {
 
             c = chunks[ i ];
 
-            if( i===0 && c.toUpperCase()==="NOT" ){
+            if( i===0 && ( c.toUpperCase()==="NOT" || c==="!" ) ){
                 this.negate = true;
                 continue;
             }
@@ -1869,7 +1869,16 @@ NGL.TubeRepresentation.prototype.create = function(){
         pd.size
     );
 
-    this.bufferList = [ this.tubeBuffer ];
+    // this.bufferList = [ this.tubeBuffer ];
+
+    this.tubebuffer2 = new NGL.TubeGroup(
+        this.backboneAtomSet.position,
+        this.backboneAtomSet.getColor(),
+        this.backboneAtomSet.getRadius( this.size, null ),
+        3  
+    );
+
+    this.bufferList = [ this.tubebuffer2 ];
 
 };
 
@@ -1891,6 +1900,211 @@ NGL.TubeRepresentation.prototype.makeBackboneSets = function(){
 };
 
 
+NGL.RibbonRepresentation = function( structure, sele, size ){
+
+    this.size = size || 0.25;
+
+    NGL.Representation.call( this, structure, sele );
+
+};
+
+NGL.RibbonRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.RibbonRepresentation.prototype.name = "ribbon";
+
+NGL.RibbonRepresentation.prototype.create = function(){
+
+    this.makeBackboneSets();
+
+    var pd = NGL.getPathData(
+        this.backboneAtomSet.position,
+        this.backboneAtomSet.getColor(),
+        this.backboneAtomSet.getRadius( this.size, null ),
+        3
+    );
+
+    this.ribbonBuffer = new NGL.RibbonBuffer(
+        pd.position,
+        pd.normal,
+        pd.dir,
+        pd.color,
+        pd.size
+    );
+
+    this.bufferList = [ this.ribbonBuffer ];
+
+};
+
+NGL.RibbonRepresentation.prototype.update = function(){
+
+    NGL.Representation.prototype.update.call( this );
+
+    // TODO
+
+};
+
+NGL.RibbonRepresentation.prototype.makeBackboneSets = function(){
+
+    var backbone = NGL.makeBackboneSets( this.atomSet );
+
+    this.backboneAtomSet = backbone.atomSet;
+    this.backboneBondSet = backbone.bondSet;
+
+};
+
+
+NGL.TraceRepresentation = function( structure, sele ){
+
+    NGL.Representation.call( this, structure, sele );
+
+};
+
+NGL.TraceRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.TraceRepresentation.prototype.name = "trace";
+
+NGL.TraceRepresentation.prototype.create = function(){
+
+    this.makeBackboneSets();
+
+    var sub = 10;
+
+    var spline = new NGL.Spline( this.backboneAtomSet.position );
+    var subPos = spline.getSubdividedPosition( sub );
+    var subCol = NGL.Utils.replicateArry3Entries(
+        NGL.Utils.randomColorArray( this.backboneAtomSet.size ), sub
+    )
+
+    this.traceBuffer = new NGL.TraceBuffer(
+        subPos,
+        subCol
+    );
+
+    this.bufferList = [ this.traceBuffer ];
+
+};
+
+NGL.TraceRepresentation.prototype.update = function(){
+
+    NGL.Representation.prototype.update.call( this );
+
+    // TODO
+
+};
+
+NGL.TraceRepresentation.prototype.makeBackboneSets = function(){
+
+    var backbone = NGL.makeBackboneSets( this.atomSet );
+
+    this.backboneAtomSet = backbone.atomSet;
+    this.backboneBondSet = backbone.bondSet;
+
+};
+
+
+// Or better name it BioSpline?
+NGL.Spline = function( position ){
+
+    this.position = position;
+    this.size = position.length / 3;
+
+};
+
+NGL.Spline.prototype = {
+
+    // from THREE.js
+    // ASR added tension
+    interpolate: function( p0, p1, p2, p3, t ) {
+
+        var tension = 0.9;
+
+        var v0 = ( p2 - p0 ) * tension;
+        var v1 = ( p3 - p1 ) * tension;
+        var t2 = t * t;
+        var t3 = t * t2;
+        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + 
+               ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + 
+               v0 * t + p1;
+
+    },
+
+    getSubdividedPosition: function( m ){
+
+        var n = this.size;
+        var n1 = n - 1;
+        var n2 = n - 2;
+        var n3 = n - 3;
+        var n13 = n1 * 3;
+        var n23 = n2 * 3;
+        var n33 = n3 * 3;
+
+        var pos = this.position;
+        var interpolate = this.interpolate;
+
+        var dt = 1.0 / m;
+        var subPos = new Float32Array( n1 * m * 3 + 3 );
+
+        // ghost point for initial position
+        var p0x = pos[ 0 + 0 ] + ( pos[ 3 + 0 ] - pos[ 0 + 0 ] );
+        var p0y = pos[ 0 + 1 ] + ( pos[ 3 + 1 ] - pos[ 0 + 1 ] );
+        var p0z = pos[ 0 + 2 ] + ( pos[ 3 + 2 ] - pos[ 0 + 2 ] );
+
+        var p1x = pos[ 0 + 0 ];
+        var p1y = pos[ 0 + 1 ];
+        var p1z = pos[ 0 + 2 ];
+
+        var p2x = pos[ 3 + 0 ];
+        var p2y = pos[ 3 + 1 ];
+        var p2z = pos[ 3 + 2 ];
+
+        var p3x, p3y, p3z;
+
+        var i, j, k, l;
+
+        for( i = 0; i < n1; ++i ){
+
+            k = i * m * 3;
+            v = ( i + 2 ) * 3;
+
+            if( i === n2 ){
+                // ghost point for last position
+                p3x = pos[ n13 + 0 ] + ( pos[ n13 + 0 ] - pos[ n23 + 0 ] );
+                p3y = pos[ n13 + 1 ] + ( pos[ n13 + 1 ] - pos[ n23 + 1 ] );
+                p3z = pos[ n13 + 2 ] + ( pos[ n13 + 2 ] - pos[ n23 + 2 ] );
+            }else{
+                p3x = pos[ v + 0 ];
+                p3y = pos[ v + 1 ];
+                p3z = pos[ v + 2 ];
+            }
+
+            for( j = 0; j < m; ++j ){
+
+                l = k + j * 3;
+
+                subPos[ l + 0 ] = interpolate( p0x, p1x, p2x, p3x, dt * j );
+                subPos[ l + 1 ] = interpolate( p0y, p1y, p2y, p3y, dt * j );
+                subPos[ l + 2 ] = interpolate( p0z, p1z, p2z, p3z, dt * j );
+
+            }
+
+            p0x = p1x; p0y = p1y; p0z = p1z;
+            p1x = p2x; p1y = p2y; p1z = p2z;
+            p2x = p3x; p2y = p3y; p2z = p3z;
+
+        }
+
+        // add last position to the array of subdivided positions
+        subPos[ n1 * m * 3 + 0 ] = pos[ n13 + 0 ];
+        subPos[ n1 * m * 3 + 1 ] = pos[ n13 + 1 ];
+        subPos[ n1 * m * 3 + 2 ] = pos[ n13 + 2 ];
+
+        return subPos;
+
+    }
+
+};
+
+
 NGL.representationTypes = {
 
     "spacefill":    NGL.SpacefillRepresentation,
@@ -1900,6 +2114,8 @@ NGL.representationTypes = {
     "line":         NGL.LineRepresentation,
     "backbone":     NGL.BackboneRepresentation,
     "tube":         NGL.TubeRepresentation,
+    "ribbon":       NGL.RibbonRepresentation,
+    "trace":        NGL.TraceRepresentation,
 
 };
 
