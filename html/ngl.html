@@ -96,7 +96,7 @@
 
                     var gui = new NGL.showcaseGui( viewer );
 
-                    gui.addFile( "../data/md.pdb" );
+                    gui.addFile( "../data/1crn.pdb" );
 
                 });
 
@@ -253,8 +253,9 @@
                         
                         if( o instanceof NGL.Structure ){
 
-                            o.add( "backbone" );
-                            o.add( "licorice", "135-200" );
+                            // o.add( "backbone" );
+                            // o.add( "ribbon" );
+                            o.add( "trace" );
                             o.center();
 
                         }

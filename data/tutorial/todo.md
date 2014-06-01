@@ -43,14 +43,19 @@ Ideas
 * Controls that move model/rotation group, not the camera
 * Websockets to lower latency of trajectory serving
   * http://www.html5rocks.com/en/tutorials/websockets/basics/
-  * http://blog.miguelgrinberg.com/post/easy-websockets-with-flask-and-gevent
+  * http://blog.miguelgrinberg.com/post/easy-websockets-with-flask-and-gevent (uses socketio)
+  * http://socket.io/
   * seems that you need gevent or similar additionally
 * WebRTC to allow p2p sync
   * http://www.html5rocks.com/en/tutorials/webrtc/datachannels/
+* Backface hitting - use to fill objects when clipped?
 
 
 Todo
 ====
+
+* NGL.HyperballRepresentation.prototype.update broken
+* negate single sele !345:A.CA
 
 * Point repr
 * Trace/tube repr
