@@ -2322,7 +2322,7 @@ NGL.TraceBuffer = function ( position, color ) {
 
     var n = this.size;
     var n1 = n - 1;
-    
+
     from = new Float32Array( n1 * 3 );
     to = new Float32Array( n1 * 3 );
     lineColor = new Float32Array( n1 * 3 );
@@ -2355,6 +2355,19 @@ NGL.TraceBuffer = function ( position, color ) {
     );
 
     this.mesh = this.lineBuffer.mesh;
+    this.geometry = this.lineBuffer.geometry;
+    this.material = this.lineBuffer.material;
+
+};
+
+NGL.TraceBuffer.prototype = {
+
+    remove: function(){
+
+        this.geometry.dispose();
+        this.material.dispose();
+
+    }
 
 };
 

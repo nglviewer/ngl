@@ -438,9 +438,9 @@ NGL.SpacefillRepresentation.prototype.name = "spacefill";
 NGL.SpacefillRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
-        this.atomSet.position,
-        this.atomSet.getColor(),
-        this.atomSet.getRadius( null, this.scale )
+        this.structure.atomPosition( this.selection ),
+        this.structure.atomColor( this.selection ),
+        this.structure.atomRadius( this.selection, null, this.scale )
     );
 
     this.bufferList = [ this.sphereBuffer ];
@@ -452,7 +452,7 @@ NGL.SpacefillRepresentation.prototype.update = function(){
     NGL.Representation.prototype.update.call( this );
 
     this.sphereBuffer.setAttributes({
-        position: this.atomSet.position
+        position: this.structure.atomPosition( this.selection )
     });
 
 };
@@ -474,9 +474,9 @@ NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
 NGL.BallAndStickRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
-        this.atomSet.position,
-        this.atomSet.getColor(),
-        this.atomSet.getRadius( null, this.sphereScale )
+        this.structure.atomPosition( this.selection ),
+        this.structure.atomColor( this.selection ),
+        this.structure.atomRadius( this.selection, null, this.sphereScale )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -828,31 +828,14 @@ NGL.TraceRepresentation.prototype.create = function(){
     var c, pos, col;
     var elemColors = NGL.ElementColors;
 
+    var selection = new NGL.Selection( ".CA .P" );
+
     this.structure.eachChain( function( c ){
 
-        pos = [];
-        col = [];
-
-        c.eachAtom( function( a ){
-
-            if( a.atomname === "CA" || a.atomname === "P" ){
-                pos.push( a.x, a.y, a.z );
-
-                c = elemColors[ a.element ];
-                if( !c ) c = 0xCCCCCC;
-                col.push(
-                    ( c >> 16 & 255 ) / 255,
-                    ( c >> 8 & 255 ) / 255,
-                    ( c & 255 ) / 255
-                );
-            }
-
-        } );
+        pos = c.atomPosition( selection );
+        col = c.atomColor( selection );
 
         if( !pos || pos.length/3 < 4 ) return;
-
-        pos = new Float32Array( pos );
-        col = new Float32Array( col );
 
         var sub = 10;
 

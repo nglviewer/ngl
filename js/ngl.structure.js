@@ -185,32 +185,117 @@ NGL.Structure.prototype = {
 
     },
 
-    // TODO optional selection
-    eachAtom: function( callback ){
+    eachAtom: function( callback, selection ){
 
         this.models.forEach( function( m ){
-            m.eachAtom( callback );
+            m.eachAtom( callback, selection );
         } );
 
     },
 
-    eachChain: function( callback ){
+    eachChain: function( callback, selection ){
 
         this.models.forEach( function( m ){
-            m.eachChain( callback );
+            m.eachChain( callback, selection );
         } );
 
     },
 
     atomPosition: function( selection ){
 
-        // TODO return Float32Array of atom positions
+        // TODO cache
+        var i, position;
+
+        if( selection ){
+            position = [];
+        }else{
+            position = new Float32Array( this.atomCount * 3 );
+        }
+
+        i = 0;
+
+        this.eachAtom( function( a ){
+
+            position[ i + 0 ] = a.x;
+            position[ i + 1 ] = a.y;
+            position[ i + 2 ] = a.z;
+
+            i += 3;
+
+        }, selection );
+
+        if( selection ) position = new Float32Array( position );
+
+        return position;
 
     },
 
     atomColor: function( selection ){
 
-        // TODO return Float32Array of atom colors
+        // TODO cache
+        var i, c, color;
+        var elemColors = NGL.ElementColors;
+
+        if( selection ){
+            color = [];
+        }else{
+            color = new Float32Array( this.atomCount * 3 );
+        }
+
+        i = 0;
+
+        this.eachAtom( function( a ){
+
+            c = elemColors[ a.element ];
+            if( !c ) c = 0xCCCCCC;
+
+            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+            color[ i + 2 ] = ( c & 255 ) / 255;
+
+            i += 3;
+
+        }, selection );
+
+        if( selection ) color = new Float32Array( color );
+
+        return color;
+
+    },
+
+    atomRadius: function( selection, size, scale ){
+
+        // TODO cache
+        var i, r, radius;
+        var vdwRadii = NGL.VdwRadii;
+
+        if( !size ) size = null;
+        if( !scale ) scale = null;
+
+        if( selection ){
+            radius = [];
+        }else{
+            radius = new Float32Array( this.atomCount );
+        }
+
+        i = 0;
+
+        this.eachAtom( function( a ){
+
+            if( size ){
+                radius[ i ] = size;
+            }else{
+                r = vdwRadii[ a.element ];
+                radius[ i ] = ( r ? r : 1.5 ) * scale;
+            }
+
+            i += 1;
+
+        }, selection );
+
+        if( selection ) radius = new Float32Array( radius );
+
+        return radius;
 
     },
 
@@ -395,6 +480,259 @@ NGL.Structure.prototype = {
 };
 
 
+NGL.Model = function( structure ){
+
+    this.structure = structure;
+    this.chains = [];
+
+    this.atomCount = 0;
+    this.residueCount = 0;
+    this.chainCount = 0;
+
+};
+
+NGL.Model.prototype = {
+
+    modelno: undefined,
+
+    nextAtomIndex: function(){
+
+        this.atomCount += 1;
+        return this.structure.nextAtomIndex();
+
+    },
+
+    nextResidueIndex: function(){
+
+        this.residueCount += 1;
+        return this.structure.nextResidueIndex();
+
+    },
+
+    nextChainIndex: function(){
+
+        this.chainCount += 1;
+        return this.structure.nextChainIndex();
+
+    },
+
+    addChain: function(){
+
+        var c = new NGL.Chain( this );
+        c.index = this.nextChainIndex();
+        this.chains.push( c );
+        return c;
+
+    },
+
+    eachAtom: function( callback ){
+
+        this.chains.forEach( function( c ){
+            c.eachAtom( callback );
+        } );
+
+    },
+
+    eachChain: function( callback ){
+
+        this.chains.forEach( callback );
+
+    },
+
+    atomPosition: function( selection ){
+
+        return NGL.Structure.prototype.atomPosition.call( this, selection );
+
+    },
+
+    atomColor: function( selection ){
+
+        return NGL.Structure.prototype.atomColor.call( this, selection );
+
+    }
+
+};
+
+
+NGL.Chain = function( model ){
+
+    this.model = model;
+    this.residues = [];
+
+    this.atomCount = 0;
+    this.residueCount = 0;
+
+};
+
+NGL.Chain.prototype = {
+
+    chainname: undefined,
+
+    nextAtomIndex: function(){
+
+        this.atomCount += 1;
+        return this.model.nextAtomIndex();
+
+    },
+
+    nextResidueIndex: function(){
+
+        this.residueCount += 1;
+        return this.model.nextResidueIndex();
+
+    },
+
+    addResidue: function(){
+
+        var r = new NGL.Residue( this );
+        r.index = this.nextResidueIndex();
+        this.residues.push( r );
+        return r;
+
+    },
+
+    eachAtom: function( callback, selection ){
+
+        this.residues.forEach( function( r ){
+            r.eachAtom( callback, selection );
+        } );
+
+    },
+
+    atomPosition: function( selection ){
+
+        return NGL.Structure.prototype.atomPosition.call( this, selection );
+
+    },
+
+    atomColor: function( selection ){
+
+        return NGL.Structure.prototype.atomColor.call( this, selection );
+
+    }
+
+};
+
+NGL.Residue = function( chain ){
+
+    this.chain = chain;
+    this.atoms = [];
+
+    this.atomCount = 0;
+
+};
+
+NGL.Residue.prototype = {
+
+    resno: undefined,
+    resname: undefined,
+
+    _ss: undefined,
+    get ss () {
+        return this._ss;
+    },
+    set ss ( value ) {
+        this._ss = value;
+        this.atoms.forEach( function( a ){
+            a.ss = value;
+        } );
+    },
+
+    nextAtomIndex: function(){
+
+        this.atomCount += 1;
+        return this.chain.nextAtomIndex();
+
+    },
+
+    addAtom: function(){
+
+        var a = new NGL.Atom( this );
+        a.index = this.nextAtomIndex();
+        this.atoms.push( a );
+        return a;
+
+    },
+
+    eachAtom: function( callback, selection ){
+
+        if( selection ){
+
+            var test = selection.test;
+
+            this.atoms.forEach( function( a ){
+
+                if( test( a ) ) callback( a );
+
+            } );
+
+        }else{
+
+            this.atoms.forEach( callback );
+
+        }
+
+    },
+
+    /*everyAtom: function( callback ){
+
+        this.atoms.every( callback );
+
+    },
+
+    someAtom: function( callback ){
+
+        this.atoms.some( callback );
+
+    },*/
+
+    atomPosition: function( selection ){
+
+        return NGL.Structure.prototype.atomPosition.call( this, selection );
+
+    },
+
+    atomColor: function( selection ){
+
+        return NGL.Structure.prototype.atomColor.call( this, selection );
+
+    }
+
+};
+
+
+NGL.Atom = function( residue ){
+
+    this.residue = residue;
+
+}
+
+NGL.Atom.prototype = {
+
+    index: undefined,
+    atomno: undefined,
+    resname: undefined,
+    x: undefined,
+    y: undefined,
+    z: undefined,
+    element: undefined,
+    chainname: undefined,
+    chainindex: undefined,
+    resno: undefined,
+    resindex: undefined,
+    serial: undefined,
+    ss: undefined,
+    color: undefined,
+    vdw: undefined,
+    covalent: undefined,
+    hetero: undefined,
+    bfactor: undefined,
+    bonds: undefined,
+    altloc: undefined,
+    atomname: undefined
+
+}
+
 
 /**
  * An object fro representing a PDB file.
@@ -438,6 +776,8 @@ NGL.PdbStructure.prototype.parse = function( str ){
     var c = m.addChain();
     var r = c.addResidue();
 
+    var chainDict = {};
+
     var a, currentChainname, currentResno;
 
     for( i = 0; i < lines.length; i++ ){
@@ -460,6 +800,8 @@ NGL.PdbStructure.prototype.parse = function( str ){
             if( !a ){
 
                 c.chainname = chainname;
+                chainDict[ chainname ] = c;
+
                 r.resno = resno;
                 r.resname = resname;
 
@@ -468,12 +810,20 @@ NGL.PdbStructure.prototype.parse = function( str ){
 
             }
 
-            // FIXME chain hetero atoms are not consecutive
-            //       use a dict of seen chainnames
             if( currentChainname!==chainname ){
 
-                c = m.addChain();
-                c.chainname = chainname;
+                if( !chainDict[ chainname ] ){
+
+                    c = m.addChain();
+                    c.chainname = chainname;
+
+                    chainDict[ chainname ] = c;
+
+                }else{
+
+                    c = chainDict[ chainname ];
+
+                }
 
             }
 
@@ -593,11 +943,12 @@ NGL.PdbStructure.prototype.parse = function( str ){
 
     console.timeEnd( "NGL.PdbStructure.parse" );
 
+    console.log( this );
+
     this.atomSet = new NGL.AtomSet( atoms );
     this.bondSet = new NGL.BondSet( this.atomSet, bonds );
 
 };
-
 
 
 /**
@@ -673,164 +1024,12 @@ NGL.GroStructure.prototype.parse = function( str ){
 };
 
 
-
-NGL.Model = function( structure ){
-
-    this.structure = structure;
-    this.chains = [];
-
-};
-
-NGL.Model.prototype = {
-
-    modelno: undefined,
-
-    addChain: function(){
-
-        var c = new NGL.Chain( this );
-        c.index = this.structure.nextChainIndex();
-        this.chains.push( c );
-        return c;
-
-    },
-
-    eachAtom: function( callback ){
-
-        this.chains.forEach( function( c ){
-            c.eachAtom( callback );
-        } );
-
-    },
-
-    eachChain: function( callback ){
-
-        this.chains.forEach( callback );
-
-    },
-
-};
-
-
-NGL.Chain = function( model ){
-
-    this.model = model;
-    this.residues = [];
-
-};
-
-NGL.Chain.prototype = {
-
-    chainname: undefined,
-
-    addResidue: function(){
-
-        var r = new NGL.Residue( this );
-        r.index = this.model.structure.nextResidueIndex();
-        this.residues.push( r );
-        return r;
-
-    },
-
-    eachAtom: function( callback ){
-
-        this.residues.forEach( function( r ){
-            r.eachAtom( callback );
-        } );
-
-    },
-
-};
-
-NGL.Residue = function( chain ){
-
-    this.chain = chain;
-    this.atoms = [];
-
-};
-
-NGL.Residue.prototype = {
-
-    resno: undefined,
-    resname: undefined,
-
-    _ss: undefined,
-    get ss () {
-        return this._ss;
-    },
-    set ss ( value ) {
-        this._ss = value;
-        this.atoms.forEach( function( a ){
-            a.ss = value;
-        } );
-    },
-
-    addAtom: function(){
-
-        var a = new NGL.Atom( this );
-        a.index = this.chain.model.structure.nextAtomIndex();
-        this.atoms.push( a );
-        return a;
-
-    },
-
-    eachAtom: function( callback ){
-
-        this.atoms.forEach( callback );
-
-    },
-
-    everyAtom: function( callback ){
-
-        this.atoms.every( callback );
-
-    },
-
-    someAtom: function( callback ){
-
-        this.atoms.some( callback );
-
-    },
-
-};
-
-
-NGL.Atom = function( residue ){
-
-    this.residue = residue;
-
-}
-
-NGL.Atom.prototype = {
-
-    index: undefined,
-    atomno: undefined,
-    resname: undefined,
-    x: undefined,
-    y: undefined,
-    z: undefined,
-    element: undefined,
-    chainname: undefined,
-    chainindex: undefined,
-    resno: undefined,
-    resindex: undefined,
-    serial: undefined,
-    ss: undefined,
-    color: undefined,
-    vdw: undefined,
-    covalent: undefined,
-    hetero: undefined,
-    bfactor: undefined,
-    bonds: undefined,
-    altloc: undefined,
-    atomname: undefined
-
-}
-
-
 ////////
 // Set
 
 NGL.AtomSet = function( atoms ){
+
+    console.warn( "AtomSet - To be removed" );
 
     this.atoms = atoms;
     this.size = this.atoms.length;
@@ -848,6 +1047,8 @@ NGL.AtomSet.prototype = {
     constructor: NGL.AtomSet,
 
     setPosition: function( position ){
+
+        console.warn( "AtomSet.setPosition - To be removed" );
 
         if( this.position.length!==position.length ){
             console.error( "NGL.AtomSet.setPosition: length differ" );
@@ -876,6 +1077,8 @@ NGL.AtomSet.prototype = {
 
     makePosition: function(){
 
+        console.warn( "AtomSet.makePosition - To be removed" );
+
         var na = this.size;
         var atoms = this.atoms;
         var position = this.position;
@@ -903,6 +1106,8 @@ NGL.AtomSet.prototype = {
      */
     computeCenter: function(){
 
+        console.warn( "AtomSet.computeCenter - To be removed" );
+
         var box = new THREE.Box3();
         var vector = new THREE.Vector3();
 
@@ -927,6 +1132,8 @@ NGL.AtomSet.prototype = {
     }(),
 
     getColor: function(){
+
+        console.warn( "AtomSet.getColor - To be removed" );
 
         var na = this.size;
         var atoms = this.atoms;
@@ -955,6 +1162,8 @@ NGL.AtomSet.prototype = {
     },
 
     getRadius: function( size, scale ){
+
+        console.warn( "AtomSet.getRadius - To be removed" );
 
         if( !size ) size = null;
         if( !scale ) scale = null;
@@ -1260,7 +1469,7 @@ NGL.Selection = function( selection ){
 
     }
 
-    this.size = this.selection.length;
+    this.test = this.makeTest();
 
 };
 
@@ -1314,7 +1523,7 @@ NGL.Selection.prototype = {
                     c[0]!==":" && c[0]!=="." &&
                     isNaN( parseInt( c ) ) ){
 
-                sele.resn = c.toUpperCase();
+                sele.resname = c.toUpperCase();
                 selection.push( sele );
                 continue;
             }
@@ -1325,7 +1534,7 @@ NGL.Selection.prototype = {
                     console.error( "atomname must be one to four characters" );
                     continue;
                 }
-                sele.atom = atomname[1].substring( 0, 4 ).toUpperCase();
+                sele.atomname = atomname[1].substring( 0, 4 ).toUpperCase();
             }
 
             chain = atomname[0].split(":");
@@ -1334,15 +1543,15 @@ NGL.Selection.prototype = {
                     console.error( "chain identifier must be one character" );
                     continue;
                 }
-                sele.chain = chain[1][0].toUpperCase();
+                sele.chainname = chain[1][0].toUpperCase();
             }
 
             if( chain[0] ){
                 resi = chain[0].split("-");
                 if( resi.length===1 ){
-                    sele.resi = parseInt( resi[0] );
+                    sele.resno = parseInt( resi[0] );
                 }else if( resi.length===2 ){
-                    sele.resi = [ parseInt( resi[0] ), parseInt( resi[1] ) ];
+                    sele.resno = [ parseInt( resi[0] ), parseInt( resi[1] ) ];
                 }else{
                     console.error( "resi range must contain one '-'" );
                     continue;
@@ -1353,15 +1562,13 @@ NGL.Selection.prototype = {
 
         }
 
-        console.log( str, selection );
-
         this.selection = selection;
 
     },
 
     makeTest: function(){
 
-        var n = this.size;
+        var n = this.selection.length;
         var selection = this.selection;
         var negate = this.negate;
 
@@ -1377,8 +1584,6 @@ NGL.Selection.prototype = {
 
         return function( a ){
 
-
-
             for( i=0; i<n; ++i ){
 
                 s = selection[ i ];
@@ -1386,21 +1591,21 @@ NGL.Selection.prototype = {
                 if( typeof s === "string" ){
 
                     if( s==="ALL" ) return t;
-                    if( s==="HETERO" && a.hetflag===true ) return t;
+                    if( s==="HETERO" && a.hetero===true ) return t;
 
                     return f;
 
                 }
 
-                if( s.resn!==undefined && s.resn!==a.resn ) continue;
-                if( s.chain!==undefined && s.chain!==a.chain ) continue;
-                if( s.atom!==undefined && s.atom!==a.atom ) continue;
+                if( s.resname!==undefined && s.resname!==a.resname ) continue;
+                if( s.chainname!==undefined && s.chainname!==a.chainname ) continue;
+                if( s.atomname!==undefined && s.atomname!==a.atomname ) continue;
 
-                if( s.resi!==undefined ){
-                    if( Array.isArray( s.resi ) && s.resi.length===2 ){
-                        if( s.resi[0]>a.resi || s.resi[1]<a.resi ) continue;
+                if( s.resno!==undefined ){
+                    if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                        if( s.resno[0]>a.resno || s.resno[1]<a.resno ) continue;
                     }else{
-                        if( s.resi!==a.resi ) continue;
+                        if( s.resno!==a.resno ) continue;
                     }
                 }
 

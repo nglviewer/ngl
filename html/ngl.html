@@ -158,7 +158,7 @@
 
                 }.bind( this ) );
                 file.add( this, 'pdbId' ).listen().onFinishChange( function( value ){
-                    
+
                     if( value.length!==4 ) return;
 
                     this.pdbId = "";
@@ -186,7 +186,7 @@
 
                 // testing primitives
                 var test = this.gui.addFolder( 'Test' );
-                test.add( this, 'count', [ 
+                test.add( this, 'count', [
                     1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000,
                     100000, 200000, 500000, 1000000, 2000000
                 ]);
@@ -251,12 +251,13 @@
                 addFile: function( path ){
 
                     NGL.autoLoad( path, this.viewer, function( o ){
-                        
+
                         if( o instanceof NGL.Structure ){
 
                             // o.add( "backbone" );
                             // o.add( "ribbon" );
-                            o.add( "trace" );
+                            // o.add( "trace" );
+                            o.add( "ball+stick" );
                             o.center();
 
                         }
@@ -294,10 +295,10 @@
                     },
                     'EllipticBezierImpostor': function(){
                         var bd = makeBezierData( count, size );
-                        new NGL.EllipticBezierImpostorBuffer( 
+                        new NGL.EllipticBezierImpostorBuffer(
                             bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 3
                         );
-                        
+
                         // new NGL.BezierImpostorBuffer( bd.p0, bd.p1, bd.p2, bd.color, bd.radius, 2 );
 
                         new NGL.SphereImpostorBuffer( bd.p0, bd.color, bd.radius );
@@ -310,11 +311,11 @@
                     },
                     'HelixImpostor': function(){
                         var hd = makeHelixData( count, size );
-                        new NGL.HelixImpostorBuffer( 
+                        new NGL.HelixImpostorBuffer(
                             hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
                         );
 
-                        // new NGL.CylinderImpostorBuffer( 
+                        // new NGL.CylinderImpostorBuffer(
                         //     hd.from, hd.to, hd.color, hd.color, hd.radius
                         // );
 
@@ -327,11 +328,11 @@
                     },
                     'HelixImpostor2': function(){
                         var hd = makeHelixData( count, size );
-                        new NGL.HelixImpostorBuffer2( 
+                        new NGL.HelixImpostorBuffer2(
                             hd.from, hd.to, hd.vFrom, hd.color, hd.color, hd.radius
                         );
 
-                        // new NGL.CylinderImpostorBuffer( 
+                        // new NGL.CylinderImpostorBuffer(
                         //     hd.from, hd.to, hd.color, hd.color, hd.radius
                         // );
 
@@ -360,10 +361,10 @@
                         new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
                     },
                     'CylinderImpostor': function(){
-                        viewer.add( new NGL.CylinderImpostorBuffer( 
+                        viewer.add( new NGL.CylinderImpostorBuffer(
                             c1.from, c1.to, c1.color, c1.color, c1.radius
                         ) );
-                        // viewer.add( new NGL.CylinderBoxImpostorBuffer( 
+                        // viewer.add( new NGL.CylinderBoxImpostorBuffer(
                         //     c1.from, c1.to, c1.color, c1.color, c1.radius
                         // ) );
                     },
@@ -373,7 +374,7 @@
                     'QuadricImpostor': function(){
                         var qlist = [
                             // "EllipsoidImpostorBuffer", "HyperboloidOneImpostorBuffer",
-                            // "HyperboloidTwoImpostorBuffer", 
+                            // "HyperboloidTwoImpostorBuffer",
                             "ConeImpostorBuffer",
                             // "EllipticCylinderImpostorBuffer"
                         ]
@@ -385,14 +386,14 @@
                         for( var i = 0; i < count; i++ ){
                             r1[ i ] = size / 3.0;
                         }
-                        
+
                         for( var i = 0; i < n; ++i ){
                             qd = makeQuadricData( count, m );
                             new NGL.SphereImpostorBuffer( qd.xpos, qd.color, r1 );
                             new NGL.SphereImpostorBuffer( qd.ypos, qd.color, r1 );
                             new NGL.SphereImpostorBuffer( qd.zpos, qd.color, r1 );
                             new NGL.SphereImpostorBuffer( qd.position, qd.color, r1 );
-                            new NGL[ qlist[i] ]( 
+                            new NGL[ qlist[i] ](
                                 qd.position, qd.xdir, qd.ydir, qd.zdir, qd.color
                             );
                         }
@@ -420,7 +421,7 @@
                     'SceneImpostor': function(){
                         new NGL.SphereImpostorBuffer( c1.from, c1.color, r1 );
                         new NGL.SphereImpostorBuffer( c1.to, c1.color, c1.radius );
-                        new NGL.CylinderImpostorBuffer( 
+                        new NGL.CylinderImpostorBuffer(
                             c1.from, c1.to, c1.color, c1.color, c1.radius, true
                         );
                         new NGL.HaloBuffer( c1.from, r1 );
@@ -433,7 +434,7 @@
                     'Scene': function(){
                         new NGL.SphereGroup( c1.from, c1.color, r1 );
                         new NGL.SphereGroup( c1.to, c1.color, r1 );
-                        new NGL.CylinderGroup( 
+                        new NGL.CylinderGroup(
                             c1.from, c1.to, c1.color, c1.radius
                         );
                         new NGL.HaloBuffer( c1.from, r1 );
@@ -442,7 +443,7 @@
                     'SceneSimple': function(){
                         new NGL.PointBuffer( c1.from, c1.color, size );
                         new NGL.PointBuffer( c1.to, c1.color, size );
-                        new NGL.LineBuffer( 
+                        new NGL.LineBuffer(
                             c1.from, c1.to, c1.color, c1.color, c1.radius
                         );
                         new NGL.HaloBuffer( c1.from, r1, true );
@@ -451,7 +452,7 @@
                     'SceneSprite': function(){
                         new NGL.ParticleSpriteBuffer( c1.from, c1.color, r1 );
                         new NGL.ParticleSpriteBuffer( c1.to, c1.color, r1 );
-                        new NGL.LineSpriteBuffer( 
+                        new NGL.LineSpriteBuffer(
                             c1.from, c1.to, c1.color, c1.color, c1.radius
                         );
                         new NGL.HaloBuffer( c1.from, r1, true );
@@ -657,7 +658,7 @@
                 var color = new Float32Array( n3 );
                 var from = new Float32Array( n3 );
                 var to = new Float32Array( n3 );
-                
+
                 var vFrom = new Float32Array( n3 );
                 var vTo = new Float32Array( n3 );
                 var pFrom = new Float32Array( n3 );
