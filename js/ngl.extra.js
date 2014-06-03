@@ -268,15 +268,10 @@ NGL.Representation = function( structure, sele ){
 
     this.viewer = structure.viewer;
 
-    this.atomSet = structure.atomSet;
+    this.selection = new NGL.Selection( sele );
+
+    this.atomSet = new NGL.AtomSet( structure, this.selection );
     this.bondSet = structure.bondSet;
-
-    if( sele ){
-
-        this.selection = new NGL.Selection( sele );
-        this.applySelection();
-
-    }
 
     this.create();
     this.finalize();
@@ -289,29 +284,11 @@ NGL.Representation.prototype = {
 
     name: "",
 
-    applySelection: function(){
+    applySelection: function( sele ){
 
-        var na = this.structure.atomSet.size;
-        var atoms = this.structure.atomSet.atoms;
+        this.selection = new NGL.Selection( sele );
 
-        var selectionTest = this.selection.makeTest();
-
-        var selectionAtoms = [];
-
-        var a;
-
-        for( var i = 0; i < na; ++i ){
-
-            a = atoms[ i ];
-
-            if( selectionTest( a ) ) selectionAtoms.push( a );
-
-        }
-
-        // TODO filter bonds instead of re-calculationg
-
-        this.atomSet = new NGL.AtomSet( selectionAtoms );
-        this.bondSet = new NGL.BondSet( this.atomSet );
+        this.atomSet.setSelection( this.selection );
 
     },
 
@@ -401,8 +378,7 @@ NGL.Representation.prototype = {
             if( sele===oldSele ) return;
             oldSele = sele;
 
-            this.selection = new NGL.Selection( sele );
-            this.applySelection();
+            this.applySelection( sele );
 
             viewer = this.viewer;
 
@@ -438,9 +414,9 @@ NGL.SpacefillRepresentation.prototype.name = "spacefill";
 NGL.SpacefillRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
-        this.structure.atomPosition( this.selection ),
-        this.structure.atomColor( this.selection ),
-        this.structure.atomRadius( this.selection, null, this.scale )
+        this.atomSet.atomPosition(),
+        this.atomSet.atomColor(),
+        this.atomSet.atomRadius( null, null, this.scale )
     );
 
     this.bufferList = [ this.sphereBuffer ];
@@ -452,7 +428,7 @@ NGL.SpacefillRepresentation.prototype.update = function(){
     NGL.Representation.prototype.update.call( this );
 
     this.sphereBuffer.setAttributes({
-        position: this.structure.atomPosition( this.selection )
+        position: this.atomSet.atomPosition()
     });
 
 };
