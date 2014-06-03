@@ -401,6 +401,36 @@ NGL.Utils = {
 
         return repArr;
 
+    },
+
+    calculateMeanArray: function( array1, array2 ){
+
+        var n = array1.length;
+        var mean = new Float32Array( n );
+
+        for( var i = 0; i < n; i++ ){
+
+            mean[ i ] = ( array1[ i ] + array2[ i ] ) / 2.0;
+
+        }
+
+        return mean;
+
+    },
+
+    calculateMinArray: function( array1, array2 ){
+
+        var n = array1.length;
+        var mean = new Float32Array( n );
+
+        for( var i = 0; i < n; i++ ){
+
+            mean[ i ] = Math.min( array1[ i ],  array2[ i ] );
+
+        }
+
+        return mean;
+
     }
 
 };
@@ -1371,12 +1401,12 @@ NGL.Buffer = function () {
         "position": { type: "v3", value: null },
         "color": { type: "c", value: null },
     });
-    
+
     this.uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
     ]);
-    
+
 }
 
 NGL.Buffer.prototype = {
@@ -2396,6 +2426,26 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius ){
 }
 
 
+NGL.HyperballStickBuffer = function( from, to, color1, color2, radius1, radius2, shrink ){
+
+    if( NGL.disableImpostor ){
+
+        return new NGL.CylinderGeometryBuffer(
+            from, to, color1, color2,
+            NGL.Utils.calculateMinArray( radius1, radius2 )
+        );
+
+    }else{
+
+        return new NGL.HyperballStickImpostorBuffer(
+            from, to, color1, color2, radius1, radius2, shrink
+        );
+
+    }
+
+}
+
+
 ////////////////
 // Text & Font
 
@@ -2565,16 +2615,16 @@ NGL.TextBuffer = function ( position, size, text ) {
 
 NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
-NGL.TextBuffer.prototype.setAttributes = function( data ){ 
-    
+NGL.TextBuffer.prototype.setAttributes = function( data ){
+
     // TODO implement; move code from contructor here
 
     // NGL.QuadBuffer.prototype.setAttributes.call( this, data );
 
 }
 
-NGL.TextBuffer.prototype.makeMapping = function(){ 
-    
+NGL.TextBuffer.prototype.makeMapping = function(){
+
     // mapping done in the contructor
 
 }

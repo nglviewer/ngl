@@ -45,7 +45,7 @@ NGL.initSurface = function( object, viewer, name ){
         geo = object.children[0].geometry;
 
     }
-    
+
     var position = NGL.Utils.positionFromGeometry( geo );
     var color = NGL.Utils.colorFromGeometry( geo );
     var index = NGL.Utils.indexFromGeometry( geo );
@@ -224,7 +224,7 @@ NGL.autoLoad = function(){
         var loader = new loaders[ ext ];
 
         if( !loader ){
-        
+
             console.error( "NGL.autoLoading: ext '" + ext + "' unknown" );
             return null;
 
@@ -241,8 +241,8 @@ NGL.autoLoad = function(){
         if( file instanceof File ){
 
             name = file.name;
-            
-            var fileLoader = new NGL.FileLoader();            
+
+            var fileLoader = new NGL.FileLoader();
             fileLoader.load( file, init )
 
         }else{
@@ -295,7 +295,7 @@ NGL.Representation.prototype = {
         var atoms = this.structure.atomSet.atoms;
 
         var selectionTest = this.selection.makeTest();
-        
+
         var selectionAtoms = [];
 
         var a;
@@ -339,7 +339,7 @@ NGL.Representation.prototype = {
     },
 
     attach: function(){
-        
+
         var viewer = this.viewer;
 
         this.bufferList.forEach( function( buffer ){
@@ -451,8 +451,8 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    this.sphereBuffer.setAttributes({ 
-        position: this.atomSet.position 
+    this.sphereBuffer.setAttributes({
+        position: this.atomSet.position
     });
 
 };
@@ -492,7 +492,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
 };
 
 NGL.BallAndStickRepresentation.prototype.update = function(){
-    
+
     NGL.Representation.prototype.update.call( this );
 
     if( this.selection ){
@@ -501,12 +501,12 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 
     }
 
-    this.sphereBuffer.setAttributes({ 
-        position: this.atomSet.position 
+    this.sphereBuffer.setAttributes({
+        position: this.atomSet.position
     });
 
-    this.cylinderBuffer.setAttributes({ 
-        position: NGL.Utils.calculateCenterArray( 
+    this.cylinderBuffer.setAttributes({
+        position: NGL.Utils.calculateCenterArray(
             this.bondSet.from, this.bondSet.to
         ),
         position1: this.bondSet.from,
@@ -611,7 +611,7 @@ NGL.HyperballRepresentation.prototype.create = function(){
         this.atomSet.getRadius( null, this.scale )
     );
 
-    this.cylinderBuffer = new NGL.HyperballStickImpostorBuffer(
+    this.cylinderBuffer = new NGL.HyperballStickBuffer(
         this.bondSet.from,
         this.bondSet.to,
         this.bondSet.getColor( 0 ),
@@ -672,12 +672,12 @@ NGL.BackboneRepresentation.prototype.update = function(){
 
     this.makeBackboneSets();
 
-    this.sphereBuffer.setAttributes({ 
-        position: this.backboneAtomSet.position 
+    this.sphereBuffer.setAttributes({
+        position: this.backboneAtomSet.position
     });
 
-    this.cylinderBuffer.setAttributes({ 
-        position: NGL.Utils.calculateCenterArray( 
+    this.cylinderBuffer.setAttributes({
+        position: NGL.Utils.calculateCenterArray(
             this.backboneBondSet.from, this.backboneBondSet.to
         ),
         position1: this.backboneBondSet.from,
@@ -733,7 +733,7 @@ NGL.TubeRepresentation.prototype.create = function(){
         this.backboneAtomSet.position,
         this.backboneAtomSet.getColor(),
         this.backboneAtomSet.getRadius( this.size, null ),
-        3  
+        3
     );
 
     this.bufferList = [ this.tubebuffer2 ];
@@ -859,7 +859,7 @@ NGL.TraceRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( pos );
         var subPos = spline.getSubdividedPosition( sub );
         var subCol = NGL.Utils.replicateArray3Entries(
-            // NGL.Utils.randomColorArray( pos.length / 3 ), 
+            // NGL.Utils.randomColorArray( pos.length / 3 ),
             col,
             sub
         );
@@ -877,15 +877,6 @@ NGL.TraceRepresentation.prototype.update = function(){
     NGL.Representation.prototype.update.call( this );
 
     // TODO
-
-};
-
-NGL.TraceRepresentation.prototype.makeBackboneSets = function(){
-
-    var backbone = NGL.makeBackboneSets( this.atomSet );
-
-    this.backboneAtomSet = backbone.atomSet;
-    this.backboneBondSet = backbone.bondSet;
 
 };
 
@@ -912,8 +903,8 @@ NGL.Spline.prototype = {
         var v1 = ( p3 - p1 ) * tension;
         var t2 = t * t;
         var t3 = t * t2;
-        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + 
-               ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + 
+        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+               ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
                v0 * t + p1;
 
     },
