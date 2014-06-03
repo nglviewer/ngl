@@ -50,6 +50,10 @@ Ideas
   * http://www.html5rocks.com/en/tutorials/webrtc/datachannels/
 * Backface hitting - use to fill objects when clipped?
 
+* Sele for trajectory by supplying a list of indices
+* Fit trajectory by supplying a list of indices
+* Calculate simulation time
+
 
 Todo
 ====
