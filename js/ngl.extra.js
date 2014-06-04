@@ -450,17 +450,17 @@ NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
 NGL.BallAndStickRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
-        this.structure.atomPosition( this.selection ),
-        this.structure.atomColor( this.selection ),
-        this.structure.atomRadius( this.selection, null, this.sphereScale )
+        this.atomSet.atomPosition(),
+        this.atomSet.atomColor(),
+        this.atomSet.atomRadius( null, null, this.sphereScale )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
-        this.bondSet.from,
-        this.bondSet.to,
-        this.bondSet.getColor( 0 ),
-        this.bondSet.getColor( 1 ),
-        this.bondSet.getRadius( null, this.cylinderSize, null )
+        this.atomSet.bondPosition( null, 0 ),
+        this.atomSet.bondPosition( null, 1 ),
+        this.atomSet.bondColor( null, 0 ),
+        this.atomSet.bondColor( null, 1 ),
+        this.atomSet.bondRadius( null, null, this.cylinderSize, null )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -507,17 +507,17 @@ NGL.LicoriceRepresentation.prototype.name = "licorice";
 NGL.LicoriceRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
-        this.atomSet.position,
-        this.atomSet.getColor(),
-        this.atomSet.getRadius( this.size, null )
+        this.atomSet.atomPosition(),
+        this.atomSet.atomColor(),
+        this.atomSet.atomRadius( null, this.size, null )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
-        this.bondSet.from,
-        this.bondSet.to,
-        this.bondSet.getColor( 0 ),
-        this.bondSet.getColor( 1 ),
-        this.bondSet.getRadius( null, this.size, null )
+        this.atomSet.bondPosition( null, 0 ),
+        this.atomSet.bondPosition( null, 1 ),
+        this.atomSet.bondColor( null, 0 ),
+        this.atomSet.bondColor( null, 1 ),
+        this.atomSet.bondRadius( null, null, this.size, null )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -544,10 +544,10 @@ NGL.LineRepresentation.prototype.name = "line";
 NGL.LineRepresentation.prototype.create = function(){
 
     this.lineBuffer = new NGL.LineBuffer(
-        this.bondSet.from,
-        this.bondSet.to,
-        this.bondSet.getColor( 0 ),
-        this.bondSet.getColor( 1 )
+        this.atomSet.bondPosition( null, 0 ),
+        this.atomSet.bondPosition( null, 1 ),
+        this.atomSet.bondColor( null, 0 ),
+        this.atomSet.bondColor( null, 1 )
     );
 
     this.bufferList = [ this.lineBuffer ];
@@ -582,18 +582,18 @@ NGL.HyperballRepresentation.prototype.name = "hyperball";
 NGL.HyperballRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
-        this.atomSet.position,
-        this.atomSet.getColor(),
-        this.atomSet.getRadius( null, this.scale )
+        this.atomSet.atomPosition(),
+        this.atomSet.atomColor(),
+        this.atomSet.atomRadius( null, null, this.scale )
     );
 
     this.cylinderBuffer = new NGL.HyperballStickBuffer(
-        this.bondSet.from,
-        this.bondSet.to,
-        this.bondSet.getColor( 0 ),
-        this.bondSet.getColor( 1 ),
-        this.bondSet.getRadius( 0, null, this.scale ),
-        this.bondSet.getRadius( 1, null, this.scale ),
+        this.atomSet.bondPosition( null, 0 ),
+        this.atomSet.bondPosition( null, 1 ),
+        this.atomSet.bondColor( null, 0 ),
+        this.atomSet.bondColor( null, 1 ),
+        this.atomSet.bondRadius( null, 0, this.cylinderSize, this.scale ),
+        this.atomSet.bondRadius( null, 1, this.cylinderSize, this.scale ),
         this.shrink
     );
 
