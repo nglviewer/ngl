@@ -319,6 +319,147 @@ NGL.AtomSet.prototype = {
 
     }(),
 
+    eachBond: function( callback, selection ){
+
+        if( selection ){
+
+            var test = selection.test;
+
+            this.atoms.forEach( function( a ){
+
+                if( test( a ) ){
+
+                    a.bonds.forEach( function( b ){
+
+                        if( b.atom1 === a && test( b.atom2 ) ){
+
+                            callback( b );
+
+                        }else if( b.atom2 === a && test( b.atom2 ) ){
+
+                            callback( b );
+
+                        }
+
+                    } );
+
+                }
+
+            } );
+
+        }else{
+
+            this.atoms.forEach( function( a ){
+
+                a.bonds.forEach( function( b ){
+
+                    callback( b );
+
+                } );
+
+            } );
+
+        }
+
+    },
+
+    bondPosition: function( selection, fromTo ){
+
+        var i = 0;
+        var position = [];
+
+        this.eachBond( function( b ){
+
+            if( fromTo ){
+
+                position[ i + 0 ] = b.atom1.x;
+                position[ i + 1 ] = b.atom1.y;
+                position[ i + 2 ] = b.atom1.z;
+
+            }else{
+
+                position[ i + 0 ] = b.atom2.x;
+                position[ i + 1 ] = b.atom2.y;
+                position[ i + 2 ] = b.atom2.z;
+
+            }
+
+            i += 3;
+
+        }, selection );
+
+        return new Float32Array( position );
+
+    },
+
+    bondColor: function( selection, fromTo ){
+
+        var i = 0;
+        var color = [];
+
+        var c;
+        var elemColors = NGL.ElementColors;
+
+        this.eachBond( function( b ){
+
+            if( fromTo ){
+
+                c = elemColors[ b.atom1.element ];
+                if( !c ) c = 0xCCCCCC;
+
+            }else{
+
+                c = elemColors[ b.atom2.element ];
+                if( !c ) c = 0xCCCCCC;
+
+            }
+
+            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+            color[ i + 2 ] = ( c & 255 ) / 255;
+
+            i += 3;
+
+        }, selection );
+
+        return new Float32Array( color );
+
+    },
+
+    bondRadius: function( selection, fromTo, size, scale ){
+
+        var i = 0;
+        var radius = [];
+
+        var r;
+        var vdwRadii = NGL.VdwRadii;
+
+        this.eachBond( function( b ){
+
+            if( size ){
+
+                radius[ i ] = size;
+
+            }else{
+
+                if( fromTo ){
+                    r = vdwRadii[ b.atom1.element ];
+                }else{
+                    r = vdwRadii[ b.atom2.element ];
+                }
+
+                radius[ i ] = ( r ? r : 1.5 ) * scale;
+
+            }
+
+            i += 1;
+
+        }, selection );
+
+        return new Float32Array( radius );
+
+    },
+
     setPosition: function( position ){
 
         console.warn( "AtomSet.setPosition - To be removed" );
@@ -432,6 +573,38 @@ NGL.AtomSet.prototype = {
         }
 
         return radius;
+
+    }
+
+};
+
+
+/////////
+// Bond
+
+NGL.Bond = function( atomA, atomB, bondOrder ){
+
+    if( atomA.index < atomB.index ){
+        this.atom1 = atomA;
+        this.atom2 = atomB;
+    }else{
+        this.atom1 = atomB;
+        this.atom2 = atomA;
+    }
+    
+    this.bondOrder = 1;
+
+};
+
+NGL.Bond.prototype = {
+
+    atom1: undefined,
+    atom2: undefined,
+    bondOrder: undefined,
+
+    qualifiedName: function(){
+
+        return this.atom1.index + "=" + this.atom2.index;
 
     }
 
@@ -975,6 +1148,9 @@ NGL.PdbStructure.prototype.parse = function( str ){
     var r = c.addResidue();
 
     var chainDict = {};
+    var serialDict = {};
+    var bondDict = {};
+    var idx = 0;
 
     var a, currentChainname, currentResno;
 
@@ -1037,6 +1213,8 @@ NGL.PdbStructure.prototype.parse = function( str ){
 
             a = r.addAtom();
 
+            serialDict[ serial ] = a;
+
             a.resname = resname;
             a.x = parseFloat( line.substr( 30, 8 ) );
             a.y = parseFloat( line.substr( 38, 8 ) );
@@ -1056,20 +1234,36 @@ NGL.PdbStructure.prototype.parse = function( str ){
             a.covalent = covRadii[ elem ];
 
             atoms.push( a );
+            idx += 1;
 
             currentChainname = chainname;
             currentResno = resno;
 
         }else if( recordName == 'CONECT' ){
 
-            var from = parseInt( line.substr( 6, 5 ) );
+            var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
             var pos = [ 11, 16, 21, 26 ];
-            var to;
 
             for (var j = 0; j < 4; j++) {
 
-                var to = parseInt( line.substr( pos[ j ], 5 ) );
-                if( isNaN( to ) ) continue;
+                var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
+                if( to === undefined ) continue;
+
+                var b = new NGL.Bond( from, to );
+                var qn = b.qualifiedName();
+
+                if( bondDict[ qn ] ){
+
+                    console.log( "bond already known" );
+
+                }else{
+
+                    from.bonds.push( b );
+                    to.bonds.push( b );
+                    bonds.push( b );
+                    bondDict[ qn ] = b;
+
+                }
 
                 // TODO: broken
                 //bonds.push([ from-2, to-2 ]);
@@ -1141,9 +1335,66 @@ NGL.PdbStructure.prototype.parse = function( str ){
 
     console.timeEnd( "NGL.PdbStructure.parse" );
 
+    function isConnected( atom1, atom2 ){
+
+        if( atom1.hetero && atom2.hetero ) return 0;
+
+        var distSquared = ( atom1.x - atom2.x ) * ( atom1.x - atom2.x ) +
+                          ( atom1.y - atom2.y ) * ( atom1.y - atom2.y ) +
+                          ( atom1.z - atom2.z ) * ( atom1.z - atom2.z );
+
+        if( isNaN( distSquared ) ) return 0;
+        if( distSquared < 0.5 ) return 0; // duplicate or altloc
+
+        var d = atom1.covalent + atom2.covalent + 0.3;
+        return distSquared < ( d * d );
+
+    }
+
+    console.time( "NGL.BondSet.calculateBonds" );
+
+    var i, j;
+
+    for( i = 0; i < nAtoms; i++ ){
+
+        a1 = atoms[ i ];
+
+        for (j = i + 1; j < i + 30 && j < nAtoms; j++ ){
+
+            a2 = atoms[ j ];
+
+            if( isConnected( a1, a2 ) ){
+
+                var b = new NGL.Bond( a1, a2 );
+                var qn = b.qualifiedName();
+
+                if( bondDict[ qn ] ){
+
+                    console.log( "bond already known" );
+
+                }else{
+
+                    a1.bonds.push( b );
+                    a2.bonds.push( b );
+                    bonds.push( b );
+                    bondDict[ qn ] = b;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    console.timeEnd( "NGL.BondSet.calculateBonds" );
+
+    this.bonds = bonds;
     this.center = this.atomCenter();
 
-    console.log( this );
+    // console.log( this );
+
+    // console.log( bonds )
 
     //this.bondSet = new NGL.BondSet( this.atomSet, bonds );
 
@@ -1614,6 +1865,8 @@ NGL.Selection.prototype = {
         var i, s;
 
         return function( a ){
+
+            if( selection.length === 0 ) return true;
 
             for( i=0; i<n; ++i ){
 
