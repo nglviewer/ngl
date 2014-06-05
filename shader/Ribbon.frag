@@ -20,9 +20,10 @@ void main() {
     #include light
 
     gl_FragColor = vec4( color, 1.0 );
-    //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+    // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
     gl_FragColor.xyz *= vLightFront;
-    //gl_FragColor.xyz = normalx;
+    // gl_FragColor.xyz = normalx;
+    // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
 
     #include fog
 }

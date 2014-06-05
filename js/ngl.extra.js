@@ -748,7 +748,103 @@ NGL.RibbonRepresentation.prototype.name = "ribbon";
 
 NGL.RibbonRepresentation.prototype.create = function(){
 
-    this.makeBackboneSets();
+    var bufferList = [];
+
+    var c, pos, col, caAtom, oAtom, prev, dot;
+    var elemColors = NGL.ElementColors;
+
+    var vPos = new THREE.Vector3();
+    var vC = new THREE.Vector3();
+    var vNorm = new THREE.Vector3();
+    var vDir = new THREE.Vector3();
+
+    var vPosPrev = new THREE.Vector3();
+    var vNormPrev = new THREE.Vector3();
+    var vDirPrev = new THREE.Vector3();
+
+    var selection = new NGL.Selection( ".CA .P" );
+
+    this.structure.eachChain( function( c ){
+
+        var subPos = [];
+        var subNorm = [];
+        var subDir = [];
+        var subCol = [];
+        var subSize = [];
+
+        prev = false;
+
+        c.eachResidue( function( r ){
+
+            caAtom = r.getAtomByName( "CA" );
+            cAtom = r.getAtomByName( "C" );
+            oAtom = r.getAtomByName( "O" );
+
+            if( !caAtom || !cAtom || !oAtom ){
+
+                prev = false;
+                return;
+
+            }
+
+            vPos.set( caAtom.x, caAtom.y, caAtom.z );
+            vC.set( cAtom.x, cAtom.y, cAtom.z );
+            vDir.set( oAtom.x, oAtom.y, oAtom.z ).sub( vC ).normalize();
+
+            // ensure the direction vector does not flip
+            if( vDir.dot( vDirPrev ) < 0 ) vDir.multiplyScalar( -1 );
+
+            vNorm.copy( vPos ).sub( vPosPrev ).cross( vDir ).normalize();
+
+            if( prev ){
+
+                // console.log( caAtom.resno )
+
+                subPos.push( caAtom.x );
+                subPos.push( caAtom.y );
+                subPos.push( caAtom.z );
+
+                subNorm.push( vNorm.x );
+                subNorm.push( vNorm.y );
+                subNorm.push( vNorm.z );
+
+                subDir.push( -vDir.x );
+                subDir.push( -vDir.y );
+                subDir.push( -vDir.z );
+
+                subCol.push( 1.0 );
+                subCol.push( 0.0 );
+                subCol.push( 0.0 );
+
+                subSize.push( 1.0 );
+
+            }
+
+            vPosPrev.copy( vPos );
+            vNormPrev.copy( vNorm );
+            vDirPrev.copy( vDir );
+
+            prev = true;
+
+        } );
+
+        bufferList.push(
+
+            new NGL.RibbonBuffer(
+                new Float32Array( subPos ),
+                new Float32Array( subNorm ),
+                new Float32Array( subDir ),
+                new Float32Array( subCol ),
+                new Float32Array( subSize )
+            )
+
+        );
+
+    } );
+
+    this.bufferList = bufferList;
+
+    /*this.makeBackboneSets();
 
     var pd = NGL.getPathData(
         this.backboneAtomSet.position,
@@ -765,7 +861,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
         pd.size
     );
 
-    this.bufferList = [ this.ribbonBuffer ];
+    this.bufferList = [ this.ribbonBuffer ];*/
 
 };
 
@@ -774,15 +870,6 @@ NGL.RibbonRepresentation.prototype.update = function(){
     NGL.Representation.prototype.update.call( this );
 
     // TODO
-
-};
-
-NGL.RibbonRepresentation.prototype.makeBackboneSets = function(){
-
-    var backbone = NGL.makeBackboneSets( this.atomSet );
-
-    this.backboneAtomSet = backbone.atomSet;
-    this.backboneBondSet = backbone.bondSet;
 
 };
 
@@ -801,29 +888,27 @@ NGL.TraceRepresentation.prototype.create = function(){
 
     var bufferList = [];
 
-    var c, pos, col;
+    var c, pos, col, set;
     var elemColors = NGL.ElementColors;
 
     var selection = new NGL.Selection( ".CA .P" );
 
     this.structure.eachChain( function( c ){
 
-        pos = c.atomPosition( selection );
-        col = c.atomColor( selection );
+        set = new NGL.AtomSet( c, selection );
+
+        pos = set.atomPosition();
+        col = set.atomColor();
 
         if( !pos || pos.length/3 < 4 ) return;
 
-        var sub = 10;
+        var subdiv = 10;
 
-        var spline = new NGL.Spline( pos );
-        var subPos = spline.getSubdividedPosition( sub );
-        var subCol = NGL.Utils.replicateArray3Entries(
-            // NGL.Utils.randomColorArray( pos.length / 3 ),
-            col,
-            sub
-        );
+        // var spline = new NGL.Spline( pos );
+        var spline = new NGL.Spline( set.atoms );
+        var sub = spline.getSubdividedPosition( subdiv );
 
-        bufferList.push( new NGL.TraceBuffer( subPos, subCol ) );
+        bufferList.push( new NGL.TraceBuffer( sub.pos, sub.col ) );
 
     } );
 
@@ -841,12 +926,12 @@ NGL.TraceRepresentation.prototype.update = function(){
 
 
 // Or better name it BioSpline?
-NGL.Spline = function( position ){
+NGL.Spline = function( atoms ){
 
-    this.position = position;
-    this.size = position.length / 3;
+    this.atoms = atoms;
+    this.size = atoms.length;
 
-    // FIXME handle less than two positions
+    // FIXME handle less than two atoms
 
 };
 
@@ -878,67 +963,99 @@ NGL.Spline.prototype = {
         var n23 = n2 * 3;
         var n33 = n3 * 3;
 
-        var pos = this.position;
+        var atoms = this.atoms;
         var interpolate = this.interpolate;
 
         var dt = 1.0 / m;
         var subPos = new Float32Array( n1 * m * 3 + 3 );
+        var subCol = new Float32Array( n1 * m * 3 + 3 );
+        var subDir = new Float32Array( n1 * m * 3 + 3 );
+        var subNorm = new Float32Array( n1 * m * 3 + 3 );
+        var subSize = new Float32Array( n1 * m + 1 );
+
+        var c = new THREE.Color();
+
+        var a0 = atoms[ 0 ];
+        var a1 = atoms[ 1 ];
+        var a2 = atoms[ 2 ];
+        var a3;
 
         // ghost point for initial position
-        var p0x = pos[ 0 + 0 ] + ( pos[ 3 + 0 ] - pos[ 0 + 0 ] );
-        var p0y = pos[ 0 + 1 ] + ( pos[ 3 + 1 ] - pos[ 0 + 1 ] );
-        var p0z = pos[ 0 + 2 ] + ( pos[ 3 + 2 ] - pos[ 0 + 2 ] );
-
-        var p1x = pos[ 0 + 0 ];
-        var p1y = pos[ 0 + 1 ];
-        var p1z = pos[ 0 + 2 ];
-
-        var p2x = pos[ 3 + 0 ];
-        var p2y = pos[ 3 + 1 ];
-        var p2z = pos[ 3 + 2 ];
-
-        var p3x, p3y, p3z;
-
+        var p0 = new THREE.Vector3().copy( a0 ).add( a1 ).sub( a0 );
+        var p1 = new THREE.Vector3().copy( a0 );
+        var p2 = new THREE.Vector3().copy( a1 );
+        var p3 = new THREE.Vector3();
+        
         var i, j, k, l;
 
         for( i = 0; i < n1; ++i ){
 
             k = i * m * 3;
-            v = ( i + 2 ) * 3;
+            v = ( i + 2 );
 
             if( i === n2 ){
+
+                a2 = atoms[ n1 ];
+                a3 = atoms[ n2 ];
                 // ghost point for last position
-                p3x = pos[ n13 + 0 ] + ( pos[ n13 + 0 ] - pos[ n23 + 0 ] );
-                p3y = pos[ n13 + 1 ] + ( pos[ n13 + 1 ] - pos[ n23 + 1 ] );
-                p3z = pos[ n13 + 2 ] + ( pos[ n13 + 2 ] - pos[ n23 + 2 ] );
+                p3.copy( a2 ).add( a2 ).sub( a3 );
+                
             }else{
-                p3x = pos[ v + 0 ];
-                p3y = pos[ v + 1 ];
-                p3z = pos[ v + 2 ];
+
+                a3 = atoms[ v ];
+                p3.copy( a3 );
+
             }
+
+            c.setRGB( Math.random(), Math.random(), Math.random() );
 
             for( j = 0; j < m; ++j ){
 
                 l = k + j * 3;
 
-                subPos[ l + 0 ] = interpolate( p0x, p1x, p2x, p3x, dt * j );
-                subPos[ l + 1 ] = interpolate( p0y, p1y, p2y, p3y, dt * j );
-                subPos[ l + 2 ] = interpolate( p0z, p1z, p2z, p3z, dt * j );
+                subPos[ l + 0 ] = interpolate( p0.x, p1.x, p2.x, p3.x, dt * j );
+                subPos[ l + 1 ] = interpolate( p0.y, p1.y, p2.y, p3.y, dt * j );
+                subPos[ l + 2 ] = interpolate( p0.z, p1.z, p2.z, p3.z, dt * j );
+
+                subCol[ l + 0 ] = c.r;
+                subCol[ l + 1 ] = c.g;
+                subCol[ l + 2 ] = c.b;
+
+
+                subSize[ i * m + j ] = 1.0;
 
             }
 
-            p0x = p1x; p0y = p1y; p0z = p1z;
-            p1x = p2x; p1y = p2y; p1z = p2z;
-            p2x = p3x; p2y = p3y; p2z = p3z;
+            p0.copy( p1 );
+            p1.copy( p2 );
+            p2.copy( p3 );
+
+            a0 = a1;
+            a1 = a2;
+            a2 = a3;
 
         }
 
         // add last position to the array of subdivided positions
-        subPos[ n1 * m * 3 + 0 ] = pos[ n13 + 0 ];
-        subPos[ n1 * m * 3 + 1 ] = pos[ n13 + 1 ];
-        subPos[ n1 * m * 3 + 2 ] = pos[ n13 + 2 ];
+        a3 = atoms[ n1 ];
+        subPos[ n1 * m * 3 + 0 ] = a3.x;
+        subPos[ n1 * m * 3 + 1 ] = a3.y;
+        subPos[ n1 * m * 3 + 2 ] = a3.z;
 
-        return subPos;
+        c.setRGB( Math.random(), Math.random(), Math.random() );
+        subCol[ l + 0 ] = c.r;
+        subCol[ l + 1 ] = c.g;
+        subCol[ l + 2 ] = c.b;
+
+        return {
+
+            "pos": subPos,
+            "col": subCol,
+            "dir": subDir,
+            "norm": subNorm,
+            "size": subSize
+
+        }
 
     }
 

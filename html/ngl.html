@@ -5,7 +5,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
         <style>
-            
+
             html {
                 height: 100%;
             }
@@ -23,7 +23,7 @@
                 width: 100%;
                 height: 100%;
             }
-            
+
             #info {
                 color: #fff;
                 background-color: rgba( 0, 0, 0, 0.75 );
@@ -36,7 +36,7 @@
                 width:33em;
                 margin:0 auto -2em;
             }
-            
+
             a { color: #ff0000 }
 
             #container {
@@ -97,7 +97,7 @@
 
                     var gui = new NGL.showcaseGui( viewer );
 
-                    gui.addFile( "../data/md.gro" );
+                    gui.addFile( "../data/1crn.pdb" );
 
                 });
 
@@ -255,12 +255,12 @@
                         if( o instanceof NGL.Structure ){
 
                             // o.add( "backbone" );
-                            // o.add( "ribbon" );
-                            // o.add( "trace" );
+                            o.add( "ribbon" );
+                            o.add( "trace" );
                             // o.add( "spacefill", "135" );
                             // o.add( "ball+stick" );
-                            o.add( "licorice" );
-                            // o.add( "line" );
+                            //o.add( "licorice" );
+                            o.add( "line" );
                             // o.add( "hyperball" );
                             o.centerView();
 
