@@ -582,7 +582,7 @@ NGL.AtomSet.prototype = {
 NGL.BondSet = function(){
 
     this.bonds = [];
-    this.bondDict = {};
+    this.bondDict = Object.create( null );
 
 };
 
