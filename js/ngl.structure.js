@@ -1130,6 +1130,32 @@ NGL.Chain.prototype = {
 
         this.residues.forEach( callback );
 
+    },
+
+    eachResidueN: function( n, callback ){
+
+        var residues = this.residues;
+        var array = new Array( n );
+        var len = residues.length;
+        var i;
+
+        for( i = 0; i < n; i++ ){
+
+            array[ i ] = residues[ i ];
+
+        }
+
+        callback.apply( this, array );
+
+        for( i = n; i < len; i++ ){
+
+            array.shift();
+            array.push( residues[ i ] );
+
+            callback.apply( this, array );
+
+        }
+
     }
 
 };
