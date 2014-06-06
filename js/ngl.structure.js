@@ -744,6 +744,14 @@ NGL.Structure.prototype = {
 
     },
 
+    eachFiber: function( callback ){
+
+        this.models.forEach( function( m ){
+            m.eachFiber( callback );
+        } );
+
+    },
+
     eachChain: function( callback ){
 
         this.models.forEach( function( m ){
@@ -1070,6 +1078,14 @@ NGL.Model.prototype = {
 
     },
 
+    eachFiber: function( callback ){
+
+        this.chains.forEach( function( c ){
+            c.eachFiber( callback );
+        } );
+
+    },
+
     eachChain: function( callback ){
 
         this.chains.forEach( callback );
@@ -1156,11 +1172,73 @@ NGL.Chain.prototype = {
 
         }
 
+    },
+
+    eachFiber: function( callback ){
+
+        var i = 0;
+        var j = 1;
+        var residues = this.residues;
+
+        this.eachResidueN( 2, function( r1, r2 ){
+
+            // console.log( r1.resno, r2.resno, r1.isProtein() );
+
+            if( !r1.isProtein() ){
+
+                i = j;
+                ++j;
+
+                return;
+
+            }
+
+            cAtom = r1.getAtomByName( 'C' );
+            nAtom = r2.getAtomByName( 'N' );
+
+            if( !cAtom || !nAtom || !cAtom.connectedTo( nAtom ) ){
+                
+                callback( new NGL.Fiber( residues.slice( i, j ) ) );
+                i = j;
+                
+            }
+
+            ++j;
+
+        } );
+
+        if( residues[ i ].isProtein() ){
+
+            // console.log( i, j, residues[ i ].isProtein() );
+            
+            callback( new NGL.Fiber( residues.slice( i, j ) ) );
+
+        }
+
     }
 
 };
 
 NGL.AtomSet.prototype.apply( NGL.Chain.prototype );
+
+
+NGL.Fiber = function( residues ){
+
+    this.residues = residues;
+    this.residueCount = residues.length;
+
+};
+
+NGL.Fiber.prototype = {
+
+    eachAtom: NGL.Chain.prototype.eachAtom,
+
+    eachResidue: NGL.Chain.prototype.eachResidue,
+
+    eachResidueN: NGL.Chain.prototype.eachResidueN
+
+};
+
 
 
 NGL.Residue = function( chain ){
@@ -1187,6 +1265,15 @@ NGL.Residue.prototype = {
         this.atoms.forEach( function( a ){
             a.ss = value;
         } );
+    },
+
+    isProtein: function(){
+
+        return this.getAtomByName( "CA" ) !== undefined &&
+            this.getAtomByName( "C" ) !== undefined &&
+            this.getAtomByName( "N" ) !== undefined &&
+            this.getAtomByName( "O" ) !== undefined;
+
     },
 
     nextAtomIndex: function(){

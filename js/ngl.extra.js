@@ -889,14 +889,25 @@ NGL.TraceRepresentation.prototype.create = function(){
     var bufferList = [];
     var subdiv = 10;
 
-    this.structure.eachChain( function( c ){
+    this.structure.eachFiber( function( f ){
 
-        var spline = new NGL.Spline( c );
+        // console.log( f.residueCount, f.residues[ 0 ].resno, f.residues[ 0 ].resname );
+
+        var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 
         bufferList.push( new NGL.TraceBuffer( sub.pos, sub.col ) );
 
     } );
+
+    // this.structure.eachChain( function( c ){
+
+    //     var spline = new NGL.Spline( c );
+    //     var sub = spline.getSubdividedPosition( subdiv );
+
+    //     bufferList.push( new NGL.TraceBuffer( sub.pos, sub.col ) );
+
+    // } );
 
     this.bufferList = bufferList;
 
@@ -912,10 +923,10 @@ NGL.TraceRepresentation.prototype.update = function(){
 
 
 // Or better name it BioSpline?
-NGL.Spline = function( chain ){
+NGL.Spline = function( fiber ){
 
-    this.chain = chain;
-    this.size = chain.residueCount;
+    this.fiber = fiber;
+    this.size = fiber.residueCount;
 
     // FIXME handle less than two atoms
 
@@ -953,24 +964,24 @@ NGL.Spline.prototype = {
         var subdivideData = this._makeSubdivideData( m );
 
         subdivideData(
-            this.chain.residues[ 0 ],
-            this.chain.residues[ 0 ],
-            this.chain.residues[ 1 ],
-            this.chain.residues[ 2 ],
+            this.fiber.residues[ 0 ],
+            this.fiber.residues[ 0 ],
+            this.fiber.residues[ 1 ],
+            this.fiber.residues[ 2 ],
             pos, col, dir, norm, size
         );
 
-        this.chain.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
             subdivideData( r1, r2, r3, r4, pos, col, dir, norm, size );
 
         } );
 
-        var rn1 = this.chain.residues[ n1 ];
+        var rn1 = this.fiber.residues[ n1 ];
 
         subdivideData(
-            this.chain.residues[ n1 - 2 ],
-            this.chain.residues[ n1 - 1 ],
+            this.fiber.residues[ n1 - 2 ],
+            this.fiber.residues[ n1 - 1 ],
             rn1,
             rn1,
             pos, col, dir, norm, size
