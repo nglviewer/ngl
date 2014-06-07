@@ -927,6 +927,7 @@ NGL.Spline = function( fiber ){
 
     this.fiber = fiber;
     this.size = fiber.residueCount;
+    this.atomname = fiber.atomname;
 
     // FIXME handle less than two atoms
 
@@ -952,6 +953,7 @@ NGL.Spline.prototype = {
 
     getSubdividedPosition: function( m ){
 
+        var atomname = this.atomname;
         var n = this.size;
         var n1 = n - 1;
 
@@ -961,7 +963,7 @@ NGL.Spline.prototype = {
         var norm = new Float32Array( n1 * m * 3 + 3 );
         var size = new Float32Array( n1 * m + 1 );
 
-        var subdivideData = this._makeSubdivideData( m );
+        var subdivideData = this._makeSubdivideData( m, atomname );
 
         subdivideData(
             this.fiber.residues[ 0 ],
@@ -987,7 +989,7 @@ NGL.Spline.prototype = {
             pos, col, dir, norm, size
         );
 
-        var can1 = rn1.getAtomByName( "CA" );
+        var can1 = rn1.getAtomByName( atomname );
 
         pos[ n1 * m * 3 + 0 ] = can1.x;
         pos[ n1 * m * 3 + 1 ] = can1.y;
@@ -1007,29 +1009,34 @@ NGL.Spline.prototype = {
 
     _makeSubdivideData: function( m ){
 
+        m = m || 10;
+
+        var elemColors = NGL.ElementColors;
+        var atomname = this.atomname
         var interpolate = this.interpolate;
         var dt = 1.0 / m;
         var c = new THREE.Color();
-        var ca1, ca2, ca3, ca4;
+        var a1, a2, a3, a4;
         var j, l;
         var k = 0;
 
         return function( r1, r2, r3, r4, pos, col, dir, norm, size ){
 
-            ca1 = r1.getAtomByName( "CA" );
-            ca2 = r2.getAtomByName( "CA" );
-            ca3 = r3.getAtomByName( "CA" );
-            ca4 = r4.getAtomByName( "CA" );
+            a1 = r1.getAtomByName( atomname );
+            a2 = r2.getAtomByName( atomname );
+            a3 = r3.getAtomByName( atomname );
+            a4 = r4.getAtomByName( atomname );
 
-            c.setRGB( Math.random(), Math.random(), Math.random() );
+            // c.setRGB( Math.random(), Math.random(), Math.random() );
+            c.setHex( elemColors[ a2.element ] || 0xCCCCCC );
 
             for( j = 0; j < m; ++j ){
 
                 l = k + j * 3;
 
-                pos[ l + 0 ] = interpolate( ca1.x, ca2.x, ca3.x, ca4.x, dt * j );
-                pos[ l + 1 ] = interpolate( ca1.y, ca2.y, ca3.y, ca4.y, dt * j );
-                pos[ l + 2 ] = interpolate( ca1.z, ca2.z, ca3.z, ca4.z, dt * j );
+                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, dt * j );
+                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, dt * j );
+                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, dt * j );
 
                 col[ l + 0 ] = c.r;
                 col[ l + 1 ] = c.g;
