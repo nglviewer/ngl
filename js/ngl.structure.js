@@ -744,6 +744,14 @@ NGL.Structure.prototype = {
 
     },
 
+    eachResidueN: function( n, callback ){
+
+        this.models.forEach( function( m ){
+            m.eachResidueN( n, callback );
+        } );
+
+    },
+
     eachFiber: function( callback ){
 
         this.models.forEach( function( m ){
@@ -772,8 +780,7 @@ NGL.Structure.prototype = {
 
         var bondSet = this.bondSet;
 
-        var i, j, n, a1, a2, b, qn;
-        var rPrev, cAtom, nAtom, oAtom, pAtom;
+        var i, j, n, a1, a2;
 
         this.eachResidue( function( r ){
 
@@ -793,40 +800,25 @@ NGL.Structure.prototype = {
 
             }
 
-            // protein
+        } );
 
-            nAtom = r.getAtomByName( 'N' );
+        this.eachResidueN( 2, function( r1, r2 ){
 
-            if( rPrev && nAtom ){
+            if( r1.isProtein() && r2.isProtein() ){
 
-                cAtom = rPrev.getAtomByName( 'C' );
-                
-                if( cAtom ){
+                bondSet.addBondIfConnected(
+                    r1.getAtomByName( "C" ),
+                    r2.getAtomByName( "N" )
+                );
 
-                    bondSet.addBondIfConnected( cAtom, nAtom );
+            }else if( r1.isNucleic() && r2.isNucleic() ){
 
-                }
-
-            }
-
-            // nucleic
-
-            pAtom = r.getAtomByName( 'P' );
-
-            if( rPrev && pAtom ){
-                
-                oAtom = rPrev.getAtomByName( "O3'" );
-                
-                if( oAtom ){
-
-                    bondSet.addBondIfConnected( oAtom, pAtom );
-
-                }
+                bondSet.addBondIfConnected(
+                    r1.getAtomByName( "O3'" ),
+                    r2.getAtomByName( "P" )
+                );
 
             }
-                
-
-            rPrev = r;
 
         } );
 
@@ -1074,6 +1066,14 @@ NGL.Model.prototype = {
 
         this.chains.forEach( function( c ){
             c.eachResidue( callback );
+        } );
+
+    },
+
+    eachResidueN: function( n, callback ){
+
+        this.chains.forEach( function( c ){
+            c.eachResidueN( n, callback );
         } );
 
     },
