@@ -1179,12 +1179,23 @@ NGL.Chain.prototype = {
         var i = 0;
         var j = 1;
         var residues = this.residues;
+        var a1, a2;
 
         this.eachResidueN( 2, function( r1, r2 ){
 
             // console.log( r1.resno, r2.resno, r1.isProtein() );
 
-            if( !r1.isProtein() ){
+            if( r1.isProtein() ){
+
+                a1 = r1.getAtomByName( 'C' );
+                a2 = r2.getAtomByName( 'N' );
+
+            }else if( r1.isNucleic() ){
+
+                a1 = r1.getAtomByName( "O3'" );
+                a2 = r2.getAtomByName( 'P' );
+
+            }else{
 
                 i = j;
                 ++j;
@@ -1193,10 +1204,7 @@ NGL.Chain.prototype = {
 
             }
 
-            cAtom = r1.getAtomByName( 'C' );
-            nAtom = r2.getAtomByName( 'N' );
-
-            if( !cAtom || !nAtom || !cAtom.connectedTo( nAtom ) ){
+            if( !a1 || !a2 || !a1.connectedTo( a2 ) ){
                 
                 callback( new NGL.Fiber( residues.slice( i, j ) ) );
                 i = j;
@@ -1207,7 +1215,7 @@ NGL.Chain.prototype = {
 
         } );
 
-        if( residues[ i ].isProtein() ){
+        if( residues[ i ].isProtein() || residues[ i ].isNucleic() ){
 
             // console.log( i, j, residues[ i ].isProtein() );
             
@@ -1226,6 +1234,18 @@ NGL.Fiber = function( residues ){
 
     this.residues = residues;
     this.residueCount = residues.length;
+
+    var r = residues[ 0 ];
+
+    if( r.isProtein() ){
+
+        this.atomname = "CA";
+
+    }else if( r.isNucleic() ){
+
+        this.atomname = "P";
+
+    }
 
 };
 
@@ -1269,10 +1289,29 @@ NGL.Residue.prototype = {
 
     isProtein: function(){
 
-        return this.getAtomByName( "CA" ) !== undefined &&
-            this.getAtomByName( "C" ) !== undefined &&
-            this.getAtomByName( "N" ) !== undefined &&
-            this.getAtomByName( "O" ) !== undefined;
+        if( this._protein === undefined ){
+
+            this._protein = this.getAtomByName( "CA" ) !== undefined &&
+                this.getAtomByName( "C" ) !== undefined &&
+                this.getAtomByName( "N" ) !== undefined &&
+                this.getAtomByName( "O" ) !== undefined;
+
+        }
+
+        return this._protein;
+
+    },
+
+    isNucleic: function(){
+
+        if( this._nucleic === undefined ){
+
+            this._nucleic = this.getAtomByName( "P" ) !== undefined &&
+                this.getAtomByName( "O3'" ) !== undefined;
+
+        }
+
+        return this._nucleic;
 
     },
 
