@@ -686,33 +686,41 @@ NGL.TubeRepresentation.prototype.name = "tube";
 
 NGL.TubeRepresentation.prototype.create = function(){
 
-    this.makeBackboneSets();
+    var bufferList = [];
+    var subdiv = 5;
 
-    var pd = NGL.getPathData(
-        this.backboneAtomSet.position,
-        this.backboneAtomSet.getColor(),
-        this.backboneAtomSet.getRadius( this.size, null ),
-        3
-    );
+    this.structure.eachFiber( function( f ){
 
-    this.tubeBuffer = new NGL.TubeImpostorBuffer(
-        pd.position,
-        pd.normal,
-        pd.dir,
-        pd.color,
-        pd.size
-    );
+        var spline = new NGL.Spline( f );
+        var sub = spline.getSubdividedPosition( subdiv );
 
-    // this.bufferList = [ this.tubeBuffer ];
+        bufferList.push(
 
-    this.tubebuffer2 = new NGL.TubeGroup(
-        this.backboneAtomSet.position,
-        this.backboneAtomSet.getColor(),
-        this.backboneAtomSet.getRadius( this.size, null ),
-        3
-    );
+            new NGL.TubeImpostorBuffer(
+                sub.pos,
+                sub.norm,
+                sub.dir,
+                sub.col,
+                sub.size
+            )
 
-    this.bufferList = [ this.tubebuffer2 ];
+        );
+
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper( sub.pos, sub.norm, "green", -1 )
+        // );
+
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue" )
+        // );
+
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue", -1 )
+        // );
+
+    } );
+
+    this.bufferList = bufferList;
 
 };
 
@@ -721,15 +729,6 @@ NGL.TubeRepresentation.prototype.update = function(){
     NGL.Representation.prototype.update.call( this );
 
     // TODO
-
-};
-
-NGL.TubeRepresentation.prototype.makeBackboneSets = function(){
-
-    var backbone = NGL.makeBackboneSets( this.atomSet );
-
-    this.backboneAtomSet = backbone.atomSet;
-    this.backboneBondSet = backbone.bondSet;
 
 };
 
@@ -749,119 +748,40 @@ NGL.RibbonRepresentation.prototype.name = "ribbon";
 NGL.RibbonRepresentation.prototype.create = function(){
 
     var bufferList = [];
+    var subdiv = 10;
 
-    var c, pos, col, caAtom, oAtom, prev, dot;
-    var elemColors = NGL.ElementColors;
+    this.structure.eachFiber( function( f ){
 
-    var vPos = new THREE.Vector3();
-    var vC = new THREE.Vector3();
-    var vNorm = new THREE.Vector3();
-    var vDir = new THREE.Vector3();
-
-    var vPosPrev = new THREE.Vector3();
-    var vNormPrev = new THREE.Vector3();
-    var vDirPrev = new THREE.Vector3();
-
-    var selection = new NGL.Selection( ".CA .P" );
-
-    this.structure.eachChain( function( c ){
-
-        var subPos = [];
-        var subNorm = [];
-        var subDir = [];
-        var subCol = [];
-        var subSize = [];
-
-        prev = false;
-
-        c.eachResidue( function( r ){
-
-            caAtom = r.getAtomByName( "CA" );
-            cAtom = r.getAtomByName( "C" );
-            oAtom = r.getAtomByName( "O" );
-
-            if( !caAtom || !cAtom || !oAtom ){
-
-                prev = false;
-                return;
-
-            }
-
-            vPos.set( caAtom.x, caAtom.y, caAtom.z );
-            vC.set( cAtom.x, cAtom.y, cAtom.z );
-            vDir.set( oAtom.x, oAtom.y, oAtom.z ).sub( vC ).normalize();
-
-            // ensure the direction vector does not flip
-            if( vDir.dot( vDirPrev ) < 0 ) vDir.multiplyScalar( -1 );
-
-            vNorm.copy( vPos ).sub( vPosPrev ).cross( vDir ).normalize();
-
-            if( prev ){
-
-                // console.log( caAtom.resno )
-
-                subPos.push( caAtom.x );
-                subPos.push( caAtom.y );
-                subPos.push( caAtom.z );
-
-                subNorm.push( vNorm.x );
-                subNorm.push( vNorm.y );
-                subNorm.push( vNorm.z );
-
-                subDir.push( -vDir.x );
-                subDir.push( -vDir.y );
-                subDir.push( -vDir.z );
-
-                subCol.push( 1.0 );
-                subCol.push( 0.0 );
-                subCol.push( 0.0 );
-
-                subSize.push( 1.0 );
-
-            }
-
-            vPosPrev.copy( vPos );
-            vNormPrev.copy( vNorm );
-            vDirPrev.copy( vDir );
-
-            prev = true;
-
-        } );
+        var spline = new NGL.Spline( f );
+        var sub = spline.getSubdividedPosition( subdiv );
 
         bufferList.push(
 
             new NGL.RibbonBuffer(
-                new Float32Array( subPos ),
-                new Float32Array( subNorm ),
-                new Float32Array( subDir ),
-                new Float32Array( subCol ),
-                new Float32Array( subSize )
+                sub.pos,
+                sub.norm,
+                sub.dir,
+                sub.col,
+                sub.size
             )
 
         );
 
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper( sub.pos, sub.norm, "green", -1 )
+        // );
+
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue" )
+        // );
+
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue", -1 )
+        // );
+
     } );
 
     this.bufferList = bufferList;
-
-    /*this.makeBackboneSets();
-
-    var pd = NGL.getPathData(
-        this.backboneAtomSet.position,
-        this.backboneAtomSet.getColor(),
-        this.backboneAtomSet.getRadius( this.size, null ),
-        3
-    );
-
-    this.ribbonBuffer = new NGL.RibbonBuffer(
-        pd.position,
-        pd.normal,
-        pd.dir,
-        pd.color,
-        pd.size
-    );
-
-    this.bufferList = [ this.ribbonBuffer ];*/
 
 };
 
@@ -891,23 +811,12 @@ NGL.TraceRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
-        // console.log( f.residueCount, f.residues[ 0 ].resno, f.residues[ 0 ].resname );
-
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 
         bufferList.push( new NGL.TraceBuffer( sub.pos, sub.col ) );
 
     } );
-
-    // this.structure.eachChain( function( c ){
-
-    //     var spline = new NGL.Spline( c );
-    //     var sub = spline.getSubdividedPosition( subdiv );
-
-    //     bufferList.push( new NGL.TraceBuffer( sub.pos, sub.col ) );
-
-    // } );
 
     this.bufferList = bufferList;
 
@@ -1014,11 +923,31 @@ NGL.Spline.prototype = {
         var elemColors = NGL.ElementColors;
         var atomname = this.atomname
         var interpolate = this.interpolate;
+        var getTangent = this._makeGetTangent();
+
         var dt = 1.0 / m;
         var c = new THREE.Color();
         var a1, a2, a3, a4;
-        var j, l;
+        var j, l, d;
         var k = 0;
+        var scale = 1;
+
+        var vTmp = new THREE.Vector3();
+
+        var vPos2 = new THREE.Vector3();
+        var vDir2 = new THREE.Vector3();
+        var vNorm2 = new THREE.Vector3();
+
+        var vPos3 = new THREE.Vector3();
+        var vDir3 = new THREE.Vector3();
+        var vNorm3 = new THREE.Vector3();
+
+        var vDir = new THREE.Vector3();
+        var vNorm = new THREE.Vector3();
+
+        var vTang = new THREE.Vector3();
+
+        var first = true;
 
         return function( r1, r2, r3, r4, pos, col, dir, norm, size ){
 
@@ -1028,27 +957,122 @@ NGL.Spline.prototype = {
             a4 = r4.getAtomByName( atomname );
 
             // c.setRGB( Math.random(), Math.random(), Math.random() );
-            c.setHex( elemColors[ a2.element ] || 0xCCCCCC );
+            // c.setHex( elemColors[ a2.element ] || 0xCCCCCC );
+
+            if( a2.ss === "h" ){
+                c.setHex( 0xFF0080 );
+                scale = 1.0;
+            }else if( a2.ss === "s" ){
+                c.setHex( 0xFFC800 );
+                scale = 1.0;
+            }else{
+                c.setHex( 0xFFFFFF );
+                scale = 0.2;
+            }
+
+            if( first ){
+                cAtom = r2.getAtomByName( "C" );
+                oAtom = r2.getAtomByName( "O" );
+                vTmp.copy( cAtom );
+                vPos2.copy( a2 );
+                vDir2.copy( oAtom ).sub( vTmp ).normalize();
+                vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
+                first = false;
+            }
+
+            cAtom = r3.getAtomByName( "C" );
+            oAtom = r3.getAtomByName( "O" );
+            vTmp.copy( cAtom );
+            vPos3.copy( a3 );
+            vDir3.copy( oAtom ).sub( vTmp ).normalize();
+
+            // ensure the direction vector does not flip
+            if( vDir2.dot( vDir3 ) < 0 ) vDir3.multiplyScalar( -1 );
+
+            
+            vNorm3.copy( a2 ).sub( a4 ).cross( vDir3 ).normalize();
+
+
+
 
             for( j = 0; j < m; ++j ){
 
+                d = dt * j
+                d1 = 1 - d;
                 l = k + j * 3;
 
-                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, dt * j );
-                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, dt * j );
-                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, dt * j );
+                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d );
+                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d );
+                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d );
 
                 col[ l + 0 ] = c.r;
                 col[ l + 1 ] = c.g;
                 col[ l + 2 ] = c.b;
 
-                size[ k / 3 + j ] = 1.0;
+                dir[ l + 0 ] = d1 * vDir2.x + d * vDir3.x;
+                dir[ l + 1 ] = d1 * vDir2.y + d * vDir3.y;
+                dir[ l + 2 ] = d1 * vDir2.z + d * vDir3.z;
+
+                norm[ l + 0 ] = d1 * vNorm2.x + d * vNorm3.x;
+                norm[ l + 1 ] = d1 * vNorm2.y + d * vNorm3.y;
+                norm[ l + 2 ] = d1 * vNorm2.z + d * vNorm3.z;
+
+                getTangent( a1, a2, a3, a4, d, vTang );
+                vNorm.set( dir[ l + 0 ], dir[ l + 1 ], dir[ l + 2 ] )
+                    .cross( vTang ).normalize();
+
+                norm[ l + 0 ] = vNorm.x;
+                norm[ l + 1 ] = vNorm.y;
+                norm[ l + 2 ] = vNorm.z;
+
+                size[ k / 3 + j ] = scale;
 
             }
 
             k += 3 * m;
 
-        }
+            vPos2.copy( vPos3 );
+            vDir2.copy( vDir3 );
+            vNorm2.copy( vNorm3 );
+
+        };
+
+    },
+
+    getPoint: function( a1, a2, a3, a4, t, v ){
+
+        v.x = NGL.Spline.prototype.interpolate( a1.x, a2.x, a3.x, a4.x, t );
+        v.y = NGL.Spline.prototype.interpolate( a1.y, a2.y, a3.y, a4.y, t );
+        v.z = NGL.Spline.prototype.interpolate( a1.z, a2.z, a3.z, a4.z, t );
+
+        return v;
+
+    },
+
+    _makeGetTangent: function(){
+
+        var getPoint = this.getPoint;
+
+        var p1 = new THREE.Vector3();
+        var p2 = new THREE.Vector3();
+
+        return function( a1, a2, a3, a4, t, v ){
+
+            var delta = 0.0001;
+            var t1 = t - delta;
+            var t2 = t + delta;
+
+            // Capping in case of danger
+
+            if ( t1 < 0 ) t1 = 0;
+            if ( t2 > 1 ) t2 = 1;
+
+            getPoint( a1, a2, a3, a4, t1, p1 );
+            getPoint( a1, a2, a3, a4, t2, p2 );
+
+            return v.copy( p2 ).sub( p1 ).normalize();
+
+        };
 
     }
 

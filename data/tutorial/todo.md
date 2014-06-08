@@ -45,7 +45,8 @@ Ideas
   * http://www.html5rocks.com/en/tutorials/websockets/basics/
   * http://blog.miguelgrinberg.com/post/easy-websockets-with-flask-and-gevent (uses socketio)
   * http://socket.io/
-  * seems that you need gevent or similar additionally
+  * http://diesel.io/
+  * seems that you need gevent or similar additionally?
 * WebRTC to allow p2p sync
   * http://www.html5rocks.com/en/tutorials/webrtc/datachannels/
 * Backface hitting - use to fill objects when clipped?

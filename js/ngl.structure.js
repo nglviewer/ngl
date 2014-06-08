@@ -1623,7 +1623,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
         for( j = 0; j < this.sheet.length; j++ ){
 
-            if (atom.chain != this.sheet[j][0]) continue;
+            if (atom.chainname != this.sheet[j][0]) continue;
             if (atom.resno < this.sheet[j][1]) continue;
             if (atom.resno > this.sheet[j][3]) continue;
             atom.ss = 's';
@@ -1634,7 +1634,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
         for( j = 0; j < this.helix.length; j++ ){
 
-            if (atom.chain != this.helix[j][0]) continue;
+            if (atom.chainname != this.helix[j][0]) continue;
             if (atom.resno < this.helix[j][1]) continue;
             if (atom.resno > this.helix[j][3]) continue;
             atom.ss = 'h';

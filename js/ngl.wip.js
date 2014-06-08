@@ -406,6 +406,47 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
 }
 
 
+NGL.BufferVectorHelper = function( position, vector, color, scale ){
+
+    scale = scale || 1;
+
+    var geometry, material, line;
+    var n = position.length/3;
+    var n2 = n * 2;
+    var n6 = n * 6;
+
+    material = new THREE.LineBasicMaterial({ color: color, fog: true });
+    geometry = new THREE.BufferGeometry();
+
+    var aPosition = new Float32Array( n2 * 3 );
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
+
+    var i, j;
+
+    for( var v = 0; v < n; v++ ){
+        
+        i = v * 2 * 3;
+        j = v * 3;
+
+        aPosition[ i + 0 ] = position[ j + 0 ];
+        aPosition[ i + 1 ] = position[ j + 1 ];
+        aPosition[ i + 2 ] = position[ j + 2 ];
+        aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
+        aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
+        aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
+
+    }
+
+    // console.log( "position", aPosition );
+
+    line = new THREE.Line( geometry, material, THREE.LinePieces );
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = line;
+
+}
 
 
 
@@ -452,48 +493,6 @@ NGL.CrossBuffer = function ( position, color, size ) {
     
     // screen aligned; pixel buffer
 
-}
-
-
-NGL.BufferVectorHelper = function( position, vector, color ){
-
-    var geometry, material, line;
-    var n = position.length/3;
-    var n2 = n * 2;
-    var n6 = n * 6;
-
-    material = new THREE.LineBasicMaterial({ color: color, fog: true });
-    geometry = new THREE.BufferGeometry();
-    geometry.addAttribute( 'position', new THREE.Float32Attribute( n2, 3 ) );
-
-    var aPosition = geometry.attributes.position.array;
-
-    var i, j;
-
-    for( var v = 0; v < n; v++ ){
-        
-        i = v * 2 * 3;
-        j = v * 3;
-
-        aPosition[ i + 0 ] = position[ j + 0 ];
-        aPosition[ i + 1 ] = position[ j + 1 ];
-        aPosition[ i + 2 ] = position[ j + 2 ];
-        aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * 5;
-        aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * 5;
-        aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * 5;
-    }
-
-    // console.log( "position", aPosition );
-
-    line = new THREE.Line( geometry, material, THREE.LinePieces );
-    NGL.group.add( line );
-
-
-    // public attributes
-    this.geometry = geometry;
-    this.material = material;
-    this.line = line;
-    this.n = n;
 }
 
 
