@@ -75,6 +75,8 @@ NGL.Resources = {
     '../shader/Quad.frag': '',
     '../shader/QuadricImpostor.vert': '',
     '../shader/QuadricImpostor.frag': '',
+    '../shader/BendCylinderImpostor.vert': '',
+    '../shader/BendCylinderImpostor.frag': '',
 
     // shader chunks
     '../shader/chunk/light_params.glsl': '',

@@ -196,7 +196,7 @@ NGL.TubeImpostorBuffer = function( position, normal, dir, color, radius ){
     // console.log( "cylColor", cylColor );
     // console.log( "cylRadius", cylRadius );
 
-    this.cylinderBuffer = new NGL.CylinderBuffer(
+    this.cylinderBuffer = new NGL.BendCylinderImpostorBuffer(
         cylFrom, cylTo, cylColor, cylColor, cylRadius, n, false
     );
 
@@ -2174,7 +2174,23 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
 }
 
 
-NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube ) {
+NGL.BendCylinderImpostorBuffer = function ( from, to, color, color2, radius ) {
+
+    var boxMapping = new Float32Array([
+        -1.0,  1.0, -1.0,
+        -1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0
+    ]);
+
+    var boxMappingIndices = new Uint32Array([
+        0, 1, 2,
+        1, 4, 2,
+        2, 4, 3,
+        4, 5, 3
+    ]);
 
     var geometry, material, mesh;
     var n = from.length/3;
@@ -2186,29 +2202,29 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
     var attributes = {
         inputMapping: { type: 'v2', value: null },
         inputColor: { type: 'c', value: null },
+        inputColor2: { type: 'c', value: null },
         inputAxis: { type: 'v3', value: null },
         inputCylinderRadius: { type: 'f', value: null },
-        inputCylinderHeight: { type: 'f', value: null }
+        inputCylinderHeight: { type: 'f', value: null },
+        inputP: { type: 'v3', value: null },
+        inputQ: { type: 'v3', value: null },
+        inputR: { type: 'v3', value: null },
+        inputS: { type: 'v3', value: null }
     };
-    if( color2 ){
-        attributes['inputColor2'] = { type: 'c', value: null };
-    }
-    if( tube ){
-        attributes['inputP'] = { type: 'v3', value: null };
-        attributes['inputQ'] = { type: 'v3', value: null };
-        attributes['inputR'] = { type: 'v3', value: null };
-        attributes['inputS'] = { type: 'v3', value: null };
-    }
+
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
+        {
+            'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+        }
     ]);
 
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'CylinderImpostor.vert' ),
-        fragmentShader: NGL.getShader( 'CylinderImpostor.frag' ),
+        vertexShader: NGL.getShader( 'BendCylinderImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'BendCylinderImpostor.frag' ),
         depthTest: true,
         transparent: false,
         depthWrite: true,
@@ -2219,61 +2235,48 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    geometry.addAttribute( 'position', new THREE.Float32Attribute( n6, 3 ) );
-    geometry.addAttribute( 'inputMapping', new THREE.Float32Attribute( n6, 3 ) );
-    geometry.addAttribute( 'inputColor', new THREE.Float32Attribute( n6, 3 ) );
-    if( color2 ){
-        geometry.addAttribute( 'inputColor2', new THREE.Float32Attribute( n6, 3 ) );
-    }
-    if( tube ){
-        geometry.addAttribute( 'inputP', new THREE.Float32Attribute( n6, 3 ) );
-        geometry.addAttribute( 'inputQ', new THREE.Float32Attribute( n6, 3 ) );
-        geometry.addAttribute( 'inputR', new THREE.Float32Attribute( n6, 3 ) );
-        geometry.addAttribute( 'inputS', new THREE.Float32Attribute( n6, 3 ) );
-    }
-    geometry.addAttribute( 'inputAxis', new THREE.Float32Attribute( n6, 3 ) );
-    geometry.addAttribute( 'inputCylinderRadius', new THREE.Float32Attribute( n6, 1 ) );
-    geometry.addAttribute( 'inputCylinderHeight', new THREE.Float32Attribute( n6, 1 ) );
+    var aPosition = new Float32Array( n6 * 3 );
+    var inputMapping = new Float32Array( n6 * 3 );
+    var inputColor = new Float32Array( n6 * 3 );
+    var inputColor2 = new Float32Array( n6 * 3 );
+    var inputP = new Float32Array( n6 * 3 );
+    var inputQ = new Float32Array( n6 * 3 );
+    var inputR = new Float32Array( n6 * 3 );
+    var inputS = new Float32Array( n6 * 3 );
+    var inputAxis = new Float32Array( n6 * 3 );
+    var inputCylinderRadius = new Float32Array( n6 * 1 );
+    var inputCylinderHeight = new Float32Array( n6 * 1 );
 
-    var aPosition = geometry.attributes.position.array;
-    var inputMapping = geometry.attributes.inputMapping.array;
-    var inputColor = geometry.attributes.inputColor.array;
-    if( color2 ){
-        var inputColor2 = geometry.attributes.inputColor2.array;
-    }
-    if( tube ){
-        var inputP = geometry.attributes.inputP.array;
-        var inputQ = geometry.attributes.inputQ.array;
-        var inputR = geometry.attributes.inputR.array;
-        var inputS = geometry.attributes.inputS.array;
-    }
-    var inputAxis = geometry.attributes.inputAxis.array;
-    var inputCylinderRadius = geometry.attributes.inputCylinderRadius.array;
-    var inputCylinderHeight = geometry.attributes.inputCylinderHeight.array;
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.BufferAttribute( inputMapping, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.BufferAttribute( inputColor, 3 ) );
+    geometry.addAttribute( 'inputColor2', new THREE.BufferAttribute( inputColor2, 3 ) );
+    geometry.addAttribute( 'inputP', new THREE.BufferAttribute( inputP, 3 ) );
+    geometry.addAttribute( 'inputQ', new THREE.BufferAttribute( inputQ, 3 ) );
+    geometry.addAttribute( 'inputR', new THREE.BufferAttribute( inputR, 3 ) );
+    geometry.addAttribute( 'inputS', new THREE.BufferAttribute( inputS, 3 ) );
+    geometry.addAttribute( 'inputAxis', new THREE.BufferAttribute( inputAxis, 3 ) );
+    geometry.addAttribute( 'inputCylinderRadius', new THREE.BufferAttribute( inputCylinderRadius, 1 ) );
+    geometry.addAttribute( 'inputCylinderHeight', new THREE.BufferAttribute( inputCylinderHeight, 1 ) );
 
-    geometry.addAttribute( 'index', new THREE.Uint16Attribute( n * 12, 1 ) );
-    var indices = geometry.attributes.index.array;
-
-    geometry.offsets = NGL.calculateOffsets( n6, 4, 6 );
-
+    var indices = new Uint32Array( n * 12, 1 );
+    geometry.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
+    
     var r, g, b;
-    if( color2 ){
-        var r2, g2, b2;
-    }
+    var r2, g2, b2;
     var x, y, z;
     var x1, y1, z1, x2, y2, z2;
     var vx, vy, vz;
     var xp, yp, zp, xn, yn, zn;
     var height;
     var i, j, k, ix, it;
-    var chunkSize = NGL.calculateChunkSize( 6 );
     var radPrev = radius[0];
 
     for( var v = 0; v < n; v++ ) {
         i = v * 3 * 6;
         k = v * 3;
 
-        inputMapping.set( NGL.BoxMapping, i );
+        inputMapping.set( boxMapping, i );
 
         r = color[ k + 0 ];
         g = color[ k + 1 ];
@@ -2285,26 +2288,24 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
             b2 = color2[ k + 2 ];
         }
 
-        if( tube ){
-            if( v%tube==0 ){
-                xp = from[ k + 0 ] + ( from[ k + 0 ] - to[ k + 0 ] );
-                yp = from[ k + 1 ] + ( from[ k + 1 ] - to[ k + 1 ] );
-                zp = from[ k + 2 ] + ( from[ k + 2 ] - to[ k + 2 ] );
-            }else{
-                xp = from[ k - 3 + 0 ];
-                yp = from[ k - 3 + 1 ];
-                zp = from[ k - 3 + 2 ];
-            }
+        if( v === 0 ){
+            xp = from[ k + 0 ] + ( from[ k + 0 ] - to[ k + 0 ] );
+            yp = from[ k + 1 ] + ( from[ k + 1 ] - to[ k + 1 ] );
+            zp = from[ k + 2 ] + ( from[ k + 2 ] - to[ k + 2 ] );
+        }else{
+            xp = from[ k - 3 + 0 ];
+            yp = from[ k - 3 + 1 ];
+            zp = from[ k - 3 + 2 ];
+        }
 
-            if( v%tube==tube-1 ){
-                xn = to[ k + 0 ] - ( from[ k + 0 ] - to[ k + 0 ] );
-                yn = to[ k + 1 ] - ( from[ k + 1 ] - to[ k + 1 ] );
-                zn = to[ k + 2 ] - ( from[ k + 2 ] - to[ k + 2 ] );
-            }else{
-                xn = to[ k + 3 + 0 ];
-                yn = to[ k + 3 + 1 ];
-                zn = to[ k + 3 + 2 ];
-            }
+        if( v === n-1 ){
+            xn = to[ k + 0 ] - ( from[ k + 0 ] - to[ k + 0 ] );
+            yn = to[ k + 1 ] - ( from[ k + 1 ] - to[ k + 1 ] );
+            zn = to[ k + 2 ] - ( from[ k + 2 ] - to[ k + 2 ] );
+        }else{
+            xn = to[ k + 3 + 0 ];
+            yn = to[ k + 3 + 1 ];
+            zn = to[ k + 3 + 2 ];
         }
 
         x1 = from[ k + 0 ];
@@ -2332,29 +2333,25 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
             inputColor[ j + 1 ] = g;
             inputColor[ j + 2 ] = b;
 
-            if( color2 ){
-                inputColor2[ j + 0 ] = r2;
-                inputColor2[ j + 1 ] = g2;
-                inputColor2[ j + 2 ] = b2;
-            }
+            inputColor2[ j + 0 ] = r2;
+            inputColor2[ j + 1 ] = g2;
+            inputColor2[ j + 2 ] = b2;
+            
+            inputP[ j + 0 ] = xp;
+            inputP[ j + 1 ] = yp;
+            inputP[ j + 2 ] = zp;
 
-            if( tube ){
-                inputP[ j + 0 ] = xp;
-                inputP[ j + 1 ] = yp;
-                inputP[ j + 2 ] = zp;
+            inputQ[ j + 0 ] = x1;
+            inputQ[ j + 1 ] = y1;
+            inputQ[ j + 2 ] = z1;
 
-                inputQ[ j + 0 ] = x1;
-                inputQ[ j + 1 ] = y1;
-                inputQ[ j + 2 ] = z1;
+            inputR[ j + 0 ] = x2;
+            inputR[ j + 1 ] = y2;
+            inputR[ j + 2 ] = z2;
 
-                inputR[ j + 0 ] = x2;
-                inputR[ j + 1 ] = y2;
-                inputR[ j + 2 ] = z2;
-
-                inputS[ j + 0 ] = xn;
-                inputS[ j + 1 ] = yn;
-                inputS[ j + 2 ] = zn;
-            }
+            inputS[ j + 0 ] = xn;
+            inputS[ j + 1 ] = yn;
+            inputS[ j + 2 ] = zn;
 
             aPosition[ j + 0 ] = x;
             aPosition[ j + 1 ] = y;
@@ -2373,9 +2370,9 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
         ix = v * 12;
         it = v * 6;
 
-        indices.set( NGL.BoxIndices, ix );
+        indices.set( boxMappingIndices, ix );
         for( var s=0; s<12; ++s ){
-            indices[ix + s] = (it + indices[ix + s]) % chunkSize;
+            indices[ix + s] += it;
         }
     }
 
@@ -2386,10 +2383,8 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
     // console.log( "inputCylinderRadius", inputCylinderRadius );
     // console.log( "inputCylinderHeight", inputCylinderHeight );
     // console.log( "indices", indices );
-    console.log( "n, tube", n, tube );
 
     mesh = new THREE.Mesh( geometry, material );
-    NGL.group.add( mesh );
     
     //new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius, false );
     //new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius, false );
@@ -2400,7 +2395,6 @@ NGL.CylinderImpostorBufferX = function ( from, to, color, color2, radius, tube )
     this.geometry = geometry;
     this.material = material;
     this.mesh = mesh;
-    this.n = n;
 
     // new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius );
     // new NGL.SphereImpostorBuffer( inputQ, inputColor, inputCylinderRadius );
