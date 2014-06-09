@@ -29,6 +29,9 @@ varying vec3 r;
 varying vec3 s;
 
 
+uniform mat4 modelViewMatrixInverse;
+
+
 vec3 line_plane_ixn(vec3 pn, vec3 pp, vec3 ld, vec3 lp)
 {
   float t = (dot(pn,pp) - dot(pn,lp))/(dot(pn,ld));
@@ -106,7 +109,8 @@ void main()
 
 
 
-    vec3 cam_dir = normalize(EyePoint.xyz - center);
+    //vec3 cam_dir = normalize(EyePoint.xyz - center);
+    vec3 cam_dir = normalize( (modelViewMatrixInverse*vec4(0,0,0,1)).xyz - center ); 
     b = dot(cam_dir, dir);
     if(b<0.0) // direction vector looks away, so flip
         ldir = -ext*dir;
@@ -148,45 +152,6 @@ void main()
 
     gl_Position = projectionMatrix * w;
 
-    // // vec4 xf0 = modelViewMatrix*vec4(center-ldir+left-up,1.0);
-    // // vec4 xf2 = modelViewMatrix*vec4(center-ldir-left-up,1.0);
-    // vec4 xc0 = modelViewMatrix*vec4(center+ldir+left-up,1.0);
-    // vec4 xc1 = modelViewMatrix*vec4(center+ldir+left+up,1.0);
-    // vec4 xc2 = modelViewMatrix*vec4(center+ldir-left-up,1.0);
-    // vec4 xc3 = modelViewMatrix*vec4(center+ldir-left+up,1.0);
-
-    // vec4 w0 = xf0;
-    // vec4 w1 = xf2;
-    // vec4 w2 = xc0;
-    // vec4 w3 = xc2;
-    // vec4 w4 = xc1;
-    // vec4 w5 = xc3;
-
-    // // Vertex 1
-    // point = w0.xyz / w0.w;
-    // gl_Position = projectionMatrix  * w0;
-
-    // // Vertex 2
-    // point = w1.xyz / w1.w;
-    // gl_Position = projectionMatrix  * w1;
-
-    // // Vertex 3
-    // point = w2.xyz / w2.w;
-    // gl_Position = projectionMatrix  * w2;
-
-    // // Vertex 4
-    // point = w3.xyz / w3.w;
-    // gl_Position = projectionMatrix  * w3;
-
-    // // Vertex 5
-    // point = w4.xyz / w4.w;
-    // gl_Position = projectionMatrix  * w4;
-
-    // // Vertex 6
-    // point = w5.xyz / w5.w;
-    // gl_Position = projectionMatrix  * w5;
-    
-    // move out of viewing frustum to avoid clipping artifacts
     if( gl_Position.z<=5.0 )
         gl_Position.z = -10.0;
 }

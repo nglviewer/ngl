@@ -687,7 +687,7 @@ NGL.TubeRepresentation.prototype.name = "tube";
 NGL.TubeRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 5;
+    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 
@@ -961,13 +961,13 @@ NGL.Spline.prototype = {
 
             if( a2.ss === "h" ){
                 c.setHex( 0xFF0080 );
-                scale = 1.0;
+                scale = 0.5;
             }else if( a2.ss === "s" ){
                 c.setHex( 0xFFC800 );
-                scale = 1.0;
+                scale = 0.5;
             }else{
                 c.setHex( 0xFFFFFF );
-                scale = 0.2;
+                scale = 0.15;
             }
 
             if( first ){

@@ -26,10 +26,10 @@ varying vec3 s;
 #include fog_params
 
 
-// void main2(void)
-// {
-//     gl_FragColor = vec4( color, 1.0 );
-// }
+void main2(void)
+{
+    gl_FragColor = vec4( color, 1.0 );
+}
 
 
 
@@ -104,9 +104,12 @@ void main()
     float a2 = D.x*D.x + D.y*D.y;
     // calculate a dicriminant of the above quadratic equation
     float d = a1*a1 - a0*a2;
-    if (d < 0.0)
+    if (d < 0.0){
         // outside of the cylinder
         discard;
+        // gl_FragColor.xyz = vec3( 0.0, 0.0, 1.0 );
+        // return;
+    }
 
     float dist = (-a1 + sqrt(d))/a2;
 
@@ -249,7 +252,8 @@ void main()
     gl_FragColor.xyz *= vLightFront;
     //gl_FragColor.w = 0.5;
     //gl_FragColor.xyz = transformedNormal;
-    //gl_FragColor.xyz = point;
+    //gl_FragColor.xyz = point
+    //gl_FragColor.xyz = color;
 
     //gl_FragColor = vec4( normalize(ray_origin - ray_target), 1.0 );
 
