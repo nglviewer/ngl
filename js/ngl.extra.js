@@ -694,29 +694,41 @@ NGL.TubeRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 
-        bufferList.push(
+        /*bufferList.push(
 
             new NGL.TubeImpostorBuffer(
-                sub.pos,
-                sub.norm,
-                sub.dir,
-                sub.col,
+                sub.position,
+                sub.normal,
+                sub.binormal,
+                sub.color,
                 sub.size
             )
 
+        );*/
+
+        var tubeBuffer = new NGL.TubeMeshBuffer(
+            sub.position,
+            sub.normal,
+            sub.binormal,
+            sub.color,
+            sub.size,
+            12
+        )
+
+        bufferList.push( tubeBuffer );
+
+        /*bufferList.push(
+            new NGL.BufferVectorHelper( sub.position, sub.normal, "red", 2 )
         );
 
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.pos, sub.norm, "green", -1 )
-        // );
+        bufferList.push(
+            new NGL.BufferVectorHelper( sub.position, sub.binormal, "blue", 2 )
+        );
 
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue" )
-        // );
+        bufferList.push(
+            new NGL.BufferVectorHelper( sub.position, sub.tangent, "green", 2 )
+        );*/
 
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue", -1 )
-        // );
 
     } );
 
@@ -758,25 +770,25 @@ NGL.RibbonRepresentation.prototype.create = function(){
         bufferList.push(
 
             new NGL.RibbonBuffer(
-                sub.pos,
-                sub.norm,
-                sub.dir,
-                sub.col,
+                sub.position,
+                sub.binormal,
+                sub.normal,
+                sub.color,
                 sub.size
             )
 
         );
 
         // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.pos, sub.norm, "green", -1 )
+        //     new NGL.BufferVectorHelper( sub.position, sub.normal, "green", -1 )
         // );
 
         // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue" )
+        //     new NGL.BufferVectorHelper( sub.position, sub.tangent, "blue" )
         // );
 
         // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.pos, sub.dir, "blue", -1 )
+        //     new NGL.BufferVectorHelper( sub.position, sub.tangent, "blue", -1 )
         // );
 
     } );
@@ -814,7 +826,7 @@ NGL.TraceRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 
-        bufferList.push( new NGL.TraceBuffer( sub.pos, sub.col ) );
+        bufferList.push( new NGL.TraceBuffer( sub.position, sub.color ) );
 
     } );
 
@@ -872,8 +884,9 @@ NGL.Spline.prototype = {
 
         var pos = new Float32Array( n1 * m * 3 + 3 );
         var col = new Float32Array( n1 * m * 3 + 3 );
-        var dir = new Float32Array( n1 * m * 3 + 3 );
+        var tan = new Float32Array( n1 * m * 3 + 3 );
         var norm = new Float32Array( n1 * m * 3 + 3 );
+        var bin = new Float32Array( n1 * m * 3 + 3 );
         var size = new Float32Array( n1 * m + 1 );
 
         var subdivideData = this._makeSubdivideData( m, trace_atomname );
@@ -883,12 +896,12 @@ NGL.Spline.prototype = {
             this.fiber.residues[ 0 ],
             this.fiber.residues[ 1 ],
             this.fiber.residues[ 2 ],
-            pos, col, dir, norm, size
+            pos, col, tan, norm, bin, size
         );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            subdivideData( r1, r2, r3, r4, pos, col, dir, norm, size );
+            subdivideData( r1, r2, r3, r4, pos, col, tan, norm, bin, size );
 
         } );
 
@@ -899,7 +912,7 @@ NGL.Spline.prototype = {
             this.fiber.residues[ n1 - 1 ],
             rn1,
             rn1,
-            pos, col, dir, norm, size
+            pos, col, tan, norm, bin, size
         );
 
         var can1 = rn1.getAtomByName( trace_atomname );
@@ -910,10 +923,11 @@ NGL.Spline.prototype = {
 
         return {
 
-            "pos": pos,
-            "col": col,
-            "dir": dir,
-            "norm": norm,
+            "position": pos,
+            "color": col,
+            "tangent": tan,
+            "normal": norm,
+            "binormal": bin,
             "size": size
 
         }
@@ -952,10 +966,11 @@ NGL.Spline.prototype = {
         var vNorm = new THREE.Vector3();
 
         var vTang = new THREE.Vector3();
+        var vBin = new THREE.Vector3();
 
         var first = true;
 
-        return function( r1, r2, r3, r4, pos, col, dir, norm, size ){
+        return function( r1, r2, r3, r4, pos, col, tan, norm, bin, size ){
 
             a1 = r1.getAtomByName( trace_atomname );
             a2 = r2.getAtomByName( trace_atomname );
@@ -983,7 +998,6 @@ NGL.Spline.prototype = {
                 cAtom = r2.getAtomByName( direction_atomname1 );
                 oAtom = r2.getAtomByName( direction_atomname2 );
                 vTmp.copy( cAtom );
-                vPos2.copy( a2 );
                 vDir2.copy( oAtom ).sub( vTmp ).normalize();
                 vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
                 first = false;
@@ -997,12 +1011,6 @@ NGL.Spline.prototype = {
 
             // ensure the direction vector does not flip
             if( vDir2.dot( vDir3 ) < 0 ) vDir3.multiplyScalar( -1 );
-
-            
-            vNorm3.copy( a2 ).sub( a4 ).cross( vDir3 ).normalize();
-
-
-
 
             for( j = 0; j < m; ++j ){
 
@@ -1018,21 +1026,24 @@ NGL.Spline.prototype = {
                 col[ l + 1 ] = c.g;
                 col[ l + 2 ] = c.b;
 
-                dir[ l + 0 ] = d1 * vDir2.x + d * vDir3.x;
-                dir[ l + 1 ] = d1 * vDir2.y + d * vDir3.y;
-                dir[ l + 2 ] = d1 * vDir2.z + d * vDir3.z;
-
-                norm[ l + 0 ] = d1 * vNorm2.x + d * vNorm3.x;
-                norm[ l + 1 ] = d1 * vNorm2.y + d * vNorm3.y;
-                norm[ l + 2 ] = d1 * vNorm2.z + d * vNorm3.z;
-
-                getTangent( a1, a2, a3, a4, d, vTang );
-                vNorm.set( dir[ l + 0 ], dir[ l + 1 ], dir[ l + 2 ] )
-                    .cross( vTang ).normalize();
-
+                vNorm.set(
+                    d1 * vDir2.x + d * vDir3.x,
+                    d1 * vDir2.y + d * vDir3.y,
+                    d1 * vDir2.z + d * vDir3.z
+                ).normalize();
                 norm[ l + 0 ] = vNorm.x;
                 norm[ l + 1 ] = vNorm.y;
                 norm[ l + 2 ] = vNorm.z;
+
+                getTangent( a1, a2, a3, a4, d, vTang );
+                tan[ l + 0 ] = vTang.x;
+                tan[ l + 1 ] = vTang.y;
+                tan[ l + 2 ] = vTang.z;
+                
+                vBin.copy( vNorm ).cross( vTang ).normalize();
+                bin[ l + 0 ] = vBin.x;
+                bin[ l + 1 ] = vBin.y;
+                bin[ l + 2 ] = vBin.z;
 
                 size[ k / 3 + j ] = scale;
 
@@ -1040,9 +1051,7 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-            vPos2.copy( vPos3 );
             vDir2.copy( vDir3 );
-            vNorm2.copy( vNorm3 );
 
         };
 

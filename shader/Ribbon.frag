@@ -23,7 +23,7 @@ void main() {
     // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
     gl_FragColor.xyz *= vLightFront;
     // gl_FragColor.xyz = normalx;
-    // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+    //gl_FragColor.xyz = color;
 
     #include fog
 }

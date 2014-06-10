@@ -1093,7 +1093,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         this.camera.updateProjectionMatrix();
 
-        this.updateBoundingBox();
+        //this.updateBoundingBox();
         this.updateDynamicUniforms();
 
         // needed for font texture, but I don't know why
@@ -2406,6 +2406,116 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
 }
 
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
+
+
+////////////////////
+// Mesh Primitives
+
+NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSegments ){
+
+    radialSegments = radialSegments || 4;
+
+    var n = position.length / 3;
+    var n1 = n - 1;
+    var radialSegments1 = radialSegments + 1;
+
+    var meshPosition = new Float32Array( n * radialSegments * 3 );
+    var meshColor = new Float32Array( n * radialSegments * 3 );
+    var meshIndex = new Uint32Array( n1 * 2 * radialSegments1 * 3 );;
+    var meshNormal = new Float32Array( n * radialSegments * 3 );
+
+    var vNormal = new THREE.Vector3();
+    var vBinormal = new THREE.Vector3();
+    var vPosition = new THREE.Vector3();
+
+    var vMeshPosition = new THREE.Vector3();
+    var vMeshNormal = new THREE.Vector3();
+
+    var i, j, k, l;
+    var v, cx, cy;
+    var radius;
+
+    for( i = 0; i < n; ++i ){
+
+        k = i * 3;
+        l = k * radialSegments;
+
+        vNormal.set(
+            normal[ k + 0 ], normal[ k + 1 ], normal[ k + 2 ]
+        );
+
+        vBinormal.set(
+            binormal[ k + 0 ], binormal[ k + 1 ], binormal[ k + 2 ]
+        );
+
+        vPosition.set(
+            position[ k + 0 ], position[ k + 1 ], position[ k + 2 ]
+        );
+
+        radius = size[ i ];
+
+        for( j = 0; j < radialSegments; ++j ){
+
+            s = l + j * 3
+
+            v = j / radialSegments * 2 * Math.PI;
+
+            cx = -radius * 1 * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
+            cy = radius * 1 * Math.sin( v );
+
+            var x = cx * vNormal.x + cy * vBinormal.x;
+            var y = cx * vNormal.y + cy * vBinormal.y;
+            var z = cx * vNormal.z + cy * vBinormal.z;
+
+            vMeshPosition.copy( vPosition );
+            vMeshPosition.x += cx * vNormal.x + cy * vBinormal.x;
+            vMeshPosition.y += cx * vNormal.y + cy * vBinormal.y;
+            vMeshPosition.z += cx * vNormal.z + cy * vBinormal.z;
+
+            meshPosition[ s + 0 ] = vMeshPosition.x;
+            meshPosition[ s + 1 ] = vMeshPosition.y;
+            meshPosition[ s + 2 ] = vMeshPosition.z;
+
+            vMeshNormal.copy( vMeshPosition ).sub( vPosition ).multiplyScalar( 1 ).normalize();
+            meshNormal[ s + 0 ] = vMeshNormal.x;
+            meshNormal[ s + 1 ] = vMeshNormal.y;
+            meshNormal[ s + 2 ] = vMeshNormal.z;
+
+            meshColor[ s + 0 ] = color[ k + 0 ];
+            meshColor[ s + 1 ] = color[ k + 1 ];
+            meshColor[ s + 2 ] = color[ k + 2 ];
+
+        }
+
+    }
+
+    for( i = 0; i < n1; ++i ){
+
+        k = i * radialSegments1 * 3 * 2
+
+        for( j = 0; j < radialSegments1; ++j ){
+
+            l = k + j * 3 * 2;
+
+            meshIndex[ l + 0 ] = i * radialSegments + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 1 ] = i * radialSegments + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 2 ] = ( i + 1 ) * radialSegments + ( ( j + 0 ) % radialSegments );
+
+            meshIndex[ l + 3 ] = ( i + 1 ) * radialSegments + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 4 ] = i * radialSegments + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 5 ] = ( i + 1 ) * radialSegments + ( ( j + 1 ) % radialSegments );
+
+        }
+
+    }
+
+    NGL.MeshBuffer.call(
+        this, meshPosition, meshColor, meshIndex, meshNormal
+    );
+
+}
+
+NGL.TubeMeshBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
 
 ///////////////////
