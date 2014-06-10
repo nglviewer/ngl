@@ -1239,11 +1239,15 @@ NGL.Fiber = function( residues ){
 
     if( r.isProtein() ){
 
-        this.atomname = "CA";
+        this.trace_atomname = "CA";
+        this.direction_atomname1 = "C";
+        this.direction_atomname2 = "O";
 
     }else if( r.isNucleic() ){
 
-        this.atomname = "P";
+        this.trace_atomname = "P";
+        this.direction_atomname1 = "OP1";
+        this.direction_atomname2 = "OP2";
 
     }
 
