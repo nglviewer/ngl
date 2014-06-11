@@ -687,7 +687,7 @@ NGL.TubeRepresentation.prototype.name = "tube";
 NGL.TubeRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 10;
+    var subdiv = 20;
 
     this.structure.eachFiber( function( f ){
 
@@ -760,7 +760,7 @@ NGL.RibbonRepresentation.prototype.name = "ribbon";
 NGL.RibbonRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 10;
+    var subdiv = 20;
 
     this.structure.eachFiber( function( f ){
 
@@ -819,7 +819,7 @@ NGL.TraceRepresentation.prototype.name = "trace";
 NGL.TraceRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 10;
+    var subdiv = 20;
 
     this.structure.eachFiber( function( f ){
 
@@ -993,6 +993,7 @@ NGL.Spline.prototype = {
                 c.setHex( 0xFFFFFF );
                 scale = 0.15;
             }
+            // scale = 0.15;
 
             if( first ){
                 cAtom = r2.getAtomByName( direction_atomname1 );
@@ -1044,6 +1045,11 @@ NGL.Spline.prototype = {
                 bin[ l + 0 ] = vBin.x;
                 bin[ l + 1 ] = vBin.y;
                 bin[ l + 2 ] = vBin.z;
+
+                vNorm.copy( vTang ).cross( vBin ).normalize();
+                norm[ l + 0 ] = vNorm.x;
+                norm[ l + 1 ] = vNorm.y;
+                norm[ l + 2 ] = vNorm.z;
 
                 size[ k / 3 + j ] = scale;
 
