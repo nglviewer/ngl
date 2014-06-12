@@ -742,7 +742,15 @@ NGL.TubeRepresentation.prototype.create = function(){
             new NGL.BufferVectorHelper(
                 tubeBuffer.meshPosition,
                 tubeBuffer.meshTangent1,
-                "lightgreen", 2 
+                "lightgreen", 1
+            )
+        );
+
+        bufferList.push(
+            new NGL.BufferVectorHelper(
+                tubeBuffer.meshPosition,
+                tubeBuffer.meshTangent2,
+                "tomato", 1 
             )
         );
 

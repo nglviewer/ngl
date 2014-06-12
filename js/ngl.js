@@ -2432,6 +2432,8 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     var vTangent = new THREE.Vector3();
     var vPosition = new THREE.Vector3();
 
+    var vDir = new THREE.Vector3();
+
     var vMeshPosition = new THREE.Vector3();
     var vMeshNormal = new THREE.Vector3();
 
@@ -2440,6 +2442,47 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     var radius;
     var irs, irs1;
 
+    // vec3 ellipse_normal( vec3 point, vec3 axis_a, vec3 axis_b, vec3 center )
+    // {
+    //     float fl = sqrt( length(axis_a)*length(axis_a) - length(axis_b)*length(axis_b) );
+    //     vec3 f1 = center + fl*normalize(axis_a);
+    //     vec3 f2 = center - fl*normalize(axis_a);
+    //     vec3 f1_v = point - f1;
+    //     vec3 f2_v = point - f2;
+    //     vec3 normal = normalize(f1_v) + normalize(f2_v);
+    //     return normalize( normal );
+    // }
+    
+    var ellipseNormal = function(){
+
+        var f1 = new THREE.Vector3();
+        var f2 = new THREE.Vector3();
+        var f1_v = new THREE.Vector3();
+        var f2_v = new THREE.Vector3();
+        var ax = new THREE.Vector3();
+        var n = new THREE.Vector3();
+
+        var al, bl, fl;
+
+        return function( p, a, b, c ){
+
+            al = a.length();
+            bl = b.length();
+            fl = Math.sqrt( al * al - bl * bl );
+            ax.copy( a ).normalize().multiplyScalar( fl );
+            f1.copy( c ).add( ax );
+            f2.copy( c ).sub( ax );
+            f1_v.copy( p ).sub( f1 ).normalize();
+            f2_v.copy( p ).sub( f2 ).normalize();
+            n.addVectors( f1_v, f2_v ).normalize();
+
+            return n;
+
+        }
+
+    }();
+
+
     for( i = 0; i < n; ++i ){
 
         k = i * 3;
@@ -2447,15 +2490,15 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
         vNormal.set(
             normal[ k + 0 ], normal[ k + 1 ], normal[ k + 2 ]
-        );
+        ).normalize();
 
         vBinormal.set(
             binormal[ k + 0 ], binormal[ k + 1 ], binormal[ k + 2 ]
-        );
+        ).normalize();
 
         vTangent.set(
             tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
-        );
+        ).normalize();
 
         vPosition.set(
             position[ k + 0 ], position[ k + 1 ], position[ k + 2 ]
@@ -2472,14 +2515,14 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
             cx = -radius * 3 * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
             cy = radius * 1 * Math.sin( v );
 
-            cxt = Math.sin( v );
-            cyt = Math.cos( v );
-
-            console.log(v)
+            cxt = radius * 3 * Math.sin( v );
+            cyt = radius * 1 * Math.cos( v );
 
             var x = cx * vNormal.x + cy * vBinormal.x;
             var y = cx * vNormal.y + cy * vBinormal.y;
             var z = cx * vNormal.z + cy * vBinormal.z;
+
+            vDir.set( x, y, z );
 
             vMeshPosition.copy( vPosition );
             vMeshPosition.x += cx * vNormal.x + cy * vBinormal.x;
@@ -2490,21 +2533,37 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
             meshPosition[ s + 1 ] = vMeshPosition.y;
             meshPosition[ s + 2 ] = vMeshPosition.z;
 
-            vMeshNormal.set(
-                -cxt * vNormal.x + cyt * vBinormal.x,
-                -cxt * vNormal.y + cyt * vBinormal.y,
-                -cxt * vNormal.z + cyt * vBinormal.z
-            ).add( vPosition ).normalize();
+            // vMeshNormal.set(
+            //     vPosition.x - cxt * vNormal.x + cyt * vBinormal.x,
+            //     vPosition.y - cxt * vNormal.y + cyt * vBinormal.y,
+            //     vPosition.z - cxt * vNormal.z + cyt * vBinormal.z
+            // ).normalize();
+
+            vMeshNormal.copy(
+                ellipseNormal(
+                    vMeshPosition, vBinormal, vNormal, vPosition
+                )
+            );
+
+            if( vDir.dot( vMeshNormal ) < 0 ) vMeshNormal.multiplyScalar( -1 );
+
+            console.log( vMeshNormal.x, vMeshNormal.y, vMeshNormal.z );
 
             meshTangent1[ s + 0 ] = vMeshNormal.x;
             meshTangent1[ s + 1 ] = vMeshNormal.y;
             meshTangent1[ s + 2 ] = vMeshNormal.z;
 
-            vMeshNormal.set(
-                -cxt * vNormal.x + cyt * vBinormal.x,
-                -cxt * vNormal.y + cyt * vBinormal.y,
-                -cxt * vNormal.z + cyt * vBinormal.z
-            ).add( vPosition ).cross( vTangent ).normalize();
+            meshTangent2[ s + 0 ] = vTangent.x;
+            meshTangent2[ s + 1 ] = vTangent.y;
+            meshTangent2[ s + 2 ] = vTangent.z;
+
+            
+
+            // vMeshNormal.set(
+            //     -cxt * vNormal.x + cyt * vBinormal.x,
+            //     -cxt * vNormal.y + cyt * vBinormal.y,
+            //     -cxt * vNormal.z + cyt * vBinormal.z
+            // ).add( vPosition ).cross( vTangent ).normalize();
 
             /*vMeshNormal.copy( vMeshPosition ).sub( vPosition )
                 .multiplyScalar( 1 ).normalize();*/
