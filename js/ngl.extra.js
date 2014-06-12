@@ -687,7 +687,7 @@ NGL.TubeRepresentation.prototype.name = "tube";
 NGL.TubeRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 20;
+    var subdiv = 5;
 
     this.structure.eachFiber( function( f ){
 
@@ -710,9 +710,10 @@ NGL.TubeRepresentation.prototype.create = function(){
             sub.position,
             sub.normal,
             sub.binormal,
+            sub.tangent,
             sub.color,
             sub.size,
-            12
+            8
         )
 
         bufferList.push( tubeBuffer );
@@ -723,11 +724,27 @@ NGL.TubeRepresentation.prototype.create = function(){
 
         bufferList.push(
             new NGL.BufferVectorHelper( sub.position, sub.binormal, "blue", 2 )
-        );
+        );*/
 
-        bufferList.push(
+        /*bufferList.push(
             new NGL.BufferVectorHelper( sub.position, sub.tangent, "green", 2 )
         );*/
+
+        /*bufferList.push(
+            new NGL.BufferVectorHelper(
+                tubeBuffer.meshPosition,
+                tubeBuffer.meshNormal,
+                "orange", 2 
+            )
+        );*/
+
+        bufferList.push(
+            new NGL.BufferVectorHelper(
+                tubeBuffer.meshPosition,
+                tubeBuffer.meshTangent1,
+                "lightgreen", 2 
+            )
+        );
 
 
     } );
@@ -760,7 +777,7 @@ NGL.RibbonRepresentation.prototype.name = "ribbon";
 NGL.RibbonRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 20;
+    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 
@@ -819,7 +836,7 @@ NGL.TraceRepresentation.prototype.name = "trace";
 NGL.TraceRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 20;
+    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 

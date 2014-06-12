@@ -2411,7 +2411,7 @@ NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSegments ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments ){
 
     radialSegments = radialSegments || 4;
 
@@ -2424,8 +2424,12 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSe
     var meshIndex = new Uint32Array( n1 * 2 * radialSegments1 * 3 );;
     var meshNormal = new Float32Array( n * radialSegments * 3 );
 
+    var meshTangent1 = new Float32Array( n * radialSegments * 3 );
+    var meshTangent2 = new Float32Array( n * radialSegments * 3 );
+
     var vNormal = new THREE.Vector3();
     var vBinormal = new THREE.Vector3();
+    var vTangent = new THREE.Vector3();
     var vPosition = new THREE.Vector3();
 
     var vMeshPosition = new THREE.Vector3();
@@ -2434,6 +2438,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSe
     var i, j, k, l;
     var v, cx, cy;
     var radius;
+    var irs, irs1;
 
     for( i = 0; i < n; ++i ){
 
@@ -2448,6 +2453,10 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSe
             binormal[ k + 0 ], binormal[ k + 1 ], binormal[ k + 2 ]
         );
 
+        vTangent.set(
+            tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
+        );
+
         vPosition.set(
             position[ k + 0 ], position[ k + 1 ], position[ k + 2 ]
         );
@@ -2458,10 +2467,15 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSe
 
             s = l + j * 3
 
-            v = j / radialSegments * 2 * Math.PI;
+            v = ( j / radialSegments ) * 2 * Math.PI;
 
-            cx = -radius * 1 * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
+            cx = -radius * 3 * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
             cy = radius * 1 * Math.sin( v );
+
+            cxt = Math.sin( v );
+            cyt = Math.cos( v );
+
+            console.log(v)
 
             var x = cx * vNormal.x + cy * vBinormal.x;
             var y = cx * vNormal.y + cy * vBinormal.y;
@@ -2476,7 +2490,24 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSe
             meshPosition[ s + 1 ] = vMeshPosition.y;
             meshPosition[ s + 2 ] = vMeshPosition.z;
 
-            vMeshNormal.copy( vMeshPosition ).sub( vPosition ).multiplyScalar( 1 ).normalize();
+            vMeshNormal.set(
+                -cxt * vNormal.x + cyt * vBinormal.x,
+                -cxt * vNormal.y + cyt * vBinormal.y,
+                -cxt * vNormal.z + cyt * vBinormal.z
+            ).add( vPosition ).normalize();
+
+            meshTangent1[ s + 0 ] = vMeshNormal.x;
+            meshTangent1[ s + 1 ] = vMeshNormal.y;
+            meshTangent1[ s + 2 ] = vMeshNormal.z;
+
+            vMeshNormal.set(
+                -cxt * vNormal.x + cyt * vBinormal.x,
+                -cxt * vNormal.y + cyt * vBinormal.y,
+                -cxt * vNormal.z + cyt * vBinormal.z
+            ).add( vPosition ).cross( vTangent ).normalize();
+
+            /*vMeshNormal.copy( vMeshPosition ).sub( vPosition )
+                .multiplyScalar( 1 ).normalize();*/
             meshNormal[ s + 0 ] = vMeshNormal.x;
             meshNormal[ s + 1 ] = vMeshNormal.y;
             meshNormal[ s + 2 ] = vMeshNormal.z;
@@ -2493,21 +2524,30 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, color, size, radialSe
 
         k = i * radialSegments1 * 3 * 2
 
+        irs = i * radialSegments;
+        irs1 = ( i + 1 ) * radialSegments;
+
         for( j = 0; j < radialSegments1; ++j ){
 
             l = k + j * 3 * 2;
 
-            meshIndex[ l + 0 ] = i * radialSegments + ( ( j + 0 ) % radialSegments );
-            meshIndex[ l + 1 ] = i * radialSegments + ( ( j + 1 ) % radialSegments );
-            meshIndex[ l + 2 ] = ( i + 1 ) * radialSegments + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
 
-            meshIndex[ l + 3 ] = ( i + 1 ) * radialSegments + ( ( j + 0 ) % radialSegments );
-            meshIndex[ l + 4 ] = i * radialSegments + ( ( j + 1 ) % radialSegments );
-            meshIndex[ l + 5 ] = ( i + 1 ) * radialSegments + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
 
         }
 
     }
+
+    this.meshPosition = meshPosition;
+    this.meshNormal = meshNormal;
+
+    this.meshTangent1 = meshTangent1;
+    this.meshTangent2 = meshTangent2;
 
     NGL.MeshBuffer.call(
         this, meshPosition, meshColor, meshIndex, meshNormal
