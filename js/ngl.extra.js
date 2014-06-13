@@ -687,7 +687,7 @@ NGL.TubeRepresentation.prototype.name = "tube";
 NGL.TubeRepresentation.prototype.create = function(){
 
     var bufferList = [];
-    var subdiv = 5;
+    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 
@@ -713,7 +713,7 @@ NGL.TubeRepresentation.prototype.create = function(){
             sub.tangent,
             sub.color,
             sub.size,
-            8
+            12
         )
 
         bufferList.push( tubeBuffer );
@@ -738,21 +738,21 @@ NGL.TubeRepresentation.prototype.create = function(){
             )
         );*/
 
-        bufferList.push(
-            new NGL.BufferVectorHelper(
-                tubeBuffer.meshPosition,
-                tubeBuffer.meshTangent1,
-                "lightgreen", 1
-            )
-        );
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper(
+        //         tubeBuffer.meshPosition,
+        //         tubeBuffer.meshTangent1,
+        //         "lightgreen", 1
+        //     )
+        // );
 
-        bufferList.push(
-            new NGL.BufferVectorHelper(
-                tubeBuffer.meshPosition,
-                tubeBuffer.meshTangent2,
-                "tomato", 1 
-            )
-        );
+        // bufferList.push(
+        //     new NGL.BufferVectorHelper(
+        //         tubeBuffer.meshPosition,
+        //         tubeBuffer.meshTangent2,
+        //         "tomato", 1 
+        //     )
+        // );
 
 
     } );
