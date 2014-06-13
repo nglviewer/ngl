@@ -691,6 +691,8 @@ NGL.TubeRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
+        if( f.residueCount < 2 ) return;
+
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 

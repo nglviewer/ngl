@@ -38,6 +38,7 @@ NGL.ElementColors = {
     "LV": 0xFFFFFF, "UUH": 0xFFFFFF
 };
 
+
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
 NGL.VdwRadii = {
     "H": 1.1, "HE": 1.4, "LI": 1.81, "BE": 1.53, "B": 1.92, "C": 1.7,
@@ -689,9 +690,13 @@ NGL.Structure.prototype = {
 
         this.autoBond();
 
+        if( this._doAutoSS ){
+            this.autoSS();
+        }
+
         this.center = this.atomCenter();
 
-        // console.log( "Structure", this );
+        console.log( "Structure", this );
 
     },
 
@@ -823,6 +828,110 @@ NGL.Structure.prototype = {
         } );
 
         console.timeEnd( "NGL.Structure.autoBond" );
+
+    },
+
+    autoSS: function(){
+
+        // Implementation based on "pv"
+        //
+        // assigns secondary structure information based on a simple and very fast 
+        // algorithm published by Zhang and Skolnick in their TM-align paper. 
+        // Reference:
+        //
+        // TM-align: a protein structure alignment algorithm based on the Tm-score 
+        // (2005) NAR, 33(7) 2302-2309
+
+        console.time( "NGL.Structure.autoSS" );
+
+        var zhangSkolnickSS = function(){
+
+            var d;
+            
+            var ca1 = new THREE.Vector3();
+            var ca2 = new THREE.Vector3();
+
+            return function( fiber, i, distances, delta ){
+                
+                for( var j = Math.max( 0, i - 2 ); j <= i; ++j ){
+
+                    for( var k = 2;  k < 5; ++k ){
+                    
+                        if( j + k >= fiber.residueCount ){
+                            continue;
+                        }
+
+                        ca1.copy( fiber.residues[ j ].getAtomByName( "CA" ) );
+                        ca2.copy( fiber.residues[ j + k ].getAtomByName( "CA" ) );
+
+                        d = ca1.distanceTo( ca2 );
+                        // console.log( d )
+
+                        if( Math.abs( d - distances[ k - 2 ] ) > delta ){
+                            return false;
+                        }
+
+                    }
+
+                }
+
+                return true;
+
+            };
+
+        }();
+
+        var isHelical = function( fiber, i ){
+
+            var helixDistances = [ 5.45, 5.18, 6.37 ];
+            var helixDelta = 2.1;
+
+            return zhangSkolnickSS( fiber, i, helixDistances, helixDelta );
+            
+        };
+
+        var isSheet = function( fiber, i ){
+
+            var sheetDistances = [ 6.1, 10.4, 13.0 ];
+            var sheetDelta = 1.42;
+
+            return zhangSkolnickSS( fiber, i, sheetDistances, sheetDelta );
+
+        };
+
+        var i, n;
+
+        this.eachFiber( function( f ){
+
+            if( !f.isProtein() ) return;
+
+            n = f.residueCount;
+
+            for( i = 0; i < n; ++i ){
+
+                if( isHelical( f, i ) ){
+
+                    // console.log( "helix", i, f.residues[ i ] );
+
+                    f.residues[ i ].ss = "h";
+
+                }else if( isSheet( f, i ) ){
+
+                    // console.log( "sheet", i, f.residues[ i ] );
+
+                    f.residues[ i ].ss = "s";
+
+                }else{
+
+                    // console.log( "no helix, no sheet", i );
+
+                }
+
+            }
+
+        } );
+
+        console.timeEnd( "NGL.Structure.autoSS" );
 
     },
 
@@ -1240,15 +1349,13 @@ NGL.Fiber = function( residues ){
     this.residues = residues;
     this.residueCount = residues.length;
 
-    var r = residues[ 0 ];
-
-    if( r.isProtein() ){
+    if( this.isProtein() ){
 
         this.trace_atomname = "CA";
         this.direction_atomname1 = "C";
         this.direction_atomname2 = "O";
 
-    }else if( r.isNucleic() ){
+    }else if( this.isNucleic() ){
 
         this.trace_atomname = "P";
         this.direction_atomname1 = "OP1";
@@ -1264,7 +1371,31 @@ NGL.Fiber.prototype = {
 
     eachResidue: NGL.Chain.prototype.eachResidue,
 
-    eachResidueN: NGL.Chain.prototype.eachResidueN
+    eachResidueN: NGL.Chain.prototype.eachResidueN,
+
+    isProtein: function(){
+
+        if( this._protein === undefined ){
+
+            this._protein = this.residues[ 0 ].isProtein();
+
+        }
+
+        return this._protein;
+
+    },
+
+    isNucleic: function(){
+
+        if( this._nucleic === undefined ){
+
+            this._nucleic = this.residues[ 0 ].isNucleic();
+
+        }
+
+        return this._nucleic;
+
+    }
 
 };
 
@@ -1654,6 +1785,10 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
     }
 
+    if( !this.sheet.length && !this.helix.length ){
+        this._doAutoSS = true;
+    }
+
     console.timeEnd( "NGL.PdbStructure.parse" );
 
 };
@@ -1664,6 +1799,8 @@ NGL.PdbStructure.prototype._parse = function( str ){
  * @class
  */
 NGL.GroStructure = function( name, viewer ){
+
+    this._doAutoSS = true;
 
     NGL.Structure.call( this, name, viewer );
 
