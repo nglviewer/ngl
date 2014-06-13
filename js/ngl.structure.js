@@ -691,7 +691,7 @@ NGL.Structure.prototype = {
 
         this.center = this.atomCenter();
 
-        // console.log( this );
+        // console.log( "Structure", this );
 
     },
 
@@ -1185,17 +1185,24 @@ NGL.Chain.prototype = {
 
             // console.log( r1.resno, r2.resno, r1.isProtein() );
 
-            if( r1.isProtein() ){
+            if( r1.isProtein() && r2.isProtein() ){
 
                 a1 = r1.getAtomByName( 'C' );
                 a2 = r2.getAtomByName( 'N' );
 
-            }else if( r1.isNucleic() ){
+            }else if( r1.isNucleic() && r2.isNucleic() ){
 
                 a1 = r1.getAtomByName( "O3'" );
                 a2 = r2.getAtomByName( 'P' );
 
             }else{
+
+                if( ( r1.isProtein() && !r2.isProtein() ) ||
+                    ( r1.isNucleic() && !r2.isNucleic() ) ){
+
+                    callback( new NGL.Fiber( residues.slice( i, j ) ) );
+
+                }
 
                 i = j;
                 ++j;
@@ -1216,8 +1223,6 @@ NGL.Chain.prototype = {
         } );
 
         if( residues[ i ].isProtein() || residues[ i ].isNucleic() ){
-
-            // console.log( i, j, residues[ i ].isProtein() );
             
             callback( new NGL.Fiber( residues.slice( i, j ) ) );
 
