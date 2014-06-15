@@ -91,15 +91,15 @@
 
                 if( o instanceof NGL.StructureComponent ){
 
-                    // o.add( "backbone" );
-                    // o.add( "ribbon" );
-                    o.addRepresentation( "tube" );
-                    // o.add( "licorice" );
-                    // o.add( "spacefill", "135" );
-                    // o.add( "ball+stick" );
-                    // o.add( "trace" );
-                    // o.add( "line" );
-                    o.addRepresentation( "hyperball", "hetero" );
+                    o.addRepresentation( "backbone" );
+                    // o.addRepresentation( "ribbon" );
+                    // o.addRepresentation( "tube", ":A" );
+                    // o.addRepresentation( "licorice" );
+                    // o.addRepresentation( "spacefill", "135" );
+                    // o.addRepresentation( "ball+stick" );
+                    o.addRepresentation( "trace" );
+                    // o.addRepresentation( "line" );
+                    // o.addRepresentation( "hyperball", "135 :B" );
                     o.centerView();
 
                 }
@@ -113,7 +113,7 @@
 
                     var stage = new NGL.Stage( "container" );
 
-                    stage.loadFile( "../data/1R6A.pdb", initFile );
+                    stage.loadFile( "../data/3pqr.pdb", initFile );
 
                     new NGL.ShowcaseGui( stage );
 

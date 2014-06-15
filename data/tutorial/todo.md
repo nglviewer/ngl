@@ -59,9 +59,12 @@ Ideas
 Todo
 ====
 
+* Spline & Selection
+* updatePosition
+
 * NGL.HyperballRepresentation.prototype.update broken
-* negate single sele !345:A.CA
-* sele "hetero 135" broken
+
+
 
 * Point repr
 * Trace/tube repr

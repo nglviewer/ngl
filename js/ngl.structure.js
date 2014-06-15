@@ -151,6 +151,15 @@ NGL.AtomSet.prototype = {
 
     },
 
+    addAtom: function( atom ){
+
+        this.atoms.push( atom );
+
+        this.atomCount = this.atoms.length;
+        // this.center = this.atomCenter();
+
+    },
+
     fromStructure: function( structure, selection ){
 
         this.structure = structure;
@@ -589,7 +598,7 @@ NGL.BondSet.prototype = {
 
     constructor: NGL.BondSet,
 
-    addBond: function( atom1, atom2 ){
+    addBond: function( atom1, atom2, onlyHere ){
 
         var bonds = this.bonds;
         var bondDict = this.bondDict;
@@ -603,8 +612,10 @@ NGL.BondSet.prototype = {
 
         }else{
 
-            atom1.bonds.push( b );
-            atom2.bonds.push( b );
+            if( !onlyHere ){
+                atom1.bonds.push( b );
+                atom2.bonds.push( b );
+            }
             bonds.push( b );
             bondDict[ qn ] = b;
 
@@ -612,15 +623,49 @@ NGL.BondSet.prototype = {
 
     },
 
-    addBondIfConnected: function( atom1, atom2 ){
+    addBondIfConnected: function( atom1, atom2, onlyHere ){
 
         if( atom1.connectedTo( atom2 ) ){
 
-            this.addBond( atom1, atom2 );
+            this.addBond( atom1, atom2, onlyHere );
 
         }
 
-    }
+    },
+
+    eachBond: function( callback, selection ){
+
+        if( selection ){
+
+            var test = selection.test;
+
+            this.bonds.forEach( function( b ){
+
+                if( test( b.atom1 ) && test( b.atom2 ) ){
+
+                    callback( b );
+
+                }
+
+            } );
+
+        }else{
+
+            this.bonds.forEach( function( b ){
+
+                callback( b );
+
+            } );
+
+        }
+
+    },
+
+    bondPosition: NGL.AtomSet.prototype.bondPosition,
+
+    bondColor: NGL.AtomSet.prototype.bondColor,
+
+    bondRadius: NGL.AtomSet.prototype.bondRadius,
 
 };
 
@@ -1773,6 +1818,8 @@ NGL.Selection = function( selection ){
 
     this.test = this.makeTest();
 
+    // console.log( this.selection )
+
 };
 
 
@@ -1816,12 +1863,14 @@ NGL.Selection.prototype = {
             sele = {};
 
             if( c.toUpperCase()==="HETERO" ){
-                selection.push( "HETERO" );
+                sele.keyword = "HETERO";
+                selection.push( sele );
                 continue;
             }
 
             if( all.indexOf( c.toUpperCase() )!==-1 ){
-                selection.push( "ALL" );
+                sele.keyword = "ALL";
+                selection.push( sele );
                 continue;
             }
 
@@ -1894,12 +1943,12 @@ NGL.Selection.prototype = {
 
                 s = selection[ i ];
 
-                if( typeof s === "string" ){
+                if( s.keyword!==undefined ){
 
-                    if( s==="ALL" ) return t;
-                    if( s==="HETERO" && a.hetero===true ) return t;
+                    if( s.keyword==="ALL" ) return t;
+                    if( s.keyword==="HETERO" && a.hetero===true ) return t;
 
-                    return f;
+                    continue;
 
                 }
 
