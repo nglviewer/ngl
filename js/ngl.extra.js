@@ -1128,15 +1128,6 @@ NGL.BackboneRepresentation.prototype.update = function(){
 
 };
 
-NGL.BackboneRepresentation.prototype.makeBackboneSets = function(){
-
-    var backbone = NGL.makeBackboneSets( this.atomSet );
-
-    this.backboneAtomSet = backbone.atomSet;
-    this.backboneBondSet = backbone.bondSet;
-
-};
-
 
 NGL.TubeRepresentation = function( structure, viewer, sele, size ){
 
@@ -1157,22 +1148,22 @@ NGL.TubeRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
-        if( f.residueCount < 2 ) return;
+        if( f.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 
-        /*bufferList.push(
+        // bufferList.push(
 
-            new NGL.TubeImpostorBuffer(
-                sub.position,
-                sub.normal,
-                sub.binormal,
-                sub.color,
-                sub.size
-            )
+        //     new NGL.TubeImpostorBuffer(
+        //         sub.position,
+        //         sub.normal,
+        //         sub.binormal,
+        //         sub.color,
+        //         sub.size
+        //     )
 
-        );*/
+        // );
 
         var tubeBuffer = new NGL.TubeMeshBuffer(
             sub.position,
@@ -1186,44 +1177,11 @@ NGL.TubeRepresentation.prototype.create = function(){
 
         bufferList.push( tubeBuffer );
 
-        /*bufferList.push(
-            new NGL.BufferVectorHelper( sub.position, sub.normal, "red", 2 )
-        );
-
-        bufferList.push(
-            new NGL.BufferVectorHelper( sub.position, sub.binormal, "blue", 2 )
-        );*/
-
-        /*bufferList.push(
-            new NGL.BufferVectorHelper( sub.position, sub.tangent, "green", 2 )
-        );*/
-
-        /*bufferList.push(
-            new NGL.BufferVectorHelper(
-                tubeBuffer.meshPosition,
-                tubeBuffer.meshNormal,
-                "orange", 2 
-            )
-        );*/
-
         // bufferList.push(
-        //     new NGL.BufferVectorHelper(
-        //         tubeBuffer.meshPosition,
-        //         tubeBuffer.meshTangent1,
-        //         "lightgreen", 1
-        //     )
+        //     new NGL.BufferVectorHelper( sub.position, sub.normal, "red", 2 )
         // );
 
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper(
-        //         tubeBuffer.meshPosition,
-        //         tubeBuffer.meshTangent2,
-        //         "tomato", 1 
-        //     )
-        // );
-
-
-    } );
+    }, this.selection, true );
 
     this.bufferList = bufferList;
 
@@ -1257,7 +1215,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
-        if( f.residueCount < 2 ) return;
+        if( f.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
@@ -1274,19 +1232,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
         );
 
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.position, sub.normal, "green", -1 )
-        // );
-
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.position, sub.tangent, "blue" )
-        // );
-
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.position, sub.tangent, "blue", -1 )
-        // );
-
-    } );
+    }, this.selection, true );
 
     this.bufferList = bufferList;
 
@@ -1318,14 +1264,14 @@ NGL.TraceRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
-        if( f.residueCount < 2 ) return;
+        if( f.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
 
         bufferList.push( new NGL.TraceBuffer( sub.position, sub.color ) );
 
-    } );
+    }, this.selection, true );
 
     this.bufferList = bufferList;
 
@@ -1340,16 +1286,13 @@ NGL.TraceRepresentation.prototype.update = function(){
 };
 
 
-// Or better name it BioSpline?
 NGL.Spline = function( fiber ){
 
     this.fiber = fiber;
-    this.size = fiber.residueCount;
+    this.size = fiber.residueCount - 2;
     this.trace_atomname = fiber.trace_atomname;
     this.direction_atomname1 = fiber.direction_atomname1;
     this.direction_atomname2 = fiber.direction_atomname2;
-
-    // FIXME handle less than two atoms
 
 };
 
@@ -1388,35 +1331,19 @@ NGL.Spline.prototype = {
 
         var subdivideData = this._makeSubdivideData( m, trace_atomname );
 
-        subdivideData(
-            this.fiber.residues[ 0 ],
-            this.fiber.residues[ 0 ],
-            this.fiber.residues[ 1 ],
-            this.fiber.residues[ 2 ],
-            pos, col, tan, norm, bin, size
-        );
-
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
             subdivideData( r1, r2, r3, r4, pos, col, tan, norm, bin, size );
 
         } );
 
-        var rn1 = this.fiber.residues[ n1 ];
+        var rn = this.fiber.residues[ n ];
 
-        subdivideData(
-            this.fiber.residues[ n1 - 2 ],
-            this.fiber.residues[ n1 - 1 ],
-            rn1,
-            rn1,
-            pos, col, tan, norm, bin, size
-        );
+        var can = rn.getAtomByName( trace_atomname );
 
-        var can1 = rn1.getAtomByName( trace_atomname );
-
-        pos[ n1 * m * 3 + 0 ] = can1.x;
-        pos[ n1 * m * 3 + 1 ] = can1.y;
-        pos[ n1 * m * 3 + 2 ] = can1.z;
+        pos[ n1 * m * 3 + 0 ] = can.x;
+        pos[ n1 * m * 3 + 1 ] = can.y;
+        pos[ n1 * m * 3 + 2 ] = can.z;
 
         return {
 

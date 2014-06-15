@@ -65,94 +65,6 @@ NGL.calculateChunkSize = function( nVertex ){
 /////////////////
 // Experimental
 
-NGL.getPathData = function( position, color, size, segments ){
-    var n = position.length/3;
-    var n1 = n - 1;
-    var numpoints = segments*n1 + 2;
-    var numpoints3 = numpoints * 3;
-    var numpoints1 = numpoints - 1;
-    
-    var points = [];
-    var j;
-    for( var v = 0; v < n; ++v ) {
-        j = 3 * v;
-        points.push( new THREE.Vector3( 
-            position[ j + 0 ], position[ j + 1 ], position[ j + 2 ] )
-        );
-    }
-    var path = new THREE.SplineCurve3( points )
-    
-    var frames = new THREE.TubeGeometry.FrenetFrames( path, numpoints, false );
-    var tangents = frames.tangents;
-    var normals = frames.normals;
-    var binormals = frames.binormals;
-
-    var aPoints = new Float32Array( numpoints3 );
-    var aNormals = new Float32Array( numpoints3 );
-    var aBinormals = new Float32Array( numpoints3 );
-    var aTangents = new Float32Array( numpoints3 );
-    var aColor = new Float32Array( numpoints3 );
-    var aSize = new Float32Array( numpoints );
-
-    var i3, p, j;
-    for ( var i = 0; i < numpoints; i++ ) {
-        i3 = i*3;
-        p = path.getPointAt( i / numpoints1 );
-        // p = path.getPoint( i / numpoints1 );
-        
-        aPoints[ i3 + 0 ] = p.x;
-        aPoints[ i3 + 1 ] = p.y;
-        aPoints[ i3 + 2 ] = p.z;
-        
-        aNormals[ i3 + 0 ] = normals[ i ].x;
-        aNormals[ i3 + 1 ] = normals[ i ].y;
-        aNormals[ i3 + 2 ] = normals[ i ].z;
-        
-        aBinormals[ i3 + 0 ] = binormals[ i ].x;
-        aBinormals[ i3 + 1 ] = binormals[ i ].y;
-        aBinormals[ i3 + 2 ] = binormals[ i ].z;
-
-        aTangents[ i3 + 0 ] = tangents[ i ].x;
-        aTangents[ i3 + 1 ] = tangents[ i ].y;
-        aTangents[ i3 + 2 ] = tangents[ i ].z;
-        
-        j = Math.min( Math.floor( i / segments ), n1 );
-        j3 = j * 3;
-        aColor[ i3 + 0 ] = color[ j3 + 0 ];
-        aColor[ i3 + 1 ] = color[ j3 + 1 ];
-        aColor[ i3 + 2 ] = color[ j3 + 2 ];
-    }
-
-    var curSize, stepSize, l;
-    var prevSize = size[0];
-    for ( var i = 0; i < n1; i++ ) {
-        j = i * segments;
-        curSize = size[ i ];
-        if( curSize<0 ){
-            prevSize = curSize * -1.5;
-            curSize = 0;
-        }
-        stepSize = (prevSize-curSize)/(segments-1);
-        for ( var l = 0; l < segments; l++ ) {
-            aSize[ j + l ] = prevSize - l * stepSize;
-            if( curSize==0 ) aSize[ j + l ] *= -1;
-        }
-        prevSize = curSize==0 ? Math.abs( size[ i ] ) : curSize;
-    }
-    
-    return {
-        "position": aPoints,
-        "normal": aNormals,
-        "dir": aBinormals,
-        "color": aColor,
-        "size": aSize,
-        "binormals": aBinormals,
-        "normals": aNormals,
-        "tangents": aTangents
-    }
-}
-
-
 NGL.TubeImpostorBuffer = function( position, normal, dir, color, radius ){
 
     var n = ( position.length/3 ) - 1;
@@ -205,290 +117,239 @@ NGL.TubeImpostorBuffer = function( position, normal, dir, color, radius ){
 }
 
 
-NGL.TubeGroup = function( position, color, radius, segments ){
+NGL.BendCylinderImpostorBuffer = function ( from, to, color, color2, radius ) {
 
-    var group = new THREE.Object3D();
-    var n = position.length/3;
+    var boxMapping = new Float32Array([
+        -1.0,  1.0, -1.0,
+        -1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0
+    ]);
 
-    var i;    
-    var points = []
-    for( var v = 0; v < n; v++ ) {
-        i = 3 * v;
-        points.push( new THREE.Vector3( 
-            position[ i + 0 ], position[ i + 1 ], position[ i + 2 ] )
-        );
-    }
-
-    console.time( "SplineCurve3" );
-    var path = new THREE.SplineCurve3( points );
-    console.timeEnd( "SplineCurve3" );
-
-    var geometry = new THREE.TubeGeometry( path, (n-1)*10, radius[ 0 ], 8 );
-
-    var mesh = new THREE.Mesh(
-        geometry,
-        NGL.getMaterial({ 
-            //color: new THREE.Color( 0.5, 0.5, 0.5 ), 
-            specular: 0x050505, 
-            visible: true,
-            wireframe: false,
-            side: THREE.DoubleSide,
-            fog: true
-        })
-    );
-    
-    this.mesh = mesh;
-
-}
-
-
-NGL.RibbonBuffer = function( position, normal, dir, color, size ){
+    var boxMappingIndices = new Uint32Array([
+        0, 1, 2,
+        1, 4, 2,
+        2, 4, 3,
+        4, 5, 3
+    ]);
 
     var geometry, material, mesh;
-    var n = ( position.length/3 ) - 1;
-    var n4 = n * 4;
+    var n = from.length/3;
+    var n6 = n * 6;
 
-    var quadIndices = new Uint32Array([
-        0, 1, 2,
-        1, 3, 2
-    ]);
+    var aRadius = new Float32Array( n6 );
 
     // make shader material
     var attributes = {
-        inputDir: { type: 'v3', value: null },
-        inputSize: { type: 'f', value: null },
-        inputNormal: { type: 'v3', value: null },
-        inputColor: { type: 'v3', value: null }
+        inputMapping: { type: 'v2', value: null },
+        inputColor: { type: 'c', value: null },
+        inputColor2: { type: 'c', value: null },
+        inputAxis: { type: 'v3', value: null },
+        inputCylinderRadius: { type: 'f', value: null },
+        inputCylinderHeight: { type: 'f', value: null },
+        inputP: { type: 'v3', value: null },
+        inputQ: { type: 'v3', value: null },
+        inputR: { type: 'v3', value: null },
+        inputS: { type: 'v3', value: null }
     };
+
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
+        {
+            'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+        }
     ]);
 
     material = new THREE.ShaderMaterial( {
         uniforms: uniforms,
         attributes: attributes,
-        vertexShader: NGL.getShader( 'Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-        side: THREE.DoubleSide,
+        vertexShader: NGL.getShader( 'BendCylinderImpostor.vert' ),
+        fragmentShader: NGL.getShader( 'BendCylinderImpostor.frag' ),
+        depthTest: true,
+        transparent: false,
+        depthWrite: true,
         lights: true,
         fog: true
     });
 
-
     // make geometry and populate buffer
     geometry = new THREE.BufferGeometry();
 
-    var aPosition = new Float32Array( n4 * 3 );
-    var inputDir = new Float32Array( n4 * 3 );
-    var inputSize = new Float32Array( n4 );
-    var inputNormal = new Float32Array( n4 * 3 );
-    var inputColor = new Float32Array( n4 * 3 );
+    var aPosition = new Float32Array( n6 * 3 );
+    var inputMapping = new Float32Array( n6 * 3 );
+    var inputColor = new Float32Array( n6 * 3 );
+    var inputColor2 = new Float32Array( n6 * 3 );
+    var inputP = new Float32Array( n6 * 3 );
+    var inputQ = new Float32Array( n6 * 3 );
+    var inputR = new Float32Array( n6 * 3 );
+    var inputS = new Float32Array( n6 * 3 );
+    var inputAxis = new Float32Array( n6 * 3 );
+    var inputCylinderRadius = new Float32Array( n6 * 1 );
+    var inputCylinderHeight = new Float32Array( n6 * 1 );
 
     geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
-    geometry.addAttribute( 'inputDir', new THREE.BufferAttribute( inputDir, 3 ) );
-    geometry.addAttribute( 'inputSize', new THREE.BufferAttribute( inputSize, 1 ) );
-    geometry.addAttribute( 'normal', new THREE.BufferAttribute( inputNormal, 3 ) );
+    geometry.addAttribute( 'inputMapping', new THREE.BufferAttribute( inputMapping, 3 ) );
     geometry.addAttribute( 'inputColor', new THREE.BufferAttribute( inputColor, 3 ) );
+    geometry.addAttribute( 'inputColor2', new THREE.BufferAttribute( inputColor2, 3 ) );
+    geometry.addAttribute( 'inputP', new THREE.BufferAttribute( inputP, 3 ) );
+    geometry.addAttribute( 'inputQ', new THREE.BufferAttribute( inputQ, 3 ) );
+    geometry.addAttribute( 'inputR', new THREE.BufferAttribute( inputR, 3 ) );
+    geometry.addAttribute( 'inputS', new THREE.BufferAttribute( inputS, 3 ) );
+    geometry.addAttribute( 'inputAxis', new THREE.BufferAttribute( inputAxis, 3 ) );
+    geometry.addAttribute( 'inputCylinderRadius', new THREE.BufferAttribute( inputCylinderRadius, 1 ) );
+    geometry.addAttribute( 'inputCylinderHeight', new THREE.BufferAttribute( inputCylinderHeight, 1 ) );
 
-    var indices = new Uint32Array( n4 * 3 );
+    var indices = new Uint32Array( n * 12, 1 );
     geometry.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
+    
+    var r, g, b;
+    var r2, g2, b2;
+    var x, y, z;
+    var x1, y1, z1, x2, y2, z2;
+    var vx, vy, vz;
+    var xp, yp, zp, xn, yn, zn;
+    var height;
+    var i, j, k, ix, it;
+    var radPrev = radius[0];
 
-    var i, k, p, l, it, ix, v3;
-    var prevSize = size[0];
-    for( var v = 0; v < n; ++v ){
-        v3 = v * 3;
-        k = v * 3 * 4;
-        l = v * 4;
+    for( var v = 0; v < n; v++ ) {
+        i = v * 3 * 6;
+        k = v * 3;
 
-        aPosition[ k + 0 ] = position[ v3 + 0 ];
-        aPosition[ k + 1 ] = position[ v3 + 1 ];
-        aPosition[ k + 2 ] = position[ v3 + 2 ];
+        inputMapping.set( boxMapping, i );
 
-        aPosition[ k + 3 ] = position[ v3 + 0 ];
-        aPosition[ k + 4 ] = position[ v3 + 1 ];
-        aPosition[ k + 5 ] = position[ v3 + 2 ];
+        r = color[ k + 0 ];
+        g = color[ k + 1 ];
+        b = color[ k + 2 ];
 
-        aPosition[ k + 6 ] = position[ v3 + 3 ];
-        aPosition[ k + 7 ] = position[ v3 + 4 ];
-        aPosition[ k + 8 ] = position[ v3 + 5 ];
-
-        aPosition[ k + 9 ] = position[ v3 + 3 ];
-        aPosition[ k + 10 ] = position[ v3 + 4 ];
-        aPosition[ k + 11 ] = position[ v3 + 5 ];
-
-        inputNormal[ k + 0 ] = normal[ v3 + 0 ];
-        inputNormal[ k + 1 ] = normal[ v3 + 1 ];
-        inputNormal[ k + 2 ] = normal[ v3 + 2 ];
-
-        inputNormal[ k + 3 ] = normal[ v3 + 0 ];
-        inputNormal[ k + 4 ] = normal[ v3 + 1 ];
-        inputNormal[ k + 5 ] = normal[ v3 + 2 ];
-
-        inputNormal[ k + 6 ] = normal[ v3 + 3 ];
-        inputNormal[ k + 7 ] = normal[ v3 + 4 ];
-        inputNormal[ k + 8 ] = normal[ v3 + 5 ];
-
-        inputNormal[ k + 9 ] = normal[ v3 + 3 ];
-        inputNormal[ k + 10 ] = normal[ v3 + 4 ];
-        inputNormal[ k + 11 ] = normal[ v3 + 5 ];
-
-
-        for( i = 0; i<4; ++i ){
-            p = k + 3 * i;
-
-            inputColor[ p + 0 ] = color[ v3 + 0 ];
-            inputColor[ p + 1 ] = color[ v3 + 1 ];
-            inputColor[ p + 2 ] = color[ v3 + 2 ];
-
-            // inputSize[ l + i ] = size[ v ];
+        if( color2 ){
+            r2 = color2[ k + 0 ];
+            g2 = color2[ k + 1 ];
+            b2 = color2[ k + 2 ];
         }
 
-        if( prevSize!=size[ v ] && prevSize<0 ){
-            inputSize[ l + 0 ] = Math.abs( prevSize );
-            inputSize[ l + 1 ] = Math.abs( prevSize );
-            inputSize[ l + 2 ] = Math.abs( size[ v ] );
-            inputSize[ l + 3 ] = Math.abs( size[ v ] );
+        if( v === 0 ){
+            xp = from[ k + 0 ] + ( from[ k + 0 ] - to[ k + 0 ] );
+            yp = from[ k + 1 ] + ( from[ k + 1 ] - to[ k + 1 ] );
+            zp = from[ k + 2 ] + ( from[ k + 2 ] - to[ k + 2 ] );
         }else{
-            inputSize[ l + 0 ] = Math.abs( size[ v ] );
-            inputSize[ l + 1 ] = Math.abs( size[ v ] );
-            inputSize[ l + 2 ] = Math.abs( size[ v ] );
-            inputSize[ l + 3 ] = Math.abs( size[ v ] );
-        }
-        prevSize = size[ v ];
-
-        inputDir[ k + 0 ] = dir[ v3 + 0 ];
-        inputDir[ k + 1 ] = dir[ v3 + 1 ];
-        inputDir[ k + 2 ] = dir[ v3 + 2 ];
-
-        inputDir[ k + 3 ] = -dir[ v3 + 0 ];
-        inputDir[ k + 4 ] = -dir[ v3 + 1 ];
-        inputDir[ k + 5 ] = -dir[ v3 + 2 ];
-
-        inputDir[ k + 6 ] = dir[ v3 + 3 ];
-        inputDir[ k + 7 ] = dir[ v3 + 4 ];
-        inputDir[ k + 8 ] = dir[ v3 + 5 ];
-
-        inputDir[ k + 9 ] = -dir[ v3 + 3 ];
-        inputDir[ k + 10 ] = -dir[ v3 + 4 ];
-        inputDir[ k + 11 ] = -dir[ v3 + 5 ];
-
-
-        ix = v * 6;
-        it = v * 4;
-
-        indices.set( quadIndices, ix );
-        for( var s=0; s<6; ++s ){
-            indices[ ix + s ] += it;
+            xp = from[ k - 3 + 0 ];
+            yp = from[ k - 3 + 1 ];
+            zp = from[ k - 3 + 2 ];
         }
 
+        if( v === n-1 ){
+            xn = to[ k + 0 ] - ( from[ k + 0 ] - to[ k + 0 ] );
+            yn = to[ k + 1 ] - ( from[ k + 1 ] - to[ k + 1 ] );
+            zn = to[ k + 2 ] - ( from[ k + 2 ] - to[ k + 2 ] );
+        }else{
+            xn = to[ k + 3 + 0 ];
+            yn = to[ k + 3 + 1 ];
+            zn = to[ k + 3 + 2 ];
+        }
+
+        x1 = from[ k + 0 ];
+        y1 = from[ k + 1 ];
+        z1 = from[ k + 2 ];
+
+        x2 = to[ k + 0 ];
+        y2 = to[ k + 1 ];
+        z2 = to[ k + 2 ];
+
+        x = ( x1 + x2 ) / 2.0;
+        y = ( y1 + y2 ) / 2.0;
+        z = ( z1 + z2 ) / 2.0;
+
+        vx = x1 - x2;
+        vy = y1 - y2;
+        vz = z1 - z2;
+
+        height = Math.sqrt( vx*vx + vy*vy + vz*vz ); 
+
+        for( var m = 0; m < 6; m++ ) {
+            j = v * 6 * 3 + (3 * m);
+
+            inputColor[ j + 0 ] = r;
+            inputColor[ j + 1 ] = g;
+            inputColor[ j + 2 ] = b;
+
+            inputColor2[ j + 0 ] = r2;
+            inputColor2[ j + 1 ] = g2;
+            inputColor2[ j + 2 ] = b2;
+            
+            inputP[ j + 0 ] = xp;
+            inputP[ j + 1 ] = yp;
+            inputP[ j + 2 ] = zp;
+
+            inputQ[ j + 0 ] = x1;
+            inputQ[ j + 1 ] = y1;
+            inputQ[ j + 2 ] = z1;
+
+            inputR[ j + 0 ] = x2;
+            inputR[ j + 1 ] = y2;
+            inputR[ j + 2 ] = z2;
+
+            inputS[ j + 0 ] = xn;
+            inputS[ j + 1 ] = yn;
+            inputS[ j + 2 ] = zn;
+
+            aPosition[ j + 0 ] = x;
+            aPosition[ j + 1 ] = y;
+            aPosition[ j + 2 ] = z;
+
+            inputAxis[ j + 0 ] = vx;
+            inputAxis[ j + 1 ] = vy;
+            inputAxis[ j + 2 ] = vz;
+
+            inputCylinderRadius[ (v * 6) + m ] = radius[ v ];
+            inputCylinderHeight[ (v * 6) + m ] = height;
+
+            aRadius[ (v * 6) + m ] = 2.0;
+        }
+
+        ix = v * 12;
+        it = v * 6;
+
+        indices.set( boxMappingIndices, ix );
+        for( var s=0; s<12; ++s ){
+            indices[ix + s] += it;
+        }
     }
 
-    // console.log( n, n4 )
-    // console.log( "inputDir", inputDir );
-    // console.log( "inputNormal", inputNormal );
-    // console.log( "RibbonBuffer aPosition", aPosition, aPosition.length );
-    // console.log( position );
-    // console.log( "inputSize", inputSize, size );
+    // console.log( "inputMapping", inputMapping );
     // console.log( "inputColor", inputColor );
+    // if(normal) console.log( "inputFrenetNormal", inputFrenetNormal );
+    // console.log( "aPosition", aPosition );
+    // console.log( "inputCylinderRadius", inputCylinderRadius );
+    // console.log( "inputCylinderHeight", inputCylinderHeight );
     // console.log( "indices", indices );
 
     mesh = new THREE.Mesh( geometry, material );
-
-    // new NGL.BufferVectorHelper( position, normal, new THREE.Color("rgb(255,0,0)") );
-    // new NGL.BufferVectorHelper( position, dir, new THREE.Color("rgb(255,255,0)") );
+    
+    //new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius, false );
+    //new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius, false );
+    //console.log( "inputP", inputP );
+    //console.log( "inputQ", inputQ );
 
     // public attributes
     this.geometry = geometry;
     this.material = material;
     this.mesh = mesh;
 
+    // new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius );
+    // new NGL.SphereImpostorBuffer( inputQ, inputColor, inputCylinderRadius );
+    // new NGL.SphereImpostorBuffer( inputR, inputColor, inputCylinderRadius );
+    // new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius );
 }
-
-
-NGL.BufferVectorHelper = function( position, vector, color, scale ){
-
-    scale = scale || 1;
-
-    var geometry, material, line;
-    var n = position.length/3;
-    var n2 = n * 2;
-    var n6 = n * 6;
-
-    material = new THREE.LineBasicMaterial({ color: color, fog: true });
-    geometry = new THREE.BufferGeometry();
-
-    var aPosition = new Float32Array( n2 * 3 );
-    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
-
-    var i, j;
-
-    for( var v = 0; v < n; v++ ){
-        
-        i = v * 2 * 3;
-        j = v * 3;
-
-        aPosition[ i + 0 ] = position[ j + 0 ];
-        aPosition[ i + 1 ] = position[ j + 1 ];
-        aPosition[ i + 2 ] = position[ j + 2 ];
-        aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
-        aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
-        aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
-
-    }
-
-    // console.log( "position", aPosition );
-
-    line = new THREE.Line( geometry, material, THREE.LinePieces );
-
-    // public attributes
-    this.geometry = geometry;
-    this.material = material;
-    this.mesh = line;
-
-}
-
 
 
 
 /////////
 // Todo
 
-// TODO
-NGL.TubeImpostorBufferX = function ( position, normal, dir, color, radius ) {
-
-    this.size = from.length / 3;
-    this.vertexShader = 'TubeImpostor.vert';
-    this.fragmentShader = 'TubeImpostor.frag';
-
-    NGL.AlignedBoxBuffer.call( this );
-
-    this.addUniforms({
-        
-    });
-    
-    this.addAttributes({
-        "radius": { type: "f", value: null },
-    });
-
-    this.setAttributes({
-        "position": position,
-        "radius": radius,
-    });
-
-    this.finalize();
-
-    this.material.transparent = true;
-    this.material.depthWrite = false;
-    this.material.lights = false;
-    this.material.blending = THREE.AdditiveBlending;
-
-}
-
-NGL.TubeImpostorBufferX.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
-
-
-// TODO
 NGL.CrossBuffer = function ( position, color, size ) {
     
     // screen aligned; pixel buffer
@@ -2172,235 +2033,3 @@ NGL.LineSpriteBuffer = function ( from, to, color, color2, width ) {
     this.mesh = mesh;
     this.n = n;
 }
-
-
-NGL.BendCylinderImpostorBuffer = function ( from, to, color, color2, radius ) {
-
-    var boxMapping = new Float32Array([
-        -1.0,  1.0, -1.0,
-        -1.0, -1.0, -1.0,
-         1.0,  1.0, -1.0,
-         1.0,  1.0,  1.0,
-         1.0, -1.0, -1.0,
-         1.0, -1.0,  1.0
-    ]);
-
-    var boxMappingIndices = new Uint32Array([
-        0, 1, 2,
-        1, 4, 2,
-        2, 4, 3,
-        4, 5, 3
-    ]);
-
-    var geometry, material, mesh;
-    var n = from.length/3;
-    var n6 = n * 6;
-
-    var aRadius = new Float32Array( n6 );
-
-    // make shader material
-    var attributes = {
-        inputMapping: { type: 'v2', value: null },
-        inputColor: { type: 'c', value: null },
-        inputColor2: { type: 'c', value: null },
-        inputAxis: { type: 'v3', value: null },
-        inputCylinderRadius: { type: 'f', value: null },
-        inputCylinderHeight: { type: 'f', value: null },
-        inputP: { type: 'v3', value: null },
-        inputQ: { type: 'v3', value: null },
-        inputR: { type: 'v3', value: null },
-        inputS: { type: 'v3', value: null }
-    };
-
-    var uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-        {
-            'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        }
-    ]);
-
-    material = new THREE.ShaderMaterial( {
-        uniforms: uniforms,
-        attributes: attributes,
-        vertexShader: NGL.getShader( 'BendCylinderImpostor.vert' ),
-        fragmentShader: NGL.getShader( 'BendCylinderImpostor.frag' ),
-        depthTest: true,
-        transparent: false,
-        depthWrite: true,
-        lights: true,
-        fog: true
-    });
-
-    // make geometry and populate buffer
-    geometry = new THREE.BufferGeometry();
-
-    var aPosition = new Float32Array( n6 * 3 );
-    var inputMapping = new Float32Array( n6 * 3 );
-    var inputColor = new Float32Array( n6 * 3 );
-    var inputColor2 = new Float32Array( n6 * 3 );
-    var inputP = new Float32Array( n6 * 3 );
-    var inputQ = new Float32Array( n6 * 3 );
-    var inputR = new Float32Array( n6 * 3 );
-    var inputS = new Float32Array( n6 * 3 );
-    var inputAxis = new Float32Array( n6 * 3 );
-    var inputCylinderRadius = new Float32Array( n6 * 1 );
-    var inputCylinderHeight = new Float32Array( n6 * 1 );
-
-    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
-    geometry.addAttribute( 'inputMapping', new THREE.BufferAttribute( inputMapping, 3 ) );
-    geometry.addAttribute( 'inputColor', new THREE.BufferAttribute( inputColor, 3 ) );
-    geometry.addAttribute( 'inputColor2', new THREE.BufferAttribute( inputColor2, 3 ) );
-    geometry.addAttribute( 'inputP', new THREE.BufferAttribute( inputP, 3 ) );
-    geometry.addAttribute( 'inputQ', new THREE.BufferAttribute( inputQ, 3 ) );
-    geometry.addAttribute( 'inputR', new THREE.BufferAttribute( inputR, 3 ) );
-    geometry.addAttribute( 'inputS', new THREE.BufferAttribute( inputS, 3 ) );
-    geometry.addAttribute( 'inputAxis', new THREE.BufferAttribute( inputAxis, 3 ) );
-    geometry.addAttribute( 'inputCylinderRadius', new THREE.BufferAttribute( inputCylinderRadius, 1 ) );
-    geometry.addAttribute( 'inputCylinderHeight', new THREE.BufferAttribute( inputCylinderHeight, 1 ) );
-
-    var indices = new Uint32Array( n * 12, 1 );
-    geometry.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
-    
-    var r, g, b;
-    var r2, g2, b2;
-    var x, y, z;
-    var x1, y1, z1, x2, y2, z2;
-    var vx, vy, vz;
-    var xp, yp, zp, xn, yn, zn;
-    var height;
-    var i, j, k, ix, it;
-    var radPrev = radius[0];
-
-    for( var v = 0; v < n; v++ ) {
-        i = v * 3 * 6;
-        k = v * 3;
-
-        inputMapping.set( boxMapping, i );
-
-        r = color[ k + 0 ];
-        g = color[ k + 1 ];
-        b = color[ k + 2 ];
-
-        if( color2 ){
-            r2 = color2[ k + 0 ];
-            g2 = color2[ k + 1 ];
-            b2 = color2[ k + 2 ];
-        }
-
-        if( v === 0 ){
-            xp = from[ k + 0 ] + ( from[ k + 0 ] - to[ k + 0 ] );
-            yp = from[ k + 1 ] + ( from[ k + 1 ] - to[ k + 1 ] );
-            zp = from[ k + 2 ] + ( from[ k + 2 ] - to[ k + 2 ] );
-        }else{
-            xp = from[ k - 3 + 0 ];
-            yp = from[ k - 3 + 1 ];
-            zp = from[ k - 3 + 2 ];
-        }
-
-        if( v === n-1 ){
-            xn = to[ k + 0 ] - ( from[ k + 0 ] - to[ k + 0 ] );
-            yn = to[ k + 1 ] - ( from[ k + 1 ] - to[ k + 1 ] );
-            zn = to[ k + 2 ] - ( from[ k + 2 ] - to[ k + 2 ] );
-        }else{
-            xn = to[ k + 3 + 0 ];
-            yn = to[ k + 3 + 1 ];
-            zn = to[ k + 3 + 2 ];
-        }
-
-        x1 = from[ k + 0 ];
-        y1 = from[ k + 1 ];
-        z1 = from[ k + 2 ];
-
-        x2 = to[ k + 0 ];
-        y2 = to[ k + 1 ];
-        z2 = to[ k + 2 ];
-
-        x = ( x1 + x2 ) / 2.0;
-        y = ( y1 + y2 ) / 2.0;
-        z = ( z1 + z2 ) / 2.0;
-
-        vx = x1 - x2;
-        vy = y1 - y2;
-        vz = z1 - z2;
-
-        height = Math.sqrt( vx*vx + vy*vy + vz*vz ); 
-
-        for( var m = 0; m < 6; m++ ) {
-            j = v * 6 * 3 + (3 * m);
-
-            inputColor[ j + 0 ] = r;
-            inputColor[ j + 1 ] = g;
-            inputColor[ j + 2 ] = b;
-
-            inputColor2[ j + 0 ] = r2;
-            inputColor2[ j + 1 ] = g2;
-            inputColor2[ j + 2 ] = b2;
-            
-            inputP[ j + 0 ] = xp;
-            inputP[ j + 1 ] = yp;
-            inputP[ j + 2 ] = zp;
-
-            inputQ[ j + 0 ] = x1;
-            inputQ[ j + 1 ] = y1;
-            inputQ[ j + 2 ] = z1;
-
-            inputR[ j + 0 ] = x2;
-            inputR[ j + 1 ] = y2;
-            inputR[ j + 2 ] = z2;
-
-            inputS[ j + 0 ] = xn;
-            inputS[ j + 1 ] = yn;
-            inputS[ j + 2 ] = zn;
-
-            aPosition[ j + 0 ] = x;
-            aPosition[ j + 1 ] = y;
-            aPosition[ j + 2 ] = z;
-
-            inputAxis[ j + 0 ] = vx;
-            inputAxis[ j + 1 ] = vy;
-            inputAxis[ j + 2 ] = vz;
-
-            inputCylinderRadius[ (v * 6) + m ] = radius[ v ];
-            inputCylinderHeight[ (v * 6) + m ] = height;
-
-            aRadius[ (v * 6) + m ] = 2.0;
-        }
-
-        ix = v * 12;
-        it = v * 6;
-
-        indices.set( boxMappingIndices, ix );
-        for( var s=0; s<12; ++s ){
-            indices[ix + s] += it;
-        }
-    }
-
-    // console.log( "inputMapping", inputMapping );
-    // console.log( "inputColor", inputColor );
-    // if(normal) console.log( "inputFrenetNormal", inputFrenetNormal );
-    // console.log( "aPosition", aPosition );
-    // console.log( "inputCylinderRadius", inputCylinderRadius );
-    // console.log( "inputCylinderHeight", inputCylinderHeight );
-    // console.log( "indices", indices );
-
-    mesh = new THREE.Mesh( geometry, material );
-    
-    //new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius, false );
-    //new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius, false );
-    //console.log( "inputP", inputP );
-    //console.log( "inputQ", inputQ );
-
-    // public attributes
-    this.geometry = geometry;
-    this.material = material;
-    this.mesh = mesh;
-
-    // new NGL.SphereImpostorBuffer( inputP, inputColor, inputCylinderRadius );
-    // new NGL.SphereImpostorBuffer( inputQ, inputColor, inputCylinderRadius );
-    // new NGL.SphereImpostorBuffer( inputR, inputColor, inputCylinderRadius );
-    // new NGL.SphereImpostorBuffer( inputS, inputColor, inputCylinderRadius );
-}
-
-
-

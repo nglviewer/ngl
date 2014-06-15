@@ -119,6 +119,9 @@ NGL.guessElement = function(){
 
 }();
 
+NGL.ProteinType = 0;
+NGL.NucleicType = 1;
+NGL.UnknownType = 2;
 
 ////////
 // Set
@@ -797,10 +800,10 @@ NGL.Structure.prototype = {
 
     },
 
-    eachFiber: function( callback ){
+    eachFiber: function( callback, selection, padded ){
 
         this.models.forEach( function( m ){
-            m.eachFiber( callback );
+            m.eachFiber( callback, selection, padded );
         } );
 
     },
@@ -1097,10 +1100,10 @@ NGL.Model.prototype = {
 
     },
 
-    eachFiber: function( callback ){
+    eachFiber: function( callback, selection, padded ){
 
         this.chains.forEach( function( c ){
-            c.eachFiber( callback );
+            c.eachFiber( callback, selection, padded );
         } );
 
     },
@@ -1193,11 +1196,57 @@ NGL.Chain.prototype = {
 
     },
 
-    eachFiber: function( callback ){
+    getFiber: function( i, j, padded ){
+
+        // console.log( i, j, this.residueCount );
+
+        var n = this.residueCount;
+        var n1 = n - 1;
+        var residues = this.residues.slice( i, j );
+
+        if( padded ){
+
+            var r = this.residues[ i ];
+            var rPrev = this.residues[ i - 1 ];
+            var rNext = this.residues[ j ];
+
+            if( i === 0 || rPrev.getType() !== r.getType() ){
+                
+                residues.unshift( this.residues[ i ] );
+
+            }else{
+
+                residues.unshift( rPrev );
+
+            }
+
+            if( j === n || rNext.getType() !== r.getType() ){
+                
+                residues.push( this.residues[ j - 1 ] );
+
+            }else{
+
+                residues.push( rNext );
+
+            }
+
+        }
+
+        // console.log( residues );
+
+        return new NGL.Fiber( residues );
+
+    },
+
+    eachFiber: function( callback, selection, padded ){
+
+        var scope = this;
 
         var i = 0;
         var j = 1;
         var residues = this.residues;
+        var test = selection ? selection.test : undefined;
+
         var a1, a2;
 
         this.eachResidueN( 2, function( r1, r2 ){
@@ -1219,7 +1268,7 @@ NGL.Chain.prototype = {
                 if( ( r1.isProtein() && !r2.isProtein() ) ||
                     ( r1.isNucleic() && !r2.isNucleic() ) ){
 
-                    callback( new NGL.Fiber( residues.slice( i, j ) ) );
+                    callback( scope.getFiber( i, j, padded ) );
 
                 }
 
@@ -1230,9 +1279,10 @@ NGL.Chain.prototype = {
 
             }
 
-            if( !a1 || !a2 || !a1.connectedTo( a2 ) ){
+            if( !a1 || !a2 || !a1.connectedTo( a2 ) ||
+                ( test && ( !test( a1 ) || !test( a2 ) ) ) ){
                 
-                callback( new NGL.Fiber( residues.slice( i, j ) ) );
+                callback( scope.getFiber( i, j, padded ) );
                 i = j;
                 
             }
@@ -1243,7 +1293,7 @@ NGL.Chain.prototype = {
 
         if( residues[ i ].isProtein() || residues[ i ].isNucleic() ){
             
-            callback( new NGL.Fiber( residues.slice( i, j ) ) );
+            callback( scope.getFiber( i, j, padded ) );
 
         }
 
@@ -1305,10 +1355,27 @@ NGL.Fiber.prototype = {
 
         return this._nucleic;
 
+    },
+
+    getType: function(){
+
+        if( this._type === undefined ){
+
+            if( this.isProtein() ){
+                this._type = NGL.ProteinType;
+            }else if( this.isNucleic() ){
+                this._type = NGL.NucleicType;
+            }else{
+                this._type = NGL.UnknownType;
+            }
+
+        }
+
+        return this._type;
+
     }
 
 };
-
 
 
 NGL.Residue = function( chain ){
@@ -1362,6 +1429,24 @@ NGL.Residue.prototype = {
         }
 
         return this._nucleic;
+
+    },
+
+    getType: function(){
+
+        if( this._type === undefined ){
+
+            if( this.isProtein() ){
+                this._type = NGL.ProteinType;
+            }else if( this.isNucleic() ){
+                this._type = NGL.NucleicType;
+            }else{
+                this._type = NGL.UnknownType;
+            }
+
+        }
+
+        return this._type;
 
     },
 
