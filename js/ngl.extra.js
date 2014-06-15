@@ -36,6 +36,8 @@ NGL.Stage = function( eid ){
 
     this.viewer = new NGL.Viewer( eid );
 
+    this.initGui();
+
     this.initFileDragDrop();
 
     this.viewer.animate();
@@ -93,9 +95,13 @@ NGL.Stage.prototype = {
 
                 component = new NGL.StructureComponent( scope, object );
 
+            }else if( object instanceof NGL.Surface ){
+
+                component = new NGL.SurfaceComponent( scope, object );
+
             }else{
 
-                console.log( "NGL.Stage.loadFile ???", object );
+                console.warn( "NGL.Stage.loadFile: object type unknown", object );
 
             }
 
@@ -111,7 +117,7 @@ NGL.Stage.prototype = {
 
         if( !component ){
 
-            console.log( "NGL.Stage.addComponent: no component given" );
+            console.warn( "NGL.Stage.addComponent: no component given" );
             return;
 
         }
@@ -133,6 +139,18 @@ NGL.Stage.prototype = {
         component.dispose();
 
     },
+
+    initGui: function(){
+
+        this.gui = new NGL.ViewerGui( this.viewer );
+
+        this.gui2 = new dat.GUI({ autoPlace: false });
+        this.gui2.domElement.style.position = 'absolute';
+        this.gui2.domElement.style.top = '0px';
+        this.gui2.domElement.style.left = '0px';
+        this.viewer.container.appendChild( this.gui2.domElement );
+
+    }
 
 }
 
@@ -249,10 +267,10 @@ NGL.StructureComponent.prototype = {
         var scope = this;
 
         var guiName = NGL.getNextAvailablePropertyName(
-            this.structure.name, this.viewer.gui2.__folders
+            this.structure.name, this.stage.gui2.__folders
         );
 
-        var gui = this.viewer.gui2.addFolder( guiName );
+        var gui = this.stage.gui2.addFolder( guiName );
         this.gui = gui;
 
         var params = {
@@ -272,7 +290,7 @@ NGL.StructureComponent.prototype = {
             dispose: function(){
 
                 scope.stage.removeComponent( scope );
-                scope.viewer.gui2.removeFolder( guiName );
+                scope.stage.gui2.removeFolder( guiName );
 
             },
 
@@ -389,8 +407,10 @@ NGL.SurfaceComponent = function( stage, surface ){
 
     this.surface = surface;
 
-    this.viewer.add( surface );
+    this.viewer.add( surface.buffer );
     this.viewer.render();
+
+    this.initGui();
 
 };
 
@@ -402,7 +422,53 @@ NGL.SurfaceComponent.prototype = {
 
     dispose: function(){},
 
-    toggle: function(){},
+    toggleDisplay: function(){
+
+        this.surface.toggleDisplay();
+        this.viewer.render();
+
+    },
+
+    initGui: function(){
+
+        var scope = this;
+
+        var guiName = NGL.getNextAvailablePropertyName(
+            this.surface.name, this.stage.gui2.__folders
+        );
+
+        var gui = this.stage.gui2.addFolder( guiName );
+        this.gui = gui;
+
+        var params = {
+
+            toggle: function(){
+
+                scope.toggleDisplay();
+
+            },
+
+            // center: function(){
+
+            //     scope.centerView();
+
+            // },
+
+            // dispose: function(){
+
+            //     scope.stage.removeComponent( scope );
+            //     scope.stage.gui2.removeFolder( guiName );
+
+            // }
+
+        };
+
+
+        gui.add( params, 'toggle' );
+        // gui.add( params, 'center' );
+        // gui.add( params, 'dispose' );
+
+    }
 
 };
 
@@ -412,7 +478,9 @@ NGL.Component.prototype.apply( NGL.SurfaceComponent.prototype );
 ////////////
 // Surface
 
-NGL.initSurface = function( object, name ){
+NGL.Surface = function( object, name ){
+
+    this.name = name;
 
     if( object instanceof THREE.Geometry ){
 
@@ -433,9 +501,17 @@ NGL.initSurface = function( object, name ){
     var index = NGL.Utils.indexFromGeometry( geo );
     var normal = NGL.Utils.normalFromGeometry( geo );
 
-    surface = new NGL.MeshBuffer( position, color, index, normal );
+    this.buffer = new NGL.MeshBuffer( position, color, index, normal );
 
-    return surface;
+}
+
+NGL.Surface.prototype = {
+
+    toggleDisplay: function(){
+
+        this.buffer.mesh.visible = !this.buffer.mesh.visible;
+
+    }
 
 }
 
@@ -544,7 +620,7 @@ NGL.ObjLoader.prototype.init = function( data, name ){
 
     }
 
-    return NGL.initSurface( data, name );
+    return new NGL.Surface( data, name );
 
 };
 
@@ -566,7 +642,7 @@ NGL.PlyLoader.prototype.init = function( data, name ){
 
     }
 
-    return NGL.initSurface( data, name );
+    return new NGL.Surface( data, name );
 
 };
 
