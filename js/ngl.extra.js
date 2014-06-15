@@ -266,6 +266,51 @@ NGL.StructureComponent.prototype = {
 
     }(),
 
+    updateFrame: function( i ){
+
+        var scope = this;
+
+        var url = "../xtc/frame/" + i +
+            "?path=" + encodeURIComponent( this.xtc );
+
+        function update( i ){
+
+            scope.structure.updatePosition( scope.frameCache[ i ] );
+
+            scope.reprList.forEach( function( repr ){
+
+                //console.log( repr.name, repr );
+                repr.update();
+
+            } );
+
+            scope.viewer.render();
+
+        }
+
+        if( this.frameCache[ i ] ){
+
+            update( i );
+
+            return;
+
+        }
+
+        var loader = new THREE.XHRLoader();
+        loader.setResponseType( "arraybuffer" );
+
+        loader.load( url, function( arrayBuffer ){
+
+            if( !arrayBuffer ) return;
+
+            scope.frameCache[ i ] = new Float32Array( arrayBuffer );
+
+            update( i );
+
+        });
+
+    },
+
     initGui: function(){
 
         var scope = this;
@@ -324,20 +369,20 @@ NGL.StructureComponent.prototype = {
 
         );
 
-        var frameCache = {};
-        // var xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
-        var xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
-        // var xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
-        params.xtc = xtc;
+        this.frameCache = {};
+        // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
+        this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
+        // this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
+        params.xtc = this.xtc;
 
-        gui.add( params, 'xtc' ).listen().onFinishChange( function( newXtc ){
+        gui.add( params, 'xtc' ).listen().onFinishChange( function( xtc ){
 
-            xtc = newXtc;
+            scope.xtc = xtc;
 
         } );
 
         var loader = new THREE.XHRLoader();
-        var url = "../xtc/numframes?path=" + encodeURIComponent( xtc );
+        var url = "../xtc/numframes?path=" + encodeURIComponent( this.xtc );
         loader.load( url, function( n ){
 
             n = parseInt( n );
@@ -348,7 +393,7 @@ NGL.StructureComponent.prototype = {
                 function( frame ){
 
                     console.log( frame );
-                    scope.structure.test( frame );
+                    scope.updateFrame( frame );
 
                 }
 
@@ -928,22 +973,17 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    if( this.selection ){
-
-        this.applySelection();
-
-    }
-
     this.sphereBuffer.setAttributes({
-        position: this.atomSet.position
+        position: this.atomSet.atomPosition()
     });
 
     this.cylinderBuffer.setAttributes({
         position: NGL.Utils.calculateCenterArray(
-            this.bondSet.from, this.bondSet.to
+            this.atomSet.bondPosition( null, 0 ),
+            this.atomSet.bondPosition( null, 1 )
         ),
-        position1: this.bondSet.from,
-        position2: this.bondSet.to
+        position1: this.atomSet.bondPosition( null, 0 ),
+        position2: this.atomSet.bondPosition( null, 1 )
     });
 
 };
@@ -1016,8 +1056,8 @@ NGL.LineRepresentation.prototype.update = function(){
     NGL.Representation.prototype.update.call( this );
 
     this.lineBuffer.setAttributes({
-        from: this.bondSet.from,
-        to: this.bondSet.to
+        from: this.atomSet.bondPosition( null, 0 ),
+        to: this.atomSet.bondPosition( null, 1 )
     });
 
 };
@@ -1060,7 +1100,16 @@ NGL.HyperballRepresentation.prototype.create = function(){
 
 NGL.HyperballRepresentation.prototype.update = function(){
 
-    NGL.BallAndStickRepresentation.prototype.update.call( this );
+    // FIXME
+    // NGL.BallAndStickRepresentation.prototype.update.call( this );
+
+    NGL.Representation.prototype.update.call( this );
+
+    // TODO more fine grained, update only position
+
+    this.dispose();
+    this.create();
+    this.attach();
 
 };
 
@@ -1140,19 +1189,11 @@ NGL.BackboneRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    this.makeBackboneSets();
+    // TODO more fine grained, update only position
 
-    this.sphereBuffer.setAttributes({
-        position: this.backboneAtomSet.position
-    });
-
-    this.cylinderBuffer.setAttributes({
-        position: NGL.Utils.calculateCenterArray(
-            this.backboneBondSet.from, this.backboneBondSet.to
-        ),
-        position1: this.backboneBondSet.from,
-        position2: this.backboneBondSet.to
-    });
+    this.dispose();
+    this.create();
+    this.attach();
 
 };
 
@@ -1219,7 +1260,11 @@ NGL.TubeRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    // TODO
+    // TODO more fine grained, update only position
+
+    this.dispose();
+    this.create();
+    this.attach();
 
 };
 
@@ -1270,7 +1315,11 @@ NGL.RibbonRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    // TODO
+    // TODO more fine grained, update only position
+
+    this.dispose();
+    this.create();
+    this.attach();
 
 };
 
@@ -1309,7 +1358,11 @@ NGL.TraceRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    // TODO
+    // TODO more fine grained, update only position
+
+    this.dispose();
+    this.create();
+    this.attach();
 
 };
 

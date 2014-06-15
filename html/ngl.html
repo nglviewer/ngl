@@ -93,10 +93,10 @@
 
                     // o.addRepresentation( "backbone" );
                     // o.addRepresentation( "ribbon", ":A" );
-                    o.addRepresentation( "tube", ":A" );
-                    o.addRepresentation( "licorice", ":B" );
-                    // o.addRepresentation( "spacefill", "135" );
-                    // o.addRepresentation( "ball+stick" );
+                    o.addRepresentation( "tube", "*" );
+                    // o.addRepresentation( "licorice", "*" );
+                    // o.addRepresentation( "spacefill", "protein" );
+                    // o.addRepresentation( "ball+stick", "! protein" );
                     // o.addRepresentation( "trace" );
                     // o.addRepresentation( "line" );
                     // o.addRepresentation( "hyperball", "135 :B" );
@@ -117,7 +117,7 @@
 
                     var stage = new NGL.Stage( "container" );
 
-                    stage.loadFile( "../data/3pqr.pdb", initFile );
+                    stage.loadFile( "../data/md.pdb", initFile );
 
                     new NGL.ShowcaseGui( stage );
 
