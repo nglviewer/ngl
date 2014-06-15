@@ -2414,6 +2414,181 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
+NGL.RibbonBuffer = function( position, normal, dir, color, size ){
+
+    var geometry, material, mesh;
+    var n = ( position.length/3 ) - 1;
+    var n4 = n * 4;
+
+    var quadIndices = new Uint32Array([
+        0, 1, 2,
+        1, 3, 2
+    ]);
+
+    // make shader material
+    var attributes = {
+        inputDir: { type: 'v3', value: null },
+        inputSize: { type: 'f', value: null },
+        inputNormal: { type: 'v3', value: null },
+        inputColor: { type: 'v3', value: null }
+    };
+    var uniforms = THREE.UniformsUtils.merge( [
+        NGL.UniformsLib[ "fog" ],
+        NGL.UniformsLib[ "lights" ],
+    ]);
+
+    material = new THREE.ShaderMaterial( {
+        uniforms: uniforms,
+        attributes: attributes,
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
+        side: THREE.DoubleSide,
+        lights: true,
+        fog: true
+    });
+
+
+    // make geometry and populate buffer
+    geometry = new THREE.BufferGeometry();
+
+    var aPosition = new Float32Array( n4 * 3 );
+    var inputDir = new Float32Array( n4 * 3 );
+    var inputSize = new Float32Array( n4 );
+    var inputNormal = new Float32Array( n4 * 3 );
+    var inputColor = new Float32Array( n4 * 3 );
+
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
+    geometry.addAttribute( 'inputDir', new THREE.BufferAttribute( inputDir, 3 ) );
+    geometry.addAttribute( 'inputSize', new THREE.BufferAttribute( inputSize, 1 ) );
+    geometry.addAttribute( 'normal', new THREE.BufferAttribute( inputNormal, 3 ) );
+    geometry.addAttribute( 'inputColor', new THREE.BufferAttribute( inputColor, 3 ) );
+
+    var indices = new Uint32Array( n4 * 3 );
+    geometry.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
+
+    var i, k, p, l, it, ix, v3;
+    var prevSize = size[0];
+    for( var v = 0; v < n; ++v ){
+        v3 = v * 3;
+        k = v * 3 * 4;
+        l = v * 4;
+
+        aPosition[ k + 0 ] = position[ v3 + 0 ];
+        aPosition[ k + 1 ] = position[ v3 + 1 ];
+        aPosition[ k + 2 ] = position[ v3 + 2 ];
+
+        aPosition[ k + 3 ] = position[ v3 + 0 ];
+        aPosition[ k + 4 ] = position[ v3 + 1 ];
+        aPosition[ k + 5 ] = position[ v3 + 2 ];
+
+        aPosition[ k + 6 ] = position[ v3 + 3 ];
+        aPosition[ k + 7 ] = position[ v3 + 4 ];
+        aPosition[ k + 8 ] = position[ v3 + 5 ];
+
+        aPosition[ k + 9 ] = position[ v3 + 3 ];
+        aPosition[ k + 10 ] = position[ v3 + 4 ];
+        aPosition[ k + 11 ] = position[ v3 + 5 ];
+
+        inputNormal[ k + 0 ] = normal[ v3 + 0 ];
+        inputNormal[ k + 1 ] = normal[ v3 + 1 ];
+        inputNormal[ k + 2 ] = normal[ v3 + 2 ];
+
+        inputNormal[ k + 3 ] = normal[ v3 + 0 ];
+        inputNormal[ k + 4 ] = normal[ v3 + 1 ];
+        inputNormal[ k + 5 ] = normal[ v3 + 2 ];
+
+        inputNormal[ k + 6 ] = normal[ v3 + 3 ];
+        inputNormal[ k + 7 ] = normal[ v3 + 4 ];
+        inputNormal[ k + 8 ] = normal[ v3 + 5 ];
+
+        inputNormal[ k + 9 ] = normal[ v3 + 3 ];
+        inputNormal[ k + 10 ] = normal[ v3 + 4 ];
+        inputNormal[ k + 11 ] = normal[ v3 + 5 ];
+
+
+        for( i = 0; i<4; ++i ){
+            p = k + 3 * i;
+
+            inputColor[ p + 0 ] = color[ v3 + 0 ];
+            inputColor[ p + 1 ] = color[ v3 + 1 ];
+            inputColor[ p + 2 ] = color[ v3 + 2 ];
+
+            // inputSize[ l + i ] = size[ v ];
+        }
+
+        if( prevSize!=size[ v ] && prevSize<0 ){
+            inputSize[ l + 0 ] = Math.abs( prevSize );
+            inputSize[ l + 1 ] = Math.abs( prevSize );
+            inputSize[ l + 2 ] = Math.abs( size[ v ] );
+            inputSize[ l + 3 ] = Math.abs( size[ v ] );
+        }else{
+            inputSize[ l + 0 ] = Math.abs( size[ v ] );
+            inputSize[ l + 1 ] = Math.abs( size[ v ] );
+            inputSize[ l + 2 ] = Math.abs( size[ v ] );
+            inputSize[ l + 3 ] = Math.abs( size[ v ] );
+        }
+        prevSize = size[ v ];
+
+        inputDir[ k + 0 ] = dir[ v3 + 0 ];
+        inputDir[ k + 1 ] = dir[ v3 + 1 ];
+        inputDir[ k + 2 ] = dir[ v3 + 2 ];
+
+        inputDir[ k + 3 ] = -dir[ v3 + 0 ];
+        inputDir[ k + 4 ] = -dir[ v3 + 1 ];
+        inputDir[ k + 5 ] = -dir[ v3 + 2 ];
+
+        inputDir[ k + 6 ] = dir[ v3 + 3 ];
+        inputDir[ k + 7 ] = dir[ v3 + 4 ];
+        inputDir[ k + 8 ] = dir[ v3 + 5 ];
+
+        inputDir[ k + 9 ] = -dir[ v3 + 3 ];
+        inputDir[ k + 10 ] = -dir[ v3 + 4 ];
+        inputDir[ k + 11 ] = -dir[ v3 + 5 ];
+
+
+        ix = v * 6;
+        it = v * 4;
+
+        indices.set( quadIndices, ix );
+        for( var s=0; s<6; ++s ){
+            indices[ ix + s ] += it;
+        }
+
+    }
+
+    // console.log( n, n4 )
+    // console.log( "inputDir", inputDir );
+    // console.log( "inputNormal", inputNormal );
+    // console.log( "RibbonBuffer aPosition", aPosition, aPosition.length );
+    // console.log( position );
+    // console.log( "inputSize", inputSize, size );
+    // console.log( "inputColor", inputColor );
+    // console.log( "indices", indices );
+
+    mesh = new THREE.Mesh( geometry, material );
+
+    // new NGL.BufferVectorHelper( position, normal, new THREE.Color("rgb(255,0,0)") );
+    // new NGL.BufferVectorHelper( position, dir, new THREE.Color("rgb(255,255,0)") );
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = mesh;
+
+}
+
+NGL.RibbonBuffer.prototype = {
+
+    remove: function(){
+
+        this.geometry.dispose();
+        this.material.dispose();
+
+    }
+
+};
+
+
 ////////////////////
 // Mesh Primitives
 
@@ -2802,8 +2977,49 @@ NGL.TextBuffer.prototype.makeMapping = function(){
 }
 
 
+///////////
+// Helper
 
+NGL.BufferVectorHelper = function( position, vector, color, scale ){
 
+    scale = scale || 1;
 
+    var geometry, material, line;
+    var n = position.length/3;
+    var n2 = n * 2;
+    var n6 = n * 6;
+
+    material = new THREE.LineBasicMaterial({ color: color, fog: true });
+    geometry = new THREE.BufferGeometry();
+
+    var aPosition = new Float32Array( n2 * 3 );
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
+
+    var i, j;
+
+    for( var v = 0; v < n; v++ ){
+        
+        i = v * 2 * 3;
+        j = v * 3;
+
+        aPosition[ i + 0 ] = position[ j + 0 ];
+        aPosition[ i + 1 ] = position[ j + 1 ];
+        aPosition[ i + 2 ] = position[ j + 2 ];
+        aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
+        aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
+        aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
+
+    }
+
+    // console.log( "position", aPosition );
+
+    line = new THREE.Line( geometry, material, THREE.LinePieces );
+
+    // public attributes
+    this.geometry = geometry;
+    this.material = material;
+    this.mesh = line;
+
+}
 
 
