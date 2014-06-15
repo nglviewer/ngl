@@ -556,7 +556,7 @@ NGL.getShader = function( name ){
  * @class
  * @param {NGL.Viewer} viewer
  */
-NGL.GUI = function( viewer ){
+NGL.ViewerGui = function( viewer ){
 
     this.viewer = viewer;
 
@@ -639,7 +639,7 @@ NGL.GUI = function( viewer ){
 
 }
 
-NGL.GUI.prototype = {
+NGL.ViewerGui.prototype = {
 
     clear: function(){
         
@@ -650,7 +650,7 @@ NGL.GUI.prototype = {
     screenshot: function(){
         
         window.open(
-            this.viewer.renderer.domElement.toDataURL("image/png"),
+            this.viewer.getImage(),
             "NGL_screenshot_" + THREE.Math.generateUUID()
         );
 
@@ -658,17 +658,7 @@ NGL.GUI.prototype = {
 
     fullscreen: function(){
         
-        var elem = this.viewer.container;
-
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
-            elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-        }
+        this.viewer.fullscreen();
 
     }
 
@@ -718,13 +708,7 @@ NGL.Viewer = function( eid ){
     this.setBackground();
     this.setFog();
 
-    this.gui = new NGL.GUI( this );
-
-    this.gui2 = new dat.GUI({ autoPlace: false });
-    this.gui2.domElement.style.position = 'absolute';
-    this.gui2.domElement.style.top = '0px';
-    this.gui2.domElement.style.left = '0px';
-    this.container.appendChild( this.gui2.domElement );
+    
 
 }
 
@@ -945,6 +929,28 @@ NGL.Viewer.prototype = {
         this.modelGroup.remove( buffer.mesh );
 
         this.render();
+
+    },
+
+    fullscreen: function(){
+        
+        var elem = this.container;
+
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        }
+
+    },
+
+    getImage: function(){
+
+        return this.renderer.domElement.toDataURL("image/png");
 
     },
 

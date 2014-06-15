@@ -115,18 +115,18 @@
 
                     stage.loadFile( "../data/1R6A.pdb", initFile );
 
-                    new NGL.showcaseGui( stage );
+                    new NGL.ShowcaseGui( stage );
 
                 });
 
             });
 
 
-            NGL.showcaseGui = function( stage ){
+            NGL.ShowcaseGui = function( stage ){
 
                 this.stage = stage;
                 this.viewer = stage.viewer;
-                this.gui = this.viewer.gui.gui;
+                this.gui = stage.gui.gui;
 
                 var file = this.gui.addFolder( 'File' );
                 file.add( this, 'file', [
@@ -217,7 +217,7 @@
 
             }
 
-            NGL.showcaseGui.prototype = {
+            NGL.ShowcaseGui.prototype = {
 
                 count: 100,
                 size: 2.0,
@@ -245,7 +245,7 @@
 
                 addFile: function( path ){
 
-                    NGL.autoLoad( path, this.viewer, initFile );
+                    this.stage.loadFile( path, initFile );
 
                 }
 
