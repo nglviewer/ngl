@@ -87,51 +87,46 @@
 
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+            function initFile( o ){
+
+                if( o instanceof NGL.StructureComponent ){
+
+                    // o.add( "backbone" );
+                    // o.add( "ribbon" );
+                    o.addRepresentation( "tube" );
+                    // o.add( "licorice" );
+                    // o.add( "spacefill", "135" );
+                    // o.add( "ball+stick" );
+                    // o.add( "trace" );
+                    // o.add( "line" );
+                    o.addRepresentation( "hyperball", "hetero" );
+                    o.centerView();
+
+                }
+
+            }
+
 
             document.addEventListener("DOMContentLoaded", function() {
 
                 NGL.init( function(){
 
-                    var viewer = new NGL.Viewer( 'container' );
-                    viewer.animate();
+                    var stage = new NGL.Stage( "container" );
 
-                    var gui = new NGL.showcaseGui( viewer );
+                    stage.loadFile( "../data/1R6A.pdb", initFile );
 
-                    gui.addFile( "../data/1R6A.pdb" );
+                    new NGL.showcaseGui( stage );
 
                 });
 
             });
 
 
-            NGL.showcaseGui = function( viewer ){
+            NGL.showcaseGui = function( stage ){
 
-                this.viewer = viewer;
-                this.gui = viewer.gui.gui;
-
-                viewer.container.addEventListener( 'dragover', function( e ){
-
-                    e.stopPropagation();
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'copy';
-
-                }, false );
-
-                viewer.container.addEventListener( 'drop', function( e ){
-
-                    e.stopPropagation();
-                    e.preventDefault();
-
-                    var fileList = e.dataTransfer.files;
-                    var n = fileList.length;
-
-                    for( var i=0; i<n; ++i ){
-
-                        this.addFile( fileList[ i ] );
-
-                    }
-
-                }.bind( this ), false );
+                this.stage = stage;
+                this.viewer = stage.viewer;
+                this.gui = this.viewer.gui.gui;
 
                 var file = this.gui.addFolder( 'File' );
                 file.add( this, 'file', [
@@ -250,24 +245,7 @@
 
                 addFile: function( path ){
 
-                    NGL.autoLoad( path, this.viewer, function( o ){
-
-                        if( o instanceof NGL.Structure ){
-
-                            // o.add( "backbone" );
-                            // o.add( "ribbon" );
-                            o.add( "tube" );
-                            // o.add( "licorice" );
-                            // o.add( "spacefill", "135" );
-                            // o.add( "ball+stick" );
-                            // o.add( "trace" );
-                            o.add( "line" );
-                            // o.add( "hyperball" );
-                            o.centerView();
-
-                        }
-
-                    });
+                    NGL.autoLoad( path, this.viewer, initFile );
 
                 }
 

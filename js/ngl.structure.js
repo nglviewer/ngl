@@ -4,8 +4,6 @@
  */
 
 
-// FIXME remove every trace of NGL.Viewer and GUI
-
 // rename residue to group
 // eachPolymer
 
@@ -662,12 +660,9 @@ NGL.Bond.prototype = {
 //////////////
 // Structure
 
-NGL.Structure = function( name, viewer ){
+NGL.Structure = function( name ){
 
     this.name = name;
-    this.viewer = viewer;
-
-    this.reprList = [];
 
     this.atomCount = 0;
     this.residueCount = 0;
@@ -935,74 +930,7 @@ NGL.Structure.prototype = {
 
     },
 
-    add: function( type, sele ){
-
-        console.time( "NGL.Structure.add " + type );
-
-        var reprType = NGL.representationTypes[ type ];
-
-        if( !reprType ){
-
-            console.error( "NGL.Structure.add: representation type unknown" );
-            return;
-
-        }
-
-        this.reprList.push( new reprType( this, sele ) );
-
-        console.timeEnd( "NGL.Structure.add " + type );
-
-    },
-
-    remove: function( repr ){
-
-        var idx = this.reprList.indexOf( repr );
-
-        if( idx !== -1 ){
-
-            this.reprList.splice( idx, 1 );
-
-        }
-
-    },
-
-    toggle: function(){
-
-        this.reprList.forEach( function( repr ){ repr.toggle(); });
-
-    },
-
-    centerView: function(){
-
-        var t = new THREE.Vector3();
-
-        return function(){
-
-            t.copy( this.center ).multiplyScalar( -1 );
-
-            this.viewer.rotationGroup.position.copy( t );
-            this.viewer.render();
-
-        };
-
-    }(),
-
-    dispose: function(){
-
-        viewer = this.viewer;
-
-        // copy via .slice as side effects may change reprList
-        this.reprList.slice().forEach( function( repr ){
-
-            repr.dispose();
-
-        });
-
-        this.viewer.gui2.removeFolder( this.__guiName );
-
-    },
-
-    update: function( position ){
+    updatePosition: function( position ){
 
         this.atomSet.setPosition( position );
         this.bondSet.makeFromTo();
@@ -1023,9 +951,10 @@ NGL.Structure.prototype = {
 
         if( this.frameCache[ i ] ){
 
-            this.update( this.frameCache[ i ] );
+            this.updatePosition( this.frameCache[ i ] );
 
-            this.viewer.render();
+            // TODO trigger event?
+            // this.viewer.render();
 
             return;
 
@@ -1040,76 +969,12 @@ NGL.Structure.prototype = {
 
             scope.frameCache[ i ] = new Float32Array( arrayBuffer );
 
-            scope.update( scope.frameCache[ i ] );
+            scope.updatePosition( scope.frameCache[ i ] );
 
-            scope.viewer.render();
-
-        });
-
-    },
-
-    initGui: function(){
-
-        var scope = this;
-
-        this.__guiName = NGL.getNextAvailablePropertyName(
-            this.name, this.viewer.gui2.__folders
-        );
-
-        this.gui = this.viewer.gui2.addFolder( this.__guiName );
-
-        this.gui.add( this, 'toggle' );
-        this.gui.add( this, 'centerView' );
-        this.gui.add( this, 'dispose' );
-
-        this.frameCache = {};
-        // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
-        this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
-        // this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
-        var params = {
-            "add repr": "",
-            "xtc": this.xtc,
-            "frame": 0
-        };
-
-        var loader = new THREE.XHRLoader();
-        var url = "../xtc/numframes?path=" + encodeURIComponent( this.xtc );
-        loader.load( url, function( n ){
-
-            n = parseInt( n );
-            console.log( "numframes", n );
-
-            scope.gui.add( params, "frame" ).min(0).max(n-1).step(1).onChange(
-
-                function( frame ){
-
-                    console.log( frame );
-                    scope.test( frame );
-
-                }
-
-            );
+            // TODO trigger event?
+            // scope.viewer.render();
 
         });
-
-        var repr = [ "" ].concat( Object.keys( NGL.representationTypes ) );
-
-        this.gui.add( params, "add repr", repr ).onChange(
-
-            function( value ){ 
-
-                scope.add( value );
-                params[ "add repr" ] = "";
-
-            }
-
-        );
-
-        this.gui.add( params, 'xtc' ).listen().onFinishChange( function( xtc ){
-
-            this.xtc = xtc;
-
-        }.bind( this ) );
 
     },
 
@@ -1580,9 +1445,9 @@ NGL.Atom.prototype = {
  * An object fro representing a PDB file.
  * @class
  */
-NGL.PdbStructure = function( name, viewer ){
+NGL.PdbStructure = function( name ){
 
-    NGL.Structure.call( this, name, viewer );
+    NGL.Structure.call( this, name );
 
 };
 
@@ -1798,11 +1663,11 @@ NGL.PdbStructure.prototype._parse = function( str ){
  * An object fro representing a GRO file.
  * @class
  */
-NGL.GroStructure = function( name, viewer ){
+NGL.GroStructure = function( name ){
 
     this._doAutoSS = true;
 
-    NGL.Structure.call( this, name, viewer );
+    NGL.Structure.call( this, name );
 
 };
 
