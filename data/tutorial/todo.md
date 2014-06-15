@@ -61,12 +61,11 @@ Todo
 
 * NGL.HyperballRepresentation.prototype.update broken
 * negate single sele !345:A.CA
+* sele "hetero 135" broken
 
 * Point repr
 * Trace/tube repr
 * Cartoon repr
-
-* AtomSetView, BondSetView
 
 * Selection
   * protein
@@ -85,7 +84,6 @@ Todo
   * see also GLmol
   * Jmol is probably problematic since there the molecule moves not the camera
 
-* PDB CONNECT record broken - currently only auto-bonding
 * NGL.LineBuffer.setAttributes missing
 * Dual color CylinderGeometryBuffer
 * GeometryBuffer quality option

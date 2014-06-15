@@ -27,10 +27,392 @@ NGL.getNextAvailablePropertyName = function( name, o ){
 };
 
 
+//////////
+// Stage
+
+NGL.Stage = function( eid ){
+
+    this.compList = [];
+
+    this.viewer = new NGL.Viewer( eid );
+
+    this.initFileDragDrop();
+
+    this.viewer.animate();
+
+}
+
+NGL.Stage.prototype = {
+
+    initFileDragDrop: function(){
+
+        this.viewer.container.addEventListener( 'dragover', function( e ){
+
+            e.stopPropagation();
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+
+        }, false );
+
+        this.viewer.container.addEventListener( 'drop', function( e ){
+
+            e.stopPropagation();
+            e.preventDefault();
+
+            var fileList = e.dataTransfer.files;
+            var n = fileList.length;
+
+            for( var i=0; i<n; ++i ){
+
+                this.loadFile( fileList[ i ], function( object ){
+
+                    if( object instanceof NGL.StructureComponent ){
+
+                        object.centerView();
+                        object.addRepresentation( "licorice" );
+
+                    }
+
+                } );
+
+            }
+
+        }.bind( this ), false );
+
+    },
+
+    loadFile: function( path, onLoad ){
+
+        var scope = this;
+
+        NGL.autoLoad( path, function( object ){
+
+            var component;
+
+            if( object instanceof NGL.Structure ){
+
+                component = new NGL.StructureComponent( scope, object );
+
+            }else{
+
+                console.log( "NGL.Stage.loadFile ???", object );
+
+            }
+
+            scope.addComponent( component );
+            
+            if( typeof onLoad === "function" ) onLoad( component );
+
+        });
+
+    },
+
+    addComponent: function( component ){
+
+        if( !component ){
+
+            console.log( "NGL.Stage.addComponent: no component given" );
+            return;
+
+        }
+
+        this.compList.push( component );
+
+    },
+
+    removeComponent: function( component ){
+
+        var idx = this.compList.indexOf( component );
+
+        if( idx !== -1 ){
+
+            this.compList.splice( idx, 1 );
+
+        }
+
+        component.dispose();
+
+    },
+
+}
+
+
+NGL.Component = function( stage ){
+
+    this.stage = stage;
+    this.viewer = stage.viewer;
+
+    this.reprList = [];
+
+}
+
+NGL.Component.prototype = {
+
+    apply: function( object ){
+
+        // object.atomPosition = NGL.AtomSet.prototype.atomPosition;
+
+    },
+
+    addRepresentation: function( type ){},
+
+    removeRepresentation: function( repr ){},
+
+    dispose: function(){},
+
+}
+
+
+NGL.StructureComponent = function( stage, structure ){
+
+    NGL.Component.call( this, stage );
+
+    this.structure = structure;
+
+    this.initGui();
+
+}
+
+NGL.StructureComponent.prototype = {
+
+    addRepresentation: function( type, sele ){
+
+        console.time( "NGL.Structure.add " + type );
+
+        var reprType = NGL.representationTypes[ type ];
+
+        if( !reprType ){
+
+            console.error( "NGL.Structure.add: representation type unknown" );
+            return;
+
+        }
+
+        var repr = new reprType( this.structure, this.viewer, sele );
+
+        this.initRepresentationGui( repr );
+
+        this.reprList.push( repr );
+
+        console.timeEnd( "NGL.Structure.add " + type );
+
+    },
+
+    removeRepresentation: function( repr, guiName ){
+
+        var idx = this.reprList.indexOf( repr );
+
+        if( idx !== -1 ){
+
+            this.reprList.splice( idx, 1 );
+
+        }
+
+        repr.dispose();
+
+    },
+
+    dispose: function(){
+
+        // copy via .slice because side effects may change reprList
+        this.reprList.slice().forEach( function( repr ){
+
+            repr.dispose();
+
+        } );
+        
+    },
+
+    toggleDisplay: function(){
+
+        this.reprList.forEach( function( repr ){ repr.toggleDisplay(); } );
+
+    },
+
+    centerView: function(){
+
+        var t = new THREE.Vector3();
+
+        return function(){
+
+            t.copy( this.structure.center ).multiplyScalar( -1 );
+
+            this.viewer.rotationGroup.position.copy( t );
+            this.viewer.render();
+
+        };
+
+    }(),
+
+    initGui: function(){
+
+        var scope = this;
+
+        var guiName = NGL.getNextAvailablePropertyName(
+            this.structure.name, this.viewer.gui2.__folders
+        );
+
+        var gui = this.viewer.gui2.addFolder( guiName );
+        this.gui = gui;
+
+        var params = {
+
+            toggle: function(){
+
+                scope.toggleDisplay();
+
+            },
+
+            center: function(){
+
+                scope.centerView();
+
+            },
+
+            dispose: function(){
+
+                scope.stage.removeComponent( scope );
+                scope.viewer.gui2.removeFolder( guiName );
+
+            },
+
+            addRepr: "",
+
+            xtc: "",
+
+            frame: 0
+
+        };
+
+
+        gui.add( params, 'toggle' );
+        gui.add( params, 'center' );
+        gui.add( params, 'dispose' );
+
+        var reprTypes = [ "" ].concat( Object.keys( NGL.representationTypes ) );
+
+        gui.add( params, "addRepr", reprTypes ).onChange(
+
+            function( type ){ 
+
+                scope.addRepresentation( type );
+                params[ "addRepr" ] = "";
+
+            }
+
+        );
+
+        var frameCache = {};
+        // var xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
+        var xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
+        // var xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
+        params.xtc = xtc;
+
+        gui.add( params, 'xtc' ).listen().onFinishChange( function( newXtc ){
+
+            xtc = newXtc;
+
+        } );
+
+        var loader = new THREE.XHRLoader();
+        var url = "../xtc/numframes?path=" + encodeURIComponent( xtc );
+        loader.load( url, function( n ){
+
+            n = parseInt( n );
+            console.log( "numframes", n );
+
+            gui.add( params, "frame" ).min(0).max(n-1).step(1).onChange(
+
+                function( frame ){
+
+                    console.log( frame );
+                    scope.structure.test( frame );
+
+                }
+
+            );
+
+        });
+
+    },
+
+    initRepresentationGui: function( repr ){
+
+        var scope = this;
+
+        var guiName = NGL.getNextAvailablePropertyName(
+            repr.name, this.gui.__folders
+        );
+
+        var gui = this.gui.addFolder( guiName );
+
+        var params = {
+
+            sele: "",
+
+            toggle: function(){
+
+                repr.toggleDisplay();
+
+            },
+
+            dispose: function(){
+
+                scope.removeRepresentation( repr );
+                scope.gui.removeFolder( guiName );
+
+            }
+
+        };
+
+        if( repr.selection ) params.sele = repr.selection.selectionStr;
+
+        gui.add( params, 'sele' ).listen().onFinishChange( function( sele ){
+
+            repr.changeSelection( sele );
+
+        } );
+
+        gui.add( params, 'toggle' );
+        gui.add( params, 'dispose' );
+
+    }
+
+};
+
+NGL.Component.prototype.apply( NGL.StructureComponent.prototype );
+
+
+NGL.SurfaceComponent = function( stage, surface ){
+
+    NGL.Component.call( this, stage );
+
+    this.surface = surface;
+
+    this.viewer.add( surface );
+    this.viewer.render();
+
+};
+
+NGL.SurfaceComponent.prototype = {
+
+    addRepresentation: function( type ){},
+
+    removeRepresentation: function( repr ){},
+
+    dispose: function(){},
+
+    toggle: function(){},
+
+};
+
+NGL.Component.prototype.apply( NGL.SurfaceComponent.prototype );
+
+
 ////////////
 // Surface
 
-NGL.initSurface = function( object, viewer, name ){
+NGL.initSurface = function( object, name ){
 
     if( object instanceof THREE.Geometry ){
 
@@ -53,9 +435,6 @@ NGL.initSurface = function( object, viewer, name ){
 
     surface = new NGL.MeshBuffer( position, color, index, normal );
 
-    viewer.add( surface );
-    viewer.render();
-
     return surface;
 
 }
@@ -64,7 +443,7 @@ NGL.initSurface = function( object, viewer, name ){
 ///////////
 // Loader
 
-NGL.FileLoader = function ( manager ) {
+NGL.FileLoader = function( manager ){
 
     this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
@@ -108,7 +487,7 @@ NGL.FileLoader.prototype = {
 };
 
 
-NGL.PdbLoader = function ( manager ) {
+NGL.PdbLoader = function( manager ){
 
     this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
@@ -117,19 +496,18 @@ NGL.PdbLoader = function ( manager ) {
 
 NGL.PdbLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.PdbLoader.prototype.init = function( str, viewer, name ){
+NGL.PdbLoader.prototype.init = function( str, name ){
 
-    var pdb = new NGL.PdbStructure( name, viewer );
+    var pdb = new NGL.PdbStructure( name );
 
     pdb.parse( str );
-    pdb.initGui();
 
     return pdb
 
 };
 
 
-NGL.GroLoader = function ( manager ) {
+NGL.GroLoader = function( manager ){
 
     this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
@@ -138,19 +516,18 @@ NGL.GroLoader = function ( manager ) {
 
 NGL.GroLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.GroLoader.prototype.init = function( str, viewer, name ){
+NGL.GroLoader.prototype.init = function( str, name ){
 
-    var gro = new NGL.GroStructure( name, viewer );
+    var gro = new NGL.GroStructure( name );
 
     gro.parse( str );
-    gro.initGui();
 
     return gro
 
 };
 
 
-NGL.ObjLoader = function ( manager ) {
+NGL.ObjLoader = function( manager ){
 
     // this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
@@ -159,7 +536,7 @@ NGL.ObjLoader = function ( manager ) {
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-NGL.ObjLoader.prototype.init = function( data, viewer, name ){
+NGL.ObjLoader.prototype.init = function( data, name ){
 
     if( typeof data === "string" ){
 
@@ -167,12 +544,12 @@ NGL.ObjLoader.prototype.init = function( data, viewer, name ){
 
     }
 
-    return NGL.initSurface( data, viewer, name );
+    return NGL.initSurface( data, name );
 
 };
 
 
-NGL.PlyLoader = function ( manager ) {
+NGL.PlyLoader = function( manager ){
 
     // this.cache = new THREE.Cache();
     // this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
@@ -181,7 +558,7 @@ NGL.PlyLoader = function ( manager ) {
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
-NGL.PlyLoader.prototype.init = function( data, viewer, name ){
+NGL.PlyLoader.prototype.init = function( data, name ){
 
     if( typeof data === "string" ){
 
@@ -189,7 +566,7 @@ NGL.PlyLoader.prototype.init = function( data, viewer, name ){
 
     }
 
-    return NGL.initSurface( data, viewer, name );
+    return NGL.initSurface( data, name );
 
 };
 
@@ -206,7 +583,7 @@ NGL.autoLoad = function(){
 
     }
 
-    return function( file, viewer, onLoad ){
+    return function( file, onLoad ){
 
         var object;
 
@@ -232,7 +609,7 @@ NGL.autoLoad = function(){
 
         function init( data ){
 
-            object = loader.init( data, viewer, name );
+            object = loader.init( data, name );
 
             if( typeof onLoad === "function" ) onLoad( object );
 
@@ -262,12 +639,12 @@ NGL.autoLoad = function(){
 ///////////////////
 // Representation
 
-NGL.Representation = function( structure, sele ){
+NGL.Representation = function( structure, viewer, sele ){
 
     this.structure = structure;
+    this.viewer = viewer;
 
-    this.viewer = structure.viewer;
-
+    this._sele = sele;
     this.selection = new NGL.Selection( sele );
 
     this.atomSet = new NGL.AtomSet( structure, this.selection );
@@ -292,10 +669,30 @@ NGL.Representation.prototype = {
 
     },
 
+    changeSelection: function( sele ){
+
+        if( sele === this._sele ) return;
+        this._sele = sele;
+
+        this.applySelection( sele );
+
+        viewer = this.viewer;
+
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.remove();
+            viewer.remove( buffer );
+
+        });
+
+        this.create();
+        this.attach();
+
+    },
+
     finalize: function(){
 
         this.attach();
-        this.initGui();
 
     },
 
@@ -327,7 +724,7 @@ NGL.Representation.prototype = {
 
     },
 
-    toggle: function(){
+    toggleDisplay: function(){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -350,60 +747,16 @@ NGL.Representation.prototype = {
 
         });
 
-        this.structure.remove( this );
-
-        this.structure.gui.removeFolder( this.__guiName );
-
-    },
-
-    initGui: function(){
-
-        this.__guiName = NGL.getNextAvailablePropertyName(
-            this.name, this.structure.gui.__folders
-        );
-
-        this.gui = this.structure.gui.addFolder( this.__guiName );
-
-        this.gui.add( this, 'toggle' );
-        this.gui.add( this, 'dispose' );
-
-        var params = { "sele": "" };
-
-        if( this.selection ) params.sele = this.selection.selectionStr;
-
-        var oldSele = "";
-
-        this.gui.add( params, 'sele' ).listen().onFinishChange( function( sele ){
-
-            if( sele===oldSele ) return;
-            oldSele = sele;
-
-            this.applySelection( sele );
-
-            viewer = this.viewer;
-
-            this.bufferList.forEach( function( buffer ){
-
-                buffer.remove();
-                viewer.remove( buffer );
-
-            });
-
-            this.create();
-            this.attach();
-
-        }.bind( this ) );
-
     }
 
 };
 
 
-NGL.SpacefillRepresentation = function( structure, sele, scale ){
+NGL.SpacefillRepresentation = function( structure, viewer, sele, scale ){
 
     this.scale = scale || 1.0;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -434,12 +787,12 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 };
 
 
-NGL.BallAndStickRepresentation = function( structure, sele, sphereScale, cylinderSize ){
+NGL.BallAndStickRepresentation = function( structure, viewer, sele, sphereScale, cylinderSize ){
 
     this.sphereScale = sphereScale || 0.2;
     this.cylinderSize = cylinderSize || 0.12;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -492,11 +845,11 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 };
 
 
-NGL.LicoriceRepresentation = function( structure, sele, size ){
+NGL.LicoriceRepresentation = function( structure, viewer, sele, size ){
 
     this.size = size || 0.15;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -531,9 +884,9 @@ NGL.LicoriceRepresentation.prototype.update = function(){
 };
 
 
-NGL.LineRepresentation = function( structure, sele ){
+NGL.LineRepresentation = function( structure, viewer, sele ){
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -566,12 +919,12 @@ NGL.LineRepresentation.prototype.update = function(){
 };
 
 
-NGL.HyperballRepresentation = function( structure, sele, scale, shrink ){
+NGL.HyperballRepresentation = function( structure, viewer, sele, scale, shrink ){
 
     this.scale = scale || 0.2;
     this.shrink = shrink || 0.12;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -608,11 +961,11 @@ NGL.HyperballRepresentation.prototype.update = function(){
 };
 
 
-NGL.BackboneRepresentation = function( structure, sele, size ){
+NGL.BackboneRepresentation = function( structure, viewer, sele, size ){
 
     this.size = size || 0.25;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -672,11 +1025,11 @@ NGL.BackboneRepresentation.prototype.makeBackboneSets = function(){
 };
 
 
-NGL.TubeRepresentation = function( structure, sele, size ){
+NGL.TubeRepresentation = function( structure, viewer, sele, size ){
 
     this.size = size || 0.25;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -772,11 +1125,11 @@ NGL.TubeRepresentation.prototype.update = function(){
 };
 
 
-NGL.RibbonRepresentation = function( structure, sele, size ){
+NGL.RibbonRepresentation = function( structure, viewer, sele, size ){
 
     this.size = size || 0.25;
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -790,6 +1143,8 @@ NGL.RibbonRepresentation.prototype.create = function(){
     var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
+
+        if( f.residueCount < 2 ) return;
 
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
@@ -833,9 +1188,9 @@ NGL.RibbonRepresentation.prototype.update = function(){
 };
 
 
-NGL.TraceRepresentation = function( structure, sele ){
+NGL.TraceRepresentation = function( structure, viewer, sele ){
 
-    NGL.Representation.call( this, structure, sele );
+    NGL.Representation.call( this, structure, viewer, sele );
 
 };
 
@@ -849,6 +1204,8 @@ NGL.TraceRepresentation.prototype.create = function(){
     var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
+
+        if( f.residueCount < 2 ) return;
 
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
