@@ -73,6 +73,10 @@ NGL.Stage.prototype = {
                         object.centerView();
                         object.addRepresentation( "licorice" );
 
+                    }else if( object instanceof NGL.SurfaceComponent ){
+
+                        object.centerView();
+
                     }
 
                 } );
@@ -420,7 +424,12 @@ NGL.SurfaceComponent.prototype = {
 
     removeRepresentation: function( repr ){},
 
-    dispose: function(){},
+    dispose: function(){
+
+        this.surface.buffer.remove();
+        this.viewer.remove( this.surface.buffer );
+
+    },
 
     toggleDisplay: function(){
 
@@ -428,6 +437,21 @@ NGL.SurfaceComponent.prototype = {
         this.viewer.render();
 
     },
+
+    centerView: function(){
+
+        var t = new THREE.Vector3();
+
+        return function(){
+
+            t.copy( this.surface.center ).multiplyScalar( -1 );
+
+            this.viewer.rotationGroup.position.copy( t );
+            this.viewer.render();
+
+        };
+
+    }(),
 
     initGui: function(){
 
@@ -448,25 +472,25 @@ NGL.SurfaceComponent.prototype = {
 
             },
 
-            // center: function(){
+            center: function(){
 
-            //     scope.centerView();
+                scope.centerView();
 
-            // },
+            },
 
-            // dispose: function(){
+            dispose: function(){
 
-            //     scope.stage.removeComponent( scope );
-            //     scope.stage.gui2.removeFolder( guiName );
+                scope.stage.removeComponent( scope );
+                scope.stage.gui2.removeFolder( guiName );
 
-            // }
+            }
 
         };
 
 
         gui.add( params, 'toggle' );
-        // gui.add( params, 'center' );
-        // gui.add( params, 'dispose' );
+        gui.add( params, 'center' );
+        gui.add( params, 'dispose' );
 
     }
 
@@ -495,6 +519,10 @@ NGL.Surface = function( object, name ){
         geo = object.children[0].geometry;
 
     }
+
+    geo.computeBoundingSphere();
+
+    this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
 
     var position = NGL.Utils.positionFromGeometry( geo );
     var color = NGL.Utils.colorFromGeometry( geo );
