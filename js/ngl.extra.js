@@ -1051,23 +1051,60 @@ NGL.BackboneRepresentation.prototype.name = "backbone";
 
 NGL.BackboneRepresentation.prototype.create = function(){
 
-    this.makeBackboneSets();
+    var backboneAtomSet, backboneBondSet;
+    var sphereBuffer, cylinderBuffer;
 
-    this.sphereBuffer = new NGL.SphereBuffer(
-        this.backboneAtomSet.position,
-        this.backboneAtomSet.getColor(),
-        this.backboneAtomSet.getRadius( this.size, null )
-    );
+    var bufferList = [];
+    var size = this.size;
+    var test = this.selection.test;
 
-    this.cylinderBuffer = new NGL.CylinderBuffer(
-        this.backboneBondSet.from,
-        this.backboneBondSet.to,
-        this.backboneBondSet.getColor( 0 ),
-        this.backboneBondSet.getColor( 1 ),
-        this.backboneBondSet.getRadius( null, this.size, null )
-    );
+    this.structure.eachFiber( function( f ){
 
-    this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        backboneAtomSet = new NGL.AtomSet();
+        backboneBondSet = new NGL.BondSet();
+
+        var a1, a2;
+
+        f.eachResidueN( 2, function( r1, r2 ){
+
+            a1 = r1.getAtomByName( f.trace_atomname );
+            a2 = r2.getAtomByName( f.trace_atomname );
+
+            if( test( a1 ) && test( a2 ) ){
+
+                backboneAtomSet.addAtom( a1 );
+                backboneBondSet.addBond( a1, a2, true );
+
+            }
+
+        } );
+
+        if( test( a1 ) && test( a2 ) ){
+
+            backboneAtomSet.addAtom( a2 );
+
+        }
+
+        sphereBuffer = new NGL.SphereBuffer(
+            backboneAtomSet.atomPosition(),
+            backboneAtomSet.atomColor(),
+            backboneAtomSet.atomRadius( null, size, null )
+        );
+
+        cylinderBuffer = new NGL.CylinderBuffer(
+            backboneBondSet.bondPosition( null, 0 ),
+            backboneBondSet.bondPosition( null, 1 ),
+            backboneBondSet.bondColor( null, 0 ),
+            backboneBondSet.bondColor( null, 1 ),
+            backboneBondSet.bondRadius( null, 0, size, null )
+        );
+
+        bufferList.push( sphereBuffer )
+        bufferList.push( cylinderBuffer );
+
+    } );
+
+    this.bufferList = bufferList;
 
 };
 
