@@ -980,51 +980,19 @@ NGL.Structure.prototype = {
 
     updatePosition: function( position ){
 
-        this.atomSet.setPosition( position );
-        this.bondSet.makeFromTo();
+        var i = 0;
 
-        this.reprList.forEach( function( repr ){
-            console.log( repr.name, repr );
-            repr.update();
+        this.eachAtom( function( a ){
+
+            a.x = position[ i + 0 ];
+            a.y = position[ i + 1 ];
+            a.z = position[ i + 2 ];
+
+            i += 3;
+
         } );
 
-    },
-
-    test: function( i ){
-
-        var scope = this;
-
-        var url = "../xtc/frame/" + i +
-            "?path=" + encodeURIComponent( this.xtc );
-
-        if( this.frameCache[ i ] ){
-
-            this.updatePosition( this.frameCache[ i ] );
-
-            // TODO trigger event?
-            // this.viewer.render();
-
-            return;
-
-        }
-
-        var loader = new THREE.XHRLoader();
-        loader.setResponseType( "arraybuffer" );
-
-        loader.load( url, function( arrayBuffer ){
-
-            if( !arrayBuffer ) return;
-
-            scope.frameCache[ i ] = new Float32Array( arrayBuffer );
-
-            scope.updatePosition( scope.frameCache[ i ] );
-
-            // TODO trigger event?
-            // scope.viewer.render();
-
-        });
-
-    },
+    }
 
 };
 
@@ -1953,6 +1921,18 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase()==="PROTEIN" ){
+                sele.keyword = "PROTEIN";
+                selection.push( sele );
+                continue;
+            }
+
+            if( c.toUpperCase()==="NUCLEIC" ){
+                sele.keyword = "NUCLEIC";
+                selection.push( sele );
+                continue;
+            }
+
             if( all.indexOf( c.toUpperCase() )!==-1 ){
                 sele.keyword = "ALL";
                 selection.push( sele );
@@ -2032,6 +2012,8 @@ NGL.Selection.prototype = {
 
                     if( s.keyword==="ALL" ) return t;
                     if( s.keyword==="HETERO" && a.hetero===true ) return t;
+                    if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return t;
+                    if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return t;
 
                     continue;
 
