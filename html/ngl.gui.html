@@ -67,11 +67,13 @@
                     var sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
                     document.body.appendChild( sidebar.dom );
 
-                    sidebar.add( new NGL.VirtualListWidget( new Array( 1000 ) ) );
+                    // sidebar.add( new NGL.VirtualListWidget( new Array( 10000 ) ) );
 
                     // FIXME
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
+
+                    stage.loadFile( "../data/1crn.pdb" );
 
                 } );
 

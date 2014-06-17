@@ -45,20 +45,7 @@ NGL.ViewportWidget = function( stage ){
 
         for( var i=0; i<n; ++i ){
 
-            stage.loadFile( fileList[ i ], function( object ){
-
-                if( object instanceof NGL.StructureComponent ){
-
-                    object.centerView();
-                    object.addRepresentation( "licorice" );
-
-                }else if( object instanceof NGL.SurfaceComponent ){
-
-                    object.centerView();
-
-                }
-
-            } );
+            stage.loadFile( fileList[ i ] );
 
         }
 
@@ -113,32 +100,9 @@ NGL.MenubarFileWidget = function( stage ){
 
     }, false );
 
-    function initFile( o ){
-
-        if( o instanceof NGL.StructureComponent ){
-
-            // o.addRepresentation( "backbone" );
-            // o.addRepresentation( "ribbon", ":A" );
-            o.addRepresentation( "tube", "*" );
-            // o.addRepresentation( "licorice", "*" );
-            // o.addRepresentation( "spacefill", "protein" );
-            // o.addRepresentation( "ball+stick", "! protein" );
-            // o.addRepresentation( "trace" );
-            // o.addRepresentation( "line" );
-            // o.addRepresentation( "hyperball", "135 :B" );
-            o.centerView();
-
-        }else if( o instanceof NGL.SurfaceComponent ){
-
-            o.centerView();
-
-        }
-
-    }
-
     function addFile( path ){
 
-        stage.loadFile( path, initFile );
+        stage.loadFile( path );
 
     }
 
@@ -277,66 +241,77 @@ NGL.SidebarWidget = function( stage ){
     signals.componentAdded.add( function( component ){
 
         console.log( component );
-        container.add( new NGL.ComponentWidget( component ) );
+        container.add( new NGL.ComponentWidget( component, stage ) );
 
-    })
+    } );
 
     return container;
 
 };
 
 
-NGL.ComponentWidget = function( component ){
+NGL.ComponentWidget = function( component, stage ){
 
-    var container = new UI.Panel();
+    var signals = component.signals;
+    var container = new UI.CollapsiblePanel();
 
-    // Name
+    var reprContainer = new UI.Panel();
 
-    var componentNameRow = new UI.Panel();
-    var componentName = new UI.Text()
-        .setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' )
-        .setValue( component.name );
+    signals.representationAdded.add( function( repr ){
 
-    componentNameRow.add( new UI.Text( 'Name' ).setWidth( '90px' ) );
-    componentNameRow.add( componentName );
+        console.log( repr );
+        reprContainer.add( new UI.Break() );
+        reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
+        
 
-    container.add( componentNameRow );
+    } );
+
+    container.addStatic( new UI.Text( component.name ) );
+    container.add( new UI.Break() );
 
     // Center
 
-    var componentCenterRow = new UI.Panel();
     var componentCenter = new UI.Button()
-        .setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' )
+        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
         .setLabel( "Center" ).onClick( function(){
             component.centerView();
         } );
 
-    componentCenterRow.add( new UI.Text( 'Center' ).setWidth( '90px' ) );
-    componentCenterRow.add( componentCenter );
-
-    container.add( componentCenterRow );
-
     // Toggle
 
-    var componentToggleRow = new UI.Panel();
     var componentToggle = new UI.Button()
-        .setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' )
+        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
         .setLabel( "Toggle" ).onClick( function(){
             component.toggleDisplay();
         } );
 
-    componentToggleRow.add( new UI.Text( 'Toggle' ).setWidth( '90px' ) );
-    componentToggleRow.add( componentToggle );
+    // Dispose
 
-    container.add( componentToggleRow );
+    var componentDispose = new UI.Button()
+        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setLabel( "Dispose" ).onClick( function(){
+            stage.removeComponent( component );
+            container.dom.parentNode.removeChild( container.dom );
+        } );
 
+    // Actions
+
+    var actionsRow = new UI.Panel();
+
+    actionsRow.add( componentCenter );
+    actionsRow.add( componentToggle );
+    actionsRow.add( componentDispose );
+
+    container.add( actionsRow );
+    // container.add( new UI.Break() );
+    container.add( reprContainer )
 
     return container;
 
 };
 
 
-NGL.StructureComponentWidget = function( structure ){
+NGL.StructureComponentWidget = function( structure, stage ){
 
     var container = new UI.Panel();
 
@@ -347,11 +322,52 @@ NGL.StructureComponentWidget = function( structure ){
 };
 
 
-NGL.SurfaceComponentWidget = function( structure ){
+NGL.SurfaceComponentWidget = function( structure, stage ){
 
     var container = new UI.Panel();
 
     
+
+    return container;
+
+};
+
+
+NGL.RepresentationWidget = function( repr, component ){
+
+    // var signals = repr.signals;
+
+    var container = new UI.CollapsiblePanel()
+        .setMarginLeft( "20px" );
+
+    container.addStatic( new UI.Text( repr.name ) );
+    container.add( new UI.Break() );
+
+    // Toggle
+
+    var reprToggle = new UI.Button()
+        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setLabel( "Toggle" ).onClick( function(){
+            repr.toggleDisplay();
+        } );
+
+    // Dispose
+
+    var reprDispose = new UI.Button()
+        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setLabel( "Dispose" ).onClick( function(){
+            component.removeRepresentation( repr );
+            container.dom.parentNode.removeChild( container.dom );
+        } );
+
+    // Actions
+
+    var actionsRow = new UI.Panel();
+
+    actionsRow.add( reprToggle );
+    actionsRow.add( reprDispose );
+
+    container.add( actionsRow );
 
     return container;
 
@@ -365,25 +381,31 @@ NGL.VirtualListWidget = function( items ){
 
     var dom = document.createElement( 'div' );
     dom.className = 'VirtualList';
-    /*dom.style.cursor = 'default';
-    dom.style.display = 'inline-block';
-    dom.style.verticalAlign = 'middle';*/
+    // dom.style.cursor = 'default';
+    // dom.style.display = 'inline-block';
+    // dom.style.verticalAlign = 'middle';
 
     this.dom = dom;
 
     this._items = items;
 
     this.list = new VirtualList({
-        w: 300,
+        w: 280,
         h: 300,
         itemHeight: 31,
         totalRows: items.length,
         generatorFn: function( index ) {
-            var el = document.createElement("div");
-            el.innerHTML = "ITEM " + items[ index ];
-            el.style.color = "orange";
-            el.style.position = "absolute"
-            return el;
+
+            var panel = new UI.Panel();
+            var text = new UI.Text()
+                .setColor( "orange" )
+                .setMarginLeft( "10px" )
+                .setValue( "ITEM " + items[ index ] );
+
+            panel.add( text );
+
+            return panel.dom;
+
         }
     });
 

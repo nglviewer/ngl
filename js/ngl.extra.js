@@ -62,6 +62,29 @@ NGL.Stage = function( eid ){
 
 NGL.Stage.prototype = {
 
+    defaultFileRepresentation: function( object ){
+
+        if( object instanceof NGL.StructureComponent ){
+
+            // object.addRepresentation( "backbone" );
+            // object.addRepresentation( "ribbon", ":A" );
+            object.addRepresentation( "tube", "*" );
+            object.addRepresentation( "licorice", "*" );
+            // object.addRepresentation( "spacefill", "protein" );
+            // object.addRepresentation( "ball+stick", "! protein" );
+            // object.addRepresentation( "trace" );
+            // object.addRepresentation( "line" );
+            // object.addRepresentation( "hyperball", "135 :B" );
+            object.centerView();
+
+        }else if( object instanceof NGL.SurfaceComponent ){
+
+            object.centerView();
+
+        }
+
+    },
+
     initFileDragDrop: function(){
 
         this.viewer.container.addEventListener( 'dragover', function( e ){
@@ -82,20 +105,7 @@ NGL.Stage.prototype = {
 
             for( var i=0; i<n; ++i ){
 
-                this.loadFile( fileList[ i ], function( object ){
-
-                    if( object instanceof NGL.StructureComponent ){
-
-                        object.centerView();
-                        object.addRepresentation( "licorice" );
-
-                    }else if( object instanceof NGL.SurfaceComponent ){
-
-                        object.centerView();
-
-                    }
-
-                } );
+                this.loadFile( fileList[ i ] );
 
             }
 
@@ -127,9 +137,15 @@ NGL.Stage.prototype = {
 
             scope.addComponent( component );
             
-            if( typeof onLoad === "function" ) onLoad( component );
+            if( typeof onLoad === "function" ){
 
-            scope.signals.componentAdded.dispatch( component );
+                onLoad( component );
+
+            }else{
+
+                scope.defaultFileRepresentation( component );
+
+            }
 
         });
 
@@ -146,6 +162,8 @@ NGL.Stage.prototype = {
 
         this.compList.push( component );
 
+        this.signals.componentAdded.dispatch( component );
+
     },
 
     removeComponent: function( component ){
@@ -159,6 +177,8 @@ NGL.Stage.prototype = {
         }
 
         component.dispose();
+
+        this.signals.componentRemoved.dispatch( component );
 
     },
 
@@ -179,6 +199,20 @@ NGL.Stage.prototype = {
 
 NGL.Component = function( stage ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        // notifications
+
+        themeChanged: new SIGNALS.Signal(),
+
+        representationAdded: new SIGNALS.Signal(),
+        representationChanged: new SIGNALS.Signal(),
+        representationRemoved: new SIGNALS.Signal(),
+
+    };
+
     this.stage = stage;
     this.viewer = stage.viewer;
 
@@ -194,9 +228,29 @@ NGL.Component.prototype = {
 
     },
 
-    addRepresentation: function( type ){},
+    addRepresentation: function( repr ){
 
-    removeRepresentation: function( repr ){},
+        this.reprList.push( repr );
+
+        this.signals.representationAdded.dispatch( repr );
+
+    },
+
+    removeRepresentation: function( repr ){
+
+        var idx = this.reprList.indexOf( repr );
+
+        if( idx !== -1 ){
+
+            this.reprList.splice( idx, 1 );
+
+        }
+
+        repr.dispose();
+
+        this.signals.representationRemoved.dispatch( repr );
+
+    },
 
     dispose: function(){},
 
@@ -233,23 +287,15 @@ NGL.StructureComponent.prototype = {
 
         this.initRepresentationGui( repr );
 
-        this.reprList.push( repr );
+        NGL.Component.prototype.addRepresentation.call( this, repr );
 
         console.timeEnd( "NGL.Structure.add " + type );
 
     },
 
-    removeRepresentation: function( repr, guiName ){
+    removeRepresentation: function( repr ){
 
-        var idx = this.reprList.indexOf( repr );
-
-        if( idx !== -1 ){
-
-            this.reprList.splice( idx, 1 );
-
-        }
-
-        repr.dispose();
+        NGL.Component.prototype.removeRepresentation.call( this, repr );
 
     },
 
