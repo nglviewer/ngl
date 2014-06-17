@@ -675,15 +675,25 @@ NGL.ViewerGui.prototype = {
  */
 NGL.Viewer = function( eid ){
 
-    this.container = document.getElementById( eid );
+    if( eid ){
 
-    if ( this.container === document ) {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-    } else {
-        var box = this.container.getBoundingClientRect();
-        this.width = box.width;
-        this.height = box.height;
+        this.eid = eid;
+
+        this.container = document.getElementById( eid );
+
+        if ( this.container === document ) {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+        } else {
+            var box = this.container.getBoundingClientRect();
+            this.width = box.width;
+            this.height = box.height;
+        }
+
+    }else{
+
+        this.container = document.createElement( 'div' );
+
     }
 
     this.aspect = this.width / this.height;
@@ -791,7 +801,9 @@ NGL.Viewer.prototype = {
         this.renderer.context.getExtension('OES_standard_derivatives');
         this.renderer.context.getExtension('OES_element_index_uint');
 
-        this.container.appendChild( this.renderer.domElement );
+        if( this.eid ){
+            this.container.appendChild( this.renderer.domElement );
+        }
 
         // postprocessing
         this.composer = new THREE.EffectComposer( this.renderer );

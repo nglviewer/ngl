@@ -32,6 +32,22 @@ NGL.getNextAvailablePropertyName = function( name, o ){
 
 NGL.Stage = function( eid ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        // notifications
+
+        themeChanged: new SIGNALS.Signal(),
+
+        componentAdded: new SIGNALS.Signal(),
+        componentChanged: new SIGNALS.Signal(),
+        componentRemoved: new SIGNALS.Signal(),
+
+        windowResize: new SIGNALS.Signal()
+
+    };
+
     this.compList = [];
 
     this.viewer = new NGL.Viewer( eid );
@@ -113,6 +129,8 @@ NGL.Stage.prototype = {
             
             if( typeof onLoad === "function" ) onLoad( component );
 
+            scope.signals.componentAdded.dispatch( component );
+
         });
 
     },
@@ -190,6 +208,7 @@ NGL.StructureComponent = function( stage, structure ){
     NGL.Component.call( this, stage );
 
     this.structure = structure;
+    this.name = structure.name;
 
     this.initGui();
 
@@ -455,6 +474,7 @@ NGL.SurfaceComponent = function( stage, surface ){
     NGL.Component.call( this, stage );
 
     this.surface = surface;
+    this.name = surface.name;
 
     this.viewer.add( surface.buffer );
     this.viewer.render();

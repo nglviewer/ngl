@@ -101,6 +101,11 @@ def js( filename ):
     return send_from_directory( os.path.join( APP_PATH, "js/" ), filename )
 
 
+@app.route( '/css/<path:filename>' )
+def css( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "css/" ), filename )
+
+
 @app.route( '/html/<path:filename>' )
 def html( filename ):
     return send_from_directory( os.path.join( APP_PATH, "html/" ), filename )
