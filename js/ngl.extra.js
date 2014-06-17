@@ -290,9 +290,12 @@ NGL.StructureComponent.prototype = {
         var scope = this;
 
         var url = "../xtc/frame/" + i +
-            "?path=" + encodeURIComponent( this.xtc );
+            "?path=" + encodeURIComponent( this.xtc ) +
+            "&natoms=" + encodeURIComponent( this.structure.atomCount );
 
         function update( i ){
+
+            console.time( "updateFrame" );
 
             scope.structure.updatePosition( scope.frameCache[ i ] );
 
@@ -304,6 +307,44 @@ NGL.StructureComponent.prototype = {
             } );
 
             scope.viewer.render();
+
+            console.timeEnd( "updateFrame" );
+
+        }
+
+        function removePbc( x, box ){
+
+            // from GROMACS
+
+            var i, j, d, dist;
+            var n = x.length;
+
+            for( i = 3; i < n; i += 3 ){
+
+                for( j = 0; j < 3; ++j ){
+
+                    dist = x[ i + j ] - x[ i - 3 + j ];
+
+                    if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
+                    
+                        if( dist > 0 ){
+
+                            for( d = 0; d < 3; ++d ){
+                                x[ i + d ] -= box[ j * 3 + d ];
+                            }
+
+                        }else{
+
+                            for( d = 0; d < 3; ++d ){
+                                x[ i + d ] += box[ j * 3 + d ];
+                            }
+
+                        }
+                    }
+
+                }
+
+            }
 
         }
 
@@ -318,11 +359,20 @@ NGL.StructureComponent.prototype = {
         var loader = new THREE.XHRLoader();
         loader.setResponseType( "arraybuffer" );
 
+        console.time( "loadFrame" );
+
         loader.load( url, function( arrayBuffer ){
+
+            console.timeEnd( "loadFrame" );
 
             if( !arrayBuffer ) return;
 
-            scope.frameCache[ i ] = new Float32Array( arrayBuffer );
+            var box = new Float32Array( arrayBuffer, 0, 9 );
+            var coords = new Float32Array( arrayBuffer, 9 * 4 );
+
+            removePbc( coords, box );
+
+            scope.frameCache[ i ] = coords;
 
             update( i );
 
@@ -390,8 +440,9 @@ NGL.StructureComponent.prototype = {
 
         this.frameCache = {};
         // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
-        this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
+        // this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
         // this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
+        this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md3/job/md3.xtc";
         params.xtc = this.xtc;
 
         gui.add( params, 'xtc' ).listen().onFinishChange( function( xtc ){
