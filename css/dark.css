@@ -63,12 +63,12 @@ button {
 	border: 6px solid transparent;
 }
 
-.CollapsiblePanel.collapsed .CollapsiblePanelButton {
+.CollapsiblePanel.collapsed > .CollapsiblePanelButton {
 	margin-top: 2px;
 	border-left-color: #555;
 }
 
-.CollapsiblePanel:not(.collapsed) .CollapsiblePanelButton {
+.CollapsiblePanel:not(.collapsed) > .CollapsiblePanelButton {
 	margin-top: 6px;
 	border-top-color: #555;
 }
