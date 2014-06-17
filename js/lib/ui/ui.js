@@ -1074,6 +1074,9 @@ UI.Button.prototype.setLabel = function ( value ) {
 
 };
 
+
+// Helper
+
 UI.MenubarHelper = {
 
 	createMenuContainer: function ( name, optionsPanel ) {
@@ -1114,6 +1117,26 @@ UI.MenubarHelper = {
 		});
 
 		return options;
+
+	},
+
+	createInput: function ( name, callbackHandler ) {
+
+		var panel = new UI.Panel()
+			.setClass( 'option' );
+
+		var text = new UI.Text()
+			.setWidth( '70px' )
+			.setValue( name );
+
+		var input = new UI.Input()
+			.setWidth( '40px' )
+			.onKeyDown( callbackHandler );
+
+		panel.add( text );
+		panel.add( input );
+
+		return panel;
 
 	},
 

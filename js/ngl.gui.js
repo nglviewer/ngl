@@ -154,13 +154,37 @@ NGL.MenubarFileWidget = function( stage ){
 
     }
 
+    function onExportImageOptionClick () {
+
+        window.open(
+            stage.viewer.getImage(),
+            "NGL_screenshot_" + THREE.Math.generateUUID()
+        );
+
+    }
+
+    function onPdbInputKeyDown ( e ) {
+
+        if( e.keyCode === 13 ){
+
+            addFile( e.target.value );
+            e.target.value = "";
+
+        }
+
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
+    var createInput = UI.MenubarHelper.createInput;
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
-        createOption( 'Open', onOpenOptionClick )
+        createOption( 'Open', onOpenOptionClick ),
+        createInput( 'PDB', onPdbInputKeyDown ),
+        createDivider(),
+        createOption( 'Export image', onExportImageOptionClick ),
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
@@ -194,6 +218,12 @@ NGL.MenubarViewWidget = function( stage ){
 
     }
 
+    function onFullScreenOptionClick () {
+
+        stage.viewer.fullscreen();
+
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -201,7 +231,9 @@ NGL.MenubarViewWidget = function( stage ){
 
     var menuConfig = [
         createOption( 'Light theme', onLightThemeOptionClick ),
-        createOption( 'Dark theme', onDarkThemeOptionClick )
+        createOption( 'Dark theme', onDarkThemeOptionClick ),
+        createDivider(),
+        createOption( 'Full screen', onFullScreenOptionClick )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
@@ -327,6 +359,42 @@ NGL.SurfaceComponentWidget = function( structure ){
 
 
 
+NGL.VirtualListWidget = function( items ){
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'div' );
+    dom.className = 'VirtualList';
+    /*dom.style.cursor = 'default';
+    dom.style.display = 'inline-block';
+    dom.style.verticalAlign = 'middle';*/
+
+    this.dom = dom;
+
+    this._items = items;
+
+    this.list = new VirtualList({
+        w: 300,
+        h: 300,
+        itemHeight: 31,
+        totalRows: items.length,
+        generatorFn: function( index ) {
+            var el = document.createElement("div");
+            el.innerHTML = "ITEM " + items[ index ];
+            el.style.color = "orange";
+            el.style.position = "absolute"
+            return el;
+        }
+    });
+
+    console.log( this.dom );
+    console.log( this.list );
+
+    this.dom.appendChild( this.list.container );
+
+    return this;
+
+};
 
 
 NGL.TreeWidget = function(){
