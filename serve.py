@@ -145,6 +145,23 @@ def redirect_app( name ):
 # trajectory server
 ############################
 
+
+# not used here, faster in javascript...
+def remove_pbc( x, box ):
+    DIM = [ 0, 1, 2 ]
+    for i in xrange( 3, len( x ), 3 ):
+        for j in DIM:
+            dist = x[ i + j ] - x[ i - 3 + j ]
+            if abs( dist ) > 0.9 * box[ j ][ j ]:
+                if dist > 0:
+                    for d in DIM:
+                        x[ i + d ] -= box[ j ][ d ]
+                else:
+                    for d in DIM:
+                        x[ i + d ] += box[ j ][ d ]
+    return x
+
+
 class XTC( object ):
     def __init__( self, xtc_file ):
         self.xtc_file = xtc_file
@@ -174,6 +191,15 @@ class XTC( object ):
         )
         # print status, step, ftime, prec
         return self.x
+
+    def get_coords( self, index, first_natoms=None, angstrom=True ):
+        coords = self.get_frame( int( index ) )
+        if first_natoms:
+            coords = coords[ 0:first_natoms ]
+        coords = coords.flatten()
+        if angstrom:
+            coords *= 10
+        return coords
 
     def superpose( self, frame, atom_indices ):
         pass
@@ -247,9 +273,17 @@ def xtc_serve( frame ):
     if path is None:
         return ""
     print path
+    natoms = request.args.get( "natoms" )
+    if natoms:
+        natoms = int( natoms )
+    print natoms
     xtc = get_xtc( path )
-    coords = xtc.get_frame( int( frame ) ).flatten() * 10
-    return array.array( "f", coords ).tostring()
+    coords = xtc.get_coords( frame, first_natoms=natoms )  # 17091
+    box = xtc.box.flatten() * 10
+    return (
+        array.array( "f", box ).tostring() +
+        array.array( "f", coords ).tostring()
+    )
 
 
 @app.route( '/xtc/numframes', methods=['GET'] )
