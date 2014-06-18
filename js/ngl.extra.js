@@ -69,7 +69,7 @@ NGL.Stage.prototype = {
             // object.addRepresentation( "backbone" );
             // object.addRepresentation( "ribbon", ":A" );
             object.addRepresentation( "tube", "*" );
-            object.addRepresentation( "licorice", "*" );
+            object.addRepresentation( "licorice", "hetero" );
             // object.addRepresentation( "spacefill", "protein" );
             // object.addRepresentation( "ball+stick", "! protein" );
             // object.addRepresentation( "trace" );
