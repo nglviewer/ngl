@@ -261,7 +261,16 @@ NGL.ComponentWidget = function( component, stage ){
 
         reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
         
+    } );
 
+    signals.visibilityChanged.add( function( value ){
+
+        if( value ){
+            toggle.removeClass( "eye-slash" ).removeClass( "eye" ).addClass( "eye" );
+        }else{
+            toggle.removeClass( "eye" ).removeClass( "eye-slash" ).addClass( "eye-slash" );
+        }
+        
     } );
 
     // Actions
@@ -272,10 +281,8 @@ NGL.ComponentWidget = function( component, stage ){
 
             if( toggle.hasClass( "eye" ) ){
                 component.setVisibility( false );
-                toggle.switchClass( "eye", "eye-slash" );
             }else{
                 component.setVisibility( true );
-                toggle.switchClass( "eye-slash", "eye" );
             }
 
         } );
@@ -351,10 +358,20 @@ NGL.SurfaceComponentWidget = function( structure, stage ){
 
 NGL.RepresentationWidget = function( repr, component ){
 
-    // var signals = repr.signals;
+    var signals = repr.signals;
 
     var container = new UI.CollapsiblePanel()
         .setMarginLeft( "20px" );
+
+    signals.visibilityChanged.add( function( value ){
+
+        if( value ){
+            toggle.removeClass( "eye-slash" ).removeClass( "eye" ).addClass( "eye" );
+        }else{
+            toggle.removeClass( "eye" ).removeClass( "eye-slash" ).addClass( "eye-slash" );
+        }
+        
+    } );
 
     // Actions
 
@@ -364,10 +381,8 @@ NGL.RepresentationWidget = function( repr, component ){
 
             if( toggle.hasClass( "eye" ) ){
                 repr.setVisibility( false );
-                toggle.switchClass( "eye", "eye-slash" );
             }else{
                 repr.setVisibility( true );
-                toggle.switchClass( "eye-slash", "eye" );
             }
 
         } );
