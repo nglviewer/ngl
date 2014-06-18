@@ -37,8 +37,8 @@ NGL = {
 NGL.Resources = {
 
     // fonts
-    '../font/Arial.png': 'image',
-    '../font/Arial.fnt': '',
+    '../fonts/Arial.png': 'image',
+    '../fonts/Arial.fnt': '',
 
     // shaders
     '../shader/BezierRaymarch.vert': '',
@@ -2816,7 +2816,7 @@ NGL.HyperballStickBuffer = function( from, to, color1, color2, radius1, radius2,
  */
 NGL.getFont = function( name ){
 
-    var fnt = NGL.Resources[ 'font/' + name + '.fnt' ].split('\n');
+    var fnt = NGL.Resources[ 'fonts/' + name + '.fnt' ].split('\n');
     var font = {};
     var tWidth = 1024;
     var tHeight = 1024;
@@ -2876,7 +2876,7 @@ NGL.TextBuffer = function ( position, size, text ) {
 
     var type = 'Arial';
     var font = NGL.getFont( type );
-    var tex = new THREE.Texture( NGL.Resources[ 'font/' + type + '.png' ] );
+    var tex = new THREE.Texture( NGL.Resources[ 'fonts/' + type + '.png' ] );
     tex.needsUpdate = true;
 
     var n = position.length / 3;

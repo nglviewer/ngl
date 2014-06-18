@@ -264,65 +264,62 @@ NGL.ComponentWidget = function( component, stage ){
 
     } );
 
-    container.addStatic( new UI.Text( component.name ) );
-    // container.add( new UI.Break() );
-
-    // Center
-
-    var componentCenter = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
-        .setLabel( "Center" ).onClick( function(){
-            component.centerView();
-        } );
-
-    // Toggle
-
-    var componentToggle = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
-        .setLabel( "Toggle" ).onClick( function(){
-            component.toggleDisplay();
-        } );
-
-    // Dispose
-
-    var componentDispose = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
-        .setLabel( "Dispose" ).onClick( function(){
-            stage.removeComponent( component );
-            container.dom.parentNode.removeChild( container.dom );
-        } );
-
     // Actions
 
-    var actionsRow = new UI.Panel();
+    var toggle = new UI.Icon( "eye" )
+        .setMarginLeft( "25px" )
+        .onClick( function(){
 
-    actionsRow.add( componentCenter );
-    actionsRow.add( componentToggle );
-    actionsRow.add( componentDispose );
+            if( toggle.hasClass( "eye" ) ){
+                component.setVisibility( false );
+                toggle.switchClass( "eye", "eye-slash" );
+            }else{
+                component.setVisibility( true );
+                toggle.switchClass( "eye-slash", "eye" );
+            }
 
-    // Add repr
+        } );
+
+    var center = new UI.Icon( "bullseye" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            component.centerView();
+
+        } );
+
+    var dispose = new UI.Icon( "trash-o" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            stage.removeComponent( component );
+            container.dom.parentNode.removeChild( container.dom );
+
+        } );
 
     var reprOptions = { "": "" };
     for( var key in NGL.representationTypes ){
         reprOptions[ key ] = key;
     }
 
-    var addReprRow = new UI.Panel();
-    var addRepr = new UI.Select()
-        .setWidth( '100px' ).setColor( '#444' )
-        .setOptions( reprOptions ).onChange( function(){
-            component.addRepresentation( addRepr.getValue() );
-            addRepr.setValue( "" );
+    var repr = new UI.Select()
+        .setWidth( '30px' )
+        .setColor( '#444' )
+        .setMarginLeft( "30px" )
+        .setOptions( reprOptions )
+        .onChange( function(){
+            component.addRepresentation( repr.getValue() );
+            repr.setValue( "" );
         } );
 
- 
-    addReprRow.add( new UI.Text( 'Add repr' ).setWidth( '120px' ) );
-    addReprRow.add( addRepr );
+    container.addStatic( new UI.Text( component.name ).setWidth( "100px" ) );
+    container.addStatic( toggle );
+    container.addStatic( center );
+    container.addStatic( dispose );
+    container.addStatic( repr );
 
     // Fill container
 
-    container.add( actionsRow );
-    container.add( addReprRow );
     container.add( reprContainer )
 
     return container;
@@ -359,37 +356,40 @@ NGL.RepresentationWidget = function( repr, component ){
     var container = new UI.CollapsiblePanel()
         .setMarginLeft( "20px" );
 
-    container.addStatic( new UI.Text( repr.name ) );
-
-    // Toggle
-
-    var reprToggle = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
-        .setLabel( "Toggle" ).onClick( function(){
-            repr.toggleDisplay();
-        } );
-
-    // Dispose
-
-    var reprDispose = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
-        .setLabel( "Dispose" ).onClick( function(){
-            component.removeRepresentation( repr );
-            container.dom.parentNode.removeChild( container.dom );
-        } );
-
     // Actions
 
-    var actionsRow = new UI.Panel();
+    var toggle = new UI.Icon( "eye" )
+        .setMarginLeft( "25px" )
+        .onClick( function(){
 
-    actionsRow.add( reprToggle );
-    actionsRow.add( reprDispose );
+            if( toggle.hasClass( "eye" ) ){
+                repr.setVisibility( false );
+                toggle.switchClass( "eye", "eye-slash" );
+            }else{
+                repr.setVisibility( true );
+                toggle.switchClass( "eye-slash", "eye" );
+            }
+
+        } );
+
+    var dispose = new UI.Icon( "trash-o" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            component.removeRepresentation( repr );
+            container.dom.parentNode.removeChild( container.dom );
+
+        } );
+
+    container.addStatic( new UI.Text( repr.name ).setWidth( "80px" ) );
+    container.addStatic( toggle );
+    container.addStatic( dispose );
 
     // Add sele
 
     var seleRow = new UI.Panel();
     var sele = new UI.Input()
-        .setWidth( '150px' ).onKeyDown( function( e ){
+        .setWidth( '190px' ).onKeyDown( function( e ){
             
             if( e.keyCode === 13 ){
 
@@ -403,10 +403,9 @@ NGL.RepresentationWidget = function( repr, component ){
         sele.setValue( repr.selection.selectionStr );
     }
  
-    seleRow.add( new UI.Text( 'Sele' ).setWidth( '50px' ) );
+    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ) );
     seleRow.add( sele );
 
-    container.add( actionsRow );
     container.add( seleRow );
 
     return container;

@@ -316,6 +316,16 @@ NGL.StructureComponent.prototype = {
 
     },
 
+    setVisibility: function( value ){
+
+        this.reprList.forEach( function( repr ){
+
+            repr.setVisibility( value );
+            
+        } );
+
+    },
+
     centerView: function(){
 
         var t = new THREE.Vector3();
@@ -600,6 +610,13 @@ NGL.SurfaceComponent.prototype = {
 
     },
 
+    setVisibility: function( value ){
+
+        this.surface.setVisibility( value );
+        this.viewer.render();
+
+    },
+
     centerView: function(){
 
         var t = new THREE.Vector3();
@@ -700,6 +717,12 @@ NGL.Surface.prototype = {
     toggleDisplay: function(){
 
         this.buffer.mesh.visible = !this.buffer.mesh.visible;
+
+    },
+
+    setVisibility: function( value ){
+
+        this.buffer.mesh.visible = value;
 
     }
 
@@ -995,6 +1018,18 @@ NGL.Representation.prototype = {
         this.bufferList.forEach( function( buffer ){
 
             buffer.mesh.visible = !buffer.mesh.visible;
+
+        });
+
+        this.viewer.render();
+
+    },
+
+    setVisibility: function( value ){
+
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.mesh.visible = value;
 
         });
 
