@@ -36,12 +36,10 @@ NGL.Stage = function( eid ){
 
     this.signals = {
 
-        // notifications
 
         themeChanged: new SIGNALS.Signal(),
 
         componentAdded: new SIGNALS.Signal(),
-        componentChanged: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
 
         windowResize: new SIGNALS.Signal()
@@ -203,13 +201,9 @@ NGL.Component = function( stage ){
 
     this.signals = {
 
-        // notifications
-
-        themeChanged: new SIGNALS.Signal(),
-
         representationAdded: new SIGNALS.Signal(),
-        representationChanged: new SIGNALS.Signal(),
         representationRemoved: new SIGNALS.Signal(),
+        visibilityChanged: new SIGNALS.Signal(),
 
     };
 
@@ -253,6 +247,12 @@ NGL.Component.prototype = {
     },
 
     dispose: function(){},
+
+    setVisibility: function( value ){
+
+        this.signals.visibilityChanged.dispatch( value );
+
+    },
 
 }
 
@@ -321,8 +321,10 @@ NGL.StructureComponent.prototype = {
         this.reprList.forEach( function( repr ){
 
             repr.setVisibility( value );
-            
+
         } );
+
+        NGL.Component.prototype.setVisibility.call( this, value );
 
     },
 
@@ -614,6 +616,8 @@ NGL.SurfaceComponent.prototype = {
 
         this.surface.setVisibility( value );
         this.viewer.render();
+
+        NGL.Component.prototype.setVisibility.call( this, value );
 
     },
 
@@ -930,6 +934,14 @@ NGL.autoLoad = function(){
 
 NGL.Representation = function( structure, viewer, sele ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        visibilityChanged: new SIGNALS.Signal(),
+
+    };
+
     this.structure = structure;
     this.viewer = viewer;
 
@@ -1034,6 +1046,8 @@ NGL.Representation.prototype = {
         });
 
         this.viewer.render();
+
+        this.signals.visibilityChanged.dispatch( value );
 
     },
 
