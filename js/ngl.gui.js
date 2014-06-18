@@ -259,20 +259,18 @@ NGL.ComponentWidget = function( component, stage ){
 
     signals.representationAdded.add( function( repr ){
 
-        console.log( repr );
-        reprContainer.add( new UI.Break() );
         reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
         
 
     } );
 
     container.addStatic( new UI.Text( component.name ) );
-    container.add( new UI.Break() );
+    // container.add( new UI.Break() );
 
     // Center
 
     var componentCenter = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
         .setLabel( "Center" ).onClick( function(){
             component.centerView();
         } );
@@ -280,7 +278,7 @@ NGL.ComponentWidget = function( component, stage ){
     // Toggle
 
     var componentToggle = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
         .setLabel( "Toggle" ).onClick( function(){
             component.toggleDisplay();
         } );
@@ -288,7 +286,7 @@ NGL.ComponentWidget = function( component, stage ){
     // Dispose
 
     var componentDispose = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
         .setLabel( "Dispose" ).onClick( function(){
             stage.removeComponent( component );
             container.dom.parentNode.removeChild( container.dom );
@@ -302,8 +300,29 @@ NGL.ComponentWidget = function( component, stage ){
     actionsRow.add( componentToggle );
     actionsRow.add( componentDispose );
 
+    // Add Selection
+
+    var reprOptions = { "": "" };
+    for( var key in NGL.representationTypes ){
+        reprOptions[ key ] = key;
+    }
+
+    var addReprRow = new UI.Panel();
+    var addRepr = new UI.Select()
+        .setWidth( '100px' ).setColor( '#444' )
+        .setOptions( reprOptions ).onChange( function(){
+            component.addRepresentation( addRepr.getValue() );
+            addRepr.setValue( "" );
+        } );
+
+ 
+    addReprRow.add( new UI.Text( 'Add repr' ).setWidth( '120px' ) );
+    addReprRow.add( addRepr );
+
+    // Fill container
+
     container.add( actionsRow );
-    // container.add( new UI.Break() );
+    container.add( addReprRow );
     container.add( reprContainer )
 
     return container;
@@ -341,12 +360,11 @@ NGL.RepresentationWidget = function( repr, component ){
         .setMarginLeft( "20px" );
 
     container.addStatic( new UI.Text( repr.name ) );
-    container.add( new UI.Break() );
 
     // Toggle
 
     var reprToggle = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
         .setLabel( "Toggle" ).onClick( function(){
             repr.toggleDisplay();
         } );
@@ -354,7 +372,7 @@ NGL.RepresentationWidget = function( repr, component ){
     // Dispose
 
     var reprDispose = new UI.Button()
-        .setWidth( '70px' ).setColor( '#444' ).setMargin( "0px 10px" )
+        .setWidth( '70px' ).setColor( '#444' ).setMarginRight( "5px" )
         .setLabel( "Dispose" ).onClick( function(){
             component.removeRepresentation( repr );
             container.dom.parentNode.removeChild( container.dom );
