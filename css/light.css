@@ -50,6 +50,10 @@ button {
 	display: none;
 }
 
+.CollapsiblePanel:not(.collapsed) > .CollapsibleContent {
+	clear: both;
+}
+
 .FancySelect {
 	background: #fff;
 	border: 1px solid #ccc;
@@ -155,6 +159,10 @@ input.Number {
 
 	#sidebar .Panel.collapsed {
 		margin-bottom: 0px;
+	}
+
+	#sidebar .CollapsibleContent {
+		margin-top: 10px;
 	}
 
 	#sidebar > .Panel {
