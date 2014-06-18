@@ -300,7 +300,7 @@ NGL.ComponentWidget = function( component, stage ){
     actionsRow.add( componentToggle );
     actionsRow.add( componentDispose );
 
-    // Add Selection
+    // Add repr
 
     var reprOptions = { "": "" };
     for( var key in NGL.representationTypes ){
@@ -385,7 +385,29 @@ NGL.RepresentationWidget = function( repr, component ){
     actionsRow.add( reprToggle );
     actionsRow.add( reprDispose );
 
+    // Add sele
+
+    var seleRow = new UI.Panel();
+    var sele = new UI.Input()
+        .setWidth( '150px' ).onKeyDown( function( e ){
+            
+            if( e.keyCode === 13 ){
+
+                repr.changeSelection( e.target.value );
+
+            }
+
+        } );
+
+    if( repr.selection ){
+        sele.setValue( repr.selection.selectionStr );
+    }
+ 
+    seleRow.add( new UI.Text( 'Sele' ).setWidth( '50px' ) );
+    seleRow.add( sele );
+
     container.add( actionsRow );
+    container.add( seleRow );
 
     return container;
 
