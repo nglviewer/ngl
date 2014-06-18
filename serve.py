@@ -121,9 +121,9 @@ def shader( filename ):
     return send_from_directory( os.path.join( APP_PATH, "shader/" ), filename )
 
 
-@app.route( '/font/<path:filename>' )
-def font( filename ):
-    return send_from_directory( os.path.join( APP_PATH, "font/" ), filename )
+@app.route( '/fonts/<path:filename>' )
+def fonts( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "fonts/" ), filename )
 
 
 @app.route( '/jsmol/<path:filename>' )

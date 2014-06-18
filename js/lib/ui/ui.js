@@ -1080,6 +1080,73 @@ UI.Button.prototype.setLabel = function ( value ) {
 };
 
 
+// Icon
+
+UI.Icon = function ( value ) {
+
+	UI.Element.call( this );
+
+	var scope = this;
+
+	var dom = document.createElement( 'span' );
+	dom.className = 'Icon fa';
+
+	this.dom = dom;
+
+	if( value ) this.addClass( value );
+
+	return this;
+
+};
+
+UI.Icon.prototype = Object.create( UI.Element.prototype );
+
+UI.Icon.prototype.hasClass = function( value ){
+
+	var classes = this.dom.className.split( " " );
+
+	var idx = classes.indexOf( "fa-" + value );
+
+    return idx !== -1;
+
+}
+
+UI.Icon.prototype.addClass = function( value ){
+
+	this.dom.className += ' fa-' + value;
+
+	return this;
+
+}
+
+UI.Icon.prototype.removeClass = function( value ){
+
+	var classes = this.dom.className.split( " " );
+
+	var idx = classes.indexOf( "fa-" + value );
+
+    if( idx !== -1 ){
+
+        classes.splice( idx, 1 );
+
+    }
+
+	this.dom.className = classes.join( " " );
+
+	return this;
+
+}
+
+UI.Icon.prototype.switchClass = function( oldValue, newValue ){
+
+	this.removeClass( oldValue );
+	this.addClass( newValue );
+
+	return this;
+
+}
+
+
 // Helper
 
 UI.MenubarHelper = {
