@@ -74,6 +74,7 @@ NGL.MenubarWidget = function( stage ){
 
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage ) );
+    container.add( new NGL.MenubarExampleWidget( stage ) );
     container.add( new NGL.MenubarHelpWidget( stage ) );
 
     return container;
@@ -203,6 +204,59 @@ NGL.MenubarViewWidget = function( stage ){
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
     return UI.MenubarHelper.createMenuContainer( 'View', optionsPanel );
+
+};
+
+
+NGL.MenubarExampleWidget = function( stage ){
+
+    // event handlers
+
+    function makeOnFileClick( file ) {
+
+        return function(){
+
+            stage.loadFile( '../data/' + file );
+
+        }
+
+    }
+
+    // configure menu contents
+
+    var createOption = UI.MenubarHelper.createOption;
+    var createDivider = UI.MenubarHelper.createDivider;
+
+    var menuConfig = [
+        createOption( '1r6a.pdb', makeOnFileClick( '1R6A.pdb' ) ),
+        createOption( '1blu.pdb', makeOnFileClick( '1blu.pdb' ) ),
+        createOption( '1crn.pdb', makeOnFileClick( '1crn.pdb' ) ),
+        createOption( '1d66.pdb', makeOnFileClick( '1d66.pdb' ) ),
+        createOption( '1jj2.pdb', makeOnFileClick( '1jj2.pdb' ) ),
+        createOption( '304d.pdb', makeOnFileClick( '304d.pdb' ) ),
+        createOption( '3dqb.pdb', makeOnFileClick( '3dqb.pdb' ) ),
+        createOption( '3l6q.pdb', makeOnFileClick( '3l6q.pdb' ) ),
+        createOption( '3pqr.pdb', makeOnFileClick( '3pqr.pdb' ) ),
+        createOption( '3sn6.pdb', makeOnFileClick( '3sn6.pdb' ) ),
+        createOption( 'BaceCg.pdb', makeOnFileClick( 'BaceCg.pdb' ) ),
+        createOption( 'hem.pdb', makeOnFileClick( 'hem.pdb' ) ),
+        createOption( 'md.pdb', makeOnFileClick( 'md.pdb' ) ),
+
+        createDivider(),
+
+        createOption( 'md.gro', makeOnFileClick( 'md.gro' ) ),
+
+        createDivider(),
+
+        createOption( '1crn.obj', makeOnFileClick( '1crn.obj' ) ),
+        createOption( '1crn.ply', makeOnFileClick( '1crn.ply' ) ),
+        createOption( '3dqb.obj', makeOnFileClick( '3dqb.obj' ) )
+    ];
+
+    var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+
+    return UI.MenubarHelper.createMenuContainer( 'Example', optionsPanel )
+        .setWidth( "80px" );
 
 };
 
@@ -428,7 +482,6 @@ NGL.RepresentationWidget = function( repr, component ){
 };
 
 
-
 NGL.VirtualListWidget = function( items ){
 
     UI.Element.call( this );
@@ -472,6 +525,8 @@ NGL.VirtualListWidget = function( items ){
 
 };
 
+
+// TODO
 
 NGL.TreeWidget = function(){
 
