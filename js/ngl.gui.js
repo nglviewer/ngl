@@ -310,10 +310,17 @@ NGL.ComponentWidget = function( component, stage ){
     var container = new UI.CollapsiblePanel();
 
     var reprContainer = new UI.Panel();
+    var trajContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
 
         reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
+        
+    } );
+
+    signals.trajectoryAdded.add( function( traj ){
+
+        trajContainer.add( new NGL.TrajectoryWidget( traj, component ) );
         
     } );
 
@@ -381,7 +388,8 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Fill container
 
-    container.add( reprContainer )
+    container.add( trajContainer );
+    container.add( reprContainer );
 
     return container;
 
@@ -480,6 +488,50 @@ NGL.RepresentationWidget = function( repr, component ){
     return container;
 
 };
+
+
+NGL.TrajectoryWidget = function( traj, component ){
+
+    var signals = traj.signals;
+
+    var container = new UI.CollapsiblePanel()
+        .setMarginLeft( "20px" );
+
+    var numframes = new UI.Text( "?" ).setWidth( "80px" )
+
+    signals.gotNumframes.add( function( value ){
+
+        numframes.setValue( value );
+        frame.setRange( 0, value );
+        
+    } );
+
+    signals.frameChanged.add( function( value ){
+
+        frame.setValue( value );
+        
+    } );
+
+    container.addStatic( new UI.Text( "Trajectory" ).setWidth( "80px" ) );
+    container.addStatic( numframes );
+
+    // frames
+
+    var frameRow = new UI.Panel();
+    var frame = new UI.Integer( -1 ).onChange( function( e ){
+
+        traj.loadFrame( frame.getValue() );
+
+    } );
+
+    frameRow.add( new UI.Text( 'Frame' ).setWidth( '45px' ) );
+    frameRow.add( frame );
+
+    container.add( frameRow );
+
+    return container;
+
+}
 
 
 NGL.VirtualListWidget = function( items ){

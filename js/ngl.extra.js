@@ -228,6 +228,8 @@ NGL.Component.prototype = {
 
         this.signals.representationAdded.dispatch( repr );
 
+        return repr;
+
     },
 
     removeRepresentation: function( repr ){
@@ -261,8 +263,15 @@ NGL.StructureComponent = function( stage, structure ){
 
     NGL.Component.call( this, stage );
 
+    var SIGNALS = signals;
+
+    this.signals.trajectoryAdded = new SIGNALS.Signal();
+    this.signals.trajectoryRemoved = new SIGNALS.Signal();
+
     this.structure = structure;
     this.name = structure.name;
+
+    this.trajList = [];
 
     this.initGui();
 
@@ -291,11 +300,54 @@ NGL.StructureComponent.prototype = {
 
         console.timeEnd( "NGL.Structure.add " + type );
 
+        return repr;
+
     },
 
     removeRepresentation: function( repr ){
 
         NGL.Component.prototype.removeRepresentation.call( this, repr );
+
+    },
+
+    addTrajectory: function( xtcPath ){
+
+        var scope = this;
+
+        var traj = new NGL.Trajectory( xtcPath, this.structure );
+
+        traj.signals.frameChanged.add( function( value ){
+
+            scope.reprList.forEach( function( repr ){
+
+                repr.update();
+
+            } );
+            
+        } );
+
+        this.trajList.push( traj );
+
+        this.signals.trajectoryAdded.dispatch( traj );
+
+        return traj;
+
+    },
+
+    removeTrajectory: function( traj ){
+
+        var idx = this.trajList.indexOf( repr );
+
+        if( idx !== -1 ){
+
+            this.trajList.splice( idx, 1 );
+
+        }
+
+        // TODO
+        // traj.dispose();
+
+        this.signals.trajectoryRemoved.dispatch( traj );
 
     },
 
@@ -305,6 +357,13 @@ NGL.StructureComponent.prototype = {
         this.reprList.slice().forEach( function( repr ){
 
             repr.dispose();
+
+        } );
+
+        // TODO remove trajectories
+        this.trajList.slice().forEach( function( traj ){
+
+            // traj.dispose();
 
         } );
         
