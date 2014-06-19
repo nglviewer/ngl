@@ -49,7 +49,8 @@ os.environ.update( app.config.get( "ENV", {} ) )
 os.environ["PATH"] += ":" + ":".join( app.config.get( "PATH", [] ) )
 os.environ["HTTP_PROXY"] = app.config.get( "PROXY", "" )
 
-APP_PATH = app.config.get("APP_PATH", "")
+APP_PATH = app.config.get( "APP_PATH", "" )
+DATA_DIRS = app.config.get( "APP_PATH", {} )
 
 
 ############################
@@ -85,6 +86,19 @@ def requires_auth( f ):
 
 
 ############################
+# helper functions
+############################
+
+def get_directory( root ):
+    directory = None
+    if root == "__example__":
+        directory = os.path.join( APP_PATH, "data/" )
+    elif root in DATA_DIRS:
+        directory = os.path.join( DATA_DIRS[ root ], "data/" )
+    return directory
+
+
+############################
 # static routes
 ############################
 
@@ -111,9 +125,11 @@ def html( filename ):
     return send_from_directory( os.path.join( APP_PATH, "html/" ), filename )
 
 
-@app.route( '/data/<path:filename>' )
-def data( filename ):
-    return send_from_directory( os.path.join( APP_PATH, "data/" ), filename )
+@app.route( '/data/<root>/<path:filename>' )
+def data( root, filename ):
+    directory = get_directory( root )
+    if directory:
+        return send_from_directory( directory, filename )
 
 
 @app.route( '/shader/<path:filename>' )
@@ -266,12 +282,14 @@ def get_xtc( path ):
     return XTC_DICT[ path ]
 
 
-@app.route( '/xtc/frame/<int:frame>', methods=['GET'] )
-def xtc_serve( frame ):
+@app.route( '/xtc/frame/<int:frame>/<root>/<path:filename>', methods=['GET'] )
+def xtc_serve( frame, root, filename ):
+    directory = get_directory( root )
+    if directory:
+        path = os.path.join( directory, filename )
+    else:
+        return
     print request.args
-    path = request.args.get( "path" )
-    if path is None:
-        return ""
     print path
     natoms = request.args.get( "natoms" )
     if natoms:
@@ -286,12 +304,12 @@ def xtc_serve( frame ):
     )
 
 
-@app.route( '/xtc/numframes', methods=['GET'] )
-def xtc_numframes():
-    path = request.args.get( "path" )
-    if path is None:
-        return ""
-    return str( get_xtc( path ).numframes )
+@app.route( '/xtc/numframes/<root>/<path:filename>' )
+def xtc_numframes( root, filename ):
+    directory = get_directory( root )
+    if directory:
+        path = os.path.join( directory, filename )
+        return str( get_xtc( path ).numframes )
 
 
 ############################

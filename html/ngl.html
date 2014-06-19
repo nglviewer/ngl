@@ -3,7 +3,7 @@
 
     <head>
 
-        <title>NGL.GUI</title>
+        <title>NGL</title>
 
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -74,7 +74,34 @@
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
 
-                    stage.loadFile( "../data/3pqr.pdb" );
+                    // stage.loadFile( "../data/__example__/3pqr.pdb" );
+                    
+                    stage.loadFile( "../data/__example__/md.gro", function( o ){
+
+                        o.addRepresentation( "line", "*" );
+                        o.addRepresentation( "ribbon", "protein" );
+                        o.centerView();
+
+                        var xtcPath = "__example__/md.xtc";
+
+                        var trajectory = new NGL.Trajectory( xtcPath, o.structure );
+
+                        setTimeout(function(){
+                            
+                            trajectory.loadFrame( 10, function(){
+
+                                o.reprList.forEach( function( repr ){
+
+                                    repr.update();
+
+                                } );
+
+                            } );
+
+                        }, 2000);
+
+                    } );
+                    
 
                 } );
 

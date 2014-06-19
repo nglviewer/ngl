@@ -496,6 +496,8 @@ NGL.StructureComponent.prototype = {
 
         );
 
+        return;
+
         this.frameCache = {};
         // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
         // this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";

@@ -216,7 +216,7 @@ NGL.MenubarExampleWidget = function( stage ){
 
         return function(){
 
-            stage.loadFile( '../data/' + file );
+            stage.loadFile( '../data/__example__/' + file );
 
         }
 
