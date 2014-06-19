@@ -266,9 +266,9 @@ NGL.ComponentWidget = function( component, stage ){
     signals.visibilityChanged.add( function( value ){
 
         if( value ){
-            toggle.removeClass( "eye-slash" ).removeClass( "eye" ).addClass( "eye" );
+            toggle.removeClass( "eye-slash", "eye" ).addClass( "eye" );
         }else{
-            toggle.removeClass( "eye" ).removeClass( "eye-slash" ).addClass( "eye-slash" );
+            toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
         }
         
     } );
@@ -366,9 +366,9 @@ NGL.RepresentationWidget = function( repr, component ){
     signals.visibilityChanged.add( function( value ){
 
         if( value ){
-            toggle.removeClass( "eye-slash" ).removeClass( "eye" ).addClass( "eye" );
+            toggle.removeClass( "eye-slash", "eye" ).addClass( "eye" );
         }else{
-            toggle.removeClass( "eye" ).removeClass( "eye-slash" ).addClass( "eye-slash" );
+            toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
         }
         
     } );
