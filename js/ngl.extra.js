@@ -1023,6 +1023,8 @@ NGL.Representation.prototype = {
 
         });
 
+        this.signals.visibilityChanged.dispatch( true );
+
     },
 
     toggleDisplay: function(){
