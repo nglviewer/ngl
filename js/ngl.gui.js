@@ -222,12 +222,35 @@ NGL.MenubarExampleWidget = function( stage ){
 
     }
 
+    function onTrajClick( file ) {
+
+        stage.loadFile( "../data/__example__/md.gro", function( o ){
+
+            o.addRepresentation( "line", "*" );
+            o.addRepresentation( "ribbon", "protein" );
+            o.centerView();
+
+            var traj = o.addTrajectory( "__example__/md.xtc" );
+
+            var i = 0;
+            var foo = setInterval(function(){
+                
+                traj.loadFrame( i++ % 51 );
+                if( i >= 102 ) clearInterval( foo );
+
+            }, 50);
+
+        } );
+
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
+
         createOption( '1r6a.pdb', makeOnFileClick( '1R6A.pdb' ) ),
         createOption( '1blu.pdb', makeOnFileClick( '1blu.pdb' ) ),
         createOption( '1crn.pdb', makeOnFileClick( '1crn.pdb' ) ),
@@ -250,7 +273,12 @@ NGL.MenubarExampleWidget = function( stage ){
 
         createOption( '1crn.obj', makeOnFileClick( '1crn.obj' ) ),
         createOption( '1crn.ply', makeOnFileClick( '1crn.ply' ) ),
-        createOption( '3dqb.obj', makeOnFileClick( '3dqb.obj' ) )
+        createOption( '3dqb.obj', makeOnFileClick( '3dqb.obj' ) ),
+
+        createDivider(),
+
+        createOption( 'trajectory', onTrajClick )
+
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );

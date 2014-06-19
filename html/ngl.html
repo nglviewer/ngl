@@ -75,25 +75,6 @@
                     stage.viewer.onWindowResize();
 
                     // stage.loadFile( "../data/__example__/3pqr.pdb" );
-                    
-                    stage.loadFile( "../data/__example__/md.gro", function( o ){
-
-                        o.addRepresentation( "line", "*" );
-                        o.addRepresentation( "ribbon", "protein" );
-                        o.centerView();
-
-                        var trajectory = o.addTrajectory( "__example__/md.xtc" );
-
-                        var i = 0;
-                        var foo = setInterval(function(){
-                            
-                            trajectory.loadFrame( i++ % 51 );
-                            if( i >= 102 ) clearInterval( foo );
-
-                        }, 50);
-
-                    } );
-                    
 
                 } );
 
