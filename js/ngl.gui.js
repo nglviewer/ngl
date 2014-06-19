@@ -502,7 +502,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     signals.gotNumframes.add( function( value ){
 
         numframes.setValue( value );
-        frame.setRange( 0, value );
+        frame.setRange( 0, value - 1 );
         
     } );
 

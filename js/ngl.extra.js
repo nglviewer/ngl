@@ -50,8 +50,6 @@ NGL.Stage = function( eid ){
 
     this.viewer = new NGL.Viewer( eid );
 
-    this.initGui();
-
     this.initFileDragDrop();
 
     this.viewer.animate();
@@ -178,18 +176,6 @@ NGL.Stage.prototype = {
 
         this.signals.componentRemoved.dispatch( component );
 
-    },
-
-    initGui: function(){
-
-        this.gui = new NGL.ViewerGui( this.viewer );
-
-        this.gui2 = new dat.GUI({ autoPlace: false });
-        this.gui2.domElement.style.position = 'absolute';
-        this.gui2.domElement.style.top = '0px';
-        this.gui2.domElement.style.left = '0px';
-        this.viewer.container.appendChild( this.gui2.domElement );
-
     }
 
 }
@@ -273,8 +259,6 @@ NGL.StructureComponent = function( stage, structure ){
 
     this.trajList = [];
 
-    this.initGui();
-
 }
 
 NGL.StructureComponent.prototype = {
@@ -293,8 +277,6 @@ NGL.StructureComponent.prototype = {
         }
 
         var repr = new reprType( this.structure, this.viewer, sele );
-
-        this.initRepresentationGui( repr );
 
         NGL.Component.prototype.addRepresentation.call( this, repr );
 
@@ -318,11 +300,15 @@ NGL.StructureComponent.prototype = {
 
         traj.signals.frameChanged.add( function( value ){
 
+            console.time( "frameUpdate" );
+
             scope.reprList.forEach( function( repr ){
 
                 repr.update();
 
             } );
+
+            console.timeEnd( "frameUpdate" );
             
         } );
 
@@ -369,12 +355,6 @@ NGL.StructureComponent.prototype = {
         
     },
 
-    toggleDisplay: function(){
-
-        this.reprList.forEach( function( repr ){ repr.toggleDisplay(); } );
-
-    },
-
     setVisibility: function( value ){
 
         this.reprList.forEach( function( repr ){
@@ -400,239 +380,7 @@ NGL.StructureComponent.prototype = {
 
         };
 
-    }(),
-
-    updateFrame: function( i ){
-
-        var scope = this;
-
-        var url = "../xtc/frame/" + i +
-            "?path=" + encodeURIComponent( this.xtc ) +
-            "&natoms=" + encodeURIComponent( this.structure.atomCount );
-
-        function update( i ){
-
-            console.time( "updateFrame" );
-
-            scope.structure.updatePosition( scope.frameCache[ i ] );
-
-            scope.reprList.forEach( function( repr ){
-
-                //console.log( repr.name, repr );
-                repr.update();
-
-            } );
-
-            scope.viewer.render();
-
-            console.timeEnd( "updateFrame" );
-
-        }
-
-        function removePbc( x, box ){
-
-            // from GROMACS
-
-            var i, j, d, dist;
-            var n = x.length;
-
-            for( i = 3; i < n; i += 3 ){
-
-                for( j = 0; j < 3; ++j ){
-
-                    dist = x[ i + j ] - x[ i - 3 + j ];
-
-                    if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
-                    
-                        if( dist > 0 ){
-
-                            for( d = 0; d < 3; ++d ){
-                                x[ i + d ] -= box[ j * 3 + d ];
-                            }
-
-                        }else{
-
-                            for( d = 0; d < 3; ++d ){
-                                x[ i + d ] += box[ j * 3 + d ];
-                            }
-
-                        }
-                    }
-
-                }
-
-            }
-
-        }
-
-        if( this.frameCache[ i ] ){
-
-            update( i );
-
-            return;
-
-        }
-
-        var loader = new THREE.XHRLoader();
-        loader.setResponseType( "arraybuffer" );
-
-        console.time( "loadFrame" );
-
-        loader.load( url, function( arrayBuffer ){
-
-            console.timeEnd( "loadFrame" );
-
-            if( !arrayBuffer ) return;
-
-            var box = new Float32Array( arrayBuffer, 0, 9 );
-            var coords = new Float32Array( arrayBuffer, 9 * 4 );
-
-            removePbc( coords, box );
-
-            scope.frameCache[ i ] = coords;
-
-            update( i );
-
-        });
-
-    },
-
-    initGui: function(){
-
-        var scope = this;
-
-        var guiName = NGL.getNextAvailablePropertyName(
-            this.structure.name, this.stage.gui2.__folders
-        );
-
-        var gui = this.stage.gui2.addFolder( guiName );
-        this.gui = gui;
-
-        var params = {
-
-            toggle: function(){
-
-                scope.toggleDisplay();
-
-            },
-
-            center: function(){
-
-                scope.centerView();
-
-            },
-
-            dispose: function(){
-
-                scope.stage.removeComponent( scope );
-                scope.stage.gui2.removeFolder( guiName );
-
-            },
-
-            addRepr: "",
-
-            xtc: "",
-
-            frame: 0
-
-        };
-
-
-        gui.add( params, 'toggle' );
-        gui.add( params, 'center' );
-        gui.add( params, 'dispose' );
-
-        var reprTypes = [ "" ].concat( Object.keys( NGL.representationTypes ) );
-
-        gui.add( params, "addRepr", reprTypes ).onChange(
-
-            function( type ){ 
-
-                scope.addRepresentation( type );
-                params[ "addRepr" ] = "";
-
-            }
-
-        );
-
-        return;
-
-        this.frameCache = {};
-        // this.xtc = "/home/arose/dev/repos/ngl/data/md.xtc";
-        // this.xtc = "/Users/alexrose/dev/repos/ngl/data/md.xtc";
-        // this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md/analysis/md_mc_fit.xtc";
-        this.xtc = "/media/arose/data3/projects/rho/Gt_I-state/md3/job/md3.xtc";
-        params.xtc = this.xtc;
-
-        gui.add( params, 'xtc' ).listen().onFinishChange( function( xtc ){
-
-            scope.xtc = xtc;
-
-        } );
-
-        var loader = new THREE.XHRLoader();
-        var url = "../xtc/numframes?path=" + encodeURIComponent( this.xtc );
-        loader.load( url, function( n ){
-
-            n = parseInt( n );
-            console.log( "numframes", n );
-
-            gui.add( params, "frame" ).min(0).max(n-1).step(1).onChange(
-
-                function( frame ){
-
-                    console.log( frame );
-                    scope.updateFrame( frame );
-
-                }
-
-            );
-
-        });
-
-    },
-
-    initRepresentationGui: function( repr ){
-
-        var scope = this;
-
-        var guiName = NGL.getNextAvailablePropertyName(
-            repr.name, this.gui.__folders
-        );
-
-        var gui = this.gui.addFolder( guiName );
-
-        var params = {
-
-            sele: "",
-
-            toggle: function(){
-
-                repr.toggleDisplay();
-
-            },
-
-            dispose: function(){
-
-                scope.removeRepresentation( repr );
-                scope.gui.removeFolder( guiName );
-
-            }
-
-        };
-
-        if( repr.selection ) params.sele = repr.selection.selectionStr;
-
-        gui.add( params, 'sele' ).listen().onFinishChange( function( sele ){
-
-            repr.changeSelection( sele );
-
-        } );
-
-        gui.add( params, 'toggle' );
-        gui.add( params, 'dispose' );
-
-    }
+    }()
 
 };
 
@@ -649,8 +397,6 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.viewer.add( surface.buffer );
     this.viewer.render();
 
-    this.initGui();
-
 };
 
 NGL.SurfaceComponent.prototype = {
@@ -663,13 +409,6 @@ NGL.SurfaceComponent.prototype = {
 
         this.surface.buffer.remove();
         this.viewer.remove( this.surface.buffer );
-
-    },
-
-    toggleDisplay: function(){
-
-        this.surface.toggleDisplay();
-        this.viewer.render();
 
     },
 
@@ -695,48 +434,7 @@ NGL.SurfaceComponent.prototype = {
 
         };
 
-    }(),
-
-    initGui: function(){
-
-        var scope = this;
-
-        var guiName = NGL.getNextAvailablePropertyName(
-            this.surface.name, this.stage.gui2.__folders
-        );
-
-        var gui = this.stage.gui2.addFolder( guiName );
-        this.gui = gui;
-
-        var params = {
-
-            toggle: function(){
-
-                scope.toggleDisplay();
-
-            },
-
-            center: function(){
-
-                scope.centerView();
-
-            },
-
-            dispose: function(){
-
-                scope.stage.removeComponent( scope );
-                scope.stage.gui2.removeFolder( guiName );
-
-            }
-
-        };
-
-
-        gui.add( params, 'toggle' );
-        gui.add( params, 'center' );
-        gui.add( params, 'dispose' );
-
-    }
+    }()
 
 };
 
@@ -778,12 +476,6 @@ NGL.Surface = function( object, name ){
 }
 
 NGL.Surface.prototype = {
-
-    toggleDisplay: function(){
-
-        this.buffer.mesh.visible = !this.buffer.mesh.visible;
-
-    },
 
     setVisibility: function( value ){
 
@@ -1085,18 +777,6 @@ NGL.Representation.prototype = {
         });
 
         this.signals.visibilityChanged.dispatch( true );
-
-    },
-
-    toggleDisplay: function(){
-
-        this.bufferList.forEach( function( buffer ){
-
-            buffer.mesh.visible = !buffer.mesh.visible;
-
-        });
-
-        this.viewer.render();
 
     },
 
