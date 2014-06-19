@@ -16,5 +16,5 @@ DATA_DIRS = {
 }
 MAX_CONTENT_LENGTH = 64 * 1024 * 1024
 SEND_FILE_MAX_AGE_DEFAULT = 0
-PROXY = 'proxy.charite.de:888'
+PROXY = 'proxy.charite.de:8080'
 REQUIRE_AUTH = False

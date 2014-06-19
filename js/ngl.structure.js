@@ -705,6 +705,158 @@ NGL.Bond.prototype = {
 };
 
 
+///////////////
+// Trajectory
+
+NGL.Trajectory = function( xtcPath, structure ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        gotNumframes: new SIGNALS.Signal(),
+        frameChanged: new SIGNALS.Signal(),
+
+    };
+
+    this.xtcPath = xtcPath;
+    this.structure = structure;
+    this.atomCount = structure.atomCount;
+
+    this.frameCache = [];
+
+    this.frameLoader = new THREE.XHRLoader();
+    this.frameLoader.setResponseType( "arraybuffer" );
+
+    this.numframes = undefined;
+
+    this.getNumframes();
+
+};
+
+NGL.Trajectory.prototype = {
+
+    constructor: NGL.Trajectory,
+
+    getNumframes: function(){
+
+        var scope = this;
+
+        var loader = new THREE.XHRLoader();
+        var url = "../xtc/numframes/" + this.xtcPath;
+
+        loader.load( url, function( n ){
+
+            n = parseInt( n );
+            console.log( "numframes", n );
+
+            scope.numframes = n;
+            scope.signals.gotNumframes.dispatch( n );
+
+        });
+
+    },
+
+    updateFrame: function( i, callback ){
+
+        if( this.frameCache[ i ] ){
+
+            this.updateStructure( i, callback );
+
+        }else{
+
+            this.loadFrame( i, callback );
+
+        }
+
+    },
+
+    loadFrame: function( i, callback ){
+
+        console.time( "loadFrame" );
+
+        var scope = this;
+
+        var url = "../xtc/frame/" + i + "/" + this.xtcPath +
+            "?natoms=" + this.atomCount;
+
+        this.frameLoader.load( url, function( arrayBuffer ){
+
+            console.timeEnd( "loadFrame" );
+
+            if( !arrayBuffer ){
+                console.error( "empty arrayBuffer for '" + url + "'" );
+            }
+
+            var box = new Float32Array( arrayBuffer, 0, 9 );
+            var coords = new Float32Array( arrayBuffer, 9 * 4 );
+
+            scope.removePbc( coords, box );
+
+            scope.frameCache[ i ] = coords;
+
+            scope.updateStructure( i, callback );
+
+        });
+
+    },
+
+    updateStructure: function( i, callback ){
+
+        this.structure.updatePosition( this.frameCache[ i ] );
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+        this.signals.frameChanged.dispatch( i );
+
+    },
+
+    removePbc: function( x, box ){
+
+        // from GROMACS
+        // in-place
+
+        var i, j, d, dist;
+        var n = x.length;
+
+        for( i = 3; i < n; i += 3 ){
+
+            for( j = 0; j < 3; ++j ){
+
+                dist = x[ i + j ] - x[ i - 3 + j ];
+
+                if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
+                
+                    if( dist > 0 ){
+
+                        for( d = 0; d < 3; ++d ){
+                            x[ i + d ] -= box[ j * 3 + d ];
+                        }
+
+                    }else{
+
+                        for( d = 0; d < 3; ++d ){
+                            x[ i + d ] += box[ j * 3 + d ];
+                        }
+
+                    }
+                }
+
+            }
+
+        }
+
+        return x;
+
+    }
+
+}
+
+
 //////////////
 // Structure
 
