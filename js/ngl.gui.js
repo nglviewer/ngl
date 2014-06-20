@@ -119,6 +119,13 @@ NGL.MenubarFileWidget = function( stage ){
 
     }
 
+    function onImportOptionClick(){
+
+        var dirWidget = new NGL.DirectoryListingWidget( stage );
+        document.body.appendChild( dirWidget.dom );
+
+    }
+
     function onExportImageOptionClick () {
 
         window.open(
@@ -147,6 +154,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     var menuConfig = [
         createOption( 'Open', onOpenOptionClick ),
+        createOption( 'Import', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createDivider(),
         createOption( 'Export image', onExportImageOptionClick ),
@@ -198,7 +206,7 @@ NGL.MenubarViewWidget = function( stage ){
         createOption( 'Light theme', onLightThemeOptionClick ),
         createOption( 'Dark theme', onDarkThemeOptionClick ),
         createDivider(),
-        createOption( 'Full screen', onFullScreenOptionClick )
+        createOption( 'Full screen', onFullScreenOptionClick, 'expand' )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
@@ -346,6 +354,7 @@ NGL.ComponentWidget = function( component, stage ){
         
     } );
 
+    // TODO move to StructureComponentWidget
     signals.trajectoryAdded.add( function( traj ){
 
         trajContainer.add( new NGL.TrajectoryWidget( traj, component ) );
@@ -559,7 +568,119 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     return container;
 
-}
+};
+
+
+NGL.DirectoryListing = function(){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        listingLoaded: new SIGNALS.Signal(),
+        
+    };
+
+};
+
+NGL.DirectoryListing.prototype = {
+
+    getListing: function( path ){
+
+        var scope = this;
+
+        path = path || "";
+
+        var loader = new THREE.XHRLoader();
+        var url = "../dir/" + path;
+
+        loader.load( url, function( responseText ){
+
+            var json = JSON.parse( responseText );
+
+            console.log( json );
+
+            scope.signals.listingLoaded.dispatch( json );
+
+        });
+
+    }
+
+};
+
+
+NGL.DirectoryListingWidget = function( stage ){
+
+    var dirListing = new NGL.DirectoryListing();
+    dirListing.getListing();
+
+    var signals = dirListing.signals;
+    var container = new UI.OverlayPanel();
+
+    var listingPanel = new UI.Panel();
+
+    container.add( new UI.Text( "Directoy listing" ) );
+    container.add( 
+        new UI.Icon( "times" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                container.dom.parentNode.removeChild( container.dom );
+
+            } )
+    );
+    container.add( new UI.HorizontalRule() );
+    container.add( listingPanel );
+
+    signals.listingLoaded.add( function( listing ){
+
+        listingPanel.clear();
+
+        listing.forEach( function( path ){
+
+            // console.log( path );
+
+            var pathRow = new UI.Panel()
+                .setClear( "both" )
+                .add( new UI.Icon( path.dir ? "folder-o" : "file-o" ).setWidth( "20px" ) )
+                .add( new UI.Text( path.name ) )
+                .onClick( function(){
+
+                    console.log( path );
+
+                    if( path.dir ){
+
+                        dirListing.getListing( path.path );
+
+                    }else{
+
+                        var ext = path.path.split('.').pop().toLowerCase();
+
+                        if( ext == "pdb" || ext == "gro" || 
+                            ext == "obj" || ext == "ply" ){
+
+                            stage.loadFile( "../data/" + path.path );
+                            
+                        }else{
+
+                            console.log( "unknown filetype: " + ext );
+
+                        }
+                        
+
+                    }
+
+                } );
+
+            listingPanel.add( pathRow );
+
+        } )
+
+    } );
+
+    return container;
+
+};
 
 
 NGL.VirtualListWidget = function( items ){

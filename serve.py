@@ -50,7 +50,7 @@ os.environ["PATH"] += ":" + ":".join( app.config.get( "PATH", [] ) )
 os.environ["HTTP_PROXY"] = app.config.get( "PROXY", "" )
 
 APP_PATH = app.config.get( "APP_PATH", "" )
-DATA_DIRS = app.config.get( "APP_PATH", {} )
+DATA_DIRS = app.config.get( "DATA_DIRS", {} )
 
 
 ############################
@@ -94,7 +94,7 @@ def get_directory( root ):
     if root == "__example__":
         directory = os.path.join( APP_PATH, "data/" )
     elif root in DATA_DIRS:
-        directory = os.path.join( DATA_DIRS[ root ], "data/" )
+        directory = os.path.join( DATA_DIRS[ root ] )
     return directory
 
 
@@ -130,6 +130,60 @@ def data( root, filename ):
     directory = get_directory( root )
     if directory:
         return send_from_directory( directory, filename )
+
+
+@app.route( '/dir/' )
+@app.route( '/dir/<root>/' )
+@app.route( '/dir/<root>/<path:path>' )
+def dir( root="", path="" ):
+    dir_content = []
+
+    if root == "":
+        for fname in DATA_DIRS.keys():
+            dir_content.append({
+                'name': fname,
+                'path': fname,
+                'dir': True
+            })
+        return json.dumps( dir_content )
+
+    directory = get_directory( root )
+    if not directory:
+        return json.dumps( dir_content )
+
+    dir_path = os.path.join( directory, path )
+
+    if path == "":
+        dir_content.append({
+            'name': '..',
+            'path': "",
+            'dir': True
+        })
+    else:
+        dir_content.append({
+            'name': '..',
+            'path': os.path.split( os.path.join( root, path ) )[0],
+            'dir': True
+        })
+
+    for fname in sorted( os.listdir( dir_path ) ):
+        if( not fname.startswith('.') and
+                not (fname.startswith('#') and fname.endswith('#')) ):
+            fpath = os.path.join( dir_path, fname )
+            if os.path.isfile( fpath ):
+                dir_content.append({
+                    'name': fname,
+                    'path': os.path.join( root, path, fname ),
+                    'size': os.path.getsize( fpath )
+                })
+            else:
+                dir_content.append({
+                    'name': fname,
+                    'path': os.path.join( root, path, fname ),
+                    'dir': True
+                })
+
+    return json.dumps( dir_content )
 
 
 @app.route( '/shader/<path:filename>' )
@@ -310,62 +364,6 @@ def xtc_numframes( root, filename ):
     if directory:
         path = os.path.join( directory, filename )
         return str( get_xtc( path ).numframes )
-
-
-############################
-# local data provider
-############################
-
-def get_path( directory_name, path ):
-    directory = app.config['DATA_DIRS'].get( directory_name )
-    if not directory:
-        return ''
-    return os.path.join( directory, path )
-
-
-@app.route('/example/directory_list/')
-def local_data_dirs():
-    dirs = app.config['DATA_DIRS'].keys()
-    dirs.sort()
-    return json.dumps( dirs )
-
-
-@app.route('/example/dataset_list2/')
-def local_data_list():
-    directory_name = request.args.get('directory_name', '')
-    if not directory_name:
-        return ''
-    path = request.args.get('path', '')
-    dirpath = get_path( directory_name, path )
-    if not dirpath:
-        return ''
-    jstree = []
-    for fname in sorted( os.listdir( dirpath ) ):
-        if( not fname.startswith('.') and
-                not (fname.startswith('#') and fname.endswith('#')) ):
-            if os.path.isfile( os.path.join(dirpath, fname) ):
-                jstree.append({
-                    'data': { 'title': '<span>' + fname + '</span>' },
-                    'metadata': { 'file': fname, 'path': path + fname, }
-                })
-            else:
-                jstree.append({
-                    'data': { 'title': '<span>' + fname + '</span>' },
-                    'metadata': { 'path': path + fname + '/', 'dir': True },
-                    'attr': { 'id': path + fname + '/' },
-                    'state': 'closed'
-                })
-    return json.dumps( jstree )
-
-
-@app.route('/example/data/')
-def local_data():
-    directory_name = request.args.get('directory_name', '')
-    path = request.args.get('path', '')
-    dirpath = get_path( directory_name, path )
-    if not dirpath:
-        return ''
-    return send_file( dirpath, mimetype='text/plain', as_attachment=True )
 
 
 ############################
