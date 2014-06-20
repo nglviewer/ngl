@@ -56,7 +56,7 @@ var properties = [
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
-    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear'
+    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float'
 ];
 
 properties.forEach( function ( property ) {
@@ -119,7 +119,6 @@ UI.Panel.prototype.add = function () {
 
 };
 
-
 UI.Panel.prototype.remove = function () {
 
     for ( var i = 0; i < arguments.length; i ++ ) {
@@ -141,6 +140,21 @@ UI.Panel.prototype.clear = function () {
     }
 
 };
+
+
+// Overlay Panel
+
+UI.OverlayPanel = function(){
+
+    UI.Panel.call( this );
+
+    this.dom.className = 'Panel OverlayPanel';
+
+    return this;
+
+};
+
+UI.OverlayPanel.prototype = Object.create( UI.Panel.prototype );
 
 
 // Collapsible Panel
@@ -1176,11 +1190,22 @@ UI.MenubarHelper = {
 
     },
     
-    createOption: function ( name, callbackHandler ) {
+    createOption: function ( name, callbackHandler, icon ) {
 
-        var option = new UI.Panel();
+    	var option = new UI.Panel();
         option.setClass( 'option' );
-        option.setTextContent( name );
+
+    	if( icon ){
+
+    		option.add( new UI.Icon( icon ).setWidth( "20px" ) );
+    		option.add( new UI.Text( name ) );
+
+    	}else{
+
+        	option.setTextContent( name );
+
+        }
+        
         option.onClick( callbackHandler );
 
         return option;

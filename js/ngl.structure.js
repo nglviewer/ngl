@@ -817,7 +817,7 @@ NGL.Trajectory.prototype = {
 
     removePbc: function( x, box ){
 
-        // from GROMACS
+        // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place
 
         var i, j, d, dist;

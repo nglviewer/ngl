@@ -191,6 +191,10 @@ NGL.Component = function( stage ){
         representationRemoved: new SIGNALS.Signal(),
         visibilityChanged: new SIGNALS.Signal(),
 
+        // TODO move to Structure
+        trajectoryAdded: new SIGNALS.Signal(),
+        trajectoryRemoved: new SIGNALS.Signal(),
+
     };
 
     this.stage = stage;
@@ -249,10 +253,10 @@ NGL.StructureComponent = function( stage, structure ){
 
     NGL.Component.call( this, stage );
 
-    var SIGNALS = signals;
+    /*var SIGNALS = signals;
 
     this.signals.trajectoryAdded = new SIGNALS.Signal();
-    this.signals.trajectoryRemoved = new SIGNALS.Signal();
+    this.signals.trajectoryRemoved = new SIGNALS.Signal();*/
 
     this.structure = structure;
     this.name = structure.name;
