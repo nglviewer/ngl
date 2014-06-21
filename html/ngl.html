@@ -74,7 +74,10 @@
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
 
-                    stage.loadFile( "../data/__example__/3pqr.pdb" );
+                    stage.loadFile( "../data/__example__/1LVZ.pdb", function( o ){
+                        o.addRepresentation( "tube", "/0" );
+                        o.addRepresentation( "licorice", "/0" );
+                    } );
 
                 } );
 

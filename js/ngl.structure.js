@@ -1671,6 +1671,7 @@ NGL.Atom.prototype = {
     bonds: undefined,
     altloc: undefined,
     atomname: undefined,
+    modelindex: undefined,
 
     connectedTo: function( atom ){
 
@@ -1860,6 +1861,20 @@ NGL.PdbStructure.prototype._parse = function( str ){
         }else if( recordName == 'TITLE ' ){
 
             this.title += line.substr( 10, 70 ) + "\n";
+
+        }else if( recordName == 'MODEL ' ){
+
+            if( a ){
+
+                m = this.addModel();
+                c = m.addChain();
+                r = c.addResidue();
+                a = undefined;
+
+                chainDict = {};
+                serialDict = {};
+
+            }
 
         }
 
@@ -2054,32 +2069,32 @@ NGL.Selection.prototype = {
 
         var all = [ "*", "", "ALL" ];
 
-        var c, sele, atomname, chain, resno, resname;
+        var c, sele, atomname, chain, resno, resname, model;
 
         for( var i = 0; i < chunks.length; i++ ){
 
             c = chunks[ i ];
 
-            if( i===0 && ( c.toUpperCase()==="NOT" || c==="!" ) ){
+            if( i === 0 && ( c.toUpperCase() === "NOT" || c === "!" ) ){
                 this.negate = true;
                 continue;
             }
 
             sele = {};
 
-            if( c.toUpperCase()==="HETERO" ){
+            if( c.toUpperCase() === "HETERO" ){
                 sele.keyword = "HETERO";
                 selection.push( sele );
                 continue;
             }
 
-            if( c.toUpperCase()==="PROTEIN" ){
+            if( c.toUpperCase() === "PROTEIN" ){
                 sele.keyword = "PROTEIN";
                 selection.push( sele );
                 continue;
             }
 
-            if( c.toUpperCase()==="NUCLEIC" ){
+            if( c.toUpperCase() === "NUCLEIC" ){
                 sele.keyword = "NUCLEIC";
                 selection.push( sele );
                 continue;
@@ -2091,8 +2106,8 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( ( c.length>=2 || c.length<=4 ) &&
-                    c[0]!==":" && c[0]!=="." &&
+            if( ( c.length >= 2 || c.length <= 4 ) &&
+                    c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
 
                 sele.resname = c.toUpperCase();
@@ -2100,9 +2115,18 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            atomname = c.split(".");
-            if( atomname.length>1 && atomname[1] ){
-                if( atomname[1].length>4 ){
+            model = c.split("/");
+            if( model.length > 1 && model[1] ){
+                if( isNaN( parseInt( model[1] ) ) ){
+                    console.error( "model must be an integer" );
+                    continue;
+                }
+                sele.model = parseInt( model[1] );
+            }
+
+            atomname = model[0].split(".");
+            if( atomname.length > 1 && atomname[1] ){
+                if( atomname[1].length > 4 ){
                     console.error( "atomname must be one to four characters" );
                     continue;
                 }
@@ -2110,8 +2134,8 @@ NGL.Selection.prototype = {
             }
 
             chain = atomname[0].split(":");
-            if( chain.length>1 && chain[1] ){
-                if( chain[1].length>1 ){
+            if( chain.length > 1 && chain[1] ){
+                if( chain[1].length > 1 ){
                     console.error( "chain identifier must be one character" );
                     continue;
                 }
@@ -2120,9 +2144,9 @@ NGL.Selection.prototype = {
 
             if( chain[0] ){
                 resi = chain[0].split("-");
-                if( resi.length===1 ){
+                if( resi.length === 1 ){
                     sele.resno = parseInt( resi[0] );
-                }else if( resi.length===2 ){
+                }else if( resi.length === 2 ){
                     sele.resno = [ parseInt( resi[0] ), parseInt( resi[1] ) ];
                 }else{
                     console.error( "resi range must contain one '-'" );
@@ -2174,6 +2198,7 @@ NGL.Selection.prototype = {
                 if( s.resname!==undefined && s.resname!==a.resname ) continue;
                 if( s.chainname!==undefined && s.chainname!==a.chainname ) continue;
                 if( s.atomname!==undefined && s.atomname!==a.atomname ) continue;
+                if( s.model!==undefined && s.model!==a.residue.chain.model.index ) continue;
 
                 if( s.resno!==undefined ){
                     if( Array.isArray( s.resno ) && s.resno.length===2 ){
