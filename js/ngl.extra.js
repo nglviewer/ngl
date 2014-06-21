@@ -725,6 +725,8 @@ NGL.Representation.prototype = {
 
         this.atomSet.setSelection( this.selection );
 
+        // console.log( this.selection );
+
     },
 
     changeSelection: function( sele ){

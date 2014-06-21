@@ -290,6 +290,8 @@ NGL.MenubarExampleWidget = function( stage ){
         createOption( '1crn.pdb', makeOnFileClick( '1crn.pdb' ) ),
         createOption( '1d66.pdb', makeOnFileClick( '1d66.pdb' ) ),
         createOption( '1jj2.pdb', makeOnFileClick( '1jj2.pdb' ) ),
+        createOption( '1lvz.pdb', makeOnFileClick( '1LVZ.pdb' ) ),
+        createOption( '1mf6.pdb', makeOnFileClick( '1MF6.pdb' ) ),
         createOption( '304d.pdb', makeOnFileClick( '304d.pdb' ) ),
         createOption( '3dqb.pdb', makeOnFileClick( '3dqb.pdb' ) ),
         createOption( '3l6q.pdb', makeOnFileClick( '3l6q.pdb' ) ),
@@ -488,7 +490,7 @@ NGL.ComponentWidget = function( component, stage ){
         .add( traj );
 
     var menu = new UI.Icon( "bars" )
-        .setMarginLeft( "40px" )
+        .setMarginLeft( "47px" )
         .onClick( function(){
 
             if( menuPanel.getDisplay() === "block" ){
