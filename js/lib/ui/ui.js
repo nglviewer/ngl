@@ -74,7 +74,8 @@ var properties = [
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
-    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float'
+    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
+    'zindex', 'minHeight', 'maxHeight'
 ];
 
 properties.forEach( function ( property ) {

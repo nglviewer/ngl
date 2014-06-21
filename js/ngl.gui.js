@@ -121,14 +121,34 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onImportOptionClick(){
 
-        var dirWidget = new NGL.DirectoryListingWidget( stage )
+        var dirWidget = new NGL.DirectoryListingWidget(
+
+            stage, "Import file", [ "pdb", "gro", "obj", "ply" ],
+
+            function( path ){
+
+                var ext = path.path.split('.').pop().toLowerCase();
+
+                if( ext == "pdb" || ext == "gro" || 
+                    ext == "obj" || ext == "ply" ){
+
+                    stage.loadFile( "../data/" + path.path );
+                    
+                }else{
+
+                    console.log( "unknown filetype: " + ext );
+
+                }
+
+            }
+
+        );
+
+        dirWidget
             .setOpacity( "0.8" )
             .setLeft( "50px" )
             .setTop( "80px" )
-            .setBottom( "80px" )
-            .setWidth( "300px" )
             .attach();
-            //min-width: 300px;
 
     }
 
@@ -159,8 +179,8 @@ NGL.MenubarFileWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
-        createOption( 'Open', onOpenOptionClick ),
-        createOption( 'Import', onImportOptionClick ),
+        createOption( 'Open...', onOpenOptionClick ),
+        createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createDivider(),
         createOption( 'Export image', onExportImageOptionClick ),
@@ -422,11 +442,50 @@ NGL.ComponentWidget = function( component, stage ){
             menuPanel.setDisplay( "none" );
         } );
 
+    var traj = new UI.Button( "import" ).onClick( function(){
+
+        menuPanel.setDisplay( "none" );
+
+        var dirWidget = new NGL.DirectoryListingWidget(
+
+            stage, "Import trajectory", [ "xtc" ],
+
+            function( path ){
+
+                var ext = path.path.split('.').pop().toLowerCase();
+
+                if( ext == "xtc" ){
+
+                    console.log( path );
+
+                    component.addTrajectory( path.path );
+
+                    dirWidget.dispose();
+                    
+                }else{
+
+                    console.log( "unknown trajectory type: " + ext );
+
+                }
+
+            }
+
+        );
+
+        dirWidget
+            .setOpacity( "0.8" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .attach();
+
+    });
+
     var menuPanel = new UI.OverlayPanel()
         .add( new UI.Text( "Repr" ).setWidth( "80px" ) )
         .add( repr )
-        // .add( new UI.Break() )
-        // .add( new UI.Text( "Traj" ).setWidth( "80px" ) );
+        .add( new UI.Break() )
+        .add( new UI.Text( "Traj" ).setWidth( "80px" ) )
+        .add( traj );
 
     var menu = new UI.Icon( "bars" )
         .setMarginLeft( "40px" )
@@ -644,7 +703,7 @@ NGL.DirectoryListing.prototype = {
 };
 
 
-NGL.DirectoryListingWidget = function( stage ){
+NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
     var dirListing = new NGL.DirectoryListing();
     dirListing.getListing();
@@ -652,11 +711,21 @@ NGL.DirectoryListingWidget = function( stage ){
     var signals = dirListing.signals;
     var container = new UI.OverlayPanel();
 
-    var listingPanel = new UI.Panel();
+    var headingPanel = new UI.Panel()
+        .setBorderBottom( "1px solid #555" )
+        .setHeight( "30px" );
 
-    container.add( new UI.Text( "Directoy listing" ) );
-    container.add( 
+    var listingPanel = new UI.Panel()
+        .setMinHeight( "100px" )
+        .setMaxHeight( "600px" )
+        .setOverflow( "auto" );
+
+    heading = heading || "Directoy listing"
+
+    headingPanel.add( new UI.Text( heading ) );
+    headingPanel.add( 
         new UI.Icon( "times" )
+            .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
 
@@ -664,7 +733,8 @@ NGL.DirectoryListingWidget = function( stage ){
 
             } )
     );
-    container.add( new UI.HorizontalRule() );
+    
+    container.add( headingPanel );
     container.add( listingPanel );
 
     signals.listingLoaded.add( function( listing ){
@@ -673,15 +743,19 @@ NGL.DirectoryListingWidget = function( stage ){
 
         listing.forEach( function( path ){
 
-            // console.log( path );
+            var ext = path.path.split('.').pop().toLowerCase();
+
+            if( filter && !path.dir && filter.indexOf( ext ) === -1 ){
+
+                return;
+
+            }
 
             var pathRow = new UI.Panel()
-                .setClear( "both" )
+                .setDisplay( "block" )
                 .add( new UI.Icon( path.dir ? "folder-o" : "file-o" ).setWidth( "20px" ) )
                 .add( new UI.Text( path.name ) )
                 .onClick( function(){
-
-                    console.log( path );
 
                     if( path.dir ){
 
@@ -689,19 +763,7 @@ NGL.DirectoryListingWidget = function( stage ){
 
                     }else{
 
-                        var ext = path.path.split('.').pop().toLowerCase();
-
-                        if( ext == "pdb" || ext == "gro" || 
-                            ext == "obj" || ext == "ply" ){
-
-                            stage.loadFile( "../data/" + path.path );
-                            
-                        }else{
-
-                            console.log( "unknown filetype: " + ext );
-
-                        }
-                        
+                        callback( path );
 
                     }
 
