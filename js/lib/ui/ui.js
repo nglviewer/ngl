@@ -30,6 +30,18 @@ UI.Element.prototype = {
 
     },
 
+    getStyle: function ( style ) {
+
+        return this.dom.style[ style ];
+
+    },
+
+    getBox: function(){
+
+        return this.dom.getBoundingClientRect();
+
+    },
+
     setDisabled: function ( value ) {
 
         this.dom.disabled = value;
@@ -43,6 +55,12 @@ UI.Element.prototype = {
         this.dom.textContent = value;
 
         return this;
+
+    },
+
+    dispose: function(){
+        
+        this.dom.parentNode.removeChild( this.dom );
 
     }
 
@@ -61,12 +79,19 @@ var properties = [
 
 properties.forEach( function ( property ) {
 
-    var method = 'set' + property.substr( 0, 1 ).toUpperCase() + property.substr( 1, property.length );
+    var methodSuffix = property.substr( 0, 1 ).toUpperCase() + 
+                        property.substr( 1, property.length );
 
-    UI.Element.prototype[ method ] = function () {
+    UI.Element.prototype[ 'set' + methodSuffix ] = function () {
 
         this.setStyle( property, arguments );
         return this;
+
+    };
+
+    UI.Element.prototype[ 'get' + methodSuffix ] = function () {
+
+        return this.getStyle( property );
 
     };
 
@@ -155,6 +180,14 @@ UI.OverlayPanel = function(){
 };
 
 UI.OverlayPanel.prototype = Object.create( UI.Panel.prototype );
+
+UI.OverlayPanel.prototype.attach = function(){
+
+    document.body.appendChild( this.dom );
+
+    return this;
+
+};
 
 
 // Collapsible Panel

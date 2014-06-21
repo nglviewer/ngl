@@ -57,16 +57,8 @@ button {
 
 .OverlayPanel {
     background-color: #000;
-    opacity: .7;
-    filter: alpha(opacity=70);
-    /*margin: 0 auto;
-    vertical-align: middle;
-    z-index: 10;*/
+    z-index: 10;
     position: absolute;
-    min-width: 300px;
-    left: 50px;
-    top: 80px;
-    bottom: 80px;
     color: #888;
     padding: 10px;
     border: 1px solid #555;
