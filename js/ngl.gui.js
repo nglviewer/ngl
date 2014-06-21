@@ -121,8 +121,14 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onImportOptionClick(){
 
-        var dirWidget = new NGL.DirectoryListingWidget( stage );
-        document.body.appendChild( dirWidget.dom );
+        var dirWidget = new NGL.DirectoryListingWidget( stage )
+            .setOpacity( "0.8" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setBottom( "80px" )
+            .setWidth( "300px" )
+            .attach();
+            //min-width: 300px;
 
     }
 
@@ -398,7 +404,7 @@ NGL.ComponentWidget = function( component, stage ){
         .onClick( function(){
 
             stage.removeComponent( component );
-            container.dom.parentNode.removeChild( container.dom );
+            container.dispose();
 
         } );
 
@@ -408,20 +414,49 @@ NGL.ComponentWidget = function( component, stage ){
     }
 
     var repr = new UI.Select()
-        .setWidth( '30px' )
         .setColor( '#444' )
-        .setMarginLeft( "30px" )
         .setOptions( reprOptions )
         .onChange( function(){
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
+            menuPanel.setDisplay( "none" );
         } );
+
+    var menuPanel = new UI.OverlayPanel()
+        .add( new UI.Text( "Repr" ).setWidth( "80px" ) )
+        .add( repr )
+        // .add( new UI.Break() )
+        // .add( new UI.Text( "Traj" ).setWidth( "80px" ) );
+
+    var menu = new UI.Icon( "bars" )
+        .setMarginLeft( "40px" )
+        .onClick( function(){
+
+            if( menuPanel.getDisplay() === "block" ){
+
+                menuPanel.setDisplay( "none" );
+                return;
+
+            }
+
+            var box = menu.getBox();
+
+            menuPanel
+                .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
+                .setTop( box.top + "px" )
+                .setDisplay( "block" )
+                .attach();
+
+        } );
+
+    
 
     container.addStatic( new UI.Text( component.name ).setWidth( "100px" ) );
     container.addStatic( toggle );
     container.addStatic( center );
     container.addStatic( dispose );
-    container.addStatic( repr );
+    container.addStatic( menu );
+    // container.addStatic( repr );
 
     // Fill container
 
@@ -491,7 +526,7 @@ NGL.RepresentationWidget = function( repr, component ){
         .onClick( function(){
 
             component.removeRepresentation( repr );
-            container.dom.parentNode.removeChild( container.dom );
+            container.dispose();
 
         } );
 
@@ -625,7 +660,7 @@ NGL.DirectoryListingWidget = function( stage ){
             .setFloat( "right" )
             .onClick( function(){
 
-                container.dom.parentNode.removeChild( container.dom );
+                container.dispose();
 
             } )
     );
