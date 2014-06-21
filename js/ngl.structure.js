@@ -332,6 +332,8 @@ NGL.AtomSet.prototype = {
 
     eachBond: function( callback, selection ){
 
+        selection = selection || this.selection;
+
         if( selection ){
 
             var test = selection.test;
@@ -342,11 +344,17 @@ NGL.AtomSet.prototype = {
 
                     a.bonds.forEach( function( b ){
 
-                        if( b.atom1 === a && test( b.atom2 ) ){
+                        // if( b.atom1 === a && test( b.atom2 ) ){
 
-                            callback( b );
+                        //     callback( b );
 
-                        }else if( b.atom2 === a && test( b.atom2 ) ){
+                        // }else if( b.atom2 === a && test( b.atom2 ) ){
+
+                        //     callback( b );
+
+                        // }
+
+                        if( test( b.atom1 ) && test( b.atom2 ) ){
 
                             callback( b );
 
@@ -2100,6 +2108,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "BACKBONE" ){
+                sele.keyword = "BACKBONE";
+                selection.push( sele );
+                continue;
+            }
+
             if( all.indexOf( c.toUpperCase() )!==-1 ){
                 sele.keyword = "ALL";
                 selection.push( sele );
@@ -2166,6 +2180,13 @@ NGL.Selection.prototype = {
         var selection = this.selection;
         var negate = this.negate;
 
+        var backboneProtein = [
+            "CA", "C", "N", "O"
+        ];
+        var backboneNucleic = [
+            "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2"
+        ];
+
         var t = true;
         var f = false;
 
@@ -2190,6 +2211,13 @@ NGL.Selection.prototype = {
                     if( s.keyword==="HETERO" && a.hetero===true ) return t;
                     if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return t;
                     if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return t;
+                    if( s.keyword==="BACKBONE" && (
+                            ( a.residue.isProtein() && 
+                                backboneProtein.indexOf( a.atomname )!==-1 ) || 
+                            ( a.residue.isNucleic() && 
+                                backboneNucleic.indexOf( a.atomname )!==-1 )
+                        )
+                    ) return t;
 
                     continue;
 
