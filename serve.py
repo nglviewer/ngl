@@ -169,6 +169,7 @@ def dir( root="", path="" ):
     for fname in sorted( os.listdir( dir_path ) ):
         if( not fname.startswith('.') and
                 not (fname.startswith('#') and fname.endswith('#')) ):
+            fname = fname.decode( "utf-8" )
             fpath = os.path.join( dir_path, fname )
             if os.path.isfile( fpath ):
                 dir_content.append({
