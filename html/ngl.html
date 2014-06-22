@@ -74,9 +74,9 @@
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
 
-                    stage.loadFile( "../data/__example__/1d66.pdb", function( o ){
-                        o.addRepresentation( "tube", "*" );
-                        o.addRepresentation( "licorice", "backbone" );
+                    stage.loadFile( "../data/__example__/3pqr.pdb", function( o ){
+                        o.addRepresentation( "spacefill", "*" );
+                        o.addRepresentation( "licorice", "*" );
                         o.centerView();
                     } );
 

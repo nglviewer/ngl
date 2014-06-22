@@ -239,7 +239,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    atomColor: function( selection ){
+    atomColor: function( selection, picking ){
 
         // TODO cache
         var i, c, color;
@@ -255,8 +255,16 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            c = elemColors[ a.element ];
-            if( !c ) c = 0xCCCCCC;
+            if( picking ){
+                
+                c = a.index + 1;
+
+            }else{
+
+                c = elemColors[ a.element ];
+                if( !c ) c = 0xCCCCCC;
+                
+            }
 
             color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
             color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
@@ -765,6 +773,7 @@ NGL.Trajectory.prototype = {
 
     },
 
+    // TODO rename to 'setFrame'?
     updateFrame: function( i, callback ){
 
         if( this.frameCache[ i ] ){

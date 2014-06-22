@@ -8,6 +8,11 @@ varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
+#ifdef PICKING
+    attribute vec3 pickingColor;
+    varying vec3 vPickingColor;
+#endif
+
 uniform mat4 projectionMatrixInverse;
 
 const mat4 D = mat4(
@@ -71,10 +76,15 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
     gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );
     gl_Position.xy -= mapping * vec2( sx, sy );
     gl_Position.xy *= gl_Position.w;
+
 }
 
 
 void main(void){
+
+    #ifdef PICKING
+        vPickingColor = pickingColor;
+    #endif
 
     vColor = color;
     cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
@@ -88,6 +98,7 @@ void main(void){
     // move out of viewing frustum to avoid clipping artifacts
     if( gl_Position.z-sphereRadius<=1.0 )
         gl_Position.z = -10.0;
+    
 }
 
 

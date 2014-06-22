@@ -54,6 +54,68 @@ NGL.Stage = function( eid ){
 
     this.viewer.animate();
 
+
+
+
+
+    var scope = this;
+
+    var gl = this.viewer.renderer.getContext();
+    var mouse = new THREE.Vector2();
+    var pixelBuffer = new Uint8Array( 4 );
+    var compList = this.compList;
+    var flag = 0;
+
+    this.viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
+
+        flag = 1;
+
+        mouse.x = e.layerX;
+        mouse.y = e.layerY;
+
+    } );
+
+    this.viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
+
+        flag = 0;
+
+    } );
+
+    this.viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
+
+        if( flag === 1 ) return;
+
+        console.log( e );
+        console.log( scope.viewer );
+
+        scope.viewer.render( null, true );
+
+        var box = scope.viewer.renderer.domElement.getBoundingClientRect();
+
+        gl.readPixels( 
+            mouse.x, box.height - mouse.y, 1, 1, 
+            gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
+        );
+
+        var rgba = Array.apply( [], pixelBuffer );
+        console.log([ 
+            ( rgba[0]/255 ).toPrecision(2),
+            ( rgba[1]/255 ).toPrecision(2),
+            ( rgba[2]/255 ).toPrecision(2),
+            ( rgba[3]/255 ).toPrecision(2)
+        ]);
+        var id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
+
+        compList[0].structure.eachAtom( function( a ){
+
+            if( a.index === ( id - 1 ) ){
+                console.log( a );
+            }
+
+        } );
+
+    } );
+
 }
 
 NGL.Stage.prototype = {
@@ -380,6 +442,7 @@ NGL.StructureComponent.prototype = {
             t.copy( this.structure.center ).multiplyScalar( -1 );
 
             this.viewer.rotationGroup.position.copy( t );
+            this.viewer.pickingRotationGroup.position.copy( t );
             this.viewer.render();
 
         };
@@ -792,6 +855,10 @@ NGL.Representation.prototype = {
 
             buffer.mesh.visible = value;
 
+            if( buffer.pickingMesh ){
+                buffer.pickingMesh.visible = value;
+            }
+
         });
 
         this.viewer.render();
@@ -833,7 +900,8 @@ NGL.SpacefillRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
-        this.atomSet.atomRadius( null, null, this.scale )
+        this.atomSet.atomRadius( null, null, this.scale ),
+        this.atomSet.atomColor( null, true )
     );
 
     this.bufferList = [ this.sphereBuffer ];
