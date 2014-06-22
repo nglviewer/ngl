@@ -12,6 +12,10 @@ varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
+#ifdef PICKING
+    varying vec3 vPickingColor;
+#endif
+
 const float opacity = 0.5;
 
 #include light_params
@@ -72,16 +76,22 @@ void main(void)
     if (gl_FragDepthEXT >= 1.0)
         discard;
 
-    vec3 transformedNormal = cameraNormal;
-    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-    
-    #include light
+    #ifdef PICKING
+        gl_FragColor.xyz = vPickingColor;
+        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+    #else
+        vec3 transformedNormal = cameraNormal;
+        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+        
+        #include light
 
-    gl_FragColor = vec4( vColor, opacity );
-    gl_FragColor.xyz *= vLightFront;
-    //gl_FragColor.a = 0.5;
-    // gl_FragColor.xyz = transformedNormal;
-    // gl_FragColor.xyz = point;
+        gl_FragColor = vec4( vColor, opacity );
+        gl_FragColor.xyz *= vLightFront;
+
+        // gl_FragColor.a = 0.5;
+        // gl_FragColor.xyz = transformedNormal;
+        // gl_FragColor.xyz = point;
+    #endif
 
     #include fog
 }

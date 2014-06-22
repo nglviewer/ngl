@@ -854,6 +854,7 @@ NGL.Viewer.prototype = {
 
         if( makeScene ){
             this.scene = new THREE.Scene();
+            this.pickingScene = new THREE.Scene();
         }
 
         this.modelGroup = new THREE.Object3D();
@@ -863,6 +864,14 @@ NGL.Viewer.prototype = {
 
         this.rotationGroup.add( this.modelGroup );
         this.scene.add( this.rotationGroup );
+
+        this.pickingModelGroup = new THREE.Object3D();
+        this.pickingModelGroup.name = "pickingModelGroup";
+        this.pickingRotationGroup = new THREE.Object3D();
+        this.pickingRotationGroup.name = "pickingRotationGroup";
+
+        this.pickingRotationGroup.add( this.pickingModelGroup );
+        this.pickingScene.add( this.pickingRotationGroup );
 
     },
 
@@ -926,11 +935,11 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer ){
 
-        //console.log( this.modelGroup );
-
         this.modelGroup.add( buffer.mesh );
 
-        
+        if( buffer.pickingMesh ){
+            this.pickingModelGroup.add( buffer.pickingMesh );
+        }
 
         this.render();
 
@@ -939,6 +948,10 @@ NGL.Viewer.prototype = {
     remove: function( buffer ){
 
         this.modelGroup.remove( buffer.mesh );
+
+        if( buffer.pickingMesh ){
+            this.pickingModelGroup.remove( buffer.pickingMesh );
+        }
 
         this.render();
 
@@ -1091,7 +1104,9 @@ NGL.Viewer.prototype = {
     /**
      * Renders the scene.
      */
-    render: function(){
+    render: function( e, picking ){
+
+        // console.log( e, picking );
 
         if( this._rendering ){
             console.warn( "tried to call 'render' from within 'render'" );
@@ -1106,13 +1121,20 @@ NGL.Viewer.prototype = {
         this.modelGroup.updateMatrix();
         this.modelGroup.updateMatrixWorld( true );
 
+        this.pickingRotationGroup.updateMatrix();
+        this.pickingRotationGroup.updateMatrixWorld( true );
+
+        this.pickingModelGroup.updateMatrix();
+        this.pickingModelGroup.updateMatrixWorld( true );
+
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         this.camera.updateProjectionMatrix();
 
         //this.updateBoundingBox();
-        this.updateDynamicUniforms();
+        this.updateDynamicUniforms( this.modelGroup );
+        this.updateDynamicUniforms( this.pickingModelGroup );
 
         // needed for font texture, but I don't know why
         NGL.textures.forEach( function( v ){
@@ -1132,7 +1154,14 @@ NGL.Viewer.prototype = {
             
         }else{
 
-            this.renderer.render( this.scene, this.camera );
+            if( picking ){
+                this.renderer.render( this.pickingScene, this.camera );
+            }else{
+                this.renderer.render( this.scene, this.camera );
+            }
+
+            // this.renderer.render( this.pickingScene, this.camera );
+            // this.renderer.render( this.scene, this.camera );
 
         }
         
@@ -1310,11 +1339,12 @@ NGL.Viewer.prototype = {
 
     },
 
-    updateDynamicUniforms: function(){
+    updateDynamicUniforms: function( group ){
 
         var i, o, u;
         var matrix = new THREE.Matrix4();
-        var objects = this.modelGroup.children;
+        // var objects = this.modelGroup.children;
+        var objects = group.children;
         var nObjects = objects.length;
         var camera = this.camera;
 
@@ -1388,6 +1418,7 @@ NGL.Viewer.prototype = {
         console.log( "scene cleared" );
 
         this.scene.remove( this.rotationGroup );
+        this.pickingScene.remove( this.pickingRotationGroup );
         
         this.initScene();
 
@@ -1829,7 +1860,7 @@ NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
  * @param {Float32Array} color
  * @param {Float32Array} radius
  */
-NGL.SphereImpostorBuffer = function( position, color, radius ){
+NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
 
     this.size = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
@@ -1852,6 +1883,40 @@ NGL.SphereImpostorBuffer = function( position, color, radius ){
     });
 
     this.finalize();
+
+    if( pickingColor ){
+
+        this.addAttributes({
+            "pickingColor": { type: "c", value: null },
+        });
+
+        this.setAttributes({
+            "pickingColor": pickingColor,
+        });
+
+        this.pickingMaterial = new THREE.ShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: false,
+            // opacity: 1.0,
+            // blending: THREE.AdditiveBlending,
+            // blending: THREE.MultiplyBlending,
+            // blending: THREE.CustomBlending,
+            // blendSrc: THREE.OneFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
+            depthWrite: true,
+            lights: true,
+            fog: false
+        });
+
+        this.pickingMaterial.defines[ "PICKING" ] = 1;
+
+        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+    }
 
 }
 
@@ -2755,7 +2820,7 @@ NGL.TubeMeshBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor ){
 
     if( NGL.disableImpostor ){
 
@@ -2763,7 +2828,7 @@ NGL.SphereBuffer = function( position, color, radius ){
 
     }else{
 
-        return new NGL.SphereImpostorBuffer( position, color, radius );
+        return new NGL.SphereImpostorBuffer( position, color, radius, pickingColor );
 
     }
 
