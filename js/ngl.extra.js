@@ -954,7 +954,11 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0 ),
         this.atomSet.bondColor( null, 1 ),
-        this.atomSet.bondRadius( null, null, this.cylinderSize, null )
+        this.atomSet.bondRadius( null, null, this.cylinderSize, null ),
+        null,
+        null,
+        this.atomSet.bondColor( null, 0, true ),
+        this.atomSet.bondColor( null, 1, true )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -1007,7 +1011,11 @@ NGL.LicoriceRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0 ),
         this.atomSet.bondColor( null, 1 ),
-        this.atomSet.bondRadius( null, null, this.size, null )
+        this.atomSet.bondRadius( null, null, this.size, null ),
+        null,
+        null,
+        this.atomSet.bondColor( null, 0, true ),
+        this.atomSet.bondColor( null, 1, true )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -1168,7 +1176,11 @@ NGL.BackboneRepresentation.prototype.create = function(){
             backboneBondSet.bondPosition( null, 1 ),
             backboneBondSet.bondColor( null, 0 ),
             backboneBondSet.bondColor( null, 1 ),
-            backboneBondSet.bondRadius( null, 0, size, null )
+            backboneBondSet.bondRadius( null, 0, size, null ),
+            null,
+            null,
+            backboneBondSet.bondColor( null, 0, true ),
+            backboneBondSet.bondColor( null, 1, true )
         );
 
         bufferList.push( sphereBuffer )

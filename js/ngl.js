@@ -1970,7 +1970,7 @@ NGL.HaloBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
  *      to i.e. get multiple aligned cylinders.
  * @param {Boolean} cap - If true the cylinders are capped.
  */
-NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap ){
+NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2 ){
 
     if( !shift ) shift = 0;
 
@@ -2005,6 +2005,42 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
     this.finalize();
 
     this.material.defines[ "CAP" ] = 1;
+
+    if( pickingColor ){
+
+        this.addAttributes({
+            "pickingColor": { type: "c", value: null },
+            "pickingColor2": { type: "c", value: null },
+        });
+
+        this.setAttributes({
+            "pickingColor": pickingColor,
+            "pickingColor2": pickingColor2,
+        });
+
+        this.pickingMaterial = new THREE.ShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: false,
+            // opacity: 1.0,
+            // blending: THREE.AdditiveBlending,
+            // blending: THREE.MultiplyBlending,
+            // blending: THREE.CustomBlending,
+            // blendSrc: THREE.OneFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
+            depthWrite: true,
+            lights: true,
+            fog: false
+        });
+
+        this.pickingMaterial.defines[ "PICKING" ] = 1;
+
+        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+    }
 
 }
 
@@ -2835,7 +2871,7 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor ){
 }
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2 ){
 
     if( NGL.disableImpostor ){
 
@@ -2843,7 +2879,7 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius ){
 
     }else{
 
-        return new NGL.CylinderImpostorBuffer( from, to, color, color2, radius );
+        return new NGL.CylinderImpostorBuffer( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2 );
 
     }
 

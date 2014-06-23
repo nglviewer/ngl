@@ -16,6 +16,11 @@ varying vec3 U;
 varying vec3 V;
 varying float b;
 
+#ifdef PICKING
+    varying vec3 vPickingColor;
+    varying vec3 vPickingColor2;
+#endif
+
 const float opacity = 0.5;
 
 #include light_params
@@ -34,7 +39,7 @@ void main2(void)
 
 
 void main()
-{   
+{
 
     vec3 end_cyl = end;
     vec3 surface_point = point;
@@ -153,22 +158,39 @@ void main()
     
     #include light
 
-    // TODO compare without sqrt
-    if( distance( new_point, end_cyl) < distance( new_point, base ) ){
-        if( b < 0.0 ){
-            gl_FragColor = vec4( vColor, opacity );
+    #ifdef PICKING
+        // TODO compare without sqrt
+        if( distance( new_point, end_cyl) < distance( new_point, base ) ){
+            if( b < 0.0 ){
+                gl_FragColor = vec4( vPickingColor, 1.0 );
+            }else{
+                gl_FragColor = vec4( vPickingColor2, 1.0 );
+            }
         }else{
-            gl_FragColor = vec4( vColor2, opacity );    
+            if( b > 0.0 ){
+                gl_FragColor = vec4( vPickingColor, 1.0 );
+            }else{
+                gl_FragColor = vec4( vPickingColor2, 1.0 );    
+            }
         }
-    }else{
-        if( b > 0.0 ){
-            gl_FragColor = vec4( vColor, opacity );
+    #else
+        // TODO compare without sqrt
+        if( distance( new_point, end_cyl) < distance( new_point, base ) ){
+            if( b < 0.0 ){
+                gl_FragColor = vec4( vColor, opacity );
+            }else{
+                gl_FragColor = vec4( vColor2, opacity );    
+            }
         }else{
-            gl_FragColor = vec4( vColor2, opacity );    
+            if( b > 0.0 ){
+                gl_FragColor = vec4( vColor, opacity );
+            }else{
+                gl_FragColor = vec4( vColor2, opacity );    
+            }
         }
-    }
-    gl_FragColor.xyz *= vLightFront;
-    //gl_FragColor.xyz = transformedNormal;
+        gl_FragColor.xyz *= vLightFront;
+        //gl_FragColor.xyz = transformedNormal;
+    #endif
 
     #include fog
 }
