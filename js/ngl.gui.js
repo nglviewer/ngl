@@ -140,6 +140,8 @@ NGL.MenubarFileWidget = function( stage ){
 
                 }
 
+                dirWidget.dispose();
+
             }
 
         );
