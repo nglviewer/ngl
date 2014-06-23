@@ -19,6 +19,12 @@ varying vec3 U;
 varying vec3 V;
 varying float b;
 
+#ifdef PICKING
+    attribute vec3 pickingColor;
+    attribute vec3 pickingColor2;
+    varying vec3 vPickingColor;
+    varying vec3 vPickingColor2;
+#endif
 
 uniform mat4 modelViewMatrixInverse;
 uniform float shift;
@@ -26,6 +32,11 @@ uniform float shift;
 
 void main()
 {
+
+    #ifdef PICKING
+        vPickingColor = pickingColor;
+        vPickingColor2 = pickingColor2;
+    #endif
 
     vec3 center = position;
     vec3 dir = normalize( position2 - position1 );

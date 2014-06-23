@@ -419,7 +419,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    bondColor: function( selection, fromTo ){
+    bondColor: function( selection, fromTo, picking ){
 
         var i = 0;
         var color = [];
@@ -431,13 +431,29 @@ NGL.AtomSet.prototype = {
 
             if( fromTo ){
 
-                c = elemColors[ b.atom1.element ];
-                if( !c ) c = 0xCCCCCC;
+                if( picking ){
+                
+                    c = b.atom1.index + 1;
+
+                }else{
+
+                    c = elemColors[ b.atom1.element ];
+                    if( !c ) c = 0xCCCCCC;
+
+                }
 
             }else{
 
-                c = elemColors[ b.atom2.element ];
-                if( !c ) c = 0xCCCCCC;
+                if( picking ){
+                
+                    c = b.atom2.index + 1;
+
+                }else{
+
+                    c = elemColors[ b.atom2.element ];
+                    if( !c ) c = 0xCCCCCC;
+
+                }
 
             }
 
