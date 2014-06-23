@@ -165,6 +165,8 @@ UI.Panel.prototype.clear = function () {
 
     }
 
+    return this;
+
 };
 
 

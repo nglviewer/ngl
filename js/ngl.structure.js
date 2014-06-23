@@ -263,7 +263,7 @@ NGL.AtomSet.prototype = {
 
                 c = elemColors[ a.element ];
                 if( !c ) c = 0xCCCCCC;
-                
+
             }
 
             color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
@@ -1703,6 +1703,23 @@ NGL.Atom.prototype = {
 
         var d = this.covalent + atom.covalent + 0.3;
         return distSquared < ( d * d );
+
+    },
+
+    qualifiedName: function(){
+
+        var name = "";
+
+        if( this.resname ) name += "[" + this.resname + "]";
+        if( this.resno ) name += this.resno;
+        if( this.chainname ) name += ":" + this.chainname;
+        if( this.atomname ) name += "." + this.atomname;
+        if( this.residue && this.residue.chain &&
+                this.residue.chain.model ){
+            name += "/" + this.residue.chain.model.index;
+        } 
+
+        return name;
 
     }
 

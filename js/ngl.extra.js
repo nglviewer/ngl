@@ -42,6 +42,8 @@ NGL.Stage = function( eid ){
         componentAdded: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
 
+        atomPicked: new SIGNALS.Signal(),
+
         windowResize: new SIGNALS.Signal()
 
     };
@@ -106,13 +108,19 @@ NGL.Stage = function( eid ){
         ]);
         var id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 
+        var pickedAtom = undefined;
         compList[0].structure.eachAtom( function( a ){
 
             if( a.index === ( id - 1 ) ){
                 console.log( a );
+                pickedAtom = a;
             }
 
         } );
+
+        scope.signals.atomPicked.dispatch( pickedAtom );
+
+        scope.viewer.render();
 
     } );
 
@@ -937,7 +945,8 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
-        this.atomSet.atomRadius( null, null, this.sphereScale )
+        this.atomSet.atomRadius( null, null, this.sphereScale ),
+        this.atomSet.atomColor( null, true )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -989,7 +998,8 @@ NGL.LicoriceRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
-        this.atomSet.atomRadius( null, this.size, null )
+        this.atomSet.atomRadius( null, this.size, null ),
+        this.atomSet.atomColor( null, true )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -1064,7 +1074,8 @@ NGL.HyperballRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
-        this.atomSet.atomRadius( null, null, this.scale )
+        this.atomSet.atomRadius( null, null, this.scale ),
+        this.atomSet.atomColor( null, true )
     );
 
     this.cylinderBuffer = new NGL.HyperballStickBuffer(
@@ -1148,7 +1159,8 @@ NGL.BackboneRepresentation.prototype.create = function(){
         sphereBuffer = new NGL.SphereBuffer(
             backboneAtomSet.atomPosition(),
             backboneAtomSet.atomColor(),
-            backboneAtomSet.atomRadius( null, size, null )
+            backboneAtomSet.atomRadius( null, size, null ),
+            this.atomSet.atomColor( null, true )
         );
 
         cylinderBuffer = new NGL.CylinderBuffer(
