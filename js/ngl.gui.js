@@ -59,9 +59,22 @@ NGL.ViewportWidget = function( stage ){
 
 NGL.ToolbarWidget = function( stage ){
 
+    var signals = stage.signals;
     var container = new UI.Panel();
 
-    
+    var messagePanel = new UI.Panel();
+
+    signals.atomPicked.add( function( atom ){
+
+        var name = atom ? atom.qualifiedName() : "none";
+
+        messagePanel
+            .clear()
+            .add( new UI.Text( "Picked: " + name ) );
+        
+    } );
+
+    container.add( messagePanel );
 
     return container;
 
