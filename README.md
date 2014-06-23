@@ -37,6 +37,34 @@ Links
 
 
 
+SSH
+===
+
+install sshfs
+
+    sudo apt-get install sshfs
 
 
+mount
 
+    sshfs -o idmap=user arose@zatopek:/shared/home/arose /home/arose/servers/zatopek
+
+
+unmount
+
+    fusermount -u /home/arose/servers/zatopek
+
+
+/etc/fstab
+
+    sshfs#arose@zatopek:/shared/home/arose /home/arose/servers/zatopek fuse defaults,idmap=user 0 0
+
+
+keep the connection active (alive) by adding this to ~/.ssh/config or to /etc/ssh/ssh_config
+
+    ServerAliveInterval 60
+
+
+passwordless ssh
+
+    sudo ssh-copy-id arose@zatopek
