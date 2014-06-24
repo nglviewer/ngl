@@ -1577,7 +1577,7 @@ NGL.Buffer.prototype = {
  * @param {Float32Array} index
  * @param {Float32Array} normal
  */
-NGL.MeshBuffer = function( position, color, index, normal ){
+NGL.MeshBuffer = function( position, color, index, normal, pickingColor ){
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -1606,6 +1606,40 @@ NGL.MeshBuffer = function( position, color, index, normal ){
     this.material.side = THREE.DoubleSide;
     // this.material.blending = THREE.AdditiveBlending;
     // this.material.blending = THREE.MultiplyBlending;
+
+    if( pickingColor ){
+
+        this.addAttributes({
+            "pickingColor": { type: "c", value: null },
+        });
+
+        this.setAttributes({
+            "pickingColor": pickingColor,
+        });
+
+        this.pickingMaterial = new THREE.ShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: false,
+            // opacity: 1.0,
+            // blending: THREE.AdditiveBlending,
+            // blending: THREE.MultiplyBlending,
+            // blending: THREE.CustomBlending,
+            // blendSrc: THREE.OneFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
+            depthWrite: true,
+            lights: true,
+            fog: false
+        });
+
+        this.pickingMaterial.defines[ "PICKING" ] = 1;
+
+        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+    }
 
 }
 
@@ -2527,7 +2561,7 @@ NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-NGL.RibbonBuffer = function( position, normal, dir, color, size ){
+NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
     var geometry, material, mesh;
     var n = ( position.length/3 ) - 1;
@@ -2545,6 +2579,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
         inputNormal: { type: 'v3', value: null },
         inputColor: { type: 'v3', value: null }
     };
+    if( pickingColor ){
+        attributes.pickingColor = { type: 'v3', value: null };
+    }
     var uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
@@ -2569,12 +2606,18 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     var inputSize = new Float32Array( n4 );
     var inputNormal = new Float32Array( n4 * 3 );
     var inputColor = new Float32Array( n4 * 3 );
+    if( pickingColor ){
+        var inputPickingColor = new Float32Array( n4 * 3 );
+    }
 
     geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
     geometry.addAttribute( 'inputDir', new THREE.BufferAttribute( inputDir, 3 ) );
     geometry.addAttribute( 'inputSize', new THREE.BufferAttribute( inputSize, 1 ) );
     geometry.addAttribute( 'normal', new THREE.BufferAttribute( inputNormal, 3 ) );
     geometry.addAttribute( 'inputColor', new THREE.BufferAttribute( inputColor, 3 ) );
+    if( pickingColor ){
+        geometry.addAttribute( 'pickingColor', new THREE.BufferAttribute( inputPickingColor, 3 ) );
+    }
 
     var indices = new Uint32Array( n4 * 3 );
     geometry.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
@@ -2625,6 +2668,12 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
             inputColor[ p + 0 ] = color[ v3 + 0 ];
             inputColor[ p + 1 ] = color[ v3 + 1 ];
             inputColor[ p + 2 ] = color[ v3 + 2 ];
+
+            if( pickingColor ){
+                inputPickingColor[ p + 0 ] = pickingColor[ v3 + 0 ];
+                inputPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
+                inputPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
+            }
 
             // inputSize[ l + i ] = size[ v ];
         }
@@ -2677,6 +2726,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     // console.log( "inputSize", inputSize, size );
     // console.log( "inputColor", inputColor );
     // console.log( "indices", indices );
+    // console.log( "inputPickingColor", inputPickingColor );
 
     mesh = new THREE.Mesh( geometry, material );
 
@@ -2687,6 +2737,34 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size ){
     this.geometry = geometry;
     this.material = material;
     this.mesh = mesh;
+
+    if( pickingColor ){
+
+        this.pickingMaterial = new THREE.ShaderMaterial( {
+            uniforms: uniforms,
+            attributes: attributes,
+            vertexShader: NGL.getShader( 'Ribbon.vert' ),
+            fragmentShader: NGL.getShader( 'Ribbon.frag' ),
+            side: THREE.DoubleSide,
+            depthTest: true,
+            transparent: false,
+            // opacity: 1.0,
+            // blending: THREE.AdditiveBlending,
+            // blending: THREE.MultiplyBlending,
+            // blending: THREE.CustomBlending,
+            // blendSrc: THREE.OneFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
+            depthWrite: true,
+            lights: true,
+            fog: false
+        });
+
+        this.pickingMaterial.defines[ "PICKING" ] = 1;
+        console.log( "pickingMaterial", this.pickingMaterial );
+        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+        console.log( "pickingMesh", this.pickingMesh );
+        console.log( "inputPickingColor", inputPickingColor );
+    }
 
 }
 
@@ -2705,7 +2783,7 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor ){
 
     radialSegments = radialSegments || 4;
 
@@ -2717,6 +2795,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     var meshColor = new Float32Array( n * radialSegments * 3 );
     var meshIndex = new Uint32Array( n1 * 2 * radialSegments1 * 3 );;
     var meshNormal = new Float32Array( n * radialSegments * 3 );
+    var meshPickingColor = new Float32Array( n * radialSegments * 3 );
 
     // var meshTangent1 = new Float32Array( n * radialSegments * 3 );
     // var meshTangent2 = new Float32Array( n * radialSegments * 3 );
@@ -2811,6 +2890,10 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
             meshColor[ s + 1 ] = color[ k + 1 ];
             meshColor[ s + 2 ] = color[ k + 2 ];
 
+            meshPickingColor[ s + 0 ] = pickingColor[ k + 0 ];
+            meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
+            meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
+
         }
 
     }
@@ -2845,7 +2928,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     // this.meshTangent2 = meshTangent2;
 
     NGL.MeshBuffer.call(
-        this, meshPosition, meshColor, meshIndex, meshNormal
+        this, meshPosition, meshColor, meshIndex, meshNormal, meshPickingColor
     );
 
 }

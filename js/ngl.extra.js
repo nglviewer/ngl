@@ -1168,7 +1168,7 @@ NGL.BackboneRepresentation.prototype.create = function(){
             backboneAtomSet.atomPosition(),
             backboneAtomSet.atomColor(),
             backboneAtomSet.atomRadius( null, size, null ),
-            this.atomSet.atomColor( null, true )
+            backboneAtomSet.atomColor( null, true )
         );
 
         cylinderBuffer = new NGL.CylinderBuffer(
@@ -1248,7 +1248,8 @@ NGL.TubeRepresentation.prototype.create = function(){
             sub.tangent,
             sub.color,
             sub.size,
-            12
+            12,
+            sub.pickingColor
         )
 
         bufferList.push( tubeBuffer );
@@ -1307,7 +1308,8 @@ NGL.RibbonRepresentation.prototype.create = function(){
                 sub.binormal,
                 sub.normal,
                 sub.color,
-                sub.size
+                sub.size,
+                sub.pickingColor
             )
 
         );
@@ -1416,12 +1418,13 @@ NGL.Spline.prototype = {
         var norm = new Float32Array( n1 * m * 3 + 3 );
         var bin = new Float32Array( n1 * m * 3 + 3 );
         var size = new Float32Array( n1 * m + 1 );
+        var pcol = new Float32Array( n1 * m * 3 + 3 );
 
         var subdivideData = this._makeSubdivideData( m, trace_atomname );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            subdivideData( r1, r2, r3, r4, pos, col, tan, norm, bin, size );
+            subdivideData( r1, r2, r3, r4, pos, col, tan, norm, bin, size, pcol );
 
         } );
 
@@ -1440,7 +1443,8 @@ NGL.Spline.prototype = {
             "tangent": tan,
             "normal": norm,
             "binormal": bin,
-            "size": size
+            "size": size,
+            "pickingColor": pcol
 
         }
 
@@ -1459,6 +1463,7 @@ NGL.Spline.prototype = {
 
         var dt = 1.0 / m;
         var c = new THREE.Color();
+        var pc = new THREE.Color();
         var a1, a2, a3, a4;
         var j, l, d;
         var k = 0;
@@ -1482,7 +1487,7 @@ NGL.Spline.prototype = {
 
         var first = true;
 
-        return function( r1, r2, r3, r4, pos, col, tan, norm, bin, size ){
+        return function( r1, r2, r3, r4, pos, col, tan, norm, bin, size, pcol ){
 
             a1 = r1.getAtomByName( trace_atomname );
             a2 = r2.getAtomByName( trace_atomname );
@@ -1505,7 +1510,10 @@ NGL.Spline.prototype = {
                 c.setHex( 0xFFFFFF );
                 scale = 0.15;
             }
-            // scale = 0.15;
+            
+            if( pcol ){
+                pc.setHex( a2.index + 1 );
+            }
 
             if( first ){
                 cAtom = r2.getAtomByName( direction_atomname1 );
@@ -1538,6 +1546,12 @@ NGL.Spline.prototype = {
                 col[ l + 0 ] = c.r;
                 col[ l + 1 ] = c.g;
                 col[ l + 2 ] = c.b;
+
+                if( pcol ){
+                    pcol[ l + 0 ] = pc.r;
+                    pcol[ l + 1 ] = pc.g;
+                    pcol[ l + 2 ] = pc.b;
+                }
 
                 vNorm.set(
                     d1 * vDir2.x + d * vDir3.x,

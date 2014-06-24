@@ -6,10 +6,17 @@ attribute vec3 color;
 varying vec3 vNormal;
 varying vec3 vColor;
 
-
+#ifdef PICKING
+    attribute vec3 pickingColor;
+    varying vec3 vPickingColor;
+#endif
 
 void main()
 {
+
+	#ifdef PICKING
+        vPickingColor = pickingColor;
+    #endif
 
 	vNormal = normalize( normalMatrix * normal );
 	vColor = color;

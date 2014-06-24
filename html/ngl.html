@@ -75,7 +75,7 @@
                     stage.viewer.onWindowResize();
 
                     stage.loadFile( "../data/__example__/1blu.pdb", function( o ){
-                        // o.addRepresentation( "spacefill", "*" );
+                        o.addRepresentation( "tube", "*" );
                         o.addRepresentation( "licorice", "*" );
                         o.centerView();
                     } );
