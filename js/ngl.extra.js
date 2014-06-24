@@ -4,6 +4,10 @@
  */
 
 
+NGL.LeftMouseButton = 1;
+NGL.MiddleMouseButton = 2;
+NGL.RightMouseButton = 3;
+
 
 NGL.getNextAvailablePropertyName = function( name, o ){
 
@@ -56,9 +60,7 @@ NGL.Stage = function( eid ){
 
     this.viewer.animate();
 
-
-
-
+    // picking
 
     var scope = this;
 
@@ -85,7 +87,7 @@ NGL.Stage = function( eid ){
 
     this.viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
 
-        if( flag === 1 ) return;
+        if( flag === 1 || e.which === NGL.RightMouseButton ) return;
 
         console.log( e );
         console.log( scope.viewer );
@@ -121,6 +123,13 @@ NGL.Stage = function( eid ){
         scope.signals.atomPicked.dispatch( pickedAtom );
 
         scope.viewer.render();
+
+        if( pickedAtom && e.which === NGL.MiddleMouseButton ){
+
+            console.log( "center", pickedAtom );
+            scope.centerView( pickedAtom );
+
+        }
 
     } );
 
@@ -246,7 +255,23 @@ NGL.Stage.prototype = {
 
         this.signals.componentRemoved.dispatch( component );
 
-    }
+    },
+
+    centerView: function(){
+
+        var t = new THREE.Vector3();
+
+        return function( center ){
+
+            t.copy( center ).multiplyScalar( -1 );
+
+            this.viewer.rotationGroup.position.copy( t );
+            this.viewer.pickingRotationGroup.position.copy( t );
+            this.viewer.render();
+
+        };
+
+    }()
 
 }
 
