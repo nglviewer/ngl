@@ -394,7 +394,7 @@ NGL.StructureComponent.prototype = {
 
         traj.signals.frameChanged.add( function( value ){
 
-            console.time( "frameUpdate" );
+            // console.time( "frameUpdate" );
 
             scope.reprList.forEach( function( repr ){
 
@@ -402,7 +402,7 @@ NGL.StructureComponent.prototype = {
 
             } );
 
-            console.timeEnd( "frameUpdate" );
+            // console.timeEnd( "frameUpdate" );
             
         } );
 
