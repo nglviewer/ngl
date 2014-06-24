@@ -757,6 +757,7 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     this.frameCache = [];
     this.frameCacheSize = 0;
+    this.currentFrame = -1;
 
     this.frameLoader = new THREE.XHRLoader();
     this.frameLoader.setResponseType( "arraybuffer" );
@@ -790,8 +791,7 @@ NGL.Trajectory.prototype = {
 
     },
 
-    // TODO rename to 'setFrame'?
-    updateFrame: function( i, callback ){
+    setFrame: function( i, callback ){
 
         if( this.frameCache[ i ] ){
 
@@ -803,11 +803,13 @@ NGL.Trajectory.prototype = {
 
         }
 
+        this.currentFrame = i;
+
     },
 
     loadFrame: function( i, callback ){
 
-        console.time( "loadFrame" );
+        // console.time( "loadFrame" );
 
         var scope = this;
 
@@ -816,7 +818,7 @@ NGL.Trajectory.prototype = {
 
         this.frameLoader.load( url, function( arrayBuffer ){
 
-            console.timeEnd( "loadFrame" );
+            // console.timeEnd( "loadFrame" );
 
             if( !arrayBuffer ){
                 console.error( "empty arrayBuffer for '" + url + "'" );

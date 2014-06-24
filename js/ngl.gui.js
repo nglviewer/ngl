@@ -294,7 +294,7 @@ NGL.Example = {
                 var i = 0;
                 var foo = setInterval(function(){
                     
-                    traj.loadFrame( i++ % 51 );
+                    traj.setFrame( i++ % 51 );
                     if( i >= 102 ) clearInterval( foo );
 
                 }, 50);
@@ -698,7 +698,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     var seleRow = new UI.Panel();
     var sele = new UI.Input()
-        .setWidth( '190px' ).onKeyDown( function( e ){
+        .setWidth( '170px' ).onKeyDown( function( e ){
             
             if( e.keyCode === 13 ){
 
@@ -712,7 +712,7 @@ NGL.RepresentationWidget = function( repr, component ){
         sele.setValue( repr.selection.selectionStr );
     }
  
-    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ) );
+    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
     seleRow.add( sele );
 
     container.add( seleRow );
@@ -742,8 +742,12 @@ NGL.TrajectoryWidget = function( traj, component ){
         numframes.clear().add( new UI.Text( value ) );
         frame.setRange( 0, value - 1 );
         frame2.setRange( 0, value - 1 );
+
+        step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
         
     } );
+
+    //1000 = n / step 
 
     signals.frameChanged.add( function( value ){
 
@@ -763,42 +767,80 @@ NGL.TrajectoryWidget = function( traj, component ){
     // frames
 
     var frameRow = new UI.Panel();
+
     var frame = new UI.Integer( -1 )
+        .setWidth( "70px" )
         .setRange( -1, -1 )
         .onChange( function( e ){
 
-            traj.loadFrame( frame.getValue() );
+            traj.setFrame( frame.getValue() );
 
         } );
+
+    var step = new UI.Integer( 1 )
+        .setWidth( "50px" )
+        .setRange( 1, 10000 );
+
+    var frameRow2 = new UI.Panel();
 
     var inProgress = false;
 
     var frame2 = new UI.Range( -1, -1, -1, 1 )
-        .setWidth( "238px" )
+        .setWidth( "195px" )
         .onInput( function( e ){
 
-            if( !inProgress ){
+            if( !inProgress && frame2.getValue() !== traj.currentFrame ){
                 inProgress = true;
                 // console.log( "input", e );
-                traj.loadFrame( frame2.getValue() );
+                traj.setFrame( frame2.getValue() );
             }
 
-        } )
-        /*.onChange( function( e ){
+        } );
 
-            if( !inProgress ){
-                inProgress = true;
-                // console.log( "change", e );
-                traj.loadFrame( frame2.getValue() );
+    // animation
+
+    var i = 0;
+    var anim;
+
+    var animButton = new UI.Icon( "play" )
+        .setMarginRight( "10px" )
+        .setMarginLeft( "20px" )
+        .onClick( function(){
+
+            if( animButton.hasClass( "play" ) ){
+
+                animButton.switchClass( "play", "pause" );
+
+                i = Math.max( 0, traj.currentFrame );
+
+                anim = setInterval(function(){
+            
+                    traj.setFrame( i );
+                    // i = ( i + step.getValue() ) % traj.numframes;
+                    i += step.getValue();
+                    if( i >= traj.numframes ) i = 0;
+
+                }, 50);
+
+            }else{
+
+                animButton.switchClass( "pause", "play" );
+
+                clearInterval( anim );
+
             }
 
-        } );*/
+        } );
 
-    frameRow.add( new UI.Text( 'Frame' ).setWidth( '45px' ) );
+    frameRow.add( new UI.Text( 'Frame' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
     frameRow.add( frame );
-    frameRow.add( frame2 );
+    frameRow.add( new UI.Text( 'Step' ).setWidth( '45px' ) );
+    frameRow.add( step );
+    frameRow2.add( animButton );
+    frameRow2.add( frame2 );
 
     container.add( frameRow );
+    container.add( frameRow2 );
 
     return container;
 
