@@ -100,7 +100,9 @@ properties.forEach( function ( property ) {
 
 // events
 
-var events = [ 'KeyUp', 'KeyDown', 'MouseOver', 'MouseOut', 'Click', 'Change' ];
+var events = [
+	'KeyUp', 'KeyDown', 'MouseOver', 'MouseOut', 'Click', 'Change', 'Input'
+];
 
 events.forEach( function ( event ) {
 
@@ -1203,6 +1205,64 @@ UI.Icon.prototype.switchClass = function( oldValue, newValue ){
     return this;
 
 }
+
+
+// Range
+
+UI.Range = function( min, max, value, step ) {
+
+    UI.Element.call( this );
+
+    var scope = this;
+
+    var dom = document.createElement( 'input' );
+    dom.className = 'Range';
+    dom.type = 'range';
+
+    dom.min = min;
+    dom.max = max;
+    dom.value = value;
+    dom.step = step;
+
+    this.dom = dom;
+    this.dom.textContent = value;
+
+    return this;
+
+};
+
+UI.Range.prototype = Object.create( UI.Element.prototype );
+
+UI.Range.prototype.getValue = function(){
+
+    return this.dom.value;
+
+};
+
+UI.Range.prototype.setRange = function( min, max ){
+
+    this.dom.min = min;
+    this.dom.max = max;
+
+    return this;
+
+};
+
+UI.Range.prototype.setValue = function( value ){
+
+    this.dom.value = value;
+
+    return this;
+
+};
+
+UI.Range.prototype.setStep = function( value ){
+
+    this.dom.step = value;
+
+    return this;
+
+};
 
 
 // Helper

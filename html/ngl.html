@@ -74,11 +74,15 @@
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
 
-                    stage.loadFile( "../data/__example__/1blu.pdb", function( o ){
-                        o.addRepresentation( "tube", "*" );
-                        o.addRepresentation( "licorice", "*" );
-                        o.centerView();
-                    } );
+                    
+                    // NGL.Example.load( "1blu", stage );
+                    NGL.Example.load( "trajectory", stage );
+                    // NGL.Example.load( "3pqr", stage );
+                    
+
+                    // alexpc
+                    
+                    // NGL.Example.load( "rho_traj", stage );
 
                 } );
 

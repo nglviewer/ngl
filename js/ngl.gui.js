@@ -257,6 +257,106 @@ NGL.MenubarViewWidget = function( stage ){
 };
 
 
+NGL.Example = {
+
+    load: function( name, stage ){
+
+        NGL.Example.data[ name ]( stage );
+
+    },
+
+    data: {
+
+        "trajectory": function( stage ){
+
+            stage.loadFile( "../data/__example__/md.gro", function( o ){
+
+                o.addRepresentation( "line", "*" );
+                o.addRepresentation( "ribbon", "protein" );
+                o.centerView();
+
+                o.addTrajectory( "__example__/md.xtc" );
+
+            } );
+
+        },
+
+        "anim_trajectory": function( stage ){
+
+            stage.loadFile( "../data/__example__/md.gro", function( o ){
+
+                o.addRepresentation( "line", "*" );
+                o.addRepresentation( "ribbon", "protein" );
+                o.centerView();
+
+                var traj = o.addTrajectory( "__example__/md.xtc" );
+
+                var i = 0;
+                var foo = setInterval(function(){
+                    
+                    traj.loadFrame( i++ % 51 );
+                    if( i >= 102 ) clearInterval( foo );
+
+                }, 50);
+
+            } );
+
+        },
+
+        "3pqr": function( stage ){
+
+            stage.loadFile( "../data/__example__/3pqr.pdb", function( o ){
+
+                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "ball+stick", "135:A 347:B 223:A" );
+                o.addRepresentation( "licorice", "hetero" );
+                
+                o.structure.eachAtom(
+                    function( a ){
+                        stage.centerView( a );
+                    },
+                    new NGL.Selection( "347:B.CA" )
+                );
+
+            } );
+
+        },
+
+        "1blu": function( stage ){
+
+            stage.loadFile( "../data/__example__/1blu.pdb", function( o ){
+
+                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "licorice", "*" );
+                o.centerView();
+
+            } );
+
+        },
+
+        // alexpc
+        
+        "rho_traj": function( stage ){
+
+            var path = "projects/rho/3pqr/GaCT/all/"
+
+            stage.loadFile( "../data/" + path + "md01_protein.gro", function( o ){
+
+                // o.addRepresentation( "line", "! H" );
+                o.addRepresentation( "ribbon", "protein" );
+                o.centerView();
+
+                o.addTrajectory( path + "md_all.xtc" );
+
+            } );
+
+        },
+
+    }
+
+};
+
+
 NGL.MenubarExampleWidget = function( stage ){
 
     // event handlers
@@ -273,23 +373,7 @@ NGL.MenubarExampleWidget = function( stage ){
 
     function onTrajClick( file ) {
 
-        stage.loadFile( "../data/__example__/md.gro", function( o ){
-
-            o.addRepresentation( "line", "*" );
-            o.addRepresentation( "ribbon", "protein" );
-            o.centerView();
-
-            var traj = o.addTrajectory( "__example__/md.xtc" );
-
-            var i = 0;
-            var foo = setInterval(function(){
-                
-                traj.loadFrame( i++ % 51 );
-                if( i >= 102 ) clearInterval( foo );
-
-            }, 50);
-
-        } );
+        NGL.Example.load( "anim_trajectory", stage );
 
     }
 
@@ -645,35 +729,74 @@ NGL.TrajectoryWidget = function( traj, component ){
     var container = new UI.CollapsiblePanel()
         .setMarginLeft( "20px" );
 
-    var numframes = new UI.Text( "?" ).setWidth( "80px" )
+    var numframes = new UI.Panel()
+        .setWidth( "80px" )
+        .setDisplay( "inline" )
+        .add( new UI.Icon( "spinner" ).addClass( "spin" ) );
+
+    var numcache = new UI.Text( "0" )
+        .setMarginLeft( "20px" );
 
     signals.gotNumframes.add( function( value ){
 
-        numframes.setValue( value );
+        numframes.clear().add( new UI.Text( value ) );
         frame.setRange( 0, value - 1 );
+        frame2.setRange( 0, value - 1 );
         
     } );
 
     signals.frameChanged.add( function( value ){
 
         frame.setValue( value );
+        frame2.setValue( value );
+
+        numcache.setValue( traj.frameCacheSize );
+
+        inProgress = false;
         
     } );
 
     container.addStatic( new UI.Text( "Trajectory" ).setWidth( "80px" ) );
     container.addStatic( numframes );
+    container.addStatic( numcache );
 
     // frames
 
     var frameRow = new UI.Panel();
-    var frame = new UI.Integer( -1 ).onChange( function( e ){
+    var frame = new UI.Integer( -1 )
+        .setRange( -1, -1 )
+        .onChange( function( e ){
 
-        traj.loadFrame( frame.getValue() );
+            traj.loadFrame( frame.getValue() );
 
-    } );
+        } );
+
+    var inProgress = false;
+
+    var frame2 = new UI.Range( -1, -1, -1, 1 )
+        .setWidth( "238px" )
+        .onInput( function( e ){
+
+            if( !inProgress ){
+                inProgress = true;
+                // console.log( "input", e );
+                traj.loadFrame( frame2.getValue() );
+            }
+
+        } )
+        /*.onChange( function( e ){
+
+            if( !inProgress ){
+                inProgress = true;
+                // console.log( "change", e );
+                traj.loadFrame( frame2.getValue() );
+            }
+
+        } );*/
 
     frameRow.add( new UI.Text( 'Frame' ).setWidth( '45px' ) );
     frameRow.add( frame );
+    frameRow.add( frame2 );
 
     container.add( frameRow );
 
