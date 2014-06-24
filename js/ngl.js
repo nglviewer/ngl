@@ -2760,10 +2760,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
         });
 
         this.pickingMaterial.defines[ "PICKING" ] = 1;
-        console.log( "pickingMaterial", this.pickingMaterial );
+        
         this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-        console.log( "pickingMesh", this.pickingMesh );
-        console.log( "inputPickingColor", inputPickingColor );
+
     }
 
 }

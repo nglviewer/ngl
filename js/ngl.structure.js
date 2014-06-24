@@ -756,6 +756,7 @@ NGL.Trajectory = function( xtcPath, structure ){
     this.atomCount = structure.atomCount;
 
     this.frameCache = [];
+    this.frameCacheSize = 0;
 
     this.frameLoader = new THREE.XHRLoader();
     this.frameLoader.setResponseType( "arraybuffer" );
@@ -826,7 +827,10 @@ NGL.Trajectory.prototype = {
 
             scope.removePbc( coords, box );
 
-            scope.frameCache[ i ] = coords;
+            if( !scope.frameCache[ i ] ){
+                scope.frameCache[ i ] = coords;
+                scope.frameCacheSize += 1;
+            }
 
             scope.updateStructure( i, callback );
 

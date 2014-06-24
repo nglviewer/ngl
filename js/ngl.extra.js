@@ -89,9 +89,6 @@ NGL.Stage = function( eid ){
 
         if( flag === 1 || e.which === NGL.RightMouseButton ) return;
 
-        console.log( e );
-        console.log( scope.viewer );
-
         scope.viewer.render( null, true );
 
         var box = scope.viewer.renderer.domElement.getBoundingClientRect();
@@ -102,19 +99,18 @@ NGL.Stage = function( eid ){
         );
 
         var rgba = Array.apply( [], pixelBuffer );
-        console.log([ 
+        /*console.log([ 
             ( rgba[0]/255 ).toPrecision(2),
             ( rgba[1]/255 ).toPrecision(2),
             ( rgba[2]/255 ).toPrecision(2),
             ( rgba[3]/255 ).toPrecision(2)
-        ]);
+        ]);*/
         var id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 
         var pickedAtom = undefined;
         compList[0].structure.eachAtom( function( a ){
 
             if( a.index === ( id - 1 ) ){
-                console.log( a );
                 pickedAtom = a;
             }
 
@@ -126,7 +122,6 @@ NGL.Stage = function( eid ){
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
-            console.log( "center", pickedAtom );
             scope.centerView( pickedAtom );
 
         }
