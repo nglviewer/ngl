@@ -795,12 +795,35 @@ NGL.TrajectoryWidget = function( traj, component ){
                 traj.setFrame( frame2.getValue() );
             }
 
+        } )
+        .onChange( function( e ){
+
+            // ensure the last requested frame gets displayed eventually
+
+            if( frame2.getValue() !== traj.currentFrame ){
+                inProgress = true;
+                // console.log( "change", e );
+                traj.setFrame( frame2.getValue() );
+            }
+
         } );
 
     // animation
 
     var i = 0;
-    var anim;
+    var animSpeed = 100;
+    var animStopFlag = true;
+    var animFunc = function(){
+            
+        traj.setFrame( i );
+        i += step.getValue();
+        if( i >= traj.numframes ) i = 0;
+
+        if( !animStopFlag ){
+            setTimeout( animFunc, animSpeed );
+        }
+
+    }
 
     var animButton = new UI.Icon( "play" )
         .setMarginRight( "10px" )
@@ -810,23 +833,14 @@ NGL.TrajectoryWidget = function( traj, component ){
             if( animButton.hasClass( "play" ) ){
 
                 animButton.switchClass( "play", "pause" );
-
+                animStopFlag = false;
                 i = Math.max( 0, traj.currentFrame );
-
-                anim = setInterval(function(){
-            
-                    traj.setFrame( i );
-                    // i = ( i + step.getValue() ) % traj.numframes;
-                    i += step.getValue();
-                    if( i >= traj.numframes ) i = 0;
-
-                }, 50);
+                animFunc();
 
             }else{
 
                 animButton.switchClass( "pause", "play" );
-
-                clearInterval( anim );
+                animStopFlag = true;
 
             }
 
