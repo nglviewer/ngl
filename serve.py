@@ -17,6 +17,7 @@ import zipfile
 import array
 import json
 from cStringIO import StringIO
+import cPickle as pickle
 
 import numpy as np
 
@@ -248,10 +249,25 @@ class XTC( object ):
             ( libxdrfile2.DIM, libxdrfile2.DIM ), dtype=np.float32
         )
 
-    def update_offsets( self ):
-        self.numframes, self.offsets = libxdrfile2.read_xtc_numframes(
-            self.xtc_file
-        )
+    def update_offsets( self, force=False ):
+        self.offset_file = self.xtc_file + ".offsets"
+        isfile_offset = os.path.isfile( self.offset_file )
+        mtime_offset = os.path.getmtime( self.offset_file )
+        mtime_xtc = os.path.getmtime( self.xtc_file )
+        if not force and isfile_offset and mtime_offset >= mtime_xtc:
+            print "found offset file"
+            with open( self.offset_file, 'rb' ) as fp:
+                self.numframes, self.offsets = pickle.load( fp )
+        else:
+            print "create offset file"
+            self.numframes, self.offsets = libxdrfile2.read_xtc_numframes(
+                self.xtc_file
+            )
+            with open( self.offset_file, 'wb' ) as fp:
+                pickle.dump( ( self.numframes, self.offsets ), fp )
+        # self.numframes, self.offsets = libxdrfile2.read_xtc_numframes(
+        #     self.xtc_file
+        # )
 
     def get_frame( self, index ):
         libxdrfile2.xdr_seek(
@@ -344,12 +360,12 @@ def xtc_serve( frame, root, filename ):
         path = os.path.join( directory, filename )
     else:
         return
-    print request.args
-    print path
+    # print request.args
+    # print path
     natoms = request.args.get( "natoms" )
     if natoms:
         natoms = int( natoms )
-    print natoms
+    # print natoms
     xtc = get_xtc( path )
     coords = xtc.get_coords( frame, first_natoms=natoms )  # 17091
     box = xtc.box.flatten() * 10
