@@ -4,8 +4,7 @@
  */
 
 
-// rename residue to group
-// eachPolymer
+// rename residue to group?
 
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
@@ -122,6 +121,7 @@ NGL.guessElement = function(){
 NGL.ProteinType = 0;
 NGL.NucleicType = 1;
 NGL.UnknownType = 2;
+
 
 ////////
 // Set
