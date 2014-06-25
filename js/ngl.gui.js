@@ -769,6 +769,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     var frameRow = new UI.Panel();
 
     var frame = new UI.Integer( -1 )
+        .setMarginLeft( "5px" )
         .setWidth( "70px" )
         .setRange( -1, -1 )
         .onChange( function( e ){
@@ -778,7 +779,8 @@ NGL.TrajectoryWidget = function( traj, component ){
         } );
 
     var step = new UI.Integer( 1 )
-        .setWidth( "50px" )
+        .setMarginLeft( "5px" )
+        .setWidth( "40px" )
         .setRange( 1, 10000 );
 
     var frameRow2 = new UI.Panel();
@@ -814,10 +816,13 @@ NGL.TrajectoryWidget = function( traj, component ){
     var animSpeed = 100;
     var animStopFlag = true;
     var animFunc = function(){
-            
-        traj.setFrame( i );
-        i += step.getValue();
-        if( i >= traj.numframes ) i = 0;
+        
+        if( !inProgress ){
+            inProgress = true;
+            traj.setFrame( i );
+            i += step.getValue();
+            if( i >= traj.numframes ) i = 0;
+        }
 
         if( !animStopFlag ){
             setTimeout( animFunc, animSpeed );
@@ -846,9 +851,9 @@ NGL.TrajectoryWidget = function( traj, component ){
 
         } );
 
-    frameRow.add( new UI.Text( 'Frame' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
+    frameRow.add( new UI.Text( 'Frame' ).setMarginLeft( "20px" ) );
     frameRow.add( frame );
-    frameRow.add( new UI.Text( 'Step' ).setWidth( '45px' ) );
+    frameRow.add( new UI.Text( 'Step' ).setMarginLeft( "10px" ) );
     frameRow.add( step );
     frameRow2.add( animButton );
     frameRow2.add( frame2 );
