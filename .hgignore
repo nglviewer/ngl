@@ -8,3 +8,5 @@ doc/*
 
 *.pyc
 app.cfg
+
+*.offsets
