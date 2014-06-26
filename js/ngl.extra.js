@@ -107,13 +107,16 @@ NGL.Stage = function( eid ){
         ]);*/
         var id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 
+        // TODO early exit, binary search
         var pickedAtom = undefined;
-        compList[0].structure.eachAtom( function( a ){
+        compList.forEach( function( o ){
+            o.structure.eachAtom( function( a ){
 
-            if( a.index === ( id - 1 ) ){
-                pickedAtom = a;
-            }
+                if( a.globalindex === ( id - 1 ) ){
+                    pickedAtom = a;
+                }
 
+            } );
         } );
 
         scope.signals.atomPicked.dispatch( pickedAtom );
@@ -1532,7 +1535,7 @@ NGL.Spline.prototype = {
             }
             
             if( pcol ){
-                pc.setHex( a2.index + 1 );
+                pc.setHex( a2.globalindex + 1 );
             }
 
             if( first ){
