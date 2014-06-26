@@ -926,6 +926,12 @@ NGL.DirectoryListing.prototype = {
 
 NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
+    // from http://stackoverflow.com/a/20463021/1435042
+    function fileSizeSI(a,b,c,d,e){
+        return (b=Math,c=b.log,d=1e3,e=c(a)/c(d)|0,a/b.pow(d,e)).toFixed(2)
+            +String.fromCharCode(160)+(e?'kMGTPEZY'[--e]+'B':'Bytes')
+    }
+
     var dirListing = new NGL.DirectoryListing();
     dirListing.getListing();
 
@@ -972,10 +978,20 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
             }
 
+            var icon, name;
+            if( path.dir ){
+                icon = "folder-o";
+                name = path.name;
+            }else{
+                icon = "file-o";
+                name = path.name + String.fromCharCode(160) +
+                    "(" + fileSizeSI( path.size ) + ")";
+            }
+
             var pathRow = new UI.Panel()
                 .setDisplay( "block" )
-                .add( new UI.Icon( path.dir ? "folder-o" : "file-o" ).setWidth( "20px" ) )
-                .add( new UI.Text( path.name ) )
+                .add( new UI.Icon( icon ).setWidth( "20px" ) )
+                .add( new UI.Text( name ) )
                 .onClick( function(){
 
                     if( path.dir ){
