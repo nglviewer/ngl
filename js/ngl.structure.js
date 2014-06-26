@@ -123,6 +123,9 @@ NGL.NucleicType = 1;
 NGL.UnknownType = 2;
 
 
+NGL.nextGlobalAtomindex = 0;
+
+
 ////////
 // Set
 
@@ -257,7 +260,7 @@ NGL.AtomSet.prototype = {
 
             if( picking ){
                 
-                c = a.index + 1;
+                c = a.globalindex + 1;
 
             }else{
 
@@ -433,7 +436,7 @@ NGL.AtomSet.prototype = {
 
                 if( picking ){
                 
-                    c = b.atom1.index + 1;
+                    c = b.atom1.globalindex + 1;
 
                 }else{
 
@@ -446,7 +449,7 @@ NGL.AtomSet.prototype = {
 
                 if( picking ){
                 
-                    c = b.atom2.index + 1;
+                    c = b.atom2.globalindex + 1;
 
                 }else{
 
@@ -553,69 +556,6 @@ NGL.AtomSet.prototype = {
             position[ j + 2 ] = a.z;
 
         }
-
-    },
-
-    getColor: function(){
-
-        console.warn( "AtomSet.getColor - To be removed" );
-
-        var na = this.size;
-        var atoms = this.atoms;
-        var color = new Float32Array( this.size * 3 );
-
-        var a, c, j;
-        var elemColors = NGL.ElementColors;
-
-        for( var i = 0; i < na; ++i ){
-
-            a = atoms[ i ];
-
-            j = i * 3;
-
-            c = elemColors[ a.element ];
-            if( !c ) c = 0xCCCCCC;
-
-            color[ j + 0 ] = ( c >> 16 & 255 ) / 255;
-            color[ j + 1 ] = ( c >> 8 & 255 ) / 255;
-            color[ j + 2 ] = ( c & 255 ) / 255;
-
-        }
-
-        return color;
-
-    },
-
-    getRadius: function( size, scale ){
-
-        console.warn( "AtomSet.getRadius - To be removed" );
-
-        if( !size ) size = null;
-        if( !scale ) scale = null;
-
-        var na = this.size;
-        var atoms = this.atoms;
-        var radius = new Float32Array( this.size );
-
-        var a, r, j;
-        var vdwRadii = NGL.VdwRadii;
-
-        for( var i = 0; i < na; ++i ){
-
-            a = atoms[ i ];
-
-            j = i * 3;
-
-            if( size ){
-                radius[ i ] = size;
-            }else{
-                r = vdwRadii[ a.element ];
-                radius[ i ] = ( r ? r : 1.5 ) * scale;
-            }
-
-        }
-
-        return radius;
 
     }
 
@@ -1684,6 +1624,8 @@ NGL.AtomSet.prototype.apply( NGL.Residue.prototype );
 NGL.Atom = function( residue ){
 
     this.residue = residue;
+
+    this.globalindex = NGL.nextGlobalAtomindex++;
 
 }
 

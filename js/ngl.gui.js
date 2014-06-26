@@ -334,6 +334,26 @@ NGL.Example = {
 
         },
 
+        "multi_struc": function( stage ){
+
+            stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
+
+                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "ball+stick", "hetero" );
+                o.centerView();
+
+            } );
+
+            stage.loadFile( "../data/__example__/3pqr.pdb", function( o ){
+
+                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "ball+stick", "hetero" );
+                o.centerView();
+
+            } );
+
+        },
+
         // alexpc
         
         "rho_traj": function( stage ){
