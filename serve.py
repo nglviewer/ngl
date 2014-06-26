@@ -252,7 +252,7 @@ class XTC( object ):
     def update_offsets( self, force=False ):
         self.offset_file = self.xtc_file + ".offsets"
         isfile_offset = os.path.isfile( self.offset_file )
-        mtime_offset = os.path.getmtime( self.offset_file )
+        mtime_offset = isfile_offset and os.path.getmtime( self.offset_file )
         mtime_xtc = os.path.getmtime( self.xtc_file )
         if not force and isfile_offset and mtime_offset >= mtime_xtc:
             print "found offset file"
