@@ -913,15 +913,35 @@ NGL.DirectoryListing.prototype = {
 
             var json = JSON.parse( responseText );
 
-            console.log( json );
+            // console.log( json );
 
-            scope.signals.listingLoaded.dispatch( json );
+            scope.signals.listingLoaded.dispatch( path, json );
 
         });
+
+    },
+
+    getFolderDict: function( path ){
+
+        path = path || "";
+        var options = { "": "" };
+        var full = [];
+
+        path.split( "/" ).forEach( function( chunk ){
+
+            full.push( chunk );
+            options[ full.join( "/" ) ] = chunk;
+
+        } );
+
+        return options;
 
     }
 
 };
+
+
+NGL.lastUsedDirectory = "";
 
 
 NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
@@ -933,7 +953,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     }
 
     var dirListing = new NGL.DirectoryListing();
-    dirListing.getListing();
+    dirListing.getListing( NGL.lastUsedDirectory );
 
     var signals = dirListing.signals;
     var container = new UI.OverlayPanel();
@@ -943,13 +963,27 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
         .setHeight( "30px" );
 
     var listingPanel = new UI.Panel()
+        .setMarginTop( "10px" )
         .setMinHeight( "100px" )
-        .setMaxHeight( "600px" )
+        .setMaxHeight( "500px" )
         .setOverflow( "auto" );
+
+    var folderSelect = new UI.Select()
+        .setColor( '#444' )
+        .setMarginLeft( "20px" )
+        .setWidth( "" )
+        .setMaxWidth( "200px" )
+        .setOptions( dirListing.getFolderDict() )
+        .onChange( function(){
+
+            dirListing.getListing( folderSelect.getValue() );
+
+        } );
 
     heading = heading || "Directoy listing"
 
     headingPanel.add( new UI.Text( heading ) );
+    headingPanel.add( folderSelect );
     headingPanel.add( 
         new UI.Icon( "times" )
             .setMarginLeft( "20px" )
@@ -964,9 +998,15 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     container.add( headingPanel );
     container.add( listingPanel );
 
-    signals.listingLoaded.add( function( listing ){
+    signals.listingLoaded.add( function( folder, listing ){
+
+        NGL.lastUsedDirectory = folder;
 
         listingPanel.clear();
+
+        folderSelect
+            .setOptions( dirListing.getFolderDict( folder ) )
+            .setValue( folder );
 
         listing.forEach( function( path ){
 
