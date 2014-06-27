@@ -833,7 +833,33 @@ NGL.Trajectory.prototype = {
 
     }
 
-}
+};
+
+
+//////////////
+// Superpose
+
+NGL.Superpose = function( srcAtoms, dstAtoms ){
+
+};
+
+NGL.Superpose.prototype = {
+
+    _superpose: function(){
+
+
+
+        numeric.svd( A );
+
+    },
+
+    transform: function( atoms ){
+
+
+
+    }
+
+};
 
 
 //////////////
