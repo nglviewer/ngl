@@ -217,23 +217,6 @@ def redirect_app( name ):
 # trajectory server
 ############################
 
-
-# not used here, faster in javascript...
-def remove_pbc( x, box ):
-    DIM = [ 0, 1, 2 ]
-    for i in xrange( 3, len( x ), 3 ):
-        for j in DIM:
-            dist = x[ i + j ] - x[ i - 3 + j ]
-            if abs( dist ) > 0.9 * box[ j ][ j ]:
-                if dist > 0:
-                    for d in DIM:
-                        x[ i + d ] -= box[ j ][ d ]
-                else:
-                    for d in DIM:
-                        x[ i + d ] += box[ j ][ d ]
-    return x
-
-
 class XTC( object ):
     def __init__( self, xtc_file ):
         self.xtc_file = xtc_file
@@ -265,9 +248,6 @@ class XTC( object ):
             )
             with open( self.offset_file, 'wb' ) as fp:
                 pickle.dump( ( self.numframes, self.offsets ), fp )
-        # self.numframes, self.offsets = libxdrfile2.read_xtc_numframes(
-        #     self.xtc_file
-        # )
 
     def get_frame( self, index ):
         libxdrfile2.xdr_seek(
@@ -288,63 +268,12 @@ class XTC( object ):
             coords *= 10
         return coords
 
-    def superpose( self, frame, atom_indices ):
-        pass
-
     def __del__( self ):
         if( self.fp ):
             libxdrfile2.xdrfile_close( self.fp )
 
 
 XTC_DICT = {}
-
-
-class Superposition( object ):
-    def __init__( self, src_coords, dst_coords ):
-        self.src_coords = src_coords
-        self.dst_coords = dst_coords
-        self.n = src_coords.shape[0]
-        self.rmsd = 0.0
-        self.rotmat = None
-        self._superpose()
-
-    def _superpose( self ):
-        self.src_center = self.src_coords.mean( axis=0 )
-        self.dst_center = self.dst_coords.mean( axis=0 )
-        v0 = ( self.src_coords.copy() - self.src_center ).T
-        v1 = ( self.dst_coords.copy() - self.dst_center ).T
-
-        # SVD of covar matrix
-        u, s, vh = np.linalg.svd( np.dot( v1, v0.T ) )
-        # rotation matrix from SVD orthonormal bases
-        R = np.dot( u, vh )
-        if np.linalg.det( R ) < 0.0:
-            # R not a right handed system
-            R -= np.outer( u[:, 2], vh[2, :] * 2.0 )
-            s[-1] *= -1.0
-        # homogeneous transformation matrix
-        M = np.identity(4)
-        M[:3, :3] = R
-
-        # translation
-        M[:3, 3] = self.dst_center
-        T = np.identity(4)
-        T[:3, 3] = -self.src_center
-        M = np.dot(M, T)
-
-        # rotation matrix
-        self.rotmat = M[0:3, 0:3]
-
-        # rmsd
-        E0 = np.sum(np.sum( v0 * v0 )) + np.sum(np.sum( v1 * v1 ))
-        msd = ( E0 - 2.0 * sum(s) ) / v0.shape[1]
-        self.rmsd = np.sqrt( max([ msd, 0.0 ]) )
-
-    def transform( self, coords ):
-        coords -= self.src_center
-        coords = ( np.dot( self.rotmat, coords.T ) ).T
-        coords += self.dst_center
-        return coords
 
 
 def get_xtc( path ):
