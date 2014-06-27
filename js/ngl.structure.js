@@ -699,6 +699,8 @@ NGL.Trajectory = function( xtcPath, structure ){
     this.frameCacheSize = 0;
     this.currentFrame = -1;
 
+    this.saveInitialStructure();
+
     this.frameLoader = new THREE.XHRLoader();
     this.frameLoader.setResponseType( "arraybuffer" );
 
@@ -711,6 +713,25 @@ NGL.Trajectory = function( xtcPath, structure ){
 NGL.Trajectory.prototype = {
 
     constructor: NGL.Trajectory,
+
+    saveInitialStructure: function(){
+
+        var i = 0;
+        var initialStructure = new Float32Array( 3 * this.atomCount );
+        
+        this.structure.eachAtom( function( a ){
+
+            initialStructure[ i + 0 ] = a.x;
+            initialStructure[ i + 1 ] = a.y;
+            initialStructure[ i + 2 ] = a.z;
+
+            i += 3;
+
+        } );
+
+        this.initialStructure = initialStructure;
+
+    },
 
     getNumframes: function(){
 
@@ -768,6 +789,7 @@ NGL.Trajectory.prototype = {
             var coords = new Float32Array( arrayBuffer, 9 * 4 );
 
             scope.removePbc( coords, box );
+            scope.superpose( coords );
 
             if( !scope.frameCache[ i ] ){
                 scope.frameCache[ i ] = coords;
@@ -831,6 +853,34 @@ NGL.Trajectory.prototype = {
 
         return x;
 
+    },
+
+    superpose: function( x ){
+
+        var sele = new NGL.Selection( ".CA" );
+
+        var coords1 = [];
+        var coords2 = [];
+
+        var coords = [];
+
+        var i;
+        var n = this.atomCount * 3;
+        var y = this.initialStructure;
+
+        this.structure.eachAtom( function( a ){
+
+            i = 3 * a.index;
+
+            coords1.push([ x[ i + 0 ], x[ i + 1 ], x[ i + 2 ] ]);
+            coords2.push([ y[ i + 0 ], y[ i + 1 ], y[ i + 2 ] ]);
+
+        }, sele );
+
+        var sp = new NGL.Superpose( coords1, coords2 );
+
+        sp.transform( x );
+
     }
 
 };
@@ -841,16 +891,9 @@ NGL.Trajectory.prototype = {
 
 NGL.Superpose = function( atoms1, atoms2 ){
 
-    var coords1 = [];
-    var coords2 = [];
-
-    atoms1.eachAtom( function( a ){
-        coords1.push( [ a.x, a.y, a.z ] );
-    } );
-
-    atoms2.eachAtom( function( a ){
-        coords2.push( [ a.x, a.y, a.z ] );
-    } );
+    var i, n;
+    var coords1 = this.prepCoords( atoms1 );
+    var coords2 = this.prepCoords( atoms2 );
 
     this._superpose( coords1, coords2 );
 
@@ -858,7 +901,7 @@ NGL.Superpose = function( atoms1, atoms2 ){
 
 NGL.Superpose.prototype = {
 
-    sub3: function( coords, mean ){
+    subMean: function( coords, mean ){
 
         var i, row;
         var cx = mean[ 0 ];
@@ -875,7 +918,7 @@ NGL.Superpose.prototype = {
 
     },
 
-    add3: function( coords, mean ){
+    addMean: function( coords, mean ){
 
         var i, row;
         var cx = mean[ 0 ];
@@ -896,7 +939,7 @@ NGL.Superpose.prototype = {
 
         // calc the matrix that moves coords1 onto coords2
 
-        console.time( "superpose" );
+        // console.time( "superpose" );
 
         this.mean1 = numeric.add.apply( null, coords1 );
         numeric.diveq( this.mean1, coords1.length );
@@ -904,8 +947,8 @@ NGL.Superpose.prototype = {
         this.mean2 = numeric.add.apply( null, coords2 );
         numeric.diveq( this.mean2, coords2.length );
 
-        this.sub3( coords1, this.mean1 );
-        this.sub3( coords2, this.mean2 );
+        this.subMean( coords1, this.mean1 );
+        this.subMean( coords2, this.mean2 );
 
         coords1 = numeric.transpose( coords1 );
         coords2 = numeric.transpose( coords2 );
@@ -983,36 +1026,92 @@ NGL.Superpose.prototype = {
         var msd = ( E0 - 2 * numeric.sum( svd.S ) ) / coords1[0].length;
         this.rmsd = Math.sqrt( Math.max( msd, 0 ) );
 
-        console.log( "rmsd", this.rmsd );
+        // console.log( "rmsd", this.rmsd );
 
-        console.timeEnd( "superpose" );
+        // console.timeEnd( "superpose" );
+
+    },
+
+    prepCoords: function( atoms ){
+
+        var coords = [];
+
+        if( typeof atoms.eachAtom === "function" ){
+
+            atoms.eachAtom( function( a ){
+
+                coords.push( [ a.x, a.y, a.z ] );
+
+            } );
+
+        }else if( atoms instanceof Float32Array ){
+
+            n = atoms.length;
+
+            for( i = 0; i < n; i += 3 ){
+
+                coords.push([ atoms[ i + 0 ], atoms[ i + 1 ], atoms[ i + 2 ] ]);
+
+            }
+
+        }else{
+
+            coords = numeric.clone( atoms );
+
+        }
+
+        return coords;
 
     },
 
     transform: function( atoms ){
 
-        var coords = [];
+        var coords = this.prepCoords( atoms );
 
-        atoms.eachAtom( function( a ){
-            coords.push( [ a.x, a.y, a.z ] );
-        } );
-
-        this.sub3( coords, this.mean1 );
+        this.subMean( coords, this.mean1 );
 
         coords = numeric.transpose(
             numeric.dot( this.rotMat, numeric.transpose( coords ) )
         );
 
-        this.add3( coords, this.mean2 );
+        this.addMean( coords, this.mean2 );
 
-        var row;
+        var n, row;
         var i = 0;
-        atoms.eachAtom( function( a ){
-            row = coords[ i++ ];
-            a.x = row[ 0 ];
-            a.y = row[ 1 ];
-            a.z = row[ 2 ];
-        } );
+
+        if( typeof atoms.eachAtom === "function" ){
+            
+            atoms.eachAtom( function( a ){
+
+                row = coords[ i++ ];
+
+                a.x = row[ 0 ];
+                a.y = row[ 1 ];
+                a.z = row[ 2 ];
+
+            } );
+
+        }else if( atoms instanceof Float32Array ){
+
+            n = atoms.length;
+
+            for( i = 0; i < n; i += 3 ){
+
+                row = coords[ i / 3 ];
+
+                atoms[ i + 0 ] = row[ 0 ];
+                atoms[ i + 1 ] = row[ 1 ];
+                atoms[ i + 2 ] = row[ 2 ];
+
+            }
+
+        }else{
+
+            atoms = numeric.clone( coords );
+
+        }
+
+        return atoms;
 
     }
 
