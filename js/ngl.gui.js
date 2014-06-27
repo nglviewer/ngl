@@ -358,169 +358,32 @@ NGL.Example = {
 
             stage.loadFile( "../data/__example__/3dqb.pdb", function( o1 ){
 
-                o1.addRepresentation( "tube", "1-320:A" );
-                o1.centerView();
+                var s = "1-320:A";
+
+                o1.addRepresentation( "tube", s );
 
                 stage.loadFile( "../data/__example__/1u19.pdb", function( o2 ){
 
-                    o2.addRepresentation( "tube", "1-320:A" );
+                    o2.addRepresentation( "tube", s );
 
-                    console.time( "foo" );
-
-                    var sele = new NGL.Selection( "1-320:A.CA" );
+                    var sele = new NGL.Selection( s + ".CA" );
 
                     var s1 = o1.structure;
                     var s2 = o2.structure;
 
                     var atoms1 = new NGL.AtomSet( s1, sele );
                     var atoms2 = new NGL.AtomSet( s2, sele );
-
-                    // console.log( atoms1 );
-                    // console.log( atoms2 );
-                    
-                    var coords1 = [];
-                    var coords2 = [];
-
-                    atoms1.eachAtom( function( a ){
-                        coords1.push( [ a.x, a.y, a.z ] );
-                    } );
-
-                    atoms2.eachAtom( function( a ){
-                        coords2.push( [ a.x, a.y, a.z ] );
-                    } );
-
-                    // console.log( coords1 );
-                    // console.log( coords2 );
-
-                    var mean1 = numeric.add.apply( null, coords1 );
-                    numeric.diveq( mean1, coords1.length );
-
-                    var mean2 = numeric.add.apply( null, coords2 );
-                    numeric.diveq( mean2, coords2.length );
-
-                    console.log( mean1 );
-                    console.log( mean2 );
-
-                    function sub3( coords, mean ){
-
-                        var i, row;
-                        var cx = mean[ 0 ];
-                        var cy = mean[ 1 ];
-                        var cz = mean[ 2 ];
-                        var n = coords.length;
-
-                        for( i = 0; i < n; ++i ){
-                            row = coords[ i ];
-                            row[ 0 ] -= cx;
-                            row[ 1 ] -= cy;
-                            row[ 2 ] -= cz;
-                        }
-
-                    }
-
-                    function add3( coords, mean ){
-
-                        var i, row;
-                        var cx = mean[ 0 ];
-                        var cy = mean[ 1 ];
-                        var cz = mean[ 2 ];
-                        var n = coords.length;
-
-                        for( i = 0; i < n; ++i ){
-                            row = coords[ i ];
-                            row[ 0 ] += cx;
-                            row[ 1 ] += cy;
-                            row[ 2 ] += cz;
-                        }
-
-                    }
-
-                    sub3( coords1, mean1 );
-                    sub3( coords2, mean2 );
-
-                    coords1 = numeric.transpose( coords1 );
-                    coords2 = numeric.transpose( coords2 );
-
-                    // SVD of covar matrix
-
-                    svd = numeric.svd( 
-                        numeric.dot( coords2, numeric.transpose( coords1 ) )
-                    );
-
-                    // rotation matrix from SVD orthonormal bases
-
-                    var R = numeric.dot( svd.U, svd.V );
-
-                    if( numeric.det( R ) < 0.0 ){
-                        // TODO
-                        console.log( "R not a right handed system" );
-                    }
-
-                    // homogeneous transformation matrix
-
-                    var M = numeric.identity( 4 );
-                    numeric.setBlock( M, [ 0, 0 ], [ 2, 2 ], R );
-                    // console.log( M.toString() );
-                    // for( var i = 0; i < 3; ++i ){
-                    //     for( var j = 0; j < 3; ++j ){
-                    //         M[ i ][ j ] = R[ i ][ j ];
-                    //     }
-                    // }
-
-                    // translation
-
-                    M[ 0 ][ 3 ] = mean2[ 0 ];
-                    M[ 1 ][ 3 ] = mean2[ 1 ];
-                    M[ 2 ][ 3 ] = mean2[ 2 ];
-
-                    var T = numeric.identity( 4 );
-                    T[ 0 ][ 3 ] = -mean1[ 0 ];
-                    T[ 1 ][ 3 ] = -mean1[ 1 ];
-                    T[ 2 ][ 3 ] = -mean1[ 2 ];
-
-                    M = numeric.dot( M, T );
-
-                    // rotation matrix
-
-                    var rotMat = numeric.getBlock( M, [ 0, 0 ], [ 2, 2 ] );
-
-                    // transform
+                    var superpose = new NGL.Superpose( atoms1, atoms2 );
 
                     var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
+                    superpose.transform( atoms );
 
-                    var coords = [];
-
-                    atoms.eachAtom( function( a ){
-                        coords.push( [ a.x, a.y, a.z ] );
+                    o1.reprList.forEach( function( repr ){
+                        repr.update();
                     } );
 
-                    sub3( coords, mean1 );
-
-                    coords = numeric.transpose(
-                        numeric.dot( rotMat, numeric.transpose( coords ) )
-                    );
-
-                    add3( coords, mean2 );
-
-                    var row;
-                    var i = 0;
-                    atoms.eachAtom( function( a ){
-                        row = coords[ i++ ];
-                        a.x = row[ 0 ];
-                        a.y = row[ 1 ];
-                        a.z = row[ 2 ];
-                    } );
-
-                    console.timeEnd( "foo" );
-
-                    // o2.reprList.forEach( function( repr ){
-
-                    //     repr.update();
-
-                    // } );
-
-                    o1.addRepresentation( "line", "*" );
-                    //o2.addRepresentation( "line", "*" );
+                    s1.center = s1.atomCenter();
+                    o1.centerView();
 
                 } );
 

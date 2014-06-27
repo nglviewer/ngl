@@ -839,23 +839,180 @@ NGL.Trajectory.prototype = {
 //////////////
 // Superpose
 
-NGL.Superpose = function( srcAtoms, dstAtoms ){
+NGL.Superpose = function( atoms1, atoms2 ){
+
+    var coords1 = [];
+    var coords2 = [];
+
+    atoms1.eachAtom( function( a ){
+        coords1.push( [ a.x, a.y, a.z ] );
+    } );
+
+    atoms2.eachAtom( function( a ){
+        coords2.push( [ a.x, a.y, a.z ] );
+    } );
+
+    this._superpose( coords1, coords2 );
 
 };
 
 NGL.Superpose.prototype = {
 
-    _superpose: function(){
+    sub3: function( coords, mean ){
 
+        var i, row;
+        var cx = mean[ 0 ];
+        var cy = mean[ 1 ];
+        var cz = mean[ 2 ];
+        var n = coords.length;
 
+        for( i = 0; i < n; ++i ){
+            row = coords[ i ];
+            row[ 0 ] -= cx;
+            row[ 1 ] -= cy;
+            row[ 2 ] -= cz;
+        }
 
-        numeric.svd( A );
+    },
+
+    add3: function( coords, mean ){
+
+        var i, row;
+        var cx = mean[ 0 ];
+        var cy = mean[ 1 ];
+        var cz = mean[ 2 ];
+        var n = coords.length;
+
+        for( i = 0; i < n; ++i ){
+            row = coords[ i ];
+            row[ 0 ] += cx;
+            row[ 1 ] += cy;
+            row[ 2 ] += cz;
+        }
+
+    },
+
+    _superpose: function( coords1, coords2 ){
+
+        // calc the matrix that moves coords1 onto coords2
+
+        console.time( "superpose" );
+
+        this.mean1 = numeric.add.apply( null, coords1 );
+        numeric.diveq( this.mean1, coords1.length );
+
+        this.mean2 = numeric.add.apply( null, coords2 );
+        numeric.diveq( this.mean2, coords2.length );
+
+        this.sub3( coords1, this.mean1 );
+        this.sub3( coords2, this.mean2 );
+
+        coords1 = numeric.transpose( coords1 );
+        coords2 = numeric.transpose( coords2 );
+
+        // SVD of covar matrix
+
+        svd = numeric.svd( 
+            numeric.dot( coords2, numeric.transpose( coords1 ) )
+        );
+
+        // rotation matrix from SVD orthonormal bases
+
+        var VH = numeric.inv( svd.V );
+        var R = numeric.dot( svd.U, VH );
+
+        function outer( v1, v2 ){
+
+            var n = v1.length;
+            var mat = [];
+
+            for( var i = 0; i < n; ++i ){
+                mat.push(
+                    numeric.mul( v2, v1[ i ] )
+                );
+            }
+
+            return mat;
+
+        }
+
+        if( numeric.det( R ) < 0.0 ){
+
+            console.log( "R not a right handed system" );
+            
+            // R -= outer( U[:, 2], VH[2, :] * 2.0 )
+            var a = [].concat.apply(
+                [], numeric.getBlock( svd.U, [ 0, 2 ], [ 2, 2 ] )
+            );
+            var b = numeric.mul(
+                numeric.getBlock( VH, [ 2, 0 ], [ 2, 2 ] )[0], 2
+            );
+            var x = outer( a, b );
+
+            numeric.subeq( R, x );
+            numeric.muleq( svd.S, -1 );
+
+        }
+
+        // homogeneous transformation matrix
+
+        var M = numeric.identity( 4 );
+        numeric.setBlock( M, [ 0, 0 ], [ 2, 2 ], R );
+
+        // translation
+
+        M[ 0 ][ 3 ] = this.mean2[ 0 ];
+        M[ 1 ][ 3 ] = this.mean2[ 1 ];
+        M[ 2 ][ 3 ] = this.mean2[ 2 ];
+
+        var T = numeric.identity( 4 );
+        T[ 0 ][ 3 ] = -this.mean1[ 0 ];
+        T[ 1 ][ 3 ] = -this.mean1[ 1 ];
+        T[ 2 ][ 3 ] = -this.mean1[ 2 ];
+
+        M = numeric.dot( M, T );
+
+        // rotation matrix
+
+        this.rotMat = numeric.getBlock( M, [ 0, 0 ], [ 2, 2 ] );
+
+        // rmsd
+        
+        var E0 = numeric.sum( numeric.mul( coords1, coords1 ) ) +
+            numeric.sum( numeric.mul( coords2, coords2 ) );
+        var msd = ( E0 - 2 * numeric.sum( svd.S ) ) / coords1[0].length;
+        this.rmsd = Math.sqrt( Math.max( msd, 0 ) );
+
+        console.log( "rmsd", this.rmsd );
+
+        console.timeEnd( "superpose" );
 
     },
 
     transform: function( atoms ){
 
+        var coords = [];
 
+        atoms.eachAtom( function( a ){
+            coords.push( [ a.x, a.y, a.z ] );
+        } );
+
+        this.sub3( coords, this.mean1 );
+
+        coords = numeric.transpose(
+            numeric.dot( this.rotMat, numeric.transpose( coords ) )
+        );
+
+        this.add3( coords, this.mean2 );
+
+        var row;
+        var i = 0;
+        atoms.eachAtom( function( a ){
+            row = coords[ i++ ];
+            a.x = row[ 0 ];
+            a.y = row[ 1 ];
+            a.z = row[ 2 ];
+        } );
 
     }
 
