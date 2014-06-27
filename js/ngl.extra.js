@@ -68,11 +68,11 @@ NGL.Stage = function( eid ){
     var mouse = new THREE.Vector2();
     var pixelBuffer = new Uint8Array( 4 );
     var compList = this.compList;
-    var flag = 0;
+    var mouseIsMoving = 0;
 
     this.viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
 
-        flag = 1;
+        mouseIsMoving = 1;
 
         mouse.x = e.layerX;
         mouse.y = e.layerY;
@@ -81,13 +81,13 @@ NGL.Stage = function( eid ){
 
     this.viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
 
-        flag = 0;
+        mouseIsMoving = 0;
 
     } );
 
     this.viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
 
-        if( flag === 1 || e.which === NGL.RightMouseButton ) return;
+        if( mouseIsMoving === 1 || e.which === NGL.RightMouseButton ) return;
 
         scope.viewer.render( null, true );
 
