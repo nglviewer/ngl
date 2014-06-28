@@ -2,7 +2,7 @@
     vertical-align: middle;
 }
 
-:-webkit-full-screen .ViewerCanvas {
+:-webkit-full-screen #viewport {
     width: 100%;
     height: 100%;
     top: 0px;
