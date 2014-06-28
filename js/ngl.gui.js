@@ -24,7 +24,6 @@ NGL.ViewportWidget = function( stage ){
     viewer.container = container.dom;
     container.dom.appendChild( renderer.domElement );
 
-
     // event handlers
 
     container.dom.addEventListener( 'dragover', function( e ){
@@ -221,6 +220,7 @@ NGL.MenubarViewWidget = function( stage ){
     function onLightThemeOptionClick () {
 
         setTheme( '../css/light.css' );
+        stage.viewer.setBackground( "white" );
         // editor.config.setKey( 'theme', 'css/light.css' );
 
     }
@@ -228,6 +228,7 @@ NGL.MenubarViewWidget = function( stage ){
     function onDarkThemeOptionClick () {
 
         setTheme( '../css/dark.css' );
+        stage.viewer.setBackground( "black" );
         // editor.config.setKey( 'theme', 'css/dark.css' );
 
     }
@@ -424,12 +425,24 @@ NGL.ComponentWidget = function( component, stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            stage.removeComponent( component );
-            container.dispose();
+            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+
+                stage.removeComponent( component );
+                container.dispose();
+
+            }else{
+
+                dispose.setColor( "firebrick" );
+
+                setTimeout( function(){ 
+                    dispose.setColor( "#888" );
+                }, 1000);
+
+            }
 
         } );
 
-    var reprOptions = { "": "" };
+    var reprOptions = { "": "[ add ]" };
     for( var key in NGL.representationTypes ){
         reprOptions[ key ] = key;
     }
@@ -482,10 +495,10 @@ NGL.ComponentWidget = function( component, stage ){
     });
 
     var menuPanel = new UI.OverlayPanel()
-        .add( new UI.Text( "Repr" ).setWidth( "80px" ) )
+        .add( new UI.Text( "Representation" ).setWidth( "110px" ) )
         .add( repr )
         .add( new UI.Break() )
-        .add( new UI.Text( "Traj" ).setWidth( "80px" ) )
+        .add( new UI.Text( "Trajectory" ).setWidth( "110px" ) )
         .add( traj );
 
     var menu = new UI.Icon( "bars" )
@@ -585,8 +598,20 @@ NGL.RepresentationWidget = function( repr, component ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            component.removeRepresentation( repr );
-            container.dispose();
+            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+
+                component.removeRepresentation( repr );
+                container.dispose();
+
+            }else{
+
+                dispose.setColor( "firebrick" );
+
+                setTimeout( function(){ 
+                    dispose.setColor( "#888" );
+                }, 1000);
+                
+            }
 
         } );
 

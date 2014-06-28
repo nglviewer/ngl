@@ -961,13 +961,13 @@ NGL.Viewer.prototype = {
         
         var elem = this.container;
 
-        if (elem.requestFullscreen) {
+        if( elem.requestFullscreen ){
             elem.requestFullscreen();
-        } else if (elem.msRequestFullscreen) {
+        }else if( elem.msRequestFullscreen ){
             elem.msRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
+        }else if( elem.mozRequestFullScreen ){
             elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) {
+        }else if( elem.webkitRequestFullscreen ){
             elem.webkitRequestFullscreen();
         }
 

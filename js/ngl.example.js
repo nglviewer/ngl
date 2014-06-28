@@ -141,6 +141,7 @@ NGL.Examples = {
                 var s = "1-320:A";
 
                 o1.addRepresentation( "tube" );
+                o1.centerView();
 
                 stage.loadFile( "../data/__example__/3sn6.pdb", function( o2 ){
 
@@ -160,7 +161,7 @@ NGL.Examples = {
                     ali.calc();
                     ali.trace();
 
-                    console.log( ali.aliScore );
+                    console.log( ali.score );
 
                 } );
 
