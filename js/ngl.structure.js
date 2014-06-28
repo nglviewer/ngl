@@ -1064,7 +1064,7 @@ NGL.Superpose.prototype = {
 
             atoms.eachAtom( function( a ){
 
-                coords.push( [ a.x, a.y, a.z ] );
+                coords.push([ a.x, a.y, a.z ]);
 
             } );
 
@@ -1853,7 +1853,7 @@ NGL.Residue.prototype = {
 
     getResname1: function(){
 
-        return NGL.AA1[ this.resname.toUpperCase() ] || '?';
+        return NGL.AA1[ this.resname.toUpperCase() ] || '';
 
     },
 
