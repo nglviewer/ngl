@@ -2,6 +2,15 @@
     vertical-align: middle;
 }
 
+:-webkit-full-screen .ViewerCanvas {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+}
+
     /* Webkit micro scrollbars */
 
     ::-webkit-scrollbar {
@@ -42,6 +51,11 @@ hr {
 
 button {
     position: relative;
+    margin-left: 0px;
+}
+
+select {
+    margin-left: 1px;
 }
 
 .Panel {

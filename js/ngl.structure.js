@@ -1853,7 +1853,7 @@ NGL.Residue.prototype = {
 
     getResname1: function(){
 
-        return NGL.AA1[ this.resname.toUpperCase() ] || '';
+        return NGL.AA1[ this.resname.toUpperCase() ] || '?';
 
     },
 
@@ -2624,7 +2624,7 @@ NGL.SubstitutionMatrices = function(){
 
     var aminoacidsX = 'ACDEFGHIKLMNPQRSTVWY';
 
-    var aminoacids = 'ARNDCQEGHILKMFPSTWYVBZX';
+    var aminoacids = 'ARNDCQEGHILKMFPSTWYVBZ?';
 
     function prepareMatrix( cellNames, mat ){
 
@@ -2688,7 +2688,7 @@ NGL.Alignment.prototype = {
 
         //console.log(this.n, this.m);
 
-        this.aliScore = undefined;
+        this.score = undefined;
         this.ali = '';
 
         this.S = [];
@@ -2776,7 +2776,7 @@ NGL.Alignment.prototype = {
         this.initMatrices();
 
         var gap0 = this.gap(0);
-        var score = this.makeScoreFn();
+        var scoreFn = this.makeScoreFn();
         var gapExtensionPenalty = this.gapExtensionPenalty;
 
         var V = this.V;
@@ -2786,26 +2786,35 @@ NGL.Alignment.prototype = {
         var n = this.n;
         var m = this.m;
 
+        var Vi1, Si1, Vi, Hi, Si;
+
         var i, j;
 
         for( i = 1; i <= n; ++i ){
 
+            Si1 = S[i-1];
+            Vi1 = V[i-1];
+
+            Vi = V[i];
+            Hi = H[i];
+            Si = S[i];
+
             for( j = 1; j <= m; ++j ){
 
-                V[i][j] = Math.max(
-                    S[i-1][j] + gap0,
-                    V[i-1][j] + gapExtensionPenalty
+                Vi[j] = Math.max(
+                    Si1[j] + gap0,
+                    Vi1[j] + gapExtensionPenalty
                 );
 
-                H[i][j] = Math.max(
-                    S[i][j-1] + gap0,
-                    H[i][j-1] + gapExtensionPenalty
+                Hi[j] = Math.max(
+                    Si[j-1] + gap0,
+                    Hi[j-1] + gapExtensionPenalty
                 );
 
-                S[i][j] = Math.max(
-                    S[i-1][j-1] + score(i-1, j-1), // match
-                    V[i][j], //del
-                    H[i][j] // ins
+                Si[j] = Math.max(
+                    Si1[j-1] + scoreFn(i-1, j-1), // match
+                    Vi[j], //del
+                    Hi[j] // ins
                 );
 
             }
@@ -2825,7 +2834,7 @@ NGL.Alignment.prototype = {
         this.ali1 = '';
         this.ali2 = '';
 
-        var score = this.makeScoreFn();
+        var scoreFn = this.makeScoreFn();
 
         var i = this.n;
         var j = this.m;
@@ -2833,23 +2842,23 @@ NGL.Alignment.prototype = {
 
         if( this.S[i][j] >= this.V[i][j] && this.S[i][j] >= this.V[i][j] ){
             mat = "S";
-            this.aliScore = this.S[i][j];
+            this.score = this.S[i][j];
         }else if( this.V[i][j] >= this.H[i][j] ){
             mat = "V";
-            this.aliScore = this.V[i][j];
+            this.score = this.V[i][j];
         }else{
             mat = "H";
-            this.aliScore = this.H[i][j];
+            this.score = this.H[i][j];
         }
 
-        // console.log("NGL.Alignment: SCORE", this.aliScore);
+        // console.log("NGL.Alignment: SCORE", this.score);
         // console.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
 
         while( i > 0 && j > 0 ){
 
             if( mat=="S" ){
 
-                if( this.S[i][j]==this.S[i-1][j-1] + score(i-1, j-1) ){
+                if( this.S[i][j]==this.S[i-1][j-1] + scoreFn(i-1, j-1) ){
                     this.ali1 = this.seq1[i-1] + this.ali1;
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --i;

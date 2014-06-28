@@ -9,28 +9,6 @@ NGL.MiddleMouseButton = 2;
 NGL.RightMouseButton = 3;
 
 
-NGL.getNextAvailablePropertyName = function( name, o ){
-
-    var i = 1;
-    var baseName = name;
-
-    while( true ){
-
-        if( o.hasOwnProperty( name ) ){
-
-            name = baseName + " (" + (i++) + ")";
-
-        }else{
-
-            return name;
-
-        }
-
-    }
-
-};
-
-
 //////////
 // Stage
 
