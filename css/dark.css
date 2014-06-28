@@ -156,6 +156,8 @@ input.Number {
 
         #menubar .menu:hover .options {
             display: block;
+            max-height: 600px;
+            overflow: auto;
         }
 
             #menubar .menu .options hr {

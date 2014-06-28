@@ -57,6 +57,7 @@ NGL.VdwRadii = {
     "CN": 2.0, "UUT": 2.0, "FL": 2.0, "UUP": 2.0, "LV": 2.0, "UUH": 2.0
 };
 
+
 // http://dx.doi.org/10.1039/b801115j (or 1.6)
 NGL.CovalentRadii = {
     "H": 0.31, "HE": 0.28, "LI": 1.28, "BE": 0.96, "B": 0.84, "C": 0.76,
@@ -77,6 +78,7 @@ NGL.CovalentRadii = {
     "DB": 1.6, "SG": 1.6, "BH": 1.6, "HS": 1.6, "MT": 1.6, "DS": 1.6, "RG": 1.6,
     "CN": 1.6, "UUT": 1.6, "FL": 1.6, "UUP": 1.6, "LV": 1.6, "UUH": 1.6
 };
+
 
 NGL.guessElement = function(){
 
@@ -118,9 +120,34 @@ NGL.guessElement = function(){
 
 }();
 
+
 NGL.ProteinType = 0;
 NGL.NucleicType = 1;
 NGL.UnknownType = 2;
+
+
+NGL.AA1 = {
+    'HIS': 'H',
+    'ARG': 'R',
+    'LYS': 'K',
+    'ILE': 'I',
+    'PHE': 'F',
+    'LEU': 'L',
+    'TRP': 'W',
+    'ALA': 'A',
+    'MET': 'M',
+    'PRO': 'P',
+    'CYS': 'C',
+    'ASN': 'N',
+    'VAL': 'V',
+    'GLY': 'G',
+    'SER': 'S',
+    'GLN': 'Q',
+    'TYR': 'Y',
+    'ASP': 'D',
+    'GLU': 'E',
+    'THR': 'T'
+};
 
 
 NGL.nextGlobalAtomindex = 0;
@@ -862,8 +889,6 @@ NGL.Trajectory.prototype = {
         var coords1 = [];
         var coords2 = [];
 
-        var coords = [];
-
         var i;
         var n = this.atomCount * 3;
         var y = this.initialStructure;
@@ -891,7 +916,6 @@ NGL.Trajectory.prototype = {
 
 NGL.Superpose = function( atoms1, atoms2 ){
 
-    var i, n;
     var coords1 = this.prepCoords( atoms1 );
     var coords2 = this.prepCoords( atoms2 );
 
@@ -1232,6 +1256,20 @@ NGL.Structure.prototype = {
     eachModel: function( callback ){
 
         this.models.forEach( callback );
+
+    },
+
+    getSequence: function(){
+
+        var seq = [];
+
+        this.eachResidue( function( r ){
+
+            seq.push( r.getResname1() );
+
+        } );
+
+        return seq;
 
     },
 
@@ -1810,6 +1848,12 @@ NGL.Residue.prototype = {
         }
 
         return this._nucleic;
+
+    },
+
+    getResname1: function(){
+
+        return NGL.AA1[ this.resname.toUpperCase() ] || '';
 
     },
 
@@ -2517,5 +2561,372 @@ NGL.Selection.prototype = {
         }
 
     },
+
+};
+
+
+//////////////
+// Alignment
+
+NGL.SubstitutionMatrices = function(){
+
+    var blosum62x = [
+        [4,0,-2,-1,-2,0,-2,-1,-1,-1,-1,-2,-1,-1,-1,1,0,0,-3,-2],        // A
+        [0,9,-3,-4,-2,-3,-3,-1,-3,-1,-1,-3,-3,-3,-3,-1,-1,-1,-2,-2],    // C
+        [-2,-3,6,2,-3,-1,-1,-3,-1,-4,-3,1,-1,0,-2,0,-1,-3,-4,-3],       // D
+        [-1,-4,2,5,-3,-2,0,-3,1,-3,-2,0,-1,2,0,0,-1,-2,-3,-2],          // E
+        [-2,-2,-3,-3,6,-3,-1,0,-3,0,0,-3,-4,-3,-3,-2,-2,-1,1,3],        // F
+        [0,-3,-1,-2,-3,6,-2,-4,-2,-4,-3,0,-2,-2,-2,0,-2,-3,-2,-3],      // G
+        [-2,-3,-1,0,-1,-2,8,-3,-1,-3,-2,1,-2,0,0,-1,-2,-3,-2,2],        // H
+        [-1,-1,-3,-3,0,-4,-3,4,-3,2,1,-3,-3,-3,-3,-2,-1,3,-3,-1],       // I
+        [-1,-3,-1,1,-3,-2,-1,-3,5,-2,-1,0,-1,1,2,0,-1,-2,-3,-2],        // K
+        [-1,-1,-4,-3,0,-4,-3,2,-2,4,2,-3,-3,-2,-2,-2,-1,1,-2,-1],       // L
+        [-1,-1,-3,-2,0,-3,-2,1,-1,2,5,-2,-2,0,-1,-1,-1,1,-1,-1],        // M
+        [-2,-3,1,0,-3,0,1,-3,0,-3,-2,6,-2,0,0,1,0,-3,-4,-2],            // N
+        [-1,-3,-1,-1,-4,-2,-2,-3,-1,-3,-2,-2,7,-1,-2,-1,-1,-2,-4,-3],   // P
+        [-1,-3,0,2,-3,-2,0,-3,1,-2,0,0,-1,5,1,0,-1,-2,-2,-1],           // Q
+        [-1,-3,-2,0,-3,-2,0,-3,2,-2,-1,0,-2,1,5,-1,-1,-3,-3,-2],        // R
+        [1,-1,0,0,-2,0,-1,-2,0,-2,-1,1,-1,0,-1,4,1,-2,-3,-2],           // S
+        [0,-1,-1,-1,-2,-2,-2,-1,-1,-1,-1,0,-1,-1,-1,1,5,0,-2,-2],       // T
+        [0,-1,-3,-2,-1,-3,-3,3,-2,1,1,-3,-2,-2,-3,-2,0,4,-3,-1],        // V
+        [-3,-2,-4,-3,1,-2,-2,-3,-3,-2,-1,-4,-4,-2,-3,-3,-2,-3,11,2],    // W
+        [-2,-2,-3,-2,3,-3,2,-1,-2,-1,-1,-2,-3,-1,-2,-2,-2,-1,2,7]       // Y
+    ];
+
+    var blosum62 = [
+        //A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X
+        [ 4,-1,-2,-2, 0,-1,-1, 0,-2,-1,-1,-1,-1,-2,-1, 1, 0,-3,-2, 0,-2,-1, 0], // A
+        [-1, 5, 0,-2,-3, 1, 0,-2, 0,-3,-2, 2,-1,-3,-2,-1,-1,-3,-2,-3,-1, 0,-1], // R
+        [-2, 0, 6, 1,-3, 0, 0, 0, 1,-3,-3, 0,-2,-3,-2, 1, 0,-4,-2,-3, 3, 0,-1], // N
+        [-2,-2, 1, 6,-3, 0, 2,-1,-1,-3,-4,-1,-3,-3,-1, 0,-1,-4,-3,-3, 4, 1,-1], // D
+        [ 0,-3,-3,-3, 9,-3,-4,-3,-3,-1,-1,-3,-1,-2,-3,-1,-1,-2,-2,-1,-3,-3,-2], // C
+        [-1, 1, 0, 0,-3, 5, 2,-2, 0,-3,-2, 1, 0,-3,-1, 0,-1,-2,-1,-2, 0, 3,-1], // Q
+        [-1, 0, 0, 2,-4, 2, 5,-2, 0,-3,-3, 1,-2,-3,-1, 0,-1,-3,-2,-2, 1, 4,-1], // E
+        [ 0,-2, 0,-1,-3,-2,-2, 6,-2,-4,-4,-2,-3,-3,-2, 0,-2,-2,-3,-3,-1,-2,-1], // G
+        [-2, 0, 1,-1,-3, 0, 0,-2, 8,-3,-3,-1,-2,-1,-2,-1,-2,-2, 2,-3, 0, 0,-1], // H
+        [-1,-3,-3,-3,-1,-3,-3,-4,-3, 4, 2,-3, 1, 0,-3,-2,-1,-3,-1, 3,-3,-3,-1], // I
+        [-1,-2,-3,-4,-1,-2,-3,-4,-3, 2, 4,-2, 2, 0,-3,-2,-1,-2,-1, 1,-4,-3,-1], // L
+        [-1, 2, 0,-1,-3, 1, 1,-2,-1,-3,-2, 5,-1,-3,-1, 0,-1,-3,-2,-2, 0, 1,-1], // K
+        [-1,-1,-2,-3,-1, 0,-2,-3,-2, 1, 2,-1, 5, 0,-2,-1,-1,-1,-1, 1,-3,-1,-1], // M
+        [-2,-3,-3,-3,-2,-3,-3,-3,-1, 0, 0,-3, 0, 6,-4,-2,-2, 1, 3,-1,-3,-3,-1], // F
+        [-1,-2,-2,-1,-3,-1,-1,-2,-2,-3,-3,-1,-2,-4, 7,-1,-1,-4,-3,-2,-2,-1,-2], // P
+        [ 1,-1, 1, 0,-1, 0, 0, 0,-1,-2,-2, 0,-1,-2,-1, 4, 1,-3,-2,-2, 0, 0, 0], // S
+        [ 0,-1, 0,-1,-1,-1,-1,-2,-2,-1,-1,-1,-1,-2,-1, 1, 5,-2,-2, 0,-1,-1, 0], // T
+        [-3,-3,-4,-4,-2,-2,-3,-2,-2,-3,-2,-3,-1, 1,-4,-3,-2,11, 2,-3,-4,-3,-2], // W
+        [-2,-2,-2,-3,-2,-1,-2,-3, 2,-1,-1,-2,-1, 3,-3,-2,-2, 2, 7,-1,-3,-2,-1], // Y
+        [ 0,-3,-3,-3,-1,-2,-2,-3,-3, 3, 1,-2, 1,-1,-2,-2, 0,-3,-1, 4,-3,-2,-1], // V
+        [-2,-1, 3, 4,-3, 0, 1,-1, 0,-3,-4, 0,-3,-3,-2, 0,-1,-4,-3,-3, 4, 1,-1], // B
+        [-1, 0, 0, 1,-3, 3, 4,-2, 0,-3,-3, 1,-1,-3,-1, 0,-1,-3,-2,-2, 1, 4,-1], // Z
+        [ 0,-1,-1,-1,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2, 0, 0,-2,-1,-1,-1,-1,-1]  // X
+    ];
+
+    var nucleotides = 'ACTG';
+
+    var aminoacidsX = 'ACDEFGHIKLMNPQRSTVWY';
+
+    var aminoacids = 'ARNDCQEGHILKMFPSTWYVBZX';
+
+    function prepareMatrix( cellNames, mat ){
+
+        var j;
+        var i = 0;
+        var matDict = {};
+
+        mat.forEach( function( row ){
+
+            j = 0;
+            var rowDict = {};
+
+            row.forEach( function( elm ){
+
+                rowDict[ cellNames[ j++ ] ] = elm;
+
+            } );
+
+            matDict[ cellNames[ i++ ] ] = rowDict;
+
+        } );
+
+        return matDict;
+
+    }
+
+    return {
+
+        blosum62: prepareMatrix( aminoacids, blosum62 ),
+
+        blosum62x: prepareMatrix( aminoacidsX, blosum62x ),
+
+    };
+
+}();
+
+
+NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix ){
+
+    // TODO try encoding seqs as integers and use array subst matrix
+
+    this.seq1 = seq1;
+    this.seq2 = seq2;
+
+    this.gapPenalty = gapPenalty || -10;
+    this.gapExtensionPenalty = gapExtensionPenalty || -1;
+    this.substMatrix = substMatrix || "blosum62";
+
+    if( this.substMatrix ){
+        this.substMatrix = NGL.SubstitutionMatrices[ this.substMatrix ];
+    }
+
+};
+
+NGL.Alignment.prototype = {
+
+    initMatrices: function(){
+
+        this.n = this.seq1.length;
+        this.m = this.seq2.length;
+
+        //console.log(this.n, this.m);
+
+        this.aliScore = undefined;
+        this.ali = '';
+
+        this.S = [];
+        this.V = [];
+        this.H = [];
+
+        for(var i = 0; i <= this.n; i++){
+            this.S[i] = [];
+            this.V[i] = [];
+            this.H[i] = [];
+            for(var j = 0; j <= this.m; j++){
+                this.S[i][j] = 0;
+                this.V[i][j] = 0;
+                this.H[i][j] = 0;
+            }
+        }
+
+        for(var i = 0; i <= this.n; ++i){
+            this.S[i][0] = this.gap(0);
+            this.H[i][0] = -Infinity;
+        }
+
+        for(var j = 0; j <= this.m; ++j){
+            this.S[0][j] = this.gap(0);
+            this.V[0][j] = -Infinity;
+        }
+
+        this.S[0][0] = 0;
+
+        // console.log(this.S, this.V, this.H);
+
+    },
+
+    gap: function( len ){
+
+        return this.gapPenalty + len * this.gapExtensionPenalty;
+
+    },
+
+    makeScoreFn: function(){
+
+        var seq1 = this.seq1;
+        var seq2 = this.seq2;
+
+        var substMatrix = this.substMatrix;
+
+        var c1, c2;
+
+        if( substMatrix ){
+
+            return function( i, j ){
+
+                c1 = seq1[i];
+                c2 = seq2[j];
+
+                try{
+                    return substMatrix[ c1 ][ c2 ];
+                }catch(e){
+                    return -4;
+                }
+
+            }
+
+        } else {
+
+            console.warn('NGL.Alignment: no subst matrix');
+
+            return function( i, j ){
+
+                c1 = seq1[i];
+                c2 = seq2[j];
+
+                return c1==c2 ? 5 : -3;
+
+            }
+
+        }
+
+    },
+
+    calc: function(){
+        
+        console.time( "NGL.Alignment.calc" );
+
+        this.initMatrices();
+
+        var gap0 = this.gap(0);
+        var score = this.makeScoreFn();
+        var gapExtensionPenalty = this.gapExtensionPenalty;
+
+        var V = this.V;
+        var H = this.H;
+        var S = this.S;
+
+        var n = this.n;
+        var m = this.m;
+
+        var i, j;
+
+        for( i = 1; i <= n; ++i ){
+
+            for( j = 1; j <= m; ++j ){
+
+                V[i][j] = Math.max(
+                    S[i-1][j] + gap0,
+                    V[i-1][j] + gapExtensionPenalty
+                );
+
+                H[i][j] = Math.max(
+                    S[i][j-1] + gap0,
+                    H[i][j-1] + gapExtensionPenalty
+                );
+
+                S[i][j] = Math.max(
+                    S[i-1][j-1] + score(i-1, j-1), // match
+                    V[i][j], //del
+                    H[i][j] // ins
+                );
+
+            }
+
+        }
+
+        console.timeEnd( "NGL.Alignment.calc" );
+
+        // console.log(this.S, this.V, this.H);
+
+    },
+
+    trace: function(){
+
+        // console.time( "NGL.Alignment.trace" );
+
+        this.ali1 = '';
+        this.ali2 = '';
+
+        var score = this.makeScoreFn();
+
+        var i = this.n;
+        var j = this.m;
+        var mat = "S";
+
+        if( this.S[i][j] >= this.V[i][j] && this.S[i][j] >= this.V[i][j] ){
+            mat = "S";
+            this.aliScore = this.S[i][j];
+        }else if( this.V[i][j] >= this.H[i][j] ){
+            mat = "V";
+            this.aliScore = this.V[i][j];
+        }else{
+            mat = "H";
+            this.aliScore = this.H[i][j];
+        }
+
+        // console.log("NGL.Alignment: SCORE", this.aliScore);
+        // console.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
+
+        while( i > 0 && j > 0 ){
+
+            if( mat=="S" ){
+
+                if( this.S[i][j]==this.S[i-1][j-1] + score(i-1, j-1) ){
+                    this.ali1 = this.seq1[i-1] + this.ali1;
+                    this.ali2 = this.seq2[j-1] + this.ali2;
+                    --i;
+                    --j;
+                    mat = "S";
+                }else if( this.S[i][j]==this.V[i][j] ){
+                    mat = "V";
+                }else if( this.S[i][j]==this.H[i][j] ){
+                    mat = "H";
+                }else{
+                    console.error('NGL.Alignment: S');
+                    --i;
+                    --j;
+                }
+
+            }else if( mat=="V" ){
+
+                if( this.V[i][j]==this.V[i-1][j] + this.gapExtensionPenalty ){
+                    this.ali1 = this.seq1[i-1] + this.ali1;
+                    this.ali2 = '-' + this.ali2;
+                    --i;
+                    mat = "V";
+                }else if( this.V[i][j]==this.S[i-1][j] + this.gap(0) ){
+                    this.ali1 = this.seq1[i-1] + this.ali1;
+                    this.ali2 = '-' + this.ali2;
+                    --i;
+                    mat = "S";
+                }else{
+                    console.error('NGL.Alignment: V');
+                    --i;
+                }
+
+            }else if( mat=="H" ){
+
+                if( this.H[i][j] == this.H[i][j-1] + this.gapExtensionPenalty ){
+                    this.ali1 = '-' + this.ali1;
+                    this.ali2 = this.seq2[j-1] + this.ali2;
+                    --j;
+                    mat = "H";
+                }else if( this.H[i][j] == this.S[i][j-1] + this.gap(0) ){
+                    this.ali1 = '-' + this.ali1;
+                    this.ali2 = this.seq2[j-1] + this.ali2;
+                    --j;
+                    mat = "S";
+                }else{
+                    console.error('NGL.Alignment: H');
+                    --j;
+                }
+
+            }else{
+
+                console.error('NGL.Alignment: no matrix');
+
+            }
+
+        }
+
+        while( i > 0 ){
+
+            this.ali1 = this.seq1[i-1] + this.ali1;
+            this.ali2 = '-' + this.ali2;
+            --i;
+
+        }
+
+        while( j > 0 ){
+
+            this.ali1 = '-' + this.ali1;
+            this.ali2 = this.seq2[j-1] + this.ali2;
+            --j;
+
+        }
+
+        // console.timeEnd( "NGL.Alignment.trace" );
+
+        // console.log([this.ali1, this.ali2]);
+
+    }
 
 };
