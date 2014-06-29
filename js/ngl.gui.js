@@ -442,6 +442,8 @@ NGL.ComponentWidget = function( component, stage ){
 
         } );
 
+    // Add representation
+
     var reprOptions = { "": "[ add ]" };
     for( var key in NGL.representationTypes ){
         reprOptions[ key ] = key;
@@ -451,10 +453,14 @@ NGL.ComponentWidget = function( component, stage ){
         .setColor( '#444' )
         .setOptions( reprOptions )
         .onChange( function(){
+
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             menuPanel.setDisplay( "none" );
+
         } );
+
+    // Import trajectory
 
     var traj = new UI.Button( "import" ).onClick( function(){
 
@@ -494,12 +500,54 @@ NGL.ComponentWidget = function( component, stage ){
 
     });
 
+    // Superpose
+
+    function initSuperposeOptions(){
+
+        var superposeOptions = { "": "[ structure ]" };
+        stage.compList.forEach( function( o, i ){
+            if( o instanceof NGL.StructureComponent ){
+                superposeOptions[ i ] = o.name;
+            }
+        } );
+        superpose.setOptions( superposeOptions );
+
+    }
+
+    stage.signals.componentAdded.add( initSuperposeOptions );    
+
+    var superpose = new UI.Select()
+        .setColor( '#444' )
+        .onChange( function(){
+
+            var s1 = component.structure;
+            var s2 = stage.compList[ superpose.getValue() ].structure;
+
+            NGL.superpose( s1, s2, true );
+
+            component.reprList.forEach( function( repr ){
+                repr.update();
+            } );
+            component.centerView();
+
+            superpose.setValue( "" );
+            menuPanel.setDisplay( "none" );
+
+        } );
+
+    initSuperposeOptions();
+
+    // Menu
+
     var menuPanel = new UI.OverlayPanel()
         .add( new UI.Text( "Representation" ).setWidth( "110px" ) )
         .add( repr )
         .add( new UI.Break() )
         .add( new UI.Text( "Trajectory" ).setWidth( "110px" ) )
-        .add( traj );
+        .add( traj )
+        .add( new UI.Break() )
+        .add( new UI.Text( "Superpose" ).setWidth( "110px" ) )
+        .add( superpose );
 
     var menu = new UI.Icon( "bars" )
         .setMarginLeft( "47px" )

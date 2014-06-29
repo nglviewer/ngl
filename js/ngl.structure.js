@@ -902,7 +902,7 @@ NGL.Trajectory.prototype = {
 
         }, sele );
 
-        var sp = new NGL.Superpose( coords1, coords2 );
+        var sp = new NGL.Superposition( coords1, coords2 );
 
         sp.transform( x );
 
@@ -911,10 +911,10 @@ NGL.Trajectory.prototype = {
 };
 
 
-//////////////
-// Superpose
+//////////////////
+// Superposition
 
-NGL.Superpose = function( atoms1, atoms2 ){
+NGL.Superposition = function( atoms1, atoms2 ){
 
     var coords1 = this.prepCoords( atoms1 );
     var coords2 = this.prepCoords( atoms2 );
@@ -923,7 +923,7 @@ NGL.Superpose = function( atoms1, atoms2 ){
 
 };
 
-NGL.Superpose.prototype = {
+NGL.Superposition.prototype = {
 
     subMean: function( coords, mean ){
 
@@ -2664,7 +2664,7 @@ NGL.SubstitutionMatrices = function(){
 
 NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix ){
 
-    // TODO try encoding seqs as integers and use array subst matrix
+    // TODO try encoding seqs as integers and use array subst matrix, maybe faster
 
     this.seq1 = seq1;
     this.seq2 = seq2;
@@ -2939,3 +2939,113 @@ NGL.Alignment.prototype = {
     }
 
 };
+
+
+NGL.superpose = function( s1, s2, align, sele ){
+
+    align = align || false;
+    sele = sele || "";
+
+    var atoms1, atoms2;
+
+    if( align ){
+
+        var seq1 = s1.getSequence();
+        var seq2 = s2.getSequence();
+
+        // console.log( seq1.join("") );
+        // console.log( seq2.join("") );
+
+        var ali = new NGL.Alignment( seq1.join(""), seq2.join("") );
+
+        ali.calc();
+        ali.trace();
+
+        console.log( ali.score );
+
+        // console.log( ali.ali1 );
+        // console.log( ali.ali2 );
+
+        var l, _i, _j, x, y;
+        var i = 0;
+        var j = 0;
+        var n = ali.ali1.length;
+        var aliIdx1 = [];
+        var aliIdx2 = [];
+
+        for( l = 0; l < n; ++l ){
+
+            x = ali.ali1[ l ];
+            y = ali.ali2[ l ];
+
+            _i = 0;
+            _j = 0;
+
+            if( x === "-" ){
+                aliIdx2[ j ] = false;
+            }else{
+                aliIdx2[ j ] = true;
+                _i = 1;
+            }
+
+            if( y === "-" ){
+                aliIdx1[ i ] = false;
+            }else{
+                aliIdx1[ i ] = true;
+                _j = 1;
+            }
+
+            i += _i;
+            j += _j;
+
+        }
+
+        console.log( i, j );
+
+        // console.log( aliIdx1 );
+        // console.log( aliIdx2 );
+
+        atoms1 = new NGL.AtomSet();
+        atoms2 = new NGL.AtomSet();
+
+        i = 0;
+        s1.eachResidue( function( r ){
+
+            if( !r.getResname1() ) return;
+
+            if( aliIdx1[ i ] ){
+                atoms1.addAtom( r.getAtomByName( "CA" ) );
+            }
+            i += 1;
+
+        } );
+
+        i = 0;
+        s2.eachResidue( function( r ){
+
+            if( !r.getResname1() ) return;
+
+            if( aliIdx2[ i ] ){
+                atoms2.addAtom( r.getAtomByName( "CA" ) );
+            }
+            i += 1;
+
+        } );
+
+    }else{
+
+        var selection = new NGL.Selection( sele + ".CA" );
+
+        atoms1 = new NGL.AtomSet( s1, selection );
+        atoms2 = new NGL.AtomSet( s2, selection );
+
+    }
+
+    var superpose = new NGL.Superposition( atoms1, atoms2 );
+
+    var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
+    superpose.transform( atoms );
+
+    s1.center = s1.atomCenter();
+
+}
