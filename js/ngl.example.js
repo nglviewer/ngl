@@ -109,23 +109,14 @@ NGL.Examples = {
 
                     o2.addRepresentation( "tube", s );
 
-                    var sele = new NGL.Selection( s + ".CA" );
-
                     var s1 = o1.structure;
                     var s2 = o2.structure;
 
-                    var atoms1 = new NGL.AtomSet( s1, sele );
-                    var atoms2 = new NGL.AtomSet( s2, sele );
-                    var superpose = new NGL.Superpose( atoms1, atoms2 );
-
-                    var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
-                    superpose.transform( atoms );
+                    NGL.superpose( s1, s2, false, s );
 
                     o1.reprList.forEach( function( repr ){
                         repr.update();
                     } );
-
-                    s1.center = s1.atomCenter();
                     o1.centerView();
 
                 } );
@@ -138,8 +129,6 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/3dqb.pdb", function( o1 ){
 
-                var s = "1-320:A";
-
                 o1.addRepresentation( "tube" );
                 o1.centerView();
 
@@ -150,99 +139,11 @@ NGL.Examples = {
                     var s1 = o1.structure;
                     var s2 = o2.structure;
 
-                    var seq1 = s1.getSequence();
-                    var seq2 = s2.getSequence();
-
-                    // console.log( seq1.join("") );
-                    // console.log( seq2.join("") );
-
-                    var ali = new NGL.Alignment( seq1.join(""), seq2.join("") );
-
-                    ali.calc();
-                    ali.trace();
-
-                    console.log( ali.score );
-
-                    // console.log( ali.ali1 );
-                    // console.log( ali.ali2 );
-
-                    var l, _i, _j, x, y;
-                    var i = 0;
-                    var j = 0;
-                    var n = ali.ali1.length;
-                    var aliIdx1 = [];
-                    var aliIdx2 = [];
-
-                    for( l = 0; l < n; ++l ){
-
-                        x = ali.ali1[ l ];
-                        y = ali.ali2[ l ];
-
-                        _i = 0;
-                        _j = 0;
-
-                        if( x === "-" ){
-                            aliIdx2[ j ] = false;
-                        }else{
-                            aliIdx2[ j ] = true;
-                            _i = 1;
-                        }
-
-                        if( y === "-" ){
-                            aliIdx1[ i ] = false;
-                        }else{
-                            aliIdx1[ i ] = true;
-                            _j = 1;
-                        }
-
-                        i += _i;
-                        j += _j;
-
-                    }
-
-                    // console.log( aliIdx1 );
-                    // console.log( aliIdx2 );
-
-                    var aliAtoms1 = new NGL.AtomSet();
-                    var aliAtoms2 = new NGL.AtomSet();
-
-                    i = 0;
-                    s1.eachResidue( function( r ){
-
-                        if( !r.getResname1() ) return;
-
-                        if( aliIdx1[ i ] ){
-                            aliAtoms1.addAtom( r.getAtomByName( "CA" ) );
-                        }
-                        i += 1;
-
-                    } );
-
-                    i = 0;
-                    s2.eachResidue( function( r ){
-
-                        if( !r.getResname1() ) return;
-
-                        if( aliIdx2[ i ] ){
-                            aliAtoms2.addAtom( r.getAtomByName( "CA" ) );
-                        }
-                        i += 1;
-
-                    } );
-
-                    // console.log( aliAtoms1 );
-                    // console.log( aliAtoms2 );
-
-                    var superpose = new NGL.Superpose( aliAtoms1, aliAtoms2 );
-
-                    var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
-                    superpose.transform( atoms );
+                    NGL.superpose( s1, s2, true );
 
                     o1.reprList.forEach( function( repr ){
                         repr.update();
                     } );
-
-                    s1.center = s1.atomCenter();
                     o1.centerView();
 
                 } );
