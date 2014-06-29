@@ -502,7 +502,7 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Superpose
 
-    function initSuperposeOptions(){
+    function setSuperposeOptions(){
 
         var superposeOptions = { "": "[ structure ]" };
         stage.compList.forEach( function( o, i ){
@@ -514,7 +514,7 @@ NGL.ComponentWidget = function( component, stage ){
 
     }
 
-    stage.signals.componentAdded.add( initSuperposeOptions );    
+    stage.signals.componentAdded.add( setSuperposeOptions );    
 
     var superpose = new UI.Select()
         .setColor( '#444' )
@@ -525,9 +525,7 @@ NGL.ComponentWidget = function( component, stage ){
 
             NGL.superpose( s1, s2, true );
 
-            component.reprList.forEach( function( repr ){
-                repr.update();
-            } );
+            component.updateRepresentations();
             component.centerView();
 
             superpose.setValue( "" );
@@ -535,7 +533,7 @@ NGL.ComponentWidget = function( component, stage ){
 
         } );
 
-    initSuperposeOptions();
+    setSuperposeOptions();
 
     // Menu
 
