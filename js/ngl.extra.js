@@ -367,6 +367,16 @@ NGL.StructureComponent.prototype = {
 
     },
 
+    updateRepresentations: function(){
+
+        this.reprList.forEach( function( repr ){
+
+            repr.update();
+
+        } );
+
+    },
+
     addTrajectory: function( xtcPath ){
 
         var scope = this;
@@ -377,11 +387,7 @@ NGL.StructureComponent.prototype = {
 
             // console.time( "frameUpdate" );
 
-            scope.reprList.forEach( function( repr ){
-
-                repr.update();
-
-            } );
+            scope.updateRepresentations();
 
             // console.timeEnd( "frameUpdate" );
             

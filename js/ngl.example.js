@@ -114,9 +114,7 @@ NGL.Examples = {
 
                     NGL.superpose( s1, s2, false, s );
 
-                    o1.reprList.forEach( function( repr ){
-                        repr.update();
-                    } );
+                    o1.updateRepresentations();
                     o1.centerView();
 
                 } );
@@ -141,9 +139,32 @@ NGL.Examples = {
 
                     NGL.superpose( s1, s2, true );
 
-                    o1.reprList.forEach( function( repr ){
-                        repr.update();
-                    } );
+                    o1.updateRepresentations();
+                    o1.centerView();
+
+                } );
+
+            } );
+
+        },
+
+        "alignment2": function( stage ){
+
+            stage.loadFile( "../data/__example__/1gzm.pdb", function( o1 ){
+
+                o1.addRepresentation( "tube" );
+                o1.centerView();
+
+                stage.loadFile( "../data/__example__/1u19.pdb", function( o2 ){
+
+                    o2.addRepresentation( "tube" );
+
+                    var s1 = o1.structure;
+                    var s2 = o2.structure;
+
+                    NGL.superpose( s1, s2, true );
+
+                    o1.updateRepresentations();
                     o1.centerView();
 
                 } );

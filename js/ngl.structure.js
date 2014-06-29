@@ -1265,7 +1265,9 @@ NGL.Structure.prototype = {
 
         this.eachResidue( function( r ){
 
-            seq.push( r.getResname1() );
+            if( r.getAtomByName( "CA" ) ){
+                seq.push( r.getResname1() );
+            }
 
         } );
 
@@ -3000,7 +3002,7 @@ NGL.superpose = function( s1, s2, align, sele ){
 
         }
 
-        console.log( i, j );
+        // console.log( i, j );
 
         // console.log( aliIdx1 );
         // console.log( aliIdx2 );
@@ -3011,7 +3013,7 @@ NGL.superpose = function( s1, s2, align, sele ){
         i = 0;
         s1.eachResidue( function( r ){
 
-            if( !r.getResname1() ) return;
+            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
 
             if( aliIdx1[ i ] ){
                 atoms1.addAtom( r.getAtomByName( "CA" ) );
@@ -3023,7 +3025,7 @@ NGL.superpose = function( s1, s2, align, sele ){
         i = 0;
         s2.eachResidue( function( r ){
 
-            if( !r.getResname1() ) return;
+            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
 
             if( aliIdx2[ i ] ){
                 atoms2.addAtom( r.getAtomByName( "CA" ) );
