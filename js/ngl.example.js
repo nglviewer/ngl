@@ -128,11 +128,13 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/3dqb.pdb", function( o1 ){
 
                 o1.addRepresentation( "tube" );
+                o1.addRepresentation( "ball+stick", "hetero" );
                 o1.centerView();
 
                 stage.loadFile( "../data/__example__/3sn6.pdb", function( o2 ){
 
                     o2.addRepresentation( "tube" );
+                    o2.addRepresentation( "ball+stick", "hetero" );
 
                     var s1 = o1.structure;
                     var s2 = o2.structure;
