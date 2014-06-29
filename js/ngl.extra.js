@@ -844,7 +844,7 @@ NGL.Representation.prototype = {
 
         if( this.selection ){
 
-            this.applySelection();
+            this.atomSet.setSelection( this.selection );
 
         }
 

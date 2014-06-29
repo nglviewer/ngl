@@ -673,7 +673,7 @@ NGL.RepresentationWidget = function( repr, component ){
             
             if( e.keyCode === 13 ){
 
-                repr.changeSelection( e.target.value );
+                repr.changeSelection( sele.getValue() );
 
             }
 
