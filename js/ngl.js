@@ -1132,7 +1132,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         this.camera.updateProjectionMatrix();
 
-        //this.updateBoundingBox();
+        // this.updateBoundingBox();
         this.updateDynamicUniforms( this.modelGroup );
         this.updateDynamicUniforms( this.pickingModelGroup );
 
@@ -1343,7 +1343,6 @@ NGL.Viewer.prototype = {
 
         var i, o, u;
         var matrix = new THREE.Matrix4();
-        // var objects = this.modelGroup.children;
         var objects = group.children;
         var nObjects = objects.length;
         var camera = this.camera;
@@ -1713,6 +1712,13 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
         this.attributes[ name ].needsUpdate = true;
 
     }, this );
+
+    if( this.mesh ){
+        this.mesh.geometry.computeBoundingBox();
+        this.mesh.geometry.computeBoundingSphere();
+    }
+
+    console.log( "mesh", this.mesh );
 
 }
 
