@@ -1445,6 +1445,16 @@ NGL.Structure.prototype = {
 
         } );
 
+    },
+
+    toPdb: function(){
+
+        // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
+        // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
+
+        // use sprintf %8.3f for coords
+        // printf PDB2 ("ATOM  %5d %4s %3s A%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n", $index,$atname[$i],$resname[$i],$resnum[$i],$x[$i],$y[$i],$z[$i],$occ[$i],$bfac[$i]),$segid[$i],$element[$i];
+
     }
 
 };
