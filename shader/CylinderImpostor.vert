@@ -2,13 +2,8 @@
 attribute vec3 mapping;
 attribute vec3 position1;
 attribute vec3 position2;
-attribute vec3 color;
-attribute vec3 color2;
 attribute float radius;
 
-
-varying vec3 vColor;
-varying vec3 vColor2;
 varying float vRadius;  
 
 varying vec3 point;
@@ -24,6 +19,11 @@ varying float b;
     attribute vec3 pickingColor2;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
+#else
+    attribute vec3 color;
+    attribute vec3 color2;
+    varying vec3 vColor;
+    varying vec3 vColor2;
 #endif
 
 uniform mat4 modelViewMatrixInverse;
@@ -36,6 +36,9 @@ void main()
     #ifdef PICKING
         vPickingColor = pickingColor;
         vPickingColor2 = pickingColor2;
+    #else
+        vColor = color;
+        vColor2 = color2;
     #endif
 
     vec3 center = position;
@@ -43,8 +46,6 @@ void main()
     float ext = length( position2 - position1 ) / 2.0;
     vec3 ldir;
 
-    vColor = color;
-    vColor2 = color2;
     vRadius = radius;
 
     // vec3 cam_dir = normalize( cameraPosition - center );

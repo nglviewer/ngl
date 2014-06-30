@@ -8,12 +8,13 @@
 uniform mat4 projectionMatrix;
 
 varying vec3 point;
-varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
 #ifdef PICKING
     varying vec3 vPickingColor;
+#else
+    varying vec3 vColor;
 #endif
 
 const float opacity = 0.5;
@@ -97,10 +98,10 @@ void main(void)
 }
 
 
-void main2(void)
-{
-    gl_FragColor = vec4( vColor, 1.0 );
-}
+// void main2(void)
+// {
+//     gl_FragColor = vec4( vColor, 1.0 );
+// }
 
 
 
