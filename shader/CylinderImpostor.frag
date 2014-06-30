@@ -4,8 +4,6 @@
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
-varying vec3 vColor;
-varying vec3 vColor2;
 varying float vRadius;  
 
 varying vec3 point;
@@ -19,6 +17,9 @@ varying float b;
 #ifdef PICKING
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
+#else
+    varying vec3 vColor;
+    varying vec3 vColor2;
 #endif
 
 const float opacity = 0.5;
@@ -32,10 +33,10 @@ const float opacity = 0.5;
 // http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs
 
 
-void main2(void)
-{
-    gl_FragColor = vec4( vColor, 1.0 );
-}
+// void main2(void)
+// {
+//     gl_FragColor = vec4( vColor, 1.0 );
+// }
 
 
 void main()

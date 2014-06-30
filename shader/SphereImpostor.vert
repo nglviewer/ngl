@@ -1,16 +1,17 @@
 
 attribute vec2 mapping;
-attribute vec3 color;
 attribute float radius;
 
 varying vec3 point;
-varying vec3 vColor;
 varying vec3 cameraSpherePos;
 varying float sphereRadius;
 
 #ifdef PICKING
     attribute vec3 pickingColor;
     varying vec3 vPickingColor;
+#else
+    attribute vec3 color;
+    varying vec3 vColor;
 #endif
 
 uniform mat4 projectionMatrixInverse;
@@ -84,9 +85,10 @@ void main(void){
 
     #ifdef PICKING
         vPickingColor = pickingColor;
+    #else
+        vColor = color;
     #endif
 
-    vColor = color;
     cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;
     sphereRadius = radius;
 

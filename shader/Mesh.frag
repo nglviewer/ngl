@@ -1,9 +1,10 @@
 
 varying vec3 vNormal;
-varying vec3 vColor;
 
 #ifdef PICKING
     varying vec3 vPickingColor;
+#else
+    varying vec3 vColor;
 #endif
 
 const float opacity = 0.5;
