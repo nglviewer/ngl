@@ -506,7 +506,7 @@ NGL.ComponentWidget = function( component, stage ){
 
         var superposeOptions = { "": "[ structure ]" };
         stage.compList.forEach( function( o, i ){
-            if( o instanceof NGL.StructureComponent ){
+            if( o instanceof NGL.StructureComponent && o !== component ){
                 superposeOptions[ i ] = o.name;
             }
         } );
@@ -514,7 +514,8 @@ NGL.ComponentWidget = function( component, stage ){
 
     }
 
-    stage.signals.componentAdded.add( setSuperposeOptions );    
+    stage.signals.componentAdded.add( setSuperposeOptions );
+    stage.signals.componentRemoved.add( setSuperposeOptions );
 
     var superpose = new UI.Select()
         .setColor( '#444' )
