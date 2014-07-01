@@ -4,6 +4,28 @@
  */
 
 
+
+NGL.download = function( dataUrl, downloadName ){
+
+    if( !dataUrl ){
+        console.warn( "NGL.download: no dataUrl given" );
+        return;
+    }
+
+    downloadName = downloadName || "download";
+
+    var a = document.createElement( 'a' );
+    document.body.appendChild( a );
+    a.href = dataUrl;
+    a.download = downloadName;
+    a.target = "_blank";
+    a.click();
+
+    document.body.removeChild( a );
+
+};
+
+
 NGL.Widget = function(){
 
 };
@@ -168,19 +190,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onExportImageOptionClick () {
 
-        window.open(
-            stage.viewer.getImage(),
-            "NGL_screenshot_" + THREE.Math.generateUUID()
-        );
-
-        /*var a = document.createElement( 'a' );
-        document.body.appendChild( a );
-        a.href = stage.viewer.getImage();
-        a.click();*/
-
-        // a.href = window.URL.createObjectURL();
-
-        //document.body.removeChild( a );
+        NGL.download( stage.viewer.getImage(), "screenshot.png" );
 
     }
 
@@ -462,10 +472,9 @@ NGL.ComponentWidget = function( component, stage ){
             { type: 'text/plain' }
         );
 
-        window.open(
-            window.URL.createObjectURL( blob ),
-            "PDB_" + THREE.Math.generateUUID()
-        );
+        NGL.download( URL.createObjectURL( blob ), "structure.pdb" );
+
+        menuPanel.setDisplay( "none" );
 
     } );
 
