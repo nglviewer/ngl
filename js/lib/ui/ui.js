@@ -12,6 +12,14 @@ UI.Element.prototype = {
 
     },
 
+    setTitle: function ( title ) {
+
+        this.dom.title = title;
+        
+        return this;
+
+    },
+
     setClass: function ( name ) {
 
         this.dom.className = name;

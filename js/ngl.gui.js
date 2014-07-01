@@ -421,6 +421,7 @@ NGL.ComponentWidget = function( component, stage ){
     // Actions
 
     var toggle = new UI.Icon( "eye" )
+        .setTitle( "hide/show" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
@@ -433,6 +434,7 @@ NGL.ComponentWidget = function( component, stage ){
         } );
 
     var center = new UI.Icon( "bullseye" )
+        .setTitle( "center" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -441,6 +443,7 @@ NGL.ComponentWidget = function( component, stage ){
         } );
 
     var dispose = new UI.Icon( "trash-o" )
+        .setTitle( "delete" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -451,7 +454,7 @@ NGL.ComponentWidget = function( component, stage ){
 
             }else{
 
-                dispose.setColor( "firebrick" );
+                dispose.setColor( "rgb(178, 34, 34)" );
 
                 setTimeout( function(){ 
                     dispose.setColor( "#888" );
@@ -588,6 +591,7 @@ NGL.ComponentWidget = function( component, stage ){
         .add( superpose );
 
     var menu = new UI.Icon( "bars" )
+        .setTitle( "menu" )
         .setMarginLeft( "47px" )
         .onClick( function(){
 
@@ -669,6 +673,7 @@ NGL.RepresentationWidget = function( repr, component ){
     // Actions
 
     var toggle = new UI.Icon( "eye" )
+        .setTitle( "hide/show" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
@@ -681,6 +686,7 @@ NGL.RepresentationWidget = function( repr, component ){
         } );
 
     var dispose = new UI.Icon( "trash-o" )
+        .setTitle( "delete" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -691,7 +697,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
             }else{
 
-                dispose.setColor( "firebrick" );
+                dispose.setColor( "rgb(178, 34, 34)" );
 
                 setTimeout( function(){ 
                     dispose.setColor( "#888" );
