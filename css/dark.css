@@ -58,6 +58,10 @@ select {
     margin-left: 1px;
 }
 
+.Icon {
+    cursor: default;
+}
+
 .Panel {
 
     -moz-user-select: none;
