@@ -85,7 +85,7 @@ NGL.Examples = {
                 // o.addRepresentation( "licorice", "*" );
                 o.centerView();
 
-                console.log( o.structure.toPdb() );
+                // console.log( o.structure.toPdb() );
 
             } );
 
