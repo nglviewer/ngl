@@ -1449,15 +1449,66 @@ NGL.Structure.prototype = {
 
     toPdb: function(){
 
+        // http://www.bmsc.washington.edu/CrystaLinks/man/pdb/part_62.html
+
         // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
         // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
 
         // use sprintf %8.3f for coords
         // printf PDB2 ("ATOM  %5d %4s %3s A%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n", $index,$atname[$i],$resname[$i],$resnum[$i],$x[$i],$y[$i],$z[$i],$occ[$i],$bfac[$i]),$segid[$i],$element[$i];
 
+        function DEF( x, y ){
+            return x !== undefined ? x : y;
+        }
+
+        var pdbFormatString =
+            "ATOM  %5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n";
+
+        var ia;
+        var im = 1;
+        var pdbRecords = [];
+
+        // FIXME multiline if title line longer than 80 chars
+        pdbRecords.push( sprintf( "TITEL %-74s\n", this.name ) );
+
+        this.eachModel( function( m ){ 
+
+            pdbRecords.push( sprintf( "MODEL %-74d\n", im++ ) );
+
+            m.eachAtom( function( a ){
+
+                // console.log( a );
+
+                pdbRecords.push(
+                    sprintf(
+                        pdbFormatString,
+                        
+                        a.serial, a.atomname, a.resname, a.chainname, a.resno,
+                        a.x, a.y, a.z,
+                        DEF( a.occurence, 1 ),
+                        a.bfactor,
+                        DEF( a.segid, "" ),
+                        DEF( a.element, "" )
+                    )
+                );
+
+            } );
+
+            pdbRecords.push( sprintf( "%-80s\n", "ENDMDL" ) );
+
+        } );
+
+        pdbRecords.push( sprintf( "%-80s\n", "END" ) );
+
+        return pdbRecords.join( "" );
+
     }
 
 };
+
+// ATOM      1    N ILE A   1       3.751   6.807  -2.135  1.00  0.00           N
+// ATOM      1    N ILE A   1       3.751   6.807-  2.135- 1.00- 0.00      -   -N
+// ATOM      1  N   ILE A   1       3.751   6.807  -2.135  1.00  0.00           N  
 
 NGL.AtomSet.prototype.apply( NGL.Structure.prototype );
 
