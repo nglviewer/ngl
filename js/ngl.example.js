@@ -77,6 +77,20 @@ NGL.Examples = {
 
         },
 
+        "multi_model": function( stage ){
+
+            stage.loadFile( "../data/__example__/1LVZ.pdb", function( o ){
+
+                o.addRepresentation( "tube", "*" );
+                // o.addRepresentation( "licorice", "*" );
+                o.centerView();
+
+                console.log( o.structure.toPdb() );
+
+            } );
+
+        },
+
         "multi_struc": function( stage ){
 
             stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
