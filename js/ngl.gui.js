@@ -173,6 +173,15 @@ NGL.MenubarFileWidget = function( stage ){
             "NGL_screenshot_" + THREE.Math.generateUUID()
         );
 
+        /*var a = document.createElement( 'a' );
+        document.body.appendChild( a );
+        a.href = stage.viewer.getImage();
+        a.click();*/
+
+        // a.href = window.URL.createObjectURL();
+
+        //document.body.removeChild( a );
+
     }
 
     function onPdbInputKeyDown ( e ) {
@@ -442,6 +451,24 @@ NGL.ComponentWidget = function( component, stage ){
 
         } );
 
+    // Export PDB
+    
+    var pdb = new UI.Button( "export" ).onClick( function(){
+
+        // https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
+
+        var blob = new Blob(
+            [ component.structure.toPdb() ],
+            { type: 'text/plain' }
+        );
+
+        window.open(
+            window.URL.createObjectURL( blob ),
+            "PDB_" + THREE.Math.generateUUID()
+        );
+
+    } );
+
     // Add representation
 
     var reprOptions = { "": "[ add ]" };
@@ -539,6 +566,9 @@ NGL.ComponentWidget = function( component, stage ){
     // Menu
 
     var menuPanel = new UI.OverlayPanel()
+        .add( new UI.Text( "PDB file" ).setWidth( "110px" ) )
+        .add( pdb )
+        .add( new UI.Break() )
         .add( new UI.Text( "Representation" ).setWidth( "110px" ) )
         .add( repr )
         .add( new UI.Break() )
