@@ -189,6 +189,26 @@ NGL.Examples = {
 
         },
 
+        "pbc": function( stage ){
+
+            stage.loadFile( "../data/__example__/pbc.pdb", function( o ){
+
+                o.addRepresentation( "tube", "1-350" );
+                o.addRepresentation( "line" );
+                o.centerView();
+
+                var center = NGL.Trajectory.prototype.centerPbc( o.structure );
+                var color = new Float32Array([ 1, 0, 0, 0, 1, 0 ]);
+                var radius = new Float32Array([ 3, 3 ]);
+
+                console.log( center );
+
+                stage.viewer.add( new NGL.SphereBuffer( center, color, radius ) );
+
+            } );
+
+        },
+
         // alexpc
         
         "rho_traj": function( stage ){

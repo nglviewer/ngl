@@ -843,6 +843,122 @@ NGL.Trajectory.prototype = {
 
     },
 
+    centerPbc: function( structure ){
+
+        // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
+
+        // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
+
+        // Bai, Linge; Breen, David (2008). Calculating Center of Mass in an Unbounded 2D Environment. Journal of Graphics, GPU, and Game Tools 13 (4): 53–60.
+
+        function center1d( coords, max ){
+
+            var n = coords.length;
+            var twoPi = 2 * Math.PI;
+            var angle, r, s, i, c;
+
+            var rMean = 0;
+            var sMean = 0;
+
+            for( i = 0; i < n; ++i ){
+
+                c = coords[ i ];
+                if( c < 0 ){
+                    console.log( "c<0", c );
+                    c += max;
+                }else if( c > max ){
+                    console.log( "c>0", c );
+                    c -= max;
+                }
+
+                // angle = ( Math.max( Math.min( coords[ i ], max ), 0 ) / max ) * twoPi
+                angle = ( c / max ) * twoPi
+                rMean += ( max / twoPi ) * Math.cos( angle );
+                sMean += ( max / twoPi ) * Math.sin( angle );
+
+            }
+
+            rMean /= n;
+            sMean /= n;
+
+            var center = ( max / twoPi ) * ( Math.atan2( -sMean, -rMean ) + Math.PI );
+
+            return center;
+
+        }
+
+        function center( coords ){
+
+            var n = coords.length;
+            var i;
+
+            var mean = 0;
+
+            for( i = 0; i < n; ++i ){
+
+                mean += coords[ i ]
+
+            }
+
+            mean /= n;
+
+            return mean;
+
+        }
+
+        var coordsX = [];
+        var coordsY = [];
+        var coordsZ = [];
+        
+        structure.eachAtom( function( a ){
+
+            coordsX.push( a.x );
+            coordsY.push( a.y );
+            coordsZ.push( a.z );
+
+        }, new NGL.Selection( "1-350.CA" ) );
+
+        console.log( "X", coordsX );
+        console.log( "Y", coordsY );
+        console.log( "Z", coordsZ );
+
+        console.log( Math.max.apply( null, coordsX ) );
+        console.log( Math.max.apply( null, coordsY ) );
+        console.log( Math.max.apply( null, coordsZ ) );
+
+        console.log( Math.min.apply( null, coordsX ) );
+        console.log( Math.min.apply( null, coordsY ) );
+        console.log( Math.min.apply( null, coordsZ ) );
+
+        var maxX = 76.2315;
+        var maxY = 76.2315;
+        var maxZ = 108.6637;
+
+        maxX = Math.max.apply( null, coordsX );
+        maxY = Math.max.apply( null, coordsY );
+        maxZ = Math.max.apply( null, coordsZ );
+
+        console.log( "XXXXXXXXXX" )
+        var centerX = center1d( coordsX, maxX );
+        console.log( "YYYYYYYYYY" )
+        var centerY = center1d( coordsY, maxY );
+        console.log( "ZZZZZZZZZZ" )
+        var centerZ = center1d( coordsZ, maxZ );
+
+        var centerXa = center( coordsX );
+        var centerYa = center( coordsY );
+        var centerZa = center( coordsZ );
+
+        console.log( centerX, centerY, centerZ );
+        console.log( centerXa, centerYa, centerZa );
+
+        return new Float32Array([
+            centerX, centerY, centerZ,
+            centerXa, centerYa, centerZa
+        ]);
+
+    },
+
     removePbc: function( x, box ){
 
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
@@ -1477,16 +1593,16 @@ NGL.Structure.prototype = {
 
             m.eachAtom( function( a ){
 
-                // console.log( a );
-
                 pdbRecords.push(
                     sprintf(
                         pdbFormatString,
                         
-                        a.serial, a.atomname, a.resname, a.chainname, a.resno,
+                        a.serial, a.atomname, a.resname,
+                        DEF( a.chainname, " " ),
+                        a.resno,
                         a.x, a.y, a.z,
-                        DEF( a.occurence, 1 ),
-                        a.bfactor,
+                        DEF( a.occurence, 1.0 ),
+                        DEF( a.bfactor, 0.0 ),
                         DEF( a.segid, "" ),
                         DEF( a.element, "" )
                     )
