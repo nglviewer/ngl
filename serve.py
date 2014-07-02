@@ -296,8 +296,8 @@ def xtc_serve( frame, root, filename ):
         natoms = int( natoms )
     # print natoms
     xtc = get_xtc( path )
-    coords = xtc.get_coords( frame, first_natoms=natoms )  # 17091
-    box = xtc.box.flatten() * 10
+    coords = xtc.get_coords( frame, first_natoms=natoms )
+    box = xtc.box.flatten() * 10  # angstrom
     return (
         array.array( "f", box ).tostring() +
         array.array( "f", coords ).tostring()
