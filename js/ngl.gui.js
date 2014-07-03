@@ -313,7 +313,7 @@ NGL.MenubarExampleWidget = function( stage ){
         createOption( '1mf6.pdb', makeOnFileClick( '1MF6.pdb' ) ),
         createOption( '304d.pdb', makeOnFileClick( '304d.pdb' ) ),
         createOption( '3dqb.pdb', makeOnFileClick( '3dqb.pdb' ) ),
-        createOption( '3l6q.pdb', makeOnFileClick( '3l6q.pdb' ) ),
+        createOption( '3l5q.pdb', makeOnFileClick( '3l5q.pdb' ) ),
         createOption( '3pqr.pdb', makeOnFileClick( '3pqr.pdb' ) ),
         createOption( '3sn6.pdb', makeOnFileClick( '3sn6.pdb' ) ),
         createOption( 'BaceCg.pdb', makeOnFileClick( 'BaceCg.pdb' ) ),

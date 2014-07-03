@@ -191,15 +191,35 @@ NGL.Examples = {
 
         "pbc": function( stage ){
 
-            stage.loadFile( "../data/__example__/pbc.pdb", function( o ){
+            stage.loadFile( "../data/__example__/pbc.gro", function( o ){
 
-                o.addRepresentation( "tube", "1-350" );
+                var maxX = 76.2315;
+                var maxY = 76.2315;
+                var maxZ = 108.6637;
+
+                o.structure.eachAtom( function( a ){
+
+                    a.x = ( a.x + maxX ) % maxX;
+                    a.y = ( a.y + maxY ) % maxY;
+                    a.z = ( a.z + maxZ ) % maxZ;
+
+                } );
+
+                o.addRepresentation( "tube", "backbone" );
+                o.addRepresentation( "spacefill", "backbone" );
                 o.addRepresentation( "line" );
                 o.centerView();
 
                 var center = NGL.Trajectory.prototype.centerPbc( o.structure );
-                var color = new Float32Array([ 1, 0, 0, 0, 1, 0 ]);
-                var radius = new Float32Array([ 3, 3 ]);
+                var color = new Float32Array([
+                    1, 1, 1,
+                    1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1,
+                    1, 1, 0,
+                    0, 1, 1
+                ]);
+                var radius = new Float32Array([ 5, 5, 5, 5, 5, 5 ]);
 
                 console.log( center );
 
