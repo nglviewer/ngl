@@ -216,12 +216,54 @@ NGL.Examples = {
                     1, 0, 0,
                     0, 1, 0,
                     0, 0, 1,
-                    1, 1, 0,
-                    0, 1, 1
+                    1, 1, 0
                 ]);
-                var radius = new Float32Array([ 5, 5, 5, 5, 5, 5 ]);
+                var radius = new Float32Array([ 5, 5, 5, 5, 5 ]);
 
                 console.log( center );
+
+                o.structure.eachAtom( function( a ){
+
+                    a.x = ( a.x - center[ 12 ] + 76.2315 + 76.2315/2 ) % 76.2315;
+                    a.y = ( a.y - center[ 13 ] + 76.2315 + 76.2315/2 ) % 76.2315;
+                    a.z = ( a.z - center[ 14 ] + 108.6637 + 108.6637/2 ) % 108.6637;
+
+                } );
+
+                var i = 0;
+                var initialStructure = new Float32Array( 3 * o.structure.atomCount );
+                
+                o.structure.eachAtom( function( a ){
+
+                    initialStructure[ i + 0 ] = a.x;
+                    initialStructure[ i + 1 ] = a.y;
+                    initialStructure[ i + 2 ] = a.z;
+
+                    i += 3;
+
+                } );
+
+                var box = [
+                    76.2315, 0, 0,
+                    0, 76.2315, 0,
+                    0, 0, 108.6637
+                ];
+
+                NGL.Trajectory.prototype.removePbc( initialStructure, box );
+
+                i = 0;
+                o.structure.eachAtom( function( a ){
+
+                    a.x = initialStructure[ i + 0 ];
+                    a.y = initialStructure[ i + 1 ];
+                    a.z = initialStructure[ i + 2 ];
+
+                    i += 3;
+
+                } );
+
+                o.updateRepresentations();
+                o.centerView();
 
                 stage.viewer.add( new NGL.SphereBuffer( center, color, radius ) );
 

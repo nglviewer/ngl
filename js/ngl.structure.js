@@ -845,69 +845,19 @@ NGL.Trajectory.prototype = {
 
     centerPbc: function( structure ){
 
+        console.time( "NGL.Trajectory.centerPbc" );
+
         // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
 
         // Bai, Linge; Breen, David (2008). Calculating Center of Mass in an Unbounded 2D Environment. Journal of Graphics, GPU, and Game Tools 13 (4): 53–60.
 
-        function center1d2( coords, max ){
-
-            var n = coords.length;
-            var twoPi = 2 * Math.PI;
-            var angle, r, s, i, c;
-
-            var rMean = 0;
-            var sMean = 0;
-
-            for( i = 0; i < n; ++i ){
-
-                c = coords[ i ];
-                if( c < 0 ){
-                    console.log( "c<0", c );
-                    c += max;
-                }else if( c > max ){
-                    console.log( "c>0", c );
-                    c -= max;
-                }
-
-                // angle = ( Math.max( Math.min( coords[ i ], max ), 0 ) / max ) * twoPi
-                angle = ( c / max ) * twoPi
-                rMean += ( max / twoPi ) * Math.cos( angle );
-                sMean += ( max / twoPi ) * Math.sin( angle );
-
-            }
-
-            rMean /= n;
-            sMean /= n;
-
-            var center = ( max / twoPi ) * ( Math.atan2( -sMean, -rMean ) + Math.PI );
-
-            return center;
-
-        }
-
-        // Points_x  = np.random.randn(10000)+1
-        // Box_min   = -10
-        // Box_max   =  10
-        // Box_width = Box_max - Box_min
-
-        // #Maps Points to Box_min ... Box_max with periodic boundaries
-        // Points_x = (Points_x%Box_width + Box_min)
-        // #Map Points to -pi..pi
-        // Points_map = (Points_x - Box_min)/Box_width*2*np.pi-np.pi
-        // #Calc circular mean
-        // Pmean_map  = np.arctan2(np.sin(Points_map).mean() , np.cos(Points_map).mean())
-        // #Map back
-        // Pmean = (Pmean_map+np.pi)/(2*np.pi) * Box_width + Box_min
-
         // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
 
-        function center1d( coords, min, max ){
-
-            var width = max - min;
+        function circularMean( coords, max ){
 
             var n = coords.length;
             var twoPi = 2 * Math.PI;
-            var angle, r, s, i, c;
+            var angle, i, c;
 
             var cosMean = 0;
             var sinMean = 0;
@@ -916,26 +866,25 @@ NGL.Trajectory.prototype = {
 
                 c = ( coords[ i ] + max ) % max;
 
-                if( c < 0 ) console.log( c )
-                var map = ( c / max ) * twoPi - Math.PI;
+                angle = ( c / max ) * twoPi - Math.PI;
 
-                cosMean += Math.cos( map );
-                sinMean += Math.sin( map );
+                cosMean += Math.cos( angle );
+                sinMean += Math.sin( angle );
 
             }
 
             cosMean /= n;
             sinMean /= n;
 
-            var meanMap = Math.atan2( sinMean, cosMean );
+            var meanAngle = Math.atan2( sinMean, cosMean );
 
-            var center = ( meanMap + Math.PI ) / twoPi * max;
+            var center = ( meanAngle + Math.PI ) / twoPi * max;
 
             return center;
 
         }
 
-        function center( coords ){
+        /*function center( coords ){
 
             var n = coords.length;
             var i;
@@ -952,12 +901,14 @@ NGL.Trajectory.prototype = {
 
             return mean;
 
-        }
+        }*/
 
         var coordsX = [];
         var coordsY = [];
         var coordsZ = [];
         
+        // TODO most time consuming, do only once by
+        // initially getting the atom indices or an atomSet
         structure.eachAtom( function( a ){
 
             coordsX.push( a.x );
@@ -966,56 +917,35 @@ NGL.Trajectory.prototype = {
 
         }, new NGL.Selection( "backbone" ) );
 
-        console.log( "X", coordsX );
-        console.log( "Y", coordsY );
-        console.log( "Z", coordsZ );
-
-        console.log( Math.max.apply( null, coordsX ) );
-        console.log( Math.max.apply( null, coordsY ) );
-        console.log( Math.max.apply( null, coordsZ ) );
-
-        console.log( Math.min.apply( null, coordsX ) );
-        console.log( Math.min.apply( null, coordsY ) );
-        console.log( Math.min.apply( null, coordsZ ) );
-
         var maxX = 76.2315;
         var maxY = 76.2315;
         var maxZ = 108.6637;
 
-        // maxX = Math.max.apply( null, coordsX );
-        // maxY = Math.max.apply( null, coordsY );
-        // maxZ = Math.max.apply( null, coordsZ );
+        var centerX = circularMean( coordsX, maxX );
+        var centerY = circularMean( coordsY, maxY );
+        var centerZ = circularMean( coordsZ, maxZ );
 
-        console.log( "XXXXXXXXXX" )
-        var centerX = center1d( coordsX, 0, maxX );
-        console.log( "YYYYYYYYYY" )
-        var centerY = center1d( coordsY, 0, maxY );
-        console.log( "ZZZZZZZZZZ" )
-        var centerZ = center1d( coordsZ, 0, maxZ );
+        // console.log( centerX, centerY, centerZ );
 
-        var centerXa = center( coordsX );
-        var centerYa = center( coordsY );
-        var centerZa = center( coordsZ );
-
-        console.log( centerX, centerY, centerZ );
-        console.log( centerXa, centerYa, centerZa );
+        console.timeEnd( "NGL.Trajectory.centerPbc" );
 
         return new Float32Array([
             0, 0, 0,
             76.2315, 0, 0,
             0, 76.2315, 0,
             0, 0, 108.6637,
-            centerX, centerY, centerZ,
-            centerXa, centerYa, centerZa
+            centerX, centerY, centerZ
         ]);
 
     },
 
     removePbc: function( x, box ){
 
+        console.time( "NGL.Trajectory.removePbc" );
+
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place
-
+        
         var i, j, d, dist;
         var n = x.length;
 
@@ -1045,6 +975,8 @@ NGL.Trajectory.prototype = {
             }
 
         }
+
+        console.timeEnd( "NGL.Trajectory.removePbc" );
 
         return x;
 
