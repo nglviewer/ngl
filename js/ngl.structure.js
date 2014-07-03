@@ -845,13 +845,11 @@ NGL.Trajectory.prototype = {
 
     centerPbc: function( structure ){
 
-        // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
-
         // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
 
         // Bai, Linge; Breen, David (2008). Calculating Center of Mass in an Unbounded 2D Environment. Journal of Graphics, GPU, and Game Tools 13 (4): 53–60.
 
-        function center1d( coords, max ){
+        function center1d2( coords, max ){
 
             var n = coords.length;
             var twoPi = 2 * Math.PI;
@@ -887,6 +885,56 @@ NGL.Trajectory.prototype = {
 
         }
 
+        // Points_x  = np.random.randn(10000)+1
+        // Box_min   = -10
+        // Box_max   =  10
+        // Box_width = Box_max - Box_min
+
+        // #Maps Points to Box_min ... Box_max with periodic boundaries
+        // Points_x = (Points_x%Box_width + Box_min)
+        // #Map Points to -pi..pi
+        // Points_map = (Points_x - Box_min)/Box_width*2*np.pi-np.pi
+        // #Calc circular mean
+        // Pmean_map  = np.arctan2(np.sin(Points_map).mean() , np.cos(Points_map).mean())
+        // #Map back
+        // Pmean = (Pmean_map+np.pi)/(2*np.pi) * Box_width + Box_min
+
+        // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
+
+        function center1d( coords, min, max ){
+
+            var width = max - min;
+
+            var n = coords.length;
+            var twoPi = 2 * Math.PI;
+            var angle, r, s, i, c;
+
+            var cosMean = 0;
+            var sinMean = 0;
+
+            for( i = 0; i < n; ++i ){
+
+                c = ( coords[ i ] + max ) % max;
+
+                if( c < 0 ) console.log( c )
+                var map = ( c / max ) * twoPi - Math.PI;
+
+                cosMean += Math.cos( map );
+                sinMean += Math.sin( map );
+
+            }
+
+            cosMean /= n;
+            sinMean /= n;
+
+            var meanMap = Math.atan2( sinMean, cosMean );
+
+            var center = ( meanMap + Math.PI ) / twoPi * max;
+
+            return center;
+
+        }
+
         function center( coords ){
 
             var n = coords.length;
@@ -916,7 +964,7 @@ NGL.Trajectory.prototype = {
             coordsY.push( a.y );
             coordsZ.push( a.z );
 
-        }, new NGL.Selection( "1-350.CA" ) );
+        }, new NGL.Selection( "backbone" ) );
 
         console.log( "X", coordsX );
         console.log( "Y", coordsY );
@@ -934,16 +982,16 @@ NGL.Trajectory.prototype = {
         var maxY = 76.2315;
         var maxZ = 108.6637;
 
-        maxX = Math.max.apply( null, coordsX );
-        maxY = Math.max.apply( null, coordsY );
-        maxZ = Math.max.apply( null, coordsZ );
+        // maxX = Math.max.apply( null, coordsX );
+        // maxY = Math.max.apply( null, coordsY );
+        // maxZ = Math.max.apply( null, coordsZ );
 
         console.log( "XXXXXXXXXX" )
-        var centerX = center1d( coordsX, maxX );
+        var centerX = center1d( coordsX, 0, maxX );
         console.log( "YYYYYYYYYY" )
-        var centerY = center1d( coordsY, maxY );
+        var centerY = center1d( coordsY, 0, maxY );
         console.log( "ZZZZZZZZZZ" )
-        var centerZ = center1d( coordsZ, maxZ );
+        var centerZ = center1d( coordsZ, 0, maxZ );
 
         var centerXa = center( coordsX );
         var centerYa = center( coordsY );
@@ -953,6 +1001,10 @@ NGL.Trajectory.prototype = {
         console.log( centerXa, centerYa, centerZa );
 
         return new Float32Array([
+            0, 0, 0,
+            76.2315, 0, 0,
+            0, 76.2315, 0,
+            0, 0, 108.6637,
             centerX, centerY, centerZ,
             centerXa, centerYa, centerZa
         ]);
