@@ -87,7 +87,12 @@ NGL.ToolbarWidget = function( stage ){
 
     signals.atomPicked.add( function( atom ){
 
-        var name = atom ? atom.qualifiedName() : "none";
+        var name = "none";
+
+        if( atom ){
+            name = atom.qualifiedName() + 
+                " (" + atom.residue.chain.model.structure.name + ")";
+        }
 
         messagePanel
             .clear()

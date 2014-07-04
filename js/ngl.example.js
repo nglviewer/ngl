@@ -265,7 +265,7 @@ NGL.Examples = {
                 o.updateRepresentations();
                 o.centerView();
 
-                stage.viewer.add( new NGL.SphereBuffer( center, color, radius ) );
+                // stage.viewer.add( new NGL.SphereBuffer( center, color, radius ) );
 
             } );
 
