@@ -375,6 +375,8 @@ NGL.StructureComponent.prototype = {
 
         } );
 
+        this.stage.viewer.render();
+
     },
 
     addTrajectory: function( xtcPath ){
