@@ -727,6 +727,7 @@ NGL.Trajectory = function( xtcPath, structure ){
     this.currentFrame = -1;
 
     this.saveInitialStructure();
+    this.makeBackboneIndices();
 
     this.frameLoader = new THREE.XHRLoader();
     this.frameLoader.setResponseType( "arraybuffer" );
@@ -757,6 +758,20 @@ NGL.Trajectory.prototype = {
         } );
 
         this.initialStructure = initialStructure;
+
+    },
+
+    makeBackboneIndices: function(){
+
+        var backboneIndices = [];
+
+        this.structure.eachAtom( function( a ){
+
+            backboneIndices.push( a.index );
+
+        }, new NGL.Selection( "backbone" ) );
+
+        this.backboneIndices = backboneIndices;
 
     },
 
@@ -815,6 +830,12 @@ NGL.Trajectory.prototype = {
             var box = new Float32Array( arrayBuffer, 0, 9 );
             var coords = new Float32Array( arrayBuffer, 9 * 4 );
 
+            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+            var mean = scope.getCircularMean(
+                scope.backboneIndices, coords, box2
+            );
+            scope.centerPbc( coords, mean, box2 );
+
             scope.removePbc( coords, box );
             scope.superpose( coords );
 
@@ -843,65 +864,62 @@ NGL.Trajectory.prototype = {
 
     },
 
-    centerPbc: function( structure ){
+    getCircularMean: function( indices, coords, box ){
 
-        console.time( "NGL.Trajectory.centerPbc" );
+        console.time( "NGL.Trajectory.getCircularMean" );
 
-        // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
+        var mean = [
 
-        // Bai, Linge; Breen, David (2008). Calculating Center of Mass in an Unbounded 2D Environment. Journal of Graphics, GPU, and Game Tools 13 (4): 53–60.
+            NGL.Utils.circularMean( coords, box[ 0 ], 3, 0, indices ),
+            NGL.Utils.circularMean( coords, box[ 1 ], 3, 1, indices ),
+            NGL.Utils.circularMean( coords, box[ 2 ], 3, 2, indices )
 
-        // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
+        ];
 
-        function circularMean( coords, max ){
+        console.timeEnd( "NGL.Trajectory.getCircularMean" );
 
-            var n = coords.length;
-            var twoPi = 2 * Math.PI;
-            var angle, i, c;
+        return mean;
 
-            var cosMean = 0;
-            var sinMean = 0;
+    },
 
-            for( i = 0; i < n; ++i ){
+    centerPbc: function( coords, mean, box ){
 
-                c = ( coords[ i ] + max ) % max;
+        console.time( "NGL.Trajectory.centerPbc2" );
 
-                angle = ( c / max ) * twoPi - Math.PI;
+        var i;
+        var n = coords.length;
 
-                cosMean += Math.cos( angle );
-                sinMean += Math.sin( angle );
+        var bx = box[ 0 ], by = box[ 1 ], bz = box[ 2 ];
+        var mx = mean[ 0 ], my = mean[ 1 ], mz = mean[ 2 ];
 
-            }
+        var fx = - mx + bx + bx / 2;
+        var fy = - my + by + by / 2;
+        var fz = - mz + bz + bz / 2;
 
-            cosMean /= n;
-            sinMean /= n;
+        for( i = 0; i < n; i += 3 ){
 
-            var meanAngle = Math.atan2( sinMean, cosMean );
-
-            var center = ( meanAngle + Math.PI ) / twoPi * max;
-
-            return center;
+            coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
+            coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
+            coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
 
         }
 
-        /*function center( coords ){
+        console.timeEnd( "NGL.Trajectory.centerPbc2" );
 
-            var n = coords.length;
-            var i;
+    },
 
-            var mean = 0;
+    centerPbcBAK: function( structure, box ){
 
-            for( i = 0; i < n; ++i ){
+        box = box || structure.box;
 
-                mean += coords[ i ]
+        if( !box ){
 
-            }
+            console.warn( "Trajectory.centerPbc: no structure box given, aborting" );
+            return;
 
-            mean /= n;
+        }
 
-            return mean;
-
-        }*/
+        console.time( "NGL.Trajectory.centerPbc0" );
 
         var coordsX = [];
         var coordsY = [];
@@ -915,25 +933,39 @@ NGL.Trajectory.prototype = {
             coordsY.push( a.y );
             coordsZ.push( a.z );
 
+        //} );
         }, new NGL.Selection( "backbone" ) );
 
-        var maxX = 76.2315;
-        var maxY = 76.2315;
-        var maxZ = 108.6637;
+        console.timeEnd( "NGL.Trajectory.centerPbc0" );
 
-        var centerX = circularMean( coordsX, maxX );
-        var centerY = circularMean( coordsY, maxY );
-        var centerZ = circularMean( coordsZ, maxZ );
+        console.time( "NGL.Trajectory.centerPbc" );
 
-        // console.log( centerX, centerY, centerZ );
+        var centerX = NGL.Utils.circularMean( coordsX, box[ 0 ] );
+        var centerY = NGL.Utils.circularMean( coordsY, box[ 1 ] );
+        var centerZ = NGL.Utils.circularMean( coordsZ, box[ 2 ] );
+
+        console.log( "BAR", centerX, centerY, centerZ );
 
         console.timeEnd( "NGL.Trajectory.centerPbc" );
 
+
+        console.time( "NGL.Trajectory.centerPbc1" );
+
+        /*structure.eachAtom( function( a ){
+
+            a.x = ( a.x - centerX + box[ 0 ] + box[ 0 ] / 2 ) % box[ 0 ];
+            a.y = ( a.y - centerY + box[ 1 ] + box[ 1 ] / 2 ) % box[ 1 ];
+            a.z = ( a.z - centerZ + box[ 2 ] + box[ 2 ] / 2 ) % box[ 2 ];
+
+        } );*/
+
+        console.timeEnd( "NGL.Trajectory.centerPbc1" );
+
         return new Float32Array([
             0, 0, 0,
-            76.2315, 0, 0,
-            0, 76.2315, 0,
-            0, 0, 108.6637,
+            box[ 0 ], 0, 0,
+            0, box[ 1 ], 0,
+            0, 0, box[ 2 ],
             centerX, centerY, centerZ
         ]);
 
@@ -984,6 +1016,8 @@ NGL.Trajectory.prototype = {
 
     superpose: function( x ){
 
+        console.time( "NGL.Trajectory.superpose" );
+
         var sele = new NGL.Selection( ".CA" );
 
         var coords1 = [];
@@ -993,6 +1027,8 @@ NGL.Trajectory.prototype = {
         var n = this.atomCount * 3;
         var y = this.initialStructure;
 
+        console.time( "NGL.Trajectory.superpose#coords" );
+        // TODO use index array instead of selection
         this.structure.eachAtom( function( a ){
 
             i = 3 * a.index;
@@ -1001,10 +1037,17 @@ NGL.Trajectory.prototype = {
             coords2.push([ y[ i + 0 ], y[ i + 1 ], y[ i + 2 ] ]);
 
         }, sele );
+        console.timeEnd( "NGL.Trajectory.superpose#coords" );
 
+        console.time( "NGL.Trajectory.superpose#sp" );
         var sp = new NGL.Superposition( coords1, coords2 );
+        console.timeEnd( "NGL.Trajectory.superpose#sp" );
 
+        console.time( "NGL.Trajectory.superpose#trans" );
         sp.transform( x );
+        console.timeEnd( "NGL.Trajectory.superpose#trans" );
+
+        console.timeEnd( "NGL.Trajectory.superpose" );
 
     }
 

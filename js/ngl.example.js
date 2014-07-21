@@ -193,9 +193,9 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/pbc.gro", function( o ){
 
-                var maxX = 76.2315;
-                var maxY = 76.2315;
-                var maxZ = 108.6637;
+                var maxX = o.structure.box[ 0 ];
+                var maxY = o.structure.box[ 1 ];
+                var maxZ = o.structure.box[ 2 ];
 
                 o.structure.eachAtom( function( a ){
 
@@ -210,7 +210,17 @@ NGL.Examples = {
                 o.addRepresentation( "line" );
                 o.centerView();
 
-                var center = NGL.Trajectory.prototype.centerPbc( o.structure );
+
+                var backboneIndices = [];
+
+                o.structure.eachAtom( function( a ){
+
+                    backboneIndices.push( a.index );
+
+                }, new NGL.Selection( "backbone" ) );
+
+
+                var center = NGL.Trajectory.prototype.centerPbcBAK( o.structure );
                 var color = new Float32Array([
                     1, 1, 1,
                     1, 0, 0,
@@ -220,43 +230,44 @@ NGL.Examples = {
                 ]);
                 var radius = new Float32Array([ 5, 5, 5, 5, 5 ]);
 
-                console.log( center );
-
-                o.structure.eachAtom( function( a ){
-
-                    a.x = ( a.x - center[ 12 ] + 76.2315 + 76.2315/2 ) % 76.2315;
-                    a.y = ( a.y - center[ 13 ] + 76.2315 + 76.2315/2 ) % 76.2315;
-                    a.z = ( a.z - center[ 14 ] + 108.6637 + 108.6637/2 ) % 108.6637;
-
-                } );
 
                 var i = 0;
-                var initialStructure = new Float32Array( 3 * o.structure.atomCount );
+                var coords = new Float32Array( 3 * o.structure.atomCount );
                 
                 o.structure.eachAtom( function( a ){
 
-                    initialStructure[ i + 0 ] = a.x;
-                    initialStructure[ i + 1 ] = a.y;
-                    initialStructure[ i + 2 ] = a.z;
+                    coords[ i + 0 ] = a.x;
+                    coords[ i + 1 ] = a.y;
+                    coords[ i + 2 ] = a.z;
 
                     i += 3;
 
                 } );
 
                 var box = [
-                    76.2315, 0, 0,
-                    0, 76.2315, 0,
-                    0, 0, 108.6637
+                    o.structure.box[ 0 ], 0, 0,
+                    0, o.structure.box[ 1 ], 0,
+                    0, 0, o.structure.box[ 2 ]
                 ];
 
-                NGL.Trajectory.prototype.removePbc( initialStructure, box );
+
+                var mean = NGL.Trajectory.prototype.getCircularMean(
+                    backboneIndices, coords, o.structure.box
+                );
+
+                console.log( mean );
+
+                NGL.Trajectory.prototype.centerPbc( coords, mean, o.structure.box );                
+                
+
+                NGL.Trajectory.prototype.removePbc( coords, box );
 
                 i = 0;
                 o.structure.eachAtom( function( a ){
 
-                    a.x = initialStructure[ i + 0 ];
-                    a.y = initialStructure[ i + 1 ];
-                    a.z = initialStructure[ i + 2 ];
+                    a.x = coords[ i + 0 ];
+                    a.y = coords[ i + 1 ];
+                    a.z = coords[ i + 2 ];
 
                     i += 3;
 
@@ -284,6 +295,22 @@ NGL.Examples = {
                 o.centerView();
 
                 o.addTrajectory( path + "md_all.xtc" );
+
+            } );
+
+        },
+
+        "rho_traj2": function( stage ){
+
+            var path = "servers/zatopek/rhodopsin_md/1u19/md01/"
+
+            stage.loadFile( "../data/" + path + "md01.gro", function( o ){
+
+                // o.addRepresentation( "line", "! H" );
+                o.addRepresentation( "ribbon", "protein" );
+                o.centerView();
+
+                o.addTrajectory( path + "md01.xtc" );
 
             } );
 
