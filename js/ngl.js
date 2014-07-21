@@ -178,6 +178,70 @@ NGL.Utils = {
 
     },
 
+    circularMean: function(){
+
+        // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
+
+        // Bai, Linge; Breen, David (2008). Calculating Center of Mass in an Unbounded 2D Environment. Journal of Graphics, GPU, and Game Tools 13 (4): 53–60.
+
+        // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
+
+        var twoPi = 2 * Math.PI;
+
+        return function( array, max, stride, offset, indices ){
+
+            stride = stride || 1;
+            offset = offset || 0;
+
+            var n = indices ? indices.length : array.length;
+            var angle, i, c;
+
+            var cosMean = 0;
+            var sinMean = 0;
+
+            if( indices ){
+
+                for( i = 0; i < n; ++i ){
+
+                    //console.log( indices[ i ], stride, offset, indices[ i ] * stride + offset, array.length, array[ indices[ i ] * stride + offset ] );
+
+                    c = ( array[ indices[ i ] * stride + offset ] + max ) % max;
+
+                    angle = ( c / max ) * twoPi - Math.PI;
+
+                    cosMean += Math.cos( angle );
+                    sinMean += Math.sin( angle );
+
+                }
+
+            }else{
+
+                for( i = offset; i < n; i += stride ){
+
+                    c = ( array[ i ] + max ) % max;
+
+                    angle = ( c / max ) * twoPi - Math.PI;
+
+                    cosMean += Math.cos( angle );
+                    sinMean += Math.sin( angle );
+
+                }
+
+            }
+
+            cosMean /= n;
+            sinMean /= n;
+
+            var meanAngle = Math.atan2( sinMean, cosMean );
+
+            var mean = ( meanAngle + Math.PI ) / twoPi * max;
+
+            return mean;
+
+        }
+
+    }(),
+
     calculateCenterArray: function( array1, array2 ){
 
         var n = array1.length;
