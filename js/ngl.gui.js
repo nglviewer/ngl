@@ -443,7 +443,7 @@ NGL.ComponentWidget = function( component, stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            component.centerView();
+            component.centerView( "backbone" );
 
         } );
 

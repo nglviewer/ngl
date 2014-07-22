@@ -308,9 +308,16 @@ NGL.Examples = {
 
                 // o.addRepresentation( "line", "! H" );
                 o.addRepresentation( "ribbon", "protein" );
-                o.centerView();
+                o.centerView( "backbone" );
 
                 o.addTrajectory( path + "md01.xtc" );
+
+            } );
+
+            stage.loadFile( "../data/" + path + "md01.gro", function( o ){
+
+                o.addRepresentation( "backbone", "protein" );
+                o.centerView( "backbone" );
 
             } );
 

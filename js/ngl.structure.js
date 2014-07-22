@@ -181,6 +181,7 @@ NGL.AtomSet.prototype = {
         object.atomColor = NGL.AtomSet.prototype.atomColor;
         object.atomRadius = NGL.AtomSet.prototype.atomRadius;
         object.atomCenter = NGL.AtomSet.prototype.atomCenter;
+        object.atomIndex = NGL.AtomSet.prototype.atomIndex;
 
     },
 
@@ -346,12 +347,26 @@ NGL.AtomSet.prototype = {
 
     },
 
+    atomIndex: function( selection ){
+
+        var index = [];
+
+        this.eachAtom( function( a ){
+
+            index.push( a.index );
+
+        }, selection );
+
+        return index;
+
+    },
+
     atomCenter: function(){
 
         var box = new THREE.Box3();
         var vector = new THREE.Vector3();
 
-        return function(){
+        return function( selection ){
 
             box.makeEmpty();
 
@@ -360,7 +375,7 @@ NGL.AtomSet.prototype = {
                 vector.set( a.x, a.y, a.z );
                 box.expandByPoint( vector );
 
-            } );
+            }, selection );
 
             return box.center();
 
@@ -727,7 +742,7 @@ NGL.Trajectory = function( xtcPath, structure ){
     this.currentFrame = -1;
 
     this.saveInitialStructure();
-    this.makeBackboneIndices();
+    this.makeIndices();
 
     this.frameLoader = new THREE.XHRLoader();
     this.frameLoader.setResponseType( "arraybuffer" );
@@ -761,17 +776,11 @@ NGL.Trajectory.prototype = {
 
     },
 
-    makeBackboneIndices: function(){
+    makeIndices: function(){
 
-        var backboneIndices = [];
-
-        this.structure.eachAtom( function( a ){
-
-            backboneIndices.push( a.index );
-
-        }, new NGL.Selection( "backbone" ) );
-
-        this.backboneIndices = backboneIndices;
+        this.backboneIndices = this.structure.atomIndex(
+            new NGL.Selection( "backbone" )
+        );
 
     },
 
@@ -866,7 +875,7 @@ NGL.Trajectory.prototype = {
 
     getCircularMean: function( indices, coords, box ){
 
-        console.time( "NGL.Trajectory.getCircularMean" );
+        // console.time( "NGL.Trajectory.getCircularMean" );
 
         var mean = [
 
@@ -876,7 +885,7 @@ NGL.Trajectory.prototype = {
 
         ];
 
-        console.timeEnd( "NGL.Trajectory.getCircularMean" );
+        // console.timeEnd( "NGL.Trajectory.getCircularMean" );
 
         return mean;
 
@@ -884,7 +893,7 @@ NGL.Trajectory.prototype = {
 
     centerPbc: function( coords, mean, box ){
 
-        console.time( "NGL.Trajectory.centerPbc2" );
+        // console.time( "NGL.Trajectory.centerPbc" );
 
         var i;
         var n = coords.length;
@@ -904,76 +913,13 @@ NGL.Trajectory.prototype = {
 
         }
 
-        console.timeEnd( "NGL.Trajectory.centerPbc2" );
-
-    },
-
-    centerPbcBAK: function( structure, box ){
-
-        box = box || structure.box;
-
-        if( !box ){
-
-            console.warn( "Trajectory.centerPbc: no structure box given, aborting" );
-            return;
-
-        }
-
-        console.time( "NGL.Trajectory.centerPbc0" );
-
-        var coordsX = [];
-        var coordsY = [];
-        var coordsZ = [];
-        
-        // TODO most time consuming, do only once by
-        // initially getting the atom indices or an atomSet
-        structure.eachAtom( function( a ){
-
-            coordsX.push( a.x );
-            coordsY.push( a.y );
-            coordsZ.push( a.z );
-
-        //} );
-        }, new NGL.Selection( "backbone" ) );
-
-        console.timeEnd( "NGL.Trajectory.centerPbc0" );
-
-        console.time( "NGL.Trajectory.centerPbc" );
-
-        var centerX = NGL.Utils.circularMean( coordsX, box[ 0 ] );
-        var centerY = NGL.Utils.circularMean( coordsY, box[ 1 ] );
-        var centerZ = NGL.Utils.circularMean( coordsZ, box[ 2 ] );
-
-        console.log( "BAR", centerX, centerY, centerZ );
-
-        console.timeEnd( "NGL.Trajectory.centerPbc" );
-
-
-        console.time( "NGL.Trajectory.centerPbc1" );
-
-        /*structure.eachAtom( function( a ){
-
-            a.x = ( a.x - centerX + box[ 0 ] + box[ 0 ] / 2 ) % box[ 0 ];
-            a.y = ( a.y - centerY + box[ 1 ] + box[ 1 ] / 2 ) % box[ 1 ];
-            a.z = ( a.z - centerZ + box[ 2 ] + box[ 2 ] / 2 ) % box[ 2 ];
-
-        } );*/
-
-        console.timeEnd( "NGL.Trajectory.centerPbc1" );
-
-        return new Float32Array([
-            0, 0, 0,
-            box[ 0 ], 0, 0,
-            0, box[ 1 ], 0,
-            0, 0, box[ 2 ],
-            centerX, centerY, centerZ
-        ]);
+        // console.timeEnd( "NGL.Trajectory.centerPbc" );
 
     },
 
     removePbc: function( x, box ){
 
-        console.time( "NGL.Trajectory.removePbc" );
+        // console.time( "NGL.Trajectory.removePbc" );
 
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place
@@ -1008,7 +954,7 @@ NGL.Trajectory.prototype = {
 
         }
 
-        console.timeEnd( "NGL.Trajectory.removePbc" );
+        // console.timeEnd( "NGL.Trajectory.removePbc" );
 
         return x;
 
@@ -1018,34 +964,29 @@ NGL.Trajectory.prototype = {
 
         console.time( "NGL.Trajectory.superpose" );
 
-        var sele = new NGL.Selection( ".CA" );
-
         var coords1 = [];
         var coords2 = [];
 
-        var i;
-        var n = this.atomCount * 3;
+        var i, j;
+        var n = this.backboneIndices.length;
         var y = this.initialStructure;
 
-        console.time( "NGL.Trajectory.superpose#coords" );
-        // TODO use index array instead of selection
-        this.structure.eachAtom( function( a ){
+        for( i = 0; i < n; ++i ){
 
-            i = 3 * a.index;
+            j = this.backboneIndices[ i ] * 3;
 
-            coords1.push([ x[ i + 0 ], x[ i + 1 ], x[ i + 2 ] ]);
-            coords2.push([ y[ i + 0 ], y[ i + 1 ], y[ i + 2 ] ]);
+            coords1.push([ x[ j + 0 ], x[ j + 1 ], x[ j + 2 ] ]);
+            coords2.push([ y[ j + 0 ], y[ j + 1 ], y[ j + 2 ] ]);
 
-        }, sele );
-        console.timeEnd( "NGL.Trajectory.superpose#coords" );
+        }
 
-        console.time( "NGL.Trajectory.superpose#sp" );
+        // console.time( "NGL.Trajectory.superpose#sp" );
         var sp = new NGL.Superposition( coords1, coords2 );
-        console.timeEnd( "NGL.Trajectory.superpose#sp" );
+        // console.timeEnd( "NGL.Trajectory.superpose#sp" );
 
-        console.time( "NGL.Trajectory.superpose#trans" );
+        // console.time( "NGL.Trajectory.superpose#trans" );
         sp.transform( x );
-        console.timeEnd( "NGL.Trajectory.superpose#trans" );
+        // console.timeEnd( "NGL.Trajectory.superpose#trans" );
 
         console.timeEnd( "NGL.Trajectory.superpose" );
 
@@ -1151,7 +1092,7 @@ NGL.Superposition.prototype = {
             console.log( "R not a right handed system" );
             
             // R -= outer( U[:, 2], VH[2, :] * 2.0 )
-            var a = [].concat.apply(
+            /*var a = [].concat.apply(
                 [], numeric.getBlock( svd.U, [ 0, 2 ], [ 2, 2 ] )
             );
             var b = numeric.mul(
@@ -1160,7 +1101,17 @@ NGL.Superposition.prototype = {
             var x = outer( a, b );
 
             numeric.subeq( R, x );
-            numeric.muleq( svd.S, -1 );
+            numeric.muleq( svd.S, -1 );*/
+
+            console.log( R );
+
+            var c = [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, -1 ] ];
+            
+            R = numeric.dot( c, VH );
+            R = numeric.dot( svd.U, R );
+
+            /*R = numeric.dot( svd.U, c );
+            R = numeric.dot( R, VH );*/
 
         }
 
