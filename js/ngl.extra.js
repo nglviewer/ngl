@@ -126,7 +126,7 @@ NGL.Stage.prototype = {
             // object.addRepresentation( "trace" );
             // object.addRepresentation( "line" );
             // object.addRepresentation( "hyperball", "135 :B" );
-            object.centerView();
+            object.centerView( "backbone" );
 
         }else if( object instanceof NGL.SurfaceComponent ){
 
@@ -454,9 +454,17 @@ NGL.StructureComponent.prototype = {
 
         var t = new THREE.Vector3();
 
-        return function(){
+        return function( sele ){
 
-            t.copy( this.structure.center ).multiplyScalar( -1 );
+            var center;
+
+            if( sele ){
+                center = this.structure.atomCenter( new NGL.Selection( sele ) );
+            }else{
+                center = this.structure.center;
+            }
+
+            t.copy( center ).multiplyScalar( -1 );
 
             this.viewer.rotationGroup.position.copy( t );
             this.viewer.pickingRotationGroup.position.copy( t );
