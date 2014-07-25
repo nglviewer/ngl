@@ -962,46 +962,85 @@ NGL.Trajectory.prototype = {
 
     superpose: function( x ){
 
-        console.time( "NGL.Trajectory.superpose" );
-
-        var coords1 = [];
-        var coords2 = [];
+        // console.time( "NGL.Trajectory.superpose" );
 
         var i, j;
-        var n = this.backboneIndices.length;
+        var n = this.backboneIndices.length * 3;
         var y = this.initialStructure;
 
-        for( i = 0; i < n; ++i ){
+        var coords1 = new Float32Array( n );
+        var coords2 = new Float32Array( n );
 
-            j = this.backboneIndices[ i ] * 3;
+        for( i = 0; i < n; i += 3 ){
 
-            coords1.push([ x[ j + 0 ], x[ j + 1 ], x[ j + 2 ] ]);
-            coords2.push([ y[ j + 0 ], y[ j + 1 ], y[ j + 2 ] ]);
+            j = this.backboneIndices[ i / 3 ] * 3;
+
+            coords1[ i + 0 ] = x[ j + 0 ];
+            coords1[ i + 1 ] = x[ j + 1 ];
+            coords1[ i + 2 ] = x[ j + 2 ];
+
+            coords2[ i + 0 ] = y[ j + 0 ];
+            coords2[ i + 1 ] = y[ j + 1 ];
+            coords2[ i + 2 ] = y[ j + 2 ];
 
         }
 
-        // console.time( "NGL.Trajectory.superpose#sp" );
         var sp = new NGL.Superposition( coords1, coords2 );
-        // console.timeEnd( "NGL.Trajectory.superpose#sp" );
 
-        // console.time( "NGL.Trajectory.superpose#trans" );
         sp.transform( x );
-        // console.timeEnd( "NGL.Trajectory.superpose#trans" );
 
-        console.timeEnd( "NGL.Trajectory.superpose" );
+        // console.timeEnd( "NGL.Trajectory.superpose" );
 
     }
 
 };
 
 
+NGL.Matrix = function( columns, rows ){
+
+    var dtype = jsfeat.F32_t | jsfeat.C1_t;
+
+    return new jsfeat.matrix_t( columns, rows, dtype );
+
+}
+
 //////////////////
 // Superposition
 
 NGL.Superposition = function( atoms1, atoms2 ){
 
-    var coords1 = this.prepCoords( atoms1 );
-    var coords2 = this.prepCoords( atoms2 );
+    // allocate & init data structures
+
+    var n;
+    if( typeof atoms1.eachAtom === "function" ){
+        n = atoms1.atomCount;
+    }else if( atoms1 instanceof Float32Array ){
+        n = atoms1.length / 3;
+    }
+
+    var coords1 = new NGL.Matrix( 3, n );
+    var coords2 = new NGL.Matrix( 3, n );
+
+    this.coords1t = new NGL.Matrix( n, 3 );
+    this.coords2t = new NGL.Matrix( n, 3 );
+
+    this.A = new NGL.Matrix( 3, 3 );
+    this.W = new NGL.Matrix( 1, 3 );
+    this.U = new NGL.Matrix( 3, 3 );
+    this.V = new NGL.Matrix( 3, 3 );
+    this.VH = new NGL.Matrix( 3, 3 );
+    this.R = new NGL.Matrix( 3, 3 );
+
+    this.tmp = new NGL.Matrix( 3, 3 );
+    this.c = new NGL.Matrix( 3, 3 );
+    this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ]);
+
+    // prep coords
+
+    this.prepCoords( atoms1, coords1 );
+    this.prepCoords( atoms2, coords2 );
+
+    // superpose
 
     this._superpose( coords1, coords2 );
 
@@ -1009,227 +1048,119 @@ NGL.Superposition = function( atoms1, atoms2 ){
 
 NGL.Superposition.prototype = {
 
-    subMean: function( coords, mean ){
-
-        var i, row;
-        var cx = mean[ 0 ];
-        var cy = mean[ 1 ];
-        var cz = mean[ 2 ];
-        var n = coords.length;
-
-        for( i = 0; i < n; ++i ){
-            row = coords[ i ];
-            row[ 0 ] -= cx;
-            row[ 1 ] -= cy;
-            row[ 2 ] -= cz;
-        }
-
-    },
-
-    addMean: function( coords, mean ){
-
-        var i, row;
-        var cx = mean[ 0 ];
-        var cy = mean[ 1 ];
-        var cz = mean[ 2 ];
-        var n = coords.length;
-
-        for( i = 0; i < n; ++i ){
-            row = coords[ i ];
-            row[ 0 ] += cx;
-            row[ 1 ] += cy;
-            row[ 2 ] += cz;
-        }
-
-    },
-
     _superpose: function( coords1, coords2 ){
-
-        // calc the matrix that moves coords1 onto coords2
 
         // console.time( "superpose" );
 
-        this.mean1 = numeric.add.apply( null, coords1 );
-        numeric.diveq( this.mean1, coords1.length );
+        this.mean1 = jsfeat.matmath.mean_rows( coords1 );
+        this.mean2 = jsfeat.matmath.mean_rows( coords2 );
 
-        this.mean2 = numeric.add.apply( null, coords2 );
-        numeric.diveq( this.mean2, coords2.length );
+        jsfeat.matmath.sub_rows( coords1, this.mean1 );
+        jsfeat.matmath.sub_rows( coords2, this.mean2 );
 
-        this.subMean( coords1, this.mean1 );
-        this.subMean( coords2, this.mean2 );
+        jsfeat.matmath.transpose( this.coords1t, coords1 );
+        jsfeat.matmath.transpose( this.coords2t, coords2 );
 
-        coords1 = numeric.transpose( coords1 );
-        coords2 = numeric.transpose( coords2 );
+        jsfeat.matmath.multiply_ABt( this.A, this.coords2t, this.coords1t );
 
-        // SVD of covar matrix
-
-        svd = numeric.svd( 
-            numeric.dot( coords2, numeric.transpose( coords1 ) )
+        var svd = jsfeat.linalg.svd_decompose(
+            this.A, this.W, this.U, this.V
         );
 
-        // rotation matrix from SVD orthonormal bases
+        jsfeat.matmath.invert_3x3( this.V, this.VH );
+        jsfeat.matmath.multiply_3x3( this.R, this.U, this.VH );
 
-        var VH = numeric.inv( svd.V );
-        var R = numeric.dot( svd.U, VH );
-
-        function outer( v1, v2 ){
-
-            var n = v1.length;
-            var mat = [];
-
-            for( var i = 0; i < n; ++i ){
-                mat.push(
-                    numeric.mul( v2, v1[ i ] )
-                );
-            }
-
-            return mat;
-
-        }
-
-        if( numeric.det( R ) < 0.0 ){
+        if( jsfeat.matmath.mat3x3_determinant( this.R ) < 0.0 ){
 
             console.log( "R not a right handed system" );
-            
-            // R -= outer( U[:, 2], VH[2, :] * 2.0 )
-            /*var a = [].concat.apply(
-                [], numeric.getBlock( svd.U, [ 0, 2 ], [ 2, 2 ] )
-            );
-            var b = numeric.mul(
-                numeric.getBlock( VH, [ 2, 0 ], [ 2, 2 ] )[0], 2
-            );
-            var x = outer( a, b );
 
-            numeric.subeq( R, x );
-            numeric.muleq( svd.S, -1 );*/
-
-            console.log( R );
-
-            var c = [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, -1 ] ];
-            
-            R = numeric.dot( c, VH );
-            R = numeric.dot( svd.U, R );
-
-            /*R = numeric.dot( svd.U, c );
-            R = numeric.dot( R, VH );*/
+            jsfeat.matmath.multiply_3x3( this.tmp, this.c, this.VH );
+            jsfeat.matmath.multiply_3x3( this.R, this.U, this.tmp );
 
         }
-
-        // homogeneous transformation matrix
-
-        var M = numeric.identity( 4 );
-        numeric.setBlock( M, [ 0, 0 ], [ 2, 2 ], R );
-
-        // translation
-
-        M[ 0 ][ 3 ] = this.mean2[ 0 ];
-        M[ 1 ][ 3 ] = this.mean2[ 1 ];
-        M[ 2 ][ 3 ] = this.mean2[ 2 ];
-
-        var T = numeric.identity( 4 );
-        T[ 0 ][ 3 ] = -this.mean1[ 0 ];
-        T[ 1 ][ 3 ] = -this.mean1[ 1 ];
-        T[ 2 ][ 3 ] = -this.mean1[ 2 ];
-
-        M = numeric.dot( M, T );
-
-        // rotation matrix
-
-        this.rotMat = numeric.getBlock( M, [ 0, 0 ], [ 2, 2 ] );
-
-        // rmsd
-        
-        var E0 = numeric.sum( numeric.mul( coords1, coords1 ) ) +
-            numeric.sum( numeric.mul( coords2, coords2 ) );
-        var msd = ( E0 - 2 * numeric.sum( svd.S ) ) / coords1[0].length;
-        this.rmsd = Math.sqrt( Math.max( msd, 0 ) );
-
-        // console.log( "rmsd", this.rmsd );
 
         // console.timeEnd( "superpose" );
 
     },
 
-    prepCoords: function( atoms ){
+    prepCoords: function( atoms, coords ){
 
-        var coords = [];
+        var i = 0;
+        var cd = coords.data;
 
         if( typeof atoms.eachAtom === "function" ){
 
             atoms.eachAtom( function( a ){
 
-                coords.push([ a.x, a.y, a.z ]);
+                cd[ i + 0 ] = a.x;
+                cd[ i + 1 ] = a.y;
+                cd[ i + 2 ] = a.z;
+
+                i += 3;
 
             } );
 
         }else if( atoms instanceof Float32Array ){
 
-            n = atoms.length;
-
-            for( i = 0; i < n; i += 3 ){
-
-                coords.push([ atoms[ i + 0 ], atoms[ i + 1 ], atoms[ i + 2 ] ]);
-
-            }
+            cd.set( atoms );
 
         }else{
 
-            coords = numeric.clone( atoms );
+            console.warn( "prepCoords: input type unknown" );
 
         }
-
-        return coords;
 
     },
 
     transform: function( atoms ){
 
-        var coords = this.prepCoords( atoms );
+        // allocate data structures
 
-        this.subMean( coords, this.mean1 );
+        var n;
+        if( typeof atoms.eachAtom === "function" ){
+            n = atoms.atomCount;
+        }else if( atoms instanceof Float32Array ){
+            n = atoms.length / 3;
+        }
+        
+        var coords = new NGL.Matrix( 3, n );
+        var tmp = new NGL.Matrix( n, 3 );
 
-        coords = numeric.transpose(
-            numeric.dot( this.rotMat, numeric.transpose( coords ) )
-        );
+        // prep coords
 
-        this.addMean( coords, this.mean2 );
+        this.prepCoords( atoms, coords );
 
-        var n, row;
+        // do transform
+
+        jsfeat.matmath.sub_rows( coords, this.mean1 );
+        jsfeat.matmath.multiply_ABt( tmp, this.R, coords );
+        jsfeat.matmath.transpose( coords, tmp );
+        jsfeat.matmath.add_rows( coords, this.mean2 );
+
         var i = 0;
+        var cd = coords.data;
 
         if( typeof atoms.eachAtom === "function" ){
             
             atoms.eachAtom( function( a ){
 
-                row = coords[ i++ ];
+                a.x = cd[ i + 0 ];
+                a.y = cd[ i + 1 ];
+                a.z = cd[ i + 2 ];
 
-                a.x = row[ 0 ];
-                a.y = row[ 1 ];
-                a.z = row[ 2 ];
+                i += 3;
 
             } );
 
         }else if( atoms instanceof Float32Array ){
 
-            n = atoms.length;
-
-            for( i = 0; i < n; i += 3 ){
-
-                row = coords[ i / 3 ];
-
-                atoms[ i + 0 ] = row[ 0 ];
-                atoms[ i + 1 ] = row[ 1 ];
-                atoms[ i + 2 ] = row[ 2 ];
-
-            }
+            atoms.set( cd.subarray( 0, n * 3 ) );
 
         }else{
 
-            atoms = numeric.clone( coords );
+            console.warn( "transform: input type unknown" );
 
         }
-
-        return atoms;
 
     }
 
