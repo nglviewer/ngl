@@ -500,7 +500,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             
             if( e.keyCode === 13 ){
 
-                component.changeSelection( sele.getValue(), true );
+                component.changeSelection( sele.getValue() );
 
             }
 
@@ -850,6 +850,12 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var container = new UI.CollapsiblePanel()
         .setMarginLeft( "20px" );
+
+    component.signals.trajectoryRemoved.add( function( _traj ){
+
+        if( traj === _traj ) container.dispose();
+        
+    } );
 
     var numframes = new UI.Panel()
         .setMarginLeft( "10px" )

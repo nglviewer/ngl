@@ -172,7 +172,9 @@ NGL.Stage.prototype = {
 
     },
 
-    loadFile: function( path, onLoad ){
+    loadFile: function( path, onLoad, params ){
+
+        params = params || {};
 
         var scope = this;
 
@@ -182,7 +184,7 @@ NGL.Stage.prototype = {
 
             if( object instanceof NGL.Structure ){
 
-                component = new NGL.StructureComponent( scope, object );
+                component = new NGL.StructureComponent( scope, object, params.sele );
 
             }else if( object instanceof NGL.Surface ){
 
@@ -337,18 +339,18 @@ NGL.StructureComponent = function( stage, structure, sele ){
     this.signals.trajectoryAdded = new SIGNALS.Signal();
     this.signals.trajectoryRemoved = new SIGNALS.Signal();*/
 
+    this.trajList = [];
+
     this.__structure = structure;
     this.structure = structure;
     this.changeSelection( sele );
     this.name = structure.name;
 
-    this.trajList = [];
-
 }
 
 NGL.StructureComponent.prototype = {
 
-    changeSelection: function( sele, update ){
+    changeSelection: function( sele ){
 
         if( sele === this.sele ) return;
 
@@ -356,23 +358,27 @@ NGL.StructureComponent.prototype = {
 
         if( sele ){
 
-            this.structure = this.__structure.makeSubset( sele );
+            this.structure = new NGL.StructureSubset( this.__structure, sele );
 
         }
 
-        if( update ){
+        var scope = this;
 
-            var scope = this;
+        this.reprList.slice( 0 ).forEach( function( repr ){
 
-            this.reprList.slice( 0 ).forEach( function( repr ){
+            scope.addRepresentation( repr.name, repr._sele );
 
-                scope.addRepresentation( repr.name, repr._sele );
+            scope.removeRepresentation( repr );
 
-                scope.removeRepresentation( repr );
+        } );
 
-            } );
+        this.trajList.slice( 0 ).forEach( function( traj ){
 
-        }
+            scope.addTrajectory( traj.xtcPath );
+
+            scope.removeTrajectory( traj );
+
+        } );
 
     },
 
@@ -443,7 +449,7 @@ NGL.StructureComponent.prototype = {
 
     removeTrajectory: function( traj ){
 
-        var idx = this.trajList.indexOf( repr );
+        var idx = this.trajList.indexOf( traj );
 
         if( idx !== -1 ){
 
