@@ -862,12 +862,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         .setDisplay( "inline" )
         .add( new UI.Icon( "spinner" ).addClass( "spin" ) );
 
-    var numcache = new UI.Text( "0" )
-        .setMarginLeft( "10px" );
-
     signals.gotNumframes.add( function( value ){
 
-        numframes.clear().add( new UI.Text( value ) );
+        numframes.clear().add( new UI.Text( "#" + value ) );
         frame.setRange( 0, value - 1 );
         frame2.setRange( 0, value - 1 );
 
@@ -882,7 +879,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         frame.setValue( value );
         frame2.setValue( value );
 
-        numcache.setValue( traj.frameCacheSize );
+        numframes.clear().add( new UI.Text(
+            "#" + traj.numframes + " (" + traj.frameCacheSize + ")"
+        ) );
 
         inProgress = false;
         
@@ -890,8 +889,6 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     container.addStatic( new UI.Text( "Trajectory" ) );
     container.addStatic( numframes );
-    container.addStatic( new UI.Text( "Cache" ).setMarginLeft( "20px" ) );
-    container.addStatic( numcache );
 
     // frames
 
