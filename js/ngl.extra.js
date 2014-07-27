@@ -88,13 +88,21 @@ NGL.Stage = function( eid ){
         // TODO early exit, binary search
         var pickedAtom = undefined;
         compList.forEach( function( o ){
-            o.structure.eachAtom( function( a ){
 
-                if( a.globalindex === ( id - 1 ) ){
-                    pickedAtom = a;
-                }
+            console.log( o, id );
 
-            } );
+            if( o instanceof NGL.StructureComponent ){
+
+                o.structure.eachAtom( function( a ){
+
+                    if( a.globalindex === ( id - 1 ) ){
+                        pickedAtom = a;
+                    }
+
+                } );
+
+            }
+
         } );
 
         scope.signals.atomPicked.dispatch( pickedAtom );
@@ -320,7 +328,7 @@ NGL.Component.prototype = {
 }
 
 
-NGL.StructureComponent = function( stage, structure ){
+NGL.StructureComponent = function( stage, structure, sele ){
 
     NGL.Component.call( this, stage );
 
@@ -329,7 +337,9 @@ NGL.StructureComponent = function( stage, structure ){
     this.signals.trajectoryAdded = new SIGNALS.Signal();
     this.signals.trajectoryRemoved = new SIGNALS.Signal();*/
 
+    this.__structure = structure;
     this.structure = structure;
+    this.changeSelection( sele );
     this.name = structure.name;
 
     this.trajList = [];
@@ -337,6 +347,34 @@ NGL.StructureComponent = function( stage, structure ){
 }
 
 NGL.StructureComponent.prototype = {
+
+    changeSelection: function( sele, update ){
+
+        if( sele === this.sele ) return;
+
+        this.sele = sele;
+
+        if( sele ){
+
+            this.structure = this.__structure.makeSubset( sele );
+
+        }
+
+        if( update ){
+
+            var scope = this;
+
+            this.reprList.slice( 0 ).forEach( function( repr ){
+
+                scope.addRepresentation( repr.name, repr._sele );
+
+                scope.removeRepresentation( repr );
+
+            } );
+
+        }
+
+    },
 
     addRepresentation: function( type, sele ){
 
@@ -522,6 +560,7 @@ NGL.SurfaceComponent.prototype = {
             t.copy( this.surface.center ).multiplyScalar( -1 );
 
             this.viewer.rotationGroup.position.copy( t );
+            this.viewer.pickingRotationGroup.position.copy( t );
             this.viewer.render();
 
         };
@@ -1315,9 +1354,12 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
         if( f.residueCount < 4 ) return;
 
+        console.time( "NGL.RibbonRepresentation.create spline" );
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
+        console.timeEnd( "NGL.RibbonRepresentation.create spline" );
 
+        console.time( "NGL.RibbonRepresentation.create buffer" );
         bufferList.push(
 
             new NGL.RibbonBuffer(
@@ -1330,6 +1372,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
             )
 
         );
+        console.timeEnd( "NGL.RibbonRepresentation.create buffer" );
 
     }, this.selection, true );
 
@@ -1343,9 +1386,16 @@ NGL.RibbonRepresentation.prototype.update = function(){
 
     // TODO more fine grained, update only position
 
+    console.time( "NGL.RibbonRepresentation.update" );
+
     this.dispose();
     this.create();
+
+    console.time( "NGL.RibbonRepresentation.update attach" );
     this.attach();
+    console.timeEnd( "NGL.RibbonRepresentation.update attach" );
+
+    console.timeEnd( "NGL.RibbonRepresentation.update" );
 
 };
 
@@ -1386,9 +1436,13 @@ NGL.TraceRepresentation.prototype.update = function(){
 
     // TODO more fine grained, update only position
 
+    console.time( "NGL.TraceRepresentation.update" );
+
     this.dispose();
     this.create();
     this.attach();
+
+    console.timeEnd( "NGL.TraceRepresentation.update" );
 
 };
 

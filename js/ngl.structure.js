@@ -625,7 +625,7 @@ NGL.BondSet.prototype = {
 
         if( bondDict[ qn ] ){
 
-            console.log( "bond already known" );
+            // console.debug( "bond already known" );
 
         }else{
 
@@ -893,7 +893,7 @@ NGL.Trajectory.prototype = {
 
     centerPbc: function( coords, mean, box ){
 
-        // console.time( "NGL.Trajectory.centerPbc" );
+        console.time( "NGL.Trajectory.centerPbc" );
 
         var i;
         var n = coords.length;
@@ -913,13 +913,13 @@ NGL.Trajectory.prototype = {
 
         }
 
-        // console.timeEnd( "NGL.Trajectory.centerPbc" );
+        console.timeEnd( "NGL.Trajectory.centerPbc" );
 
     },
 
     removePbc: function( x, box ){
 
-        // console.time( "NGL.Trajectory.removePbc" );
+        console.time( "NGL.Trajectory.removePbc" );
 
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place
@@ -954,7 +954,7 @@ NGL.Trajectory.prototype = {
 
         }
 
-        // console.timeEnd( "NGL.Trajectory.removePbc" );
+        console.timeEnd( "NGL.Trajectory.removePbc" );
 
         return x;
 
@@ -962,7 +962,7 @@ NGL.Trajectory.prototype = {
 
     superpose: function( x ){
 
-        // console.time( "NGL.Trajectory.superpose" );
+        console.time( "NGL.Trajectory.superpose" );
 
         var i, j;
         var n = this.backboneIndices.length * 3;
@@ -989,7 +989,7 @@ NGL.Trajectory.prototype = {
 
         sp.transform( x );
 
-        // console.timeEnd( "NGL.Trajectory.superpose" );
+        console.timeEnd( "NGL.Trajectory.superpose" );
 
     }
 
@@ -1205,6 +1205,106 @@ NGL.Structure.prototype = {
 
     },
 
+    makeSubset: function( sele ){
+
+        console.time( "NGL.Structure.makeSubset" );
+
+        var selection = new NGL.Selection( sele );
+
+        var _s = new NGL.Structure( this.name + " [subset]" );
+        _s.bondSet = new NGL.BondSet();
+
+        var atomIndexDict = {};
+
+        var _m, _c, _r, _a;
+
+        this.eachModel( function( m ){
+
+            _m = _s.addModel();
+
+            m.eachChain( function( c ){
+
+                _c = _m.addChain();
+                _c.chainname = c.chainname;
+
+                c.eachResidue( function( r ){
+
+                    _r = _c.addResidue();
+                    _r.resno = r.resno;
+                    _r.resname = r.resname;
+
+                    r.eachAtom( function( a ){
+
+                        _a = _r.addAtom();
+                        _a.atomno = a.atomno;
+                        _a.resname = a.resname;
+                        _a.x = a.x;
+                        _a.y = a.y;
+                        _a.z = a.z;
+                        _a.element = a.element;
+                        _a.chainname = a.chainname;
+                        _a.chainindex = a.chainindex;
+                        _a.resno = a.resno;
+                        _a.resindex = a.resindex;
+                        _a.serial = a.serial;
+                        _a.ss = a.ss;
+                        _a.color = a.color;
+                        _a.vdw = a.vdw;
+                        _a.covalent = a.covalent;
+                        _a.hetero = a.hetero;
+                        _a.bfactor = a.bfactor;
+                        _a.bonds = [];
+                        _a.altloc = a.altloc;
+                        _a.atomname = a.atomname;
+                        _a.modelindex = a.modelindex;
+
+                        atomIndexDict[ a.index ] = _a;
+
+                    }, selection );
+
+                    if( _r.atoms.length === 0 ){
+                        _c.residues.pop();
+                        --_c.residueCount;
+                        --_m.residueCount;
+                        --_s.residueCount;
+                    }
+
+                }, selection );
+
+                if( _c.residues.length === 0 ){
+                    _m.chains.pop();
+                    --_m.chainCount;
+                    --_s.chainCount;
+                }
+
+            }, selection );
+
+            if( _m.chains.length === 0 ){
+                _s.models.pop();
+                --_s.modelCount;
+            }
+
+        }, selection );
+
+        this.bondSet.eachBond( function( b ){
+
+            _s.bondSet.addBond(
+                atomIndexDict[ b.atom1.index ],
+                atomIndexDict[ b.atom2.index ]
+            )
+
+        }, selection );
+
+        _s.center = _s.atomCenter();
+
+        console.timeEnd( "NGL.Structure.makeSubset" );
+
+        console.log( _s )
+
+        return _s;
+
+    },
+
     nextAtomIndex: function(){
 
         return this.atomCount++;
@@ -1246,7 +1346,7 @@ NGL.Structure.prototype = {
 
     },
 
-    eachResidue: function( callback ){
+    eachResidue: function( callback, selection ){
 
         this.models.forEach( function( m ){
             m.eachResidue( callback );
@@ -1270,23 +1370,39 @@ NGL.Structure.prototype = {
 
     },
 
-    eachChain: function( callback ){
+    eachChain: function( callback, selection ){
 
         this.models.forEach( function( m ){
-            m.eachChain( callback );
+            m.eachChain( callback, selection );
         } );
 
     },
 
-    eachModel: function( callback ){
+    eachModel: function( callback, selection ){
 
-        this.models.forEach( callback );
+        if( selection ){
+
+            var test = selection.modelTest;
+
+            this.models.forEach( function( m ){
+
+                if( test( m ) ) callback( m );
+
+            } );
+
+        }else{
+
+            this.models.forEach( callback );
+
+        }
 
     },
 
     getSequence: function(){
 
         var seq = [];
+
+        // FIXME nucleic support
 
         this.eachResidue( function( r ){
 
@@ -1308,6 +1424,8 @@ NGL.Structure.prototype = {
 
         var i, j, n, a1, a2;
 
+        // bonds within a residue
+
         this.eachResidue( function( r ){
 
             n = r.atomCount - 1;
@@ -1327,6 +1445,8 @@ NGL.Structure.prototype = {
             }
 
         } );
+
+        // bonds between residues
 
         this.eachResidueN( 2, function( r1, r2 ){
 
@@ -1362,8 +1482,6 @@ NGL.Structure.prototype = {
         //
         // TM-align: a protein structure alignment algorithm based on the Tm-score 
         // (2005) NAR, 33(7) 2302-2309
-
-        console.time( "NGL.Structure.autoSS" );
 
         var zhangSkolnickSS = function(){
 
@@ -1422,39 +1540,45 @@ NGL.Structure.prototype = {
 
         var i, n;
 
-        this.eachFiber( function( f ){
+        return function(){
 
-            if( !f.isProtein() ) return;
+            console.time( "NGL.Structure.autoSS" );
 
-            n = f.residueCount;
+            this.eachFiber( function( f ){
 
-            for( i = 0; i < n; ++i ){
+                if( !f.isProtein() ) return;
 
-                if( isHelical( f, i ) ){
+                n = f.residueCount;
 
-                    // console.log( "helix", i, f.residues[ i ] );
+                for( i = 0; i < n; ++i ){
 
-                    f.residues[ i ].ss = "h";
+                    if( isHelical( f, i ) ){
 
-                }else if( isSheet( f, i ) ){
+                        // console.log( "helix", i, f.residues[ i ] );
 
-                    // console.log( "sheet", i, f.residues[ i ] );
+                        f.residues[ i ].ss = "h";
 
-                    f.residues[ i ].ss = "s";
+                    }else if( isSheet( f, i ) ){
 
-                }else{
+                        // console.log( "sheet", i, f.residues[ i ] );
 
-                    // console.log( "no helix, no sheet", i );
+                        f.residues[ i ].ss = "s";
+
+                    }else{
+
+                        // console.log( "no helix, no sheet", i );
+
+                    }
 
                 }
 
-            }
+            } );
 
-        } );
+            console.timeEnd( "NGL.Structure.autoSS" );
 
-        console.timeEnd( "NGL.Structure.autoSS" );
+        }
 
-    },
+    }(),
 
     updatePosition: function( position ){
 
@@ -1489,45 +1613,49 @@ NGL.Structure.prototype = {
         var pdbFormatString =
             "ATOM  %5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n";
 
-        var ia;
-        var im = 1;
-        var pdbRecords = [];
+        return function(){
 
-        // FIXME multiline if title line longer than 80 chars
-        pdbRecords.push( sprintf( "TITEL %-74s\n", this.name ) );
+            var ia;
+            var im = 1;
+            var pdbRecords = [];
 
-        this.eachModel( function( m ){ 
+            // FIXME multiline if title line longer than 80 chars
+            pdbRecords.push( sprintf( "TITEL %-74s\n", this.name ) );
 
-            pdbRecords.push( sprintf( "MODEL %-74d\n", im++ ) );
+            this.eachModel( function( m ){ 
 
-            m.eachAtom( function( a ){
+                pdbRecords.push( sprintf( "MODEL %-74d\n", im++ ) );
 
-                pdbRecords.push(
-                    sprintf(
-                        pdbFormatString,
-                        
-                        a.serial, a.atomname, a.resname,
-                        DEF( a.chainname, " " ),
-                        a.resno,
-                        a.x, a.y, a.z,
-                        DEF( a.occurence, 1.0 ),
-                        DEF( a.bfactor, 0.0 ),
-                        DEF( a.segid, "" ),
-                        DEF( a.element, "" )
-                    )
-                );
+                m.eachAtom( function( a ){
+
+                    pdbRecords.push(
+                        sprintf(
+                            pdbFormatString,
+                            
+                            a.serial, a.atomname, a.resname,
+                            DEF( a.chainname, " " ),
+                            a.resno,
+                            a.x, a.y, a.z,
+                            DEF( a.occurence, 1.0 ),
+                            DEF( a.bfactor, 0.0 ),
+                            DEF( a.segid, "" ),
+                            DEF( a.element, "" )
+                        )
+                    );
+
+                } );
+
+                pdbRecords.push( sprintf( "%-80s\n", "ENDMDL" ) );
 
             } );
 
-            pdbRecords.push( sprintf( "%-80s\n", "ENDMDL" ) );
+            pdbRecords.push( sprintf( "%-80s\n", "END" ) );
 
-        } );
+            return pdbRecords.join( "" );
 
-        pdbRecords.push( sprintf( "%-80s\n", "END" ) );
+        }
 
-        return pdbRecords.join( "" );
-
-    }
+    }()
 
 };
 
@@ -1591,7 +1719,7 @@ NGL.Model.prototype = {
 
     },
 
-    eachResidue: function( callback ){
+    eachResidue: function( callback, selection ){
 
         this.chains.forEach( function( c ){
             c.eachResidue( callback );
@@ -1615,9 +1743,23 @@ NGL.Model.prototype = {
 
     },
 
-    eachChain: function( callback ){
+    eachChain: function( callback, selection ){
 
-        this.chains.forEach( callback );
+        if( selection ){
+
+            var test = selection.chainTest;
+
+            this.chains.forEach( function( c ){
+
+                if( test( c ) ) callback( c );
+
+            } );
+
+        }else{
+
+            this.chains.forEach( callback );
+
+        }
 
     }
 
@@ -1671,13 +1813,29 @@ NGL.Chain.prototype = {
 
     },
 
-    eachResidue: function( callback ){
+    eachResidue: function( callback, selection ){
 
-        this.residues.forEach( callback );
+        if( selection ){
+
+            var test = selection.residueTest;
+
+            this.residues.forEach( function( r ){
+
+                if( test( r ) ) callback( r );
+
+            } );
+
+        }else{
+
+            this.residues.forEach( callback );
+
+        }
 
     },
 
     eachResidueN: function( n, callback ){
+
+        if( this.residues.length < n ) return;
 
         var residues = this.residues;
         var array = new Array( n );
@@ -1936,6 +2094,18 @@ NGL.Residue.prototype = {
         }
 
         return this._nucleic;
+
+    },
+
+    isHetero: function(){
+
+        if( this._hetero === undefined ){
+
+            this._hetero = this.atoms.length && this.atoms[0].hetero;
+
+        }
+
+        return this._hetero;
 
     },
 
@@ -2449,6 +2619,9 @@ NGL.Selection = function( selection ){
     }
 
     this.test = this.makeTest();
+    this.residueTest = this.makeResidueTest();
+    this.chainTest = this.makeChainTest();
+    this.modelTest = this.makeModelTest();
 
     // console.log( this.selection )
 
@@ -2578,30 +2751,18 @@ NGL.Selection.prototype = {
 
     },
 
-    makeTest: function(){
+    _makeTest: function( fn ){
 
         var n = this.selection.length;
         var selection = this.selection;
         var negate = this.negate;
 
-        var backboneProtein = [
-            "CA", "C", "N", "O"
-        ];
-        var backboneNucleic = [
-            "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2"
-        ];
-
-        var t = true;
-        var f = false;
-
-        if( negate ){
-            t = !t;
-            f = !f;
-        }
+        var t = negate ? false : true;
+        var f = negate ? true : false;
 
         var i, s;
 
-        return function( a ){
+        return function( entity ){
 
             if( selection.length === 0 ) return true;
 
@@ -2609,38 +2770,17 @@ NGL.Selection.prototype = {
 
                 s = selection[ i ];
 
-                if( s.keyword!==undefined ){
+                if( s.keyword!==undefined && s.keyword==="ALL" ) return t;
 
-                    if( s.keyword==="ALL" ) return t;
-                    if( s.keyword==="HETERO" && a.hetero===true ) return t;
-                    if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return t;
-                    if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return t;
-                    if( s.keyword==="BACKBONE" && (
-                            ( a.residue.isProtein() && 
-                                backboneProtein.indexOf( a.atomname )!==-1 ) || 
-                            ( a.residue.isNucleic() && 
-                                backboneNucleic.indexOf( a.atomname )!==-1 )
-                        )
-                    ) return t;
+                if( fn( entity, s, t, f ) === t ){
+
+                    return t;
+
+                }else{
 
                     continue;
 
                 }
-
-                if( s.resname!==undefined && s.resname!==a.resname ) continue;
-                if( s.chainname!==undefined && s.chainname!==a.chainname ) continue;
-                if( s.atomname!==undefined && s.atomname!==a.atomname ) continue;
-                if( s.model!==undefined && s.model!==a.residue.chain.model.index ) continue;
-
-                if( s.resno!==undefined ){
-                    if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                        if( s.resno[0]>a.resno || s.resno[1]<a.resno ) continue;
-                    }else{
-                        if( s.resno!==a.resno ) continue;
-                    }
-                }
-
-                return t;
 
             }
 
@@ -2649,6 +2789,118 @@ NGL.Selection.prototype = {
         }
 
     },
+
+    makeTest: function(){
+
+        var backboneProtein = [
+            "CA", "C", "N", "O"
+        ];
+        var backboneNucleic = [
+            "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2"
+        ];
+
+        var fn = function( a, s, t, f ){
+
+            if( s.keyword!==undefined ){
+
+                if( s.keyword==="HETERO" && a.hetero===true ) return t;
+                if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return t;
+                if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return t;
+                if( s.keyword==="BACKBONE" && (
+                        ( a.residue.isProtein() && 
+                            backboneProtein.indexOf( a.atomname )!==-1 ) || 
+                        ( a.residue.isNucleic() && 
+                            backboneNucleic.indexOf( a.atomname )!==-1 )
+                    )
+                ) return t;
+
+                return f;
+
+            }
+
+            if( s.resname!==undefined && s.resname!==a.resname ) return f;
+            if( s.chainname!==undefined && s.chainname!==a.chainname ) return f;
+            if( s.atomname!==undefined && s.atomname!==a.atomname ) return f;
+            if( s.model!==undefined && s.model!==a.residue.chain.model.index ) return f;
+
+            if( s.resno!==undefined ){
+                if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) return f;
+                }else{
+                    if( s.resno!==a.resno ) return f;
+                }
+            }
+
+            return t;
+
+        }
+
+        return this._makeTest( fn );
+
+    },
+
+    makeResidueTest: function(){
+
+        var fn = function( r, s, t, f ){
+
+            if( s.keyword!==undefined ){
+
+                if( s.keyword==="HETERO" && r.isHetero() ) return t;
+                if( s.keyword==="PROTEIN" && r.isProtein() ) return t;
+                if( s.keyword==="NUCLEIC" && r.isNucleic() ) return t;
+
+                return f;
+
+            }
+
+            if( s.resname!==undefined && s.resname!==r.resname ) return f;
+            if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return f;
+            if( s.model!==undefined && s.model!==r.chain.model.index ) return f;
+
+            if( s.resno!==undefined ){
+                if( Array.isArray( s.resno ) && r.resno.length===2 ){
+                    if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return f;
+                }else{
+                    if( s.resno!==r.resno ) return f;
+                }
+            }
+
+            return t;
+
+        }
+
+        return this._makeTest( fn );
+
+    },
+
+    makeChainTest: function(){
+
+        var fn = function( c, s, t, f ){
+
+            if( s.chainname!==undefined && s.chainname!==c.chainname ) return f;
+            if( s.model!==undefined && s.model!==c.model.index ) return f;
+
+            return t;
+
+        }
+
+        return this._makeTest( fn );
+
+    },
+
+    makeModelTest: function(){
+
+        var fn = function( m, s, t, f ){
+
+            if( s.model!==undefined && s.model!==m.index ) return f;
+
+            return t;
+
+        }
+
+        return this._makeTest( fn );
+
+    }
 
 };
 
