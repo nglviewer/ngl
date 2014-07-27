@@ -12,15 +12,21 @@ NGL.Examples = {
 
         "trajectory": function( stage ){
 
+            var params = {
+                sele: "protein na cl",
+                // sele: "349-352",
+            };
+
             stage.loadFile( "../data/__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "*" );
                 o.addRepresentation( "ribbon", "protein" );
+                o.addRepresentation( "spacefill", "NA CL" );
                 o.centerView();
 
                 o.addTrajectory( "__example__/md.xtc" );
 
-            } );
+            }, params );
 
         },
 

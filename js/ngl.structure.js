@@ -751,6 +751,40 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     this.getNumframes();
 
+    if( structure instanceof NGL.StructureSubset ){
+
+        this.atomIndices = [];
+
+        var indices = structure.structure.atomIndex( structure.selection );
+
+        var i, r;
+        var p = indices[ 0 ];
+        var q = indices[ 0 ];
+        var n = indices.length;
+
+        for( i = 1; i < n; ++i ){
+
+            r = indices[ i ];
+
+            if( q + 1 < r ){
+
+                this.atomIndices.push( [ p, q + 1 ] );
+                p = r;
+                
+            }
+
+            q = r;
+
+        }
+
+        this.atomIndices.push( [ p, q + 1 ] );
+
+    }else{
+
+        this.atomIndices = [ [ 0, this.atomCount ] ];
+
+    }
+
 };
 
 NGL.Trajectory.prototype = {
@@ -826,7 +860,7 @@ NGL.Trajectory.prototype = {
         var scope = this;
 
         var url = "../xtc/frame/" + i + "/" + this.xtcPath +
-            "?natoms=" + this.atomCount;
+            "?atomIndices=" + this.atomIndices.join(";");
 
         this.frameLoader.load( url, function( arrayBuffer ){
 
@@ -839,14 +873,22 @@ NGL.Trajectory.prototype = {
             var box = new Float32Array( arrayBuffer, 0, 9 );
             var coords = new Float32Array( arrayBuffer, 9 * 4 );
 
-            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-            var mean = scope.getCircularMean(
-                scope.backboneIndices, coords, box2
-            );
-            scope.centerPbc( coords, mean, box2 );
+            //console.log( box )
+            //console.log( coords )
+
+            if( scope.backboneIndices.length > 0 ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = scope.getCircularMean(
+                    scope.backboneIndices, coords, box2
+                );
+                scope.centerPbc( coords, mean, box2 );
+            }
 
             scope.removePbc( coords, box );
-            scope.superpose( coords );
+
+            if( scope.backboneIndices.length > 0 ){
+                scope.superpose( coords );
+            }
 
             if( !scope.frameCache[ i ] ){
                 scope.frameCache[ i ] = coords;
@@ -1202,106 +1244,6 @@ NGL.Structure.prototype = {
         this.center = this.atomCenter();
 
         console.log( "Structure", this );
-
-    },
-
-    makeSubset: function( sele ){
-
-        console.time( "NGL.Structure.makeSubset" );
-
-        var selection = new NGL.Selection( sele );
-
-        var _s = new NGL.Structure( this.name + " [subset]" );
-        _s.bondSet = new NGL.BondSet();
-
-        var atomIndexDict = {};
-
-        var _m, _c, _r, _a;
-
-        this.eachModel( function( m ){
-
-            _m = _s.addModel();
-
-            m.eachChain( function( c ){
-
-                _c = _m.addChain();
-                _c.chainname = c.chainname;
-
-                c.eachResidue( function( r ){
-
-                    _r = _c.addResidue();
-                    _r.resno = r.resno;
-                    _r.resname = r.resname;
-
-                    r.eachAtom( function( a ){
-
-                        _a = _r.addAtom();
-                        _a.atomno = a.atomno;
-                        _a.resname = a.resname;
-                        _a.x = a.x;
-                        _a.y = a.y;
-                        _a.z = a.z;
-                        _a.element = a.element;
-                        _a.chainname = a.chainname;
-                        _a.chainindex = a.chainindex;
-                        _a.resno = a.resno;
-                        _a.resindex = a.resindex;
-                        _a.serial = a.serial;
-                        _a.ss = a.ss;
-                        _a.color = a.color;
-                        _a.vdw = a.vdw;
-                        _a.covalent = a.covalent;
-                        _a.hetero = a.hetero;
-                        _a.bfactor = a.bfactor;
-                        _a.bonds = [];
-                        _a.altloc = a.altloc;
-                        _a.atomname = a.atomname;
-                        _a.modelindex = a.modelindex;
-
-                        atomIndexDict[ a.index ] = _a;
-
-                    }, selection );
-
-                    if( _r.atoms.length === 0 ){
-                        _c.residues.pop();
-                        --_c.residueCount;
-                        --_m.residueCount;
-                        --_s.residueCount;
-                    }
-
-                }, selection );
-
-                if( _c.residues.length === 0 ){
-                    _m.chains.pop();
-                    --_m.chainCount;
-                    --_s.chainCount;
-                }
-
-            }, selection );
-
-            if( _m.chains.length === 0 ){
-                _s.models.pop();
-                --_s.modelCount;
-            }
-
-        }, selection );
-
-        this.bondSet.eachBond( function( b ){
-
-            _s.bondSet.addBond(
-                atomIndexDict[ b.atom1.index ],
-                atomIndexDict[ b.atom2.index ]
-            )
-
-        }, selection );
-
-        _s.center = _s.atomCenter();
-
-        console.timeEnd( "NGL.Structure.makeSubset" );
-
-        console.log( _s )
-
-        return _s;
 
     },
 
@@ -2274,6 +2216,118 @@ NGL.Atom.prototype = {
 }
 
 
+NGL.StructureSubset = function( structure, sele ){
+
+    NGL.Structure.call( this, structure.name + " [subset]" );
+
+    this.structure = structure;
+    this.selection = new NGL.Selection( sele );
+
+    this.bondSet = new NGL.BondSet();
+
+    this._build();
+
+};
+
+NGL.StructureSubset.prototype = Object.create( NGL.Structure.prototype );
+
+NGL.StructureSubset.prototype._build = function(){
+
+    console.time( "NGL.StructureSubset._build" );
+
+    var structure = this.structure;
+    var selection = this.selection;
+    var bondSet = this.bondSet;
+
+    var _s = this;
+    var _m, _c, _r, _a;
+
+    var atomIndexDict = {};
+
+    structure.eachModel( function( m ){
+
+        _m = _s.addModel();
+
+        m.eachChain( function( c ){
+
+            _c = _m.addChain();
+            _c.chainname = c.chainname;
+
+            c.eachResidue( function( r ){
+
+                _r = _c.addResidue();
+                _r.resno = r.resno;
+                _r.resname = r.resname;
+
+                r.eachAtom( function( a ){
+
+                    _a = _r.addAtom();
+                    _a.atomno = a.atomno;
+                    _a.resname = a.resname;
+                    _a.x = a.x;
+                    _a.y = a.y;
+                    _a.z = a.z;
+                    _a.element = a.element;
+                    _a.chainname = a.chainname;
+                    _a.chainindex = a.chainindex;
+                    _a.resno = a.resno;
+                    _a.resindex = a.resindex;
+                    _a.serial = a.serial;
+                    _a.ss = a.ss;
+                    _a.color = a.color;
+                    _a.vdw = a.vdw;
+                    _a.covalent = a.covalent;
+                    _a.hetero = a.hetero;
+                    _a.bfactor = a.bfactor;
+                    _a.bonds = [];
+                    _a.altloc = a.altloc;
+                    _a.atomname = a.atomname;
+                    _a.modelindex = a.modelindex;
+
+                    atomIndexDict[ a.index ] = _a;
+
+                }, selection );
+
+                if( _r.atoms.length === 0 ){
+                    _c.residues.pop();
+                    --_c.residueCount;
+                    --_m.residueCount;
+                    --_s.residueCount;
+                }
+
+            }, selection );
+
+            if( _c.residues.length === 0 ){
+                _m.chains.pop();
+                --_m.chainCount;
+                --_s.chainCount;
+            }
+
+        }, selection );
+
+        if( _m.chains.length === 0 ){
+            _s.models.pop();
+            --_s.modelCount;
+        }
+
+    }, selection );
+
+    structure.bondSet.eachBond( function( b ){
+
+        _s.bondSet.addBond(
+            atomIndexDict[ b.atom1.index ],
+            atomIndexDict[ b.atom2.index ]
+        )
+
+    }, selection );
+
+    _s.center = _s.atomCenter();
+
+    console.timeEnd( "NGL.StructureSubset._build" );
+
+}
+
+
 /**
  * An object fro representing a PDB file.
  * @class
@@ -2858,7 +2912,7 @@ NGL.Selection.prototype = {
             if( s.model!==undefined && s.model!==r.chain.model.index ) return f;
 
             if( s.resno!==undefined ){
-                if( Array.isArray( s.resno ) && r.resno.length===2 ){
+                if( Array.isArray( s.resno ) && s.resno.length===2 ){
                     if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return f;
                 }else{
                     if( s.resno!==r.resno ) return f;
