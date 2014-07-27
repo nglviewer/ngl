@@ -383,7 +383,20 @@ NGL.SidebarWidget = function( stage ){
     signals.componentAdded.add( function( component ){
 
         console.log( component );
-        container.add( new NGL.ComponentWidget( component, stage ) );
+
+        if( component instanceof NGL.StructureComponent ){
+
+            container.add( new NGL.StructureComponentWidget( component, stage ) );
+
+        }else if( component instanceof NGL.SurfaceComponent ){
+
+            container.add( new NGL.SurfaceComponentWidget( component, stage ) );
+
+        }else{
+
+            console.warn( "NGL.SidebarWidget: component type unknown", component );
+
+        }
 
     } );
 
@@ -393,6 +406,17 @@ NGL.SidebarWidget = function( stage ){
 
 
 NGL.ComponentWidget = function( component, stage ){
+
+    var container = new UI.Panel();
+
+    
+
+    return container;
+
+};
+
+
+NGL.StructureComponentWidget = function( component, stage ){
 
     var signals = component.signals;
     var container = new UI.CollapsiblePanel();
@@ -406,7 +430,6 @@ NGL.ComponentWidget = function( component, stage ){
         
     } );
 
-    // TODO move to StructureComponentWidget
     signals.trajectoryAdded.add( function( traj ){
 
         trajContainer.add( new NGL.TrajectoryWidget( traj, component ) );
@@ -468,6 +491,29 @@ NGL.ComponentWidget = function( component, stage ){
             }
 
         } );
+
+    // Selection for subset
+
+    var seleRow = new UI.Panel();
+    var sele = new UI.Input()
+        .setWidth( '190px' ).onKeyDown( function( e ){
+            
+            if( e.keyCode === 13 ){
+
+                component.changeSelection( sele.getValue(), true );
+
+            }
+
+        } );
+
+    if( component.sele ){
+        sele.setValue( component.sele );
+    }
+ 
+    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
+    seleRow.add( sele );
+
+    container.add( seleRow );
 
     // Export PDB
     
@@ -636,22 +682,71 @@ NGL.ComponentWidget = function( component, stage ){
 };
 
 
-NGL.StructureComponentWidget = function( structure, stage ){
+NGL.SurfaceComponentWidget = function( component, stage ){
 
-    var container = new UI.Panel();
+    var signals = component.signals;
+    var container = new UI.CollapsiblePanel();
 
+    signals.visibilityChanged.add( function( value ){
+
+        if( value ){
+            toggle.removeClass( "eye-slash", "eye" ).addClass( "eye" );
+        }else{
+            toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
+        }
+        
+    } );
+
+    // Actions
+
+    var toggle = new UI.Icon( "eye" )
+        .setTitle( "hide/show" )
+        .setMarginLeft( "25px" )
+        .onClick( function(){
+
+            if( toggle.hasClass( "eye" ) ){
+                component.setVisibility( false );
+            }else{
+                component.setVisibility( true );
+            }
+
+        } );
+
+    var center = new UI.Icon( "bullseye" )
+        .setTitle( "center" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            component.centerView( "backbone" );
+
+        } );
+
+    var dispose = new UI.Icon( "trash-o" )
+        .setTitle( "delete" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+
+                stage.removeComponent( component );
+                container.dispose();
+
+            }else{
+
+                dispose.setColor( "rgb(178, 34, 34)" );
+
+                setTimeout( function(){ 
+                    dispose.setColor( "#888" );
+                }, 1000);
+
+            }
+
+        } );
     
-
-    return container;
-
-};
-
-
-NGL.SurfaceComponentWidget = function( structure, stage ){
-
-    var container = new UI.Panel();
-
-    
+    container.addStatic( new UI.Text( component.name ).setWidth( "100px" ) );
+    container.addStatic( toggle );
+    container.addStatic( center );
+    container.addStatic( dispose );
 
     return container;
 
@@ -672,6 +767,12 @@ NGL.RepresentationWidget = function( repr, component ){
         }else{
             toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
         }
+        
+    } );
+
+    component.signals.representationRemoved.add( function( _repr ){
+
+        if( repr === _repr ) container.dispose();
         
     } );
 
@@ -698,7 +799,6 @@ NGL.RepresentationWidget = function( repr, component ){
             if( dispose.getColor() === "rgb(178, 34, 34)" ){
 
                 component.removeRepresentation( repr );
-                container.dispose();
 
             }else{
 
@@ -752,12 +852,12 @@ NGL.TrajectoryWidget = function( traj, component ){
         .setMarginLeft( "20px" );
 
     var numframes = new UI.Panel()
-        .setWidth( "80px" )
+        .setMarginLeft( "10px" )
         .setDisplay( "inline" )
         .add( new UI.Icon( "spinner" ).addClass( "spin" ) );
 
     var numcache = new UI.Text( "0" )
-        .setMarginLeft( "20px" );
+        .setMarginLeft( "10px" );
 
     signals.gotNumframes.add( function( value ){
 
@@ -782,8 +882,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         
     } );
 
-    container.addStatic( new UI.Text( "Trajectory" ).setWidth( "80px" ) );
+    container.addStatic( new UI.Text( "Trajectory" ) );
     container.addStatic( numframes );
+    container.addStatic( new UI.Text( "Cache" ).setMarginLeft( "20px" ) );
     container.addStatic( numcache );
 
     // frames
