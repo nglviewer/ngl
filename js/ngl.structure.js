@@ -123,7 +123,8 @@ NGL.guessElement = function(){
 
 NGL.ProteinType = 0;
 NGL.NucleicType = 1;
-NGL.UnknownType = 2;
+NGL.CgType = 2;
+NGL.UnknownType = 3;
 
 
 NGL.AA1 = {
@@ -1406,6 +1407,13 @@ NGL.Structure.prototype = {
                     r2.getAtomByName( "P" )
                 );
 
+            }else if( r1.isCg() && r2.isCg() ){
+
+                bondSet.addBondIfConnected(
+                    r1.getAtomByName( "CA" ),
+                    r2.getAtomByName( "CA" )
+                );
+
             }
 
         } );
@@ -1870,9 +1878,15 @@ NGL.Chain.prototype = {
                 a1 = r1.getAtomByName( "O3'" );
                 a2 = r2.getAtomByName( 'P' );
 
+            }else if( r1.isCg() && r2.isCg() ){
+
+                a1 = r1.getAtomByName( 'CA' );
+                a2 = r2.getAtomByName( 'CA' );
+
             }else{
 
                 if( ( r1.isProtein() && !r2.isProtein() ) ||
+                    ( r1.isCg() && !r2.isCg() ) ||
                     ( r1.isNucleic() && !r2.isNucleic() ) ){
 
                     callback( scope.getFiber( i, j, padded ) );
@@ -1898,7 +1912,9 @@ NGL.Chain.prototype = {
 
         } );
 
-        if( residues[ i ].isProtein() || residues[ i ].isNucleic() ){
+        if( residues[ i ].isProtein() ||
+            residues[ i ].isCg() || 
+            residues[ i ].isNucleic() ){
             
             callback( scope.getFiber( i, j, padded ) );
 
@@ -1920,7 +1936,7 @@ NGL.Fiber = function( residues ){
 
         this.trace_atomname = "CA";
         this.direction_atomname1 = "C";
-        this.direction_atomname2 = "O";
+        this.direction_atomname2 = [ "O", "OC1" ];
 
     }else if( this.isNucleic() ){
 
@@ -1928,7 +1944,14 @@ NGL.Fiber = function( residues ){
         this.direction_atomname1 = "OP1";
         this.direction_atomname2 = "OP2";
 
+    }else if( this.isCg() ){
+
+        this.trace_atomname = "CA";
+        this.direction_atomname1 = "CA";
+        this.direction_atomname2 = "CA";
+
     }
+
 
 };
 
@@ -1952,6 +1975,18 @@ NGL.Fiber.prototype = {
 
     },
 
+    isCg: function(){
+
+        if( this._cg === undefined ){
+
+            this._cg = this.residues[ 0 ].isCg();
+
+        }
+
+        return this._cg;
+
+    },
+
     isNucleic: function(){
 
         if( this._nucleic === undefined ){
@@ -1972,6 +2007,8 @@ NGL.Fiber.prototype = {
                 this._type = NGL.ProteinType;
             }else if( this.isNucleic() ){
                 this._type = NGL.NucleicType;
+            }else if( this.isCg() ){
+                this._type = NGL.CgType;
             }else{
                 this._type = NGL.UnknownType;
             }
@@ -2018,11 +2055,24 @@ NGL.Residue.prototype = {
             this._protein = this.getAtomByName( "CA" ) !== undefined &&
                 this.getAtomByName( "C" ) !== undefined &&
                 this.getAtomByName( "N" ) !== undefined &&
-                this.getAtomByName( "O" ) !== undefined;
+                this.getAtomByName([ "O", "OC1" ]) !== undefined;
 
         }
 
         return this._protein;
+
+    },
+
+    isCg: function(){
+
+        if( this._cg === undefined ){
+
+            // FIXME also check for common protein residue names
+            this._cg = !this.isProtein() && this.getAtomByName( "CA" );
+
+        }
+
+        return this._cg;
 
     },
 
@@ -2065,6 +2115,8 @@ NGL.Residue.prototype = {
                 this._type = NGL.ProteinType;
             }else if( this.isNucleic() ){
                 this._type = NGL.NucleicType;
+            }else if( this.isCg() ){
+                this._type = NGL.CgType;
             }else{
                 this._type = NGL.UnknownType;
             }
@@ -2115,9 +2167,11 @@ NGL.Residue.prototype = {
 
         var atom = undefined;
 
+        if( !Array.isArray( atomname ) ) atomname = [ atomname ];
+
         this.atoms.some( function( a ){
 
-            if( atomname === a.atomname ){
+            if( atomname.indexOf( a.atomname ) != -1 ){
 
                 atom = a;
                 return true;
@@ -2129,18 +2183,6 @@ NGL.Residue.prototype = {
         return atom;
 
     }
-
-    /*everyAtom: function( callback ){
-
-        this.atoms.every( callback );
-
-    },
-
-    someAtom: function( callback ){
-
-        this.atoms.some( callback );
-
-    },*/
 
 };
 
@@ -2182,14 +2224,17 @@ NGL.Atom.prototype = {
 
     connectedTo: function( atom ){
 
-        if( this.hetero && atom.hetero ) return 0;
+        if( this.hetero && atom.hetero ) return false;
 
         var distSquared = ( this.x - atom.x ) * ( this.x - atom.x ) +
                           ( this.y - atom.y ) * ( this.y - atom.y ) +
                           ( this.z - atom.z ) * ( this.z - atom.z );
 
-        if( isNaN( distSquared ) ) return 0;
-        if( distSquared < 0.5 ) return 0; // duplicate or altloc
+        // console.log( distSquared );
+        if( this.residue.isCg() && distSquared < 30.0 ) return true;
+
+        if( isNaN( distSquared ) ) return false;
+        if( distSquared < 0.5 ) return false; // duplicate or altloc
 
         var d = this.covalent + atom.covalent + 0.3;
         return distSquared < ( d * d );
@@ -2851,6 +2896,9 @@ NGL.Selection.prototype = {
         ];
         var backboneNucleic = [
             "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2"
+        ];
+        var backboneProtein = [
+            "CA", "C", "N", "O"
         ];
 
         var fn = function( a, s, t, f ){

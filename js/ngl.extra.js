@@ -134,7 +134,8 @@ NGL.Stage.prototype = {
             // object.addRepresentation( "trace" );
             // object.addRepresentation( "line" );
             // object.addRepresentation( "hyperball", "135 :B" );
-            object.centerView( "backbone" );
+            // object.centerView( "backbone" );
+            object.centerView();
 
         }else if( object instanceof NGL.SurfaceComponent ){
 

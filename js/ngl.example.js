@@ -301,6 +301,19 @@ NGL.Examples = {
 
         },
 
+        "cg": function( stage ){
+
+            stage.loadFile( "../data/__example__/BaceCg.pdb", function( o ){
+
+                o.addRepresentation( "trace" );
+                o.addRepresentation( "tube" );
+                o.addRepresentation( "ball+stick" );
+                o.centerView();
+
+            } );
+
+        },
+
         // alexpc
         
         "rho_traj": function( stage ){
