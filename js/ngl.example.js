@@ -288,6 +288,19 @@ NGL.Examples = {
 
         },
 
+        "xtc_parts": function( stage ){
+
+            stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
+
+                o.addRepresentation( "ribbon" );
+                o.centerView();
+
+                o.addTrajectory( "__example__/@md_1u19.xtc" );
+
+            } );
+
+        },
+
         // alexpc
         
         "rho_traj": function( stage ){
