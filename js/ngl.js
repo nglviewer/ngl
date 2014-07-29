@@ -1782,7 +1782,7 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
         this.mesh.geometry.computeBoundingSphere();
     }
 
-    console.log( "mesh", this.mesh );
+    // console.log( "mesh", this.mesh );
 
 }
 

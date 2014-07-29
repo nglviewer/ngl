@@ -1360,12 +1360,15 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
         if( f.residueCount < 4 ) return;
 
-        console.time( "NGL.RibbonRepresentation.create spline" );
+        // console.time( "NGL.RibbonRepresentation.create spline" );
+        
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( subdiv );
-        console.timeEnd( "NGL.RibbonRepresentation.create spline" );
+        
+        //console.timeEnd( "NGL.RibbonRepresentation.create spline" );
 
-        console.time( "NGL.RibbonRepresentation.create buffer" );
+        //console.time( "NGL.RibbonRepresentation.create buffer" );
+        
         bufferList.push(
 
             new NGL.RibbonBuffer(
@@ -1378,7 +1381,8 @@ NGL.RibbonRepresentation.prototype.create = function(){
             )
 
         );
-        console.timeEnd( "NGL.RibbonRepresentation.create buffer" );
+        
+        // console.timeEnd( "NGL.RibbonRepresentation.create buffer" );
 
     }, this.selection, true );
 
@@ -1392,16 +1396,14 @@ NGL.RibbonRepresentation.prototype.update = function(){
 
     // TODO more fine grained, update only position
 
-    console.time( "NGL.RibbonRepresentation.update" );
+    // console.time( "NGL.RibbonRepresentation.update" );
 
     this.dispose();
     this.create();
 
-    console.time( "NGL.RibbonRepresentation.update attach" );
     this.attach();
-    console.timeEnd( "NGL.RibbonRepresentation.update attach" );
 
-    console.timeEnd( "NGL.RibbonRepresentation.update" );
+    // console.timeEnd( "NGL.RibbonRepresentation.update" );
 
 };
 
@@ -1442,13 +1444,13 @@ NGL.TraceRepresentation.prototype.update = function(){
 
     // TODO more fine grained, update only position
 
-    console.time( "NGL.TraceRepresentation.update" );
+    // console.time( "NGL.TraceRepresentation.update" );
 
     this.dispose();
     this.create();
     this.attach();
 
-    console.timeEnd( "NGL.TraceRepresentation.update" );
+    // console.timeEnd( "NGL.TraceRepresentation.update" );
 
 };
 
