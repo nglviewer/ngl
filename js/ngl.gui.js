@@ -466,7 +466,8 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            component.centerView( "backbone" );
+            // component.centerView( "backbone" );
+            component.centerView();
 
         } );
 
