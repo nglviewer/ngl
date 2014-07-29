@@ -2,21 +2,11 @@ from __future__ import with_statement
 
 import sys
 import os
-import gzip
-import urllib2
-# import StringIO
-import base64
-import tempfile
+import re
 import functools
-import uuid
-import signal
 import logging
-import multiprocessing
-import collections
-import zipfile
 import array
 import json
-from cStringIO import StringIO
 import cPickle as pickle
 
 import numpy as np
@@ -185,6 +175,16 @@ def dir( root="", path="" ):
                     'dir': True
                 })
 
+    for fname in get_split_xtc( dir_path ):
+        dir_content.append({
+            'name': fname,
+            'path': os.path.join( root, path, fname ),
+            'size': sum([
+                os.path.getsize( x ) for x in
+                get_xtc_parts( fname, dir_path )
+            ])
+        })
+
     return json.dumps( dir_content )
 
 
@@ -217,7 +217,7 @@ def redirect_app( name ):
 # trajectory server
 ############################
 
-class XTC( object ):
+class Xtc( object ):
     def __init__( self, xtc_file ):
         self.xtc_file = xtc_file
         self.fp = libxdrfile2.xdrfile_open( self.xtc_file, 'rb' )
@@ -262,7 +262,9 @@ class XTC( object ):
     def get_coords( self, index, atom_indices=None, angstrom=True ):
         coords = self.get_frame( int( index ) )
         if atom_indices:
-            coords = np.concatenate([ coords[ i:j ].ravel() for i,j in atom_indices ])
+            coords = np.concatenate([
+                coords[ i:j ].ravel() for i, j in atom_indices
+            ])
         if angstrom:
             coords *= 10
         return coords
@@ -272,12 +274,71 @@ class XTC( object ):
             libxdrfile2.xdrfile_close( self.fp )
 
 
+def get_xtc_parts( name, directory ):
+    pattern = re.escape( name[1:-4] ) + "\.part[0-9]{4,4}\.xtc$"
+    parts = []
+    for f in os.listdir( directory ):
+        m = re.match( pattern, f )
+        if m and os.path.isfile( os.path.join( directory, f ) ):
+            parts.append( os.path.join( directory, f ) )
+    return sorted( parts )
+
+
+def get_split_xtc( directory ):
+    pattern = "(.*)\.part[0-9]{4,4}\.xtc$"
+    split = set()
+    for f in os.listdir( directory ):
+        m = re.match( pattern, f )
+        if( m ):
+            split.add( "@" + m.group(1) + ".xtc" )
+    return sorted( split )
+
+
+class XtcParts( object ):
+    def __init__( self, parts ):
+        self.parts = []
+        for f in sorted( parts ):
+            self.parts.append( get_xtc( f ) )
+        self.box = self.parts[ 0 ].box
+        self._update_numframes()
+
+    def _update_numframes( self ):
+        self.numframes = 0
+        for xtc in self.parts:
+            self.numframes += xtc.numframes
+
+    def update_offsets( self, force=False ):
+        for xtc in self.parts:
+            xtc.update_offsets( force=force )
+        self._update_numframes()
+
+    def get_coords( self, index, atom_indices=None, angstrom=True ):
+        i = 0
+        for xtc in self.parts:
+            if index < i + xtc.numframes:
+                break
+            i += xtc.numframes
+        return xtc.get_coords(
+            index - i, atom_indices=atom_indices, angstrom=angstrom
+        )
+
+    def __del__( self ):
+        for xtc in self.parts:
+            xtc.__del__()
+
+
 XTC_DICT = {}
 
 
 def get_xtc( path ):
     if path not in XTC_DICT:
-        XTC_DICT[ path ] = XTC( str( path ) )
+        stem = os.path.basename( path )
+        if stem.startswith( "@" ):
+            XTC_DICT[ path ] = XtcParts(
+                get_xtc_parts( stem, os.path.dirname( path ) )
+            )
+        else:
+            XTC_DICT[ path ] = Xtc( str( path ) )
     return XTC_DICT[ path ]
 
 
