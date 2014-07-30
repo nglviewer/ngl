@@ -52,7 +52,7 @@ def check_auth( username, password ):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == 'test' and password == 'test'
+    return username == 'testuser' and password == 'test456'
 
 
 def authenticate():
@@ -60,19 +60,20 @@ def authenticate():
     return Response(
         'Could not verify your access level for that URL.\n'
         'You have to login with proper credentials', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+        { 'WWW-Authenticate': 'Basic realm="Login Required"' }
     )
 
 
 # use as decorator after a route decorator
 def requires_auth( f ):
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        if app.config.get('REQUIRE_AUTH', False):
+    @functools.wraps( f )
+    def decorated( *args, **kwargs ):
+        if app.config.get( 'REQUIRE_AUTH', False ):
+            print "check auth"
             auth = request.authorization
-            if not auth or not check_auth(auth.username, auth.password):
+            if not auth or not check_auth( auth.username, auth.password ):
                 return authenticate()
-        return f(*args, **kwargs)
+        return f( *args, **kwargs )
     return decorated
 
 
@@ -112,6 +113,7 @@ def css( filename ):
 
 
 @app.route( '/html/<path:filename>' )
+@requires_auth
 def html( filename ):
     return send_from_directory( os.path.join( APP_PATH, "html/" ), filename )
 
