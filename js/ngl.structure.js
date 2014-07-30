@@ -2065,16 +2065,22 @@ NGL.Residue.prototype = {
 
     isCg: function(){
 
-        if( this._cg === undefined ){
+        var AA3 = Object.keys( NGL.AA1 );
 
-            // FIXME also check for common protein residue names
-            this._cg = !this.isProtein() && this.getAtomByName( "CA" );
+        return function(){
+
+            if( this._cg === undefined ){
+
+                this._cg = !this.isProtein() && this.getAtomByName( "CA" ) &&
+                    AA3.indexOf( this.resname ) !== -1;
+
+            }
+
+            return this._cg;
 
         }
 
-        return this._cg;
-
-    },
+    }(),
 
     isNucleic: function(){
 
@@ -2171,7 +2177,7 @@ NGL.Residue.prototype = {
 
         this.atoms.some( function( a ){
 
-            if( atomname.indexOf( a.atomname ) != -1 ){
+            if( atomname.indexOf( a.atomname ) !== -1 ){
 
                 atom = a;
                 return true;
