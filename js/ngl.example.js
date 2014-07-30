@@ -199,7 +199,9 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/pbc.gro", function( o ){
 
-                var maxX = o.structure.box[ 0 ];
+                // FIXME pbc centering and removal for files other then trajectories
+
+                /*var maxX = o.structure.box[ 0 ];
                 var maxY = o.structure.box[ 1 ];
                 var maxZ = o.structure.box[ 2 ];
 
@@ -209,80 +211,12 @@ NGL.Examples = {
                     a.y = ( a.y + maxY ) % maxY;
                     a.z = ( a.z + maxZ ) % maxZ;
 
-                } );
+                } );*/
 
                 o.addRepresentation( "tube", "backbone" );
                 o.addRepresentation( "spacefill", "backbone" );
                 o.addRepresentation( "line" );
                 o.centerView();
-
-
-                var backboneIndices = [];
-
-                o.structure.eachAtom( function( a ){
-
-                    backboneIndices.push( a.index );
-
-                }, new NGL.Selection( "backbone" ) );
-
-
-                var center = NGL.Trajectory.prototype.centerPbcBAK( o.structure );
-                var color = new Float32Array([
-                    1, 1, 1,
-                    1, 0, 0,
-                    0, 1, 0,
-                    0, 0, 1,
-                    1, 1, 0
-                ]);
-                var radius = new Float32Array([ 5, 5, 5, 5, 5 ]);
-
-
-                var i = 0;
-                var coords = new Float32Array( 3 * o.structure.atomCount );
-                
-                o.structure.eachAtom( function( a ){
-
-                    coords[ i + 0 ] = a.x;
-                    coords[ i + 1 ] = a.y;
-                    coords[ i + 2 ] = a.z;
-
-                    i += 3;
-
-                } );
-
-                var box = [
-                    o.structure.box[ 0 ], 0, 0,
-                    0, o.structure.box[ 1 ], 0,
-                    0, 0, o.structure.box[ 2 ]
-                ];
-
-
-                var mean = NGL.Trajectory.prototype.getCircularMean(
-                    backboneIndices, coords, o.structure.box
-                );
-
-                console.log( mean );
-
-                NGL.Trajectory.prototype.centerPbc( coords, mean, o.structure.box );                
-                
-
-                NGL.Trajectory.prototype.removePbc( coords, box );
-
-                i = 0;
-                o.structure.eachAtom( function( a ){
-
-                    a.x = coords[ i + 0 ];
-                    a.y = coords[ i + 1 ];
-                    a.z = coords[ i + 2 ];
-
-                    i += 3;
-
-                } );
-
-                o.updateRepresentations();
-                o.centerView();
-
-                // stage.viewer.add( new NGL.SphereBuffer( center, color, radius ) );
 
             } );
 
