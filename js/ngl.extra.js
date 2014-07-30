@@ -1304,6 +1304,13 @@ NGL.TubeRepresentation.prototype.create = function(){
 
         // );
 
+        var rx = 1.5;
+        var ry = 0.5;
+
+        if( f.isCg() ){
+            ry = 1.5;
+        }
+
         var tubeBuffer = new NGL.TubeMeshBuffer(
             sub.position,
             sub.normal,
@@ -1312,7 +1319,9 @@ NGL.TubeRepresentation.prototype.create = function(){
             sub.color,
             sub.size,
             12,
-            sub.pickingColor
+            sub.pickingColor,
+            rx,
+            ry
         )
 
         bufferList.push( tubeBuffer );
@@ -1595,20 +1604,34 @@ NGL.Spline.prototype = {
                 pc.setHex( a2.globalindex + 1 );
             }
 
-            if( first ){
-                cAtom = r2.getAtomByName( direction_atomname1 );
-                oAtom = r2.getAtomByName( direction_atomname2 );
-                vTmp.copy( cAtom );
-                vDir2.copy( oAtom ).sub( vTmp ).normalize();
-                vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
-                first = false;
-            }
+            if( trace_atomname === direction_atomname1 ){
 
-            cAtom = r3.getAtomByName( direction_atomname1 );
-            oAtom = r3.getAtomByName( direction_atomname2 );
-            vTmp.copy( cAtom );
-            vPos3.copy( a3 );
-            vDir3.copy( oAtom ).sub( vTmp ).normalize();
+                if( first ){
+                    vDir2.set( 0, 0, 1 );
+                    vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
+                    first = false;
+                }
+
+                vDir3.set( 0, 0, 1 );
+
+            }else{
+
+                if( first ){
+                    cAtom = r2.getAtomByName( direction_atomname1 );
+                    oAtom = r2.getAtomByName( direction_atomname2 );
+                    vTmp.copy( cAtom );
+                    vDir2.copy( oAtom ).sub( vTmp ).normalize();
+                    vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
+                    first = false;
+                }
+
+                cAtom = r3.getAtomByName( direction_atomname1 );
+                oAtom = r3.getAtomByName( direction_atomname2 );
+                vTmp.copy( cAtom );
+                vPos3.copy( a3 );
+                vDir3.copy( oAtom ).sub( vTmp ).normalize();
+
+            }
 
             // ensure the direction vector does not flip
             if( vDir2.dot( vDir3 ) < 0 ) vDir3.multiplyScalar( -1 );

@@ -2852,7 +2852,10 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry ){
+
+    rx = rx || 1.5;
+    ry = ry || 0.5;
 
     radialSegments = radialSegments || 4;
 
@@ -2913,8 +2916,8 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
             v = ( j / radialSegments ) * 2 * Math.PI;
 
-            rx = 1.5;
-            ry = 0.5;
+            // rx = 1.5;
+            // ry = 0.5;
 
             cx = -radius * rx * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
             cy = radius * ry * Math.sin( v );

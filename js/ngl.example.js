@@ -305,7 +305,6 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/BaceCg.pdb", function( o ){
 
-                o.addRepresentation( "trace" );
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "ball+stick" );
                 o.centerView();

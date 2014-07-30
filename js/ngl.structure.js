@@ -2231,7 +2231,7 @@ NGL.Atom.prototype = {
                           ( this.z - atom.z ) * ( this.z - atom.z );
 
         // console.log( distSquared );
-        if( this.residue.isCg() && distSquared < 30.0 ) return true;
+        if( this.residue.isCg() && distSquared < 28.0 ) return true;
 
         if( isNaN( distSquared ) ) return false;
         if( distSquared < 0.5 ) return false; // duplicate or altloc
