@@ -250,6 +250,11 @@ NGL.Stage.prototype = {
 
         return function( center ){
 
+            // remove any paning/translation
+            var ctrl = this.viewer.controls;
+            ctrl.object.position.sub( ctrl.target );
+            ctrl.target.copy( ctrl.target0 );
+
             t.copy( center ).multiplyScalar( -1 );
 
             this.viewer.rotationGroup.position.copy( t );
@@ -501,6 +506,11 @@ NGL.StructureComponent.prototype = {
 
         return function( sele ){
 
+            // remove any paning/translation
+            var ctrl = this.viewer.controls;
+            ctrl.object.position.sub( ctrl.target );
+            ctrl.target.copy( ctrl.target0 );
+
             var center;
 
             if( sele ){
@@ -563,6 +573,11 @@ NGL.SurfaceComponent.prototype = {
         var t = new THREE.Vector3();
 
         return function(){
+
+            // remove any paning/translation
+            var ctrl = this.viewer.controls;
+            ctrl.object.position.sub( ctrl.target );
+            ctrl.target.copy( ctrl.target0 );
 
             t.copy( this.surface.center ).multiplyScalar( -1 );
 
