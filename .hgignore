@@ -3,9 +3,6 @@ syntax: glob
 *.sublime-project
 *.sublime-workspace
 
-build/jsdoc/.*
-doc/*
-
 *.pyc
 app.cfg
 
