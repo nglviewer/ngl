@@ -118,6 +118,11 @@ def html( filename ):
     return send_from_directory( os.path.join( APP_PATH, "html/" ), filename )
 
 
+@app.route( '/doc/<path:filename>' )
+def doc( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "doc/" ), filename )
+
+
 @app.route( '/data/<root>/<path:filename>' )
 def data( root, filename ):
     directory = get_directory( root )

@@ -319,9 +319,9 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // event handlers
 
-    function onRcsbPdbOptionClick () {
+    function onDocOptionClick () {
 
-        window.open( 'http://www.rcsb.org', '_blank' );
+        window.open( '../doc/index.html', '_blank' );
 
     }
 
@@ -331,7 +331,7 @@ NGL.MenubarHelpWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
-        createOption( 'RCSB PDB', onRcsbPdbOptionClick )
+        createOption( 'Documentation', onDocOptionClick )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
