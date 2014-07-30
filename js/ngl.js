@@ -29,6 +29,16 @@ NGL = {
 };
 
 
+NGL.GET = function( id ){
+        
+    var a = new RegExp( id + "=([^&#=]*)" );
+    var m = a.exec( window.location.search );
+    
+    if( m ) return decodeURIComponent( m[1] );
+
+}
+
+
 /**
  * [Resources description]
  * @type {Object}

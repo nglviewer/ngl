@@ -284,62 +284,28 @@ NGL.MenubarViewWidget = function( stage ){
 
 NGL.MenubarExampleWidget = function( stage ){
 
-    // event handlers
-
-    function makeOnFileClick( file ) {
-
-        return function(){
-
-            stage.loadFile( '../data/__example__/' + file );
-
-        }
-
-    }
-
-    function onTrajClick( file ) {
-
-        NGL.Examples.load( "anim_trajectory", stage );
-
-    }
-
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
     var createDivider = UI.MenubarHelper.createDivider;
 
-    var menuConfig = [
+    var menuConfig = [];
 
-        createOption( '1r6a.pdb', makeOnFileClick( '1R6A.pdb' ) ),
-        createOption( '1blu.pdb', makeOnFileClick( '1blu.pdb' ) ),
-        createOption( '1crn.pdb', makeOnFileClick( '1crn.pdb' ) ),
-        createOption( '1d66.pdb', makeOnFileClick( '1d66.pdb' ) ),
-        createOption( '1jj2.pdb', makeOnFileClick( '1jj2.pdb' ) ),
-        createOption( '1lvz.pdb', makeOnFileClick( '1LVZ.pdb' ) ),
-        createOption( '1mf6.pdb', makeOnFileClick( '1MF6.pdb' ) ),
-        createOption( '304d.pdb', makeOnFileClick( '304d.pdb' ) ),
-        createOption( '3dqb.pdb', makeOnFileClick( '3dqb.pdb' ) ),
-        createOption( '3l5q.pdb', makeOnFileClick( '3l5q.pdb' ) ),
-        createOption( '3pqr.pdb', makeOnFileClick( '3pqr.pdb' ) ),
-        createOption( '3sn6.pdb', makeOnFileClick( '3sn6.pdb' ) ),
-        createOption( 'BaceCg.pdb', makeOnFileClick( 'BaceCg.pdb' ) ),
-        createOption( 'hem.pdb', makeOnFileClick( 'hem.pdb' ) ),
-        createOption( 'md.pdb', makeOnFileClick( 'md.pdb' ) ),
+    Object.keys( NGL.Examples.data ).forEach( function( name ){
 
-        createDivider(),
+        if( name.charAt( 0 ) === "_" ) return;
 
-        createOption( 'md.gro', makeOnFileClick( 'md.gro' ) ),
+        menuConfig.push(
 
-        createDivider(),
+            createOption( name, function(){
 
-        createOption( '1crn.obj', makeOnFileClick( '1crn.obj' ) ),
-        createOption( '1crn.ply', makeOnFileClick( '1crn.ply' ) ),
-        createOption( '3dqb.obj', makeOnFileClick( '3dqb.obj' ) ),
+                NGL.Examples.load( name, stage );
 
-        createDivider(),
+            } )
 
-        createOption( 'trajectory', onTrajClick )
+        );
 
-    ];
+    } );
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 

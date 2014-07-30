@@ -76,23 +76,9 @@
                     // FIXME
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
-                    
-                    // NGL.Examples.load( "1blu", stage );
-                    // NGL.Examples.load( "trajectory", stage );
-                    // NGL.Examples.load( "3pqr", stage );
-                    // NGL.Examples.load( "multi_struc", stage );
-                    // NGL.Examples.load( "superpose", stage );
-                    // NGL.Examples.load( "alignment", stage );
-                    // NGL.Examples.load( "alignment2", stage );
-                    // NGL.Examples.load( "multi_model", stage );
-                    // NGL.Examples.load( "pbc", stage );
-                    // NGL.Examples.load( "rho_traj2", stage );
-                    // NGL.Examples.load( "xtc_parts", stage );
-                    NGL.Examples.load( "cg", stage );
 
-                    // alexpc
-                    
-                    // NGL.Example.load( "rho_traj", stage );
+                    var example = NGL.GET( "example" );
+                    if( example ) NGL.Examples.load( example, stage );
 
                 } );
 

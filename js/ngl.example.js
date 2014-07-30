@@ -46,7 +46,7 @@ NGL.Examples = {
                     traj.setFrame( i++ % 51 );
                     if( i >= 102 ) clearInterval( foo );
 
-                }, 50);
+                }, 100);
 
             } );
 
@@ -315,7 +315,7 @@ NGL.Examples = {
 
         // alexpc
         
-        "rho_traj": function( stage ){
+        "_rho_traj": function( stage ){
 
             var path = "projects/rho/3pqr/GaCT/all/"
 
@@ -331,7 +331,7 @@ NGL.Examples = {
 
         },
 
-        "rho_traj2": function( stage ){
+        "_rho_traj2": function( stage ){
 
             var path = "servers/zatopek/rhodopsin_md/1u19/md01/"
 
