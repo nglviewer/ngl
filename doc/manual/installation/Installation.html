@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		<h2>SSH</h2>
+
+		install sshfs
+
+	    <code>sudo apt-get install sshfs</code>
+
+
+		mount
+
+	    <code>sshfs -o idmap=user arose@zatopek:/shared/home/arose /home/arose/servers/zatopek</code>
+
+
+		unmount
+
+	    <code>fusermount -u /home/arose/servers/zatopek</code>
+
+
+		/etc/fstab
+
+	    <code>sshfs#arose@zatopek:/shared/home/arose /home/arose/servers/zatopek fuse defaults,idmap=user 0 0</code>
+
+
+		keep the connection active (alive) by adding this to ~/.ssh/config or to /etc/ssh/ssh_config
+
+	    <code>ServerAliveInterval 60</code>
+
+
+		passwordless ssh
+
+	    <code>sudo ssh-copy-id arose@zatopek</code>
+
+
+
+	</body>
+</html>
