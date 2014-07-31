@@ -792,8 +792,6 @@ NGL.Viewer = function( eid ){
     this.setBackground();
     this.setFog();
 
-    
-
 }
 
 NGL.Viewer.prototype = {
@@ -861,7 +859,7 @@ NGL.Viewer.prototype = {
         this.renderer = new THREE.WebGLRenderer({
             preserveDrawingBuffer: true,
             alpha: false,
-            antialias: true, // TODO artifacts in impostor shader
+            antialias: true,
         });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
@@ -1499,6 +1497,26 @@ NGL.Viewer.prototype = {
 
     },
 
+    centerView: function(){
+
+        var t = new THREE.Vector3();
+
+        return function( center ){
+
+            // remove any paning/translation
+            this.controls.object.position.sub( this.controls.target );
+            this.controls.target.copy( this.controls.target0 );
+
+            t.copy( center ).multiplyScalar( -1 );
+
+            this.rotationGroup.position.copy( t );
+            this.pickingRotationGroup.position.copy( t );
+            this.render();
+
+        }
+
+    }()
+
 }
 
 
@@ -1631,10 +1649,19 @@ NGL.Buffer.prototype = {
 
     },
 
-    remove: function(){
+    dispose: function(){
+
+        this.mesh.dispose();
+        if( this.pickingMesh ){
+            this.pickingMesh.dispose();
+        }
 
         this.geometry.dispose();
+
         this.material.dispose();
+        if( this.pickingMaterial ){
+            this.pickingMaterial.dispose();
+        }
 
     }
 
@@ -2404,6 +2431,16 @@ NGL.PointBuffer = function ( position, color ) {
 
 }
 
+NGL.PointBuffer.prototype = {
+
+    dispose: function(){
+
+        NGL.Buffer.prototype.dispose.call( this );
+
+    }
+
+};
+
 
 /**
  * [LineBuffer description]
@@ -2541,10 +2578,9 @@ NGL.LineBuffer.prototype = {
 
     },
 
-    remove: function(){
+    dispose: function(){
 
-        this.geometry.dispose();
-        this.material.dispose();
+        NGL.Buffer.prototype.dispose.call( this );
 
     }
 
@@ -2597,10 +2633,9 @@ NGL.TraceBuffer = function ( position, color ) {
 
 NGL.TraceBuffer.prototype = {
 
-    remove: function(){
+    dispose: function(){
 
-        this.geometry.dispose();
-        this.material.dispose();
+        NGL.Buffer.prototype.dispose.call( this );
 
     }
 
@@ -2849,10 +2884,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
 NGL.RibbonBuffer.prototype = {
 
-    remove: function(){
+    dispose: function(){
 
-        this.geometry.dispose();
-        this.material.dispose();
+        NGL.Buffer.prototype.dispose.call( this );
 
     }
 
@@ -3139,6 +3173,8 @@ NGL.getFont = function( name ){
  * @param {String[]} text
  */
 NGL.TextBuffer = function ( position, size, text ) {
+
+    // FIXME texture memory handling
 
     var type = 'Arial';
     var font = NGL.getFont( type );

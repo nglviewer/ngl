@@ -111,7 +111,7 @@ NGL.Stage = function( eid ){
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
-            scope.centerView( pickedAtom );
+            scope.viewer.centerView( pickedAtom );
 
         }
 
@@ -244,26 +244,13 @@ NGL.Stage.prototype = {
 
     },
 
-    centerView: function(){
+    centerView: function( center ){
 
-        var t = new THREE.Vector3();
+        console.warn( "Stage.centerView: deprecated" );
 
-        return function( center ){
+        this.viewer.centerView( center );
 
-            // remove any paning/translation
-            var ctrl = this.viewer.controls;
-            ctrl.object.position.sub( ctrl.target );
-            ctrl.target.copy( ctrl.target0 );
-
-            t.copy( center ).multiplyScalar( -1 );
-
-            this.viewer.rotationGroup.position.copy( t );
-            this.viewer.pickingRotationGroup.position.copy( t );
-            this.viewer.render();
-
-        };
-
-    }()
+    }
 
 }
 
@@ -277,10 +264,6 @@ NGL.Component = function( stage ){
         representationAdded: new SIGNALS.Signal(),
         representationRemoved: new SIGNALS.Signal(),
         visibilityChanged: new SIGNALS.Signal(),
-
-        // TODO move to Structure
-        trajectoryAdded: new SIGNALS.Signal(),
-        trajectoryRemoved: new SIGNALS.Signal(),
 
     };
 
@@ -325,7 +308,18 @@ NGL.Component.prototype = {
 
     },
 
-    dispose: function(){},
+    dispose: function(){
+
+        // copy via .slice because side effects may change reprList
+        this.reprList.slice().forEach( function( repr ){
+
+            repr.dispose();
+
+        } );
+
+        this.reprList = [];
+
+    },
 
     setVisibility: function( value ){
 
@@ -340,10 +334,10 @@ NGL.StructureComponent = function( stage, structure, sele ){
 
     NGL.Component.call( this, stage );
 
-    /*var SIGNALS = signals;
+    var SIGNALS = signals;
 
     this.signals.trajectoryAdded = new SIGNALS.Signal();
-    this.signals.trajectoryRemoved = new SIGNALS.Signal();*/
+    this.signals.trajectoryRemoved = new SIGNALS.Signal();
 
     this.trajList = [];
 
@@ -463,8 +457,7 @@ NGL.StructureComponent.prototype = {
 
         }
 
-        // TODO
-        // traj.dispose();
+        traj.dispose();
 
         this.signals.trajectoryRemoved.dispatch( traj );
 
@@ -472,19 +465,16 @@ NGL.StructureComponent.prototype = {
 
     dispose: function(){
 
+        NGL.Component.prototype.dispose.call( this );
+
         // copy via .slice because side effects may change reprList
-        this.reprList.slice().forEach( function( repr ){
-
-            repr.dispose();
-
-        } );
-
-        // TODO remove trajectories
         this.trajList.slice().forEach( function( traj ){
 
-            // traj.dispose();
+            traj.dispose();
 
         } );
+
+        this.trajList = [];
         
     },
 
@@ -500,34 +490,19 @@ NGL.StructureComponent.prototype = {
 
     },
 
-    centerView: function(){
+    centerView: function( sele ){
 
-        var t = new THREE.Vector3();
+        var center;
 
-        return function( sele ){
+        if( sele ){
+            center = this.structure.atomCenter( new NGL.Selection( sele ) );
+        }else{
+            center = this.structure.center;
+        }
 
-            // remove any paning/translation
-            var ctrl = this.viewer.controls;
-            ctrl.object.position.sub( ctrl.target );
-            ctrl.target.copy( ctrl.target0 );
+        this.viewer.centerView( center );
 
-            var center;
-
-            if( sele ){
-                center = this.structure.atomCenter( new NGL.Selection( sele ) );
-            }else{
-                center = this.structure.center;
-            }
-
-            t.copy( center ).multiplyScalar( -1 );
-
-            this.viewer.rotationGroup.position.copy( t );
-            this.viewer.pickingRotationGroup.position.copy( t );
-            this.viewer.render();
-
-        };
-
-    }()
+    }
 
 };
 
@@ -554,8 +529,9 @@ NGL.SurfaceComponent.prototype = {
 
     dispose: function(){
 
-        this.surface.buffer.remove();
         this.viewer.remove( this.surface.buffer );
+        this.surface.buffer.dispose();
+        this.surface.buffer = null;  // aid GC
 
     },
 
@@ -570,24 +546,9 @@ NGL.SurfaceComponent.prototype = {
 
     centerView: function(){
 
-        var t = new THREE.Vector3();
+        this.viewer.centerView( this.surface.center );
 
-        return function(){
-
-            // remove any paning/translation
-            var ctrl = this.viewer.controls;
-            ctrl.object.position.sub( ctrl.target );
-            ctrl.target.copy( ctrl.target0 );
-
-            t.copy( this.surface.center ).multiplyScalar( -1 );
-
-            this.viewer.rotationGroup.position.copy( t );
-            this.viewer.pickingRotationGroup.position.copy( t );
-            this.viewer.render();
-
-        };
-
-    }()
+    }
 
 };
 
@@ -885,15 +846,7 @@ NGL.Representation.prototype = {
 
         this.applySelection( sele );
 
-        viewer = this.viewer;
-
-        this.bufferList.forEach( function( buffer ){
-
-            buffer.remove();
-            viewer.remove( buffer );
-
-        });
-
+        this.dispose();
         this.create();
         this.attach();
 
@@ -959,10 +912,13 @@ NGL.Representation.prototype = {
 
         this.bufferList.forEach( function( buffer ){
 
-            buffer.remove();
             viewer.remove( buffer );
+            buffer.dispose();
+            buffer = null;  // aid GC
 
         });
+
+        this.bufferList = [];
 
     }
 
@@ -1445,7 +1401,6 @@ NGL.RibbonRepresentation.prototype.update = function(){
 
     this.dispose();
     this.create();
-
     this.attach();
 
     // console.timeEnd( "NGL.RibbonRepresentation.update" );
