@@ -725,6 +725,8 @@ NGL.Bond.prototype = {
 
 NGL.Trajectory = function( xtcPath, structure ){
 
+    // FIXME representations do not stay hidden on frame update
+
     var SIGNALS = signals;
 
     this.signals = {
@@ -855,6 +857,8 @@ NGL.Trajectory.prototype = {
     },
 
     loadFrame: function( i, callback ){
+
+        // TODO implement max frameCache size, re-use arrays
 
         // console.time( "loadFrame" );
 
@@ -1011,6 +1015,7 @@ NGL.Trajectory.prototype = {
         var n = this.backboneIndices.length * 3;
         var y = this.initialStructure;
 
+        // FIXME re-use arrays
         var coords1 = new Float32Array( n );
         var coords2 = new Float32Array( n );
 
@@ -1951,7 +1956,6 @@ NGL.Fiber = function( residues ){
         this.direction_atomname2 = "CA";
 
     }
-
 
 };
 
