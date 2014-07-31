@@ -998,6 +998,16 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
+    // TODO more fine grained, update only position
+
+    this.dispose();
+    this.create();
+    this.attach();
+
+    return;
+
+    // FIXME
+
     this.sphereBuffer.setAttributes({
         position: this.atomSet.atomPosition()
     });
@@ -1046,6 +1056,16 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
 NGL.BallAndStickRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
+
+    // TODO more fine grained, update only position
+
+    this.dispose();
+    this.create();
+    this.attach();
+
+    return;
+
+    // FIXME
 
     this.sphereBuffer.setAttributes({
         position: this.atomSet.atomPosition()
