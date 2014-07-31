@@ -812,6 +812,8 @@ NGL.Representation = function( structure, viewer, sele ){
     this.structure = structure;
     this.viewer = viewer;
 
+    this.visible = true;
+
     this._sele = sele;
     this.selection = new NGL.Selection( sele );
 
@@ -850,6 +852,8 @@ NGL.Representation.prototype = {
         this.create();
         this.attach();
 
+        this.setVisibility( this.visible );
+
     },
 
     finalize: function(){
@@ -864,11 +868,21 @@ NGL.Representation.prototype = {
 
     },
 
-    update: function(){
+    update: function( just_create ){
 
         if( this.selection ){
 
             this.atomSet.setSelection( this.selection );
+
+        }
+
+        if( just_create ){
+
+            this.dispose();
+            this.create();
+            this.attach();
+
+            this.setVisibility( this.visible );
 
         }
 
@@ -889,6 +903,8 @@ NGL.Representation.prototype = {
     },
 
     setVisibility: function( value ){
+
+        this.visible = value;
 
         this.bufferList.forEach( function( buffer ){
 
@@ -1011,13 +1027,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
 
 NGL.BallAndStickRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this );
-
-    // TODO more fine grained, update only position
-
-    this.dispose();
-    this.create();
-    this.attach();
+    NGL.Representation.prototype.update.call( this, true );
 
     return;
 
@@ -1156,16 +1166,9 @@ NGL.HyperballRepresentation.prototype.create = function(){
 
 NGL.HyperballRepresentation.prototype.update = function(){
 
-    // FIXME
-    // NGL.BallAndStickRepresentation.prototype.update.call( this );
-
-    NGL.Representation.prototype.update.call( this );
+    NGL.Representation.prototype.update.call( this, true );
 
     // TODO more fine grained, update only position
-
-    this.dispose();
-    this.create();
-    this.attach();
 
 };
 
@@ -1248,13 +1251,9 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
 NGL.BackboneRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this );
+    NGL.Representation.prototype.update.call( this, true );
 
     // TODO more fine grained, update only position
-
-    this.dispose();
-    this.create();
-    this.attach();
 
 };
 
@@ -1329,13 +1328,9 @@ NGL.TubeRepresentation.prototype.create = function(){
 
 NGL.TubeRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this );
+    NGL.Representation.prototype.update.call( this, true );
 
     // TODO more fine grained, update only position
-
-    this.dispose();
-    this.create();
-    this.attach();
 
 };
 
@@ -1393,17 +1388,9 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
 NGL.RibbonRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this );
+    NGL.Representation.prototype.update.call( this, true );
 
     // TODO more fine grained, update only position
-
-    // console.time( "NGL.RibbonRepresentation.update" );
-
-    this.dispose();
-    this.create();
-    this.attach();
-
-    // console.timeEnd( "NGL.RibbonRepresentation.update" );
 
 };
 
@@ -1440,17 +1427,9 @@ NGL.TraceRepresentation.prototype.create = function(){
 
 NGL.TraceRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this );
+    NGL.Representation.prototype.update.call( this, true );
 
     // TODO more fine grained, update only position
-
-    // console.time( "NGL.TraceRepresentation.update" );
-
-    this.dispose();
-    this.create();
-    this.attach();
-
-    // console.timeEnd( "NGL.TraceRepresentation.update" );
 
 };
 
