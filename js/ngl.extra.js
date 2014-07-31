@@ -970,16 +970,6 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    // TODO more fine grained, update only position
-
-    this.dispose();
-    this.create();
-    this.attach();
-
-    return;
-
-    // FIXME
-
     this.sphereBuffer.setAttributes({
         position: this.atomSet.atomPosition()
     });
@@ -1027,11 +1017,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
 
 NGL.BallAndStickRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this, true );
-
-    return;
-
-    // FIXME
+    NGL.Representation.prototype.update.call( this );
 
     this.sphereBuffer.setAttributes({
         position: this.atomSet.atomPosition()
@@ -1166,9 +1152,20 @@ NGL.HyperballRepresentation.prototype.create = function(){
 
 NGL.HyperballRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this, true );
+    NGL.Representation.prototype.update.call( this );
 
-    // TODO more fine grained, update only position
+    this.sphereBuffer.setAttributes({
+        position: this.atomSet.atomPosition()
+    });
+
+    this.cylinderBuffer.setAttributes({
+        position: NGL.Utils.calculateCenterArray(
+            this.atomSet.bondPosition( null, 0 ),
+            this.atomSet.bondPosition( null, 1 )
+        ),
+        inputPosition1: this.atomSet.bondPosition( null, 0 ),
+        inputPosition2: this.atomSet.bondPosition( null, 1 )
+    });
 
 };
 
@@ -1191,6 +1188,9 @@ NGL.BackboneRepresentation.prototype.create = function(){
     var sphereBuffer, cylinderBuffer;
 
     var bufferList = [];
+    var atomSetList = [];
+    var bondSetList = [];
+
     var size = this.size;
     var test = this.selection.test;
 
@@ -1198,6 +1198,9 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
         backboneAtomSet = new NGL.AtomSet();
         backboneBondSet = new NGL.BondSet();
+
+        atomSetList.push( backboneAtomSet );
+        bondSetList.push( backboneBondSet );
 
         var a1, a2;
 
@@ -1246,14 +1249,43 @@ NGL.BackboneRepresentation.prototype.create = function(){
     } );
 
     this.bufferList = bufferList;
+    this.atomSetList = atomSetList;
+    this.bondSetList = bondSetList;
 
 };
 
 NGL.BackboneRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this, true );
+    NGL.Representation.prototype.update.call( this );
+    
+    var backboneAtomSet, backboneBondSet;
+    var sphereBuffer, cylinderBuffer;
 
-    // TODO more fine grained, update only position
+    var i;
+    var n = this.atomSetList.length;
+
+    for( i = 0; i < n; ++i ){
+
+        backboneAtomSet = this.atomSetList[ i ];
+        backboneBondSet = this.bondSetList[ i ];
+
+        sphereBuffer = this.bufferList[ i * 2 ];
+        cylinderBuffer = this.bufferList[ i * 2 + 1 ];
+
+        sphereBuffer.setAttributes({
+            position: backboneAtomSet.atomPosition()
+        });
+
+        cylinderBuffer.setAttributes({
+            position: NGL.Utils.calculateCenterArray(
+                backboneBondSet.bondPosition( null, 0 ),
+                backboneBondSet.bondPosition( null, 1 )
+            ),
+            position1: backboneBondSet.bondPosition( null, 0 ),
+            position2: backboneBondSet.bondPosition( null, 1 )
+        });
+
+    }
 
 };
 
@@ -1395,7 +1427,9 @@ NGL.RibbonRepresentation.prototype.update = function(){
 };
 
 
-NGL.TraceRepresentation = function( structure, viewer, sele ){
+NGL.TraceRepresentation = function( structure, viewer, sele, subdiv ){
+
+    this.subdiv = subdiv || 10;
 
     NGL.Representation.call( this, structure, viewer, sele );
 
@@ -1407,15 +1441,15 @@ NGL.TraceRepresentation.prototype.name = "trace";
 
 NGL.TraceRepresentation.prototype.create = function(){
 
+    var scope = this;
     var bufferList = [];
-    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 
         if( f.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( f );
-        var sub = spline.getSubdividedPosition( subdiv );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
 
         bufferList.push( new NGL.TraceBuffer( sub.position, sub.color ) );
 
@@ -1427,9 +1461,29 @@ NGL.TraceRepresentation.prototype.create = function(){
 
 NGL.TraceRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this, true );
+    NGL.Representation.prototype.update.call( this );
 
-    // TODO more fine grained, update only position
+    var traceBuffer;
+    var scope = this;
+    var i = 0;
+
+    this.structure.eachFiber( function( f ){
+
+        if( f.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( f );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
+
+        traceBuffer = scope.bufferList[ i ];
+
+        traceBuffer.setAttributes({
+            "position": sub.position,
+            "color": sub.color
+        });
+
+        ++i;
+
+    }, this.selection, true );
 
 };
 

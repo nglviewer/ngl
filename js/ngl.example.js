@@ -226,7 +226,8 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
 
-                o.addRepresentation( "ribbon" );
+                // o.addRepresentation( "ribbon" );
+                o.addRepresentation( "trace" );
                 o.centerView();
 
                 o.addTrajectory( "__example__/@md_1u19.xtc" );

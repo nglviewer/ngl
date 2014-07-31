@@ -2594,48 +2594,95 @@ NGL.TraceBuffer = function ( position, color ) {
     var n = this.size;
     var n1 = n - 1;
 
-    from = new Float32Array( n1 * 3 );
-    to = new Float32Array( n1 * 3 );
-    lineColor = new Float32Array( n1 * 3 );
-    lineColor2 = new Float32Array( n1 * 3 );
-
-    for( var i=0, v; i<n1; ++i ){
-
-        v = 3 * i;
-
-        from[ v + 0 ] = position[ v + 0 ];
-        from[ v + 1 ] = position[ v + 1 ];
-        from[ v + 2 ] = position[ v + 2 ];
-
-        to[ v + 0 ] = position[ v + 3 ];
-        to[ v + 1 ] = position[ v + 4 ];
-        to[ v + 2 ] = position[ v + 5 ];
-
-        lineColor[ v + 0 ] = color[ v + 0 ];
-        lineColor[ v + 1 ] = color[ v + 1 ];
-        lineColor[ v + 2 ] = color[ v + 2 ];
-
-        lineColor2[ v + 0 ] = color[ v + 3 ];
-        lineColor2[ v + 1 ] = color[ v + 4 ];
-        lineColor2[ v + 2 ] = color[ v + 5 ];
-
-    }
+    this.from = new Float32Array( n1 * 3 );
+    this.to = new Float32Array( n1 * 3 );
+    this.lineColor = new Float32Array( n1 * 3 );
+    this.lineColor2 = new Float32Array( n1 * 3 );
 
     this.lineBuffer = new NGL.LineBuffer(
-        from, to, lineColor, lineColor2
+        this.from, this.to, this.lineColor, this.lineColor2
     );
 
-    this.mesh = this.lineBuffer.mesh;
+    this.attributes = this.lineBuffer.attributes;
+
     this.geometry = this.lineBuffer.geometry;
+
+    this.setAttributes({
+        position: position,
+        color: color
+    });
+
     this.material = this.lineBuffer.material;
+
+    this.mesh = this.lineBuffer.mesh;
 
 };
 
 NGL.TraceBuffer.prototype = {
 
+    setAttributes: function( data ){
+
+        var position, color;
+        var from, to, lineColor, lineColor2;
+
+        if( data[ "position" ] ){
+            position = data[ "position" ];
+            from = this.from;
+            to = this.to;
+        }
+
+        if( data[ "color" ] ){
+            color = data[ "color" ];
+            lineColor = this.lineColor;
+            lineColor2 = this.lineColor2;
+        }
+
+        var n = this.size;
+        var n1 = n - 1;
+
+        for( var i=0, v; i<n1; ++i ){
+
+            v = 3 * i;
+
+            if( position ){
+
+                from[ v + 0 ] = position[ v + 0 ];
+                from[ v + 1 ] = position[ v + 1 ];
+                from[ v + 2 ] = position[ v + 2 ];
+
+                to[ v + 0 ] = position[ v + 3 ];
+                to[ v + 1 ] = position[ v + 4 ];
+                to[ v + 2 ] = position[ v + 5 ];
+
+            }
+
+            if( color ){
+
+                lineColor[ v + 0 ] = color[ v + 0 ];
+                lineColor[ v + 1 ] = color[ v + 1 ];
+                lineColor[ v + 2 ] = color[ v + 2 ];
+
+                lineColor2[ v + 0 ] = color[ v + 3 ];
+                lineColor2[ v + 1 ] = color[ v + 4 ];
+                lineColor2[ v + 2 ] = color[ v + 5 ];
+
+            }
+
+        }
+
+        this.lineBuffer.setAttributes({
+            from: from,
+            to: to,
+            color: lineColor,
+            color2: lineColor2
+        });
+
+    },
+
     dispose: function(){
 
-        NGL.Buffer.prototype.dispose.call( this );
+        // NGL.Buffer.prototype.dispose.call( this );
+        NGL.Buffer.prototype.dispose.call( this.lineBuffer );
 
     }
 
