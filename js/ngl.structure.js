@@ -191,7 +191,6 @@ NGL.AtomSet.prototype = {
         this.atoms.push( atom );
 
         this.atomCount = this.atoms.length;
-        // this.center = this.atomCenter();
 
     },
 
