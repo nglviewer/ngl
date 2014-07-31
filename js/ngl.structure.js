@@ -744,9 +744,6 @@ NGL.Trajectory = function( xtcPath, structure ){
     this.frameCacheSize = 0;
     this.currentFrame = -1;
 
-    this.saveInitialStructure();
-    this.makeIndices();
-
     this.frameLoader = new THREE.XHRLoader();
     this.frameLoader.setResponseType( "arraybuffer" );
 
@@ -788,6 +785,12 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     }
 
+    this.coords1 = new Float32Array( 3 * this.atomCount );
+    this.coords2 = new Float32Array( 3 * this.atomCount );
+
+    this.saveInitialStructure();
+    this.makeIndices();
+
 };
 
 NGL.Trajectory.prototype = {
@@ -818,6 +821,22 @@ NGL.Trajectory.prototype = {
         this.backboneIndices = this.structure.atomIndex(
             new NGL.Selection( "backbone" )
         );
+
+        var i, j;
+        var n = this.backboneIndices.length * 3;
+
+        var y = this.initialStructure;
+        var coords2 = this.coords2;
+
+        for( i = 0; i < n; i += 3 ){
+
+            j = this.backboneIndices[ i / 3 ] * 3;
+
+            coords2[ i + 0 ] = y[ j + 0 ];
+            coords2[ i + 1 ] = y[ j + 1 ];
+            coords2[ i + 2 ] = y[ j + 2 ];
+
+        }
 
     },
 
@@ -940,7 +959,7 @@ NGL.Trajectory.prototype = {
 
     centerPbc: function( coords, mean, box ){
 
-        console.time( "NGL.Trajectory.centerPbc" );
+        // console.time( "NGL.Trajectory.centerPbc" );
 
         var i;
         var n = coords.length;
@@ -960,13 +979,13 @@ NGL.Trajectory.prototype = {
 
         }
 
-        console.timeEnd( "NGL.Trajectory.centerPbc" );
+        // console.timeEnd( "NGL.Trajectory.centerPbc" );
 
     },
 
     removePbc: function( x, box ){
 
-        console.time( "NGL.Trajectory.removePbc" );
+        // console.time( "NGL.Trajectory.removePbc" );
 
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place
@@ -1001,7 +1020,7 @@ NGL.Trajectory.prototype = {
 
         }
 
-        console.timeEnd( "NGL.Trajectory.removePbc" );
+        // console.timeEnd( "NGL.Trajectory.removePbc" );
 
         return x;
 
@@ -1009,15 +1028,13 @@ NGL.Trajectory.prototype = {
 
     superpose: function( x ){
 
-        console.time( "NGL.Trajectory.superpose" );
+        // console.time( "NGL.Trajectory.superpose" );
 
         var i, j;
         var n = this.backboneIndices.length * 3;
-        var y = this.initialStructure;
 
-        // FIXME re-use arrays
-        var coords1 = new Float32Array( n );
-        var coords2 = new Float32Array( n );
+        var coords1 = this.coords1;
+        var coords2 = this.coords2;
 
         for( i = 0; i < n; i += 3 ){
 
@@ -1027,17 +1044,19 @@ NGL.Trajectory.prototype = {
             coords1[ i + 1 ] = x[ j + 1 ];
             coords1[ i + 2 ] = x[ j + 2 ];
 
-            coords2[ i + 0 ] = y[ j + 0 ];
-            coords2[ i + 1 ] = y[ j + 1 ];
-            coords2[ i + 2 ] = y[ j + 2 ];
-
         }
 
+        // TODO re-use superposition object
         var sp = new NGL.Superposition( coords1, coords2 );
-
         sp.transform( x );
 
-        console.timeEnd( "NGL.Trajectory.superpose" );
+        // console.timeEnd( "NGL.Trajectory.superpose" );
+
+    },
+
+    dispose: function(){
+
+        this.frameCache = [];  // aid GC
 
     }
 
@@ -2568,8 +2587,6 @@ NGL.PdbStructure.prototype._parse = function( str ){
             }
 
         }
-
-        // FIXME parse MODEL record
 
     }
 
