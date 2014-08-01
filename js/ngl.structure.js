@@ -872,9 +872,6 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     }
 
-    this.coords1 = new Float32Array( 3 * this.atomCount );
-    this.coords2 = new Float32Array( 3 * this.atomCount );
-
     this.saveInitialStructure();
     this.makeIndices();
 
@@ -911,6 +908,9 @@ NGL.Trajectory.prototype = {
 
         var i, j;
         var n = this.backboneIndices.length * 3;
+
+        this.coords1 = new Float32Array( n );
+        this.coords2 = new Float32Array( n );
 
         var y = this.initialStructure;
         var coords2 = this.coords2;
