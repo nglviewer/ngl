@@ -28,6 +28,12 @@ NGL.Examples = {
 
             }, params );
 
+            stage.loadFile( "../data/__example__/md.gro", function( o ){
+
+                o.addRepresentation( "backbone", "protein" );
+
+            } );
+
         },
 
         "anim_trajectory": function( stage ){
@@ -309,7 +315,7 @@ NGL.Examples = {
             stage.loadFile( "../data/" + path + "md01.gro", function( o ){
 
                 o.addRepresentation( "backbone", "protein" );
-                o.centerView( "ribbon" );
+                o.centerView( "backbone" );
 
             } );
 
