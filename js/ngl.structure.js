@@ -88,6 +88,7 @@ NGL.guessElement = function(){
     return function( atomName ){
 
         var at = atomName.trim().toUpperCase();
+        if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
         var n = at.length;
 
         if( n===0 ) return "";
