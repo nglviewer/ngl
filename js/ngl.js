@@ -2599,21 +2599,18 @@ NGL.TraceBuffer = function ( position, color ) {
     this.lineColor = new Float32Array( n1 * 3 );
     this.lineColor2 = new Float32Array( n1 * 3 );
 
-    this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2
-    );
-
-    this.attributes = this.lineBuffer.attributes;
-
-    this.geometry = this.lineBuffer.geometry;
-
     this.setAttributes({
         position: position,
         color: color
     });
 
-    this.material = this.lineBuffer.material;
+    this.lineBuffer = new NGL.LineBuffer(
+        this.from, this.to, this.lineColor, this.lineColor2
+    );
 
+    this.attributes = this.lineBuffer.attributes;
+    this.geometry = this.lineBuffer.geometry;
+    this.material = this.lineBuffer.material;
     this.mesh = this.lineBuffer.mesh;
 
 };
@@ -2670,12 +2667,21 @@ NGL.TraceBuffer.prototype = {
 
         }
 
-        this.lineBuffer.setAttributes({
-            from: from,
-            to: to,
-            color: lineColor,
-            color2: lineColor2
-        });
+        var lineData = {};
+
+        if( position ){
+            lineData[ "from" ] = from;
+            lineData[ "to" ] = to;
+        }
+
+        if( color ){
+            lineData[ "color" ] = lineColor;
+            lineData[ "color2" ] = lineColor2;
+        }
+
+        if( this.lineBuffer ){
+            this.lineBuffer.setAttributes( lineData );
+        }
 
     },
 
@@ -3034,164 +3040,253 @@ NGL.RibbonBuffer.prototype = {
 
 NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry ){
 
-    rx = rx || 1.5;
-    ry = ry || 0.5;
+    this.rx = rx || 1.5;
+    this.ry = ry || 0.5;
 
-    radialSegments = radialSegments || 4;
+    this.radialSegments = radialSegments || 4;
+    this.size = position.length / 3;;
 
-    var n = position.length / 3;
+    var n = this.size;
     var n1 = n - 1;
-    var radialSegments1 = radialSegments + 1;
+    var radialSegments = this.radialSegments;
+    var radialSegments1 = this.radialSegments + 1;
 
-    var meshPosition = new Float32Array( n * radialSegments * 3 );
-    var meshColor = new Float32Array( n * radialSegments * 3 );
-    var meshIndex = new Uint32Array( n1 * 2 * radialSegments1 * 3 );;
-    var meshNormal = new Float32Array( n * radialSegments * 3 );
-    var meshPickingColor = new Float32Array( n * radialSegments * 3 );
+    this.meshPosition = new Float32Array( n * radialSegments * 3 );
+    this.meshColor = new Float32Array( n * radialSegments * 3 );
+    this.meshNormal = new Float32Array( n * radialSegments * 3 );
+    this.meshPickingColor = new Float32Array( n * radialSegments * 3 );
+    this.meshIndex = new Uint32Array( n1 * 2 * radialSegments1 * 3 );
 
-    // var meshTangent1 = new Float32Array( n * radialSegments * 3 );
-    // var meshTangent2 = new Float32Array( n * radialSegments * 3 );
+    this.makeIndex();
 
-    var vNormal = new THREE.Vector3();
-    var vBinormal = new THREE.Vector3();
-    var vTangent = new THREE.Vector3();
-    var vPosition = new THREE.Vector3();
+    this.setAttributes({
+        position: position,
+        normal: normal,
+        binormal: binormal,
+        tangent: tangent,
+        color: color,
+        size: size,
+        pickingColor: pickingColor
+    });
 
-    var vMeshPosition = new THREE.Vector3();
-    var vMeshNormal = new THREE.Vector3();
-    var vMeshTangent = new THREE.Vector3();
-
-    var i, j, k, l;
-    var v, cx, cy;
-    var cx1, cy1, cx2, cy2;
-    var radius;
-    var irs, irs1;
-
-    for( i = 0; i < n; ++i ){
-
-        k = i * 3;
-        l = k * radialSegments;
-
-        vNormal.set(
-            normal[ k + 0 ], normal[ k + 1 ], normal[ k + 2 ]
-        ).normalize();
-
-        vBinormal.set(
-            binormal[ k + 0 ], binormal[ k + 1 ], binormal[ k + 2 ]
-        ).normalize();
-
-        vTangent.set(
-            tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
-        ).normalize();
-
-        vPosition.set(
-            position[ k + 0 ], position[ k + 1 ], position[ k + 2 ]
-        );
-
-        radius = size[ i ];
-
-        for( j = 0; j < radialSegments; ++j ){
-
-            s = l + j * 3
-
-            v = ( j / radialSegments ) * 2 * Math.PI;
-
-            // rx = 1.5;
-            // ry = 0.5;
-
-            cx = -radius * rx * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
-            cy = radius * ry * Math.sin( v );
-
-            cx1 = -radius * rx * Math.cos( v - 0.01 );
-            cy1 = radius * ry * Math.sin( v - 0.01 );
-            cx2 = -radius * rx * Math.cos( v + 0.01 );
-            cy2 = radius * ry * Math.sin( v + 0.01 );
-
-            // vMeshPosition.copy( vPosition );
-            // vMeshPosition.x += cx * vNormal.x + cy * vBinormal.x;
-            // vMeshPosition.y += cx * vNormal.y + cy * vBinormal.y;
-            // vMeshPosition.z += cx * vNormal.z + cy * vBinormal.z;
-
-            meshPosition[ s + 0 ] = vPosition.x + cx * vNormal.x + cy * vBinormal.x;
-            meshPosition[ s + 1 ] = vPosition.y + cx * vNormal.y + cy * vBinormal.y;
-            meshPosition[ s + 2 ] = vPosition.z + cx * vNormal.z + cy * vBinormal.z;
-
-            vMeshNormal.set(
-                // elipse tangent approximated as vector from/to adjacent points
-                ( cx2 * vNormal.x + cy2 * vBinormal.x ) -
-                    ( cx1 * vNormal.x + cy1 * vBinormal.x ),
-                ( cx2 * vNormal.y + cy2 * vBinormal.y ) -
-                    ( cx1 * vNormal.y + cy1 * vBinormal.y ),
-                ( cx2 * vNormal.z + cy2 * vBinormal.z ) -
-                    ( cx1 * vNormal.z + cy1 * vBinormal.z )
-            ).cross( vTangent );
-
-            // meshTangent1[ s + 0 ] = vMeshNormal.x;
-            // meshTangent1[ s + 1 ] = vMeshNormal.y;
-            // meshTangent1[ s + 2 ] = vMeshNormal.z;
-
-            // meshTangent2[ s + 0 ] = vTangent.x;
-            // meshTangent2[ s + 1 ] = vTangent.y;
-            // meshTangent2[ s + 2 ] = vTangent.z;
-
-            meshNormal[ s + 0 ] = vMeshNormal.x;
-            meshNormal[ s + 1 ] = vMeshNormal.y;
-            meshNormal[ s + 2 ] = vMeshNormal.z;
-
-            meshColor[ s + 0 ] = color[ k + 0 ];
-            meshColor[ s + 1 ] = color[ k + 1 ];
-            meshColor[ s + 2 ] = color[ k + 2 ];
-
-            meshPickingColor[ s + 0 ] = pickingColor[ k + 0 ];
-            meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
-            meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
-
-        }
-
-    }
-
-    for( i = 0; i < n1; ++i ){
-
-        k = i * radialSegments1 * 3 * 2
-
-        irs = i * radialSegments;
-        irs1 = ( i + 1 ) * radialSegments;
-
-        for( j = 0; j < radialSegments1; ++j ){
-
-            l = k + j * 3 * 2;
-
-            meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
-            meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
-            meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
-
-            meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
-            meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
-            meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
-
-        }
-
-    }
-
-    this.meshPosition = meshPosition;
-    this.meshNormal = meshNormal;
-
-    // this.meshTangent1 = meshTangent1;
-    // this.meshTangent2 = meshTangent2;
-
-    NGL.MeshBuffer.call(
-        this, meshPosition, meshColor, meshIndex, meshNormal, meshPickingColor
+    this.meshBuffer = new NGL.MeshBuffer(
+        this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor
     );
+
+    this.geometry = this.meshBuffer.geometry;
+    this.material = this.meshBuffer.material;
+    this.mesh = this.meshBuffer.mesh;
+
+    this.pickingMaterial = this.meshBuffer.pickingMaterial;
+    this.pickingMesh = this.meshBuffer.pickingMesh;
 
 }
 
-NGL.TubeMeshBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
+NGL.TubeMeshBuffer.prototype = {
 
-// NGL.TubeMeshBuffer.prototype.setAttributes = function( data ){
+    setAttributes: function(){
 
-    // TODO
+        var vNormal = new THREE.Vector3();
+        var vBinormal = new THREE.Vector3();
+        var vTangent = new THREE.Vector3();
+        var vPosition = new THREE.Vector3();
 
-// };
+        var vMeshPosition = new THREE.Vector3();
+        var vMeshNormal = new THREE.Vector3();
+        var vMeshTangent = new THREE.Vector3();
+
+        return function( data ){
+
+            var rx = this.rx;
+            var ry = this.ry;
+
+            var n = this.size;
+            var n1 = n - 1;
+            var radialSegments = this.radialSegments;
+            var radialSegments1 = this.radialSegments + 1;
+
+            var position, normal, binormal, tangent, color, size, pickingColor;
+            var meshPosition, meshColor, meshNormal, meshPickingColor
+
+            if( data[ "position" ] ){
+                position = data[ "position" ];
+                normal = data[ "normal" ];
+                binormal = data[ "binormal" ];
+                tangent = data[ "tangent" ];
+                size = data[ "size" ];
+                meshPosition = this.meshPosition;
+                meshNormal = this.meshNormal;
+            }
+
+            if( data[ "color" ] ){
+                color = data[ "color" ];
+                meshColor = this.meshColor;
+            }
+
+            if( data[ "pickingColor" ] ){
+                pickingColor = data[ "pickingColor" ];
+                meshPickingColor = this.meshPickingColor;
+            }
+
+            var i, j, k, l;
+            var v, cx, cy;
+            var cx1, cy1, cx2, cy2;
+            var radius;
+            var irs, irs1;
+
+            for( i = 0; i < n; ++i ){
+
+                k = i * 3;
+                l = k * radialSegments;
+
+                if( position ){
+
+                    vNormal.set(
+                        normal[ k + 0 ], normal[ k + 1 ], normal[ k + 2 ]
+                    ).normalize();
+
+                    vBinormal.set(
+                        binormal[ k + 0 ], binormal[ k + 1 ], binormal[ k + 2 ]
+                    ).normalize();
+
+                    vTangent.set(
+                        tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
+                    ).normalize();
+
+                    vPosition.set(
+                        position[ k + 0 ], position[ k + 1 ], position[ k + 2 ]
+                    );
+
+                    radius = size[ i ];
+
+                }
+
+                for( j = 0; j < radialSegments; ++j ){
+
+                    s = l + j * 3
+
+                    if( position ){
+
+                        v = ( j / radialSegments ) * 2 * Math.PI;
+
+                        cx = -radius * rx * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
+                        cy = radius * ry * Math.sin( v );
+
+                        cx1 = -radius * rx * Math.cos( v - 0.01 );
+                        cy1 = radius * ry * Math.sin( v - 0.01 );
+                        cx2 = -radius * rx * Math.cos( v + 0.01 );
+                        cy2 = radius * ry * Math.sin( v + 0.01 );
+
+                        meshPosition[ s + 0 ] =
+                            vPosition.x + cx * vNormal.x + cy * vBinormal.x;
+                        meshPosition[ s + 1 ] =
+                            vPosition.y + cx * vNormal.y + cy * vBinormal.y;
+                        meshPosition[ s + 2 ] =
+                            vPosition.z + cx * vNormal.z + cy * vBinormal.z;
+
+                        vMeshNormal.set(
+                            // elipse tangent approximated as vector from/to adjacent points
+                            ( cx2 * vNormal.x + cy2 * vBinormal.x ) -
+                                ( cx1 * vNormal.x + cy1 * vBinormal.x ),
+                            ( cx2 * vNormal.y + cy2 * vBinormal.y ) -
+                                ( cx1 * vNormal.y + cy1 * vBinormal.y ),
+                            ( cx2 * vNormal.z + cy2 * vBinormal.z ) -
+                                ( cx1 * vNormal.z + cy1 * vBinormal.z )
+                        ).cross( vTangent );
+
+                        meshNormal[ s + 0 ] = vMeshNormal.x;
+                        meshNormal[ s + 1 ] = vMeshNormal.y;
+                        meshNormal[ s + 2 ] = vMeshNormal.z;
+
+                    }
+
+                    if( color ){
+
+                        meshColor[ s + 0 ] = color[ k + 0 ];
+                        meshColor[ s + 1 ] = color[ k + 1 ];
+                        meshColor[ s + 2 ] = color[ k + 2 ];
+
+                    }
+
+                    if( pickingColor ){
+
+                        meshPickingColor[ s + 0 ] = pickingColor[ k + 0 ];
+                        meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
+                        meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
+
+                    }
+
+                }
+
+            }
+
+            var meshData = {};
+
+            if( position ){
+                meshData[ "position" ] = meshPosition;
+                meshData[ "normal" ] = meshNormal;
+            }
+
+            if( color ){
+                meshData[ "color" ] = meshColor;
+            }
+
+            if( pickingColor ){
+                meshData[ "pickingColor" ] = meshPickingColor;
+            }
+
+            if( this.meshBuffer ){
+                this.meshBuffer.setAttributes( meshData );
+            }
+        
+        }
+
+    }(),
+
+    makeIndex: function(){
+
+        var meshIndex = this.meshIndex;
+
+        var n = this.size;
+        var n1 = n - 1;
+        var radialSegments = this.radialSegments;
+        var radialSegments1 = this.radialSegments + 1;
+
+        var i, k, irs, irs1, l, j;
+
+        for( i = 0; i < n1; ++i ){
+
+            k = i * radialSegments1 * 3 * 2
+
+            irs = i * radialSegments;
+            irs1 = ( i + 1 ) * radialSegments;
+
+            for( j = 0; j < radialSegments1; ++j ){
+
+                l = k + j * 3 * 2;
+
+                meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+                meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
+                meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
+
+                meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
+                meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
+
+            }
+
+        }
+
+    },
+
+    dispose: function(){
+
+        this.meshBuffer.dispose();
+
+    }
+
+};
 
 
 ///////////////////

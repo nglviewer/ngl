@@ -1290,9 +1290,10 @@ NGL.BackboneRepresentation.prototype.update = function(){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, size ){
+NGL.TubeRepresentation = function( structure, viewer, sele, size, subdiv ){
 
     this.size = size || 0.25;
+    this.subdiv = subdiv || 10;
 
     NGL.Representation.call( this, structure, viewer, sele );
 
@@ -1304,27 +1305,15 @@ NGL.TubeRepresentation.prototype.name = "tube";
 
 NGL.TubeRepresentation.prototype.create = function(){
 
+    var scope = this;
     var bufferList = [];
-    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 
         if( f.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( f );
-        var sub = spline.getSubdividedPosition( subdiv );
-
-        // bufferList.push(
-
-        //     new NGL.TubeImpostorBuffer(
-        //         sub.position,
-        //         sub.normal,
-        //         sub.binormal,
-        //         sub.color,
-        //         sub.size
-        //     )
-
-        // );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
 
         var rx = 1.5;
         var ry = 0.5;
@@ -1348,10 +1337,6 @@ NGL.TubeRepresentation.prototype.create = function(){
 
         bufferList.push( tubeBuffer );
 
-        // bufferList.push(
-        //     new NGL.BufferVectorHelper( sub.position, sub.normal, "red", 2 )
-        // );
-
     }, this.selection, true );
 
     this.bufferList = bufferList;
@@ -1360,9 +1345,32 @@ NGL.TubeRepresentation.prototype.create = function(){
 
 NGL.TubeRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this, true );
+    NGL.Representation.prototype.update.call( this );
 
-    // TODO more fine grained, update only position
+    var tubeBuffer;
+    var scope = this;
+    var i = 0;
+
+    this.structure.eachFiber( function( f ){
+
+        if( f.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( f );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
+
+        tubeBuffer = scope.bufferList[ i ];
+
+        tubeBuffer.setAttributes({
+            "position": sub.position,
+            "normal": sub.normal,
+            "binormal": sub.binormal,
+            "tangent": sub.tangent,
+            "size": sub.size
+        });
+
+        ++i;
+
+    }, this.selection, true );
 
 };
 
@@ -1389,14 +1397,8 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
         if( f.residueCount < 4 ) return;
 
-        // console.time( "NGL.RibbonRepresentation.create spline" );
-        
         var spline = new NGL.Spline( f );
         var sub = spline.getSubdividedPosition( scope.subdiv );
-        
-        //console.timeEnd( "NGL.RibbonRepresentation.create spline" );
-
-        //console.time( "NGL.RibbonRepresentation.create buffer" );
         
         bufferList.push(
 
@@ -1410,8 +1412,6 @@ NGL.RibbonRepresentation.prototype.create = function(){
             )
 
         );
-        
-        // console.timeEnd( "NGL.RibbonRepresentation.create buffer" );
 
     }, this.selection, true );
 
