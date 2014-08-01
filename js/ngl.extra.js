@@ -935,6 +935,7 @@ NGL.Representation.prototype = {
         });
 
         this.bufferList = [];
+        this.fiberList = [];
 
     }
 
@@ -1311,40 +1312,44 @@ NGL.TubeRepresentation.prototype.name = "tube";
 NGL.TubeRepresentation.prototype.create = function(){
 
     var scope = this;
-    var bufferList = [];
 
-    this.structure.eachFiber( function( f ){
+    this.bufferList = [];
+    this.fiberList = [];
 
-        if( f.residueCount < 4 ) return;
+    this.structure.eachFiber( function( fiber ){
 
-        var spline = new NGL.Spline( f );
+        if( fiber.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( fiber );
         var sub = spline.getSubdividedPosition( scope.subdiv );
 
         var rx = 1.5;
         var ry = 0.5;
 
-        if( f.isCg() ){
+        if( fiber.isCg() ){
             ry = 1.5;
         }
 
-        var tubeBuffer = new NGL.TubeMeshBuffer(
-            sub.position,
-            sub.normal,
-            sub.binormal,
-            sub.tangent,
-            sub.color,
-            sub.size,
-            12,
-            sub.pickingColor,
-            rx,
-            ry
-        )
+        scope.bufferList.push(
 
-        bufferList.push( tubeBuffer );
+            new NGL.TubeMeshBuffer(
+                sub.position,
+                sub.normal,
+                sub.binormal,
+                sub.tangent,
+                sub.color,
+                sub.size,
+                12,
+                sub.pickingColor,
+                rx,
+                ry
+            )
+
+        );
+
+        scope.fiberList.push( fiber );
 
     }, this.selection, true );
-
-    this.bufferList = bufferList;
 
 };
 
@@ -1352,20 +1357,19 @@ NGL.TubeRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    var tubeBuffer;
-    var scope = this;
     var i = 0;
+    var n = this.fiberList.length;
 
-    this.structure.eachFiber( function( f ){
+    for( i = 0; i < n; ++i ){
 
-        if( f.residueCount < 4 ) return;
+        var fiber = this.fiberList[ i ]
 
-        var spline = new NGL.Spline( f );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
+        if( fiber.residueCount < 4 ) return;
 
-        tubeBuffer = scope.bufferList[ i ];
+        var spline = new NGL.Spline( fiber );
+        var sub = spline.getSubdividedPosition( this.subdiv );
 
-        tubeBuffer.setAttributes({
+        this.bufferList[ i ].setAttributes({
             "position": sub.position,
             "normal": sub.normal,
             "binormal": sub.binormal,
@@ -1373,9 +1377,7 @@ NGL.TubeRepresentation.prototype.update = function(){
             "size": sub.size
         });
 
-        ++i;
-
-    }, this.selection, true );
+    };
 
 };
 
@@ -1396,16 +1398,18 @@ NGL.RibbonRepresentation.prototype.name = "ribbon";
 NGL.RibbonRepresentation.prototype.create = function(){
 
     var scope = this;
-    var bufferList = [];
 
-    this.structure.eachFiber( function( f ){
+    this.bufferList = [];
+    this.fiberList = [];
 
-        if( f.residueCount < 4 ) return;
+    this.structure.eachFiber( function( fiber ){
 
-        var spline = new NGL.Spline( f );
+        if( fiber.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( fiber );
         var sub = spline.getSubdividedPosition( scope.subdiv );
         
-        bufferList.push(
+        scope.bufferList.push(
 
             new NGL.RibbonBuffer(
                 sub.position,
@@ -1418,36 +1422,15 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
         );
 
-    }, this.selection, true );
+        scope.fiberList.push( fiber );
 
-    this.bufferList = bufferList;
+    }, this.selection, true );
 
 };
 
 NGL.RibbonRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this );
-
-    var ribbonBuffer;
-    var scope = this;
-    var i = 0;
-
-    this.structure.eachFiber( function( f ){
-
-        if( f.residueCount < 4 ) return;
-
-        var spline = new NGL.Spline( f );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
-
-        ribbonBuffer = scope.bufferList[ i ];
-
-        ribbonBuffer.setAttributes({
-            "position": sub.position
-        });
-
-        ++i;
-
-    }, this.selection, true );
+    NGL.TraceRepresentation.prototype.update.call( this );
 
 };
 
@@ -1467,20 +1450,21 @@ NGL.TraceRepresentation.prototype.name = "trace";
 NGL.TraceRepresentation.prototype.create = function(){
 
     var scope = this;
-    var bufferList = [];
 
-    this.structure.eachFiber( function( f ){
+    this.bufferList = [];
+    this.fiberList = [];
 
-        if( f.residueCount < 4 ) return;
+    this.structure.eachFiber( function( fiber ){
 
-        var spline = new NGL.Spline( f );
+        if( fiber.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( fiber );
         var sub = spline.getSubdividedPosition( scope.subdiv );
 
-        bufferList.push( new NGL.TraceBuffer( sub.position, sub.color ) );
+        scope.bufferList.push( new NGL.TraceBuffer( sub.position, sub.color ) );
+        scope.fiberList.push( fiber );
 
     }, this.selection, true );
-
-    this.bufferList = bufferList;
 
 };
 
@@ -1488,26 +1472,23 @@ NGL.TraceRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    var traceBuffer;
-    var scope = this;
     var i = 0;
+    var n = this.fiberList.length;
 
-    this.structure.eachFiber( function( f ){
+    for( i = 0; i < n; ++i ){
 
-        if( f.residueCount < 4 ) return;
+        var fiber = this.fiberList[ i ]
 
-        var spline = new NGL.Spline( f );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
+        if( fiber.residueCount < 4 ) return;
 
-        traceBuffer = scope.bufferList[ i ];
+        var spline = new NGL.Spline( fiber );
+        var sub = spline.getSubdividedPosition( this.subdiv );
 
-        traceBuffer.setAttributes({
+        this.bufferList[ i ].setAttributes({
             "position": sub.position
         });
 
-        ++i;
-
-    }, this.selection, true );
+    };
 
 };
 
