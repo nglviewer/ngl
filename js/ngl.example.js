@@ -242,6 +242,38 @@ NGL.Examples = {
 
         },
 
+        "ribosome": function( stage ){
+
+            stage.loadFile( "../data/__example__/4UPY.pdb", function( o ){
+
+                o.addRepresentation( "tube" );
+                stage.viewer.centerView();
+
+            } );
+
+            stage.loadFile( "../data/__example__/4UPX.pdb", function( o ){
+
+                o.addRepresentation( "tube" );
+                stage.viewer.centerView();
+
+            } );
+
+            stage.loadFile( "../data/__example__/4UQ5.pdb", function( o ){
+
+                o.addRepresentation( "tube" );
+                stage.viewer.centerView();
+
+            } );
+
+            stage.loadFile( "../data/__example__/4UPW.pdb", function( o ){
+
+                o.addRepresentation( "tube" );
+                stage.viewer.centerView();
+
+            } );
+
+        },
+
         // alexpc
         
         "_rho_traj": function( stage ){
