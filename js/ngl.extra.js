@@ -970,8 +970,10 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
+    var position = this.atomSet.atomPosition();
+
     this.sphereBuffer.setAttributes({
-        position: this.atomSet.atomPosition()
+        position: position
     });
 
 };
@@ -1023,13 +1025,13 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
         position: this.atomSet.atomPosition()
     });
 
+    var from = this.atomSet.bondPosition( null, 0 );
+    var to = this.atomSet.bondPosition( null, 1 );
+
     this.cylinderBuffer.setAttributes({
-        position: NGL.Utils.calculateCenterArray(
-            this.atomSet.bondPosition( null, 0 ),
-            this.atomSet.bondPosition( null, 1 )
-        ),
-        position1: this.atomSet.bondPosition( null, 0 ),
-        position2: this.atomSet.bondPosition( null, 1 )
+        position: NGL.Utils.calculateCenterArray( from, to ),
+        position1: from,
+        position2: to
     });
 
 };
@@ -1106,9 +1108,12 @@ NGL.LineRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
+    var from = this.atomSet.bondPosition( null, 0 );
+    var to = this.atomSet.bondPosition( null, 1 );
+
     this.lineBuffer.setAttributes({
-        from: this.atomSet.bondPosition( null, 0 ),
-        to: this.atomSet.bondPosition( null, 1 )
+        from: from,
+        to: to
     });
 
 };
@@ -1158,13 +1163,13 @@ NGL.HyperballRepresentation.prototype.update = function(){
         position: this.atomSet.atomPosition()
     });
 
+    var from = this.atomSet.bondPosition( null, 0 );
+    var to = this.atomSet.bondPosition( null, 1 );
+
     this.cylinderBuffer.setAttributes({
-        position: NGL.Utils.calculateCenterArray(
-            this.atomSet.bondPosition( null, 0 ),
-            this.atomSet.bondPosition( null, 1 )
-        ),
-        inputPosition1: this.atomSet.bondPosition( null, 0 ),
-        inputPosition2: this.atomSet.bondPosition( null, 1 )
+        position: NGL.Utils.calculateCenterArray( from, to ),
+        inputPosition1: from,
+        inputPosition2: to
     });
 
 };
@@ -1276,13 +1281,13 @@ NGL.BackboneRepresentation.prototype.update = function(){
             position: backboneAtomSet.atomPosition()
         });
 
+        var from = backboneBondSet.bondPosition( null, 0 );
+        var to = backboneBondSet.bondPosition( null, 1 );
+
         cylinderBuffer.setAttributes({
-            position: NGL.Utils.calculateCenterArray(
-                backboneBondSet.bondPosition( null, 0 ),
-                backboneBondSet.bondPosition( null, 1 )
-            ),
-            position1: backboneBondSet.bondPosition( null, 0 ),
-            position2: backboneBondSet.bondPosition( null, 1 )
+            position: NGL.Utils.calculateCenterArray( from, to ),
+            position1: from,
+            position2: to
         });
 
     }

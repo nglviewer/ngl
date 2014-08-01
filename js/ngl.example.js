@@ -315,6 +315,24 @@ NGL.Examples = {
 
         },
 
+        "_mdfit": function( stage ){
+
+            var path = "test_data/mdfit/"
+
+            stage.loadFile( "../data/" + path + "mdfit_50s_timo.gro", function( o ){
+
+                // o.addRepresentation( "spacefill" );
+                o.addRepresentation( "line" );
+                o.addRepresentation( "backbone" );
+                // o.addRepresentation( "ribbon" );
+                o.centerView();
+
+                o.addTrajectory( path + "mdfit_50s_timo.xtc" );
+
+            } );
+
+        },
+
     }
 
 };
