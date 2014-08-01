@@ -322,9 +322,10 @@ NGL.Examples = {
             stage.loadFile( "../data/" + path + "mdfit_50s_timo.gro", function( o ){
 
                 // o.addRepresentation( "spacefill" );
-                o.addRepresentation( "line" );
-                o.addRepresentation( "backbone" );
-                // o.addRepresentation( "ribbon" );
+                // o.addRepresentation( "line" );
+                // o.addRepresentation( "backbone" );
+                o.addRepresentation( "ribbon" );
+                // o.addRepresentation( "trace" );
                 o.centerView();
 
                 o.addTrajectory( path + "mdfit_50s_timo.xtc" );
