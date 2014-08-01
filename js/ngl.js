@@ -3087,14 +3087,8 @@ NGL.TubeMeshBuffer.prototype = {
 
     setAttributes: function(){
 
-        var vNormal = new THREE.Vector3();
-        var vBinormal = new THREE.Vector3();
         var vTangent = new THREE.Vector3();
-        var vPosition = new THREE.Vector3();
-
-        var vMeshPosition = new THREE.Vector3();
         var vMeshNormal = new THREE.Vector3();
-        var vMeshTangent = new THREE.Vector3();
 
         return function( data ){
 
@@ -3135,6 +3129,35 @@ NGL.TubeMeshBuffer.prototype = {
             var radius;
             var irs, irs1;
 
+            var normX, normY, normZ;
+            var biX, biY, biZ;
+            var posX, posY, posZ;
+
+            var cxArr = [];
+            var cyArr = [];
+            var cx1Arr = [];
+            var cy1Arr = [];
+            var cx2Arr = [];
+            var cy2Arr = [];
+
+            if( position ){
+            
+                for( j = 0; j < radialSegments; ++j ){
+
+                    v = ( j / radialSegments ) * 2 * Math.PI;
+
+                    cxArr[ j ] = rx * Math.cos( v );
+                    cyArr[ j ] = ry * Math.sin( v );
+
+                    cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
+                    cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
+                    cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
+                    cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
+
+                }
+
+            }
+
             for( i = 0; i < n; ++i ){
 
                 k = i * 3;
@@ -3142,21 +3165,21 @@ NGL.TubeMeshBuffer.prototype = {
 
                 if( position ){
 
-                    vNormal.set(
-                        normal[ k + 0 ], normal[ k + 1 ], normal[ k + 2 ]
-                    ).normalize();
-
-                    vBinormal.set(
-                        binormal[ k + 0 ], binormal[ k + 1 ], binormal[ k + 2 ]
-                    ).normalize();
-
                     vTangent.set(
                         tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
-                    ).normalize();
-
-                    vPosition.set(
-                        position[ k + 0 ], position[ k + 1 ], position[ k + 2 ]
                     );
+
+                    normX = normal[ k + 0 ];
+                    normY = normal[ k + 1 ];
+                    normZ = normal[ k + 2 ];
+
+                    biX = binormal[ k + 0 ];
+                    biY = binormal[ k + 1 ];
+                    biZ = binormal[ k + 2 ];
+
+                    posX = position[ k + 0 ];
+                    posY = position[ k + 1 ];
+                    posZ = position[ k + 2 ];
 
                     radius = size[ i ];
 
@@ -3168,31 +3191,26 @@ NGL.TubeMeshBuffer.prototype = {
 
                     if( position ){
 
-                        v = ( j / radialSegments ) * 2 * Math.PI;
+                        cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
+                        cy = radius * cyArr[ j ];
 
-                        cx = -radius * rx * Math.cos( v ); // TODO: Hack: Negating it so it faces outside.
-                        cy = radius * ry * Math.sin( v );
+                        cx1 = -radius * cx1Arr[ j ];
+                        cy1 = radius * cy1Arr[ j ];
+                        cx2 = -radius * cx2Arr[ j ];
+                        cy2 = radius * cy2Arr[ j ];
 
-                        cx1 = -radius * rx * Math.cos( v - 0.01 );
-                        cy1 = radius * ry * Math.sin( v - 0.01 );
-                        cx2 = -radius * rx * Math.cos( v + 0.01 );
-                        cy2 = radius * ry * Math.sin( v + 0.01 );
-
-                        meshPosition[ s + 0 ] =
-                            vPosition.x + cx * vNormal.x + cy * vBinormal.x;
-                        meshPosition[ s + 1 ] =
-                            vPosition.y + cx * vNormal.y + cy * vBinormal.y;
-                        meshPosition[ s + 2 ] =
-                            vPosition.z + cx * vNormal.z + cy * vBinormal.z;
+                        meshPosition[ s + 0 ] = posX + cx * normX + cy * biX;
+                        meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
+                        meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
 
                         vMeshNormal.set(
                             // elipse tangent approximated as vector from/to adjacent points
-                            ( cx2 * vNormal.x + cy2 * vBinormal.x ) -
-                                ( cx1 * vNormal.x + cy1 * vBinormal.x ),
-                            ( cx2 * vNormal.y + cy2 * vBinormal.y ) -
-                                ( cx1 * vNormal.y + cy1 * vBinormal.y ),
-                            ( cx2 * vNormal.z + cy2 * vBinormal.z ) -
-                                ( cx1 * vNormal.z + cy1 * vBinormal.z )
+                            ( cx2 * normX + cy2 * biX ) -
+                                ( cx1 * normX + cy1 * biX ),
+                            ( cx2 * normY + cy2 * biY ) -
+                                ( cx1 * normY + cy1 * biY ),
+                            ( cx2 * normZ + cy2 * biZ ) -
+                                ( cx1 * normZ + cy1 * biZ )
                         ).cross( vTangent );
 
                         meshNormal[ s + 0 ] = vMeshNormal.x;
