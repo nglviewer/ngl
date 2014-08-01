@@ -937,7 +937,7 @@ NGL.Trajectory.prototype = {
         loader.load( url, function( n ){
 
             n = parseInt( n );
-            console.log( "numframes", n );
+            // console.log( "numframes", n );
 
             scope.numframes = n;
             scope.signals.gotNumframes.dispatch( n );
@@ -1008,7 +1008,7 @@ NGL.Trajectory.prototype = {
 
             scope.updateStructure( i, callback );
 
-        });
+        } );
 
     },
 
