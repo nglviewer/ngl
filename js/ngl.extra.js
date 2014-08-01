@@ -1367,9 +1367,10 @@ NGL.TubeRepresentation.prototype.update = function(){
 };
 
 
-NGL.RibbonRepresentation = function( structure, viewer, sele, size ){
+NGL.RibbonRepresentation = function( structure, viewer, sele, size, subdiv ){
 
     this.size = size || 0.25;
+    this.subdiv = subdiv || 10;
 
     NGL.Representation.call( this, structure, viewer, sele );
 
@@ -1381,8 +1382,8 @@ NGL.RibbonRepresentation.prototype.name = "ribbon";
 
 NGL.RibbonRepresentation.prototype.create = function(){
 
+    var scope = this;
     var bufferList = [];
-    var subdiv = 10;
 
     this.structure.eachFiber( function( f ){
 
@@ -1391,7 +1392,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
         // console.time( "NGL.RibbonRepresentation.create spline" );
         
         var spline = new NGL.Spline( f );
-        var sub = spline.getSubdividedPosition( subdiv );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
         
         //console.timeEnd( "NGL.RibbonRepresentation.create spline" );
 
@@ -1420,9 +1421,28 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
 NGL.RibbonRepresentation.prototype.update = function(){
 
-    NGL.Representation.prototype.update.call( this, true );
+    NGL.Representation.prototype.update.call( this );
 
-    // TODO more fine grained, update only position
+    var ribbonBuffer;
+    var scope = this;
+    var i = 0;
+
+    this.structure.eachFiber( function( f ){
+
+        if( f.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( f );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
+
+        ribbonBuffer = scope.bufferList[ i ];
+
+        ribbonBuffer.setAttributes({
+            "position": sub.position
+        });
+
+        ++i;
+
+    }, this.selection, true );
 
 };
 
@@ -1477,8 +1497,7 @@ NGL.TraceRepresentation.prototype.update = function(){
         traceBuffer = scope.bufferList[ i ];
 
         traceBuffer.setAttributes({
-            "position": sub.position,
-            "color": sub.color
+            "position": sub.position
         });
 
         ++i;
