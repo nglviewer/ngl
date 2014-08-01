@@ -330,7 +330,8 @@ NGL.Examples = {
                 // o.addRepresentation( "spacefill" );
                 // o.addRepresentation( "line" );
                 // o.addRepresentation( "backbone" );
-                o.addRepresentation( "ribbon" );
+                //o.addRepresentation( "ribbon" );
+                o.addRepresentation( "tube" );
                 // o.addRepresentation( "trace" );
                 o.centerView();
 

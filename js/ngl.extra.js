@@ -1360,6 +1360,8 @@ NGL.TubeRepresentation.prototype.update = function(){
     var i = 0;
     var n = this.fiberList.length;
 
+    // console.time( this.name, "update" );
+
     for( i = 0; i < n; ++i ){
 
         var fiber = this.fiberList[ i ]
@@ -1378,6 +1380,8 @@ NGL.TubeRepresentation.prototype.update = function(){
         });
 
     };
+
+    // console.timeEnd( this.name, "update" );
 
 };
 
