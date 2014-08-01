@@ -12,67 +12,49 @@ NGL.RightMouseButton = 3;
 //////////
 // Stage
 
-NGL.Stage = function( eid ){
+NGL.PickingControls = function( viewer, stage ){
 
-    var SIGNALS = signals;
+    var gl = viewer.renderer.getContext();
+    var pixelBuffer = new Uint8Array( 4 );
+    var compList = stage.compList;
 
-    this.signals = {
+    var mouse = {
 
-
-        themeChanged: new SIGNALS.Signal(),
-
-        componentAdded: new SIGNALS.Signal(),
-        componentRemoved: new SIGNALS.Signal(),
-
-        atomPicked: new SIGNALS.Signal(),
-
-        windowResize: new SIGNALS.Signal()
+        position: new THREE.Vector2(),
+        down: new THREE.Vector2(),
+        moving: false,
+        distance: function(){
+            return mouse.position.distanceTo( mouse.down );
+        }
 
     };
 
-    this.compList = [];
+    viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
 
-    this.viewer = new NGL.Viewer( eid );
-
-    this.initFileDragDrop();
-
-    this.viewer.animate();
-
-    // picking
-
-    var scope = this;
-
-    var gl = this.viewer.renderer.getContext();
-    var mouse = new THREE.Vector2();
-    var pixelBuffer = new Uint8Array( 4 );
-    var compList = this.compList;
-    var mouseIsMoving = 0;
-
-    this.viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
-
-        mouseIsMoving = 1;
-
-        mouse.x = e.layerX;
-        mouse.y = e.layerY;
+        mouse.moving = true;
+        mouse.position.x = e.layerX;
+        mouse.position.y = e.layerY;
 
     } );
 
-    this.viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
+    viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
 
-        mouseIsMoving = 0;
+        mouse.moving = false;
+        mouse.down.x = e.layerX;
+        mouse.down.y = e.layerY;
 
     } );
 
-    this.viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
+    viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
 
-        if( mouseIsMoving === 1 || e.which === NGL.RightMouseButton ) return;
+        if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
 
-        scope.viewer.render( null, true );
+        viewer.render( null, true );
 
-        var box = scope.viewer.renderer.domElement.getBoundingClientRect();
+        var box = viewer.renderer.domElement.getBoundingClientRect();
 
         gl.readPixels( 
-            mouse.x, box.height - mouse.y, 1, 1, 
+            mouse.position.x, box.height - mouse.position.y, 1, 1, 
             gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
         );
 
@@ -83,7 +65,10 @@ NGL.Stage = function( eid ){
             ( rgba[2]/255 ).toPrecision(2),
             ( rgba[3]/255 ).toPrecision(2)
         ]);*/
-        var id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
+        var id =
+            ( pixelBuffer[0] << 16 ) | 
+            ( pixelBuffer[1] << 8 ) | 
+            ( pixelBuffer[2] );
 
         // TODO early exit, binary search
         var pickedAtom = undefined;
@@ -105,17 +90,47 @@ NGL.Stage = function( eid ){
 
         } );
 
-        scope.signals.atomPicked.dispatch( pickedAtom );
+        stage.signals.atomPicked.dispatch( pickedAtom );
 
-        scope.viewer.render();
+        viewer.render();
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
-            scope.viewer.centerView( pickedAtom );
+            viewer.centerView( pickedAtom );
 
         }
 
     } );
+
+};
+
+
+NGL.Stage = function( eid ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        themeChanged: new SIGNALS.Signal(),
+
+        componentAdded: new SIGNALS.Signal(),
+        componentRemoved: new SIGNALS.Signal(),
+
+        atomPicked: new SIGNALS.Signal(),
+
+        windowResize: new SIGNALS.Signal()
+
+    };
+
+    this.compList = [];
+
+    this.viewer = new NGL.Viewer( eid );
+
+    this.initFileDragDrop();
+
+    this.viewer.animate();
+
+    this.pickingControls = new NGL.PickingControls( this.viewer, this );
 
 }
 
