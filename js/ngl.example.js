@@ -59,13 +59,8 @@ NGL.Examples = {
                 o.addRepresentation( "tube", "*" );
                 o.addRepresentation( "ball+stick", "135:A 347:B 223:A" );
                 o.addRepresentation( "licorice", "hetero" );
-                
-                o.structure.eachAtom(
-                    function( a ){
-                        stage.centerView( a );
-                    },
-                    new NGL.Selection( "347:B.CA" )
-                );
+
+                o.centerView();
 
             } );
 
@@ -135,7 +130,7 @@ NGL.Examples = {
                     NGL.superpose( s1, s2, false, s );
 
                     o1.updateRepresentations();
-                    o1.centerView();
+                    o1.centerView( ":A" );
 
                 } );
 
@@ -226,8 +221,7 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
 
-                // o.addRepresentation( "ribbon" );
-                o.addRepresentation( "trace" );
+                o.addRepresentation( "ribbon" );
                 o.centerView();
 
                 o.addTrajectory( "__example__/@md_1u19.xtc" );
@@ -283,7 +277,7 @@ NGL.Examples = {
             stage.loadFile( "../data/" + path + "md01.gro", function( o ){
 
                 o.addRepresentation( "backbone", "protein" );
-                o.centerView( "backbone" );
+                o.centerView( "ribbon" );
 
             } );
 
