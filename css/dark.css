@@ -156,13 +156,15 @@ input.Number {
 
     #menubar .menu {
         float: left;
-        width: 50px;
         cursor: pointer;
+        position: relative;
     }
 
-    #menubar .Panel {
-        color: #888;
-    }
+        #menubar .menu .title {
+            color: #888;
+            margin: 0px;
+            padding: 8px;
+        }
 
         #menubar .menu .options {
             display: none;
@@ -170,6 +172,8 @@ input.Number {
             background-color: #111;
             width: 140px;
             border-top: solid 1px #1D1D1D;
+            position: absolute;
+            top: 33px;
         }
 
         #menubar .menu:hover .options {
@@ -193,7 +197,6 @@ input.Number {
                     color: #fff;
                     background-color: #08f;
                 }
-
 
 #sidebar {
     position: absolute;
