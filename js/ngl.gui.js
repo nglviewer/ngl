@@ -263,6 +263,12 @@ NGL.MenubarViewWidget = function( stage ){
 
     }
 
+    function onCenterOptionClick () {
+
+        stage.centerView();
+
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -272,7 +278,8 @@ NGL.MenubarViewWidget = function( stage ){
         createOption( 'Light theme', onLightThemeOptionClick ),
         createOption( 'Dark theme', onDarkThemeOptionClick ),
         createDivider(),
-        createOption( 'Full screen', onFullScreenOptionClick, 'expand' )
+        createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
+        createOption( 'Center', onCenterOptionClick, 'bullseye' )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
