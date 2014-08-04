@@ -253,28 +253,28 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/4UPY.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
-                stage.viewer.centerView();
+                stage.centerView();
 
             } );
 
             stage.loadFile( "../data/__example__/4UPX.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
-                stage.viewer.centerView();
+                stage.centerView();
 
             } );
 
             stage.loadFile( "../data/__example__/4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
-                stage.viewer.centerView();
+                stage.centerView();
 
             } );
 
             stage.loadFile( "../data/__example__/4UPW.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
-                stage.viewer.centerView();
+                stage.centerView();
 
             } );
 

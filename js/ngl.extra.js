@@ -259,13 +259,27 @@ NGL.Stage.prototype = {
 
     },
 
-    centerView: function( center ){
+    centerView: function(){
 
-        console.warn( "Stage.centerView: deprecated" );
+        var box = new THREE.Box3();
+        var center = new THREE.Vector3();
 
-        this.viewer.centerView( center );
+        return function(){
+        
+            box.makeEmpty();
 
-    }
+            this.compList.forEach( function( comp ){
+
+                box.expandByPoint( comp.getCenter() );
+
+            } );
+
+            box.center( center );
+            this.viewer.centerView( center );
+
+        }
+
+    }()
 
 }
 
@@ -341,6 +355,12 @@ NGL.Component.prototype = {
         this.signals.visibilityChanged.dispatch( value );
 
     },
+
+    getCenter: function(){
+
+        console.warn( "not implemented" )
+
+    }
 
 }
 
@@ -517,6 +537,12 @@ NGL.StructureComponent.prototype = {
 
         this.viewer.centerView( center );
 
+    },
+
+    getCenter: function(){
+
+        return this.structure.center;
+
     }
 
 };
@@ -562,6 +588,12 @@ NGL.SurfaceComponent.prototype = {
     centerView: function(){
 
         this.viewer.centerView( this.surface.center );
+
+    },
+
+    getCenter: function(){
+
+        return this.surface.center;
 
     }
 
