@@ -1877,19 +1877,27 @@ NGL.Chain.prototype = {
 
     eachResidue: function( callback, selection ){
 
+        var i, r;
+        var n = this.residueCount;
+
         if( selection ){
 
             var test = selection.residueTest;
 
-            this.residues.forEach( function( r ){
+            for( i = 0; i < n; ++i ){
 
+                r = this.residues[ i ];
                 if( test( r ) ) callback( r );
 
-            } );
+            }
 
         }else{
 
-            this.residues.forEach( callback );
+            for( i = 0; i < n; ++i ){
+
+                callback( this.residues[ i ] );
+
+            }
 
         }
 
@@ -2110,25 +2118,7 @@ NGL.Fiber.prototype = {
 
     },
 
-    getType: function(){
-
-        if( this._type === undefined ){
-
-            if( this.isProtein() ){
-                this._type = NGL.ProteinType;
-            }else if( this.isNucleic() ){
-                this._type = NGL.NucleicType;
-            }else if( this.isCg() ){
-                this._type = NGL.CgType;
-            }else{
-                this._type = NGL.UnknownType;
-            }
-
-        }
-
-        return this._type;
-
-    }
+    getType: NGL.Chain.prototype.getType
 
 };
 
@@ -2262,19 +2252,27 @@ NGL.Residue.prototype = {
 
     eachAtom: function( callback, selection ){
 
+        var i, a;
+        var n = this.atomCount;
+
         if( selection ){
 
             var test = selection.test;
 
-            this.atoms.forEach( function( a ){
+            for( i = 0; i < n; ++i ){
 
+                a = this.atoms[ i ];
                 if( test( a ) ) callback( a );
 
-            } );
+            }
 
         }else{
 
-            this.atoms.forEach( callback );
+            for( i = 0; i < n; ++i ){
+
+                callback( this.atoms[ i ] );
+
+            }
 
         }
 
@@ -2282,20 +2280,41 @@ NGL.Residue.prototype = {
 
     getAtomByName: function( atomname ){
 
+        var i, a;
         var atom = undefined;
+        var n = this.atomCount;
 
-        if( !Array.isArray( atomname ) ) atomname = [ atomname ];
+        if( Array.isArray( atomname ) ){
 
-        this.atoms.some( function( a ){
+            for( i = 0; i < n; ++i ){
 
-            if( atomname.indexOf( a.atomname ) !== -1 ){
+                a = this.atoms[ i ];
+                
+                if( atomname.indexOf( a.atomname ) !== -1 ){
 
-                atom = a;
-                return true;
+                    atom = a;
+                    break
+
+                }
 
             }
 
-        } );
+        }else{
+
+            for( i = 0; i < n; ++i ){
+
+                a = this.atoms[ i ];
+                
+                if( atomname === a.atomname ){
+
+                    atom = a;
+                    break
+
+                }
+
+            }
+
+        }
 
         return atom;
 
