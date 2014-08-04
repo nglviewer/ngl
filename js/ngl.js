@@ -3,19 +3,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-/**
- * monkey patch for dat.GUI to remove a folder
- */
-dat.GUI.prototype.removeFolder = function( name ){
-
-    var f = this.__folders[ name ];
-    f.close();
-    f.__ul.parentNode.parentNode.parentNode.removeChild( f.__ul.parentNode.parentNode );
-    this.__folders[ name ] = undefined;
-    this.onResize();
-
-};
-
 
 /**
  * [NGL description]
@@ -512,8 +499,6 @@ NGL.Utils = {
 };
 
 
-
-
 /**
  * Initialize the global NGL object, i.e. get resources
  */
@@ -617,124 +602,6 @@ NGL.getShader = function( name ){
         return chunk ? chunk : "";
 
     });
-
-};
-
-
-////////
-// GUI
-
-/**
- * A dat.GUI {@link https://code.google.com/p/dat-gui/} based GUI
- * for a viewer instance.
- * @class
- * @param {NGL.Viewer} viewer
- */
-NGL.ViewerGui = function( viewer ){
-
-    this.viewer = viewer;
-
-    this.dotScreenEffect = false;
-    this.fxaaEffect = false;
-    this.ssaoEffect = false;
-
-    this.fogType = "";
-    this.fogNear = 0;
-    this.fogFar = 100;
-    this.fogDensity = 0.00025;
-    this.fogColor = '#000000';
-    this.backgroundColor = '#000000';
-    this.cameraPerspective = true;
-    this.cameraFov = 40;
-    this.clipNear = 0;
-    this.clipFar = 100;
-
-    var gui = new dat.GUI({ autoPlace: false });
-    gui.domElement.style.position = 'absolute';
-    gui.domElement.style.top = '0px';
-    gui.domElement.style.right = '0px';
-    this.viewer.container.appendChild( gui.domElement );
-    this.gui = gui;
-
-    var view = gui.addFolder( 'View' );
-    view.add( this, 'clear' );
-    view.add( this, 'screenshot' );
-    view.add( this, 'fullscreen' );
-    view.add( this, 'dotScreenEffect' ).onChange(
-        function( value ){ 
-            viewer.dotScreenEffect.enabled = value;
-            viewer.render();
-        }
-    );
-    view.add( this, 'fxaaEffect' ).onChange(
-        function( value ){ 
-            viewer.fxaaEffect.enabled = value;
-            viewer.render();
-        }
-    );
-    // view.add( this, 'ssaoEffect' ).onChange(
-    //     function( value ){ 
-    //         viewer.ssaoEffect.enabled = value;
-    //         viewer.render();
-    //     }
-    // );
-
-    var settings = gui.addFolder( 'Settings' );
-    settings.add(this, 'fogType', ['', 'linear', 'exp2']).onChange(
-        function( value ){ viewer.setFog( value ); }
-    );
-    settings.add(this, 'fogNear').min(0).max(100).step(1).onChange(
-        function( value ){ viewer.setFog( null, null, value ); }
-    );
-    settings.add(this, 'fogFar').min(0).max(100).step(1).onChange(
-        function( value ){ viewer.setFog( null, null, null, value ); }
-    );
-    settings.add(this, 'fogDensity').min(0).max(0.1).step(0.005).onChange(
-        function( value ){ viewer.setFog( null, null, null, null, value ); }
-    );
-    settings.addColor(this, 'fogColor').onChange(
-        function( value ){ viewer.setFog( null, value ); }
-    ).listen();
-    settings.addColor(this, 'backgroundColor').onChange(
-        function( value ){ viewer.setBackground( value ); this.fogColor = value; }
-    );
-    settings.add(this, 'cameraPerspective').onChange(
-        function( value ){ viewer.setCamera( value ); }
-    );
-    settings.add(this, 'cameraFov').min(0).max(180).step(1).onChange(
-        function( value ){ viewer.setCamera( null, value ); }
-    );
-    settings.add(this, 'clipNear').min(0).max(100).step(1).onChange(
-        function( value ){ viewer.setClip( value, null ); }
-    );
-    settings.add(this, 'clipFar').min(0).max(100).step(1).onChange(
-        function( value ){ viewer.setClip( null, value ); }
-    );
-
-};
-
-NGL.ViewerGui.prototype = {
-
-    clear: function(){
-        
-        this.viewer.clear();
-
-    },
-
-    screenshot: function(){
-        
-        window.open(
-            this.viewer.getImage(),
-            "NGL_screenshot_" + THREE.Math.generateUUID()
-        );
-
-    },
-
-    fullscreen: function(){
-        
-        this.viewer.fullscreen();
-
-    }
 
 };
 

@@ -5,8 +5,7 @@ var list = {
             [ "Installation", "manual/installation/Installation" ]
         ],
         "Development": [
-            [ "Font", "manual/development/Font" ],
-            [ "Todo", "manual/development/Todo" ]
+            [ "Font", "manual/development/Font" ]
         ]
     },
 

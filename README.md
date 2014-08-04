@@ -1,26 +1,6 @@
 
 
-Example usage
-=============
-
-    $( NGL ).bind( 'initialized', function(){
-        
-        var viewer = new NGL.Viewer( 'container' );
-
-        // a single red sphere of radius 2 at the origin
-        var buffer = new NGL.SphereImpostorBuffer(
-            new Float32Array( 0, 0, 0 ),
-            new Float32Array( 1, 0, 0 ),
-            new Float32Array( 2 ),
-        );
-
-        viewer.add( buffer );
-
-        viewer.animate();
-
-    });
-
-    NGL.init();
+NGL is an online viewer for proteins and other molecular structures. It is especially suited to access trajectories from molecular dynamics simulations.
 
 
 Links
@@ -28,12 +8,19 @@ Links
 
 * [WebGL Report](http://webglreport.com/)
 * [WebGL Stats](http://webglstats.com/)
-* [JSdoc](http://usejsdoc.org/) and [DocStrap](https://github.com/terryweiss/docstrap)
 * [three.js](http://threejs.org/)
     * [Github](https://github.com/mrdoob/three.js/)
     * [Examples](http://threejs.org/examples/)
     * [Documentation](http://threejs.org/docs/)
-* [dat.GUI](https://github.com/dataarts/dat.gui)
 
 
+
+Other viewers
+=============
+
+* [iMolecule](https://github.com/patrickfuller/imolecule)
+* [pv](https://github.com/biasmv/pv)
+* [GLmol](https://github.com/biochem-fan/GLmol)
+* [Chem Doodle Web Components](http://web.chemdoodle.com/)
+* [iview](https://github.com/HongjianLi/istar) (based on GLmol)
 
