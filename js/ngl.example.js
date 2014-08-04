@@ -20,7 +20,7 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "*" );
-                o.addRepresentation( "ribbon", "protein" );
+                o.addRepresentation( "tube", "protein" );
                 o.addRepresentation( "spacefill", "NA CL" );
                 o.centerView();
 
@@ -41,7 +41,7 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "*" );
-                o.addRepresentation( "ribbon", "protein" );
+                o.addRepresentation( "tube", "protein" );
                 o.centerView();
 
                 var traj = o.addTrajectory( "__example__/md.xtc" );
@@ -289,7 +289,7 @@ NGL.Examples = {
             stage.loadFile( "../data/" + path + "md01_protein.gro", function( o ){
 
                 // o.addRepresentation( "line", "! H" );
-                o.addRepresentation( "ribbon", "protein" );
+                o.addRepresentation( "tube", "protein" );
                 o.centerView();
 
                 o.addTrajectory( path + "md_all.xtc" );
@@ -305,7 +305,7 @@ NGL.Examples = {
             stage.loadFile( "../data/" + path + "md01.gro", function( o ){
 
                 // o.addRepresentation( "line", "! H" );
-                o.addRepresentation( "ribbon", "protein" );
+                o.addRepresentation( "tube", "protein" );
                 o.centerView( "backbone" );
 
                 o.addTrajectory( path + "md01.xtc" );
