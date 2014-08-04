@@ -129,19 +129,23 @@ input.Number {
 
     #menubar .menu {
         float: left;
-        width: 50px;
         cursor: pointer;
+        position: relative;
     }
 
-    #menubar .Panel {
-        color: #888;
-    }
+        #menubar .menu .title {
+            color: #888;
+            margin: 0px;
+            padding: 8px;
+        }
 
         #menubar .menu .options {
             display: none;
             padding: 5px 0px;
             background: #eee;
             width: 140px;
+            position: absolute;
+            top: 33px;
         }
 
         #menubar .menu:hover .options {

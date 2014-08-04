@@ -1281,6 +1281,7 @@ UI.MenubarHelper = {
 
         var container = new UI.Panel();
         var title = new UI.Panel();
+        title.setClass( 'title' );
 
         title.setTextContent( name );
         title.setMargin( '0px' );

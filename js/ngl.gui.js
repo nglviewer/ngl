@@ -316,8 +316,7 @@ NGL.MenubarExampleWidget = function( stage ){
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
-    return UI.MenubarHelper.createMenuContainer( 'Example', optionsPanel )
-        .setWidth( "80px" );
+    return UI.MenubarHelper.createMenuContainer( 'Example', optionsPanel );
 
 };
 
