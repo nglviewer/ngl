@@ -80,6 +80,9 @@
                     var example = NGL.GET( "example" );
                     if( example ) NGL.Examples.load( example, stage );
 
+                    var pdb = NGL.GET( "pdb" );
+                    if( pdb ) stage.loadFile( pdb );
+
                 } );
 
             } );
