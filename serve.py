@@ -8,6 +8,7 @@ import logging
 import array
 import json
 import cPickle as pickle
+import collections
 
 import numpy as np
 
@@ -69,9 +70,7 @@ def requires_auth( f ):
     @functools.wraps( f )
     def decorated( *args, **kwargs ):
         if app.config.get( 'REQUIRE_AUTH', False ):
-            print "check auth"
             auth = request.authorization
-            print auth
             if not auth or not check_auth( auth.username, auth.password ):
                 return authenticate()
         return f( *args, **kwargs )
@@ -299,12 +298,12 @@ def get_xtc_parts( name, directory ):
 
 def get_split_xtc( directory ):
     pattern = "(.*)\.part[0-9]{4,4}\.xtc$"
-    split = set()
+    split = collections.defaultdict( int )
     for f in os.listdir( directory ):
         m = re.match( pattern, f )
         if( m ):
-            split.add( "@" + m.group(1) + ".xtc" )
-    return sorted( split )
+            split[ "@" + m.group(1) + ".xtc" ] += 1
+    return sorted( [ k for k, v in split.iteritems() if v > 1 ] )
 
 
 class XtcParts( object ):
