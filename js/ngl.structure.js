@@ -2513,7 +2513,7 @@ NGL.StructureSubset.prototype._build = function(){
         _s.bondSet.addBond(
             atomIndexDict[ b.atom1.index ],
             atomIndexDict[ b.atom2.index ]
-        )
+        );
 
     }, selection );
 
@@ -3047,6 +3047,9 @@ NGL.Selection.prototype = {
             "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
             "O3*", "O5*", "C5*", "C4*", "C3*"
         ];
+        var backboneCg = [
+            "CA"
+        ];
 
         var fn = function( a, s, t, f ){
 
@@ -3059,7 +3062,9 @@ NGL.Selection.prototype = {
                         ( a.residue.isProtein() && 
                             backboneProtein.indexOf( a.atomname )!==-1 ) || 
                         ( a.residue.isNucleic() && 
-                            backboneNucleic.indexOf( a.atomname )!==-1 )
+                            backboneNucleic.indexOf( a.atomname )!==-1 ) ||
+                        ( a.residue.isCg() && 
+                            backboneCg.indexOf( a.atomname )!==-1 )
                     )
                 ) return t;
 
@@ -3098,7 +3103,7 @@ NGL.Selection.prototype = {
                 if( s.keyword==="PROTEIN" && r.isProtein() ) return t;
                 if( s.keyword==="NUCLEIC" && r.isNucleic() ) return t;
 
-                return f;
+                if( s.keyword!=="BACKBONE" ) return f;
 
             }
 

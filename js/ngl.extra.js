@@ -397,6 +397,12 @@ NGL.StructureComponent.prototype = {
 
         }
 
+        this.rebuild();
+
+    },
+
+    rebuild: function(){
+
         var scope = this;
 
         this.reprList.slice( 0 ).forEach( function( repr ){
