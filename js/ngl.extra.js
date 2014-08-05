@@ -1020,9 +1020,13 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
     var position = this.atomSet.atomPosition();
 
+    console.time( "spacefill update" );
+
     this.sphereBuffer.setAttributes({
         position: position
     });
+
+    console.timeEnd( "spacefill update" );
 
 };
 
@@ -1075,13 +1079,13 @@ NGL.BallAndStickRepresentation.prototype.update = function(){
 
     var from = this.atomSet.bondPosition( null, 0 );
     var to = this.atomSet.bondPosition( null, 1 );
-
+console.time( "cylinder update" );
     this.cylinderBuffer.setAttributes({
         position: NGL.Utils.calculateCenterArray( from, to ),
         position1: from,
         position2: to
     });
-
+console.timeEnd( "cylinder update" );
 };
 
 

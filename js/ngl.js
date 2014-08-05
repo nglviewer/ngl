@@ -2105,7 +2105,7 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
  * @private
  * @augments {NGL.MappedBuffer}
  */
-NGL.GeometryBuffer = function( position, color ){
+NGL.GeometryBuffer = function( position, color, pickingColor ){
 
     var geo = this.geo;
     geo.computeVertexNormals( true );
@@ -2117,175 +2117,208 @@ NGL.GeometryBuffer = function( position, color ){
     this.size = n * m;
     this.positionCount = n;
 
-    console.log( "n", n, "o", o, "n*o*3", n*o*3 );
-
     this.geoPosition = NGL.Utils.positionFromGeometry( geo );
     this.geoNormal = NGL.Utils.normalFromGeometry( geo );
     this.geoIndex = NGL.Utils.indexFromGeometry( geo );
 
-    this.bufferPosition = new Float32Array( this.size * 3 );
-    this.bufferNormal = new Float32Array( this.size * 3 );
-    this.bufferIndex = new Uint32Array( n * o * 3 );
-    this.bufferColor = new Float32Array( this.size * 3 );
+    this.meshPosition = new Float32Array( this.size * 3 );
+    this.meshNormal = new Float32Array( this.size * 3 );
+    this.meshIndex = new Uint32Array( n * o * 3 );
+    this.meshColor = new Float32Array( this.size * 3 );
+    this.meshPickingColor = new Float32Array( this.size * 3 );
 
-    this._geoPosition = new Float32Array( m * 3 );
-    this._geoIndex = new Uint32Array( o * 3 );
-    this._geoNormal = new Float32Array( m * 3 );
-
-    this.attributeSize = this.size;
-    this.vertexShader = 'Mesh.vert';
-    this.fragmentShader = 'Mesh.frag';
-    
-    this.index = this.bufferIndex;
+    this.transformedGeoPosition = new Float32Array( m * 3 );
+    this.transformedGeoNormal = new Float32Array( m * 3 );
 
     this.makeIndex();
 
-    this.makeIndex = function(){}
-
-    NGL.Buffer.call( this );
-    
-    this.addAttributes({
-        "normal": { type: "v3", value: null },
-    });
-    
     this.setAttributes({
         "position": position,
-        "color": color
+        "color": color,
+        "pickingColor": pickingColor
     });
-    
-    this.finalize();
+
+    this.meshBuffer = new NGL.MeshBuffer(
+        this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor
+    );
+
+    this.geometry = this.meshBuffer.geometry;
+    this.material = this.meshBuffer.material;
+    this.mesh = this.meshBuffer.mesh;
+
+    this.pickingMaterial = this.meshBuffer.pickingMaterial;
+    this.pickingMesh = this.meshBuffer.pickingMesh;
 
 };
 
-NGL.GeometryBuffer.prototype = Object.create( NGL.Buffer.prototype );
+NGL.GeometryBuffer.prototype = {
 
-NGL.GeometryBuffer.prototype.applyPositionTransform = function(){};
+    applyPositionTransform: function(){},
 
-NGL.GeometryBuffer.prototype.setAttributes = function( data ){
+    setAttributes: function(){
 
-    var position, color;
+        var matrix = new THREE.Matrix4();
+        var normalMatrix = new THREE.Matrix3();
 
-    if( data[ "position" ] ){
-        position = data[ "position" ];
-        updateNormals = this.updateNormals;
-    }
+        return function( data ){
 
-    if( data[ "color" ] ){
-        color = data[ "color" ];
-    }
+            var position, color, pickingColor;
 
-    var geo = this.geo;
+            var updateNormals = this.updateNormals || !this.meshBuffer;
 
-    var n = position.length / 3;
-    var m = geo.vertices.length;
-    var o = geo.faces.length;
+            if( data[ "position" ] ){
+                position = data[ "position" ];
+                var geoPosition = this.geoPosition;
+                var meshPosition = this.meshPosition;
+                var transformedGeoPosition = this.transformedGeoPosition;
+            }
 
-    var geoPosition = this.geoPosition;
-    var geoNormal = this.geoNormal;
+            if( data[ "color" ] ){
+                color = data[ "color" ];
+                var meshColor = this.meshColor;
+            }
 
-    var bufferPosition = this.bufferPosition;
-    var bufferNormal = this.bufferNormal;
-    var bufferColor = this.bufferColor;
+            if( data[ "pickingColor" ] ){
+                pickingColor = data[ "pickingColor" ];
+                var meshPickingColor = this.meshPickingColor;
+            }
 
-    // transformed
-    var _geoPosition = this._geoPosition;
-    var _geoNormal = this._geoNormal;
-
-    var i, j, k, l, i3;
-
-    var matrix = new THREE.Matrix4();
-    var normalMatrix = new THREE.Matrix3();
-
-    for( i = 0; i < n; ++i ){
-
-        k = i * m * 3;
-        i3 = i * 3;
-
-        if( position ){
-
-            _geoPosition.set( geoPosition );
-            matrix.makeTranslation(
-                position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
-            );
-            this.applyPositionTransform( matrix, i, i3 );
-            matrix.applyToVector3Array( _geoPosition );
-
-            _geoNormal.set( geoNormal );
             if( updateNormals ){
-                normalMatrix.getNormalMatrix( matrix );
-                normalMatrix.applyToVector3Array( _geoNormal );
+                var geoNormal = this.geoNormal;
+                var meshNormal = this.meshNormal;
+                var transformedGeoNormal = this.transformedGeoNormal;
             }
 
-            bufferPosition.set( _geoPosition, k );
-            bufferNormal.set( _geoNormal, k );
+            var n = this.positionCount;
+            var m = this.geo.vertices.length;
+
+            var i, j, k, l, i3;
+
+            for( i = 0; i < n; ++i ){
+
+                k = i * m * 3;
+                i3 = i * 3;
+
+                if( position ){
+
+                    transformedGeoPosition.set( geoPosition );
+                    matrix.makeTranslation(
+                        position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
+                    );
+                    this.applyPositionTransform( matrix, i, i3 );
+                    matrix.applyToVector3Array( transformedGeoPosition );
+
+                    meshPosition.set( transformedGeoPosition, k );
+                    
+                }
+
+                if( updateNormals ){
+
+                    transformedGeoNormal.set( geoNormal );
+                    normalMatrix.getNormalMatrix( matrix );
+                    normalMatrix.applyToVector3Array( transformedGeoNormal );
+                    
+                    meshNormal.set( transformedGeoNormal, k );
+
+                }
+
+                if( color ){
+
+                    for( j = 0; j < m; ++j ){
+
+                        l = k + 3 * j;
+
+                        meshColor[ l + 0 ] = color[ i3 + 0 ];
+                        meshColor[ l + 1 ] = color[ i3 + 1 ];
+                        meshColor[ l + 2 ] = color[ i3 + 2 ];
+
+                    }
+
+                }
+
+                if( pickingColor ){
+
+                    for( j = 0; j < m; ++j ){
+
+                        l = k + 3 * j;
+
+                        meshPickingColor[ l + 0 ] = pickingColor[ i3 + 0 ];
+                        meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
+                        meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
+
+                    }
+
+                }
+
+            }
+
+            var meshData = {};
+
+            if( position ){
+                meshData[ "position" ] = meshPosition;
+            }
+
+            if( updateNormals ){
+                meshData[ "normal" ] = meshNormal;
+            }
+
+            if( color ){
+                meshData[ "color" ] = meshColor;
+            }
+
+            if( pickingColor ){
+                meshData[ "pickingColor" ] = meshPickingColor;
+            }
+
+            if( this.meshBuffer ){
+                this.meshBuffer.setAttributes( meshData );
+            }
 
         }
 
-        if( color ){
+    }(),
 
-            for( j = 0; j < m; ++j ){
+    makeIndex: function(){
 
-                l = k + 3 * j;
+        var geoIndex = this.geoIndex;
+        var meshIndex = this.meshIndex;
 
-                bufferColor[ l + 0 ] = color[ i3 + 0 ];
-                bufferColor[ l + 1 ] = color[ i3 + 1 ];
-                bufferColor[ l + 2 ] = color[ i3 + 2 ];
+        var n = this.positionCount;
+        var m = this.geo.vertices.length;
+        var o = this.geo.faces.length;
 
-            }
+        var p, i, j, q;
+        var o3 = o * 3;
+
+        for( i = 0; i < n; ++i ){
+
+            j = i * o3;
+            q = j + o3;
+
+            meshIndex.set( geoIndex, j );
+            for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
 
         }
 
-    }
+    },
 
-    var data = {};
+    dispose: function(){
 
-    if( position ){
-        data[ "position" ] = bufferPosition;
-        data[ "normal" ] = bufferNormal;
-    }
-
-    if( color ){
-        data[ "color" ] = bufferColor;
-    }
-
-    NGL.Buffer.prototype.setAttributes.call( this, data );
-
-};
-
-NGL.GeometryBuffer.prototype.makeIndex = function(){
-
-    var geoIndex = this.geoIndex;
-    var _geoIndex = this._geoIndex;
-    var bufferIndex = this.bufferIndex;
-
-    var n = this.positionCount;
-    var m = this.geo.vertices.length;
-    var o = this.geo.faces.length;
-
-    var p, i;
-    var o3 = o * 3;
-
-    for( i = 0; i < n; ++i ){
-
-        _geoIndex.set( geoIndex );
-        for( p = 0; p < o3; ++p ) _geoIndex[ p ] += i * m;
-
-        bufferIndex.set( _geoIndex, i * o * 3 );
+        this.meshBuffer.dispose();
 
     }
 
-    console.log( "this.index.length", this.index.length );
-
-};
+}
 
 
-NGL.SphereGeometryBuffer = function( position, color, radius ){
+NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor ){
 
     this.geo = new THREE.IcosahedronGeometry( 1, 2 );
 
     this.setPositionTransform( radius );
 
-    NGL.GeometryBuffer.call( this, position, color );
+    NGL.GeometryBuffer.call( this, position, color, pickingColor );
 
 };
 
@@ -2317,22 +2350,37 @@ NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
 }
 
 
-NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius ){
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor1, pickingColor2 ){
 
     this.updateNormals = true;
 
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
+    
     this.geo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
     this.geo.applyMatrix( matrix );
 
+    this.setPositionTransform( from, to, radius );
+
     var position = NGL.Utils.calculateCenterArray( from, to );
-    // var direction = NGL.Utils.calculateDirectionArray( from, to );
+
+    NGL.GeometryBuffer.call( this, position, color, pickingColor1 );
+
+};
+
+NGL.CylinderGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+
+NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, radius ){
 
     var r;
     var scale = new THREE.Vector3();
     var eye = new THREE.Vector3();
     var target = new THREE.Vector3();
     var up = new THREE.Vector3( 0, 1, 0 );
+    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
+
+    this._from = from;
+    this._to = to;
+    this._radius = radius;
 
     this.applyPositionTransform = function( matrix, i, i3 ){
 
@@ -2346,12 +2394,26 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius ){
 
     }
 
-    NGL.GeometryBuffer.call( this, position, color );
-
 };
 
-NGL.CylinderGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
 
+    if( data[ "position1" ] && data[ "position2" ] ){
+        this._from = data[ "position1" ];
+        this._to = data[ "position2" ];
+    }
+
+    if( data[ "radius" ] ){
+        this._radius = data[ "radius" ];
+    }
+
+    if( ( data[ "position1" ] && data[ "position2" ] ) || data[ "radius" ] ){
+        this.setPositionTransform( this._from, this._to, this._radius );
+    }
+
+    NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
+
+}
 
 
 //////////////////////
@@ -3016,13 +3078,13 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.makeIndex();
 
     this.setAttributes({
-        position: position,
-        normal: normal,
-        binormal: binormal,
-        tangent: tangent,
-        color: color,
-        size: size,
-        pickingColor: pickingColor
+        "position": position,
+        "normal": normal,
+        "binormal": binormal,
+        "tangent": tangent,
+        "color": color,
+        "size": size,
+        "pickingColor": pickingColor
     });
 
     this.meshBuffer = new NGL.MeshBuffer(
@@ -3270,7 +3332,7 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor ){
 
     if( NGL.disableImpostor ){
 
-        return new NGL.SphereGeometryBuffer( position, color, radius );
+        return new NGL.SphereGeometryBuffer( position, color, radius, pickingColor );
 
     }else{
 
@@ -3285,7 +3347,7 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 
     if( NGL.disableImpostor ){
 
-        return new NGL.CylinderGeometryBuffer( from, to, color, color2, radius );
+        return new NGL.CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2 );
 
     }else{
 
