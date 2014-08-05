@@ -13,38 +13,49 @@
 
 		install sshfs
 
-	    <code>sudo apt-get install sshfs</code>
+		<code class="lang-sh">sudo apt-get install sshfs</code>
 
 
 		mount
 
-	    <code>sshfs -o idmap=user,follow_symlinks remote_user@server_xy:/home/remote_user /home/local_user/servers/server_xy</code>
+		<code class="lang-sh">sshfs -o idmap=user,follow_symlinks remote_user@server_xy:/home/remote_user /home/local_user/servers/server_xy</code>
 
 
 		unmount
 
-	    <code>fusermount -u /home/local_user/servers/server_xy</code>
+		<code class="lang-sh">fusermount -u /home/local_user/servers/server_xy</code>
 
 
 		/etc/fstab
 
-	    <code>remote_user@server_xy:/home/remote_user /home/local_user/servers/server_xy fuse.sshfs _netdev,user,idmap=user,follow_symlinks,identityfile=/home/local_user/.ssh/id_rsa,allow_other,default_permissions 0 0</code>
+		<code class="lang-sh">remote_user@server_xy:/home/remote_user /home/local_user/servers/server_xy fuse.sshfs _netdev,user,idmap=user,follow_symlinks,identityfile=/home/local_user/.ssh/id_rsa,allow_other,default_permissions 0 0</code>
 
 
 		keep the connection active (alive) by adding this to ~/.ssh/config or to /etc/ssh/ssh_config
 
-	    <code>ServerAliveInterval 60</code>
+		<code>ServerAliveInterval 60</code>
 
 
 		passwordless ssh
 
-	    <code>ssh-copy-id remote_user@server_xy</code>
+		<code class="lang-sh">ssh-copy-id remote_user@server_xy</code>
 
 
-	    if you do not have a ssh identity yet do
+		if you do not have a ssh identity yet do
 
-	    <code>ssh-keygen</code>
+		<code class="lang-sh">ssh-keygen</code>
 
+
+		<h2>libxdrfile2</h2>
+
+		<code class="lang-sh">
+		cd lib/
+		sudo python setup.py install
+		</code>
+
+		make sure you have the python development files installed
+
+		<code class="lang-sh">sudo apt-get install python-dev</code>
 
 
 	</body>
