@@ -71,6 +71,7 @@ def requires_auth( f ):
         if app.config.get( 'REQUIRE_AUTH', False ):
             print "check auth"
             auth = request.authorization
+            print auth
             if not auth or not check_auth( auth.username, auth.password ):
                 return authenticate()
         return f( *args, **kwargs )
@@ -134,6 +135,11 @@ def data( root, filename ):
 @app.route( '/dir/<root>/' )
 @app.route( '/dir/<root>/<path:path>' )
 def dir( root="", path="" ):
+
+    # auth = request.authorization
+    # if not auth or not check_auth( auth.username, auth.password ):
+    #     return authenticate()
+
     dir_content = []
 
     if root == "":
