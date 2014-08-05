@@ -239,16 +239,17 @@ NGL.Utils = {
 
     }(),
 
-    calculateCenterArray: function( array1, array2 ){
+    calculateCenterArray: function( array1, array2, center, offset ){
 
         var n = array1.length;
-        var center = new Float32Array( n );
+        center = center || new Float32Array( n );
+        offset = offset || 0;
 
         for( var i = 0; i < n; i+=3 ){
 
-            center[ i + 0 ] = ( array1[ i + 0 ] + array2[ i + 0 ] ) / 2.0;
-            center[ i + 1 ] = ( array1[ i + 1 ] + array2[ i + 1 ] ) / 2.0;
-            center[ i + 2 ] = ( array1[ i + 2 ] + array2[ i + 2 ] ) / 2.0;
+            center[ offset + i + 0 ] = ( array1[ i + 0 ] + array2[ i + 0 ] ) / 2.0;
+            center[ offset + i + 1 ] = ( array1[ i + 1 ] + array2[ i + 1 ] ) / 2.0;
+            center[ offset + i + 2 ] = ( array1[ i + 2 ] + array2[ i + 2 ] ) / 2.0;
 
         }
 
@@ -2372,11 +2373,34 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
     this.geo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
     this.geo.applyMatrix( matrix );
 
-    this.setPositionTransform( from, to, radius );
+    var n = from.length;
+    var m = radius.length;
 
-    var position = NGL.Utils.calculateCenterArray( from, to );
+    this._position = new Float32Array( n * 2 );
+    this._color = new Float32Array( n * 2 );
+    this._pickingColor = new Float32Array( n * 2 );
+    this._from = new Float32Array( n * 2 );
+    this._to = new Float32Array( n * 2 );
+    this._radius = new Float32Array( m * 2 );
 
-    NGL.GeometryBuffer.call( this, position, color, pickingColor );
+    this.__center = new Float32Array( n );
+
+    this.setAttributes({
+        "position1": from,
+        "position2": to,
+        "color": color,
+        "color2": color2,
+        "radius": radius,
+        "pickingColor": pickingColor,
+        "pickingColor2": pickingColor2,
+        "__init__": true
+    });
+
+    this.setPositionTransform( this._from, this._to, this._radius );
+
+    NGL.GeometryBuffer.call(
+        this, this._position, this._color, this._pickingColor
+    );
 
 };
 
@@ -2390,10 +2414,6 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
     var target = new THREE.Vector3();
     var up = new THREE.Vector3( 0, 1, 0 );
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
-
-    this._from = from;
-    this._to = to;
-    this._radius = radius;
 
     this.applyPositionTransform = function( matrix, i, i3 ){
 
@@ -2411,20 +2431,74 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
 
 NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
 
+    // FIXME very hacky
+    if( !this.meshBuffer && !data[ "__init__" ] ){
+        NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
+        return;
+    }
+
+    var n = this._position.length / 2;
+    var m = this._radius.length / 2;
+    var geoData = {};
+
     if( data[ "position1" ] && data[ "position2" ] ){
-        this._from = data[ "position1" ];
-        this._to = data[ "position2" ];
+
+        NGL.Utils.calculateCenterArray(
+            data[ "position1" ], data[ "position2" ], this.__center
+        );
+        NGL.Utils.calculateCenterArray(
+            data[ "position1" ], this.__center, this._position
+        );
+        NGL.Utils.calculateCenterArray(
+            this.__center, data[ "position2" ], this._position, n
+        );
+
+        this._from.set( data[ "position1" ] );
+        this._from.set( this.__center, n );
+
+        this._to.set( this.__center );
+        this._to.set( data[ "position2" ], n );
+
+        geoData[ "position" ] = this._position;
+
+    }
+
+    if( data[ "color" ] && data[ "color2" ] ){
+
+        this._color.set( data[ "color" ] );
+        this._color.set( data[ "color2" ], n );
+
+        geoData[ "color" ] = this._color;
+
+    }
+
+    if( data[ "pickingColor" ] && data[ "pickingColor2" ] ){
+
+        this._pickingColor.set( data[ "pickingColor" ] );
+        this._pickingColor.set( data[ "pickingColor2" ], n );
+
+        geoData[ "pickingColor" ] = this._pickingColor;
+
     }
 
     if( data[ "radius" ] ){
-        this._radius = data[ "radius" ];
+
+        this._radius.set( data[ "radius" ] );
+        this._radius.set( data[ "radius" ], m );
+
     }
 
     if( ( data[ "position1" ] && data[ "position2" ] ) || data[ "radius" ] ){
+
         this.setPositionTransform( this._from, this._to, this._radius );
+
     }
 
-    NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
+    if( this.meshBuffer ){
+
+        NGL.GeometryBuffer.prototype.setAttributes.call( this, geoData );
+
+    }
 
 }
 
