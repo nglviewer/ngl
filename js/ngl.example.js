@@ -240,6 +240,21 @@ NGL.Examples = {
 
         },
 
+        "impostor": function( stage ){
+
+            stage.loadFile( "../data/__example__/1u19.pdb", function( o ){
+
+                NGL.disableImpostor = true;
+                o.addRepresentation( "spacefill", ":A" );
+                NGL.disableImpostor = false;
+                o.addRepresentation( "spacefill", ":B" );
+
+                o.centerView();
+
+            } );
+
+        },
+
         "cg": function( stage ){
 
             stage.loadFile( "../data/__example__/BaceCg.pdb", function( o ){

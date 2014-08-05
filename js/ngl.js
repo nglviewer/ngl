@@ -729,14 +729,27 @@ NGL.Viewer.prototype = {
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
 
-        var _glExtensionFragDepth = this.renderer.context.getExtension('EXT_frag_depth');
+        var _glExtensionFragDepth = this.renderer.context.getExtension(
+            'EXT_frag_depth'
+        );
         if( !_glExtensionFragDepth ){
             NGL.disableImpostor = true;
-            console.error( "ERROR getting 'EXT_frag_depth'" );
+            console.warn( "ERROR getting 'EXT_frag_depth'" );
         }
 
-        this.renderer.context.getExtension('OES_standard_derivatives');
-        this.renderer.context.getExtension('OES_element_index_uint');
+        var _glStandardDerivatives = this.renderer.context.getExtension(
+            'OES_standard_derivatives'
+        );
+        if( !_glStandardDerivatives ){
+            console.error( "ERROR getting 'OES_standard_derivatives'" );
+        }
+
+        var _glElementIndexUint = this.renderer.context.getExtension(
+            'OES_element_index_uint'
+        );
+        if( !_glElementIndexUint ){
+            console.error( "ERROR getting 'OES_element_index_uint'" );
+        }
 
         if( this.eid ){
             this.container.appendChild( this.renderer.domElement );
@@ -2350,7 +2363,7 @@ NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
 }
 
 
-NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor1, pickingColor2 ){
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2 ){
 
     this.updateNormals = true;
 
@@ -2363,7 +2376,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
 
     var position = NGL.Utils.calculateCenterArray( from, to );
 
-    NGL.GeometryBuffer.call( this, position, color, pickingColor1 );
+    NGL.GeometryBuffer.call( this, position, color, pickingColor );
 
 };
 
