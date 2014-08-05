@@ -687,8 +687,6 @@ NGL.Viewer.prototype = {
 
             specular: 0x050505,
 
-            disableImpostor: false
-
         };
 
     },
@@ -2109,8 +2107,6 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
  */
 NGL.GeometryBuffer = function( position, color ){
 
-    updateNormals = this.updateNormals;
-
     var geo = this.geo;
     geo.computeVertexNormals( true );
 
@@ -2119,69 +2115,32 @@ NGL.GeometryBuffer = function( position, color ){
     var o = geo.faces.length;
 
     this.size = n * m;
+    this.positionCount = n;
 
-    var geoPosition = NGL.Utils.positionFromGeometry( geo );
-    var geoNormal = NGL.Utils.normalFromGeometry( geo );
-    var geoIndex = NGL.Utils.indexFromGeometry( geo );
+    console.log( "n", n, "o", o, "n*o*3", n*o*3 );
 
-    var bufferPosition = new Float32Array( this.size * 3 );
-    var bufferNormal = new Float32Array( this.size * 3 );
-    var bufferIndex = new Uint32Array( n * o * 3 );
-    var bufferColor = new Float32Array( this.size * 3 );
+    this.geoPosition = NGL.Utils.positionFromGeometry( geo );
+    this.geoNormal = NGL.Utils.normalFromGeometry( geo );
+    this.geoIndex = NGL.Utils.indexFromGeometry( geo );
 
-    var _geoPosition = new Float32Array( m * 3 );
-    var _geoIndex = new Uint32Array( o * 3 );
-    var _geoNormal = new Float32Array( m * 3 );
+    this.bufferPosition = new Float32Array( this.size * 3 );
+    this.bufferNormal = new Float32Array( this.size * 3 );
+    this.bufferIndex = new Uint32Array( n * o * 3 );
+    this.bufferColor = new Float32Array( this.size * 3 );
 
-    var i, j, k, l, i3, p;
-    var o3 = o * 3;
-    var r;
-
-    var matrix = new THREE.Matrix4();
-    var normalMatrix = new THREE.Matrix3();
-
-    for( i = 0; i < n; ++i ){
-
-        k = i * m * 3;
-        i3 = i * 3;
-
-        _geoPosition.set( geoPosition );
-        matrix.makeTranslation(
-            position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
-        );
-        this.applyPositionTransform( matrix, i, i3 );
-        matrix.applyToVector3Array( _geoPosition );
-
-        _geoNormal.set( geoNormal );
-        if( updateNormals ){
-            normalMatrix.getNormalMatrix( matrix );
-            normalMatrix.applyToVector3Array( _geoNormal );
-        }
-
-        _geoIndex.set( geoIndex );
-        for( p = 0; p < o3; ++p ) _geoIndex[ p ] += i * m;
-
-        bufferPosition.set( _geoPosition, k );
-        bufferNormal.set( _geoNormal, k );
-        bufferIndex.set( _geoIndex, i * o * 3 );
-
-        for( j = 0; j < m; ++j ){
-
-            l = k + 3 * j;
-
-            bufferColor[ l + 0 ] = color[ i3 + 0 ];
-            bufferColor[ l + 1 ] = color[ i3 + 1 ];
-            bufferColor[ l + 2 ] = color[ i3 + 2 ];
-
-        }
-
-    }
+    this._geoPosition = new Float32Array( m * 3 );
+    this._geoIndex = new Uint32Array( o * 3 );
+    this._geoNormal = new Float32Array( m * 3 );
 
     this.attributeSize = this.size;
     this.vertexShader = 'Mesh.vert';
     this.fragmentShader = 'Mesh.frag';
     
-    this.index = bufferIndex;
+    this.index = this.bufferIndex;
+
+    this.makeIndex();
+
+    this.makeIndex = function(){}
 
     NGL.Buffer.call( this );
     
@@ -2190,9 +2149,8 @@ NGL.GeometryBuffer = function( position, color ){
     });
     
     this.setAttributes({
-        "position": bufferPosition,
-        "color": bufferColor,
-        "normal": bufferNormal,
+        "position": position,
+        "color": color
     });
     
     this.finalize();
@@ -2203,12 +2161,137 @@ NGL.GeometryBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.GeometryBuffer.prototype.applyPositionTransform = function(){};
 
-NGL.GeometryBuffer.prototype.applyNormalTransform = function(){};
+NGL.GeometryBuffer.prototype.setAttributes = function( data ){
+
+    var position, color;
+
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        updateNormals = this.updateNormals;
+    }
+
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+    }
+
+    var geo = this.geo;
+
+    var n = position.length / 3;
+    var m = geo.vertices.length;
+    var o = geo.faces.length;
+
+    var geoPosition = this.geoPosition;
+    var geoNormal = this.geoNormal;
+
+    var bufferPosition = this.bufferPosition;
+    var bufferNormal = this.bufferNormal;
+    var bufferColor = this.bufferColor;
+
+    // transformed
+    var _geoPosition = this._geoPosition;
+    var _geoNormal = this._geoNormal;
+
+    var i, j, k, l, i3;
+
+    var matrix = new THREE.Matrix4();
+    var normalMatrix = new THREE.Matrix3();
+
+    for( i = 0; i < n; ++i ){
+
+        k = i * m * 3;
+        i3 = i * 3;
+
+        if( position ){
+
+            _geoPosition.set( geoPosition );
+            matrix.makeTranslation(
+                position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
+            );
+            this.applyPositionTransform( matrix, i, i3 );
+            matrix.applyToVector3Array( _geoPosition );
+
+            _geoNormal.set( geoNormal );
+            if( updateNormals ){
+                normalMatrix.getNormalMatrix( matrix );
+                normalMatrix.applyToVector3Array( _geoNormal );
+            }
+
+            bufferPosition.set( _geoPosition, k );
+            bufferNormal.set( _geoNormal, k );
+
+        }
+
+        if( color ){
+
+            for( j = 0; j < m; ++j ){
+
+                l = k + 3 * j;
+
+                bufferColor[ l + 0 ] = color[ i3 + 0 ];
+                bufferColor[ l + 1 ] = color[ i3 + 1 ];
+                bufferColor[ l + 2 ] = color[ i3 + 2 ];
+
+            }
+
+        }
+
+    }
+
+    var data = {};
+
+    if( position ){
+        data[ "position" ] = bufferPosition;
+        data[ "normal" ] = bufferNormal;
+    }
+
+    if( color ){
+        data[ "color" ] = bufferColor;
+    }
+
+    NGL.Buffer.prototype.setAttributes.call( this, data );
+
+};
+
+NGL.GeometryBuffer.prototype.makeIndex = function(){
+
+    var geoIndex = this.geoIndex;
+    var _geoIndex = this._geoIndex;
+    var bufferIndex = this.bufferIndex;
+
+    var n = this.positionCount;
+    var m = this.geo.vertices.length;
+    var o = this.geo.faces.length;
+
+    var p, i;
+    var o3 = o * 3;
+
+    for( i = 0; i < n; ++i ){
+
+        _geoIndex.set( geoIndex );
+        for( p = 0; p < o3; ++p ) _geoIndex[ p ] += i * m;
+
+        bufferIndex.set( _geoIndex, i * o * 3 );
+
+    }
+
+    console.log( "this.index.length", this.index.length );
+
+};
 
 
 NGL.SphereGeometryBuffer = function( position, color, radius ){
 
     this.geo = new THREE.IcosahedronGeometry( 1, 2 );
+
+    this.setPositionTransform( radius );
+
+    NGL.GeometryBuffer.call( this, position, color );
+
+};
+
+NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+
+NGL.SphereGeometryBuffer.prototype.setPositionTransform = function( radius ){
 
     var r;
     var scale = new THREE.Vector3();
@@ -2221,11 +2304,17 @@ NGL.SphereGeometryBuffer = function( position, color, radius ){
 
     }
 
-    NGL.GeometryBuffer.call( this, position, color );
-
 };
 
-NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
+
+    if( data[ "radius" ] ){
+        this.setPositionTransform( data[ "radius" ] );
+    }
+
+    NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
+
+}
 
 
 NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius ){
