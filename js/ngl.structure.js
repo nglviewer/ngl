@@ -1633,6 +1633,8 @@ NGL.Structure.prototype = {
                     }else{
 
                         // console.log( "no helix, no sheet", i );
+                        
+                        f.residues[ i ].ss = "";
 
                     }
 
