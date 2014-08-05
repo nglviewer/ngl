@@ -18,17 +18,17 @@
 
 		mount
 
-	    <code>sshfs -o idmap=user arose@zatopek:/shared/home/arose /home/arose/servers/zatopek</code>
+	    <code>sshfs -o idmap=user,follow_symlinks remote_user@server_xy:/home/remote_user /home/local_user/servers/server_xy</code>
 
 
 		unmount
 
-	    <code>fusermount -u /home/arose/servers/zatopek</code>
+	    <code>fusermount -u /home/local_user/servers/server_xy</code>
 
 
 		/etc/fstab
 
-	    <code>sshfs#arose@zatopek:/shared/home/arose /home/arose/servers/zatopek fuse defaults,idmap=user 0 0</code>
+	    <code>remote_user@server_xy:/home/remote_user /home/local_user/servers/server_xy fuse.sshfs _netdev,user,idmap=user,follow_symlinks,identityfile=/home/local_user/.ssh/id_rsa,allow_other,default_permissions 0 0</code>
 
 
 		keep the connection active (alive) by adding this to ~/.ssh/config or to /etc/ssh/ssh_config
@@ -38,7 +38,12 @@
 
 		passwordless ssh
 
-	    <code>sudo ssh-copy-id arose@zatopek</code>
+	    <code>ssh-copy-id remote_user@server_xy</code>
+
+
+	    if you do not have a ssh identity yet do
+
+	    <code>ssh-keygen</code>
 
 
 

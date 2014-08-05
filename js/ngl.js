@@ -3308,8 +3308,9 @@ NGL.TubeMeshBuffer.prototype = {
                         meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
                         meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
 
+                        // TODO half of these are symmetric
                         vMeshNormal.set(
-                            // elipse tangent approximated as vector from/to adjacent points
+                            // ellipse tangent approximated as vector from/to adjacent points
                             ( cx2 * normX + cy2 * biX ) -
                                 ( cx1 * normX + cy1 * biX ),
                             ( cx2 * normY + cy2 * biY ) -
