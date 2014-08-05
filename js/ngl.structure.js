@@ -1016,6 +1016,10 @@ NGL.Trajectory.prototype = {
     updateStructure: function( i, callback ){
 
         this.structure.updatePosition( this.frameCache[ i ] );
+        this.structure.trajectory = {
+            name: this.xtcPath,
+            frame: i
+        };
 
         if( typeof callback === "function" ){
 
@@ -1682,7 +1686,18 @@ NGL.Structure.prototype = {
             var pdbRecords = [];
 
             // FIXME multiline if title line longer than 80 chars
-            pdbRecords.push( sprintf( "TITEL %-74s\n", this.name ) );
+            pdbRecords.push( sprintf( "TITEL %-74s\n", name ) );
+
+            if( this.trajectory ){
+                pdbRecords.push( sprintf(
+                    "REMARK %-73s\n",
+                    "Trajectory '" + this.trajectory.name + "'"
+                ) );
+                pdbRecords.push( sprintf(
+                    "REMARK %-73s\n",
+                    "Frame " + this.trajectory.frame + ""
+                ) );
+            }
 
             this.eachModel( function( m ){ 
 
