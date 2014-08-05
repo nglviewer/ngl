@@ -397,11 +397,21 @@ NGL.StructureComponent.prototype = {
 
         }
 
-        this.rebuild();
+        this.rebuildRepresentations();
+
+        var scope = this;
+
+        this.trajList.slice( 0 ).forEach( function( traj ){
+
+            scope.addTrajectory( traj.xtcPath );
+
+            scope.removeTrajectory( traj );
+
+        } );
 
     },
 
-    rebuild: function(){
+    rebuildRepresentations: function(){
 
         var scope = this;
 
@@ -410,14 +420,6 @@ NGL.StructureComponent.prototype = {
             scope.addRepresentation( repr.name, repr._sele );
 
             scope.removeRepresentation( repr );
-
-        } );
-
-        this.trajList.slice( 0 ).forEach( function( traj ){
-
-            scope.addTrajectory( traj.xtcPath );
-
-            scope.removeTrajectory( traj );
 
         } );
 

@@ -228,8 +228,8 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
 
                 o.addRepresentation( "tube" );
-                // o.addRepresentation( "spacefill" );
-                o.addRepresentation( "ball+stick" );
+                o.addRepresentation( "line" );
+                // o.addRepresentation( "ball+stick" );
                 o.centerView();
 
                 o.addTrajectory( "__example__/@md_1u19.xtc" );
@@ -319,7 +319,7 @@ NGL.Examples = {
 
         "_rho_traj2": function( stage ){
 
-            var path = "servers/zatopek/rhodopsin_md/1u19/md01/"
+            var path = "servers/zatopek/arose/rhodopsin_md/1u19/md01/"
 
             stage.loadFile( "../data/" + path + "md01.gro", function( o ){
 

@@ -599,6 +599,17 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     setSuperposeOptions();
 
+    // SS calculate
+    
+    var ss = new UI.Button( "calculate" ).onClick( function(){
+
+        component.structure.autoSS();
+        component.rebuildRepresentations();
+
+        menuPanel.setDisplay( "none" );
+
+    } );
+
     // Menu
 
     var menuPanel = new UI.OverlayPanel()
@@ -612,7 +623,10 @@ NGL.StructureComponentWidget = function( component, stage ){
         .add( traj )
         .add( new UI.Break() )
         .add( new UI.Text( "Superpose" ).setWidth( "110px" ) )
-        .add( superpose );
+        .add( superpose )
+        .add( new UI.Break() )
+        .add( new UI.Text( "SS" ).setWidth( "110px" ) )
+        .add( ss );
 
     var menu = new UI.Icon( "bars" )
         .setTitle( "menu" )
