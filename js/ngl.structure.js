@@ -3080,8 +3080,6 @@ NGL.Selection.prototype = {
 
     _makeTest: function( fn, selection, negate ){
 
-        var scope = this;
-
         if( selection === undefined ) selection = this.selection;
         if( negate === undefined ) negate = this.negate;
         var n = selection.rules.length;
@@ -3093,7 +3091,21 @@ NGL.Selection.prototype = {
 
         var i, s, and;
 
-        var test = function( entity ){
+        var subTests = [];
+
+        for( i=0; i<n; ++i ){
+
+            s = selection.rules[ i ];
+
+            if( s.operator ){
+
+                subTests[ i ] = this._makeTest( fn, s, false );
+
+            }
+
+        }
+
+        return function( entity ){
 
             and = selection.operator === "AND";
 
@@ -3103,8 +3115,7 @@ NGL.Selection.prototype = {
 
                 if( s.operator ){
 
-                    // TODO pre-make
-                    if( scope._makeTest( fn, s, false )( entity ) === t ){
+                    if( subTests[ i ]( entity ) === t ){
 
                         if( and ){ continue; }else{ return t; }
 
@@ -3139,8 +3150,6 @@ NGL.Selection.prototype = {
             if( and ){ return t; }else{ return f; }
 
         }
-
-        return test;
 
     },
 
