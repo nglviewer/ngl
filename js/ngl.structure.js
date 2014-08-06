@@ -2895,26 +2895,17 @@ NGL.Selection.prototype = {
     parse: function( str ){
 
         this.selection = {
-            "operator": null,
+            "operator": undefined,
             "rules": []
         };
 
         if( !str ) return;
 
-        // valid examples
-        //     :A
-        //     32
-        //     :A.CA
-        //     32:A.CA
-        //     32-40:A - not implemented yet
-        //     32.CA
-        //     LYS
-        //
-        // all case insensitive
+        var scope = this;
 
         var selection = this.selection;
         var selectionStack = [];
-        var newSelection;
+        var newSelection, oldSelection;
         var andContext = null;
 
         str = str.replace( /\(/, ' ( ' ).replace( /\)/, ' ) ' ).trim();
@@ -2937,9 +2928,14 @@ NGL.Selection.prototype = {
                 "operator": operator,
                 "rules": []
             };
-            selection.rules.push( newSelection );
-            selectionStack.push( selection );
-            selection = newSelection;
+            if( selection === undefined ){
+                selection = newSelection;
+                scope.selection = newSelection;
+            }else{
+                selection.rules.push( newSelection );
+                selectionStack.push( selection );
+                selection = newSelection;
+            }
             j = 0;
 
         }
@@ -2958,50 +2954,68 @@ NGL.Selection.prototype = {
             if( c === "(" ){
                 
                 // console.log( "(" );
-                createNewContext();
+
+                if( j > 0 ){
+                    createNewContext();
+                }
                 continue;
 
             }else if( c === ")" ){
                 
                 // console.log( ")" );
+
                 selection = selectionStack.pop();
                 j = selection.rules.length;
                 continue;
 
             }else if( c.toUpperCase() === "AND" ){
 
+                // console.log( "AND" );
+
                 if( selection.operator === "OR" ){
-                    //console.log( "AND", "need new context" )
                     var lastRule = selection.rules.pop();
                     createNewContext( "AND" );
                     pushRule( lastRule );
                 }else{
-                    //console.log( "AND", "context good" );
                     selection.operator = "AND";
                 }
                 continue;
 
             }else if( c.toUpperCase() === "OR" ){
 
+                // console.log( "OR" );
+
                 if( selection.operator === "AND" ){
-                    //console.log( "OR", "need new context" )
+                    oldSelection = selection;
                     selection = selectionStack.pop();
-                    j = selection.rules.length;
+                    if( selection === undefined ){
+                        createNewContext( "OR" );
+                        pushRule( oldSelection );
+                    }else{
+                        j = selection.rules.length;
+                    }
                 }else{
                     selection.operator = "OR";
                 }
                 continue;
 
+            }else if( c.toUpperCase() === "NOT" ){
+
+                // console.log( "NOT", j );
+
+                if( j === 0 ){
+                    selection.negate = true;
+                }else{
+                    createNewContext();
+                    selection.negate = true;
+                }
+                continue;
+
             }else{
 
-                // console.log( "chunk", c, j );
+                // console.log( "chunk", c, j, selection );
 
             }
-
-            // if( i === 0 && ( c.toUpperCase() === "NOT" || c === "!" ) ){
-            //     this.negate = true;
-            //     continue;
-            // }
 
             sele = {};
 
@@ -3093,18 +3107,16 @@ NGL.Selection.prototype = {
 
     },
 
-    _makeTest: function( fn, selection, negate ){
+    _makeTest: function( fn, selection ){
 
         if( selection === undefined ) selection = this.selection;
         if( selection.error ) return function(){ return true; }
-
-        if( negate === undefined ) negate = this.negate;
         
         var n = selection.rules.length;
         if( n === 0 ) return function(){ return true; }
 
-        var t = negate ? false : true;
-        var f = negate ? true : false;
+        var t = selection.negate ? false : true;
+        var f = selection.negate ? true : false;
 
         var i, s, and;
 
@@ -3116,7 +3128,7 @@ NGL.Selection.prototype = {
 
             if( s.operator ){
 
-                subTests[ i ] = this._makeTest( fn, s, false );
+                subTests[ i ] = this._makeTest( fn, s );
 
             }
 
