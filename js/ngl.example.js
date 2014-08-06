@@ -13,7 +13,7 @@ NGL.Examples = {
         "trajectory": function( stage ){
 
             var params = {
-                sele: "protein na cl",
+                sele: "protein or na or cl",
                 // sele: "349-352",
             };
 
@@ -21,7 +21,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "line", "*" );
                 o.addRepresentation( "tube", "protein" );
-                o.addRepresentation( "spacefill", "NA CL" );
+                o.addRepresentation( "spacefill", "NA or CL" );
                 o.centerView();
 
                 o.addTrajectory( "__example__/md.xtc" );
@@ -63,7 +63,7 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/3pqr.pdb", function( o ){
 
                 o.addRepresentation( "tube", "*" );
-                o.addRepresentation( "ball+stick", "135:A 347:B 223:A" );
+                o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
                 o.addRepresentation( "licorice", "hetero" );
 
                 o.centerView();
@@ -294,6 +294,20 @@ NGL.Examples = {
 
                 o.addRepresentation( "tube" );
                 stage.centerView();
+
+            } );
+
+        },
+
+        "selection": function( stage ){
+
+            stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
+
+                var sele = "( 10-15 or ( backbone and ( 30-35 or 40-45 ) ) )";
+
+                o.addRepresentation( "tube" );
+                o.addRepresentation( "line", sele );
+                o.centerView();
 
             } );
 
