@@ -379,3 +379,115 @@ QUnit.test( "selection negate parens 5", function( assert ) {
 });
 
 
+QUnit.test( "selection backbone CA", function( assert ) {
+
+    var sele = "not backbone or .CA";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    { "keyword": "BACKBONE" }
+                ]
+            },
+            { "atomname": "CA" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection CA backbone", function( assert ) {
+
+    var sele = ".CA or not backbone";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            { "atomname": "CA" },
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    { "keyword": "BACKBONE" }
+                ]
+            }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection MET or GLY", function( assert ) {
+
+    var sele = "MET or GLY";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            { "resname": "MET" },
+            { "resname": "GLY" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection not ( MET ) or GLY", function( assert ) {
+
+    var sele = "not ( MET ) or GLY";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    { "resname": "MET" }
+                ]
+            },
+            { "resname": "GLY" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection not ( MET or GLY )", function( assert ) {
+
+    var sele = "not ( MET or GLY )";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "negate": true,
+        "rules": [
+            { "resname": "MET" },
+            { "resname": "GLY" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
