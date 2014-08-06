@@ -246,8 +246,10 @@ NGL.Examples = {
 
                 NGL.disableImpostor = true;
                 o.addRepresentation( "spacefill", ":A" );
+                o.addRepresentation( "ball+stick", ":A" );
                 NGL.disableImpostor = _disableImpostor;
                 o.addRepresentation( "spacefill", ":B" );
+                o.addRepresentation( "ball+stick", ":B" );
 
                 o.centerView();
 
