@@ -1,8 +1,6 @@
 
 
-QUnit.test( "hello test", function( assert ) {
-    assert.ok( 1 == "1", "Passed!" );
-});
+QUnit.module( "selection" );
 
 
 QUnit.test( "selection parens", function( assert ) {
@@ -79,4 +77,80 @@ QUnit.test( "selection outer parens", function( assert ) {
     assert.deepEqual( selection.selection, selectionObj, "Passed!" );
 
 });
+
+
+QUnit.test( "selection parsing error resi", function( assert ) {
+
+    var sele = "( foobar )";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = { 
+        "error": "resi must be an integer"
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection parsing error atomname", function( assert ) {
+
+    var sele = ".FOOBAR";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = { 
+        "error": "atomname must be one to four characters"
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection parsing error chain", function( assert ) {
+
+    var sele = ":FOO";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = { 
+        "error": "chain identifier must be one character"
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection parsing error model", function( assert ) {
+
+    var sele = "/Q";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = { 
+        "error": "model must be an integer"
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection parsing error resi range", function( assert ) {
+
+    var sele = "1-2-3";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = { 
+        "error": "resi range must contain one '-'"
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
 

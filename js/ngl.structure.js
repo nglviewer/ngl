@@ -2860,7 +2860,17 @@ NGL.Selection = function( selection ){
     if( !selection || typeof selection === 'string' ){
 
         this.selectionStr = selection || "";
-        this.parse( selection );
+
+        try{
+
+            this.parse( selection );
+
+        }catch( e ){
+
+            // console.error( e.stack );
+            this.selection = { "error": e.message };
+
+        }
 
     }else{
 
@@ -2917,7 +2927,8 @@ NGL.Selection.prototype = {
 
         var all = [ "*", "", "ALL" ];
 
-        var c, sele, atomname, chain, resno, resname, model, i
+        var c, sele, i, error;
+        var atomname, chain, resno, resname, model, resi;
         var j = 0;
 
         var createNewContext = function( operator ){
@@ -2987,10 +2998,10 @@ NGL.Selection.prototype = {
 
             }
 
-            if( i === 0 && ( c.toUpperCase() === "NOT" || c === "!" ) ){
-                this.negate = true;
-                continue;
-            }
+            // if( i === 0 && ( c.toUpperCase() === "NOT" || c === "!" ) ){
+            //     this.negate = true;
+            //     continue;
+            // }
 
             sele = {};
 
@@ -3024,7 +3035,7 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( ( c.length >= 2 || c.length <= 4 ) &&
+            if( ( c.length >= 2 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
 
@@ -3036,8 +3047,7 @@ NGL.Selection.prototype = {
             model = c.split("/");
             if( model.length > 1 && model[1] ){
                 if( isNaN( parseInt( model[1] ) ) ){
-                    console.error( "model must be an integer" );
-                    continue;
+                    throw new Error( "model must be an integer" );
                 }
                 sele.model = parseInt( model[1] );
             }
@@ -3045,8 +3055,7 @@ NGL.Selection.prototype = {
             atomname = model[0].split(".");
             if( atomname.length > 1 && atomname[1] ){
                 if( atomname[1].length > 4 ){
-                    console.error( "atomname must be one to four characters" );
-                    continue;
+                    throw new Error( "atomname must be one to four characters" );
                 }
                 sele.atomname = atomname[1].substring( 0, 4 ).toUpperCase();
             }
@@ -3054,8 +3063,7 @@ NGL.Selection.prototype = {
             chain = atomname[0].split(":");
             if( chain.length > 1 && chain[1] ){
                 if( chain[1].length > 1 ){
-                    console.error( "chain identifier must be one character" );
-                    continue;
+                    throw new Error( "chain identifier must be one character" );
                 }
                 sele.chainname = chain[1][0].toUpperCase();
             }
@@ -3063,16 +3071,23 @@ NGL.Selection.prototype = {
             if( chain[0] ){
                 resi = chain[0].split("-");
                 if( resi.length === 1 ){
-                    sele.resno = parseInt( resi[0] );
+                    resi = parseInt( resi[0] );
+                    if( isNaN( resi ) ){
+                        throw new Error( "resi must be an integer" );
+                    }
+                    sele.resno = resi;
                 }else if( resi.length === 2 ){
                     sele.resno = [ parseInt( resi[0] ), parseInt( resi[1] ) ];
                 }else{
-                    console.error( "resi range must contain one '-'" );
-                    continue;
+                    throw new Error( "resi range must contain one '-'" );
                 }
             }
 
-            pushRule( sele );
+            if( Object.keys( sele ).length > 0 ){
+                pushRule( sele );
+            }else{
+                throw new Error( "empty selection chunk" );
+            }
 
         }
 
@@ -3081,9 +3096,11 @@ NGL.Selection.prototype = {
     _makeTest: function( fn, selection, negate ){
 
         if( selection === undefined ) selection = this.selection;
-        if( negate === undefined ) negate = this.negate;
-        var n = selection.rules.length;
+        if( selection.error ) return function(){ return true; }
 
+        if( negate === undefined ) negate = this.negate;
+        
+        var n = selection.rules.length;
         if( n === 0 ) return function(){ return true; }
 
         var t = negate ? false : true;
