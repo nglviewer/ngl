@@ -2857,18 +2857,18 @@ NGL.Selection = function( selection ){
 
     this.selectionStr = "";
 
-    if( Array.isArray( selection ) ){
-
-        this.selection = selection;
-
-    }else{
+    if( !selection || typeof selection === 'string' ){
 
         this.selectionStr = selection || "";
         this.parse( selection );
 
+    }else{
+
+        this.selection = selection;
+
     }
 
-    this.test = this.makeTest();
+    this.test = this.makeAtomTest();
     this.residueTest = this.makeResidueTest();
     this.chainTest = this.makeChainTest();
     this.modelTest = this.makeModelTest();
@@ -2884,7 +2884,10 @@ NGL.Selection.prototype = {
 
     parse: function( str ){
 
-        this.selection = [];
+        this.selection = {
+            "operator": null,
+            "rules": []
+        };
 
         if( !str ) return;
 
@@ -2900,15 +2903,89 @@ NGL.Selection.prototype = {
         // all case insensitive
 
         var selection = this.selection;
-        var chunks = str.trim().split(/\s+/);
+        var selectionStack = [];
+        var newSelection;
+        var andContext = null;
+
+        str = str.replace( /\(/, ' ( ' ).replace( /\)/, ' ) ' ).trim();
+        if( str.charAt( 0 ) === "(" && str.substr( -1 ) === ")" ){
+            str = str.slice( 1, -1 ).trim();
+        }
+        var chunks = str.split( /\s+/ );
+
+        // console.log( str, chunks )
 
         var all = [ "*", "", "ALL" ];
 
-        var c, sele, atomname, chain, resno, resname, model;
+        var c, sele, atomname, chain, resno, resname, model, i
+        var j = 0;
 
-        for( var i = 0; i < chunks.length; i++ ){
+        var createNewContext = function( operator ){
+
+            newSelection = {
+                "operator": operator,
+                "rules": []
+            };
+            selection.rules.push( newSelection );
+            selectionStack.push( selection );
+            selection = newSelection;
+            j = 0;
+
+        }
+
+        var pushRule = function( rule ){
+
+            selection.rules.push( rule );
+            ++j;
+
+        }
+
+        for( i = 0; i < chunks.length; ++i ){
 
             c = chunks[ i ];
+
+            if( c === "(" ){
+                
+                // console.log( "(" );
+                createNewContext();
+                continue;
+
+            }else if( c === ")" ){
+                
+                // console.log( ")" );
+                selection = selectionStack.pop();
+                j = selection.rules.length;
+                continue;
+
+            }else if( c.toUpperCase() === "AND" ){
+
+                if( selection.operator === "OR" ){
+                    //console.log( "AND", "need new context" )
+                    var lastRule = selection.rules.pop();
+                    createNewContext( "AND" );
+                    pushRule( lastRule );
+                }else{
+                    //console.log( "AND", "context good" );
+                    selection.operator = "AND";
+                }
+                continue;
+
+            }else if( c.toUpperCase() === "OR" ){
+
+                if( selection.operator === "AND" ){
+                    //console.log( "OR", "need new context" )
+                    selection = selectionStack.pop();
+                    j = selection.rules.length;
+                }else{
+                    selection.operator = "OR";
+                }
+                continue;
+
+            }else{
+
+                // console.log( "chunk", c, j );
+
+            }
 
             if( i === 0 && ( c.toUpperCase() === "NOT" || c === "!" ) ){
                 this.negate = true;
@@ -2919,31 +2996,31 @@ NGL.Selection.prototype = {
 
             if( c.toUpperCase() === "HETERO" ){
                 sele.keyword = "HETERO";
-                selection.push( sele );
+                pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "PROTEIN" ){
                 sele.keyword = "PROTEIN";
-                selection.push( sele );
+                pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "NUCLEIC" ){
                 sele.keyword = "NUCLEIC";
-                selection.push( sele );
+                pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "BACKBONE" ){
                 sele.keyword = "BACKBONE";
-                selection.push( sele );
+                pushRule( sele );
                 continue;
             }
 
             if( all.indexOf( c.toUpperCase() )!==-1 ){
                 sele.keyword = "ALL";
-                selection.push( sele );
+                pushRule( sele );
                 continue;
             }
 
@@ -2952,7 +3029,7 @@ NGL.Selection.prototype = {
                     isNaN( parseInt( c ) ) ){
 
                 sele.resname = c.toUpperCase();
-                selection.push( sele );
+                pushRule( sele );
                 continue;
             }
 
@@ -2995,52 +3072,79 @@ NGL.Selection.prototype = {
                 }
             }
 
-            selection.push( sele );
+            pushRule( sele );
 
         }
 
     },
 
-    _makeTest: function( fn ){
+    _makeTest: function( fn, selection, negate ){
 
-        var n = this.selection.length;
-        var selection = this.selection;
-        var negate = this.negate;
+        var scope = this;
+
+        if( selection === undefined ) selection = this.selection;
+        if( negate === undefined ) negate = this.negate;
+        var n = selection.rules.length;
+
+        if( n === 0 ) return function(){ return true; }
 
         var t = negate ? false : true;
         var f = negate ? true : false;
 
-        var i, s;
+        var i, s, and;
 
-        return function( entity ){
+        var test = function( entity ){
 
-            if( selection.length === 0 ) return true;
+            and = selection.operator === "AND";
 
             for( i=0; i<n; ++i ){
 
-                s = selection[ i ];
+                s = selection.rules[ i ];
 
-                if( s.keyword!==undefined && s.keyword==="ALL" ) return t;
+                if( s.operator ){
 
-                if( fn( entity, s, t, f ) === t ){
+                    // TODO pre-make
+                    if( scope._makeTest( fn, s, false )( entity ) === t ){
 
-                    return t;
+                        if( and ){ continue; }else{ return t; }
+
+                    }else{
+
+                        if( and ){ return f; }else{ continue; }
+
+                    }
 
                 }else{
+                 
+                    if( s.keyword!==undefined && s.keyword==="ALL" ){
 
-                    continue;
+                        if( and ){ continue; }else{ return t; }
+
+                    }
+
+                    if( fn( entity, s, t, f ) === t ){
+
+                        if( and ){ continue; }else{ return t; }
+
+                    }else{
+
+                        if( and ){ return f; }else{ continue; }
+
+                    }
 
                 }
 
             }
 
-            return f;
+            if( and ){ return t; }else{ return f; }
 
         }
 
+        return test;
+
     },
 
-    makeTest: function(){
+    makeAtomTest: function(){
 
         var backboneProtein = [
             "CA", "C", "N", "O"
