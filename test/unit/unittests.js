@@ -793,3 +793,42 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
     } );
 
 });
+
+
+QUnit.module( "structure" );
+
+
+QUnit.asyncTest( "structure subset", function( assert ) {
+
+    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var subset = new NGL.StructureSubset( structure, "10-30" );
+
+        assert.equal( structure.atomCount, 774, "Passed!" );
+        assert.equal( subset.atomCount, 211, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "structure subset not", function( assert ) {
+
+    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var subset = new NGL.StructureSubset( structure, "not 10-30" );
+        
+        assert.equal( structure.atomCount, 774, "Passed!" );
+        assert.equal( subset.atomCount, 563, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});

@@ -2888,7 +2888,7 @@ NGL.Selection = function( selection ){
 
         }catch( e ){
 
-            // console.error( e.stack );
+            console.error( e.stack );
             this.selection = { "error": e.message };
 
         }
@@ -3239,7 +3239,7 @@ NGL.Selection.prototype = {
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
 
-        var i, s, and;
+        var i, s, and, ret;
 
         var subTests = [];
 
@@ -3265,7 +3265,13 @@ NGL.Selection.prototype = {
 
                 if( s.hasOwnProperty( "operator" ) ){
 
-                    if( subTests[ i ]( entity ) === true ){
+                    ret = subTests[ i ]( entity );
+
+                    if( ret === -1 ){
+
+                        return -1;
+
+                    }else if( ret === true){
 
                         if( and ){ continue; }else{ return t; }
 
@@ -3283,7 +3289,13 @@ NGL.Selection.prototype = {
 
                     }
 
-                    if( fn( entity, s ) === true ){
+                    ret = fn( entity, s );
+
+                    if( ret === -1 ){
+
+                        return -1;
+
+                    }else if( ret === true){
 
                         if( and ){ continue; }else{ return t; }
 
@@ -3374,9 +3386,13 @@ NGL.Selection.prototype = {
                 if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
                 if( s.keyword==="WATER" && r.isWater() ) return true;
 
-                if( s.keyword!=="BACKBONE" ) return false;
+                // if( s.keyword!=="BACKBONE" ) return false;
 
             }
+
+            if( s.chainname===undefined && s.model===undefined &&
+                    s.resname===undefined && s.resno===undefined
+            ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -3402,6 +3418,8 @@ NGL.Selection.prototype = {
 
         var fn = function( c, s ){
 
+            if( s.chainname===undefined && s.model===undefined ) return -1;
+
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
             if( s.model!==undefined && s.model!==c.model.index ) return false;
 
@@ -3417,7 +3435,8 @@ NGL.Selection.prototype = {
 
         var fn = function( m, s ){
 
-            if( s.model!==undefined && s.model!==m.index ) return false;
+            if( s.model===undefined ) return -1;
+            if( s.model!==m.index ) return false;
 
             return true;
 
