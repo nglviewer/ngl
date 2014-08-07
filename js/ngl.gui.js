@@ -221,7 +221,7 @@ NGL.MenubarFileWidget = function( stage ){
         createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createDivider(),
-        createOption( 'Export image', onExportImageOptionClick ),
+        createOption( 'Export image', onExportImageOptionClick, 'camera' ),
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
