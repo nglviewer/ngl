@@ -315,6 +315,20 @@ NGL.Examples = {
 
         },
 
+        "test": function( stage ){
+
+            stage.loadFile( "../data/__example__/BaceCgProteinAtomistic.pdb", function( o ){
+
+                var sele = "sidechainAttached";
+
+                o.addRepresentation( "tube" );
+                o.addRepresentation( "licorice", sele );
+                o.centerView();
+
+            } );
+
+        },
+
         // alexpc
         
         "_rho_traj": function( stage ){

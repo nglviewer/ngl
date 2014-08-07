@@ -122,10 +122,11 @@ NGL.guessElement = function(){
 }();
 
 
-NGL.ProteinType = 0;
-NGL.NucleicType = 1;
-NGL.CgType = 2;
-NGL.UnknownType = 3;
+NGL.UnknownType = 0;
+NGL.CgType = 1;
+NGL.ProteinType = 2;
+NGL.NucleicType = 3;
+NGL.WaterType = 4;
 
 
 NGL.AA1 = {
@@ -2073,7 +2074,7 @@ NGL.Fiber = function( residues ){
 
         this.trace_atomname = "CA";
         this.direction_atomname1 = "C";
-        this.direction_atomname2 = [ "O", "OC1" ];
+        this.direction_atomname2 = [ "O", "OC1", "O1" ];
 
     }else if( this.isNucleic() ){
 
@@ -2173,7 +2174,7 @@ NGL.Residue.prototype = {
             this._protein = this.getAtomByName( "CA" ) !== undefined &&
                 this.getAtomByName( "C" ) !== undefined &&
                 this.getAtomByName( "N" ) !== undefined &&
-                this.getAtomByName([ "O", "OC1" ]) !== undefined;
+                this.getAtomByName([ "O", "OC1", "O1" ]) !== undefined;
 
         }
 
@@ -2259,6 +2260,8 @@ NGL.Residue.prototype = {
                 this._type = NGL.NucleicType;
             }else if( this.isCg() ){
                 this._type = NGL.CgType;
+            }else if( this.isWater() ){
+                this._type = NGL.WaterType;
             }else{
                 this._type = NGL.UnknownType;
             }
@@ -3303,7 +3306,9 @@ NGL.Selection.prototype = {
     makeAtomTest: function(){
 
         var backboneProtein = [
-            "CA", "C", "N", "O"
+            "CA", "C", "N", "O",
+            "O1", "O2", "OC1", "OC2",
+            "H", "H1", "H2", "H3"
         ];
         var backboneNucleic = [
             "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
