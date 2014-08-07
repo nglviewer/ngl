@@ -24,6 +24,7 @@
 			<li>*hetero*</li>
 			<li>*all*</li>
 			<li>*water*</li>
+			<li>*hydrogen*</li>
 		</ul>
 
 
@@ -31,14 +32,15 @@
 
 		<ul>
 			<li>residue number: *1*, *2*, *100*</li>
-			<li>residue number range: *3-40*</li>
+			<li>residue number range: *3-40* (Note that there are no space around <strong>-</strong> allowed)</li>
 			<li>chain name: <strong>:A</strong></li>
 			<li>atom name: <strong>.CA</strong>, <strong>.C</strong>, <strong>.N</strong>, ...</li>
 			<li>model: <strong>/0</strong>, <strong>/1</strong>, ...</li>
 			<li>residue name: *ALA*, *GLU*, *SOL*, *DMPC*, ...</li>
+			<li>element name: <strong>#H</strong>, <strong>#C</strong>, <strong>#O</strong>, ...</li>
 		</ul>
 
-		These expressions can be combined (excluding the residue name) like this
+		Some of these expressions can be combined (in this order) - residue numer (range), chain name, atom name, model - like this
 
 		<code>10-20:A.CA/0 # select C-alpha atoms of residues 10 to 20 from chain A in model 0</code>
 
@@ -46,7 +48,7 @@
 
 		<code>10-20 and :A and .CA and /0</code>
 
-		Single expressions may be left out ss long as the order - residue numer (range), chain name, atom name, model - is kept, e.g.
+		Single expressions may be left out ss long as the order (see above) is kept, e.g.
 
 		<code>:A/0 # select chain A from model 0</code>
 
