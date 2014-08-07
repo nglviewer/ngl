@@ -682,6 +682,37 @@ QUnit.test( "element H", function( assert ) {
 });
 
 
+QUnit.test( "(CYS and .CA) or (CYS and hydrogen)", function( assert ) {
+
+    var sele = "(CYS and .CA) or (CYS and hydrogen)";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            {
+                "operator": "AND",
+                "rules": [
+                    { "resname": "CYS" },
+                    { "atomname": "CA" }
+                ]
+            },
+            {
+                "operator": "AND",
+                "rules": [
+                    { "resname": "CYS" },
+                    { "element": "H" }
+                ]
+            }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
 QUnit.module( "selection test" );
 
 

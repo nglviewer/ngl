@@ -2929,7 +2929,7 @@ NGL.Selection.prototype = {
         var newSelection, oldSelection;
         var andContext = null;
 
-        str = str.replace( /\(/, ' ( ' ).replace( /\)/, ' ) ' ).trim();
+        str = str.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
         if( str.charAt( 0 ) === "(" && str.substr( -1 ) === ")" ){
             str = str.slice( 1, -1 ).trim();
         }
