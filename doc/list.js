@@ -7,8 +7,11 @@ var list = {
             [ "Trajectory", "manual/usage/Trajectory" ],
             [ "Interface", "manual/usage/Interface" ]
         ],
-        "Installation": [
-            [ "Installation", "manual/installation/Installation" ]
+        "Deployment": [
+            [ "Installation", "manual/deployment/Installation" ],
+            [ "Browser", "manual/deployment/Browser" ],
+            [ "Webserver", "manual/deployment/Webserver" ],
+            [ "Filesystem", "manual/deployment/Filesystem" ]
         ],
         "Development": [
             [ "Acknowledgement", "manual/development/Acknowledgement" ],
