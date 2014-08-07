@@ -2225,6 +2225,24 @@ NGL.Residue.prototype = {
 
     },
 
+    isWater: function(){
+
+        var water = [ "SOL", "WAT", "HOH", "H2O" ];
+
+        return function(){
+
+            if( this._water === undefined ){
+
+                this._water = water.indexOf( this.resname ) !== -1;
+
+            }
+
+            return this._water;
+
+        }
+
+    }(),
+
     getResname1: function(){
 
         return NGL.AA1[ this.resname.toUpperCase() ] || '';
@@ -2563,7 +2581,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
     var i, j;
     var line, recordName;
-    var altloc, serial, elem, chainname, resno, resname;
+    var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
     var m = this.addModel();
     var c = m.addChain();
@@ -2581,8 +2599,8 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
         if( recordName == 'ATOM  ' || recordName == 'HETATM' ){
 
-            altLoc = line[ 16 ];
-            if( altLoc != ' ' && altLoc != 'A' ) continue; // FIXME: ad hoc
+            altloc = line[ 16 ];
+            if( altloc != ' ' && altloc != 'A' ) continue; // FIXME: ad hoc
 
             serial = parseInt( line.substr( 6, 5 ) );
             atomname = line.substr( 12, 4 ).trim();
@@ -2648,7 +2666,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
             a.bonds = [];
             a.ss = 'c';
             a.bfactor = parseFloat( line.substr( 60, 8 ) );
-            a.altloc = altLoc;
+            a.altloc = altloc;
             a.color = 0xFFFFFF;
             a.vdw = vdwRadii[ element ];
             a.covalent = covRadii[ element ];
@@ -2895,8 +2913,8 @@ NGL.Selection.prototype = {
     parse: function( str ){
 
         this.selection = {
-            "operator": undefined,
-            "rules": []
+            operator: undefined,
+            rules: []
         };
 
         if( !str ) return;
@@ -2924,11 +2942,9 @@ NGL.Selection.prototype = {
 
         var createNewContext = function( operator ){
 
-            if( j === 0 ) return;
-
             newSelection = {
-                "operator": operator,
-                "rules": []
+                operator: operator,
+                rules: []
             };
             if( selection === undefined ){
                 selection = newSelection;
@@ -2981,15 +2997,22 @@ NGL.Selection.prototype = {
                 // console.log( ")" );
 
                 getPrevContext();
+                if( selection.negate ){
+                    getPrevContext();
+                }
                 continue;
 
             }
 
-            // handle 'not' without parens
+            // leave 'not' context
 
             if( not > 0 ){
 
-                if( not === 1 ){
+                if( c.toUpperCase() === "NOT" ){
+
+                    not = 1;
+
+                }else if( not === 1 ){
 
                     not = 2;
 
@@ -3057,6 +3080,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "WATER" ){
+                sele.keyword = "WATER";
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "PROTEIN" ){
                 sele.keyword = "PROTEIN";
                 pushRule( sele );
@@ -3071,6 +3100,37 @@ NGL.Selection.prototype = {
 
             if( c.toUpperCase() === "BACKBONE" ){
                 sele.keyword = "BACKBONE";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SIDECHAIN" ){
+                sele = {
+                    operator: undefined,
+                    negate: true,
+                    rules: [
+                        { keyword: "BACKBONE" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SIDECHAINATTACHED" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "PRO", atomname: "N" },
+                        {
+                            operator: undefined,
+                            negate: true,
+                            rules: [
+                                { keyword: "BACKBONE" }
+                            ]
+                        },
+                        { atomname: "CA" }
+                    ]
+                };
                 pushRule( sele );
                 continue;
             }
@@ -3190,7 +3250,7 @@ NGL.Selection.prototype = {
 
                 if( s.hasOwnProperty( "operator" ) ){
 
-                    if( subTests[ i ]( entity ) === t ){
+                    if( subTests[ i ]( entity ) === true ){
 
                         if( and ){ continue; }else{ return t; }
 
@@ -3208,7 +3268,7 @@ NGL.Selection.prototype = {
 
                     }
 
-                    if( fn( entity, s, t, f ) === t ){
+                    if( fn( entity, s ) === true ){
 
                         if( and ){ continue; }else{ return t; }
 
@@ -3241,13 +3301,14 @@ NGL.Selection.prototype = {
             "CA"
         ];
 
-        var fn = function( a, s, t, f ){
+        var fn = function( a, s ){
 
             if( s.keyword!==undefined ){
 
-                if( s.keyword==="HETERO" && a.hetero===true ) return t;
-                if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return t;
-                if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return t;
+                if( s.keyword==="HETERO" && a.hetero===true ) return true;
+                if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return true;
+                if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
+                if( s.keyword==="WATER" && a.residue.isWater() ) return true;
                 if( s.keyword==="BACKBONE" && (
                         ( a.residue.isProtein() && 
                             backboneProtein.indexOf( a.atomname )!==-1 ) || 
@@ -3256,26 +3317,26 @@ NGL.Selection.prototype = {
                         ( a.residue.isCg() && 
                             backboneCg.indexOf( a.atomname )!==-1 )
                     )
-                ) return t;
+                ) return true;
 
-                return f;
+                return false;
 
             }
 
-            if( s.resname!==undefined && s.resname!==a.resname ) return f;
-            if( s.chainname!==undefined && s.chainname!==a.chainname ) return f;
-            if( s.atomname!==undefined && s.atomname!==a.atomname ) return f;
-            if( s.model!==undefined && s.model!==a.residue.chain.model.index ) return f;
+            if( s.resname!==undefined && s.resname!==a.resname ) return false;
+            if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
+            if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
+            if( s.model!==undefined && s.model!==a.residue.chain.model.index ) return false;
 
             if( s.resno!==undefined ){
                 if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) return f;
+                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) return false;
                 }else{
-                    if( s.resno!==a.resno ) return f;
+                    if( s.resno!==a.resno ) return false;
                 }
             }
 
-            return t;
+            return true;
 
         }
 
@@ -3285,31 +3346,32 @@ NGL.Selection.prototype = {
 
     makeResidueTest: function(){
 
-        var fn = function( r, s, t, f ){
+        var fn = function( r, s ){
 
             if( s.keyword!==undefined ){
 
-                if( s.keyword==="HETERO" && r.isHetero() ) return t;
-                if( s.keyword==="PROTEIN" && r.isProtein() ) return t;
-                if( s.keyword==="NUCLEIC" && r.isNucleic() ) return t;
+                if( s.keyword==="HETERO" && r.isHetero() ) return true;
+                if( s.keyword==="PROTEIN" && r.isProtein() ) return true;
+                if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
+                if( s.keyword==="WATER" && r.isWater() ) return true;
 
-                if( s.keyword!=="BACKBONE" ) return f;
+                if( s.keyword!=="BACKBONE" ) return false;
 
             }
 
-            if( s.resname!==undefined && s.resname!==r.resname ) return f;
-            if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return f;
-            if( s.model!==undefined && s.model!==r.chain.model.index ) return f;
+            if( s.resname!==undefined && s.resname!==r.resname ) return false;
+            if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
+            if( s.model!==undefined && s.model!==r.chain.model.index ) return false;
 
             if( s.resno!==undefined ){
                 if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                    if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return f;
+                    if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return false;
                 }else{
-                    if( s.resno!==r.resno ) return f;
+                    if( s.resno!==r.resno ) return false;
                 }
             }
 
-            return t;
+            return true;
 
         }
 
@@ -3319,12 +3381,12 @@ NGL.Selection.prototype = {
 
     makeChainTest: function(){
 
-        var fn = function( c, s, t, f ){
+        var fn = function( c, s ){
 
-            if( s.chainname!==undefined && s.chainname!==c.chainname ) return f;
-            if( s.model!==undefined && s.model!==c.model.index ) return f;
+            if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
+            if( s.model!==undefined && s.model!==c.model.index ) return false;
 
-            return t;
+            return true;
 
         }
 
@@ -3334,11 +3396,11 @@ NGL.Selection.prototype = {
 
     makeModelTest: function(){
 
-        var fn = function( m, s, t, f ){
+        var fn = function( m, s ){
 
-            if( s.model!==undefined && s.model!==m.index ) return f;
+            if( s.model!==undefined && s.model!==m.index ) return false;
 
-            return t;
+            return true;
 
         }
 

@@ -251,7 +251,12 @@ QUnit.test( "negate parens", function( assert ) {
                 "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "resno": [ 10, 15 ] }
+                    {
+                        "operator": undefined,
+                        "rules": [
+                            { "resno": [ 10, 15 ] }
+                        ]
+                    }
                 ]
             }
         ]
@@ -273,11 +278,16 @@ QUnit.test( "negate parens 2", function( assert ) {
         "rules": [
             { "resname": "MET" },
             {
-                "operator": "AND",
+                "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "resno": [ 10, 15 ] },
-                    { "resno": [ 15, 20 ] }
+                    {
+                        "operator": "AND",
+                        "rules": [
+                            { "resno": [ 10, 15 ] },
+                            { "resno": [ 15, 20 ] }
+                        ]
+                    }
                 ]
             }
         ]
@@ -299,11 +309,16 @@ QUnit.test( "negate parens 3", function( assert ) {
         "rules": [
             { "resname": "MET" },
             {
-                "operator": "AND",
+                "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "resno": [ 10, 15 ] },
-                    { "resno": [ 15, 20 ] }
+                    {
+                        "operator": "AND",
+                        "rules": [
+                            { "resno": [ 10, 15 ] },
+                            { "resno": [ 15, 20 ] } 
+                        ]
+                    }
                 ]
             },
             { "resname": "GLU" },
@@ -329,11 +344,16 @@ QUnit.test( "negate parens 4", function( assert ) {
                 "operator": "AND",
                 "rules": [
                     {
-                        "operator": "AND",
+                        "operator": undefined,
                         "negate": true,
                         "rules": [
-                            { "resno": [ 10, 15 ] },
-                            { "resno": [ 15, 20 ] }
+                            {
+                                "operator": "AND",
+                                "rules": [
+                                    { "resno": [ 10, 15 ] },
+                                    { "resno": [ 15, 20 ] }
+                                ]
+                            },
                         ]
                     },
                     { "resname": "GLU" }
@@ -361,11 +381,16 @@ QUnit.test( "negate parens 5", function( assert ) {
                 "rules": [
                     { "resno": [ 1, 100 ] },
                     {
-                        "operator": "OR",
+                        "operator": undefined,
                         "negate": true,
                         "rules": [
-                            { "resname": "MET" },
-                            { "resname": "GLU" }
+                            {
+                                "operator": "OR",
+                                "rules": [
+                                    { "resname": "MET" },
+                                    { "resname": "GLU" }
+                                ]
+                            }
                         ]
                     }
                 ]
@@ -461,7 +486,12 @@ QUnit.test( "not ( MET ) or GLY", function( assert ) {
                 "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "resname": "MET" }
+                    {
+                        "operator": undefined,
+                        "rules": [
+                            { "resname": "MET" }
+                        ]
+                    }
                 ]
             },
             { "resname": "GLY" }
@@ -480,11 +510,16 @@ QUnit.test( "not ( MET or GLY )", function( assert ) {
     var selection = new NGL.Selection( sele );
 
     var selectionObj = {
-        "operator": "OR",
+        "operator": undefined,
         "negate": true,
         "rules": [
-            { "resname": "MET" },
-            { "resname": "GLY" }
+            {
+                "operator": "OR",
+                "rules": [
+                    { "resname": "MET" },
+                    { "resname": "GLY" }
+                ]
+            }
         ]
     };
 
@@ -503,7 +538,124 @@ QUnit.test( "not ( MET )", function( assert ) {
         "operator": undefined,
         "negate": true,
         "rules": [
-            { "resname": "MET" }
+            {
+                "operator": undefined,
+                "rules": [
+                    { "resname": "MET" }
+                ]
+            }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "not not MET", function( assert ) {
+
+    var sele = "not not MET";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "negate": true,
+        "rules": [
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    { "resname": "MET" }
+                ]
+            }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "not not not MET", function( assert ) {
+
+    var sele = "not not not MET";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "negate": true,
+        "rules": [
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    {
+                        "operator": undefined,
+                        "negate": true,
+                        "rules": [
+                            { "resname": "MET" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "MET or sidechain", function( assert ) {
+
+    var sele = "MET or sidechain";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            { "resname": "MET" },
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    { "keyword": "BACKBONE" }
+                ]
+            }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "MET or not sidechain", function( assert ) {
+
+    var sele = "MET or not sidechain";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            { "resname": "MET" },
+            {
+                "operator": undefined,
+                "negate": true,
+                "rules": [
+                    {
+                        "operator": undefined,
+                        "negate": true,
+                        "rules": [
+                            { "keyword": "BACKBONE" }
+                        ]
+                    }
+                ]
+            }
         ]
     };
 
@@ -603,3 +755,23 @@ QUnit.asyncTest( "not backbone or .CA", function( assert ) {
 
 });
 
+
+QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
+
+    var selection1 = new NGL.Selection( "TYR" );
+    var selection2 = new NGL.Selection( "not not TYR" );
+
+    var path = "../../data/__example__/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet1 = new NGL.AtomSet( structure, selection1 );
+        var atomSet2 = new NGL.AtomSet( structure, selection2 );
+
+        assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
+        
+        QUnit.start()
+
+    } );
+
+});
