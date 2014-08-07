@@ -2867,7 +2867,7 @@ NGL.Selection = function( selection ){
 
         }catch( e ){
 
-            console.error( e.stack );
+            // console.error( e.stack );
             this.selection = { "error": e.message };
 
         }
@@ -2970,7 +2970,7 @@ NGL.Selection.prototype = {
 
             if( c === "(" ){
                 
-                console.log( "(" );
+                // console.log( "(" );
 
                 not = false;
                 createNewContext();
@@ -2978,7 +2978,7 @@ NGL.Selection.prototype = {
 
             }else if( c === ")" ){
                 
-                console.log( ")" );
+                // console.log( ")" );
 
                 getPrevContext();
                 continue;
@@ -3000,7 +3000,7 @@ NGL.Selection.prototype = {
 
                 }else{
 
-                    console.warn( "something went wrong with 'not'" );
+                    throw new Error( "something went wrong with 'not'" );
 
                 }
 
@@ -3010,7 +3010,7 @@ NGL.Selection.prototype = {
 
             if( c.toUpperCase() === "AND" ){
 
-                console.log( "AND" );
+                // console.log( "AND" );
 
                 if( selection.operator === "OR" ){
                     var lastRule = selection.rules.pop();
@@ -3023,7 +3023,7 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "OR" ){
 
-                console.log( "OR" );
+                // console.log( "OR" );
 
                 if( selection.operator === "AND" ){
                     getPrevContext( "OR" );
@@ -3034,7 +3034,7 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "NOT" ){
 
-                console.log( "NOT", j );
+                // console.log( "NOT", j );
 
                 not = 1;
                 createNewContext();
@@ -3043,7 +3043,7 @@ NGL.Selection.prototype = {
 
             }else{
 
-                console.log( "chunk", c, j, selection );
+                // console.log( "chunk", c, j, selection );
 
             }
 
@@ -3172,7 +3172,7 @@ NGL.Selection.prototype = {
 
             s = selection.rules[ i ];
 
-            if( s.operator ){
+            if( s.hasOwnProperty( "operator" ) ){
 
                 subTests[ i ] = this._makeTest( fn, s );
 
@@ -3188,7 +3188,7 @@ NGL.Selection.prototype = {
 
                 s = selection.rules[ i ];
 
-                if( s.operator ){
+                if( s.hasOwnProperty( "operator" ) ){
 
                     if( subTests[ i ]( entity ) === t ){
 

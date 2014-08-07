@@ -326,9 +326,11 @@ NGL.MenubarHelpWidget = function( stage ){
     // event handlers
 
     function onDocOptionClick () {
-
         window.open( '../doc/index.html', '_blank' );
+    }
 
+    function onUnittestsOptionClick () {
+        window.open( '../test/unit/unittests.html', '_blank' );
     }
 
     // configure menu contents
@@ -337,7 +339,8 @@ NGL.MenubarHelpWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
-        createOption( 'Documentation', onDocOptionClick )
+        createOption( 'Documentation', onDocOptionClick ),
+        createOption( 'Unittests', onUnittestsOptionClick )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );

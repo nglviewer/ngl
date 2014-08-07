@@ -305,10 +305,10 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
 
-                var sele = "( 10-15 or ( backbone and ( 30-35 or 40-45 ) ) )";
+                var sele = "not backbone or .CA";
 
                 o.addRepresentation( "tube" );
-                o.addRepresentation( "line", sele );
+                o.addRepresentation( "licorice", sele );
                 o.centerView();
 
             } );
