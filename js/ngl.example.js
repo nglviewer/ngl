@@ -305,7 +305,7 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
 
-                var sele = "not backbone or .CA";
+                var sele = "not backbone or .CA or (PRO and .N)";
 
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "licorice", sele );
