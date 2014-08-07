@@ -379,7 +379,7 @@ QUnit.test( "selection negate parens 5", function( assert ) {
 });
 
 
-QUnit.test( "selection backbone CA", function( assert ) {
+QUnit.test( "selection not backbone or .CA", function( assert ) {
 
     var sele = "not backbone or .CA";
 
@@ -404,7 +404,7 @@ QUnit.test( "selection backbone CA", function( assert ) {
 });
 
 
-QUnit.test( "selection CA backbone", function( assert ) {
+QUnit.test( "selection .CA or not backbone", function( assert ) {
 
     var sele = ".CA or not backbone";
 
@@ -485,6 +485,25 @@ QUnit.test( "selection not ( MET or GLY )", function( assert ) {
         "rules": [
             { "resname": "MET" },
             { "resname": "GLY" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "selection not ( MET )", function( assert ) {
+
+    var sele = "not ( MET )";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "negate": true,
+        "rules": [
+            { "resname": "MET" }
         ]
     };
 

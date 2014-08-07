@@ -2867,7 +2867,7 @@ NGL.Selection = function( selection ){
 
         }catch( e ){
 
-            // console.error( e.stack );
+            console.error( e.stack );
             this.selection = { "error": e.message };
 
         }
@@ -2918,11 +2918,13 @@ NGL.Selection.prototype = {
 
         var all = [ "*", "", "ALL" ];
 
-        var c, sele, i, error;
+        var c, sele, i, error, not;
         var atomname, chain, resno, resname, model, resi;
         var j = 0;
 
         var createNewContext = function( operator ){
+
+            if( j === 0 ) return;
 
             newSelection = {
                 "operator": operator,
@@ -2940,12 +2942,27 @@ NGL.Selection.prototype = {
 
         }
 
+        var getPrevContext = function( operator ){
+
+            oldSelection = selection;
+            selection = selectionStack.pop();
+            if( selection === undefined ){
+                createNewContext( operator );
+                pushRule( oldSelection );
+            }else{
+                j = selection.rules.length;
+            }
+
+        }
+
         var pushRule = function( rule ){
 
             selection.rules.push( rule );
-            ++j;
+            j += 1;
 
         }
+
+        // handle parens
 
         for( i = 0; i < chunks.length; ++i ){
 
@@ -2953,24 +2970,47 @@ NGL.Selection.prototype = {
 
             if( c === "(" ){
                 
-                // console.log( "(" );
+                console.log( "(" );
 
-                if( j > 0 ){
-                    createNewContext();
-                }
+                not = false;
+                createNewContext();
                 continue;
 
             }else if( c === ")" ){
                 
-                // console.log( ")" );
+                console.log( ")" );
 
-                selection = selectionStack.pop();
-                j = selection.rules.length;
+                getPrevContext();
                 continue;
 
-            }else if( c.toUpperCase() === "AND" ){
+            }
 
-                // console.log( "AND" );
+            // handle 'not' without parens
+
+            if( not > 0 ){
+
+                if( not === 1 ){
+
+                    not = 2;
+
+                }else if( not === 2 ){
+
+                    not = false;
+                    getPrevContext();
+
+                }else{
+
+                    console.warn( "something went wrong with 'not'" );
+
+                }
+
+            }
+
+            // handle logic operators
+
+            if( c.toUpperCase() === "AND" ){
+
+                console.log( "AND" );
 
                 if( selection.operator === "OR" ){
                     var lastRule = selection.rules.pop();
@@ -2983,17 +3023,10 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "OR" ){
 
-                // console.log( "OR" );
+                console.log( "OR" );
 
                 if( selection.operator === "AND" ){
-                    oldSelection = selection;
-                    selection = selectionStack.pop();
-                    if( selection === undefined ){
-                        createNewContext( "OR" );
-                        pushRule( oldSelection );
-                    }else{
-                        j = selection.rules.length;
-                    }
+                    getPrevContext( "OR" );
                 }else{
                     selection.operator = "OR";
                 }
@@ -3001,21 +3034,20 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "NOT" ){
 
-                // console.log( "NOT", j );
+                console.log( "NOT", j );
 
-                if( j === 0 ){
-                    selection.negate = true;
-                }else{
-                    createNewContext();
-                    selection.negate = true;
-                }
+                not = 1;
+                createNewContext();
+                selection.negate = true;
                 continue;
 
             }else{
 
-                // console.log( "chunk", c, j, selection );
+                console.log( "chunk", c, j, selection );
 
             }
+
+            // handle keyword attributes
 
             sele = {};
 
@@ -3048,6 +3080,8 @@ NGL.Selection.prototype = {
                 pushRule( sele );
                 continue;
             }
+
+            // handle atom expressions
 
             if( ( c.length >= 2 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
@@ -3097,11 +3131,23 @@ NGL.Selection.prototype = {
                 }
             }
 
+            // round up
+
             if( Object.keys( sele ).length > 0 ){
                 pushRule( sele );
             }else{
                 throw new Error( "empty selection chunk" );
             }
+
+        }
+
+        // cleanup
+        
+        if( this.selection.operator === undefined &&
+                this.selection.rules.length === 1 &&
+                this.selection.rules[ 0 ].hasOwnProperty( "operator" ) ){
+
+            this.selection = this.selection.rules[ 0 ];
 
         }
 
