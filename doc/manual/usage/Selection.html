@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		Selections (or 'Sele' for short) can be input at various places in the [page:Interface GUI] or when scripting. They are used to limit which atoms/residues are shown in a [page:Representation Representation] or what atoms are loaded from a [page:Trajectory].
+
+		<h2>Language</h2>
+
+		<h3>Expressions</h3>
+
+		<ul>
+			<li>keywords: *backbone*, *protein*, *nucleic*, *hetero*, *all*</li>
+			<li>chain name: <strong>:A</strong></li>
+			<li>atom name: <strong>.CA</strong>, <strong>.C</strong>, <strong>.N</strong>, ...</li>
+			<li>model: <strong>/0</strong>, <strong>/1</strong>, ...</li>
+			<li>residue name: *ALA*, *GLU*, *SOL*, ...</li>
+			<li>residue number: *1*, *2*, *100*</li>
+			<li>residue number range: *3-40*</li>
+		</ul>
+
+
+		<h3>Logical operators (in order of binding strength)</h3>
+
+		<ul>
+			<li>*NOT*</li>
+			<li>*AND*</li>
+			<li>*OR*</li>
+		</ul>
+
+
+		Additionally, parentheses *()* can be used for grouping.
+
+
+		<h2>Examples</h2>
+
+		Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of proline. This selection is useful to display the sidechains together with a backbone trace.
+
+		<code>not backbone or .CA or (PRO and .N)</code>
+
+	</body>
+</html>

@@ -1,10 +1,17 @@
 var list = {
 
     "Manual": {
+        "Usage": [
+            [ "Selection", "manual/usage/Selection" ],
+            [ "Representation", "manual/usage/Representation" ],
+            [ "Trajectory", "manual/usage/Trajectory" ],
+            [ "Interface", "manual/usage/Interface" ]
+        ],
         "Installation": [
             [ "Installation", "manual/installation/Installation" ]
         ],
         "Development": [
+            [ "Acknowledgement", "manual/development/Acknowledgement" ],
             [ "Font", "manual/development/Font" ]
         ]
     },
