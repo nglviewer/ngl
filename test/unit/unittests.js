@@ -1,9 +1,9 @@
 
 
-QUnit.module( "selection" );
+QUnit.module( "selection parse" );
 
 
-QUnit.test( "selection chain", function( assert ) {
+QUnit.test( "chain", function( assert ) {
 
     var sele = ":A";
 
@@ -21,7 +21,7 @@ QUnit.test( "selection chain", function( assert ) {
 });
 
 
-QUnit.test( "selection chain resno range", function( assert ) {
+QUnit.test( "chain resno range", function( assert ) {
 
     var sele = "1-100:A";
 
@@ -42,7 +42,7 @@ QUnit.test( "selection chain resno range", function( assert ) {
 });
 
 
-QUnit.test( "selection parens", function( assert ) {
+QUnit.test( "parens", function( assert ) {
 
     var sele = "10-15 or ( backbone and ( 30-35 or 40-45 ) )";
 
@@ -73,7 +73,7 @@ QUnit.test( "selection parens", function( assert ) {
 });
 
 
-QUnit.test( "selection no parens", function( assert ) {
+QUnit.test( "no parens", function( assert ) {
 
     var sele = "10-15 or backbone and 30-35 or 40-45";
 
@@ -99,7 +99,7 @@ QUnit.test( "selection no parens", function( assert ) {
 });
 
 
-QUnit.test( "selection outer parens", function( assert ) {
+QUnit.test( "outer parens", function( assert ) {
 
     var sele = "( 10-15 or backbone )";
 
@@ -118,7 +118,7 @@ QUnit.test( "selection outer parens", function( assert ) {
 });
 
 
-QUnit.test( "selection parsing error resi", function( assert ) {
+QUnit.test( "parsing error resi", function( assert ) {
 
     var sele = "( foobar )";
 
@@ -133,7 +133,7 @@ QUnit.test( "selection parsing error resi", function( assert ) {
 });
 
 
-QUnit.test( "selection parsing error atomname", function( assert ) {
+QUnit.test( "parsing error atomname", function( assert ) {
 
     var sele = ".FOOBAR";
 
@@ -148,7 +148,7 @@ QUnit.test( "selection parsing error atomname", function( assert ) {
 });
 
 
-QUnit.test( "selection parsing error chain", function( assert ) {
+QUnit.test( "parsing error chain", function( assert ) {
 
     var sele = ":FOO";
 
@@ -163,7 +163,7 @@ QUnit.test( "selection parsing error chain", function( assert ) {
 });
 
 
-QUnit.test( "selection parsing error model", function( assert ) {
+QUnit.test( "parsing error model", function( assert ) {
 
     var sele = "/Q";
 
@@ -178,7 +178,7 @@ QUnit.test( "selection parsing error model", function( assert ) {
 });
 
 
-QUnit.test( "selection parsing error resi range", function( assert ) {
+QUnit.test( "parsing error resi range", function( assert ) {
 
     var sele = "1-2-3";
 
@@ -193,7 +193,7 @@ QUnit.test( "selection parsing error resi range", function( assert ) {
 });
 
 
-QUnit.test( "selection negate simple", function( assert ) {
+QUnit.test( "negate simple", function( assert ) {
 
     var sele = "not 10-15";
 
@@ -212,7 +212,7 @@ QUnit.test( "selection negate simple", function( assert ) {
 });
 
 
-QUnit.test( "selection negate or", function( assert ) {
+QUnit.test( "negate or", function( assert ) {
 
     var sele = "MET or not 10-15";
 
@@ -237,7 +237,7 @@ QUnit.test( "selection negate or", function( assert ) {
 });
 
 
-QUnit.test( "selection negate parens", function( assert ) {
+QUnit.test( "negate parens", function( assert ) {
 
     var sele = "MET or not ( 10-15 )";
 
@@ -262,7 +262,7 @@ QUnit.test( "selection negate parens", function( assert ) {
 });
 
 
-QUnit.test( "selection negate parens 2", function( assert ) {
+QUnit.test( "negate parens 2", function( assert ) {
 
     var sele = "MET or not ( 10-15 and 15-20 )";
 
@@ -288,7 +288,7 @@ QUnit.test( "selection negate parens 2", function( assert ) {
 });
 
 
-QUnit.test( "selection negate parens 3", function( assert ) {
+QUnit.test( "negate parens 3", function( assert ) {
 
     var sele = "MET or not ( 10-15 and 15-20 ) or GLU";
 
@@ -315,7 +315,7 @@ QUnit.test( "selection negate parens 3", function( assert ) {
 });
 
 
-QUnit.test( "selection negate parens 4", function( assert ) {
+QUnit.test( "negate parens 4", function( assert ) {
 
     var sele = "MET or not ( 10-15 and 15-20 ) and GLU";
 
@@ -347,7 +347,7 @@ QUnit.test( "selection negate parens 4", function( assert ) {
 });
 
 
-QUnit.test( "selection negate parens 5", function( assert ) {
+QUnit.test( "negate parens 5", function( assert ) {
 
     var sele = "1-100 and not ( MET or GLU ) or 300-330";
 
@@ -379,7 +379,7 @@ QUnit.test( "selection negate parens 5", function( assert ) {
 });
 
 
-QUnit.test( "selection not backbone or .CA", function( assert ) {
+QUnit.test( "not backbone or .CA", function( assert ) {
 
     var sele = "not backbone or .CA";
 
@@ -404,7 +404,7 @@ QUnit.test( "selection not backbone or .CA", function( assert ) {
 });
 
 
-QUnit.test( "selection .CA or not backbone", function( assert ) {
+QUnit.test( ".CA or not backbone", function( assert ) {
 
     var sele = ".CA or not backbone";
 
@@ -429,7 +429,7 @@ QUnit.test( "selection .CA or not backbone", function( assert ) {
 });
 
 
-QUnit.test( "selection MET or GLY", function( assert ) {
+QUnit.test( "MET or GLY", function( assert ) {
 
     var sele = "MET or GLY";
 
@@ -448,7 +448,7 @@ QUnit.test( "selection MET or GLY", function( assert ) {
 });
 
 
-QUnit.test( "selection not ( MET ) or GLY", function( assert ) {
+QUnit.test( "not ( MET ) or GLY", function( assert ) {
 
     var sele = "not ( MET ) or GLY";
 
@@ -473,7 +473,7 @@ QUnit.test( "selection not ( MET ) or GLY", function( assert ) {
 });
 
 
-QUnit.test( "selection not ( MET or GLY )", function( assert ) {
+QUnit.test( "not ( MET or GLY )", function( assert ) {
 
     var sele = "not ( MET or GLY )";
 
@@ -493,7 +493,7 @@ QUnit.test( "selection not ( MET or GLY )", function( assert ) {
 });
 
 
-QUnit.test( "selection not ( MET )", function( assert ) {
+QUnit.test( "not ( MET )", function( assert ) {
 
     var sele = "not ( MET )";
 
@@ -510,3 +510,96 @@ QUnit.test( "selection not ( MET )", function( assert ) {
     assert.deepEqual( selection.selection, selectionObj, "Passed!" );
 
 });
+
+
+QUnit.module( "selection test" );
+
+
+QUnit.asyncTest( "backbone", function( assert ) {
+
+    var sele = "backbone";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "../../data/__example__/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atomCount, 184, "Passed!" );
+        assert.equal( atomSet.atoms[ 0 ].atomname, "N", "Passed!" );
+        
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( ".CA", function( assert ) {
+
+    var sele = ".CA";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "../../data/__example__/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atomCount, 46, "Passed!" );
+        assert.equal( atomSet.atoms[ 30 ].atomname, "CA", "Passed!" );
+        
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "not backbone", function( assert ) {
+
+    var sele = "not backbone";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "../../data/__example__/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atomCount, 143, "Passed!" );
+        assert.equal( atomSet.atoms[ 0 ].atomname, "CB", "Passed!" );
+        
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "not backbone or .CA", function( assert ) {
+
+    var sele = "not backbone or .CA";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "../../data/__example__/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atomCount, 189, "Passed!" );
+        assert.equal( atomSet.atoms[ 0 ].atomname, "CA", "Passed!" );
+        assert.equal( atomSet.atoms[ 1 ].atomname, "CB", "Passed!" );
+        
+        QUnit.start()
+
+    } );
+
+});
+
