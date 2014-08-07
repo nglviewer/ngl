@@ -340,6 +340,7 @@ NGL.MenubarHelpWidget = function( stage ){
 
     var menuConfig = [
         createOption( 'Documentation', onDocOptionClick ),
+        createDivider(),
         createOption( 'Unittests', onUnittestsOptionClick )
     ];
 

@@ -2978,11 +2978,11 @@ NGL.Selection.prototype = {
 
         }
 
-        // handle parens
-
         for( i = 0; i < chunks.length; ++i ){
 
             c = chunks[ i ];
+
+            // handle parens
 
             if( c === "(" ){
                 
@@ -3098,6 +3098,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "HYDROGEN" ){
+                sele.element = "H";
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "BACKBONE" ){
                 sele.keyword = "BACKBONE";
                 pushRule( sele );
@@ -3142,6 +3148,12 @@ NGL.Selection.prototype = {
             }
 
             // handle atom expressions
+
+            if( c.charAt( 0 ) === "#" ){
+                sele.element = c.substr( 1 ).toUpperCase();
+                pushRule( sele );
+                continue;
+            }
 
             if( ( c.length >= 2 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
@@ -3335,6 +3347,8 @@ NGL.Selection.prototype = {
                     if( s.resno!==a.resno ) return false;
                 }
             }
+
+            if( s.element!==undefined && s.element!==a.element ) return false;
 
             return true;
 

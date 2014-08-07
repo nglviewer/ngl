@@ -664,6 +664,24 @@ QUnit.test( "MET or not sidechain", function( assert ) {
 });
 
 
+QUnit.test( "element H", function( assert ) {
+
+    var sele = "#H";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "rules": [
+            { "element": "H" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
 QUnit.module( "selection test" );
 
 

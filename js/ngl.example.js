@@ -19,7 +19,7 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/md.gro", function( o ){
 
-                o.addRepresentation( "line", "*" );
+                o.addRepresentation( "line", "not hydrogen" );
                 o.addRepresentation( "tube", "protein" );
                 o.addRepresentation( "spacefill", "NA or CL" );
                 o.centerView();
@@ -40,7 +40,7 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/md.gro", function( o ){
 
-                o.addRepresentation( "line", "*" );
+                o.addRepresentation( "line", "not hydrogen and protein" );
                 o.addRepresentation( "tube", "protein" );
                 o.centerView();
 
@@ -228,7 +228,7 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
 
                 o.addRepresentation( "tube" );
-                o.addRepresentation( "line" );
+                o.addRepresentation( "line", "not hydrogen" );
                 // o.addRepresentation( "ball+stick" );
                 o.centerView();
 
@@ -323,7 +323,7 @@ NGL.Examples = {
 
             stage.loadFile( "../data/" + path + "md01_protein.gro", function( o ){
 
-                // o.addRepresentation( "line", "! H" );
+                o.addRepresentation( "line", "not hydrogen" );
                 o.addRepresentation( "tube", "protein" );
                 o.centerView();
 
@@ -339,7 +339,7 @@ NGL.Examples = {
 
             stage.loadFile( "../data/" + path + "md01.gro", function( o ){
 
-                // o.addRepresentation( "line", "! H" );
+                o.addRepresentation( "line", "not hydrogen" );
                 o.addRepresentation( "tube", "protein" );
                 o.centerView( "backbone" );
 
@@ -363,7 +363,7 @@ NGL.Examples = {
             stage.loadFile( "../data/" + path + "mdfit_50s_timo.gro", function( o ){
 
                 // o.addRepresentation( "spacefill" );
-                // o.addRepresentation( "line" );
+                o.addRepresentation( "line", "not hydrogen" );
                 // o.addRepresentation( "backbone" );
                 //o.addRepresentation( "ribbon" );
                 o.addRepresentation( "tube" );
