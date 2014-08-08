@@ -92,7 +92,7 @@ NGL.PickingControls = function( viewer, stage ){
 
         stage.signals.atomPicked.dispatch( pickedAtom );
 
-        viewer.render();
+        if( !NGL.GET( "debug" ) ) viewer.render();
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
