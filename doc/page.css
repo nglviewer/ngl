@@ -12,6 +12,7 @@ body {
 	font-size: 15px;
 	line-height: 18px;
 	overflow: auto;
+	max-width: 800px;
 }
 
 a {
