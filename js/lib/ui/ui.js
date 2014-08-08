@@ -1326,6 +1326,14 @@ UI.AdaptiveTextArea.prototype.setValue = function ( value ) {
 
 };
 
+UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
+
+    this.textarea.style.backgroundColor = value;
+
+    return this;
+
+};
+
 UI.AdaptiveTextArea.prototype.onKeyDown = function ( callback ) {
 
     this.textarea.addEventListener( 'keydown', callback.bind( this ), false );
