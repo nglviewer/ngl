@@ -472,22 +472,13 @@ NGL.StructureComponentWidget = function( component, stage ){
     // Selection for subset
 
     var seleRow = new UI.Panel();
-    var sele = new UI.AdaptiveTextArea()
-        .setWidth( '195px' ).onKeyDown( function( e ){
-            
-            if( e.keyCode === 13 ){
-
-                component.changeSelection( sele.getValue() );
-                e.preventDefault();
-
-            }
-
+    var sele = new NGL.SelectionWidget()
+        .setWidth( '195px' )
+        .setValue( component.sele )
+        .onEnter( function( value ){
+            repr.changeSelection( value );
         } );
 
-    if( component.sele ){
-        sele.setValue( component.sele );
-    }
- 
     seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
     seleRow.add( sele );
 
@@ -811,21 +802,12 @@ NGL.RepresentationWidget = function( repr, component ){
     // Add sele
 
     var seleRow = new UI.Panel();
-    var sele = new UI.AdaptiveTextArea()
-        .setWidth( '175px' ).onKeyDown( function( e ){
-            
-            if( e.keyCode === 13 ){
-
-                repr.changeSelection( sele.getValue() );
-                e.preventDefault();
-
-            }
-
+    var sele = new NGL.SelectionWidget()
+        .setWidth( '175px' )
+        .setValue( repr.selection.selectionStr )
+        .onEnter( function( value ){
+            repr.changeSelection( value );
         } );
-
-    if( repr.selection ){
-        sele.setValue( repr.selection.selectionStr );
-    }
  
     seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
     seleRow.add( sele );
@@ -835,6 +817,63 @@ NGL.RepresentationWidget = function( repr, component ){
     return container;
 
 };
+
+
+NGL.SelectionWidget = function(){
+
+    var textarea = new UI.AdaptiveTextArea();
+    var container = textarea;
+
+    var check = function( sele ){
+
+        var selection = new NGL.Selection( sele );
+        
+        return !selection.selection[ "error" ];
+
+    }
+
+    container.setValue = function( value ){
+
+        UI.AdaptiveTextArea.prototype.setValue.call(
+            textarea, value || ""
+        );
+
+        return container;
+
+    }
+
+    container.onEnter = function( callback ){
+
+        textarea.onKeyDown( function( e ){
+            
+            var value = textarea.getValue();
+
+            if( e.keyCode === 13 ){
+
+                callback( value );
+                e.preventDefault();
+
+                if( check( value ) ){
+                    textarea.setBackgroundColor( "white" );
+                }else{
+                    textarea.setBackgroundColor( "tomato" );
+                }
+
+            }else{
+
+                textarea.setBackgroundColor( "skyblue" );
+
+            }
+
+        } );
+
+        return container;
+
+    }
+
+    return container;
+
+}
 
 
 NGL.TrajectoryWidget = function( traj, component ){
@@ -1196,44 +1235,6 @@ NGL.VirtualListWidget = function( items ){
     this.dom.appendChild( this.list.container );
 
     return this;
-
-};
-
-
-// TODO
-
-NGL.TreeWidget = function(){
-
-};
-
-NGL.TreeWidget.prototype = {
-
-};
-
-
-NGL.GridWidget = function(){
-
-};
-
-NGL.GridWidget.prototype = {
-
-};
-
-
-NGL.StructureGridWidget = function(){
-
-};
-
-NGL.StructureGridWidget.prototype = {
-
-};
-
-
-NGL.ComponentGridWidget = function(){
-
-};
-
-NGL.ComponentGridWidget.prototype = {
 
 };
 

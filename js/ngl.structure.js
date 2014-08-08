@@ -2935,7 +2935,7 @@ NGL.Selection = function( selection ){
 
         }catch( e ){
 
-            console.error( e.stack );
+            // console.error( e.stack );
             this.selection = { "error": e.message };
 
         }
