@@ -854,7 +854,7 @@ NGL.SelectionWidget = function(){
                 e.preventDefault();
 
                 if( check( value ) ){
-                    textarea.setBackgroundColor( "white" );
+                    textarea.setBackgroundColor( "#ccc" );
                 }else{
                     textarea.setBackgroundColor( "tomato" );
                 }
