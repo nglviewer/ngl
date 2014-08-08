@@ -109,7 +109,7 @@ properties.forEach( function ( property ) {
 // events
 
 var events = [
-	'KeyUp', 'KeyDown', 'MouseOver', 'MouseOut', 'Click', 'Change', 'Input'
+    'KeyUp', 'KeyDown', 'MouseOver', 'MouseOut', 'Click', 'Change', 'Input'
 ];
 
 events.forEach( function ( event ) {
@@ -1273,6 +1273,66 @@ UI.Range.prototype.setStep = function( value ){
 };
 
 
+// AdaptiveTextArea
+
+UI.AdaptiveTextArea = function () {
+
+    // http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/
+
+    UI.Element.call( this );
+
+    var scope = this;
+
+    var container = document.createElement( 'div' );
+    container.className = 'AdaptiveTextAreaContainer';
+
+    var textarea = document.createElement( 'textarea' );
+    textarea.className = 'AdaptiveTextArea';
+
+    var size = document.createElement( 'div' );
+    size.className = 'AdaptiveTextAreaSize';
+
+    container.appendChild( textarea );
+    container.appendChild( size );
+
+    textarea.addEventListener( 'input', function ( event ) {
+
+        size.innerHTML = textarea.value + '\n';
+
+    }, false );
+
+    this.textarea = textarea;
+    this.dom = container;
+
+    return this;
+
+};
+
+UI.AdaptiveTextArea.prototype = Object.create( UI.Element.prototype );
+
+UI.AdaptiveTextArea.prototype.getValue = function () {
+
+    return this.textarea.value;
+
+};
+
+UI.AdaptiveTextArea.prototype.setValue = function ( value ) {
+
+    this.textarea.value = value;
+
+    return this;
+
+};
+
+UI.AdaptiveTextArea.prototype.onKeyDown = function ( callback ) {
+
+    this.textarea.addEventListener( 'keydown', callback.bind( this ), false );
+
+    return this;
+
+};
+
+
 // Helper
 
 UI.MenubarHelper = {
@@ -1297,17 +1357,17 @@ UI.MenubarHelper = {
     
     createOption: function ( name, callbackHandler, icon ) {
 
-    	var option = new UI.Panel();
+        var option = new UI.Panel();
         option.setClass( 'option' );
 
-    	if( icon ){
+        if( icon ){
 
-    		option.add( new UI.Icon( icon ).setWidth( "20px" ) );
-    		option.add( new UI.Text( name ) );
+            option.add( new UI.Icon( icon ).setWidth( "20px" ) );
+            option.add( new UI.Text( name ) );
 
-    	}else{
+        }else{
 
-        	option.setTextContent( name );
+            option.setTextContent( name );
 
         }
         
