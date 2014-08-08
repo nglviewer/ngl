@@ -863,3 +863,51 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
     } );
 
 });
+
+
+QUnit.asyncTest( "structure fiber no chains", function( assert ) {
+
+    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var i = 0;
+
+        structure.eachFiber( function( f ){
+
+            console.log( f );
+            i += 1;
+
+        } );
+        
+        assert.equal( i, 3, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
+
+    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var i = 0;
+
+        structure.eachFiber( function( f ){
+
+            console.log( f );
+            i += 1;
+
+        }, undefined, true );
+        
+        assert.equal( i, 3, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
