@@ -59,12 +59,7 @@ NGL.PickingControls = function( viewer, stage ){
         );
 
         var rgba = Array.apply( [], pixelBuffer );
-        /*console.log([ 
-            ( rgba[0]/255 ).toPrecision(2),
-            ( rgba[1]/255 ).toPrecision(2),
-            ( rgba[2]/255 ).toPrecision(2),
-            ( rgba[3]/255 ).toPrecision(2)
-        ]);*/
+        
         var id =
             ( pixelBuffer[0] << 16 ) | 
             ( pixelBuffer[1] << 8 ) | 
@@ -73,8 +68,6 @@ NGL.PickingControls = function( viewer, stage ){
         // TODO early exit, binary search
         var pickedAtom = undefined;
         compList.forEach( function( o ){
-
-            console.log( o, id );
 
             if( o instanceof NGL.StructureComponent ){
 
@@ -92,7 +85,25 @@ NGL.PickingControls = function( viewer, stage ){
 
         stage.signals.atomPicked.dispatch( pickedAtom );
 
-        if( !NGL.GET( "debug" ) ) viewer.render();
+        if( NGL.GET( "debug" ) ){
+            console.log(
+                "picked color",
+                [
+                    ( rgba[0]/255 ).toPrecision(2),
+                    ( rgba[1]/255 ).toPrecision(2),
+                    ( rgba[2]/255 ).toPrecision(2),
+                    ( rgba[3]/255 ).toPrecision(2)
+                ]
+            );
+            console.log( "picked id", id );
+            console.log(
+                "picked position",
+                mouse.position.x,
+                box.height - mouse.position.y 
+            );
+        }else{
+            viewer.render();
+        }
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
