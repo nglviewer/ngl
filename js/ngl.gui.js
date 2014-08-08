@@ -472,12 +472,13 @@ NGL.StructureComponentWidget = function( component, stage ){
     // Selection for subset
 
     var seleRow = new UI.Panel();
-    var sele = new UI.Input()
-        .setWidth( '190px' ).onKeyDown( function( e ){
+    var sele = new UI.AdaptiveTextArea()
+        .setWidth( '195px' ).onKeyDown( function( e ){
             
             if( e.keyCode === 13 ){
 
                 component.changeSelection( sele.getValue() );
+                e.preventDefault();
 
             }
 
@@ -810,12 +811,13 @@ NGL.RepresentationWidget = function( repr, component ){
     // Add sele
 
     var seleRow = new UI.Panel();
-    var sele = new UI.Input()
-        .setWidth( '170px' ).onKeyDown( function( e ){
+    var sele = new UI.AdaptiveTextArea()
+        .setWidth( '175px' ).onKeyDown( function( e ){
             
             if( e.keyCode === 13 ){
 
                 repr.changeSelection( sele.getValue() );
+                e.preventDefault();
 
             }
 

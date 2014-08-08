@@ -905,7 +905,7 @@ NGL.Trajectory.prototype = {
     makeIndices: function(){
 
         this.backboneIndices = this.structure.atomIndex(
-            new NGL.Selection( "backbone" )
+            new NGL.Selection( "backbone and not hydrogen" )
         );
 
         var i, j;
