@@ -1302,6 +1302,7 @@ UI.AdaptiveTextArea = function () {
     }, false );
 
     this.textarea = textarea;
+    this.size = size;
     this.dom = container;
 
     return this;
@@ -1319,6 +1320,7 @@ UI.AdaptiveTextArea.prototype.getValue = function () {
 UI.AdaptiveTextArea.prototype.setValue = function ( value ) {
 
     this.textarea.value = value;
+    this.size.innerHTML = value + '\n';
 
     return this;
 
