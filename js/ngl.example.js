@@ -315,14 +315,13 @@ NGL.Examples = {
 
         },
 
-        "test": function( stage ){
+        "spline": function( stage ){
 
             stage.loadFile( "../data/__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
-                var sele = "sidechainAttached";
-
-                o.addRepresentation( "tube" );
-                o.addRepresentation( "licorice", sele );
+                o.addRepresentation( "tube", "10-20" );
+                o.addRepresentation( "trace", "not 11-19" );
+                o.addRepresentation( "licorice", "sidechainAttached" );
                 o.centerView();
 
             } );

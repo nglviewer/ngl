@@ -1959,13 +1959,15 @@ NGL.Chain.prototype = {
 
         if( padded ){
 
-            var r = this.residues[ i ];
             var rPrev = this.residues[ i - 1 ];
+            var rStart = this.residues[ i ];
+            var rEnd = this.residues[ j - 1 ];
             var rNext = this.residues[ j ];
 
-            if( i === 0 || rPrev.getType() !== r.getType() ){
+            if( i === 0 || rPrev.getType() !== rStart.getType() ||
+                    !rPrev.connectedTo( rStart ) ){
                 
-                residues.unshift( this.residues[ i ] );
+                residues.unshift( rStart );
 
             }else{
 
@@ -1973,9 +1975,10 @@ NGL.Chain.prototype = {
 
             }
 
-            if( j === n || rNext.getType() !== r.getType() ){
+            if( j === n || rNext.getType() !== rStart.getType() ||
+                    !rEnd.connectedTo( rNext ) ){
                 
-                residues.push( this.residues[ j - 1 ] );
+                residues.push( rEnd );
 
             }else{
 
@@ -2355,6 +2358,50 @@ NGL.Residue.prototype = {
         }
 
         return atom;
+
+    },
+
+    getBackboneAtomStart: function(){
+
+        if( this.isProtein() ){
+
+            return this.getAtomByName( 'C' );
+
+        }else if( this.isNucleic() ){
+
+            return this.getAtomByName([ "O3'", "O3*" ]);
+
+        }else if( this.isCg() ){
+
+            return this.getAtomByName( 'CA' );
+
+        }
+
+    },
+
+    getBackboneAtomEnd: function(){
+
+        if( this.isProtein() ){
+
+            return this.getAtomByName( 'N' );
+
+        }else if( this.isNucleic() ){
+
+            return this.getAtomByName( 'P' );
+
+        }else if( this.isCg() ){
+
+            return this.getAtomByName( 'CA' );
+
+        }
+
+    },
+
+    connectedTo: function( rNext ){
+
+        return this.getBackboneAtomStart().connectedTo(
+            rNext.getBackboneAtomEnd()
+        );
 
     }
 
