@@ -53,8 +53,13 @@ NGL.PickingControls = function( viewer, stage ){
 
         var box = viewer.renderer.domElement.getBoundingClientRect();
 
+        var offsetX = e.clientX - box.left;
+        var offsetY = e.clientY - box.top;
+
         gl.readPixels( 
-            mouse.position.x, box.height - mouse.position.y, 1, 1, 
+            offsetX * window.devicePixelRatio,
+            (box.height - offsetY) * window.devicePixelRatio, 
+            1, 1, 
             gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
         );
 
@@ -98,9 +103,9 @@ NGL.PickingControls = function( viewer, stage ){
             console.log( "picked id", id );
             console.log(
                 "picked position",
-                mouse.position.x,
-                box.height - mouse.position.y 
+                offsetX, box.height - offsetY
             );
+            console.log( "devicePixelRatio", window.devicePixelRatio )
         }else{
             viewer.render();
         }
