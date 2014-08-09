@@ -825,6 +825,12 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     };
 
+    this.params = {
+        centerPbc: false,
+        removePbc: true,
+        superpose: true
+    };
+
     this.xtcPath = xtcPath;
     this.structure = structure;
     this.atomCount = structure.atomCount;
@@ -948,6 +954,26 @@ NGL.Trajectory.prototype = {
 
     },
 
+    resetCache: function(){
+
+        this.frameCache = [];
+        this.frameCacheSize = 0;
+        this.frameLoader.cache.clear();
+        this.setFrame( this.currentFrame );
+
+    },
+
+    setSuperpose: function( value ){
+
+        if( value !== this.params.superpose ){
+
+            this.params.superpose = value;
+            this.resetCache();
+
+        }
+
+    },
+
     setFrame: function( i, callback ){
 
         if( this.frameCache[ i ] ){
@@ -981,15 +1007,13 @@ NGL.Trajectory.prototype = {
 
             if( !arrayBuffer ){
                 console.error( "empty arrayBuffer for '" + url + "'" );
+                return;
             }
 
             var box = new Float32Array( arrayBuffer, 0, 9 );
             var coords = new Float32Array( arrayBuffer, 9 * 4 );
 
-            //console.log( box )
-            //console.log( coords )
-
-            if( scope.backboneIndices.length > 0 ){
+            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
                 var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
                 var mean = scope.getCircularMean(
                     scope.backboneIndices, coords, box2
@@ -997,9 +1021,11 @@ NGL.Trajectory.prototype = {
                 scope.centerPbc( coords, mean, box2 );
             }
 
-            scope.removePbc( coords, box );
+            if( scope.params.removePbc ){
+                scope.removePbc( coords, box );
+            }
 
-            if( scope.backboneIndices.length > 0 ){
+            if( scope.backboneIndices.length > 0 && scope.params.superpose ){
                 scope.superpose( coords );
             }
 
@@ -1334,12 +1360,7 @@ NGL.Structure = function( name ){
 
     this.name = name;
 
-    this.atomCount = 0;
-    this.residueCount = 0;
-    this.chainCount = 0;
-    this.modelCount = 0;
-
-    this.models = [];
+    this.reset();
 
 };
 
@@ -1347,9 +1368,19 @@ NGL.Structure.prototype = {
 
     constructor: NGL.Structure,
 
-    parse: function( str ){
+    reset: function(){
 
+        this.atomCount = 0;
+        this.residueCount = 0;
+        this.chainCount = 0;
+        this.modelCount = 0;
+
+        this.models = [];
         this.bondSet = new NGL.BondSet();
+
+    },
+
+    parse: function( str ){
 
         this._parse( str );
 
@@ -1361,7 +1392,7 @@ NGL.Structure.prototype = {
 
         this.center = this.atomCenter();
 
-        console.log( "Structure", this );
+        // console.log( "Structure", this );
 
     },
 
@@ -1478,7 +1509,7 @@ NGL.Structure.prototype = {
 
     autoBond: function(){
 
-        console.time( "NGL.Structure.autoBond" );
+        // console.time( "NGL.Structure.autoBond" );
 
         var bondSet = this.bondSet;
 
@@ -1535,7 +1566,7 @@ NGL.Structure.prototype = {
 
         } );
 
-        console.timeEnd( "NGL.Structure.autoBond" );
+        // console.timeEnd( "NGL.Structure.autoBond" );
 
     },
 
@@ -2612,7 +2643,7 @@ NGL.PdbStructure.prototype = Object.create( NGL.Structure.prototype );
  */
 NGL.PdbStructure.prototype._parse = function( str ){
 
-    console.time( "NGL.PdbStructure.parse" );
+    // console.time( "NGL.PdbStructure.parse" );
 
     var bondSet = this.bondSet;
 
@@ -2819,7 +2850,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
         this._doAutoSS = true;
     }
 
-    console.timeEnd( "NGL.PdbStructure.parse" );
+    // console.timeEnd( "NGL.PdbStructure.parse" );
 
 };
 
