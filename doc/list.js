@@ -8,8 +8,8 @@ var list = {
             [ "Interface", "manual/usage/Interface" ]
         ],
         "Deployment": [
-            [ "Installation", "manual/deployment/Installation" ],
             [ "Browser", "manual/deployment/Browser" ],
+            [ "Installation", "manual/deployment/Installation" ],
             [ "Webserver", "manual/deployment/Webserver" ],
             [ "Filesystem", "manual/deployment/Filesystem" ]
         ],
