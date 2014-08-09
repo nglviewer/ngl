@@ -19,9 +19,9 @@ NGL.Examples = {
 
             stage.loadFile( "../data/__example__/md.gro", function( o ){
 
-                o.addRepresentation( "line", "not hydrogen" );
+                o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
                 o.addRepresentation( "tube", "protein" );
-                o.addRepresentation( "spacefill", "NA or CL" );
+                // o.addRepresentation( "spacefill", "NA or CL" );
                 o.centerView();
 
                 o.addTrajectory( "__example__/md.xtc" );
@@ -228,7 +228,7 @@ NGL.Examples = {
             stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
 
                 o.addRepresentation( "tube" );
-                o.addRepresentation( "line", "not hydrogen" );
+                o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
                 // o.addRepresentation( "ball+stick" );
                 o.centerView();
 
