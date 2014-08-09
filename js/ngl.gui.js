@@ -333,6 +333,10 @@ NGL.MenubarHelpWidget = function( stage ){
         window.open( '../test/unit/unittests.html', '_blank' );
     }
 
+    function onBenchmarksOptionClick () {
+        window.open( '../test/bench/benchmarks.html', '_blank' );
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -341,7 +345,8 @@ NGL.MenubarHelpWidget = function( stage ){
     var menuConfig = [
         createOption( 'Documentation', onDocOptionClick ),
         createDivider(),
-        createOption( 'Unittests', onUnittestsOptionClick )
+        createOption( 'Unittests', onUnittestsOptionClick ),
+        createOption( 'Benchmarks', onBenchmarksOptionClick )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
@@ -897,8 +902,8 @@ NGL.TrajectoryWidget = function( traj, component ){
     signals.gotNumframes.add( function( value ){
 
         numframes.clear().add( new UI.Text( "#" + value ) );
-        frame.setRange( 0, value - 1 );
-        frame2.setRange( 0, value - 1 );
+        frame.setRange( -1, value - 1 );
+        frame2.setRange( -1, value - 1 );
 
         step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
         
@@ -1016,8 +1021,18 @@ NGL.TrajectoryWidget = function( traj, component ){
     frameRow2.add( animButton );
     frameRow2.add( frame2 );
 
+    var setSuperpose = new UI.Checkbox( traj.params.superpose )
+        .setMarginLeft( "10px" )
+        .onChange( function(){
+            traj.setSuperpose( setSuperpose.getValue() );
+        } );
+    var frameRow3 = new UI.Panel()
+        .add( new UI.Text( 'Superpose' ).setMarginLeft( "20px" ) )
+        .add( setSuperpose );
+
     container.add( frameRow );
     container.add( frameRow2 );
+    container.add( frameRow3 );
 
     return container;
 

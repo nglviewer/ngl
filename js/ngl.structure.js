@@ -976,7 +976,9 @@ NGL.Trajectory.prototype = {
 
     setFrame: function( i, callback ){
 
-        if( this.frameCache[ i ] ){
+        i = parseInt( i );
+
+        if( i === -1 || this.frameCache[ i ] ){
 
             this.updateStructure( i, callback );
 
@@ -1042,7 +1044,16 @@ NGL.Trajectory.prototype = {
 
     updateStructure: function( i, callback ){
 
-        this.structure.updatePosition( this.frameCache[ i ] );
+        if( i === -1 ){
+
+            this.structure.updatePosition( this.initialStructure );
+
+        }else{
+
+            this.structure.updatePosition( this.frameCache[ i ] );
+
+        }
+
         this.structure.trajectory = {
             name: this.xtcPath,
             frame: i
@@ -2654,7 +2665,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
     this.sheet = [];
     this.helix = [];
 
-    var lines = str.split("\n");
+    var lines = str.split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -2678,10 +2689,10 @@ NGL.PdbStructure.prototype._parse = function( str ){
         line = lines[i];
         recordName = line.substr( 0, 6 );
 
-        if( recordName == 'ATOM  ' || recordName == 'HETATM' ){
+        if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
             altloc = line[ 16 ];
-            if( altloc != ' ' && altloc != 'A' ) continue; // FIXME: ad hoc
+            if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
 
             serial = parseInt( line.substr( 6, 5 ) );
             atomname = line.substr( 12, 4 ).trim();
@@ -2739,7 +2750,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
             a.y = parseFloat( line.substr( 38, 8 ) );
             a.z = parseFloat( line.substr( 46, 8 ) );
             a.element = element;
-            a.hetero = ( line[ 0 ]=='H' ) ? true : false;
+            a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
             a.chainname = chainname;
             a.resno = resno;
             a.serial = serial;
@@ -2816,7 +2827,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
     var atom, atom2
     var nAtoms = atoms.length;
 
-    // Assign secondary structures
+    // assign secondary structures
     for( i = 0; i < nAtoms; i++ ){
 
         atom = atoms[ i ];
@@ -2846,7 +2857,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
     }
 
-    if( !this.sheet.length && !this.helix.length ){
+    if( this.sheet.length === 0 && this.helix.length === 0 ){
         this._doAutoSS = true;
     }
 
@@ -2873,7 +2884,7 @@ NGL.GroStructure.prototype._parse = function( str ){
 
     console.time( "NGL.GroStructure.parse" );
 
-    var lines = str.trim().split("\n");
+    var lines = str.trim().split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -2884,11 +2895,11 @@ NGL.GroStructure.prototype._parse = function( str ){
 
     this.title = lines[ 0 ].trim();
     this.size = parseInt( lines[ 1 ] );
-    var b = lines[ lines.length-1 ].trim().split(/\s+/);
+    var b = lines[ lines.length-1 ].trim().split( /\s+/ );
     this.box = [
-        parseFloat(b[0]) * 10,
-        parseFloat(b[1]) * 10,
-        parseFloat(b[2]) * 10
+        parseFloat( b[0] ) * 10,
+        parseFloat( b[1] ) * 10,
+        parseFloat( b[2] ) * 10
     ];
 
     var m = this.addModel();
