@@ -976,7 +976,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     // animation
 
     var i = 0;
-    var animSpeed = 100;
+    var animSpeed = 50;
     var animStopFlag = true;
     var animFunc = function(){
         

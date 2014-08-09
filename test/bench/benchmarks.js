@@ -4,13 +4,35 @@ var suite = new Benchmark.Suite( "bench",
 
     {
         onCycle: function( event, bench ){
+
             console.log(
                 String( event.target ),
                 ( event.target.stats.mean * 1000 ).toFixed(2) + " ms"
             );
+
+            document.body.appendChild( document.createElement( 'br' ) );
+
+            var titleDom = document.createElement( 'div' );
+            titleDom.style.fontWeight = 'bold';
+            titleDom.textContent = event.target.name;
+            document.body.appendChild( titleDom );
+
+            var msDom = document.createElement( 'div' );
+            document.body.appendChild( msDom );
+            msDom.textContent = ( event.target.stats.mean * 1000 ).toFixed(2) + " ms";
+
         },
         onComplete: function(){
+
             console.log( "Done" );
+
+            document.body.appendChild( document.createElement( 'br' ) );
+
+            var done = document.createElement( 'div' );
+            done.style.fontWeight = 'bold';
+            done.textContent = "Done";
+            document.body.appendChild( done );
+
         },
         onError: function( e ){
             console.error( e );
@@ -81,68 +103,68 @@ suite.add( '1crn autoBond',
 );
 
 
-suite.add( '3dqb parse',
+// suite.add( '3dqb parse',
     
-    {
-        fn: function(){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "3dqb" ] );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         fn: function(){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "3dqb" ] );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
-suite.add( '3dqb autoBond',
+// suite.add( '3dqb autoBond',
 
-    {
-        fn: function(){
+//     {
+//         fn: function(){
     
-            pdbStructure.bondSet = new NGL.BondSet();
-            pdbStructure.autoBond();
+//             pdbStructure.bondSet = new NGL.BondSet();
+//             pdbStructure.autoBond();
 
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-            pdbStructure.parse( data[ "3dqb" ] );
-        }
-    }
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//             pdbStructure.parse( data[ "3dqb" ] );
+//         }
+//     }
 
-);
+// );
 
 
-suite.add( '3l5q parse',
+// suite.add( '3l5q parse',
     
-    {
-        fn: function(){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "3l5q" ] );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         fn: function(){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "3l5q" ] );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
-suite.add( '3l5q autoBond',
+// suite.add( '3l5q autoBond',
 
-    {
-        fn: function(){
+//     {
+//         fn: function(){
     
-            pdbStructure.bondSet = new NGL.BondSet();
-            pdbStructure.autoBond();
+//             pdbStructure.bondSet = new NGL.BondSet();
+//             pdbStructure.autoBond();
 
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-            pdbStructure.parse( data[ "3l5q" ] );
-        }
-    }
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//             pdbStructure.parse( data[ "3l5q" ] );
+//         }
+//     }
 
-);
+// );
 
 
 
