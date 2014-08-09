@@ -3934,7 +3934,7 @@ NGL.superpose = function( s1, s2, align, sele ){
         ali.calc();
         ali.trace();
 
-        console.log( ali.score );
+        // console.log( "superpose alignment score", ali.score );
 
         // console.log( ali.ali1 );
         // console.log( ali.ali2 );
