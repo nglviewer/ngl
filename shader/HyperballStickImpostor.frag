@@ -4,8 +4,6 @@
 // varying vec3 mapping;
 
 varying mat4 matrix_near;
-varying vec4 color_atom1;
-varying vec4 color_atom2;
 
 varying vec4 prime1;
 varying vec4 prime2;
@@ -13,6 +11,14 @@ varying vec4 prime2;
 uniform float shrink;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
+
+#ifdef PICKING
+    varying vec3 vPickingColor;
+    varying vec3 vPickingColor2;
+#else
+    varying vec3 vColor;
+    varying vec3 vColor2;
+#endif
 
 #include light_params
 
@@ -156,21 +162,9 @@ void main()
     // Transform normal to model space to view-space
     vec4 M1 = vec4(M,1.0);
     vec4 M2 =  mat*M1;
-    vec3 normal = normalize((modelViewMatrixInverseTranspose*M2).xyz);
+    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );
 
 
-    // Mix the color bond in function of the two atom colors
-    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /
-                                distance(prime2.xyz,prime1.xyz);
-    // lerp function not in GLSL. Find something else ...
-    vec3 diffusecolor = mix( color_atom2.xyz, color_atom1.xyz, distance_ratio );
-    if( distance_ratio>0.5 ){
-        diffusecolor = color_atom1.xyz;
-    }else{
-        diffusecolor = color_atom2.xyz;
-    }
-
-    
     // Give color parameters to the Graphic card
     //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
     //gl_FragColor.a = 1.0;
@@ -180,8 +174,30 @@ void main()
     
     #include light
 
-    gl_FragColor = vec4( diffusecolor, 1.0 );
-    gl_FragColor.xyz *= vLightFront;
+    // Mix the color bond in function of the two atom colors
+    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /
+                                distance(prime2.xyz,prime1.xyz);
+
+    #ifdef PICKING
+        // lerp function not in GLSL. Find something else ...
+        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );
+        if( distance_ratio>0.5 ){
+            diffusecolor = vPickingColor;
+        }else{
+            diffusecolor = vPickingColor2;
+        }
+        gl_FragColor = vec4( diffusecolor, 1.0 );
+    #else
+        // lerp function not in GLSL. Find something else ...
+        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );
+        if( distance_ratio>0.5 ){
+            diffusecolor = vColor;
+        }else{
+            diffusecolor = vColor2;
+        }
+        gl_FragColor = vec4( diffusecolor, 1.0 );
+        gl_FragColor.xyz *= vLightFront;
+    #endif
 
     #include fog
 

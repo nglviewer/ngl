@@ -2,17 +2,25 @@
 attribute vec3 mapping;
 attribute float inputRadius1;
 attribute float inputRadius2;
-attribute vec3 inputColor1;
-attribute vec3 inputColor2;
 attribute vec3 inputPosition1;
 attribute vec3 inputPosition2;
 
 varying mat4 matrix_near;
-varying vec4 color_atom1;
-varying vec4 color_atom2;
 
 varying vec4 prime1;
 varying vec4 prime2;
+
+#ifdef PICKING
+    attribute vec3 pickingColor;
+    attribute vec3 pickingColor2;
+    varying vec3 vPickingColor;
+    varying vec3 vPickingColor2;
+#else
+    attribute vec3 color;
+    attribute vec3 color2;
+    varying vec3 vColor;
+    varying vec3 vColor2;
+#endif
 
 uniform float shrink;
 uniform mat4 modelViewProjectionMatrix;
@@ -27,8 +35,13 @@ void main()
     vec3 position_atom2;
     vec4 vertex_position;
 
-    color_atom1 = vec4( inputColor1, 1.0 );
-    color_atom2 = vec4( inputColor2, 1.0 );
+    #ifdef PICKING
+        vPickingColor = pickingColor;
+        vPickingColor2 = pickingColor2;
+    #else
+        vColor = color;
+        vColor2 = color2;
+    #endif
 
     float radius1 = inputRadius1;
     float radius2 = inputRadius2;
