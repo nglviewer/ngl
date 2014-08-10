@@ -922,7 +922,10 @@ NGL.TrajectoryWidget = function( traj, component ){
     var numframes = new UI.Panel()
         .setMarginLeft( "10px" )
         .setDisplay( "inline" )
-        .add( new UI.Icon( "spinner" ).addClass( "spin" ).setWidth( "90px" ) );
+        .add( new UI.Icon( "spinner" )
+                .addClass( "spin" )
+                .setMarginRight( "78px" )
+        );
 
     signals.gotNumframes.add( function( value ){
 
@@ -930,11 +933,10 @@ NGL.TrajectoryWidget = function( traj, component ){
         frame.setRange( -1, value - 1 );
         frameRange.setRange( -1, value - 1 );
 
+        // 1000 = n / step 
         step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
         
     } );
-
-    //1000 = n / step 
 
     signals.frameChanged.add( function( value ){
 
@@ -964,8 +966,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         } );
 
     var step = new UI.Integer( 1 )
-        .setMarginLeft( "5px" )
-        .setWidth( "40px" )
+        .setWidth( "30px" )
         .setRange( 1, 10000 );
 
     var frameRow = new UI.Panel();
@@ -1015,8 +1016,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     }
 
     var animTimeout = new UI.Integer( 50 )
-        .setMarginLeft( "5px" )
-        .setWidth( "70px" )
+        .setWidth( "30px" )
         .setRange( 10, 1000 );
 
     var animButton = new UI.Icon( "play" )
@@ -1084,7 +1084,11 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addEntry( "Remove PBC", setRemovePbc )
         .addEntry( "Superpose", setSuperpose )
         .addEntry( "Step", step )
-        .addEntry( "Timeout", animTimeout );
+        .addEntry( "Timeout", animTimeout )
+        .addEntry(
+            "File", new UI.Text( traj.xtcPath.replace( "/", "/\u200B" ) )
+                        .setMaxWidth( "100px" )
+        );
 
     container
         .addStatic( menu );
