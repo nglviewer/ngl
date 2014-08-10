@@ -2067,7 +2067,7 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 NGL.CylinderImpostorBuffer.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
 
 
-NGL.HyperballStickImpostorBuffer = function( position1, position2, color1, color2, radius1, radius2, shrink ){
+NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2 ){
 
     this.size = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
@@ -2083,8 +2083,8 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color1, color
     });
     
     this.addAttributes({
-        "inputColor1": { type: "c", value: null },
-        "inputColor2": { type: "c", value: null },
+        "color": { type: "c", value: null },
+        "color2": { type: "c", value: null },
         "inputRadius1": { type: "f", value: null },
         "inputRadius2": { type: "f", value: null },
         "inputPosition1": { type: "v3", value: null },
@@ -2092,8 +2092,8 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color1, color
     });
 
     this.setAttributes({
-        "inputColor1": color1,
-        "inputColor2": color2,
+        "color": color,
+        "color2": color2,
         "inputRadius1": radius1,
         "inputRadius2": radius2,
         "inputPosition1": position1,
@@ -2103,6 +2103,42 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color1, color
     });
 
     this.finalize();
+
+    if( pickingColor ){
+
+        this.addAttributes({
+            "pickingColor": { type: "c", value: null },
+            "pickingColor2": { type: "c", value: null },
+        });
+
+        this.setAttributes({
+            "pickingColor": pickingColor,
+            "pickingColor2": pickingColor2,
+        });
+
+        this.pickingMaterial = new THREE.ShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: false,
+            // opacity: 1.0,
+            // blending: THREE.AdditiveBlending,
+            // blending: THREE.MultiplyBlending,
+            // blending: THREE.CustomBlending,
+            // blendSrc: THREE.OneFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
+            depthWrite: true,
+            lights: true,
+            fog: false
+        });
+
+        this.pickingMaterial.defines[ "PICKING" ] = 1;
+
+        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+    }
 
 };
 
@@ -3446,19 +3482,21 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color1, color2, radius1, radius2, shrink ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2 ){
 
     if( NGL.disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
-            from, to, color1, color2,
-            NGL.Utils.calculateMinArray( radius1, radius2 )
+            from, to, color, color2,
+            NGL.Utils.calculateMinArray( radius1, radius2 ),
+            0, false, pickingColor, pickingColor2
         );
 
     }else{
 
         return new NGL.HyperballStickImpostorBuffer(
-            from, to, color1, color2, radius1, radius2, shrink
+            from, to, color, color2, radius1, radius2, shrink,
+            pickingColor, pickingColor2
         );
 
     }
