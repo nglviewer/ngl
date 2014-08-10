@@ -317,7 +317,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    atomColor: function( selection, picking ){
+    atomColor: function( selection, type ){
 
         // TODO cache
         var i, c, color;
@@ -333,9 +333,13 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            if( picking ){
+            if( type === "picking" ){
                 
                 c = a.globalindex + 1;
+
+            }else if( type ){
+
+                c = type;
 
             }else{
 
@@ -605,7 +609,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    bondColor: function( selection, fromTo, picking ){
+    bondColor: function( selection, fromTo, type ){
 
         var i = 0;
         var color = [];
@@ -617,9 +621,13 @@ NGL.AtomSet.prototype = {
 
             if( fromTo ){
 
-                if( picking ){
+                if( type === "picking" ){
                 
                     c = b.atom1.globalindex + 1;
+
+                }else if( type ){
+
+                    c = type;
 
                 }else{
 
@@ -630,9 +638,13 @@ NGL.AtomSet.prototype = {
 
             }else{
 
-                if( picking ){
+                if( type === "picking" ){
                 
                     c = b.atom2.globalindex + 1;
+
+                }else if( type ){
+
+                    c = type;
 
                 }else{
 

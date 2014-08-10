@@ -1031,7 +1031,7 @@ NGL.SpacefillRepresentation.prototype.create = function(){
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
         this.atomSet.atomRadius( null, null, this.scale ),
-        this.atomSet.atomColor( null, true )
+        this.atomSet.atomColor( null, "picking" )
     );
 
     this.bufferList = [ this.sphereBuffer ];
@@ -1070,7 +1070,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
         this.atomSet.atomRadius( null, null, this.sphereScale ),
-        this.atomSet.atomColor( null, true )
+        this.atomSet.atomColor( null, "picking" )
     );
 
     this.__center = new Float32Array( this.atomSet.bondCount * 3 );
@@ -1083,8 +1083,8 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
         this.atomSet.bondRadius( null, null, this.cylinderSize, null ),
         null,
         null,
-        this.atomSet.bondColor( null, 0, true ),
-        this.atomSet.bondColor( null, 1, true )
+        this.atomSet.bondColor( null, 0, "picking" ),
+        this.atomSet.bondColor( null, 1, "picking" )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -1128,8 +1128,9 @@ NGL.LicoriceRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
+        // this.atomSet.atomColor( null, 0x00FF00 ),
         this.atomSet.atomRadius( null, this.size, null ),
-        this.atomSet.atomColor( null, true )
+        this.atomSet.atomColor( null, "picking" )
     );
 
     this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -1137,11 +1138,13 @@ NGL.LicoriceRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0 ),
         this.atomSet.bondColor( null, 1 ),
+        // this.atomSet.bondColor( null, 0, 0x00FF00 ),
+        // this.atomSet.bondColor( null, 1, 0x00FF00 ),
         this.atomSet.bondRadius( null, null, this.size, null ),
         null,
         null,
-        this.atomSet.bondColor( null, 0, true ),
-        this.atomSet.bondColor( null, 1, true )
+        this.atomSet.bondColor( null, 0, "picking" ),
+        this.atomSet.bondColor( null, 1, "picking" )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -1212,7 +1215,7 @@ NGL.HyperballRepresentation.prototype.create = function(){
         this.atomSet.atomPosition(),
         this.atomSet.atomColor(),
         this.atomSet.atomRadius( null, null, this.scale ),
-        this.atomSet.atomColor( null, true )
+        this.atomSet.atomColor( null, "picking" )
     );
 
     this.cylinderBuffer = new NGL.HyperballStickBuffer(
@@ -1222,7 +1225,9 @@ NGL.HyperballRepresentation.prototype.create = function(){
         this.atomSet.bondColor( null, 1 ),
         this.atomSet.bondRadius( null, 0, this.cylinderSize, this.scale ),
         this.atomSet.bondRadius( null, 1, this.cylinderSize, this.scale ),
-        this.shrink
+        this.shrink,
+        this.atomSet.bondColor( null, 0, "picking" ),
+        this.atomSet.bondColor( null, 1, "picking" )
     );
 
     this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -1307,7 +1312,7 @@ NGL.BackboneRepresentation.prototype.create = function(){
             backboneAtomSet.atomPosition(),
             backboneAtomSet.atomColor(),
             backboneAtomSet.atomRadius( null, size, null ),
-            backboneAtomSet.atomColor( null, true )
+            backboneAtomSet.atomColor( null, "picking" )
         );
 
         cylinderBuffer = new NGL.CylinderBuffer(
@@ -1318,8 +1323,8 @@ NGL.BackboneRepresentation.prototype.create = function(){
             backboneBondSet.bondRadius( null, 0, size, null ),
             null,
             null,
-            backboneBondSet.bondColor( null, 0, true ),
-            backboneBondSet.bondColor( null, 1, true )
+            backboneBondSet.bondColor( null, 0, "picking" ),
+            backboneBondSet.bondColor( null, 1, "picking" )
         );
 
         bufferList.push( sphereBuffer )
