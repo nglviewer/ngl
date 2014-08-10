@@ -822,6 +822,7 @@ NGL.Trajectory = function( xtcPath, structure ){
 
         gotNumframes: new SIGNALS.Signal(),
         frameChanged: new SIGNALS.Signal(),
+        selectionChanged: new SIGNALS.Signal(),
 
     };
 
@@ -881,6 +882,7 @@ NGL.Trajectory = function( xtcPath, structure ){
     }
 
     this.saveInitialStructure();
+    this.changeSelection( "backbone and not hydrogen" );
     this.makeIndices();
 
 };
@@ -908,14 +910,22 @@ NGL.Trajectory.prototype = {
 
     },
 
+    changeSelection: function( sele ){
+
+        this.selection = new NGL.Selection( sele );
+        this.makeIndices();
+        this.resetCache();
+
+        this.signals.selectionChanged.dispatch();
+
+    },
+
     makeIndices: function(){
 
-        this.backboneIndices = this.structure.atomIndex(
-            new NGL.Selection( "backbone and not hydrogen" )
-        );
+        this.indices = this.structure.atomIndex( this.selection );
 
         var i, j;
-        var n = this.backboneIndices.length * 3;
+        var n = this.indices.length * 3;
 
         this.coords1 = new Float32Array( n );
         this.coords2 = new Float32Array( n );
@@ -925,7 +935,7 @@ NGL.Trajectory.prototype = {
 
         for( i = 0; i < n; i += 3 ){
 
-            j = this.backboneIndices[ i / 3 ] * 3;
+            j = this.indices[ i / 3 ] * 3;
 
             coords2[ i + 0 ] = y[ j + 0 ];
             coords2[ i + 1 ] = y[ j + 1 ];
@@ -1015,10 +1025,10 @@ NGL.Trajectory.prototype = {
             var box = new Float32Array( arrayBuffer, 0, 9 );
             var coords = new Float32Array( arrayBuffer, 9 * 4 );
 
-            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
+            if( scope.indices.length > 0 && scope.params.centerPbc ){
                 var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
                 var mean = scope.getCircularMean(
-                    scope.backboneIndices, coords, box2
+                    scope.indices, coords, box2
                 );
                 scope.centerPbc( coords, mean, box2 );
             }
@@ -1027,7 +1037,7 @@ NGL.Trajectory.prototype = {
                 scope.removePbc( coords, box );
             }
 
-            if( scope.backboneIndices.length > 0 && scope.params.superpose ){
+            if( scope.indices.length > 0 && scope.params.superpose ){
                 scope.superpose( coords );
             }
 
@@ -1161,14 +1171,14 @@ NGL.Trajectory.prototype = {
         // console.time( "NGL.Trajectory.superpose" );
 
         var i, j;
-        var n = this.backboneIndices.length * 3;
+        var n = this.indices.length * 3;
 
         var coords1 = this.coords1;
         var coords2 = this.coords2;
 
         for( i = 0; i < n; i += 3 ){
 
-            j = this.backboneIndices[ i / 3 ] * 3;
+            j = this.indices[ i / 3 ] * 3;
 
             coords1[ i + 0 ] = x[ j + 0 ];
             coords1[ i + 1 ] = x[ j + 1 ];

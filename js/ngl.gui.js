@@ -1021,6 +1021,21 @@ NGL.TrajectoryWidget = function( traj, component ){
     frameRow2.add( animButton );
     frameRow2.add( frame2 );
 
+    // Add sele
+
+    var seleRow = new UI.Panel();
+    var sele = new NGL.SelectionWidget()
+        .setWidth( '175px' )
+        .setValue( traj.selection.selectionStr )
+        .onEnter( function( value ){
+            traj.changeSelection( value );
+        } );
+
+    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
+    seleRow.add( sele );
+
+    // TODO menu
+
     var setSuperpose = new UI.Checkbox( traj.params.superpose )
         .setMarginLeft( "10px" )
         .onChange( function(){
@@ -1032,6 +1047,7 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     container.add( frameRow );
     container.add( frameRow2 );
+    container.add( seleRow );
     container.add( frameRow3 );
 
     return container;
