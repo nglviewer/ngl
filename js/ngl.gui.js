@@ -922,13 +922,13 @@ NGL.TrajectoryWidget = function( traj, component ){
     var numframes = new UI.Panel()
         .setMarginLeft( "10px" )
         .setDisplay( "inline" )
-        .add( new UI.Icon( "spinner" ).addClass( "spin" ) );
+        .add( new UI.Icon( "spinner" ).addClass( "spin" ).setWidth( "90px" ) );
 
     signals.gotNumframes.add( function( value ){
 
-        numframes.clear().add( new UI.Text( "#" + value ) );
+        numframes.clear().add( frame.setWidth( "80px" ) );
         frame.setRange( -1, value - 1 );
-        frame2.setRange( -1, value - 1 );
+        frameRange.setRange( -1, value - 1 );
 
         step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
         
@@ -939,11 +939,9 @@ NGL.TrajectoryWidget = function( traj, component ){
     signals.frameChanged.add( function( value ){
 
         frame.setValue( value );
-        frame2.setValue( value );
+        frameRange.setValue( value );
 
-        numframes.clear().add( new UI.Text(
-            "#" + traj.numframes + " (" + traj.frameCacheSize + ")"
-        ) );
+        numframes.clear().add( frame.setWidth( "80px" ) );
 
         inProgress = false;
         
@@ -954,8 +952,6 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     // frames
 
-    var frameRow = new UI.Panel();
-
     var frame = new UI.Integer( -1 )
         .setMarginLeft( "5px" )
         .setWidth( "70px" )
@@ -963,6 +959,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         .onChange( function( e ){
 
             traj.setFrame( frame.getValue() );
+            menu.setDisplay( "none" );
 
         } );
 
@@ -971,18 +968,18 @@ NGL.TrajectoryWidget = function( traj, component ){
         .setWidth( "40px" )
         .setRange( 1, 10000 );
 
-    var frameRow2 = new UI.Panel();
+    var frameRow = new UI.Panel();
 
     var inProgress = false;
 
-    var frame2 = new UI.Range( -1, -1, -1, 1 )
+    var frameRange = new UI.Range( -1, -1, -1, 1 )
         .setWidth( "195px" )
         .onInput( function( e ){
 
-            if( !inProgress && frame2.getValue() !== traj.currentFrame ){
+            if( !inProgress && frameRange.getValue() !== traj.currentFrame ){
                 inProgress = true;
                 // console.log( "input", e );
-                traj.setFrame( frame2.getValue() );
+                traj.setFrame( frameRange.getValue() );
             }
 
         } )
@@ -990,10 +987,10 @@ NGL.TrajectoryWidget = function( traj, component ){
 
             // ensure the last requested frame gets displayed eventually
 
-            if( frame2.getValue() !== traj.currentFrame ){
+            if( frameRange.getValue() !== traj.currentFrame ){
                 inProgress = true;
                 // console.log( "change", e );
-                traj.setFrame( frame2.getValue() );
+                traj.setFrame( frameRange.getValue() );
             }
 
         } );
@@ -1001,22 +998,26 @@ NGL.TrajectoryWidget = function( traj, component ){
     // animation
 
     var i = 0;
-    var animSpeed = 50;
     var animStopFlag = true;
     var animFunc = function(){
         
         if( !inProgress ){
             inProgress = true;
             traj.setFrame( i );
-            i += step.getValue();
+            i += step.getValue() || 1;
             if( i >= traj.numframes ) i = 0;
         }
 
         if( !animStopFlag ){
-            setTimeout( animFunc, animSpeed );
+            setTimeout( animFunc, animTimeout.getValue() || 50 );
         }
 
     }
+
+    var animTimeout = new UI.Integer( 50 )
+        .setMarginLeft( "5px" )
+        .setWidth( "70px" )
+        .setRange( 10, 1000 );
 
     var animButton = new UI.Icon( "play" )
         .setMarginRight( "10px" )
@@ -1039,12 +1040,8 @@ NGL.TrajectoryWidget = function( traj, component ){
 
         } );
 
-    frameRow.add( new UI.Text( 'Frame' ).setMarginLeft( "20px" ) );
-    frameRow.add( frame );
-    frameRow.add( new UI.Text( 'Step' ).setMarginLeft( "10px" ) );
-    frameRow.add( step );
-    frameRow2.add( animButton );
-    frameRow2.add( frame2 );
+    frameRow.add( animButton );
+    frameRow.add( frameRange );
 
     // Add sele
 
@@ -1058,21 +1055,43 @@ NGL.TrajectoryWidget = function( traj, component ){
                 } )
         );
 
-    // TODO menu
+    // Options
+
+    var setCenterPbc = new UI.Checkbox( traj.params.centerPbc )
+        .onChange( function(){
+            traj.setCenterPbc( setCenterPbc.getValue() );
+            menu.setDisplay( "none" );
+        } );
+
+    var setRemovePbc = new UI.Checkbox( traj.params.removePbc )
+        .onChange( function(){
+            traj.setRemovePbc( setRemovePbc.getValue() );
+            menu.setDisplay( "none" );
+        } );
 
     var setSuperpose = new UI.Checkbox( traj.params.superpose )
-        .setMarginLeft( "10px" )
         .onChange( function(){
             traj.setSuperpose( setSuperpose.getValue() );
+            menu.setDisplay( "none" );
         } );
-    var frameRow3 = new UI.Panel()
-        .add( new UI.Text( 'Superpose' ).setMarginLeft( "20px" ) )
-        .add( setSuperpose );
 
-    container.add( frameRow );
-    container.add( frameRow2 );
-    container.add( seleRow );
-    container.add( frameRow3 );
+    // Menu
+
+    var menu = new NGL.MenuWidget()
+        .setMarginLeft( "47px" )
+        .setEntryTitleWidth( "110px" )
+        .addEntry( "Center", setCenterPbc )
+        .addEntry( "Remove PBC", setRemovePbc )
+        .addEntry( "Superpose", setSuperpose )
+        .addEntry( "Step", step )
+        .addEntry( "Timeout", animTimeout );
+
+    container
+        .addStatic( menu );
+
+    container
+        .add( seleRow )
+        .add( frameRow );
 
     return container;
 
