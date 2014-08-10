@@ -814,8 +814,6 @@ NGL.Bond.prototype = {
 
 NGL.Trajectory = function( xtcPath, structure ){
 
-    // FIXME representations do not stay hidden on frame update
-
     var SIGNALS = signals;
 
     this.signals = {
@@ -827,7 +825,7 @@ NGL.Trajectory = function( xtcPath, structure ){
     };
 
     this.params = {
-        centerPbc: false,
+        centerPbc: true,
         removePbc: true,
         superpose: true
     };
@@ -970,6 +968,28 @@ NGL.Trajectory.prototype = {
         this.frameCacheSize = 0;
         this.frameLoader.cache.clear();
         this.setFrame( this.currentFrame );
+
+    },
+
+    setCenterPbc: function( value ){
+
+        if( value !== this.params.centerPbc ){
+
+            this.params.centerPbc = value;
+            this.resetCache();
+
+        }
+
+    },
+
+    setRemovePbc: function( value ){
+
+        if( value !== this.params.removePbc ){
+
+            this.params.removePbc = value;
+            this.resetCache();
+
+        }
 
     },
 
