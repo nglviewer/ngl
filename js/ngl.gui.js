@@ -474,18 +474,17 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         } );
 
-    // Selection for subset
+    // Selection
 
-    var seleRow = new UI.Panel();
-    var sele = new NGL.SelectionWidget()
-        .setWidth( '195px' )
-        .setValue( component.sele )
-        .onEnter( function( value ){
-            repr.changeSelection( value );
-        } );
-
-    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
-    seleRow.add( sele );
+    var seleRow = new UI.Panel()
+        .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
+        .add( new NGL.SelectionWidget()
+                .setWidth( '195px' )
+                .setValue( component.sele )
+                .onEnter( function( value ){
+                    component.changeSelection( value );
+                } )
+        );
 
     container.add( seleRow );
 
@@ -502,25 +501,28 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         NGL.download( URL.createObjectURL( blob ), "structure.pdb" );
 
-        menuPanel.setDisplay( "none" );
+        menu.setDisplay( "none" );
 
-    } );
+    });
 
     // Add representation
 
-    var reprOptions = { "": "[ add ]" };
-    for( var key in NGL.representationTypes ){
-        reprOptions[ key ] = key;
-    }
-
     var repr = new UI.Select()
         .setColor( '#444' )
-        .setOptions( reprOptions )
+        .setOptions( (function(){
+
+            var reprOptions = { "": "[ add ]" };
+            for( var key in NGL.representationTypes ){
+                reprOptions[ key ] = key;
+            }
+            return reprOptions;
+
+        })() )
         .onChange( function(){
 
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
-            menuPanel.setDisplay( "none" );
+            menu.setDisplay( "none" );
 
         } );
 
@@ -528,7 +530,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var traj = new UI.Button( "import" ).onClick( function(){
 
-        menuPanel.setDisplay( "none" );
+        menu.setDisplay( "none" );
 
         var dirWidget = new NGL.DirectoryListingWidget(
 
@@ -594,7 +596,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             component.centerView();
 
             superpose.setValue( "" );
-            menuPanel.setDisplay( "none" );
+            menu.setDisplay( "none" );
 
         } );
 
@@ -602,36 +604,50 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // SS calculate
     
-    var ss = new UI.Button( "calculate" ).onClick( function(){
+    var ssButton = new UI.Button( "calculate" ).onClick( function(){
 
         component.structure.autoSS();
         component.rebuildRepresentations();
 
-        menuPanel.setDisplay( "none" );
+        menu.setDisplay( "none" );
 
     } );
 
     // Menu
 
-    var menuPanel = new UI.OverlayPanel()
-        .add( new UI.Text( "PDB file" ).setWidth( "110px" ) )
-        .add( pdb )
-        .add( new UI.Break() )
-        .add( new UI.Text( "Representation" ).setWidth( "110px" ) )
-        .add( repr )
-        .add( new UI.Break() )
-        .add( new UI.Text( "Trajectory" ).setWidth( "110px" ) )
-        .add( traj )
-        .add( new UI.Break() )
-        .add( new UI.Text( "Superpose" ).setWidth( "110px" ) )
-        .add( superpose )
-        .add( new UI.Break() )
-        .add( new UI.Text( "SS" ).setWidth( "110px" ) )
-        .add( ss );
+    var menu = new NGL.MenuWidget()
+        .setMarginLeft( "47px" )
+        .setEntryTitleWidth( "110px" )
+        .addEntry( "PDB file", pdb )
+        .addEntry( "Representation", repr )
+        .addEntry( "Trajectory", traj )
+        .addEntry( "Superpose", superpose )
+        .addEntry( "SS", ssButton );
+
+    container
+        .addStatic( new UI.Text( component.name ).setWidth( "100px" ) )
+        .addStatic( toggle )
+        .addStatic( center )
+        .addStatic( dispose )
+        .addStatic( menu );
+
+    // Fill container
+
+    container.add( trajContainer );
+    container.add( reprContainer );
+
+    return container;
+
+};
+
+
+NGL.MenuWidget = function(){
+
+    var menuPanel = new UI.OverlayPanel();
+    var menuEntryTitleWidth = "100px";
 
     var menu = new UI.Icon( "bars" )
         .setTitle( "menu" )
-        .setMarginLeft( "47px" )
         .onClick( function(){
 
             if( menuPanel.getDisplay() === "block" ){
@@ -651,21 +667,31 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         } );
 
-    
+    menu.addEntry = function( title, entry ){
 
-    container.addStatic( new UI.Text( component.name ).setWidth( "100px" ) );
-    container.addStatic( toggle );
-    container.addStatic( center );
-    container.addStatic( dispose );
-    container.addStatic( menu );
-    // container.addStatic( repr );
+        menuPanel
+            .add( new UI.Text( title ).setWidth( menuEntryTitleWidth ) )
+            .add( entry )
+            .add( new UI.Break() )
+        return menu;
 
-    // Fill container
+    }
 
-    container.add( trajContainer );
-    container.add( reprContainer );
+    menu.setEntryTitleWidth = function( value ){
 
-    return container;
+        menuEntryTitleWidth = value;
+        return menu;
+
+    }
+
+    menu.setDisplay = function( value ){
+
+        menuPanel.setDisplay( value );
+        return menu;
+
+    }
+
+    return menu;
 
 };
 
@@ -806,16 +832,15 @@ NGL.RepresentationWidget = function( repr, component ){
 
     // Add sele
 
-    var seleRow = new UI.Panel();
-    var sele = new NGL.SelectionWidget()
-        .setWidth( '175px' )
-        .setValue( repr.selection.selectionStr )
-        .onEnter( function( value ){
-            repr.changeSelection( value );
-        } );
- 
-    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
-    seleRow.add( sele );
+    var seleRow = new UI.Panel()
+        .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
+        .add( new NGL.SelectionWidget()
+                .setWidth( '175px' )
+                .setValue( repr.selection.selectionStr )
+                .onEnter( function( value ){
+                    repr.changeSelection( value );
+                } )
+        );
 
     container.add( seleRow );
 
@@ -1023,16 +1048,15 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     // Add sele
 
-    var seleRow = new UI.Panel();
-    var sele = new NGL.SelectionWidget()
-        .setWidth( '175px' )
-        .setValue( traj.selection.selectionStr )
-        .onEnter( function( value ){
-            traj.changeSelection( value );
-        } );
-
-    seleRow.add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) );
-    seleRow.add( sele );
+    var seleRow = new UI.Panel()
+        .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
+        .add( new NGL.SelectionWidget()
+                .setWidth( '175px' )
+                .setValue( traj.selection.selectionStr )
+                .onEnter( function( value ){
+                    traj.changeSelection( value );
+                } )
+        );
 
     // TODO menu
 
