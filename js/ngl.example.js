@@ -328,6 +328,18 @@ NGL.Examples = {
 
         },
 
+        "test": function( stage ){
+
+            stage.loadFile( "../data/__example__/Bace1Trimer-inDPPC.gro", function( o ){
+
+                o.addRepresentation( "tube" );
+                o.addRepresentation( "licorice", "DPPC" );
+                o.centerView();
+
+            } );
+
+        },
+
         // alexpc
         
         "_rho_traj": function( stage ){

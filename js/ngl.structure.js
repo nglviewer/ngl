@@ -82,7 +82,7 @@ NGL.CovalentRadii = {
 
 NGL.guessElement = function(){
 
-    var elm1 = [ "H", "C", "O", "N", "S" ];
+    var elm1 = [ "H", "C", "O", "N", "S", "P" ];
     var elm2 = [ "NA", "CL" ];
 
     return function( atomName ){
