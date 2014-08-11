@@ -1,0 +1,293 @@
+﻿* {
+    vertical-align: middle;
+}
+
+:-webkit-full-screen #viewport {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin: 0;
+    overflow: hidden;
+}
+
+hr {
+    border: 0px;
+    border-top: 1px solid #ccc;
+}
+
+button {
+    position: relative;
+}
+
+select {
+    margin-left: 1px;
+}
+
+.Icon {
+    cursor: default;
+}
+
+.Panel {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+
+    /* No support for these yet */
+    -o-user-select: none;
+    user-select: none;
+}
+
+.OverlayPanel {
+    background-color: #FFF;
+    z-index: 10;
+    position: absolute;
+    color: #888;
+    padding: 10px;
+    border: 1px solid #555;
+    overflow: auto;
+}
+
+.CollapsiblePanel .CollapsiblePanelButton {
+    float: left;
+    margin-right: 6px;
+    width: 0px;
+    height: 0px;
+    border: 6px solid transparent;
+}
+
+.CollapsiblePanel.collapsed > .CollapsiblePanelButton {
+    margin-top: 2px;
+    border-left-color: #bbb;
+}
+
+.CollapsiblePanel:not(.collapsed) > .CollapsiblePanelButton {
+    margin-top: 6px;
+    border-top-color: #bbb;
+}
+
+.CollapsiblePanel.collapsed .CollapsibleContent {
+    display: none;
+}
+
+.CollapsiblePanel:not(.collapsed) > .CollapsibleContent {
+    clear: both;
+}
+
+.FancySelect {
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 0;
+    cursor: default;
+    overflow: auto;
+    outline: none;
+}
+
+    .FancySelect .option {
+        padding: 4px;
+        color: #666;
+        white-space: nowrap;
+    }
+
+    .FancySelect .option.active {
+        background-color: #f8f8f8;
+    }
+
+input.Number {
+    color: #0080f0;
+    font-size: 12px;                            /** TODO: Use of !imporant is not ideal **/
+    background-color: transparent!important;    /* For now this is a quick fix a rendering issue due to inherited background */
+    border: 1px solid transparent;
+    padding: 2px;
+    cursor: col-resize;
+}
+
+
+/* http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/ */
+
+.AdaptiveTextAreaContainer {
+    position: relative;
+    display: inline-block;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.AdaptiveTextArea, .AdaptiveTextAreaSize {
+    min-height: 21px;
+    /* need to manually set font and font size */
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    box-sizing: border-box;
+    padding: 2px;
+    border: 1px solid #ccc;
+
+    overflow: hidden;
+    width: 100%;
+}
+
+.AdaptiveTextArea {
+    height: 100%;
+    position: absolute;
+    resize: none;
+
+    /*
+    "pre" or "preline" or "normal" fixes Chrome issue where
+    whitespace at end of lines does not trigger a line break.
+    However, it causes the text to exhibit the behavior seen with
+    "pre" that is described below.
+    */
+    white-space: normal;
+}
+
+.AdaptiveTextAreaSize {
+    visibility: hidden;
+
+    /*
+    Pre-wrap: preserve spacing and newlines, but wrap text.
+    Pre: preserve spacing and newlines but don't wrap text.
+
+    "pre" does not wrap well on Firefox, even with word-wrap:break-word.
+    "pre" on Chrome works with word-wrap, but exhibits different behavior:
+    Instead of entire words being moved to the next line for wrapping,
+    the browser will cut words in the middle for wrapping.
+    "pre-line" has Firefox issues
+    */
+    white-space: pre-wrap;
+    /* Required for wrapping lines in Webkit,
+    but not necessary in Firefox if you have white-space wrapping
+    (pre-wrap, normal, pre-line) already set */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+
+#viewport {
+    position: absolute;
+    top: 32px;
+    left: 0px;
+    right: 300px;
+    bottom: 32px;
+}
+
+#menubar {
+    position: absolute;
+    width: 100%;
+    height: 32px;
+    background: #eee;
+    padding: 0px;
+    margin: 0px;
+    z-index: 100;
+}
+
+    #menubar .menu {
+        float: left;
+        cursor: pointer;
+        position: relative;
+    }
+
+        #menubar .menu .title {
+            color: #888;
+            margin: 0px;
+            padding: 8px;
+        }
+
+        #menubar .menu .options {
+            display: none;
+            padding: 5px 0px;
+            background: #eee;
+            width: 140px;
+            position: absolute;
+            top: 32px;
+        }
+
+        #menubar .menu:hover .options {
+            display: block;
+            max-height: 600px;
+            overflow: auto;
+        }
+
+            #menubar .menu .options hr {
+                border-color: #ddd;
+            }
+
+            #menubar .menu .options .option {
+                color: #666;
+                background-color: transparent;
+                padding: 5px 10px;
+                margin: 0px !important;
+            }
+
+                #menubar .menu .options .option:hover {
+                    color: #fff;
+                    background-color: #08f;
+                }
+
+
+#sidebar {
+    position: absolute;
+    right: 0px;
+    top: 32px;
+    bottom: 0px;
+    width: 300px;
+    background: #eee;
+    overflow: auto;
+}
+
+    #sidebar input,
+    #sidebar textarea,
+    #sidebar select {
+        /* background: #ccc; */
+    }
+
+    #sidebar .Panel {
+        margin-bottom: 10px;
+    }
+
+    #sidebar .Panel.collapsed {
+        margin-bottom: 0px;
+    }
+
+    #sidebar .CollapsibleContent {
+        margin-top: 10px;
+    }
+
+    #sidebar > .Panel {
+        color: #888;
+        padding: 10px;
+        border-top: 1px solid #ccc;
+    }
+
+    #sidebar #outliner {
+        width: 100%;
+        height: 140px;
+        color: #444;
+        font-size: 12px;
+    }
+
+#toolbar {
+    position: absolute;
+    left: 0px;
+    right: 300px;
+    bottom: 0px;
+    height: 32px;
+    background: #eee;
+    color: #333;
+}
+
+    #toolbar .Panel {
+        padding: 4px;
+        color: #888;
+    }
+
+    #toolbar button {
+        margin-right: 6px;
+    }
+
+

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		<div>See <a href="https://github.com/libgdx/libgdx/wiki/Distance-field-fonts">here</a> for a detailed description of distance field fonts and how they can be created.</div>
+
+		<div>The <em>fnt</em> files where created with <em>Hiero</em> which can be started with:</div>
+
+		<code>java -cp gdx.jar:gdx-natives.jar:gdx-backend-lwjgl.jar:gdx-backend-lwjgl-natives.jar:extensions/gdx-tools/gdx-tools.jar com.badlogic.gdx.tools.hiero.Hiero</code>
+
+		<div>The fields of the <em>fnt</em> format are:<br/>
+
+		<ul>
+			<li><strong>id</strong> - The ID of the character from the font file.</li>
+			<li><strong>x</strong> - X position within the bitmap image file.</li>
+			<li><strong>y</strong> - Y position within the bitmap image file.</li>
+			<li><strong>width</strong> - Width of the character in the image file.</li>
+			<li><strong>height</strong> - Height of the character in the image file.</li>
+			<li><strong>xoffset</strong> - Number of pixels to move right before drawing this character.</li>
+			<li><strong>yoffset</strong> - Number of pixels to move down before drawing this character.</li>
+			<li><strong>xadvance</strong> - Number of pixels to jump right after drawing this character.</li>
+			<li><strong>page</strong> - The image to use if characters are split across multiple images.</li>
+			<li><strong>chnl</strong> - The color channel, if color channels are used for separate characters.</li>
+
+		</div>
+		
+	</body>
+</html>
