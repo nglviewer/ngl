@@ -338,9 +338,25 @@ NGL.Examples = {
 
         },
 
-        "test": function( stage ){
+        "autoChainName": function( stage ){
+
+            var params = {
+                sele: ":A or :B or DPPC"
+            };
 
             stage.loadFile( "../data/__example__/Bace1Trimer-inDPPC.gro", function( o ){
+
+                o.addRepresentation( "tube" );
+                o.addRepresentation( "licorice", "DPPC" );
+                o.centerView();
+
+            }, params );
+
+        },
+
+        "test": function( stage ){
+
+            stage.loadFile( "../data/__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "licorice", "DPPC" );

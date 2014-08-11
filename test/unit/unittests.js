@@ -864,6 +864,23 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
 
 });
 
+QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
+
+    var path = "../../data/__example__/Bace1Trimer-inDPPC.gro";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var subset = new NGL.StructureSubset( structure, ":A" );
+
+        assert.equal( structure.atomCount, 52661, "Passed!" );
+        assert.equal( subset.atomCount, 258, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
 
 QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 

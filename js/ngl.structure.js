@@ -1443,6 +1443,10 @@ NGL.Structure.prototype = {
             this.autoSS();
         }
 
+        if( this._doAutoChainName ){
+            this.autoChainName();
+        }
+
         this.center = this.atomCenter();
 
         // console.log( "Structure", this );
@@ -1728,6 +1732,48 @@ NGL.Structure.prototype = {
             } );
 
             console.timeEnd( "NGL.Structure.autoSS" );
+
+        }
+
+    }(),
+
+    autoChainName: function(){
+
+        var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                    "abcdefghijklmnopqrstuvwxyz" +
+                    "0123456789";
+        var n = names.length;
+
+        return function(){
+
+            console.time( "NGL.Structure.autoChainName" );
+
+            var name;
+            var i = 0;
+
+            this.eachFiber( function( f ){
+
+                name = names[ i ];
+
+                f.eachAtom( function( a ){
+
+                    a.chainname = name;
+
+                } );
+
+                i += 1;
+
+                if( i === n ){
+
+                    console.warn( "out of chain names" );
+
+                    i = 0;
+
+                }
+
+            } );
+
+            console.timeEnd( "NGL.Structure.autoChainName" );
 
         }
 
@@ -2903,6 +2949,12 @@ NGL.PdbStructure.prototype._parse = function( str ){
         this._doAutoSS = true;
     }
 
+    var _doAutoChainName = true;
+    this.eachChain( function( c ){
+        if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+    } );
+    this._doAutoChainName = _doAutoChainName;
+
     // console.timeEnd( "NGL.PdbStructure.parse" );
 
 };
@@ -2915,6 +2967,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
 NGL.GroStructure = function( name ){
 
     this._doAutoSS = true;
+    this._doAutoChainName = true;
 
     NGL.Structure.call( this, name );
 
@@ -2933,7 +2986,7 @@ NGL.GroStructure.prototype._parse = function( str ){
     var vdwRadii = NGL.VdwRadii;
 
     var i, j;
-    var line, recordName, altloc, serial, atomName, elem;
+    var line, serial, atomname, element, resno, resname;
 
     this.title = lines[ 0 ].trim();
     this.size = parseInt( lines[ 1 ] );
@@ -3319,6 +3372,7 @@ NGL.Selection.prototype = {
                 if( chain[1].length > 1 ){
                     throw new Error( "chain identifier must be one character" );
                 }
+                // TODO fails to distinguish between upper and lower case chain names
                 sele.chainname = chain[1][0].toUpperCase();
             }
 
@@ -3517,6 +3571,7 @@ NGL.Selection.prototype = {
                 if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
                 if( s.keyword==="WATER" && r.isWater() ) return true;
 
+                // FIXME ???
                 // if( s.keyword!=="BACKBONE" ) return false;
 
             }
@@ -3524,6 +3579,7 @@ NGL.Selection.prototype = {
             if( s.chainname===undefined && s.model===undefined &&
                     s.resname===undefined && s.resno===undefined
             ) return -1;
+            if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -3549,6 +3605,7 @@ NGL.Selection.prototype = {
 
         var fn = function( c, s ){
 
+            if( s.chainname!==undefined && c.chainname===undefined ) return -1;
             if( s.chainname===undefined && s.model===undefined ) return -1;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
