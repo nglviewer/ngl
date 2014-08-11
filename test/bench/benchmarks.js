@@ -74,6 +74,7 @@ Object.keys( data ).forEach( function( name ){
 suite.add( '1crn parse',
     
     {
+        async: true,
         fn: function(){
             pdbStructure.reset();
             pdbStructure._parse( data[ "1crn" ] );
@@ -88,6 +89,7 @@ suite.add( '1crn parse',
 suite.add( '1crn autoBond',
     
     {
+        async: true,
         fn: function(){
     
             pdbStructure.bondSet = new NGL.BondSet();
@@ -103,68 +105,72 @@ suite.add( '1crn autoBond',
 );
 
 
-// suite.add( '3dqb parse',
+suite.add( '3dqb parse',
     
-//     {
-//         fn: function(){
-//             pdbStructure.reset();
-//             pdbStructure._parse( data[ "3dqb" ] );
-//         },
-//         setup: function(){
-//             var pdbStructure = new NGL.PdbStructure();
-//         }
-//     }
+    {
+        async: true,
+        fn: function(){
+            pdbStructure.reset();
+            pdbStructure._parse( data[ "3dqb" ] );
+        },
+        setup: function(){
+            var pdbStructure = new NGL.PdbStructure();
+        }
+    }
 
-// );
+);
 
-// suite.add( '3dqb autoBond',
+suite.add( '3dqb autoBond',
 
-//     {
-//         fn: function(){
+    {
+        async: true,
+        fn: function(){
     
-//             pdbStructure.bondSet = new NGL.BondSet();
-//             pdbStructure.autoBond();
+            pdbStructure.bondSet = new NGL.BondSet();
+            pdbStructure.autoBond();
 
-//         },
-//         setup: function(){
-//             var pdbStructure = new NGL.PdbStructure();
-//             pdbStructure.parse( data[ "3dqb" ] );
-//         }
-//     }
+        },
+        setup: function(){
+            var pdbStructure = new NGL.PdbStructure();
+            pdbStructure.parse( data[ "3dqb" ] );
+        }
+    }
 
-// );
+);
 
 
-// suite.add( '3l5q parse',
+suite.add( '3l5q parse',
     
-//     {
-//         fn: function(){
-//             pdbStructure.reset();
-//             pdbStructure._parse( data[ "3l5q" ] );
-//         },
-//         setup: function(){
-//             var pdbStructure = new NGL.PdbStructure();
-//         }
-//     }
+    {
+        async: true,
+        fn: function(){
+            pdbStructure.reset();
+            pdbStructure._parse( data[ "3l5q" ] );
+        },
+        setup: function(){
+            var pdbStructure = new NGL.PdbStructure();
+        }
+    }
 
-// );
+);
 
-// suite.add( '3l5q autoBond',
+suite.add( '3l5q autoBond',
 
-//     {
-//         fn: function(){
+    {
+        async: true,
+        fn: function(){
     
-//             pdbStructure.bondSet = new NGL.BondSet();
-//             pdbStructure.autoBond();
+            pdbStructure.bondSet = new NGL.BondSet();
+            pdbStructure.autoBond();
 
-//         },
-//         setup: function(){
-//             var pdbStructure = new NGL.PdbStructure();
-//             pdbStructure.parse( data[ "3l5q" ] );
-//         }
-//     }
+        },
+        setup: function(){
+            var pdbStructure = new NGL.PdbStructure();
+            pdbStructure.parse( data[ "3l5q" ] );
+        }
+    }
 
-// );
+);
 
 
 
