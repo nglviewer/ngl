@@ -300,17 +300,27 @@ NGL.MenubarExampleWidget = function( stage ){
 
     Object.keys( NGL.Examples.data ).forEach( function( name ){
 
-        if( name.charAt( 0 ) === "_" ) return;
+        if( name.charAt( 0 ) === "_" ){
 
-        menuConfig.push(
+            return;
 
-            createOption( name, function(){
+        }else if( name === "divider" ){
 
-                NGL.Examples.load( name, stage );
+            menuConfig.push( createDivider() );
 
-            } )
+        }else{
+            
+            menuConfig.push(
 
-        );
+                createOption( name, function(){
+
+                    NGL.Examples.load( name, stage );
+
+                } )
+
+            );
+
+        }
 
     } );
 
