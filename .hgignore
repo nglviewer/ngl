@@ -5,6 +5,7 @@ syntax: glob
 
 *.pyc
 app.cfg
-tracking.js
+js/tracking.js
+js/examples.js
 
 *.offsets

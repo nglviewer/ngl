@@ -8,6 +8,16 @@ NGL.Examples = {
 
     },
 
+    add: function( examples ){
+
+        Object.keys( examples ).forEach( function( name ){
+
+            NGL.Examples.data[ name ] = examples[ name ];
+
+        } );
+
+    },
+
     data: {
 
         "trajectory": function( stage ){
@@ -338,68 +348,7 @@ NGL.Examples = {
 
             } );
 
-        },
-
-        // alexpc
-        
-        "_rho_traj": function( stage ){
-
-            var path = "projects/rho/3pqr/GaCT/all/"
-
-            stage.loadFile( "../data/" + path + "md01_protein.gro", function( o ){
-
-                o.addRepresentation( "line", "not hydrogen" );
-                o.addRepresentation( "tube", "protein" );
-                o.centerView();
-
-                o.addTrajectory( path + "md_all.xtc" );
-
-            } );
-
-        },
-
-        "_rho_traj2": function( stage ){
-
-            var path = "servers/zatopek/arose/rhodopsin_md/1u19/md01/"
-
-            stage.loadFile( "../data/" + path + "md01.gro", function( o ){
-
-                o.addRepresentation( "line", "not hydrogen" );
-                o.addRepresentation( "tube", "protein" );
-                o.centerView( "backbone" );
-
-                o.addTrajectory( path + "md01.xtc" );
-
-            } );
-
-            stage.loadFile( "../data/" + path + "md01.gro", function( o ){
-
-                o.addRepresentation( "backbone", "protein" );
-                o.centerView( "backbone" );
-
-            } );
-
-        },
-
-        "_mdfit": function( stage ){
-
-            var path = "test_data/mdfit/"
-
-            stage.loadFile( "../data/" + path + "mdfit_50s_timo.gro", function( o ){
-
-                // o.addRepresentation( "spacefill" );
-                o.addRepresentation( "line", "not hydrogen" );
-                // o.addRepresentation( "backbone" );
-                //o.addRepresentation( "ribbon" );
-                o.addRepresentation( "tube" );
-                // o.addRepresentation( "trace" );
-                o.centerView();
-
-                o.addTrajectory( path + "mdfit_50s_timo.xtc" );
-
-            } );
-
-        },
+        }
 
     }
 
