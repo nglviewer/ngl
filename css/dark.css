@@ -232,7 +232,7 @@ input.Number {
             width: 140px;
             border-top: solid 1px #1D1D1D;
             position: absolute;
-            top: 33px;
+            top: 32px;
         }
 
         #menubar .menu:hover .options {
@@ -270,7 +270,7 @@ input.Number {
     #sidebar input,
     #sidebar textarea,
     #sidebar select {
-        background: #ccc;
+        /*background: #ccc;*/
     }
 
     #sidebar .Panel {
