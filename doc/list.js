@@ -13,8 +13,14 @@ var list = {
             [ "Webserver", "manual/deployment/Webserver" ],
             [ "Filesystem", "manual/deployment/Filesystem" ]
         ],
+        "Methods": [
+            [ "Processing", "manual/methods/Processing" ],
+            [ "Rendering", "manual/methods/Rendering" ]
+        ],
         "Development": [
             [ "Acknowledgement", "manual/development/Acknowledgement" ],
+            [ "Unittest", "manual/development/Unittest" ],
+            [ "Benchmark", "manual/development/Benchmark" ],
             [ "Font", "manual/development/Font" ]
         ]
     },
