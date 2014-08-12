@@ -1096,7 +1096,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addEntry( "Step", step )
         .addEntry( "Timeout", animTimeout )
         .addEntry(
-            "File", new UI.Text( traj.xtcPath.replace( "/", "/\u200B" ) )
+            "File", new UI.Text( traj.xtcPath.replace( /\//g, "/\u200B" ) )
                         .setMaxWidth( "100px" )
         );
 
