@@ -44,19 +44,34 @@ os.environ["HTTP_PROXY"] = app.config.get( "PROXY", "" )
 APP_PATH = app.config.get( "APP_PATH", "" )
 DATA_DIRS = app.config.get( "DATA_DIRS", {} )
 
+REQUIRE_AUTH = app.config.get( 'REQUIRE_AUTH', False )
+REQUIRE_DATA_AUTH = \
+    app.config.get( 'REQUIRE_DATA_AUTH', False ) and not REQUIRE_AUTH
+DATA_AUTH = app.config.get( 'DATA_AUTH', {} )
+
 
 ############################
 # basic auth
 ############################
 
-def check_auth( username, password ):
+def check_auth( auth ):
     """This function is called to check if a username /
     password combination is valid.
     """
     return (
-        username == app.config.get( 'USERNAME', '' ) and 
-        password == app.config.get( 'PASSWORD', '' )
+        auth.username == app.config.get( 'USERNAME', '' ) and 
+        auth.password == app.config.get( 'PASSWORD', '' )
     )
+
+
+def check_data_auth( auth, root ):
+    if root in DATA_AUTH:
+        return (
+            auth.username == DATA_AUTH[ root ][ 0 ] and 
+            auth.password == DATA_AUTH[ root ][ 1 ]
+        )
+    else:
+        return True
 
 
 def authenticate():
@@ -72,9 +87,13 @@ def authenticate():
 def requires_auth( f ):
     @functools.wraps( f )
     def decorated( *args, **kwargs ):
-        if app.config.get( 'REQUIRE_AUTH', False ):
-            auth = request.authorization
-            if not auth or not check_auth( auth.username, auth.password ):
+        auth = request.authorization
+        root = kwargs.get( "root", None )
+        if REQUIRE_AUTH:
+            if not auth or not check_auth( auth ):
+                return authenticate()
+        elif REQUIRE_DATA_AUTH and root and root in DATA_AUTH:
+            if not auth or not check_data_auth( auth, root ):
                 return authenticate()
         return f( *args, **kwargs )
     return decorated
@@ -158,10 +177,13 @@ def dir( root="", path="" ):
 
     if root == "":
         for fname in DATA_DIRS.keys():
+            if fname.startswith( '_' ):
+                continue
             dir_content.append({
                 'name': fname,
                 'path': fname,
-                'dir': True
+                'dir': True,
+                'restricted': REQUIRE_DATA_AUTH and fname in DATA_AUTH
             })
         return json.dumps( dir_content )
 
