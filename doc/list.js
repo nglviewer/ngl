@@ -2,10 +2,11 @@ var list = {
 
     "Manual": {
         "Usage": [
-            [ "Selection", "manual/usage/Selection" ],
-            [ "Representation", "manual/usage/Representation" ],
-            [ "Trajectory", "manual/usage/Trajectory" ],
-            [ "Interface", "manual/usage/Interface" ]
+            [ "Selection language", "manual/usage/Selection-language" ],
+            [ "Molecular representations", "manual/usage/Molecular-representations" ],
+            [ "User interface", "manual/usage/User-interface" ],
+            [ "Trajectory access", "manual/usage/Trajectory-access" ],
+            [ "Scripting", "manual/usage/Scripting" ]
         ],
         "Deployment": [
             [ "Browser", "manual/deployment/Browser" ],
@@ -29,6 +30,22 @@ var list = {
         "Core": [
             [ "Stage", "api/core/Stage" ],
             [ "Viewer", "api/core/Viewer" ]
+        ],
+        "Object": [
+            [ "Structure", "api/object/Structure" ],
+            [ "Selection", "api/object/Selection" ]
+        ],
+        "Component": [
+            [ "StructureComponent", "api/component/StructureComponent" ],
+            [ "SurfaceComponent", "api/component/SurfaceComponent" ]
+        ],
+        "Representation": [
+            [ "SpacefillRepresentation", "api/representation/SpacefillRepresentation" ],
+            [ "RibbonRepresentation", "api/representation/RibbonRepresentation" ]
+        ],
+        "Algorithm": [
+            [ "Alignment", "api/algorithm/Alignment" ],
+            [ "Superposition", "api/algorithm/Superposition" ]
         ]
     },
 
