@@ -1293,6 +1293,10 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
                 } );
 
+            if( path.restricted ){
+                pathRow.add( new UI.Icon( "key" ).setMarginLeft( "5px" ) )
+            }
+
             listingPanel.add( pathRow );
 
         } )

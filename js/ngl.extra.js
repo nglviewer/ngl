@@ -156,16 +156,8 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
-            // object.addRepresentation( "backbone" );
-            // object.addRepresentation( "ribbon", ":A" );
             object.addRepresentation( "tube", "*" );
             object.addRepresentation( "licorice", "hetero" );
-            // object.addRepresentation( "spacefill", "protein" );
-            // object.addRepresentation( "ball+stick", "! protein" );
-            // object.addRepresentation( "trace" );
-            // object.addRepresentation( "line" );
-            // object.addRepresentation( "hyperball", "135 :B" );
-            // object.centerView( "backbone" );
             object.centerView();
 
         }else if( object instanceof NGL.SurfaceComponent ){
