@@ -123,10 +123,14 @@ NGL.MenubarWidget = function( stage ){
 
 NGL.MenubarFileWidget = function( stage ){
 
+    var fileTypesOpen = [ "pdb", "gro", "obj", "ply", "ngz" ];
+    var fileTypesImport = fileTypesOpen + [ "ngl" ];
+
     var fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.multiple = true;
     fileInput.style = "visibility:hidden";
+    fileInput.accept = "." + fileTypesOpen.join( ",." );
     fileInput.addEventListener( 'change', function( e ){
 
         var fileList = e.target.files;
@@ -160,17 +164,15 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onImportOptionClick(){
 
-        var fileTypes = [ "pdb", "gro", "obj", "ply", "ngl", "ngz" ];
-
         var dirWidget = new NGL.DirectoryListingWidget(
 
-            stage, "Import file", fileTypes,
+            stage, "Import file", fileTypesImport,
 
             function( path ){
 
                 var ext = path.path.split('.').pop().toLowerCase();
 
-                if( fileTypes.indexOf( ext ) !== -1 ){
+                if( fileTypesImport.indexOf( ext ) !== -1 ){
 
                     stage.loadFile( "../data/" + path.path );
                     
