@@ -53,7 +53,10 @@ def check_auth( username, password ):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == 'testuser' and password == 'test456'
+    return (
+        username == app.config.get( 'USERNAME', '' ) and 
+        password == app.config.get( 'PASSWORD', '' )
+    )
 
 
 def authenticate():
@@ -65,7 +68,7 @@ def authenticate():
     )
 
 
-# use as decorator after a route decorator
+# use as decorator *after* a route decorator
 def requires_auth( f ):
     @functools.wraps( f )
     def decorated( *args, **kwargs ):
@@ -95,6 +98,7 @@ def get_directory( root ):
 ############################
 
 @app.route( '/favicon.ico' )
+@requires_auth
 def favicon():
     return send_from_directory(
         os.path.join( APP_PATH, "img/" ), 'favicon.ico',
@@ -103,11 +107,13 @@ def favicon():
 
 
 @app.route( '/js/<path:filename>' )
+@requires_auth
 def js( filename ):
     return send_from_directory( os.path.join( APP_PATH, "js/" ), filename )
 
 
 @app.route( '/css/<path:filename>' )
+@requires_auth
 def css( filename ):
     return send_from_directory( os.path.join( APP_PATH, "css/" ), filename )
 
@@ -119,16 +125,19 @@ def html( filename ):
 
 
 @app.route( '/doc/<path:filename>' )
+@requires_auth
 def doc( filename ):
     return send_from_directory( os.path.join( APP_PATH, "doc/" ), filename )
 
 
 @app.route( '/test/<path:filename>' )
+@requires_auth
 def test( filename ):
     return send_from_directory( os.path.join( APP_PATH, "test/" ), filename )
 
 
 @app.route( '/data/<root>/<path:filename>' )
+@requires_auth
 def data( root, filename ):
     directory = get_directory( root )
     if directory:
@@ -138,6 +147,7 @@ def data( root, filename ):
 @app.route( '/dir/' )
 @app.route( '/dir/<root>/' )
 @app.route( '/dir/<root>/<path:path>' )
+@requires_auth
 def dir( root="", path="" ):
 
     # auth = request.authorization
@@ -206,26 +216,31 @@ def dir( root="", path="" ):
 
 
 @app.route( '/shader/<path:filename>' )
+@requires_auth
 def shader( filename ):
     return send_from_directory( os.path.join( APP_PATH, "shader/" ), filename )
 
 
 @app.route( '/fonts/<path:filename>' )
+@requires_auth
 def fonts( filename ):
     return send_from_directory( os.path.join( APP_PATH, "fonts/" ), filename )
 
 
 @app.route( '/jsmol/<path:filename>' )
+@requires_auth
 def jsmol( filename ):
     return send_from_directory( os.path.join( APP_PATH, "jsmol/" ), filename )
 
 
 @app.route( '/' )
+@requires_auth
 def redirect_ngl():
     return redirect( url_for( 'html', filename='ngl.html' ) )
 
 
 @app.route( '/app/<name>' )
+@requires_auth
 def redirect_app( name ):
     return redirect( url_for( 'html', filename='%s.html' % name ) )
 
@@ -360,6 +375,7 @@ def get_xtc( path ):
 
 
 @app.route( '/xtc/frame/<int:frame>/<root>/<path:filename>', methods=['GET'] )
+@requires_auth
 def xtc_serve( frame, root, filename ):
     directory = get_directory( root )
     if directory:
@@ -385,6 +401,7 @@ def xtc_serve( frame, root, filename ):
 
 
 @app.route( '/xtc/numframes/<root>/<path:filename>' )
+@requires_auth
 def xtc_numframes( root, filename ):
     directory = get_directory( root )
     if directory:
