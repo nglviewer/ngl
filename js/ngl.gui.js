@@ -882,7 +882,7 @@ NGL.SelectionWidget = function( signal ){
 
     }
 
-    var textarea = new UI.AdaptiveTextArea();
+    var textarea = new UI.AdaptiveTextArea().setSpellcheck( false );
     var container = textarea;
     var selectionStr = "";
 

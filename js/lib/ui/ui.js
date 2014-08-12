@@ -83,7 +83,8 @@ var properties = [
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
     'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
-    'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak'
+    'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
+    'spellcheck'
 ];
 
 properties.forEach( function ( property ) {
@@ -1327,17 +1328,17 @@ UI.AdaptiveTextArea.prototype.setValue = function ( value ) {
 
 };
 
-UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
+UI.AdaptiveTextArea.prototype.setSpellcheck = function ( value ) {
 
-    this.textarea.style.backgroundColor = value;
+    this.textarea.spellcheck = value;
 
     return this;
 
 };
 
-UI.AdaptiveTextArea.prototype.onKeyDown = function ( callback ) {
+UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
 
-    this.textarea.addEventListener( 'keydown', callback.bind( this ), false );
+    this.textarea.style.backgroundColor = value;
 
     return this;
 
