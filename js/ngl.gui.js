@@ -635,7 +635,9 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addEntry( "SS", ssButton );
 
     container
-        .addStatic( new UI.Text( component.name ).setWidth( "100px" ) )
+        .addStatic( new UI.Text( component.name )
+                        .setWidth( "100px" )
+                        .setWordBreak( "break-all" ) )
         .addStatic( toggle )
         .addStatic( center )
         .addStatic( dispose )
@@ -767,10 +769,13 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
         } );
     
-    container.addStatic( new UI.Text( component.name ).setWidth( "100px" ) );
-    container.addStatic( toggle );
-    container.addStatic( center );
-    container.addStatic( dispose );
+    container
+        .addStatic( new UI.Text( component.name )
+                        .setWidth( "100px" )
+                        .setWordBreak( "break-all" ) )
+        .addStatic( toggle )
+        .addStatic( center )
+        .addStatic( dispose );
 
     return container;
 
@@ -1096,9 +1101,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addEntry( "Step", step )
         .addEntry( "Timeout", animTimeout )
         .addEntry(
-            "File", new UI.Text( traj.xtcPath.replace( /\//g, "/\u200B" ) )
+            "File", new UI.Text( traj.xtcPath )
                         .setMaxWidth( "100px" )
-        );
+                        .setWordBreak( "break-all" ) );
 
     container
         .addStatic( menu );
