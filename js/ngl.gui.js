@@ -174,7 +174,7 @@ NGL.MenubarFileWidget = function( stage ){
 
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
 
-                    stage.loadFile( "../data/" + path.path );
+                    stage.loadFile( path.path );
                     
                 }else{
 

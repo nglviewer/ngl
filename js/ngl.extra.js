@@ -912,7 +912,7 @@ NGL.autoLoad = function(){
 
         }else{
 
-            loader.load( file, init );
+            loader.load( "../data/" + file, init );
 
         }
 

@@ -27,7 +27,7 @@ NGL.Examples = {
                 // sele: "349-352",
             };
 
-            stage.loadFile( "../data/__example__/md.gro", function( o ){
+            stage.loadFile( "__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
                 o.addRepresentation( "tube", "protein" );
@@ -38,7 +38,7 @@ NGL.Examples = {
 
             }, params );
 
-            stage.loadFile( "../data/__example__/md.gro", function( o ){
+            stage.loadFile( "__example__/md.gro", function( o ){
 
                 o.addRepresentation( "backbone", "protein" );
 
@@ -48,7 +48,7 @@ NGL.Examples = {
 
         "anim_trajectory": function( stage ){
 
-            stage.loadFile( "../data/__example__/md.gro", function( o ){
+            stage.loadFile( "__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "not hydrogen and protein" );
                 o.addRepresentation( "tube", "protein" );
@@ -70,7 +70,7 @@ NGL.Examples = {
 
         "3pqr": function( stage ){
 
-            stage.loadFile( "../data/__example__/3pqr.pdb", function( o ){
+            stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
                 o.addRepresentation( "tube", "*" );
                 o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
@@ -84,7 +84,7 @@ NGL.Examples = {
 
         "1blu": function( stage ){
 
-            stage.loadFile( "../data/__example__/1blu.pdb", function( o ){
+            stage.loadFile( "__example__/1blu.pdb", function( o ){
 
                 o.addRepresentation( "tube", "*" );
                 o.addRepresentation( "licorice", "*" );
@@ -96,7 +96,7 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            stage.loadFile( "../data/__example__/1LVZ.pdb", function( o ){
+            stage.loadFile( "__example__/1LVZ.pdb", function( o ){
 
                 o.addRepresentation( "tube", "*" );
                 // o.addRepresentation( "licorice", "*" );
@@ -110,7 +110,7 @@ NGL.Examples = {
 
         "multi_struc": function( stage ){
 
-            stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
 
                 o.addRepresentation( "tube", "*" );
                 o.addRepresentation( "ball+stick", "hetero" );
@@ -118,7 +118,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "../data/__example__/3pqr.pdb", function( o ){
+            stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
                 o.addRepresentation( "tube", "*" );
                 o.addRepresentation( "ball+stick", "hetero" );
@@ -130,13 +130,13 @@ NGL.Examples = {
 
         "superpose": function( stage ){
 
-            stage.loadFile( "../data/__example__/3dqb.pdb", function( o1 ){
+            stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
 
                 var s = "1-320:A";
 
                 o1.addRepresentation( "tube", s );
 
-                stage.loadFile( "../data/__example__/1u19.pdb", function( o2 ){
+                stage.loadFile( "__example__/1u19.pdb", function( o2 ){
 
                     o2.addRepresentation( "tube", s );
 
@@ -156,13 +156,13 @@ NGL.Examples = {
 
         "alignment": function( stage ){
 
-            stage.loadFile( "../data/__example__/3dqb.pdb", function( o1 ){
+            stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
 
                 o1.addRepresentation( "tube" );
                 o1.addRepresentation( "ball+stick", "hetero" );
                 o1.centerView();
 
-                stage.loadFile( "../data/__example__/3sn6.pdb", function( o2 ){
+                stage.loadFile( "__example__/3sn6.pdb", function( o2 ){
 
                     o2.addRepresentation( "tube" );
                     o2.addRepresentation( "ball+stick", "hetero" );
@@ -183,12 +183,12 @@ NGL.Examples = {
 
         "alignment2": function( stage ){
 
-            stage.loadFile( "../data/__example__/1gzm.pdb", function( o1 ){
+            stage.loadFile( "__example__/1gzm.pdb", function( o1 ){
 
                 o1.addRepresentation( "tube" );
                 o1.centerView();
 
-                stage.loadFile( "../data/__example__/1u19.pdb", function( o2 ){
+                stage.loadFile( "__example__/1u19.pdb", function( o2 ){
 
                     o2.addRepresentation( "tube" );
 
@@ -208,7 +208,7 @@ NGL.Examples = {
 
         "pbc": function( stage ){
 
-            stage.loadFile( "../data/__example__/pbc.gro", function( o ){
+            stage.loadFile( "__example__/pbc.gro", function( o ){
 
                 // FIXME pbc centering and removal for files other then trajectories
 
@@ -235,7 +235,7 @@ NGL.Examples = {
 
         "xtc_parts": function( stage ){
 
-            stage.loadFile( "../data/__example__/md_1u19.gro", function( o ){
+            stage.loadFile( "__example__/md_1u19.gro", function( o ){
 
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
@@ -250,7 +250,7 @@ NGL.Examples = {
 
         "impostor": function( stage ){
 
-            stage.loadFile( "../data/__example__/1u19.pdb", function( o ){
+            stage.loadFile( "__example__/1u19.pdb", function( o ){
 
                 var _disableImpostor = NGL.disableImpostor;
 
@@ -269,7 +269,7 @@ NGL.Examples = {
 
         "cg": function( stage ){
 
-            stage.loadFile( "../data/__example__/BaceCg.pdb", function( o ){
+            stage.loadFile( "__example__/BaceCg.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "ball+stick" );
@@ -281,28 +281,28 @@ NGL.Examples = {
 
         "ribosome": function( stage ){
 
-            stage.loadFile( "../data/__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "__example__/4UPY.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "../data/__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "__example__/4UPX.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "../data/__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "../data/__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "__example__/4UPW.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 stage.centerView();
@@ -313,7 +313,7 @@ NGL.Examples = {
 
         "selection": function( stage ){
 
-            stage.loadFile( "../data/__example__/1crn.pdb", function( o ){
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
 
                 var sele = "not backbone or .CA or (PRO and .N)";
 
@@ -327,7 +327,7 @@ NGL.Examples = {
 
         "spline": function( stage ){
 
-            stage.loadFile( "../data/__example__/BaceCgProteinAtomistic.pdb", function( o ){
+            stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
                 o.addRepresentation( "tube", "10-20" );
                 o.addRepresentation( "trace", "not 11-19" );
@@ -344,7 +344,7 @@ NGL.Examples = {
                 sele: ":A or :B or DPPC"
             };
 
-            stage.loadFile( "../data/__example__/Bace1Trimer-inDPPC.gro", function( o ){
+            stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
 
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "licorice", "DPPC" );
@@ -356,7 +356,7 @@ NGL.Examples = {
 
         "script": function( stage ){
 
-            var file = "../data/__example__/script.ngl";
+            var file = "__example__/script.ngl";
 
             NGL.autoLoad( file, function( script ){
 
@@ -368,7 +368,7 @@ NGL.Examples = {
 
         "test": function( stage ){
 
-            stage.loadFile( "../data/__example__/BaceCgProteinAtomistic.pdb", function( o ){
+            stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
                 o.addRepresentation( "tube" );
                 o.addRepresentation( "licorice", "DPPC" );
