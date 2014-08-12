@@ -4,9 +4,6 @@
  */
 
 
-// rename residue to group?
-
-
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 NGL.ElementColors = {
     "H": 0xFFFFFF, "HE": 0xD9FFFF, "LI": 0xCC80FF, "BE": 0xC2FF00, "B": 0xFFB5B5,
@@ -824,7 +821,7 @@ NGL.Bond.prototype = {
 ///////////////
 // Trajectory
 
-NGL.Trajectory = function( xtcPath, structure ){
+NGL.Trajectory = function( xtcPath, structure, sele ){
 
     var SIGNALS = signals;
 
@@ -891,8 +888,10 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     }
 
+    sele = sele || "backbone and not hydrogen";
+
     this.saveInitialStructure();
-    this.changeSelection( "backbone and not hydrogen" );
+    this.changeSelection( sele );
     this.backboneIndices = this.structure.atomIndex(
         new NGL.Selection( "backbone and not hydrogen" )
     );

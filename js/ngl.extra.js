@@ -222,21 +222,29 @@ NGL.Stage.prototype = {
 
                 component = new NGL.SurfaceComponent( scope, object );
 
+            }else if( object instanceof NGL.Script ){
+
+                object.call( scope );
+
             }else{
 
                 console.warn( "NGL.Stage.loadFile: object type unknown", object );
 
             }
 
-            scope.addComponent( component );
-            
-            if( typeof onLoad === "function" ){
+            if( component ){
 
-                onLoad( component );
+                scope.addComponent( component );
+                
+                if( typeof onLoad === "function" ){
 
-            }else{
+                    onLoad( component );
 
-                scope.defaultFileRepresentation( component );
+                }else{
+
+                    scope.defaultFileRepresentation( component );
+
+                }
 
             }
 
@@ -482,11 +490,11 @@ NGL.StructureComponent.prototype = {
 
     },
 
-    addTrajectory: function( xtcPath ){
+    addTrajectory: function( xtcPath, sele ){
 
         var scope = this;
 
-        var traj = new NGL.Trajectory( xtcPath, this.structure );
+        var traj = new NGL.Trajectory( xtcPath, this.structure, sele );
 
         traj.signals.frameChanged.add( function( value ){
 
@@ -672,6 +680,32 @@ NGL.Surface.prototype = {
 
 
 ///////////
+// Script
+
+NGL.Script = function( str, name, path ){
+
+    this.name = name;
+    this.path = path;
+    this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
+
+    this.fn = new Function(
+        'stage', '__name__', '__path__', '__dir__', str
+    );
+
+}
+
+NGL.Script.prototype = {
+
+    call: function( stage ){
+
+        this.fn( stage, this.name, this.path, this.dir );
+
+    }
+
+}
+
+
+///////////
 // Loader
 
 NGL.FileLoader = function( manager ){
@@ -802,6 +836,24 @@ NGL.PlyLoader.prototype.init = function( data, name ){
 };
 
 
+NGL.ScriptLoader = function( manager ){
+
+    this.cache = new THREE.Cache();
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.ScriptLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+
+NGL.ScriptLoader.prototype.init = function( data, name, path ){
+
+    var script = new NGL.Script( data, name, path );
+
+    return script;
+
+};
+
+
 NGL.autoLoad = function(){
 
     var loaders = {
@@ -811,6 +863,8 @@ NGL.autoLoad = function(){
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
+
+        "ngl": NGL.ScriptLoader,
 
     }
 
@@ -822,7 +876,10 @@ NGL.autoLoad = function(){
         var name = path.replace( /^.*[\\\/]/, '' );
         var ext = path.split('.').pop().toLowerCase();
 
-        if( name.length===4 ){
+        // FIXME can lead to false positives
+        // maybe use a fake protocoll like rcsb://
+        console.log( path, name, ext )
+        if( name.length === 4 && name == path && name === ext ){
 
             ext = "pdb";
             file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
@@ -840,7 +897,7 @@ NGL.autoLoad = function(){
 
         function init( data ){
 
-            object = loader.init( data, name );
+            object = loader.init( data, name, path );
 
             if( typeof onLoad === "function" ) onLoad( object );
 

@@ -1,0 +1,10 @@
+
+
+stage.loadFile( __dir__ + "1blu.pdb", function( o ){
+
+    o.addRepresentation( "tube" );
+    o.addRepresentation( "licorice", "sidechainAttached" );
+    o.centerView();
+
+} );
+

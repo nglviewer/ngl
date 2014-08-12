@@ -160,16 +160,17 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onImportOptionClick(){
 
+        var fileTypes = [ "pdb", "gro", "obj", "ply", "ngl", "ngz" ];
+
         var dirWidget = new NGL.DirectoryListingWidget(
 
-            stage, "Import file", [ "pdb", "gro", "obj", "ply" ],
+            stage, "Import file", fileTypes,
 
             function( path ){
 
                 var ext = path.path.split('.').pop().toLowerCase();
 
-                if( ext == "pdb" || ext == "gro" || 
-                    ext == "obj" || ext == "ply" ){
+                if( fileTypes.indexOf( ext ) !== -1 ){
 
                     stage.loadFile( "../data/" + path.path );
                     
