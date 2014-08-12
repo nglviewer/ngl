@@ -884,6 +884,7 @@ NGL.SelectionWidget = function( signal ){
 
     var textarea = new UI.AdaptiveTextArea();
     var container = textarea;
+    var selectionStr = "";
 
     var check = function( sele ){
 
@@ -895,8 +896,10 @@ NGL.SelectionWidget = function( signal ){
 
     container.setValue = function( value ){
 
+        selectionStr = value || "";
+
         UI.AdaptiveTextArea.prototype.setValue.call(
-            textarea, value || ""
+            textarea, selectionStr
         );
 
         return container;
@@ -905,13 +908,15 @@ NGL.SelectionWidget = function( signal ){
 
     container.onEnter = function( callback ){
 
-        textarea.onKeyDown( function( e ){
+        textarea.onKeyPress( function( e ){
             
             var value = textarea.getValue();
+            var character = String.fromCharCode( e.which );
 
             if( e.keyCode === 13 ){
 
                 callback( value );
+                selectionStr = value;
                 e.preventDefault();
 
                 if( check( value ) ){
@@ -919,6 +924,24 @@ NGL.SelectionWidget = function( signal ){
                 }else{
                     textarea.setBackgroundColor( "tomato" );
                 }
+
+            }else if( selectionStr !== value + character ){
+
+                textarea.setBackgroundColor( "skyblue" );
+
+            }else{
+
+                textarea.setBackgroundColor( "white" );
+
+            }
+
+        } );
+
+        textarea.onKeyUp( function( e ){
+
+            if( selectionStr === textarea.getValue() ){
+
+                textarea.setBackgroundColor( "white" );
 
             }else{
 
