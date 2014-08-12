@@ -354,6 +354,18 @@ NGL.Examples = {
 
         },
 
+        "script": function( stage ){
+
+            var file = "../data/__example__/script.ngl";
+
+            NGL.autoLoad( file, function( script ){
+
+                script.call( stage );
+
+            } );
+
+        },
+
         "test": function( stage ){
 
             stage.loadFile( "../data/__example__/BaceCgProteinAtomistic.pdb", function( o ){
