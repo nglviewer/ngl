@@ -300,13 +300,13 @@ NGL.MenubarExampleWidget = function( stage ){
 
     Object.keys( NGL.Examples.data ).forEach( function( name ){
 
-        if( name.charAt( 0 ) === "_" ){
-
-            return;
-
-        }else if( name === "divider" ){
+        if( name === "__divider__" ){
 
             menuConfig.push( createDivider() );
+
+        }else if( name.charAt( 0 ) === "_" ){
+
+            return;
 
         }else{
             
@@ -864,7 +864,20 @@ NGL.RepresentationWidget = function( repr, component ){
 };
 
 
-NGL.SelectionWidget = function(){
+NGL.SelectionWidget = function( signal ){
+
+    // TODO bind to a selection (this requires consequent
+    // re-use of that selection elsewhere)
+
+    if( signal ){
+
+        signal.add( function( selection ){
+
+            container.setValue( selection.selectionStr );
+
+        } );
+
+    }
 
     var textarea = new UI.AdaptiveTextArea();
     var container = textarea;
@@ -1062,7 +1075,7 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new NGL.SelectionWidget()
+        .add( new NGL.SelectionWidget( traj.signals.selectionChanged )
                 .setWidth( '175px' )
                 .setValue( traj.selection.selectionStr )
                 .onEnter( function( value ){

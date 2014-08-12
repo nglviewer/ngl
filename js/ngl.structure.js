@@ -893,6 +893,9 @@ NGL.Trajectory = function( xtcPath, structure ){
 
     this.saveInitialStructure();
     this.changeSelection( "backbone and not hydrogen" );
+    this.backboneIndices = this.structure.atomIndex(
+        new NGL.Selection( "backbone and not hydrogen" )
+    );
     this.makeIndices();
 
 };
@@ -926,7 +929,32 @@ NGL.Trajectory.prototype = {
         this.makeIndices();
         this.resetCache();
 
-        this.signals.selectionChanged.dispatch();
+        this.signals.selectionChanged.dispatch( this.selection );
+
+    },
+
+    getIndices: function( selection ){
+
+        this.indices = this.structure.atomIndex( selection );
+
+        var i, j;
+        var n = this.indices.length * 3;
+
+        this.coords1 = new Float32Array( n );
+        this.coords2 = new Float32Array( n );
+
+        var y = this.initialStructure;
+        var coords2 = this.coords2;
+
+        for( i = 0; i < n; i += 3 ){
+
+            j = this.indices[ i / 3 ] * 3;
+
+            coords2[ i + 0 ] = y[ j + 0 ];
+            coords2[ i + 1 ] = y[ j + 1 ];
+            coords2[ i + 2 ] = y[ j + 2 ];
+
+        }
 
     },
 
@@ -1057,10 +1085,10 @@ NGL.Trajectory.prototype = {
             var box = new Float32Array( arrayBuffer, 0, 9 );
             var coords = new Float32Array( arrayBuffer, 9 * 4 );
 
-            if( scope.indices.length > 0 && scope.params.centerPbc ){
+            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
                 var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
                 var mean = scope.getCircularMean(
-                    scope.indices, coords, box2
+                    scope.backboneIndices, coords, box2
                 );
                 scope.centerPbc( coords, mean, box2 );
             }
