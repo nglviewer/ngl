@@ -269,7 +269,7 @@
 						li.appendChild( a );
 						ul.appendChild( li );
 
-						nameCategoryMap[page[0]] = {
+						nameCategoryMap[ page[0].replace( / /g, "-" ) ] = {
 							section: section,
 							category: category,
 							name: page[0],
