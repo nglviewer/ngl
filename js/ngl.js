@@ -2666,53 +2666,64 @@ NGL.LineBuffer.prototype = {
         for( var v = 0; v < n; v++ ){
 
             j = v * 3;
-
-            x1 = from[ j + 0 ];
-            y1 = from[ j + 1 ];
-            z1 = from[ j + 2 ];
-
-            x2 = to[ j + 0 ];
-            y2 = to[ j + 1 ];
-            z2 = to[ j + 2 ];
-
-            x = ( x1 + x2 ) / 2.0;
-            y = ( y1 + y2 ) / 2.0;
-            z = ( z1 + z2 ) / 2.0;
-
             i = v * 2 * 3;
+
             if( from && to ){
+
+                x1 = from[ j + 0 ];
+                y1 = from[ j + 1 ];
+                z1 = from[ j + 2 ];
+
+                x2 = to[ j + 0 ];
+                y2 = to[ j + 1 ];
+                z2 = to[ j + 2 ];
+
+                x = ( x1 + x2 ) / 2.0;
+                y = ( y1 + y2 ) / 2.0;
+                z = ( z1 + z2 ) / 2.0;
+
                 aPosition[ i + 0 ] = from[ j + 0 ];
                 aPosition[ i + 1 ] = from[ j + 1 ];
                 aPosition[ i + 2 ] = from[ j + 2 ];
                 aPosition[ i + 3 ] = x;
                 aPosition[ i + 4 ] = y;
                 aPosition[ i + 5 ] = z;
+
             }
+
             if( color && color2 ){
+
                 aColor[ i + 0 ] = color[ j + 0 ];
                 aColor[ i + 1 ] = color[ j + 1 ];
                 aColor[ i + 2 ] = color[ j + 2 ];
                 aColor[ i + 3 ] = color[ j + 0 ];
                 aColor[ i + 4 ] = color[ j + 1 ];
                 aColor[ i + 5 ] = color[ j + 2 ];
+
             }
 
             i2 = i + n6;
+
             if( from && to ){
+
                 aPosition[ i2 + 0 ] = x;
                 aPosition[ i2 + 1 ] = y;
                 aPosition[ i2 + 2 ] = z;
                 aPosition[ i2 + 3 ] = to[ j + 0 ];
                 aPosition[ i2 + 4 ] = to[ j + 1 ];
                 aPosition[ i2 + 5 ] = to[ j + 2 ];
+
             }
+            
             if( color && color2 ){
+
                 aColor[ i2 + 0 ] = color2[ j + 0 ];
                 aColor[ i2 + 1 ] = color2[ j + 1 ];
                 aColor[ i2 + 2 ] = color2[ j + 2 ];
                 aColor[ i2 + 3 ] = color2[ j + 0 ];
                 aColor[ i2 + 4 ] = color2[ j + 1 ];
                 aColor[ i2 + 5 ] = color2[ j + 2 ];
+
             }
 
         }

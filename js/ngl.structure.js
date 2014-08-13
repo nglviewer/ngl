@@ -316,8 +316,10 @@ NGL.AtomSet.prototype = {
 
     atomColor: function( selection, type ){
 
+        // console.time( "atomColor" );
+
         // TODO cache
-        var i, c, color;
+        var i, c, color, r, g, b;
         var elemColors = NGL.ElementColors;
 
         if( selection ){
@@ -328,11 +330,35 @@ NGL.AtomSet.prototype = {
 
         i = 0;
 
-        this.eachAtom( function( a ){
+        var atomColorFunc = function(){
 
             if( type === "picking" ){
-                
-                c = a.globalindex + 1;
+
+                return function( a ){
+
+                    c = a.globalindex + 1;
+
+                    color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+                    color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+                    color[ i + 2 ] = ( c & 255 ) / 255;
+
+                    i += 3;
+
+                }
+
+            }else if( type === "element" ){
+
+                return function( a ){
+
+                    c = elemColors[ a.element ] || 0xCCCCCC;
+
+                    color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+                    color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+                    color[ i + 2 ] = ( c & 255 ) / 255;
+
+                    i += 3;
+
+                }
 
             }else if( type ){
 
@@ -340,20 +366,31 @@ NGL.AtomSet.prototype = {
 
             }else{
 
-                c = elemColors[ a.element ];
-                if( !c ) c = 0xCCCCCC;
+                c = 0xCCCCCC;
 
             }
 
-            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-            color[ i + 2 ] = ( c & 255 ) / 255;
+            r = ( c >> 16 & 255 ) / 255;
+            g = ( c >> 8 & 255 ) / 255;
+            b = ( c & 255 ) / 255;
 
-            i += 3;
+            return function( a ){
 
-        }, selection );
+                color[ i + 0 ] = r;
+                color[ i + 1 ] = g;
+                color[ i + 2 ] = b;
+
+                i += 3;
+
+            }
+
+        }();
+
+        this.eachAtom( atomColorFunc, selection );
 
         if( selection ) color = new Float32Array( color );
+
+        // console.timeEnd( "atomColor" );
 
         return color;
 
@@ -622,14 +659,17 @@ NGL.AtomSet.prototype = {
                 
                     c = b.atom1.globalindex + 1;
 
+                }else if( type === "element" ){
+
+                    c = elemColors[ b.atom1.element ] || 0xCCCCCC;
+
                 }else if( type ){
 
                     c = type;
 
                 }else{
 
-                    c = elemColors[ b.atom1.element ];
-                    if( !c ) c = 0xCCCCCC;
+                    c = 0xCCCCCC;
 
                 }
 
@@ -639,14 +679,17 @@ NGL.AtomSet.prototype = {
                 
                     c = b.atom2.globalindex + 1;
 
+                }else if( type === "element" ){
+
+                    c = elemColors[ b.atom2.element ] || 0xCCCCCC;
+
                 }else if( type ){
 
                     c = type;
 
                 }else{
 
-                    c = elemColors[ b.atom2.element ];
-                    if( !c ) c = 0xCCCCCC;
+                    c = 0xCCCCCC;
 
                 }
 

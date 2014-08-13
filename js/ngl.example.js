@@ -370,20 +370,32 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md_1u19.gro", function( o ){
 
-                o.addRepresentation( "spacefill", "1-30" );
-                o.addRepresentation( "ball+stick", "30-60" );
-                o.addRepresentation( "licorice", "60-90" );
-                o.addRepresentation( "hyperball", "90-120" );
-                o.addRepresentation( "line", "120-150" );
-                o.addRepresentation( "backbone", "150-180" );
-                o.addRepresentation( "tube", "180-210" );
-                o.addRepresentation( "cartoon", "210-240" );
-                o.addRepresentation( "ribbon", "240-270" );
-                o.addRepresentation( "trace", "270-300" );
+                var spacefill = o.addRepresentation( "spacefill", "1-30" );
+                var ballStick = o.addRepresentation( "ball+stick", "30-60" );
+                var licorice = o.addRepresentation( "licorice", "60-90" );
+                var hyperball = o.addRepresentation( "hyperball", "90-120" );
+                var line = o.addRepresentation( "line", "120-150" );
+                var backbone = o.addRepresentation( "backbone", "150-180" );
+                var tube = o.addRepresentation( "tube", "180-210" );
+                var cartoon = o.addRepresentation( "cartoon", "210-240" );
+                var ribbon = o.addRepresentation( "ribbon", "240-270" );
+                var trace = o.addRepresentation( "trace", "270-300" );
 
                 o.centerView();
 
                 o.addTrajectory( "__example__/@md_1u19.xtc" );
+
+                var i = 0;
+                var colorList = [ 0x00CCFF, "element" ];
+
+                // setInterval( function(){
+
+                //     spacefill.update({ "color": colorList[ i % colorList.length ] });
+                //     stage.viewer.render();
+
+                //     i += 1;
+
+                // }, 500 );
 
             }, { sele: "not hydrogen" } );
 
