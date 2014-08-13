@@ -1103,13 +1103,20 @@ NGL.SpacefillRepresentation.prototype.create = function(){
 
 };
 
-NGL.SpacefillRepresentation.prototype.update = function(){
+NGL.SpacefillRepresentation.prototype.update = function( what ){
 
     NGL.Representation.prototype.update.call( this );
 
-    this.sphereBuffer.setAttributes({
-        position: this.atomSet.atomPosition()
-    });
+    what = what || { "position": true };
+    var data = {};
+
+    if( what[ "position" ] ){
+
+        data[ "position" ] = this.atomSet.atomPosition();
+
+    }
+
+    this.sphereBuffer.setAttributes( data );
 
 };
 
