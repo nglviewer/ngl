@@ -309,6 +309,7 @@ NGL.Component = function( stage ){
         representationAdded: new SIGNALS.Signal(),
         representationRemoved: new SIGNALS.Signal(),
         visibilityChanged: new SIGNALS.Signal(),
+        nameChanged: new SIGNALS.Signal(),
 
     };
 
@@ -323,7 +324,7 @@ NGL.Component.prototype = {
 
     apply: function( object ){
 
-        // object.atomPosition = NGL.AtomSet.prototype.atomPosition;
+        object.setName = NGL.Component.prototype.setName;
 
     },
 
@@ -369,6 +370,13 @@ NGL.Component.prototype = {
     setVisibility: function( value ){
 
         this.signals.visibilityChanged.dispatch( value );
+
+    },
+
+    setName: function( value ){
+
+        this.name = value;
+        this.signals.nameChanged.dispatch( value );
 
     },
 
@@ -629,9 +637,10 @@ NGL.Component.prototype.apply( NGL.SurfaceComponent.prototype );
 ////////////
 // Surface
 
-NGL.Surface = function( object, name ){
+NGL.Surface = function( object, name, path ){
 
     this.name = name;
+    this.path = path;
 
     if( object instanceof THREE.Geometry ){
 
@@ -753,9 +762,9 @@ NGL.PdbLoader = function( manager ){
 
 NGL.PdbLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.PdbLoader.prototype.init = function( str, name ){
+NGL.PdbLoader.prototype.init = function( str, name, path ){
 
-    var pdb = new NGL.PdbStructure( name );
+    var pdb = new NGL.PdbStructure( name, path );
 
     pdb.parse( str );
 
@@ -773,9 +782,9 @@ NGL.GroLoader = function( manager ){
 
 NGL.GroLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.GroLoader.prototype.init = function( str, name ){
+NGL.GroLoader.prototype.init = function( str, name, path ){
 
-    var gro = new NGL.GroStructure( name );
+    var gro = new NGL.GroStructure( name, path );
 
     gro.parse( str );
 
@@ -793,7 +802,7 @@ NGL.ObjLoader = function( manager ){
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-NGL.ObjLoader.prototype.init = function( data, name ){
+NGL.ObjLoader.prototype.init = function( data, name, path ){
 
     if( typeof data === "string" ){
 
@@ -801,7 +810,7 @@ NGL.ObjLoader.prototype.init = function( data, name ){
 
     }
 
-    return new NGL.Surface( data, name );
+    return new NGL.Surface( data, name, path );
 
 };
 
@@ -815,7 +824,7 @@ NGL.PlyLoader = function( manager ){
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
-NGL.PlyLoader.prototype.init = function( data, name ){
+NGL.PlyLoader.prototype.init = function( data, name, path ){
 
     if( typeof data === "string" ){
 
@@ -823,7 +832,7 @@ NGL.PlyLoader.prototype.init = function( data, name ){
 
     }
 
-    return new NGL.Surface( data, name );
+    return new NGL.Surface( data, name, path );
 
 };
 
