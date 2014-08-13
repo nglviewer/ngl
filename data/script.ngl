@@ -4,7 +4,7 @@ stage.loadFile( __dir__ + "1blu.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.addRepresentation( "licorice", "sidechainAttached and not( SF4 or CYS )" )
-    	.setVisibility( false );
+        .setVisibility( false );
     o.addRepresentation( "hyperball", "sidechainAttached and ( SF4 or CYS )" );
     o.centerView();
 

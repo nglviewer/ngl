@@ -113,7 +113,7 @@ NGL.MenubarWidget = function( stage ){
 
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage ) );
-    container.add( new NGL.MenubarExampleWidget( stage ) );
+    container.add( new NGL.MenubarExamplesWidget( stage ) );
     container.add( new NGL.MenubarHelpWidget( stage ) );
 
     return container;
@@ -292,7 +292,7 @@ NGL.MenubarViewWidget = function( stage ){
 };
 
 
-NGL.MenubarExampleWidget = function( stage ){
+NGL.MenubarExamplesWidget = function( stage ){
 
     // configure menu contents
 
@@ -329,7 +329,7 @@ NGL.MenubarExampleWidget = function( stage ){
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
-    return UI.MenubarHelper.createMenuContainer( 'Example', optionsPanel );
+    return UI.MenubarHelper.createMenuContainer( 'Examples', optionsPanel );
 
 };
 
