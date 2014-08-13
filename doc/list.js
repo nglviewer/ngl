@@ -36,6 +36,7 @@ var list = {
             [ "Selection", "api/object/Selection" ]
         ],
         "Component": [
+            [ "Component", "api/component/Component" ],
             [ "StructureComponent", "api/component/StructureComponent" ],
             [ "SurfaceComponent", "api/component/SurfaceComponent" ]
         ],
