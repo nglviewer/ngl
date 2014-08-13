@@ -156,7 +156,7 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
-            object.addRepresentation( "tube", "*" );
+            object.addRepresentation( "cartoon", "*" );
             object.addRepresentation( "licorice", "hetero" );
             object.centerView();
 
@@ -871,7 +871,7 @@ NGL.autoLoad = function(){
 
     return function( file, onLoad ){
 
-        var object;
+        var object, rcsb;
 
         var path = ( file instanceof File ) ? file.name : file;
         var name = path.replace( /^.*[\\\/]/, '' );
@@ -879,11 +879,12 @@ NGL.autoLoad = function(){
 
         // FIXME can lead to false positives
         // maybe use a fake protocoll like rcsb://
-        console.log( path, name, ext )
-        if( name.length === 4 && name == path && name === ext ){
+        if( name.length === 4 && name == path && name.toLowerCase() === ext ){
 
             ext = "pdb";
             file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+
+            rcsb = true;
 
         }
 
@@ -910,6 +911,10 @@ NGL.autoLoad = function(){
 
             var fileLoader = new NGL.FileLoader();
             fileLoader.load( file, init )
+
+        }else if( rcsb ){
+
+            loader.load( file, init );
 
         }else{
 
@@ -1007,6 +1012,8 @@ NGL.Representation.prototype = {
 
         if( just_create ){
 
+            console.error( "deprecated" )
+
             this.dispose();
             this.create();
             this.attach();
@@ -1100,10 +1107,8 @@ NGL.SpacefillRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
-    var position = this.atomSet.atomPosition();
-
     this.sphereBuffer.setAttributes({
-        position: position
+        position: this.atomSet.atomPosition()
     });
 
 };
