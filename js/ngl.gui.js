@@ -867,9 +867,23 @@ NGL.RepresentationWidget = function( repr, component ){
 
         } );
 
-    container.addStatic( new UI.Text( repr.name ).setWidth( "80px" ) );
-    container.addStatic( toggle );
-    container.addStatic( dispose );
+    var color = new UI.Color()
+        .setTitle( "color" )
+        .setWidth( "17px" )
+        .setHeight( "21px" )
+        .setMarginLeft( "10px" )
+        .onChange( function( e ){
+
+            repr.update({ "color": color.getHexValue() });
+            repr.viewer.render();
+
+        } );
+
+    container
+        .addStatic( new UI.Text( repr.name ).setWidth( "80px" ) )
+        .addStatic( toggle )
+        .addStatic( dispose )
+        .addStatic( color );
 
     // Add sele
 
