@@ -30,7 +30,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
-                o.addRepresentation( "tube", "protein" );
+                o.addRepresentation( "cartoon", "protein" );
                 // o.addRepresentation( "spacefill", "NA or CL" );
                 o.centerView();
 
@@ -51,7 +51,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/md.gro", function( o ){
 
                 o.addRepresentation( "line", "not hydrogen and protein" );
-                o.addRepresentation( "tube", "protein" );
+                o.addRepresentation( "cartoon", "protein" );
                 o.centerView();
 
                 var traj = o.addTrajectory( "__example__/md.xtc" );
@@ -72,7 +72,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "cartoon", "*" );
                 o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
                 o.addRepresentation( "licorice", "hetero" );
 
@@ -86,7 +86,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1blu.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "cartoon", "*" );
                 o.addRepresentation( "licorice", "*" );
                 o.centerView();
 
@@ -98,7 +98,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1LVZ.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "cartoon", "*" );
                 // o.addRepresentation( "licorice", "*" );
                 o.centerView();
 
@@ -112,7 +112,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1crn.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "cartoon", "*" );
                 o.addRepresentation( "ball+stick", "hetero" );
                 o.centerView();
 
@@ -120,7 +120,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*" );
+                o.addRepresentation( "cartoon", "*" );
                 o.addRepresentation( "ball+stick", "hetero" );
                 o.centerView();
 
@@ -134,11 +134,11 @@ NGL.Examples = {
 
                 var s = "1-320:A";
 
-                o1.addRepresentation( "tube", s );
+                o1.addRepresentation( "cartoon", s );
 
                 stage.loadFile( "__example__/1u19.pdb", function( o2 ){
 
-                    o2.addRepresentation( "tube", s );
+                    o2.addRepresentation( "cartoon", s );
 
                     var s1 = o1.structure;
                     var s2 = o2.structure;
@@ -158,13 +158,13 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
 
-                o1.addRepresentation( "tube" );
+                o1.addRepresentation( "cartoon" );
                 o1.addRepresentation( "ball+stick", "hetero" );
                 o1.centerView();
 
                 stage.loadFile( "__example__/3sn6.pdb", function( o2 ){
 
-                    o2.addRepresentation( "tube" );
+                    o2.addRepresentation( "cartoon" );
                     o2.addRepresentation( "ball+stick", "hetero" );
 
                     var s1 = o1.structure;
@@ -185,12 +185,12 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1gzm.pdb", function( o1 ){
 
-                o1.addRepresentation( "tube" );
+                o1.addRepresentation( "cartoon" );
                 o1.centerView();
 
                 stage.loadFile( "__example__/1u19.pdb", function( o2 ){
 
-                    o2.addRepresentation( "tube" );
+                    o2.addRepresentation( "cartoon" );
 
                     var s1 = o1.structure;
                     var s2 = o2.structure;
@@ -224,7 +224,7 @@ NGL.Examples = {
 
                 } );*/
 
-                o.addRepresentation( "tube", "backbone" );
+                o.addRepresentation( "cartoon", "backbone" );
                 o.addRepresentation( "spacefill", "backbone" );
                 o.addRepresentation( "line" );
                 o.centerView();
@@ -237,7 +237,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md_1u19.gro", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
                 // o.addRepresentation( "ball+stick" );
                 o.centerView();
@@ -271,7 +271,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/BaceCg.pdb", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 o.addRepresentation( "ball+stick" );
                 o.centerView();
 
@@ -283,28 +283,28 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/4UPY.pdb", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPX.pdb", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UQ5.pdb", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPW.pdb", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );
@@ -317,7 +317,7 @@ NGL.Examples = {
 
                 var sele = "not backbone or .CA or (PRO and .N)";
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 o.addRepresentation( "licorice", sele );
                 o.centerView();
 
@@ -329,7 +329,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
-                o.addRepresentation( "tube", "10-20" );
+                o.addRepresentation( "cartoon", "10-20" );
                 o.addRepresentation( "trace", "not 11-19" );
                 o.addRepresentation( "licorice", "sidechainAttached" );
                 o.centerView();
@@ -346,7 +346,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 o.addRepresentation( "licorice", "DPPC" );
                 o.centerView();
 
@@ -370,7 +370,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
-                o.addRepresentation( "tube" );
+                o.addRepresentation( "cartoon" );
                 o.addRepresentation( "licorice", "DPPC" );
                 o.centerView();
 

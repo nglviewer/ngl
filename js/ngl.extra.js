@@ -1460,6 +1460,92 @@ NGL.TubeRepresentation.prototype.create = function(){
         var sub = spline.getSubdividedPosition( scope.subdiv );
 
         var rx = 1.5;
+        var ry = 1.5;
+
+        scope.bufferList.push(
+
+            new NGL.TubeMeshBuffer(
+                sub.position,
+                sub.normal,
+                sub.binormal,
+                sub.tangent,
+                sub.color,
+                sub.size,
+                12,
+                sub.pickingColor,
+                rx,
+                ry
+            )
+
+        );
+
+        scope.fiberList.push( fiber );
+
+    }, this.selection, true );
+
+};
+
+NGL.TubeRepresentation.prototype.update = function(){
+
+    NGL.Representation.prototype.update.call( this );
+
+    var i = 0;
+    var n = this.fiberList.length;
+
+    // console.time( this.name, "update" );
+
+    for( i = 0; i < n; ++i ){
+
+        var fiber = this.fiberList[ i ]
+
+        if( fiber.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( fiber );
+        var sub = spline.getSubdividedPosition( this.subdiv );
+
+        this.bufferList[ i ].setAttributes({
+            "position": sub.position,
+            "normal": sub.normal,
+            "binormal": sub.binormal,
+            "tangent": sub.tangent,
+            "size": sub.size
+        });
+
+    };
+
+    // console.timeEnd( this.name, "update" );
+
+};
+
+
+NGL.CartoonRepresentation = function( structure, viewer, sele, size, subdiv ){
+
+    this.size = size || 0.25;
+    this.subdiv = subdiv || 10;
+
+    NGL.Representation.call( this, structure, viewer, sele );
+
+};
+
+NGL.CartoonRepresentation.prototype = Object.create( NGL.Representation.prototype );
+
+NGL.CartoonRepresentation.prototype.name = "cartoon";
+
+NGL.CartoonRepresentation.prototype.create = function(){
+
+    var scope = this;
+
+    this.bufferList = [];
+    this.fiberList = [];
+
+    this.structure.eachFiber( function( fiber ){
+
+        if( fiber.residueCount < 4 ) return;
+
+        var spline = new NGL.Spline( fiber );
+        var sub = spline.getSubdividedPosition( scope.subdiv );
+
+        var rx = 1.5;
         var ry = 0.5;
 
         if( fiber.isCg() ){
@@ -1489,7 +1575,7 @@ NGL.TubeRepresentation.prototype.create = function(){
 
 };
 
-NGL.TubeRepresentation.prototype.update = function(){
+NGL.CartoonRepresentation.prototype.update = function(){
 
     NGL.Representation.prototype.update.call( this );
 
@@ -1909,6 +1995,7 @@ NGL.representationTypes = {
     "line":         NGL.LineRepresentation,
     "backbone":     NGL.BackboneRepresentation,
     "tube":         NGL.TubeRepresentation,
+    "cartoon":      NGL.CartoonRepresentation,
     "ribbon":       NGL.RibbonRepresentation,
     "trace":        NGL.TraceRepresentation,
 
