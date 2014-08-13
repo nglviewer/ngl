@@ -6,5 +6,7 @@ stage.loadFile( __dir__ + "1blu.pdb", function( o ){
     o.addRepresentation( "licorice", "sidechainAttached" );
     o.centerView();
 
+    o.setName( "1BLU" );
+
 } );
 

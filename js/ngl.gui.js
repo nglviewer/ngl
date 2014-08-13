@@ -440,6 +440,12 @@ NGL.StructureComponentWidget = function( component, stage ){
         
     } );
 
+    signals.nameChanged.add( function( value ){
+
+        name.setValue( value );
+        
+    } );
+
     // Actions
 
     var toggle = new UI.Icon( "eye" )
@@ -460,7 +466,6 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            // component.centerView( "backbone" );
             component.centerView();
 
         } );
@@ -486,6 +491,12 @@ NGL.StructureComponentWidget = function( component, stage ){
             }
 
         } );
+
+    // Name
+
+    var name = new UI.Text( component.name )
+        .setWidth( "100px" )
+        .setWordWrap( "break-word" );
 
     // Selection
 
@@ -635,12 +646,14 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addEntry( "Representation", repr )
         .addEntry( "Trajectory", traj )
         .addEntry( "Superpose", superpose )
-        .addEntry( "SS", ssButton );
+        .addEntry( "SS", ssButton )
+        .addEntry(
+            "File", new UI.Text( component.structure.name )
+                        .setMaxWidth( "100px" )
+                        .setWordWrap( "break-word" ) );
 
     container
-        .addStatic( new UI.Text( component.name )
-                        .setWidth( "100px" )
-                        .setWordBreak( "break-all" ) )
+        .addStatic( name )
         .addStatic( toggle )
         .addStatic( center )
         .addStatic( dispose )
@@ -726,6 +739,12 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         
     } );
 
+    signals.nameChanged.add( function( value ){
+
+        name.setValue( value );
+        
+    } );
+
     // Actions
 
     var toggle = new UI.Icon( "eye" )
@@ -772,10 +791,14 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
         } );
     
+    // Name
+
+    var name = new UI.Text( component.name )
+        .setWidth( "100px" )
+        .setWordWrap( "break-word" );
+
     container
-        .addStatic( new UI.Text( component.name )
-                        .setWidth( "100px" )
-                        .setWordBreak( "break-all" ) )
+        .addStatic( name )
         .addStatic( toggle )
         .addStatic( center )
         .addStatic( dispose );
@@ -1142,7 +1165,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addEntry(
             "File", new UI.Text( traj.xtcPath )
                         .setMaxWidth( "100px" )
-                        .setWordBreak( "break-all" ) );
+                        .setWordWrap( "break-word" ) );
 
     container
         .addStatic( menu );

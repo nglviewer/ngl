@@ -1436,9 +1436,10 @@ NGL.Superposition.prototype = {
 //////////////
 // Structure
 
-NGL.Structure = function( name ){
+NGL.Structure = function( name, path ){
 
     this.name = name;
+    this.path = path;
 
     this.reset();
 

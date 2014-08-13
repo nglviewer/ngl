@@ -84,7 +84,7 @@ var properties = [
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
     'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
     'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
-    'spellcheck'
+    'wordWrap', 'spellcheck'
 ];
 
 properties.forEach( function ( property ) {
