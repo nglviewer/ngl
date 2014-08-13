@@ -366,6 +366,29 @@ NGL.Examples = {
 
         },
 
+        "trajReprUpdate": function( stage ){
+
+            stage.loadFile( "__example__/md_1u19.gro", function( o ){
+
+                o.addRepresentation( "spacefill", "1-30" );
+                o.addRepresentation( "ball+stick", "30-60" );
+                o.addRepresentation( "licorice", "60-90" );
+                o.addRepresentation( "hyperball", "90-120" );
+                o.addRepresentation( "line", "120-150" );
+                o.addRepresentation( "backbone", "150-180" );
+                o.addRepresentation( "tube", "180-210" );
+                o.addRepresentation( "cartoon", "210-240" );
+                o.addRepresentation( "ribbon", "240-270" );
+                o.addRepresentation( "trace", "270-300" );
+
+                o.centerView();
+
+                o.addTrajectory( "__example__/@md_1u19.xtc" );
+
+            }, { sele: "not hydrogen" } );
+
+        },
+
         "test": function( stage ){
 
             stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
