@@ -153,6 +153,65 @@ NGL.AA1 = {
 NGL.nextGlobalAtomindex = 0;
 
 
+//////////
+// Color
+
+NGL.ColorScheme = function( type ){
+
+    this.type = type;
+
+}
+
+NGL.ColorScheme.prototype = {
+
+    atomColor: function( a ){
+
+        var type = this.type;
+        var elemColors = NGL.ElementColors;
+
+        switch( type ){
+
+            case "picking":
+            
+                c = a.globalindex + 1;
+                break;
+
+            case "element":
+            
+                c = elemColors[ a.element ] || 0xCCCCCC;
+                break;
+
+            case "ss":
+            
+                if( a.ss === "h" ){
+                    c = 0xFF0080;
+                }else if( a.ss === "s" ){
+                    c = 0xFFC800;
+                }else if( a.atomname === "P" ){
+                    c = 0xAE00FE;
+                }else{
+                    c = 0xFFFFFF;
+                }
+                break;
+
+            case undefined:
+
+                c = 0xFFFFFF;
+
+            default: 
+               
+                c = type;
+                break;
+
+        }
+
+        return c;
+
+    }
+
+};
+
+
 ////////
 // Set
 
@@ -319,8 +378,10 @@ NGL.AtomSet.prototype = {
         // console.time( "atomColor" );
 
         // TODO cache
-        var i, c, color, r, g, b;
+        var c, color;
         var elemColors = NGL.ElementColors;
+
+        var colorScheme = new NGL.ColorScheme( type );
 
         if( selection ){
             color = [];
@@ -328,65 +389,19 @@ NGL.AtomSet.prototype = {
             color = new Float32Array( this.atomCount * 3 );
         }
 
-        i = 0;
+        var i = 0;
 
-        var atomColorFunc = function(){
+        this.eachAtom( function( a ){
 
-            if( type === "picking" ){
+            c = colorScheme.atomColor( a );
 
-                return function( a ){
+            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+            color[ i + 2 ] = ( c & 255 ) / 255;
 
-                    c = a.globalindex + 1;
+            i += 3;
 
-                    color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-                    color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-                    color[ i + 2 ] = ( c & 255 ) / 255;
-
-                    i += 3;
-
-                }
-
-            }else if( type === "element" ){
-
-                return function( a ){
-
-                    c = elemColors[ a.element ] || 0xCCCCCC;
-
-                    color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-                    color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-                    color[ i + 2 ] = ( c & 255 ) / 255;
-
-                    i += 3;
-
-                }
-
-            }else if( type ){
-
-                c = type;
-
-            }else{
-
-                c = 0xCCCCCC;
-
-            }
-
-            r = ( c >> 16 & 255 ) / 255;
-            g = ( c >> 8 & 255 ) / 255;
-            b = ( c & 255 ) / 255;
-
-            return function( a ){
-
-                color[ i + 0 ] = r;
-                color[ i + 1 ] = g;
-                color[ i + 2 ] = b;
-
-                i += 3;
-
-            }
-
-        }();
-
-        this.eachAtom( atomColorFunc, selection );
+        }, selection );
 
         if( selection ) color = new Float32Array( color );
 
@@ -651,49 +666,11 @@ NGL.AtomSet.prototype = {
         var c;
         var elemColors = NGL.ElementColors;
 
+        var colorScheme = new NGL.ColorScheme( type );
+
         this.eachBond( function( b ){
 
-            if( fromTo ){
-
-                if( type === "picking" ){
-                
-                    c = b.atom1.globalindex + 1;
-
-                }else if( type === "element" ){
-
-                    c = elemColors[ b.atom1.element ] || 0xCCCCCC;
-
-                }else if( type ){
-
-                    c = type;
-
-                }else{
-
-                    c = 0xCCCCCC;
-
-                }
-
-            }else{
-
-                if( type === "picking" ){
-                
-                    c = b.atom2.globalindex + 1;
-
-                }else if( type === "element" ){
-
-                    c = elemColors[ b.atom2.element ] || 0xCCCCCC;
-
-                }else if( type ){
-
-                    c = type;
-
-                }else{
-
-                    c = 0xCCCCCC;
-
-                }
-
-            }
+            c = colorScheme.atomColor( fromTo ? b.atom1 : b.atom2 );
 
             color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
             color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
@@ -2276,21 +2253,21 @@ NGL.Fiber = function( residues ){
 
     if( this.isProtein() ){
 
-        this.trace_atomname = "CA";
-        this.direction_atomname1 = "C";
-        this.direction_atomname2 = [ "O", "OC1", "O1" ];
+        this.traceAtomname = "CA";
+        this.directionAtomname1 = "C";
+        this.directionAtomname2 = [ "O", "OC1", "O1" ];
 
     }else if( this.isNucleic() ){
 
-        this.trace_atomname = "P";
-        this.direction_atomname1 = [ "OP1", "O1P" ];
-        this.direction_atomname2 = [ "OP2", "O2P" ];
+        this.traceAtomname = "P";
+        this.directionAtomname1 = [ "OP1", "O1P" ];
+        this.directionAtomname2 = [ "OP2", "O2P" ];
 
     }else if( this.isCg() ){
 
-        this.trace_atomname = "CA";
-        this.direction_atomname1 = "CA";
-        this.direction_atomname2 = "CA";
+        this.traceAtomname = "CA";
+        this.directionAtomname1 = "CA";
+        this.directionAtomname2 = "CA";
 
     }
 
@@ -2634,7 +2611,6 @@ NGL.Atom.prototype = {
     resindex: undefined,
     serial: undefined,
     ss: undefined,
-    color: undefined,
     vdw: undefined,
     covalent: undefined,
     hetero: undefined,
@@ -2741,7 +2717,6 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.resindex = a.resindex;
                     _a.serial = a.serial;
                     _a.ss = a.ss;
-                    _a.color = a.color;
                     _a.vdw = a.vdw;
                     _a.covalent = a.covalent;
                     _a.hetero = a.hetero;
@@ -2918,7 +2893,6 @@ NGL.PdbStructure.prototype._parse = function( str ){
             a.ss = 'c';
             a.bfactor = parseFloat( line.substr( 60, 8 ) );
             a.altloc = altloc;
-            a.color = 0xFFFFFF;
             a.vdw = vdwRadii[ element ];
             a.covalent = covRadii[ element ];
 
@@ -3113,7 +3087,6 @@ NGL.GroStructure.prototype._parse = function( str ){
         a.ss = 'c';
         a.bonds = [];
 
-        a.color = 0xFFFFFF;
         a.vdw = vdwRadii[ element ];
         a.covalent = covRadii[ element ];
 
