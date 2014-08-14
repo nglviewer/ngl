@@ -731,16 +731,14 @@ NGL.ColorSchemeWidget = function(){
     var iconText = new UI.Text( "" )
         .setClass( "fa-stack-1x" )
         .setColor( "#111" )
-        .setFontSize( "0.8em" )
+        .setFontSize( "0.9em" )
 
-    var iconSquare = new UI.Icon( "square", "stack-1x" );
+    var iconSquare = new UI.Icon( "square", "stack-1x" )
+        .setMarginTop( "0.05em" );
 
     var icon = new UI.Icon( "stack" )
         .setTitle( "color" )
         .setWidth( "1em" ).setHeight( "1em" ).setLineHeight( "1em" )
-        .add( new UI.Icon( "square", "stack-1x" )
-                .setFontSize( "1.2em" )
-                .setLineHeight( "inherit" ) )
         .add( iconSquare )
         .add( iconText )
         .onClick( function(){
@@ -839,14 +837,19 @@ NGL.ColorSchemeWidget = function(){
 
     }
 
+    var c = new THREE.Color();
     icon.setColor = function( value ){
-
-        // console.log(value)
 
         icon.setScheme( "color" );
         colorInput.setValue( value );
         colorInput2.setValue( value );
         iconSquare.setColor( value );
+        c.setStyle( value );
+        if( ( c.r + c.g + c.b ) > 1.5 ){
+            iconText.setColor( "#000" );
+        }else{
+            iconText.setColor( "#FFF" );
+        }
         return icon;
 
     }
