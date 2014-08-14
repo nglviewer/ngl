@@ -36,6 +36,8 @@ NGL.ElementColors = {
     "": 0xFFFFFF
 };
 
+
+// from Jmol http://jmol.sourceforge.net/jscolors/
 NGL.ResidueColors = {
     "ALA": 0xC8C8C8,
     "ARG": 0x145AFF,
