@@ -991,6 +991,17 @@ NGL.Representation.prototype = {
 
     },
 
+    changeColor: function( type ){
+
+        if( type && type !== this.color ){
+
+            this.color = type;
+            this.update({ "color": type });
+
+        }
+
+    },
+
     finalize: function(){
 
         this.attach();
@@ -1120,7 +1131,6 @@ NGL.SpacefillRepresentation.prototype.update = function( what ){
 
     if( what[ "color" ] ){
 
-        this.color = what[ "color" ];
         sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
 
     }
@@ -1195,8 +1205,6 @@ NGL.BallAndStickRepresentation.prototype.update = function( what ){
     }
 
     if( what[ "color" ] ){
-
-        this.color = what[ "color" ];
 
         sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
 
@@ -1295,8 +1303,6 @@ NGL.LineRepresentation.prototype.update = function( what ){
 
     if( what[ "color" ] ){
 
-        this.color = what[ "color" ];
-
         lineData[ "color" ] = this.atomSet.bondColor( null, 0, this.color );
         lineData[ "color2" ] = this.atomSet.bondColor( null, 1, this.color );
 
@@ -1372,8 +1378,6 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
     }
 
     if( what[ "color" ] ){
-
-        this.color = what[ "color" ];
 
         sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
 
@@ -1483,12 +1487,8 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
     var sphereBuffer, cylinderBuffer;
     var sphereData, cylinderData;
 
-    if( what[ "color" ] ){
-        this.color = what[ "color" ];
-    }
-    var color = this.color;
-
     var i;
+    var color = this.color;
     var n = this.atomSetList.length;
 
     for( i = 0; i < n; ++i ){
@@ -1596,10 +1596,6 @@ NGL.TubeRepresentation.prototype.update = function( what ){
     NGL.Representation.prototype.update.call( this );
 
     what = what || { "position": true };
-
-    if( what[ "color" ] ){
-        this.color = what[ "color" ];
-    }
 
     var i = 0;
     var n = this.fiberList.length;
@@ -1713,10 +1709,6 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
 
     what = what || { "position": true };
 
-    if( what[ "color" ] ){
-        this.color = what[ "color" ];
-    }
-
     var i = 0;
     var n = this.fiberList.length;
 
@@ -1818,10 +1810,6 @@ NGL.RibbonRepresentation.prototype.update = function( what ){
 
     what = what || { "position": true };
 
-    if( what[ "color" ] ){
-        this.color = what[ "color" ];
-    }
-
     var i = 0;
     var n = this.fiberList.length;
 
@@ -1911,10 +1899,6 @@ NGL.TraceRepresentation.prototype.update = function( what ){
     NGL.Representation.prototype.update.call( this );
 
     what = what || { "position": true };
-
-    if( what[ "color" ] ){
-        this.color = what[ "color" ];
-    }
 
     var i = 0;
     var n = this.fiberList.length;

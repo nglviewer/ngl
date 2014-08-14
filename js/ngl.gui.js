@@ -724,6 +724,121 @@ NGL.MenuWidget = function(){
 };
 
 
+NGL.ColorSchemeWidget = function(){
+
+    var panel = new UI.OverlayPanel();
+
+    var iconText = new UI.Text( "" )
+        .setClass( "fa-stack-1x" )
+        .setColor( "#111" )
+        .setFontSize( "0.8em" )
+
+    var icon = new UI.Icon( "stack" )
+        .setTitle( "color" )
+        .setWidth( "1em" ).setHeight( "1em" ).setLineHeight( "1em" )
+        .add( new UI.Icon( "square", "stack-1x" ) )
+        .add( iconText )
+        .onClick( function(){
+
+            if( panel.getDisplay() === "block" ){
+
+                panel.setDisplay( "none" );
+                return;
+
+            }
+
+            var box = icon.getBox();
+
+            panel
+                .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
+                .setTop( box.top + "px" )
+                .setDisplay( "block" )
+                .attach();
+
+        } );
+
+    var changeEvent = document.createEvent('Event');
+    changeEvent.initEvent('change', true, true);
+
+    var schemeSelector = new UI.Select()
+        .setColor( '#444' )
+        .setWidth( "" )
+        .setOptions({
+            "": "",
+            "element": "by element",
+            "ss": "by secondary structure",
+            "picking": "by picking id",
+            "color": "color"
+        })
+        .onChange( function(){
+
+            var scheme = schemeSelector.getValue();
+            iconText.setValue( scheme.charAt( 0 ) );
+
+            if( scheme !== "color" ){
+                panel.setDisplay( "none" );
+            }
+            icon.dom.dispatchEvent( changeEvent );
+
+        } );
+
+    var colorInput = new UI.Color()
+        .onChange( function(){
+
+            icon.setScheme( "color" );
+            icon.dom.style.color = colorInput.getValue();
+            icon.dom.dispatchEvent( changeEvent );
+
+        } );
+
+    panel
+        .add( new UI.Text( "Color scheme" ).setMarginBottom( "10px" ) )
+        .add( new UI.Break() )
+        .add( schemeSelector )
+        .add( new UI.Break() )
+        .add( new UI.Text( "Color: " ) )
+        .add( colorInput );
+
+    icon.setScheme = function( value ){
+
+        iconText.setValue( value.charAt( 0 ) );
+        schemeSelector.setValue( value );
+        return icon;
+
+    }
+
+    icon.getScheme = function(){
+
+        return schemeSelector.getValue();
+
+    }
+
+    icon.setColor = function( value ){
+
+        colorInput.setValue( value );
+        icon.dom.style.color = value;
+        return icon;
+
+    }
+
+    icon.getColor = function(){
+
+        return colorInput.getValue();
+
+    }
+
+    icon.setDisplay = function( value ){
+
+        panel.setDisplay( value );
+        return icon;
+
+    }
+
+    return icon;
+
+};
+
+
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
@@ -867,23 +982,42 @@ NGL.RepresentationWidget = function( repr, component ){
 
         } );
 
-    var color = new UI.Color()
-        .setTitle( "color" )
-        .setWidth( "17px" )
-        .setHeight( "21px" )
+    var colorWidget = new NGL.ColorSchemeWidget()
         .setMarginLeft( "10px" )
-        .onChange( function( e ){
+        .setScheme( repr.color )
+        .onChange( (function(){
 
-            repr.update({ "color": color.getHexValue() });
-            repr.viewer.render();
+            var c = new THREE.Color();
 
-        } );
+            return function( e ){
+
+                var scheme = colorWidget.getScheme();
+
+                if( scheme === "color" ){
+
+                    var color = colorWidget.getColor();
+
+                    c.setStyle( color );
+                    repr.changeColor( c.getHex() );
+
+                }else{
+
+                    colorWidget.setColor( "#888" );
+                    repr.changeColor( scheme );
+
+                }
+
+                repr.viewer.render();
+
+            }
+
+        })() );
 
     container
         .addStatic( new UI.Text( repr.name ).setWidth( "80px" ) )
         .addStatic( toggle )
         .addStatic( dispose )
-        .addStatic( color );
+        .addStatic( colorWidget );
 
     // Add sele
 
