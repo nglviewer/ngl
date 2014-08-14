@@ -940,6 +940,7 @@ NGL.Representation = function( structure, viewer, sele, color ){
     this.signals = {
 
         visibilityChanged: new SIGNALS.Signal(),
+        colorChanged: new SIGNALS.Signal(),
 
     };
 
@@ -997,6 +998,8 @@ NGL.Representation.prototype = {
 
             this.color = type;
             this.update({ "color": type });
+
+            this.signals.colorChanged.dispatch( type );
 
         }
 
