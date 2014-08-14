@@ -1534,12 +1534,14 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, size, subdiv ){
+NGL.TubeRepresentation = function( structure, viewer, sele, color, size, subdiv ){
 
     this.size = size || 0.25;
     this.subdiv = subdiv || 10;
 
-    NGL.Representation.call( this, structure, viewer, sele );
+    color = color || "ss";
+
+    NGL.Representation.call( this, structure, viewer, sele, color );
 
 };
 
@@ -1559,7 +1561,8 @@ NGL.TubeRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
 
         var rx = 1.5;
         var ry = 1.5;
@@ -1567,14 +1570,14 @@ NGL.TubeRepresentation.prototype.create = function(){
         scope.bufferList.push(
 
             new NGL.TubeMeshBuffer(
-                sub.position,
-                sub.normal,
-                sub.binormal,
-                sub.tangent,
-                sub.color,
-                sub.size,
+                subPos.position,
+                subPos.normal,
+                subPos.binormal,
+                subPos.tangent,
+                subCol.color,
+                subPos.size,
                 12,
-                sub.pickingColor,
+                subCol.pickingColor,
                 rx,
                 ry
             )
@@ -1587,9 +1590,15 @@ NGL.TubeRepresentation.prototype.create = function(){
 
 };
 
-NGL.TubeRepresentation.prototype.update = function(){
+NGL.TubeRepresentation.prototype.update = function( what ){
 
     NGL.Representation.prototype.update.call( this );
+
+    what = what || { "position": true };
+
+    if( what[ "color" ] ){
+        this.color = what[ "color" ];
+    }
 
     var i = 0;
     var n = this.fiberList.length;
@@ -1598,20 +1607,35 @@ NGL.TubeRepresentation.prototype.update = function(){
 
     for( i = 0; i < n; ++i ){
 
-        var fiber = this.fiberList[ i ]
+        var fiber = this.fiberList[ i ];
 
         if( fiber.residueCount < 4 ) return;
 
+        var bufferData = {};
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( this.subdiv );
 
-        this.bufferList[ i ].setAttributes({
-            "position": sub.position,
-            "normal": sub.normal,
-            "binormal": sub.binormal,
-            "tangent": sub.tangent,
-            "size": sub.size
-        });
+        if( what[ "position" ] ){
+
+            var subPos = spline.getSubdividedPosition( this.subdiv );
+
+            bufferData[ "position" ] = subPos.position;
+            bufferData[ "normal" ] = subPos.normal;
+            bufferData[ "binormal" ] = subPos.binormal;
+            bufferData[ "tangent" ] = subPos.tangent;
+            bufferData[ "size" ] = subPos.size;
+
+        }
+
+        if( what[ "color" ] ){
+
+            var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+
+            bufferData[ "color" ] = subCol.color;
+            bufferData[ "pickingColor" ] = subCol.pickingColor;
+
+        }
+
+        this.bufferList[ i ].setAttributes( bufferData );
 
     };
 
@@ -1620,12 +1644,14 @@ NGL.TubeRepresentation.prototype.update = function(){
 };
 
 
-NGL.CartoonRepresentation = function( structure, viewer, sele, size, subdiv ){
+NGL.CartoonRepresentation = function( structure, viewer, sele, color, size, subdiv ){
 
     this.size = size || 0.25;
     this.subdiv = subdiv || 10;
 
-    NGL.Representation.call( this, structure, viewer, sele );
+    color = color || "ss";
+
+    NGL.Representation.call( this, structure, viewer, sele, color );
 
 };
 
@@ -1645,7 +1671,8 @@ NGL.CartoonRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
 
         var rx = 1.5;
         var ry = 0.5;
@@ -1657,14 +1684,14 @@ NGL.CartoonRepresentation.prototype.create = function(){
         scope.bufferList.push(
 
             new NGL.TubeMeshBuffer(
-                sub.position,
-                sub.normal,
-                sub.binormal,
-                sub.tangent,
-                sub.color,
-                sub.size,
+                subPos.position,
+                subPos.normal,
+                subPos.binormal,
+                subPos.tangent,
+                subCol.color,
+                subPos.size,
                 12,
-                sub.pickingColor,
+                subCol.pickingColor,
                 rx,
                 ry
             )
@@ -1677,9 +1704,15 @@ NGL.CartoonRepresentation.prototype.create = function(){
 
 };
 
-NGL.CartoonRepresentation.prototype.update = function(){
+NGL.CartoonRepresentation.prototype.update = function( what ){
 
     NGL.Representation.prototype.update.call( this );
+
+    what = what || { "position": true };
+
+    if( what[ "color" ] ){
+        this.color = what[ "color" ];
+    }
 
     var i = 0;
     var n = this.fiberList.length;
@@ -1692,16 +1725,31 @@ NGL.CartoonRepresentation.prototype.update = function(){
 
         if( fiber.residueCount < 4 ) return;
 
+        var bufferData = {};
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( this.subdiv );
 
-        this.bufferList[ i ].setAttributes({
-            "position": sub.position,
-            "normal": sub.normal,
-            "binormal": sub.binormal,
-            "tangent": sub.tangent,
-            "size": sub.size
-        });
+        if( what[ "position" ] ){
+
+            var subPos = spline.getSubdividedPosition( this.subdiv );
+
+            bufferData[ "position" ] = subPos.position;
+            bufferData[ "normal" ] = subPos.normal;
+            bufferData[ "binormal" ] = subPos.binormal;
+            bufferData[ "tangent" ] = subPos.tangent;
+            bufferData[ "size" ] = subPos.size;
+
+        }
+
+        if( what[ "color" ] ){
+
+            var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+
+            bufferData[ "color" ] = subCol.color;
+            bufferData[ "pickingColor" ] = subCol.pickingColor;
+
+        }
+
+        this.bufferList[ i ].setAttributes( bufferData );
 
     };
 
@@ -1710,12 +1758,14 @@ NGL.CartoonRepresentation.prototype.update = function(){
 };
 
 
-NGL.RibbonRepresentation = function( structure, viewer, sele, size, subdiv ){
+NGL.RibbonRepresentation = function( structure, viewer, sele, color, size, subdiv ){
 
     this.size = size || 0.25;
     this.subdiv = subdiv || 10;
 
-    NGL.Representation.call( this, structure, viewer, sele );
+    color = color || "ss";
+
+    NGL.Representation.call( this, structure, viewer, sele, color );
 
 };
 
@@ -1735,17 +1785,18 @@ NGL.RibbonRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
         
         scope.bufferList.push(
 
             new NGL.RibbonBuffer(
-                sub.position,
-                sub.binormal,
-                sub.normal,
-                sub.color,
-                sub.size,
-                sub.pickingColor
+                subPos.position,
+                subPos.binormal,
+                subPos.normal,
+                subCol.color,
+                subPos.size,
+                subCol.pickingColor
             )
 
         );
@@ -1756,18 +1807,62 @@ NGL.RibbonRepresentation.prototype.create = function(){
 
 };
 
-NGL.RibbonRepresentation.prototype.update = function(){
+NGL.RibbonRepresentation.prototype.update = function( what ){
 
-    NGL.TraceRepresentation.prototype.update.call( this );
+    NGL.Representation.prototype.update.call( this );
+
+    what = what || { "position": true };
+
+    if( what[ "color" ] ){
+        this.color = what[ "color" ];
+    }
+
+    var i = 0;
+    var n = this.fiberList.length;
+
+    for( i = 0; i < n; ++i ){
+
+        var fiber = this.fiberList[ i ]
+
+        if( fiber.residueCount < 4 ) return;
+
+        var bufferData = {};
+        var spline = new NGL.Spline( fiber );
+
+        if( what[ "position" ] ){
+
+            var subPos = spline.getSubdividedPosition( this.subdiv );
+
+            bufferData[ "position" ] = subPos.position;
+            bufferData[ "normal" ] = subPos.binormal;
+            bufferData[ "dir" ] = subPos.normal;
+            bufferData[ "size" ] = subPos.size;
+
+        }
+
+        if( what[ "color" ] ){
+
+            var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+
+            bufferData[ "color" ] = subCol.color;
+            bufferData[ "pickingColor" ] = subCol.pickingColor;
+
+        }
+
+        this.bufferList[ i ].setAttributes( bufferData );
+
+    };
 
 };
 
 
-NGL.TraceRepresentation = function( structure, viewer, sele, subdiv ){
+NGL.TraceRepresentation = function( structure, viewer, sele, color, subdiv ){
 
     this.subdiv = subdiv || 10;
 
-    NGL.Representation.call( this, structure, viewer, sele );
+    color = color || "ss";
+
+    NGL.Representation.call( this, structure, viewer, sele, color );
 
 };
 
@@ -1787,18 +1882,27 @@ NGL.TraceRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
 
-        scope.bufferList.push( new NGL.TraceBuffer( sub.position, sub.color ) );
+        scope.bufferList.push(
+            new NGL.TraceBuffer( subPos.position, subCol.color )
+        );
         scope.fiberList.push( fiber );
 
     }, this.selection, true );
 
 };
 
-NGL.TraceRepresentation.prototype.update = function(){
+NGL.TraceRepresentation.prototype.update = function( what ){
 
     NGL.Representation.prototype.update.call( this );
+
+    what = what || { "position": true };
+
+    if( what[ "color" ] ){
+        this.color = what[ "color" ];
+    }
 
     var i = 0;
     var n = this.fiberList.length;
@@ -1809,12 +1913,26 @@ NGL.TraceRepresentation.prototype.update = function(){
 
         if( fiber.residueCount < 4 ) return;
 
+        var bufferData = {};
         var spline = new NGL.Spline( fiber );
-        var sub = spline.getSubdividedPosition( this.subdiv );
 
-        this.bufferList[ i ].setAttributes({
-            "position": sub.position
-        });
+        if( what[ "position" ] ){
+
+            var subPos = spline.getSubdividedPosition( this.subdiv );
+
+            bufferData[ "position" ] = subPos.position;
+
+        }
+
+        if( what[ "color" ] ){
+
+            var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+
+            bufferData[ "color" ] = subCol.color;
+
+        }
+
+        this.bufferList[ i ].setAttributes( bufferData );
 
     };
 
@@ -1849,6 +1967,86 @@ NGL.Spline.prototype = {
 
     },
 
+    getSubdividedColor: function( m, type ){
+
+        var n = this.size;
+        var n1 = n - 1;
+        var trace_atomname = this.trace_atomname;
+
+        var col = new Float32Array( n1 * m * 3 + 3 );
+        var pcol = new Float32Array( n1 * m * 3 + 3 );
+
+        var c = new THREE.Color();
+        var pc = new THREE.Color();
+        var k = 0;
+
+        var j, l, a2;
+
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+
+            a2 = r2.getAtomByName( trace_atomname );
+
+            if( type === "ss" ){
+
+                if( a2.ss === "h" ){
+                    c.setHex( 0xFF0080 );
+                }else if( a2.ss === "s" ){
+                    c.setHex( 0xFFC800 );
+                }else if( a2.atomname === "P" ){
+                    c.setHex( 0xAE00FE );
+                }else{
+                    c.setHex( 0xFFFFFF );
+                }
+
+            }else if( type ){
+
+                c.setHex( type );
+
+            }else{
+
+                c.setHex( 0xFFFFFF );
+
+            }
+
+            if( pcol ){
+                pc.setHex( a2.globalindex + 1 );
+            }
+
+            for( j = 0; j < m; ++j ){
+
+                l = k + j * 3;
+
+                col[ l + 0 ] = c.r;
+                col[ l + 1 ] = c.g;
+                col[ l + 2 ] = c.b;
+
+                if( pcol ){
+                    pcol[ l + 0 ] = pc.r;
+                    pcol[ l + 1 ] = pc.g;
+                    pcol[ l + 2 ] = pc.b;
+                }
+
+            }
+
+            k += 3 * m;
+
+        } );
+
+        col[ n1 * m * 3 + 0 ] = col[ n1 * m * 3 - 3 ];
+        col[ n1 * m * 3 + 1 ] = col[ n1 * m * 3 - 2 ];
+        col[ n1 * m * 3 + 2 ] = col[ n1 * m * 3 - 1 ];
+
+        pcol[ n1 * m * 3 + 0 ] = pcol[ n1 * m * 3 - 3 ];
+        pcol[ n1 * m * 3 + 1 ] = pcol[ n1 * m * 3 - 2 ];
+        pcol[ n1 * m * 3 + 2 ] = pcol[ n1 * m * 3 - 1 ];
+
+        return { 
+            "color": col,
+            "pickingColor": pcol
+        };
+
+    },
+
     getSubdividedPosition: function( m ){
 
         var trace_atomname = this.trace_atomname;
@@ -1858,38 +2056,47 @@ NGL.Spline.prototype = {
         var n1 = n - 1;
 
         var pos = new Float32Array( n1 * m * 3 + 3 );
-        var col = new Float32Array( n1 * m * 3 + 3 );
         var tan = new Float32Array( n1 * m * 3 + 3 );
         var norm = new Float32Array( n1 * m * 3 + 3 );
         var bin = new Float32Array( n1 * m * 3 + 3 );
         var size = new Float32Array( n1 * m + 1 );
-        var pcol = new Float32Array( n1 * m * 3 + 3 );
 
         var subdivideData = this._makeSubdivideData( m, trace_atomname );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            subdivideData( r1, r2, r3, r4, pos, col, tan, norm, bin, size, pcol );
+            subdivideData( r1, r2, r3, r4, pos, tan, norm, bin, size );
 
         } );
 
         var rn = this.fiber.residues[ n ];
-
         var can = rn.getAtomByName( trace_atomname );
 
         pos[ n1 * m * 3 + 0 ] = can.x;
         pos[ n1 * m * 3 + 1 ] = can.y;
         pos[ n1 * m * 3 + 2 ] = can.z;
 
+        bin[ n1 * m * 3 + 0 ] = bin[ n1 * m * 3 - 3 ];
+        bin[ n1 * m * 3 + 1 ] = bin[ n1 * m * 3 - 2 ];
+        bin[ n1 * m * 3 + 2 ] = bin[ n1 * m * 3 - 1 ];
+
+        tan[ n1 * m * 3 + 0 ] = tan[ n1 * m * 3 - 3 ];
+        tan[ n1 * m * 3 + 1 ] = tan[ n1 * m * 3 - 2 ];
+        tan[ n1 * m * 3 + 2 ] = tan[ n1 * m * 3 - 1 ];
+
+        norm[ n1 * m * 3 + 0 ] = norm[ n1 * m * 3 - 3 ];
+        norm[ n1 * m * 3 + 1 ] = norm[ n1 * m * 3 - 2 ];
+        norm[ n1 * m * 3 + 2 ] = norm[ n1 * m * 3 - 1 ];
+
+        size[ n1 * m + 0 ] = size[ n1 * m - 1 ];
+
         return {
 
             "position": pos,
-            "color": col,
             "tangent": tan,
             "normal": norm,
             "binormal": bin,
-            "size": size,
-            "pickingColor": pcol
+            "size": size
 
         }
 
@@ -1907,8 +2114,6 @@ NGL.Spline.prototype = {
         var getTangent = this._makeGetTangent();
 
         var dt = 1.0 / m;
-        var c = new THREE.Color();
-        var pc = new THREE.Color();
         var a1, a2, a3, a4;
         var j, l, d;
         var k = 0;
@@ -1932,32 +2137,21 @@ NGL.Spline.prototype = {
 
         var first = true;
 
-        return function( r1, r2, r3, r4, pos, col, tan, norm, bin, size, pcol ){
+        return function( r1, r2, r3, r4, pos, tan, norm, bin, size ){
 
             a1 = r1.getAtomByName( trace_atomname );
             a2 = r2.getAtomByName( trace_atomname );
             a3 = r3.getAtomByName( trace_atomname );
             a4 = r4.getAtomByName( trace_atomname );
 
-            // c.setRGB( Math.random(), Math.random(), Math.random() );
-            // c.setHex( elemColors[ a2.element ] || 0xCCCCCC );
-
             if( a2.ss === "h" ){
-                c.setHex( 0xFF0080 );
                 scale = 0.5;
             }else if( a2.ss === "s" ){
-                c.setHex( 0xFFC800 );
                 scale = 0.5;
             }else if( a2.atomname === "P" ){
-                c.setHex( 0xAE00FE );
                 scale = 0.8;
             }else{
-                c.setHex( 0xFFFFFF );
                 scale = 0.15;
-            }
-            
-            if( pcol ){
-                pc.setHex( a2.globalindex + 1 );
             }
 
             if( trace_atomname === direction_atomname1 ){
@@ -2001,16 +2195,6 @@ NGL.Spline.prototype = {
                 pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d );
                 pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d );
                 pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d );
-
-                col[ l + 0 ] = c.r;
-                col[ l + 1 ] = c.g;
-                col[ l + 2 ] = c.b;
-
-                if( pcol ){
-                    pcol[ l + 0 ] = pc.r;
-                    pcol[ l + 1 ] = pc.g;
-                    pcol[ l + 2 ] = pc.b;
-                }
 
                 vNorm.set(
                     d1 * vDir2.x + d * vDir3.x,
