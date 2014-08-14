@@ -29,7 +29,48 @@ NGL.ElementColors = {
     "MD": 0xB30DA6, "NO": 0xBD0D87, "LR": 0xC70066, "RF": 0xCC0059, "DB": 0xD1004F,
     "SG": 0xD90045, "BH": 0xE00038, "HS": 0xE6002E, "MT": 0xEB0026, "DS": 0xFFFFFF,
     "RG": 0xFFFFFF, "CN": 0xFFFFFF, "UUT": 0xFFFFFF, "FL": 0xFFFFFF, "UUP": 0xFFFFFF,
-    "LV": 0xFFFFFF, "UUH": 0xFFFFFF
+    "LV": 0xFFFFFF, "UUH": 0xFFFFFF,
+
+    "D": 0xFFFFC0, "T": 0xFFFFA0,
+
+    "": 0xFFFFFF
+};
+
+NGL.ResidueColors = {
+    "ALA": 0xC8C8C8,
+    "ARG": 0x145AFF,
+    "ASN": 0x00DCDC,
+    "ASP": 0xE60A0A,
+    "CYS": 0xE6E600,
+    "GLN": 0x00DCDC,
+    "GLU": 0xE60A0A,
+    "GLY": 0xEBEBEB,
+    "HIS": 0x8282D2,
+    "ILE": 0x0F820F,
+    "LEU": 0x0F820F,
+    "LYS": 0x145AFF,
+    "MET": 0xE6E600,
+    "PHE": 0x3232AA,
+    "PRO": 0xDC9682,
+    "SER": 0xFA9600,
+    "THR": 0xFA9600,
+    "TRP": 0xB45AB4,
+    "TYR": 0x3232AA,
+    "VAL": 0x0F820F,
+
+    "ASX": 0xFF69B4,
+    "GLX": 0xFF69B4,
+    "ASN": 0xFF69B4,
+    "GLH": 0xFF69B4,
+
+    "A": 0xA0A0FF,
+    "G": 0xFF7070,
+    "I": 0x80FFFF,
+    "C": 0xFF8C4B,
+    "T": 0xA0FFA0,
+    "U": 0xFF8080,
+
+    "": 0xBEA06E
 };
 
 
@@ -51,7 +92,9 @@ NGL.VdwRadii = {
     "PA": 2.0, "U": 2.3, "NP": 2.0, "PU": 2.0, "AM": 2.0, "CM": 2.0, "BK": 2.0,
     "CF": 2.0, "ES": 2.0, "FM": 2.0, "MD": 2.0, "NO": 2.0, "LR": 2.0, "RF": 2.0,
     "DB": 2.0, "SG": 2.0, "BH": 2.0, "HS": 2.0, "MT": 2.0, "DS": 2.0, "RG": 2.0,
-    "CN": 2.0, "UUT": 2.0, "FL": 2.0, "UUP": 2.0, "LV": 2.0, "UUH": 2.0
+    "CN": 2.0, "UUT": 2.0, "FL": 2.0, "UUP": 2.0, "LV": 2.0, "UUH": 2.0,
+
+    "": 2.0
 };
 
 
@@ -73,7 +116,9 @@ NGL.CovalentRadii = {
     "PA": 2.0, "U": 1.96, "NP": 1.9, "PU": 1.87, "AM": 1.8, "CM": 1.69, "BK": 1.6,
     "CF": 1.6, "ES": 1.6, "FM": 1.6, "MD": 1.6, "NO": 1.6, "LR": 1.6, "RF": 1.6,
     "DB": 1.6, "SG": 1.6, "BH": 1.6, "HS": 1.6, "MT": 1.6, "DS": 1.6, "RG": 1.6,
-    "CN": 1.6, "UUT": 1.6, "FL": 1.6, "UUP": 1.6, "LV": 1.6, "UUH": 1.6
+    "CN": 1.6, "UUT": 1.6, "FL": 1.6, "UUP": 1.6, "LV": 1.6, "UUH": 1.6,
+
+    "": 1.6
 };
 
 
@@ -168,6 +213,10 @@ NGL.ColorScheme.prototype = {
 
         var type = this.type;
         var elemColors = NGL.ElementColors;
+        var resColors = NGL.ResidueColors;
+
+        var defaultElemColor = NGL.ElementColors[""];
+        var defaultResColor = NGL.ResidueColors[""];
 
         switch( type ){
 
@@ -178,7 +227,12 @@ NGL.ColorScheme.prototype = {
 
             case "element":
             
-                c = elemColors[ a.element ] || 0xCCCCCC;
+                c = elemColors[ a.element ] || defaultElemColor;
+                break;
+
+            case "resname":
+
+                c = resColors[ a.resname ] || defaultResColor;
                 break;
 
             case "ss":
