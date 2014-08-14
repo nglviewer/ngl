@@ -767,6 +767,7 @@ NGL.ColorSchemeWidget = function(){
         .setOptions({
             "": "",
             "element": "by element",
+            "resname": "by residue name",
             "ss": "by secondary structure",
             "picking": "by picking id",
             "color": "color"
