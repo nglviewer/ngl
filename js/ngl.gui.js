@@ -733,22 +733,23 @@ NGL.ColorSchemeWidget = function(){
         .setColor( "#111" )
         .setFontSize( "0.8em" )
 
+    var iconSquare = new UI.Icon( "square", "stack-1x" );
+
     var icon = new UI.Icon( "stack" )
         .setTitle( "color" )
         .setWidth( "1em" ).setHeight( "1em" ).setLineHeight( "1em" )
-        .add( new UI.Icon( "square", "stack-1x" ) )
+        .add( new UI.Icon( "square", "stack-1x" )
+                .setFontSize( "1.2em" )
+                .setLineHeight( "inherit" ) )
+        .add( iconSquare )
         .add( iconText )
         .onClick( function(){
 
             if( panel.getDisplay() === "block" ){
-
                 panel.setDisplay( "none" );
                 return;
-
             }
-
             var box = icon.getBox();
-
             panel
                 .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
                 .setTop( box.top + "px" )
@@ -772,10 +773,8 @@ NGL.ColorSchemeWidget = function(){
         })
         .onChange( function(){
 
-            var scheme = schemeSelector.getValue();
-            iconText.setValue( scheme.charAt( 0 ) );
-
-            if( scheme !== "color" ){
+            icon.setScheme( schemeSelector.getValue() );
+            if( schemeSelector.getValue() !== "color" ){
                 panel.setDisplay( "none" );
             }
             icon.dom.dispatchEvent( changeEvent );
@@ -785,22 +784,48 @@ NGL.ColorSchemeWidget = function(){
     var colorInput = new UI.Color()
         .onChange( function(){
 
-            icon.setScheme( "color" );
-            icon.dom.style.color = colorInput.getValue();
+            icon.setColor( colorInput.getValue() );
             icon.dom.dispatchEvent( changeEvent );
 
         } );
+
+    var colorInput2 = new UI.JsColor()
+        .onImmediateChange( function(){
+
+            icon.setColor( colorInput2.getValue() );
+            icon.dom.dispatchEvent( changeEvent );
+
+        } );
+    
+
+
+    var colorPicker = new UI.Panel()
+        .setWidth( "280px" )
+        .setHeight( "200px" );
+    // https://github.com/PitPik/colorPicker
+    var colorPickerObject = new ColorPicker( {
+        appenTo: colorPicker.dom,
+        size: 2,
+    } );
 
     panel
         .add( new UI.Text( "Color scheme" ).setMarginBottom( "10px" ) )
         .add( new UI.Break() )
         .add( schemeSelector )
         .add( new UI.Break() )
-        .add( new UI.Text( "Color: " ) )
-        .add( colorInput );
+        /*.add( new UI.Text( "Color: " ) )
+        .add( colorInput )*/
+        .add( new UI.Break() )
+        .add( colorInput2 )
+        /*.add( new UI.Break() )
+        .add( colorPicker )*/
+        ;
 
     icon.setScheme = function( value ){
 
+        if( value !== "color" ){
+            icon.setColor( "#888" );
+        }
         iconText.setValue( value.charAt( 0 ) );
         schemeSelector.setValue( value );
         return icon;
@@ -815,8 +840,12 @@ NGL.ColorSchemeWidget = function(){
 
     icon.setColor = function( value ){
 
+        // console.log(value)
+
+        icon.setScheme( "color" );
         colorInput.setValue( value );
-        icon.dom.style.color = value;
+        colorInput2.setValue( value );
+        iconSquare.setColor( value );
         return icon;
 
     }
@@ -940,6 +969,18 @@ NGL.RepresentationWidget = function( repr, component ){
         
     } );
 
+    signals.colorChanged.add( function( value ){
+
+        if( parseInt( value ) === value ){
+            colorWidget.setColor(
+                "#" + ( new THREE.Color( value ).getHexString() )
+            );
+        }else{
+            colorWidget.setScheme( value );
+        }
+        
+    } );
+
     component.signals.representationRemoved.add( function( _repr ){
 
         if( repr === _repr ) container.dispose();
@@ -988,25 +1029,15 @@ NGL.RepresentationWidget = function( repr, component ){
         .onChange( (function(){
 
             var c = new THREE.Color();
-
             return function( e ){
 
                 var scheme = colorWidget.getScheme();
-
                 if( scheme === "color" ){
-
-                    var color = colorWidget.getColor();
-
-                    c.setStyle( color );
+                    c.setStyle( colorWidget.getColor() );
                     repr.changeColor( c.getHex() );
-
                 }else{
-
-                    colorWidget.setColor( "#888" );
                     repr.changeColor( scheme );
-
                 }
-
                 repr.viewer.render();
 
             }
@@ -1032,6 +1063,16 @@ NGL.RepresentationWidget = function( repr, component ){
         );
 
     container.add( seleRow );
+
+    // Menu
+
+    var menu = new NGL.MenuWidget()
+        .setMarginLeft( "45px" )
+        .setEntryTitleWidth( "110px" )
+        ;
+
+    container
+        .addStatic( menu );
 
     return container;
 
@@ -1199,7 +1240,10 @@ NGL.TrajectoryWidget = function( traj, component ){
     var inProgress = false;
 
     var frameRange = new UI.Range( -1, -1, -1, 1 )
-        .setWidth( "195px" )
+        .setWidth( "198px" )
+        .setMargin( "0px" )
+        .setPadding( "0px" )
+        .setBorder( "0px" )
         .onInput( function( e ){
 
             if( !inProgress && frameRange.getValue() !== traj.currentFrame ){
@@ -1303,7 +1347,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     // Menu
 
     var menu = new NGL.MenuWidget()
-        .setMarginLeft( "47px" )
+        .setMarginLeft( "45px" )
         .setEntryTitleWidth( "110px" )
         .addEntry( "Center", setCenterPbc )
         .addEntry( "Remove PBC", setRemovePbc )

@@ -1357,6 +1357,53 @@ UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
 };
 
 
+// JsColor
+
+UI.JsColor = function(){
+
+    UI.Element.call( this );
+
+    var scope = this;
+
+    var dom = document.createElement( 'input' );
+
+    dom.className = 'Input';
+    dom.style.padding = '2px';
+    dom.style.border = '1px solid #ccc';
+
+    this.jscolorObject = new jscolor.color( dom, {
+        hash: true
+    } );
+
+    this.dom = dom;
+
+    return this;
+
+};
+
+UI.JsColor.prototype = Object.create( UI.Element.prototype );
+
+UI.JsColor.prototype.setValue = function( value ){
+
+    this.jscolorObject.fromString( value );
+    return this;
+
+};
+
+UI.JsColor.prototype.getValue = function(){
+
+    return this.dom.value;
+
+};
+
+UI.JsColor.prototype.onImmediateChange = function( fn ){
+
+    this.jscolorObject.onImmediateChange = fn;
+    return this;
+
+};
+
+
 // Helper
 
 UI.MenubarHelper = {

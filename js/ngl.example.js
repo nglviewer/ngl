@@ -385,6 +385,9 @@ NGL.Examples = {
 
                 o.addTrajectory( "__example__/@md_1u19.xtc" );
 
+                spacefill.changeColor( 0x00CCFF );
+                stage.viewer.render();
+
                 var i = 0;
                 var colorList = [ 0x00CCFF, "element" ];
 
