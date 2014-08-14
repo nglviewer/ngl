@@ -1563,6 +1563,7 @@ NGL.TubeRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( fiber );
         var subPos = spline.getSubdividedPosition( scope.subdiv );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+        var subSize = spline.getSubdividedSize( scope.subdiv, "tube" );
 
         var rx = 1.5;
         var ry = 1.5;
@@ -1575,7 +1576,7 @@ NGL.TubeRepresentation.prototype.create = function(){
                 subPos.binormal,
                 subPos.tangent,
                 subCol.color,
-                subPos.size,
+                subSize.size,
                 12,
                 subCol.pickingColor,
                 rx,
@@ -1614,15 +1615,16 @@ NGL.TubeRepresentation.prototype.update = function( what ){
         var bufferData = {};
         var spline = new NGL.Spline( fiber );
 
-        if( what[ "position" ] ){
+        if( what[ "position" ] || what[ "size" ] ){
 
             var subPos = spline.getSubdividedPosition( this.subdiv );
+            var subSize = spline.getSubdividedSize( this.subdiv, "tube" );
 
             bufferData[ "position" ] = subPos.position;
             bufferData[ "normal" ] = subPos.normal;
             bufferData[ "binormal" ] = subPos.binormal;
             bufferData[ "tangent" ] = subPos.tangent;
-            bufferData[ "size" ] = subPos.size;
+            bufferData[ "size" ] = subSize.size;
 
         }
 
@@ -1673,6 +1675,7 @@ NGL.CartoonRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( fiber );
         var subPos = spline.getSubdividedPosition( scope.subdiv );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+        var subSize = spline.getSubdividedSize( scope.subdiv );
 
         var rx = 1.5;
         var ry = 0.5;
@@ -1689,7 +1692,7 @@ NGL.CartoonRepresentation.prototype.create = function(){
                 subPos.binormal,
                 subPos.tangent,
                 subCol.color,
-                subPos.size,
+                subSize.size,
                 12,
                 subCol.pickingColor,
                 rx,
@@ -1728,15 +1731,16 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
         var bufferData = {};
         var spline = new NGL.Spline( fiber );
 
-        if( what[ "position" ] ){
+        if( what[ "position" ] || what[ "size" ] ){
 
             var subPos = spline.getSubdividedPosition( this.subdiv );
+            var subSize = spline.getSubdividedSize( this.subdiv );
 
             bufferData[ "position" ] = subPos.position;
             bufferData[ "normal" ] = subPos.normal;
             bufferData[ "binormal" ] = subPos.binormal;
             bufferData[ "tangent" ] = subPos.tangent;
-            bufferData[ "size" ] = subPos.size;
+            bufferData[ "size" ] = subSize.size;
 
         }
 
@@ -1787,6 +1791,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( fiber );
         var subPos = spline.getSubdividedPosition( scope.subdiv );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+        var subSize = spline.getSubdividedSize( scope.subdiv );
         
         scope.bufferList.push(
 
@@ -1795,7 +1800,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
                 subPos.binormal,
                 subPos.normal,
                 subCol.color,
-                subPos.size,
+                subSize.size,
                 subCol.pickingColor
             )
 
@@ -1836,7 +1841,14 @@ NGL.RibbonRepresentation.prototype.update = function( what ){
             bufferData[ "position" ] = subPos.position;
             bufferData[ "normal" ] = subPos.binormal;
             bufferData[ "dir" ] = subPos.normal;
-            bufferData[ "size" ] = subPos.size;
+
+        }
+
+        if( what[ "size" ] ){
+
+            var subSize = spline.getSubdividedSize( this.subdiv );
+
+            bufferData[ "size" ] = subSize.size;
 
         }
 
@@ -2033,13 +2045,12 @@ NGL.Spline.prototype = {
         var tan = new Float32Array( n1 * m * 3 + 3 );
         var norm = new Float32Array( n1 * m * 3 + 3 );
         var bin = new Float32Array( n1 * m * 3 + 3 );
-        var size = new Float32Array( n1 * m + 1 );
 
         var subdivideData = this._makeSubdivideData( m, traceAtomname );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            subdivideData( r1, r2, r3, r4, pos, tan, norm, bin, size );
+            subdivideData( r1, r2, r3, r4, pos, tan, norm, bin );
 
         } );
 
@@ -2062,17 +2073,66 @@ NGL.Spline.prototype = {
         norm[ n1 * m * 3 + 1 ] = norm[ n1 * m * 3 - 2 ];
         norm[ n1 * m * 3 + 2 ] = norm[ n1 * m * 3 - 1 ];
 
-        size[ n1 * m + 0 ] = size[ n1 * m - 1 ];
-
         return {
 
             "position": pos,
             "tangent": tan,
             "normal": norm,
-            "binormal": bin,
-            "size": size
+            "binormal": bin
 
         }
+
+    },
+
+    getSubdividedSize: function( m, type ){
+
+        var n = this.size;
+        var n1 = n - 1;
+        var traceAtomname = this.traceAtomname;
+
+        var size = new Float32Array( n1 * m + 1 );
+
+        var scale = 1;
+        var k = 0;
+        var j, l, a2, c, pc;
+
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+
+            a2 = r2.getAtomByName( traceAtomname );
+
+            if( type === "tube" ){
+
+                scale = 0.15;
+
+            }else{
+
+                if( a2.ss === "h" ){
+                    scale = 0.5;
+                }else if( a2.ss === "s" ){
+                    scale = 0.5;
+                }else if( a2.atomname === "P" ){
+                    scale = 0.8;
+                }else{
+                    scale = 0.15;
+                }
+
+            }
+
+            for( j = 0; j < m; ++j ){
+
+                size[ k + j ] = scale;
+
+            }
+
+            k += m;
+
+        } );
+
+        size[ n1 * m + 0 ] = size[ n1 * m - 1 ];
+
+        return { 
+            "size": size
+        };
 
     },
 
@@ -2091,7 +2151,6 @@ NGL.Spline.prototype = {
         var a1, a2, a3, a4;
         var j, l, d;
         var k = 0;
-        var scale = 1;
 
         var vTmp = new THREE.Vector3();
 
@@ -2111,22 +2170,12 @@ NGL.Spline.prototype = {
 
         var first = true;
 
-        return function( r1, r2, r3, r4, pos, tan, norm, bin, size ){
+        return function( r1, r2, r3, r4, pos, tan, norm, bin ){
 
             a1 = r1.getAtomByName( traceAtomname );
             a2 = r2.getAtomByName( traceAtomname );
             a3 = r3.getAtomByName( traceAtomname );
             a4 = r4.getAtomByName( traceAtomname );
-
-            if( a2.ss === "h" ){
-                scale = 0.5;
-            }else if( a2.ss === "s" ){
-                scale = 0.5;
-            }else if( a2.atomname === "P" ){
-                scale = 0.8;
-            }else{
-                scale = 0.15;
-            }
 
             if( traceAtomname === directionAtomname1 ){
 
@@ -2193,8 +2242,6 @@ NGL.Spline.prototype = {
                 norm[ l + 0 ] = vNorm.x;
                 norm[ l + 1 ] = vNorm.y;
                 norm[ l + 2 ] = vNorm.z;
-
-                size[ k / 3 + j ] = scale;
 
             }
 
