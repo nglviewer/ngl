@@ -84,7 +84,7 @@ var properties = [
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
     'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
     'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
-    'wordWrap', 'spellcheck'
+    'wordWrap', 'spellcheck', 'lineHeight'
 ];
 
 properties.forEach( function ( property ) {
@@ -1144,24 +1144,22 @@ UI.Button.prototype.setLabel = function ( value ) {
 
 // Icon
 
-UI.Icon = function ( value ) {
+UI.Icon = function( value ){
 
-    UI.Element.call( this );
-
-    var scope = this;
+    UI.Panel.call( this );
 
     var dom = document.createElement( 'span' );
     dom.className = 'Icon fa';
 
     this.dom = dom;
 
-    if( value ) this.addClass( value );
+    if( value ) this.addClass.apply( this, arguments );
 
     return this;
 
 };
 
-UI.Icon.prototype = Object.create( UI.Element.prototype );
+UI.Icon.prototype = Object.create( UI.Panel.prototype );
 
 UI.Icon.prototype.hasClass = function( value ){
 
@@ -1174,6 +1172,20 @@ UI.Icon.prototype.hasClass = function( value ){
 }
 
 UI.Icon.prototype.addClass = function( value ){
+
+    for ( var i = 0; i < arguments.length; i ++ ) {
+        
+        this.dom.className += ' fa-' + arguments[ i ];
+
+    }
+
+    return this;
+
+}
+
+UI.Icon.prototype.setClass = function( value ){
+
+    this.dom.className = 'Icon fa';
 
     for ( var i = 0; i < arguments.length; i ++ ) {
         
