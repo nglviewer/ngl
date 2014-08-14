@@ -1425,8 +1425,8 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
         f.eachResidueN( 2, function( r1, r2 ){
 
-            a1 = r1.getAtomByName( f.trace_atomname );
-            a2 = r2.getAtomByName( f.trace_atomname );
+            a1 = r1.getAtomByName( f.traceAtomname );
+            a2 = r2.getAtomByName( f.traceAtomname );
 
             if( test( a1 ) && test( a2 ) ){
 
@@ -1943,9 +1943,9 @@ NGL.Spline = function( fiber ){
 
     this.fiber = fiber;
     this.size = fiber.residueCount - 2;
-    this.trace_atomname = fiber.trace_atomname;
-    this.direction_atomname1 = fiber.direction_atomname1;
-    this.direction_atomname2 = fiber.direction_atomname2;
+    this.traceAtomname = fiber.traceAtomname;
+    this.directionAtomname1 = fiber.directionAtomname1;
+    this.directionAtomname2 = fiber.directionAtomname2;
 
 };
 
@@ -1971,60 +1971,34 @@ NGL.Spline.prototype = {
 
         var n = this.size;
         var n1 = n - 1;
-        var trace_atomname = this.trace_atomname;
+        var traceAtomname = this.traceAtomname;
 
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
-        var c = new THREE.Color();
-        var pc = new THREE.Color();
-        var k = 0;
+        var colorScheme = new NGL.ColorScheme( type );
 
-        var j, l, a2;
+        var k = 0;
+        var j, l, a2, c, pc;
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            a2 = r2.getAtomByName( trace_atomname );
+            a2 = r2.getAtomByName( traceAtomname );
 
-            if( type === "ss" ){
-
-                if( a2.ss === "h" ){
-                    c.setHex( 0xFF0080 );
-                }else if( a2.ss === "s" ){
-                    c.setHex( 0xFFC800 );
-                }else if( a2.atomname === "P" ){
-                    c.setHex( 0xAE00FE );
-                }else{
-                    c.setHex( 0xFFFFFF );
-                }
-
-            }else if( type ){
-
-                c.setHex( type );
-
-            }else{
-
-                c.setHex( 0xFFFFFF );
-
-            }
-
-            if( pcol ){
-                pc.setHex( a2.globalindex + 1 );
-            }
+            c = colorScheme.atomColor( a2 );
+            pc = a2.globalindex + 1;
 
             for( j = 0; j < m; ++j ){
 
                 l = k + j * 3;
 
-                col[ l + 0 ] = c.r;
-                col[ l + 1 ] = c.g;
-                col[ l + 2 ] = c.b;
+                col[ l + 0 ] = ( c >> 16 & 255 ) / 255;
+                col[ l + 1 ] = ( c >> 8 & 255 ) / 255;
+                col[ l + 2 ] = ( c & 255 ) / 255;
 
-                if( pcol ){
-                    pcol[ l + 0 ] = pc.r;
-                    pcol[ l + 1 ] = pc.g;
-                    pcol[ l + 2 ] = pc.b;
-                }
+                pcol[ l + 0 ] = ( pc >> 16 & 255 ) / 255;
+                pcol[ l + 1 ] = ( pc >> 8 & 255 ) / 255;
+                pcol[ l + 2 ] = ( pc & 255 ) / 255;
 
             }
 
@@ -2049,9 +2023,9 @@ NGL.Spline.prototype = {
 
     getSubdividedPosition: function( m ){
 
-        var trace_atomname = this.trace_atomname;
-        var direction_atomname1 = this.direction_atomname1;
-        var direction_atomname2 = this.direction_atomname2;
+        var traceAtomname = this.traceAtomname;
+        var directionAtomname1 = this.directionAtomname1;
+        var directionAtomname2 = this.directionAtomname2;
         var n = this.size;
         var n1 = n - 1;
 
@@ -2061,7 +2035,7 @@ NGL.Spline.prototype = {
         var bin = new Float32Array( n1 * m * 3 + 3 );
         var size = new Float32Array( n1 * m + 1 );
 
-        var subdivideData = this._makeSubdivideData( m, trace_atomname );
+        var subdivideData = this._makeSubdivideData( m, traceAtomname );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
@@ -2070,7 +2044,7 @@ NGL.Spline.prototype = {
         } );
 
         var rn = this.fiber.residues[ n ];
-        var can = rn.getAtomByName( trace_atomname );
+        var can = rn.getAtomByName( traceAtomname );
 
         pos[ n1 * m * 3 + 0 ] = can.x;
         pos[ n1 * m * 3 + 1 ] = can.y;
@@ -2107,9 +2081,9 @@ NGL.Spline.prototype = {
         m = m || 10;
 
         var elemColors = NGL.ElementColors;
-        var trace_atomname = this.trace_atomname;
-        var direction_atomname1 = this.direction_atomname1;
-        var direction_atomname2 = this.direction_atomname2;
+        var traceAtomname = this.traceAtomname;
+        var directionAtomname1 = this.directionAtomname1;
+        var directionAtomname2 = this.directionAtomname2;
         var interpolate = this.interpolate;
         var getTangent = this._makeGetTangent();
 
@@ -2139,10 +2113,10 @@ NGL.Spline.prototype = {
 
         return function( r1, r2, r3, r4, pos, tan, norm, bin, size ){
 
-            a1 = r1.getAtomByName( trace_atomname );
-            a2 = r2.getAtomByName( trace_atomname );
-            a3 = r3.getAtomByName( trace_atomname );
-            a4 = r4.getAtomByName( trace_atomname );
+            a1 = r1.getAtomByName( traceAtomname );
+            a2 = r2.getAtomByName( traceAtomname );
+            a3 = r3.getAtomByName( traceAtomname );
+            a4 = r4.getAtomByName( traceAtomname );
 
             if( a2.ss === "h" ){
                 scale = 0.5;
@@ -2154,7 +2128,7 @@ NGL.Spline.prototype = {
                 scale = 0.15;
             }
 
-            if( trace_atomname === direction_atomname1 ){
+            if( traceAtomname === directionAtomname1 ){
 
                 if( first ){
                     vDir2.set( 0, 0, 1 );
@@ -2167,16 +2141,16 @@ NGL.Spline.prototype = {
             }else{
 
                 if( first ){
-                    cAtom = r2.getAtomByName( direction_atomname1 );
-                    oAtom = r2.getAtomByName( direction_atomname2 );
+                    cAtom = r2.getAtomByName( directionAtomname1 );
+                    oAtom = r2.getAtomByName( directionAtomname2 );
                     vTmp.copy( cAtom );
                     vDir2.copy( oAtom ).sub( vTmp ).normalize();
                     vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
                     first = false;
                 }
 
-                cAtom = r3.getAtomByName( direction_atomname1 );
-                oAtom = r3.getAtomByName( direction_atomname2 );
+                cAtom = r3.getAtomByName( directionAtomname1 );
+                oAtom = r3.getAtomByName( directionAtomname2 );
                 vTmp.copy( cAtom );
                 vPos3.copy( a3 );
                 vDir3.copy( oAtom ).sub( vTmp ).normalize();
