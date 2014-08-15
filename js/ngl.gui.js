@@ -1140,11 +1140,19 @@ NGL.RepresentationWidget = function( repr, component ){
 
         var p = repr.parameters[ name ];
 
-        if( p.type === "number" ){
+        if( p.type === "number" || p.type === "integer" ){
 
-            var input = new UI.Number( repr[ name ] )
+            var input;
+
+            if( p.type === "number" ){
+                input = new UI.Number( repr[ name ] )
+                    .setPrecision( p.precision );
+            }else{
+                input = new UI.Integer( repr[ name ] );
+            }
+
+            input
                 .setRange( p.min, p.max )
-                .setPrecision( p.precision )
                 .onChange( function(){
 
                     var po = {};

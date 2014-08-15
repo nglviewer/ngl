@@ -449,7 +449,7 @@ NGL.Examples = {
                         i += j;
 
                     }, 10 );
-                })();
+                })//();
 
             }, { sele: "not hydrogen" } );
 
