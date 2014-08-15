@@ -284,6 +284,8 @@ NGL.RadiusFactory = function( type, scale ){
     this.type = type;
     this.scale = scale || 1.0;
 
+    this.max = 10;
+
 }
 
 NGL.RadiusFactory.prototype = {
@@ -338,7 +340,7 @@ NGL.RadiusFactory.prototype = {
 
         }
 
-        return r * scale;
+        return Math.min( r * scale, this.max );
 
     }
 

@@ -971,6 +971,15 @@ NGL.Representation.prototype = {
 
     name: "",
 
+    defaultScale: {
+        "vdw": 1.0,
+        "covalent": 1.0,
+        "bfactor": 0.01,
+        "ss": 1.0
+    },
+
+    defaultSize: 1.0,
+
     applySelection: function( sele ){
 
         this.selection = new NGL.Selection( sele );
@@ -1003,9 +1012,9 @@ NGL.Representation.prototype = {
         if( type && type !== this.color ){
 
             this.color = type;
-            this.update({ "color": true });
 
-            this.signals.colorChanged.dispatch( type );
+            this.update({ "color": true });
+            this.signals.colorChanged.dispatch( this.color );
 
         }
 
@@ -1013,14 +1022,16 @@ NGL.Representation.prototype = {
 
     },
 
-    changeRadius: function( type ){
+    changeRadius: function( type, scale ){
 
         if( type && type !== this.radius ){
 
-            this.radius = type;
+            this.radius = type === "size" ? this.defaultSize : type;
+            this.scale = scale || this.defaultScale[ type ] || 1.0;
             
-            this.update({ "radius": type });
-            this.signals.radiusChanged.dispatch( type );
+            this.update({ "radius": true, "scale": true });
+            this.signals.radiusChanged.dispatch( this.radius );
+            this.signals.scaleChanged.dispatch( this.scale );
 
         }
 
@@ -1034,8 +1045,8 @@ NGL.Representation.prototype = {
 
             this.scale = scale;
             
-            this.update({ "scale": scale });
-            this.signals.scaleChanged.dispatch( scale );
+            this.update({ "scale": true });
+            this.signals.scaleChanged.dispatch( this.scale );
 
         }
 
@@ -1191,7 +1202,7 @@ NGL.SpacefillRepresentation.prototype.update = function( what ){
 
 NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio ){
 
-    radius = radius || 0.15;
+    radius = radius || this.defaultSize;
 
     this.aspectRatio = aspectRatio || 2.0;
 
@@ -1202,13 +1213,16 @@ NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radiu
 NGL.BallAndStickRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
+NGL.BallAndStickRepresentation.prototype.defaultSize = 0.15;
 
 NGL.BallAndStickRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor( null, this.color ),
-        this.atomSet.atomRadius( null, this.radius, this.aspectRatio ),
+        this.atomSet.atomRadius(
+            null, this.radius, this.scale * this.aspectRatio
+        ),
         this.atomSet.atomColor( null, "picking" )
     );
 
@@ -1219,7 +1233,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0, this.color ),
         this.atomSet.bondColor( null, 1, this.color ),
-        this.atomSet.bondRadius( null, null, this.radius, 1.0 ),
+        this.atomSet.bondRadius( null, null, this.radius, this.scale ),
         null,
         null,
         this.atomSet.bondColor( null, 0, "picking" ),
@@ -1263,6 +1277,18 @@ NGL.BallAndStickRepresentation.prototype.update = function( what ){
 
     }
 
+    if( what[ "radius" ] || what[ "scale" ] ){
+
+        sphereData[ "radius" ] = this.atomSet.atomRadius(
+            null, this.radius, this.scale * this.aspectRatio
+        );
+
+        cylinderData[ "radius" ] = this.atomSet.bondRadius(
+            null, null, this.radius, this.scale
+        );
+
+    }
+
     this.sphereBuffer.setAttributes( sphereData );
     this.cylinderBuffer.setAttributes( cylinderData );
 
@@ -1271,7 +1297,7 @@ NGL.BallAndStickRepresentation.prototype.update = function( what ){
 
 NGL.LicoriceRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
-    radius = radius || 0.15;
+    radius = radius || this.defaultSize;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1280,13 +1306,14 @@ NGL.LicoriceRepresentation = function( structure, viewer, sele, color, radius, s
 NGL.LicoriceRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.LicoriceRepresentation.prototype.name = "licorice";
+NGL.LicoriceRepresentation.prototype.defaultSize = 0.15;
 
 NGL.LicoriceRepresentation.prototype.create = function(){
 
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor( null, this.color ),
-        this.atomSet.atomRadius( null, this.radius, 1.0 ),
+        this.atomSet.atomRadius( null, this.radius, this.scale ),
         this.atomSet.atomColor( null, "picking" )
     );
 
@@ -1295,7 +1322,7 @@ NGL.LicoriceRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0, this.color ),
         this.atomSet.bondColor( null, 1, this.color ),
-        this.atomSet.bondRadius( null, null, this.radius, 1.0 ),
+        this.atomSet.bondRadius( null, null, this.radius, this.scale ),
         null,
         null,
         this.atomSet.bondColor( null, 0, "picking" ),
@@ -1307,6 +1334,8 @@ NGL.LicoriceRepresentation.prototype.create = function(){
 };
 
 NGL.LicoriceRepresentation.prototype.update = function( what ){
+
+    this.aspectRatio = 1.0;
 
     NGL.BallAndStickRepresentation.prototype.update.call( this, what );
 
@@ -1376,6 +1405,7 @@ NGL.HyperballRepresentation = function( structure, viewer, sele, color, radius, 
 NGL.HyperballRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.HyperballRepresentation.prototype.name = "hyperball";
+NGL.HyperballRepresentation.prototype.defaultScale[ "vdw" ] = 0.2;
 
 NGL.HyperballRepresentation.prototype.create = function(){
 
@@ -1437,6 +1467,21 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
 
     }
 
+    if( what[ "radius" ] || what[ "scale" ] ){
+
+        sphereData[ "radius" ] = this.atomSet.atomRadius(
+            null, this.radius, this.scale
+        );
+
+        cylinderData[ "inputRadius1" ] = this.atomSet.bondRadius(
+            null, 0, this.radius, this.scale
+        );
+        cylinderData[ "inputRadius2" ] = this.atomSet.bondRadius(
+            null, 1, this.radius, this.scale
+        );
+
+    }
+
     this.sphereBuffer.setAttributes( sphereData );
     this.cylinderBuffer.setAttributes( cylinderData );
 
@@ -1445,7 +1490,7 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
 
 NGL.BackboneRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
-    radius = radius || 0.25;
+    radius = radius || this.defaultSize;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1454,6 +1499,7 @@ NGL.BackboneRepresentation = function( structure, viewer, sele, color, radius, s
 NGL.BackboneRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.BackboneRepresentation.prototype.name = "backbone";
+NGL.BackboneRepresentation.prototype.defaultSize = 0.25;
 
 NGL.BackboneRepresentation.prototype.create = function(){
 
@@ -1578,6 +1624,18 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 
         }
 
+        if( what[ "radius" ] || what[ "scale" ] ){
+
+            sphereData[ "radius" ] = backboneAtomSet.atomRadius(
+                null, this.radius, this.scale
+            );
+
+            cylinderData[ "radius" ] = backboneBondSet.bondRadius(
+                null, null, this.radius, this.scale
+            );
+
+        }
+
         sphereBuffer.setAttributes( sphereData );
         cylinderBuffer.setAttributes( cylinderData );
 
@@ -1589,7 +1647,7 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv ){
 
     color = color || "ss";
-    radius = radius || 0.25;
+    radius = radius || this.defaultSize;
 
     /*radius = "bfactor";
     scale = 0.01;*/
@@ -1603,6 +1661,7 @@ NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale
 NGL.TubeRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.TubeRepresentation.prototype.name = "tube";
+NGL.TubeRepresentation.prototype.defaultSize = 0.25;
 
 NGL.TubeRepresentation.prototype.create = function(){
 
@@ -1668,10 +1727,12 @@ NGL.TubeRepresentation.prototype.update = function( what ){
         var bufferData = {};
         var spline = new NGL.Spline( fiber );
 
-        if( what[ "position" ] || what[ "size" ] ){
+        if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
             var subPos = spline.getSubdividedPosition( this.subdiv );
-            var subSize = spline.getSubdividedSize( this.subdiv, "tube" );
+            var subSize = spline.getSubdividedSize(
+                this.subdiv, this.radius, this.scale
+            );
 
             bufferData[ "position" ] = subPos.position;
             bufferData[ "normal" ] = subPos.normal;
@@ -1783,10 +1844,12 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
         var bufferData = {};
         var spline = new NGL.Spline( fiber );
 
-        if( what[ "position" ] || what[ "size" ] ){
+        if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
             var subPos = spline.getSubdividedPosition( this.subdiv );
-            var subSize = spline.getSubdividedSize( this.subdiv );
+            var subSize = spline.getSubdividedSize(
+                this.subdiv, this.radius, this.scale
+            );
 
             bufferData[ "position" ] = subPos.position;
             bufferData[ "normal" ] = subPos.normal;
@@ -1829,6 +1892,7 @@ NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, sca
 NGL.RibbonRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.RibbonRepresentation.prototype.name = "ribbon";
+NGL.RibbonRepresentation.prototype.defaultScale[ "ss" ] *= 3.0;
 
 NGL.RibbonRepresentation.prototype.create = function(){
 
@@ -1895,9 +1959,11 @@ NGL.RibbonRepresentation.prototype.update = function( what ){
 
         }
 
-        if( what[ "size" ] ){
+        if( what[ "radius" ] || what[ "scale" ] ){
 
-            var subSize = spline.getSubdividedSize( this.subdiv );
+            var subSize = spline.getSubdividedSize(
+                this.subdiv, this.radius, this.scale
+            );
 
             bufferData[ "size" ] = subSize.size;
 

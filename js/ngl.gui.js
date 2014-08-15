@@ -795,8 +795,6 @@ NGL.ColorSchemeWidget = function(){
 
         } );
     
-
-
     var colorPicker = new UI.Panel()
         .setWidth( "280px" )
         .setHeight( "200px" );
@@ -984,6 +982,24 @@ NGL.RepresentationWidget = function( repr, component ){
         
     } );
 
+    signals.radiusChanged.add( function( value ){
+        
+        if( parseFloat( value ) ){
+            radiusSelector.setValue( "size" );
+            sizeInput.setValue( value );
+        }else{
+            radiusSelector.setValue( value );
+            sizeInput.dom.value = NaN;
+        }
+        
+    } );
+
+    signals.scaleChanged.add( function( value ){
+
+        scaleInput.setValue( value );
+        
+    } );
+
     component.signals.representationRemoved.add( function( _repr ){
 
         if( repr === _repr ) container.dispose();
@@ -1069,9 +1085,53 @@ NGL.RepresentationWidget = function( repr, component ){
 
     // Menu
 
+    var radiusSelector = new UI.Select()
+        .setColor( '#444' )
+        .setWidth( "" )
+        .setOptions({
+            "": "",
+            "vdw": "by vdW radius",
+            "covalent": "by covalent radius",
+            "ss": "by secondary structure",
+            "bfactor": "by bfactor",
+            "size": "size"
+        })
+        .setValue( parseFloat( repr.radius ) ? "size" : repr.radius )
+        .onChange( function(){
+
+            repr.changeRadius( radiusSelector.getValue() );
+            repr.viewer.render();
+
+        } );
+
+    var sizeInput = new UI.Number(
+            parseFloat( repr.radius ) ? parseFloat( repr.radius ) : NaN
+        )
+        .setRange( 0.001, 10 )
+        .setPrecision( 3 )
+        .onChange( function(){
+
+            repr.changeRadius( sizeInput.getValue() );
+            repr.viewer.render();
+
+        } );
+
+    var scaleInput = new UI.Number( repr.scale )
+        .setRange( 0.001, 10 )
+        .setPrecision( 3 )
+        .onChange( function(){
+
+            repr.changeScale( scaleInput.getValue() );
+            repr.viewer.render();
+
+        } );
+
     var menu = new NGL.MenuWidget()
         .setMarginLeft( "45px" )
         .setEntryTitleWidth( "110px" )
+        .addEntry( "Radius type", radiusSelector )
+        .addEntry( "Radius size", sizeInput )
+        .addEntry( "Radius scale", scaleInput )
         ;
 
     container
