@@ -366,6 +366,32 @@ NGL.Examples = {
 
         },
 
+        "bfactor": function( stage ){
+
+            stage.loadFile( "__example__/1u19.pdb", function( o ){
+
+                var tube = o.addRepresentation( "tube", ":A" );
+
+                o.centerView( ":A" );
+
+            } );
+
+        },
+
+        "1d66": function( stage ){
+
+            stage.loadFile( "__example__/1d66.pdb", function( o ){
+
+                o.addRepresentation( "cartoon", "nucleic" );
+                o.addRepresentation( "licorice", "nucleic" )
+                    .changeColor( "resname" );
+
+                o.centerView( "nucleic" );
+
+            } );
+
+        },
+
         "trajReprUpdate": function( stage ){
 
             stage.loadFile( "__example__/md_1u19.gro", function( o ){
@@ -389,17 +415,25 @@ NGL.Examples = {
                 hyperball.changeColor( "resname" );
                 stage.viewer.render();
 
-                var i = 0;
-                var colorList = [ 0x00CCFF, "element" ];
 
-                // setInterval( function(){
+                (function(){
+                    var i = 100;
+                    var j = 1;
 
-                //     spacefill.update({ "color": colorList[ i % colorList.length ] });
-                //     stage.viewer.render();
+                    setInterval( function(){
 
-                //     i += 1;
+                        spacefill.changeScale( i / 100 );
+                        stage.viewer.render();
 
-                // }, 500 );
+                        if( i === 100 ){
+                            j = -1;
+                        }else if( i === 10 ){
+                            j = 1;
+                        }
+                        i += j;
+
+                    }, 10 );
+                })//();
 
             }, { sele: "not hydrogen" } );
 
