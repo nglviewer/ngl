@@ -371,9 +371,22 @@ NGL.Examples = {
             stage.loadFile( "__example__/1u19.pdb", function( o ){
 
                 o.addRepresentation( "tube", ":A" )
+                    .setVisibility( false )
                     .changeRadius( "bfactor", 0.005 );
 
-                o.addRepresentation( "backbone", ":A" )
+                o.addRepresentation( "hyperball", ":A" )
+                    .setVisibility( false )
+                    .setParameters({ shrink: 0.3 });
+
+                o.addRepresentation( "ball+stick", ":A and sidechainAttached" )
+                    .setVisibility( true )
+                    .changeRadius( 0.1 )
+                    .setParameters({ aspectRatio: 1.5 });
+
+                o.addRepresentation( "cartoon", ":A" )
+                    .setVisibility( true )
+                    .changeScale( 0.3 )
+                    .setParameters({ aspectRatio: 6.0 });
 
                 o.centerView( ":A" );
 
@@ -436,7 +449,7 @@ NGL.Examples = {
                         i += j;
 
                     }, 10 );
-                })//();
+                })();
 
             }, { sele: "not hydrogen" } );
 

@@ -980,6 +980,8 @@ NGL.Representation.prototype = {
 
     defaultSize: 1.0,
 
+    parameters: {},
+
     applySelection: function( sele ){
 
         this.selection = new NGL.Selection( sele );
@@ -1124,6 +1126,12 @@ NGL.Representation.prototype = {
 
     },
 
+    setParameters: function( params ){
+
+
+
+    },
+
     dispose: function(){
 
         viewer = this.viewer;
@@ -1213,7 +1221,14 @@ NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radiu
 NGL.BallAndStickRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.BallAndStickRepresentation.prototype.name = "ball+stick";
+
 NGL.BallAndStickRepresentation.prototype.defaultSize = 0.15;
+
+NGL.BallAndStickRepresentation.prototype.parameters = {
+    aspectRatio: {
+        type: "number", precision: 1, max: 10.0, min: 1.0
+    }
+};
 
 NGL.BallAndStickRepresentation.prototype.create = function(){
 
@@ -1294,6 +1309,19 @@ NGL.BallAndStickRepresentation.prototype.update = function( what ){
 
 };
 
+NGL.BallAndStickRepresentation.prototype.setParameters = function( params ){
+
+    if( params && params[ "aspectRatio" ] ){
+
+        this.aspectRatio = params[ "aspectRatio" ];
+        this.update({ "radius": true, "scale": true });
+
+    }
+
+    return this;
+
+};
+
 
 NGL.LicoriceRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
@@ -1306,6 +1334,7 @@ NGL.LicoriceRepresentation = function( structure, viewer, sele, color, radius, s
 NGL.LicoriceRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.LicoriceRepresentation.prototype.name = "licorice";
+
 NGL.LicoriceRepresentation.prototype.defaultSize = 0.15;
 
 NGL.LicoriceRepresentation.prototype.create = function(){
@@ -1405,7 +1434,14 @@ NGL.HyperballRepresentation = function( structure, viewer, sele, color, radius, 
 NGL.HyperballRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.HyperballRepresentation.prototype.name = "hyperball";
+
 NGL.HyperballRepresentation.prototype.defaultScale[ "vdw" ] = 0.2;
+
+NGL.HyperballRepresentation.prototype.parameters = {
+    shrink: {
+        type: "number", precision: 3, max: 1.0, min: 0.001
+    }
+};
 
 NGL.HyperballRepresentation.prototype.create = function(){
 
@@ -1487,6 +1523,17 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
 
 };
 
+NGL.HyperballRepresentation.prototype.setParameters = function( params ){
+
+    if( params && params[ "shrink" ] ){
+
+        this.shrink = params[ "shrink" ];
+        this.cylinderBuffer.uniforms[ "shrink" ].value = this.shrink;
+
+    }
+
+};
+
 
 NGL.BackboneRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
@@ -1499,6 +1546,7 @@ NGL.BackboneRepresentation = function( structure, viewer, sele, color, radius, s
 NGL.BackboneRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.BackboneRepresentation.prototype.name = "backbone";
+
 NGL.BackboneRepresentation.prototype.defaultSize = 0.25;
 
 NGL.BackboneRepresentation.prototype.create = function(){
@@ -1649,9 +1697,6 @@ NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale
     color = color || "ss";
     radius = radius || this.defaultSize;
 
-    /*radius = "bfactor";
-    scale = 0.01;*/
-
     this.subdiv = subdiv || 10;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
@@ -1661,6 +1706,7 @@ NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale
 NGL.TubeRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.TubeRepresentation.prototype.name = "tube";
+
 NGL.TubeRepresentation.prototype.defaultSize = 0.25;
 
 NGL.TubeRepresentation.prototype.create = function(){
@@ -1776,6 +1822,12 @@ NGL.CartoonRepresentation.prototype = Object.create( NGL.Representation.prototyp
 
 NGL.CartoonRepresentation.prototype.name = "cartoon";
 
+NGL.CartoonRepresentation.prototype.parameters = {
+    aspectRatio: {
+        type: "number", precision: 1, max: 10.0, min: 1.0
+    }
+};
+
 NGL.CartoonRepresentation.prototype.create = function(){
 
     var scope = this;
@@ -1844,6 +1896,8 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
         var bufferData = {};
         var spline = new NGL.Spline( fiber );
 
+        this.bufferList[ i ].rx = this.aspectRatio;
+
         if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
             var subPos = spline.getSubdividedPosition( this.subdiv );
@@ -1876,6 +1930,19 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
 
 };
 
+NGL.CartoonRepresentation.prototype.setParameters = function( params ){
+
+    if( params && params[ "aspectRatio" ] ){
+
+        this.aspectRatio = params[ "aspectRatio" ];
+        this.update({ "radius": true, "scale": true });
+
+    }
+
+    return this;
+
+};
+
 
 NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv ){
 
@@ -1892,6 +1959,7 @@ NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, sca
 NGL.RibbonRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.RibbonRepresentation.prototype.name = "ribbon";
+
 NGL.RibbonRepresentation.prototype.defaultScale[ "ss" ] *= 3.0;
 
 NGL.RibbonRepresentation.prototype.create = function(){
