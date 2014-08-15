@@ -1693,7 +1693,7 @@ NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale
 
     this.subdiv = subdiv || 10;
     this.radialSegments = radialSegments || 12;
-    this.tension = tension || 0.9;
+    this.tension = tension || NaN;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1849,7 +1849,7 @@ NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, sc
     this.aspectRatio = aspectRatio || 3.0;
     this.subdiv = subdiv || 10;
     this.radialSegments = radialSegments || 12;
-    this.tension = tension || 0.9;
+    this.tension = tension || NaN;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1935,7 +1935,7 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
 
     for( i = 0; i < n; ++i ){
 
-        var fiber = this.fiberList[ i ]
+        var fiber = this.fiberList[ i ];
 
         if( fiber.residueCount < 4 ) return;
 
@@ -2018,7 +2018,7 @@ NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, sca
     scale = scale || 3.0;
 
     this.subdiv = subdiv || 10;
-    this.tension = tension || 0.9;
+    this.tension = tension || NaN;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -2153,7 +2153,7 @@ NGL.RibbonRepresentation.prototype.setParameters = function( params ){
 NGL.TraceRepresentation = function( structure, viewer, sele, color, subdiv, tension ){
 
     this.subdiv = subdiv || 10;
-    this.tension = tension || 0.9;
+    this.tension = tension || NaN;
 
     color = color || "ss";
 
@@ -2340,6 +2340,10 @@ NGL.Spline.prototype = {
     },
 
     getSubdividedPosition: function( m, tension ){
+
+        if( isNaN( tension ) ){
+            tension = this.fiber.residues[ 0 ].isNucleic() ? 0.6 : 0.9;
+        }
 
         var traceAtomname = this.traceAtomname;
         var directionAtomname1 = this.directionAtomname1;
