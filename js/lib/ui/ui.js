@@ -990,7 +990,11 @@ UI.Integer = function ( number ) {
 
         distance += ( pointer.x - prevPointer.x ) - ( pointer.y - prevPointer.y );
 
-        var number = onMouseDownValue + ( distance / ( event.shiftKey ? 5 : 50 ) ) * scope.step;
+        var modifier = 50;
+        if( event.shiftKey ) modifier = 5;
+        if( event.ctrlKey ) modifier = 500;
+
+        var number = onMouseDownValue + ( distance / modifier ) * scope.step;
 
         dom.value = Math.min( scope.max, Math.max( scope.min, number ) ) | 0;
 

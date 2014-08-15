@@ -999,11 +999,7 @@ NGL.Representation.prototype = {
 
         this.applySelection( sele );
 
-        this.dispose();
-        this.create();
-        this.attach();
-
-        this.setVisibility( this.visible );
+        this.rebuild();
 
         return this;
 
@@ -1068,7 +1064,7 @@ NGL.Representation.prototype = {
 
     },
 
-    update: function( just_create ){
+    update: function(){
 
         if( this.selection ){
 
@@ -1076,17 +1072,15 @@ NGL.Representation.prototype = {
 
         }
 
-        if( just_create ){
+    },
 
-            console.error( "deprecated" )
+    rebuild: function(){
 
-            this.dispose();
-            this.create();
-            this.attach();
+        this.dispose();
+        this.create();
+        this.attach();
 
-            this.setVisibility( this.visible );
-
-        }
+        this.setVisibility( this.visible );
 
     },
 
@@ -1692,12 +1686,14 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv ){
+NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv, radialSegments, tension ){
 
     color = color || "ss";
     radius = radius || this.defaultSize;
 
     this.subdiv = subdiv || 10;
+    this.radialSegments = radialSegments || 12;
+    this.tension = tension || 0.9;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1708,6 +1704,18 @@ NGL.TubeRepresentation.prototype = Object.create( NGL.Representation.prototype )
 NGL.TubeRepresentation.prototype.name = "tube";
 
 NGL.TubeRepresentation.prototype.defaultSize = 0.25;
+
+NGL.TubeRepresentation.prototype.parameters = {
+    subdiv: {
+        type: "integer", max: 50, min: 1
+    },
+    radialSegments: {
+        type: "integer", max: 50, min: 1
+    },
+    tension: {
+        type: "number", precision: 1, max: 1.0, min: 0.1
+    }
+};
 
 NGL.TubeRepresentation.prototype.create = function(){
 
@@ -1721,7 +1729,7 @@ NGL.TubeRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
         var subSize = spline.getSubdividedSize(
             scope.subdiv, scope.radius, scope.scale
@@ -1739,7 +1747,7 @@ NGL.TubeRepresentation.prototype.create = function(){
                 subPos.tangent,
                 subCol.color,
                 subSize.size,
-                12,
+                scope.radialSegments,
                 subCol.pickingColor,
                 rx,
                 ry
@@ -1775,7 +1783,7 @@ NGL.TubeRepresentation.prototype.update = function( what ){
 
         if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
-            var subPos = spline.getSubdividedPosition( this.subdiv );
+            var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
             var subSize = spline.getSubdividedSize(
                 this.subdiv, this.radius, this.scale
             );
@@ -1805,14 +1813,43 @@ NGL.TubeRepresentation.prototype.update = function( what ){
 
 };
 
+NGL.TubeRepresentation.prototype.setParameters = function( params ){
 
-NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio, subdiv ){
+    if( params && params[ "subdiv" ] ){
+
+        this.subdiv = params[ "subdiv" ];
+        this.rebuild();
+
+    }
+
+    if( params && params[ "radialSegments" ] ){
+
+        this.radialSegments = params[ "radialSegments" ];
+        this.rebuild();
+
+    }
+
+    if( params && params[ "tension" ] ){
+
+        this.tension = params[ "tension" ];
+        this.update({ "radius": true });
+
+    }
+
+    return this;
+
+};
+
+
+NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio, subdiv, radialSegments, tension ){
 
     color = color || "ss";
     radius = radius || "ss";
     
     this.aspectRatio = aspectRatio || 3.0;
     this.subdiv = subdiv || 10;
+    this.radialSegments = radialSegments || 12;
+    this.tension = tension || 0.9;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1825,6 +1862,15 @@ NGL.CartoonRepresentation.prototype.name = "cartoon";
 NGL.CartoonRepresentation.prototype.parameters = {
     aspectRatio: {
         type: "number", precision: 1, max: 10.0, min: 1.0
+    },
+    subdiv: {
+        type: "integer", max: 50, min: 1
+    },
+    radialSegments: {
+        type: "integer", max: 50, min: 1
+    },
+    tension: {
+        type: "number", precision: 1, max: 1.0, min: 0.1
     }
 };
 
@@ -1840,7 +1886,7 @@ NGL.CartoonRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
         var subSize = spline.getSubdividedSize(
             scope.subdiv, scope.radius, scope.scale
@@ -1862,7 +1908,7 @@ NGL.CartoonRepresentation.prototype.create = function(){
                 subPos.tangent,
                 subCol.color,
                 subSize.size,
-                12,
+                scope.radialSegments,
                 subCol.pickingColor,
                 rx,
                 ry
@@ -1900,7 +1946,7 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
 
         if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
-            var subPos = spline.getSubdividedPosition( this.subdiv );
+            var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
             var subSize = spline.getSubdividedSize(
                 this.subdiv, this.radius, this.scale
             );
@@ -1935,7 +1981,28 @@ NGL.CartoonRepresentation.prototype.setParameters = function( params ){
     if( params && params[ "aspectRatio" ] ){
 
         this.aspectRatio = params[ "aspectRatio" ];
-        this.update({ "radius": true, "scale": true });
+        this.update({ "radius": true });
+
+    }
+
+    if( params && params[ "subdiv" ] ){
+
+        this.subdiv = params[ "subdiv" ];
+        this.rebuild();
+
+    }
+
+    if( params && params[ "radialSegments" ] ){
+
+        this.radialSegments = params[ "radialSegments" ];
+        this.rebuild();
+
+    }
+
+    if( params && params[ "tension" ] ){
+
+        this.tension = params[ "tension" ];
+        this.update({ "position": true });
 
     }
 
@@ -1944,13 +2011,14 @@ NGL.CartoonRepresentation.prototype.setParameters = function( params ){
 };
 
 
-NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv ){
+NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv, tension ){
 
     color = color || "ss";
     radius = radius || "ss";
     scale = scale || 3.0;
 
     this.subdiv = subdiv || 10;
+    this.tension = tension || 0.9;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1961,6 +2029,15 @@ NGL.RibbonRepresentation.prototype = Object.create( NGL.Representation.prototype
 NGL.RibbonRepresentation.prototype.name = "ribbon";
 
 NGL.RibbonRepresentation.prototype.defaultScale[ "ss" ] *= 3.0;
+
+NGL.RibbonRepresentation.prototype.parameters = {
+    subdiv: {
+        type: "integer", max: 50, min: 1
+    },
+    tension: {
+        type: "number", precision: 1, max: 1.0, min: 0.1
+    }
+};
 
 NGL.RibbonRepresentation.prototype.create = function(){
 
@@ -1974,7 +2051,7 @@ NGL.RibbonRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
         var subSize = spline.getSubdividedSize(
             scope.subdiv, scope.radius, scope.scale
@@ -2019,7 +2096,7 @@ NGL.RibbonRepresentation.prototype.update = function( what ){
 
         if( what[ "position" ] ){
 
-            var subPos = spline.getSubdividedPosition( this.subdiv );
+            var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
 
             bufferData[ "position" ] = subPos.position;
             bufferData[ "normal" ] = subPos.binormal;
@@ -2052,10 +2129,31 @@ NGL.RibbonRepresentation.prototype.update = function( what ){
 
 };
 
+NGL.RibbonRepresentation.prototype.setParameters = function( params ){
 
-NGL.TraceRepresentation = function( structure, viewer, sele, color, subdiv ){
+    if( params && params[ "subdiv" ] ){
+
+        this.subdiv = params[ "subdiv" ];
+        this.rebuild();
+
+    }
+
+    if( params && params[ "tension" ] ){
+
+        this.tension = params[ "tension" ];
+        this.update({ "position": true });
+
+    }
+
+    return this;
+
+};
+
+
+NGL.TraceRepresentation = function( structure, viewer, sele, color, subdiv, tension ){
 
     this.subdiv = subdiv || 10;
+    this.tension = tension || 0.9;
 
     color = color || "ss";
 
@@ -2066,6 +2164,15 @@ NGL.TraceRepresentation = function( structure, viewer, sele, color, subdiv ){
 NGL.TraceRepresentation.prototype = Object.create( NGL.Representation.prototype );
 
 NGL.TraceRepresentation.prototype.name = "trace";
+
+NGL.TraceRepresentation.prototype.parameters = {
+    subdiv: {
+        type: "integer", max: 50, min: 1
+    },
+    tension: {
+        type: "number", precision: 1, max: 1.0, min: 0.1
+    }
+};
 
 NGL.TraceRepresentation.prototype.create = function(){
 
@@ -2079,7 +2186,7 @@ NGL.TraceRepresentation.prototype.create = function(){
         if( fiber.residueCount < 4 ) return;
 
         var spline = new NGL.Spline( fiber );
-        var subPos = spline.getSubdividedPosition( scope.subdiv );
+        var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
 
         scope.bufferList.push(
@@ -2111,7 +2218,7 @@ NGL.TraceRepresentation.prototype.update = function( what ){
 
         if( what[ "position" ] ){
 
-            var subPos = spline.getSubdividedPosition( this.subdiv );
+            var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
 
             bufferData[ "position" ] = subPos.position;
 
@@ -2131,6 +2238,26 @@ NGL.TraceRepresentation.prototype.update = function( what ){
 
 };
 
+NGL.TraceRepresentation.prototype.setParameters = function( params ){
+
+    if( params && params[ "subdiv" ] ){
+
+        this.subdiv = params[ "subdiv" ];
+        this.rebuild();
+
+    }
+
+    if( params && params[ "tension" ] ){
+
+        this.tension = params[ "tension" ];
+        this.update({ "position": true });
+
+    }
+
+    return this;
+
+};
+
 
 NGL.Spline = function( fiber ){
 
@@ -2146,9 +2273,7 @@ NGL.Spline.prototype = {
 
     // from THREE.js
     // ASR added tension
-    interpolate: function( p0, p1, p2, p3, t ) {
-
-        var tension = 0.9;
+    interpolate: function( p0, p1, p2, p3, t, tension ) {
 
         var v0 = ( p2 - p0 ) * tension;
         var v1 = ( p3 - p1 ) * tension;
@@ -2214,7 +2339,7 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedPosition: function( m ){
+    getSubdividedPosition: function( m, tension ){
 
         var traceAtomname = this.traceAtomname;
         var directionAtomname1 = this.directionAtomname1;
@@ -2227,7 +2352,7 @@ NGL.Spline.prototype = {
         var norm = new Float32Array( n1 * m * 3 + 3 );
         var bin = new Float32Array( n1 * m * 3 + 3 );
 
-        var subdivideData = this._makeSubdivideData( m, traceAtomname );
+        var subdivideData = this._makeSubdivideData( m, tension );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
@@ -2302,16 +2427,17 @@ NGL.Spline.prototype = {
 
     },
 
-    _makeSubdivideData: function( m ){
+    _makeSubdivideData: function( m, tension ){
 
         m = m || 10;
+        tension = tension || 0.9;
 
         var elemColors = NGL.ElementColors;
         var traceAtomname = this.traceAtomname;
         var directionAtomname1 = this.directionAtomname1;
         var directionAtomname2 = this.directionAtomname2;
         var interpolate = this.interpolate;
-        var getTangent = this._makeGetTangent();
+        var getTangent = this._makeGetTangent( tension );
 
         var dt = 1.0 / m;
         var a1, a2, a3, a4;
@@ -2381,9 +2507,9 @@ NGL.Spline.prototype = {
                 d1 = 1 - d;
                 l = k + j * 3;
 
-                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d );
-                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d );
-                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d );
+                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d, tension );
+                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d, tension );
+                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d, tension );
 
                 vNorm.set(
                     d1 * vDir2.x + d * vDir3.x,
@@ -2419,17 +2545,17 @@ NGL.Spline.prototype = {
 
     },
 
-    getPoint: function( a1, a2, a3, a4, t, v ){
+    getPoint: function( a1, a2, a3, a4, t, v, tension ){
 
-        v.x = NGL.Spline.prototype.interpolate( a1.x, a2.x, a3.x, a4.x, t );
-        v.y = NGL.Spline.prototype.interpolate( a1.y, a2.y, a3.y, a4.y, t );
-        v.z = NGL.Spline.prototype.interpolate( a1.z, a2.z, a3.z, a4.z, t );
+        v.x = NGL.Spline.prototype.interpolate( a1.x, a2.x, a3.x, a4.x, t, tension );
+        v.y = NGL.Spline.prototype.interpolate( a1.y, a2.y, a3.y, a4.y, t, tension );
+        v.z = NGL.Spline.prototype.interpolate( a1.z, a2.z, a3.z, a4.z, t, tension );
 
         return v;
 
     },
 
-    _makeGetTangent: function(){
+    _makeGetTangent: function( tension ){
 
         var getPoint = this.getPoint;
 
@@ -2447,8 +2573,8 @@ NGL.Spline.prototype = {
             if ( t1 < 0 ) t1 = 0;
             if ( t2 > 1 ) t2 = 1;
 
-            getPoint( a1, a2, a3, a4, t1, p1 );
-            getPoint( a1, a2, a3, a4, t2, p2 );
+            getPoint( a1, a2, a3, a4, t1, p1, tension );
+            getPoint( a1, a2, a3, a4, t2, p2, tension );
 
             return v.copy( p2 ).sub( p1 ).normalize();
 
