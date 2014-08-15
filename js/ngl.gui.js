@@ -766,7 +766,9 @@ NGL.ColorSchemeWidget = function(){
             "element": "by element",
             "resname": "by residue name",
             "ss": "by secondary structure",
+            "atomindex": "by atom index",
             "picking": "by picking id",
+            "random": "random",
             "color": "color"
         })
         .onChange( function(){

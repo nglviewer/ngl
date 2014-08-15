@@ -2294,7 +2294,7 @@ NGL.Spline.prototype = {
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
-        var colorFactory = new NGL.ColorFactory( type );
+        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
 
         var k = 0;
         var j, l, a2, c, pc;
