@@ -400,7 +400,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", "nucleic" );
                 o.addRepresentation( "licorice", "nucleic" )
-                    .changeColor( "resname" );
+                    .changeColor( "atomindex" );
 
                 o.centerView( "nucleic" );
 

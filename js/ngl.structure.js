@@ -211,9 +211,20 @@ NGL.nextGlobalAtomindex = 0;
 ////////////
 // Factory
 
-NGL.ColorFactory = function( type ){
+NGL.ColorFactory = function( type, structure ){
 
     this.type = type;
+    this.structure = structure;
+
+    if( structure ){
+
+        this.atomindexScale = chroma
+            //.scale( 'Spectral' )
+            //.scale( 'RdYlGn' )
+            .scale([ "red", "orange", "yellow", "green", "blue" ])
+            .domain( [ 0, this.structure.atomCount ]);
+
+    }
 
 }
 
@@ -228,7 +239,9 @@ NGL.ColorFactory.prototype = {
         var defaultElemColor = NGL.ElementColors[""];
         var defaultResColor = NGL.ResidueColors[""];
 
-        var c;
+        var atomindexScale = this.atomindexScale;
+
+        var c, _c;
 
         switch( type ){
 
@@ -245,6 +258,18 @@ NGL.ColorFactory.prototype = {
             case "resname":
 
                 c = resColors[ a.resname ] || defaultResColor;
+                break;
+
+            case "atomindex":
+
+                _c = atomindexScale( a.index ).rgba();
+                //console.log( _c, a.index, a );
+                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                break;
+
+            case "random":
+
+                c = Math.random() * 0xFFFFFF;
                 break;
 
             case "ss":
@@ -514,7 +539,7 @@ NGL.AtomSet.prototype = {
 
         // TODO cache
         var c, color;
-        var colorFactory = new NGL.ColorFactory( type );
+        var colorFactory = new NGL.ColorFactory( type, this.structure );
 
         if( selection ){
             color = [];
@@ -789,7 +814,7 @@ NGL.AtomSet.prototype = {
         var color = [];
 
         var c;
-        var colorFactory = new NGL.ColorFactory( type );
+        var colorFactory = new NGL.ColorFactory( type, this.structure );
 
         this.eachBond( function( b ){
 
@@ -2277,7 +2302,7 @@ NGL.Chain.prototype = {
 
         // console.log( residues );
 
-        return new NGL.Fiber( residues );
+        return new NGL.Fiber( residues, this.model.structure );
 
     },
 
@@ -2355,7 +2380,9 @@ NGL.Chain.prototype = {
 NGL.AtomSet.prototype.apply( NGL.Chain.prototype );
 
 
-NGL.Fiber = function( residues ){
+NGL.Fiber = function( residues, structure ){
+
+    this.structure = structure;
 
     this.residues = residues;
     this.residueCount = residues.length;
