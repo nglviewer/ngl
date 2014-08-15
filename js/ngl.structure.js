@@ -72,6 +72,13 @@ NGL.ResidueColors = {
     "T": 0xA0FFA0,
     "U": 0xFF8080,
 
+    "DA": 0xA0A0FF,
+    "DG": 0xFF7070,
+    "DI": 0x80FFFF,
+    "DC": 0xFF8C4B,
+    "DT": 0xA0FFA0,
+    "DU": 0xFF8080,
+
     "": 0xBEA06E
 };
 
@@ -170,7 +177,8 @@ NGL.UnknownType = 0;
 NGL.CgType = 1;
 NGL.ProteinType = 2;
 NGL.NucleicType = 3;
-NGL.WaterType = 4;
+NGL.NucleicBackboneType = 4;
+NGL.WaterType = 5;
 
 
 NGL.AA1 = {
@@ -200,16 +208,16 @@ NGL.AA1 = {
 NGL.nextGlobalAtomindex = 0;
 
 
-//////////
-// Color
+////////////
+// Factory
 
-NGL.ColorScheme = function( type ){
+NGL.ColorFactory = function( type ){
 
     this.type = type;
 
 }
 
-NGL.ColorScheme.prototype = {
+NGL.ColorFactory.prototype = {
 
     atomColor: function( a ){
 
@@ -219,6 +227,8 @@ NGL.ColorScheme.prototype = {
 
         var defaultElemColor = NGL.ElementColors[""];
         var defaultResColor = NGL.ResidueColors[""];
+
+        var c;
 
         switch( type ){
 
@@ -253,6 +263,7 @@ NGL.ColorScheme.prototype = {
             case undefined:
 
                 c = 0xFFFFFF;
+                break;
 
             default: 
                
@@ -262,6 +273,72 @@ NGL.ColorScheme.prototype = {
         }
 
         return c;
+
+    }
+
+};
+
+
+NGL.RadiusFactory = function( type, scale ){
+
+    this.type = type;
+    this.scale = scale || 1.0;
+
+}
+
+NGL.RadiusFactory.prototype = {
+
+    atomRadius: function( a ){
+
+        var type = this.type;
+        var scale = this.scale;
+        var vdwRadii = NGL.VdwRadii;
+        var covalentRadii = NGL.CovalentRadii;
+
+        var defaultVdwRadius = NGL.VdwRadii[""];
+        var defaultCovalentRadius = NGL.CovalentRadii[""];
+        var defaultBfactor = 1;
+
+        var r;
+
+        switch( type ){
+
+            case "vdw":
+            
+                r = vdwRadii[ a.element ] || defaultVdwRadius;
+                break;
+
+            case "covalent":
+            
+                r = covalentRadii[ a.element ] || defaultCovalentRadius;
+                break;
+
+            case "bfactor":
+
+                r = a.bfactor || defaultBfactor;
+                break;
+
+            case "ss":
+            
+                if( a.ss === "h" ){
+                    r = 0.25;
+                }else if( a.ss === "s" ){
+                    r = 0.25;
+                }else if( a.atomname === "P" ){
+                    r = 0.4;
+                }else{
+                    r = 0.1;
+                }
+                break;
+
+            default: 
+               
+                r = type || 1.0;
+                break;
+
+        }
+
+        return r * scale;
 
     }
 
@@ -435,9 +512,7 @@ NGL.AtomSet.prototype = {
 
         // TODO cache
         var c, color;
-        var elemColors = NGL.ElementColors;
-
-        var colorScheme = new NGL.ColorScheme( type );
+        var colorFactory = new NGL.ColorFactory( type );
 
         if( selection ){
             color = [];
@@ -449,7 +524,7 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            c = colorScheme.atomColor( a );
+            c = colorFactory.atomColor( a );
 
             color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
             color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
@@ -467,14 +542,11 @@ NGL.AtomSet.prototype = {
 
     },
 
-    atomRadius: function( selection, size, scale ){
+    atomRadius: function( selection, type, scale ){
 
         // TODO cache
-        var i, r, radius;
-        var vdwRadii = NGL.VdwRadii;
-
-        if( !size ) size = null;
-        if( !scale ) scale = null;
+        var i, radius;
+        var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         if( selection ){
             radius = [];
@@ -486,12 +558,7 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            if( size ){
-                radius[ i ] = size;
-            }else{
-                r = vdwRadii[ a.element ];
-                radius[ i ] = ( r ? r : 1.5 ) * scale;
-            }
+            radius[ i ] = radiusFactory.atomRadius( a );
 
             i += 1;
 
@@ -720,13 +787,11 @@ NGL.AtomSet.prototype = {
         var color = [];
 
         var c;
-        var elemColors = NGL.ElementColors;
-
-        var colorScheme = new NGL.ColorScheme( type );
+        var colorFactory = new NGL.ColorFactory( type );
 
         this.eachBond( function( b ){
 
-            c = colorScheme.atomColor( fromTo ? b.atom1 : b.atom2 );
+            c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
 
             color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
             color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
@@ -740,31 +805,17 @@ NGL.AtomSet.prototype = {
 
     },
 
-    bondRadius: function( selection, fromTo, size, scale ){
+    bondRadius: function( selection, fromTo, type, scale ){
 
         var i = 0;
         var radius = [];
-
-        var r;
-        var vdwRadii = NGL.VdwRadii;
+        var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         this.eachBond( function( b ){
 
-            if( size ){
-
-                radius[ i ] = size;
-
-            }else{
-
-                if( fromTo ){
-                    r = vdwRadii[ b.atom1.element ];
-                }else{
-                    r = vdwRadii[ b.atom2.element ];
-                }
-
-                radius[ i ] = ( r ? r : 1.5 ) * scale;
-
-            }
+            radius[ i ] = radiusFactory.atomRadius(
+                fromTo ? b.atom1 : b.atom2
+            );
 
             i += 1;
 
@@ -2248,7 +2299,7 @@ NGL.Chain.prototype = {
                 a1 = r1.getAtomByName( 'C' );
                 a2 = r2.getAtomByName( 'N' );
 
-            }else if( r1.isNucleic() && r2.isNucleic() ){
+            }else if( r1.hasNucleicBackbone() && r2.hasNucleicBackbone() ){
 
                 a1 = r1.getAtomByName([ "O3'", "O3*" ]);
                 a2 = r2.getAtomByName( 'P' );
@@ -2262,7 +2313,7 @@ NGL.Chain.prototype = {
 
                 if( ( r1.isProtein() && !r2.isProtein() ) ||
                     ( r1.isCg() && !r2.isCg() ) ||
-                    ( r1.isNucleic() && !r2.isNucleic() ) ){
+                    ( r1.hasNucleicBackbone() && !r2.hasNucleicBackbone() ) ){
 
                     callback( scope.getFiber( i, j, padded ) );
 
@@ -2289,7 +2340,7 @@ NGL.Chain.prototype = {
 
         if( residues[ i ].isProtein() ||
             residues[ i ].isCg() || 
-            residues[ i ].isNucleic() ){
+            residues[ i ].hasNucleicBackbone() ){
             
             callback( scope.getFiber( i, j, padded ) );
 
@@ -2440,14 +2491,38 @@ NGL.Residue.prototype = {
 
     isNucleic: function(){
 
-        if( this._nucleic === undefined ){
+        var bases = [
+            "A", "C", "T", "G", "U",
+            "DA", "DC", "DT", "DG", "DU"
+        ];
 
-            this._nucleic = this.getAtomByName( "P" ) !== undefined &&
-                this.getAtomByName([ "O3'", "O3*" ]) !== undefined;
+        return function(){
+
+            if( this._nucleic === undefined ){
+
+                this._nucleic = ( this.getAtomByName( "P" ) !== undefined
+                        || bases.indexOf( this.resname ) !== -1
+                    ) &&
+                    this.getAtomByName([ "O3'", "O3*" ]) !== undefined;
+
+            }
+
+            return this._nucleic;
 
         }
 
-        return this._nucleic;
+    }(),
+
+    hasNucleicBackbone: function(){
+
+        if( this._nucleicBackbone === undefined ){
+
+            this._nucleicBackbone = this.isNucleic() &&
+                this.getAtomByName( "P" ) !== undefined;
+
+        }
+
+        return this._nucleicBackbone;
 
     },
 
@@ -2493,6 +2568,8 @@ NGL.Residue.prototype = {
 
             if( this.isProtein() ){
                 this._type = NGL.ProteinType;
+            }else if( this.hasNucleicBackbone() ){
+                this._type = NGL.NucleicBackboneType;
             }else if( this.isNucleic() ){
                 this._type = NGL.NucleicType;
             }else if( this.isCg() ){
@@ -2601,7 +2678,7 @@ NGL.Residue.prototype = {
 
             return this.getAtomByName( 'C' );
 
-        }else if( this.isNucleic() ){
+        }else if( this.hasNucleicBackbone() ){
 
             return this.getAtomByName([ "O3'", "O3*" ]);
 
@@ -2619,7 +2696,7 @@ NGL.Residue.prototype = {
 
             return this.getAtomByName( 'N' );
 
-        }else if( this.isNucleic() ){
+        }else if( this.hasNucleicBackbone() ){
 
             return this.getAtomByName( 'P' );
 

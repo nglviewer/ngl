@@ -933,7 +933,7 @@ NGL.autoLoad = function(){
 ///////////////////
 // Representation
 
-NGL.Representation = function( structure, viewer, sele, color ){
+NGL.Representation = function( structure, viewer, sele, color, radius, scale ){
 
     var SIGNALS = signals;
 
@@ -941,12 +941,16 @@ NGL.Representation = function( structure, viewer, sele, color ){
 
         visibilityChanged: new SIGNALS.Signal(),
         colorChanged: new SIGNALS.Signal(),
+        radiusChanged: new SIGNALS.Signal(),
+        scaleChanged: new SIGNALS.Signal(),
 
     };
 
     this.structure = structure;
     this.viewer = viewer;
     this.color = color || "element";
+    this.radius = radius || "vdw";
+    this.scale = scale || 1.0;
 
     this.visible = true;
 
@@ -990,6 +994,8 @@ NGL.Representation.prototype = {
 
         this.setVisibility( this.visible );
 
+        return this;
+
     },
 
     changeColor: function( type ){
@@ -997,11 +1003,43 @@ NGL.Representation.prototype = {
         if( type && type !== this.color ){
 
             this.color = type;
-            this.update({ "color": type });
+            this.update({ "color": true });
 
             this.signals.colorChanged.dispatch( type );
 
         }
+
+        return this;
+
+    },
+
+    changeRadius: function( type ){
+
+        if( type && type !== this.radius ){
+
+            this.radius = type;
+            
+            this.update({ "radius": type });
+            this.signals.radiusChanged.dispatch( type );
+
+        }
+
+        return this;
+
+    },
+
+    changeScale: function( scale ){
+
+        if( scale && scale !== this.scale ){
+
+            this.scale = scale;
+            
+            this.update({ "scale": scale });
+            this.signals.scaleChanged.dispatch( scale );
+
+        }
+
+        return this;
 
     },
 
@@ -1071,6 +1109,8 @@ NGL.Representation.prototype = {
 
         this.signals.visibilityChanged.dispatch( value );
 
+        return this;
+
     },
 
     dispose: function(){
@@ -1093,11 +1133,9 @@ NGL.Representation.prototype = {
 };
 
 
-NGL.SpacefillRepresentation = function( structure, viewer, sele, color, scale ){
+NGL.SpacefillRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
-    this.scale = scale || 1.0;
-
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1110,7 +1148,7 @@ NGL.SpacefillRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor( null, this.color ),
-        this.atomSet.atomRadius( null, null, this.scale ),
+        this.atomSet.atomRadius( null, this.radius, this.scale ),
         this.atomSet.atomColor( null, "picking" )
     );
 
@@ -1138,17 +1176,26 @@ NGL.SpacefillRepresentation.prototype.update = function( what ){
 
     }
 
+    if( what[ "radius" ] || what[ "scale" ] ){
+
+        sphereData[ "radius" ] = this.atomSet.atomRadius(
+            null, this.radius, this.scale
+        );
+
+    }
+
     this.sphereBuffer.setAttributes( sphereData );
 
 };
 
 
-NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, sphereScale, cylinderSize ){
+NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio ){
 
-    this.sphereScale = sphereScale || 0.2;
-    this.cylinderSize = cylinderSize || 0.12;
+    radius = radius || 0.15;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    this.aspectRatio = aspectRatio || 2.0;
+
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1161,7 +1208,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor( null, this.color ),
-        this.atomSet.atomRadius( null, null, this.sphereScale ),
+        this.atomSet.atomRadius( null, this.radius, this.aspectRatio ),
         this.atomSet.atomColor( null, "picking" )
     );
 
@@ -1172,7 +1219,7 @@ NGL.BallAndStickRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0, this.color ),
         this.atomSet.bondColor( null, 1, this.color ),
-        this.atomSet.bondRadius( null, null, this.cylinderSize, null ),
+        this.atomSet.bondRadius( null, null, this.radius, 1.0 ),
         null,
         null,
         this.atomSet.bondColor( null, 0, "picking" ),
@@ -1222,11 +1269,11 @@ NGL.BallAndStickRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.LicoriceRepresentation = function( structure, viewer, sele, color, size ){
+NGL.LicoriceRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
-    this.size = size || 0.15;
+    radius = radius || 0.15;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1239,7 +1286,7 @@ NGL.LicoriceRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor( null, this.color ),
-        this.atomSet.atomRadius( null, this.size, null ),
+        this.atomSet.atomRadius( null, this.radius, 1.0 ),
         this.atomSet.atomColor( null, "picking" )
     );
 
@@ -1248,7 +1295,7 @@ NGL.LicoriceRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0, this.color ),
         this.atomSet.bondColor( null, 1, this.color ),
-        this.atomSet.bondRadius( null, null, this.size, null ),
+        this.atomSet.bondRadius( null, null, this.radius, 1.0 ),
         null,
         null,
         this.atomSet.bondColor( null, 0, "picking" ),
@@ -1316,12 +1363,13 @@ NGL.LineRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.HyperballRepresentation = function( structure, viewer, sele, color, scale, shrink ){
+NGL.HyperballRepresentation = function( structure, viewer, sele, color, radius, scale, shrink ){
 
-    this.scale = scale || 0.2;
+    scale = scale || 0.2;
+
     this.shrink = shrink || 0.12;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1334,7 +1382,7 @@ NGL.HyperballRepresentation.prototype.create = function(){
     this.sphereBuffer = new NGL.SphereBuffer(
         this.atomSet.atomPosition(),
         this.atomSet.atomColor( null, this.color ),
-        this.atomSet.atomRadius( null, null, this.scale ),
+        this.atomSet.atomRadius( null, this.radius, this.scale ),
         this.atomSet.atomColor( null, "picking" )
     );
 
@@ -1345,8 +1393,8 @@ NGL.HyperballRepresentation.prototype.create = function(){
         this.atomSet.bondPosition( null, 1 ),
         this.atomSet.bondColor( null, 0, this.color ),
         this.atomSet.bondColor( null, 1, this.color ),
-        this.atomSet.bondRadius( null, 0, this.cylinderSize, this.scale ),
-        this.atomSet.bondRadius( null, 1, this.cylinderSize, this.scale ),
+        this.atomSet.bondRadius( null, 0, this.radius, this.scale ),
+        this.atomSet.bondRadius( null, 1, this.radius, this.scale ),
         this.shrink,
         this.atomSet.bondColor( null, 0, "picking" ),
         this.atomSet.bondColor( null, 1, "picking" )
@@ -1395,11 +1443,11 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.BackboneRepresentation = function( structure, viewer, sele, color, size ){
+NGL.BackboneRepresentation = function( structure, viewer, sele, color, radius, scale ){
 
-    this.size = size || 0.25;
+    radius = radius || 0.25;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1417,7 +1465,8 @@ NGL.BackboneRepresentation.prototype.create = function(){
     var bondSetList = [];
 
     var color = this.color;
-    var size = this.size;
+    var radius = this.radius;
+    var scale = this.scale;
     var test = this.selection.test;
 
     this.structure.eachFiber( function( f ){
@@ -1453,7 +1502,7 @@ NGL.BackboneRepresentation.prototype.create = function(){
         sphereBuffer = new NGL.SphereBuffer(
             backboneAtomSet.atomPosition(),
             backboneAtomSet.atomColor( null, color ),
-            backboneAtomSet.atomRadius( null, size, null ),
+            backboneAtomSet.atomRadius( null, radius, scale ),
             backboneAtomSet.atomColor( null, "picking" )
         );
 
@@ -1462,7 +1511,7 @@ NGL.BackboneRepresentation.prototype.create = function(){
             backboneBondSet.bondPosition( null, 1 ),
             backboneBondSet.bondColor( null, 0, color ),
             backboneBondSet.bondColor( null, 1, color ),
-            backboneBondSet.bondRadius( null, 0, size, null ),
+            backboneBondSet.bondRadius( null, 0, radius, scale ),
             null,
             null,
             backboneBondSet.bondColor( null, 0, "picking" ),
@@ -1537,14 +1586,17 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, color, size, subdiv ){
-
-    this.size = size || 0.25;
-    this.subdiv = subdiv || 10;
+NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv ){
 
     color = color || "ss";
+    radius = radius || 0.25;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    /*radius = "bfactor";
+    scale = 0.01;*/
+
+    this.subdiv = subdiv || 10;
+
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1566,10 +1618,12 @@ NGL.TubeRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( fiber );
         var subPos = spline.getSubdividedPosition( scope.subdiv );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-        var subSize = spline.getSubdividedSize( scope.subdiv, "tube" );
+        var subSize = spline.getSubdividedSize(
+            scope.subdiv, scope.radius, scope.scale
+        );
 
-        var rx = 1.5;
-        var ry = 1.5;
+        var rx = 1.0;
+        var ry = 1.0;
 
         scope.bufferList.push(
 
@@ -1645,14 +1699,15 @@ NGL.TubeRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.CartoonRepresentation = function( structure, viewer, sele, color, size, subdiv ){
-
-    this.size = size || 0.25;
-    this.subdiv = subdiv || 10;
+NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio, subdiv ){
 
     color = color || "ss";
+    radius = radius || "ss";
+    
+    this.aspectRatio = aspectRatio || 3.0;
+    this.subdiv = subdiv || 10;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1674,13 +1729,15 @@ NGL.CartoonRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( fiber );
         var subPos = spline.getSubdividedPosition( scope.subdiv );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-        var subSize = spline.getSubdividedSize( scope.subdiv );
+        var subSize = spline.getSubdividedSize(
+            scope.subdiv, scope.radius, scope.scale
+        );
 
-        var rx = 1.5;
-        var ry = 0.5;
+        var rx = 1.0 * scope.aspectRatio;
+        var ry = 1.0;
 
         if( fiber.isCg() ){
-            ry = 1.5;
+            ry = rx;
         }
 
         scope.bufferList.push(
@@ -1757,14 +1814,15 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.RibbonRepresentation = function( structure, viewer, sele, color, size, subdiv ){
-
-    this.size = size || 0.25;
-    this.subdiv = subdiv || 10;
+NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv ){
 
     color = color || "ss";
+    radius = radius || "ss";
+    scale = scale || 3.0;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    this.subdiv = subdiv || 10;
+
+    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
 };
 
@@ -1786,7 +1844,9 @@ NGL.RibbonRepresentation.prototype.create = function(){
         var spline = new NGL.Spline( fiber );
         var subPos = spline.getSubdividedPosition( scope.subdiv );
         var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-        var subSize = spline.getSubdividedSize( scope.subdiv );
+        var subSize = spline.getSubdividedSize(
+            scope.subdiv, scope.radius, scope.scale
+        );
         
         scope.bufferList.push(
 
@@ -1975,7 +2035,7 @@ NGL.Spline.prototype = {
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
-        var colorScheme = new NGL.ColorScheme( type );
+        var colorFactory = new NGL.ColorFactory( type );
 
         var k = 0;
         var j, l, a2, c, pc;
@@ -1984,7 +2044,7 @@ NGL.Spline.prototype = {
 
             a2 = r2.getAtomByName( traceAtomname );
 
-            c = colorScheme.atomColor( a2 );
+            c = colorFactory.atomColor( a2 );
             pc = a2.globalindex + 1;
 
             for( j = 0; j < m; ++j ){
@@ -2071,7 +2131,7 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedSize: function( m, type ){
+    getSubdividedSize: function( m, type, scale ){
 
         var n = this.size;
         var n1 = n - 1;
@@ -2079,35 +2139,20 @@ NGL.Spline.prototype = {
 
         var size = new Float32Array( n1 * m + 1 );
 
-        var scale = 1;
+        var radiusFactory = new NGL.RadiusFactory( type, scale );
+
         var k = 0;
-        var j, l, a2, c, pc;
+        var j, l, a2, r;
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
             a2 = r2.getAtomByName( traceAtomname );
 
-            if( type === "tube" ){
-
-                scale = 0.15;
-
-            }else{
-
-                if( a2.ss === "h" ){
-                    scale = 0.5;
-                }else if( a2.ss === "s" ){
-                    scale = 0.5;
-                }else if( a2.atomname === "P" ){
-                    scale = 0.8;
-                }else{
-                    scale = 0.15;
-                }
-
-            }
+            r = radiusFactory.atomRadius( a2 );
 
             for( j = 0; j < m; ++j ){
 
-                size[ k + j ] = scale;
+                size[ k + j ] = r;
 
             }
 

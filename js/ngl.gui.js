@@ -730,11 +730,10 @@ NGL.ColorSchemeWidget = function(){
 
     var iconText = new UI.Text( "" )
         .setClass( "fa-stack-1x" )
-        .setColor( "#111" )
-        .setFontSize( "0.9em" )
+        .setColor( "#111" );
 
     var iconSquare = new UI.Icon( "square", "stack-1x" )
-        .setMarginTop( "0.05em" );
+        //.setMarginTop( "0.05em" );
 
     var icon = new UI.Icon( "stack" )
         .setTitle( "color" )
@@ -825,7 +824,7 @@ NGL.ColorSchemeWidget = function(){
         if( value !== "color" ){
             icon.setColor( "#888" );
         }
-        iconText.setValue( value.charAt( 0 ) );
+        iconText.setValue( value.charAt( 0 ).toUpperCase() );
         schemeSelector.setValue( value );
         return icon;
 
