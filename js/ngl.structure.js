@@ -3470,6 +3470,31 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "HELIX" ){
+                sele.keyword = "HELIX";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SHEET" ){
+                sele.keyword = "SHEET";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "TURN" ){
+                sele = {
+                    operator: "OR",
+                    negate: true,
+                    rules: [
+                        { keyword: "HELIX" },
+                        { keyword: "SHEET" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "BACKBONE" ){
                 sele.keyword = "BACKBONE";
                 pushRule( sele );
@@ -3702,6 +3727,8 @@ NGL.Selection.prototype = {
                 if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return true;
                 if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
                 if( s.keyword==="WATER" && a.residue.isWater() ) return true;
+                if( s.keyword==="HELIX" && a.ss==="h" ) return true;
+                if( s.keyword==="SHEET" && a.ss==="s" ) return true;
                 if( s.keyword==="BACKBONE" && (
                         ( a.residue.isProtein() && 
                             backboneProtein.indexOf( a.atomname )!==-1 ) || 
