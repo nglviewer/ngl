@@ -1134,6 +1134,32 @@ NGL.RepresentationWidget = function( repr, component ){
         .addEntry( "Radius scale", scaleInput )
         ;
 
+    // Parameters
+    
+    Object.keys( repr.parameters ).forEach( function( name ){
+
+        var p = repr.parameters[ name ];
+
+        if( p.type === "number" ){
+
+            var input = new UI.Number( repr[ name ] )
+                .setRange( p.min, p.max )
+                .setPrecision( p.precision )
+                .onChange( function(){
+
+                    var po = {};
+                    po[ name ] = input.getValue();
+                    repr.setParameters( po );
+                    repr.viewer.render();
+
+                } );
+
+            menu.addEntry( name, input );
+
+        }
+
+    } );
+
     container
         .addStatic( menu );
 
