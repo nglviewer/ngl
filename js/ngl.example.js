@@ -370,7 +370,10 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1u19.pdb", function( o ){
 
-                var tube = o.addRepresentation( "tube", ":A" );
+                o.addRepresentation( "tube", ":A" )
+                    .changeRadius( "bfactor", 0.005 );
+
+                o.addRepresentation( "backbone", ":A" )
 
                 o.centerView( ":A" );
 
