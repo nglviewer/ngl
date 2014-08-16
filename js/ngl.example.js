@@ -72,7 +72,8 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "*" );
+                o.addRepresentation( "cartoon", "*" )
+                    .changeColor( "residueindex" );
                 o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
                 o.addRepresentation( "licorice", "hetero" );
 
