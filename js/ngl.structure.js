@@ -37,8 +37,8 @@ NGL.ElementColors = {
 };
 
 
-// from Jmol http://jmol.sourceforge.net/jscolors/
-NGL.ResidueColors = {
+// from Jmol http://jmol.sourceforge.net/jscolors/ (protein + shapely for nucleic)
+NGL._ResidueColors = {
     "ALA": 0xC8C8C8,
     "ARG": 0x145AFF,
     "ASN": 0x00DCDC,
@@ -81,6 +81,67 @@ NGL.ResidueColors = {
 
     "": 0xBEA06E
 };
+NGL.ResidueColors = {
+    "ALA": 0x8CFF8C,
+    "ARG": 0x00007C,
+    "ASN": 0xFF7C70,
+    "ASP": 0xA00042,
+    "CYS": 0xFFFF70,
+    "GLN": 0xFF4C4C,
+    "GLU": 0x660000,
+    "GLY": 0xFFFFFF,
+    "HIS": 0x7070FF,
+    "ILE": 0x004C00,
+    "LEU": 0x455E45,
+    "LYS": 0x4747B8,
+    "MET": 0xB8A042,
+    "PHE": 0x534C52,
+    "PRO": 0x525252,
+    "SER": 0xFF7042,
+    "THR": 0xB84C00,
+    "TRP": 0x4F4600,
+    "TYR": 0x8C704C,
+    "VAL": 0xFF8CFF,
+
+    "ASX": 0xFF00FF,
+    "GLX": 0xFF00FF,
+    "ASN": 0xFF00FF,
+    "GLH": 0xFF00FF,
+
+    "A": 0xA0A0FF,
+    "G": 0xFF7070,
+    "I": 0x80FFFF,
+    "C": 0xFF8C4B,
+    "T": 0xA0FFA0,
+    "U": 0xFF8080,
+
+    "DA": 0xA0A0FF,
+    "DG": 0xFF7070,
+    "DI": 0x80FFFF,
+    "DC": 0xFF8C4B,
+    "DT": 0xA0FFA0,
+    "DU": 0xFF8080,
+
+    "": 0xFF00FF
+};
+
+
+// from Jmol http://jmol.sourceforge.net/jscolors/ (shapely)
+NGL.StructureColors = {
+    "alphaHelix": 0xFF0080,
+    "3_10Helix": 0xA00080,
+    "piHelix": 0x600080,
+    "betaStrand": 0xFFC800,
+    "betaTurn": 0x6080FF,
+    "coil": 0xFFFFFF,
+
+    "dna": 0xAE00FE,
+    "rna": 0xFD0162,
+
+    "carbohydrate": 0xA6A6FA,
+
+    "": 0x808080
+}
 
 
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
@@ -222,7 +283,29 @@ NGL.ColorFactory = function( type, structure ){
             //.scale( 'Spectral' )
             //.scale( 'RdYlGn' )
             .scale([ "red", "orange", "yellow", "green", "blue" ])
+            .mode('lch')
             .domain( [ 0, this.structure.atomCount ]);
+
+        this.residueindexScale = chroma
+            //.scale( 'Spectral' )
+            //.scale( 'RdYlGn' )
+            .scale([ "red", "orange", "yellow", "green", "blue" ])
+            .mode('lch')
+            .domain( [ 0, this.structure.residueCount ]);
+
+        this.chainindexScale = chroma
+            .scale( 'Spectral' )
+            //.scale( 'RdYlGn' )
+            //.scale([ "red", "orange", "yellow", "green", "blue" ])
+            .mode('lch')
+            .domain( [ 0, this.structure.chainCount ]);
+
+        this.modelindexScale = chroma
+            //.scale( 'Spectral' )
+            //.scale( 'RdYlGn' )
+            .scale([ "red", "orange", "yellow", "green", "blue" ])
+            .mode('lch')
+            .domain( [ 0, this.structure.modelCount ]);
 
     }
 
@@ -235,11 +318,16 @@ NGL.ColorFactory.prototype = {
         var type = this.type;
         var elemColors = NGL.ElementColors;
         var resColors = NGL.ResidueColors;
+        var strucColors = NGL.StructureColors;
 
         var defaultElemColor = NGL.ElementColors[""];
         var defaultResColor = NGL.ResidueColors[""];
+        var defaultStrucColor = NGL.StructureColors[""];
 
         var atomindexScale = this.atomindexScale;
+        var residueindexScale = this.residueindexScale;
+        var chainindexScale = this.chainindexScale;
+        var modelindexScale = this.modelindexScale;
 
         var c, _c;
 
@@ -267,6 +355,27 @@ NGL.ColorFactory.prototype = {
                 c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
                 break;
 
+            case "residueindex":
+
+                _c = residueindexScale( a.residue.index ).rgba();
+                //console.log( _c, a.index, a );
+                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                break;
+
+            case "chainindex":
+
+                _c = chainindexScale( a.residue.chain.index ).rgba();
+                //console.log( _c, a.index, a );
+                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                break;
+
+            case "modelindex":
+
+                _c = modelindexScale( a.residue.chain.model.index ).rgba();
+                //console.log( _c, a.index, a );
+                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                break;
+
             case "random":
 
                 c = Math.random() * 0xFFFFFF;
@@ -275,13 +384,15 @@ NGL.ColorFactory.prototype = {
             case "ss":
             
                 if( a.ss === "h" ){
-                    c = 0xFF0080;
+                    c = strucColors[ "alphaHelix" ];
                 }else if( a.ss === "s" ){
-                    c = 0xFFC800;
-                }else if( a.atomname === "P" ){
-                    c = 0xAE00FE;
+                    c = strucColors[ "betaStrand" ];
+                }else if( a.residue.isNucleic() ){
+                    c = strucColors[ "dna" ];
+                }else if( a.residue.isProtein() ){
+                    c = strucColors[ "coil" ];
                 }else{
-                    c = 0xFFFFFF;
+                    c = defaultStrucColor;
                 }
                 break;
 

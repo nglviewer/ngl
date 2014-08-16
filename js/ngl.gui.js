@@ -767,6 +767,9 @@ NGL.ColorSchemeWidget = function(){
             "resname": "by residue name",
             "ss": "by secondary structure",
             "atomindex": "by atom index",
+            "residueindex": "by residue index",
+            "chainindex": "by chain index",
+            "modelindex": "by model index",
             "picking": "by picking id",
             "random": "random",
             "color": "color"
