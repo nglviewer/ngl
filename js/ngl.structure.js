@@ -350,30 +350,26 @@ NGL.ColorFactory.prototype = {
 
             case "atomindex":
 
-                _c = atomindexScale( a.index ).rgba();
-                //console.log( _c, a.index, a );
-                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                _c = atomindexScale( a.index )._rgb;
+                c = _c[0] << 16 | _c[1] << 8 | _c[2];
                 break;
 
             case "residueindex":
 
-                _c = residueindexScale( a.residue.index ).rgba();
-                //console.log( _c, a.index, a );
-                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                _c = residueindexScale( a.residue.index )._rgb;
+                c = _c[0] << 16 | _c[1] << 8 | _c[2];
                 break;
 
             case "chainindex":
 
-                _c = chainindexScale( a.residue.chain.index ).rgba();
-                //console.log( _c, a.index, a );
-                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                _c = chainindexScale( a.residue.chain.index )._rgb;
+                c = _c[0] << 16 | _c[1] << 8 | _c[2];
                 break;
 
             case "modelindex":
 
-                _c = modelindexScale( a.residue.chain.model.index ).rgba();
-                //console.log( _c, a.index, a );
-                c = ( _c[0] ) << 16 ^ ( _c[1] ) << 8 ^ ( _c[2] ) << 0;
+                _c = modelindexScale( a.residue.chain.model.index )._rgb;
+                c = _c[0] << 16 | _c[1] << 8 | _c[2];
                 break;
 
             case "random":
