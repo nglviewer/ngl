@@ -16,6 +16,102 @@ NGL = {
 };
 
 
+NGL.makeAsymmetricFrustum = ( function(){
+
+    var shearMatrix = new THREE.Matrix4();
+    var scaleMatrix = new THREE.Matrix4();
+
+    return function( projectionMatrix, fov, aspect, near, n, i ){
+
+        var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
+        var bottom = - top;
+        var left = aspect * bottom;
+        var right = aspect * top;
+        var width = Math.abs( right - left );
+        var height = Math.abs( top - bottom );
+
+        var x = i % n;
+        var y = Math.floor( i / n );
+
+        shearMatrix.set(
+            1, 0, ( x - ( n - 1 ) * 0.5 ) * width / near, 0,
+            0, 1, -( y - ( n - 1 ) * 0.5 ) * height / near, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        scaleMatrix.set(
+            n, 0, 0, 0,
+            0, n, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        return projectionMatrix.multiply( shearMatrix ).multiply( scaleMatrix );
+
+    }
+
+} )();
+
+
+NGL.screenshot = function( renderer, scene, camera, factor ){
+
+    var i;
+    var drawCounter = 0;
+    var n = factor * factor;
+
+    var gl = renderer.getContext();
+    var width = gl.drawingBufferWidth;
+    var height = gl.drawingBufferHeight;
+
+    for( i = 0; i < n; ++i ){
+        
+        var canvas = document.createElement( 'canvas' );
+        document.body.appendChild( canvas );
+        canvas.width = width * factor;
+        canvas.height = height * factor;
+
+        var ctx = canvas.getContext( '2d' );
+
+        makeAsymmetricFrustum(
+            camera.projectionMatrix,
+            camera.fov, camera.aspect, camera.near,
+            factor, i
+        );
+
+        renderer.render( scene, camera );
+
+        camera.updateProjectionMatrix();
+
+        ( function( i ){
+
+            var img = new Image();
+            img.onload = function(){
+
+                var x = ( i % factor ) * width;
+                var y = Math.floor( i / factor ) * height;
+
+                ctx.drawImage( img, x, y );
+                
+                if( drawCounter === n - 1 ){
+                    console.log( "done drawing" );
+                    download( canvas.toDataURL( "image/png" ), "img.png" );
+                    document.body.removeChild( canvas );
+                }
+                drawCounter += 1;
+
+            };
+            img.src = renderer.domElement.toDataURL( "image/png" );
+
+        } )( i );
+
+    }
+
+    console.log( "done rendering" );
+
+}
+
+
 NGL.GET = function( id ){
         
     var a = new RegExp( id + "=([^&#=]*)" );
@@ -834,7 +930,7 @@ NGL.Viewer.prototype = {
         
         var ambientLight = new THREE.AmbientLight( 0x101010 );
         
-        var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0.01)
+        var hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0.01 );
         
         this.scene.add( directionalLight );
         this.scene.add( ambientLight );
@@ -2714,7 +2810,7 @@ NGL.LineBuffer.prototype = {
                 aPosition[ i2 + 5 ] = to[ j + 2 ];
 
             }
-            
+
             if( color && color2 ){
 
                 aColor[ i2 + 0 ] = color2[ j + 0 ];
