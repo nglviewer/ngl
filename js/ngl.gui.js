@@ -1441,17 +1441,30 @@ NGL.TrajectoryWidget = function( traj, component ){
             menu.setDisplay( "none" );
         } );
 
+    signals.centerPbcParamChanged.add( function( value ){
+        console.log( "moin", value )
+        setCenterPbc.setValue( value );
+    } );
+
     var setRemovePbc = new UI.Checkbox( traj.params.removePbc )
         .onChange( function(){
             traj.setRemovePbc( setRemovePbc.getValue() );
             menu.setDisplay( "none" );
         } );
 
+    signals.removePbcParamChanged.add( function( value ){
+        setRemovePbc.setValue( value );
+    } );
+
     var setSuperpose = new UI.Checkbox( traj.params.superpose )
         .onChange( function(){
             traj.setSuperpose( setSuperpose.getValue() );
             menu.setDisplay( "none" );
         } );
+
+    signals.superposeParamChanged.add( function( value ){
+        setSuperpose.setValue( value );
+    } );
 
     // Menu
 

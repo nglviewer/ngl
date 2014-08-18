@@ -1092,6 +1092,10 @@ NGL.Trajectory = function( xtcPath, structure, sele ){
         frameChanged: new SIGNALS.Signal(),
         selectionChanged: new SIGNALS.Signal(),
 
+        centerPbcParamChanged: new SIGNALS.Signal(),
+        removePbcParamChanged: new SIGNALS.Signal(),
+        superposeParamChanged: new SIGNALS.Signal(),
+
     };
 
     this.params = {
@@ -1269,6 +1273,8 @@ NGL.Trajectory.prototype = {
         this.frameLoader.cache.clear();
         this.setFrame( this.currentFrame );
 
+        return this;
+
     },
 
     setCenterPbc: function( value ){
@@ -1277,8 +1283,11 @@ NGL.Trajectory.prototype = {
 
             this.params.centerPbc = value;
             this.resetCache();
+            this.signals.centerPbcParamChanged.dispatch( value );
 
         }
+
+        return this;
 
     },
 
@@ -1288,8 +1297,11 @@ NGL.Trajectory.prototype = {
 
             this.params.removePbc = value;
             this.resetCache();
+            this.signals.removePbcParamChanged.dispatch( value );
 
         }
+
+        return this;
 
     },
 
@@ -1299,8 +1311,11 @@ NGL.Trajectory.prototype = {
 
             this.params.superpose = value;
             this.resetCache();
+            this.signals.superposeParamChanged.dispatch( value );
 
         }
+
+        return this;
 
     },
 
@@ -1319,6 +1334,8 @@ NGL.Trajectory.prototype = {
         }
 
         this.currentFrame = i;
+
+        return this;
 
     },
 
