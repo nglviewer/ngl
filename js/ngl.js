@@ -16,98 +16,48 @@ NGL = {
 };
 
 
-NGL.makeAsymmetricFrustum = ( function(){
-
-    var shearMatrix = new THREE.Matrix4();
-    var scaleMatrix = new THREE.Matrix4();
-
-    return function( projectionMatrix, fov, aspect, near, n, i ){
-
-        var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
-        var bottom = - top;
-        var left = aspect * bottom;
-        var right = aspect * top;
-        var width = Math.abs( right - left );
-        var height = Math.abs( top - bottom );
-
-        var x = i % n;
-        var y = Math.floor( i / n );
-
-        shearMatrix.set(
-            1, 0, ( x - ( n - 1 ) * 0.5 ) * width / near, 0,
-            0, 1, -( y - ( n - 1 ) * 0.5 ) * height / near, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
-
-        scaleMatrix.set(
-            n, 0, 0, 0,
-            0, n, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
-
-        return projectionMatrix.multiply( shearMatrix ).multiply( scaleMatrix );
-
-    }
-
-} )();
 
 
-NGL.screenshot = function( renderer, scene, camera, factor ){
+if( !HTMLCanvasElement.prototype.toBlob ){
 
-    var i;
-    var drawCounter = 0;
-    var n = factor * factor;
+    HTMLCanvasElement.prototype.toBlob = function(){
 
-    var gl = renderer.getContext();
-    var width = gl.drawingBufferWidth;
-    var height = gl.drawingBufferHeight;
+        function dataURLToBlob( dataURL ){
 
-    for( i = 0; i < n; ++i ){
-        
-        var canvas = document.createElement( 'canvas' );
-        document.body.appendChild( canvas );
-        canvas.width = width * factor;
-        canvas.height = height * factor;
+            // https://github.com/ebidel/filer.js/blob/master/src/filer.js
 
-        var ctx = canvas.getContext( '2d' );
+            var base64Marker = ';base64,';
 
-        makeAsymmetricFrustum(
-            camera.projectionMatrix,
-            camera.fov, camera.aspect, camera.near,
-            factor, i
-        );
+            if( dataURL.indexOf( base64Marker ) === -1) {
+                var parts = dataURL.split( ',' );
+                var contentType = parts[ 0 ].split( ':' )[ 1 ];
+                var raw = decodeURIComponent( parts[ 1 ] );
 
-        renderer.render( scene, camera );
+                return new Blob( [ raw ], { type: contentType } );
+            }
 
-        camera.updateProjectionMatrix();
+            var parts = dataURL.split( base64Marker );
+            var contentType = parts[ 0 ].split( ':' )[ 1 ];
+            var raw = window.atob( parts[ 1 ] );
+            var rawLength = raw.length;
 
-        ( function( i ){
+            var uInt8Array = new Uint8Array( rawLength );
 
-            var img = new Image();
-            img.onload = function(){
+            for( var i = 0; i < rawLength; ++i ){
+                uInt8Array[ i ] = raw.charCodeAt( i );
+            }
 
-                var x = ( i % factor ) * width;
-                var y = Math.floor( i / factor ) * height;
+            return new Blob( [ uInt8Array ], { type: contentType } );
 
-                ctx.drawImage( img, x, y );
-                
-                if( drawCounter === n - 1 ){
-                    console.log( "done drawing" );
-                    download( canvas.toDataURL( "image/png" ), "img.png" );
-                    document.body.removeChild( canvas );
-                }
-                drawCounter += 1;
+        }
 
-            };
-            img.src = renderer.domElement.toDataURL( "image/png" );
+        return function( callback, type, quality ){
 
-        } )( i );
+            callback( dataURLToBlob( this.toDataURL( type, quality ) ) );
 
-    }
+        }
 
-    console.log( "done rendering" );
+    }();
 
 }
 
@@ -1020,9 +970,9 @@ NGL.Viewer.prototype = {
 
     },
 
-    getImage: function(){
+    getImage: function( type, quality ){
 
-        return this.renderer.domElement.toDataURL("image/png");
+        return this.renderer.domElement.toBlob( type, quality );
 
     },
 
@@ -1148,10 +1098,86 @@ NGL.Viewer.prototype = {
 
     },
 
+    screenshot: function( factor, type, quality ){
+
+        var i;
+        var n = factor * factor;
+
+        var canvas = document.createElement( 'canvas' );
+        canvas.style.display = "hidden";
+        document.body.appendChild( canvas );
+        canvas.width = this.width * factor;
+        canvas.height = this.height * factor;
+
+        var ctx = canvas.getContext( '2d' );
+
+        var shearMatrix = new THREE.Matrix4();
+        var scaleMatrix = new THREE.Matrix4();
+
+        var near = this.camera.near;
+        var top = Math.tan( THREE.Math.degToRad( this.camera.fov * 0.5 ) ) * near;
+        var bottom = - top;
+        var left = this.camera.aspect * bottom;
+        var right = this.camera.aspect * top;
+        var width = Math.abs( right - left );
+        var height = Math.abs( top - bottom );
+
+        function makeAsymmetricFrustum( projectionMatrix, i ){
+
+            var x = i % factor;
+            var y = Math.floor( i / factor );
+
+            shearMatrix.set(
+                1, 0, ( x - ( factor - 1 ) * 0.5 ) * width / near, 0,
+                0, 1, -( y - ( factor - 1 ) * 0.5 ) * height / near, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+            scaleMatrix.set(
+                factor, 0, 0, 0,
+                0, factor, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+            return projectionMatrix.multiply( shearMatrix ).multiply( scaleMatrix );
+
+        }
+
+        for( i = 0; i < n; ++i ){
+
+            makeAsymmetricFrustum( this.camera.projectionMatrix, i );
+
+            this.render( null, null, true );
+
+            var x = ( i % factor ) * this.width;
+            var y = Math.floor( i / factor ) * this.height;
+
+            ctx.drawImage( this.renderer.domElement, x, y );
+
+            this.camera.updateProjectionMatrix();
+
+        }
+
+        var ext = type.split( "/" )[ 1 ];
+
+        canvas.toBlob(
+            function( blob ){
+                NGL.download( blob, "screenshot." + ext );
+                document.body.removeChild( canvas );
+            },
+            type, quality
+        );
+
+        this.render();
+
+    },
+
     /**
      * Renders the scene.
      */
-    render: function( e, picking ){
+    render: function( e, picking, foo ){
 
         // console.log( e, picking );
 
@@ -1177,7 +1203,7 @@ NGL.Viewer.prototype = {
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
-        this.camera.updateProjectionMatrix();
+        if( !foo ) this.camera.updateProjectionMatrix();
 
         // this.updateBoundingBox();
         this.updateDynamicUniforms( this.modelGroup );
