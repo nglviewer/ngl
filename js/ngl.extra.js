@@ -2405,17 +2405,21 @@ NGL.Spline.prototype = {
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         var k = 0;
-        var j, l, a2, r;
+        var j, l, a2, a3, s2, s3, t;
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
             a2 = r2.getAtomByName( traceAtomname );
+            a3 = r3.getAtomByName( traceAtomname );
 
-            r = radiusFactory.atomRadius( a2 );
+            s2 = radiusFactory.atomRadius( a2 );
+            s3 = radiusFactory.atomRadius( a3 );
 
             for( j = 0; j < m; ++j ){
 
-                size[ k + j ] = r;
+                // size[ k + j ] = r;
+                t = j / m;
+                size[ k + j ] = ( 1 - t ) * s2 + t * s3;
 
             }
 

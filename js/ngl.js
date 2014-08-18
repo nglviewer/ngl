@@ -4,20 +4,6 @@
  */
 
 
-/**
- * [NGL description]
- * @namespace NGL
- * @type {Object}
- */
-NGL = {
-    REVISION: '1dev',
-    EPS: 0.0000001,
-    disableImpostor: false
-};
-
-
-
-
 if( !HTMLCanvasElement.prototype.toBlob ){
 
     HTMLCanvasElement.prototype.toBlob = function(){
@@ -60,6 +46,18 @@ if( !HTMLCanvasElement.prototype.toBlob ){
     }();
 
 }
+
+
+/**
+ * [NGL description]
+ * @namespace NGL
+ * @type {Object}
+ */
+NGL = {
+    REVISION: '1dev',
+    EPS: 0.0000001,
+    disableImpostor: false
+};
 
 
 NGL.GET = function( id ){
