@@ -1753,7 +1753,7 @@ NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
  * @private
  * @augments {NGL.Buffer}
  */
-NGL.MappedBuffer = function () {
+NGL.MappedBuffer = function(){
 
     this.mappedSize = this.size * this.mappingSize;
     this.attributeSize = this.mappedSize;
@@ -1883,7 +1883,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
  * @private
  * @augments {NGL.MappedBuffer}
  */
-NGL.QuadBuffer = function () {
+NGL.QuadBuffer = function(){
 
     this.mapping = new Float32Array([
         -1.0,  1.0,
@@ -1915,7 +1915,7 @@ NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
  * @private
  * @augments {NGL.MappedBuffer}
  */
-NGL.BoxBuffer = function () {
+NGL.BoxBuffer = function(){
 
     this.mapping = new Float32Array([
         -1.0, -1.0, -1.0,
@@ -1961,7 +1961,7 @@ NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
  * @private
  * @augments {NGL.MappedBuffer}
  */
-NGL.AlignedBoxBuffer = function () {
+NGL.AlignedBoxBuffer = function(){
 
     this.mapping = new Float32Array([
         -1.0,  1.0, -1.0,
@@ -2671,7 +2671,7 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
  * @param {Float32Array} position
  * @param {Float32Array} color
  */
-NGL.PointBuffer = function ( position, color ) {
+NGL.PointBuffer = function( position, color ){
     
     this.size = position.length / 3;
 
@@ -2714,7 +2714,7 @@ NGL.PointBuffer.prototype = {
  * @param {Float32Array} color
  * @param {Float32Array} color2
  */
-NGL.LineBuffer = function ( from, to, color, color2 ) {
+NGL.LineBuffer = function( from, to, color, color2 ){
 
     this.size = from.length / 3;
 
@@ -2861,7 +2861,7 @@ NGL.LineBuffer.prototype = {
 };
 
 
-NGL.TraceBuffer = function ( position, color ) {
+NGL.TraceBuffer = function( position, color ){
 
     this.size = position.length / 3;
 
@@ -2972,7 +2972,7 @@ NGL.TraceBuffer.prototype = {
 //////////////////////
 // Sprite Primitives
 
-NGL.ParticleSpriteBuffer = function ( position, color, radius ) {
+NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
     this.size = position.length / 3;
     this.vertexShader = 'ParticleSprite.vert';
@@ -3704,7 +3704,7 @@ NGL.getFont = function( name ){
  * @param {Float32Array} size
  * @param {String[]} text
  */
-NGL.TextBuffer = function ( position, size, text ) {
+NGL.TextBuffer = function( position, size, text ){
 
     // FIXME texture memory handling
 
