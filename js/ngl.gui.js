@@ -4,24 +4,31 @@
  */
 
 
+NGL.download = function( data, downloadName ){
 
-NGL.download = function( dataUrl, downloadName ){
-
-    if( !dataUrl ){
-        console.warn( "NGL.download: no dataUrl given" );
+    if( !data ){
+        console.warn( "NGL.download: no data given" );
         return;
     }
 
     downloadName = downloadName || "download";
 
     var a = document.createElement( 'a' );
+    a.style.display = "hidden";
     document.body.appendChild( a );
-    a.href = dataUrl;
+    if( data instanceof Blob ){
+        a.href = URL.createObjectURL( data );
+    }else{
+        a.href = data;
+    }
     a.download = downloadName;
     a.target = "_blank";
     a.click();
 
     document.body.removeChild( a );
+    if( data instanceof Blob ){
+        URL.revokeObjectURL( data );
+    }
 
 };
 
@@ -198,7 +205,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onExportImageOptionClick () {
 
-        NGL.download( stage.viewer.getImage(), "screenshot.png" );
+        stage.viewer.screenshot( 4, "image/png", 1.0 );
 
     }
 
