@@ -1911,7 +1911,7 @@ NGL.Structure.prototype = {
                     r2.getAtomByName( "N" )
                 );
 
-            }else if( r1.isNucleic() && r2.isNucleic() ){
+            }else if( r1.isNucleic() && r2.hasNucleicBackbone() ){
 
                 bondSet.addBondIfConnected(
                     r1.getAtomByName([ "O3'", "O3*" ]),
