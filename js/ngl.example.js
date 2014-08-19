@@ -29,9 +29,9 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md.gro", function( o ){
 
-                o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
-                o.addRepresentation( "cartoon", "protein" );
-                // o.addRepresentation( "spacefill", "NA or CL" );
+                o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
+                o.addRepresentation( "cartoon", { sele: "protein" } );
+                // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
                 o.centerView();
 
                 o.addTrajectory( "__example__/md.xtc" );
@@ -40,7 +40,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md.gro", function( o ){
 
-                o.addRepresentation( "backbone", "protein" );
+                o.addRepresentation( "backbone", { sele: "protein" } );
 
             } );
 
@@ -50,8 +50,8 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md.gro", function( o ){
 
-                o.addRepresentation( "line", "not hydrogen and protein" );
-                o.addRepresentation( "cartoon", "protein" );
+                o.addRepresentation( "line", { sele: "not hydrogen and protein" } );
+                o.addRepresentation( "cartoon", { sele: "protein" } );
                 o.centerView();
 
                 var traj = o.addTrajectory( "__example__/md.xtc" );
@@ -72,9 +72,12 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*", "atomindex", "bfactor", 0.01 );
-                o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
-                o.addRepresentation( "licorice", "hetero" );
+                o.addRepresentation( "tube", {
+                    sele: "*", color: "atomindex", radius: "bfactor", scale: 0.01,
+                    subdiv: 50, radialSegments: 50
+                } );
+                o.addRepresentation( "ball+stick", { sele: "135:A or 347:B or 223:A" } );
+                o.addRepresentation( "licorice", { sele: "hetero" } );
 
                 o.centerView();
 
@@ -86,8 +89,8 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1blu.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "*" );
-                o.addRepresentation( "licorice", "*" );
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                o.addRepresentation( "licorice", { sele: "*" } );
                 o.centerView();
 
             } );
@@ -98,8 +101,8 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1LVZ.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "*" );
-                // o.addRepresentation( "licorice", "*" );
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                // o.addRepresentation( "licorice", { sele: "*" } );
                 o.centerView();
 
                 // console.log( o.structure.toPdb() );
@@ -112,16 +115,16 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1crn.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "*" );
-                o.addRepresentation( "ball+stick", "hetero" );
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                o.addRepresentation( "ball+stick", { sele: "hetero" } );
                 o.centerView();
 
             } );
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "*" );
-                o.addRepresentation( "ball+stick", "hetero" );
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                o.addRepresentation( "ball+stick", { sele: "hetero" } );
                 o.centerView();
 
             } );
@@ -134,11 +137,11 @@ NGL.Examples = {
 
                 var s = "1-320:A";
 
-                o1.addRepresentation( "cartoon", s );
+                o1.addRepresentation( "cartoon", { sele: s } );
 
                 stage.loadFile( "__example__/1u19.pdb", function( o2 ){
 
-                    o2.addRepresentation( "cartoon", s );
+                    o2.addRepresentation( "cartoon", { sele: s } );
 
                     var s1 = o1.structure;
                     var s2 = o2.structure;
@@ -159,13 +162,13 @@ NGL.Examples = {
             stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
 
                 o1.addRepresentation( "cartoon" );
-                o1.addRepresentation( "ball+stick", "hetero" );
+                o1.addRepresentation( "ball+stick", { sele: "hetero" } );
                 o1.centerView();
 
                 stage.loadFile( "__example__/3sn6.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon" );
-                    o2.addRepresentation( "ball+stick", "hetero" );
+                    o2.addRepresentation( "ball+stick", { sele: "hetero" } );
 
                     var s1 = o1.structure;
                     var s2 = o2.structure;
@@ -224,8 +227,8 @@ NGL.Examples = {
 
                 } );*/
 
-                o.addRepresentation( "cartoon", "backbone" );
-                o.addRepresentation( "spacefill", "backbone" );
+                o.addRepresentation( "cartoon", { sele: "backbone" } );
+                o.addRepresentation( "spacefill", { sele: "backbone" } );
                 o.addRepresentation( "line" );
                 o.centerView();
 
@@ -238,7 +241,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/md_1u19.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
-                o.addRepresentation( "line", "not hydrogen and sidechainAttached" );
+                o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
                 // o.addRepresentation( "ball+stick" );
                 o.centerView();
 
@@ -255,11 +258,11 @@ NGL.Examples = {
                 var _disableImpostor = NGL.disableImpostor;
 
                 NGL.disableImpostor = true;
-                o.addRepresentation( "spacefill", ":A" );
-                o.addRepresentation( "ball+stick", ":A" );
+                o.addRepresentation( "spacefill", { sele: ":A" } );
+                o.addRepresentation( "ball+stick", { sele: ":A" } );
                 NGL.disableImpostor = _disableImpostor;
-                o.addRepresentation( "spacefill", ":B" );
-                o.addRepresentation( "ball+stick", ":B" );
+                o.addRepresentation( "spacefill", { sele: ":B" } );
+                o.addRepresentation( "ball+stick", { sele: ":B" } );
 
                 o.centerView();
 
@@ -318,7 +321,7 @@ NGL.Examples = {
                 var sele = "not backbone or .CA or (PRO and .N)";
 
                 o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice", sele );
+                o.addRepresentation( "licorice", { sele: sele } );
                 o.centerView();
 
             } );
@@ -329,9 +332,9 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "10-20" );
-                o.addRepresentation( "trace", "not 11-19" );
-                o.addRepresentation( "licorice", "sidechainAttached" );
+                o.addRepresentation( "cartoon", { sele: "10-20" } );
+                o.addRepresentation( "trace", { sele: "not 11-19" } );
+                o.addRepresentation( "licorice", { sele: "sidechainAttached" } );
                 o.centerView();
 
             } );
@@ -347,7 +350,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice", "DPPC" );
+                o.addRepresentation( "licorice", { sele: "DPPC" } );
                 o.centerView();
 
             }, params );
@@ -370,20 +373,20 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1u19.pdb", function( o ){
 
-                o.addRepresentation( "tube", ":A" )
+                o.addRepresentation( "tube", { sele: ":A" } )
                     .setVisibility( false )
                     .changeRadius( "bfactor", 0.005 );
 
-                o.addRepresentation( "hyperball", ":A" )
+                o.addRepresentation( "hyperball", { sele: ":A" } )
                     .setVisibility( false )
                     .setParameters({ shrink: 0.3 });
 
-                o.addRepresentation( "ball+stick", ":A and sidechainAttached" )
+                o.addRepresentation( "ball+stick", { sele: ":A and sidechainAttached" } )
                     .setVisibility( true )
                     .changeRadius( 0.1 )
                     .setParameters({ aspectRatio: 1.5 });
 
-                o.addRepresentation( "cartoon", ":A" )
+                o.addRepresentation( "cartoon", { sele: ":A" } )
                     .setVisibility( true )
                     .changeScale( 0.3 )
                     .setParameters({ aspectRatio: 6.0 });
@@ -398,9 +401,10 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1d66.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", "nucleic" );
-                o.addRepresentation( "licorice", "nucleic" )
-                    .changeColor( "atomindex" );
+                o.addRepresentation( "cartoon", { sele: "nucleic" } );
+                o.addRepresentation( "licorice", {
+                    sele: "nucleic", color: "atomindex"
+                } );
 
                 o.centerView( "nucleic" );
 
@@ -412,25 +416,24 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md_1u19.gro", function( o ){
 
-                var spacefill = o.addRepresentation( "spacefill", "1-30" );
-                var ballStick = o.addRepresentation( "ball+stick", "30-60" );
-                var licorice = o.addRepresentation( "licorice", "60-90" );
-                var hyperball = o.addRepresentation( "hyperball", "90-120" );
-                var line = o.addRepresentation( "line", "120-150" );
-                var backbone = o.addRepresentation( "backbone", "150-180" );
-                var tube = o.addRepresentation( "tube", "180-210" );
-                var cartoon = o.addRepresentation( "cartoon", "210-240" );
-                var ribbon = o.addRepresentation( "ribbon", "240-270" );
-                var trace = o.addRepresentation( "trace", "270-300" );
+                var spacefill = o.addRepresentation( "spacefill", {
+                    sele: "1-30", color: 0x00CCFF, radius: 2.0, scale: 1.0
+                } );
+                var ballStick = o.addRepresentation( "ball+stick", { sele: "30-60" } );
+                var licorice = o.addRepresentation( "licorice", { sele: "60-90" } );
+                var hyperball = o.addRepresentation( "hyperball", {
+                    sele: "90-120", color: "resname"
+                } );
+                var line = o.addRepresentation( "line", { sele: "120-150" } );
+                var backbone = o.addRepresentation( "backbone", { sele: "150-180" } );
+                var tube = o.addRepresentation( "tube", { sele: "180-210" } );
+                var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
+                var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
+                var trace = o.addRepresentation( "trace", { sele: "270-300" } );
 
                 o.centerView();
 
                 o.addTrajectory( "__example__/@md_1u19.xtc" );
-
-                spacefill.changeColor( 0x00CCFF );
-                hyperball.changeColor( "resname" );
-                stage.viewer.render();
-
 
                 (function(){
                     var i = 100;
@@ -460,7 +463,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice", "DPPC" );
+                o.addRepresentation( "licorice", { sele: "DPPC" } );
                 o.centerView();
 
             } );
