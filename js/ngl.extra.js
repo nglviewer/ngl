@@ -1156,9 +1156,11 @@ NGL.Representation.prototype = {
 
         };
 
+        var scope = this;
+
         Object.keys( this.parameters ).forEach( function( name ){
 
-            params[ name ] = this[ name ];
+            params[ name ] = scope[ name ];
 
         } );
 

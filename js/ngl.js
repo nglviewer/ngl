@@ -1682,7 +1682,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor ){
     this.attributeSize = this.size;
     this.vertexShader = 'Mesh.vert';
     this.fragmentShader = 'Mesh.frag';
-    
+
     this.index = index;
 
     NGL.Buffer.call( this );

@@ -205,7 +205,57 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onExportImageOptionClick () {
 
+        var i = 0;
+        var paramsList = [];
+        
+        stage.compList.forEach( function( o ){
+
+            if( o instanceof NGL.StructureComponent ){
+
+                o.reprList.slice( 0 ).forEach( function( repr ){
+
+                    var p = repr.getParameters();
+
+                    if( p.subdiv !== undefined ){
+                        p.subdiv = Math.max( 20, p.subdiv );
+                    }
+
+                    if( p.radialSegments !== undefined ){
+                        p.radialSegments = Math.max( 20, p.radialSegments );
+                    }
+
+                    o.addRepresentation( repr.name, p );
+                    o.removeRepresentation( repr );
+
+                    paramsList.push( repr.getParameters() );
+                    i += 1;
+
+                } );
+
+            }
+
+        } );
+
         stage.viewer.screenshot( 4, "image/png", 1.0 );
+
+        i = 0;
+
+        stage.compList.forEach( function( o ){
+
+            if( o instanceof NGL.StructureComponent ){
+
+                o.reprList.slice( 0 ).forEach( function( repr ){
+
+                    o.addRepresentation( repr.name, paramsList[ i ] );
+                    o.removeRepresentation( repr );
+
+                    i += 1;
+
+                } );
+
+            }
+
+        } );
 
     }
 
