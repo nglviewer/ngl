@@ -441,7 +441,17 @@ NGL.StructureComponent.prototype = {
 
         this.reprList.slice( 0 ).forEach( function( repr ){
 
-            scope.addRepresentation( repr.name, repr._sele );
+            var params = {};
+            Object.keys( repr.parameters ).forEach( function( name ){
+                params[ name ] = repr[ name ];
+            } );
+
+            var newRepr = scope.addRepresentation(
+                repr.name, repr._sele, repr.color,
+                repr.radius, repr.scale, params
+            );
+            
+            newRepr.setVisibility( repr.visible );
 
             scope.removeRepresentation( repr );
 
@@ -449,7 +459,7 @@ NGL.StructureComponent.prototype = {
 
     },
 
-    addRepresentation: function( type, sele ){
+    addRepresentation: function( type, sele, color, radius, scale, params ){
 
         console.time( "NGL.Structure.add " + type );
 
@@ -462,7 +472,11 @@ NGL.StructureComponent.prototype = {
 
         }
 
-        var repr = new reprType( this.structure, this.viewer, sele );
+        var repr = new reprType(
+            this.structure, this.viewer, sele, color, radius, scale, params
+        );
+
+        // repr.setParameters( params );
 
         NGL.Component.prototype.addRepresentation.call( this, repr );
 
@@ -1121,19 +1135,21 @@ NGL.Representation.prototype = {
 
     },
 
-    setParameters: function( what, rebuild ){
+    setParameters: function( params, what, rebuild ){
 
         if( rebuild ){
 
             this.rebuild();
 
-        }else if( Object.keys( what ).length ){
+        }else if( what && Object.keys( what ).length ){
 
             this.update( what );
             
         }
 
         this.signals.parametersChanged.dispatch();
+
+        return this;
 
     },
 
@@ -1213,11 +1229,12 @@ NGL.SpacefillRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio ){
+NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
 
+    params = params || {};
     radius = radius || this.defaultSize;
 
-    this.aspectRatio = aspectRatio || 2.0;
+    this.aspectRatio = params.aspectRatio || 2.0;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1327,7 +1344,7 @@ NGL.BallAndStickRepresentation.prototype.setParameters = function( params ){
 
     }
 
-    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+    NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
 
@@ -1432,11 +1449,12 @@ NGL.LineRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.HyperballRepresentation = function( structure, viewer, sele, color, radius, scale, shrink ){
+NGL.HyperballRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
 
+    params = params || {};
     scale = scale || 0.2;
 
-    this.shrink = shrink || 0.12;
+    this.shrink = params.shrink || 0.12;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1546,7 +1564,7 @@ NGL.HyperballRepresentation.prototype.setParameters = function( params ){
 
     }
 
-    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+    NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
 
@@ -1710,15 +1728,16 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv, radialSegments, tension, capped ){
+NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
 
+    params = params || {};
     color = color || "ss";
     radius = radius || this.defaultSize;
 
-    this.subdiv = subdiv || 10;
-    this.radialSegments = radialSegments || 12;
-    this.tension = tension || NaN;
-    this.capped = capped || true;
+    this.subdiv = params.subdiv || 10;
+    this.radialSegments = params.radialSegments || 12;
+    this.tension = params.tension || NaN;
+    this.capped = params.capped || true;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1874,23 +1893,24 @@ NGL.TubeRepresentation.prototype.setParameters = function( params ){
 
     }
 
-    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+    NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
 
 };
 
 
-NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio, subdiv, radialSegments, tension, capped ){
+NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
 
+    params = params || {};
     color = color || "ss";
     radius = radius || "ss";
     
-    this.aspectRatio = aspectRatio || 3.0;
-    this.subdiv = subdiv || 10;
-    this.radialSegments = radialSegments || 12;
-    this.tension = tension || NaN;
-    this.capped = capped || true;
+    this.aspectRatio = params.aspectRatio || 3.0;
+    this.subdiv = params.subdiv || 10;
+    this.radialSegments = params.radialSegments || 12;
+    this.tension = params.tension || NaN;
+    this.capped = params.capped || true;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -2061,21 +2081,22 @@ NGL.CartoonRepresentation.prototype.setParameters = function( params ){
 
     }
 
-    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+    NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
 
 };
 
 
-NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv, tension ){
+NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
 
+    params = params || {};
     color = color || "ss";
     radius = radius || "ss";
     scale = scale || 3.0;
 
-    this.subdiv = subdiv || 10;
-    this.tension = tension || NaN;
+    this.subdiv = params.subdiv || 10;
+    this.tension = params.tension || NaN;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -2205,19 +2226,20 @@ NGL.RibbonRepresentation.prototype.setParameters = function( params ){
 
     }
 
-    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+    NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
 
 };
 
 
-NGL.TraceRepresentation = function( structure, viewer, sele, color, subdiv, tension ){
+NGL.TraceRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
 
-    this.subdiv = subdiv || 10;
-    this.tension = tension || NaN;
-
+    params = params || {};
     color = color || "ss";
+
+    this.subdiv = params.subdiv || 10;
+    this.tension = params.tension || NaN;
 
     NGL.Representation.call( this, structure, viewer, sele, color );
 
@@ -2319,7 +2341,7 @@ NGL.TraceRepresentation.prototype.setParameters = function( params ){
 
     }
 
-    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+    NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
 
