@@ -78,7 +78,7 @@ NGL.Examples = {
                 o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
                 o.addRepresentation( "licorice", "hetero" );
 
-                o.centerView( "312" );
+                o.centerView();
 
             } );
 

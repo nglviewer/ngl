@@ -1686,7 +1686,7 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv, radialSegments, tension ){
+NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, subdiv, radialSegments, tension, capped ){
 
     color = color || "ss";
     radius = radius || this.defaultSize;
@@ -1694,6 +1694,7 @@ NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale
     this.subdiv = subdiv || 10;
     this.radialSegments = radialSegments || 12;
     this.tension = tension || NaN;
+    this.capped = capped || true;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1714,6 +1715,9 @@ NGL.TubeRepresentation.prototype.parameters = {
     },
     tension: {
         type: "number", precision: 1, max: 1.0, min: 0.1
+    },
+    capped: {
+        type: "boolean"
     }
 };
 
@@ -1750,7 +1754,8 @@ NGL.TubeRepresentation.prototype.create = function(){
                 scope.radialSegments,
                 subCol.pickingColor,
                 rx,
-                ry
+                ry,
+                scope.capped
             )
 
         );
@@ -1836,12 +1841,19 @@ NGL.TubeRepresentation.prototype.setParameters = function( params ){
 
     }
 
+    if( params && params[ "capped" ] !== undefined ){
+        console.log( this.capped, params )
+        this.capped = params[ "capped" ];
+        this.rebuild();
+
+    }
+
     return this;
 
 };
 
 
-NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio, subdiv, radialSegments, tension ){
+NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, aspectRatio, subdiv, radialSegments, tension, capped ){
 
     color = color || "ss";
     radius = radius || "ss";
@@ -1850,6 +1862,7 @@ NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, sc
     this.subdiv = subdiv || 10;
     this.radialSegments = radialSegments || 12;
     this.tension = tension || NaN;
+    this.capped = capped || true;
 
     NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
 
@@ -1871,6 +1884,9 @@ NGL.CartoonRepresentation.prototype.parameters = {
     },
     tension: {
         type: "number", precision: 1, max: 1.0, min: 0.1
+    },
+    capped: {
+        type: "boolean"
     }
 };
 
@@ -1911,7 +1927,8 @@ NGL.CartoonRepresentation.prototype.create = function(){
                 scope.radialSegments,
                 subCol.pickingColor,
                 rx,
-                ry
+                ry,
+                scope.capped
             )
 
         );
@@ -2003,6 +2020,13 @@ NGL.CartoonRepresentation.prototype.setParameters = function( params ){
 
         this.tension = params[ "tension" ];
         this.update({ "position": true });
+
+    }
+
+    if( params && params[ "capped" ] !== undefined ){
+
+        this.capped = params[ "capped" ];
+        this.rebuild();
 
     }
 
@@ -2417,7 +2441,7 @@ NGL.Spline.prototype = {
 
             for( j = 0; j < m; ++j ){
 
-                // size[ k + j ] = r;
+                // linear interpolation
                 t = j / m;
                 size[ k + j ] = ( 1 - t ) * s2 + t * s3;
 
