@@ -72,9 +72,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "tube", "*" )
-                    .changeRadius( "bfactor" )
-                    .changeColor( "residueindex" );
+                o.addRepresentation( "tube", "*", "atomindex", "bfactor", 0.01 );
                 o.addRepresentation( "ball+stick", "135:A or 347:B or 223:A" );
                 o.addRepresentation( "licorice", "hetero" );
 
