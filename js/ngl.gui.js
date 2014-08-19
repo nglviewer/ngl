@@ -1173,6 +1173,12 @@ NGL.RepresentationWidget = function( repr, component ){
 
         if( input ){
 
+            signals.parametersChanged.add( function( value ){
+
+                input.setValue( repr[ name ] );
+                
+            } );
+
             input.onChange( function(){
 
                 var po = {};

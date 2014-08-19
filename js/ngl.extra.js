@@ -943,6 +943,7 @@ NGL.Representation = function( structure, viewer, sele, color, radius, scale ){
         colorChanged: new SIGNALS.Signal(),
         radiusChanged: new SIGNALS.Signal(),
         scaleChanged: new SIGNALS.Signal(),
+        parametersChanged: new SIGNALS.Signal(),
 
     };
 
@@ -1120,9 +1121,19 @@ NGL.Representation.prototype = {
 
     },
 
-    setParameters: function( params ){
+    setParameters: function( what, rebuild ){
 
+        if( rebuild ){
 
+            this.rebuild();
+
+        }else if( Object.keys( what ).length ){
+
+            this.update( what );
+            
+        }
+
+        this.signals.parametersChanged.dispatch();
 
     },
 
@@ -1305,12 +1316,18 @@ NGL.BallAndStickRepresentation.prototype.update = function( what ){
 
 NGL.BallAndStickRepresentation.prototype.setParameters = function( params ){
 
+    var rebuild = false;
+    var what = {};
+
     if( params && params[ "aspectRatio" ] ){
 
         this.aspectRatio = params[ "aspectRatio" ];
-        this.update({ "radius": true, "scale": true });
+        what[ "radius" ] = true;
+        what[ "scale" ] = true;
 
     }
+
+    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
 
     return this;
 
@@ -1519,12 +1536,19 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
 
 NGL.HyperballRepresentation.prototype.setParameters = function( params ){
 
+    var rebuild = false;
+    var what = {};
+
     if( params && params[ "shrink" ] ){
 
         this.shrink = params[ "shrink" ];
         this.cylinderBuffer.uniforms[ "shrink" ].value = this.shrink;
 
     }
+
+    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
+
+    return this;
 
 };
 
@@ -1820,33 +1844,37 @@ NGL.TubeRepresentation.prototype.update = function( what ){
 
 NGL.TubeRepresentation.prototype.setParameters = function( params ){
 
+    var rebuild = false;
+    var what = {};
+
     if( params && params[ "subdiv" ] ){
 
         this.subdiv = params[ "subdiv" ];
-        this.rebuild();
+        rebuild = true;
 
     }
 
     if( params && params[ "radialSegments" ] ){
 
         this.radialSegments = params[ "radialSegments" ];
-        this.rebuild();
+        rebuild = true;
 
     }
 
     if( params && params[ "tension" ] ){
 
         this.tension = params[ "tension" ];
-        this.update({ "radius": true });
+        what[ "radius" ] = true;
 
     }
 
     if( params && params[ "capped" ] !== undefined ){
-        console.log( this.capped, params )
         this.capped = params[ "capped" ];
-        this.rebuild();
+        rebuild = true;
 
     }
+
+    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
 
     return this;
 
@@ -1995,40 +2023,45 @@ NGL.CartoonRepresentation.prototype.update = function( what ){
 
 NGL.CartoonRepresentation.prototype.setParameters = function( params ){
 
+    var rebuild = false;
+    var what = {};
+
     if( params && params[ "aspectRatio" ] ){
 
         this.aspectRatio = params[ "aspectRatio" ];
-        this.update({ "radius": true });
+        what[ "radius" ] = true;
 
     }
 
     if( params && params[ "subdiv" ] ){
 
         this.subdiv = params[ "subdiv" ];
-        this.rebuild();
+        rebuild = true;
 
     }
 
     if( params && params[ "radialSegments" ] ){
 
         this.radialSegments = params[ "radialSegments" ];
-        this.rebuild();
+        rebuild = true;
 
     }
 
     if( params && params[ "tension" ] ){
 
         this.tension = params[ "tension" ];
-        this.update({ "position": true });
+        what[ "position" ] = true;
 
     }
 
     if( params && params[ "capped" ] !== undefined ){
 
         this.capped = params[ "capped" ];
-        this.rebuild();
+        rebuild = true;
 
     }
+
+    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
 
     return this;
 
@@ -2155,10 +2188,13 @@ NGL.RibbonRepresentation.prototype.update = function( what ){
 
 NGL.RibbonRepresentation.prototype.setParameters = function( params ){
 
+    var rebuild = false;
+    var what = {};
+
     if( params && params[ "subdiv" ] ){
 
         this.subdiv = params[ "subdiv" ];
-        this.rebuild();
+        rebuild = true;
 
     }
 
@@ -2168,6 +2204,8 @@ NGL.RibbonRepresentation.prototype.setParameters = function( params ){
         this.update({ "position": true });
 
     }
+
+    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
 
     return this;
 
@@ -2264,19 +2302,24 @@ NGL.TraceRepresentation.prototype.update = function( what ){
 
 NGL.TraceRepresentation.prototype.setParameters = function( params ){
 
+    var rebuild = false;
+    var what = {};
+
     if( params && params[ "subdiv" ] ){
 
         this.subdiv = params[ "subdiv" ];
-        this.rebuild();
+        rebuild = true;
 
     }
 
     if( params && params[ "tension" ] ){
 
         this.tension = params[ "tension" ];
-        this.update({ "position": true });
+        what[ "position" ] = true;
 
     }
+
+    NGL.Representation.prototype.setParameters.call( this, what, rebuild );
 
     return this;
 
