@@ -3310,24 +3310,29 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped ){
 
     this.rx = rx || 1.5;
     this.ry = ry || 0.5;
 
     this.radialSegments = radialSegments || 4;
-    this.size = position.length / 3;;
+    this.capVertices = capped ? this.radialSegments : 0;
+    this.capTriangles = capped ? this.radialSegments - 2 : 0;
+    this.size = position.length / 3;
 
     var n = this.size;
     var n1 = n - 1;
-    var radialSegments = this.radialSegments;
     var radialSegments1 = this.radialSegments + 1;
 
-    this.meshPosition = new Float32Array( n * radialSegments * 3 );
-    this.meshColor = new Float32Array( n * radialSegments * 3 );
-    this.meshNormal = new Float32Array( n * radialSegments * 3 );
-    this.meshPickingColor = new Float32Array( n * radialSegments * 3 );
-    this.meshIndex = new Uint32Array( n1 * 2 * radialSegments1 * 3 );
+    var x = n * this.radialSegments * 3 + 2 * this.capVertices * 3;
+
+    this.meshPosition = new Float32Array( x );
+    this.meshColor = new Float32Array( x );
+    this.meshNormal = new Float32Array( x );
+    this.meshPickingColor = new Float32Array( x );
+    this.meshIndex = new Uint32Array(
+        n1 * 2 * radialSegments * 3 + 2 * this.capTriangles * 3
+    );
 
     this.makeIndex();
 
@@ -3369,8 +3374,8 @@ NGL.TubeMeshBuffer.prototype = {
 
             var n = this.size;
             var n1 = n - 1;
+            var capVertices = this.capVertices;
             var radialSegments = this.radialSegments;
-            var radialSegments1 = this.radialSegments + 1;
 
             var position, normal, binormal, tangent, color, size, pickingColor;
             var meshPosition, meshColor, meshNormal, meshPickingColor
@@ -3395,7 +3400,7 @@ NGL.TubeMeshBuffer.prototype = {
                 meshPickingColor = this.meshPickingColor;
             }
 
-            var i, j, k, l;
+            var i, j, k, l, s, t;
             var v, cx, cy;
             var cx1, cy1, cx2, cy2;
             var radius;
@@ -3512,6 +3517,87 @@ NGL.TubeMeshBuffer.prototype = {
 
             }
 
+            // front cap
+
+            k = 0;
+            l = n * 3 * radialSegments;
+
+            for( j = 0; j < radialSegments; ++j ){
+
+                s = k + j * 3;
+                t = l + j * 3;
+
+                if( position ){
+
+                    meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
+                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                    meshNormal[ t + 0 ] = tangent[ k + 0 ];
+                    meshNormal[ t + 1 ] = tangent[ k + 1 ];
+                    meshNormal[ t + 2 ] = tangent[ k + 2 ];
+
+                }
+
+                if( color ){
+
+                    meshColor[ t + 0 ] = meshColor[ s + 0 ];
+                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+                }
+
+                if( pickingColor ){
+
+                    meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
+                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
+                }
+
+            }
+
+            // back cap
+
+            k = ( n - 1 ) * 3 * radialSegments;
+            l = ( n + 1 ) * 3 * radialSegments;
+
+            for( j = 0; j < radialSegments; ++j ){
+
+                s = k + j * 3;
+                t = l + j * 3;
+
+                if( position ){
+
+                    meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
+                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                    meshNormal[ t + 0 ] = tangent[ n1 * 3 + 0 ];
+                    meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
+                    meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
+
+                }
+
+                if( color ){
+
+                    meshColor[ t + 0 ] = meshColor[ s + 0 ];
+                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+                }
+
+                if( pickingColor ){
+
+                    meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
+                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
+                }
+
+            }
+
+
             var meshData = {};
 
             if( position ){
@@ -3541,6 +3627,7 @@ NGL.TubeMeshBuffer.prototype = {
 
         var n = this.size;
         var n1 = n - 1;
+        var capTriangles = this.capTriangles;
         var radialSegments = this.radialSegments;
         var radialSegments1 = this.radialSegments + 1;
 
@@ -3548,12 +3635,12 @@ NGL.TubeMeshBuffer.prototype = {
 
         for( i = 0; i < n1; ++i ){
 
-            k = i * radialSegments1 * 3 * 2
+            k = i * radialSegments * 3 * 2
 
             irs = i * radialSegments;
             irs1 = ( i + 1 ) * radialSegments;
 
-            for( j = 0; j < radialSegments1; ++j ){
+            for( j = 0; j < radialSegments; ++j ){
 
                 l = k + j * 3 * 2;
 
@@ -3565,6 +3652,57 @@ NGL.TubeMeshBuffer.prototype = {
                 meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
                 meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
 
+            }
+
+        }
+
+        // capping
+        
+        var strip = [ 0 ];
+
+        for( j = 1; j < radialSegments1 / 2; ++j ){
+
+            strip.push( j );
+            if( radialSegments - j !== j ){
+                strip.push( radialSegments - j );
+            }
+
+        }
+
+        // front cap
+
+        l = n1 * radialSegments * 3 * 2;
+        k = n * radialSegments;
+
+        for( j = 0; j < strip.length - 2; ++j ){
+
+            if( j % 2 === 0 ){
+                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
+                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
+            }else{
+                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
+                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+            }
+
+        }
+
+        // back cap
+
+        l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
+        k = n * radialSegments + radialSegments;
+
+        for( j = 0; j < strip.length - 2; ++j ){
+
+            if( j % 2 === 0 ){
+                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
+                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
+            }else{
+                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
+                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
             }
 
         }

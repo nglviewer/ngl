@@ -1150,11 +1150,10 @@ NGL.RepresentationWidget = function( repr, component ){
     
     Object.keys( repr.parameters ).forEach( function( name ){
 
+        var input;
         var p = repr.parameters[ name ];
 
         if( p.type === "number" || p.type === "integer" ){
-
-            var input;
 
             if( p.type === "number" ){
                 input = new UI.Number( repr[ name ] )
@@ -1163,16 +1162,25 @@ NGL.RepresentationWidget = function( repr, component ){
                 input = new UI.Integer( repr[ name ] );
             }
 
-            input
-                .setRange( p.min, p.max )
-                .onChange( function(){
+            input.setRange( p.min, p.max )
+                
 
-                    var po = {};
-                    po[ name ] = input.getValue();
-                    repr.setParameters( po );
-                    repr.viewer.render();
+        }else if( p.type === "boolean" ){
 
-                } );
+            input = new UI.Checkbox( repr[ name ] );
+
+        }
+
+        if( input ){
+
+            input.onChange( function(){
+
+                var po = {};
+                po[ name ] = input.getValue();
+                repr.setParameters( po );
+                repr.viewer.render();
+
+            } );
 
             menu.addEntry( name, input );
 
