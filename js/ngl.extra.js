@@ -156,8 +156,8 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
-            object.addRepresentation( "cartoon", "*" );
-            object.addRepresentation( "licorice", "hetero" );
+            object.addRepresentation( "cartoon", { sele: "*" } );
+            object.addRepresentation( "licorice", { sele: "hetero" } );
             object.centerView();
 
         }else if( object instanceof NGL.SurfaceComponent ){
@@ -427,7 +427,7 @@ NGL.StructureComponent.prototype = {
 
         this.trajList.slice( 0 ).forEach( function( traj ){
 
-            scope.addTrajectory( traj.xtcPath );
+            scope.addTrajectory( traj.xtcPath, traj._sele, traj.currentFrame );
 
             scope.removeTrajectory( traj );
 
@@ -441,17 +441,7 @@ NGL.StructureComponent.prototype = {
 
         this.reprList.slice( 0 ).forEach( function( repr ){
 
-            var params = {};
-            Object.keys( repr.parameters ).forEach( function( name ){
-                params[ name ] = repr[ name ];
-            } );
-
-            var newRepr = scope.addRepresentation(
-                repr.name, repr._sele, repr.color,
-                repr.radius, repr.scale, params
-            );
-            
-            newRepr.setVisibility( repr.visible );
+            scope.addRepresentation( repr.name, repr.getParameters() );
 
             scope.removeRepresentation( repr );
 
@@ -459,24 +449,20 @@ NGL.StructureComponent.prototype = {
 
     },
 
-    addRepresentation: function( type, sele, color, radius, scale, params ){
+    addRepresentation: function( type, params ){
 
         console.time( "NGL.Structure.add " + type );
 
-        var reprType = NGL.representationTypes[ type ];
+        var ReprClass = NGL.representationTypes[ type ];
 
-        if( !reprType ){
+        if( !ReprClass ){
 
             console.error( "NGL.Structure.add: representation type unknown" );
             return;
 
         }
 
-        var repr = new reprType(
-            this.structure, this.viewer, sele, color, radius, scale, params
-        );
-
-        // repr.setParameters( params );
+        var repr = new ReprClass( this.structure, this.viewer, params );
 
         NGL.Component.prototype.addRepresentation.call( this, repr );
 
@@ -504,11 +490,13 @@ NGL.StructureComponent.prototype = {
 
     },
 
-    addTrajectory: function( xtcPath, sele ){
+    addTrajectory: function( xtcPath, sele, i ){
 
         var scope = this;
 
         var traj = new NGL.Trajectory( xtcPath, this.structure, sele );
+
+        traj.setFrame( i );
 
         traj.signals.frameChanged.add( function( value ){
 
@@ -947,7 +935,7 @@ NGL.autoLoad = function(){
 ///////////////////
 // Representation
 
-NGL.Representation = function( structure, viewer, sele, color, radius, scale ){
+NGL.Representation = function( structure, viewer, params ){
 
     var SIGNALS = signals;
 
@@ -963,17 +951,20 @@ NGL.Representation = function( structure, viewer, sele, color, radius, scale ){
 
     this.structure = structure;
     this.viewer = viewer;
-    this.color = color || "element";
-    this.radius = radius || "vdw";
-    this.scale = scale || 1.0;
 
-    this.visible = true;
+    params = params || {};
 
-    this._sele = sele;
-    this.selection = new NGL.Selection( sele );
+    this.color = params.color || "element";
+    this.radius = params.radius || "vdw";
+    this.scale = params.scale || 1.0;
 
-    this.atomSet = new NGL.AtomSet( structure, this.selection );
-    this.bondSet = structure.bondSet;
+    this.visible = params.visible || true;
+
+    this._sele = params.sele;
+    this.selection = new NGL.Selection( this._sele );
+
+    this.atomSet = new NGL.AtomSet( this.structure, this.selection );
+    this.bondSet = this.structure.bondSet;
 
     this.create();
     this.finalize();
@@ -1153,6 +1144,28 @@ NGL.Representation.prototype = {
 
     },
 
+    getParameters: function(){
+
+        var params = {
+
+            color: this.color,
+            radius: this.radius,
+            scale: this.scale,
+            visible: this.visible,
+            sele: this._sele
+
+        };
+
+        Object.keys( this.parameters ).forEach( function( name ){
+
+            params[ name ] = this[ name ];
+
+        } );
+
+        return params;
+
+    },
+
     dispose: function(){
 
         viewer = this.viewer;
@@ -1173,9 +1186,9 @@ NGL.Representation.prototype = {
 };
 
 
-NGL.SpacefillRepresentation = function( structure, viewer, sele, color, radius, scale ){
+NGL.SpacefillRepresentation = function( structure, viewer, params ){
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1229,14 +1242,14 @@ NGL.SpacefillRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.BallAndStickRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
+NGL.BallAndStickRepresentation = function( structure, viewer, params ){
 
     params = params || {};
-    radius = radius || this.defaultSize;
+    params.radius = params.radius || this.defaultSize;
 
     this.aspectRatio = params.aspectRatio || 2.0;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1351,11 +1364,12 @@ NGL.BallAndStickRepresentation.prototype.setParameters = function( params ){
 };
 
 
-NGL.LicoriceRepresentation = function( structure, viewer, sele, color, radius, scale ){
+NGL.LicoriceRepresentation = function( structure, viewer, params ){
 
-    radius = radius || this.defaultSize;
+    params = params || {};
+    params.radius = params.radius || this.defaultSize;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1399,9 +1413,9 @@ NGL.LicoriceRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.LineRepresentation = function( structure, viewer, sele, color ){
+NGL.LineRepresentation = function( structure, viewer, params ){
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1449,14 +1463,14 @@ NGL.LineRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.HyperballRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
+NGL.HyperballRepresentation = function( structure, viewer, params ){
 
     params = params || {};
-    scale = scale || 0.2;
+    params.scale = params.scale || 0.2;
 
     this.shrink = params.shrink || 0.12;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1571,11 +1585,12 @@ NGL.HyperballRepresentation.prototype.setParameters = function( params ){
 };
 
 
-NGL.BackboneRepresentation = function( structure, viewer, sele, color, radius, scale ){
+NGL.BackboneRepresentation = function( structure, viewer, params ){
 
-    radius = radius || this.defaultSize;
+    params = params || {};
+    params.radius = params.radius || this.defaultSize;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1728,18 +1743,18 @@ NGL.BackboneRepresentation.prototype.update = function( what ){
 };
 
 
-NGL.TubeRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
+NGL.TubeRepresentation = function( structure, viewer, params ){
 
     params = params || {};
-    color = color || "ss";
-    radius = radius || this.defaultSize;
+    params.color = params.color || "ss";
+    params.radius = params.radius || this.defaultSize;
 
     this.subdiv = params.subdiv || 10;
     this.radialSegments = params.radialSegments || 12;
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -1900,11 +1915,11 @@ NGL.TubeRepresentation.prototype.setParameters = function( params ){
 };
 
 
-NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
+NGL.CartoonRepresentation = function( structure, viewer, params ){
 
     params = params || {};
-    color = color || "ss";
-    radius = radius || "ss";
+    params.color = params.color || "ss";
+    params.radius = params.radius || "ss";
     
     this.aspectRatio = params.aspectRatio || 3.0;
     this.subdiv = params.subdiv || 10;
@@ -1912,7 +1927,7 @@ NGL.CartoonRepresentation = function( structure, viewer, sele, color, radius, sc
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -2088,17 +2103,17 @@ NGL.CartoonRepresentation.prototype.setParameters = function( params ){
 };
 
 
-NGL.RibbonRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
+NGL.RibbonRepresentation = function( structure, viewer, params ){
 
     params = params || {};
-    color = color || "ss";
-    radius = radius || "ss";
-    scale = scale || 3.0;
+    params.color = params.color || "ss";
+    params.radius = params.radius || "ss";
+    params.scale = params.scale || 3.0;
 
     this.subdiv = params.subdiv || 10;
     this.tension = params.tension || NaN;
 
-    NGL.Representation.call( this, structure, viewer, sele, color, radius, scale );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 
@@ -2233,15 +2248,15 @@ NGL.RibbonRepresentation.prototype.setParameters = function( params ){
 };
 
 
-NGL.TraceRepresentation = function( structure, viewer, sele, color, radius, scale, params ){
+NGL.TraceRepresentation = function( structure, viewer, params ){
 
     params = params || {};
-    color = color || "ss";
+    params.color = params.color || "ss";
 
     this.subdiv = params.subdiv || 10;
     this.tension = params.tension || NaN;
 
-    NGL.Representation.call( this, structure, viewer, sele, color );
+    NGL.Representation.call( this, structure, viewer, params );
 
 };
 

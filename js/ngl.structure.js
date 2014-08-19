@@ -1189,6 +1189,7 @@ NGL.Trajectory.prototype = {
 
     changeSelection: function( sele ){
 
+        this._sele = sele;
         this.selection = new NGL.Selection( sele );
         this.makeIndices();
         this.resetCache();
@@ -1320,6 +1321,8 @@ NGL.Trajectory.prototype = {
     },
 
     setFrame: function( i, callback ){
+
+        if( i === undefined ) return this;
 
         i = parseInt( i );
 

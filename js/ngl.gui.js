@@ -876,6 +876,19 @@ NGL.ColorSchemeWidget = function(){
 
     }
 
+    icon.setValue = function( value ){
+
+        if( parseInt( value ) === value ){
+            icon.setColor(
+                "#" + ( new THREE.Color( value ).getHexString() )
+            );
+        }else{
+            icon.setScheme( value );
+        }
+        return icon;
+
+    }
+
     return icon;
 
 };
@@ -984,13 +997,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     signals.colorChanged.add( function( value ){
 
-        if( parseInt( value ) === value ){
-            colorWidget.setColor(
-                "#" + ( new THREE.Color( value ).getHexString() )
-            );
-        }else{
-            colorWidget.setScheme( value );
-        }
+        colorWidget.set( value );
         
     } );
 
@@ -1056,7 +1063,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     var colorWidget = new NGL.ColorSchemeWidget()
         .setMarginLeft( "10px" )
-        .setScheme( repr.color )
+        .setValue( repr.color )
         .onChange( (function(){
 
             var c = new THREE.Color();
