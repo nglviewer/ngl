@@ -928,3 +928,65 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
     } );
 
 });
+
+
+QUnit.module( "svd" );
+
+
+QUnit.test( "svd", function( assert ) {
+
+    // http://web.mit.edu/be.400/www/SVD/Singular_Value_Decomposition.htm
+
+    var data_type = jsfeat.F32_t | jsfeat.C1_t;
+    var m_rows = 4;
+    var n_cols = 2;
+
+    var A = new jsfeat.matrix_t( n_cols, m_rows, data_type );
+    A.data.set([
+        2, 4,
+        1, 3,
+        0, 0,
+        0, 0
+    ]);
+
+    console.log( "A", A.data );
+
+    var W = new jsfeat.matrix_t( 1, n_cols, data_type );
+    var U = new jsfeat.matrix_t( m_rows, m_rows, data_type );
+    var V = new jsfeat.matrix_t( n_cols, n_cols, data_type );
+
+    var svd = jsfeat.linalg.svd_decompose( A, W, U, V );
+
+    console.log( "U", U.data );
+
+
+    var Ux = [ 0.82, -0.58,  0, 0,
+               0.58,  0.82,  0, 0,
+               0,     0,     1, 0,
+               0,     0,     0, 1 ];
+
+    var Vx = [ 0.40, -0.91,
+               0.91,  0.40 ];
+
+    var Sx = [ 5.47, 0,
+               0,    0.37,
+               0,    0,
+               0,    0 ];
+
+    /*assert.equal( U.data, Ux, "Passed!" );
+
+    assert.close( U.data[0], Ux[0], 0.01 );
+    assert.close( U.data[1], Ux[1], 0.01 );
+    assert.close( U.data[2], Ux[2], 0.01 );
+    assert.close( U.data[3], Ux[3], 0.01 );*/
+
+    assert.close( W.data[0], Sx[0], 0.01 );
+    assert.close( W.data[1], Sx[3], 0.01 );
+
+    assert.close( V.data[0], Vx[0], 0.01 );
+    assert.close( V.data[1], Vx[1], 0.01 );
+    assert.close( V.data[2], Vx[2], 0.01 );
+    assert.close( V.data[3], Vx[3], 0.01 );
+
+});
+
