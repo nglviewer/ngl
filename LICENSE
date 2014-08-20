@@ -1,0 +1,227 @@
+
+////////
+// NGL
+
+	The MIT License, Copyright &copy; 2013-2014 Alexander S. Rose 
+
+	applies to all files unless otherwise noted
+
+
+//////////
+// THREE
+
+	The MIT License, Copyright &copy; 2010-2014 three.js authors
+
+	js/three.js
+	js/three/*
+	js/lib/ui/ui.js
+	js/threex.renderstats.js
+
+	css/dark.css
+	css/light.css
+
+	doc/page.css
+	doc/page.js
+	doc/list.js
+	doc/index.html
+	doc/prettify/threejs.css
+
+
+////////////
+// Signals
+
+	JS Signals <http://millermedeiros.github.com/js-signals/>
+	Released under the MIT license
+	Author: Miller Medeiros
+
+	js/lib/ui/signals.min.js
+
+
+/////////////////
+// Font Awesome
+
+	Font Awesome by Dave Gandy - http://fontawesome.io
+
+	License: MIT License
+	URL: http://opensource.org/licenses/mit-license.html
+
+	css/font-awesome.min.css
+
+	License: SIL OFL 1.1
+	URL: http://scripts.sil.org/OFL
+
+	fonts/FontAwesome.otf
+	fonts/fontawesome-webfont.eot
+	fonts/fontawesome-webfont.svg
+	fonts/fontawesome-webfont.ttf
+	fonts/fontawesome-webfont.woff
+
+
+///////////////
+// sprintf.js
+
+	https://github.com/alexei/sprintf.js
+	3-clause BSD license, 2007-2013
+	Alexandru Marasteanu <hello [at) alexei (dot] ro>
+
+	js/lib/sprintf.js
+
+
+///////////
+// jsfeat
+
+	http://inspirit.github.io/jsfeat/
+	MIT License, 2012, Eugene Zatepyakin
+
+	js/lib/svd.js
+
+
+//////////
+// QUint
+
+	http://qunitjs.com/
+	https://github.com/JamesMGreene/qunit-assert-close
+	MIT License, Copyright 2006, 2014 
+	jQuery Foundation and other contributors, https://jquery.org/
+
+	test/unit/qunit-1.14.0.js
+	test/unit/qunit-1.14.0.css
+	test/unit/qunit-assert-close.js
+
+
+/////////////////
+// Benchmark.js
+
+	http://benchmarkjs.com/
+	MIT License, Copyright 2010-2014
+	Mathias Bynens <http://mathiasbynens.be/>
+	Based on JSLitmus.js, copyright Robert Kieffer <http://broofa.com/>
+	Modified by John-David Dalton <http://allyoucanleet.com/>
+
+	test/bench/benchmark-1.0.0.js
+
+
+////////////////
+// libxdrfile2
+
+	http://www.gromacs.org/
+	http://mdanalysis.googlecode.com
+
+	GNU GENERAL PUBLIC LICENSE Version 2 (lib/xdrfile/COPYING)
+
+	lib/setup.py
+	lib/xdrfile/*
+
+
+//////////////
+// Chroma.js
+
+	https://github.com/gka/chroma.js
+	MIT License, Copyright 2011-2013, Gregor Aisch
+
+	js/chroma.min.js
+
+
+////////////
+// jscolor
+
+	/**
+	 * jscolor, JavaScript Color Picker
+	 *
+	 * @version 1.4.3
+	 * @license GNU Lesser General Public License, http://www.gnu.org/copyleft/lesser.html
+	 * @author  Jan Odvarko, http://odvarko.cz
+	 * @created 2008-06-15
+	 * @updated 2014-07-16
+	 * @link    http://jscolor.com
+	 */
+	
+	js/lib/jscolor/*
+
+
+/////////////////////
+// Virtual DOM List
+
+	https://github.com/sergi/virtual-list
+	MIT License, Copyright (C) 2013 Sergi Mansilla
+
+	js/lib/vlist.js
+
+
+/////////////////////
+// Closure Compiler
+
+	Copyright 2009 The Closure Compiler Authors.
+	Licensed under the Apache License, Version 2.0 (the "License");
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	build/closure-compiler/*
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////
+// License texts
+
+
+The MIT License
+
+Copyright (c) <year>, <copyright holder>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+
+
+3-clause BSD license
+
+Copyright (c) <year>, <copyright holder>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+

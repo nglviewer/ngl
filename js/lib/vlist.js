@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+// TODO modified by Alexander S. Rose
+
 'use strict';
 
 /**
