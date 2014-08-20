@@ -1558,25 +1558,42 @@ NGL.Buffer.prototype = {
 
         this.makeIndex();
 
-        this.material = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            // opacity: 1.0,
-            // blending: THREE.AdditiveBlending,
-            // blending: THREE.MultiplyBlending,
-            // blending: THREE.CustomBlending,
-            // blendSrc: THREE.OneFactor,
-            // blendDst: THREE.OneMinusSrcAlphaFactor,
-            depthWrite: true,
-            lights: true,
-            fog: true
-        });
+        if( this.wireframe ){
 
-        this.mesh = new THREE.Mesh( this.geometry, this.material );
+            this.material = new THREE.LineBasicMaterial({
+                uniforms: this.uniforms,
+                attributes: this.attributes,
+                vertexColors: true,
+                fog: true
+            });
+
+            this.mesh = new THREE.Line(
+                this.geometry, this.material, THREE.LinePieces
+            );
+
+        }else{
+
+            this.material = new THREE.ShaderMaterial( {
+                uniforms: this.uniforms,
+                attributes: this.attributes,
+                vertexShader: NGL.getShader( this.vertexShader ),
+                fragmentShader: NGL.getShader( this.fragmentShader ),
+                depthTest: true,
+                transparent: false,
+                // opacity: 1.0,
+                // blending: THREE.AdditiveBlending,
+                // blending: THREE.MultiplyBlending,
+                // blending: THREE.CustomBlending,
+                // blendSrc: THREE.OneFactor,
+                // blendDst: THREE.OneMinusSrcAlphaFactor,
+                depthWrite: true,
+                lights: true,
+                fog: true
+            });
+
+            this.mesh = new THREE.Mesh( this.geometry, this.material );
+
+        }
 
     },
 
@@ -1676,7 +1693,9 @@ NGL.Buffer.prototype = {
  * @param {Float32Array} index
  * @param {Float32Array} normal
  */
-NGL.MeshBuffer = function( position, color, index, normal, pickingColor ){
+NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe ){
+
+    this.wireframe = wireframe || false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -1734,6 +1753,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor ){
             fog: false
         });
 
+        this.pickingMaterial.side = THREE.DoubleSide;
         this.pickingMaterial.defines[ "PICKING" ] = 1;
 
         this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
@@ -3310,10 +3330,12 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe ){
 
     this.rx = rx || 1.5;
     this.ry = ry || 0.5;
+
+    this.wireframe = wireframe || false;
 
     this.radialSegments = radialSegments || 4;
     this.capVertices = capped ? this.radialSegments : 0;
@@ -3348,7 +3370,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor
+        this.meshNormal, this.meshPickingColor, this.wireframe
     );
 
     this.geometry = this.meshBuffer.geometry;

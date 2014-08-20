@@ -401,7 +401,9 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1d66.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { sele: "nucleic" } );
+                o.addRepresentation( "cartoon", {
+                    sele: "nucleic", wireframe: true
+                } );
                 o.addRepresentation( "licorice", {
                     sele: "nucleic", color: "atomindex"
                 } );
