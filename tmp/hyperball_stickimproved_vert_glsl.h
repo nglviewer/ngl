@@ -1,3 +1,14 @@
+// Copyright (C) 2010-2011 by
+// Laboratoire de Biochimie Theorique (CNRS),
+// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
+// Departement des Sciences de la Simulation et de l'Information (CEA). 
+
+// License: CeCILL-C license (http://www.cecill.info/)
+
+// Contact: Marc Baaden
+// E-mail: baaden@smplinux.de
+// Webpage: http://hyperballs.sourceforge.net
+
 #ifndef __STICKIMPROVED_VERT_H__
 #define __STICKIMPROVED_VERT_H__
 const char stickimproved_vert[] = ""

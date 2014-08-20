@@ -32,13 +32,43 @@ mat4 transpose( in mat4 inMatrix ) {
 
 
 //------------------------------------------------------------------------------
-/// Compute point size and center using the technique described in:
-/// "GPU-Based Ray-Casting of Quadratic Surfaces"
-/// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.
+// Compute point size and center using the technique described in:
+// "GPU-Based Ray-Casting of Quadratic Surfaces"
+// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.
 //
-// Code based on ...
+// Code based on
+/*=========================================================================
+
+ Program:   Visualization Toolkit
+ Module:    Quadrics_fs.glsl and Quadrics_vs.glsl
+
+ Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
+ All rights reserved.
+ See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
+
+ This software is distributed WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ PURPOSE.  See the above copyright notice for more information.
+
+ =========================================================================*/
+
+// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl
+// .SECTION Thanks
+// <verbatim>
+//
+//  This file is part of the PointSprites plugin developed and contributed by
+//
+//  Copyright (c) CSCS - Swiss National Supercomputing Centre
+//                EDF - Electricite de France
+//
+//  John Biddiscombe, Ugo Varetto (CSCS)
+//  Stephane Ploix (EDF)
+//
+// </verbatim>
 // 
-// ASR: Adapted to work with quads
+// Contributions by Alexander Rose
+// - ported to WebGL
+// - adapted to work with quads
 void ComputePointSizeAndPositionInClipCoordSphere(){
     
     vec2 xbc;

@@ -1,4 +1,6 @@
-
+/**
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
 
 // Interface based on JSmolGLmol.js by Bob Hanson and biochem_fan
 
