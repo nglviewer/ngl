@@ -1749,6 +1749,7 @@ NGL.TubeRepresentation = function( structure, viewer, params ){
     this.radialSegments = params.radialSegments || 12;
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
+    this.wireframe = params.wireframe || false;
 
     NGL.Representation.call( this, structure, viewer, params );
 
@@ -1771,6 +1772,9 @@ NGL.TubeRepresentation.prototype.parameters = {
         type: "number", precision: 1, max: 1.0, min: 0.1
     },
     capped: {
+        type: "boolean"
+    },
+    wireframe: {
         type: "boolean"
     }
 };
@@ -1809,7 +1813,8 @@ NGL.TubeRepresentation.prototype.create = function(){
                 subCol.pickingColor,
                 rx,
                 ry,
-                scope.capped
+                scope.capped,
+                scope.wireframe
             )
 
         );
@@ -1904,6 +1909,13 @@ NGL.TubeRepresentation.prototype.setParameters = function( params ){
 
     }
 
+    if( params && params[ "wireframe" ] !== undefined ){
+
+        this.wireframe = params[ "wireframe" ];
+        rebuild = true;
+
+    }
+
     NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
     return this;
@@ -1922,6 +1934,7 @@ NGL.CartoonRepresentation = function( structure, viewer, params ){
     this.radialSegments = params.radialSegments || 12;
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
+    this.wireframe = params.wireframe || false;
 
     NGL.Representation.call( this, structure, viewer, params );
 
@@ -1945,6 +1958,9 @@ NGL.CartoonRepresentation.prototype.parameters = {
         type: "number", precision: 1, max: 1.0, min: 0.1
     },
     capped: {
+        type: "boolean"
+    },
+    wireframe: {
         type: "boolean"
     }
 };
@@ -1987,7 +2003,8 @@ NGL.CartoonRepresentation.prototype.create = function(){
                 subCol.pickingColor,
                 rx,
                 ry,
-                scope.capped
+                scope.capped,
+                scope.wireframe
             )
 
         );
@@ -2088,6 +2105,13 @@ NGL.CartoonRepresentation.prototype.setParameters = function( params ){
     if( params && params[ "capped" ] !== undefined ){
 
         this.capped = params[ "capped" ];
+        rebuild = true;
+
+    }
+
+    if( params && params[ "wireframe" ] !== undefined ){
+
+        this.wireframe = params[ "wireframe" ];
         rebuild = true;
 
     }
