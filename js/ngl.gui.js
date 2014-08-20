@@ -853,10 +853,10 @@ NGL.ColorSchemeWidget = function(){
         .setWidth( "280px" )
         .setHeight( "200px" );
     // https://github.com/PitPik/colorPicker
-    var colorPickerObject = new ColorPicker( {
+    /*var colorPickerObject = new ColorPicker( {
         appenTo: colorPicker.dom,
         size: 2,
-    } );
+    } );*/
 
     panel
         .add( new UI.Text( "Color scheme" ).setMarginBottom( "10px" ) )
