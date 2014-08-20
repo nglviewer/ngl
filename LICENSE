@@ -1,10 +1,13 @@
 
+For license texts see at the end of this document.
+
+
 ////////
 // NGL
 
 	The MIT License, Copyright &copy; 2013-2014 Alexander S. Rose 
 
-	applies to all files unless otherwise noted
+	applies to all files unless otherwise noted (excluding files in tmp/*)
 
 
 //////////
@@ -158,10 +161,90 @@
 	build/closure-compiler/*
 
 
+/////////////////////
+// HyperBall shader
+
+	Copyright (C) 2010-2011 by
+	Laboratoire de Biochimie Theorique (CNRS),
+	Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
+	Departement des Sciences de la Simulation et de l'Information (CEA). 
+
+	License: CeCILL-C license (http://www.cecill.info/)
+
+	Contact: Marc Baaden
+	E-mail: baaden@smplinux.de
+	Webpage: http://hyperballs.sourceforge.net
+
+	ported to WebGL by Alexander Rose
+
+	shader/HyperballStickImpostor.vert
+	shader/HyperballStickImpostor.frag
 
 
+/////////////////////////////////////////
+// PyMOL screen aligned cylinder shader
+
+	Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
+
+	All Rights Reserved
+
+	Permission to use, copy, modify, distribute, and distribute modified
+	versions of this software and its built-in documentation for any
+	purpose and without fee is hereby granted, provided that the above
+	copyright notice appears in all copies and that both the copyright
+	notice and this permission notice appear in supporting documentation,
+	and that the name of Schrodinger, LLC not be used in advertising or
+	publicity pertaining to distribution of the software without specific,
+	written prior permission.
+
+	SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+	INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
+	NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+	CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+	OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+	OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
+	USE OR PERFORMANCE OF THIS SOFTWARE.
+
+	shader/CylinderImpostor.vert
+	shader/CylinderImpostor.frag
+	shader/LineSprite.vert
 
 
+///////////////////////////////////////////
+// VTK quadric surface center calculation
+
+	/*=========================================================================
+
+	 Program:   Visualization Toolkit
+	 Module:    Quadrics_fs.glsl and Quadrics_vs.glsl
+
+	 Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
+	 All rights reserved.
+	 See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
+
+	 This software is distributed WITHOUT ANY WARRANTY; without even
+	 the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 PURPOSE.  See the above copyright notice for more information.
+
+	 =========================================================================*/
+
+	// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl
+	// .SECTION Thanks
+	// <verbatim>
+	//
+	//  This file is part of the PointSprites plugin developed and contributed by
+	//
+	//  Copyright (c) CSCS - Swiss National Supercomputing Centre
+	//                EDF - Electricite de France
+	//
+	//  John Biddiscombe, Ugo Varetto (CSCS)
+	//  Stephane Ploix (EDF)
+	//
+	// </verbatim>
+
+	shader/ParticleSprite.vert
+	shader/SphereHalo.vert
+	shader/SphereImpostor.vert
 
 
 
