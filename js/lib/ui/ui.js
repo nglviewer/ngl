@@ -1227,12 +1227,48 @@ UI.Icon.prototype.removeClass = function( value ){
 
 }
 
-UI.Icon.prototype.switchClass = function( oldValue, newValue ){
+UI.Icon.prototype.switchClass = function( newValue, oldValue ){
 
-    this.removeClass( oldValue );
+    this.removeClass( oldValue, newValue );
     this.addClass( newValue );
 
     return this;
+
+}
+
+
+// Toggle Icon
+
+UI.ToggleIcon = function( value, classTrue, classFalse ){
+
+    UI.Icon.call( this, value ? classTrue : classFalse );
+
+    this.value = value;
+    this.classTrue = classTrue;
+    this.classFalse = classFalse;
+
+    return this;
+
+};
+
+UI.ToggleIcon.prototype = Object.create( UI.Icon.prototype );
+
+UI.ToggleIcon.prototype.setValue = function( value ){
+
+    this.value = value;
+
+    if( value ){
+        this.switchClass( this.classTrue, this.classFalse );
+    }else{
+        this.switchClass( this.classFalse, this.classTrue );
+    }
+
+    return this;
+}
+
+UI.ToggleIcon.prototype.getValue = function(){
+    
+    return this.value;
 
 }
 

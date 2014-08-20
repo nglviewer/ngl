@@ -74,7 +74,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "tube", {
                     sele: "*", color: "atomindex", radius: "bfactor", scale: 0.01,
-                    subdiv: 50, radialSegments: 50
+                    subdiv: 50, radialSegments: 50, visible: true
                 } );
                 o.addRepresentation( "ball+stick", { sele: "135:A or 347:B or 223:A" } );
                 o.addRepresentation( "licorice", { sele: "hetero" } );

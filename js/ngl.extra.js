@@ -316,6 +316,7 @@ NGL.Component = function( stage ){
     this.stage = stage;
     this.viewer = stage.viewer;
 
+    this.visible = true;
     this.reprList = [];
 
 }
@@ -369,6 +370,7 @@ NGL.Component.prototype = {
 
     setVisibility: function( value ){
 
+        this.visible = value;
         this.signals.visibilityChanged.dispatch( value );
 
     },
@@ -958,7 +960,7 @@ NGL.Representation = function( structure, viewer, params ){
     this.radius = params.radius || "vdw";
     this.scale = params.scale || 1.0;
 
-    this.visible = params.visible || true;
+    this.visible = params.visible === undefined ? true : params.visible;
 
     this._sele = params.sele;
     this.selection = new NGL.Selection( this._sele );
@@ -967,7 +969,7 @@ NGL.Representation = function( structure, viewer, params ){
     this.bondSet = this.structure.bondSet;
 
     this.create();
-    this.finalize();
+    this.attach();
 
 };
 
@@ -1058,12 +1060,6 @@ NGL.Representation.prototype = {
 
     },
 
-    finalize: function(){
-
-        this.attach();
-
-    },
-
     create: function(){
 
         this.bufferList = [];
@@ -1086,8 +1082,6 @@ NGL.Representation.prototype = {
         this.create();
         this.attach();
 
-        this.setVisibility( this.visible );
-
     },
 
     attach: function(){
@@ -1100,7 +1094,7 @@ NGL.Representation.prototype = {
 
         });
 
-        this.signals.visibilityChanged.dispatch( true );
+        this.setVisibility( this.visible );
 
     },
 
