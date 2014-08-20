@@ -897,11 +897,6 @@ NGL.Viewer.prototype = {
         this.stats.domElement.style.right = '0px';
         this.container.appendChild( this.stats.domElement );
 
-        this.rendererStats = new THREEx.RendererStats();
-        this.rendererStats.domElement.style.position = 'absolute';
-        this.rendererStats.domElement.style.bottom = '0px';
-        this.container.appendChild( this.rendererStats.domElement );
-
     },
 
     /**
@@ -1219,8 +1214,6 @@ NGL.Viewer.prototype = {
             // this.renderer.render( this.scene, this.camera );
 
         }
-        
-        this.rendererStats.update( this.renderer );
 
         this._rendering = false;
 
