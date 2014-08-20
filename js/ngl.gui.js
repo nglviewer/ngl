@@ -489,11 +489,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     signals.visibilityChanged.add( function( value ){
 
-        if( value ){
-            toggle.removeClass( "eye-slash", "eye" ).addClass( "eye" );
-        }else{
-            toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
-        }
+        toggle.setValue( value );
         
     } );
 
@@ -505,17 +501,13 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Actions
 
-    var toggle = new UI.Icon( "eye" )
+    var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            if( toggle.hasClass( "eye" ) ){
-                component.setVisibility( false );
-            }else{
-                component.setVisibility( true );
-            }
-
+            component.setVisibility( !toggle.getValue() );
+            
         } );
 
     var center = new UI.Icon( "bullseye" )
@@ -951,11 +943,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     signals.visibilityChanged.add( function( value ){
 
-        if( value ){
-            toggle.removeClass( "eye-slash", "eye" ).addClass( "eye" );
-        }else{
-            toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
-        }
+        toggle.setValue( value );
         
     } );
 
@@ -967,16 +955,12 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     // Actions
 
-    var toggle = new UI.Icon( "eye" )
+    var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            if( toggle.hasClass( "eye" ) ){
-                component.setVisibility( false );
-            }else{
-                component.setVisibility( true );
-            }
+            component.setVisibility( !toggle.getValue() );
 
         } );
 
@@ -1037,17 +1021,13 @@ NGL.RepresentationWidget = function( repr, component ){
 
     signals.visibilityChanged.add( function( value ){
 
-        if( value ){
-            toggle.removeClass( "eye-slash", "eye" ).addClass( "eye" );
-        }else{
-            toggle.removeClass( "eye", "eye-slash" ).addClass( "eye-slash" );
-        }
+        toggle.setValue( value );
         
     } );
 
     signals.colorChanged.add( function( value ){
 
-        colorWidget.set( value );
+        colorWidget.setValue( value );
         
     } );
 
@@ -1077,16 +1057,12 @@ NGL.RepresentationWidget = function( repr, component ){
 
     // Actions
 
-    var toggle = new UI.Icon( "eye" )
+    var toggle = new UI.ToggleIcon( repr.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            if( toggle.hasClass( "eye" ) ){
-                repr.setVisibility( false );
-            }else{
-                repr.setVisibility( true );
-            }
+            repr.setVisibility( !toggle.getValue() );
 
         } );
 
@@ -1468,24 +1444,24 @@ NGL.TrajectoryWidget = function( traj, component ){
         .setWidth( "30px" )
         .setRange( 10, 1000 );
 
-    var animButton = new UI.Icon( "play" )
+    var animButton = new UI.ToggleIcon( true, "play", "pause" )
         .setMarginRight( "10px" )
         .setMarginLeft( "20px" )
         .onClick( function(){
 
-            if( animButton.hasClass( "play" ) ){
+            if( animButton.getValue() ){
 
-                animButton.switchClass( "play", "pause" );
                 animStopFlag = false;
                 i = Math.max( 0, traj.currentFrame );
                 animFunc();
 
             }else{
 
-                animButton.switchClass( "pause", "play" );
                 animStopFlag = true;
 
             }
+
+            animButton.setValue( !animButton.getValue() );
 
         } );
 
@@ -1513,7 +1489,6 @@ NGL.TrajectoryWidget = function( traj, component ){
         } );
 
     signals.centerPbcParamChanged.add( function( value ){
-        console.log( "moin", value )
         setCenterPbc.setValue( value );
     } );
 
