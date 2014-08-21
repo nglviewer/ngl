@@ -213,54 +213,46 @@ NGL.MenubarFileWidget = function( stage ){
         var i = 0;
         var paramsList = [];
         
-        stage.compList.forEach( function( o ){
+        stage.eachComponent( function( o ){
 
-            if( o instanceof NGL.StructureComponent ){
+            o.reprList.slice( 0 ).forEach( function( repr ){
 
-                o.reprList.slice( 0 ).forEach( function( repr ){
+                var p = repr.getParameters();
 
-                    var p = repr.getParameters();
+                if( p.subdiv !== undefined ){
+                    p.subdiv = Math.max( 20, p.subdiv );
+                }
 
-                    if( p.subdiv !== undefined ){
-                        p.subdiv = Math.max( 20, p.subdiv );
-                    }
+                if( p.radialSegments !== undefined ){
+                    p.radialSegments = Math.max( 20, p.radialSegments );
+                }
 
-                    if( p.radialSegments !== undefined ){
-                        p.radialSegments = Math.max( 20, p.radialSegments );
-                    }
+                o.addRepresentation( repr.name, p );
+                o.removeRepresentation( repr );
 
-                    o.addRepresentation( repr.name, p );
-                    o.removeRepresentation( repr );
+                paramsList.push( repr.getParameters() );
+                i += 1;
 
-                    paramsList.push( repr.getParameters() );
-                    i += 1;
+            } );
 
-                } );
-
-            }
-
-        } );
+        }, NGL.StructureComponent );
 
         stage.viewer.screenshot( 4, "image/png", 1.0 );
 
         i = 0;
 
-        stage.compList.forEach( function( o ){
+        stage.eachComponent( function( o ){
 
-            if( o instanceof NGL.StructureComponent ){
+            o.reprList.slice( 0 ).forEach( function( repr ){
 
-                o.reprList.slice( 0 ).forEach( function( repr ){
+                o.addRepresentation( repr.name, paramsList[ i ] );
+                o.removeRepresentation( repr );
 
-                    o.addRepresentation( repr.name, paramsList[ i ] );
-                    o.removeRepresentation( repr );
+                i += 1;
 
-                    i += 1;
+            } );
 
-                } );
-
-            }
-
-        } );
+        }, NGL.StructureComponent );
 
     }
 
@@ -653,11 +645,13 @@ NGL.StructureComponentWidget = function( component, stage ){
     function setSuperposeOptions(){
 
         var superposeOptions = { "": "[ structure ]" };
-        stage.compList.forEach( function( o, i ){
-            if( o instanceof NGL.StructureComponent && o !== component ){
-                superposeOptions[ i ] = o.name;
-            }
-        } );
+
+        stage.eachComponent( function( o, i ){
+
+            if( o !== component ) superposeOptions[ i ] = o.name;
+
+        }, NGL.StructureComponent );
+
         superpose.setOptions( superposeOptions );
 
     }
