@@ -277,6 +277,121 @@ UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
 };
 
 
+// Virtual List
+
+UI.VirtualList = function( items ){
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'div' );
+    dom.className = 'VirtualList';
+    // dom.style.cursor = 'default';
+    // dom.style.display = 'inline-block';
+    // dom.style.verticalAlign = 'middle';
+
+    this.dom = dom;
+
+    this._items = items;
+
+    this.list = new VirtualList({
+        w: 280,
+        h: 300,
+        itemHeight: 31,
+        totalRows: items.length,
+        generatorFn: function( index ) {
+
+            var panel = new UI.Panel();
+            var text = new UI.Text()
+                .setColor( "orange" )
+                .setMarginLeft( "10px" )
+                .setValue( "ITEM " + items[ index ] );
+
+            panel.add( text );
+
+            return panel.dom;
+
+        }
+    });
+
+    console.log( this.dom );
+    console.log( this.list );
+
+    this.dom.appendChild( this.list.container );
+
+    return this;
+
+};
+
+
+// Popup Menu
+
+UI.PopupMenu = function(){
+
+    UI.Icon.call( this, "bars" );
+
+    var scope = this;
+
+    var panel = new UI.OverlayPanel();
+    var entryLabelWidth = "100px";
+
+    this.setTitle( "menu" );
+        
+    this.onClick( function(){
+
+        if( panel.getDisplay() === "block" ){
+
+            panel.setDisplay( "none" );
+            return;
+
+        }
+
+        var box = scope.getBox();
+
+        panel
+            .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
+            .setTop( box.top + "px" )
+            .setDisplay( "block" )
+            .attach();
+
+    } );
+
+    this.panel = panel;
+    this.entryLabelWidth = entryLabelWidth;
+
+    return this;
+
+};
+
+UI.PopupMenu.prototype = Object.create( UI.Icon.prototype );
+
+UI.PopupMenu.prototype.addEntry = function( label, entry ){
+
+    this.panel
+        .add( new UI.Text( label ).setWidth( this.entryLabelWidth ) )
+        .add( entry )
+        .add( new UI.Break() );
+    
+    return this;
+
+}
+
+UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
+
+    this.entryLabelWidth = value;
+
+    return this;
+
+}
+
+UI.PopupMenu.prototype.setDisplay = function( value ){
+
+    this.panel.setDisplay( value );
+    
+    return this;
+
+}
+
+
 // JsColor
 
 UI.JsColor = function(){
