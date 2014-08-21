@@ -547,7 +547,7 @@ NGL.StructureComponent.prototype = {
 
         NGL.Component.prototype.dispose.call( this );
 
-        // copy via .slice because side effects may change reprList
+        // copy via .slice because side effects may change trajList
         this.trajList.slice().forEach( function( traj ){
 
             traj.dispose();
