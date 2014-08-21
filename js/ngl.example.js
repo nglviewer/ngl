@@ -462,9 +462,9 @@ NGL.Examples = {
 
         "test": function( stage ){
 
-            stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
+            stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
 
-                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "cartoon", { color: "chainindex" } );
                 o.addRepresentation( "licorice", { sele: "DPPC" } );
                 o.centerView();
 

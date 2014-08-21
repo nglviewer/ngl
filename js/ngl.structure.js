@@ -309,6 +309,17 @@ NGL.ColorFactory = function( type, structure ){
 
     }
 
+    this.chainNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                      "abcdefghijklmnopqrstuvwxyz" +
+                      "0123456789";
+
+    this.chainnameScale = chroma
+        .scale( 'Spectral' )
+        //.scale( 'RdYlGn' )
+        //.scale([ "red", "orange", "yellow", "green", "blue" ])
+        .mode('lch')
+        .domain( [ 0, 26 ]);
+
 }
 
 NGL.ColorFactory.prototype = {
@@ -361,8 +372,14 @@ NGL.ColorFactory.prototype = {
                 break;
 
             case "chainindex":
-
-                _c = chainindexScale( a.residue.chain.index )._rgb;
+            
+                if( a.residue.chain.chainname === undefined ){
+                    _c = this.chainnameScale(
+                        this.chainNames.indexOf( a.chainname ) * 10
+                    )._rgb;
+                }else{
+                    _c = chainindexScale( a.residue.chain.index )._rgb;
+                }
                 c = _c[0] << 16 | _c[1] << 8 | _c[2];
                 break;
 
