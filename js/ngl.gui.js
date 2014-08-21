@@ -1,5 +1,4 @@
 /**
- * @file GUI
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
@@ -41,6 +40,8 @@ NGL.Widget.prototype = {
 
 };
 
+
+// Viewport
 
 NGL.ViewportWidget = function( stage ){
 
@@ -85,6 +86,8 @@ NGL.ViewportWidget = function( stage ){
 };
 
 
+// Toolbar
+
 NGL.ToolbarWidget = function( stage ){
 
     var signals = stage.signals;
@@ -113,6 +116,8 @@ NGL.ToolbarWidget = function( stage ){
 
 };
 
+
+// Menubar
 
 NGL.MenubarWidget = function( stage ){
 
@@ -426,6 +431,8 @@ NGL.MenubarHelpWidget = function( stage ){
 };
 
 
+// Sidebar
+
 NGL.SidebarWidget = function( stage ){
 
     var signals = stage.signals;
@@ -455,6 +462,8 @@ NGL.SidebarWidget = function( stage ){
 
 };
 
+
+// Component
 
 NGL.ComponentWidget = function( component, stage ){
 
@@ -551,7 +560,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new NGL.SelectionWidget()
+        .add( new UI.SelectionInput()
                 .setWidth( '195px' )
                 .setValue( component.sele )
                 .onEnter( function( value ){
@@ -688,9 +697,9 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Menu
 
-    var menu = new NGL.MenuWidget()
+    var menu = new UI.PopupMenu()
         .setMarginLeft( "47px" )
-        .setEntryTitleWidth( "110px" )
+        .setEntryLabelWidth( "110px" )
         .addEntry( "PDB file", pdb )
         .addEntry( "Representation", repr )
         .addEntry( "Trajectory", traj )
@@ -714,224 +723,6 @@ NGL.StructureComponentWidget = function( component, stage ){
     container.add( reprContainer );
 
     return container;
-
-};
-
-
-NGL.MenuWidget = function(){
-
-    var menuPanel = new UI.OverlayPanel();
-    var menuEntryTitleWidth = "100px";
-
-    var menu = new UI.Icon( "bars" )
-        .setTitle( "menu" )
-        .onClick( function(){
-
-            if( menuPanel.getDisplay() === "block" ){
-
-                menuPanel.setDisplay( "none" );
-                return;
-
-            }
-
-            var box = menu.getBox();
-
-            menuPanel
-                .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
-                .setTop( box.top + "px" )
-                .setDisplay( "block" )
-                .attach();
-
-        } );
-
-    menu.addEntry = function( title, entry ){
-
-        menuPanel
-            .add( new UI.Text( title ).setWidth( menuEntryTitleWidth ) )
-            .add( entry )
-            .add( new UI.Break() )
-        return menu;
-
-    }
-
-    menu.setEntryTitleWidth = function( value ){
-
-        menuEntryTitleWidth = value;
-        return menu;
-
-    }
-
-    menu.setDisplay = function( value ){
-
-        menuPanel.setDisplay( value );
-        return menu;
-
-    }
-
-    return menu;
-
-};
-
-
-NGL.ColorSchemeWidget = function(){
-
-    var panel = new UI.OverlayPanel();
-
-    var iconText = new UI.Text( "" )
-        .setClass( "fa-stack-1x" )
-        .setColor( "#111" );
-
-    var iconSquare = new UI.Icon( "square", "stack-1x" )
-        //.setMarginTop( "0.05em" );
-
-    var icon = new UI.Icon( "stack" )
-        .setTitle( "color" )
-        .setWidth( "1em" ).setHeight( "1em" ).setLineHeight( "1em" )
-        .add( iconSquare )
-        .add( iconText )
-        .onClick( function(){
-
-            if( panel.getDisplay() === "block" ){
-                panel.setDisplay( "none" );
-                return;
-            }
-            var box = icon.getBox();
-            panel
-                .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
-                .setTop( box.top + "px" )
-                .setDisplay( "block" )
-                .attach();
-
-        } );
-
-    var changeEvent = document.createEvent('Event');
-    changeEvent.initEvent('change', true, true);
-
-    var schemeSelector = new UI.Select()
-        .setColor( '#444' )
-        .setWidth( "" )
-        .setOptions({
-            "": "",
-            "element": "by element",
-            "resname": "by residue name",
-            "ss": "by secondary structure",
-            "atomindex": "by atom index",
-            "residueindex": "by residue index",
-            "chainindex": "by chain index",
-            "modelindex": "by model index",
-            "picking": "by picking id",
-            "random": "random",
-            "color": "color"
-        })
-        .onChange( function(){
-
-            icon.setScheme( schemeSelector.getValue() );
-            if( schemeSelector.getValue() !== "color" ){
-                panel.setDisplay( "none" );
-            }
-            icon.dom.dispatchEvent( changeEvent );
-
-        } );
-
-    var colorInput = new UI.Color()
-        .onChange( function(){
-
-            icon.setColor( colorInput.getValue() );
-            icon.dom.dispatchEvent( changeEvent );
-
-        } );
-
-    var colorInput2 = new UI.JsColor()
-        .onImmediateChange( function(){
-
-            icon.setColor( colorInput2.getValue() );
-            icon.dom.dispatchEvent( changeEvent );
-
-        } );
-    
-    var colorPicker = new UI.Panel()
-        .setWidth( "280px" )
-        .setHeight( "200px" );
-    // https://github.com/PitPik/colorPicker
-    /*var colorPickerObject = new ColorPicker( {
-        appenTo: colorPicker.dom,
-        size: 2,
-    } );*/
-
-    panel
-        .add( new UI.Text( "Color scheme" ).setMarginBottom( "10px" ) )
-        .add( new UI.Break() )
-        .add( schemeSelector )
-        .add( new UI.Break() )
-        /*.add( new UI.Text( "Color: " ) )
-        .add( colorInput )*/
-        .add( new UI.Break() )
-        .add( colorInput2 )
-        /*.add( new UI.Break() )
-        .add( colorPicker )*/
-        ;
-
-    icon.setScheme = function( value ){
-
-        if( value !== "color" ){
-            icon.setColor( "#888" );
-        }
-        iconText.setValue( value.charAt( 0 ).toUpperCase() );
-        schemeSelector.setValue( value );
-        return icon;
-
-    }
-
-    icon.getScheme = function(){
-
-        return schemeSelector.getValue();
-
-    }
-
-    var c = new THREE.Color();
-    icon.setColor = function( value ){
-
-        icon.setScheme( "color" );
-        colorInput.setValue( value );
-        colorInput2.setValue( value );
-        iconSquare.setColor( value );
-        c.setStyle( value );
-        if( ( c.r + c.g + c.b ) > 1.5 ){
-            iconText.setColor( "#000" );
-        }else{
-            iconText.setColor( "#FFF" );
-        }
-        return icon;
-
-    }
-
-    icon.getColor = function(){
-
-        return colorInput.getValue();
-
-    }
-
-    icon.setDisplay = function( value ){
-
-        panel.setDisplay( value );
-        return icon;
-
-    }
-
-    icon.setValue = function( value ){
-
-        if( parseInt( value ) === value ){
-            icon.setColor(
-                "#" + ( new THREE.Color( value ).getHexString() )
-            );
-        }else{
-            icon.setScheme( value );
-        }
-        return icon;
-
-    }
-
-    return icon;
 
 };
 
@@ -1011,6 +802,8 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
 };
 
+
+// Representation
 
 NGL.RepresentationWidget = function( repr, component ){
 
@@ -1118,7 +911,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new NGL.SelectionWidget()
+        .add( new UI.SelectionInput()
                 .setWidth( '175px' )
                 .setValue( repr.selection.selectionStr )
                 .onEnter( function( value ){
@@ -1171,9 +964,9 @@ NGL.RepresentationWidget = function( repr, component ){
 
         } );
 
-    var menu = new NGL.MenuWidget()
+    var menu = new UI.PopupMenu()
         .setMarginLeft( "45px" )
-        .setEntryTitleWidth( "110px" )
+        .setEntryLabelWidth( "110px" )
         .addEntry( "Radius type", radiusSelector )
         .addEntry( "Radius size", sizeInput )
         .addEntry( "Radius scale", scaleInput )
@@ -1235,98 +1028,7 @@ NGL.RepresentationWidget = function( repr, component ){
 };
 
 
-NGL.SelectionWidget = function( signal ){
-
-    // TODO bind to a selection (this requires consequent
-    // re-use of that selection elsewhere)
-
-    if( signal ){
-
-        signal.add( function( selection ){
-
-            container.setValue( selection.selectionStr );
-
-        } );
-
-    }
-
-    var textarea = new UI.AdaptiveTextArea().setSpellcheck( false );
-    var container = textarea;
-    var selectionStr = "";
-
-    var check = function( sele ){
-
-        var selection = new NGL.Selection( sele );
-        
-        return !selection.selection[ "error" ];
-
-    }
-
-    container.setValue = function( value ){
-
-        selectionStr = value || "";
-
-        UI.AdaptiveTextArea.prototype.setValue.call(
-            textarea, selectionStr
-        );
-
-        return container;
-
-    }
-
-    container.onEnter = function( callback ){
-
-        textarea.onKeyPress( function( e ){
-            
-            var value = textarea.getValue();
-            var character = String.fromCharCode( e.which );
-
-            if( e.keyCode === 13 ){
-
-                callback( value );
-                selectionStr = value;
-                e.preventDefault();
-
-                if( check( value ) ){
-                    textarea.setBackgroundColor( "white" );
-                }else{
-                    textarea.setBackgroundColor( "tomato" );
-                }
-
-            }else if( selectionStr !== value + character ){
-
-                textarea.setBackgroundColor( "skyblue" );
-
-            }else{
-
-                textarea.setBackgroundColor( "white" );
-
-            }
-
-        } );
-
-        textarea.onKeyUp( function( e ){
-
-            if( selectionStr === textarea.getValue() ){
-
-                textarea.setBackgroundColor( "white" );
-
-            }else{
-
-                textarea.setBackgroundColor( "skyblue" );
-
-            }
-
-        } );
-
-        return container;
-
-    }
-
-    return container;
-
-}
-
+// Trajectory
 
 NGL.TrajectoryWidget = function( traj, component ){
 
@@ -1472,7 +1174,7 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new NGL.SelectionWidget( traj.signals.selectionChanged )
+        .add( new UI.SelectionInput( traj.signals.selectionChanged )
                 .setWidth( '175px' )
                 .setValue( traj.selection.selectionStr )
                 .onEnter( function( value ){
@@ -1514,9 +1216,9 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     // Menu
 
-    var menu = new NGL.MenuWidget()
+    var menu = new UI.PopupMenu()
         .setMarginLeft( "45px" )
-        .setEntryTitleWidth( "110px" )
+        .setEntryLabelWidth( "110px" )
         .addEntry( "Center", setCenterPbc )
         .addEntry( "Remove PBC", setRemovePbc )
         .addEntry( "Superpose", setSuperpose )
@@ -1538,6 +1240,10 @@ NGL.TrajectoryWidget = function( traj, component ){
 
 };
 
+
+// Directory
+
+NGL.lastUsedDirectory = "";
 
 NGL.DirectoryListing = function(){
 
@@ -1592,9 +1298,6 @@ NGL.DirectoryListing.prototype = {
     }
 
 };
-
-
-NGL.lastUsedDirectory = "";
 
 
 NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
@@ -1712,48 +1415,3 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     return container;
 
 };
-
-
-NGL.VirtualListWidget = function( items ){
-
-    UI.Element.call( this );
-
-    var dom = document.createElement( 'div' );
-    dom.className = 'VirtualList';
-    // dom.style.cursor = 'default';
-    // dom.style.display = 'inline-block';
-    // dom.style.verticalAlign = 'middle';
-
-    this.dom = dom;
-
-    this._items = items;
-
-    this.list = new VirtualList({
-        w: 280,
-        h: 300,
-        itemHeight: 31,
-        totalRows: items.length,
-        generatorFn: function( index ) {
-
-            var panel = new UI.Panel();
-            var text = new UI.Text()
-                .setColor( "orange" )
-                .setMarginLeft( "10px" )
-                .setValue( "ITEM " + items[ index ] );
-
-            panel.add( text );
-
-            return panel.dom;
-
-        }
-    });
-
-    console.log( this.dom );
-    console.log( this.list );
-
-    this.dom.appendChild( this.list.container );
-
-    return this;
-
-};
-
