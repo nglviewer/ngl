@@ -693,9 +693,18 @@ NGL.Script = function( str, name, path ){
     this.path = path;
     this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
-    this.fn = new Function(
-        'stage', '__name__', '__path__', '__dir__', str
-    );
+    try {
+
+        this.fn = new Function(
+            'stage', '__name__', '__path__', '__dir__', str
+        );
+
+    }catch( e ){
+
+        console.log( "NGL.Script compilation failed", e );
+        this.fn = null;
+
+    }
 
 }
 
@@ -703,7 +712,15 @@ NGL.Script.prototype = {
 
     call: function( stage ){
 
-        this.fn( stage, this.name, this.path, this.dir );
+        if( this.fn ){
+
+            this.fn( stage, this.name, this.path, this.dir );
+
+        }else{
+
+            console.log( "NGL.Script.call no function available" );
+
+        }
 
     }
 
