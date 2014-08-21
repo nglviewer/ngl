@@ -16,7 +16,6 @@ NGL.PickingControls = function( viewer, stage ){
 
     var gl = viewer.renderer.getContext();
     var pixelBuffer = new Uint8Array( 4 );
-    var compList = stage.compList;
 
     var mouse = {
 
@@ -72,21 +71,17 @@ NGL.PickingControls = function( viewer, stage ){
 
         // TODO early exit, binary search
         var pickedAtom = undefined;
-        compList.forEach( function( o ){
+        stage.eachComponent( function( o ){
 
-            if( o instanceof NGL.StructureComponent ){
+            o.structure.eachAtom( function( a ){
 
-                o.structure.eachAtom( function( a ){
+                if( a.globalindex === ( id - 1 ) ){
+                    pickedAtom = a;
+                }
 
-                    if( a.globalindex === ( id - 1 ) ){
-                        pickedAtom = a;
-                    }
+            } );
 
-                } );
-
-            }
-
-        } );
+        }, NGL.StructureComponent );
 
         stage.signals.atomPicked.dispatch( pickedAtom );
 
@@ -284,9 +279,9 @@ NGL.Stage.prototype = {
         
             box.makeEmpty();
 
-            this.compList.forEach( function( comp ){
+            this.eachComponent( function( o ){
 
-                box.expandByPoint( comp.getCenter() );
+                box.expandByPoint( o.getCenter() );
 
             } );
 
@@ -295,7 +290,21 @@ NGL.Stage.prototype = {
 
         }
 
-    }()
+    }(),
+
+    eachComponent: function( callback, type ){
+
+        this.compList.forEach( function( o, i ){
+            
+            if( !type || o instanceof type ){
+
+                callback( o, i );
+
+            }
+
+        } );
+
+    }
 
 }
 
