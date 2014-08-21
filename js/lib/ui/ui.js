@@ -6,6 +6,10 @@
 // TODO changes by Alexander S. Rose
 // - more events and properties
 // - ctrlKey modifier for Number and Integer
+// - UI.Element.prototype.getBox()
+// - UI.Element.prototype.dispose()
+// - UI.Element.prototype.setTitle()
+// - UI.Element.prototype.getStyle()
 
 
 var UI = {};

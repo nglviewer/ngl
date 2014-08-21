@@ -17,9 +17,11 @@ UI.OverlayPanel = function(){
 
 UI.OverlayPanel.prototype = Object.create( UI.Panel.prototype );
 
-UI.OverlayPanel.prototype.attach = function(){
+UI.OverlayPanel.prototype.attach = function( node ){
 
-    document.body.appendChild( this.dom );
+    node = node || document.body;
+
+    node.appendChild( this.dom );
 
     return this;
 
@@ -331,12 +333,27 @@ UI.PopupMenu = function(){
 
     var scope = this;
 
-    var panel = new UI.OverlayPanel();
     var entryLabelWidth = "100px";
 
+    var panel = new UI.OverlayPanel()
+        .setDisplay( "none" )
+        .attach( this.dom );
+    
+    panel.add(
+        new UI.Icon( "times" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                panel.setDisplay( "none" );
+
+            } )
+    );
+
     this.setTitle( "menu" );
-        
-    this.onClick( function(){
+
+    this.onClick( function( e ){
+
+        if( e.toElement !== scope.dom ) return;
 
         if( panel.getDisplay() === "block" ){
 
@@ -349,9 +366,8 @@ UI.PopupMenu = function(){
 
         panel
             .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
-            .setTop( box.top + "px" )
-            .setDisplay( "block" )
-            .attach();
+            .setTop( ( box.top - 32 ) + "px" )
+            .setDisplay( "block" );
 
     } );
 
