@@ -1,6 +1,6 @@
 
 
-NGL is an online viewer for proteins and other molecular structures. It enables remote access and display of trajectories from molecular dynamics simulations.
+NGL is an on-line viewer for proteins and other molecular structures. It includes a server that enables remote access and display of trajectories e.g. from molecular dynamics simulations. By requiring only a web browser (no plug-ins needed), collaborative visual analysis and sharing of data are facilitated. Trajectories are instantly processed (on demand) to allow display from raw data sources, i.e. while running a simulation on a supercomputer.
 
 
 Links
@@ -14,14 +14,15 @@ Links
 Features
 ========
 
-* File types - .pdb, .gro, .obj, .ply, .xtc (server)
+* File types -  load .pdb, .gro, .obj, .ply or .xtc (server) files; save .pdb files
+* Trajectory server - remotely access trajectories e.g. from molecular dynamics simulations
 * Representations - spacefill, ball+stick, licorice, hyperball, line, backbone, tube, cartoon, ribbon, trace
+* Attributes - use the element name, atomic b-factor, residue index and many more to adjust the color and size of representations
+* Processing - trajectories are automatically centered and superposed (respecting periodic boundaries); secondary structure assignment and chain names are added when missing
+* Selection language - choose atoms for display, processing, loading
 * Picking - click on a representation to learn to which atom it belongs
-* Trajectory server - remotely access trajectories from molecular dynamics simulations
-* Speed - uses your graphics card through WebGL
-* High resolution screenshots
-* Scripting ...
-* Selections ...
-
+* Speed - your graphics card is used through WebGL
+* Screenshots - high resolution renderings in .png, .jpg or .webp (Chrome) format
+* Scripting support - control every aspect through JavaScript
 
 
