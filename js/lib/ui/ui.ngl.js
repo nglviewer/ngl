@@ -9,12 +9,24 @@ NGL.ColorSchemeWidget = function(){
 
     var panel = new UI.OverlayPanel();
 
+    panel.add(
+        new UI.Icon( "times" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                panel.setDisplay( "none" );
+
+            } )
+    );
+
     var iconText = new UI.Text( "" )
         .setClass( "fa-stack-1x" )
         .setColor( "#111" );
 
     var iconSquare = new UI.Icon( "square", "stack-1x" )
         //.setMarginTop( "0.05em" );
+
+    // TODO re-use UI.PopupMenu
 
     var icon = new UI.Icon( "stack" )
         .setTitle( "color" )
