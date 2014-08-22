@@ -3880,7 +3880,7 @@ NGL.Selection.prototype = {
         var backboneProtein = [
             "CA", "C", "N", "O",
             "O1", "O2", "OC1", "OC2",
-            "H", "H1", "H2", "H3"
+            "H", "H1", "H2", "H3", "HA"
         ];
         var backboneNucleic = [
             "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
@@ -4496,5 +4496,94 @@ NGL.superpose = function( s1, s2, align, sele ){
     superpose.transform( atoms );
 
     s1.center = s1.atomCenter();
+
+}
+
+
+////////////
+// Surface
+
+NGL.Surface = function( object, name, path ){
+
+    this.name = name;
+    this.path = path;
+
+    if( object instanceof THREE.Geometry ){
+
+        geo = object;
+
+        // TODO check if needed
+        geo.computeFaceNormals( true );
+        geo.computeVertexNormals( true );
+
+    }else{
+
+        geo = object.children[0].geometry;
+
+    }
+
+    geo.computeBoundingSphere();
+
+    this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
+
+    var position = NGL.Utils.positionFromGeometry( geo );
+    var color = NGL.Utils.colorFromGeometry( geo );
+    var index = NGL.Utils.indexFromGeometry( geo );
+    var normal = NGL.Utils.normalFromGeometry( geo );
+
+    this.buffer = new NGL.MeshBuffer( position, color, index, normal );
+
+}
+
+NGL.Surface.prototype = {
+
+    setVisibility: function( value ){
+
+        this.buffer.mesh.visible = value;
+
+    }
+
+}
+
+
+///////////
+// Script
+
+NGL.Script = function( str, name, path ){
+
+    this.name = name;
+    this.path = path;
+    this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
+
+    try {
+
+        this.fn = new Function(
+            'stage', '__name__', '__path__', '__dir__', str
+        );
+
+    }catch( e ){
+
+        console.log( "NGL.Script compilation failed", e );
+        this.fn = null;
+
+    }
+
+}
+
+NGL.Script.prototype = {
+
+    call: function( stage ){
+
+        if( this.fn ){
+
+            this.fn( stage, this.name, this.path, this.dir );
+
+        }else{
+
+            console.log( "NGL.Script.call no function available" );
+
+        }
+
+    }
 
 }

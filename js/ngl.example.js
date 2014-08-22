@@ -40,7 +40,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/md.gro", function( o ){
 
-                o.addRepresentation( "backbone", { sele: "protein" } );
+                o.addRepresentation( "backbone", { sele: "protein", color: "ss" } );
 
             } );
 
