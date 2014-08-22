@@ -1796,17 +1796,45 @@ NGL.Structure.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        this.models.forEach( function( m ){
-            m.eachAtom( callback, selection );
-        } );
+        if( selection ){
+
+            var test = selection.modelTest;
+
+            this.models.forEach( function( m ){
+
+                if( test( m ) ) m.eachAtom( callback, selection );
+
+            } );
+
+        }else{
+
+            this.models.forEach( function( m ){
+                m.eachAtom( callback );
+            } );
+
+        }
 
     },
 
     eachResidue: function( callback, selection ){
 
-        this.models.forEach( function( m ){
-            m.eachResidue( callback );
-        } );
+        if( selection ){
+
+            var test = selection.modelTest;
+
+            this.models.forEach( function( m ){
+
+                if( test( m ) ) m.eachResidue( callback, selection );
+
+            } );
+
+        }else{
+
+            this.models.forEach( function( m ){
+                m.eachResidue( callback );
+            } );
+
+        }
 
     },
 
@@ -1820,17 +1848,45 @@ NGL.Structure.prototype = {
 
     eachFiber: function( callback, selection, padded ){
 
-        this.models.forEach( function( m ){
-            m.eachFiber( callback, selection, padded );
-        } );
+        if( selection ){
+
+            var test = selection.modelTest;
+
+            this.models.forEach( function( m ){
+
+                if( test( m ) ) m.eachFiber( callback, selection, padded );
+
+            } );
+
+        }else{
+
+            this.models.forEach( function( m ){
+                m.eachFiber( callback, undefined, padded );
+            } );
+
+        }
 
     },
 
     eachChain: function( callback, selection ){
 
-        this.models.forEach( function( m ){
-            m.eachChain( callback, selection );
-        } );
+        if( selection ){
+
+            var test = selection.modelTest;
+
+            this.models.forEach( function( m ){
+
+                if( test( m ) ) m.eachChain( callback, selection );
+
+            } );
+
+        }else{
+
+            this.models.forEach( function( m ){
+                m.eachChain( callback );
+            } );
+
+        }
 
     },
 
@@ -2231,17 +2287,70 @@ NGL.Model.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        this.chains.forEach( function( c ){
-            c.eachAtom( callback, selection );
-        } );
+        if( selection ){
+
+            var test = selection.chainTest;
+
+            this.chains.forEach( function( c ){
+
+                if( test( c ) ) c.eachAtom( callback, selection );
+
+            } );
+
+        }else{
+
+            this.chains.forEach( function( c ){
+                c.eachAtom( callback );
+            } );
+
+        }
 
     },
 
     eachResidue: function( callback, selection ){
 
-        this.chains.forEach( function( c ){
-            c.eachResidue( callback );
-        } );
+        var i, j, o, c, r;
+        var n = this.chainCount;
+
+        if( selection ){
+
+            var test = selection.chainTest;
+
+            for( i = 0; i < n; ++i ){
+
+                c = this.chains[ i ];
+
+                if( !test( c ) ) continue;
+
+                o = c.residueCount;
+
+                var residueTest = selection.residueTest;
+
+                for( j = 0; j < o; ++j ){
+
+                    r = c.residues[ j ];
+                    if( residueTest( r ) ) callback( r );
+
+                }
+
+            }
+
+        }else{
+
+            for( i = 0; i < n; ++i ){   
+
+                c = this.chains[ i ];
+                o = c.residueCount;
+
+                for( j = 0; j < o; ++j ){
+
+                    callback( c.residues[ j ] );
+
+                }
+
+            }
+
+        }
 
     },
 
@@ -2255,27 +2364,49 @@ NGL.Model.prototype = {
 
     eachFiber: function( callback, selection, padded ){
 
-        this.chains.forEach( function( c ){
-            c.eachFiber( callback, selection, padded );
-        } );
-
-    },
-
-    eachChain: function( callback, selection ){
-
         if( selection ){
 
             var test = selection.chainTest;
 
             this.chains.forEach( function( c ){
 
-                if( test( c ) ) callback( c );
+                if( test( c ) ) c.eachFiber( callback, selection, padded );
 
             } );
 
         }else{
 
-            this.chains.forEach( callback );
+            this.chains.forEach( function( c ){
+                c.eachFiber( callback, undefined, padded );
+            } );
+
+        }
+
+    },
+
+    eachChain: function( callback, selection ){
+
+        var i, c;
+        var n = this.chainCount;
+
+        if( selection ){
+
+            var test = selection.chainTest;
+
+            for( i = 0; i < n; ++i ){
+
+                c = this.chains[ i ];
+                if( test( c ) ) callback( c );
+
+            }
+
+        }else{
+
+            for( i = 0; i < n; ++i ){
+
+                callback( this.chains[ i ] );
+
+            }
 
         }
 
@@ -2325,9 +2456,48 @@ NGL.Chain.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        this.residues.forEach( function( r ){
-            r.eachAtom( callback, selection );
-        } );
+        var i, j, o, r, a;
+        var n = this.residueCount;
+
+        if( selection ){
+
+            var test = selection.residueTest;
+
+            for( i = 0; i < n; ++i ){
+
+                r = this.residues[ i ];
+
+                if( !test( r ) ) continue;
+
+                o = r.atomCount;
+
+                var atomTest = selection.test;
+
+                for( j = 0; j < o; ++j ){
+
+                    a = r.atoms[ j ];
+                    if( atomTest( a ) ) callback( a );
+
+                }
+
+            }
+
+        }else{
+
+            for( i = 0; i < n; ++i ){   
+
+                r = this.residues[ i ];
+                o = r.atomCount;
+
+                for( j = 0; j < o; ++j ){
+
+                    callback( r.atoms[ j ] );
+
+                }
+
+            }
+
+        }
 
     },
 
@@ -2604,10 +2774,19 @@ NGL.Residue.prototype = {
         return this._ss;
     },
     set ss ( value ) {
+
         this._ss = value;
-        this.atoms.forEach( function( a ){
-            a.ss = value;
-        } );
+
+        var i;
+        var n = this.atomCount;
+        var atoms = this.atoms;
+
+        for( i = 0; i < n; ++i ){
+
+            atoms[ i ].ss = value;
+
+        }
+
     },
 
     isProtein: function(){
@@ -3080,8 +3259,6 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
     var bondSet = this.bondSet;
 
-    var atoms = [];
-
     this.title = '';
     this.id = '';
     this.sheet = [];
@@ -3184,8 +3361,6 @@ NGL.PdbStructure.prototype._parse = function( str ){
             a.vdw = vdwRadii[ element ];
             a.covalent = covRadii[ element ];
 
-            atoms.push( a );
-
             currentChainname = chainname;
             currentResno = resno;
 
@@ -3245,42 +3420,41 @@ NGL.PdbStructure.prototype._parse = function( str ){
 
     }
 
-    var atom, atom2
-    var nAtoms = atoms.length;
-
     // assign secondary structures
-    for( i = 0; i < nAtoms; i++ ){
 
-        atom = atoms[ i ];
-        if( atom == undefined ) continue;
+    for( j = 0; j < this.sheet.length; j++ ){
 
-        for( j = 0; j < this.sheet.length; j++ ){
+        var selection = new NGL.Selection(
+            this.sheet[j][1] + "-" + this.sheet[j][3] + ":" + this.sheet[j][0]
+        );
 
-            if (atom.chainname != this.sheet[j][0]) continue;
-            if (atom.resno < this.sheet[j][1]) continue;
-            if (atom.resno > this.sheet[j][3]) continue;
-            atom.ss = 's';
-            if (atom.resno == this.sheet[j][1]) atom.ssbegin = true;
-            if (atom.resno == this.sheet[j][3]) atom.ssend = true;
+        this.eachResidue( function( r ){
 
-        }
+            r.ss = "s";
 
-        for( j = 0; j < this.helix.length; j++ ){
+        }, selection );
 
-            if (atom.chainname != this.helix[j][0]) continue;
-            if (atom.resno < this.helix[j][1]) continue;
-            if (atom.resno > this.helix[j][3]) continue;
-            atom.ss = 'h';
-            if (atom.resno == this.helix[j][1]) atom.ssbegin = true;
-            else if (atom.resno == this.helix[j][3]) atom.ssend = true;
+    }
 
-        }
+    for( j = 0; j < this.helix.length; j++ ){
+
+        var selection = new NGL.Selection(
+            this.helix[j][1] + "-" + this.helix[j][3] + ":" + this.helix[j][0]
+        );
+
+        this.eachResidue( function( r ){
+
+            r.ss = "h";
+
+        }, selection );
 
     }
 
     if( this.sheet.length === 0 && this.helix.length === 0 ){
         this._doAutoSS = true;
     }
+
+    // check for chain names
 
     var _doAutoChainName = true;
     this.eachChain( function( c ){
@@ -3310,7 +3484,7 @@ NGL.GroStructure.prototype = Object.create( NGL.Structure.prototype );
 
 NGL.GroStructure.prototype._parse = function( str ){
 
-    console.time( "NGL.GroStructure.parse" );
+    // console.time( "NGL.GroStructure.parse" );
 
     var lines = str.trim().split( "\n" );
 
@@ -3382,7 +3556,7 @@ NGL.GroStructure.prototype._parse = function( str ){
 
     }
 
-    console.timeEnd( "NGL.GroStructure.parse" );
+    // console.timeEnd( "NGL.GroStructure.parse" );
 
 };
 
@@ -3729,8 +3903,7 @@ NGL.Selection.prototype = {
                 if( chain[1].length > 1 ){
                     throw new Error( "chain identifier must be one character" );
                 }
-                // TODO fails to distinguish between upper and lower case chain names
-                sele.chainname = chain[1][0].toUpperCase();
+                sele.chainname = chain[1][0];
             }
 
             if( chain[0] ){
