@@ -309,6 +309,9 @@ NGL.Stage.prototype = {
 }
 
 
+//////////////
+// Component
+
 NGL.Component = function( stage ){
 
     var SIGNALS = signals;
@@ -647,93 +650,32 @@ NGL.SurfaceComponent.prototype = {
 NGL.Component.prototype.apply( NGL.SurfaceComponent.prototype );
 
 
-////////////
-// Surface
+NGL.ScriptComponent = function( stage, script ){
 
-NGL.Surface = function( object, name, path ){
+    NGL.Component.call( this, stage );
 
-    this.name = name;
-    this.path = path;
+    this.script = script;
+    this.name = script.name;
 
-    if( object instanceof THREE.Geometry ){
+};
 
-        geo = object;
+NGL.ScriptComponent.prototype = {
 
-        // TODO check if needed
-        geo.computeFaceNormals( true );
-        geo.computeVertexNormals( true );
+    addRepresentation: function( type ){},
 
-    }else{
+    removeRepresentation: function( repr ){},
 
-        geo = object.children[0].geometry;
+    dispose: function(){
 
-    }
+        // TODO
 
-    geo.computeBoundingSphere();
+    },
 
-    this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
+    setVisibility: function( value ){}
 
-    var position = NGL.Utils.positionFromGeometry( geo );
-    var color = NGL.Utils.colorFromGeometry( geo );
-    var index = NGL.Utils.indexFromGeometry( geo );
-    var normal = NGL.Utils.normalFromGeometry( geo );
+};
 
-    this.buffer = new NGL.MeshBuffer( position, color, index, normal );
-
-}
-
-NGL.Surface.prototype = {
-
-    setVisibility: function( value ){
-
-        this.buffer.mesh.visible = value;
-
-    }
-
-}
-
-
-///////////
-// Script
-
-NGL.Script = function( str, name, path ){
-
-    this.name = name;
-    this.path = path;
-    this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
-
-    try {
-
-        this.fn = new Function(
-            'stage', '__name__', '__path__', '__dir__', str
-        );
-
-    }catch( e ){
-
-        console.log( "NGL.Script compilation failed", e );
-        this.fn = null;
-
-    }
-
-}
-
-NGL.Script.prototype = {
-
-    call: function( stage ){
-
-        if( this.fn ){
-
-            this.fn( stage, this.name, this.path, this.dir );
-
-        }else{
-
-            console.log( "NGL.Script.call no function available" );
-
-        }
-
-    }
-
-}
+NGL.Component.prototype.apply( NGL.ScriptComponent.prototype );
 
 
 ///////////
@@ -2447,26 +2389,47 @@ NGL.Spline.prototype = {
         var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
 
         var k = 0;
-        var j, l, a2, c, pc;
+        var j, l, mh, a2, c2, pc2, a3, c3, pc3;
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
+            mh = Math.ceil( m / 2 );
+
             a2 = r2.getAtomByName( traceAtomname );
 
-            c = colorFactory.atomColor( a2 );
-            pc = a2.globalindex + 1;
+            c2 = colorFactory.atomColor( a2 );
+            pc2 = a2.globalindex + 1;
 
-            for( j = 0; j < m; ++j ){
+            for( j = 0; j < mh; ++j ){
 
                 l = k + j * 3;
 
-                col[ l + 0 ] = ( c >> 16 & 255 ) / 255;
-                col[ l + 1 ] = ( c >> 8 & 255 ) / 255;
-                col[ l + 2 ] = ( c & 255 ) / 255;
+                col[ l + 0 ] = ( c2 >> 16 & 255 ) / 255;
+                col[ l + 1 ] = ( c2 >> 8 & 255 ) / 255;
+                col[ l + 2 ] = ( c2 & 255 ) / 255;
 
-                pcol[ l + 0 ] = ( pc >> 16 & 255 ) / 255;
-                pcol[ l + 1 ] = ( pc >> 8 & 255 ) / 255;
-                pcol[ l + 2 ] = ( pc & 255 ) / 255;
+                pcol[ l + 0 ] = ( pc2 >> 16 & 255 ) / 255;
+                pcol[ l + 1 ] = ( pc2 >> 8 & 255 ) / 255;
+                pcol[ l + 2 ] = ( pc2 & 255 ) / 255;
+
+            }
+
+            a3 = r3.getAtomByName( traceAtomname );
+
+            c3 = colorFactory.atomColor( a3 );
+            pc3 = a3.globalindex + 1;
+
+            for( j = mh; j < m; ++j ){
+
+                l = k + j * 3;
+
+                col[ l + 0 ] = ( c3 >> 16 & 255 ) / 255;
+                col[ l + 1 ] = ( c3 >> 8 & 255 ) / 255;
+                col[ l + 2 ] = ( c3 & 255 ) / 255;
+
+                pcol[ l + 0 ] = ( pc3 >> 16 & 255 ) / 255;
+                pcol[ l + 1 ] = ( pc3 >> 8 & 255 ) / 255;
+                pcol[ l + 2 ] = ( pc3 & 255 ) / 255;
 
             }
 
