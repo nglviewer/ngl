@@ -754,6 +754,7 @@ NGL.Viewer.prototype = {
             preserveDrawingBuffer: true,
             alpha: false,
             antialias: true,
+            devicePixelRatio: window.devicePixelRatio
         });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
@@ -1033,6 +1034,8 @@ NGL.Viewer.prototype = {
     },
 
     onWindowResize: function(){
+
+        this.renderer.devicePixelRatio = window.devicePixelRatio;
 
         if ( this.container === document ) {
             this.width = window.innerWidth;
