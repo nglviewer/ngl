@@ -396,7 +396,7 @@ def get_xtc( path ):
     return XTC_DICT[ path ]
 
 
-@app.route( '/xtc/frame/<int:frame>/<root>/<path:filename>', methods=['GET'] )
+@app.route( '/xtc/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
 @requires_auth
 def xtc_serve( frame, root, filename ):
     directory = get_directory( root )
@@ -406,7 +406,7 @@ def xtc_serve( frame, root, filename ):
         return
     # print request.args
     # print path
-    atom_indices = request.args.get( "atomIndices" )
+    atom_indices = request.form.get( "atomIndices" )
     if atom_indices:
         atom_indices = [
             [ int( y ) for y in x.split( "," ) ]

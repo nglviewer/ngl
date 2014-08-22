@@ -1129,11 +1129,7 @@ NGL.Trajectory = function( xtcPath, structure, sele ){
     this.frameCacheSize = 0;
     this.currentFrame = -1;
 
-    this.frameLoader = new THREE.XHRLoader();
-    this.frameLoader.setResponseType( "arraybuffer" );
-
     this.numframes = undefined;
-
     this.getNumframes();
 
     if( structure instanceof NGL.StructureSubset ){
@@ -1215,31 +1211,6 @@ NGL.Trajectory.prototype = {
 
     },
 
-    getIndices: function( selection ){
-
-        this.indices = this.structure.atomIndex( selection );
-
-        var i, j;
-        var n = this.indices.length * 3;
-
-        this.coords1 = new Float32Array( n );
-        this.coords2 = new Float32Array( n );
-
-        var y = this.initialStructure;
-        var coords2 = this.coords2;
-
-        for( i = 0; i < n; i += 3 ){
-
-            j = this.indices[ i / 3 ] * 3;
-
-            coords2[ i + 0 ] = y[ j + 0 ];
-            coords2[ i + 1 ] = y[ j + 1 ];
-            coords2[ i + 2 ] = y[ j + 2 ];
-
-        }
-
-    },
-
     makeIndices: function(){
 
         this.indices = this.structure.atomIndex( this.selection );
@@ -1288,7 +1259,6 @@ NGL.Trajectory.prototype = {
 
         this.frameCache = [];
         this.frameCacheSize = 0;
-        this.frameLoader.cache.clear();
         this.setFrame( this.currentFrame );
 
         return this;
@@ -1367,12 +1337,22 @@ NGL.Trajectory.prototype = {
 
         var scope = this;
 
-        var url = "../xtc/frame/" + i + "/" + this.xtcPath +
-            "?atomIndices=" + this.atomIndices.join(";");
+        var request = new XMLHttpRequest();
 
-        this.frameLoader.load( url, function( arrayBuffer ){
+        var url = "../xtc/frame/" + i + "/" + this.xtcPath;
+        var params = "atomIndices=" + this.atomIndices.join(";");
+
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
+
+        request.addEventListener( 'load', function( event ){
 
             // console.timeEnd( "loadFrame" );
+
+            var arrayBuffer = this.response;
 
             if( !arrayBuffer ){
                 console.error( "empty arrayBuffer for '" + url + "'" );
@@ -1405,7 +1385,9 @@ NGL.Trajectory.prototype = {
 
             scope.updateStructure( i, callback );
 
-        } );
+        }, false );
+        
+        request.send( params );
 
     },
 
