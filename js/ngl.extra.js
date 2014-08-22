@@ -469,13 +469,13 @@ NGL.StructureComponent.prototype = {
 
     addRepresentation: function( type, params ){
 
-        console.time( "NGL.Structure.add " + type );
+        console.time( "NGL.StructureComponent.add " + type );
 
         var ReprClass = NGL.representationTypes[ type ];
 
         if( !ReprClass ){
 
-            console.error( "NGL.Structure.add: representation type unknown" );
+            console.error( "NGL.StructureComponent.add: representation type unknown" );
             return;
 
         }
@@ -484,7 +484,7 @@ NGL.StructureComponent.prototype = {
 
         NGL.Component.prototype.addRepresentation.call( this, repr );
 
-        console.timeEnd( "NGL.Structure.add " + type );
+        console.timeEnd( "NGL.StructureComponent.add " + type );
 
         return repr;
 
