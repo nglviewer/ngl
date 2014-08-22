@@ -159,6 +159,10 @@ NGL.Stage.prototype = {
 
             object.centerView();
 
+        }else if( object instanceof NGL.ScriptComponent ){
+
+            object.run();
+
         }
 
     },
@@ -211,7 +215,7 @@ NGL.Stage.prototype = {
 
             }else if( object instanceof NGL.Script ){
 
-                object.call( scope );
+                component = new NGL.ScriptComponent( scope, object );
 
             }else{
 
@@ -654,8 +658,14 @@ NGL.ScriptComponent = function( stage, script ){
 
     NGL.Component.call( this, stage );
 
+    var SIGNALS = signals;
+
+    this.signals.statusChanged = new SIGNALS.Signal();
+
     this.script = script;
     this.name = script.name;
+
+    this.status = "loaded";
 
 };
 
@@ -664,6 +674,31 @@ NGL.ScriptComponent.prototype = {
     addRepresentation: function( type ){},
 
     removeRepresentation: function( repr ){},
+
+    run: function(){
+
+        var scope = this;
+
+        this.setStatus( "running" );
+
+        this.script.call( this.stage, function(){
+
+            scope.setStatus( "finished" );
+
+        } );
+
+        this.setStatus( "called" );
+
+    },
+
+    setStatus: function( value ){
+
+        this.status = value;
+        this.signals.statusChanged.dispatch( value );
+
+        return this;
+
+    },
 
     dispose: function(){
 
