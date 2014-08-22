@@ -359,13 +359,7 @@ NGL.Examples = {
 
         "script": function( stage ){
 
-            var file = "__example__/script.ngl";
-
-            NGL.autoLoad( file, function( script ){
-
-                script.call( stage );
-
-            } );
+            stage.loadFile( "__example__/script.ngl" );
 
         },
 

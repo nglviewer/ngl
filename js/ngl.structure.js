@@ -4540,7 +4540,9 @@ NGL.Script = function( str, name, path ){
     try {
 
         this.fn = new Function(
-            'stage', '__name__', '__path__', '__dir__', str
+            'stage', 'finish',
+            '__name__', '__path__', '__dir__',
+            str
         );
 
     }catch( e ){
@@ -4554,11 +4556,17 @@ NGL.Script = function( str, name, path ){
 
 NGL.Script.prototype = {
 
-    call: function( stage ){
+    call: function( stage, onFinish ){
 
         if( this.fn ){
 
-            this.fn( stage, this.name, this.path, this.dir );
+            if( typeof onFinish !== "function" ){
+
+                onFinish = function(){};
+
+            }
+
+            this.fn( stage, onFinish, this.name, this.path, this.dir );
 
         }else{
 

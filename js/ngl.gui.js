@@ -442,6 +442,10 @@ NGL.SidebarWidget = function( stage ){
 
             container.add( new NGL.SurfaceComponentWidget( component, stage ) );
 
+        }else if( component instanceof NGL.ScriptComponent ){
+
+            container.add( new NGL.ScriptComponentWidget( component, stage ) );
+
         }else{
 
             console.warn( "NGL.SidebarWidget: component type unknown", component );
@@ -791,6 +795,69 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .addStatic( toggle )
         .addStatic( center )
         .addStatic( dispose );
+
+    return container;
+
+};
+
+
+NGL.ScriptComponentWidget = function( component, stage ){
+
+    var signals = component.signals;
+    var container = new UI.CollapsiblePanel();
+
+    signals.nameChanged.add( function( value ){
+
+        name.setValue( value );
+        
+    } );
+
+    signals.statusChanged.add( function( value ){
+
+        status.setValue( value );
+        
+    } );
+
+    // Actions
+
+    var dispose = new UI.Icon( "trash-o" )
+        .setTitle( "delete" )
+        .setMarginLeft( "25px" )
+        .onClick( function(){
+
+            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+
+                stage.removeComponent( component );
+                container.dispose();
+
+            }else{
+
+                dispose.setColor( "rgb(178, 34, 34)" );
+
+                setTimeout( function(){ 
+                    dispose.setColor( "#888" );
+                }, 1000);
+
+            }
+
+        } );
+    
+    // Name
+
+    var name = new UI.Text( component.name )
+        .setWidth( "100px" )
+        .setWordWrap( "break-word" );
+
+    // Status
+
+    var status = new UI.Text( component.status ).setMarginLeft( "20px" );
+
+    container
+        .addStatic( name )
+        .addStatic( dispose );
+
+    container
+        .add( status );
 
     return container;
 
