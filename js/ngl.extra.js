@@ -407,7 +407,7 @@ NGL.Component.prototype = {
 }
 
 
-NGL.StructureComponent = function( stage, structure, sele ){
+NGL.StructureComponent = function( stage, structure, selectionString ){
 
     NGL.Component.call( this, stage );
 
@@ -420,36 +420,53 @@ NGL.StructureComponent = function( stage, structure, sele ){
 
     this.__structure = structure;
     this.structure = structure;
-    this.changeSelection( sele );
+    this.initSelection( selectionString );
     this.name = structure.name;
 
 }
 
 NGL.StructureComponent.prototype = {
 
-    changeSelection: function( sele ){
-
-        if( sele === this.sele ) return;
-
-        this.sele = sele;
-
-        if( sele ){
-
-            this.structure = new NGL.StructureSubset( this.__structure, sele );
-
-        }
-
-        this.rebuildRepresentations();
+    initSelection: function( string ){
 
         var scope = this;
 
-        this.trajList.slice( 0 ).forEach( function( traj ){
+        this.selection = new NGL.Selection( string );
 
-            scope.addTrajectory( traj.xtcPath, traj._sele, traj.currentFrame );
+        this.selection.signals.stringChanged.add( function( string ){
 
-            scope.removeTrajectory( traj );
+            scope.applySelection();
+
+            scope.rebuildRepresentations();
+            scope.rebuildTrajectories();
 
         } );
+
+        this.applySelection();
+
+    },
+
+    applySelection: function(){
+
+        if( this.selection.string ){
+
+            this.structure = new NGL.StructureSubset(
+                this.__structure, this.selection.string
+            );
+
+        }else{
+
+            this.structure = this.__structure;
+
+        }
+
+    },
+
+    setSelection: function( string ){
+
+        this.selection.setString( string );
+
+        return this;
 
     },
 
@@ -462,6 +479,20 @@ NGL.StructureComponent.prototype = {
             scope.addRepresentation( repr.name, repr.getParameters() );
 
             scope.removeRepresentation( repr );
+
+        } );
+
+    },
+
+    rebuildTrajectories: function(){
+
+        var scope = this;
+
+        scope.trajList.slice( 0 ).forEach( function( traj ){
+
+            scope.addTrajectory( traj.xtcPath, traj._sele, traj.currentFrame );
+
+            scope.removeTrajectory( traj );
 
         } );
 
@@ -942,6 +973,8 @@ NGL.autoLoad = function(){
 
 NGL.Representation = function( structure, viewer, params ){
 
+    var scope = this;
+
     var SIGNALS = signals;
 
     this.signals = {
@@ -965,11 +998,16 @@ NGL.Representation = function( structure, viewer, params ){
 
     this.visible = params.visible === undefined ? true : params.visible;
 
-    this._sele = params.sele;
-    this.selection = new NGL.Selection( this._sele );
+    this.selection = new NGL.Selection( params.sele );
 
     this.atomSet = new NGL.AtomSet( this.structure, this.selection );
     this.bondSet = this.structure.bondSet;
+
+    // must come after atomSet to ensure selection change signals
+    // have already updated the atomSet
+    this.selection.signals.stringChanged.add( function( string ){
+        scope.rebuild();
+    } );
 
     this.create();
     this.attach();
@@ -993,30 +1031,15 @@ NGL.Representation.prototype = {
 
     parameters: {},
 
-    applySelection: function( sele ){
+    setSelection: function( string ){
 
-        this.selection = new NGL.Selection( sele );
-
-        this.atomSet.setSelection( this.selection );
-
-        // console.log( this.selection );
-
-    },
-
-    changeSelection: function( sele ){
-
-        if( sele === this._sele ) return;
-        this._sele = sele;
-
-        this.applySelection( sele );
-
-        this.rebuild();
+        this.selection.setString( string );
 
         return this;
 
     },
 
-    changeColor: function( type ){
+    setColor: function( type ){
 
         if( type && type !== this.color ){
 
@@ -1031,7 +1054,7 @@ NGL.Representation.prototype = {
 
     },
 
-    changeRadius: function( type, scale ){
+    setRadius: function( type, scale ){
 
         if( type && type !== this.radius ){
 
@@ -1048,7 +1071,7 @@ NGL.Representation.prototype = {
 
     },
 
-    changeScale: function( scale ){
+    setScale: function( scale ){
 
         if( scale && scale !== this.scale ){
 
@@ -1070,12 +1093,6 @@ NGL.Representation.prototype = {
     },
 
     update: function(){
-
-        if( this.selection ){
-
-            this.atomSet.setSelection( this.selection );
-
-        }
 
     },
 
@@ -1149,7 +1166,7 @@ NGL.Representation.prototype = {
             radius: this.radius,
             scale: this.scale,
             visible: this.visible,
-            sele: this._sele
+            sele: this.selection.string
 
         };
 

@@ -556,13 +556,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new UI.SelectionInput()
-                .setWidth( '195px' )
-                .setValue( component.sele )
-                .onEnter( function( value ){
-                    component.changeSelection( value );
-                } )
-        );
+        .add( new UI.SelectionInput( component.selection ).setWidth( '195px' ) );
 
     container.add( seleRow );
 
@@ -570,14 +564,12 @@ NGL.StructureComponentWidget = function( component, stage ){
     
     var pdb = new UI.Button( "export" ).onClick( function(){
 
-        // https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
-
         var blob = new Blob(
             [ component.structure.toPdb() ],
             { type: 'text/plain' }
         );
 
-        NGL.download( URL.createObjectURL( blob ), "structure.pdb" );
+        NGL.download( blob, "structure.pdb" );
 
         menu.setDisplay( "none" );
 
@@ -952,9 +944,9 @@ NGL.RepresentationWidget = function( repr, component ){
                 var scheme = colorWidget.getScheme();
                 if( scheme === "color" ){
                     c.setStyle( colorWidget.getColor() );
-                    repr.changeColor( c.getHex() );
+                    repr.setColor( c.getHex() );
                 }else{
-                    repr.changeColor( scheme );
+                    repr.setColor( scheme );
                 }
                 repr.viewer.render();
 
@@ -972,13 +964,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new UI.SelectionInput()
-                .setWidth( '175px' )
-                .setValue( repr.selection.selectionStr )
-                .onEnter( function( value ){
-                    repr.changeSelection( value );
-                } )
-        );
+        .add( new UI.SelectionInput( repr.selection ).setWidth( '175px' ) );
 
     container.add( seleRow );
 
@@ -998,7 +984,7 @@ NGL.RepresentationWidget = function( repr, component ){
         .setValue( parseFloat( repr.radius ) ? "size" : repr.radius )
         .onChange( function(){
 
-            repr.changeRadius( radiusSelector.getValue() );
+            repr.setRadius( radiusSelector.getValue() );
             repr.viewer.render();
 
         } );
@@ -1010,7 +996,7 @@ NGL.RepresentationWidget = function( repr, component ){
         .setPrecision( 3 )
         .onChange( function(){
 
-            repr.changeRadius( sizeInput.getValue() );
+            repr.setRadius( sizeInput.getValue() );
             repr.viewer.render();
 
         } );
@@ -1020,7 +1006,7 @@ NGL.RepresentationWidget = function( repr, component ){
         .setPrecision( 3 )
         .onChange( function(){
 
-            repr.changeScale( scaleInput.getValue() );
+            repr.setScale( scaleInput.getValue() );
             repr.viewer.render();
 
         } );
@@ -1235,13 +1221,7 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var seleRow = new UI.Panel()
         .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new UI.SelectionInput( traj.signals.selectionChanged )
-                .setWidth( '175px' )
-                .setValue( traj.selection.selectionStr )
-                .onEnter( function( value ){
-                    traj.changeSelection( value );
-                } )
-        );
+        .add( new UI.SelectionInput( traj.selection ).setWidth( '175px' ) );
 
     // Options
 

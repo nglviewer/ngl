@@ -536,17 +536,23 @@ NGL.AtomSet.prototype = {
 
     fromStructure: function( structure, selection ){
 
+        var scope = this;
+
         this.structure = structure;
 
-        this.setSelection( selection );
+        this.selection = selection;
+
+        this.selection.signals.stringChanged.add( function( string ){
+
+            scope.applySelection();
+
+        } );
+
+        this.applySelection();
 
     },
 
-    setSelection: function( selection ){
-
-        if( selection && this.selection === selection ) return;
-
-        this.selection = selection;
+    applySelection: function(){
 
         // atoms
 
@@ -557,7 +563,7 @@ NGL.AtomSet.prototype = {
 
             atoms.push( a );
 
-        }, selection );
+        }, this.selection );
 
         this.atomCount = this.atoms.length;
         this.center = this.atomCenter();
@@ -573,7 +579,7 @@ NGL.AtomSet.prototype = {
 
             bonds.push( b );
 
-        }, selection );
+        }, this.selection );
 
         this.bondCount = this.bonds.length;
 
@@ -1099,7 +1105,9 @@ NGL.Bond.prototype = {
 ///////////////
 // Trajectory
 
-NGL.Trajectory = function( xtcPath, structure, sele ){
+NGL.Trajectory = function( xtcPath, structure, selectionString ){
+
+    var scope = this;
 
     var SIGNALS = signals;
 
@@ -1166,10 +1174,19 @@ NGL.Trajectory = function( xtcPath, structure, sele ){
 
     }
 
-    sele = sele || "backbone and not hydrogen";
-
     this.saveInitialStructure();
-    this.changeSelection( sele );
+
+    this.selection = new NGL.Selection(
+        selectionString || "backbone and not hydrogen"
+    );
+    
+    this.selection.signals.stringChanged.add( function( string ){
+
+        scope.makeIndices();
+        scope.resetCache();
+
+    } );
+
     this.backboneIndices = this.structure.atomIndex(
         new NGL.Selection( "backbone and not hydrogen" )
     );
@@ -1200,14 +1217,11 @@ NGL.Trajectory.prototype = {
 
     },
 
-    changeSelection: function( sele ){
+    setSelection: function( string ){
 
-        this._sele = sele;
-        this.selection = new NGL.Selection( sele );
-        this.makeIndices();
-        this.resetCache();
+        this.selection.setString( string );
 
-        this.signals.selectionChanged.dispatch( this.selection );
+        return this;
 
     },
 
@@ -3159,7 +3173,7 @@ NGL.StructureSubset.prototype._build = function(){
         _m = _s.addModel();
 
         m.eachChain( function( c ){
-
+            
             _c = _m.addChain();
             _c.chainname = c.chainname;
 
@@ -3564,37 +3578,17 @@ NGL.GroStructure.prototype._parse = function( str ){
 //////////////
 // Selection
 
-NGL.Selection = function( selection ){
+NGL.Selection = function( string ){
 
-    this.selectionStr = "";
+    var SIGNALS = signals;
 
-    if( !selection || typeof selection === 'string' ){
+    this.signals = {
 
-        this.selectionStr = selection || "";
+        stringChanged: new SIGNALS.Signal(),
 
-        try{
+    };
 
-            this.parse( selection );
-
-        }catch( e ){
-
-            // console.error( e.stack );
-            this.selection = { "error": e.message };
-
-        }
-
-    }else{
-
-        this.selection = selection;
-
-    }
-
-    this.test = this.makeAtomTest();
-    this.residueTest = this.makeResidueTest();
-    this.chainTest = this.makeChainTest();
-    this.modelTest = this.makeModelTest();
-
-    // console.log( this.selection )
+    this.setString( string );
 
 };
 
@@ -3603,14 +3597,44 @@ NGL.Selection.prototype = {
 
     constructor: NGL.Selection,
 
-    parse: function( str ){
+    setString: function( string ){
+
+        string = string || "";
+
+        if( string === this.string ){
+            return;
+        }
+
+        try{
+
+            this.parse( string );
+
+        }catch( e ){
+
+            // console.error( e.stack );
+            this.selection = { "error": e.message };
+
+        }
+
+        this.string = string;
+
+        this.test = this.makeAtomTest();
+        this.residueTest = this.makeResidueTest();
+        this.chainTest = this.makeChainTest();
+        this.modelTest = this.makeModelTest();
+
+        this.signals.stringChanged.dispatch( string );
+
+    },
+
+    parse: function( string ){
 
         this.selection = {
             operator: undefined,
             rules: []
         };
 
-        if( !str ) return;
+        if( !string ) return;
 
         var scope = this;
 
@@ -3619,13 +3643,13 @@ NGL.Selection.prototype = {
         var newSelection, oldSelection;
         var andContext = null;
 
-        str = str.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
-        if( str.charAt( 0 ) === "(" && str.substr( -1 ) === ")" ){
-            str = str.slice( 1, -1 ).trim();
+        string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
+        if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
+            string = string.slice( 1, -1 ).trim();
         }
-        var chunks = str.split( /\s+/ );
+        var chunks = string.split( /\s+/ );
 
-        // console.log( str, chunks )
+        // console.log( string, chunks )
 
         var all = [ "*", "", "ALL" ];
 
@@ -4047,6 +4071,8 @@ NGL.Selection.prototype = {
 
         var fn = function( a, s ){
 
+            // returning -1 means the rule is not applicable
+
             if( s.keyword!==undefined ){
 
                 if( s.keyword==="HETERO" && a.hetero===true ) return true;
@@ -4096,6 +4122,8 @@ NGL.Selection.prototype = {
 
         var fn = function( r, s ){
 
+            // returning -1 means the rule is not applicable
+
             if( s.keyword!==undefined ){
 
                 if( s.keyword==="HETERO" && r.isHetero() ) return true;
@@ -4112,6 +4140,9 @@ NGL.Selection.prototype = {
                     s.resname===undefined && s.resno===undefined
             ) return -1;
             if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
+
+            // support autoChainNames which work only on atoms
+            if( s.chainname!==" " && r.chain.chainname===" " ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -4137,8 +4168,13 @@ NGL.Selection.prototype = {
 
         var fn = function( c, s ){
 
+            // returning -1 means the rule is not applicable
+
             if( s.chainname!==undefined && c.chainname===undefined ) return -1;
             if( s.chainname===undefined && s.model===undefined ) return -1;
+
+            // support autoChainNames which work only on atoms
+            if( s.chainname!==" " && c.chainname===" " ) return -1;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
             if( s.model!==undefined && s.model!==c.model.index ) return false;
@@ -4154,6 +4190,8 @@ NGL.Selection.prototype = {
     makeModelTest: function(){
 
         var fn = function( m, s ){
+
+            // returning -1 means the rule is not applicable
 
             if( s.model===undefined ) return -1;
             if( s.model!==m.index ) return false;
