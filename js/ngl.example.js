@@ -286,28 +286,60 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/4UPY.pdb", function( o ){
 
-                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPX.pdb", function( o ){
 
-                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UQ5.pdb", function( o ){
 
-                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPW.pdb", function( o ){
 
-                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
+                stage.centerView();
+
+            } );
+
+        },
+
+        "ribosome2": function( stage ){
+
+            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+
+                o.addRepresentation( "line" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+
+                o.addRepresentation( "line" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+
+                o.addRepresentation( "line" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+
+                o.addRepresentation( "line" );
                 stage.centerView();
 
             } );

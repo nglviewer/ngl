@@ -182,26 +182,31 @@ NGL.ColorSchemeWidget = function(){
 
 // Selection
 
-UI.SelectionInput = function( signal ){
+UI.SelectionInput = function( selection ){
 
-    // TODO bind to a selection (this requires consequent
-    // re-use of that selection elsewhere)
+    if( ! selection instanceof NGL.Selection ){
+        console.error( "no selection given", selection );
+    }
 
 	UI.AdaptiveTextArea.call( this );
 
 	this.setSpellcheck( false );
 
-    if( signal ){
+    this.setValue( selection.string );
 
-        signal.add( function( selection ){
+    this.selection = selection;
 
-            container.setValue( selection.selectionStr );
+    var scope = this;
 
-        } );
+    var signals = selection.signals;
 
-    }
+    signals.stringChanged.add( function( string ){
 
-    this.selectionStr = "";
+        scope.setValue( string );
+
+    } );
+
+    this.onEnter();
 
     return this;
 
@@ -211,11 +216,7 @@ UI.SelectionInput.prototype = Object.create( UI.AdaptiveTextArea.prototype );
 
 UI.SelectionInput.prototype.setValue = function( value ){
 
-    this.selectionStr = value || "";
-
-    UI.AdaptiveTextArea.prototype.setValue.call(
-        this, this.selectionStr
-    );
+    UI.AdaptiveTextArea.prototype.setValue.call( this, value );
 
     return this;
 
@@ -223,15 +224,17 @@ UI.SelectionInput.prototype.setValue = function( value ){
 
 UI.SelectionInput.prototype.onEnter = function( callback ){
 
-	var check = function( sele ){
+    // TODO more a private method
 
-        var selection = new NGL.Selection( sele );
+    var scope = this;
+
+	var check = function( string ){
+
+        var selection = new NGL.Selection( string );
         
         return !selection.selection[ "error" ];
 
     }
-
-    var scope = this;
 
     this.onKeyPress( function( e ){
         
@@ -240,17 +243,29 @@ UI.SelectionInput.prototype.onEnter = function( callback ){
 
         if( e.keyCode === 13 ){
 
-            callback( value );
-            scope.selectionStr = value;
             e.preventDefault();
 
             if( check( value ) ){
+
+                if( typeof callback === "function" ){
+
+                    callback( value );
+
+                }else{
+
+                    scope.selection.setString( value );
+
+                }
+
                 scope.setBackgroundColor( "white" );
+
             }else{
+
                 scope.setBackgroundColor( "tomato" );
+
             }
 
-        }else if( scope.selectionStr !== value + character ){
+        }else if( scope.selection.string !== value + character ){
 
             scope.setBackgroundColor( "skyblue" );
 
@@ -264,7 +279,13 @@ UI.SelectionInput.prototype.onEnter = function( callback ){
 
     this.onKeyUp( function( e ){
 
-        if( scope.selectionStr === scope.getValue() ){
+        var value = scope.getValue();
+
+        if( !check( value ) ){
+
+            scope.setBackgroundColor( "tomato" );
+
+        }else if( scope.selection.string === scope.getValue() ){
 
             scope.setBackgroundColor( "white" );
 
