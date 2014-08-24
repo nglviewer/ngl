@@ -197,17 +197,21 @@ NGL.Stage.prototype = {
 
     loadFile: function( path, onLoad, params ){
 
-        params = params || {};
-
+        var component;
         var scope = this;
 
         NGL.autoLoad( path, function( object ){
 
-            var component;
+            // check for placeholder component
+            if( component ){
+
+                scope.removeComponent( component );
+
+            }
 
             if( object instanceof NGL.Structure ){
 
-                component = new NGL.StructureComponent( scope, object, params.sele );
+                component = new NGL.StructureComponent( scope, object, params );
 
             }else if( object instanceof NGL.Surface ){
 
@@ -220,26 +224,34 @@ NGL.Stage.prototype = {
             }else{
 
                 console.warn( "NGL.Stage.loadFile: object type unknown", object );
+                return;
 
             }
 
-            if( component ){
+            scope.addComponent( component );
+            
+            if( typeof onLoad === "function" ){
 
-                scope.addComponent( component );
-                
-                if( typeof onLoad === "function" ){
+                onLoad( component );
 
-                    onLoad( component );
+            }else{
 
-                }else{
-
-                    scope.defaultFileRepresentation( component );
-
-                }
+                scope.defaultFileRepresentation( component );
 
             }
 
         });
+
+        // ensure that component is yet ready
+        if( !component ){
+
+            component = new NGL.Component( this );
+            var path2 = ( path instanceof File ) ? path.name : path;
+            component.name = path2.replace( /^.*[\\\/]/, '' );
+
+            this.addComponent( component );
+
+        }
 
     },
 
@@ -285,7 +297,13 @@ NGL.Stage.prototype = {
 
             this.eachComponent( function( o ){
 
-                box.expandByPoint( o.getCenter() );
+                var point = o.getCenter();
+
+                if( point ){
+
+                    box.expandByPoint( point );
+
+                }
 
             } );
 
@@ -400,14 +418,16 @@ NGL.Component.prototype = {
 
     getCenter: function(){
 
-        console.warn( "not implemented" )
+        // console.warn( "not implemented" )
 
     }
 
 }
 
 
-NGL.StructureComponent = function( stage, structure, selectionString ){
+NGL.StructureComponent = function( stage, structure, params ){
+
+    params = params || {};
 
     NGL.Component.call( this, stage );
 
@@ -420,7 +440,7 @@ NGL.StructureComponent = function( stage, structure, selectionString ){
 
     this.__structure = structure;
     this.structure = structure;
-    this.initSelection( selectionString );
+    this.initSelection( params.sele );
     this.name = structure.name;
 
 }
@@ -782,6 +802,7 @@ NGL.FileLoader.prototype = {
 
         }
 
+        // TODO binary?
         reader.readAsText( file );
 
         scope.manager.itemStart( file );

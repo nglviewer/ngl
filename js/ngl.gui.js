@@ -430,25 +430,53 @@ NGL.SidebarWidget = function( stage ){
     var signals = stage.signals;
     var container = new UI.Panel();
 
+    var compList = [];
+    var widgetList = [];
+
     signals.componentAdded.add( function( component ){
 
-        console.log( component );
+        var widget;
 
         if( component instanceof NGL.StructureComponent ){
 
-            container.add( new NGL.StructureComponentWidget( component, stage ) );
+            widget = new NGL.StructureComponentWidget( component, stage );
 
         }else if( component instanceof NGL.SurfaceComponent ){
 
-            container.add( new NGL.SurfaceComponentWidget( component, stage ) );
+            widget = new NGL.SurfaceComponentWidget( component, stage );
 
         }else if( component instanceof NGL.ScriptComponent ){
 
-            container.add( new NGL.ScriptComponentWidget( component, stage ) );
+            widget = new NGL.ScriptComponentWidget( component, stage );
+
+        }else if( component instanceof NGL.Component ){
+
+            widget = new NGL.ComponentWidget( component, stage );
 
         }else{
 
             console.warn( "NGL.SidebarWidget: component type unknown", component );
+            return;
+
+        }
+
+        container.add( widget );
+
+        compList.push( component );
+        widgetList.push( widget );
+
+    } );
+
+    signals.componentRemoved.add( function( component ){
+
+        var idx = compList.indexOf( component );
+
+        if( idx !== -1 ){
+
+            widgetList[ idx ].dispose();
+
+            compList.splice( idx, 1 );
+            widgetList.splice( idx, 1 );
 
         }
 
@@ -463,9 +491,22 @@ NGL.SidebarWidget = function( stage ){
 
 NGL.ComponentWidget = function( component, stage ){
 
-    var container = new UI.Panel();
-
+    var signals = component.signals;
+    var container = new UI.CollapsibleIconPanel( "file" );
     
+    // Name
+
+    var name = new UI.Text( component.name )
+        .setWidth( "100px" )
+        .setWordWrap( "break-word" );
+
+    // Status
+
+    var status = new UI.Icon( "spinner" )
+        .addClass( "spin" )
+        .setMarginLeft( "25px" );
+
+    container.addStatic( name, status );
 
     return container;
 
@@ -532,7 +573,6 @@ NGL.StructureComponentWidget = function( component, stage ){
             if( dispose.getColor() === "rgb(178, 34, 34)" ){
 
                 stage.removeComponent( component );
-                container.dispose();
 
             }else{
 
@@ -762,7 +802,6 @@ NGL.SurfaceComponentWidget = function( component, stage ){
             if( dispose.getColor() === "rgb(178, 34, 34)" ){
 
                 stage.removeComponent( component );
-                container.dispose();
 
             }else{
 
@@ -820,7 +859,6 @@ NGL.ScriptComponentWidget = function( component, stage ){
             if( dispose.getColor() === "rgb(178, 34, 34)" ){
 
                 stage.removeComponent( component );
-                container.dispose();
 
             }else{
 
