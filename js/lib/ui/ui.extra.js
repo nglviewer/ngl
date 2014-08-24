@@ -327,13 +327,13 @@ UI.VirtualList = function( items ){
 
 // Popup Menu
 
-UI.PopupMenu = function(){
+UI.PopupMenu = function( iconClass ){
 
-    UI.Icon.call( this, "bars" );
-
-    var scope = this;
+    UI.Panel.call( this );
 
     var entryLabelWidth = "100px";
+
+    var icon = new UI.Icon( iconClass || "bars" );
 
     var panel = new UI.OverlayPanel()
         .setDisplay( "none" )
@@ -349,11 +349,9 @@ UI.PopupMenu = function(){
             } )
     );
 
-    this.setTitle( "menu" );
+    icon.setTitle( "menu" );
 
-    this.onClick( function( e ){
-
-        if( e.toElement !== scope.dom ) return;
+    icon.onClick( function( e ){
 
         if( panel.getDisplay() === "block" ){
 
@@ -362,7 +360,7 @@ UI.PopupMenu = function(){
 
         }
 
-        var box = scope.getBox();
+        var box = icon.getBox();
 
         panel
             .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
@@ -371,6 +369,12 @@ UI.PopupMenu = function(){
 
     } );
 
+    this.add( icon );
+
+    this.setClass( "" )
+        .setDisplay( "inline" );
+
+    this.icon = icon;
     this.panel = panel;
     this.entryLabelWidth = entryLabelWidth;
 
@@ -378,7 +382,7 @@ UI.PopupMenu = function(){
 
 };
 
-UI.PopupMenu.prototype = Object.create( UI.Icon.prototype );
+UI.PopupMenu.prototype = Object.create( UI.Panel.prototype );
 
 UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
@@ -399,7 +403,7 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 
 }
 
-UI.PopupMenu.prototype.setDisplay = function( value ){
+UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     this.panel.setDisplay( value );
     

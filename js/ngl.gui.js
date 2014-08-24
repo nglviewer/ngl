@@ -554,11 +554,11 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Selection
 
-    var seleRow = new UI.Panel()
-        .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new UI.SelectionInput( component.selection ).setWidth( '195px' ) );
-
-    container.add( seleRow );
+    container.add(
+        new UI.SelectionPanel( component.selection )
+            .setMarginLeft( "20px" )
+            .setInputWidth( '214px' )
+    );
 
     // Export PDB
     
@@ -688,7 +688,7 @@ NGL.StructureComponentWidget = function( component, stage ){
     // Menu
 
     var menu = new UI.PopupMenu()
-        .setMarginLeft( "47px" )
+        .setMarginLeft( "46px" )
         .setEntryLabelWidth( "110px" )
         .addEntry( "PDB file", pdb )
         .addEntry( "Representation", repr )
@@ -960,13 +960,13 @@ NGL.RepresentationWidget = function( repr, component ){
         .addStatic( dispose )
         .addStatic( colorWidget );
 
-    // Add sele
+    // Selection
 
-    var seleRow = new UI.Panel()
-        .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new UI.SelectionInput( repr.selection ).setWidth( '175px' ) );
-
-    container.add( seleRow );
+    container.add(
+        new UI.SelectionPanel( repr.selection )
+            .setMarginLeft( "20px" )
+            .setInputWidth( '194px' )
+    );
 
     // Menu
 
@@ -1196,6 +1196,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     var animButton = new UI.ToggleIcon( true, "play", "pause" )
         .setMarginRight( "10px" )
         .setMarginLeft( "20px" )
+        .setTitle( "play" )
         .onClick( function(){
 
             if( animButton.getValue() ){
@@ -1203,10 +1204,12 @@ NGL.TrajectoryWidget = function( traj, component ){
                 animStopFlag = false;
                 i = Math.max( 0, traj.currentFrame );
                 animFunc();
+                animButton.setTitle( "pause" )
 
             }else{
 
                 animStopFlag = true;
+                animButton.setTitle( "play" )
 
             }
 
@@ -1217,11 +1220,13 @@ NGL.TrajectoryWidget = function( traj, component ){
     frameRow.add( animButton );
     frameRow.add( frameRange );
 
-    // Add sele
+    // Selection
 
-    var seleRow = new UI.Panel()
-        .add( new UI.Text( 'Sele' ).setWidth( '45px' ).setMarginLeft( "20px" ) )
-        .add( new UI.SelectionInput( traj.selection ).setWidth( '175px' ) );
+    container.add(
+        new UI.SelectionPanel( traj.selection )
+            .setMarginLeft( "20px" )
+            .setInputWidth( '194px' )
+    );
 
     // Options
 
@@ -1274,7 +1279,6 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addStatic( menu );
 
     container
-        .add( seleRow )
         .add( frameRow );
 
     return container;
