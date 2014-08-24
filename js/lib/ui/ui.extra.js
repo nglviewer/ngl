@@ -28,7 +28,7 @@ UI.OverlayPanel.prototype.attach = function( node ){
 };
 
 
-// Icon (font awesome)
+// Icon (requires font awesome)
 
 UI.Icon = function( value ){
 
@@ -49,19 +49,15 @@ UI.Icon.prototype = Object.create( UI.Panel.prototype );
 
 UI.Icon.prototype.hasClass = function( value ){
 
-    var classes = this.dom.className.split( " " );
-
-    var idx = classes.indexOf( "fa-" + value );
-
-    return idx !== -1;
+    return this.dom.classList.contains( "fa-" + value );
 
 }
 
 UI.Icon.prototype.addClass = function( value ){
 
     for ( var i = 0; i < arguments.length; i ++ ) {
-        
-        this.dom.className += ' fa-' + arguments[ i ];
+
+        this.dom.classList.add( 'fa-' + arguments[ i ] );
 
     }
 
@@ -75,7 +71,7 @@ UI.Icon.prototype.setClass = function( value ){
 
     for ( var i = 0; i < arguments.length; i ++ ) {
         
-        this.dom.className += ' fa-' + arguments[ i ];
+        this.dom.classList.add( 'fa-' + arguments[ i ] );
 
     }
 
@@ -85,21 +81,11 @@ UI.Icon.prototype.setClass = function( value ){
 
 UI.Icon.prototype.removeClass = function( value ){
 
-    var classes = this.dom.className.split( " " );
-
     for ( var i = 0; i < arguments.length; i ++ ) {
 
-        var idx = classes.indexOf( "fa-" + arguments[ i ] );
-
-        if( idx !== -1 ){
-
-            classes.splice( idx, 1 );
-
-        }
+        this.dom.classList.remove( "fa-" + arguments[ i ] );
 
     }
-
-    this.dom.className = classes.join( " " );
 
     return this;
 
@@ -279,7 +265,7 @@ UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
 };
 
 
-// Virtual List
+// Virtual List (requires Virtual DOM list)
 
 UI.VirtualList = function( items ){
 
@@ -412,7 +398,7 @@ UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 }
 
 
-// JsColor
+// JsColor (requires jscolor)
 
 UI.JsColor = function(){
 
