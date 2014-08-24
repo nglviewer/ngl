@@ -241,7 +241,9 @@ NGL.Examples = {
             stage.loadFile( "__example__/md_1u19.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
-                o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
+                o.addRepresentation( "line", {
+                    sele: "not hydrogen and sidechainAttached"
+                } );
                 // o.addRepresentation( "ball+stick" );
                 o.centerView();
 
@@ -401,23 +403,22 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1u19.pdb", function( o ){
 
-                o.addRepresentation( "tube", { sele: ":A" } )
-                    .setVisibility( false )
-                    .changeRadius( "bfactor", 0.005 );
+                o.addRepresentation( "tube", {
+                    sele: ":A", visible: false, bfactor: 0.005
+                } );
 
-                o.addRepresentation( "hyperball", { sele: ":A" } )
-                    .setVisibility( false )
-                    .setParameters({ shrink: 0.3 });
+                o.addRepresentation( "hyperball", {
+                    sele: ":A", visible: false, shrink: 0.3
+                } );
 
-                o.addRepresentation( "ball+stick", { sele: ":A and sidechainAttached" } )
-                    .setVisibility( true )
-                    .changeRadius( 0.1 )
-                    .setParameters({ aspectRatio: 1.5 });
+                o.addRepresentation( "ball+stick", {
+                    sele: ":A and sidechainAttached",
+                    visible: true, aspectRatio: 1.5
+                } );
 
-                o.addRepresentation( "cartoon", { sele: ":A" } )
-                    .setVisibility( true )
-                    .changeScale( 0.3 )
-                    .setParameters({ aspectRatio: 6.0 });
+                o.addRepresentation( "cartoon", {
+                    sele: ":A", visible: true, scale: 0.3, aspectRatio: 6.0
+                } );
 
                 o.centerView( ":A" );
 
@@ -471,7 +472,7 @@ NGL.Examples = {
 
                     setInterval( function(){
 
-                        spacefill.changeScale( i / 100 );
+                        spacefill.setScale( i / 100 );
                         stage.viewer.render();
 
                         if( i === 100 ){
