@@ -3213,7 +3213,7 @@ NGL.RibbonBuffer.prototype = {
 
             if( size ){
 
-                if( prevSize!=size[ v ] && prevSize<0 ){
+                if( prevSize!=size[ v ] ){
                     inputSize[ l + 0 ] = Math.abs( prevSize );
                     inputSize[ l + 1 ] = Math.abs( prevSize );
                     inputSize[ l + 2 ] = Math.abs( size[ v ] );
