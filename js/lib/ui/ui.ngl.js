@@ -7,18 +7,6 @@
 
 NGL.ColorSchemeWidget = function(){
 
-    var panel = new UI.OverlayPanel();
-
-    panel.add(
-        new UI.Icon( "times" )
-            .setFloat( "right" )
-            .onClick( function(){
-
-                panel.setDisplay( "none" );
-
-            } )
-    );
-
     var iconText = new UI.Text( "" )
         .setClass( "fa-stack-1x" )
         .setColor( "#111" );
@@ -26,27 +14,13 @@ NGL.ColorSchemeWidget = function(){
     var iconSquare = new UI.Icon( "square", "stack-1x" )
         //.setMarginTop( "0.05em" );
 
-    // TODO re-use UI.PopupMenu
+    var menu = new UI.PopupMenu( "stack" )
 
-    var icon = new UI.Icon( "stack" )
+    menu.icon
         .setTitle( "color" )
         .setWidth( "1em" ).setHeight( "1em" ).setLineHeight( "1em" )
         .add( iconSquare )
         .add( iconText )
-        .onClick( function(){
-
-            if( panel.getDisplay() === "block" ){
-                panel.setDisplay( "none" );
-                return;
-            }
-            var box = icon.getBox();
-            panel
-                .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
-                .setTop( box.top + "px" )
-                .setDisplay( "block" )
-                .attach();
-
-        } );
 
     var changeEvent = document.createEvent('Event');
     changeEvent.initEvent('change', true, true);
@@ -69,75 +43,52 @@ NGL.ColorSchemeWidget = function(){
         })
         .onChange( function(){
 
-            icon.setScheme( schemeSelector.getValue() );
+            menu.setScheme( schemeSelector.getValue() );
             if( schemeSelector.getValue() !== "color" ){
-                panel.setDisplay( "none" );
+                menu.setMenuDisplay( "none" );
             }
-            icon.dom.dispatchEvent( changeEvent );
+            menu.dom.dispatchEvent( changeEvent );
 
         } );
 
-    var colorInput = new UI.Color()
-        .onChange( function(){
-
-            icon.setColor( colorInput.getValue() );
-            icon.dom.dispatchEvent( changeEvent );
-
-        } );
-
-    var colorInput2 = new UI.JsColor()
+    var colorInput = new UI.JsColor()
         .onImmediateChange( function(){
 
-            icon.setColor( colorInput2.getValue() );
-            icon.dom.dispatchEvent( changeEvent );
+            menu.setColor( colorInput.getValue() );
+            menu.dom.dispatchEvent( changeEvent );
 
         } );
     
     var colorPicker = new UI.Panel()
         .setWidth( "280px" )
         .setHeight( "200px" );
-    // https://github.com/PitPik/colorPicker
-    /*var colorPickerObject = new ColorPicker( {
-        appenTo: colorPicker.dom,
-        size: 2,
-    } );*/
 
-    panel
-        .add( new UI.Text( "Color scheme" ).setMarginBottom( "10px" ) )
-        .add( new UI.Break() )
-        .add( schemeSelector )
-        .add( new UI.Break() )
-        /*.add( new UI.Text( "Color: " ) )
-        .add( colorInput )*/
-        .add( new UI.Break() )
-        .add( colorInput2 )
-        /*.add( new UI.Break() )
-        .add( colorPicker )*/
-        ;
+    menu
+        .addEntry( "Color scheme", schemeSelector )
+        .addEntry( "", colorInput );
 
-    icon.setScheme = function( value ){
+    menu.setScheme = function( value ){
 
         if( value !== "color" ){
-            icon.setColor( "#888" );
+            menu.setColor( "#888" );
         }
         iconText.setValue( value.charAt( 0 ).toUpperCase() );
         schemeSelector.setValue( value );
-        return icon;
+        return menu;
 
     }
 
-    icon.getScheme = function(){
+    menu.getScheme = function(){
 
         return schemeSelector.getValue();
 
     }
 
     var c = new THREE.Color();
-    icon.setColor = function( value ){
+    menu.setColor = function( value ){
 
-        icon.setScheme( "color" );
+        menu.setScheme( "color" );
         colorInput.setValue( value );
-        colorInput2.setValue( value );
         iconSquare.setColor( value );
         c.setStyle( value );
         if( ( c.r + c.g + c.b ) > 1.5 ){
@@ -145,37 +96,30 @@ NGL.ColorSchemeWidget = function(){
         }else{
             iconText.setColor( "#FFF" );
         }
-        return icon;
+        return menu;
 
     }
 
-    icon.getColor = function(){
+    menu.getColor = function(){
 
         return colorInput.getValue();
 
     }
 
-    icon.setDisplay = function( value ){
-
-        panel.setDisplay( value );
-        return icon;
-
-    }
-
-    icon.setValue = function( value ){
+    menu.setValue = function( value ){
 
         if( parseInt( value ) === value ){
-            icon.setColor(
+            menu.setColor(
                 "#" + ( new THREE.Color( value ).getHexString() )
             );
         }else{
-            icon.setScheme( value );
+            menu.setScheme( value );
         }
-        return icon;
+        return menu;
 
     }
 
-    return icon;
+    return menu;
 
 };
 
@@ -184,13 +128,17 @@ NGL.ColorSchemeWidget = function(){
 
 UI.SelectionInput = function( selection ){
 
-    if( ! selection instanceof NGL.Selection ){
-        console.error( "no selection given", selection );
-    }
-
 	UI.AdaptiveTextArea.call( this );
 
 	this.setSpellcheck( false );
+
+    if( ! selection instanceof NGL.Selection ){
+
+        console.error( "UI.SelectionInput: not a selection", selection );
+
+        return this;
+
+    }
 
     this.setValue( selection.string );
 
@@ -300,3 +248,31 @@ UI.SelectionInput.prototype.onEnter = function( callback ){
     return this;
 
 };
+
+
+UI.SelectionPanel = function( selection ){
+
+    UI.Panel.call( this );
+
+    this.icon = new UI.Icon( 'filter' )
+        .setTitle( "filter selection" )
+        .addClass( 'lg' )
+        .setMarginRight( "10px" );
+
+    this.input = new UI.SelectionInput( selection );
+
+    this.add( this.icon, this.input );
+
+    return this;
+
+}
+
+UI.SelectionPanel.prototype = Object.create( UI.Panel.prototype );
+
+UI.SelectionPanel.prototype.setInputWidth = function( value ){
+
+    this.input.setWidth( value );
+
+    return this;
+
+}
