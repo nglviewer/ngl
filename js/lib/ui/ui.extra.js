@@ -443,3 +443,84 @@ UI.JsColor.prototype.onImmediateChange = function( fn ){
     return this;
 
 };
+
+
+// Collapsible Icon Panel
+
+UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
+
+    UI.Panel.call( this );
+
+    this.dom.className = 'Panel CollapsiblePanel';
+
+    if( iconClass1 === undefined ){
+
+        // iconClass1 = iconClass1 || "plus-square";
+        // iconClass2 = iconClass2 || "minus-square";
+
+        iconClass1 = iconClass1 || "chevron-right";
+        iconClass2 = iconClass2 || "chevron-down";
+
+    }
+
+    this.button = new UI.Icon( iconClass1 )
+        .setWidth( "12px" ).setMarginRight( "6px" );
+    this.addStatic( this.button );
+
+    var scope = this;
+    this.button.dom.addEventListener( 'click', function ( event ) {
+
+        scope.toggle();
+
+    }, false );
+
+    this.content = document.createElement( 'div' );
+    this.content.className = 'CollapsibleContent';
+    this.dom.appendChild( this.content );
+
+    this.isCollapsed = false;
+
+    this.iconClass1 = iconClass1;
+    this.iconClass2 = iconClass2;
+
+    return this;
+
+};
+
+UI.CollapsibleIconPanel.prototype = Object.create( UI.CollapsiblePanel.prototype );
+
+UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
+
+    if ( setCollapsed ) {
+
+        this.dom.classList.add('collapsed');
+
+        if( this.iconClass2 ){
+        
+            this.button.switchClass( this.iconClass2, this.iconClass1 );
+
+        }else{
+
+            this.button.addClass( "rotate-90" );
+
+        }
+
+    } else {
+
+        this.dom.classList.remove('collapsed');
+        
+        if( this.iconClass2 ){
+            
+            this.button.switchClass( this.iconClass1, this.iconClass2 );
+
+        }else{
+
+            this.button.removeClass( "rotate-90" );
+
+        }
+
+    }
+
+    this.isCollapsed = setCollapsed;
+
+};

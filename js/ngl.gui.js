@@ -475,7 +475,7 @@ NGL.ComponentWidget = function( component, stage ){
 NGL.StructureComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsiblePanel();
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
@@ -720,7 +720,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsiblePanel();
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     signals.visibilityChanged.add( function( value ){
 
@@ -796,7 +796,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 NGL.ScriptComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsiblePanel();
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     signals.nameChanged.add( function( value ){
 
@@ -862,7 +862,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     var signals = repr.signals;
 
-    var container = new UI.CollapsiblePanel()
+    var container = new UI.CollapsibleIconPanel( "bookmark" )
         .setMarginLeft( "20px" );
 
     signals.visibilityChanged.add( function( value ){
@@ -1081,7 +1081,7 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var signals = traj.signals;
 
-    var container = new UI.CollapsiblePanel()
+    var container = new UI.CollapsibleIconPanel( "database" )
         .setMarginLeft( "20px" );
 
     component.signals.trajectoryRemoved.add( function( _traj ){
