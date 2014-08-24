@@ -125,21 +125,13 @@ For license texts see at the end of this document.
 	js/chroma.min.js
 
 
-////////////
-// jscolor
+/////////////////////
+// FlexiColorPicker
 
-	/**
-	 * jscolor, JavaScript Color Picker
-	 *
-	 * @version 1.4.3
-	 * @license GNU Lesser General Public License, http://www.gnu.org/copyleft/lesser.html
-	 * @author  Jan Odvarko, http://odvarko.cz
-	 * @created 2008-06-15
-	 * @updated 2014-07-16
-	 * @link    http://jscolor.com
-	 */
+	https://github.com/DavidDurman/FlexiColorPicker
+	MIT License, Copyright (c) 2011 - 2012 David Durman
 	
-	js/lib/jscolor/*
+	js/lib/colorpicker.js
 
 
 /////////////////////

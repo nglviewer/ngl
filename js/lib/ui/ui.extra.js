@@ -398,53 +398,6 @@ UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 }
 
 
-// JsColor (requires jscolor)
-
-UI.JsColor = function(){
-
-    UI.Element.call( this );
-
-    var scope = this;
-
-    var dom = document.createElement( 'input' );
-
-    dom.className = 'Input';
-    dom.style.padding = '2px';
-    dom.style.border = '1px solid #ccc';
-
-    this.jscolorObject = new jscolor.color( dom, {
-        hash: true
-    } );
-
-    this.dom = dom;
-
-    return this;
-
-};
-
-UI.JsColor.prototype = Object.create( UI.Element.prototype );
-
-UI.JsColor.prototype.setValue = function( value ){
-
-    this.jscolorObject.fromString( value );
-    return this;
-
-};
-
-UI.JsColor.prototype.getValue = function(){
-
-    return this.dom.value;
-
-};
-
-UI.JsColor.prototype.onImmediateChange = function( fn ){
-
-    this.jscolorObject.onImmediateChange = fn;
-    return this;
-
-};
-
-
 // Collapsible Icon Panel
 
 UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
@@ -522,5 +475,118 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
     }
 
     this.isCollapsed = setCollapsed;
+
+};
+
+
+// Color picker (requires FlexiColorPicker)
+// https://github.com/DavidDurman/FlexiColorPicker
+
+UI.ColorPicker = function(){
+
+    var scope = this;
+
+    UI.Panel.call( this );
+
+    // slider
+
+    this.slideWrapper = new UI.Panel()
+        .setClass( "slide-wrapper" );
+
+    this.sliderIndicator = new UI.Panel()
+        .setClass( "slide-indicator" );
+
+    this.slider = new UI.Panel()
+        .setClass( "slide" )
+        .setWidth( "25px" )
+        .setHeight( "80px" );
+
+    this.slideWrapper.add(
+        this.slider,
+        this.sliderIndicator
+    );
+
+    // picker
+
+    this.pickerWrapper = new UI.Panel()
+        .setClass( "picker-wrapper" );
+
+    this.pickerIndicator = new UI.Panel()
+        .setClass( "picker-indicator" );
+
+    this.picker = new UI.Panel()
+        .setClass( "picker" )
+        .setWidth( "130px" )
+        .setHeight( "80px" );
+
+    this.pickerWrapper.add(
+        this.picker,
+        this.pickerIndicator
+    );
+
+    // event
+
+    var changeEvent = document.createEvent('Event');
+    changeEvent.initEvent('change', true, true);
+
+    // finalize
+
+    this.add(
+        this.pickerWrapper,
+        this.slideWrapper
+    );
+
+    ColorPicker.fixIndicators(
+
+        this.sliderIndicator.dom,
+        this.pickerIndicator.dom
+
+    );
+
+    this.colorPicker = ColorPicker(
+
+        this.slider.dom,
+        this.picker.dom,
+
+        function( hex, hsv, rgb, pickerCoordinate, sliderCoordinate ){
+
+            ColorPicker.positionIndicators(
+                scope.sliderIndicator.dom, scope.pickerIndicator.dom,
+                sliderCoordinate, pickerCoordinate
+            );
+
+            scope.hex = hex;
+            scope.hsv = hsv;
+            scope.rgb = rgb;
+
+            if( !scope._settingValue ){
+
+                scope.dom.dispatchEvent( changeEvent, hex, hsv, rgb );
+
+            }
+
+        }
+
+    );
+
+    return this;
+
+}
+
+UI.ColorPicker.prototype = Object.create( UI.Panel.prototype );
+
+UI.ColorPicker.prototype.setValue = function( value ){
+
+    this._settingValue = true;
+    this.colorPicker.setHex( value );
+    this._settingValue = false;
+
+    return this;
+
+};
+
+UI.ColorPicker.prototype.getValue = function(){
+
+    return this.hex;
 
 };

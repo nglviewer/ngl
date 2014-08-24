@@ -3,29 +3,33 @@
  */
 
 
-// Color scheme
+// Color
 
-NGL.ColorSchemeWidget = function(){
+UI.ColorPopupMenu = function(){
 
-    var iconText = new UI.Text( "" )
+    var scope = this;
+
+    UI.Panel.call( this );
+
+    this.iconText = new UI.Text( "" )
         .setClass( "fa-stack-1x" )
         .setColor( "#111" );
 
-    var iconSquare = new UI.Icon( "square", "stack-1x" )
+    this.iconSquare = new UI.Icon( "square", "stack-1x" )
         //.setMarginTop( "0.05em" );
 
-    var menu = new UI.PopupMenu( "stack" )
+    this.menu = new UI.PopupMenu( "stack" );
 
-    menu.icon
+    this.menu.icon
         .setTitle( "color" )
         .setWidth( "1em" ).setHeight( "1em" ).setLineHeight( "1em" )
-        .add( iconSquare )
-        .add( iconText )
+        .add( this.iconSquare )
+        .add( this.iconText )
 
     var changeEvent = document.createEvent('Event');
     changeEvent.initEvent('change', true, true);
 
-    var schemeSelector = new UI.Select()
+    this.schemeSelector = new UI.Select()
         .setColor( '#444' )
         .setWidth( "" )
         .setOptions({
@@ -43,83 +47,111 @@ NGL.ColorSchemeWidget = function(){
         })
         .onChange( function(){
 
-            menu.setScheme( schemeSelector.getValue() );
+            scope.setScheme( schemeSelector.getValue() );
             if( schemeSelector.getValue() !== "color" ){
-                menu.setMenuDisplay( "none" );
+                scope.menu.setMenuDisplay( "none" );
             }
-            menu.dom.dispatchEvent( changeEvent );
+            scope.dom.dispatchEvent( changeEvent );
 
         } );
 
-    var colorInput = new UI.JsColor()
-        .onImmediateChange( function(){
+    this.colorInput = new UI.Input()
+        .onChange( function(){
 
-            menu.setColor( colorInput.getValue() );
-            menu.dom.dispatchEvent( changeEvent );
+            scope.setColor( scope.colorInput.getValue() );
+            scope.dom.dispatchEvent( changeEvent );
 
         } );
-    
-    var colorPicker = new UI.Panel()
-        .setWidth( "280px" )
-        .setHeight( "200px" );
 
-    menu
-        .addEntry( "Color scheme", schemeSelector )
-        .addEntry( "", colorInput );
+    this.colorPicker = new UI.ColorPicker()
+        .onChange( function( e, hex, hsv, rgb ){
 
-    menu.setScheme = function( value ){
+            scope.setColor( scope.colorPicker.getValue() );
+            scope.dom.dispatchEvent( changeEvent );
 
-        if( value !== "color" ){
-            menu.setColor( "#888" );
-        }
-        iconText.setValue( value.charAt( 0 ).toUpperCase() );
-        schemeSelector.setValue( value );
-        return menu;
+        } );
 
+    this.menu
+        .addEntry( "Color scheme", this.schemeSelector )
+        .addEntry( "", this.colorInput )
+        .addEntry( "", this.colorPicker );
+
+    this.add( this.menu );
+
+    this.setClass( "" )
+        .setDisplay( "inline" );
+
+    return this;
+
+};
+
+UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
+
+UI.ColorPopupMenu.prototype.setScheme = function( value ){
+
+    if( value !== "color" ){
+        this.setColor( "#888" );
     }
 
-    menu.getScheme = function(){
+    this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
+    this.schemeSelector.setValue( value );
 
-        return schemeSelector.getValue();
+    return this;
 
-    }
+};
+
+UI.ColorPopupMenu.prototype.getScheme = function(){
+
+    return this.schemeSelector.getValue();
+
+};
+
+UI.ColorPopupMenu.prototype.setColor = function(){
 
     var c = new THREE.Color();
-    menu.setColor = function( value ){
 
-        menu.setScheme( "color" );
-        colorInput.setValue( value );
-        iconSquare.setColor( value );
+    return function( value ){
+
+        this.setScheme( "color" );
+
+        this.colorInput
+            .setBackgroundColor( value )
+            .setValue( value );
+
+        this.colorPicker.setValue( value );
+
+        this.iconSquare.setColor( value );
+
         c.setStyle( value );
         if( ( c.r + c.g + c.b ) > 1.5 ){
-            iconText.setColor( "#000" );
+            this.iconText.setColor( "#000" );
         }else{
-            iconText.setColor( "#FFF" );
+            this.iconText.setColor( "#FFF" );
         }
-        return menu;
+
+        return this;
 
     }
 
-    menu.getColor = function(){
+}();
 
-        return colorInput.getValue();
+UI.ColorPopupMenu.prototype.getColor = function(){
 
+    return this.colorInput.getValue();
+
+};
+
+UI.ColorPopupMenu.prototype.setValue = function( value ){
+
+    if( parseInt( value ) === value ){
+        this.setColor(
+            "#" + ( new THREE.Color( value ).getHexString() )
+        );
+    }else{
+        this.setScheme( value );
     }
 
-    menu.setValue = function( value ){
-
-        if( parseInt( value ) === value ){
-            menu.setColor(
-                "#" + ( new THREE.Color( value ).getHexString() )
-            );
-        }else{
-            menu.setScheme( value );
-        }
-        return menu;
-
-    }
-
-    return menu;
+    return this;
 
 };
 
