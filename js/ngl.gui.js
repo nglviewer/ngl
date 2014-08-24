@@ -971,7 +971,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
         } );
 
-    var colorWidget = new NGL.ColorSchemeWidget()
+    var colorWidget = new UI.ColorPopupMenu()
         .setMarginLeft( "10px" )
         .setValue( repr.color )
         .onChange( (function(){
@@ -1152,7 +1152,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         frame.setValue( value );
         frameRange.setValue( value );
 
-        numframes.clear().add( frame.setWidth( "80px" ) );
+        numframes.clear().add( frame.setWidth( "70px" ) );
 
         inProgress = false;
         
