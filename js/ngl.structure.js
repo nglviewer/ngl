@@ -1129,6 +1129,8 @@ NGL.Trajectory = function( xtcPath, structure, selectionString ){
         superpose: true
     };
 
+    this.name = xtcPath.replace( /^.*[\\\/]/, '' );
+
     this.xtcPath = xtcPath;
     this.structure = structure;
     this.atomCount = structure.atomCount;
