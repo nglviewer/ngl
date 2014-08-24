@@ -1095,12 +1095,12 @@ NGL.TrajectoryWidget = function( traj, component ){
         .setDisplay( "inline" )
         .add( new UI.Icon( "spinner" )
                 .addClass( "spin" )
-                .setMarginRight( "78px" )
+                .setMarginRight( "69px" )
         );
 
     signals.gotNumframes.add( function( value ){
 
-        numframes.clear().add( frame.setWidth( "80px" ) );
+        numframes.clear().add( frame.setWidth( "70px" ) );
         frame.setRange( -1, value - 1 );
         frameRange.setRange( -1, value - 1 );
 
@@ -1120,7 +1120,13 @@ NGL.TrajectoryWidget = function( traj, component ){
         
     } );
 
-    container.addStatic( new UI.Text( "Trajectory" ) );
+    // Name
+
+    var name = new UI.Text( traj.name )
+        .setWidth( "108px" )
+        .setWordWrap( "break-word" );
+
+    container.addStatic( name );
     container.addStatic( numframes );
 
     // frames
@@ -1132,7 +1138,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         .onChange( function( e ){
 
             traj.setFrame( frame.getValue() );
-            menu.setDisplay( "none" );
+            menu.setMenuDisplay( "none" );
 
         } );
 
@@ -1263,7 +1269,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     // Menu
 
     var menu = new UI.PopupMenu()
-        .setMarginLeft( "45px" )
+        .setMarginLeft( "10px" )
         .setEntryLabelWidth( "110px" )
         .addEntry( "Center", setCenterPbc )
         .addEntry( "Remove PBC", setRemovePbc )
