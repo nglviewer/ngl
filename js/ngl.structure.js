@@ -4,6 +4,12 @@
  */
 
 
+var NGL = NGL || {};
+
+if( typeof importScripts === 'function' ){
+    importScripts( 'three/three.js', 'lib/ui/signals.min.js' );
+}
+
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 NGL.ElementColors = {
     "H": 0xFFFFFF, "HE": 0xD9FFFF, "LI": 0xCC80FF, "BE": 0xC2FF00, "B": 0xFFB5B5,
@@ -3574,6 +3580,21 @@ NGL.GroStructure.prototype._parse = function( str ){
 
     // console.timeEnd( "NGL.GroStructure.parse" );
 
+};
+
+
+///////////
+// Worker
+
+onmessage = function( event ){
+
+    var pdbStructure = new NGL.PdbStructure();
+    
+    pdbStructure._parse( event.data );
+
+    postMessage( pdbStructure );
+    // postMessage( "moin" );
+    
 };
 
 
