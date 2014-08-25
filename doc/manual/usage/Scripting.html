@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		Scripts are written in JavaScript and can be loaded as files that have the extension <strong>.ngl</strong>.
+
+
+		<h2>Example</h2>
+
+		<div>Load the structure of PDB entry *1CRN* from <a href="http://www.rcsb.org/">RCSB</a>, add a cartoon representation and center the view on the structure.</div>
+
+		<code>
+		stage.loadFile( "1CRN", function( o ){
+
+			o.addRepresentation( "cartoon" );
+			o.centerView();
+
+		} );
+		</code>
+
+
+		<h2>Variables</h2>
+
+		The following variables are available in a scripting context.
+
+		<ul>
+			<li>*stage* - the [page:Stage] object</li>
+			<li>*__name__* - the name of the script file</li>
+			<li>*__path__* - the full path of the script file</li>
+			<li>*__dir__* - the directory to the scipt file</li>
+		</ul>
+
+
+	</body>
+</html>

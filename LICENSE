@@ -1,0 +1,302 @@
+
+For license texts see at the end of this document.
+
+
+////////
+// NGL
+
+	The MIT License, Copyright &copy; 2013-2014 Alexander S. Rose 
+
+	applies to all files unless otherwise noted (excluding files in tmp/*)
+
+
+//////////
+// THREE
+
+	The MIT License, Copyright &copy; 2010-2014 three.js authors
+
+	js/three.js
+	js/three/*
+	js/lib/ui/ui.js
+	js/threex.renderstats.js
+
+	css/dark.css
+	css/light.css
+
+	doc/page.css
+	doc/page.js
+	doc/list.js
+	doc/index.html
+	doc/prettify/threejs.css
+
+
+////////////
+// Signals
+
+	JS Signals <http://millermedeiros.github.com/js-signals/>
+	Released under the MIT license
+	Author: Miller Medeiros
+
+	js/lib/ui/signals.min.js
+
+
+/////////////////
+// Font Awesome
+
+	Font Awesome by Dave Gandy - http://fontawesome.io
+
+	License: MIT License
+	URL: http://opensource.org/licenses/mit-license.html
+
+	css/font-awesome.min.css
+
+	License: SIL OFL 1.1
+	URL: http://scripts.sil.org/OFL
+
+	fonts/FontAwesome.otf
+	fonts/fontawesome-webfont.eot
+	fonts/fontawesome-webfont.svg
+	fonts/fontawesome-webfont.ttf
+	fonts/fontawesome-webfont.woff
+
+
+///////////////
+// sprintf.js
+
+	https://github.com/alexei/sprintf.js
+	3-clause BSD license, 2007-2013
+	Alexandru Marasteanu <hello [at) alexei (dot] ro>
+
+	js/lib/sprintf.js
+
+
+///////////
+// jsfeat
+
+	http://inspirit.github.io/jsfeat/
+	MIT License, 2012, Eugene Zatepyakin
+
+	js/lib/svd.js
+
+
+//////////
+// QUint
+
+	http://qunitjs.com/
+	https://github.com/JamesMGreene/qunit-assert-close
+	MIT License, Copyright 2006, 2014 
+	jQuery Foundation and other contributors, https://jquery.org/
+
+	test/unit/qunit-1.14.0.js
+	test/unit/qunit-1.14.0.css
+	test/unit/qunit-assert-close.js
+
+
+/////////////////
+// Benchmark.js
+
+	http://benchmarkjs.com/
+	MIT License, Copyright 2010-2014
+	Mathias Bynens <http://mathiasbynens.be/>
+	Based on JSLitmus.js, copyright Robert Kieffer <http://broofa.com/>
+	Modified by John-David Dalton <http://allyoucanleet.com/>
+
+	test/bench/benchmark-1.0.0.js
+
+
+////////////////
+// libxdrfile2
+
+	http://www.gromacs.org/
+	http://mdanalysis.googlecode.com
+
+	GNU GENERAL PUBLIC LICENSE Version 2 (lib/xdrfile/COPYING)
+
+	lib/setup.py
+	lib/xdrfile/*
+
+
+//////////////
+// Chroma.js
+
+	https://github.com/gka/chroma.js
+	MIT License, Copyright 2011-2013, Gregor Aisch
+
+	js/chroma.min.js
+
+
+/////////////////////
+// FlexiColorPicker
+
+	https://github.com/DavidDurman/FlexiColorPicker
+	MIT License, Copyright (c) 2011 - 2012 David Durman
+	
+	js/lib/colorpicker.js
+
+
+/////////////////////
+// Virtual DOM List
+
+	https://github.com/sergi/virtual-list
+	MIT License, Copyright (C) 2013 Sergi Mansilla
+
+	js/lib/vlist.js
+
+
+/////////////////////
+// Closure Compiler
+
+	Copyright 2009 The Closure Compiler Authors.
+	Licensed under the Apache License, Version 2.0 (the "License");
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	build/closure-compiler/*
+
+
+/////////////////////
+// HyperBall shader
+
+	Copyright (C) 2010-2011 by
+	Laboratoire de Biochimie Theorique (CNRS),
+	Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
+	Departement des Sciences de la Simulation et de l'Information (CEA). 
+
+	License: CeCILL-C license (http://www.cecill.info/)
+
+	Contact: Marc Baaden
+	E-mail: baaden@smplinux.de
+	Webpage: http://hyperballs.sourceforge.net
+
+	ported to WebGL by Alexander Rose
+
+	shader/HyperballStickImpostor.vert
+	shader/HyperballStickImpostor.frag
+
+
+/////////////////////////////////////////
+// PyMOL screen aligned cylinder shader
+
+	Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
+
+	All Rights Reserved
+
+	Permission to use, copy, modify, distribute, and distribute modified
+	versions of this software and its built-in documentation for any
+	purpose and without fee is hereby granted, provided that the above
+	copyright notice appears in all copies and that both the copyright
+	notice and this permission notice appear in supporting documentation,
+	and that the name of Schrodinger, LLC not be used in advertising or
+	publicity pertaining to distribution of the software without specific,
+	written prior permission.
+
+	SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+	INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
+	NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+	CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+	OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+	OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
+	USE OR PERFORMANCE OF THIS SOFTWARE.
+
+	shader/CylinderImpostor.vert
+	shader/CylinderImpostor.frag
+	shader/LineSprite.vert
+
+
+///////////////////////////////////////////
+// VTK quadric surface center calculation
+
+	/*=========================================================================
+
+	 Program:   Visualization Toolkit
+	 Module:    Quadrics_fs.glsl and Quadrics_vs.glsl
+
+	 Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
+	 All rights reserved.
+	 See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
+
+	 This software is distributed WITHOUT ANY WARRANTY; without even
+	 the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 PURPOSE.  See the above copyright notice for more information.
+
+	 =========================================================================*/
+
+	// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl
+	// .SECTION Thanks
+	// <verbatim>
+	//
+	//  This file is part of the PointSprites plugin developed and contributed by
+	//
+	//  Copyright (c) CSCS - Swiss National Supercomputing Centre
+	//                EDF - Electricite de France
+	//
+	//  John Biddiscombe, Ugo Varetto (CSCS)
+	//  Stephane Ploix (EDF)
+	//
+	// </verbatim>
+
+	shader/ParticleSprite.vert
+	shader/SphereHalo.vert
+	shader/SphereImpostor.vert
+
+
+
+
+
+
+//////////////////
+// License texts
+
+
+The MIT License
+
+Copyright (c) <year>, <copyright holder>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+
+
+3-clause BSD license
+
+Copyright (c) <year>, <copyright holder>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+

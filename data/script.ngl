@@ -1,0 +1,19 @@
+
+
+stage.loadFile( __dir__ + "1blu.pdb", function( o ){
+
+    o.addRepresentation( "cartoon" );
+    o.addRepresentation( "licorice", {
+    	sele: "sidechainAttached and not( SF4 or CYS )", visible: false
+    } );
+    o.addRepresentation( "hyperball", {
+    	sele: "sidechainAttached and ( SF4 or CYS )"
+    } );
+    o.centerView();
+
+    o.setName( "1BLU" );
+
+    finish();
+
+} );
+

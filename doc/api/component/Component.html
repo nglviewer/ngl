@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		<div class="desc">A container that contain a data object and can be added to a [page:Stage]. For [page:Structure] objects there is [page:StructureComponent] and for [page:Surface] objects [page:SurfaceComponent].</div>
+
+
+		<h2>Example</h2>
+
+
+		<code>
+		var structure = new NGL.Structure();
+		var sele = "ALL";
+
+		var structureComponent = new NGL.StructureComponent(
+			stage, structure, sele
+		);
+		</code>
+
+		
+		<h2>Constructor</h2>
+
+		<h3>[name]( [page:Stage stage] )</h3>
+
+		<div></div>
+
+		
+		<h2>Properties</h2>
+
+		<h3>.name</h3>
+		<div></div>
+
+
+		<h2>Signals</h2>
+
+		<h3>.visibilityChanged</h3>
+		<div></div>
+
+
+		<h2>Methods</h2>
+
+		<h3>.setVisibility( value )</h3>
+		<div></div>
+
+		<h3>.setName( value )</h3>
+		<div></div>
+
+		<h3>.centerView( sele )</h3>
+		<div></div>
+
+		<h3>.getCenter() THREE.Vector3</h3>
+		<div></div>
+
+		<h3>.dispose()</h3>
+		<div></div>
+
+
+	</body>
+</html>

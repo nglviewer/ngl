@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		
+		<h2>libxdrfile2</h2>
+
+		For the efficient access of GROMACS trajectory files, the library *libxdrfile2* needs to be installed.
+
+		<code class="lang-sh">
+		cd lib/
+		sudo python setup.py install
+		</code>
+
+		make sure you have the python development files installed
+
+		<code class="lang-sh">sudo apt-get install python-dev</code>
+
+
+		<h2>Configuration files</h2>
+
+		<p>The website can be configured through some javascript files that should be set-up.</p>
+
+		Copy the sample tracking.js file and add any tracking code you need.
+
+		<code>cp js/tracking.js.sample js/tracking.js</code>
+
+
+		Copy the sample examples.js file and add any examples you want to be available on your server.
+
+		<code>cp js/examples.js.sample js/examples.js</code>
+
+
+	</body>
+</html>
