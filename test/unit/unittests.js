@@ -28,12 +28,10 @@ QUnit.test( "chain resno range", function( assert ) {
     var selection = new NGL.Selection( sele );
 
     var selectionObj = {
-        "operator": undefined,
+        "operator": "AND",
         "rules": [
-            {
-                "chainname": "A",
-                "resno": [ 1, 100 ]
-            }
+            { "chainname": "A" },
+            { "resno": [ 1, 100 ] }
         ]
     };
 
@@ -809,6 +807,27 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
 
     var selection1 = new NGL.Selection( "TYR" );
     var selection2 = new NGL.Selection( "not not TYR" );
+
+    var path = "../../data/__example__/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet1 = new NGL.AtomSet( structure, selection1 );
+        var atomSet2 = new NGL.AtomSet( structure, selection2 );
+
+        assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
+        
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
+
+    var selection1 = new NGL.Selection( "not ( 12 and .CA )" );
+    var selection2 = new NGL.Selection( "not ( 12.CA )" );
 
     var path = "../../data/__example__/1crn.pdb";
 

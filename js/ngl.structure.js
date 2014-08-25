@@ -3298,7 +3298,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
     var serialDict = {};
 
     var a, currentChainname, currentResno;
-    
+
     for( i = 0; i < lines.length; i++ ){
 
         line = lines[i];
@@ -3870,7 +3870,14 @@ NGL.Selection.prototype = {
                 sele = {
                     operator: "OR",
                     rules: [
-                        { resname: "PRO", atomname: "N" },
+                        {
+                            operator: "AND",
+                            negate: false,
+                            rules: [
+                                { resname: "PRO" },
+                                { atomname: "N" },
+                            ]
+                        },
                         {
                             operator: undefined,
                             negate: true,
@@ -3908,12 +3915,23 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            // there must be only one constraint per rule
+            // otherwise a test quickly becomes not applicable
+            // e.g. chainTest for chainname when resno is present too
+
+            sele = {
+                operator: "AND",
+                rules: []
+            };
+
             model = c.split("/");
             if( model.length > 1 && model[1] ){
                 if( isNaN( parseInt( model[1] ) ) ){
                     throw new Error( "model must be an integer" );
                 }
-                sele.model = parseInt( model[1] );
+                sele.rules.push( {
+                    model: parseInt( model[1] )
+                } );
             }
 
             atomname = model[0].split(".");
@@ -3921,7 +3939,9 @@ NGL.Selection.prototype = {
                 if( atomname[1].length > 4 ){
                     throw new Error( "atomname must be one to four characters" );
                 }
-                sele.atomname = atomname[1].substring( 0, 4 ).toUpperCase();
+                sele.rules.push( {
+                    atomname: atomname[1].substring( 0, 4 ).toUpperCase()
+                } );
             }
 
             chain = atomname[0].split(":");
@@ -3929,7 +3949,9 @@ NGL.Selection.prototype = {
                 if( chain[1].length > 1 ){
                     throw new Error( "chain identifier must be one character" );
                 }
-                sele.chainname = chain[1][0];
+                sele.rules.push( {
+                    chainname: chain[1][0]
+                } );
             }
 
             if( chain[0] ){
@@ -3939,9 +3961,13 @@ NGL.Selection.prototype = {
                     if( isNaN( resi ) ){
                         throw new Error( "resi must be an integer" );
                     }
-                    sele.resno = resi;
+                    sele.rules.push( {
+                        resno: resi
+                    } );
                 }else if( resi.length === 2 ){
-                    sele.resno = [ parseInt( resi[0] ), parseInt( resi[1] ) ];
+                    sele.rules.push( {
+                        resno: [ parseInt( resi[0] ), parseInt( resi[1] ) ]
+                    } );
                 }else{
                     throw new Error( "resi range must contain one '-'" );
                 }
@@ -3949,7 +3975,9 @@ NGL.Selection.prototype = {
 
             // round up
 
-            if( Object.keys( sele ).length > 0 ){
+            if( sele.rules.length === 1 ){
+                pushRule( sele.rules[ 0 ] );
+            }else if( sele.rules.length > 1 ){
                 pushRule( sele );
             }else{
                 throw new Error( "empty selection chunk" );
@@ -4132,9 +4160,6 @@ NGL.Selection.prototype = {
                 if( s.keyword==="PROTEIN" && r.isProtein() ) return true;
                 if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
                 if( s.keyword==="WATER" && r.isWater() ) return true;
-
-                // FIXME ???
-                // if( s.keyword!=="BACKBONE" ) return false;
 
             }
 
