@@ -757,7 +757,9 @@ NGL.ScriptComponent.prototype = {
 
     },
 
-    setVisibility: function( value ){}
+    setVisibility: function( value ){},
+
+    getCenter: function(){}
 
 };
 
