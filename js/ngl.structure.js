@@ -3298,7 +3298,7 @@ NGL.PdbStructure.prototype._parse = function( str ){
     var serialDict = {};
 
     var a, currentChainname, currentResno;
-
+    
     for( i = 0; i < lines.length; i++ ){
 
         line = lines[i];
