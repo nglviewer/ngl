@@ -611,7 +611,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         NGL.download( blob, "structure.pdb" );
 
-        menu.setDisplay( "none" );
+        menu.setMenuDisplay( "none" );
 
     });
 
@@ -632,7 +632,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
-            menu.setDisplay( "none" );
+            menu.setMenuDisplay( "none" );
 
         } );
 
@@ -640,7 +640,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var traj = new UI.Button( "import" ).onClick( function(){
 
-        menu.setDisplay( "none" );
+        menu.setMenuDisplay( "none" );
 
         var dirWidget = new NGL.DirectoryListingWidget(
 
@@ -708,7 +708,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             component.centerView();
 
             superpose.setValue( "" );
-            menu.setDisplay( "none" );
+            menu.setMenuDisplay( "none" );
 
         } );
 
@@ -721,7 +721,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         component.structure.autoSS();
         component.rebuildRepresentations();
 
-        menu.setDisplay( "none" );
+        menu.setMenuDisplay( "none" );
 
     } );
 
@@ -1277,7 +1277,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     var setCenterPbc = new UI.Checkbox( traj.params.centerPbc )
         .onChange( function(){
             traj.setCenterPbc( setCenterPbc.getValue() );
-            menu.setDisplay( "none" );
+            menu.setMenuDisplay( "none" );
         } );
 
     signals.centerPbcParamChanged.add( function( value ){
@@ -1287,7 +1287,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     var setRemovePbc = new UI.Checkbox( traj.params.removePbc )
         .onChange( function(){
             traj.setRemovePbc( setRemovePbc.getValue() );
-            menu.setDisplay( "none" );
+            menu.setMenuDisplay( "none" );
         } );
 
     signals.removePbcParamChanged.add( function( value ){
@@ -1297,7 +1297,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     var setSuperpose = new UI.Checkbox( traj.params.superpose )
         .onChange( function(){
             traj.setSuperpose( setSuperpose.getValue() );
-            menu.setDisplay( "none" );
+            menu.setMenuDisplay( "none" );
         } );
 
     signals.superposeParamChanged.add( function( value ){
