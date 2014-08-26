@@ -6,8 +6,6 @@
 </head>
 <body>
 
-<script src="stringview.js"></script>
-
     <script>
 
         var Atom = function(){
@@ -92,23 +90,22 @@
         var AtomArray = function( size ){
 
             this.atomno = new Int32Array( size );
-            this.resname = new StringView( 5 * size, "ASCII" );
+            this.resname = new Uint8Array( 5 * size );
             this.x = new Float32Array( size );
             this.y = new Float32Array( size );
             this.z = new Float32Array( size );
-            this.element = new StringView( 3 * size, "ASCII" );
-            this.chainname = new StringView( size, "ASCII" );
+            this.element = new Uint8Array( 3 * size );
+            this.chainname = new Uint8Array( size );
             this.resno = new Int32Array( size );
             this.serial = new Int32Array( size );
-            this.ss = new StringView( size, "ASCII" );
+            this.ss = new Uint8Array( size );
             this.vdw = new Float32Array( size );
             this.covalent = new Float32Array( size );
-
             this.hetero = new Uint8Array( size );
             this.bfactor = new Float32Array( size );
             this.bonds = new Array( size );
-            this.altloc = new StringView( size, "ASCII" );
-            this.atomname = new StringView( 4 * size, "ASCII" );
+            this.altloc = new Uint8Array( size );
+            this.atomname = new Uint8Array( 4 * size );
 
         };
 
@@ -117,84 +114,102 @@
             setResname: function( i, str ){
 
                 var j = 5 * i;
-                this.resname.rawData[ j ] = str.charCodeAt( 0 );
-                this.resname.rawData[ j + 1 ] = str.charCodeAt( 1 );
-                this.resname.rawData[ j + 2 ] = str.charCodeAt( 2 );
-                this.resname.rawData[ j + 3 ] = str.charCodeAt( 3 );
-                this.resname.rawData[ j + 4 ] = str.charCodeAt( 4 );
+                this.resname[ j ] = str.charCodeAt( 0 );
+                this.resname[ j + 1 ] = str.charCodeAt( 1 );
+                this.resname[ j + 2 ] = str.charCodeAt( 2 );
+                this.resname[ j + 3 ] = str.charCodeAt( 3 );
+                this.resname[ j + 4 ] = str.charCodeAt( 4 );
 
             },
 
             getResname: function( i ){
 
-                return this.resname.subview( i * 5, 5 );
+                var j = 5 * i;
+                return String.fromCharCode(
+                    this.resname[ j ],
+                    this.resname[ j + 1 ],
+                    this.resname[ j + 2 ],
+                    this.resname[ j + 3 ],
+                    this.resname[ j + 4 ]
+                );
 
             },
 
             setElement: function( i, str ){
 
                 var j = 3 * i;
-                this.resname.rawData[ j ] = str.charCodeAt( 0 );
-                this.resname.rawData[ j + 1 ] = str.charCodeAt( 1 );
-                this.resname.rawData[ j + 2 ] = str.charCodeAt( 2 );
+                this.element[ j ] = str.charCodeAt( 0 );
+                this.element[ j + 1 ] = str.charCodeAt( 1 );
+                this.element[ j + 2 ] = str.charCodeAt( 2 );
 
             },
 
             getElement: function( i ){
 
-                return this.element.subview( i * 3, 3 );
+                var j = 3 * i;
+                return String.fromCharCode(
+                    this.element[ j ],
+                    this.element[ j + 1 ],
+                    this.element[ j + 2 ]
+                );
 
             },
 
             setChainname: function( i, str ){
 
-                this.chainname.rawData[ i ] = str.charCodeAt( 0 );
+                this.chainname[ i ] = str.charCodeAt( 0 );
 
             },
 
             getChainname: function( i ){
 
-                return this.chainname.subview( i, 1 );
+                return String.fromCharCode( this.chainname[ i ] );
 
             },
 
             setSS: function( i, str ){
 
-                this.ss.rawData[ i ] = str.charCodeAt( 0 );
+                this.ss[ i ] = str.charCodeAt( 0 );
 
             },
 
             getSS: function( i ){
 
-                return this.ss.subview( i, 1 );
+                return String.fromCharCode( this.ss[ i ] );
 
             },
 
             setAltloc: function( i, str ){
 
-                this.altloc.rawData[ i ] = str.charCodeAt( 0 );
+                this.altloc[ i ] = str.charCodeAt( 0 );
 
             },
 
             getAltloc: function( i ){
 
-                return this.altloc.subview( i, 1 );
+                return String.fromCharCode( this.altloc[ i ] );
 
             },
 
             setAtomname: function( i, str ){
 
                 var j = 4 * i;
-                this.atomname.rawData[ j ] = str.charCodeAt( 0 );
-                this.atomname.rawData[ j + 1 ] = str.charCodeAt( 1 );
-                this.atomname.rawData[ j + 2 ] = str.charCodeAt( 2 );
-                this.atomname.rawData[ j + 3 ] = str.charCodeAt( 3 );
+                this.atomname[ j ] = str.charCodeAt( 0 );
+                this.atomname[ j + 1 ] = str.charCodeAt( 1 );
+                this.atomname[ j + 2 ] = str.charCodeAt( 2 );
+                this.atomname[ j + 3 ] = str.charCodeAt( 3 );
 
             },
 
             getAtomname: function( i ){
 
-                return this.atomname.subview( i, 1 );
+                var j = 4 * i;
+                return String.fromCharCode(
+                    this.atomname[ j ],
+                    this.atomname[ j + 1 ],
+                    this.atomname[ j + 2 ],
+                    this.atomname[ j + 3 ]
+                );
 
             },
 
@@ -223,12 +238,14 @@
 
                 var name = "";
 
-                var resname = this.getResname( i );
+                var resname = this.getResname( i ).trim();
+                var chainname = this.getChainname( i ).trim();
+                var atomname = this.getAtomname( i ).trim();
 
                 if( resname ) name += "[" + resname + "]";
                 if( this.resno[ i ] ) name += this.resno[ i ];
-                if( this.chainname[ i ] ) name += ":" + this.chainname[ i ];
-                if( this.atomname[ i ] ) name += "." + this.atomname[ i ];
+                if( chainname ) name += ":" + chainname;
+                if( atomname ) name += "." + atomname;
                 if( this.residue && this.residue.chain &&
                         this.residue.chain.model ){
                     name += "/" + this.residue.chain.model.index;
@@ -290,6 +307,8 @@
                 atomArray.setAtomname( i, "CA  " );
             }
             console.timeEnd( "atomArray set" );
+
+            console.log( atomArray.qualifiedName( 9 ) );
             
             var atomList = new AtomList( n );
             var a;
