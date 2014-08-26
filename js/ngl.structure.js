@@ -754,14 +754,44 @@ NGL.AtomSet.prototype = {
 
         return function( selection ){
 
+            // console.time( "NGL.AtomSet.atomCenter" );
+
+            var i = 0;
+            var n = this.atomCount;
+
             box.makeEmpty();
 
-            this.eachAtom( function( a ){
+            if( selection ){
 
-                vector.set( a.x, a.y, a.z );
-                box.expandByPoint( vector );
+                var test = selection.test;
 
-            }, selection );
+                for( i = 0; i < n; ++i ){
+
+                    a = this.atoms[ i ];
+
+                    if( test( a ) ){
+
+                        vector.set( a.x, a.y, a.z );
+                        box.expandByPoint( vector );
+
+                    }
+
+                };
+
+            }else{
+
+                for( i = 0; i < n; ++i ){
+
+                    a = this.atoms[ i ];
+
+                    vector.set( a.x, a.y, a.z );
+                    box.expandByPoint( vector );
+
+                };
+
+            }
+
+            // console.timeEnd( "NGL.AtomSet.atomCenter" );
 
             return box.center();
 
@@ -1758,28 +1788,35 @@ NGL.Structure.prototype = {
         this.chainCount = 0;
         this.modelCount = 0;
 
+        this.atoms = [];
         this.models = [];
         this.bondSet = new NGL.BondSet();
 
     },
 
-    parse: function( str ){
+    parse: function( str, callback ){
 
-        this._parse( str );
+        var scope = this;
 
-        this.autoBond();
+        this._parse( str, function(){
 
-        if( this._doAutoSS ){
-            this.autoSS();
-        }
+            scope.autoBond();
 
-        if( this._doAutoChainName ){
-            this.autoChainName();
-        }
+            if( scope._doAutoSS ){
+                scope.autoSS();
+            }
 
-        this.center = this.atomCenter();
+            if( scope._doAutoChainName ){
+                scope.autoChainName();
+            }
 
-        // console.log( "Structure", this );
+            scope.center = scope.atomCenter();
+
+            // console.log( "Structure", scope );
+
+            if( typeof callback === "function" ) callback( scope );
+
+        } );
 
     },
 
@@ -1952,13 +1989,15 @@ NGL.Structure.prototype = {
 
     autoBond: function(){
 
-        // console.time( "NGL.Structure.autoBond" );
+        console.time( "NGL.Structure.autoBond" );
 
         var bondSet = this.bondSet;
 
         var i, j, n, a1, a2;
 
         // bonds within a residue
+
+        console.time( "NGL.Structure.autoBond within" );
 
         this.eachResidue( function( r ){
 
@@ -1980,7 +2019,11 @@ NGL.Structure.prototype = {
 
         } );
 
+        console.timeEnd( "NGL.Structure.autoBond within" );
+
         // bonds between residues
+
+        console.time( "NGL.Structure.autoBond between" );
 
         this.eachResidueN( 2, function( r1, r2 ){
 
@@ -2009,7 +2052,9 @@ NGL.Structure.prototype = {
 
         } );
 
-        // console.timeEnd( "NGL.Structure.autoBond" );
+        console.timeEnd( "NGL.Structure.autoBond between" );
+
+        console.timeEnd( "NGL.Structure.autoBond" );
 
     },
 
@@ -3275,10 +3320,13 @@ NGL.PdbStructure.prototype = Object.create( NGL.Structure.prototype );
  * Parses a pdb string. Based on GLmol.parsePDB2.
  * @param  {String} str
  */
-NGL.PdbStructure.prototype._parse = function( str ){
+NGL.PdbStructure.prototype._parse = function( str, callback ){
 
-    // console.time( "NGL.PdbStructure.parse" );
+    console.time( "NGL.PdbStructure.parse" );
 
+    var scope = this;
+
+    var atoms = this.atoms;
     var bondSet = this.bondSet;
 
     this.title = '';
@@ -3303,188 +3351,229 @@ NGL.PdbStructure.prototype._parse = function( str ){
     var chainDict = {};
     var serialDict = {};
 
+    var id = this.id;
+    var title = this.title;
+    var sheet = this.sheet;
+    var helix = this.helix;
+
     var a, currentChainname, currentResno;
 
-    for( i = 0; i < lines.length; i++ ){
+    var n = lines.length;
 
-        line = lines[i];
-        recordName = line.substr( 0, 6 );
+    var _i = 0;
+    var _step = 10000;
+    var _n = Math.min( _step, n );
 
-        if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
+    function _chunked(){
 
-            altloc = line[ 16 ];
-            if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
+        for( i = _i; i < _n; i++ ){
 
-            serial = parseInt( line.substr( 6, 5 ) );
-            atomname = line.substr( 12, 4 ).trim();
-            element = line.substr( 76, 2 ).trim();
-            chainname = line[  21 ];
-            resno = parseInt( line.substr( 22, 5 ) );
-            resname = line.substr( 17, 3 ).trim();
+            line = lines[i];
+            recordName = line.substr( 0, 6 );
 
-            if( !a ){
+            if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
-                c.chainname = chainname;
-                chainDict[ chainname ] = c;
+                altloc = line[ 16 ];
+                if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
 
-                r.resno = resno;
-                r.resname = resname;
+                serial = parseInt( line.substr( 6, 5 ) );
+                atomname = line.substr( 12, 4 ).trim();
+                element = line.substr( 76, 2 ).trim();
+                chainname = line[  21 ];
+                resno = parseInt( line.substr( 22, 5 ) );
+                resname = line.substr( 17, 3 ).trim();
+
+                if( !a ){
+
+                    c.chainname = chainname;
+                    chainDict[ chainname ] = c;
+
+                    r.resno = resno;
+                    r.resname = resname;
+
+                    currentChainname = chainname;
+                    currentResno = resno;
+
+                }
+
+                if( currentChainname!==chainname ){
+
+                    if( !chainDict[ chainname ] ){
+
+                        c = m.addChain();
+                        c.chainname = chainname;
+
+                        chainDict[ chainname ] = c;
+
+                    }else{
+
+                        c = chainDict[ chainname ];
+
+                    }
+
+                }
+
+                if( currentResno!==resno ){
+
+                    r = c.addResidue();
+                    r.resno = resno;
+                    r.resname = resname;
+
+                }
+
+                if( !element ) element = guessElem( atomname );
+
+                a = r.addAtom();
+
+                serialDict[ serial ] = a;
+
+                a.resname = resname;
+                a.x = parseFloat( line.substr( 30, 8 ) );
+                a.y = parseFloat( line.substr( 38, 8 ) );
+                a.z = parseFloat( line.substr( 46, 8 ) );
+                a.element = element;
+                a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
+                a.chainname = chainname;
+                a.resno = resno;
+                a.serial = serial;
+                a.atomname = atomname;
+                a.bonds = [];
+                a.ss = 'c';
+                a.bfactor = parseFloat( line.substr( 60, 8 ) );
+                a.altloc = altloc;
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
 
                 currentChainname = chainname;
                 currentResno = resno;
 
-            }
+                atoms.push( a );
 
-            if( currentChainname!==chainname ){
+            }else if( recordName == 'CONECT' ){
 
-                if( !chainDict[ chainname ] ){
+                var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
+                var pos = [ 11, 16, 21, 26 ];
 
+                for (var j = 0; j < 4; j++) {
+
+                    var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
+                    if( to === undefined ) continue;
+
+                    bondSet.addBond( from, to );
+
+                }
+
+            }else if( recordName == 'HELIX ' ){
+
+                var startChain = line[ 19 ];
+                var startResi = parseInt( line.substr( 21, 4 ) );
+                var endChain = line[ 31 ];
+                var endResi = parseInt( line.substr( 33, 4 ) );
+                helix.push([ startChain, startResi, endChain, endResi ]);
+
+            }else if( recordName == 'SHEET ' ){
+
+                var startChain = line[ 21 ];
+                var startResi = parseInt( line.substr( 22, 4 ) );
+                var endChain = line[ 32 ];
+                var endResi = parseInt( line.substr( 33, 4 ) );
+                sheet.push([ startChain, startResi, endChain, endResi ]);
+
+            }else if( recordName == 'HEADER' ){
+
+                id = line.substr( 62, 4 );
+
+            }else if( recordName == 'TITLE ' ){
+
+                title += line.substr( 10, 70 ) + "\n";
+
+            }else if( recordName == 'MODEL ' ){
+
+                if( a ){
+
+                    m = this.addModel();
                     c = m.addChain();
-                    c.chainname = chainname;
+                    r = c.addResidue();
+                    a = undefined;
 
-                    chainDict[ chainname ] = c;
-
-                }else{
-
-                    c = chainDict[ chainname ];
+                    chainDict = {};
+                    serialDict = {};
 
                 }
 
             }
 
-            if( currentResno!==resno ){
+        }
 
-                r = c.addResidue();
-                r.resno = resno;
-                r.resname = resname;
+        if( _n === n ){
 
-            }
+            console.timeEnd( "NGL.PdbStructure.parse" );
 
-            if( !element ) element = guessElem( atomname );
+            _postProcess();
+            callback( scope );
 
-            a = r.addAtom();
+        }else{
 
-            serialDict[ serial ] = a;
+            _i += _step;
+            _n = Math.min( _n + _step, n );
 
-            a.resname = resname;
-            a.x = parseFloat( line.substr( 30, 8 ) );
-            a.y = parseFloat( line.substr( 38, 8 ) );
-            a.z = parseFloat( line.substr( 46, 8 ) );
-            a.element = element;
-            a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
-            a.chainname = chainname;
-            a.resno = resno;
-            a.serial = serial;
-            a.atomname = atomname;
-            a.bonds = [];
-            a.ss = 'c';
-            a.bfactor = parseFloat( line.substr( 60, 8 ) );
-            a.altloc = altloc;
-            a.vdw = vdwRadii[ element ];
-            a.covalent = covRadii[ element ];
-
-            currentChainname = chainname;
-            currentResno = resno;
-
-        }else if( recordName == 'CONECT' ){
-
-            var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
-            var pos = [ 11, 16, 21, 26 ];
-
-            for (var j = 0; j < 4; j++) {
-
-                var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
-                if( to === undefined ) continue;
-
-                bondSet.addBond( from, to );
-
-            }
-
-        }else if( recordName == 'HELIX ' ){
-
-            var startChain = line[ 19 ];
-            var startResi = parseInt( line.substr( 21, 4 ) );
-            var endChain = line[ 31 ];
-            var endResi = parseInt( line.substr( 33, 4 ) );
-            this.helix.push([ startChain, startResi, endChain, endResi ]);
-
-        }else if( recordName == 'SHEET ' ){
-
-            var startChain = line[ 21 ];
-            var startResi = parseInt( line.substr( 22, 4 ) );
-            var endChain = line[ 32 ];
-            var endResi = parseInt( line.substr( 33, 4 ) );
-            this.sheet.push([ startChain, startResi, endChain, endResi ]);
-
-        }else if( recordName == 'HEADER' ){
-
-            this.id = line.substr( 62, 4 );
-
-        }else if( recordName == 'TITLE ' ){
-
-            this.title += line.substr( 10, 70 ) + "\n";
-
-        }else if( recordName == 'MODEL ' ){
-
-            if( a ){
-
-                m = this.addModel();
-                c = m.addChain();
-                r = c.addResidue();
-                a = undefined;
-
-                chainDict = {};
-                serialDict = {};
-
-            }
+            setTimeout( _chunked );
 
         }
 
     }
 
-    // assign secondary structures
+    function _postProcess(){
 
-    for( j = 0; j < this.sheet.length; j++ ){
+        // assign secondary structures
 
-        var selection = new NGL.Selection(
-            this.sheet[j][1] + "-" + this.sheet[j][3] + ":" + this.sheet[j][0]
-        );
+        console.time( "NGL.PdbStructure.parse ss" );
 
-        this.eachResidue( function( r ){
+        for( j = 0; j < sheet.length; j++ ){
 
-            r.ss = "s";
+            var selection = new NGL.Selection(
+                sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
+            );
 
-        }, selection );
+            scope.eachResidue( function( r ){
+
+                r.ss = "s";
+
+            }, selection );
+
+        }
+
+        for( j = 0; j < helix.length; j++ ){
+
+            var selection = new NGL.Selection(
+                helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
+            );
+
+            scope.eachResidue( function( r ){
+
+                r.ss = "h";
+
+            }, selection );
+
+        }
+
+        console.timeEnd( "NGL.PdbStructure.parse ss" );
+
+        if( sheet.length === 0 && helix.length === 0 ){
+            scope._doAutoSS = true;
+        }
+
+        // check for chain names
+
+        var _doAutoChainName = true;
+        scope.eachChain( function( c ){
+            if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+        } );
+        scope._doAutoChainName = _doAutoChainName;
 
     }
 
-    for( j = 0; j < this.helix.length; j++ ){
-
-        var selection = new NGL.Selection(
-            this.helix[j][1] + "-" + this.helix[j][3] + ":" + this.helix[j][0]
-        );
-
-        this.eachResidue( function( r ){
-
-            r.ss = "h";
-
-        }, selection );
-
-    }
-
-    if( this.sheet.length === 0 && this.helix.length === 0 ){
-        this._doAutoSS = true;
-    }
-
-    // check for chain names
-
-    var _doAutoChainName = true;
-    this.eachChain( function( c ){
-        if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
-    } );
-    this._doAutoChainName = _doAutoChainName;
-
-    // console.timeEnd( "NGL.PdbStructure.parse" );
+    setTimeout( _chunked );
 
 };
 
@@ -3504,89 +3593,13 @@ NGL.GroStructure = function( name, path, callback ){
 
 NGL.GroStructure.prototype = Object.create( NGL.Structure.prototype );
 
-NGL.GroStructure.prototype._parse = function( str ){
+NGL.GroStructure.prototype._parse = function( str, callback ){
 
-    // console.time( "NGL.GroStructure.parse" );
-
-    var lines = str.trim().split( "\n" );
-
-    var guessElem = NGL.guessElement;
-    var covRadii = NGL.CovalentRadii;
-    var vdwRadii = NGL.VdwRadii;
-
-    var i, j;
-    var line, serial, atomname, element, resno, resname;
-
-    this.title = lines[ 0 ].trim();
-    this.size = parseInt( lines[ 1 ] );
-    var b = lines[ lines.length-1 ].trim().split( /\s+/ );
-    this.box = [
-        parseFloat( b[0] ) * 10,
-        parseFloat( b[1] ) * 10,
-        parseFloat( b[2] ) * 10
-    ];
-
-    var m = this.addModel();
-    var c = m.addChain();
-    var r = c.addResidue();
-
-    var a, currentResno;
-
-    for( i = 2; i < lines.length-1; i++ ){
-
-        line = lines[i];
-
-        atomname = line.substr( 10, 5 ).trim();
-        resno = parseInt( line.substr( 0, 5 ) )
-        resname = line.substr( 5, 5 ).trim();
-
-        if( !a ){
-
-            r.resno = resno;
-            r.resname = resname;
-            currentResno = resno;
-
-        }
-
-        if( currentResno!==resno ){
-
-            r = c.addResidue();
-            r.resno = resno;
-            r.resname = resname;
-
-        }
-
-        element = guessElem( atomname );
-
-        a = r.addAtom();
-
-        a.resname = resname;
-        a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
-        a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
-        a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
-        a.element = element;
-        a.resno = resno;
-        a.serial = parseInt( line.substr( 15, 5 ) );
-        a.atomname = atomname;
-        a.ss = 'c';
-        a.bonds = [];
-
-        a.vdw = vdwRadii[ element ];
-        a.covalent = covRadii[ element ];
-
-        currentResno = resno;
-
-    }
-
-    // console.timeEnd( "NGL.GroStructure.parse" );
-
-};
-
-NGL.GroStructure.prototype._parse2 = function( str, callback ){
-
-    // console.time( "NGL.GroStructure.parse2" );
+    console.time( "NGL.GroStructure.parse" );
 
     var scope = this;
+
+    var atoms = this.atoms;
 
     var lines = str.trim().split( "\n" );
 
@@ -3615,8 +3628,8 @@ NGL.GroStructure.prototype._parse2 = function( str, callback ){
     var n = lines.length - 1;
 
     var _i = 2;
-    var _n = 10002;
     var _step = 10000;
+    var _n = Math.min( _step + 2, n );
 
     function _chunked(){
 
@@ -3664,12 +3677,13 @@ NGL.GroStructure.prototype._parse2 = function( str, callback ){
 
             currentResno = resno;
 
+            atoms.push( a );
+
         }
 
         if( _n === n ){
 
-            // console.timeEnd( "NGL.GroStructure.parse2" );
-            // console.log( scope );
+            console.timeEnd( "NGL.GroStructure.parse" );
             callback( scope );
 
         }else{
