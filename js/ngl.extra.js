@@ -823,11 +823,11 @@ NGL.PdbLoader = function( manager ){
 
 NGL.PdbLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.PdbLoader.prototype.init = function( str, name, path ){
+NGL.PdbLoader.prototype.init = function( str, name, path, callback ){
 
     var pdb = new NGL.PdbStructure( name, path );
 
-    pdb.parse( str );
+    pdb.parse( str, callback );
 
     return pdb
 
@@ -847,7 +847,7 @@ NGL.GroLoader.prototype.init = function( str, name, path, callback ){
 
     var gro = new NGL.GroStructure( name, path );
 
-    gro.parse( str );
+    gro.parse( str, callback );
 
     return gro
 
@@ -863,7 +863,7 @@ NGL.ObjLoader = function( manager ){
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-NGL.ObjLoader.prototype.init = function( data, name, path ){
+NGL.ObjLoader.prototype.init = function( data, name, path, callback ){
 
     if( typeof data === "string" ){
 
@@ -871,7 +871,11 @@ NGL.ObjLoader.prototype.init = function( data, name, path ){
 
     }
 
-    return new NGL.Surface( data, name, path );
+    var obj = new NGL.Surface( data, name, path )
+
+    if( typeof callback === "function" ) callback( obj );
+
+    return obj;
 
 };
 
@@ -885,7 +889,7 @@ NGL.PlyLoader = function( manager ){
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
-NGL.PlyLoader.prototype.init = function( data, name, path ){
+NGL.PlyLoader.prototype.init = function( data, name, path, callback ){
 
     if( typeof data === "string" ){
 
@@ -893,7 +897,11 @@ NGL.PlyLoader.prototype.init = function( data, name, path ){
 
     }
 
-    return new NGL.Surface( data, name, path );
+    var ply = new NGL.Surface( data, name, path );
+
+    if( typeof callback === "function" ) callback( ply );
+
+    return ply;
 
 };
 
@@ -907,9 +915,11 @@ NGL.ScriptLoader = function( manager ){
 
 NGL.ScriptLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.ScriptLoader.prototype.init = function( data, name, path ){
+NGL.ScriptLoader.prototype.init = function( data, name, path, callback ){
 
     var script = new NGL.Script( data, name, path );
+
+    if( typeof callback === "function" ) callback( script );
 
     return script;
 
@@ -960,9 +970,11 @@ NGL.autoLoad = function(){
 
         function init( data ){
 
-            object = loader.init( data, name, path );
+            object = loader.init( data, name, path, function( _object ){
 
-            if( typeof onLoad === "function" ) onLoad( object );
+                if( typeof onLoad === "function" ) onLoad( _object );
+
+            } );
 
         }
 
