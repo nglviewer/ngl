@@ -843,7 +843,7 @@ NGL.GroLoader = function( manager ){
 
 NGL.GroLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.GroLoader.prototype.init = function( str, name, path ){
+NGL.GroLoader.prototype.init = function( str, name, path, callback ){
 
     var gro = new NGL.GroStructure( name, path );
 

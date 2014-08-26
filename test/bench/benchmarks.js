@@ -54,7 +54,12 @@ var loadingManager = new THREE.LoadingManager( function(){
     console.log( "data loaded" );
     suite.run( true );
 
-});
+    // var groStructure = new NGL.GroStructure();
+    // groStructure._parse2( data[ "pbc" ], function(){
+    //     console.log( groStructure );
+    // } );
+
+} );
 
 var xhrLoader = new THREE.XHRLoader( loadingManager );
 
@@ -73,42 +78,42 @@ Object.keys( data ).forEach( function( name ){
 
 
 
-suite.add( '1crn parse',
+// suite.add( '1crn parse',
     
-    {
-        async: true,
-        fn: function(){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "1crn" ] );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         async: true,
+//         fn: function(){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "1crn" ] );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
 
-suite.add( '1crn parse web worker',
+// suite.add( '1crn parse web worker',
     
-    {
-        async: true,
-        defer: true,
-        fn: function( deffered ){
-            worker.onmessage = function( event ){
-                deferred.resolve();
-            };
-            worker.postMessage( data[ "1crn" ] );
-        },
-        setup: function(){
-            var worker = new Worker( '../../js/ngl.structure.js' );
-        },
-        teardown: function(){
-            worker.terminate();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deffered ){
+//             worker.onmessage = function( event ){
+//                 deferred.resolve();
+//             };
+//             worker.postMessage( data[ "1crn" ] );
+//         },
+//         setup: function(){
+//             var worker = new Worker( '../../js/ngl.structure.js' );
+//         },
+//         teardown: function(){
+//             worker.terminate();
+//         }
+//     }
 
-);
+// );
 
 
 // suite.add( '1crn autoBond',
@@ -130,42 +135,42 @@ suite.add( '1crn parse web worker',
 // );
 
 
-suite.add( '3dqb parse',
+// suite.add( '3dqb parse',
     
-    {
-        async: true,
-        fn: function(){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "3dqb" ] );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         async: true,
+//         fn: function(){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "3dqb" ] );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
 
-suite.add( '3dqb parse web worker',
+// suite.add( '3dqb parse web worker',
     
-    {
-        async: true,
-        defer: true,
-        fn: function( deffered ){
-            worker.onmessage = function( event ){
-                deferred.resolve();
-            };
-            worker.postMessage( data[ "3dqb" ] );
-        },
-        setup: function(){
-            var worker = new Worker( '../../js/ngl.structure.js' );
-        },
-        teardown: function(){
-            worker.terminate();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deffered ){
+//             worker.onmessage = function( event ){
+//                 deferred.resolve();
+//             };
+//             worker.postMessage( data[ "3dqb" ] );
+//         },
+//         setup: function(){
+//             var worker = new Worker( '../../js/ngl.structure.js' );
+//         },
+//         teardown: function(){
+//             worker.terminate();
+//         }
+//     }
 
-);
+// );
 
 
 // suite.add( '3dqb autoBond',
@@ -187,42 +192,42 @@ suite.add( '3dqb parse web worker',
 // );
 
 
-suite.add( '3l5q parse',
+// suite.add( '3l5q parse',
     
-    {
-        async: true,
-        fn: function(){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "3l5q" ] );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         async: true,
+//         fn: function(){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "3l5q" ] );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
 
-suite.add( '3l5q parse web worker',
+// suite.add( '3l5q parse web worker',
     
-    {
-        async: true,
-        defer: true,
-        fn: function( deffered ){
-            worker.onmessage = function( event ){
-                deferred.resolve();
-            };
-            worker.postMessage( data[ "3l5q" ] );
-        },
-        setup: function(){
-            var worker = new Worker( '../../js/ngl.structure.js' );
-        },
-        teardown: function(){
-            worker.terminate();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deffered ){
+//             worker.onmessage = function( event ){
+//                 deferred.resolve();
+//             };
+//             worker.postMessage( data[ "3l5q" ] );
+//         },
+//         setup: function(){
+//             var worker = new Worker( '../../js/ngl.structure.js' );
+//         },
+//         teardown: function(){
+//             worker.terminate();
+//         }
+//     }
 
-);
+// );
 
 
 // suite.add( '3l5q parse2',
@@ -260,34 +265,37 @@ suite.add( '3l5q parse web worker',
 // );
 
 
-// suite.add( 'pbc parse',
+suite.add( 'pbc parse',
     
-//     {
-//         async: true,
-//         fn: function(){
-//             groStructure.reset();
-//             groStructure._parse( data[ "pbc" ] );
-//         },
-//         setup: function(){
-//             var groStructure = new NGL.GroStructure();
-//         }
-//     }
+    {
+        async: true,
+        fn: function(){
+            groStructure.reset();
+            groStructure._parse( data[ "pbc" ] );
+        },
+        setup: function(){
+            var groStructure = new NGL.GroStructure();
+        }
+    }
 
-// );
+);
 
 
-// suite.add( 'pbc parse2',
+suite.add( 'pbc parse2',
     
-//     {
-//         async: true,
-//         fn: function(){
-//             groStructure.reset();
-//             groStructure._parse2( data[ "pbc" ] );
-//         },
-//         setup: function(){
-//             var groStructure = new NGL.GroStructure();
-//         }
-//     }
+    {
+        async: true,
+        defer: true,
+        fn: function( deffered ){
+            groStructure.reset();
+            groStructure._parse2( data[ "pbc" ], function(){
+                deferred.resolve();
+            } );
+        },
+        setup: function(){
+            var groStructure = new NGL.GroStructure();
+        }
+    }
 
-// );
+);
 
