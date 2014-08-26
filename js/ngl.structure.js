@@ -4,6 +4,12 @@
  */
 
 
+var NGL = NGL || {};
+
+if( typeof importScripts === 'function' ){
+    importScripts( 'three/three.js', 'lib/ui/signals.min.js' );
+}
+
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 NGL.ElementColors = {
     "H": 0xFFFFFF, "HE": 0xD9FFFF, "LI": 0xCC80FF, "BE": 0xC2FF00, "B": 0xFFB5B5,
@@ -3487,12 +3493,12 @@ NGL.PdbStructure.prototype._parse = function( str ){
  * An object fro representing a GRO file.
  * @class
  */
-NGL.GroStructure = function( name ){
+NGL.GroStructure = function( name, path, callback ){
 
     this._doAutoSS = true;
     this._doAutoChainName = true;
 
-    NGL.Structure.call( this, name );
+    NGL.Structure.call( this, name, path, callback );
 
 };
 
@@ -3574,6 +3580,126 @@ NGL.GroStructure.prototype._parse = function( str ){
 
     // console.timeEnd( "NGL.GroStructure.parse" );
 
+};
+
+NGL.GroStructure.prototype._parse2 = function( str, callback ){
+
+    // console.time( "NGL.GroStructure.parse2" );
+
+    var scope = this;
+
+    var lines = str.trim().split( "\n" );
+
+    var guessElem = NGL.guessElement;
+    var covRadii = NGL.CovalentRadii;
+    var vdwRadii = NGL.VdwRadii;
+
+    var i, j;
+    var line, serial, atomname, element, resno, resname;
+
+    this.title = lines[ 0 ].trim();
+    this.size = parseInt( lines[ 1 ] );
+    var b = lines[ lines.length-1 ].trim().split( /\s+/ );
+    this.box = [
+        parseFloat( b[0] ) * 10,
+        parseFloat( b[1] ) * 10,
+        parseFloat( b[2] ) * 10
+    ];
+
+    var m = this.addModel();
+    var c = m.addChain();
+    var r = c.addResidue();
+
+    var a, currentResno;
+
+    var n = lines.length - 1;
+
+    var _i = 2;
+    var _n = 10002;
+    var _step = 10000;
+
+    function _chunked(){
+
+        for( i = _i; i < _n; i++ ){
+
+            line = lines[i];
+
+            atomname = line.substr( 10, 5 ).trim();
+            resno = parseInt( line.substr( 0, 5 ) )
+            resname = line.substr( 5, 5 ).trim();
+
+            if( !a ){
+
+                r.resno = resno;
+                r.resname = resname;
+                currentResno = resno;
+
+            }
+
+            if( currentResno!==resno ){
+
+                r = c.addResidue();
+                r.resno = resno;
+                r.resname = resname;
+
+            }
+
+            element = guessElem( atomname );
+
+            a = r.addAtom();
+
+            a.resname = resname;
+            a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
+            a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
+            a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
+            a.element = element;
+            a.resno = resno;
+            a.serial = parseInt( line.substr( 15, 5 ) );
+            a.atomname = atomname;
+            a.ss = 'c';
+            a.bonds = [];
+
+            a.vdw = vdwRadii[ element ];
+            a.covalent = covRadii[ element ];
+
+            currentResno = resno;
+
+        }
+
+        if( _n === n ){
+
+            // console.timeEnd( "NGL.GroStructure.parse2" );
+            // console.log( scope );
+            callback( scope );
+
+        }else{
+
+            _i += _step;
+            _n = Math.min( _n + _step, n );
+
+            setTimeout( _chunked );
+
+        }
+
+    }
+
+    setTimeout( _chunked );
+
+};
+
+
+///////////
+// Worker
+
+onmessage = function( event ){
+
+    var pdbStructure = new NGL.PdbStructure();
+    
+    pdbStructure._parse( event.data );
+
+    postMessage( pdbStructure );
+    // postMessage( "moin" );
+    
 };
 
 
