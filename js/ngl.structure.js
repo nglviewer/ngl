@@ -756,6 +756,7 @@ NGL.AtomSet.prototype = {
 
             // console.time( "NGL.AtomSet.atomCenter" );
 
+            var a;
             var i = 0;
             var n = this.atomCount;
 
@@ -3140,9 +3141,7 @@ NGL.Atom.prototype = {
     z: undefined,
     element: undefined,
     chainname: undefined,
-    chainindex: undefined,
     resno: undefined,
-    resindex: undefined,
     serial: undefined,
     ss: undefined,
     vdw: undefined,
@@ -3152,15 +3151,16 @@ NGL.Atom.prototype = {
     bonds: undefined,
     altloc: undefined,
     atomname: undefined,
-    modelindex: undefined,
 
     connectedTo: function( atom ){
 
         if( this.hetero && atom.hetero ) return false;
 
-        var distSquared = ( this.x - atom.x ) * ( this.x - atom.x ) +
-                          ( this.y - atom.y ) * ( this.y - atom.y ) +
-                          ( this.z - atom.z ) * ( this.z - atom.z );
+        var x = this.x - atom.x;
+        var y = this.y - atom.y;
+        var z = this.z - atom.z;
+
+        var distSquared = x * x + y * y + z * z;
 
         // console.log( distSquared );
         if( this.residue.isCg() && distSquared < 28.0 ) return true;
@@ -3200,6 +3200,7 @@ NGL.StructureSubset = function( structure, sele ){
     this.structure = structure;
     this.selection = new NGL.Selection( sele );
 
+    this.atoms = [];
     this.bondSet = new NGL.BondSet();
 
     this._build();
@@ -3214,6 +3215,7 @@ NGL.StructureSubset.prototype._build = function(){
 
     var structure = this.structure;
     var selection = this.selection;
+    var atoms = this.atoms;
     var bondSet = this.bondSet;
 
     var _s = this;
@@ -3246,9 +3248,7 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.z = a.z;
                     _a.element = a.element;
                     _a.chainname = a.chainname;
-                    _a.chainindex = a.chainindex;
                     _a.resno = a.resno;
-                    _a.resindex = a.resindex;
                     _a.serial = a.serial;
                     _a.ss = a.ss;
                     _a.vdw = a.vdw;
@@ -3258,9 +3258,9 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.bonds = [];
                     _a.altloc = a.altloc;
                     _a.atomname = a.atomname;
-                    _a.modelindex = a.modelindex;
 
                     atomIndexDict[ a.index ] = _a;
+                    atoms.push( _a );
 
                 }, selection );
 
@@ -3491,7 +3491,7 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
 
                 if( a ){
 
-                    m = this.addModel();
+                    m = scope.addModel();
                     c = m.addChain();
                     r = c.addResidue();
                     a = undefined;
