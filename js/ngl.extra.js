@@ -102,7 +102,7 @@ NGL.PickingControls = function( viewer, stage ){
             );
             console.log( "devicePixelRatio", window.devicePixelRatio )
         }else{
-            viewer.render();
+            viewer.requestRender();
         }
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
@@ -555,7 +555,7 @@ NGL.StructureComponent.prototype = {
 
         } );
 
-        this.stage.viewer.render();
+        this.stage.viewer.requestRender();
 
     },
 
@@ -661,7 +661,6 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.name = surface.name;
 
     this.viewer.add( surface.buffer );
-    this.viewer.render();
 
 };
 
@@ -682,7 +681,7 @@ NGL.SurfaceComponent.prototype = {
     setVisibility: function( value ){
 
         this.surface.setVisibility( value );
-        this.viewer.render();
+        this.viewer.requestRender();
 
         NGL.Component.prototype.setVisibility.call( this, value );
 
@@ -1167,7 +1166,7 @@ NGL.Representation.prototype = {
 
         });
 
-        this.viewer.render();
+        this.viewer.requestRender();
 
         this.signals.visibilityChanged.dispatch( value );
 
