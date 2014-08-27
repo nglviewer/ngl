@@ -1515,7 +1515,7 @@ NGL.Viewer.prototype = {
  * @class
  * @private
  */
-NGL.Buffer = function () {
+NGL.Buffer = function( position, color ){
 
     // required properties:
     // - size
@@ -1527,8 +1527,8 @@ NGL.Buffer = function () {
     this.geometry = new THREE.BufferGeometry();
 
     this.addAttributes({
-        "position": { type: "v3", value: null },
-        "color": { type: "c", value: null },
+        "position": { type: "v3", value: position },
+        "color": { type: "c", value: color },
     });
 
     this.uniforms = THREE.UniformsUtils.merge( [
@@ -1599,18 +1599,32 @@ NGL.Buffer.prototype = {
 
         Object.keys( attributes ).forEach( function( name ){
 
+            var buf;
             var a = attributes[ name ];
 
             this.attributes[ name ] = { 
                 "type": a.type, "value": null
             };
 
+            if( a.value ){
+
+                if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
+                    console.error( "attribute value has wrong length" );
+                }
+
+                buf = a.value;
+
+            }else{
+            
+                buf = new Float32Array(
+                    this.attributeSize * itemSize[ a.type ]
+                );
+
+            }
+
             this.geometry.addAttribute( 
                 name, 
-                new THREE.BufferAttribute(
-                    new Float32Array( this.attributeSize * itemSize[ a.type ] ),
-                    itemSize[ a.type ]
-                )
+                new THREE.BufferAttribute( buf, itemSize[ a.type ] )
             );
 
         }, this );
@@ -1642,14 +1656,22 @@ NGL.Buffer.prototype = {
 
     makeIndex: function(){
 
+        var buf;
+
+        if( this.index ){
+
+            buf = this.index;
+
+        }else{
+
+            buf = new Uint32Array( this.index.length );
+
+        }
+
         this.geometry.addAttribute( 
             "index",
-            new THREE.BufferAttribute(
-                new Uint32Array( this.index.length ), 1
-            )
+            new THREE.BufferAttribute( buf, 1 )
         );
-
-        this.geometry.attributes[ "index" ].array.set( this.index );
 
     },
 
@@ -1692,16 +1714,10 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
 
     this.index = index;
 
-    NGL.Buffer.call( this );
+    NGL.Buffer.call( this, position, color );
     
     this.addAttributes({
-        "normal": { type: "v3", value: null },
-    });
-    
-    this.setAttributes({
-        "position": position,
-        "color": color,
-        "normal": normal,
+        "normal": { type: "v3", value: normal },
     });
     
     this.finalize();
@@ -1716,11 +1732,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
     if( pickingColor ){
 
         this.addAttributes({
-            "pickingColor": { type: "c", value: null },
-        });
-
-        this.setAttributes({
-            "pickingColor": pickingColor,
+            "pickingColor": { type: "c", value: pickingColor },
         });
 
         this.pickingMaterial = new THREE.ShaderMaterial( {
@@ -3654,11 +3666,14 @@ NGL.TubeMeshBuffer.prototype = {
 
                 l = k + j * 3 * 2;
 
-                meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+                // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+                meshIndex[ l ] = irs + j;
                 meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
-                meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                meshIndex[ l + 2 ] = irs1 + j;
 
-                meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+                meshIndex[ l + 3 ] = irs1 + j;
                 meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
                 meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
 
