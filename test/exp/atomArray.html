@@ -456,7 +456,8 @@
 
             console.log( atomArray.qualifiedName( 9 ) );
             
-            var pa = new ProxyAtom( atomArray );
+            var atomArray2 = new AtomArray( n );
+            var pa = new ProxyAtom( atomArray2 );
             console.time( "atomArray atomProxy set" );
             for( i = 0; i < n; ++i ){
                 pa.index = i;
