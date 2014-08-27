@@ -47,8 +47,8 @@ UI.ColorPopupMenu = function(){
         })
         .onChange( function(){
 
-            scope.setScheme( schemeSelector.getValue() );
-            if( schemeSelector.getValue() !== "color" ){
+            scope.setScheme( scope.schemeSelector.getValue() );
+            if( scope.schemeSelector.getValue() !== "color" ){
                 scope.menu.setMenuDisplay( "none" );
             }
             scope.dom.dispatchEvent( changeEvent );
