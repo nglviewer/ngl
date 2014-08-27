@@ -257,6 +257,152 @@
 
         };
 
+        var ProxyAtom = function( atomArray, index ){
+
+            this.atomArray = atomArray;
+            this.index = index;
+
+        };
+
+        ProxyAtom.prototype = {
+
+            get atomno () {
+                return this.atomArray.atomno[ this.index ];
+            },
+            set atomno ( value ) {
+                this.atomArray.atomno[ this.index ] = value;
+            },
+
+            get resname () {
+                return this.atomArray.getResname( this.index );
+            },
+            set resname ( value ) {
+                this.atomArray.setResname( this.index, value );
+            },
+
+            get x () {
+                return this.atomArray.x[ this.index ];
+            },
+            set x ( value ) {
+                this.atomArray.x[ this.index ] = value;
+            },
+
+            get y () {
+                return this.atomArray.y[ this.index ];
+            },
+            set y ( value ) {
+                this.atomArray.y[ this.index ] = value;
+            },
+
+            get z () {
+                return this.atomArray.z[ this.index ];
+            },
+            set z ( value ) {
+                this.atomArray.z[ this.index ] = value;
+            },
+
+            get element () {
+                return this.atomArray.getElement( this.index );
+            },
+            set element ( value ) {
+                this.atomArray.setElement( this.index, value );
+            },
+
+            get chainname () {
+                return this.atomArray.getChainname( this.index );
+            },
+            set chainname ( value ) {
+                this.atomArray.setChainname( this.index, value );
+            },
+
+            get resno () {
+                return this.atomArray.resno[ this.index ];
+            },
+            set resno ( value ) {
+                this.atomArray.resno[ this.index ] = value;
+            },
+
+            get serial () {
+                return this.atomArray.serial[ this.index ];
+            },
+            set serial ( value ) {
+                this.atomArray.serial[ this.index ] = value;
+            },
+
+            get ss () {
+                return this.atomArray.getSS( this.index );
+            },
+            set ss ( value ) {
+                this.atomArray.setSS( this.index, value );
+            },
+
+            get vdw () {
+                return this.atomArray.vdw[ this.index ];
+            },
+            set vdw ( value ) {
+                this.atomArray.vdw[ this.index ] = value;
+            },
+
+            get covalent () {
+                return this.atomArray.covalent[ this.index ];
+            },
+            set covalent ( value ) {
+                this.atomArray.covalent[ this.index ] = value;
+            },
+
+            get hetero () {
+                return this.atomArray.hetero[ this.index ];
+            },
+            set hetero ( value ) {
+                this.atomArray.hetero[ this.index ] = value;
+            },
+
+            get bfactor () {
+                return this.atomArray.bfactor[ this.index ];
+            },
+            set bfactor ( value ) {
+                this.atomArray.bfactor[ this.index ] = value;
+            },
+
+            get bonds () {
+                return this.atomArray.bonds[ this.index ];
+            },
+            set bonds ( value ) {
+                this.atomArray.bonds[ this.index ] = value;
+            },
+
+            get altloc () {
+                return this.atomArray.getAltloc( this.index );
+            },
+            set altloc ( value ) {
+                this.atomArray.setAltloc( this.index, value );
+            },
+
+            get atomname () {
+                return this.atomArray.getAtomname( this.index );
+            },
+            set atomname ( value ) {
+                this.atomArray.setAtomname( this.index, value );
+            },
+
+            qualifiedName: function(){
+
+                var name = "";
+
+                if( this.resname ) name += "[" + this.resname + "]";
+                if( this.resno ) name += this.resno;
+                if( this.chainname ) name += ":" + this.chainname;
+                if( this.atomname ) name += "." + this.atomname;
+                if( this.residue && this.residue.chain &&
+                        this.residue.chain.model ){
+                    name += "/" + this.residue.chain.model.index;
+                } 
+
+                return name;
+
+            }
+
+        }
 
         function test( n ){
 
@@ -310,6 +456,32 @@
 
             console.log( atomArray.qualifiedName( 9 ) );
             
+            var pa = new ProxyAtom( atomArray );
+            console.time( "atomArray atomProxy set" );
+            for( i = 0; i < n; ++i ){
+                pa.index = i;
+                pa.atomno = i;
+                pa.resname = "GLU  ";
+                pa.x = 6.234;
+                pa.y = 7.345;
+                pa.z = 8.456;
+                pa.element = "NE ";
+                pa.chainname = "B";
+                pa.resno = i;
+                pa.serial = i;
+                pa.ss = "s";
+                pa.vdw = 1.5;
+                pa.covalent = 1.3;
+                pa.hetero = 0;
+                pa.bfactor = 40.234;
+                pa.bonds = new Array( 3 );
+                pa.altloc = " ";
+                pa.atomname = "N   ";
+            }
+            console.timeEnd( "atomArray atomProxy set" );
+
+            console.log( pa.qualifiedName( 9 ) );
+
             var atomList = new AtomList( n );
             var a;
             console.time( "atomList set" );
