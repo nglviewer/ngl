@@ -6,9 +6,9 @@
 
 var NGL = NGL || {};
 
-if( typeof importScripts === 'function' ){
-    importScripts( 'three/three.js', 'lib/ui/signals.min.js' );
-}
+// if( typeof importScripts === 'function' ){
+//     importScripts( 'three/three.js', 'lib/ui/signals.min.js' );
+// }
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 NGL.ElementColors = {
@@ -3004,6 +3004,15 @@ NGL.Residue.prototype = {
 
     },
 
+    addProxyAtom: function( atomArray ){
+
+        var a = new NGL.ProxyAtom( atomArray, this.nextAtomIndex() );
+        a.residue = this;
+        this.atoms.push( a );
+        return a;
+
+    },
+
     eachAtom: function( callback, selection ){
 
         var i, a;
@@ -3151,6 +3160,331 @@ NGL.Atom.prototype = {
     bonds: undefined,
     altloc: undefined,
     atomname: undefined,
+
+    connectedTo: function( atom ){
+
+        if( this.hetero && atom.hetero ) return false;
+
+        var x = this.x - atom.x;
+        var y = this.y - atom.y;
+        var z = this.z - atom.z;
+
+        var distSquared = x * x + y * y + z * z;
+
+        // console.log( distSquared );
+        if( this.residue.isCg() && distSquared < 28.0 ) return true;
+
+        if( isNaN( distSquared ) ) return false;
+        if( distSquared < 0.5 ) return false; // duplicate or altloc
+
+        var d = this.covalent + atom.covalent + 0.3;
+        return distSquared < ( d * d );
+
+    },
+
+    qualifiedName: function(){
+
+        var name = "";
+
+        if( this.resname ) name += "[" + this.resname + "]";
+        if( this.resno ) name += this.resno;
+        if( this.chainname ) name += ":" + this.chainname;
+        if( this.atomname ) name += "." + this.atomname;
+        if( this.residue && this.residue.chain &&
+                this.residue.chain.model ){
+            name += "/" + this.residue.chain.model.index;
+        } 
+
+        return name;
+
+    }
+
+}
+
+
+NGL.AtomArray = function( size ){
+
+    this.atomno = new Int32Array( size );
+    this.resname = new Uint8Array( 5 * size );
+    this.x = new Float32Array( size );
+    this.y = new Float32Array( size );
+    this.z = new Float32Array( size );
+    this.element = new Uint8Array( 3 * size );
+    this.chainname = new Uint8Array( size );
+    this.resno = new Int32Array( size );
+    this.serial = new Int32Array( size );
+    this.ss = new Uint8Array( size );
+    this.vdw = new Float32Array( size );
+    this.covalent = new Float32Array( size );
+    this.hetero = new Uint8Array( size );
+    this.bfactor = new Float32Array( size );
+    this.bonds = new Array( size );
+    this.altloc = new Uint8Array( size );
+    this.atomname = new Uint8Array( 4 * size );
+
+    this.residue = new Array( size );
+
+};
+
+NGL.AtomArray.prototype = {
+
+    setResname: function( i, str ){
+
+        var j = 5 * i;
+        this.resname[ j ] = str.charCodeAt( 0 );
+        this.resname[ j + 1 ] = str.charCodeAt( 1 );
+        this.resname[ j + 2 ] = str.charCodeAt( 2 );
+        this.resname[ j + 3 ] = str.charCodeAt( 3 );
+        this.resname[ j + 4 ] = str.charCodeAt( 4 );
+
+    },
+
+    getResname: function( i ){
+
+        var code;
+        var resname = "";
+        var j = 5 * i;
+        for( var k = 0; k < 5; ++k ){
+            code = this.resname[ j + k ];
+            if( code ){
+                resname += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return resname;
+
+    },
+
+    setElement: function( i, str ){
+
+        var j = 3 * i;
+        this.element[ j ] = str.charCodeAt( 0 );
+        this.element[ j + 1 ] = str.charCodeAt( 1 );
+        this.element[ j + 2 ] = str.charCodeAt( 2 );
+
+    },
+
+    getElement: function( i ){
+
+        var code;
+        var element = "";
+        var j = 3 * i;
+        for( var k = 0; k < 3; ++k ){
+            code = this.element[ j + k ];
+            if( code ){
+                element += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return element;
+
+    },
+
+    setChainname: function( i, str ){
+
+        this.chainname[ i ] = str.charCodeAt( 0 );
+
+    },
+
+    getChainname: function( i ){
+
+        var code = this.chainname[ i ];
+        return code ? String.fromCharCode( code ) : "";
+
+    },
+
+    setSS: function( i, str ){
+
+        this.ss[ i ] = str.charCodeAt( 0 );
+
+    },
+
+    getSS: function( i ){
+
+        var code = this.ss[ i ];
+        return code ? String.fromCharCode( code ) : "";
+
+    },
+
+    setAltloc: function( i, str ){
+
+        this.altloc[ i ] = str.charCodeAt( 0 );
+
+    },
+
+    getAltloc: function( i ){
+
+        var code = this.altloc[ i ];
+        return code ? String.fromCharCode( code ) : "";
+
+    },
+
+    setAtomname: function( i, str ){
+
+        var j = 4 * i;
+        this.atomname[ j ] = str.charCodeAt( 0 );
+        this.atomname[ j + 1 ] = str.charCodeAt( 1 );
+        this.atomname[ j + 2 ] = str.charCodeAt( 2 );
+        this.atomname[ j + 3 ] = str.charCodeAt( 3 );
+
+    },
+
+    getAtomname: function( i ){
+
+        var code;
+        var atomname = "";
+        var j = 4 * i;
+        for( var k = 0; k < 4; ++k ){
+            code = this.atomname[ j + k ];
+            if( code ){
+                atomname += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return atomname;
+
+    }
+
+};
+
+
+NGL.ProxyAtom = function( atomArray, index ){
+
+    this.atomArray = atomArray;
+    this.index = index;
+
+};
+
+NGL.ProxyAtom.prototype = {
+
+    get atomno () {
+        return this.atomArray.atomno[ this.index ];
+    },
+    set atomno ( value ) {
+        this.atomArray.atomno[ this.index ] = value;
+    },
+
+    get resname () {
+        return this.atomArray.getResname( this.index );
+    },
+    set resname ( value ) {
+        this.atomArray.setResname( this.index, value );
+    },
+
+    get x () {
+        return this.atomArray.x[ this.index ];
+    },
+    set x ( value ) {
+        this.atomArray.x[ this.index ] = value;
+    },
+
+    get y () {
+        return this.atomArray.y[ this.index ];
+    },
+    set y ( value ) {
+        this.atomArray.y[ this.index ] = value;
+    },
+
+    get z () {
+        return this.atomArray.z[ this.index ];
+    },
+    set z ( value ) {
+        this.atomArray.z[ this.index ] = value;
+    },
+
+    get element () {
+        return this.atomArray.getElement( this.index );
+    },
+    set element ( value ) {
+        this.atomArray.setElement( this.index, value );
+    },
+
+    get chainname () {
+        return this.atomArray.getChainname( this.index );
+    },
+    set chainname ( value ) {
+        this.atomArray.setChainname( this.index, value );
+    },
+
+    get resno () {
+        return this.atomArray.resno[ this.index ];
+    },
+    set resno ( value ) {
+        this.atomArray.resno[ this.index ] = value;
+    },
+
+    get serial () {
+        return this.atomArray.serial[ this.index ];
+    },
+    set serial ( value ) {
+        this.atomArray.serial[ this.index ] = value;
+    },
+
+    get ss () {
+        return this.atomArray.getSS( this.index );
+    },
+    set ss ( value ) {
+        this.atomArray.setSS( this.index, value );
+    },
+
+    get vdw () {
+        return this.atomArray.vdw[ this.index ];
+    },
+    set vdw ( value ) {
+        this.atomArray.vdw[ this.index ] = value;
+    },
+
+    get covalent () {
+        return this.atomArray.covalent[ this.index ];
+    },
+    set covalent ( value ) {
+        this.atomArray.covalent[ this.index ] = value;
+    },
+
+    get hetero () {
+        return this.atomArray.hetero[ this.index ];
+    },
+    set hetero ( value ) {
+        this.atomArray.hetero[ this.index ] = value;
+    },
+
+    get bfactor () {
+        return this.atomArray.bfactor[ this.index ];
+    },
+    set bfactor ( value ) {
+        this.atomArray.bfactor[ this.index ] = value;
+    },
+
+    get bonds () {
+        return this.atomArray.bonds[ this.index ];
+    },
+    set bonds ( value ) {
+        this.atomArray.bonds[ this.index ] = value;
+    },
+
+    get altloc () {
+        return this.atomArray.getAltloc( this.index );
+    },
+    set altloc ( value ) {
+        this.atomArray.setAltloc( this.index, value );
+    },
+
+    get atomname () {
+        return this.atomArray.getAtomname( this.index );
+    },
+    set atomname ( value ) {
+        this.atomArray.setAtomname( this.index, value );
+    },
+
+    get residue () {
+        return this.atomArray.residue[ this.index ];
+    },
+    set residue ( value ) {
+        this.atomArray.residue[ this.index ] = value;
+    },
 
     connectedTo: function( atom ){
 
@@ -3619,6 +3953,8 @@ NGL.GroStructure.prototype._parse = function( str, callback ){
         parseFloat( b[2] ) * 10
     ];
 
+    var atomArray = new NGL.AtomArray( this.size );
+
     var m = this.addModel();
     var c = m.addChain();
     var r = c.addResidue();
@@ -3659,7 +3995,7 @@ NGL.GroStructure.prototype._parse = function( str, callback ){
 
             element = guessElem( atomname );
 
-            a = r.addAtom();
+            a = r.addProxyAtom( atomArray );
 
             a.resname = resname;
             a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
@@ -3696,6 +4032,8 @@ NGL.GroStructure.prototype._parse = function( str, callback ){
         }
 
     }
+
+    this.atomArray = atomArray;
 
     setTimeout( _chunked );
 

@@ -197,26 +197,75 @@
 
         }
 
-        /*test2( 10 );
-        test2( 100 );
-        test2( 1000 );
-        test2( 10000 );
-        test2( 100000 );*/
+        // test2( 10 );
+        // test2( 100 );
+        // test2( 1000 );
+        // test2( 10000 );
+        // test2( 100000 );
         // test2( 1000000 );
 
         var data = {
             "1crn": "../../data/__example__/1crn.gro",
+            "pbc": "../../data/__example__/pbc.gro",
         };
 
         var loadingManager = new THREE.LoadingManager( function(){
 
             console.log( "data loaded" );
             
-            var gro = new NGL.GroStructure2( "1crn", "1crn" );
+            var gro = new NGL.GroStructure( "1crn", "1crn" );
 
-            gro.parse( data[ "1crn" ], function(){
+            gro.parse( data[ "1crn" ], function( _gro ){
 
-                console.log( "parsing callback" );
+                console.log( "gro", _gro );
+
+            } );
+
+            // var gro2 = new NGL.GroStructure2( "1crn", "1crn" );
+
+            // gro2._parse( data[ "1crn" ], function( _gro2 ){
+
+            //     console.log( "gro2", _gro2 );
+
+            // } );
+
+            var gro3 = new NGL.GroStructure3( "1crn", "1crn" );
+
+            gro3.parse( data[ "1crn" ], function( _gro3 ){
+
+                console.log( "gro3", _gro3 );
+
+                pa = new NGL.ProxyAtom( _gro3.atomArray, 0 );
+                console.log( pa.qualifiedName() );
+
+            } );
+
+
+
+            var pbc = new NGL.GroStructure( "pbc", "pbc" );
+
+            pbc.parse( data[ "pbc" ], function( _pbc ){
+
+                console.log( "pbc", _pbc );
+
+            } );
+
+            // var pbc2 = new NGL.GroStructure2( "pbc", "pbc" );
+
+            // pbc2._parse( data[ "pbc" ], function( _pbc2 ){
+
+            //     console.log( "pbc2", _pbc2 );
+
+            // } );
+
+            var pbc3 = new NGL.GroStructure3( "pbc", "pbc" );
+
+            pbc3.parse( data[ "pbc" ], function( _pbc3 ){
+
+                console.log( "pbc3", _pbc3 );
+
+                pa = new NGL.ProxyAtom( _pbc3.atomArray, 0 );
+                console.log( pa.qualifiedName() );
 
             } );
 
