@@ -491,11 +491,15 @@ NGL.Examples = {
 
         "test": function( stage ){
 
-            stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
+            console.time( "test" );
 
+            stage.loadFile( "__example__/3l5q.pdb", function( o ){
+
+                o.addRepresentation( "line", { color: "chainindex" } );
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
-                o.addRepresentation( "licorice", { sele: "DPPC" } );
                 o.centerView();
+
+                console.timeEnd( "test" );
 
             } );
 

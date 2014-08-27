@@ -758,6 +758,7 @@ NGL.Viewer.prototype = {
         });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = true;
+        this.renderer.sortObjects = false;
 
         var _glExtensionFragDepth = this.renderer.context.getExtension(
             'EXT_frag_depth'
@@ -916,7 +917,7 @@ NGL.Viewer.prototype = {
             this.pickingModelGroup.add( buffer.pickingMesh );
         }
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -928,7 +929,7 @@ NGL.Viewer.prototype = {
             this.pickingModelGroup.remove( buffer.pickingMesh );
         }
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -972,7 +973,7 @@ NGL.Viewer.prototype = {
         if( far ) p.fogFar = far;
         if( density ) p.fogDensity = density;
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -989,7 +990,7 @@ NGL.Viewer.prototype = {
         this.setFog( null, p.backgroundColor );
         this.renderer.setClearColor( p.backgroundColor, 1 );
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -1018,7 +1019,7 @@ NGL.Viewer.prototype = {
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -1029,7 +1030,7 @@ NGL.Viewer.prototype = {
         if( near ) p.clipNear = near;
         if( far ) p.clipFar = far;
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -1064,7 +1065,7 @@ NGL.Viewer.prototype = {
             1 / this.width, 1 / this.height
         );
 
-        this.render();
+        this.requestRender();
 
     },
 
@@ -1150,7 +1151,13 @@ NGL.Viewer.prototype = {
             type, quality
         );
 
-        this.render();
+        this.requestRender();
+
+    },
+
+    requestRender: function(){
+
+        requestAnimationFrame( this.render.bind( this ) );
 
     },
 
@@ -1490,7 +1497,8 @@ NGL.Viewer.prototype = {
 
             this.rotationGroup.position.copy( t );
             this.pickingRotationGroup.position.copy( t );
-            this.render();
+
+            this.requestRender();
 
         }
 
