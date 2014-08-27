@@ -501,6 +501,10 @@ NGL.Examples = {
 
                 console.timeEnd( "test" );
 
+                console.time( "render" );
+                o.viewer.render();
+                console.timeEnd( "render" );
+
             } );
 
         }
