@@ -3308,9 +3308,9 @@ NGL.StructureSubset.prototype._build = function(){
  * An object fro representing a PDB file.
  * @class
  */
-NGL.PdbStructure = function( name ){
+NGL.PdbStructure = function( name, path ){
 
-    NGL.Structure.call( this, name );
+    NGL.Structure.call( this, name, path );
 
 };
 
@@ -3582,12 +3582,12 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
  * An object fro representing a GRO file.
  * @class
  */
-NGL.GroStructure = function( name, path, callback ){
+NGL.GroStructure = function( name, path ){
 
     this._doAutoSS = true;
     this._doAutoChainName = true;
 
-    NGL.Structure.call( this, name, path, callback );
+    NGL.Structure.call( this, name, path );
 
 };
 
