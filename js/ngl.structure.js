@@ -3356,6 +3356,8 @@ NGL.ProxyAtom = function( atomArray, index ){
     this.atomArray = atomArray;
     this.index = index;
 
+    this.globalindex = NGL.nextGlobalAtomindex++;
+
 };
 
 NGL.ProxyAtom.prototype = {
