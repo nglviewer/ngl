@@ -2,6 +2,14 @@
 
 var NGL = NGL || {};
 
+if( typeof importScripts === 'function' ){
+    importScripts(
+        '../../js/three/three.js',
+        '../../js/lib/ui/signals.min.js',
+        '../../js/ngl.structure.js'
+    );
+}
+
 
 NGL.AtomArray = function( size ){
 
@@ -23,6 +31,8 @@ NGL.AtomArray = function( size ){
     this.altloc = new Uint8Array( size );
     this.atomname = new Uint8Array( 4 * size );
 
+    this.residue = new Array( size );
+
 };
 
 NGL.AtomArray.prototype = {
@@ -40,14 +50,18 @@ NGL.AtomArray.prototype = {
 
     getResname: function( i ){
 
+        var code;
+        var resname = "";
         var j = 5 * i;
-        return String.fromCharCode(
-            this.resname[ j ],
-            this.resname[ j + 1 ],
-            this.resname[ j + 2 ],
-            this.resname[ j + 3 ],
-            this.resname[ j + 4 ]
-        );
+        for( var k = 0; k < 5; ++k ){
+            code = this.resname[ j + k ];
+            if( code ){
+                resname += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return resname;
 
     },
 
@@ -62,12 +76,18 @@ NGL.AtomArray.prototype = {
 
     getElement: function( i ){
 
+        var code;
+        var element = "";
         var j = 3 * i;
-        return String.fromCharCode(
-            this.element[ j ],
-            this.element[ j + 1 ],
-            this.element[ j + 2 ]
-        );
+        for( var k = 0; k < 3; ++k ){
+            code = this.element[ j + k ];
+            if( code ){
+                element += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return element;
 
     },
 
@@ -79,7 +99,8 @@ NGL.AtomArray.prototype = {
 
     getChainname: function( i ){
 
-        return String.fromCharCode( this.chainname[ i ] );
+        var code = this.chainname[ i ];
+        return code ? String.fromCharCode( code ) : "";
 
     },
 
@@ -91,7 +112,8 @@ NGL.AtomArray.prototype = {
 
     getSS: function( i ){
 
-        return String.fromCharCode( this.ss[ i ] );
+        var code = this.ss[ i ];
+        return code ? String.fromCharCode( code ) : "";
 
     },
 
@@ -103,7 +125,8 @@ NGL.AtomArray.prototype = {
 
     getAltloc: function( i ){
 
-        return String.fromCharCode( this.altloc[ i ] );
+        var code = this.altloc[ i ];
+        return code ? String.fromCharCode( code ) : "";
 
     },
 
@@ -119,13 +142,18 @@ NGL.AtomArray.prototype = {
 
     getAtomname: function( i ){
 
+        var code;
+        var atomname = "";
         var j = 4 * i;
-        return String.fromCharCode(
-            this.atomname[ j ],
-            this.atomname[ j + 1 ],
-            this.atomname[ j + 2 ],
-            this.atomname[ j + 3 ]
-        );
+        for( var k = 0; k < 4; ++k ){
+            code = this.atomname[ j + k ];
+            if( code ){
+                atomname += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return atomname;
 
     },
 
@@ -301,6 +329,34 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.setAtomname( this.index, value );
     },
 
+    get residue () {
+        return this.atomArray.residue[ this.index ];
+    },
+    set residue ( value ) {
+        this.atomArray.residue[ this.index ] = value;
+    },
+
+    connectedTo: function( atom ){
+
+        if( this.hetero && atom.hetero ) return false;
+
+        var x = this.x - atom.x;
+        var y = this.y - atom.y;
+        var z = this.z - atom.z;
+
+        var distSquared = x * x + y * y + z * z;
+
+        // console.log( distSquared );
+        if( this.residue.isCg() && distSquared < 28.0 ) return true;
+
+        if( isNaN( distSquared ) ) return false;
+        if( distSquared < 0.5 ) return false; // duplicate or altloc
+
+        var d = this.covalent + atom.covalent + 0.3;
+        return distSquared < ( d * d );
+
+    },
+
     qualifiedName: function(){
 
         var name = "";
@@ -321,6 +377,29 @@ NGL.ProxyAtom.prototype = {
 }
 
 
+onmessage = function( event ){
+
+    var groStructure = new NGL.GroStructure2();
+    
+    groStructure.__parse( event.data );
+
+    var aa = groStructure.atomArray;
+
+    // postMessage( aa );
+
+    postMessage( aa, [
+        aa.atomno.buffer, aa.resname.buffer, aa.x.buffer, aa.y.buffer,
+        aa.z.buffer, aa.element.buffer, aa.chainname.buffer,
+        aa.resno.buffer, aa.serial.buffer, aa.ss.buffer, aa.vdw.buffer,
+        aa.covalent.buffer, aa.hetero.buffer, aa.bfactor.buffer,
+        aa.altloc.buffer, aa.atomname.buffer
+    ] );
+    
+    // postMessage( "moin" );
+    
+};
+
+
 NGL.GroStructure2 = function( name, path ){
 
     this._doAutoSS = true;
@@ -334,7 +413,124 @@ NGL.GroStructure2.prototype = Object.create( NGL.Structure.prototype );
 
 NGL.GroStructure2.prototype._parse = function( str, callback ){
 
+    var scope = this;
+
+    var worker = new Worker( '../exp/atomArray.js' );
+
+    worker.onmessage = function( event ){
+        callback( event.data );
+        worker.terminate();
+    };
+
+    worker.postMessage( str );
+
+},
+
+NGL.GroStructure2.prototype.__parse = function( str, callback ){
+
     console.time( "NGL.GroStructure2.parse" );
+
+    var atoms = this.atoms;
+
+    var lines = str.trim().split( "\n" );
+
+    var guessElem = NGL.guessElement;
+    var covRadii = NGL.CovalentRadii;
+    var vdwRadii = NGL.VdwRadii;
+
+    var i, j;
+    var line, serial, atomname, element, resno, resname;
+
+    this.title = lines[ 0 ].trim();
+    this.size = parseInt( lines[ 1 ] );
+    var b = lines[ lines.length-1 ].trim().split( /\s+/ );
+    this.box = [
+        parseFloat( b[0] ) * 10,
+        parseFloat( b[1] ) * 10,
+        parseFloat( b[2] ) * 10
+    ];
+
+    var atomArray = new NGL.AtomArray( this.size );
+    var pa = new NGL.ProxyAtom( atomArray );
+
+    var m = this.addModel();
+    var c = m.addChain();
+    var r = c.addResidue();
+
+    var a, currentResno;
+
+    var n = lines.length - 1;
+
+    for( i = 2; i < n; i++ ){
+
+        line = lines[i];
+
+        atomname = line.substr( 10, 5 ).trim();
+        resno = parseInt( line.substr( 0, 5 ) )
+        resname = line.substr( 5, 5 ).trim();
+
+        if( !a ){
+
+            r.resno = resno;
+            r.resname = resname;
+            currentResno = resno;
+
+        }
+
+        if( currentResno!==resno ){
+
+            r = c.addResidue();
+            r.resno = resno;
+            r.resname = resname;
+
+        }
+
+        element = guessElem( atomname );
+
+        pa.index = r.addAtom2();
+
+        pa.resname = resname;
+        pa.x = parseFloat( line.substr( 20, 8 ) ) * 10;
+        pa.y = parseFloat( line.substr( 28, 8 ) ) * 10;
+        pa.z = parseFloat( line.substr( 36, 8 ) ) * 10;
+        pa.element = element;
+        pa.resno = resno;
+        pa.serial = parseInt( line.substr( 15, 5 ) );
+        pa.atomname = atomname;
+        pa.ss = 'c';
+        pa.bonds = [];
+
+        pa.vdw = vdwRadii[ element ];
+        pa.covalent = covRadii[ element ];
+
+        currentResno = resno;
+
+        // atoms.push( pa.index );
+
+    }
+
+    this.atomArray = atomArray;
+
+    console.timeEnd( "NGL.GroStructure2.parse" );
+    // callback( this );
+
+};
+
+
+NGL.GroStructure3 = function( name, path ){
+
+    this._doAutoSS = true;
+    this._doAutoChainName = true;
+
+    NGL.Structure.call( this, name, path );
+
+};
+
+NGL.GroStructure3.prototype = Object.create( NGL.Structure.prototype );
+
+NGL.GroStructure3.prototype._parse = function( str, callback ){
+
+    console.time( "NGL.GroStructure3.parse" );
 
     var scope = this;
 
@@ -359,7 +555,6 @@ NGL.GroStructure2.prototype._parse = function( str, callback ){
     ];
 
     var atomArray = new NGL.AtomArray( this.size );
-    var pa = new NGL.ProxyAtom( atomArray );
 
     var m = this.addModel();
     var c = m.addChain();
@@ -401,7 +596,7 @@ NGL.GroStructure2.prototype._parse = function( str, callback ){
 
             element = guessElem( atomname );
 
-            a = r.addAtom();
+            a = r.addProxyAtom( atomArray );
 
             a.resname = resname;
             a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
@@ -425,7 +620,7 @@ NGL.GroStructure2.prototype._parse = function( str, callback ){
 
         if( _n === n ){
 
-            console.timeEnd( "NGL.GroStructure2.parse" );
+            console.timeEnd( "NGL.GroStructure3.parse" );
             callback( scope );
 
         }else{
@@ -438,6 +633,8 @@ NGL.GroStructure2.prototype._parse = function( str, callback ){
         }
 
     }
+
+    this.atomArray = atomArray;
 
     setTimeout( _chunked );
 

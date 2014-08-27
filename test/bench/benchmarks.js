@@ -43,6 +43,7 @@ var suite = new Benchmark.Suite( "bench",
 
 var data = {
     "1crn": "../../data/__example__/1crn.pdb",
+    "1crn.gro": "../../data/__example__/1crn.gro",
     "3dqb": "../../data/__example__/3dqb.pdb",
     "3l5q": "../../data/__example__/3l5q.pdb",
 
@@ -73,23 +74,61 @@ Object.keys( data ).forEach( function( name ){
 
 
 
-suite.add( '1crn parse',
+// suite.add( '1crn parse',
     
-    {
-        async: true,
-        defer: true,
-        fn: function( deferred ){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "1crn" ], function(){
-                deferred.resolve();
-            } );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "1crn" ], function(){
+//                 deferred.resolve();
+//             } );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
+
+
+// suite.add( '1crn.gro parse',
+    
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             groStructure.reset();
+//             groStructure._parse( data[ "1crn.gro" ], function(){
+//                 deferred.resolve();
+//             } );
+//         },
+//         setup: function(){
+//             var groStructure = new NGL.GroStructure();
+//         }
+//     }
+
+// );
+
+
+// suite.add( '1crn.gro parse2',
+    
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             groStructure.reset();
+//             groStructure._parse( data[ "1crn.gro" ], function(){
+//                 deferred.resolve();
+//             } );
+//         },
+//         setup: function(){
+//             var groStructure = new NGL.GroStructure2();
+//         }
+//     }
+
+// );
 
 
 // suite.add( '1crn parse web worker',
@@ -133,23 +172,23 @@ suite.add( '1crn parse',
 // );
 
 
-suite.add( '3dqb parse',
+// suite.add( '3dqb parse',
     
-    {
-        async: true,
-        defer: true,
-        fn: function( deferred ){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "3dqb" ], function(){
-                deferred.resolve();
-            } );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "3dqb" ], function(){
+//                 deferred.resolve();
+//             } );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
 
 // suite.add( '3dqb parse web worker',
@@ -193,23 +232,23 @@ suite.add( '3dqb parse',
 // );
 
 
-suite.add( '3l5q parse',
+// suite.add( '3l5q parse',
     
-    {
-        async: true,
-        defer: true,
-        fn: function( deferred ){
-            pdbStructure.reset();
-            pdbStructure._parse( data[ "3l5q" ], function(){
-                deferred.resolve();
-            } );
-        },
-        setup: function(){
-            var pdbStructure = new NGL.PdbStructure();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             pdbStructure.reset();
+//             pdbStructure._parse( data[ "3l5q" ], function(){
+//                 deferred.resolve();
+//             } );
+//         },
+//         setup: function(){
+//             var pdbStructure = new NGL.PdbStructure();
+//         }
+//     }
 
-);
+// );
 
 
 // suite.add( '3l5q parse web worker',
@@ -260,7 +299,7 @@ suite.add( 'pbc parse',
         defer: true,
         fn: function( deferred ){
             groStructure.reset();
-            groStructure._parse( data[ "pbc" ], function(){
+            groStructure.parse( data[ "pbc" ], function(){
                 deferred.resolve();
             } );
         },
@@ -271,3 +310,42 @@ suite.add( 'pbc parse',
 
 );
 
+
+// suite.add( 'pbc parse2',
+    
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             groStructure.reset();
+//             groStructure._parse( data[ "pbc" ], function( d ){
+//                 deferred.resolve();
+//                 // console.log( d )
+//             } );
+//         },
+//         setup: function(){
+//             var groStructure = new NGL.GroStructure2();
+//         }
+//     }
+
+// );
+
+
+suite.add( 'pbc parse3',
+    
+    {
+        async: true,
+        defer: true,
+        fn: function( deferred ){
+            groStructure.reset();
+            groStructure.parse( data[ "pbc" ], function( d ){
+                deferred.resolve();
+                // console.log( d )
+            } );
+        },
+        setup: function(){
+            var groStructure = new NGL.GroStructure3();
+        }
+    }
+
+);
