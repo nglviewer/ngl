@@ -6,6 +6,10 @@
 </head>
 <body>
 
+    <script src="../../js/three/three.js"></script>
+    <script src="../../js/ngl.structure.js"></script>
+    <script src="atomArray.js"></script>
+
     <script>
 
         var Atom = function(){
@@ -87,329 +91,12 @@
 
         }
 
-        var AtomArray = function( size ){
-
-            this.atomno = new Int32Array( size );
-            this.resname = new Uint8Array( 5 * size );
-            this.x = new Float32Array( size );
-            this.y = new Float32Array( size );
-            this.z = new Float32Array( size );
-            this.element = new Uint8Array( 3 * size );
-            this.chainname = new Uint8Array( size );
-            this.resno = new Int32Array( size );
-            this.serial = new Int32Array( size );
-            this.ss = new Uint8Array( size );
-            this.vdw = new Float32Array( size );
-            this.covalent = new Float32Array( size );
-            this.hetero = new Uint8Array( size );
-            this.bfactor = new Float32Array( size );
-            this.bonds = new Array( size );
-            this.altloc = new Uint8Array( size );
-            this.atomname = new Uint8Array( 4 * size );
-
-        };
-
-        AtomArray.prototype = {
-
-            setResname: function( i, str ){
-
-                var j = 5 * i;
-                this.resname[ j ] = str.charCodeAt( 0 );
-                this.resname[ j + 1 ] = str.charCodeAt( 1 );
-                this.resname[ j + 2 ] = str.charCodeAt( 2 );
-                this.resname[ j + 3 ] = str.charCodeAt( 3 );
-                this.resname[ j + 4 ] = str.charCodeAt( 4 );
-
-            },
-
-            getResname: function( i ){
-
-                var j = 5 * i;
-                return String.fromCharCode(
-                    this.resname[ j ],
-                    this.resname[ j + 1 ],
-                    this.resname[ j + 2 ],
-                    this.resname[ j + 3 ],
-                    this.resname[ j + 4 ]
-                );
-
-            },
-
-            setElement: function( i, str ){
-
-                var j = 3 * i;
-                this.element[ j ] = str.charCodeAt( 0 );
-                this.element[ j + 1 ] = str.charCodeAt( 1 );
-                this.element[ j + 2 ] = str.charCodeAt( 2 );
-
-            },
-
-            getElement: function( i ){
-
-                var j = 3 * i;
-                return String.fromCharCode(
-                    this.element[ j ],
-                    this.element[ j + 1 ],
-                    this.element[ j + 2 ]
-                );
-
-            },
-
-            setChainname: function( i, str ){
-
-                this.chainname[ i ] = str.charCodeAt( 0 );
-
-            },
-
-            getChainname: function( i ){
-
-                return String.fromCharCode( this.chainname[ i ] );
-
-            },
-
-            setSS: function( i, str ){
-
-                this.ss[ i ] = str.charCodeAt( 0 );
-
-            },
-
-            getSS: function( i ){
-
-                return String.fromCharCode( this.ss[ i ] );
-
-            },
-
-            setAltloc: function( i, str ){
-
-                this.altloc[ i ] = str.charCodeAt( 0 );
-
-            },
-
-            getAltloc: function( i ){
-
-                return String.fromCharCode( this.altloc[ i ] );
-
-            },
-
-            setAtomname: function( i, str ){
-
-                var j = 4 * i;
-                this.atomname[ j ] = str.charCodeAt( 0 );
-                this.atomname[ j + 1 ] = str.charCodeAt( 1 );
-                this.atomname[ j + 2 ] = str.charCodeAt( 2 );
-                this.atomname[ j + 3 ] = str.charCodeAt( 3 );
-
-            },
-
-            getAtomname: function( i ){
-
-                var j = 4 * i;
-                return String.fromCharCode(
-                    this.atomname[ j ],
-                    this.atomname[ j + 1 ],
-                    this.atomname[ j + 2 ],
-                    this.atomname[ j + 3 ]
-                );
-
-            },
-
-            connectedTo: function( i, j ){
-
-                if( this.hetero[ i ] && this.hetero[ j ] ) return false;
-
-                var xij = this.x[ i ] - this.x[ j ];
-                var yij = this.y[ i ] - this.y[ j ];
-                var zij = this.z[ i ] - this.z[ j ];
-
-                var distSquared = xij * xij + yij * yij + zij * zij;
-
-                // console.log( distSquared );
-                if( this.residue.isCg() && distSquared < 28.0 ) return true;
-
-                if( isNaN( distSquared ) ) return false;
-                if( distSquared < 0.5 ) return false; // duplicate or altloc
-
-                var d = this.covalent[ i ] + this.covalent[ j ] + 0.3;
-                return distSquared < ( d * d );
-
-            },
-
-            qualifiedName: function( i ){
-
-                var name = "";
-
-                var resname = this.getResname( i ).trim();
-                var chainname = this.getChainname( i ).trim();
-                var atomname = this.getAtomname( i ).trim();
-
-                if( resname ) name += "[" + resname + "]";
-                if( this.resno[ i ] ) name += this.resno[ i ];
-                if( chainname ) name += ":" + chainname;
-                if( atomname ) name += "." + atomname;
-                if( this.residue && this.residue.chain &&
-                        this.residue.chain.model ){
-                    name += "/" + this.residue.chain.model.index;
-                } 
-
-                return name;
-
-            }
-
-        };
-
-        var ProxyAtom = function( atomArray, index ){
-
-            this.atomArray = atomArray;
-            this.index = index;
-
-        };
-
-        ProxyAtom.prototype = {
-
-            get atomno () {
-                return this.atomArray.atomno[ this.index ];
-            },
-            set atomno ( value ) {
-                this.atomArray.atomno[ this.index ] = value;
-            },
-
-            get resname () {
-                return this.atomArray.getResname( this.index );
-            },
-            set resname ( value ) {
-                this.atomArray.setResname( this.index, value );
-            },
-
-            get x () {
-                return this.atomArray.x[ this.index ];
-            },
-            set x ( value ) {
-                this.atomArray.x[ this.index ] = value;
-            },
-
-            get y () {
-                return this.atomArray.y[ this.index ];
-            },
-            set y ( value ) {
-                this.atomArray.y[ this.index ] = value;
-            },
-
-            get z () {
-                return this.atomArray.z[ this.index ];
-            },
-            set z ( value ) {
-                this.atomArray.z[ this.index ] = value;
-            },
-
-            get element () {
-                return this.atomArray.getElement( this.index );
-            },
-            set element ( value ) {
-                this.atomArray.setElement( this.index, value );
-            },
-
-            get chainname () {
-                return this.atomArray.getChainname( this.index );
-            },
-            set chainname ( value ) {
-                this.atomArray.setChainname( this.index, value );
-            },
-
-            get resno () {
-                return this.atomArray.resno[ this.index ];
-            },
-            set resno ( value ) {
-                this.atomArray.resno[ this.index ] = value;
-            },
-
-            get serial () {
-                return this.atomArray.serial[ this.index ];
-            },
-            set serial ( value ) {
-                this.atomArray.serial[ this.index ] = value;
-            },
-
-            get ss () {
-                return this.atomArray.getSS( this.index );
-            },
-            set ss ( value ) {
-                this.atomArray.setSS( this.index, value );
-            },
-
-            get vdw () {
-                return this.atomArray.vdw[ this.index ];
-            },
-            set vdw ( value ) {
-                this.atomArray.vdw[ this.index ] = value;
-            },
-
-            get covalent () {
-                return this.atomArray.covalent[ this.index ];
-            },
-            set covalent ( value ) {
-                this.atomArray.covalent[ this.index ] = value;
-            },
-
-            get hetero () {
-                return this.atomArray.hetero[ this.index ];
-            },
-            set hetero ( value ) {
-                this.atomArray.hetero[ this.index ] = value;
-            },
-
-            get bfactor () {
-                return this.atomArray.bfactor[ this.index ];
-            },
-            set bfactor ( value ) {
-                this.atomArray.bfactor[ this.index ] = value;
-            },
-
-            get bonds () {
-                return this.atomArray.bonds[ this.index ];
-            },
-            set bonds ( value ) {
-                this.atomArray.bonds[ this.index ] = value;
-            },
-
-            get altloc () {
-                return this.atomArray.getAltloc( this.index );
-            },
-            set altloc ( value ) {
-                this.atomArray.setAltloc( this.index, value );
-            },
-
-            get atomname () {
-                return this.atomArray.getAtomname( this.index );
-            },
-            set atomname ( value ) {
-                this.atomArray.setAtomname( this.index, value );
-            },
-
-            qualifiedName: function(){
-
-                var name = "";
-
-                if( this.resname ) name += "[" + this.resname + "]";
-                if( this.resno ) name += this.resno;
-                if( this.chainname ) name += ":" + this.chainname;
-                if( this.atomname ) name += "." + this.atomname;
-                if( this.residue && this.residue.chain &&
-                        this.residue.chain.model ){
-                    name += "/" + this.residue.chain.model.index;
-                } 
-
-                return name;
-
-            }
-
-        }
-
         function test( n ){
 
             console.log( "test", n );
 
             console.time( "atomArray init" );
-            var atomArray = new AtomArray( n );
+            var atomArray = new NGL.AtomArray( n );
             console.timeEnd( "atomArray init" );
 
             console.time( "atomList init" );
@@ -418,12 +105,12 @@
 
         }
 
-        test( 10 );
+        /*test( 10 );
         test( 100 );
         test( 1000 );
         test( 10000 );
         test( 100000 );
-        test( 1000000 );
+        test( 1000000 );*/
 
         function test2( n ){
 
@@ -431,7 +118,7 @@
 
             var i;
 
-            var atomArray = new AtomArray( n );
+            var atomArray = new NGL.AtomArray( n );
             console.time( "atomArray set" );
             for( i = 0; i < n; ++i ){
                 atomArray.atomno[ i ] = i;
@@ -456,8 +143,8 @@
 
             console.log( atomArray.qualifiedName( 9 ) );
             
-            var atomArray2 = new AtomArray( n );
-            var pa = new ProxyAtom( atomArray2 );
+            var atomArray2 = new NGL.AtomArray( n );
+            var pa = new NGL.ProxyAtom( atomArray2 );
             console.time( "atomArray atomProxy set" );
             for( i = 0; i < n; ++i ){
                 pa.index = i;
@@ -510,12 +197,44 @@
 
         }
 
-        test2( 10 );
+        /*test2( 10 );
         test2( 100 );
         test2( 1000 );
         test2( 10000 );
-        test2( 100000 );
-        test2( 1000000 );
+        test2( 100000 );*/
+        // test2( 1000000 );
+
+        var data = {
+            "1crn": "../../data/__example__/1crn.gro",
+        };
+
+        var loadingManager = new THREE.LoadingManager( function(){
+
+            console.log( "data loaded" );
+            
+            var gro = new NGL.GroStructure2( "1crn", "1crn" );
+
+            gro.parse( data[ "1crn" ], function(){
+
+                console.log( "parsing callback" );
+
+            } );
+
+        } );
+
+        var xhrLoader = new THREE.XHRLoader( loadingManager );
+
+        Object.keys( data ).forEach( function( name ){
+
+            var url = data[ name ];
+
+            xhrLoader.load( url, function( response ){
+
+                data[ name ] = response;
+
+            } );
+
+        } );
 
     </script>
 
