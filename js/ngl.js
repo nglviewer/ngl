@@ -712,7 +712,7 @@ NGL.Viewer.prototype = {
             cameraZ: -80, // FIXME initial value should be automatically determined
 
             clipNear: 0,
-            clipFar: 100,
+            clipFar: 50,
 
             specular: 0x050505,
 
@@ -1192,7 +1192,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !foo ) this.camera.updateProjectionMatrix();
 
-        // this.updateBoundingBox();
+        this.updateBoundingBox();
         this.updateDynamicUniforms( this.modelGroup );
         this.updateDynamicUniforms( this.pickingModelGroup );
 
