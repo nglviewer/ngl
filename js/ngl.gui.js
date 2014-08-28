@@ -506,12 +506,39 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
+    // clipping
+
+    var near = new UI.Range(
+            1, 100,
+            stage.viewer.params.clipNear, 1
+        )
+        .onInput( function(){
+            stage.viewer.setClip( near.getValue(), far.getValue() );
+        } );
+
+    var far = new UI.Range(
+            1, 100,
+            stage.viewer.params.clipFar, 1
+        )
+        .onInput( function(){
+            stage.viewer.setClip( near.getValue(), far.getValue() );
+        } );
+
+
     var actions = new UI.Panel()
         .setClass( "Panel Sticky" )
-        .add( expandAll, collapseAll );
+        .add(
+            expandAll,
+            collapseAll,
+            new UI.Break(),
+            near,
+            far
+        );
 
-
-    container.add( actions, widgetContainer );
+    container.add(
+        actions,
+        widgetContainer
+    );
 
     return container;
 
