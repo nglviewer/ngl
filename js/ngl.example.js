@@ -489,7 +489,7 @@ NGL.Examples = {
 
         },
 
-        "test": function( stage ){
+        "timing": function( stage ){
 
             console.time( "test" );
 
@@ -504,6 +504,22 @@ NGL.Examples = {
                 console.time( "render" );
                 o.viewer.render();
                 console.timeEnd( "render" );
+
+            } );
+
+        },
+
+        "test": function( stage ){
+
+            console.time( "test" );
+
+            stage.loadFile( "__example__/1CKB.pdb", function( o ){
+
+                o.addRepresentation( "licorice", { sele: "hetero" } );
+                o.addRepresentation( "cartoon" );
+                o.centerView();
+
+                console.log( o.structure );
 
             } );
 
