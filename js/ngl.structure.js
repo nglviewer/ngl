@@ -243,9 +243,10 @@ NGL.guessElement = function(){
 NGL.UnknownType = 0;
 NGL.CgType = 1;
 NGL.ProteinType = 2;
-NGL.NucleicType = 3;
-NGL.NucleicBackboneType = 4;
-NGL.WaterType = 5;
+NGL.ProteinBackboneType = 3;
+NGL.NucleicType = 4;
+NGL.NucleicBackboneType = 5;
+NGL.WaterType = 6;
 
 
 NGL.AA1 = {
@@ -2685,7 +2686,7 @@ NGL.Chain.prototype = {
 
             // console.log( r1.resno, r2.resno, r1.isProtein() );
 
-            if( r1.isProtein() && r2.isProtein() ){
+            if( r1.hasProteinBackbone() && r2.hasProteinBackbone() ){
 
                 a1 = r1.getAtomByName( 'C' );
                 a2 = r2.getAtomByName( 'N' );
@@ -2702,7 +2703,7 @@ NGL.Chain.prototype = {
 
             }else{
 
-                if( ( r1.isProtein() && !r2.isProtein() ) ||
+                if( ( r1.hasProteinBackbone() && !r2.hasProteinBackbone() ) ||
                     ( r1.isCg() && !r2.isCg() ) ||
                     ( r1.hasNucleicBackbone() && !r2.hasNucleicBackbone() ) ){
 
@@ -2729,7 +2730,7 @@ NGL.Chain.prototype = {
 
         } );
 
-        if( residues[ i ].isProtein() ||
+        if( residues[ i ].hasProteinBackbone() ||
             residues[ i ].isCg() || 
             residues[ i ].hasNucleicBackbone() ){
             
@@ -2863,12 +2864,24 @@ NGL.Residue.prototype = {
 
             this._protein = this.getAtomByName( "CA" ) !== undefined &&
                 this.getAtomByName( "C" ) !== undefined &&
-                this.getAtomByName( "N" ) !== undefined &&
-                this.getAtomByName([ "O", "OC1", "O1" ]) !== undefined;
+                this.getAtomByName( "N" ) !== undefined;
 
         }
 
         return this._protein;
+
+    },
+
+    hasProteinBackbone: function(){
+
+        if( this._proteinBackbone === undefined ){
+
+            this._proteinBackbone = this.isProtein() &&
+                this.getAtomByName([ "O", "OC1", "O1" ]) !== undefined;
+
+        }
+
+        return this._proteinBackbone;
 
     },
 
@@ -2881,6 +2894,7 @@ NGL.Residue.prototype = {
             if( this._cg === undefined ){
 
                 this._cg = !this.isProtein() && this.getAtomByName( "CA" ) &&
+                    this.atomCount <= 4 &&
                     AA3.indexOf( this.resname ) !== -1;
 
             }
@@ -3161,9 +3175,10 @@ NGL.Atom.prototype = {
     altloc: undefined,
     atomname: undefined,
 
-    connectedTo: function( atom ){
+    connectedTo: function( atom, foo ){
 
-        if( this.hetero && atom.hetero ) return false;
+        if( this.hetero && atom.hetero && 
+            this.residue.chain.model.structure.hasConnect ) return false;
 
         var x = this.x - atom.x;
         var y = this.y - atom.y;
@@ -3178,6 +3193,7 @@ NGL.Atom.prototype = {
         if( distSquared < 0.5 ) return false; // duplicate or altloc
 
         var d = this.covalent + atom.covalent + 0.3;
+
         return distSquared < ( d * d );
 
     },
@@ -3692,6 +3708,8 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
     var sheet = this.sheet;
     var helix = this.helix;
 
+    this.hasConnect = false;
+
     var a, currentChainname, currentResno;
 
     var n = lines.length;
@@ -3798,6 +3816,8 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
                     bondSet.addBond( from, to );
 
                 }
+
+                scope.hasConnect = true;
 
             }else if( recordName == 'HELIX ' ){
 
