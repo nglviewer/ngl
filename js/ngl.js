@@ -1656,22 +1656,18 @@ NGL.Buffer.prototype = {
 
     makeIndex: function(){
 
-        var buf;
-
         if( this.index ){
 
-            buf = this.index;
+            this.geometry.addAttribute( 
+                "index",
+                new THREE.BufferAttribute( this.index, 1 )
+            );
 
         }else{
 
-            buf = new Uint32Array( this.index.length );
+            console.error( "no index set" );
 
         }
-
-        this.geometry.addAttribute( 
-            "index",
-            new THREE.BufferAttribute( buf, 1 )
-        );
 
     },
 
