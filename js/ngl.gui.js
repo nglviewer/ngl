@@ -430,6 +430,9 @@ NGL.SidebarWidget = function( stage ){
     var signals = stage.signals;
     var container = new UI.Panel();
 
+    var widgetContainer = new UI.Panel()
+        .setClass( "Content" );
+
     var compList = [];
     var widgetList = [];
 
@@ -460,7 +463,7 @@ NGL.SidebarWidget = function( stage ){
 
         }
 
-        container.add( widget );
+        widgetContainer.add( widget );
 
         compList.push( component );
         widgetList.push( widget );
@@ -481,6 +484,34 @@ NGL.SidebarWidget = function( stage ){
         }
 
     } );
+
+    // actions
+
+    var expandAll = new UI.Icon( "plus-square" )
+        .onClick( function(){
+
+            widgetList.forEach( function( widget ){
+                widget.expand();
+            } );
+
+        } );
+
+    var collapseAll = new UI.Icon( "minus-square" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            widgetList.forEach( function( widget ){
+                widget.collapse();
+            } );
+
+        } );
+
+    var actions = new UI.Panel()
+        .setClass( "Panel Sticky" )
+        .add( expandAll, collapseAll );
+
+
+    container.add( actions, widgetContainer );
 
     return container;
 
