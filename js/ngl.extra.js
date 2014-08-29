@@ -1043,8 +1043,16 @@ NGL.Representation = function( structure, viewer, params ){
         scope.rebuild();
     } );
 
-    this.create();
-    this.attach();
+    if( this.atomSet.atomCount ){
+
+        this.create();
+        this.attach();
+
+    }else{
+
+        this.bufferList = [];
+
+    }
 
 };
 
@@ -1133,8 +1141,13 @@ NGL.Representation.prototype = {
     rebuild: function(){
 
         this.dispose();
-        this.create();
-        this.attach();
+
+        if( this.atomSet.atomCount ){
+
+            this.create();
+            this.attach();
+
+        }
 
     },
 
