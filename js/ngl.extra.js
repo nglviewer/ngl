@@ -1177,6 +1177,14 @@ NGL.Representation.prototype = {
                 buffer.pickingMesh.visible = value;
             }
 
+            if( buffer.boundingSphereMesh ){
+                buffer.boundingSphereMesh.visible = value;
+            }
+
+            if( buffer.boundingBoxMesh ){
+                buffer.boundingBoxMesh.visible = value;
+            }
+
         });
 
         this.viewer.requestRender();
