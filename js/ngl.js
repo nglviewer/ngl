@@ -917,8 +917,6 @@ NGL.Viewer.prototype = {
         buffer.geometry.computeBoundingBox();
         buffer.geometry.computeBoundingSphere();
 
-        console.log( buffer.geometry )
-
         this.modelGroup.add( buffer.mesh );
 
         if( buffer.pickingMesh ){
@@ -927,7 +925,11 @@ NGL.Viewer.prototype = {
 
         this.requestRender();
 
+        //
+
         if( !NGL.GET( "debug" ) ) return;
+
+        console.log( buffer.geometry )
 
         //
 
@@ -1639,6 +1641,8 @@ NGL.Buffer.prototype = {
         this.makeIndex();
 
         if( this.wireframe ){
+
+            // FIXME refactor so that one can switch between the mesh and the line
 
             this.material = new THREE.LineBasicMaterial({
                 uniforms: this.uniforms,
