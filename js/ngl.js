@@ -688,6 +688,8 @@ NGL.Viewer = function( eid ){
     this.setBackground();
     this.setFog();
 
+    this.boundingBox = new THREE.Box3();
+
 };
 
 NGL.Viewer.prototype = {
@@ -911,11 +913,87 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer ){
 
+        buffer.geometry.frustumCulled = false;
+        buffer.geometry.computeBoundingBox();
+        buffer.geometry.computeBoundingSphere();
+
+        console.log( buffer.geometry )
+
         this.modelGroup.add( buffer.mesh );
 
         if( buffer.pickingMesh ){
             this.pickingModelGroup.add( buffer.pickingMesh );
         }
+
+        this.requestRender();
+
+        if( !NGL.GET( "debug" ) ) return;
+
+        //
+
+        var _bb = buffer.geometry.boundingBox;
+        var bb = this.boundingBox;
+        bb.expandByPoint( _bb.min );
+        bb.expandByPoint( _bb.max );
+        var bbSize = bb.size();
+
+        var material = new THREE.MeshBasicMaterial( {
+            color: Math.random() * 0xFFFFFF, wireframe: true
+        } );
+        var boxGeometry = new THREE.BoxGeometry(
+            bbSize.x, bbSize.y, bbSize.z
+        );
+        if( this.boundingBoxMesh ){
+            this.modelGroup.remove( this.boundingBoxMesh );
+        }
+        this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
+        bb.center( this.boundingBoxMesh.position );
+        this.modelGroup.add( this.boundingBoxMesh );
+
+        //
+
+        // console.log( "before", this.camera.near )
+
+        // this.camera.near = ( bb.size().length() * 0.5 ) / 
+        //     Math.sqrt(
+        //         1 + Math.pow( 
+        //             Math.tan( this.camera.fov / 180 * Math.PI / 2 ), 2 
+        //         ) * 
+        //         ( Math.pow( this.camera.aspect, 2 ) + 1 )
+        //     );
+
+        // console.log( "after", this.camera.near, this.camera.position.z, bb.size().length() * 0.5 )
+
+        //this.camera.near = bb.size().length() * 0.5;
+
+        // this.camera.updateMatrix();
+        // this.camera.updateMatrixWorld( true );
+        // this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
+        // this.camera.updateProjectionMatrix();
+
+        //
+
+        var sphereGeometry = new THREE.IcosahedronGeometry(
+            buffer.geometry.boundingSphere.radius, 3
+        );
+        var boundingSphereMesh = new THREE.Mesh( sphereGeometry, material );
+        boundingSphereMesh.position.copy(
+            buffer.geometry.boundingSphere.center
+        );
+        this.modelGroup.add( boundingSphereMesh );
+
+        var bb2 = buffer.geometry.boundingBox;
+        var bb2Size = bb2.size();
+        var boxGeometry2 = new THREE.BoxGeometry(
+            bb2Size.x, bb2Size.y, bb2Size.z
+        );
+        var boundingBoxMesh = new THREE.Mesh( boxGeometry2, material );
+        bb2.center( boundingBoxMesh.position );
+        this.modelGroup.add( boundingBoxMesh );
+
+
+        buffer.boundingSphereMesh = boundingSphereMesh;
+        buffer.boundingBoxMesh = boundingBoxMesh;
 
         this.requestRender();
 
@@ -927,6 +1005,14 @@ NGL.Viewer.prototype = {
 
         if( buffer.pickingMesh ){
             this.pickingModelGroup.remove( buffer.pickingMesh );
+        }
+
+        if( buffer.boundingSphereMesh ){
+            this.modelGroup.remove( buffer.boundingSphereMesh );
+        }
+
+        if( buffer.boundingBoxMesh ){
+            this.modelGroup.remove( buffer.boundingBoxMesh );
         }
 
         this.requestRender();
@@ -1192,7 +1278,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !foo ) this.camera.updateProjectionMatrix();
 
-        this.updateBoundingBox();
+        // this.updateBoundingBox();
         this.updateDynamicUniforms( this.modelGroup );
         this.updateDynamicUniforms( this.pickingModelGroup );
 
@@ -1226,6 +1312,12 @@ NGL.Viewer.prototype = {
         }
 
         this._rendering = false;
+
+        if( NGL.GET( "debug" ) ){
+
+            console.log( this.camera.near, this.camera.position.z )
+
+        }
 
     },
 

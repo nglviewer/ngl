@@ -510,18 +510,25 @@ NGL.SidebarWidget = function( stage ){
 
     var near = new UI.Range(
             1, 100,
-            stage.viewer.params.clipNear, 1
+            // stage.viewer.params.clipNear, 1
+            stage.viewer.camera.near, 1
         )
         .onInput( function(){
-            stage.viewer.setClip( near.getValue(), far.getValue() );
+            // stage.viewer.setClip( near.getValue(), far.getValue() );
+            console.log( near.getValue() )
+            stage.viewer.camera.near = parseFloat( near.getValue() ) / 10;
+            stage.viewer.requestRender();
         } );
 
     var far = new UI.Range(
-            1, 100,
-            stage.viewer.params.clipFar, 1
+            1, 1000,
+            // stage.viewer.params.clipFar, 1
+            stage.viewer.camera.far, 1
         )
         .onInput( function(){
-            stage.viewer.setClip( near.getValue(), far.getValue() );
+            // stage.viewer.setClip( near.getValue(), far.getValue() );
+            stage.viewer.camera.far = parseFloat( far.getValue() );
+            stage.viewer.requestRender();
         } );
 
 
