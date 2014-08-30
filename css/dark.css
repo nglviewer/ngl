@@ -211,6 +211,8 @@ input.Number {
     padding: 0px;
     margin: 0px;
     z-index: 100;
+    top: 0px;
+    left: 0px;
 }
 
     #menubar .menu {
