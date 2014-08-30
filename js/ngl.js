@@ -702,7 +702,7 @@ NGL.Viewer.prototype = {
         
             fogType: null,
             fogColor: 0x000000,
-            fogNear: 0,
+            fogNear: 50,
             fogFar: 100,
             fogDensity: 0.00025,
 

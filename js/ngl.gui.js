@@ -518,6 +518,14 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
+    var centerAll = new UI.Icon( "bullseye" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            stage.centerView();
+
+        } );
+
     var settingsMenu = new UI.PopupMenu( "cogs" )
         .setMarginLeft( "10px" );
 
@@ -570,6 +578,7 @@ NGL.SidebarWidget = function( stage ){
         .add(
             expandAll,
             collapseAll,
+            centerAll,
             settingsMenu
         );
 
