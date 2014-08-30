@@ -517,9 +517,10 @@ NGL.Examples = {
 
                 o.addRepresentation( "licorice", { sele: "hetero" } );
                 o.addRepresentation( "cartoon" );
+                o.addRepresentation( "spacefill" );
                 o.centerView();
 
-                console.log( o.structure );
+                console.log( o.structure.center );
 
             } );
 

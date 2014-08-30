@@ -311,11 +311,11 @@ input.Number {
     }
 
     #sidebar .Sticky {
-        height: 60px;
+        height: 100px;
     }
 
     #sidebar .Content {
-        top: 60px;
+        top: 100px;
         bottom: 0px;
         position: absolute;
         overflow: auto;

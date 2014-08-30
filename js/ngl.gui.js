@@ -508,29 +508,41 @@ NGL.SidebarWidget = function( stage ){
 
     // clipping
 
-    var near = new UI.Range(
+    var clipNear = new UI.Range(
             1, 100,
-            // stage.viewer.params.clipNear, 1
-            stage.viewer.camera.near, 1
+            stage.viewer.params.clipNear, 1
         )
         .onInput( function(){
-            // stage.viewer.setClip( near.getValue(), far.getValue() );
-            console.log( near.getValue() )
-            stage.viewer.camera.near = parseFloat( near.getValue() ) / 10;
-            stage.viewer.requestRender();
+            stage.viewer.setClip( clipNear.getValue(), clipFar.getValue() );
         } );
 
-    var far = new UI.Range(
-            1, 1000,
-            // stage.viewer.params.clipFar, 1
-            stage.viewer.camera.far, 1
+    var clipFar = new UI.Range(
+            1, 100,
+            stage.viewer.params.clipFar, 1
         )
         .onInput( function(){
-            // stage.viewer.setClip( near.getValue(), far.getValue() );
-            stage.viewer.camera.far = parseFloat( far.getValue() );
-            stage.viewer.requestRender();
+            stage.viewer.setClip( clipNear.getValue(), clipFar.getValue() );
         } );
 
+    // fog
+
+    var fogNear = new UI.Range(
+            1, 100,
+            stage.viewer.params.fogNear, 1
+        )
+        .onInput( function(){
+            stage.viewer.setFog( null, null, fogNear.getValue(), fogFar.getValue() );
+        } );
+
+    var fogFar = new UI.Range(
+            1, 100,
+            stage.viewer.params.fogFar, 1
+        )
+        .onInput( function(){
+            stage.viewer.setFog( null, null, fogNear.getValue(), fogFar.getValue() );
+        } );
+
+    //
 
     var actions = new UI.Panel()
         .setClass( "Panel Sticky" )
@@ -538,8 +550,11 @@ NGL.SidebarWidget = function( stage ){
             expandAll,
             collapseAll,
             new UI.Break(),
-            near,
-            far
+            clipNear,
+            clipFar,
+            new UI.Break(),
+            fogNear,
+            fogFar
         );
 
     container.add(

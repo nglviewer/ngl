@@ -8,7 +8,7 @@
 uniform mat4 projectionMatrix;
 
 varying vec3 point;
-varying vec3 cameraSpherePos;
+varying vec4 cameraSpherePos;
 varying float sphereRadius;
 
 #ifdef PICKING
@@ -45,8 +45,8 @@ void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 {
     vec3 rayDirection = normalize( point );
 
-    float B = -2.0 * dot(rayDirection, cameraSpherePos);
-    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);
+    float B = -2.0 * dot(rayDirection, cameraSpherePos.xyz);
+    float C = dot(cameraSpherePos.xyz, cameraSpherePos.xyz) - (sphereRadius*sphereRadius);
     
     float det = (B * B) - (4.0 * C);
     if(det < 0.0){
@@ -58,13 +58,27 @@ void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
         
         float intersectT = min(posT, negT);
         cameraPos = rayDirection * intersectT;
-        cameraNormal = normalize(cameraPos - cameraSpherePos);
+        // if( cameraPos.z > -80.0 ){
+        //     cameraPos = rayDirection * max(posT, negT);
+        //     //cameraPos.z = -80.0 + sphereRadius;
+
+        //     cameraNormal = vec3( 0.0, 0.0, 0.4 );
+        //     // cameraNormal = normalize(cameraSpherePos.xyz - cameraPos);
+        //     // cameraNormal = -normalize(cameraPos - cameraSpherePos.xyz) / 2.0;
+        // }else{
+        //     cameraNormal = normalize(cameraPos - cameraSpherePos.xyz);
+        // }
+
+        cameraNormal = normalize(cameraPos - cameraSpherePos.xyz);
     }
 }
 
 
 void main(void)
 {   
+
+    
+
     Impostor(cameraPos, cameraNormal);
 
     //Set the depth based on the new cameraPos.
@@ -76,6 +90,14 @@ void main(void)
         discard;
     if (gl_FragDepthEXT >= 1.0)
         discard;
+
+    // if( cameraPos.z - sphereRadius > -80.0 ){
+    //     discard;
+    // }
+
+    // if( dot( cameraSpherePos, vec4( 0.0, 0.0, -1.0, -80.0 ) ) < 0.0 ){
+    //     discard;
+    // }
 
     #ifdef PICKING
         gl_FragColor.xyz = vPickingColor;
