@@ -323,7 +323,8 @@ UI.PopupMenu = function( iconClass ){
 
     var panel = new UI.OverlayPanel()
         .setDisplay( "none" )
-        .attach( this.dom );
+        .attach()
+        //.attach( this.dom );
     
     panel.add(
         new UI.Icon( "times" )
@@ -350,7 +351,8 @@ UI.PopupMenu = function( iconClass ){
 
         panel
             .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
-            .setTop( ( box.top - 32 ) + "px" )
+            // .setTop( ( box.top - 32 - 40 ) + "px" )
+            .setTop( ( box.top ) + "px" )
             .setDisplay( "block" );
 
     } );

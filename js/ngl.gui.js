@@ -518,6 +518,9 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
+    var settingsMenu = new UI.PopupMenu( "cogs" )
+        .setMarginLeft( "10px" );
+
     // clipping
 
     var clipNear = new UI.Range(
@@ -556,17 +559,18 @@ NGL.SidebarWidget = function( stage ){
 
     //
 
+    settingsMenu
+        .addEntry( "clip near", clipNear )
+        .addEntry( "clip far", clipFar )
+        .addEntry( "fog near", fogNear )
+        .addEntry( "fog far", fogFar );
+
     var actions = new UI.Panel()
         .setClass( "Panel Sticky" )
         .add(
             expandAll,
             collapseAll,
-            new UI.Break(),
-            clipNear,
-            clipFar,
-            new UI.Break(),
-            fogNear,
-            fogFar
+            settingsMenu
         );
 
     container.add(
