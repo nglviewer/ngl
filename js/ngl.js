@@ -1141,9 +1141,9 @@ NGL.Viewer.prototype = {
         this.orthographicCamera.bottom = az * -this.height / 2;
 
         this.camera.updateProjectionMatrix();
-        this.controls.handleResize();
         this.renderer.setSize( this.width, this.height );
         this.composer.setSize( this.width, this.height );
+        this.controls.handleResize();
 
         this.fxaaEffect.uniforms[ 'resolution' ].value.set( 
             1 / this.width, 1 / this.height
