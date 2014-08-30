@@ -64,6 +64,7 @@ UI.ColorPopupMenu = function(){
         } );
 
     this.colorPicker = new UI.ColorPicker()
+        .setDisplay( "inline-block" )
         .onChange( function( e, hex, hsv, rgb ){
 
             scope.setColor( scope.colorPicker.getValue() );
@@ -73,8 +74,8 @@ UI.ColorPopupMenu = function(){
 
     this.menu
         .addEntry( "Color scheme", this.schemeSelector )
-        .addEntry( "", this.colorInput )
-        .addEntry( "", this.colorPicker );
+        .addEntry( "Color input", this.colorInput )
+        .addEntry( "Color picker", this.colorPicker );
 
     this.add( this.menu );
 
