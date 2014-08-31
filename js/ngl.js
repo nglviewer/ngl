@@ -715,6 +715,7 @@ NGL.Viewer.prototype = {
 
             clipNear: 0,
             clipFar: 100,
+            clipDist: 20,
 
             specular: 0x050505,
 
@@ -1339,8 +1340,15 @@ NGL.Viewer.prototype = {
         var cDist = this.camera.position.length();
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
         var farFactor = - ( 50 - this.params.clipFar ) / 50;
-        this.camera.near = Math.max( 0.1, cDist - ( bRadius * nearFactor ) );
-        this.camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
+        this.camera.near = Math.max(
+            0.1,
+            this.params.clipDist,
+            cDist - ( bRadius * nearFactor )
+        );
+        this.camera.far = Math.max(
+            1,
+            cDist + ( bRadius * farFactor )
+        );
 
         // fog
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;

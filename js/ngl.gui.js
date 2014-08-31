@@ -712,6 +712,15 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.setClip( clipNear.getValue(), clipFar.getValue() );
         } );
 
+    var clipDist = new UI.Range(
+            1, 100,
+            stage.viewer.params.clipDist, 1
+        )
+        .onInput( function(){
+            stage.viewer.params.clipDist = clipDist.getValue();
+            stage.viewer.requestRender();
+        } );
+
     // fog
 
     var fogNear = new UI.Range(
@@ -735,6 +744,7 @@ NGL.SidebarWidget = function( stage ){
     settingsMenu
         .addEntry( "clip near", clipNear )
         .addEntry( "clip far", clipFar )
+        .addEntry( "clip distance", clipDist )
         .addEntry( "fog near", fogNear )
         .addEntry( "fog far", fogFar );
 
