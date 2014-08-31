@@ -515,9 +515,9 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1CKB.pdb", function( o ){
 
-                o.addRepresentation( "licorice", { sele: "hetero" } );
+                o.addRepresentation( "licorice", { scale: 3.0 } );
                 o.addRepresentation( "cartoon" );
-                o.addRepresentation( "spacefill" );
+                // o.addRepresentation( "spacefill" );
                 o.centerView();
 
                 console.log( o.structure.center );

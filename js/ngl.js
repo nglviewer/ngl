@@ -2162,7 +2162,9 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 
     this.finalize();
 
-    this.material.defines[ "CAP" ] = 1;
+    if( cap ){
+        this.material.defines[ "CAP" ] = 1;
+    }
 
     if( pickingColor ){
 

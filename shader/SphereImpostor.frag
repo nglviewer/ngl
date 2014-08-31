@@ -84,13 +84,11 @@ bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 
 
 void main(void)
-{   
+{
 
     bool flag = Impostor(cameraPos, cameraNormal);
 
     //Set the depth based on the new cameraPos.
-    // vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
-    // gl_FragDepthEXT = 0.5 + 0.5 * clipZW.x / clipZW.y;
     if( flag ){
         gl_FragDepthEXT = calcDepth( cameraPos );
     }else{
@@ -129,6 +127,7 @@ void main(void)
     #endif
 
     #include fog
+
 }
 
 

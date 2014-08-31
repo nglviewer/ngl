@@ -499,12 +499,14 @@ NGL.ExportImageWidget = function( stage ){
             exportButton.setDisplay( "none" );
             progress.setDisplay( "inline-block" );
 
-            exportImage(
-                parseInt( factorSelect.getValue() ),
-                typeSelect.getValue(),
-                parseFloat( qualitySelect.getValue() ),
-                antialiasCheckbox.getValue()
-            )
+            setTimeout( function(){
+                exportImage(
+                    parseInt( factorSelect.getValue() ),
+                    typeSelect.getValue(),
+                    parseFloat( qualitySelect.getValue() ),
+                    antialiasCheckbox.getValue()
+                )
+            }, 50 );
 
         } );
 
