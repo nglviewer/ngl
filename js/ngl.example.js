@@ -288,28 +288,28 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/4UPY.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
+                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPX.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
+                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UQ5.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
+                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPW.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 6, radialSegments: 8 } );
+                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 stage.centerView();
 
             } );
