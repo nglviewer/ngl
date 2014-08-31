@@ -41,12 +41,24 @@ vec3 cameraNormal;
 //   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;
 
 
-void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
+// Calculate depth based on the given camera position.
+float calcDepth( in vec3 camPos )
 {
+    vec2 clipZW = camPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
+    return 0.5 + 0.5 * clipZW.x / clipZW.y;
+}
+
+
+bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
+{
+
+    vec3 cameraSpherePos2 = cameraSpherePos.xyz;
+    cameraSpherePos2.z += sphereRadius;
+
     vec3 rayDirection = normalize( point );
 
-    float B = -2.0 * dot(rayDirection, cameraSpherePos.xyz);
-    float C = dot(cameraSpherePos.xyz, cameraSpherePos.xyz) - (sphereRadius*sphereRadius);
+    float B = -2.0 * dot(rayDirection, cameraSpherePos2);
+    float C = dot(cameraSpherePos2, cameraSpherePos2) - (sphereRadius*sphereRadius);
     
     float det = (B * B) - (4.0 * C);
     if(det < 0.0){
@@ -58,18 +70,15 @@ void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
         
         float intersectT = min(posT, negT);
         cameraPos = rayDirection * intersectT;
-        // if( cameraPos.z > -80.0 ){
-        //     cameraPos = rayDirection * max(posT, negT);
-        //     //cameraPos.z = -80.0 + sphereRadius;
+        if( calcDepth( cameraPos ) <= 0.0 ){
+            cameraPos = rayDirection * max(posT, negT);
+            cameraNormal = vec3( 0.0, 0.0, 0.4 );
+            return false;
+        }else{
+            cameraNormal = normalize(cameraPos - cameraSpherePos2);
+        }
 
-        //     cameraNormal = vec3( 0.0, 0.0, 0.4 );
-        //     // cameraNormal = normalize(cameraSpherePos.xyz - cameraPos);
-        //     // cameraNormal = -normalize(cameraPos - cameraSpherePos.xyz) / 2.0;
-        // }else{
-        //     cameraNormal = normalize(cameraPos - cameraSpherePos.xyz);
-        // }
-
-        cameraNormal = normalize(cameraPos - cameraSpherePos.xyz);
+        return true;
     }
 }
 
@@ -77,27 +86,30 @@ void Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 void main(void)
 {   
 
-    
-
-    Impostor(cameraPos, cameraNormal);
+    bool flag = Impostor(cameraPos, cameraNormal);
 
     //Set the depth based on the new cameraPos.
-    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
-    gl_FragDepthEXT = 0.5 + 0.5 * clipZW.x / clipZW.y;
+    // vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
+    // gl_FragDepthEXT = 0.5 + 0.5 * clipZW.x / clipZW.y;
+    if( flag ){
+        gl_FragDepthEXT = calcDepth( cameraPos );
+    }else{
+
+        if( calcDepth( cameraPos ) < 0.0 ){
+            discard;
+        }else{
+            // clamp to near clipping plane and add a tiny value to
+            // make spheres with a greater radius occlude smaller ones
+            gl_FragDepthEXT = 0.0 + ( 0.000001 / sphereRadius );
+        }
+
+    }
 
     // bugfix (mac only?)
-    if (gl_FragDepthEXT <= 0.0)
+    if (gl_FragDepthEXT < 0.0)
         discard;
-    if (gl_FragDepthEXT >= 1.0)
+    if (gl_FragDepthEXT > 1.0)
         discard;
-
-    // if( cameraPos.z - sphereRadius > -80.0 ){
-    //     discard;
-    // }
-
-    // if( dot( cameraSpherePos, vec4( 0.0, 0.0, -1.0, -80.0 ) ) < 0.0 ){
-    //     discard;
-    // }
 
     #ifdef PICKING
         gl_FragColor.xyz = vPickingColor;
