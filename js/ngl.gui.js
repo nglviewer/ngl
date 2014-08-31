@@ -529,8 +529,6 @@ NGL.ExportImageWidget = function( stage ){
 
     function exportImage( factor, type, quality, antialias ){
 
-        console.log( factor, type, quality, antialias );
-
         var i = 0;
         var paramsList = [];
         
@@ -574,24 +572,26 @@ NGL.ExportImageWidget = function( stage ){
                 if( finished ){
                     progress.setDisplay( "none" );
                     exportButton.setDisplay( "inline-block" );
+
+                    i = 0;
+
+                    stage.eachComponent( function( o ){
+
+                        o.reprList.slice( 0 ).forEach( function( repr ){
+
+                            o.addRepresentation( repr.name, paramsList[ i ] );
+                            o.removeRepresentation( repr );
+
+                            i += 1;
+
+                        } );
+
+                    }, NGL.StructureComponent );
                 }
             }
         );
 
-        i = 0;
-
-        stage.eachComponent( function( o ){
-
-            o.reprList.slice( 0 ).forEach( function( repr ){
-
-                o.addRepresentation( repr.name, paramsList[ i ] );
-                o.removeRepresentation( repr );
-
-                i += 1;
-
-            } );
-
-        }, NGL.StructureComponent );
+        
 
     }
 
