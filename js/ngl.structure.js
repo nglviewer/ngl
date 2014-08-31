@@ -3686,6 +3686,9 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
     this.sheet = [];
     this.helix = [];
 
+    this.biomolDict = {};
+    var biomolDict = this.biomolDict;
+
     var lines = str.split( "\n" );
 
     var guessElem = NGL.guessElement;
@@ -3710,7 +3713,7 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
 
     this.hasConnect = false;
 
-    var a, currentChainname, currentResno;
+    var a, currentChainname, currentResno, currentBiomol;
 
     var n = lines.length;
 
@@ -3803,7 +3806,7 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
 
                 atoms.push( a );
 
-            }else if( recordName == 'CONECT' ){
+            }else if( recordName === 'CONECT' ){
 
                 var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
                 var pos = [ 11, 16, 21, 26 ];
@@ -3819,7 +3822,7 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
 
                 scope.hasConnect = true;
 
-            }else if( recordName == 'HELIX ' ){
+            }else if( recordName === 'HELIX ' ){
 
                 var startChain = line[ 19 ];
                 var startResi = parseInt( line.substr( 21, 4 ) );
@@ -3827,7 +3830,7 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
                 var endResi = parseInt( line.substr( 33, 4 ) );
                 helix.push([ startChain, startResi, endChain, endResi ]);
 
-            }else if( recordName == 'SHEET ' ){
+            }else if( recordName === 'SHEET ' ){
 
                 var startChain = line[ 21 ];
                 var startResi = parseInt( line.substr( 22, 4 ) );
@@ -3835,15 +3838,56 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
                 var endResi = parseInt( line.substr( 33, 4 ) );
                 sheet.push([ startChain, startResi, endChain, endResi ]);
 
-            }else if( recordName == 'HEADER' ){
+            }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
+
+                if( line.substr( 11, 12 ) === "BIOMOLECULE:" ){
+
+                    var name = line.substr( 23 ).trim();
+
+                    biomolDict[ name ] = {
+                        matrixDict: {},
+                        chainList: []
+                    };
+                    currentBiomol = biomolDict[ name ];
+
+                }else if( line.substr( 13, 5 ) === "BIOMT" ){
+
+                    var row = parseInt( line[ 18 ] ) - 1;
+                    var mat = line.substr( 20, 3 ).trim();
+
+                    if( row === 0 ){
+                        currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                    }
+
+                    var elms = currentBiomol.matrixDict[ mat ].elements;
+
+                    elms[ 4 * 0 + row ] = parseFloat( line.substr( 24, 9 ) );
+                    elms[ 4 * 1 + row ] = parseFloat( line.substr( 34, 9 ) );
+                    elms[ 4 * 2 + row ] = parseFloat( line.substr( 44, 9 ) );
+                    elms[ 4 * 3 + row ] = parseFloat( line.substr( 54, 14 ) );
+                                     
+                }else if(
+                    line.substr( 11, 30 ) === 'APPLY THE FOLLOWING TO CHAINS:' ||
+                    line.substr( 11, 30 ) === '                   AND CHAINS:'
+                ){
+
+                    line.substr( 41, 30 ).split( "," ).forEach( function( v ){
+
+                        currentBiomol.chainList.push( v.trim() )
+
+                    } );
+
+                }
+
+            }else if( recordName === 'HEADER' ){
 
                 id = line.substr( 62, 4 );
 
-            }else if( recordName == 'TITLE ' ){
+            }else if( recordName === 'TITLE ' ){
 
                 title += line.substr( 10, 70 ) + "\n";
 
-            }else if( recordName == 'MODEL ' ){
+            }else if( recordName === 'MODEL ' ){
 
                 if( a ){
 
@@ -3867,6 +3911,8 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
 
             _postProcess();
             callback( scope );
+
+            // console.log( biomolDict );
 
         }else{
 
