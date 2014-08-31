@@ -137,13 +137,62 @@ UI.ToggleIcon.prototype.getValue = function(){
 }
 
 
+// Progress
+
+UI.Progress = function( max, value ) {
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'progress' );
+    dom.className = 'Progress';
+
+    dom.max = max || 1.0;
+    if( value !== undefined ) dom.value = value;
+
+    this.dom = dom;
+
+    return this;
+
+};
+
+UI.Progress.prototype = Object.create( UI.Element.prototype );
+
+UI.Progress.prototype.getValue = function(){
+
+    return this.dom.value;
+
+};
+
+UI.Progress.prototype.setValue = function( value ){
+
+    this.dom.value = value;
+
+    return this;
+
+};
+
+UI.Progress.prototype.setMax = function( value ){
+
+    this.dom.max = value;
+
+    return this;
+
+};
+
+UI.Progress.prototype.setIndeterminate = function(){
+
+    this.dom.removeAttribute( "value" );
+
+    return this;
+
+};
+
+
 // Range
 
 UI.Range = function( min, max, value, step ) {
 
     UI.Element.call( this );
-
-    var scope = this;
 
     var dom = document.createElement( 'input' );
     dom.className = 'Range';
@@ -313,7 +362,7 @@ UI.VirtualList = function( items ){
 
 // Popup Menu
 
-UI.PopupMenu = function( iconClass ){
+UI.PopupMenu = function( iconClass, heading ){
 
     UI.Panel.call( this );
 
@@ -326,15 +375,26 @@ UI.PopupMenu = function( iconClass ){
         .attach()
         //.attach( this.dom );
     
-    panel.add(
-        new UI.Icon( "times" )
-            .setFloat( "right" )
-            .onClick( function(){
+    var headingPanel = new UI.Panel()
+        .setBorderBottom( "1px solid #555" )
+        .setMarginBottom( "10px" )
+        .setHeight( "25px" );
 
-                panel.setDisplay( "none" );
+    headingPanel
+        .add(
+            new UI.Icon( "times" )
+                .setFloat( "right" )
+                .onClick( function(){
 
-            } )
-    );
+                    panel.setDisplay( "none" );
+
+                } )
+        )
+        .add(
+            new UI.Text( heading )
+        );
+
+    panel.add( headingPanel );
 
     icon.setTitle( "menu" );
 
@@ -376,7 +436,7 @@ UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
     this.panel
         .add( new UI.Text( label ).setWidth( this.entryLabelWidth ) )
-        .add( entry )
+        .add( entry || new UI.Panel() )
         .add( new UI.Break() );
     
     return this;

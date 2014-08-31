@@ -41,6 +41,30 @@ NGL.Widget.prototype = {
 };
 
 
+// Stage
+
+NGL.StageWidget = function( stage ){
+
+    var viewer = stage.viewer;
+    var renderer = viewer.renderer;
+    
+    this.viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
+    document.body.appendChild( this.viewport.dom );
+
+    this.toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
+    document.body.appendChild( this.toolbar.dom );
+
+    this.menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
+    document.body.appendChild( this.menubar.dom );
+
+    this.sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
+    document.body.appendChild( this.sidebar.dom );
+
+    return this;
+
+};
+
+
 // Viewport
 
 NGL.ViewportWidget = function( stage ){
@@ -150,17 +174,17 @@ NGL.MenubarFileWidget = function( stage ){
 
         for( var i=0; i<n; ++i ){
 
-            addFile( fileList[ i ] );
+            stage.loadFile( fileList[ i ] );
 
         }
 
     }, false );
 
-    function addFile( path ){
+    // export image
 
-        stage.loadFile( path );
-
-    }
+    var exportImageWidget = new NGL.ExportImageWidget( stage )
+        .setDisplay( "none" )
+        .attach();
 
     // event handlers
 
@@ -210,49 +234,21 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onExportImageOptionClick () {
 
-        var i = 0;
-        var paramsList = [];
+        exportImageWidget
+            .setOpacity( "0.8" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setDisplay( "block" );
+
+        return;
+
         
-        stage.eachComponent( function( o ){
 
-            o.reprList.slice( 0 ).forEach( function( repr ){
+    }
 
-                var p = repr.getParameters();
+    function onScreenshotOptionClick () {
 
-                if( p.subdiv !== undefined ){
-                    p.subdiv = Math.max( 20, p.subdiv );
-                }
-
-                if( p.radialSegments !== undefined ){
-                    p.radialSegments = Math.max( 20, p.radialSegments );
-                }
-
-                o.addRepresentation( repr.name, p );
-                o.removeRepresentation( repr );
-
-                paramsList.push( repr.getParameters() );
-                i += 1;
-
-            } );
-
-        }, NGL.StructureComponent );
-
-        stage.viewer.screenshot( 4, "image/png", 1.0 );
-
-        i = 0;
-
-        stage.eachComponent( function( o ){
-
-            o.reprList.slice( 0 ).forEach( function( repr ){
-
-                o.addRepresentation( repr.name, paramsList[ i ] );
-                o.removeRepresentation( repr );
-
-                i += 1;
-
-            } );
-
-        }, NGL.StructureComponent );
+        stage.viewer.screenshot( 1, "image/png", 1.0, true );
 
     }
 
@@ -260,7 +256,7 @@ NGL.MenubarFileWidget = function( stage ){
 
         if( e.keyCode === 13 ){
 
-            addFile( e.target.value );
+            stage.loadFile( e.target.value );
             e.target.value = "";
 
         }
@@ -278,7 +274,8 @@ NGL.MenubarFileWidget = function( stage ){
         createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createDivider(),
-        createOption( 'Export image', onExportImageOptionClick, 'camera' ),
+        createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
+        createOption( 'Export image...', onExportImageOptionClick ),
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
@@ -435,6 +432,174 @@ NGL.MenubarHelpWidget = function( stage ){
 };
 
 
+// Export image
+
+NGL.ExportImageWidget = function( stage ){
+
+    var container = new UI.OverlayPanel();
+
+    var headingPanel = new UI.Panel()
+        .setBorderBottom( "1px solid #555" )
+        .setHeight( "25px" );
+
+    var listingPanel = new UI.Panel()
+        .setMarginTop( "10px" )
+        .setMinHeight( "100px" )
+        .setMaxHeight( "500px" )
+        .setOverflow( "auto" );
+
+    headingPanel.add( new UI.Text( "Image export" ) );
+    headingPanel.add( 
+        new UI.Icon( "times" )
+            .setMarginLeft( "20px" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                container.setDisplay( "none" );
+
+            } )
+    );
+    
+    container.add( headingPanel );
+    container.add( listingPanel );
+
+    var factorSelect = new UI.Select()
+        .setOptions( {
+            "1": "1x", "2": "2x", "3": "3x", "4": "4x",
+            "5": "5x", "6": "6x", "7": "7x", "8": "8x",
+            "9": "9x", "10": "10x"
+        } )
+        .setValue( "4" );
+
+    var typeSelect = new UI.Select()
+        .setOptions( {
+            "image/png": "PNG",
+            "image/jpeg": "JPEG",
+            // "image/webp": "WebP"
+        } )
+        .setValue( "image/png" );
+
+    var qualitySelect = new UI.Select()
+        .setOptions( {
+            "0.1": "0.1", "0.2": "0.2", "0.3": "0.3", "0.4": "0.4",
+            "0.5": "0.5", "0.6": "0.6", "0.7": "0.7", "0.8": "0.8",
+            "0.9": "0.9", "1.0": "1.0"
+        } )
+        .setValue( "1.0" );
+
+    var antialiasCheckbox = new UI.Checkbox()
+        .setValue( true );
+
+    var progress = new UI.Progress()
+        .setDisplay( "none" );
+
+    var exportButton = new UI.Button( "export" )
+        .onClick( function(){
+
+            exportButton.setDisplay( "none" );
+            progress.setDisplay( "inline-block" );
+
+            exportImage(
+                parseInt( factorSelect.getValue() ),
+                typeSelect.getValue(),
+                parseFloat( qualitySelect.getValue() ),
+                antialiasCheckbox.getValue()
+            )
+
+        } );
+
+    function addEntry( label, entry ){
+
+        listingPanel
+            .add( new UI.Text( label ).setWidth( "80px" ) )
+            .add( entry || new UI.Panel() )
+            .add( new UI.Break() );
+
+    }
+
+    addEntry( "scale", factorSelect );
+    addEntry( "type", typeSelect );
+    addEntry( "quality", qualitySelect );
+    addEntry( "antialias", antialiasCheckbox );
+
+    listingPanel.add(
+        new UI.Break(),
+        exportButton, progress
+    );
+
+    function exportImage( factor, type, quality, antialias ){
+
+        console.log( factor, type, quality, antialias );
+
+        var i = 0;
+        var paramsList = [];
+        
+        stage.eachComponent( function( o ){
+
+            o.reprList.slice( 0 ).forEach( function( repr ){
+
+                var p = repr.getParameters();
+
+                if( p.subdiv !== undefined ){
+                    p.subdiv = Math.max( 20, p.subdiv );
+                }
+
+                if( p.radialSegments !== undefined ){
+                    p.radialSegments = Math.max( 20, p.radialSegments );
+                }
+
+                o.addRepresentation( repr.name, p );
+                o.removeRepresentation( repr );
+
+                paramsList.push( repr.getParameters() );
+                i += 1;
+
+            } );
+
+        }, NGL.StructureComponent );
+
+        stage.viewer.screenshot(
+            factor, type, quality, antialias,
+            function( i, n, finished ){
+                if( i === 1 ){
+                    progress.setMax( n );
+                }
+                // FIXME "i + 1" case should not be needed but
+                // without it the progress element is updated too late
+                if( i === n || i + 1 === n ){
+                    progress.setIndeterminate();
+                }else{
+                    progress.setValue( i );
+                }
+                if( finished ){
+                    progress.setDisplay( "none" );
+                    exportButton.setDisplay( "inline-block" );
+                }
+            }
+        );
+
+        i = 0;
+
+        stage.eachComponent( function( o ){
+
+            o.reprList.slice( 0 ).forEach( function( repr ){
+
+                o.addRepresentation( repr.name, paramsList[ i ] );
+                o.removeRepresentation( repr );
+
+                i += 1;
+
+            } );
+
+        }, NGL.StructureComponent );
+
+    }
+
+    return container;
+
+};
+
+
 // Sidebar
 
 NGL.SidebarWidget = function( stage ){
@@ -526,7 +691,7 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
-    var settingsMenu = new UI.PopupMenu( "cogs" )
+    var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
         .setMarginLeft( "10px" );
 
     // clipping
@@ -832,7 +997,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Menu
 
-    var menu = new UI.PopupMenu()
+    var menu = new UI.PopupMenu( "bars", "Structure" )
         .setMarginLeft( "46px" )
         .setEntryLabelWidth( "110px" )
         .addEntry( "PDB file", pdb )
@@ -1154,7 +1319,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
         } );
 
-    var menu = new UI.PopupMenu()
+    var menu = new UI.PopupMenu( "bars", "Representation" )
         .setMarginLeft( "45px" )
         .setEntryLabelWidth( "110px" )
         .addEntry( "Radius type", radiusSelector )
@@ -1411,7 +1576,7 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     // Menu
 
-    var menu = new UI.PopupMenu()
+    var menu = new UI.PopupMenu( "bars", "Trajectory" )
         .setMarginLeft( "10px" )
         .setEntryLabelWidth( "110px" )
         .addEntry( "Center", setCenterPbc )
