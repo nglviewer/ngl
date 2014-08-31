@@ -18,7 +18,7 @@ UI.ColorPopupMenu = function(){
     this.iconSquare = new UI.Icon( "square", "stack-1x" )
         //.setMarginTop( "0.05em" );
 
-    this.menu = new UI.PopupMenu( "stack" );
+    this.menu = new UI.PopupMenu( "stack", "Color" );
 
     this.menu.icon
         .setTitle( "color" )
@@ -73,9 +73,9 @@ UI.ColorPopupMenu = function(){
         } );
 
     this.menu
-        .addEntry( "Color scheme", this.schemeSelector )
-        .addEntry( "Color input", this.colorInput )
-        .addEntry( "Color picker", this.colorPicker );
+        .addEntry( "Scheme", this.schemeSelector )
+        .addEntry( "Input", this.colorInput )
+        .addEntry( "Picker", this.colorPicker );
 
     this.add( this.menu );
 

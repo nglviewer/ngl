@@ -57,22 +57,9 @@
                 NGL.init( function(){
 
                     var stage = new NGL.Stage();
+                    NGL.StageWidget( stage );
 
-                    var viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
-                    document.body.appendChild( viewport.dom );
-
-                    var toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
-                    document.body.appendChild( toolbar.dom );
-
-                    var menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
-                    document.body.appendChild( menubar.dom );
-
-                    var sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
-                    document.body.appendChild( sidebar.dom );
-
-                    // sidebar.add( new UI.VirtualList( new Array( 10000 ) ) );
-
-                    // FIXME
+                    // FIXME why and why twice?
                     stage.viewer.onWindowResize();
                     stage.viewer.onWindowResize();
 

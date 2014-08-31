@@ -1163,7 +1163,17 @@ NGL.Viewer.prototype = {
 
     },
 
-    screenshot: function( factor, type, quality ){
+    screenshot: function( factor, type, quality, antialias, progressCallback ){
+
+        // FIXME don't show rendered parts
+        // FIXME controls need to be disabled
+
+        var scope = this;
+
+        // FIXME creates stitch lines in Firefox
+        // antialiasing by supersampling
+
+        if( antialias ) factor *= 2;
 
         var i;
         var n = factor * factor;
@@ -1171,8 +1181,18 @@ NGL.Viewer.prototype = {
         var canvas = document.createElement( 'canvas' );
         canvas.style.display = "hidden";
         document.body.appendChild( canvas );
-        canvas.width = this.width * factor;
-        canvas.height = this.height * factor;
+
+        if( antialias ){
+
+            canvas.width = this.width * factor / 2;
+            canvas.height = this.height * factor / 2;
+
+        }else{
+
+            canvas.width = this.width * factor;
+            canvas.height = this.height * factor;
+
+        }
 
         var ctx = canvas.getContext( '2d' );
 
@@ -1210,32 +1230,75 @@ NGL.Viewer.prototype = {
 
         }
 
-        for( i = 0; i < n; ++i ){
+        function render( i, n ){
 
-            makeAsymmetricFrustum( this.camera.projectionMatrix, i );
+            makeAsymmetricFrustum( scope.camera.projectionMatrix, i );
 
-            this.render( null, null, true );
+            scope.render( null, null, true );
 
-            var x = ( i % factor ) * this.width;
-            var y = Math.floor( i / factor ) * this.height;
+            var x = ( i % factor ) * scope.width;
+            var y = Math.floor( i / factor ) * scope.height;
 
-            ctx.drawImage( this.renderer.domElement, x, y );
+            if( antialias ){
 
-            this.camera.updateProjectionMatrix();
+                ctx.drawImage(
+                    scope.renderer.domElement,
+                    x / 2, y / 2,
+                    scope.width / 2, scope.height / 2
+                );
+
+            }else{
+
+                ctx.drawImage( scope.renderer.domElement, x, y );
+
+            }
+
+            scope.camera.updateProjectionMatrix();
+
+            if( typeof progressCallback === "function" ){
+
+                progressCallback( i + 1, n, false );
+
+            }
 
         }
 
-        var ext = type.split( "/" )[ 1 ];
+        for( i = 0; i <= n; ++i ){
 
-        canvas.toBlob(
-            function( blob ){
-                NGL.download( blob, "screenshot." + ext );
-                document.body.removeChild( canvas );
-            },
-            type, quality
-        );
+            setTimeout( (function( i, n ){
 
-        this.requestRender();
+                return function(){
+
+                    if( i === n ){
+                        save( n );
+                    }else{
+                        render( i, n );
+                    }
+
+                }
+
+            })( i, n ) );
+
+        }
+
+        function save( n ){
+
+            var ext = type.split( "/" )[ 1 ];
+
+            canvas.toBlob(
+                function( blob ){
+                    NGL.download( blob, "screenshot." + ext );
+                    document.body.removeChild( canvas );
+                    if( typeof progressCallback === "function" ){
+                        progressCallback( n, n, true );
+                    }
+                },
+                type, quality
+            );
+
+            scope.requestRender();
+
+        }
 
     },
 
