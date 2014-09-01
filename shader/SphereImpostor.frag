@@ -89,13 +89,10 @@ void main(void)
     bool flag = Impostor(cameraPos, cameraNormal);
 
     //Set the depth based on the new cameraPos.
-    if( flag ){
-        gl_FragDepthEXT = calcDepth( cameraPos );
-    }else{
+    gl_FragDepthEXT = calcDepth( cameraPos );
+    if( !flag ){
 
-        if( calcDepth( cameraPos ) < 0.0 ){
-            discard;
-        }else{
+        if( gl_FragDepthEXT >= 0.0 ){
             // clamp to near clipping plane and add a tiny value to
             // make spheres with a greater radius occlude smaller ones
             gl_FragDepthEXT = 0.0 + ( 0.000001 / sphereRadius );
