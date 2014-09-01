@@ -61,7 +61,7 @@
 
 		<code>10-20 and :A and .CA and /0</code>
 
-		Single expressions may be left out ss long as the order (see above) is kept, e.g.
+		Single expressions may be left out as long as the order (see above) is kept, e.g.
 
 		<code>:A/0 # select chain A from model 0</code>
 
@@ -74,7 +74,9 @@
 			<li>*OR*</li>
 		</ul>
 
-		Additionally, parentheses *()* can be used for grouping.
+		Additionally, parentheses *()* can be used for grouping:
+
+		<code>:A and ( 1 or 10 or 100 ) # select residues 1, 10 and 100 from chain A</code>
 
 
 	</body>
