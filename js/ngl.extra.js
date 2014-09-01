@@ -1141,13 +1141,8 @@ NGL.Representation.prototype = {
     rebuild: function(){
 
         this.dispose();
-
-        if( this.atomSet.atomCount ){
-
-            this.create();
-            this.attach();
-
-        }
+        this.create();
+        this.attach();
 
     },
 
