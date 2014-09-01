@@ -39,7 +39,8 @@ app.config.from_pyfile( cfg_file )
 
 os.environ.update( app.config.get( "ENV", {} ) )
 os.environ["PATH"] += ":" + ":".join( app.config.get( "PATH", [] ) )
-os.environ["HTTP_PROXY"] = app.config.get( "PROXY", "" )
+if( app.config.get( "PROXY" ) is not None ):
+    os.environ["HTTP_PROXY"] = app.config.get( "PROXY", "" )
 
 APP_PATH = app.config.get( "APP_PATH", "" )
 DATA_DIRS = app.config.get( "DATA_DIRS", {} )

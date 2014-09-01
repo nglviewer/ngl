@@ -9,7 +9,16 @@
 	<body>
 		<h1>[name]</h1>
 
-		
+
+		<h2>Flask</h2>
+
+		The server is based on *Flask*, which can be installed through *pip*:
+
+		<code class="lang-sh">
+		sudo pip install Flask
+		</code>
+
+
 		<h2>libxdrfile2</h2>
 
 		For the efficient access of GROMACS trajectory files, the library *libxdrfile2* needs to be installed.
@@ -19,23 +28,52 @@
 		sudo python setup.py install
 		</code>
 
-		make sure you have the python development files installed
+		Make sure you have the python development files installed, e.g.
 
 		<code class="lang-sh">sudo apt-get install python-dev</code>
 
 
 		<h2>Configuration files</h2>
 
-		<p>The website can be configured through some javascript files that should be set-up.</p>
+		<h3>Server</h3>
 
-		Copy the sample tracking.js file and add any tracking code you need.
+		Copy/rename the sample app.cfg file. It allows e.g. setting data directories that will be accessible through the web server, define access restrictions.
+
+		<code>cp app.cfg.sample app.cfg</code>
+
+
+		<h3>Website</h3>
+
+		<p>The website can be configured through some JavaScript files that should be set-up.</p>
+
+		Copy/rename the sample tracking.js file and add any tracking code you need.
 
 		<code>cp js/tracking.js.sample js/tracking.js</code>
 
 
-		Copy the sample examples.js file and add any examples you want to be available on your server.
+		Copy/rename the sample examples.js file and add any examples you want to be available on your server.
 
 		<code>cp js/examples.js.sample js/examples.js</code>
+
+
+		<h2>Starting</h2>
+
+		<h3>Local/development</h3>
+
+		The server can be started with the python script
+
+		<code class="lang-sh">python serve.py</code>
+
+		which will use the *app.cfg* configuration file or with
+
+		<code class="lang-sh">python serve.py my_conf.cfg</code>
+
+		to use the *my_conf.cfg* configuration file.
+
+
+		<h3>Apache</h3>
+
+		For instructions on how to configure *Apache* to serve NGL see this [page:Webserver page].
 
 
 	</body>
