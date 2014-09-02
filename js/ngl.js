@@ -931,30 +931,30 @@ NGL.Viewer.prototype = {
         var group = new THREE.Object3D();
         var pickingGroup = new THREE.Object3D();
 
-        // group.add( buffer.mesh );
-        // if( buffer.pickingMesh ){
-        //     pickingGroup.add( buffer.pickingMesh );
-        // }
-
         if( matrixList ){
 
             matrixList.forEach( function( matrix ){
 
-                var subGroup = new THREE.Object3D();
-                subGroup.add( buffer.getMesh() );
-                subGroup.applyMatrix( matrix );
-                group.add( subGroup );
+                var mesh = buffer.getMesh();
+                mesh.applyMatrix( matrix );
+                group.add( mesh );
 
                 if( buffer.pickingMesh ){
 
-                    var pickingSubGroup = new THREE.Object3D();
-                    pickingSubGroup.add( buffer.getMesh( "picking" ) );
-                    pickingSubGroup.applyMatrix( matrix );
-                    pickingGroup.add( pickingSubGroup );
+                    var pickingMesh = buffer.getMesh( "picking" );
+                    pickingMesh.applyMatrix( matrix );
+                    pickingGroup.add( pickingMesh );
 
                 }
 
             } );
+
+        }else{
+
+            group.add( buffer.mesh );
+            if( buffer.pickingMesh ){
+                pickingGroup.add( buffer.pickingMesh );
+            }
 
         }
 
