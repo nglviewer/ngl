@@ -509,18 +509,14 @@ NGL.Examples = {
 
         },
 
-        "test": function( stage ){
+        "capsid": function( stage ){
 
             console.time( "test" );
 
-            stage.loadFile( "__example__/1CKB.pdb", function( o ){
+            stage.loadFile( "__example__/1RB8.pdb", function( o ){
 
-                o.addRepresentation( "licorice", { scale: 3.0 } );
-                o.addRepresentation( "cartoon" );
-                // o.addRepresentation( "spacefill" );
-                o.centerView();
-
-                // console.log( o.structure.center );
+                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
+                stage.centerView();
 
             } );
 
