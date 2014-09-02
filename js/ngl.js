@@ -1405,13 +1405,12 @@ NGL.Viewer.prototype = {
         var nObjects = objects.length;
         var camera = this.camera;
 
-        for( i = 0; i < nObjects; i ++ ) {
+        group.traverse( function ( o ){
 
-            o = objects[i];
-            if( !o.material ) continue;
+            if( !o.material ) return;
 
             u = o.material.uniforms;
-            if( !u ) continue;
+            if( !u ) return;
 
             o.updateMatrix();
             o.updateMatrixWorld( true );
@@ -1424,10 +1423,18 @@ NGL.Viewer.prototype = {
             }
 
             if( u.modelViewMatrixInverseTranspose ){
-                matrix.multiplyMatrices( 
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
-                u.modelViewMatrixInverseTranspose.value.getInverse( matrix ).transpose();
+                if( u.modelViewMatrixInverse ){
+                    u.modelViewMatrixInverseTranspose.value.copy(
+                        u.modelViewMatrixInverse.value
+                    ).transpose();
+                }else{
+                    matrix.multiplyMatrices( 
+                        camera.matrixWorldInverse, o.matrixWorld
+                    );
+                    u.modelViewMatrixInverseTranspose.value
+                        .getInverse( matrix )
+                        .transpose();
+                }
             }
 
             if( u.projectionMatrixInverse ){
@@ -1452,18 +1459,27 @@ NGL.Viewer.prototype = {
             }
 
             if( u.modelViewProjectionMatrixInverse ){
-                matrix.multiplyMatrices( 
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
-                u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
-                    camera.projectionMatrix, matrix
-                )
-                u.modelViewProjectionMatrixInverse.value.getInverse( 
-                    u.modelViewProjectionMatrixInverse.value
-                );
+                if( u.modelViewProjectionMatrix ){
+                    u.modelViewProjectionMatrixInverse.value.copy(
+                        u.modelViewProjectionMatrix.value
+                    );
+                    u.modelViewProjectionMatrixInverse.value.getInverse( 
+                        u.modelViewProjectionMatrixInverse.value
+                    );
+                }else{
+                    matrix.multiplyMatrices( 
+                        camera.matrixWorldInverse, o.matrixWorld
+                    );
+                    u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
+                        camera.projectionMatrix, matrix
+                    )
+                    u.modelViewProjectionMatrixInverse.value.getInverse( 
+                        u.modelViewProjectionMatrixInverse.value
+                    );
+                }
             }
 
-        }
+        } );
 
     },
 
