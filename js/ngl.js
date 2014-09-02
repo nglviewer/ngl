@@ -924,7 +924,7 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer, matrixList ){
 
-        buffer.geometry.frustumCulled = false;
+        buffer.mesh.frustumCulled = false;
         buffer.geometry.computeBoundingBox();
         buffer.geometry.computeBoundingSphere();
 
