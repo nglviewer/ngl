@@ -1,78 +1,4 @@
-﻿* {
-    vertical-align: middle;
-}
-
-:-webkit-full-screen #viewport {
-    width: 100%;
-    height: 100%;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-}
-
-    /* Webkit micro scrollbars */
-
-    ::-webkit-scrollbar {
-        width:9px;
-    }
-
-    ::-webkit-scrollbar-track {
-        -webkit-border-radius:5px;
-        border-radius:5px;
-        background:rgba(140,140,140,0.1);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        -webkit-border-radius:5px;
-        border-radius:5px;
-        background:rgba(140,140,140,0.2);
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background:rgba(140,140,140,0.4);
-    }
-
-    ::-webkit-scrollbar-thumb:window-inactive {
-        background:rgba(140,140,140,0.5);
-    }
-
-body {
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    margin: 0;
-    overflow: hidden;
-}
-
-hr {
-    border: 0px;
-    border-top: 1px solid #ccc;
-}
-
-button {
-    position: relative;
-    margin-left: 0px;
-}
-
-select {
-    margin-left: 1px;
-}
-
-.Icon {
-    cursor: default;
-}
-
-.Panel {
-
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-
-    /* No support for these yet */
-    -o-user-select: none;
-    user-select: none;
-}
-
+﻿
 .OverlayPanel {
     background-color: #000;
     z-index: 10;
@@ -81,32 +7,6 @@ select {
     padding: 10px;
     border: 1px solid #555;
     overflow: auto;
-}
-
-.CollapsiblePanel .CollapsiblePanelButton {
-    float: left;
-    margin-right: 6px;
-    width: 0px;
-    height: 0px;
-    border: 6px solid transparent;
-}
-
-.CollapsiblePanel.collapsed > .CollapsiblePanelButton {
-    margin-top: 2px;
-    border-left-color: #555;
-}
-
-.CollapsiblePanel:not(.collapsed) > .CollapsiblePanelButton {
-    margin-top: 6px;
-    border-top-color: #555;
-}
-
-.CollapsiblePanel.collapsed .CollapsibleContent {
-    display: none;
-}
-
-.CollapsiblePanel:not(.collapsed) > .CollapsibleContent {
-    clear: both;
 }
 
 .FancySelect {
@@ -135,65 +35,6 @@ input.Number {
     padding: 2px;
     cursor: col-resize;
 }
-
-
-/* http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/ */
-
-.AdaptiveTextAreaContainer {
-    position: relative;
-    display: inline-block;
-    margin-top: 2px;
-    margin-bottom: 2px;
-}
-
-.AdaptiveTextArea, .AdaptiveTextAreaSize {
-    min-height: 21px;
-    /* need to manually set font and font size */
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-    box-sizing: border-box;
-    padding: 2px;
-    border: 1px solid #ccc;
-
-    overflow: hidden;
-    width: 100%;
-}
-
-.AdaptiveTextArea {
-    height: 100%;
-    position: absolute;
-    resize: none;
-
-    /*
-    "pre" or "preline" or "normal" fixes Chrome issue where
-    whitespace at end of lines does not trigger a line break.
-    However, it causes the text to exhibit the behavior seen with
-    "pre" that is described below.
-    */
-    white-space: normal;
-}
-
-.AdaptiveTextAreaSize {
-    visibility: hidden;
-
-    /*
-    Pre-wrap: preserve spacing and newlines, but wrap text.
-    Pre: preserve spacing and newlines but don't wrap text.
-
-    "pre" does not wrap well on Firefox, even with word-wrap:break-word.
-    "pre" on Chrome works with word-wrap, but exhibits different behavior:
-    Instead of entire words being moved to the next line for wrapping,
-    the browser will cut words in the middle for wrapping.
-    "pre-line" has Firefox issues
-    */
-    white-space: pre-wrap;
-    /* Required for wrapping lines in Webkit,
-    but not necessary in Firefox if you have white-space wrapping
-    (pre-wrap, normal, pre-line) already set */
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
 
 #viewport {
     position: absolute;
@@ -306,10 +147,6 @@ input.Number {
         font-size: 12px;
     }
 
-    #sidebar .Sticky {
-        height: 400px;
-    }
-
     #sidebar .Content {
         top: 40px;
         bottom: 0px;
@@ -337,55 +174,3 @@ input.Number {
     #toolbar button {
         margin-right: 6px;
     }
-
-
-/* FlexiColorPicker */
-.picker-wrapper, 
-.slide-wrapper {
-    position: relative;
-    float: left;
-}
-.picker-indicator,
-.slide-indicator {
-    position: absolute;
-    left: 0;
-    top: 0;
-    pointer-events: none;
-}
-.picker,
-.slide {
-    cursor: crosshair;
-    float: left;
-}
-.slide-wrapper {
-    margin-left: 10px;
-}
-.picker-indicator {
-    width: 5px;
-    height: 5px;
-    border: 2px solid darkblue;
-    -moz-border-radius: 4px;
-    -o-border-radius: 4px;
-    -webkit-border-radius: 4px;
-    border-radius: 4px;
-    opacity: .5;
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
-    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=50);
-    filter: alpha(opacity=50);
-    background-color: white;
-}
-.slide-indicator {
-    width: 100%;
-    height: 10px;
-    left: -4px;
-    opacity: .6;
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
-    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=60);
-    filter: alpha(opacity=60);
-    border: 4px solid lightblue;
-    -moz-border-radius: 4px;
-    -o-border-radius: 4px;
-    -webkit-border-radius: 4px;
-    border-radius: 4px;
-    background-color: white;
-}
