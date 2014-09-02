@@ -2709,8 +2709,9 @@ NGL.PointBuffer = function( position, color ){
 
 NGL.PointBuffer.prototype = {
 
-    // TODO
     setAttributes: function( data ){
+
+        // TODO
 
     },
 
@@ -3037,7 +3038,7 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
-// TODO refactor to create a MeshBuffer
+
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
     this.size = ( position.length/3 ) - 1;
@@ -3059,16 +3060,6 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
     ]);
-
-    this.material = new THREE.ShaderMaterial( {
-        uniforms: this.uniforms,
-        attributes: this.attributes,
-        vertexShader: NGL.getShader( 'Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-        side: THREE.DoubleSide,
-        lights: true,
-        fog: true
-    });
 
     this.geometry = new THREE.BufferGeometry();
 
@@ -3104,28 +3095,40 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
     this.makeIndex();
 
-    this.mesh = new THREE.Mesh( this.geometry, this.material );
+    this.wirefameMaterial = new THREE.LineBasicMaterial({
+        uniforms: this.uniforms,
+        attributes: this.attributes,
+        vertexColors: true,
+        fog: true
+    });
 
-    if( pickingColor ){
+    this.material = new THREE.ShaderMaterial( {
+        uniforms: this.uniforms,
+        attributes: this.attributes,
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
+        side: THREE.DoubleSide,
+        lights: true,
+        fog: true
+    });
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( 'Ribbon.vert' ),
-            fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-            side: THREE.DoubleSide,
-            depthTest: true,
-            transparent: false,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
+    this.pickingMaterial = new THREE.ShaderMaterial( {
+        uniforms: this.uniforms,
+        attributes: this.attributes,
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
+        side: THREE.DoubleSide,
+        depthTest: true,
+        transparent: false,
+        depthWrite: true,
+        lights: true,
+        fog: false
+    });
 
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
-        
-        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-
-    }
+    this.pickingMaterial.defines[ "PICKING" ] = 1;
+    
+    this.mesh = this.getMesh();
+    this.pickingMesh = this.getMesh( "picking" );
 
 };
 
@@ -3335,11 +3338,7 @@ NGL.RibbonBuffer.prototype = {
 
     },
 
-    // getMesh: function( type ){
-
-    //     return this.meshBuffer.getMesh( type );
-
-    // },
+    getMesh: NGL.Buffer.prototype.getMesh,
 
     dispose: function(){
 
