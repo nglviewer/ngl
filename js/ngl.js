@@ -924,37 +924,110 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer, matrixList ){
 
+        // FIXME bounding box must be updated when geometry positions change
         buffer.mesh.frustumCulled = false;
-        buffer.geometry.computeBoundingBox();
-        buffer.geometry.computeBoundingSphere();
 
         var group = new THREE.Object3D();
         var pickingGroup = new THREE.Object3D();
-
-        group.add( buffer.mesh );
-        if( buffer.pickingMesh ){
-            pickingGroup.add( buffer.pickingMesh );
-        }
 
         if( matrixList ){
 
             matrixList.forEach( function( matrix ){
 
-                var subGroup = new THREE.Object3D();
-                subGroup.add(
-                    new THREE.Mesh( buffer.geometry, buffer.material )
-                );
-                subGroup.applyMatrix( matrix );
-                group.add( subGroup );
+                var mesh = buffer.getMesh();
+                mesh.applyMatrix( matrix );
+                mesh.userData[ "matrix" ] = matrix;
+                group.add( mesh );
 
                 if( buffer.pickingMesh ){
 
-                    var pickingSubGroup = new THREE.Object3D();
-                    pickingSubGroup.add(
-                        new THREE.Mesh( buffer.geometry, buffer.pickingMaterial )
-                    );
-                    pickingSubGroup.applyMatrix( matrix );
-                    pickingGroup.add( pickingSubGroup );
+                    var pickingMesh = buffer.getMesh( "picking" );
+                    pickingMesh.applyMatrix( matrix );
+                    pickingGroup.add( pickingMesh );
+
+                }
+
+                this.updateBoundingBox( buffer.geometry, matrix );
+
+            }, this );
+
+        }else{
+
+            group.add( buffer.mesh );
+            if( buffer.pickingMesh ){
+                pickingGroup.add( buffer.pickingMesh );
+            }
+
+            this.updateBoundingBox( buffer.geometry );
+
+        }
+
+        this.modelGroup.add( group );
+        this.pickingModelGroup.add( pickingGroup );
+
+        this.requestRender();
+
+        return [ group, pickingGroup ];
+
+    },
+
+    remove: function( meshList ){
+
+        this.modelGroup.remove( meshList[ 0 ] );
+        this.modelGroup.remove( meshList[ 1 ] );
+
+        this.updateBoundingBox();
+
+        this.requestRender();
+
+    },
+
+    updateBoundingBox: function( geometry, matrix ){
+
+        var gbb;
+        var bb = this.boundingBox;
+
+        if( this.boundingBoxMesh ){
+            this.modelGroup.remove( this.boundingBoxMesh );
+        }
+
+        if( geometry ){
+
+            if( !geometry.boundingBox ){
+                geometry.computeBoundingBox();
+            }
+
+            if( matrix ){
+                gbb = geometry.boundingBox.clone();
+                gbb.applyMatrix4( matrix );
+            }else{
+                gbb = geometry.boundingBox;
+            }
+
+            bb.expandByPoint( gbb.min );
+            bb.expandByPoint( gbb.max );
+
+        }else{
+
+            bb.makeEmpty();
+            
+            this.modelGroup.traverse( function ( node ){
+
+                if ( node.geometry !== undefined ){
+
+                    if( !node.geometry.boundingBox ){
+                        node.geometry.computeBoundingBox();
+                    }
+
+                    if( node.userData[ "matrix" ] ){
+                        gbb = node.geometry.boundingBox.clone();
+                        gbb.applyMatrix4( node.userData[ "matrix" ] );
+                    }else{
+                        gbb = node.geometry.boundingBox;
+                    }
+
+                    bb.expandByPoint( gbb.min );
+                    bb.expandByPoint( gbb.max );
 
                 }
 
@@ -962,105 +1035,20 @@ NGL.Viewer.prototype = {
 
         }
 
-        this.modelGroup.add( group );
-        this.pickingModelGroup.add( pickingGroup );
+        if( NGL.GET( "debug" ) ){
 
-        // 
+            var bbSize = bb.size();
+            var material = new THREE.MeshBasicMaterial( {
+                color: Math.random() * 0xFFFFFF, wireframe: true
+            } );
+            var boxGeometry = new THREE.BoxGeometry(
+                bbSize.x, bbSize.y, bbSize.z
+            );
+            this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
+            bb.center( this.boundingBoxMesh.position );
+            this.modelGroup.add( this.boundingBoxMesh );
 
-        var bb = this.boundingBox;
-        bb.expandByPoint( buffer.geometry.boundingBox.min );
-        bb.expandByPoint( buffer.geometry.boundingBox.max );
-
-        this.requestRender();
-
-        return [ group, pickingGroup ];
-
-        //
-
-        // if( !NGL.GET( "debug" ) ) return;
-
-        // var bbSize = bb.size();
-
-        // var material = new THREE.MeshBasicMaterial( {
-        //     color: Math.random() * 0xFFFFFF, wireframe: true
-        // } );
-        // var boxGeometry = new THREE.BoxGeometry(
-        //     bbSize.x, bbSize.y, bbSize.z
-        // );
-        // if( this.boundingBoxMesh ){
-        //     this.modelGroup.remove( this.boundingBoxMesh );
-        // }
-        // this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
-        // bb.center( this.boundingBoxMesh.position );
-        // this.modelGroup.add( this.boundingBoxMesh );
-
-        // //
-
-        // var bb2 = buffer.geometry.boundingBox;
-        // var bb2Size = bb2.size();
-        // var boxGeometry2 = new THREE.BoxGeometry(
-        //     bb2Size.x, bb2Size.y, bb2Size.z
-        // );
-        // var boundingBoxMesh = new THREE.Mesh( boxGeometry2, material );
-        // bb2.center( boundingBoxMesh.position );
-        // //this.modelGroup.add( boundingBoxMesh );
-
-        // buffer.boundingBoxMesh = boundingBoxMesh;
-
-        // this.requestRender();
-
-    },
-
-    remove: function( group ){
-
-        // this.modelGroup.remove( buffer.mesh );
-
-        this.modelGroup.remove( group[ 0 ] );
-        this.modelGroup.remove( group[ 1 ] );
-
-        // if( buffer.pickingMesh ){
-        //     this.pickingModelGroup.remove( buffer.pickingMesh );
-        // }
-
-        // if( buffer.boundingBoxMesh ){
-        //     this.modelGroup.remove( buffer.boundingBoxMesh );
-        // }
-
-        var bb = this.boundingBox;
-        bb.makeEmpty();
-        if( this.boundingBoxMesh ){
-            this.modelGroup.remove( this.boundingBoxMesh );
         }
-
-        this.modelGroup.traverse( function ( node ){
-
-            if ( node.geometry !== undefined ){
-
-                bb.expandByPoint( node.geometry.boundingBox.min );
-                bb.expandByPoint( node.geometry.boundingBox.max );
-
-            }
-
-        } );
-
-        this.requestRender();
-
-        //
-
-        // if( !NGL.GET( "debug" ) ) return;
-
-        // var bbSize = bb.size();
-        // var material = new THREE.MeshBasicMaterial( {
-        //     color: Math.random() * 0xFFFFFF, wireframe: true
-        // } );
-        // var boxGeometry = new THREE.BoxGeometry(
-        //     bbSize.x, bbSize.y, bbSize.z
-        // );
-        // this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
-        // bb.center( this.boundingBoxMesh.position );
-        // this.modelGroup.add( this.boundingBoxMesh );
-
-        // this.requestRender();
 
     },
 
@@ -1358,9 +1346,7 @@ NGL.Viewer.prototype = {
     /**
      * Renders the scene.
      */
-    render: function( e, picking, foo ){
-
-        // console.log( e, picking );
+    render: function( e, picking, tileing ){
 
         if( this._rendering ){
             console.warn( "tried to call 'render' from within 'render'" );
@@ -1382,6 +1368,7 @@ NGL.Viewer.prototype = {
         this.pickingModelGroup.updateMatrixWorld( true );
 
         // clipping
+
         var bRadius = this.boundingBox.size().length() * 0.5;
         var cDist = this.camera.position.length();
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
@@ -1397,6 +1384,7 @@ NGL.Viewer.prototype = {
         );
 
         // fog
+
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
         this.scene.fog = new THREE.Fog(
@@ -1405,14 +1393,12 @@ NGL.Viewer.prototype = {
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
 
-        this.camera.near = 0.1;
-        this.camera.far = 10000;
-        this.scene.fog = null;
+        //
 
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
-        if( !foo ) this.camera.updateProjectionMatrix();
+        if( !tileing ) this.camera.updateProjectionMatrix();
 
         this.updateDynamicUniforms( this.modelGroup );
         this.updateDynamicUniforms( this.pickingModelGroup );
@@ -1589,6 +1575,8 @@ NGL.Buffer = function( position, color ){
     // - vertexShader
     // - fragmentShader
 
+    this.side = THREE.FrontSide;
+
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
 
@@ -1612,42 +1600,62 @@ NGL.Buffer.prototype = {
 
         this.makeIndex();
 
-        if( this.wireframe ){
+        this.wireframeMaterial = new THREE.LineBasicMaterial({
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexColors: true,
+            fog: true
+        });
 
-            // FIXME refactor so that one can switch between the mesh and the line
+        this.material = new THREE.ShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: false,
+            depthWrite: true,
+            lights: true,
+            fog: true
+        });
 
-            this.material = new THREE.LineBasicMaterial({
-                uniforms: this.uniforms,
-                attributes: this.attributes,
-                vertexColors: true,
-                fog: true
-            });
+        this.material.side = this.side;
 
-            this.mesh = new THREE.Line(
-                this.geometry, this.material, THREE.LinePieces
+        this.pickingMaterial = new THREE.ShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: false,
+            depthWrite: true,
+            lights: true,
+            fog: false
+        });
+
+        this.pickingMaterial.side = this.side;
+        this.pickingMaterial.defines[ "PICKING" ] = 1;
+
+        this.mesh = this.getMesh();
+        this.pickingMesh = this.getMesh( "picking" );
+
+    },
+
+    getMesh: function( type ){
+
+        if( type === "picking" ){
+
+            return new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+        }else if( type === "wireframe" || this.wireframe ){
+
+            return new THREE.Line(
+                this.geometry, this.wireframeMaterial, THREE.LinePieces
             );
 
         }else{
 
-            this.material = new THREE.ShaderMaterial( {
-                uniforms: this.uniforms,
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
-                depthTest: true,
-                transparent: false,
-                // opacity: 1.0,
-                // blending: THREE.AdditiveBlending,
-                // blending: THREE.MultiplyBlending,
-                // blending: THREE.CustomBlending,
-                // blendSrc: THREE.OneFactor,
-                // blendDst: THREE.OneMinusSrcAlphaFactor,
-                depthWrite: true,
-                lights: true,
-                fog: true
-            });
-
-            this.mesh = new THREE.Mesh( this.geometry, this.material );
+            return new THREE.Mesh( this.geometry, this.material );
 
         }
 
@@ -1769,6 +1777,7 @@ NGL.Buffer.prototype = {
  */
 NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe ){
 
+    this.side = THREE.DoubleSide;
     this.wireframe = wireframe || false;
 
     this.size = position.length / 3;
@@ -1783,15 +1792,6 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
     this.addAttributes({
         "normal": { type: "v3", value: normal },
     });
-    
-    this.finalize();
-    
-    // this.material.transparent = true;
-    // this.material.depthWrite = true;
-    // this.material.lights = false;
-    this.material.side = THREE.DoubleSide;
-    // this.material.blending = THREE.AdditiveBlending;
-    // this.material.blending = THREE.MultiplyBlending;
 
     if( pickingColor ){
 
@@ -1799,30 +1799,9 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
             "pickingColor": { type: "c", value: pickingColor },
         });
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            // opacity: 1.0,
-            // blending: THREE.AdditiveBlending,
-            // blending: THREE.MultiplyBlending,
-            // blending: THREE.CustomBlending,
-            // blendSrc: THREE.OneFactor,
-            // blendDst: THREE.OneMinusSrcAlphaFactor,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
-
-        this.pickingMaterial.side = THREE.DoubleSide;
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
-
-        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-
     }
+
+    this.finalize();
 
 };
 
@@ -2106,8 +2085,6 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
         "radius": radius,
     });
 
-    this.finalize();
-
     if( pickingColor ){
 
         this.addAttributes({
@@ -2118,29 +2095,9 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
             "pickingColor": pickingColor,
         });
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            // opacity: 1.0,
-            // blending: THREE.AdditiveBlending,
-            // blending: THREE.MultiplyBlending,
-            // blending: THREE.CustomBlending,
-            // blendSrc: THREE.OneFactor,
-            // blendDst: THREE.OneMinusSrcAlphaFactor,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
-
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
-
-        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-
     }
+
+    this.finalize();
 
 };
 
@@ -2226,12 +2183,6 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
         "radius": radius,
     });
 
-    this.finalize();
-
-    if( cap ){
-        this.material.defines[ "CAP" ] = 1;
-    }
-
     if( pickingColor ){
 
         this.addAttributes({
@@ -2244,28 +2195,12 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
             "pickingColor2": pickingColor2,
         });
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            // opacity: 1.0,
-            // blending: THREE.AdditiveBlending,
-            // blending: THREE.MultiplyBlending,
-            // blending: THREE.CustomBlending,
-            // blendSrc: THREE.OneFactor,
-            // blendDst: THREE.OneMinusSrcAlphaFactor,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
+    }
 
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
+    this.finalize();
 
-        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-
+    if( cap ){
+        this.material.defines[ "CAP" ] = 1;
     }
 
 };
@@ -2308,8 +2243,6 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
         "position": NGL.Utils.calculateCenterArray( position1, position2 ),
     });
 
-    this.finalize();
-
     if( pickingColor ){
 
         this.addAttributes({
@@ -2322,29 +2255,9 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
             "pickingColor2": pickingColor2,
         });
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            // opacity: 1.0,
-            // blending: THREE.AdditiveBlending,
-            // blending: THREE.MultiplyBlending,
-            // blending: THREE.CustomBlending,
-            // blendSrc: THREE.OneFactor,
-            // blendDst: THREE.OneMinusSrcAlphaFactor,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
-
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
-
-        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-
     }
+
+    this.finalize();
 
 };
 
@@ -2556,6 +2469,12 @@ NGL.GeometryBuffer.prototype = {
             for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
 
         }
+
+    },
+
+    getMesh: function( type ){
+
+        return this.meshBuffer.getMesh( type );
 
     },
 
@@ -2774,11 +2693,23 @@ NGL.PointBuffer = function( position, color ){
         'color', new THREE.BufferAttribute( color, 3 )
     );
 
-    this.mesh = new THREE.PointCloud( this.geometry, this.material );
+    this.mesh = this.getMesh();
 
 };
 
 NGL.PointBuffer.prototype = {
+
+    setAttributes: function( data ){
+
+        // TODO
+
+    },
+
+    getMesh: function( type ){
+
+        return new THREE.PointCloud( this.geometry, this.material );
+
+    },
 
     dispose: function(){
 
@@ -2833,7 +2764,7 @@ NGL.LineBuffer = function( from, to, color, color2 ){
         fog: true
     });
 
-    this.mesh = new THREE.Line( this.geometry, this.material, THREE.LinePieces );
+    this.mesh = this.getMesh();
 
 };
 
@@ -2933,6 +2864,12 @@ NGL.LineBuffer.prototype = {
             }
 
         }
+
+    },
+
+    getMesh: function( type ){
+
+        return new THREE.Line( this.geometry, this.material, THREE.LinePieces );
 
     },
 
@@ -3043,9 +2980,14 @@ NGL.TraceBuffer.prototype = {
 
     },
 
+    getMesh: function( type ){
+
+        return this.lineBuffer.getMesh( type );
+
+    },
+
     dispose: function(){
 
-        // NGL.Buffer.prototype.dispose.call( this );
         NGL.Buffer.prototype.dispose.call( this.lineBuffer );
 
     }
@@ -3109,16 +3051,6 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
         NGL.UniformsLib[ "lights" ],
     ]);
 
-    this.material = new THREE.ShaderMaterial( {
-        uniforms: this.uniforms,
-        attributes: this.attributes,
-        vertexShader: NGL.getShader( 'Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-        side: THREE.DoubleSide,
-        lights: true,
-        fog: true
-    });
-
     this.geometry = new THREE.BufferGeometry();
 
     this.geometry.addAttribute( 
@@ -3153,28 +3085,40 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
     this.makeIndex();
 
-    this.mesh = new THREE.Mesh( this.geometry, this.material );
+    this.wirefameMaterial = new THREE.LineBasicMaterial({
+        uniforms: this.uniforms,
+        attributes: this.attributes,
+        vertexColors: true,
+        fog: true
+    });
 
-    if( pickingColor ){
+    this.material = new THREE.ShaderMaterial( {
+        uniforms: this.uniforms,
+        attributes: this.attributes,
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
+        side: THREE.DoubleSide,
+        lights: true,
+        fog: true
+    });
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( 'Ribbon.vert' ),
-            fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-            side: THREE.DoubleSide,
-            depthTest: true,
-            transparent: false,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
+    this.pickingMaterial = new THREE.ShaderMaterial( {
+        uniforms: this.uniforms,
+        attributes: this.attributes,
+        vertexShader: NGL.getShader( 'Ribbon.vert' ),
+        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
+        side: THREE.DoubleSide,
+        depthTest: true,
+        transparent: false,
+        depthWrite: true,
+        lights: true,
+        fog: false
+    });
 
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
-        
-        this.pickingMesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
-
-    }
+    this.pickingMaterial.defines[ "PICKING" ] = 1;
+    
+    this.mesh = this.getMesh();
+    this.pickingMesh = this.getMesh( "picking" );
 
 };
 
@@ -3383,6 +3327,8 @@ NGL.RibbonBuffer.prototype = {
         // console.log( "index", index );
 
     },
+
+    getMesh: NGL.Buffer.prototype.getMesh,
 
     dispose: function(){
 
@@ -3797,6 +3743,12 @@ NGL.TubeMeshBuffer.prototype = {
             }
 
         }
+
+    },
+
+    getMesh: function( type ){
+
+        return this.meshBuffer.getMesh( type );
 
     },
 
