@@ -1149,11 +1149,22 @@ NGL.Representation.prototype = {
         // console.log( structure.biomolDict )
         // console.log( Object.values( structure.biomolDict[ 1 ].matrixDict ) );
 
-        var matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict );
+        var matrixList;
+
+        // TODO
+        if( structure.biomolDict && structure.biomolDict[ 1 ] ){
+            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict );
+        }else{
+            matrixList = [];
+        }
 
         this.bufferList.forEach( function( buffer ){
 
-            groupList.push( viewer.add( buffer, matrixList ) );
+            if( matrixList.length > 1 ){
+                groupList.push( viewer.add( buffer, matrixList ) );
+            }else{
+                groupList.push( viewer.add( buffer ) );
+            }
 
         });
 
@@ -1165,17 +1176,16 @@ NGL.Representation.prototype = {
 
         this.visible = value;
 
-        this.bufferList.forEach( function( buffer ){
+        // this.bufferList.forEach( function( buffer ){
 
-            buffer.mesh.visible = value;
+        //     buffer.mesh.visible = value;
 
-            if( buffer.pickingMesh ){
-                buffer.pickingMesh.visible = value;
-            }
+        // });
 
-            if( buffer.boundingBoxMesh ){
-                buffer.boundingBoxMesh.visible = value;
-            }
+        this.groupList.forEach( function( meshList ){
+
+            meshList[ 0 ].visible = value;
+            meshList[ 1 ].visible = value;
 
         });
 
