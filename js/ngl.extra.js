@@ -1043,16 +1043,10 @@ NGL.Representation = function( structure, viewer, params ){
         scope.rebuild();
     } );
 
-    if( this.atomSet.atomCount ){
+    this.groupList = [];
 
-        this.create();
-        this.attach();
-
-    }else{
-
-        this.bufferList = [];
-
-    }
+    this.create();
+    this.attach();
 
 };
 
@@ -1149,10 +1143,17 @@ NGL.Representation.prototype = {
     attach: function(){
 
         var viewer = this.viewer;
+        var groupList = this.groupList;
+        var structure = this.structure;
+
+        // console.log( structure.biomolDict )
+        // console.log( Object.values( structure.biomolDict[ 1 ].matrixDict ) );
+
+        var matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict );
 
         this.bufferList.forEach( function( buffer ){
 
-            viewer.add( buffer );
+            groupList.push( viewer.add( buffer, matrixList ) );
 
         });
 
@@ -1232,15 +1233,21 @@ NGL.Representation.prototype = {
 
         viewer = this.viewer;
 
+        this.groupList.forEach( function( group ){
+
+            viewer.remove( group );
+
+        });
+
         this.bufferList.forEach( function( buffer ){
 
-            viewer.remove( buffer );
             buffer.dispose();
             buffer = null;  // aid GC
 
         });
 
         this.bufferList = [];
+        this.groupList = [];
         this.fiberList = [];
 
     }

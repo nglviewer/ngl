@@ -47,6 +47,16 @@ if( !HTMLCanvasElement.prototype.toBlob ){
 
 }
 
+Object.values = function ( obj ){
+    var valueList = [];
+    for( var key in obj ) {
+        if ( obj.hasOwnProperty( key ) ) {
+            valueList.push( obj[ key ] );
+        }
+    }
+    return valueList;
+}
+
 
 /**
  * [NGL description]
@@ -912,17 +922,48 @@ NGL.Viewer.prototype = {
      * var buffer = new NGL.Buffer();
      * viewer.add( buffer );
      */
-    add: function( buffer ){
+    add: function( buffer, matrixList ){
 
         buffer.geometry.frustumCulled = false;
         buffer.geometry.computeBoundingBox();
         buffer.geometry.computeBoundingSphere();
 
-        this.modelGroup.add( buffer.mesh );
+        var group = new THREE.Object3D();
+        var pickingGroup = new THREE.Object3D();
 
+        group.add( buffer.mesh );
         if( buffer.pickingMesh ){
-            this.pickingModelGroup.add( buffer.pickingMesh );
+            pickingGroup.add( buffer.pickingMesh );
         }
+
+        if( matrixList ){
+
+            matrixList.forEach( function( matrix ){
+
+                var subGroup = new THREE.Object3D();
+                subGroup.add(
+                    new THREE.Mesh( buffer.geometry, buffer.material )
+                );
+                subGroup.applyMatrix( matrix );
+                group.add( subGroup );
+
+                if( buffer.pickingMesh ){
+
+                    var pickingSubGroup = new THREE.Object3D();
+                    pickingSubGroup.add(
+                        new THREE.Mesh( buffer.geometry, buffer.pickingMaterial )
+                    );
+                    pickingSubGroup.applyMatrix( matrix );
+                    pickingGroup.add( pickingSubGroup );
+
+                }
+
+            } );
+
+        }
+
+        this.modelGroup.add( group );
+        this.pickingModelGroup.add( pickingGroup );
 
         // 
 
@@ -932,53 +973,58 @@ NGL.Viewer.prototype = {
 
         this.requestRender();
 
-        //
-
-        if( !NGL.GET( "debug" ) ) return;
-
-        var bbSize = bb.size();
-
-        var material = new THREE.MeshBasicMaterial( {
-            color: Math.random() * 0xFFFFFF, wireframe: true
-        } );
-        var boxGeometry = new THREE.BoxGeometry(
-            bbSize.x, bbSize.y, bbSize.z
-        );
-        if( this.boundingBoxMesh ){
-            this.modelGroup.remove( this.boundingBoxMesh );
-        }
-        this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
-        bb.center( this.boundingBoxMesh.position );
-        this.modelGroup.add( this.boundingBoxMesh );
+        return [ group, pickingGroup ];
 
         //
 
-        var bb2 = buffer.geometry.boundingBox;
-        var bb2Size = bb2.size();
-        var boxGeometry2 = new THREE.BoxGeometry(
-            bb2Size.x, bb2Size.y, bb2Size.z
-        );
-        var boundingBoxMesh = new THREE.Mesh( boxGeometry2, material );
-        bb2.center( boundingBoxMesh.position );
-        //this.modelGroup.add( boundingBoxMesh );
+        // if( !NGL.GET( "debug" ) ) return;
 
-        buffer.boundingBoxMesh = boundingBoxMesh;
+        // var bbSize = bb.size();
 
-        this.requestRender();
+        // var material = new THREE.MeshBasicMaterial( {
+        //     color: Math.random() * 0xFFFFFF, wireframe: true
+        // } );
+        // var boxGeometry = new THREE.BoxGeometry(
+        //     bbSize.x, bbSize.y, bbSize.z
+        // );
+        // if( this.boundingBoxMesh ){
+        //     this.modelGroup.remove( this.boundingBoxMesh );
+        // }
+        // this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
+        // bb.center( this.boundingBoxMesh.position );
+        // this.modelGroup.add( this.boundingBoxMesh );
+
+        // //
+
+        // var bb2 = buffer.geometry.boundingBox;
+        // var bb2Size = bb2.size();
+        // var boxGeometry2 = new THREE.BoxGeometry(
+        //     bb2Size.x, bb2Size.y, bb2Size.z
+        // );
+        // var boundingBoxMesh = new THREE.Mesh( boxGeometry2, material );
+        // bb2.center( boundingBoxMesh.position );
+        // //this.modelGroup.add( boundingBoxMesh );
+
+        // buffer.boundingBoxMesh = boundingBoxMesh;
+
+        // this.requestRender();
 
     },
 
-    remove: function( buffer ){
+    remove: function( group ){
 
-        this.modelGroup.remove( buffer.mesh );
+        // this.modelGroup.remove( buffer.mesh );
 
-        if( buffer.pickingMesh ){
-            this.pickingModelGroup.remove( buffer.pickingMesh );
-        }
+        this.modelGroup.remove( group[ 0 ] );
+        this.modelGroup.remove( group[ 1 ] );
 
-        if( buffer.boundingBoxMesh ){
-            this.modelGroup.remove( buffer.boundingBoxMesh );
-        }
+        // if( buffer.pickingMesh ){
+        //     this.pickingModelGroup.remove( buffer.pickingMesh );
+        // }
+
+        // if( buffer.boundingBoxMesh ){
+        //     this.modelGroup.remove( buffer.boundingBoxMesh );
+        // }
 
         var bb = this.boundingBox;
         bb.makeEmpty();
@@ -1001,20 +1047,20 @@ NGL.Viewer.prototype = {
 
         //
 
-        if( !NGL.GET( "debug" ) ) return;
+        // if( !NGL.GET( "debug" ) ) return;
 
-        var bbSize = bb.size();
-        var material = new THREE.MeshBasicMaterial( {
-            color: Math.random() * 0xFFFFFF, wireframe: true
-        } );
-        var boxGeometry = new THREE.BoxGeometry(
-            bbSize.x, bbSize.y, bbSize.z
-        );
-        this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
-        bb.center( this.boundingBoxMesh.position );
-        this.modelGroup.add( this.boundingBoxMesh );
+        // var bbSize = bb.size();
+        // var material = new THREE.MeshBasicMaterial( {
+        //     color: Math.random() * 0xFFFFFF, wireframe: true
+        // } );
+        // var boxGeometry = new THREE.BoxGeometry(
+        //     bbSize.x, bbSize.y, bbSize.z
+        // );
+        // this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
+        // bb.center( this.boundingBoxMesh.position );
+        // this.modelGroup.add( this.boundingBoxMesh );
 
-        this.requestRender();
+        // this.requestRender();
 
     },
 
@@ -1358,6 +1404,10 @@ NGL.Viewer.prototype = {
             Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
+
+        this.camera.near = 0.1;
+        this.camera.far = 10000;
+        this.scene.fog = null;
 
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );

@@ -520,7 +520,7 @@ NGL.Examples = {
                 // o.addRepresentation( "spacefill" );
                 o.centerView();
 
-                console.log( o.structure.center );
+                // console.log( o.structure.center );
 
             } );
 
