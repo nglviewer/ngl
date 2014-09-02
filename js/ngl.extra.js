@@ -293,22 +293,27 @@ NGL.Stage.prototype = {
 
         return function(){
         
-            box.makeEmpty();
+            // box.makeEmpty();
 
-            this.eachComponent( function( o ){
+            // this.eachComponent( function( o ){
 
-                var point = o.getCenter();
+            //     var point = o.getCenter();
 
-                if( point ){
+            //     if( point ){
 
-                    box.expandByPoint( point );
+            //         box.expandByPoint( point );
 
-                }
+            //     }
 
-            } );
+            // } );
 
-            box.center( center );
-            this.viewer.centerView( center );
+            // box.center( center );
+            // this.viewer.centerView( center );
+
+            this.viewer.centerView(
+                this.viewer.boundingBox.center()
+            );
+            
 
         }
 

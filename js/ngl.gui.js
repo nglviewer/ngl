@@ -690,7 +690,7 @@ NGL.SidebarWidget = function( stage ){
         .onClick( function(){
 
             stage.centerView();
-
+            
         } );
 
     var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
