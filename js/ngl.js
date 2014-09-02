@@ -1600,7 +1600,7 @@ NGL.Buffer.prototype = {
 
         this.makeIndex();
 
-        this.wirefameMaterial = new THREE.LineBasicMaterial({
+        this.wireframeMaterial = new THREE.LineBasicMaterial({
             uniforms: this.uniforms,
             attributes: this.attributes,
             vertexColors: true,
@@ -1636,22 +1636,22 @@ NGL.Buffer.prototype = {
         this.pickingMaterial.side = this.side;
         this.pickingMaterial.defines[ "PICKING" ] = 1;
 
-        this.mesh = this.getMesh( this.wireframe ? "wireframe" : "" );
+        this.mesh = this.getMesh();
         this.pickingMesh = this.getMesh( "picking" );
 
     },
 
     getMesh: function( type ){
 
-        if( type === "wireframe" ){
+        if( type === "picking" ){
+
+            return new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+        }else if( type === "wireframe" || this.wireframe ){
 
             return new THREE.Line(
                 this.geometry, this.wireframeMaterial, THREE.LinePieces
             );
-
-        }else if( type === "picking" ){
-
-            return new THREE.Mesh( this.geometry, this.pickingMaterial );
 
         }else{
 
