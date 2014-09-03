@@ -47,6 +47,7 @@ if( !HTMLCanvasElement.prototype.toBlob ){
 
 }
 
+
 Object.values = function ( obj ){
     var valueList = [];
     for( var key in obj ) {
@@ -936,6 +937,12 @@ NGL.Viewer.prototype = {
 
                 var mesh = buffer.getMesh();
                 mesh.applyMatrix( matrix );
+                // mesh.matrix = matrix;
+                // mesh.matrixWorld = matrix;
+                // mesh.updateMatrix();
+                // mesh.updateMatrixWorld();
+                // mesh.matrixAutoUpdate = true;
+                
                 mesh.userData[ "matrix" ] = matrix;
                 group.add( mesh );
 
@@ -1452,9 +1459,19 @@ NGL.Viewer.prototype = {
             o.updateMatrixWorld( true );
 
             if( u.modelViewMatrixInverse ){
-                matrix.multiplyMatrices( 
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
+                if( false && o.userData[ "matrix" ] ){
+                    matrix.multiplyMatrices(
+                        // o.userData[ "matrix" ], o.matrixWorld
+                        o.matrixWorld, o.userData[ "matrix" ]
+                    );
+                    matrix.multiplyMatrices( 
+                        camera.matrixWorldInverse, o.userData[ "matrix" ]
+                    );
+                }else{
+                    matrix.multiplyMatrices( 
+                        camera.matrixWorldInverse, o.matrixWorld
+                    );
+                }
                 u.modelViewMatrixInverse.value.getInverse( matrix );
             }
 

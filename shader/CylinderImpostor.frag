@@ -59,10 +59,14 @@ const float opacity = 0.5;
 // http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs
 
 
-// void main2(void)
-// {
-//     gl_FragColor = vec4( vColor, 1.0 );
-// }
+/*void main2(void)
+{
+    #ifdef PICKING
+        gl_FragColor = vec4( vPickingColor, 1.0 );
+    #else
+        gl_FragColor = vec4( vColor, 1.0 );
+    #endif
+}*/
 
 
 void main()

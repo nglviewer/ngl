@@ -75,8 +75,14 @@ void main()
     vRadius = radius;
 
     // vec3 cam_dir = normalize( cameraPosition - center );
+    // vec3 cam_dir = normalize(
+    //     cameraPosition - 
+    //     ( viewMatrix * vec4( center, 1.0 ) ).xyz
+    // );
     // needed for jsmol which rotes the model not the camera
-    vec3 cam_dir = normalize( (modelViewMatrixInverse*vec4(0,0,0,1)).xyz - center ); 
+    vec3 cam_dir = normalize(
+        ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center
+    );
 
     b = dot( cam_dir, dir );
     if( b < 0.0 ) // direction vector looks away, so flip
