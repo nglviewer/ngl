@@ -517,6 +517,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 o.addRepresentation( "licorice" );
+                // o.addRepresentation( "hyperball" );
                 stage.centerView();
 
             } );

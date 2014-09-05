@@ -1158,7 +1158,7 @@ NGL.Representation.prototype = {
 
         // TODO
         if( structure.biomolDict && structure.biomolDict[ 1 ] ){
-            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict );
+            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict )//.slice(0,5);
         }else{
             matrixList = [];
         }

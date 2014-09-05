@@ -544,6 +544,8 @@ NGL.Utils = {
  */
 NGL.init = function( onload ){
 
+    NGL.disableImpostor = NGL.GET( "disableImpostor" );
+
     NGL.materialCache = {};
 
     this.textures = [];
@@ -925,9 +927,6 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer, matrixList ){
 
-        // FIXME bounding box must be updated when geometry positions change
-        buffer.mesh.frustumCulled = false;
-
         var group = new THREE.Object3D();
         var pickingGroup = new THREE.Object3D();
 
@@ -936,19 +935,15 @@ NGL.Viewer.prototype = {
             matrixList.forEach( function( matrix ){
 
                 var mesh = buffer.getMesh();
+                mesh.frustumCulled = false;
                 mesh.applyMatrix( matrix );
-                // mesh.matrix = matrix;
-                // mesh.matrixWorld = matrix;
-                // mesh.updateMatrix();
-                // mesh.updateMatrixWorld();
-                // mesh.matrixAutoUpdate = true;
-                
                 mesh.userData[ "matrix" ] = matrix;
                 group.add( mesh );
 
                 if( buffer.pickingMesh ){
 
                     var pickingMesh = buffer.getMesh( "picking" );
+                    pickingMesh.frustumCulled = false;
                     pickingMesh.applyMatrix( matrix );
                     pickingGroup.add( pickingMesh );
 
@@ -961,7 +956,10 @@ NGL.Viewer.prototype = {
         }else{
 
             group.add( buffer.mesh );
+            buffer.mesh.frustumCulled = false;
+
             if( buffer.pickingMesh ){
+                buffer.pickingMesh.frustumCulled = false;
                 pickingGroup.add( buffer.pickingMesh );
             }
 
@@ -1362,17 +1360,17 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
-        this.rotationGroup.updateMatrix();
-        this.rotationGroup.updateMatrixWorld( true );
+        // this.rotationGroup.updateMatrix();
+        // this.rotationGroup.updateMatrixWorld( true );
 
-        this.modelGroup.updateMatrix();
-        this.modelGroup.updateMatrixWorld( true );
+        // this.modelGroup.updateMatrix();
+        // this.modelGroup.updateMatrixWorld( true );
 
-        this.pickingRotationGroup.updateMatrix();
-        this.pickingRotationGroup.updateMatrixWorld( true );
+        // this.pickingRotationGroup.updateMatrix();
+        // this.pickingRotationGroup.updateMatrixWorld( true );
 
-        this.pickingModelGroup.updateMatrix();
-        this.pickingModelGroup.updateMatrixWorld( true );
+        // this.pickingModelGroup.updateMatrix();
+        // this.pickingModelGroup.updateMatrixWorld( true );
 
         // clipping
 
@@ -1402,13 +1400,22 @@ NGL.Viewer.prototype = {
 
         //
 
+        // this.camera.near = 0.1;
+        // this.camera.far = 10000;
+        // this.scene.fog = null;
+
+        //
+
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        this.updateDynamicUniforms( this.modelGroup );
-        this.updateDynamicUniforms( this.pickingModelGroup );
+        if( picking ){
+            this.updateDynamicUniforms( this.pickingModelGroup );
+        }else{
+            this.updateDynamicUniforms( this.modelGroup );
+        }
 
         // FIXME needed for font texture, but unclear why
         NGL.textures.forEach( function( v ){
@@ -1440,101 +1447,91 @@ NGL.Viewer.prototype = {
 
     },
 
-    updateDynamicUniforms: function( group ){
+    updateDynamicUniforms: function(){
 
-        var i, o, u;
+        var u;
         var matrix = new THREE.Matrix4();
-        var objects = group.children;
-        var nObjects = objects.length;
-        var camera = this.camera;
 
-        group.traverse( function ( o ){
+        return function( group ){
 
-            if( !o.material ) return;
+            var camera = this.camera;
 
-            u = o.material.uniforms;
-            if( !u ) return;
+            group.traverse( function ( o ){
 
-            o.updateMatrix();
-            o.updateMatrixWorld( true );
+                if( !o.material ) return;
 
-            if( u.modelViewMatrixInverse ){
-                if( false && o.userData[ "matrix" ] ){
-                    matrix.multiplyMatrices(
-                        // o.userData[ "matrix" ], o.matrixWorld
-                        o.matrixWorld, o.userData[ "matrix" ]
-                    );
-                    matrix.multiplyMatrices( 
-                        camera.matrixWorldInverse, o.userData[ "matrix" ]
-                    );
-                }else{
-                    matrix.multiplyMatrices( 
-                        camera.matrixWorldInverse, o.matrixWorld
-                    );
-                }
-                u.modelViewMatrixInverse.value.getInverse( matrix );
-            }
+                u = o.material.uniforms;
+                if( !u ) return;
 
-            if( u.modelViewMatrixInverseTranspose ){
                 if( u.modelViewMatrixInverse ){
-                    u.modelViewMatrixInverseTranspose.value.copy(
-                        u.modelViewMatrixInverse.value
-                    ).transpose();
-                }else{
                     matrix.multiplyMatrices( 
                         camera.matrixWorldInverse, o.matrixWorld
                     );
-                    u.modelViewMatrixInverseTranspose.value
-                        .getInverse( matrix )
-                        .transpose();
+                    u.modelViewMatrixInverse.value.getInverse( matrix );
                 }
-            }
 
-            if( u.projectionMatrixInverse ){
-                u.projectionMatrixInverse.value.getInverse(
-                    camera.projectionMatrix
-                );
-            }
+                if( u.modelViewMatrixInverseTranspose ){
+                    if( u.modelViewMatrixInverse ){
+                        u.modelViewMatrixInverseTranspose.value.copy(
+                            u.modelViewMatrixInverse.value
+                        ).transpose();
+                    }else{
+                        matrix.multiplyMatrices( 
+                            camera.matrixWorldInverse, o.matrixWorld
+                        );
+                        u.modelViewMatrixInverseTranspose.value
+                            .getInverse( matrix )
+                            .transpose();
+                    }
+                }
 
-            if( u.projectionMatrixTranspose ){
-                u.projectionMatrixTranspose.value.copy(
-                    camera.projectionMatrix
-                ).transpose();
-            }
+                if( u.projectionMatrixInverse ){
+                    u.projectionMatrixInverse.value.getInverse(
+                        camera.projectionMatrix
+                    );
+                }
 
-            if( u.modelViewProjectionMatrix ){
-                matrix.multiplyMatrices( 
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
-                u.modelViewProjectionMatrix.value.multiplyMatrices(
-                    camera.projectionMatrix, matrix
-                )
-            }
+                if( u.projectionMatrixTranspose ){
+                    u.projectionMatrixTranspose.value.copy(
+                        camera.projectionMatrix
+                    ).transpose();
+                }
 
-            if( u.modelViewProjectionMatrixInverse ){
                 if( u.modelViewProjectionMatrix ){
-                    u.modelViewProjectionMatrixInverse.value.copy(
-                        u.modelViewProjectionMatrix.value
-                    );
-                    u.modelViewProjectionMatrixInverse.value.getInverse( 
-                        u.modelViewProjectionMatrixInverse.value
-                    );
-                }else{
                     matrix.multiplyMatrices( 
                         camera.matrixWorldInverse, o.matrixWorld
                     );
-                    u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
+                    u.modelViewProjectionMatrix.value.multiplyMatrices(
                         camera.projectionMatrix, matrix
                     )
-                    u.modelViewProjectionMatrixInverse.value.getInverse( 
-                        u.modelViewProjectionMatrixInverse.value
-                    );
                 }
-            }
 
-        } );
+                if( u.modelViewProjectionMatrixInverse ){
+                    if( u.modelViewProjectionMatrix ){
+                        u.modelViewProjectionMatrixInverse.value.copy(
+                            u.modelViewProjectionMatrix.value
+                        );
+                        u.modelViewProjectionMatrixInverse.value.getInverse( 
+                            u.modelViewProjectionMatrixInverse.value
+                        );
+                    }else{
+                        matrix.multiplyMatrices( 
+                            camera.matrixWorldInverse, o.matrixWorld
+                        );
+                        u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
+                            camera.projectionMatrix, matrix
+                        )
+                        u.modelViewProjectionMatrixInverse.value.getInverse( 
+                            u.modelViewProjectionMatrixInverse.value
+                        );
+                    }
+                }
 
-    },
+            } );
+
+        }
+
+    }(),
 
     /**
      * Clears the scene.
@@ -1617,42 +1614,6 @@ NGL.Buffer.prototype = {
 
         this.makeIndex();
 
-        this.wireframeMaterial = new THREE.LineBasicMaterial({
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexColors: true,
-            fog: true
-        });
-
-        this.material = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            depthWrite: true,
-            lights: true,
-            fog: true
-        });
-
-        this.material.side = this.side;
-
-        this.pickingMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: false,
-            depthWrite: true,
-            lights: true,
-            fog: false
-        });
-
-        this.pickingMaterial.side = this.side;
-        this.pickingMaterial.defines[ "PICKING" ] = 1;
-
         this.mesh = this.getMesh();
         this.pickingMesh = this.getMesh( "picking" );
 
@@ -1660,11 +1621,9 @@ NGL.Buffer.prototype = {
 
     getMesh: function( type ){
 
-        if( type === "picking" ){
+        var material = this.getMaterial( type );
 
-            return new THREE.Mesh( this.geometry, this.pickingMaterial );
-
-        }else if( type === "wireframe" || this.wireframe ){
+        if( type === "wireframe" || this.wireframe ){
 
             return new THREE.Line(
                 this.geometry, this.wireframeMaterial, THREE.LinePieces
@@ -1672,9 +1631,62 @@ NGL.Buffer.prototype = {
 
         }else{
 
-            return new THREE.Mesh( this.geometry, this.material );
+            return new THREE.Mesh( this.geometry, material );
 
         }
+
+    },
+
+    getMaterial: function( type ){
+
+        var material;
+        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
+
+        if( type === "picking" ){
+
+            material = new THREE.ShaderMaterial( {
+                uniforms: uniforms,
+                attributes: this.attributes,
+                vertexShader: NGL.getShader( this.vertexShader ),
+                fragmentShader: NGL.getShader( this.fragmentShader ),
+                depthTest: true,
+                transparent: false,
+                depthWrite: true,
+                lights: true,
+                fog: false
+            });
+
+            material.side = this.side;
+            material.defines[ "PICKING" ] = 1;
+
+        }else if( type === "wireframe" || this.wireframe ){
+
+            material = new THREE.LineBasicMaterial({
+                uniforms: uniforms,
+                attributes: this.attributes,
+                vertexColors: true,
+                fog: true
+            });
+
+        }else{
+
+            material = new THREE.ShaderMaterial( {
+                uniforms: uniforms,
+                attributes: this.attributes,
+                vertexShader: NGL.getShader( this.vertexShader ),
+                fragmentShader: NGL.getShader( this.fragmentShader ),
+                depthTest: true,
+                transparent: false,
+                depthWrite: true,
+                lights: true,
+                fog: true
+            });
+
+            material.side = this.side;
+
+        }
+
+        return material;
 
     },
 
