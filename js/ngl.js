@@ -929,9 +929,6 @@ NGL.Viewer.prototype = {
 
         var group, pickingGroup;
 
-        // FIXME bounding box must be updated when geometry positions change
-        buffer.mesh.frustumCulled = false;
-
         group = new THREE.Object3D();
         if( buffer.pickingMesh ){
             pickingGroup = new THREE.Object3D();
@@ -962,12 +959,14 @@ NGL.Viewer.prototype = {
 
         }else{
 
-            group.add( buffer.mesh );
-            buffer.mesh.frustumCulled = false;
+            var mesh = buffer.getMesh();
+            mesh.frustumCulled = false;
+            group.add( mesh );
 
             if( buffer.pickingMesh ){
-                buffer.pickingMesh.frustumCulled = false;
-                pickingGroup.add( buffer.pickingMesh );
+                var pickingMesh = buffer.getMesh( "picking" );
+                pickingMesh.frustumCulled = false;
+                pickingGroup.add( pickingMesh );
             }
 
             this.updateBoundingBox( buffer.geometry );
@@ -2148,40 +2147,6 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
 NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-NGL.HaloBuffer = function( position, radius ){
-
-    this.size = position.length / 3;
-    this.vertexShader = 'SphereHalo.vert';
-    this.fragmentShader = 'SphereHalo.frag';
-
-    NGL.QuadBuffer.call( this );
-
-    this.addUniforms({
-        "color"  : { type: "c", value: new THREE.Color( 0x007700 ) },
-        'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-    });
-    
-    this.addAttributes({
-        "radius": { type: "f", value: null },
-    });
-
-    this.setAttributes({
-        "position": position,
-        "radius": radius,
-    });
-
-    this.finalize();
-
-    this.material.transparent = true;
-    this.material.depthWrite = false;
-    this.material.lights = false;
-    this.material.blending = THREE.AdditiveBlending;
-
-};
-
-NGL.HaloBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
-
-
 /**
  * [CylinderImpostorBuffer description]
  * @class 
@@ -2243,9 +2208,10 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 
     this.finalize();
 
-    if( cap ){
-        this.material.defines[ "CAP" ] = 1;
-    }
+    // FIXME
+    // if( cap ){
+    //     this.material.defines[ "CAP" ] = 1;
+    // }
 
 };
 
@@ -2355,13 +2321,6 @@ NGL.GeometryBuffer = function( position, color, pickingColor ){
         this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor
     );
-
-    this.geometry = this.meshBuffer.geometry;
-    this.material = this.meshBuffer.material;
-    this.mesh = this.meshBuffer.mesh;
-
-    this.pickingMaterial = this.meshBuffer.pickingMaterial;
-    this.pickingMesh = this.meshBuffer.pickingMesh;
 
 };
 
@@ -2722,12 +2681,6 @@ NGL.PointBuffer = function( position, color ){
     
     this.size = position.length / 3;
 
-    this.material = new THREE.PointCloudMaterial({
-        vertexColors: true,
-        sizeAttenuation: false,
-        fog: true
-    });
-
     this.geometry = new THREE.BufferGeometry();
 
     this.geometry.addAttribute(
@@ -2736,8 +2689,6 @@ NGL.PointBuffer = function( position, color ){
     this.geometry.addAttribute(
         'color', new THREE.BufferAttribute( color, 3 )
     );
-
-    this.mesh = this.getMesh();
 
 };
 
@@ -2751,7 +2702,19 @@ NGL.PointBuffer.prototype = {
 
     getMesh: function( type ){
 
-        return new THREE.PointCloud( this.geometry, this.material );
+        return new THREE.PointCloud(
+            this.geometry, this.getMaterial( type )
+        );
+
+    },
+
+    getMaterial: function( type ){
+
+        return new THREE.PointCloudMaterial({
+            vertexColors: true,
+            sizeAttenuation: false,
+            fog: true
+        });
 
     },
 
@@ -2801,14 +2764,6 @@ NGL.LineBuffer = function( from, to, color, color2 ){
         color: color,
         color2: color2
     });
-
-    this.material = new THREE.LineBasicMaterial({
-        attributes: this.attributes,
-        vertexColors: true,
-        fog: true
-    });
-
-    this.mesh = this.getMesh();
 
 };
 
@@ -2913,7 +2868,19 @@ NGL.LineBuffer.prototype = {
 
     getMesh: function( type ){
 
-        return new THREE.Line( this.geometry, this.material, THREE.LinePieces );
+        return new THREE.Line(
+            this.geometry, this.getMaterial( type ), THREE.LinePieces
+        );
+
+    },
+
+    getMaterial: function( type ){
+
+        return new THREE.LineBasicMaterial({
+            attributes: this.attributes,
+            vertexColors: true,
+            fog: true
+        });
 
     },
 
@@ -3075,6 +3042,9 @@ NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
+    this.vertexShader = 'Ribbon.vert';
+    this.fragmentShader = 'Ribbon.frag';
+    this.side = THREE.DoubleSide;
     this.size = ( position.length/3 ) - 1;
 
     var n = this.size;
@@ -3128,41 +3098,6 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
     });
 
     this.makeIndex();
-
-    this.wirefameMaterial = new THREE.LineBasicMaterial({
-        uniforms: this.uniforms,
-        attributes: this.attributes,
-        vertexColors: true,
-        fog: true
-    });
-
-    this.material = new THREE.ShaderMaterial( {
-        uniforms: this.uniforms,
-        attributes: this.attributes,
-        vertexShader: NGL.getShader( 'Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-        side: THREE.DoubleSide,
-        lights: true,
-        fog: true
-    });
-
-    this.pickingMaterial = new THREE.ShaderMaterial( {
-        uniforms: this.uniforms,
-        attributes: this.attributes,
-        vertexShader: NGL.getShader( 'Ribbon.vert' ),
-        fragmentShader: NGL.getShader( 'Ribbon.frag' ),
-        side: THREE.DoubleSide,
-        depthTest: true,
-        transparent: false,
-        depthWrite: true,
-        lights: true,
-        fog: false
-    });
-
-    this.pickingMaterial.defines[ "PICKING" ] = 1;
-    
-    this.mesh = this.getMesh();
-    this.pickingMesh = this.getMesh( "picking" );
 
 };
 
@@ -3374,6 +3309,8 @@ NGL.RibbonBuffer.prototype = {
 
     getMesh: NGL.Buffer.prototype.getMesh,
 
+    getMaterial: NGL.Buffer.prototype.getMaterial,
+
     dispose: function(){
 
         NGL.Buffer.prototype.dispose.call( this );
@@ -3428,13 +3365,6 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
         this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, this.wireframe
     );
-
-    this.geometry = this.meshBuffer.geometry;
-    this.material = this.meshBuffer.material;
-    this.mesh = this.meshBuffer.mesh;
-
-    this.pickingMaterial = this.meshBuffer.pickingMaterial;
-    this.pickingMesh = this.meshBuffer.pickingMesh;
 
 }
 
