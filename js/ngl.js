@@ -930,7 +930,7 @@ NGL.Viewer.prototype = {
         var group, pickingGroup;
 
         group = new THREE.Object3D();
-        if( buffer.pickingMesh ){
+        if( buffer.pickable ){
             pickingGroup = new THREE.Object3D();
         }
 
@@ -944,7 +944,7 @@ NGL.Viewer.prototype = {
                 mesh.userData[ "matrix" ] = matrix;
                 group.add( mesh );
 
-                if( buffer.pickingMesh ){
+                if( buffer.pickable ){
 
                     var pickingMesh = buffer.getMesh( "picking" );
                     pickingMesh.frustumCulled = false;
@@ -963,7 +963,7 @@ NGL.Viewer.prototype = {
             mesh.frustumCulled = false;
             group.add( mesh );
 
-            if( buffer.pickingMesh ){
+            if( buffer.pickable ){
                 var pickingMesh = buffer.getMesh( "picking" );
                 pickingMesh.frustumCulled = false;
                 pickingGroup.add( pickingMesh );
@@ -974,22 +974,24 @@ NGL.Viewer.prototype = {
         }
 
         this.modelGroup.add( group );
-        if( buffer.pickingMesh ){
+        if( buffer.pickable ){
             this.pickingModelGroup.add( pickingGroup );
+        }
+
+        buffer.group = group;
+        if( buffer.pickable ){
+            buffer.pickingGroup = pickingGroup;
         }
 
         this.requestRender();
 
-        return [ group, pickingGroup ];
-
     },
 
-    remove: function( mesh ){
+    remove: function( buffer ){
 
-        for( var i = 0; i < arguments.length; ++i ){
-
-            this.modelGroup.remove( arguments[ i ] );
-
+        this.modelGroup.remove( buffer.group );
+        if( buffer.pickable ){
+            this.pickingModelGroup.remove( buffer.pickingGroup );
         }
 
         this.updateBoundingBox();
@@ -1600,8 +1602,8 @@ NGL.Buffer = function( position, color, pickingColor ){
     // - vertexShader
     // - fragmentShader
 
+    this.pickable = false;
     this.side = this.side || THREE.FrontSide;
-    this.hasPickingColor = false;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -1617,7 +1619,7 @@ NGL.Buffer = function( position, color, pickingColor ){
             "pickingColor": { type: "c", value: pickingColor },
         });
 
-        this.hasPickingColor = true;
+        this.pickable = true;
 
     }
 
@@ -1648,7 +1650,7 @@ NGL.Buffer.prototype = {
         if( type === "wireframe" || this.wireframe ){
 
             return new THREE.Line(
-                this.geometry, this.wireframeMaterial, THREE.LinePieces
+                this.geometry, material, THREE.LinePieces
             );
 
         }else{
@@ -1798,19 +1800,34 @@ NGL.Buffer.prototype = {
 
     },
 
+    setVisibility: function( value ){
+
+        this.group.visible = value;
+        if( this.pickable ){
+            this.pickingGroup.visible = value;
+        }
+
+    },
+
     dispose: function(){
 
-        this.mesh.dispose();
-        if( this.pickingMesh ){
-            this.pickingMesh.dispose();
+        this.group.traverse( function ( o ){
+            if( o.material ){
+                o.material.dispose();
+            }
+            o.dispose();
+        } );
+
+        if( this.pickable ){
+            this.pickingGroup.traverse( function ( o ){
+                if( o.material ){
+                    o.material.dispose();
+                }
+                o.dispose();
+            } );
         }
 
         this.geometry.dispose();
-
-        this.material.dispose();
-        if( this.pickingMaterial ){
-            this.pickingMaterial.dispose();
-        }
 
     }
 
@@ -2138,6 +2155,8 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
             "pickingColor": pickingColor,
         });
 
+        this.pickable = true;
+
     }
 
     this.finalize();
@@ -2203,6 +2222,8 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
         });
+
+        this.pickable = true;
 
     }
 
@@ -2321,6 +2342,9 @@ NGL.GeometryBuffer = function( position, color, pickingColor ){
         this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor
     );
+
+    this.pickable = this.meshBuffer.pickable;
+    this.geometry = this.meshBuffer.geometry;
 
 };
 
@@ -2481,11 +2505,9 @@ NGL.GeometryBuffer.prototype = {
 
     },
 
-    dispose: function(){
+    setVisibility: NGL.Buffer.prototype.setVisibility,
 
-        this.meshBuffer.dispose();
-
-    }
+    dispose: NGL.Buffer.prototype.dispose
 
 }
 
@@ -2718,11 +2740,9 @@ NGL.PointBuffer.prototype = {
 
     },
 
-    dispose: function(){
+    setVisibility: NGL.Buffer.prototype.setVisibility,
 
-        NGL.Buffer.prototype.dispose.call( this );
-
-    }
+    dispose: NGL.Buffer.prototype.dispose
 
 };
 
@@ -2884,11 +2904,9 @@ NGL.LineBuffer.prototype = {
 
     },
 
-    dispose: function(){
+    setVisibility: NGL.Buffer.prototype.setVisibility,
 
-        NGL.Buffer.prototype.dispose.call( this );
-
-    }
+    dispose: NGL.Buffer.prototype.dispose
 
 };
 
@@ -2914,10 +2932,8 @@ NGL.TraceBuffer = function( position, color ){
         this.from, this.to, this.lineColor, this.lineColor2
     );
 
-    this.attributes = this.lineBuffer.attributes;
+    this.pickable = this.lineBuffer.pickable;
     this.geometry = this.lineBuffer.geometry;
-    this.material = this.lineBuffer.material;
-    this.mesh = this.lineBuffer.mesh;
 
 };
 
@@ -2997,11 +3013,9 @@ NGL.TraceBuffer.prototype = {
 
     },
 
-    dispose: function(){
+    setVisibility: NGL.Buffer.prototype.setVisibility,
 
-        NGL.Buffer.prototype.dispose.call( this.lineBuffer );
-
-    }
+    dispose: NGL.Buffer.prototype.dispose
 
 };
 
@@ -3086,6 +3100,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
         this.geometry.addAttribute( 
             'pickingColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
         );
+        this.pickable = true;
     }
 
     this.setAttributes({
@@ -3311,11 +3326,9 @@ NGL.RibbonBuffer.prototype = {
 
     getMaterial: NGL.Buffer.prototype.getMaterial,
 
-    dispose: function(){
+    setVisibility: NGL.Buffer.prototype.setVisibility,
 
-        NGL.Buffer.prototype.dispose.call( this );
-
-    }
+    dispose: NGL.Buffer.prototype.dispose
 
 };
 
@@ -3365,6 +3378,9 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
         this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, this.wireframe
     );
+
+    this.pickable = this.meshBuffer.pickable;
+    this.geometry = this.meshBuffer.geometry;
 
 }
 
@@ -3726,11 +3742,9 @@ NGL.TubeMeshBuffer.prototype = {
 
     },
 
-    dispose: function(){
+    setVisibility: NGL.Buffer.prototype.setVisibility,
 
-        this.meshBuffer.dispose();
-
-    }
+    dispose: NGL.Buffer.prototype.dispose
 
 };
 
