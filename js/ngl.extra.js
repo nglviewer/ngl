@@ -665,7 +665,11 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.surface = surface;
     this.name = surface.name;
 
-    this.viewer.add( surface.buffer );
+    this.groupList = [];
+
+    this.groupList.push(
+        this.viewer.add( surface.buffer )
+    );
 
 };
 
@@ -677,9 +681,18 @@ NGL.SurfaceComponent.prototype = {
 
     dispose: function(){
 
-        this.viewer.remove( this.surface.buffer );
+        var viewer = this.viewer;
+
+        this.groupList.forEach( function( groups ){
+
+            viewer.remove.apply( viewer, groups );
+
+        });
+
         this.surface.buffer.dispose();
         this.surface.buffer = null;  // aid GC
+
+        this.groupList = [];
 
     },
 
@@ -1190,7 +1203,7 @@ NGL.Representation.prototype = {
         this.groupList.forEach( function( meshList ){
 
             meshList[ 0 ].visible = value;
-            meshList[ 1 ].visible = value;
+            if( meshList[ 1 ] ) meshList[ 1 ].visible = value;
 
         });
 
@@ -1246,11 +1259,11 @@ NGL.Representation.prototype = {
 
     dispose: function(){
 
-        viewer = this.viewer;
+        var viewer = this.viewer;
 
-        this.groupList.forEach( function( group ){
+        this.groupList.forEach( function( groups ){
 
-            viewer.remove( group );
+            viewer.remove.apply( viewer, groups );
 
         });
 

@@ -927,8 +927,15 @@ NGL.Viewer.prototype = {
      */
     add: function( buffer, matrixList ){
 
-        var group = new THREE.Object3D();
-        var pickingGroup = new THREE.Object3D();
+        var group, pickingGroup;
+
+        // FIXME bounding box must be updated when geometry positions change
+        buffer.mesh.frustumCulled = false;
+
+        group = new THREE.Object3D();
+        if( buffer.pickingMesh ){
+            pickingGroup = new THREE.Object3D();
+        }
 
         if( matrixList ){
 
@@ -968,7 +975,9 @@ NGL.Viewer.prototype = {
         }
 
         this.modelGroup.add( group );
-        this.pickingModelGroup.add( pickingGroup );
+        if( buffer.pickingMesh ){
+            this.pickingModelGroup.add( pickingGroup );
+        }
 
         this.requestRender();
 
@@ -976,10 +985,13 @@ NGL.Viewer.prototype = {
 
     },
 
-    remove: function( meshList ){
+    remove: function( mesh ){
 
-        this.modelGroup.remove( meshList[ 0 ] );
-        this.modelGroup.remove( meshList[ 1 ] );
+        for( var i = 0; i < arguments.length; ++i ){
+
+            this.modelGroup.remove( arguments[ i ] );
+
+        }
 
         this.updateBoundingBox();
 
@@ -1581,7 +1593,7 @@ NGL.Viewer.prototype = {
  * @class
  * @private
  */
-NGL.Buffer = function( position, color ){
+NGL.Buffer = function( position, color, pickingColor ){
 
     // required properties:
     // - size
@@ -1589,7 +1601,8 @@ NGL.Buffer = function( position, color ){
     // - vertexShader
     // - fragmentShader
 
-    this.side = THREE.FrontSide;
+    this.side = this.side || THREE.FrontSide;
+    this.hasPickingColor = false;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -1598,6 +1611,16 @@ NGL.Buffer = function( position, color ){
         "position": { type: "v3", value: position },
         "color": { type: "c", value: color },
     });
+
+    if( pickingColor ){
+
+        this.addAttributes({
+            "pickingColor": { type: "c", value: pickingColor },
+        });
+
+        this.hasPickingColor = true;
+
+    }
 
     this.uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
@@ -1770,7 +1793,7 @@ NGL.Buffer.prototype = {
 
         }else{
 
-            console.error( "no index set" );
+            console.info( "no index set" );
 
         }
 
@@ -1816,19 +1839,11 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
 
     this.index = index;
 
-    NGL.Buffer.call( this, position, color );
+    NGL.Buffer.call( this, position, color, pickingColor );
     
     this.addAttributes({
         "normal": { type: "v3", value: normal },
     });
-
-    if( pickingColor ){
-
-        this.addAttributes({
-            "pickingColor": { type: "c", value: pickingColor },
-        });
-
-    }
 
     this.finalize();
 
