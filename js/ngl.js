@@ -1385,6 +1385,9 @@ NGL.Viewer.prototype = {
         // this.pickingModelGroup.updateMatrix();
         // this.pickingModelGroup.updateMatrixWorld( true );
 
+        // needed for picking to work on the first pick
+        this.pickingRotationGroup.updateMatrixWorld();
+
         // clipping
 
         var bRadius = this.boundingBox.size().length() * 0.5;
@@ -2285,6 +2288,8 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
         });
+
+        this.pickable = true;
 
     }
 
