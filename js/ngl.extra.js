@@ -1685,8 +1685,13 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
+        if( f.residueCount < 2 ) return;
+
         backboneAtomSet = new NGL.AtomSet();
         backboneBondSet = new NGL.BondSet();
+
+        backboneAtomSet.structure = f.structure;
+        backboneBondSet.structure = f.structure;
 
         atomSetList.push( backboneAtomSet );
         bondSetList.push( backboneBondSet );
