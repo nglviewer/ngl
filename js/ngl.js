@@ -2257,19 +2257,19 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
     this.addAttributes({
         "color": { type: "c", value: null },
         "color2": { type: "c", value: null },
-        "inputRadius1": { type: "f", value: null },
-        "inputRadius2": { type: "f", value: null },
-        "inputPosition1": { type: "v3", value: null },
-        "inputPosition2": { type: "v3", value: null },
+        "radius": { type: "f", value: null },
+        "radius2": { type: "f", value: null },
+        "position1": { type: "v3", value: null },
+        "position2": { type: "v3", value: null },
     });
 
     this.setAttributes({
         "color": color,
         "color2": color2,
-        "inputRadius1": radius1,
-        "inputRadius2": radius2,
-        "inputPosition1": position1,
-        "inputPosition2": position2,
+        "radius": radius1,
+        "radius2": radius2,
+        "position1": position1,
+        "position2": position2,
 
         "position": NGL.Utils.calculateCenterArray( position1, position2 ),
     });
@@ -2409,6 +2409,7 @@ NGL.GeometryBuffer.prototype = {
                     
                 }
 
+                // TODO debug by drawing normals as lines
                 if( updateNormals ){
 
                     transformedGeoNormal.set( geoNormal );

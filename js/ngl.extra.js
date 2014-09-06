@@ -1601,8 +1601,9 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
         cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
             from, to, this.__center
         );
-        cylinderData[ "inputPosition1" ] = from;
-        cylinderData[ "inputPosition2" ] = to;
+
+        cylinderData[ "position1" ] = from;
+        cylinderData[ "position2" ] = to;
 
     }
 
@@ -1621,10 +1622,10 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
             null, this.radius, this.scale
         );
 
-        cylinderData[ "inputRadius1" ] = this.atomSet.bondRadius(
+        cylinderData[ "radius" ] = this.atomSet.bondRadius(
             null, 0, this.radius, this.scale
         );
-        cylinderData[ "inputRadius2" ] = this.atomSet.bondRadius(
+        cylinderData[ "radius2" ] = this.atomSet.bondRadius(
             null, 1, this.radius, this.scale
         );
 

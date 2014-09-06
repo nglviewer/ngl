@@ -260,13 +260,13 @@ NGL.Examples = {
                 var _disableImpostor = NGL.disableImpostor;
 
                 NGL.disableImpostor = true;
-                o.addRepresentation( "spacefill", { sele: ":A" } );
+                //o.addRepresentation( "spacefill", { sele: ":A" } );
                 o.addRepresentation( "ball+stick", { sele: ":A" } );
-                NGL.disableImpostor = _disableImpostor;
-                o.addRepresentation( "spacefill", { sele: ":B" } );
+                // NGL.disableImpostor = _disableImpostor;
+                // o.addRepresentation( "spacefill", { sele: ":B" } );
                 o.addRepresentation( "ball+stick", { sele: ":B" } );
 
-                o.centerView();
+                o.centerView( ":A" );
 
             } );
 

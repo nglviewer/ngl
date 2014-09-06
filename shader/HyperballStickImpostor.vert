@@ -16,10 +16,10 @@
 
 
 attribute vec3 mapping;
-attribute float inputRadius1;
-attribute float inputRadius2;
-attribute vec3 inputPosition1;
-attribute vec3 inputPosition2;
+attribute float radius;
+attribute float radius2;
+attribute vec3 position1;
+attribute vec3 position2;
 
 varying mat4 matrix_near;
 
@@ -59,18 +59,12 @@ void main()
         vColor2 = color2;
     #endif
 
-    float radius1 = inputRadius1;
-    float radius2 = inputRadius2;
+    float radius1 = radius;
 
-    position_atom1 = inputPosition1;
-    position_atom2 = inputPosition2;
+    position_atom1 = position1;
+    position_atom2 = position2;
 
-    // ??? distance( position_atom1, position_atom2 );
-    float distance = sqrt( 
-        (position_atom1.x - position_atom2.x)*(position_atom1.x - position_atom2.x) + 
-        (position_atom1.y - position_atom2.y)*(position_atom1.y - position_atom2.y) + 
-        (position_atom1.z - position_atom2.z)*(position_atom1.z - position_atom2.z)
-    );
+    float distance = distance( position_atom1, position_atom2 );
 
     spaceposition.z = mapping.z * distance;
 
@@ -82,9 +76,6 @@ void main()
         spaceposition.x = mapping.x * 1.5 * radius2;
     }
     spaceposition.w = 1.0;
-
-
-
 
     vec4 e3 = vec4( 1.0 );
     vec3 e1, e1_temp, e2, e2_temp;
@@ -132,10 +123,6 @@ void main()
 
     // New position
     gl_Position = modelViewProjectionMatrix * vertex_position;
-
-
-
-
 
     vec4 i_near, i_far;
 
