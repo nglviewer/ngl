@@ -665,7 +665,10 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.surface = surface;
     this.name = surface.name;
 
-    this.viewer.add( surface.buffer )
+    // this.viewer.add( surface.buffer );
+
+    var mesh = surface.buffer.getMesh( "background" );
+    this.viewer.backgroundModelGroup.add( mesh );
 
 };
 

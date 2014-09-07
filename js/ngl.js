@@ -773,7 +773,7 @@ NGL.Viewer.prototype = {
             devicePixelRatio: window.devicePixelRatio
         });
         this.renderer.setSize( this.width, this.height );
-        this.renderer.autoClear = true;
+        this.renderer.autoClear = false;
         this.renderer.sortObjects = false;
 
         var _glExtensionFragDepth = this.renderer.context.getExtension(
@@ -852,6 +852,7 @@ NGL.Viewer.prototype = {
         if( !this.scene ){
             this.scene = new THREE.Scene();
             this.pickingScene = new THREE.Scene();
+            this.backgroundScene = new THREE.Scene();
         }
 
         this.modelGroup = new THREE.Group();
@@ -862,6 +863,8 @@ NGL.Viewer.prototype = {
         this.rotationGroup.add( this.modelGroup );
         this.scene.add( this.rotationGroup );
 
+        // picking
+
         this.pickingModelGroup = new THREE.Group();
         this.pickingModelGroup.name = "pickingModelGroup";
         this.pickingRotationGroup = new THREE.Group();
@@ -869,6 +872,16 @@ NGL.Viewer.prototype = {
 
         this.pickingRotationGroup.add( this.pickingModelGroup );
         this.pickingScene.add( this.pickingRotationGroup );
+
+        // background
+
+        this.backgroundModelGroup = new THREE.Group();
+        this.backgroundModelGroup.name = "backgroundModelGroup";
+        this.backgroundRotationGroup = new THREE.Group();
+        this.backgroundRotationGroup.name = "backgroundRotationGroup";
+
+        this.backgroundRotationGroup.add( this.backgroundModelGroup );
+        this.backgroundScene.add( this.backgroundRotationGroup );
 
     },
 
@@ -1374,6 +1387,8 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
+        this.renderer.clear( true, true, true );
+
         // needed for picking to work on the first pick
         this.pickingRotationGroup.updateMatrixWorld();
 
@@ -1418,6 +1433,7 @@ NGL.Viewer.prototype = {
             this.updateDynamicUniforms( this.pickingModelGroup );
         }else{
             this.updateDynamicUniforms( this.modelGroup );
+            this.updateDynamicUniforms( this.backgroundModelGroup );
         }
 
         // FIXME needed for font texture, but unclear why
@@ -1437,6 +1453,9 @@ NGL.Viewer.prototype = {
             this.composer.render();
             
         }else{
+
+            this.renderer.render( this.backgroundScene, this.camera );
+            this.renderer.clear( false, true, false );
 
             if( picking ){
                 this.renderer.render( this.pickingScene, this.camera );
@@ -1566,6 +1585,7 @@ NGL.Viewer.prototype = {
 
             this.rotationGroup.position.copy( t );
             this.pickingRotationGroup.position.copy( t );
+            this.backgroundRotationGroup.position.copy( t );
 
             this.requestRender();
 
@@ -1627,9 +1647,6 @@ NGL.Buffer.prototype = {
     finalize: function(){
 
         this.makeIndex();
-
-        this.mesh = this.getMesh();
-        this.pickingMesh = this.getMesh( "picking" );
 
     },
 
@@ -1697,6 +1714,12 @@ NGL.Buffer.prototype = {
             });
 
             material.side = this.side;
+
+            if( type === "background" ){
+
+                material.defines[ "NOLIGHT" ] = 1;
+
+            }
 
         }
 

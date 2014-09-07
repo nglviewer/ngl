@@ -7,8 +7,6 @@ varying vec3 vNormal;
     varying vec3 vColor;
 #endif
 
-const float opacity = 0.5;
-
 #include light_params
 
 #include fog_params
@@ -17,28 +15,30 @@ const float opacity = 0.5;
 void main()
 {
 
-	vec3 transformedNormal = normalize( vNormal );
-	if( !gl_FrontFacing ) transformedNormal = -normalize( vNormal );
-		
+    vec3 transformedNormal = normalize( vNormal );
+    if( !gl_FrontFacing ) transformedNormal = -normalize( vNormal );
+        
 
-	#ifdef PICKING
+    #ifdef PICKING
+
         gl_FragColor.xyz = vPickingColor;
-        // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+
     #else
-	    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+        
+        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
 
-		#include light
+        #ifndef NOLIGHT
+            #include light
+        #endif
 
-	    gl_FragColor = vec4( vColor, opacity );
-	    // gl_FragColor = vec4( vec3( 1.0, 0.0, 0.0 ), opacity );
-	    // gl_FragColor = vec4( vec3( 1.0, 0.6, 0.0 ), opacity );
-	    // gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-		gl_FragColor.xyz *= vLightFront;
-		// gl_FragColor.xyz = vColor;
-		// gl_FragColor.xyz = vNormal;
-		// gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
-	#endif
+        gl_FragColor = vec4( vColor, 1.0 );
+        
+        #ifndef NOLIGHT
+            gl_FragColor.xyz *= vLightFront;
+        #endif
+        
+    #endif
 
-	#include fog
+    #include fog
 
 }

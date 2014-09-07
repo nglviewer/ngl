@@ -522,6 +522,19 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "surface": function( stage ){
+
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/1crn.obj" );
+
         }
 
     }
