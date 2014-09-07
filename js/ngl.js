@@ -685,7 +685,7 @@ NGL.Viewer = function( eid ){
 
     this.initCamera();
 
-    this.initScene( true );
+    this.initScene();
 
     this.initRenderer();
 
@@ -847,24 +847,24 @@ NGL.Viewer.prototype = {
 
     },
 
-    initScene: function( makeScene ){
+    initScene: function(){
 
-        if( makeScene ){
+        if( !this.scene ){
             this.scene = new THREE.Scene();
             this.pickingScene = new THREE.Scene();
         }
 
-        this.modelGroup = new THREE.Object3D();
+        this.modelGroup = new THREE.Group();
         this.modelGroup.name = "modelGroup";
-        this.rotationGroup = new THREE.Object3D();
+        this.rotationGroup = new THREE.Group();
         this.rotationGroup.name = "rotationGroup";
 
         this.rotationGroup.add( this.modelGroup );
         this.scene.add( this.rotationGroup );
 
-        this.pickingModelGroup = new THREE.Object3D();
+        this.pickingModelGroup = new THREE.Group();
         this.pickingModelGroup.name = "pickingModelGroup";
-        this.pickingRotationGroup = new THREE.Object3D();
+        this.pickingRotationGroup = new THREE.Group();
         this.pickingRotationGroup.name = "pickingRotationGroup";
 
         this.pickingRotationGroup.add( this.pickingModelGroup );
@@ -929,9 +929,9 @@ NGL.Viewer.prototype = {
 
         var group, pickingGroup;
 
-        group = new THREE.Object3D();
+        group = new THREE.Group();
         if( buffer.pickable ){
-            pickingGroup = new THREE.Object3D();
+            pickingGroup = new THREE.Group();
         }
 
         if( matrixList ){
@@ -949,6 +949,7 @@ NGL.Viewer.prototype = {
                     var pickingMesh = buffer.getMesh( "picking" );
                     pickingMesh.frustumCulled = false;
                     pickingMesh.applyMatrix( matrix );
+                    pickingMesh.userData[ "matrix" ] = matrix;
                     pickingGroup.add( pickingMesh );
 
                 }
@@ -1373,18 +1374,6 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
-        // this.rotationGroup.updateMatrix();
-        // this.rotationGroup.updateMatrixWorld( true );
-
-        // this.modelGroup.updateMatrix();
-        // this.modelGroup.updateMatrixWorld( true );
-
-        // this.pickingRotationGroup.updateMatrix();
-        // this.pickingRotationGroup.updateMatrixWorld( true );
-
-        // this.pickingModelGroup.updateMatrix();
-        // this.pickingModelGroup.updateMatrixWorld( true );
-
         // needed for picking to work on the first pick
         this.pickingRotationGroup.updateMatrixWorld();
 
@@ -1414,13 +1403,11 @@ NGL.Viewer.prototype = {
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
 
-        //
-
-        // this.camera.near = 0.1;
-        // this.camera.far = 10000;
-        // this.scene.fog = null;
-
-        //
+        if( NGL.GET( "disableClipping" ) ){
+            this.camera.near = 0.1;
+            this.camera.far = 10000;
+            this.scene.fog = null;
+        }
 
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );
@@ -3777,11 +3764,15 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 
     if( NGL.disableImpostor ){
 
-        return new NGL.CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2 );
+        return new NGL.CylinderGeometryBuffer(
+            from, to, color, color2, radius, pickingColor, pickingColor2
+        );
 
     }else{
 
-        return new NGL.CylinderImpostorBuffer( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2 );
+        return new NGL.CylinderImpostorBuffer(
+            from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2
+        );
 
     }
 
