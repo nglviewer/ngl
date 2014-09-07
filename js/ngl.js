@@ -3994,13 +3994,11 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
 
     scale = scale || 1;
 
-    var geometry, material, line;
     var n = position.length/3;
     var n2 = n * 2;
     var n6 = n * 6;
 
-    material = new THREE.LineBasicMaterial({ color: color, fog: true });
-    geometry = new THREE.BufferGeometry();
+    var geometry = new THREE.BufferGeometry();
 
     var aPosition = new Float32Array( n2 * 3 );
     geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
@@ -4023,12 +4021,21 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
 
     // console.log( "position", aPosition );
 
-    line = new THREE.Line( geometry, material, THREE.LinePieces );
-
-    // public attributes
     this.geometry = geometry;
-    this.material = material;
-    this.mesh = line;
+
+    this.getMesh = function(){
+
+        var material = new THREE.LineBasicMaterial( { 
+            color: color, fog: true 
+        } );
+
+        return new THREE.Line( geometry, material, THREE.LinePieces );;
+
+    }
+
+    this.setVisibility = NGL.Buffer.prototype.setVisibility;
+
+    this.dispose = NGL.Buffer.prototype.dispose;
 
 };
 
