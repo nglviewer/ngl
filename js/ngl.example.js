@@ -255,18 +255,18 @@ NGL.Examples = {
 
         "impostor": function( stage ){
 
-            stage.loadFile( "__example__/1u19.pdb", function( o ){
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
 
                 var _disableImpostor = NGL.disableImpostor;
 
                 NGL.disableImpostor = true;
                 //o.addRepresentation( "spacefill", { sele: ":A" } );
-                o.addRepresentation( "ball+stick", { sele: ":A" } );
+                o.addRepresentation( "ball+stick", { sele: "16" } );
                 // NGL.disableImpostor = _disableImpostor;
                 // o.addRepresentation( "spacefill", { sele: ":B" } );
-                o.addRepresentation( "ball+stick", { sele: ":B" } );
+                // o.addRepresentation( "ball+stick", { sele: ":B" } );
 
-                o.centerView( ":A" );
+                stage.centerView();
 
             } );
 

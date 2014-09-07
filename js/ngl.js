@@ -2300,7 +2300,6 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
 NGL.GeometryBuffer = function( position, color, pickingColor ){
 
     var geo = this.geo;
-    geo.computeVertexNormals( true );
 
     var n = position.length / 3;
     var m = geo.vertices.length;
@@ -2353,8 +2352,6 @@ NGL.GeometryBuffer.prototype = {
 
             var position, color, pickingColor;
 
-            var updateNormals = this.updateNormals || !this.meshBuffer;
-
             if( data[ "position" ] ){
                 position = data[ "position" ];
                 var geoPosition = this.geoPosition;
@@ -2371,6 +2368,8 @@ NGL.GeometryBuffer.prototype = {
                 pickingColor = data[ "pickingColor" ];
                 var meshPickingColor = this.meshPickingColor;
             }
+
+            var updateNormals = ( this.updateNormals && position ) || !this.meshBuffer;
 
             if( updateNormals ){
                 var geoNormal = this.geoNormal;
@@ -2401,7 +2400,6 @@ NGL.GeometryBuffer.prototype = {
                     
                 }
 
-                // TODO debug by drawing normals as lines
                 if( updateNormals ){
 
                     transformedGeoNormal.set( geoNormal );
@@ -2592,14 +2590,13 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
     var eye = new THREE.Vector3();
     var target = new THREE.Vector3();
     var up = new THREE.Vector3( 0, 1, 0 );
-    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
 
     this.applyPositionTransform = function( matrix, i, i3 ){
 
         eye.set( from[ i3 + 0 ], from[ i3 + 1 ], from[ i3 + 2 ] );
         target.set( to[ i3 + 0 ], to[ i3 + 1 ], to[ i3 + 2 ] );
         matrix.lookAt( eye, target, up );
-
+        
         r = radius[ i ];
         scale.set( r, r, eye.distanceTo( target ) );
         matrix.scale( scale );
