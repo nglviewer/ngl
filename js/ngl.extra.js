@@ -293,22 +293,27 @@ NGL.Stage.prototype = {
 
         return function(){
         
-            box.makeEmpty();
+            // box.makeEmpty();
 
-            this.eachComponent( function( o ){
+            // this.eachComponent( function( o ){
 
-                var point = o.getCenter();
+            //     var point = o.getCenter();
 
-                if( point ){
+            //     if( point ){
 
-                    box.expandByPoint( point );
+            //         box.expandByPoint( point );
 
-                }
+            //     }
 
-            } );
+            // } );
 
-            box.center( center );
-            this.viewer.centerView( center );
+            // box.center( center );
+            // this.viewer.centerView( center );
+
+            this.viewer.centerView(
+                this.viewer.boundingBox.center()
+            );
+            
 
         }
 
@@ -660,7 +665,10 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.surface = surface;
     this.name = surface.name;
 
-    this.viewer.add( surface.buffer );
+    // this.viewer.add( surface.buffer );
+
+    var mesh = surface.buffer.getMesh( "background" );
+    this.viewer.backgroundModelGroup.add( mesh );
 
 };
 
@@ -673,6 +681,7 @@ NGL.SurfaceComponent.prototype = {
     dispose: function(){
 
         this.viewer.remove( this.surface.buffer );
+
         this.surface.buffer.dispose();
         this.surface.buffer = null;  // aid GC
 
@@ -1043,8 +1052,6 @@ NGL.Representation = function( structure, viewer, params ){
         scope.rebuild();
     } );
 
-    this.groupList = [];
-
     this.create();
     this.attach();
 
@@ -1143,7 +1150,6 @@ NGL.Representation.prototype = {
     attach: function(){
 
         var viewer = this.viewer;
-        var groupList = this.groupList;
         var structure = this.structure;
 
         // console.log( structure.biomolDict )
@@ -1153,7 +1159,7 @@ NGL.Representation.prototype = {
 
         // TODO
         if( structure.biomolDict && structure.biomolDict[ 1 ] ){
-            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict );
+            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict )//.slice(0,5);
         }else{
             matrixList = [];
         }
@@ -1161,9 +1167,9 @@ NGL.Representation.prototype = {
         this.bufferList.forEach( function( buffer ){
 
             if( matrixList.length > 1 ){
-                groupList.push( viewer.add( buffer, matrixList ) );
+                viewer.add( buffer, matrixList );
             }else{
-                groupList.push( viewer.add( buffer ) );
+                viewer.add( buffer );
             }
 
         });
@@ -1176,16 +1182,9 @@ NGL.Representation.prototype = {
 
         this.visible = value;
 
-        // this.bufferList.forEach( function( buffer ){
+        this.bufferList.forEach( function( buffer ){
 
-        //     buffer.mesh.visible = value;
-
-        // });
-
-        this.groupList.forEach( function( meshList ){
-
-            meshList[ 0 ].visible = value;
-            meshList[ 1 ].visible = value;
+            buffer.setVisibility( value );
 
         });
 
@@ -1241,23 +1240,17 @@ NGL.Representation.prototype = {
 
     dispose: function(){
 
-        viewer = this.viewer;
-
-        this.groupList.forEach( function( group ){
-
-            viewer.remove( group );
-
-        });
+        var viewer = this.viewer;
 
         this.bufferList.forEach( function( buffer ){
 
+            viewer.remove( buffer );
             buffer.dispose();
             buffer = null;  // aid GC
 
         });
 
         this.bufferList = [];
-        this.groupList = [];
         this.fiberList = [];
 
     }
@@ -1611,8 +1604,9 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
         cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
             from, to, this.__center
         );
-        cylinderData[ "inputPosition1" ] = from;
-        cylinderData[ "inputPosition2" ] = to;
+
+        cylinderData[ "position1" ] = from;
+        cylinderData[ "position2" ] = to;
 
     }
 
@@ -1631,10 +1625,10 @@ NGL.HyperballRepresentation.prototype.update = function( what ){
             null, this.radius, this.scale
         );
 
-        cylinderData[ "inputRadius1" ] = this.atomSet.bondRadius(
+        cylinderData[ "radius" ] = this.atomSet.bondRadius(
             null, 0, this.radius, this.scale
         );
-        cylinderData[ "inputRadius2" ] = this.atomSet.bondRadius(
+        cylinderData[ "radius2" ] = this.atomSet.bondRadius(
             null, 1, this.radius, this.scale
         );
 
@@ -1695,8 +1689,13 @@ NGL.BackboneRepresentation.prototype.create = function(){
 
     this.structure.eachFiber( function( f ){
 
+        if( f.residueCount < 2 ) return;
+
         backboneAtomSet = new NGL.AtomSet();
         backboneBondSet = new NGL.BondSet();
+
+        backboneAtomSet.structure = f.structure;
+        backboneBondSet.structure = f.structure;
 
         atomSetList.push( backboneAtomSet );
         bondSetList.push( backboneBondSet );

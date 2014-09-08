@@ -61,7 +61,11 @@ const float opacity = 0.5;
 
 // void main2(void)
 // {
-//     gl_FragColor = vec4( vColor, 1.0 );
+//     #ifdef PICKING
+//         gl_FragColor = vec4( vPickingColor, 1.0 );
+//     #else
+//         gl_FragColor = vec4( vColor, 1.0 );
+//     #endif
 // }
 
 

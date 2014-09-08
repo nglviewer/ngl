@@ -95,10 +95,19 @@ float update_z_buffer(vec3 M, mat4 ModelViewP){
 }
 
 
-void main2(void)
-{
-    gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-}
+// void main2(void)
+// {
+//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+// }
+
+// void main(void)
+// {
+//     #ifdef PICKING
+//         gl_FragColor = vec4( vPickingColor, 1.0 );
+//     #else
+//         gl_FragColor = vec4( vColor, 1.0 );
+//     #endif
+// }
 
 
 void main()

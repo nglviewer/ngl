@@ -23,6 +23,7 @@
 // - ported to WebGL
 // - dual color
 // - picking color
+// - shift
 
 
 attribute vec3 mapping;
@@ -67,16 +68,17 @@ void main()
         vColor2 = color2;
     #endif
 
+    vRadius = radius;
+
     vec3 center = position;
     vec3 dir = normalize( position2 - position1 );
     float ext = length( position2 - position1 ) / 2.0;
+
+    vec3 cam_dir = normalize(
+        ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center
+    );
+
     vec3 ldir;
-
-    vRadius = radius;
-
-    // vec3 cam_dir = normalize( cameraPosition - center );
-    // needed for jsmol which rotes the model not the camera
-    vec3 cam_dir = normalize( (modelViewMatrixInverse*vec4(0,0,0,1)).xyz - center ); 
 
     b = dot( cam_dir, dir );
     if( b < 0.0 ) // direction vector looks away, so flip
@@ -109,10 +111,6 @@ void main()
     point = w.xyz / w.w;
 
     gl_Position = projectionMatrix * w;
-    
-    // move out of viewing frustum to avoid clipping artifacts
-    if( gl_Position.z<=1.0 )
-        gl_Position.z = -10.0;
 
 }
 

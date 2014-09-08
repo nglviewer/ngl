@@ -255,18 +255,18 @@ NGL.Examples = {
 
         "impostor": function( stage ){
 
-            stage.loadFile( "__example__/1u19.pdb", function( o ){
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
 
                 var _disableImpostor = NGL.disableImpostor;
 
                 NGL.disableImpostor = true;
-                o.addRepresentation( "spacefill", { sele: ":A" } );
-                o.addRepresentation( "ball+stick", { sele: ":A" } );
-                NGL.disableImpostor = _disableImpostor;
-                o.addRepresentation( "spacefill", { sele: ":B" } );
-                o.addRepresentation( "ball+stick", { sele: ":B" } );
+                //o.addRepresentation( "spacefill", { sele: ":A" } );
+                o.addRepresentation( "ball+stick", { sele: "16" } );
+                // NGL.disableImpostor = _disableImpostor;
+                // o.addRepresentation( "spacefill", { sele: ":B" } );
+                // o.addRepresentation( "ball+stick", { sele: ":B" } );
 
-                o.centerView();
+                stage.centerView();
 
             } );
 
@@ -516,9 +516,24 @@ NGL.Examples = {
             stage.loadFile( "__example__/1RB8.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
+                o.addRepresentation( "licorice" );
+                // o.addRepresentation( "hyperball" );
                 stage.centerView();
 
             } );
+
+        },
+
+        "surface": function( stage ){
+
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/1crn.obj" );
 
         }
 
