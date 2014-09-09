@@ -4780,6 +4780,364 @@ NGL.Selection.prototype = {
 };
 
 
+///////////
+// Spline
+
+NGL.Spline = function( fiber ){
+
+    this.fiber = fiber;
+    this.size = fiber.residueCount - 2;
+    this.traceAtomname = fiber.traceAtomname;
+    this.directionAtomname1 = fiber.directionAtomname1;
+    this.directionAtomname2 = fiber.directionAtomname2;
+
+};
+
+NGL.Spline.prototype = {
+
+    // from THREE.js
+    // ASR added tension
+    interpolate: function( p0, p1, p2, p3, t, tension ) {
+
+        var v0 = ( p2 - p0 ) * tension;
+        var v1 = ( p3 - p1 ) * tension;
+        var t2 = t * t;
+        var t3 = t * t2;
+        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+               ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+               v0 * t + p1;
+
+    },
+
+    getSubdividedColor: function( m, type ){
+
+        var n = this.size;
+        var n1 = n - 1;
+        var traceAtomname = this.traceAtomname;
+
+        var col = new Float32Array( n1 * m * 3 + 3 );
+        var pcol = new Float32Array( n1 * m * 3 + 3 );
+
+        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
+
+        var k = 0;
+        var j, l, mh, a2, c2, pc2, a3, c3, pc3;
+
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+
+            mh = Math.ceil( m / 2 );
+
+            a2 = r2.getAtomByName( traceAtomname );
+
+            c2 = colorFactory.atomColor( a2 );
+            pc2 = a2.globalindex + 1;
+
+            for( j = 0; j < mh; ++j ){
+
+                l = k + j * 3;
+
+                col[ l + 0 ] = ( c2 >> 16 & 255 ) / 255;
+                col[ l + 1 ] = ( c2 >> 8 & 255 ) / 255;
+                col[ l + 2 ] = ( c2 & 255 ) / 255;
+
+                pcol[ l + 0 ] = ( pc2 >> 16 & 255 ) / 255;
+                pcol[ l + 1 ] = ( pc2 >> 8 & 255 ) / 255;
+                pcol[ l + 2 ] = ( pc2 & 255 ) / 255;
+
+            }
+
+            a3 = r3.getAtomByName( traceAtomname );
+
+            c3 = colorFactory.atomColor( a3 );
+            pc3 = a3.globalindex + 1;
+
+            for( j = mh; j < m; ++j ){
+
+                l = k + j * 3;
+
+                col[ l + 0 ] = ( c3 >> 16 & 255 ) / 255;
+                col[ l + 1 ] = ( c3 >> 8 & 255 ) / 255;
+                col[ l + 2 ] = ( c3 & 255 ) / 255;
+
+                pcol[ l + 0 ] = ( pc3 >> 16 & 255 ) / 255;
+                pcol[ l + 1 ] = ( pc3 >> 8 & 255 ) / 255;
+                pcol[ l + 2 ] = ( pc3 & 255 ) / 255;
+
+            }
+
+            k += 3 * m;
+
+        } );
+
+        col[ n1 * m * 3 + 0 ] = col[ n1 * m * 3 - 3 ];
+        col[ n1 * m * 3 + 1 ] = col[ n1 * m * 3 - 2 ];
+        col[ n1 * m * 3 + 2 ] = col[ n1 * m * 3 - 1 ];
+
+        pcol[ n1 * m * 3 + 0 ] = pcol[ n1 * m * 3 - 3 ];
+        pcol[ n1 * m * 3 + 1 ] = pcol[ n1 * m * 3 - 2 ];
+        pcol[ n1 * m * 3 + 2 ] = pcol[ n1 * m * 3 - 1 ];
+
+        return { 
+            "color": col,
+            "pickingColor": pcol
+        };
+
+    },
+
+    getSubdividedPosition: function( m, tension ){
+
+        if( isNaN( tension ) ){
+            tension = this.fiber.residues[ 0 ].isNucleic() ? 0.6 : 0.9;
+        }
+
+        var traceAtomname = this.traceAtomname;
+        var directionAtomname1 = this.directionAtomname1;
+        var directionAtomname2 = this.directionAtomname2;
+        var n = this.size;
+        var n1 = n - 1;
+
+        var pos = new Float32Array( n1 * m * 3 + 3 );
+        var tan = new Float32Array( n1 * m * 3 + 3 );
+        var norm = new Float32Array( n1 * m * 3 + 3 );
+        var bin = new Float32Array( n1 * m * 3 + 3 );
+
+        var subdivideData = this._makeSubdivideData( m, tension );
+
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+
+            subdivideData( r1, r2, r3, r4, pos, tan, norm, bin );
+
+        } );
+
+        var rn = this.fiber.residues[ n ];
+        var can = rn.getAtomByName( traceAtomname );
+
+        pos[ n1 * m * 3 + 0 ] = can.x;
+        pos[ n1 * m * 3 + 1 ] = can.y;
+        pos[ n1 * m * 3 + 2 ] = can.z;
+
+        bin[ n1 * m * 3 + 0 ] = bin[ n1 * m * 3 - 3 ];
+        bin[ n1 * m * 3 + 1 ] = bin[ n1 * m * 3 - 2 ];
+        bin[ n1 * m * 3 + 2 ] = bin[ n1 * m * 3 - 1 ];
+
+        tan[ n1 * m * 3 + 0 ] = tan[ n1 * m * 3 - 3 ];
+        tan[ n1 * m * 3 + 1 ] = tan[ n1 * m * 3 - 2 ];
+        tan[ n1 * m * 3 + 2 ] = tan[ n1 * m * 3 - 1 ];
+
+        norm[ n1 * m * 3 + 0 ] = norm[ n1 * m * 3 - 3 ];
+        norm[ n1 * m * 3 + 1 ] = norm[ n1 * m * 3 - 2 ];
+        norm[ n1 * m * 3 + 2 ] = norm[ n1 * m * 3 - 1 ];
+
+        return {
+
+            "position": pos,
+            "tangent": tan,
+            "normal": norm,
+            "binormal": bin
+
+        }
+
+    },
+
+    getSubdividedSize: function( m, type, scale ){
+
+        var n = this.size;
+        var n1 = n - 1;
+        var traceAtomname = this.traceAtomname;
+
+        var size = new Float32Array( n1 * m + 1 );
+
+        var radiusFactory = new NGL.RadiusFactory( type, scale );
+
+        var k = 0;
+        var j, l, a2, a3, s2, s3, t;
+
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+
+            a2 = r2.getAtomByName( traceAtomname );
+            a3 = r3.getAtomByName( traceAtomname );
+
+            s2 = radiusFactory.atomRadius( a2 );
+            s3 = radiusFactory.atomRadius( a3 );
+
+            for( j = 0; j < m; ++j ){
+
+                // linear interpolation
+                t = j / m;
+                size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+
+            }
+
+            k += m;
+
+        } );
+
+        size[ n1 * m + 0 ] = size[ n1 * m - 1 ];
+
+        return { 
+            "size": size
+        };
+
+    },
+
+    _makeSubdivideData: function( m, tension ){
+
+        m = m || 10;
+        tension = tension || 0.9;
+
+        var elemColors = NGL.ElementColors;
+        var traceAtomname = this.traceAtomname;
+        var directionAtomname1 = this.directionAtomname1;
+        var directionAtomname2 = this.directionAtomname2;
+        var interpolate = this.interpolate;
+        var getTangent = this._makeGetTangent( tension );
+
+        var dt = 1.0 / m;
+        var a1, a2, a3, a4;
+        var j, l, d;
+        var k = 0;
+
+        var vTmp = new THREE.Vector3();
+
+        var vPos2 = new THREE.Vector3();
+        var vDir2 = new THREE.Vector3();
+        var vNorm2 = new THREE.Vector3();
+
+        var vPos3 = new THREE.Vector3();
+        var vDir3 = new THREE.Vector3();
+        var vNorm3 = new THREE.Vector3();
+
+        var vDir = new THREE.Vector3();
+        var vNorm = new THREE.Vector3();
+
+        var vTang = new THREE.Vector3();
+        var vBin = new THREE.Vector3();
+
+        var first = true;
+
+        return function( r1, r2, r3, r4, pos, tan, norm, bin ){
+
+            a1 = r1.getAtomByName( traceAtomname );
+            a2 = r2.getAtomByName( traceAtomname );
+            a3 = r3.getAtomByName( traceAtomname );
+            a4 = r4.getAtomByName( traceAtomname );
+
+            if( traceAtomname === directionAtomname1 ){
+
+                if( first ){
+                    vDir2.set( 0, 0, 1 );
+                    vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
+                    first = false;
+                }
+
+                vDir3.set( 0, 0, 1 );
+
+            }else{
+
+                if( first ){
+                    cAtom = r2.getAtomByName( directionAtomname1 );
+                    oAtom = r2.getAtomByName( directionAtomname2 );
+                    vTmp.copy( cAtom );
+                    vDir2.copy( oAtom ).sub( vTmp ).normalize();
+                    vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
+                    first = false;
+                }
+
+                cAtom = r3.getAtomByName( directionAtomname1 );
+                oAtom = r3.getAtomByName( directionAtomname2 );
+                vTmp.copy( cAtom );
+                vPos3.copy( a3 );
+                vDir3.copy( oAtom ).sub( vTmp ).normalize();
+
+            }
+
+            // ensure the direction vector does not flip
+            if( vDir2.dot( vDir3 ) < 0 ) vDir3.multiplyScalar( -1 );
+
+            for( j = 0; j < m; ++j ){
+
+                d = dt * j
+                d1 = 1 - d;
+                l = k + j * 3;
+
+                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d, tension );
+                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d, tension );
+                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d, tension );
+
+                vNorm.set(
+                    d1 * vDir2.x + d * vDir3.x,
+                    d1 * vDir2.y + d * vDir3.y,
+                    d1 * vDir2.z + d * vDir3.z
+                ).normalize();
+                norm[ l + 0 ] = vNorm.x;
+                norm[ l + 1 ] = vNorm.y;
+                norm[ l + 2 ] = vNorm.z;
+
+                getTangent( a1, a2, a3, a4, d, vTang );
+                tan[ l + 0 ] = vTang.x;
+                tan[ l + 1 ] = vTang.y;
+                tan[ l + 2 ] = vTang.z;
+                
+                vBin.copy( vNorm ).cross( vTang ).normalize();
+                bin[ l + 0 ] = vBin.x;
+                bin[ l + 1 ] = vBin.y;
+                bin[ l + 2 ] = vBin.z;
+
+                vNorm.copy( vTang ).cross( vBin ).normalize();
+                norm[ l + 0 ] = vNorm.x;
+                norm[ l + 1 ] = vNorm.y;
+                norm[ l + 2 ] = vNorm.z;
+
+            }
+
+            k += 3 * m;
+
+            vDir2.copy( vDir3 );
+
+        };
+
+    },
+
+    getPoint: function( a1, a2, a3, a4, t, v, tension ){
+
+        v.x = NGL.Spline.prototype.interpolate( a1.x, a2.x, a3.x, a4.x, t, tension );
+        v.y = NGL.Spline.prototype.interpolate( a1.y, a2.y, a3.y, a4.y, t, tension );
+        v.z = NGL.Spline.prototype.interpolate( a1.z, a2.z, a3.z, a4.z, t, tension );
+
+        return v;
+
+    },
+
+    _makeGetTangent: function( tension ){
+
+        var getPoint = this.getPoint;
+
+        var p1 = new THREE.Vector3();
+        var p2 = new THREE.Vector3();
+
+        return function( a1, a2, a3, a4, t, v ){
+
+            var delta = 0.0001;
+            var t1 = t - delta;
+            var t2 = t + delta;
+
+            // Capping in case of danger
+
+            if ( t1 < 0 ) t1 = 0;
+            if ( t2 > 1 ) t2 = 1;
+
+            getPoint( a1, a2, a3, a4, t1, p1, tension );
+            getPoint( a1, a2, a3, a4, t2, p2, tension );
+
+            return v.copy( p2 ).sub( p1 ).normalize();
+
+        };
+
+    }
+
+};
+
+
 //////////////
 // Alignment
 
