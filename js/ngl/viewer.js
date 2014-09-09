@@ -925,12 +925,29 @@ NGL.Viewer.prototype = {
 
     },
 
+    addBackground: function( buffer ){
+
+        var mesh = buffer.getMesh( "background" );
+        mesh.frustumCulled = false;
+
+        this.backgroundModelGroup.add( mesh );
+
+        this.updateBoundingBox( buffer.geometry );
+
+        buffer.group = mesh;
+
+        this.requestRender();
+
+    },
+
     remove: function( buffer ){
 
         this.modelGroup.remove( buffer.group );
         if( buffer.pickable ){
             this.pickingModelGroup.remove( buffer.pickingGroup );
         }
+
+        this.backgroundModelGroup.remove( buffer.group );
 
         this.updateBoundingBox();
 
@@ -1577,7 +1594,6 @@ NGL.Buffer.prototype = {
         if( NGL.indexUint16 ){
 
             this.geometry.drawcalls = this.geometry.computeOffsets();
-            console.log( this.geometry.drawcalls.length );
 
         }
 
@@ -1737,10 +1753,6 @@ NGL.Buffer.prototype = {
                 "index",
                 new THREE.BufferAttribute( this.index, 1 )
             );
-
-        }else{
-
-            console.info( "no index set" );
 
         }
 

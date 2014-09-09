@@ -156,6 +156,7 @@ NGL.Stage.prototype = {
 
         }else if( object instanceof NGL.SurfaceComponent ){
 
+            object.addRepresentation();
             object.centerView();
 
         }else if( object instanceof NGL.ScriptComponent ){
@@ -524,11 +525,9 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         var repr = new ReprClass( this.structure, this.viewer, params );
 
-        NGL.Component.prototype.addRepresentation.call( this, repr );
-
         console.timeEnd( "NGL.StructureComponent.add " + type );
 
-        return repr;
+        return NGL.Component.prototype.addRepresentation.call( this, repr );
 
     },
 
@@ -619,17 +618,21 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.surface = surface;
     this.name = surface.name;
 
-    this.addRepresentation(
-
-        new NGL.SurfaceRepresentation( surface, stage.viewer, {} )
-
-    );
-
 };
 
 NGL.SurfaceComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    addRepresentation: function( type, params ){
+
+        var repr = new NGL.SurfaceRepresentation(
+            this.surface, this.stage.viewer, params
+        );
+
+        return NGL.Component.prototype.addRepresentation.call( this, repr );
+
+    },
 
     centerView: function(){
 

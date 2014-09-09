@@ -13,10 +13,13 @@ NGL.Representation = function( object, viewer, params ){
 
     var SIGNALS = signals;
 
+    // TODO
     this.signals = {
 
         visibilityChanged: new SIGNALS.Signal(),
         colorChanged: new SIGNALS.Signal(),
+        radiusChanged: new SIGNALS.Signal(),
+        scaleChanged: new SIGNALS.Signal(),
         parametersChanged: new SIGNALS.Signal(),
 
     };
@@ -156,19 +159,14 @@ NGL.Representation.prototype = {
 };
 
 
-////////////////////////////
-// StructureRepresentation
+/////////////////////////////
+// Structure representation
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
 
     NGL.Representation.call( this, structure, viewer, params );
 
     var scope = this;
-
-    var SIGNALS = signals;
-
-    this.signals.radiusChanged = new SIGNALS.Signal();
-    this.signals.scaleChanged = new SIGNALS.Signal();
 
     this.structure = structure;
     this.viewer = viewer;
@@ -1543,8 +1541,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 } );
 
 
-////////////////////////////
-// SurfaceRepresentation
+///////////////////////////
+// Surface representation
 
 NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
@@ -1555,8 +1553,8 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
     params = params || {};
 
-    this.color = params.color || "element";
-    this.background = params.background || false;
+    this.color = params.color || 0xDDDDDD;
+    this.background = params.background || true;
     this.wireframe = params.wireframe || false;
 
     this.create();
@@ -1570,13 +1568,33 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     name: "",
 
+    parameters: {
+
+        wireframe: {
+            type: "boolean"
+        },
+        background: {
+            type: "boolean"
+        }
+
+    },
+
     attach: function(){
 
         var viewer = this.viewer;
+        var background = this.background;
 
         this.bufferList.forEach( function( buffer ){
 
-            viewer.add( buffer );
+            if( background ){
+
+                viewer.addBackground( buffer );
+
+            }else{
+
+                viewer.add( buffer );
+
+            }
 
         });
 
@@ -1621,7 +1639,10 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             }
 
             position = geo.attributes.position.array;
-            color = NGL.Utils.uniformArray3( n, 1, 1, 1 );
+            var tc = new THREE.Color( this.color );
+            color = NGL.Utils.uniformArray3(
+                n, tc.r, tc.g, tc.b
+            );
             index = null;
             normal = geo.attributes.normal.array;
 
@@ -1635,10 +1656,35 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         }
 
         var meshBuffer = new NGL.MeshBuffer(
-            position, color, index, normal, undefined, false
+            position, color, index, normal, undefined, this.wireframe
         );
 
         this.bufferList = [ meshBuffer ];
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "wireframe" ] !== undefined ){
+
+            this.wireframe = params[ "wireframe" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "background" ] !== undefined ){
+
+            this.background = params[ "background" ];
+            rebuild = true;
+
+        }
+
+        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+
+        return this;
 
     }
 

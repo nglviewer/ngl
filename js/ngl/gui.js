@@ -1,35 +1,7 @@
 /**
+ * @file  Gui
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
-
-
-NGL.download = function( data, downloadName ){
-
-    if( !data ){
-        console.warn( "NGL.download: no data given" );
-        return;
-    }
-
-    downloadName = downloadName || "download";
-
-    var a = document.createElement( 'a' );
-    a.style.display = "hidden";
-    document.body.appendChild( a );
-    if( data instanceof Blob ){
-        a.href = URL.createObjectURL( data );
-    }else{
-        a.href = data;
-    }
-    a.download = downloadName;
-    a.target = "_blank";
-    a.click();
-
-    document.body.removeChild( a );
-    if( data instanceof Blob ){
-        URL.revokeObjectURL( data );
-    }
-
-};
 
 
 NGL.Widget = function(){
@@ -1044,6 +1016,14 @@ NGL.SurfaceComponentWidget = function( component, stage ){
     var signals = component.signals;
     var container = new UI.CollapsibleIconPanel( "file" );
 
+    var reprContainer = new UI.Panel();
+
+    signals.representationAdded.add( function( repr ){
+
+        reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
+        
+    } );
+
     signals.visibilityChanged.add( function( value ){
 
         toggle.setValue( value );
@@ -1103,11 +1083,37 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .setWidth( "100px" )
         .setWordWrap( "break-word" );
 
+    // Add representation
+
+    var repr = new UI.Button( "add" )
+        .onClick( function(){
+
+            component.addRepresentation();
+            menu.setMenuDisplay( "none" );
+
+        } );
+
+    // Menu
+
+    var menu = new UI.PopupMenu( "bars", "Surface" )
+        .setMarginLeft( "46px" )
+        .setEntryLabelWidth( "110px" )
+        .addEntry( "Representation", repr )
+        .addEntry(
+            "File", new UI.Text( component.surface.name )
+                        .setMaxWidth( "100px" )
+                        .setWordWrap( "break-word" ) );
+
     container
         .addStatic( name )
         .addStatic( toggle )
         .addStatic( center )
-        .addStatic( dispose );
+        .addStatic( dispose )
+        .addStatic( menu );
+
+    // Fill container
+
+    container.add( reprContainer );
 
     return container;
 
@@ -1282,11 +1288,15 @@ NGL.RepresentationWidget = function( repr, component ){
 
     // Selection
 
-    container.add(
-        new UI.SelectionPanel( repr.selection )
-            .setMarginLeft( "20px" )
-            .setInputWidth( '194px' )
-    );
+    if( component instanceof NGL.StructureComponent ){
+
+        container.add(
+            new UI.SelectionPanel( repr.selection )
+                .setMarginLeft( "20px" )
+                .setInputWidth( '194px' )
+        );
+
+    }
 
     // Menu
 

@@ -116,3 +116,32 @@ NGL.createObject = function( prototype, properties ){
     return object;
 
 };
+
+
+NGL.download = function( data, downloadName ){
+
+    if( !data ){
+        console.warn( "NGL.download: no data given" );
+        return;
+    }
+
+    downloadName = downloadName || "download";
+
+    var a = document.createElement( 'a' );
+    a.style.display = "hidden";
+    document.body.appendChild( a );
+    if( data instanceof Blob ){
+        a.href = URL.createObjectURL( data );
+    }else{
+        a.href = data;
+    }
+    a.download = downloadName;
+    a.target = "_blank";
+    a.click();
+
+    document.body.removeChild( a );
+    if( data instanceof Blob ){
+        URL.revokeObjectURL( data );
+    }
+
+};
