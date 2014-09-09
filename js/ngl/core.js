@@ -84,6 +84,11 @@ NGL = {
 };
 
 
+NGL.LeftMouseButton = 1;
+NGL.MiddleMouseButton = 2;
+NGL.RightMouseButton = 3;
+
+
 NGL.GET = function( id ){
         
     var a = new RegExp( id + "=([^&#=]*)" );

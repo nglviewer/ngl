@@ -1539,3 +1539,21 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     }
 
 } );
+
+
+//
+
+NGL.representationTypes = {
+
+    "spacefill":    NGL.SpacefillRepresentation,
+    "ball+stick":   NGL.BallAndStickRepresentation,
+    "licorice":     NGL.LicoriceRepresentation,
+    "hyperball":    NGL.HyperballRepresentation,
+    "line":         NGL.LineRepresentation,
+    "backbone":     NGL.BackboneRepresentation,
+    "tube":         NGL.TubeRepresentation,
+    "cartoon":      NGL.CartoonRepresentation,
+    "ribbon":       NGL.RibbonRepresentation,
+    "trace":        NGL.TraceRepresentation,
+
+};
