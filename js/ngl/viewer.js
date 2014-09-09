@@ -1501,6 +1501,8 @@ NGL.Viewer.prototype = {
 
         return function( center ){
 
+            center = center || this.boundingBox.center();
+
             // remove any paning/translation
             this.controls.object.position.sub( this.controls.target );
             this.controls.target.copy( this.controls.target0 );

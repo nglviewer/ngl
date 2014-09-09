@@ -286,37 +286,10 @@ NGL.Stage.prototype = {
     },
 
     centerView: function(){
+       
+        this.viewer.centerView();
 
-        var box = new THREE.Box3();
-        var center = new THREE.Vector3();
-
-        return function(){
-        
-            // box.makeEmpty();
-
-            // this.eachComponent( function( o ){
-
-            //     var point = o.getCenter();
-
-            //     if( point ){
-
-            //         box.expandByPoint( point );
-
-            //     }
-
-            // } );
-
-            // box.center( center );
-            // this.viewer.centerView( center );
-
-            this.viewer.centerView(
-                this.viewer.boundingBox.center()
-            );
-            
-
-        }
-
-    }(),
+    },
 
     eachComponent: function( callback, type ){
 
@@ -361,12 +334,6 @@ NGL.Component = function( stage ){
 
 NGL.Component.prototype = {
 
-    apply: function( object ){
-
-        object.setName = NGL.Component.prototype.setName;
-
-    },
-
     addRepresentation: function( repr ){
 
         this.reprList.push( repr );
@@ -393,6 +360,18 @@ NGL.Component.prototype = {
 
     },
 
+    updateRepresentations: function(){
+
+        this.reprList.forEach( function( repr ){
+
+            repr.update();
+
+        } );
+
+        this.stage.viewer.requestRender();
+
+    },
+
     dispose: function(){
 
         // copy via .slice because side effects may change reprList
@@ -407,6 +386,12 @@ NGL.Component.prototype = {
     },
 
     setVisibility: function( value ){
+
+        this.reprList.forEach( function( repr ){
+
+            repr.setVisibility( value );
+
+        } );
 
         this.visible = value;
         this.signals.visibilityChanged.dispatch( value );
@@ -449,7 +434,9 @@ NGL.StructureComponent = function( stage, structure, params ){
 
 }
 
-NGL.StructureComponent.prototype = {
+NGL.StructureComponent.prototype = NGL.createObject(
+
+    NGL.Component.prototype, {
 
     initSelection: function( string ){
 
@@ -545,24 +532,6 @@ NGL.StructureComponent.prototype = {
 
     },
 
-    removeRepresentation: function( repr ){
-
-        NGL.Component.prototype.removeRepresentation.call( this, repr );
-
-    },
-
-    updateRepresentations: function(){
-
-        this.reprList.forEach( function( repr ){
-
-            repr.update();
-
-        } );
-
-        this.stage.viewer.requestRender();
-
-    },
-
     addTrajectory: function( xtcPath, sele, i ){
 
         var scope = this;
@@ -620,18 +589,6 @@ NGL.StructureComponent.prototype = {
         
     },
 
-    setVisibility: function( value ){
-
-        this.reprList.forEach( function( repr ){
-
-            repr.setVisibility( value );
-
-        } );
-
-        NGL.Component.prototype.setVisibility.call( this, value );
-
-    },
-
     centerView: function( sele ){
 
         var center;
@@ -652,9 +609,7 @@ NGL.StructureComponent.prototype = {
 
     }
 
-};
-
-NGL.Component.prototype.apply( NGL.StructureComponent.prototype );
+} );
 
 
 NGL.SurfaceComponent = function( stage, surface ){
@@ -664,52 +619,25 @@ NGL.SurfaceComponent = function( stage, surface ){
     this.surface = surface;
     this.name = surface.name;
 
-    // this.viewer.add( surface.buffer );
+    this.addRepresentation(
 
-    var mesh = surface.buffer.getMesh( "background" );
-    this.viewer.backgroundModelGroup.add( mesh );
+        new NGL.SurfaceRepresentation( surface, stage.viewer, {} )
+
+    );
 
 };
 
-NGL.SurfaceComponent.prototype = {
+NGL.SurfaceComponent.prototype = NGL.createObject(
 
-    addRepresentation: function( type ){},
-
-    removeRepresentation: function( repr ){},
-
-    dispose: function(){
-
-        this.viewer.remove( this.surface.buffer );
-
-        this.surface.buffer.dispose();
-        this.surface.buffer = null;  // aid GC
-
-    },
-
-    setVisibility: function( value ){
-
-        this.surface.setVisibility( value );
-        this.viewer.requestRender();
-
-        NGL.Component.prototype.setVisibility.call( this, value );
-
-    },
+    NGL.Component.prototype, {
 
     centerView: function(){
 
-        this.viewer.centerView( this.surface.center );
+        this.viewer.centerView();
 
     },
 
-    getCenter: function(){
-
-        return this.surface.center;
-
-    }
-
-};
-
-NGL.Component.prototype.apply( NGL.SurfaceComponent.prototype );
+} );
 
 
 NGL.ScriptComponent = function( stage, script ){
@@ -727,7 +655,9 @@ NGL.ScriptComponent = function( stage, script ){
 
 };
 
-NGL.ScriptComponent.prototype = {
+NGL.ScriptComponent.prototype = NGL.createObject(
+
+    NGL.Component.prototype, {
 
     addRepresentation: function( type ){},
 
@@ -768,6 +698,4 @@ NGL.ScriptComponent.prototype = {
 
     getCenter: function(){}
 
-};
-
-NGL.Component.prototype.apply( NGL.ScriptComponent.prototype );
+} );
