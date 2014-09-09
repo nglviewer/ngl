@@ -67,7 +67,8 @@ Object.values = function ( obj ){
 NGL = {
     REVISION: '1dev',
     EPS: 0.0000001,
-    disableImpostor: false
+    disableImpostor: false,
+    indexUint16: false
 };
 
 
@@ -781,21 +782,22 @@ NGL.Viewer.prototype = {
         );
         if( !_glExtensionFragDepth ){
             NGL.disableImpostor = true;
-            console.warn( "ERROR getting 'EXT_frag_depth'" );
+            console.info( "EXT_frag_depth not available" );
         }
 
         var _glStandardDerivatives = this.renderer.context.getExtension(
             'OES_standard_derivatives'
         );
         if( !_glStandardDerivatives ){
-            console.error( "ERROR getting 'OES_standard_derivatives'" );
+            console.error( "OES_standard_derivatives not available" );
         }
 
         var _glElementIndexUint = this.renderer.context.getExtension(
             'OES_element_index_uint'
         );
         if( !_glElementIndexUint ){
-            console.error( "ERROR getting 'OES_element_index_uint'" );
+            NGL.indexUint16 = true;
+            console.info( "OES_element_index_uint not available" );
         }
 
         if( this.eid ){
@@ -1647,6 +1649,12 @@ NGL.Buffer.prototype = {
     finalize: function(){
 
         this.makeIndex();
+
+        if( NGL.indexUint16 ){
+
+            this.geometry.drawcalls = this.geometry.computeOffsets();
+
+        }
 
     },
 
@@ -3125,7 +3133,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
         pickingColor: pickingColor
     });
 
-    this.makeIndex();
+    NGL.Buffer.prototype.finalize.call( this );
 
 };
 
@@ -3312,7 +3320,9 @@ NGL.RibbonBuffer.prototype = {
         ]);
 
         this.geometry.addAttribute( 
-            'index', new THREE.BufferAttribute( new Uint32Array( n4 * 3 ), 1 )
+            'index', new THREE.BufferAttribute(
+                new Uint32Array( n4 * 3 ), 1
+            )
         );
 
         var index = this.geometry.attributes[ "index" ].array;
@@ -3330,8 +3340,6 @@ NGL.RibbonBuffer.prototype = {
             }
 
         }
-
-        // console.log( "index", index );
 
     },
 
