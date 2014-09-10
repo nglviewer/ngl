@@ -74,9 +74,9 @@ NGL.UniformsLib = {
 NGL.Utils = {
 
     /**
-     * Converted to JavaScript from 
+     * Converted to JavaScript from
      * {@link http://paulbourke.net/geometry/pointlineplane/lineline.c}
-     * 
+     *
      * @param  {THREE.Vector3} p1
      * @param  {THREE.Vector3} p2
      * @param  {THREE.Vector3} p3
@@ -252,7 +252,7 @@ NGL.Utils = {
             position[ j + 0 ] = v3.x;
             position[ j + 1 ] = v3.y;
             position[ j + 2 ] = v3.z;
-            
+
         }
 
         return position;
@@ -287,7 +287,7 @@ NGL.Utils = {
             color[ j + 0 ] = c.r;
             color[ j + 1 ] = c.g;
             color[ j + 2 ] = c.b;
-            
+
         }
 
         return color;
@@ -310,7 +310,7 @@ NGL.Utils = {
             index[ j + 0 ] = f.a;
             index[ j + 1 ] = f.b;
             index[ j + 2 ] = f.c;
-            
+
         }
 
         return index;
@@ -348,7 +348,7 @@ NGL.Utils = {
             normal[ j + 0 ] = n3.x;
             normal[ j + 1 ] = n3.y;
             normal[ j + 2 ] = n3.z;
-            
+
         }
 
         return normal;
@@ -503,7 +503,7 @@ NGL.initResources = function( onLoad ){
     var xhrLoader = new THREE.XHRLoader( loadingManager );
 
     Object.keys( NGL.Resources ).forEach( function( url ){
-        
+
         var v = NGL.Resources[ url ];
 
         if( v=="image" ){
@@ -513,7 +513,7 @@ NGL.initResources = function( onLoad ){
                 NGL.Resources[ url ] = image;
 
             });
-            
+
         }else{
 
             xhrLoader.load( url, function( data ){
@@ -521,9 +521,9 @@ NGL.initResources = function( onLoad ){
                 NGL.Resources[ url ] = data;
 
             });
-            
+
         }
-        
+
     });
 
 };
@@ -629,13 +629,13 @@ NGL.Viewer = function( eid ){
 };
 
 NGL.Viewer.prototype = {
-    
+
     constructor: NGL.Viewer,
 
     initParams: function(){
 
         this.params = {
-        
+
             fogType: null,
             fogColor: 0x000000,
             fogNear: 50,
@@ -664,14 +664,14 @@ NGL.Viewer.prototype = {
         var p = this.params;
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
-        this.perspectiveCamera = new THREE.PerspectiveCamera( 
+        this.perspectiveCamera = new THREE.PerspectiveCamera(
             p.cameraFov, this.aspect, 0.1, 10000
         );
         this.perspectiveCamera.position.z = p.cameraZ;
         this.perspectiveCamera.lookAt( lookAt );
 
         this.orthographicCamera = new THREE.OrthographicCamera(
-            this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 
+            this.width / - 2, this.width / 2, this.height / 2, this.height / - 2,
             p.cameraNear, p.cameraFar
         );
         this.orthographicCamera.position.z = p.cameraZ/2;
@@ -732,14 +732,14 @@ NGL.Viewer.prototype = {
         this.composer.addPass( new THREE.RenderPass( this.scene, this.camera ) );
 
         this.depthScale = 0.5;
-        this.depthTarget = new THREE.WebGLRenderTarget( 
-            this.width * this.depthScale, this.height * this.depthScale, 
+        this.depthTarget = new THREE.WebGLRenderTarget(
+            this.width * this.depthScale, this.height * this.depthScale,
             { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter }
         );
 
         this.ssaoEffect = new THREE.ShaderPass( THREE.SSAOShader );
         this.ssaoEffect.uniforms[ 'tDepth' ].value = this.depthTarget;
-        this.ssaoEffect.uniforms[ 'size' ].value.set( 
+        this.ssaoEffect.uniforms[ 'size' ].value.set(
             this.width * this.depthScale, this.height * this.depthScale
         );
         this.ssaoEffect.uniforms[ 'cameraNear' ].value = this.camera.near;
@@ -753,7 +753,7 @@ NGL.Viewer.prototype = {
         this.composer.addPass( this.dotScreenEffect );
 
         this.fxaaEffect = new THREE.ShaderPass( THREE.FXAAShader );
-        this.fxaaEffect.uniforms[ 'resolution' ].value = new THREE.Vector2( 
+        this.fxaaEffect.uniforms[ 'resolution' ].value = new THREE.Vector2(
             1 / this.width, 1 / this.height
         );
         this.fxaaEffect.enabled = false;
@@ -810,15 +810,15 @@ NGL.Viewer.prototype = {
     },
 
     initLights: function(){
-        
+
         var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
         directionalLight.position.copy( new THREE.Vector3( 1, 1, -2.5 ).normalize() );
         directionalLight.intensity = 0.5;
-        
+
         var ambientLight = new THREE.AmbientLight( 0x101010 );
-        
+
         var hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0.01 );
-        
+
         this.scene.add( directionalLight );
         this.scene.add( ambientLight );
         this.scene.add( hemisphereLight );
@@ -827,8 +827,8 @@ NGL.Viewer.prototype = {
 
     initControls: function(){
 
-        this.controls = new THREE.TrackballControls( 
-            this.camera, this.renderer.domElement 
+        this.controls = new THREE.TrackballControls(
+            this.camera, this.renderer.domElement
         );
 
         this.controls.rotateSpeed = 2.0;
@@ -983,7 +983,7 @@ NGL.Viewer.prototype = {
         }else{
 
             bb.makeEmpty();
-            
+
             this.modelGroup.traverse( function ( node ){
 
                 if ( node.geometry !== undefined ){
@@ -1026,7 +1026,7 @@ NGL.Viewer.prototype = {
     },
 
     fullscreen: function(){
-        
+
         var elem = this.container;
 
         if( elem.requestFullscreen ){
@@ -1100,14 +1100,14 @@ NGL.Viewer.prototype = {
         }else{
             this.camera = this.orthographicCamera;
         }
-        
+
         this.perspectiveCamera.fov = p.cameraFov;
         this.perspectiveCamera.near = p.cameraNear;
         this.perspectiveCamera.far = p.cameraFar;
 
         this.orthographicCamera.near = p.cameraNear;
         this.orthographicCamera.far = p.cameraFar;
-        
+
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
 
@@ -1153,7 +1153,7 @@ NGL.Viewer.prototype = {
         this.composer.setSize( this.width, this.height );
         this.controls.handleResize();
 
-        this.fxaaEffect.uniforms[ 'resolution' ].value.set( 
+        this.fxaaEffect.uniforms[ 'resolution' ].value.set(
             1 / this.width, 1 / this.height
         );
 
@@ -1382,7 +1382,7 @@ NGL.Viewer.prototype = {
             v.uniform.value = v.tex;
         });
 
-        if( this.ssaoEffect.enabled || this.fxaaEffect.enabled || 
+        if( this.ssaoEffect.enabled || this.fxaaEffect.enabled ||
             this.dotScreenEffect.enabled ){
 
             if( this.ssaoEffect.enabled ){
@@ -1392,7 +1392,7 @@ NGL.Viewer.prototype = {
             }
             this.depthPassPlugin.enabled = false;
             this.composer.render();
-            
+
         }else{
 
             this.renderer.render( this.backgroundScene, this.camera );
@@ -1427,7 +1427,7 @@ NGL.Viewer.prototype = {
                 if( !u ) return;
 
                 if( u.modelViewMatrixInverse ){
-                    matrix.multiplyMatrices( 
+                    matrix.multiplyMatrices(
                         camera.matrixWorldInverse, o.matrixWorld
                     );
                     u.modelViewMatrixInverse.value.getInverse( matrix );
@@ -1439,7 +1439,7 @@ NGL.Viewer.prototype = {
                             u.modelViewMatrixInverse.value
                         ).transpose();
                     }else{
-                        matrix.multiplyMatrices( 
+                        matrix.multiplyMatrices(
                             camera.matrixWorldInverse, o.matrixWorld
                         );
                         u.modelViewMatrixInverseTranspose.value
@@ -1461,7 +1461,7 @@ NGL.Viewer.prototype = {
                 }
 
                 if( u.modelViewProjectionMatrix ){
-                    matrix.multiplyMatrices( 
+                    matrix.multiplyMatrices(
                         camera.matrixWorldInverse, o.matrixWorld
                     );
                     u.modelViewProjectionMatrix.value.multiplyMatrices(
@@ -1474,17 +1474,17 @@ NGL.Viewer.prototype = {
                         u.modelViewProjectionMatrixInverse.value.copy(
                             u.modelViewProjectionMatrix.value
                         );
-                        u.modelViewProjectionMatrixInverse.value.getInverse( 
+                        u.modelViewProjectionMatrixInverse.value.getInverse(
                             u.modelViewProjectionMatrixInverse.value
                         );
                     }else{
-                        matrix.multiplyMatrices( 
+                        matrix.multiplyMatrices(
                             camera.matrixWorldInverse, o.matrixWorld
                         );
                         u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
                             camera.projectionMatrix, matrix
                         )
-                        u.modelViewProjectionMatrixInverse.value.getInverse( 
+                        u.modelViewProjectionMatrixInverse.value.getInverse(
                             u.modelViewProjectionMatrixInverse.value
                         );
                     }
@@ -1505,7 +1505,7 @@ NGL.Viewer.prototype = {
 
         this.scene.remove( this.rotationGroup );
         this.pickingScene.remove( this.pickingRotationGroup );
-        
+
         this.initScene();
 
         this.renderer.clear();
@@ -1584,7 +1584,7 @@ NGL.Buffer = function( position, color, pickingColor ){
 };
 
 NGL.Buffer.prototype = {
-    
+
     constructor: NGL.Buffer,
 
     finalize: function(){
@@ -1679,7 +1679,7 @@ NGL.Buffer.prototype = {
     addUniforms: function( uniforms ){
 
         this.uniforms = THREE.UniformsUtils.merge([ this.uniforms, uniforms ]);
-    
+
     },
 
     addAttributes: function( attributes ){
@@ -1693,7 +1693,7 @@ NGL.Buffer.prototype = {
             var buf;
             var a = attributes[ name ];
 
-            this.attributes[ name ] = { 
+            this.attributes[ name ] = {
                 "type": a.type, "value": null
             };
 
@@ -1706,15 +1706,15 @@ NGL.Buffer.prototype = {
                 buf = a.value;
 
             }else{
-            
+
                 buf = new Float32Array(
                     this.attributeSize * itemSize[ a.type ]
                 );
 
             }
 
-            this.geometry.addAttribute( 
-                name, 
+            this.geometry.addAttribute(
+                name,
                 new THREE.BufferAttribute( buf, itemSize[ a.type ] )
             );
 
@@ -1735,7 +1735,7 @@ NGL.Buffer.prototype = {
         var attributes = this.geometry.attributes;
 
         Object.keys( data ).forEach( function( name ){
-            
+
             attributes[ name ].set( data[ name ] );
 
             attributes[ name ].needsUpdate = true;
@@ -1749,7 +1749,7 @@ NGL.Buffer.prototype = {
 
         if( this.index ){
 
-            this.geometry.addAttribute( 
+            this.geometry.addAttribute(
                 "index",
                 new THREE.BufferAttribute( this.index, 1 )
             );
@@ -1814,7 +1814,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
     this.index = index;
 
     NGL.Buffer.call( this, position, color, pickingColor );
-    
+
     this.addAttributes({
         "normal": { type: "v3", value: normal },
     });
@@ -1864,23 +1864,23 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
     var a, d, itemSize, array, n, i, j;
 
     Object.keys( data ).forEach( function( name ){
-        
+
         d = data[ name ];
         a = attributes[ name ];
         itemSize = a.itemSize;
         array = a.array;
-        
+
         for( var k = 0; k < size; ++k ) {
-            
+
             n = k * itemSize;
             i = n * mappingSize;
-            
+
             for( var l = 0; l < mappingSize; ++l ) {
-                
+
                 j = i + (itemSize * l);
 
                 for( var m = 0; m < itemSize; ++m ) {
-                    
+
                     array[ j + m ] = d[ n + m ];
 
                 }
@@ -1915,7 +1915,7 @@ NGL.MappedBuffer.prototype.makeMapping = function(){
     for( var v = 0; v < size; v++ ) {
 
         aMapping.set( mapping, v * mappingItemSize * mappingSize );
-        
+
     }
 
 };
@@ -1928,7 +1928,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
     var mappingIndicesSize = this.mappingIndicesSize;
     var mappingItemSize = this.mappingItemSize;
 
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         "index",
         new THREE.BufferAttribute(
             new Uint32Array( size * mappingIndicesSize ), 1
@@ -1944,7 +1944,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
         i = v * mappingItemSize * mappingSize;
         ix = v * mappingIndicesSize;
         it = v * mappingSize;
-        
+
         index.set( mappingIndices, ix );
 
         for( var s=0; s<mappingIndicesSize; ++s ){
@@ -1958,7 +1958,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 
 /**
  * [QuadBuffer description]
- * @class 
+ * @class
  * @private
  * @augments {NGL.MappedBuffer}
  */
@@ -1990,7 +1990,7 @@ NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
 /**
  * [BoxBuffer description]
- * @class 
+ * @class
  * @private
  * @augments {NGL.MappedBuffer}
  */
@@ -2075,7 +2075,7 @@ NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
 /**
  * [SphereImpostorBuffer description]
- * @class 
+ * @class
  * @augments {NGL.MappedBuffer}
  * @param {Float32Array} position
  * @param {Float32Array} color
@@ -2092,7 +2092,7 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
     this.addUniforms({
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
     });
-    
+
     this.addAttributes({
         "radius": { type: "f", value: null },
     });
@@ -2126,14 +2126,14 @@ NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 /**
  * [CylinderImpostorBuffer description]
- * @class 
+ * @class
  * @augments {NGL.AlignedBoxBuffer}
  * @param {Float32Array} from
  * @param {Float32Array} to
  * @param {Float32Array} color
  * @param {Float32Array} color2
  * @param {Float32Array} radius
- * @param {Float} shift - Moves the cylinder in camera space 
+ * @param {Float} shift - Moves the cylinder in camera space
  *      to i.e. get multiple aligned cylinders.
  * @param {Boolean} cap - If true the cylinders are capped.
  */
@@ -2151,7 +2151,7 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'shift': { type: "f", value: shift },
     });
-    
+
     this.addAttributes({
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
@@ -2211,7 +2211,7 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
         'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
         'shrink': { type: "f", value: shrink },
     });
-    
+
     this.addAttributes({
         "color": { type: "c", value: null },
         "color2": { type: "c", value: null },
@@ -2261,7 +2261,7 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
 
 /**
  * [GeometryBuffer description]
- * @class 
+ * @class
  * @private
  * @augments {NGL.MappedBuffer}
  */
@@ -2365,7 +2365,7 @@ NGL.GeometryBuffer.prototype = {
                     matrix.applyToVector3Array( transformedGeoPosition );
 
                     meshPosition.set( transformedGeoPosition, k );
-                    
+
                 }
 
                 if( updateNormals ){
@@ -2373,7 +2373,7 @@ NGL.GeometryBuffer.prototype = {
                     transformedGeoNormal.set( geoNormal );
                     normalMatrix.getNormalMatrix( matrix );
                     normalMatrix.applyToVector3Array( transformedGeoNormal );
-                    
+
                     meshNormal.set( transformedGeoNormal, k );
 
                 }
@@ -2514,7 +2514,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
     this.updateNormals = true;
 
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
-    
+
     this.geo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
     this.geo.applyMatrix( matrix );
 
@@ -2564,7 +2564,7 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
         eye.set( from[ i3 + 0 ], from[ i3 + 1 ], from[ i3 + 2 ] );
         target.set( to[ i3 + 0 ], to[ i3 + 1 ], to[ i3 + 2 ] );
         matrix.lookAt( eye, target, up );
-        
+
         r = radius[ i ];
         scale.set( r, r, eye.distanceTo( target ) );
         matrix.scale( scale );
@@ -2652,13 +2652,13 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
 
 /**
  * [PointBuffer description]
- * @class 
+ * @class
  * @todo  Inherit from NGL.Buffer
  * @param {Float32Array} position
  * @param {Float32Array} color
  */
 NGL.PointBuffer = function( position, color ){
-    
+
     this.size = position.length / 3;
 
     this.geometry = new THREE.BufferGeometry();
@@ -2707,7 +2707,7 @@ NGL.PointBuffer.prototype = {
 
 /**
  * [LineBuffer description]
- * @class 
+ * @class
  * @todo  Inherit from NGL.Buffer
  * @param {Float32Array} from
  * @param {Float32Array} to
@@ -2729,10 +2729,10 @@ NGL.LineBuffer = function( from, to, color, color2 ){
 
     this.geometry = new THREE.BufferGeometry();
 
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'position', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
     );
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'color', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
     );
 
@@ -2992,7 +2992,7 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
     this.addUniforms({
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
     });
-    
+
     this.addAttributes({
         "radius": { type: "f", value: null },
     });
@@ -3039,23 +3039,23 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
 
     this.geometry = new THREE.BufferGeometry();
 
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'position', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
     );
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'inputDir', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
     );
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'inputSize', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
     );
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'normal', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
     );
-    this.geometry.addAttribute( 
+    this.geometry.addAttribute(
         'inputColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
     );
     if( pickingColor ){
-        this.geometry.addAttribute( 
+        this.geometry.addAttribute(
             'pickingColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
         );
         this.pickable = true;
@@ -3256,7 +3256,7 @@ NGL.RibbonBuffer.prototype = {
             1, 3, 2
         ]);
 
-        this.geometry.addAttribute( 
+        this.geometry.addAttribute(
             'index', new THREE.BufferAttribute(
                 new Uint32Array( n4 * 3 ), 1
             )
@@ -3400,7 +3400,7 @@ NGL.TubeMeshBuffer.prototype = {
             var cy2Arr = [];
 
             if( position ){
-            
+
                 for( j = 0; j < radialSegments; ++j ){
 
                     v = ( j / radialSegments ) * 2 * Math.PI;
@@ -3598,7 +3598,7 @@ NGL.TubeMeshBuffer.prototype = {
             if( this.meshBuffer ){
                 this.meshBuffer.setAttributes( meshData );
             }
-        
+
         }
 
     }(),
@@ -3642,7 +3642,7 @@ NGL.TubeMeshBuffer.prototype = {
         }
 
         // capping
-        
+
         var strip = [ 0 ];
 
         for( j = 1; j < radialSegments1 / 2; ++j ){
@@ -3819,7 +3819,7 @@ NGL.getFont = function( name ){
         }
 
     })
-    
+
     return font;
 
 };
@@ -3827,7 +3827,7 @@ NGL.getFont = function( name ){
 
 /**
  * [TextBuffer description]
- * @class 
+ * @class
  * @augments {NGL.QuadBuffer}
  * @param {Float32Array} position
  * @param {Float32Array} size
@@ -3843,7 +3843,7 @@ NGL.TextBuffer = function( position, size, text ){
     tex.needsUpdate = true;
 
     var n = position.length / 3;
-    
+
     if( !text ){
         text = [];
         for( var i = 0; i < n; i++ ){
@@ -3866,7 +3866,7 @@ NGL.TextBuffer = function( position, size, text ){
     });
 
     NGL.textures.push({ uniform: this.uniforms.fontTexture, tex: tex });
-    
+
     this.addAttributes({
         "inputTexCoord": { type: "v2", value: null },
         "inputSize": { type: "f", value: null },
@@ -3971,7 +3971,7 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
     var i, j;
 
     for( var v = 0; v < n; v++ ){
-        
+
         i = v * 2 * 3;
         j = v * 3;
 
@@ -3990,8 +3990,8 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
 
     this.getMesh = function(){
 
-        var material = new THREE.LineBasicMaterial( { 
-            color: color, fog: true 
+        var material = new THREE.LineBasicMaterial( {
+            color: color, fog: true
         } );
 
         return new THREE.Line( geometry, material, THREE.LinePieces );;
