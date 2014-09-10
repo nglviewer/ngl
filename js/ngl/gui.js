@@ -990,7 +990,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addEntry( "Superpose", superpose )
         .addEntry( "SS", ssButton )
         .addEntry(
-            "File", new UI.Text( component.structure.name )
+            "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
@@ -1100,7 +1100,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .setEntryLabelWidth( "110px" )
         .addEntry( "Representation", repr )
         .addEntry(
-            "File", new UI.Text( component.surface.name )
+            "File", new UI.Text( component.surface.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
