@@ -19,7 +19,7 @@ NGL.StageWidget = function( stage ){
 
     var viewer = stage.viewer;
     var renderer = viewer.renderer;
-    
+
     this.viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
     document.body.appendChild( this.viewport.dom );
 
@@ -96,14 +96,14 @@ NGL.ToolbarWidget = function( stage ){
         var name = "none";
 
         if( atom ){
-            name = atom.qualifiedName() + 
+            name = atom.qualifiedName() +
                 " (" + atom.residue.chain.model.structure.name + ")";
         }
 
         messagePanel
             .clear()
             .add( new UI.Text( "Picked: " + name ) );
-        
+
     } );
 
     container.add( messagePanel );
@@ -183,7 +183,7 @@ NGL.MenubarFileWidget = function( stage ){
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
 
                     stage.loadFile( path.path );
-                    
+
                 }else{
 
                     console.log( "unknown filetype: " + ext );
@@ -214,7 +214,7 @@ NGL.MenubarFileWidget = function( stage ){
 
         return;
 
-        
+
 
     }
 
@@ -347,7 +347,7 @@ NGL.MenubarExamplesWidget = function( stage ){
             return;
 
         }else{
-            
+
             menuConfig.push(
 
                 createOption( name, function(){
@@ -421,7 +421,7 @@ NGL.ExportImageWidget = function( stage ){
         .setOverflow( "auto" );
 
     headingPanel.add( new UI.Text( "Image export" ) );
-    headingPanel.add( 
+    headingPanel.add(
         new UI.Icon( "times" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
@@ -431,7 +431,7 @@ NGL.ExportImageWidget = function( stage ){
 
             } )
     );
-    
+
     container.add( headingPanel );
     container.add( listingPanel );
 
@@ -505,7 +505,7 @@ NGL.ExportImageWidget = function( stage ){
 
         var i = 0;
         var paramsList = [];
-        
+
         stage.eachComponent( function( o ){
 
             o.reprList.slice( 0 ).forEach( function( repr ){
@@ -565,7 +565,7 @@ NGL.ExportImageWidget = function( stage ){
             }
         );
 
-        
+
 
     }
 
@@ -662,7 +662,7 @@ NGL.SidebarWidget = function( stage ){
         .onClick( function(){
 
             stage.centerView();
-            
+
         } );
 
     var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
@@ -747,7 +747,7 @@ NGL.ComponentWidget = function( component, stage ){
 
     var signals = component.signals;
     var container = new UI.CollapsibleIconPanel( "file" );
-    
+
     // Name
 
     var name = new UI.Text( component.name )
@@ -778,84 +778,27 @@ NGL.StructureComponentWidget = function( component, stage ){
     signals.representationAdded.add( function( repr ){
 
         reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
-        
+
     } );
 
     signals.trajectoryAdded.add( function( traj ){
 
         trajContainer.add( new NGL.TrajectoryWidget( traj, component ) );
-        
+
     } );
-
-    signals.visibilityChanged.add( function( value ){
-
-        toggle.setValue( value );
-        
-    } );
-
-    signals.nameChanged.add( function( value ){
-
-        name.setValue( value );
-        
-    } );
-
-    // Actions
-
-    var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
-        .setTitle( "hide/show" )
-        .setMarginLeft( "25px" )
-        .onClick( function(){
-
-            component.setVisibility( !toggle.getValue() );
-            
-        } );
-
-    var center = new UI.Icon( "bullseye" )
-        .setTitle( "center" )
-        .setMarginLeft( "10px" )
-        .onClick( function(){
-
-            component.centerView();
-
-        } );
-
-    var dispose = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
-        .setMarginLeft( "10px" )
-        .onClick( function(){
-
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
-
-                stage.removeComponent( component );
-
-            }else{
-
-                dispose.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){ 
-                    dispose.setColor( "#888" );
-                }, 1000);
-
-            }
-
-        } );
-
-    // Name
-
-    var name = new UI.Text( component.name )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
 
     // Selection
 
     container.add(
+
         new UI.SelectionPanel( component.selection )
             .setMarginLeft( "20px" )
             .setInputWidth( '214px' )
+
     );
 
     // Export PDB
-    
+
     var pdb = new UI.Button( "export" ).onClick( function(){
 
         var blob = new Blob(
@@ -865,7 +808,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         NGL.download( blob, "structure.pdb" );
 
-        menu.setMenuDisplay( "none" );
+        componentPanel.setMenuDisplay( "none" );
 
     });
 
@@ -886,7 +829,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
-            menu.setMenuDisplay( "none" );
+            componentPanel.setMenuDisplay( "none" );
 
         } );
 
@@ -894,7 +837,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var traj = new UI.Button( "import" ).onClick( function(){
 
-        menu.setMenuDisplay( "none" );
+        componentPanel.setMenuDisplay( "none" );
 
         var dirWidget = new NGL.DirectoryListingWidget(
 
@@ -911,7 +854,7 @@ NGL.StructureComponentWidget = function( component, stage ){
                     component.addTrajectory( path.path );
 
                     dirWidget.dispose();
-                    
+
                 }else{
 
                     console.log( "unknown trajectory type: " + ext );
@@ -962,49 +905,44 @@ NGL.StructureComponentWidget = function( component, stage ){
             component.centerView();
 
             superpose.setValue( "" );
-            menu.setMenuDisplay( "none" );
+            componentPanel.setMenuDisplay( "none" );
 
         } );
 
     setSuperposeOptions();
 
     // SS calculate
-    
+
     var ssButton = new UI.Button( "calculate" ).onClick( function(){
 
         component.structure.autoSS();
         component.rebuildRepresentations();
 
-        menu.setMenuDisplay( "none" );
+        componentPanel.setMenuDisplay( "none" );
 
     } );
 
-    // Menu
+    // Component panel
 
-    var menu = new UI.PopupMenu( "bars", "Structure" )
-        .setMarginLeft( "46px" )
-        .setEntryLabelWidth( "110px" )
-        .addEntry( "PDB file", pdb )
-        .addEntry( "Representation", repr )
-        .addEntry( "Trajectory", traj )
-        .addEntry( "Superpose", superpose )
-        .addEntry( "SS", ssButton )
-        .addEntry(
+    var componentPanel = new UI.ComponentPanel( component )
+        .setDisplay( "inline-block" )
+        .setMargin( "0px" )
+        .addMenuEntry( "PDB file", pdb )
+        .addMenuEntry( "Representation", repr )
+        .addMenuEntry( "Trajectory", traj )
+        .addMenuEntry( "Superpose", superpose )
+        .addMenuEntry( "SS", ssButton )
+        .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
-    container
-        .addStatic( name )
-        .addStatic( toggle )
-        .addStatic( center )
-        .addStatic( dispose )
-        .addStatic( menu );
-
     // Fill container
 
-    container.add( trajContainer );
-    container.add( reprContainer );
+    container
+        .addStatic( componentPanel )
+        .add( trajContainer )
+        .add( reprContainer );
 
     return container;
 
@@ -1021,67 +959,8 @@ NGL.SurfaceComponentWidget = function( component, stage ){
     signals.representationAdded.add( function( repr ){
 
         reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
-        
+
     } );
-
-    signals.visibilityChanged.add( function( value ){
-
-        toggle.setValue( value );
-        
-    } );
-
-    signals.nameChanged.add( function( value ){
-
-        name.setValue( value );
-        
-    } );
-
-    // Actions
-
-    var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
-        .setTitle( "hide/show" )
-        .setMarginLeft( "25px" )
-        .onClick( function(){
-
-            component.setVisibility( !toggle.getValue() );
-
-        } );
-
-    var center = new UI.Icon( "bullseye" )
-        .setTitle( "center" )
-        .setMarginLeft( "10px" )
-        .onClick( function(){
-
-            component.centerView( "backbone" );
-
-        } );
-
-    var dispose = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
-        .setMarginLeft( "10px" )
-        .onClick( function(){
-
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
-
-                stage.removeComponent( component );
-
-            }else{
-
-                dispose.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){ 
-                    dispose.setColor( "#888" );
-                }, 1000);
-
-            }
-
-        } );
-    
-    // Name
-
-    var name = new UI.Text( component.name )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
 
     // Add representation
 
@@ -1089,31 +968,26 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .onClick( function(){
 
             component.addRepresentation();
-            menu.setMenuDisplay( "none" );
+            componentPanel.setMenuDisplay( "none" );
 
         } );
 
-    // Menu
+    // Component panel
 
-    var menu = new UI.PopupMenu( "bars", "Surface" )
-        .setMarginLeft( "46px" )
-        .setEntryLabelWidth( "110px" )
-        .addEntry( "Representation", repr )
-        .addEntry(
+    var componentPanel = new UI.ComponentPanel( component )
+        .setDisplay( "inline-block" )
+        .setMargin( "0px" )
+        .addMenuEntry( "Representation", repr )
+        .addMenuEntry(
             "File", new UI.Text( component.surface.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
-    container
-        .addStatic( name )
-        .addStatic( toggle )
-        .addStatic( center )
-        .addStatic( dispose )
-        .addStatic( menu );
-
     // Fill container
 
-    container.add( reprContainer );
+    container
+        .addStatic( componentPanel )
+        .add( reprContainer );
 
     return container;
 
@@ -1128,13 +1002,13 @@ NGL.ScriptComponentWidget = function( component, stage ){
     signals.nameChanged.add( function( value ){
 
         name.setValue( value );
-        
+
     } );
 
     signals.statusChanged.add( function( value ){
 
         status.setValue( value );
-        
+
     } );
 
     // Actions
@@ -1152,14 +1026,14 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
                 dispose.setColor( "rgb(178, 34, 34)" );
 
-                setTimeout( function(){ 
+                setTimeout( function(){
                     dispose.setColor( "#888" );
                 }, 1000);
 
             }
 
         } );
-    
+
     // Name
 
     var name = new UI.Text( component.name )
@@ -1194,17 +1068,17 @@ NGL.RepresentationWidget = function( repr, component ){
     signals.visibilityChanged.add( function( value ){
 
         toggle.setValue( value );
-        
+
     } );
 
     signals.colorChanged.add( function( value ){
 
         colorWidget.setValue( value );
-        
+
     } );
 
     signals.radiusChanged.add( function( value ){
-        
+
         if( parseFloat( value ) ){
             radiusSelector.setValue( "size" );
             sizeInput.setValue( value );
@@ -1212,19 +1086,19 @@ NGL.RepresentationWidget = function( repr, component ){
             radiusSelector.setValue( value );
             sizeInput.dom.value = NaN;
         }
-        
+
     } );
 
     signals.scaleChanged.add( function( value ){
 
         scaleInput.setValue( value );
-        
+
     } );
 
     component.signals.representationRemoved.add( function( _repr ){
 
         if( repr === _repr ) container.dispose();
-        
+
     } );
 
     // Actions
@@ -1251,10 +1125,10 @@ NGL.RepresentationWidget = function( repr, component ){
 
                 dispose.setColor( "rgb(178, 34, 34)" );
 
-                setTimeout( function(){ 
+                setTimeout( function(){
                     dispose.setColor( "#888" );
                 }, 1000);
-                
+
             }
 
         } );
@@ -1350,7 +1224,7 @@ NGL.RepresentationWidget = function( repr, component ){
         ;
 
     // Parameters
-    
+
     Object.keys( repr.parameters ).forEach( function( name ){
 
         var input;
@@ -1366,7 +1240,7 @@ NGL.RepresentationWidget = function( repr, component ){
             }
 
             input.setRange( p.min, p.max )
-                
+
 
         }else if( p.type === "boolean" ){
 
@@ -1379,7 +1253,7 @@ NGL.RepresentationWidget = function( repr, component ){
             signals.parametersChanged.add( function( value ){
 
                 input.setValue( repr[ name ] );
-                
+
             } );
 
             input.onChange( function(){
@@ -1417,7 +1291,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     component.signals.trajectoryRemoved.add( function( _traj ){
 
         if( traj === _traj ) container.dispose();
-        
+
     } );
 
     var numframes = new UI.Panel()
@@ -1434,9 +1308,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         frame.setRange( -1, value - 1 );
         frameRange.setRange( -1, value - 1 );
 
-        // 1000 = n / step 
+        // 1000 = n / step
         step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
-        
+
     } );
 
     signals.frameChanged.add( function( value ){
@@ -1447,7 +1321,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         numframes.clear().add( frame.setWidth( "70px" ) );
 
         inProgress = false;
-        
+
     } );
 
     // Name
@@ -1511,7 +1385,7 @@ NGL.TrajectoryWidget = function( traj, component ){
     var i = 0;
     var animStopFlag = true;
     var animFunc = function(){
-        
+
         if( !inProgress ){
             inProgress = true;
             traj.setFrame( i );
@@ -1633,7 +1507,7 @@ NGL.DirectoryListing = function(){
     this.signals = {
 
         listingLoaded: new SIGNALS.Signal(),
-        
+
     };
 
 };
@@ -1721,7 +1595,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
     headingPanel.add( new UI.Text( heading ) );
     headingPanel.add( folderSelect );
-    headingPanel.add( 
+    headingPanel.add(
         new UI.Icon( "times" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
@@ -1731,7 +1605,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
             } )
     );
-    
+
     container.add( headingPanel );
     container.add( listingPanel );
 

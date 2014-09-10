@@ -335,6 +335,8 @@ NGL.Component = function( stage ){
 
 NGL.Component.prototype = {
 
+    type: "component",
+
     addRepresentation: function( repr ){
 
         this.reprList.push( repr );
@@ -438,6 +440,8 @@ NGL.StructureComponent = function( stage, structure, params ){
 NGL.StructureComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    type: "structure",
 
     initSelection: function( string ){
 
@@ -624,6 +628,8 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
 
+    type: "surface",
+
     addRepresentation: function( type, params ){
 
         var repr = new NGL.SurfaceRepresentation(
@@ -661,6 +667,8 @@ NGL.ScriptComponent = function( stage, script ){
 NGL.ScriptComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    type: "script",
 
     addRepresentation: function( type ){},
 
