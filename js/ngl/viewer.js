@@ -1178,9 +1178,6 @@ NGL.Viewer.prototype = {
 
         var scope = this;
 
-        // FIXME creates stitch lines in Firefox
-        // antialiasing by supersampling
-
         if( antialias ) factor *= 2;
 
         var i;
@@ -1251,8 +1248,10 @@ NGL.Viewer.prototype = {
 
                 ctx.drawImage(
                     scope.renderer.domElement,
-                    x / 2, y / 2,
-                    scope.width / 2, scope.height / 2
+                    Math.round( x / 2 ),
+                    Math.round( y / 2 ),
+                    Math.round( scope.width / 2 ),
+                    Math.round( scope.height / 2 )
                 );
 
             }else{
