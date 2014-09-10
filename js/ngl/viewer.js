@@ -2536,9 +2536,8 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
         "color2": color2,
         "radius": radius,
         "pickingColor": pickingColor,
-        "pickingColor2": pickingColor2,
-        "__init__": true
-    });
+        "pickingColor2": pickingColor2
+    }, true );
 
     this.setPositionTransform( this._from, this._to, this._radius );
 
@@ -2572,12 +2571,13 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
 
 };
 
-NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
+NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
 
-    // FIXME very hacky
-    if( !this.meshBuffer && !data[ "__init__" ] ){
+    if( !this.meshBuffer && !init ){
+
         NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
         return;
+
     }
 
     var n = this._position.length / 2;
