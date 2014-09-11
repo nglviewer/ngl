@@ -691,7 +691,7 @@ NGL.Viewer.prototype = {
 
         this.renderer = new THREE.WebGLRenderer({
             preserveDrawingBuffer: true,
-            alpha: false,
+            alpha: true,
             antialias: true,
             devicePixelRatio: window.devicePixelRatio
         });
@@ -1171,7 +1171,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    screenshot: function( factor, type, quality, antialias, progressCallback ){
+    screenshot: function( factor, type, quality, antialias, transparent, progressCallback ){
 
         // FIXME don't show rendered parts
         // FIXME controls need to be disabled
@@ -1182,6 +1182,12 @@ NGL.Viewer.prototype = {
 
         var i;
         var n = factor * factor;
+
+        if( transparent ){
+
+            this.renderer.setClearColor( this.params.backgroundColor, 0 );
+
+        }
 
         var canvas = document.createElement( 'canvas' );
         canvas.style.display = "hidden";
@@ -1277,9 +1283,21 @@ NGL.Viewer.prototype = {
                 return function(){
 
                     if( i === n ){
+
                         save( n );
+
+                        if( transparent ){
+
+                            scope.renderer.setClearColor(
+                                scope.params.backgroundColor, 1
+                            );
+
+                        }
+
                     }else{
+
                         render( i, n );
+
                     }
 
                 }
