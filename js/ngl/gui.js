@@ -214,13 +214,11 @@ NGL.MenubarFileWidget = function( stage ){
 
         return;
 
-
-
     }
 
     function onScreenshotOptionClick () {
 
-        stage.viewer.screenshot( 1, "image/png", 1.0, true, false );
+        stage.viewer.screenshot( 1, "image/png", 1.0, true, false, false );
 
     }
 
@@ -465,6 +463,9 @@ NGL.ExportImageWidget = function( stage ){
     var transparentCheckbox = new UI.Checkbox()
         .setValue( false );
 
+    var trimCheckbox = new UI.Checkbox()
+        .setValue( false );
+
     var progress = new UI.Progress()
         .setDisplay( "none" );
 
@@ -480,7 +481,8 @@ NGL.ExportImageWidget = function( stage ){
                     typeSelect.getValue(),
                     parseFloat( qualitySelect.getValue() ),
                     antialiasCheckbox.getValue(),
-                    transparentCheckbox.getValue()
+                    transparentCheckbox.getValue(),
+                    trimCheckbox.getValue()
                 )
             }, 50 );
 
@@ -500,13 +502,14 @@ NGL.ExportImageWidget = function( stage ){
     addEntry( "quality", qualitySelect );
     addEntry( "antialias", antialiasCheckbox );
     addEntry( "transparent", transparentCheckbox );
+    addEntry( "trim", trimCheckbox );
 
     listingPanel.add(
         new UI.Break(),
         exportButton, progress
     );
 
-    function exportImage( factor, type, quality, antialias, transparent ){
+    function exportImage( factor, type, quality, antialias, transparent, trim ){
 
         var i = 0;
         var paramsList = [];
@@ -536,7 +539,7 @@ NGL.ExportImageWidget = function( stage ){
         }, NGL.StructureComponent );
 
         stage.viewer.screenshot(
-            factor, type, quality, antialias, transparent,
+            factor, type, quality, antialias, transparent, trim,
             function( i, n, finished ){
                 if( i === 1 ){
                     progress.setMax( n );

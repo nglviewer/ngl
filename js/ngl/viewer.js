@@ -571,6 +571,102 @@ NGL.getShader = function( name ){
 };
 
 
+NGL.trimCanvas = function( canvas, r, g, b, a ){
+
+    var canvasHeight = canvas.height;
+    var canvasWidth = canvas.width;
+
+    var ctx = canvas.getContext( '2d' );
+    var pixels = ctx.getImageData(0, 0, canvasWidth, canvasHeight ).data;
+
+    var x, y, doBreak;
+
+    doBreak = false;
+    for( y = 0; y < canvasHeight; y++ ) {
+        for( x = 0; x < canvasWidth; x++ ) {
+            var off = ( y * canvasWidth + x ) * 4;
+            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
+                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
+                doBreak = true;
+                break;
+            }
+        }
+        if( doBreak ){
+            break;
+        }
+    }
+    var topY = y;
+
+    doBreak = false;
+    for( x = 0; x < canvasWidth; x++ ) {
+        for( y = 0; y < canvasHeight; y++ ) {
+            var off = ( y * canvasWidth + x ) * 4;
+            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
+                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
+                doBreak = true;
+                break;
+            }
+        }
+        if( doBreak ){
+            break;
+        }
+    }
+    var topX = x;
+
+    doBreak = false;
+    for( y = canvasHeight-1; y >= 0; y-- ) {
+        for( x = canvasWidth-1; x >= 0; x-- ) {
+            var off = ( y * canvasWidth + x ) * 4;
+            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
+                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
+                doBreak = true;
+                break;
+            }
+        }
+        if( doBreak ){
+            break;
+        }
+    }
+    var bottomY = y;
+
+    doBreak = false;
+    for( x = canvasWidth-1; x >= 0; x-- ) {
+        for( y = canvasHeight-1; y >= 0; y-- ) {
+            var off = ( y * canvasWidth + x ) * 4;
+            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
+                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
+                doBreak = true;
+                break;
+            }
+        }
+        if( doBreak ){
+            break;
+        }
+    }
+    var bottomX = x;
+
+    var trimedCanvas = document.createElement( 'canvas' );
+    trimedCanvas.style.display = "hidden";
+    document.body.appendChild( trimedCanvas );
+
+    trimedCanvas.width = bottomX - topX;
+    trimedCanvas.height = bottomY - topY;
+
+    var trimedCtx = trimedCanvas.getContext( '2d' );
+
+    trimedCtx.drawImage(
+        canvas,
+        topX, topY,
+        trimedCanvas.width, trimedCanvas.height,
+        0, 0,
+        trimedCanvas.width, trimedCanvas.height
+    );
+
+    return trimedCanvas;
+
+}
+
+
 ///////////
 // Viewer
 
@@ -1171,7 +1267,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    screenshot: function( factor, type, quality, antialias, transparent, progressCallback ){
+    screenshot: function( factor, type, quality, antialias, transparent, trim, progressCallback ){
 
         // FIXME don't show rendered parts
         // FIXME controls need to be disabled
@@ -1309,6 +1405,18 @@ NGL.Viewer.prototype = {
         function save( n ){
 
             var ext = type.split( "/" )[ 1 ];
+
+            if( trim ){
+
+                var bg = new THREE.Color( scope.params.backgroundColor );
+                var r = ( bg.r * 255 ) | 0;
+                var g = ( bg.g * 255 ) | 0;
+                var b = ( bg.b * 255 ) | 0;
+                var a = transparent ? 0 : 255;
+
+                canvas = NGL.trimCanvas( canvas, r, g, b, a );
+
+            }
 
             canvas.toBlob(
                 function( blob ){
