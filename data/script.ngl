@@ -31,14 +31,7 @@ load( "3dqb.pdb", function( o ){
 
 then( function(){
 
-    NGL.superpose(
-        pdb[ "1u19" ].structure,
-        pdb[ "3dqb" ].structure,
-        true
-    );
-
-    pdb[ "1u19" ].updateRepresentations();
-
+    pdb[ "1u19" ].superpose( pdb[ "3dqb" ], true );
     pdb[ "3dqb" ].centerView();
 
 } );

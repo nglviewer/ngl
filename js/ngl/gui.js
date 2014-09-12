@@ -904,12 +904,11 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setColor( '#444' )
         .onChange( function(){
 
-            var s1 = component.structure;
-            var s2 = stage.compList[ superpose.getValue() ].structure;
+            component.superpose(
+                stage.compList[ superpose.getValue() ],
+                true
+            );
 
-            NGL.superpose( s1, s2, true );
-
-            component.updateRepresentations();
             component.centerView();
 
             superpose.setValue( "" );

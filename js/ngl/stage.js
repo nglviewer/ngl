@@ -50,18 +50,18 @@ NGL.PickingControls = function( viewer, stage ){
         var offsetX = e.clientX - box.left;
         var offsetY = e.clientY - box.top;
 
-        gl.readPixels( 
+        gl.readPixels(
             offsetX * window.devicePixelRatio,
-            (box.height - offsetY) * window.devicePixelRatio, 
-            1, 1, 
+            (box.height - offsetY) * window.devicePixelRatio,
+            1, 1,
             gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
         );
 
         var rgba = Array.apply( [], pixelBuffer );
-        
+
         var id =
-            ( pixelBuffer[0] << 16 ) | 
-            ( pixelBuffer[1] << 8 ) | 
+            ( pixelBuffer[0] << 16 ) |
+            ( pixelBuffer[1] << 8 ) |
             ( pixelBuffer[2] );
 
         // TODO early exit, binary search
@@ -229,7 +229,7 @@ NGL.Stage.prototype = {
             }
 
             scope.addComponent( component );
-            
+
             if( typeof onLoad === "function" ){
 
                 onLoad( component );
@@ -242,7 +242,7 @@ NGL.Stage.prototype = {
 
         });
 
-        // ensure that component is yet ready
+        // ensure that component is ready yet
         if( !component ){
 
             component = new NGL.Component( this );
@@ -287,7 +287,7 @@ NGL.Stage.prototype = {
     },
 
     centerView: function(){
-       
+
         this.viewer.centerView();
 
     },
@@ -295,7 +295,7 @@ NGL.Stage.prototype = {
     eachComponent: function( callback, type ){
 
         this.compList.forEach( function( o, i ){
-            
+
             if( !type || o instanceof type ){
 
                 callback( o, i );
@@ -550,7 +550,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
             scope.updateRepresentations();
 
             // console.timeEnd( "frameUpdate" );
-            
+
         } );
 
         this.trajList.push( traj );
@@ -589,7 +589,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
         } );
 
         this.trajList = [];
-        
+
     },
 
     centerView: function( sele ){
@@ -609,6 +609,19 @@ NGL.StructureComponent.prototype = NGL.createObject(
     getCenter: function(){
 
         return this.structure.center;
+
+    },
+
+    superpose: function( component, align, sele ){
+
+        NGL.superpose(
+            this.structure,
+            component.structure,
+            align,
+            sele
+        );
+
+        this.updateRepresentations();
 
     }
 
