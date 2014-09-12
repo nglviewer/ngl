@@ -1,19 +1,69 @@
 
+console.log( "moin" );
 
-stage.loadFile( __dir__ + "1blu.pdb", function( o ){
+
+var pdb = [];
+
+
+var pdb1u19 = load( "1u19.pdb", function( o ){
+
+    pdb[ "1u19" ] = o;
 
     o.addRepresentation( "cartoon" );
-    o.addRepresentation( "licorice", {
-    	sele: "sidechainAttached and not( SF4 or CYS )", visible: false
-    } );
-    o.addRepresentation( "hyperball", {
-    	sele: "sidechainAttached and ( SF4 or CYS )"
-    } );
     o.centerView();
 
-    o.setName( "1BLU" );
-
-    finish();
+    o.setName( "1U19" );
 
 } );
 
+
+load( "3dqb.pdb", function( o ){
+
+    pdb[ "3dqb" ] = o;
+
+    o.addRepresentation( "cartoon" );
+    o.centerView();
+
+    o.setName( "3DQB" );
+
+} );
+
+
+then( function(){
+
+    NGL.superpose(
+        pdb[ "1u19" ].structure,
+        pdb[ "3dqb" ].structure,
+        true
+    );
+
+    pdb[ "1u19" ].updateRepresentations();
+
+    pdb[ "3dqb" ].centerView();
+
+} );
+
+
+load( "1blu.pdb", function( o ){
+
+    pdb[ "1blu" ] = o;
+
+    o.addRepresentation( "cartoon" );
+    o.addRepresentation( "licorice", {
+        sele: "sidechainAttached and not( SF4 or CYS )", visible: false
+    } );
+    o.addRepresentation( "hyperball", {
+        sele: "sidechainAttached and ( SF4 or CYS )"
+    } );
+    // o.centerView();
+
+    o.setName( "1BLU" );
+
+} );
+
+
+then( function(){
+
+    console.log( "goodbye" );
+
+} );
