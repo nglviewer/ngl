@@ -9,6 +9,14 @@
 
 NGL.Script = function( str, name, path ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        elementAdded: new SIGNALS.Signal(),
+
+    };
+
     this.name = name;
     this.path = path;
     this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
@@ -16,7 +24,7 @@ NGL.Script = function( str, name, path ){
     try {
 
         this.fn = new Function(
-            'stage', 'load', 'then',
+            'stage', 'load', 'then', 'panel',
             '__name__', '__path__', '__dir__',
             str
         );
@@ -34,6 +42,18 @@ NGL.Script.prototype = {
 
     call: function( stage, onFinish ){
 
+        var scope = this;
+
+        var panel = {
+
+            add: function( element ){
+
+                scope.signals.elementAdded.dispatch( arguments );
+
+            }
+
+        };
+
         var queue = new NGL.ScriptQueue( stage, this.dir, onFinish );
 
         if( this.fn ){
@@ -41,7 +61,10 @@ NGL.Script.prototype = {
             var loadFn = queue.load.bind( queue );
             var thenFn = queue.then.bind( queue );
 
-            this.fn( stage, loadFn, thenFn, this.name, this.path, this.dir );
+            this.fn(
+                stage, loadFn, thenFn, panel,
+                this.name, this.path, this.dir
+            );
 
         }else{
 

@@ -1006,6 +1006,8 @@ NGL.ScriptComponentWidget = function( component, stage ){
     var signals = component.signals;
     var container = new UI.CollapsibleIconPanel( "file" );
 
+    var panel = new UI.Panel().setMarginLeft( "20px" );
+
     signals.nameChanged.add( function( value ){
 
         name.setValue( value );
@@ -1015,6 +1017,12 @@ NGL.ScriptComponentWidget = function( component, stage ){
     signals.statusChanged.add( function( value ){
 
         status.setValue( value );
+
+    } );
+
+    component.script.signals.elementAdded.add( function( value ){
+
+        panel.add.apply( panel, value );
 
     } );
 
@@ -1049,14 +1057,18 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Status
 
-    var status = new UI.Text( component.status ).setMarginLeft( "20px" );
+    var status = new UI.Text( component.status );
 
     container
         .addStatic( name )
         .addStatic( dispose );
 
     container
-        .add( status );
+        .add( new UI.Panel().setMarginLeft( "20px" )
+                .add( new UI.Text( "Status:  " ).setMarginRight( "10px" ) )
+                .add( status )
+        )
+        .add( panel );
 
     return container;
 
