@@ -1641,7 +1641,7 @@ NGL.Viewer.prototype = {
 
         var t = new THREE.Vector3();
 
-        return function( center ){
+        return function( center, zoom ){
 
             center = center || this.boundingBox.center();
 
@@ -1651,9 +1651,30 @@ NGL.Viewer.prototype = {
 
             t.copy( center ).multiplyScalar( -1 );
 
+            if( zoom ){
+
+                if( zoom === true ){
+
+                    zoom = this.boundingBox.size().length() /
+                        2 / Math.tan( Math.PI * this.camera.fov / 360 );
+
+                }
+
+                zoom = Math.max( zoom, 1.2 * this.params.clipDist );
+
+                this.camera.position.multiplyScalar(
+                    zoom / this.camera.position.length()
+                );
+
+            }
+
             this.rotationGroup.position.copy( t );
             this.pickingRotationGroup.position.copy( t );
             this.backgroundRotationGroup.position.copy( t );
+
+            this.rotationGroup.updateMatrixWorld();
+            this.pickingRotationGroup.updateMatrixWorld();
+            this.backgroundRotationGroup.updateMatrixWorld();
 
             this.requestRender();
 

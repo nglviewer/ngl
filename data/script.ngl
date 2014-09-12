@@ -54,30 +54,22 @@ load( "1blu.pdb", function( o ){
 
 then( function(){
 
-    panel.add( new UI.Text( "moin" ), new UI.Break() );
-
-    var retinal
+    var retinal = pdb[ "1u19" ].addRepresentation( "licorice", {
+        sele: "RET or 296", visible: true
+    } );
 
     var btnShow = new UI.Button( "show retinal" ).onClick( function(){
-
-        if( retinal ){
-            retinal.setVisibility( true );
-        }else{
-            retinal = pdb[ "1u19" ].addRepresentation( "licorice", {
-                sele: "RET or 296", visible: true
-            } );
-        }
-
+        retinal.setVisibility( true );
+        pdb[ "1u19" ].centerView( "RET and :A", true );
     } );
 
     var btnHide = new UI.Button( "hide retinal" ).onClick( function(){
-
-        if( retinal ){
-            retinal.setVisibility( false );
-        }
-
+        retinal.setVisibility( false );
     } );
 
+    panel.add( new UI.Text( "moin" ), new UI.Break() );
     panel.add( btnShow, btnHide );
+
+    stage.centerView();
 
 } );

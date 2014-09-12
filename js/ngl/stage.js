@@ -152,7 +152,7 @@ NGL.Stage.prototype = {
 
             object.addRepresentation( "cartoon", { sele: "*" } );
             object.addRepresentation( "licorice", { sele: "hetero" } );
-            object.centerView();
+            object.centerView( undefined, true );
 
         }else if( object instanceof NGL.SurfaceComponent ){
 
@@ -288,7 +288,7 @@ NGL.Stage.prototype = {
 
     centerView: function(){
 
-        this.viewer.centerView();
+        this.viewer.centerView( undefined, true );
 
     },
 
@@ -592,17 +592,32 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    centerView: function( sele ){
+    centerView: function( sele, zoom ){
 
         var center;
 
         if( sele ){
-            center = this.structure.atomCenter( new NGL.Selection( sele ) );
+
+            var selection = new NGL.Selection( sele );
+
+            center = this.structure.atomCenter( selection );
+
+            if( zoom ){
+                var bb = this.structure.getBoundingBox( selection );
+                zoom = bb.size().length();
+            }
+
         }else{
+
             center = this.structure.center;
+
+            if( zoom ){
+                zoom = this.structure.boundingBox.size().length();
+            }
+
         }
 
-        this.viewer.centerView( center );
+        this.viewer.centerView( center, zoom );
 
     },
 

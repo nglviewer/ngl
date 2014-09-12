@@ -354,7 +354,7 @@ UI.ComponentPanel = function( component ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            component.centerView();
+            component.centerView( undefined, true );
 
         } );
 

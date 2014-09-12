@@ -352,12 +352,12 @@ NGL.ColorFactory.prototype = {
         switch( type ){
 
             case "picking":
-            
+
                 c = a.globalindex + 1;
                 break;
 
             case "element":
-            
+
                 c = elemColors[ a.element ] || defaultElemColor;
                 break;
 
@@ -379,7 +379,7 @@ NGL.ColorFactory.prototype = {
                 break;
 
             case "chainindex":
-            
+
                 if( a.residue.chain.chainname === undefined ){
                     _c = this.chainnameScale(
                         this.chainNames.indexOf( a.chainname ) * 10
@@ -402,7 +402,7 @@ NGL.ColorFactory.prototype = {
                 break;
 
             case "ss":
-            
+
                 if( a.ss === "h" ){
                     c = strucColors[ "alphaHelix" ];
                 }else if( a.ss === "s" ){
@@ -421,8 +421,8 @@ NGL.ColorFactory.prototype = {
                 c = 0xFFFFFF;
                 break;
 
-            default: 
-               
+            default:
+
                 c = type;
                 break;
 
@@ -462,12 +462,12 @@ NGL.RadiusFactory.prototype = {
         switch( type ){
 
             case "vdw":
-            
+
                 r = vdwRadii[ a.element ] || defaultVdwRadius;
                 break;
 
             case "covalent":
-            
+
                 r = covalentRadii[ a.element ] || defaultCovalentRadius;
                 break;
 
@@ -477,7 +477,7 @@ NGL.RadiusFactory.prototype = {
                 break;
 
             case "ss":
-            
+
                 if( a.ss === "h" ){
                     r = 0.25;
                 }else if( a.ss === "s" ){
@@ -489,8 +489,8 @@ NGL.RadiusFactory.prototype = {
                 }
                 break;
 
-            default: 
-               
+            default:
+
                 r = type || 1.0;
                 break;
 
@@ -524,6 +524,8 @@ NGL.AtomSet.prototype = {
     constructor: NGL.AtomSet,
 
     apply: function( object ){
+
+        object.getBoundingBox = NGL.AtomSet.prototype.getBoundingBox;
 
         object.atomPosition = NGL.AtomSet.prototype.atomPosition;
         object.atomColor = NGL.AtomSet.prototype.atomColor;
@@ -578,7 +580,7 @@ NGL.AtomSet.prototype = {
         this._atomPosition = undefined;
 
         // bonds
-        
+
         this.bonds = [];
         var bonds = this.bonds;
 
@@ -592,6 +594,49 @@ NGL.AtomSet.prototype = {
 
         this._bondPositionFrom = undefined;
         this._bondPositionTo = undefined;
+
+    },
+
+    getBoundingBox: function( selection ){
+
+        var box = new THREE.Box3();
+        var vector = new THREE.Vector3();
+
+        var a;
+        var i = 0;
+        var n = this.atomCount;
+
+        if( selection ){
+
+            var test = selection.test;
+
+            for( i = 0; i < n; ++i ){
+
+                a = this.atoms[ i ];
+
+                if( test( a ) ){
+
+                    vector.set( a.x, a.y, a.z );
+                    box.expandByPoint( vector );
+
+                }
+
+            };
+
+        }else{
+
+            for( i = 0; i < n; ++i ){
+
+                a = this.atoms[ i ];
+
+                vector.set( a.x, a.y, a.z );
+                box.expandByPoint( vector );
+
+            };
+
+        }
+
+        return box;
 
     },
 
@@ -1120,7 +1165,7 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
         this.atom1 = atomB;
         this.atom2 = atomA;
     }
-    
+
     this.bondOrder = 1;
 
 };
@@ -1199,7 +1244,7 @@ NGL.Trajectory = function( xtcPath, structure, selectionString ){
 
                 this.atomIndices.push( [ p, q + 1 ] );
                 p = r;
-                
+
             }
 
             q = r;
@@ -1219,7 +1264,7 @@ NGL.Trajectory = function( xtcPath, structure, selectionString ){
     this.selection = new NGL.Selection(
         selectionString || "backbone and not hydrogen"
     );
-    
+
     this.selection.signals.stringChanged.add( function( string ){
 
         scope.makeIndices();
@@ -1242,7 +1287,7 @@ NGL.Trajectory.prototype = {
 
         var i = 0;
         var initialStructure = new Float32Array( 3 * this.atomCount );
-        
+
         this.structure.eachAtom( function( a ){
 
             initialStructure[ i + 0 ] = a.x;
@@ -1440,7 +1485,7 @@ NGL.Trajectory.prototype = {
             scope.updateStructure( i, callback );
 
         }, false );
-        
+
         request.send( params );
 
     },
@@ -1522,7 +1567,7 @@ NGL.Trajectory.prototype = {
 
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place
-        
+
         var i, j, d, dist;
         var n = x.length;
 
@@ -1533,7 +1578,7 @@ NGL.Trajectory.prototype = {
                 dist = x[ i + j ] - x[ i - 3 + j ];
 
                 if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
-                
+
                     if( dist > 0 ){
 
                         for( d = 0; d < 3; ++d ){
@@ -1722,7 +1767,7 @@ NGL.Superposition.prototype = {
         }else if( atoms instanceof Float32Array ){
             n = atoms.length / 3;
         }
-        
+
         var coords = new NGL.Matrix( 3, n );
         var tmp = new NGL.Matrix( n, 3 );
 
@@ -1741,7 +1786,7 @@ NGL.Superposition.prototype = {
         var cd = coords.data;
 
         if( typeof atoms.eachAtom === "function" ){
-            
+
             atoms.eachAtom( function( a ){
 
                 a.x = cd[ i + 0 ];
@@ -1813,6 +1858,7 @@ NGL.Structure.prototype = {
             }
 
             scope.center = scope.atomCenter();
+            scope.boundingBox = scope.getBoundingBox();
 
             // console.log( "Structure", scope );
 
@@ -2064,26 +2110,26 @@ NGL.Structure.prototype = {
 
         // Implementation based on "pv"
         //
-        // assigns secondary structure information based on a simple and very fast 
-        // algorithm published by Zhang and Skolnick in their TM-align paper. 
+        // assigns secondary structure information based on a simple and very fast
+        // algorithm published by Zhang and Skolnick in their TM-align paper.
         // Reference:
         //
-        // TM-align: a protein structure alignment algorithm based on the Tm-score 
+        // TM-align: a protein structure alignment algorithm based on the Tm-score
         // (2005) NAR, 33(7) 2302-2309
 
         var zhangSkolnickSS = function(){
 
             var d;
-            
+
             var ca1 = new THREE.Vector3();
             var ca2 = new THREE.Vector3();
 
             return function( fiber, i, distances, delta ){
-                
+
                 for( var j = Math.max( 0, i - 2 ); j <= i; ++j ){
 
                     for( var k = 2;  k < 5; ++k ){
-                    
+
                         if( j + k >= fiber.residueCount ){
                             continue;
                         }
@@ -2114,7 +2160,7 @@ NGL.Structure.prototype = {
             var helixDelta = 2.1;
 
             return zhangSkolnickSS( fiber, i, helixDistances, helixDelta );
-            
+
         };
 
         var isSheet = function( fiber, i ){
@@ -2155,7 +2201,7 @@ NGL.Structure.prototype = {
                     }else{
 
                         // console.log( "no helix, no sheet", i );
-                        
+
                         f.residues[ i ].ss = "";
 
                     }
@@ -2265,7 +2311,7 @@ NGL.Structure.prototype = {
                 ) );
             }
 
-            this.eachModel( function( m ){ 
+            this.eachModel( function( m ){
 
                 pdbRecords.push( sprintf( "MODEL %-74d\n", im++ ) );
 
@@ -2274,7 +2320,7 @@ NGL.Structure.prototype = {
                     pdbRecords.push(
                         sprintf(
                             pdbFormatString,
-                            
+
                             a.serial, a.atomname, a.resname,
                             DEF( a.chainname, " " ),
                             a.resno,
@@ -2304,7 +2350,7 @@ NGL.Structure.prototype = {
 
 // ATOM      1    N ILE A   1       3.751   6.807  -2.135  1.00  0.00           N
 // ATOM      1    N ILE A   1       3.751   6.807-  2.135- 1.00- 0.00      -   -N
-// ATOM      1  N   ILE A   1       3.751   6.807  -2.135  1.00  0.00           N  
+// ATOM      1  N   ILE A   1       3.751   6.807  -2.135  1.00  0.00           N
 
 NGL.AtomSet.prototype.apply( NGL.Structure.prototype );
 
@@ -2406,7 +2452,7 @@ NGL.Model.prototype = {
 
         }else{
 
-            for( i = 0; i < n; ++i ){   
+            for( i = 0; i < n; ++i ){
 
                 c = this.chains[ i ];
                 o = c.residueCount;
@@ -2553,7 +2599,7 @@ NGL.Chain.prototype = {
 
         }else{
 
-            for( i = 0; i < n; ++i ){   
+            for( i = 0; i < n; ++i ){
 
                 r = this.residues[ i ];
                 o = r.atomCount;
@@ -2643,7 +2689,7 @@ NGL.Chain.prototype = {
 
             if( i === 0 || rPrev.getType() !== rStart.getType() ||
                     !rPrev.connectedTo( rStart ) ){
-                
+
                 residues.unshift( rStart );
 
             }else{
@@ -2654,7 +2700,7 @@ NGL.Chain.prototype = {
 
             if( j === n || rNext.getType() !== rStart.getType() ||
                     !rEnd.connectedTo( rNext ) ){
-                
+
                 residues.push( rEnd );
 
             }else{
@@ -2720,10 +2766,10 @@ NGL.Chain.prototype = {
 
             if( !a1 || !a2 || !a1.connectedTo( a2 ) ||
                 ( test && ( !test( a1 ) || !test( a2 ) ) ) ){
-                
+
                 callback( scope.getFiber( i, j, padded ) );
                 i = j;
-                
+
             }
 
             ++j;
@@ -2731,9 +2777,9 @@ NGL.Chain.prototype = {
         } );
 
         if( residues[ i ].hasProteinBackbone() ||
-            residues[ i ].isCg() || 
+            residues[ i ].isCg() ||
             residues[ i ].hasNucleicBackbone() ){
-            
+
             callback( scope.getFiber( i, j, padded ) );
 
         }
@@ -3066,7 +3112,7 @@ NGL.Residue.prototype = {
             for( i = 0; i < n; ++i ){
 
                 a = this.atoms[ i ];
-                
+
                 if( atomname.indexOf( a.atomname ) !== -1 ){
 
                     atom = a;
@@ -3081,7 +3127,7 @@ NGL.Residue.prototype = {
             for( i = 0; i < n; ++i ){
 
                 a = this.atoms[ i ];
-                
+
                 if( atomname === a.atomname ){
 
                     atom = a;
@@ -3177,7 +3223,7 @@ NGL.Atom.prototype = {
 
     connectedTo: function( atom, foo ){
 
-        if( this.hetero && atom.hetero && 
+        if( this.hetero && atom.hetero &&
             this.residue.chain.model.structure.hasConnect ) return false;
 
         var x = this.x - atom.x;
@@ -3209,7 +3255,7 @@ NGL.Atom.prototype = {
         if( this.residue && this.residue.chain &&
                 this.residue.chain.model ){
             name += "/" + this.residue.chain.model.index;
-        } 
+        }
 
         return name;
 
@@ -3536,7 +3582,7 @@ NGL.ProxyAtom.prototype = {
         if( this.residue && this.residue.chain &&
                 this.residue.chain.model ){
             name += "/" + this.residue.chain.model.index;
-        } 
+        }
 
         return name;
 
@@ -3580,7 +3626,7 @@ NGL.StructureSubset.prototype._build = function(){
         _m = _s.addModel();
 
         m.eachChain( function( c ){
-            
+
             _c = _m.addChain();
             _c.chainname = c.chainname;
 
@@ -3865,7 +3911,7 @@ NGL.PdbStructure.prototype._parse = function( str, callback ){
                     elms[ 4 * 1 + row ] = parseFloat( line.substr( 34, 9 ) );
                     elms[ 4 * 2 + row ] = parseFloat( line.substr( 44, 9 ) );
                     elms[ 4 * 3 + row ] = parseFloat( line.substr( 54, 14 ) );
-                                     
+
                 }else if(
                     line.substr( 11, 30 ) === 'APPLY THE FOLLOWING TO CHAINS:' ||
                     line.substr( 11, 30 ) === '                   AND CHAINS:'
@@ -4114,12 +4160,12 @@ NGL.GroStructure.prototype._parse = function( str, callback ){
 onmessage = function( event ){
 
     var pdbStructure = new NGL.PdbStructure();
-    
+
     pdbStructure._parse( event.data );
 
     postMessage( pdbStructure );
     // postMessage( "moin" );
-    
+
 };
 
 
@@ -4250,7 +4296,7 @@ NGL.Selection.prototype = {
             // handle parens
 
             if( c === "(" ){
-                
+
                 // console.log( "(" );
 
                 not = false;
@@ -4258,7 +4304,7 @@ NGL.Selection.prototype = {
                 continue;
 
             }else if( c === ")" ){
-                
+
                 // console.log( ")" );
 
                 getPrevContext();
@@ -4532,7 +4578,7 @@ NGL.Selection.prototype = {
         }
 
         // cleanup
-        
+
         if( this.selection.operator === undefined &&
                 this.selection.rules.length === 1 &&
                 this.selection.rules[ 0 ].hasOwnProperty( "operator" ) ){
@@ -4547,7 +4593,7 @@ NGL.Selection.prototype = {
 
         if( selection === undefined ) selection = this.selection;
         if( selection.error ) return function(){ return true; }
-        
+
         var n = selection.rules.length;
         if( n === 0 ) return function(){ return true; }
 
@@ -4597,7 +4643,7 @@ NGL.Selection.prototype = {
                     }
 
                 }else{
-                 
+
                     if( s.keyword!==undefined && s.keyword==="ALL" ){
 
                         if( and ){ continue; }else{ return t; }
@@ -4658,11 +4704,11 @@ NGL.Selection.prototype = {
                 if( s.keyword==="HELIX" && a.ss==="h" ) return true;
                 if( s.keyword==="SHEET" && a.ss==="s" ) return true;
                 if( s.keyword==="BACKBONE" && (
-                        ( a.residue.isProtein() && 
-                            backboneProtein.indexOf( a.atomname )!==-1 ) || 
-                        ( a.residue.isNucleic() && 
+                        ( a.residue.isProtein() &&
+                            backboneProtein.indexOf( a.atomname )!==-1 ) ||
+                        ( a.residue.isNucleic() &&
                             backboneNucleic.indexOf( a.atomname )!==-1 ) ||
-                        ( a.residue.isCg() && 
+                        ( a.residue.isCg() &&
                             backboneCg.indexOf( a.atomname )!==-1 )
                     )
                 ) return true;
@@ -4877,7 +4923,7 @@ NGL.Spline.prototype = {
         pcol[ n1 * m * 3 + 1 ] = pcol[ n1 * m * 3 - 2 ];
         pcol[ n1 * m * 3 + 2 ] = pcol[ n1 * m * 3 - 1 ];
 
-        return { 
+        return {
             "color": col,
             "pickingColor": pcol
         };
@@ -4974,7 +5020,7 @@ NGL.Spline.prototype = {
 
         size[ n1 * m + 0 ] = size[ n1 * m - 1 ];
 
-        return { 
+        return {
             "size": size
         };
 
@@ -5077,7 +5123,7 @@ NGL.Spline.prototype = {
                 tan[ l + 0 ] = vTang.x;
                 tan[ l + 1 ] = vTang.y;
                 tan[ l + 2 ] = vTang.z;
-                
+
                 vBin.copy( vNorm ).cross( vTang ).normalize();
                 bin[ l + 0 ] = vBin.x;
                 bin[ l + 1 ] = vBin.y;
@@ -5343,7 +5389,7 @@ NGL.Alignment.prototype = {
     },
 
     calc: function(){
-        
+
         console.time( "NGL.Alignment.calc" );
 
         this.initMatrices();
