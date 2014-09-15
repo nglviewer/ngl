@@ -8,19 +8,25 @@ python -m unittest test_trajectory.LibXdrTestCase
 python -m unittest test_trajectory.LibXdrTestCase.test_xdr
 """
 
-
 import os
-import unittest
-
-import numpy as np
-import xdrfile.libxdrfile2 as libxdrfile2
-import netCDF4 as netcdf
-
 DIR = os.path.split( os.path.abspath( __file__ ) )[0]
 DATA_DIR = os.path.join(
     os.path.split( os.path.split( DIR )[0] )[0],
     "data"
 )
+
+import sys
+sys.path.append( os.path.join( DIR, "..", "..", "lib" ) )
+
+print sys.path
+
+import unittest
+
+import numpy as np
+# import xdrfile.libxdrfile2 as libxdrfile2
+import lib.xdrfile.libxdrfile2 as libxdrfile2
+import netCDF4 as netcdf
+
 
 class LibXdrTestCase( unittest.TestCase ):
     def test_xdr( self ):
