@@ -5,7 +5,7 @@ For license texts see at the end of this document.
 ////////
 // NGL
 
-	The MIT License, Copyright &copy; 2013-2014 Alexander S. Rose 
+	The MIT License, Copyright &copy; 2013-2014 Alexander S. Rose
 
 	applies to all files unless otherwise noted (excluding files in tmp/*)
 
@@ -84,7 +84,7 @@ For license texts see at the end of this document.
 
 	http://qunitjs.com/
 	https://github.com/JamesMGreene/qunit-assert-close
-	MIT License, Copyright 2006, 2014 
+	MIT License, Copyright 2006, 2014
 	jQuery Foundation and other contributors, https://jquery.org/
 
 	test/unit/qunit-1.14.0.js
@@ -122,7 +122,7 @@ For license texts see at the end of this document.
 	https://github.com/gka/chroma.js
 	MIT License, Copyright 2011-2013, Gregor Aisch
 
-	js/chroma.min.js
+	js/lib/chroma.min.js
 
 
 /////////////////////
@@ -130,7 +130,7 @@ For license texts see at the end of this document.
 
 	https://github.com/DavidDurman/FlexiColorPicker
 	MIT License, Copyright (c) 2011 - 2012 David Durman
-	
+
 	js/lib/colorpicker.js
 
 
@@ -141,6 +141,24 @@ For license texts see at the end of this document.
 	MIT License, Copyright (C) 2013 Sergi Mansilla
 
 	js/lib/vlist.js
+
+
+//////////////
+// tether.js
+
+	https://github.com/HubSpot/tether
+	MIT License, Copyright (c) 2014 HubSpot, Inc.
+
+	js/lib/tether.min.js
+
+
+//////////////////
+// promisejs.org
+
+	https://github.com/ForbesLindesay/promisejs.org
+	MIT License, Copyright (c) 2013 Forbes Lindesay
+
+	js/lib/promise-6.0.0.min.js
 
 
 /////////////////////
@@ -159,7 +177,7 @@ For license texts see at the end of this document.
 	Copyright (C) 2010-2011 by
 	Laboratoire de Biochimie Theorique (CNRS),
 	Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
-	Departement des Sciences de la Simulation et de l'Information (CEA). 
+	Departement des Sciences de la Simulation et de l'Information (CEA).
 
 	License: CeCILL-C license (http://www.cecill.info/)
 

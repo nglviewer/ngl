@@ -360,7 +360,7 @@ UI.VirtualList = function( items ){
 };
 
 
-// Popup Menu
+// Popup Menu (requires Tether)
 
 UI.PopupMenu = function( iconClass, heading ){
 
