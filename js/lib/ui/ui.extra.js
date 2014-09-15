@@ -70,7 +70,7 @@ UI.Icon.prototype.setClass = function( value ){
     this.dom.className = 'Icon fa';
 
     for ( var i = 0; i < arguments.length; i ++ ) {
-        
+
         this.dom.classList.add( 'fa-' + arguments[ i ] );
 
     }
@@ -131,7 +131,7 @@ UI.ToggleIcon.prototype.setValue = function( value ){
 }
 
 UI.ToggleIcon.prototype.getValue = function(){
-    
+
     return this.value;
 
 }
@@ -372,9 +372,8 @@ UI.PopupMenu = function( iconClass, heading ){
 
     var panel = new UI.OverlayPanel()
         .setDisplay( "none" )
-        .attach()
-        //.attach( this.dom );
-    
+        .attach( this.dom );
+
     var headingPanel = new UI.Panel()
         .setBorderBottom( "1px solid #555" )
         .setMarginBottom( "10px" )
@@ -397,7 +396,6 @@ UI.PopupMenu = function( iconClass, heading ){
     panel.add( headingPanel );
 
     icon.setTitle( "menu" );
-
     icon.onClick( function( e ){
 
         if( panel.getDisplay() === "block" ){
@@ -407,13 +405,23 @@ UI.PopupMenu = function( iconClass, heading ){
 
         }
 
-        var box = icon.getBox();
+        panel.setDisplay( "block" );
 
-        panel
-            .setRight( ( window.innerWidth - box.left + 10 ) + "px" )
-            // .setTop( ( box.top - 32 - 40 ) + "px" )
-            .setTop( ( box.top ) + "px" )
-            .setDisplay( "block" );
+        var tether = new Tether( {
+            element: panel.dom,
+            target: icon.dom,
+            attachment: 'top right',
+            targetAttachment: 'top left',
+            offset: '0px 5px',
+            constraints: [
+                {
+                    to: 'window',
+                    attachment: 'element'
+                }
+            ]
+        } );
+
+        tether.position();
 
     } );
 
@@ -438,7 +446,7 @@ UI.PopupMenu.prototype.addEntry = function( label, entry ){
         .add( new UI.Text( label ).setWidth( this.entryLabelWidth ) )
         .add( entry || new UI.Panel() )
         .add( new UI.Break() );
-    
+
     return this;
 
 }
@@ -454,8 +462,16 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     this.panel.setDisplay( value );
-    
+
     return this;
+
+}
+
+UI.PopupMenu.prototype.dispose = function(){
+
+    this.panel.dispose();
+
+    UI.Element.prototype.dispose.call( this );
 
 }
 
@@ -511,7 +527,7 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
         this.dom.classList.add('collapsed');
 
         if( this.iconClass2 ){
-        
+
             this.button.switchClass( this.iconClass2, this.iconClass1 );
 
         }else{
@@ -523,9 +539,9 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
     } else {
 
         this.dom.classList.remove('collapsed');
-        
+
         if( this.iconClass2 ){
-            
+
             this.button.switchClass( this.iconClass1, this.iconClass2 );
 
         }else{
