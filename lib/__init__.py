@@ -1,5 +1,5 @@
 
-__all__ = [ '_libxdrfile2', '_dcd' ]
+__all__ = [ 'libxdrfile2', 'dcd' ]
 
-import _libxdrfile2 as libxdrfile2
-import _dcd as dcd
+import xdrfile.libxdrfile2 as libxdrfile2
+import dcd.dcd as dcd

@@ -1,25 +1,20 @@
-# Python bindings for libxdrfile2
-# Copyright (c) 2010 Oliver Beckstein <orbeckst@gmail.com>
-# Copyright (c) 2013,2014 Manuel Melo <manuel.nuno.melo@gmail.com>
-# Published under the GNU GENERAL PUBLIC LICENSE Version 2 (or higher)
-"""Distutils setup for the stand-alone xdrfile package
+#! /usr/bin/python
+"""Distutils-based setup script for trajectory file reading modules.
 
-Copy this file to the parent directory of xdrfile and rename it to
-setup.py. See xdrfile/README for instructions.
+A working installation of NumPy <http://numpy.scipy.org> is required.
+
+For a basic installation just type the command::
+
+    python setup.py build_ext --inplace
+
+Based on setup.py from MDAnalysis:
+
+    http://code.google.com/p/mdanalysis/
 
 """
 
-# python setup.py build_ext --inplace
 
-# For setuptools (easy install) uncomment
-##from ez_setup import use_setuptools
-##use_setuptools()
-##from setuptools import setup, Extension
-
-# For basic distutils use
 from distutils.core import setup, Extension
-
-import sys, os
 
 # Obtain the numpy include directory.  This logic works across numpy versions.
 import numpy
@@ -39,16 +34,6 @@ largefile_macros = [
 
 if __name__ == '__main__':
     setup(
-        # name = 'xdrfile',
-        # version = '0.1-libxdrfile2',
-        # description = 'Python interface to libxdrfile2 library',
-        # author = 'David van der Spoel, Erik Lindahl, Oliver Beckstein, Manuel Melo',
-        # author_email = 'orbeckst@gmail.com',
-        # url = 'http://mdanalysis.googlecode.com/',
-        # license = 'GPL 2',
-        # packages = [ 'xdrfile' ],
-        # package_dir = { 'xdrfile': 'xdrfile' },
-        # ext_package = 'xdrfile',
         ext_modules = [
             Extension(
                 'xdrfile._libxdrfile2',
@@ -62,7 +47,7 @@ if __name__ == '__main__':
                 define_macros = largefile_macros
             ),
             Extension(
-                'dcd._dcd',
+                'dcd._dcdmodule',
                 sources = [
                     'dcd/dcd.c'
                 ],

@@ -1,5 +1,5 @@
 
-__all__ = ['_dcd']
+__all__ = [ '_dcdmodule' ]
 
-import _dcd
+import _dcdmodule
 
