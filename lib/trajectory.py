@@ -1,11 +1,34 @@
 
+import os
+import re
 import array
+import collections
 import numpy as np
+import cPickle as pickle
 
 import dcd.dcd as dcd
 import netCDF4 as netcdf
 import xdrfile.libxdrfile2 as libxdrfile2
 
+
+def get_xtc_parts( name, directory ):
+    pattern = re.escape( name[1:-4] ) + "\.part[0-9]{4,4}\.xtc$"
+    parts = []
+    for f in os.listdir( directory ):
+        m = re.match( pattern, f )
+        if m and os.path.isfile( os.path.join( directory, f ) ):
+            parts.append( os.path.join( directory, f ) )
+    return sorted( parts )
+
+
+def get_split_xtc( directory ):
+    pattern = "(.*)\.part[0-9]{4,4}\.xtc$"
+    split = collections.defaultdict( int )
+    for f in os.listdir( directory ):
+        m = re.match( pattern, f )
+        if( m ):
+            split[ "@" + m.group(1) + ".xtc" ] += 1
+    return sorted( [ k for k, v in split.iteritems() if v > 1 ] )
 
 
 def get_trajectory( file_name ):
@@ -17,6 +40,24 @@ def get_trajectory( file_name ):
     }
     if ext in types:
         return types[ ext ]( file_name )
+    else:
+        raise Exception( "extension '%s' not supported" % ext )
+
+
+class TrajectoryCache( object ):
+    def __init__( self ):
+        self.cache = {}
+
+    def get( self, path ):
+        if path not in self.cache:
+            stem = os.path.basename( path )
+            if stem.startswith( "@" ):
+                self.cache[ path ] = TrajectoryCollection(
+                    get_xtc_parts( stem, os.path.dirname( path ) )
+                )
+            else:
+                self.cache[ path ] = get_trajectory( str( path ) )
+        return self.cache[ path ]
 
 
 class Trajectory( object ):
@@ -79,7 +120,7 @@ class TrajectoryCollection( Trajectory ):
 
 class XtcTrajectory( Trajectory ):
     def __init__( self, file_name ):
-        self.file_name = file_name
+        self.file_name = str( file_name )
         self.xdr_fp = libxdrfile2.xdrfile_open( self.file_name, 'rb' )
         self.numatoms = libxdrfile2.read_xtc_natoms( self.file_name )
         self.update()
