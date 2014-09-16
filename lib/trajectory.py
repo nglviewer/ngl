@@ -36,6 +36,7 @@ def get_trajectory( file_name ):
     types = {
         ".xtc": XtcTrajectory,
         ".netcdf": NetcdfTrajectory,
+        ".nc": NetcdfTrajectory,
         ".dcd": DcdTrajectory,
     }
     if ext in types:
@@ -167,7 +168,7 @@ class XtcTrajectory( Trajectory ):
             libxdrfile2.xdrfile_close( self.xdr_fp )
 
 
-class NetcdfTrajectory( object ):
+class NetcdfTrajectory( Trajectory ):
     def __init__( self, file_name ):
         self.file_name = file_name
         self.netcdf = netcdf.Dataset( self.file_name )
@@ -178,8 +179,12 @@ class NetcdfTrajectory( object ):
         self.box = np.zeros( ( 3, 3 ), dtype=np.float32 )
 
     def _get_frame( self, index ):
-        self.box[ :3 ] = self.netcdf.variables['cell_lengths'][ index ]
-        self.box[ 3: ] = self.netcdf.variables['cell_angles'][ index ]
+        if 'cell_lengths' in self.netcdf.variables:
+            cell_lengths = self.netcdf.variables[ 'cell_lengths' ]
+            self.box[ 0, 0 ] = cell_lengths[ index ][ 0 ]
+            self.box[ 1, 1 ] = cell_lengths[ index ][ 1 ]
+            self.box[ 2, 2 ] = cell_lengths[ index ][ 2 ]
+        # self.netcdf.variables['cell_angles'][ index ]
         self.x = self.netcdf.variables[ 'coordinates' ][ index ]
         return self.box, self.x
 
@@ -188,7 +193,7 @@ class NetcdfTrajectory( object ):
             self.netcdf.close()
 
 
-class DcdTrajectory( object ):
+class DcdTrajectory( Trajectory ):
     def __init__( self, file_name ):
         self.file_name = file_name
         self.dcd = dcd.DCDReader( self.file_name )
@@ -196,11 +201,14 @@ class DcdTrajectory( object ):
         self.numframes = self.dcd.numframes
 
         self.x = None
-        self.box = None
+        self.box = np.zeros( ( 3, 3 ), dtype=np.float32 )
 
     def _get_frame( self, index ):
         self.x = self.dcd[ index ]
-        self.box = self.dcd._unitcell
+        # dcd._unitcell format [A, alpha, B, beta, gamma, C]
+        self.box[ 0, 0 ] = self.dcd._unitcell[ 0 ]
+        self.box[ 1, 1 ] = self.dcd._unitcell[ 2 ]
+        self.box[ 2, 2 ] = self.dcd._unitcell[ 5 ]
         return self.box, self.x
 
     def __del__( self ):

@@ -42,9 +42,6 @@ class DCDReader():
 
         self._read_dcd_header()
 
-        print "numatoms", self.numatoms
-        print "numframes", self.numframes
-
         self._pos = np.zeros(
             ( self.numatoms, 3 ), dtype=np.float32, order='F'
         )

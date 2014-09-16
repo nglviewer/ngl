@@ -506,7 +506,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         scope.trajList.slice( 0 ).forEach( function( traj ){
 
-            scope.addTrajectory( traj.xtcPath, traj._sele, traj.currentFrame );
+            scope.addTrajectory( traj.trajPath, traj._sele, traj.currentFrame );
 
             scope.removeTrajectory( traj );
 
@@ -535,11 +535,11 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    addTrajectory: function( xtcPath, sele, i ){
+    addTrajectory: function( trajPath, sele, i ){
 
         var scope = this;
 
-        var traj = new NGL.Trajectory( xtcPath, this.structure, sele );
+        var traj = new NGL.Trajectory( trajPath, this.structure, sele );
 
         traj.setFrame( i );
 

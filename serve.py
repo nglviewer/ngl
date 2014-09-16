@@ -271,7 +271,7 @@ def redirect_app( name ):
 
 TRAJ_CACHE = trajectory.TrajectoryCache()
 
-@app.route( '/xtc/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
+@app.route( '/traj/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
 @requires_auth
 def traj_serve( frame, root, filename ):
     directory = get_directory( root )
@@ -293,7 +293,7 @@ def traj_serve( frame, root, filename ):
     )
 
 
-@app.route( '/xtc/numframes/<root>/<path:filename>' )
+@app.route( '/traj/numframes/<root>/<path:filename>' )
 @requires_auth
 def traj_numframes( root, filename ):
     directory = get_directory( root )

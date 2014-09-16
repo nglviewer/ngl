@@ -46,6 +46,40 @@ NGL.Examples = {
 
         },
 
+        "dcd_trajectory": function( stage ){
+
+            stage.loadFile( "__example__/ala3.pdb", function( o ){
+
+                o.addRepresentation( "licorice" );
+                o.addRepresentation( "cartoon", { sele: "protein" } );
+                o.centerView();
+
+                o.addTrajectory( "__example__/ala3.dcd" )
+                    .setCenterPbc( false )
+                    .setRemovePbc( false )
+                    .setSuperpose( true );
+
+            } );
+
+        },
+
+        "netcdf_trajectory": function( stage ){
+
+            stage.loadFile( "__example__/DPDP.pdb", function( o ){
+
+                o.addRepresentation( "licorice" );
+                o.addRepresentation( "cartoon", { sele: "protein" } );
+                o.centerView();
+
+                o.addTrajectory( "__example__/DPDP.nc" )
+                    .setCenterPbc( false )
+                    .setRemovePbc( false )
+                    .setSuperpose( true );
+
+            } );
+
+        },
+
         "anim_trajectory": function( stage ){
 
             stage.loadFile( "__example__/md.gro", function( o ){
@@ -58,7 +92,7 @@ NGL.Examples = {
 
                 var i = 0;
                 var foo = setInterval(function(){
-                    
+
                     traj.setFrame( i++ % 51 );
                     if( i >= 102 ) clearInterval( foo );
 

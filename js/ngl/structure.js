@@ -1188,7 +1188,8 @@ NGL.Bond.prototype = {
 ///////////////
 // Trajectory
 
-NGL.Trajectory = function( xtcPath, structure, selectionString ){
+// TODO params handling in constructor and getParameters method
+NGL.Trajectory = function( trajPath, structure, selectionString ){
 
     var scope = this;
 
@@ -1212,9 +1213,9 @@ NGL.Trajectory = function( xtcPath, structure, selectionString ){
         superpose: true
     };
 
-    this.name = xtcPath.replace( /^.*[\\\/]/, '' );
+    this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
-    this.xtcPath = xtcPath;
+    this.trajPath = trajPath;
     this.structure = structure;
     this.atomCount = structure.atomCount;
 
@@ -1340,7 +1341,7 @@ NGL.Trajectory.prototype = {
         var scope = this;
 
         var loader = new THREE.XHRLoader();
-        var url = "../xtc/numframes/" + this.xtcPath;
+        var url = "../traj/numframes/" + this.trajPath;
 
         loader.load( url, function( n ){
 
@@ -1438,7 +1439,7 @@ NGL.Trajectory.prototype = {
 
         var request = new XMLHttpRequest();
 
-        var url = "../xtc/frame/" + i + "/" + this.xtcPath;
+        var url = "../traj/frame/" + i + "/" + this.trajPath;
         var params = "atomIndices=" + this.atomIndices.join(";");
 
         request.open( "POST", url, true );
@@ -1503,7 +1504,7 @@ NGL.Trajectory.prototype = {
         }
 
         this.structure.trajectory = {
-            name: this.xtcPath,
+            name: this.trajPath,
             frame: i
         };
 
@@ -1539,6 +1540,10 @@ NGL.Trajectory.prototype = {
 
         // console.time( "NGL.Trajectory.centerPbc" );
 
+        if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
+            return;
+        }
+
         var i;
         var n = coords.length;
 
@@ -1564,6 +1569,10 @@ NGL.Trajectory.prototype = {
     removePbc: function( x, box ){
 
         // console.time( "NGL.Trajectory.removePbc" );
+
+        if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
+            return;
+        }
 
         // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
         // in-place

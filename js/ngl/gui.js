@@ -847,15 +847,17 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         componentPanel.setMenuDisplay( "none" );
 
+        var trajExt = [ "xtc", "dcd", "netcdf", "nc" ];
+
         var dirWidget = new NGL.DirectoryListingWidget(
 
-            stage, "Import trajectory", [ "xtc" ],
+            stage, "Import trajectory", trajExt,
 
             function( path ){
 
                 var ext = path.path.split('.').pop().toLowerCase();
 
-                if( ext == "xtc" ){
+                if( trajExt.indexOf( ext ) !== -1 ){
 
                     console.log( path );
 
@@ -1500,7 +1502,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addEntry( "Step", step )
         .addEntry( "Timeout", animTimeout )
         .addEntry(
-            "File", new UI.Text( traj.xtcPath )
+            "File", new UI.Text( traj.trajPath )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
