@@ -1,5 +1,7 @@
-#! /usr/bin/python
-"""Distutils-based setup script for trajectory file reading modules.
+#!/usr/bin/env python
+
+"""
+Distutils-based setup script for trajectory file reading modules.
 
 A working installation of NumPy <http://numpy.scipy.org> is required.
 
@@ -10,7 +12,6 @@ For a basic installation just type the command::
 Based on setup.py from MDAnalysis:
 
     http://code.google.com/p/mdanalysis/
-
 """
 
 
