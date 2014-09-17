@@ -305,6 +305,15 @@ NGL.MenubarViewWidget = function( stage ){
 
     }
 
+    function onGetOrientationClick () {
+
+        window.prompt(
+            "Orientation",
+            JSON.stringify( stage.viewer.getOrientation() )
+        );
+
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -315,7 +324,9 @@ NGL.MenubarViewWidget = function( stage ){
         createOption( 'Dark theme', onDarkThemeOptionClick ),
         createDivider(),
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
-        createOption( 'Center', onCenterOptionClick, 'bullseye' )
+        createOption( 'Center', onCenterOptionClick, 'bullseye' ),
+        createDivider(),
+        createOption( 'Orientation', onGetOrientationClick ),
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );

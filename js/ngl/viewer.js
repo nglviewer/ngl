@@ -1680,7 +1680,34 @@ NGL.Viewer.prototype = {
 
         }
 
-    }()
+    }(),
+
+    getOrientation: function(){
+
+        return [
+            this.camera.position.toArray(),
+            this.camera.up.toArray(),
+            this.rotationGroup.position.toArray()
+        ];
+
+    },
+
+    setOrientation: function( orientation ){
+
+        this.camera.position.fromArray( orientation[ 0 ] );
+        this.camera.up.fromArray( orientation[ 1 ] );
+
+        this.rotationGroup.position.fromArray( orientation[ 2 ] );
+        this.pickingRotationGroup.position.fromArray( orientation[ 2 ] );
+        this.backgroundRotationGroup.position.fromArray( orientation[ 2 ] );
+
+        this.rotationGroup.updateMatrixWorld();
+        this.pickingRotationGroup.updateMatrixWorld();
+        this.backgroundRotationGroup.updateMatrixWorld();
+
+        this.requestRender();
+
+    }
 
 };
 

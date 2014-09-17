@@ -106,7 +106,7 @@ NGL.Representation.prototype = {
         }else if( what && Object.keys( what ).length ){
 
             this.update( what );
-            
+
         }
 
         this.signals.parametersChanged.dispatch();
@@ -222,7 +222,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
             this.radius = type === "size" ? this.defaultSize : type;
             this.scale = scale || this.defaultScale[ type ] || 1.0;
-            
+
             this.update({ "radius": true, "scale": true });
             this.signals.radiusChanged.dispatch( this.radius );
             this.signals.scaleChanged.dispatch( this.scale );
@@ -238,7 +238,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         if( scale && scale !== this.scale ){
 
             this.scale = scale;
-            
+
             this.update({ "scale": true });
             this.signals.scaleChanged.dispatch( this.scale );
 
@@ -291,7 +291,7 @@ NGL.SpacefillRepresentation = function( structure, viewer, params ){
 NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
-    
+
     name: "spacefill",
 
     create: function(){
@@ -410,7 +410,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         if( what[ "position" ] ){
 
             sphereData[ "position" ] = this.atomSet.atomPosition();
-            
+
             var from = this.atomSet.bondPosition( null, 0 );
             var to = this.atomSet.bondPosition( null, 1 );
 
@@ -557,7 +557,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
         var lineData = {};
 
         if( what[ "position" ] ){
-            
+
             lineData[ "from" ] = this.atomSet.bondPosition( null, 0 );
             lineData[ "to" ] = this.atomSet.bondPosition( null, 1 );
 
@@ -643,7 +643,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         if( what[ "position" ] ){
 
             sphereData[ "position" ] = this.atomSet.atomPosition();
-            
+
             var from = this.atomSet.bondPosition( null, 0 );
             var to = this.atomSet.bondPosition( null, 1 );
 
@@ -805,7 +805,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         NGL.Representation.prototype.update.call( this );
-        
+
         what = what || { "position": true };
 
         var backboneAtomSet, backboneBondSet;
@@ -830,7 +830,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             if( what[ "position" ] ){
 
                 sphereData[ "position" ] = backboneAtomSet.atomPosition();
-                
+
                 var from = backboneBondSet.bondPosition( null, 0 );
                 var to = backboneBondSet.bondPosition( null, 1 );
 
@@ -1068,7 +1068,7 @@ NGL.CartoonRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.color = params.color || "ss";
     params.radius = params.radius || "ss";
-    
+
     this.aspectRatio = params.aspectRatio || 3.0;
     this.subdiv = params.subdiv || 10;
     this.radialSegments = params.radialSegments || 12;
@@ -1319,7 +1319,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             var subSize = spline.getSubdividedSize(
                 scope.subdiv, scope.radius, scope.scale
             );
-            
+
             scope.bufferList.push(
 
                 new NGL.RibbonBuffer(
