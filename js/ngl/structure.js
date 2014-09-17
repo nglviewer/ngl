@@ -3705,6 +3705,7 @@ NGL.StructureSubset.prototype._build = function(){
     }, selection );
 
     _s.center = _s.atomCenter();
+    _s.boundingBox = _s.getBoundingBox();
 
     console.timeEnd( "NGL.StructureSubset._build" );
 
