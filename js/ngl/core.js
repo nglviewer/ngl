@@ -90,10 +90,10 @@ NGL.RightMouseButton = 3;
 
 
 NGL.GET = function( id ){
-        
+
     var a = new RegExp( id + "=([^&#=]*)" );
     var m = a.exec( window.location.search );
-    
+
     if( m ) return decodeURIComponent( m[1] );
 
 };
@@ -145,3 +145,32 @@ NGL.download = function( data, downloadName ){
     }
 
 };
+
+
+NGL.unicodeHelper = function(){
+
+    var replace_map = {
+        "{alpha}": "\u03B1",
+        "{beta}": "\u03B2",
+        "{gamma}": "\u03B3",
+        "{dot}": "\u00B7",
+        "{bullet}": "\u2022",
+    }
+
+    var keys = Object.keys( replace_map ).join('|');
+
+    var rg = new RegExp( '(' + keys + ')', 'gi' );
+
+    return function( str ){
+
+        str = str.replace(
+            rg, function( s, p1, p2, offset, sx ){
+                return replace_map[ String( s ) ];
+            }
+        );
+
+        return str;
+
+    };
+
+}();
