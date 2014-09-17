@@ -12,11 +12,11 @@ if [ ! -f app.cfg ]; then
 fi
 
 if [ ! -f js/examples.js ]; then
-    cp js/examples.js.sample examples.js
+    cp js/examples.js.sample js/examples.js
 fi
 
 if [ ! -f js/tracking.js ]; then
-    cp js/tracking.js.sample tracking.js
+    cp js/tracking.js.sample js/tracking.js
 fi
 
 echo "start the server with './serve.py'"
