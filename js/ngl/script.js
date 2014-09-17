@@ -24,7 +24,7 @@ NGL.Script = function( str, name, path ){
     try {
 
         this.fn = new Function(
-            'stage', 'load', 'then', 'panel',
+            'stage', 'component', 'load', 'then', 'panel',
             '__name__', '__path__', '__dir__',
             str
         );
@@ -40,7 +40,7 @@ NGL.Script = function( str, name, path ){
 
 NGL.Script.prototype = {
 
-    call: function( stage, onFinish ){
+    call: function( stage, component, onFinish ){
 
         var scope = this;
 
@@ -62,7 +62,7 @@ NGL.Script.prototype = {
             var thenFn = queue.then.bind( queue );
 
             this.fn(
-                stage, loadFn, thenFn, panel,
+                stage, component, loadFn, thenFn, panel,
                 this.name, this.path, this.dir
             );
 
