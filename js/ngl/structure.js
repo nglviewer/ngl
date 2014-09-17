@@ -2236,28 +2236,33 @@ NGL.Structure.prototype = {
 
             console.time( "NGL.Structure.autoChainName" );
 
-            var name;
-            var i = 0;
+            var i, name;
 
-            this.eachFiber( function( f ){
+            this.eachModel( function( m ){
 
-                name = names[ i ];
+                i = 0;
 
-                f.eachAtom( function( a ){
+                m.eachFiber( function( f ){
 
-                    a.chainname = name;
+                    name = names[ i ];
 
-                } );
+                    f.eachAtom( function( a ){
 
-                i += 1;
+                        a.chainname = name;
 
-                if( i === n ){
+                    } );
 
-                    console.warn( "out of chain names" );
+                    i += 1;
 
-                    i = 0;
+                    if( i === n ){
 
-                }
+                        console.warn( "out of chain names" );
+
+                        i = 0;
+
+                    }
+
+                } )
 
             } );
 
