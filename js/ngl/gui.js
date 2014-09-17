@@ -1029,7 +1029,12 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     signals.statusChanged.add( function( value ){
 
-        status.setValue( value );
+        if( value === "finished" ){
+
+            container.removeStatic( status );
+            container.addStatic( dispose );
+
+        }
 
     } );
 
@@ -1070,17 +1075,15 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Status
 
-    var status = new UI.Text( component.status );
+    var status = new UI.Icon( "spinner" )
+        .addClass( "spin" )
+        .setMarginLeft( "25px" );
 
     container
         .addStatic( name )
-        .addStatic( dispose );
+        .addStatic( status );
 
     container
-        .add( new UI.Panel().setMarginLeft( "20px" )
-                .add( new UI.Text( "Status:  " ).setMarginRight( "10px" ) )
-                .add( status )
-        )
         .add( panel );
 
     return container;
