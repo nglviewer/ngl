@@ -12,7 +12,7 @@ import xdrfile.libxdrfile2 as libxdrfile2
 
 
 def get_xtc_parts( name, directory ):
-    pattern = re.escape( name[1:-4] ) + "\.part[0-9]{4,4}\.xtc$"
+    pattern = re.escape( name[1:-4] ) + "\.part[0-9]{4,4}\.(xtc|trr)$"
     parts = []
     for f in os.listdir( directory ):
         m = re.match( pattern, f )
@@ -22,12 +22,12 @@ def get_xtc_parts( name, directory ):
 
 
 def get_split_xtc( directory ):
-    pattern = "(.*)\.part[0-9]{4,4}\.xtc$"
+    pattern = "(.*)\.part[0-9]{4,4}\.(xtc|trr)$"
     split = collections.defaultdict( int )
     for f in os.listdir( directory ):
         m = re.match( pattern, f )
         if( m ):
-            split[ "@" + m.group(1) + ".xtc" ] += 1
+            split[ "@" + m.group(1) + "." + m.group(2) ] += 1
     return sorted( [ k for k, v in split.iteritems() if v > 1 ] )
 
 
@@ -35,6 +35,7 @@ def get_trajectory( file_name ):
     ext = os.path.splitext( file_name )[1].lower()
     types = {
         ".xtc": XtcTrajectory,
+        ".trr": TrrTrajectory,
         ".netcdf": NetcdfTrajectory,
         ".nc": NetcdfTrajectory,
         ".dcd": DcdTrajectory,
@@ -119,11 +120,11 @@ class TrajectoryCollection( Trajectory ):
             trajectory.__del__()
 
 
-class XtcTrajectory( Trajectory ):
+class XdrTrajectory( Trajectory ):
     def __init__( self, file_name ):
         self.file_name = str( file_name )
         self.xdr_fp = libxdrfile2.xdrfile_open( self.file_name, 'rb' )
-        self.numatoms = libxdrfile2.read_xtc_natoms( self.file_name )
+        self.numatoms = self._read_natoms( self.file_name )
         self.update()
         # allocate coordinate array of the right size and type
         self.x = np.zeros(
@@ -134,18 +135,27 @@ class XtcTrajectory( Trajectory ):
             ( libxdrfile2.DIM, libxdrfile2.DIM ), dtype=np.float32
         )
 
+    def _read_natoms( self, file_name ):
+        pass
+
+    def _read_numframes( self, file_name ):
+        pass
+
+    def _read( self, fp, box, x ):
+        pass  # return status, step, ftime
+
     def update( self, force=False ):
         self.offset_file = self.file_name + ".offsets"
         isfile_offset = os.path.isfile( self.offset_file )
         mtime_offset = isfile_offset and os.path.getmtime( self.offset_file )
-        mtime_xtc = os.path.getmtime( self.file_name )
-        if not force and isfile_offset and mtime_offset >= mtime_xtc:
+        mtime_xdr = os.path.getmtime( self.file_name )
+        if not force and isfile_offset and mtime_offset >= mtime_xdr:
             print "found offset file"
             with open( self.offset_file, 'rb' ) as fp:
                 self.numframes, self.offsets = pickle.load( fp )
         else:
             print "create offset file"
-            self.numframes, self.offsets = libxdrfile2.read_xtc_numframes(
+            self.numframes, self.offsets = self._read_numframes(
                 self.file_name
             )
             with open( self.offset_file, 'wb' ) as fp:
@@ -155,7 +165,7 @@ class XtcTrajectory( Trajectory ):
         libxdrfile2.xdr_seek(
             self.xdr_fp, long( self.offsets[ index ] ), libxdrfile2.SEEK_SET
         )
-        status, step, ftime, prec = libxdrfile2.read_xtc(
+        status, step, ftime = self._read(
             self.xdr_fp, self.box, self.x
         )
         # print status, step, ftime, prec
@@ -166,6 +176,41 @@ class XtcTrajectory( Trajectory ):
     def __del__( self ):
         if( self.xdr_fp ):
             libxdrfile2.xdrfile_close( self.xdr_fp )
+
+
+class XtcTrajectory( XdrTrajectory ):
+    def _read_natoms( self, file_name ):
+        return libxdrfile2.read_xtc_natoms( file_name )
+
+    def _read_numframes( self, file_name ):
+        return libxdrfile2.read_xtc_numframes( file_name )
+
+    def _read( self, fp, box, x ):
+        status, step, ftime, prec = libxdrfile2.read_xtc( fp, box, x )
+        return status, step, ftime
+
+
+class TrrTrajectory( XdrTrajectory ):
+    def __init__( self, *args, **kwargs ):
+        XdrTrajectory.__init__( self, *args, **kwargs )
+        self.v = np.zeros(
+            ( self.numatoms, libxdrfile2.DIM ), dtype=np.float32
+        )
+        self.f = np.zeros(
+            ( self.numatoms, libxdrfile2.DIM ), dtype=np.float32
+        )
+
+    def _read_natoms( self, file_name ):
+        return libxdrfile2.read_trr_natoms( file_name )
+
+    def _read_numframes( self, file_name ):
+        return libxdrfile2.read_trr_numframes( file_name )
+
+    def _read( self, fp, box, x ):
+        status, step, ftime, clambda, has_x, has_v, has_f = libxdrfile2.read_trr(
+            fp, box, x, self.v, self.f
+        )
+        return status, step, ftime
 
 
 class NetcdfTrajectory( Trajectory ):

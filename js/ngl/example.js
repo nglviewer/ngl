@@ -46,6 +46,20 @@ NGL.Examples = {
 
         },
 
+        "trr_trajectory": function( stage ){
+
+            stage.loadFile( "__example__/md.gro", function( o ){
+
+                o.addRepresentation( "line" );
+                o.addRepresentation( "cartoon", { sele: "protein" } );
+                o.centerView();
+
+                o.addTrajectory( "__example__/md.trr" );
+
+            } );
+
+        },
+
         "dcd_trajectory": function( stage ){
 
             stage.loadFile( "__example__/ala3.pdb", function( o ){

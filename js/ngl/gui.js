@@ -847,7 +847,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         componentPanel.setMenuDisplay( "none" );
 
-        var trajExt = [ "xtc", "dcd", "netcdf", "nc" ];
+        var trajExt = [ "xtc", "trr", "dcd", "netcdf", "nc" ];
 
         var dirWidget = new NGL.DirectoryListingWidget(
 
