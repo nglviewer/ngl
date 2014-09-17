@@ -627,13 +627,14 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    superpose: function( component, align, sele ){
+    superpose: function( component, align, sele1, sele2 ){
 
         NGL.superpose(
             this.structure,
             component.structure,
             align,
-            sele
+            sele1,
+            sele2
         );
 
         this.updateRepresentations();
@@ -708,7 +709,7 @@ NGL.ScriptComponent.prototype = NGL.createObject(
 
         this.setStatus( "running" );
 
-        this.script.call( this.stage, function(){
+        this.script.call( this.stage, this, function(){
 
             scope.setStatus( "finished" );
 

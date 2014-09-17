@@ -5575,17 +5575,26 @@ NGL.Alignment.prototype = {
 };
 
 
-NGL.superpose = function( s1, s2, align, sele ){
+NGL.superpose = function( s1, s2, align, sele1, sele2 ){
 
     align = align || false;
-    sele = sele || "";
+    sele1 = sele1 || "";
+    sele2 = sele2 || "";
 
     var atoms1, atoms2;
 
     if( align ){
 
-        var seq1 = s1.getSequence();
-        var seq2 = s2.getSequence();
+        var _s1 = s1;
+        var _s2 = s2;
+
+        if( sele1 && sele2 ){
+            _s1 = new NGL.StructureSubset( s1, sele1 );
+            _s2 = new NGL.StructureSubset( s2, sele2 );
+        }
+
+        var seq1 = _s1.getSequence();
+        var seq2 = _s2.getSequence();
 
         // console.log( seq1.join("") );
         // console.log( seq2.join("") );
@@ -5643,7 +5652,7 @@ NGL.superpose = function( s1, s2, align, sele ){
         atoms2 = new NGL.AtomSet();
 
         i = 0;
-        s1.eachResidue( function( r ){
+        _s1.eachResidue( function( r ){
 
             if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
 
@@ -5655,7 +5664,7 @@ NGL.superpose = function( s1, s2, align, sele ){
         } );
 
         i = 0;
-        s2.eachResidue( function( r ){
+        _s2.eachResidue( function( r ){
 
             if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
 
@@ -5668,10 +5677,12 @@ NGL.superpose = function( s1, s2, align, sele ){
 
     }else{
 
-        var selection = new NGL.Selection( sele + ".CA" );
-
-        atoms1 = new NGL.AtomSet( s1, selection );
-        atoms2 = new NGL.AtomSet( s2, selection );
+        atoms1 = new NGL.AtomSet(
+            s1, new NGL.Selection( sele1 + " and .CA" )
+        );
+        atoms2 = new NGL.AtomSet(
+            s2, new NGL.Selection( sele2 + " and .CA" )
+        );
 
     }
 
