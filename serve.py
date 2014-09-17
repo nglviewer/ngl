@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import logging
+import datetime
 import functools
 
 sys.path.append(
@@ -20,6 +21,7 @@ from flask import request
 from flask import make_response, Response
 from flask import jsonify
 from flask import url_for, redirect
+from flask import current_app
 
 from werkzeug import secure_filename
 
@@ -110,6 +112,49 @@ def get_directory( root ):
     return os.path.abspath( directory )
 
 
+def crossdomain(
+    origin=None, methods=None, headers=None,
+    max_age=21600, attach_to_all=True, automatic_options=True
+):
+    if methods is not None:
+        methods = ', '.join( sorted( x.upper() for x in methods ) )
+    if headers is not None and not isinstance( headers, basestring ):
+        headers = ', '.join( x.upper() for x in headers )
+    if not isinstance( origin, basestring ):
+        origin = ', '.join(origin)
+    if isinstance( max_age, datetime.timedelta ):
+        max_age = max_age.total_seconds()
+
+    def get_methods():
+        if methods is not None:
+            return methods
+
+        options_resp = current_app.make_default_options_response()
+        return options_resp.headers[ 'allow' ]
+
+    def decorator(f):
+        def wrapped_function(*args, **kwargs):
+            if automatic_options and request.method == 'OPTIONS':
+                resp = current_app.make_default_options_response()
+            else:
+                resp = make_response( f( *args, **kwargs ) )
+            if not attach_to_all and request.method != 'OPTIONS':
+                return resp
+
+            h = resp.headers
+
+            h['Access-Control-Allow-Origin'] = origin
+            h['Access-Control-Allow-Methods'] = get_methods()
+            h['Access-Control-Max-Age'] = str( max_age )
+            if headers is not None:
+                h['Access-Control-Allow-Headers'] = headers
+            return resp
+
+        f.provide_automatic_options = False
+        return functools.update_wrapper( wrapped_function, f )
+    return decorator
+
+
 ############################
 # static routes
 ############################
@@ -125,6 +170,7 @@ def favicon():
 
 @app.route( '/js/<path:filename>' )
 @requires_auth
+@crossdomain( origin='*' )
 def js( filename ):
     return send_from_directory( os.path.join( APP_PATH, "js/" ), filename )
 
@@ -137,6 +183,7 @@ def css( filename ):
 
 @app.route( '/html/<path:filename>' )
 @requires_auth
+@crossdomain( origin='*' )
 def html( filename ):
     return send_from_directory( os.path.join( APP_PATH, "html/" ), filename )
 
@@ -247,12 +294,6 @@ def fonts( filename ):
     return send_from_directory( os.path.join( APP_PATH, "fonts/" ), filename )
 
 
-@app.route( '/jsmol/<path:filename>' )
-@requires_auth
-def jsmol( filename ):
-    return send_from_directory( os.path.join( APP_PATH, "jsmol/" ), filename )
-
-
 @app.route( '/' )
 @requires_auth
 def redirect_ngl():
@@ -308,10 +349,10 @@ def traj_numframes( root, filename ):
 
 if __name__ == '__main__':
     app.run(
-        debug=app.config.get('DEBUG', False),
-        host=app.config.get('HOST', '127.0.0.1'),
-        port=app.config.get('PORT', 8010),
+        debug=app.config.get( 'DEBUG', False ),
+        host=app.config.get( 'HOST', '127.0.0.1' ),
+        port=app.config.get( 'PORT', 8010 ),
         threaded=True,
         processes=1,
-        extra_files=['app.cfg']
+        extra_files=[ 'app.cfg' ]
     )
