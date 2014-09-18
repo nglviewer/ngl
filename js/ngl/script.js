@@ -103,7 +103,7 @@ NGL.ScriptQueue = function( stage, dir, onFinish ){
 
 NGL.ScriptQueue.prototype = {
 
-    load: function( file, callback ){
+    load: function( file, callback, params ){
 
         var status;
 
@@ -124,7 +124,7 @@ NGL.ScriptQueue.prototype = {
 
             }
 
-        } );
+        }, params );
 
         var handle = function( resolve, reject ){
 
