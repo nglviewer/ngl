@@ -52,42 +52,25 @@ NGL.FileLoader.prototype = {
 };
 
 
-NGL.PdbLoader = function( manager ){
+NGL.StructureLoader = function( manager ){
 
     this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
 
-NGL.PdbLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+NGL.StructureLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.PdbLoader.prototype.init = function( str, name, path, callback ){
+NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback ){
 
-    var pdb = new NGL.PdbStructure( name, path );
+    var parsers = {
 
-    pdb.parse( str, callback );
+        "gro": NGL.GroParser,
+        "pdb": NGL.PdbParser,
 
-    return pdb
+    };
 
-};
-
-
-NGL.GroLoader = function( manager ){
-
-    this.cache = new THREE.Cache();
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-};
-
-NGL.GroLoader.prototype = Object.create( THREE.XHRLoader.prototype );
-
-NGL.GroLoader.prototype.init = function( str, name, path, callback ){
-
-    var gro = new NGL.GroStructure( name, path );
-
-    gro.parse( str, callback );
-
-    return gro
+    return new parsers[ ext ]( name, path ).parse( str, callback );
 
 };
 
@@ -101,7 +84,7 @@ NGL.ObjLoader = function( manager ){
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-NGL.ObjLoader.prototype.init = function( data, name, path, callback ){
+NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
     if( typeof data === "string" ){
 
@@ -127,7 +110,7 @@ NGL.PlyLoader = function( manager ){
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
-NGL.PlyLoader.prototype.init = function( data, name, path, callback ){
+NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
 
     if( typeof data === "string" ){
 
@@ -153,7 +136,7 @@ NGL.ScriptLoader = function( manager ){
 
 NGL.ScriptLoader.prototype = Object.create( THREE.XHRLoader.prototype );
 
-NGL.ScriptLoader.prototype.init = function( data, name, path, callback ){
+NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 
     var script = new NGL.Script( data, name, path );
 
@@ -168,8 +151,8 @@ NGL.autoLoad = function(){
 
     var loaders = {
 
-        "gro": NGL.GroLoader,
-        "pdb": NGL.PdbLoader,
+        "gro": NGL.StructureLoader,
+        "pdb": NGL.StructureLoader,
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
@@ -208,7 +191,7 @@ NGL.autoLoad = function(){
 
         function init( data ){
 
-            object = loader.init( data, name, path, function( _object ){
+            object = loader.init( data, name, path, ext, function( _object ){
 
                 if( typeof onLoad === "function" ) onLoad( _object );
 
