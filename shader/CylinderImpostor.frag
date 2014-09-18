@@ -30,7 +30,7 @@
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
-varying float vRadius;  
+varying float vRadius;
 
 varying vec3 point;
 varying vec3 axis;
@@ -48,7 +48,7 @@ varying float b;
     varying vec3 vColor2;
 #endif
 
-const float opacity = 0.5;
+const float opacity = 1.0;
 
 #include light_params
 
@@ -129,16 +129,16 @@ void main()
     #endif
 
     // flat
-    if (cap_test < 0.0) 
+    if (cap_test < 0.0)
     {
         // ray-plane intersection
         float dNV = dot(-axis, ray_direction);
-        if (dNV < 0.0) 
+        if (dNV < 0.0)
             discard;
         float near = dot(-axis, (base)) / dNV;
         new_point = ray_direction * near + ray_origin;
         // within the cap radius?
-        if (dot(new_point - base, new_point-base) > radius2) 
+        if (dot(new_point - base, new_point-base) > radius2)
             discard;
 
         #ifdef CAP
@@ -152,18 +152,18 @@ void main()
     cap_test = dot((new_point - end_cyl), axis);
 
     // flat
-    if( cap_test > 0.0 ) 
+    if( cap_test > 0.0 )
     {
         // ray-plane intersection
         float dNV = dot(axis, ray_direction);
-        if (dNV < 0.0) 
+        if (dNV < 0.0)
             discard;
         float near = dot(axis, end_cyl) / dNV;
         new_point = ray_direction * near + ray_origin;
         // within the cap radius?
-        if( dot(new_point - end_cyl, new_point-base) > radius2 ) 
+        if( dot(new_point - end_cyl, new_point-base) > radius2 )
             discard;
-        
+
         #ifdef CAP
             normal = axis;
         #else
@@ -186,7 +186,7 @@ void main()
 
     vec3 transformedNormal = normal;
     vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-    
+
     #include light
 
     #ifdef PICKING
@@ -201,7 +201,7 @@ void main()
             if( b > 0.0 ){
                 gl_FragColor = vec4( vPickingColor, 1.0 );
             }else{
-                gl_FragColor = vec4( vPickingColor2, 1.0 );    
+                gl_FragColor = vec4( vPickingColor2, 1.0 );
             }
         }
     #else
@@ -210,13 +210,13 @@ void main()
             if( b < 0.0 ){
                 gl_FragColor = vec4( vColor, opacity );
             }else{
-                gl_FragColor = vec4( vColor2, opacity );    
+                gl_FragColor = vec4( vColor2, opacity );
             }
         }else{
             if( b > 0.0 ){
                 gl_FragColor = vec4( vColor, opacity );
             }else{
-                gl_FragColor = vec4( vColor2, opacity );    
+                gl_FragColor = vec4( vColor2, opacity );
             }
         }
         gl_FragColor.xyz *= vLightFront;

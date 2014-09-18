@@ -1,18 +1,18 @@
+#!/usr/bin/env python
+
 from __future__ import with_statement
 
-import sys
 import os
-import re
-import functools
-import logging
-import array
+import sys
 import json
-import cPickle as pickle
-import collections
+import logging
+import datetime
+import functools
 
-import numpy as np
-
-import xdrfile.libxdrfile2 as libxdrfile2
+sys.path.append(
+    os.path.split( os.path.abspath( __file__ ) )[0]
+)
+import lib.trajectory as trajectory
 
 from flask import Flask
 from flask import send_from_directory
@@ -21,14 +21,13 @@ from flask import request
 from flask import make_response, Response
 from flask import jsonify
 from flask import url_for, redirect
+from flask import current_app
 
 from werkzeug import secure_filename
-
 
 logging.basicConfig( level=logging.DEBUG )
 LOG = logging.getLogger('ngl')
 LOG.setLevel( logging.DEBUG )
-
 
 cfg_file = 'app.cfg'
 if len( sys.argv ) > 1:
@@ -60,7 +59,7 @@ def check_auth( auth ):
     password combination is valid.
     """
     return (
-        auth.username == app.config.get( 'USERNAME', '' ) and 
+        auth.username == app.config.get( 'USERNAME', '' ) and
         auth.password == app.config.get( 'PASSWORD', '' )
     )
 
@@ -68,7 +67,7 @@ def check_auth( auth ):
 def check_data_auth( auth, root ):
     if root in DATA_AUTH:
         return (
-            auth.username == DATA_AUTH[ root ][ 0 ] and 
+            auth.username == DATA_AUTH[ root ][ 0 ] and
             auth.password == DATA_AUTH[ root ][ 1 ]
         )
     else:
@@ -110,7 +109,50 @@ def get_directory( root ):
         directory = os.path.join( APP_PATH, "data/" )
     elif root in DATA_DIRS:
         directory = os.path.join( DATA_DIRS[ root ] )
-    return directory
+    return os.path.abspath( directory )
+
+
+def crossdomain(
+    origin=None, methods=None, headers=None,
+    max_age=21600, attach_to_all=True, automatic_options=True
+):
+    if methods is not None:
+        methods = ', '.join( sorted( x.upper() for x in methods ) )
+    if headers is not None and not isinstance( headers, basestring ):
+        headers = ', '.join( x.upper() for x in headers )
+    if not isinstance( origin, basestring ):
+        origin = ', '.join(origin)
+    if isinstance( max_age, datetime.timedelta ):
+        max_age = max_age.total_seconds()
+
+    def get_methods():
+        if methods is not None:
+            return methods
+
+        options_resp = current_app.make_default_options_response()
+        return options_resp.headers[ 'allow' ]
+
+    def decorator(f):
+        def wrapped_function(*args, **kwargs):
+            if automatic_options and request.method == 'OPTIONS':
+                resp = current_app.make_default_options_response()
+            else:
+                resp = make_response( f( *args, **kwargs ) )
+            if not attach_to_all and request.method != 'OPTIONS':
+                return resp
+
+            h = resp.headers
+
+            h['Access-Control-Allow-Origin'] = origin
+            h['Access-Control-Allow-Methods'] = get_methods()
+            h['Access-Control-Max-Age'] = str( max_age )
+            if headers is not None:
+                h['Access-Control-Allow-Headers'] = headers
+            return resp
+
+        f.provide_automatic_options = False
+        return functools.update_wrapper( wrapped_function, f )
+    return decorator
 
 
 ############################
@@ -128,6 +170,7 @@ def favicon():
 
 @app.route( '/js/<path:filename>' )
 @requires_auth
+@crossdomain( origin='*' )
 def js( filename ):
     return send_from_directory( os.path.join( APP_PATH, "js/" ), filename )
 
@@ -140,6 +183,7 @@ def css( filename ):
 
 @app.route( '/html/<path:filename>' )
 @requires_auth
+@crossdomain( origin='*' )
 def html( filename ):
     return send_from_directory( os.path.join( APP_PATH, "html/" ), filename )
 
@@ -225,13 +269,13 @@ def dir( root="", path="" ):
                     'dir': True
                 })
 
-    for fname in get_split_xtc( dir_path ):
+    for fname in trajectory.get_split_xtc( dir_path ):
         dir_content.append({
             'name': fname,
             'path': os.path.join( root, path, fname ),
             'size': sum([
                 os.path.getsize( x ) for x in
-                get_xtc_parts( fname, dir_path )
+                trajectory.get_xtc_parts( fname, dir_path )
             ])
         })
 
@@ -250,12 +294,6 @@ def fonts( filename ):
     return send_from_directory( os.path.join( APP_PATH, "fonts/" ), filename )
 
 
-@app.route( '/jsmol/<path:filename>' )
-@requires_auth
-def jsmol( filename ):
-    return send_from_directory( os.path.join( APP_PATH, "jsmol/" ), filename )
-
-
 @app.route( '/' )
 @requires_auth
 def redirect_ngl():
@@ -272,134 +310,11 @@ def redirect_app( name ):
 # trajectory server
 ############################
 
-class Xtc( object ):
-    def __init__( self, xtc_file ):
-        self.xtc_file = xtc_file
-        self.fp = libxdrfile2.xdrfile_open( self.xtc_file, 'rb' )
-        self.natoms = libxdrfile2.read_xtc_natoms( self.xtc_file )
-        self.update_offsets()
-        # allocate coordinate array of the right size and type
-        self.x = np.zeros(
-            ( self.natoms, libxdrfile2.DIM ), dtype=np.float32
-        )
-        # allocate unit cell box
-        self.box = np.zeros(
-            ( libxdrfile2.DIM, libxdrfile2.DIM ), dtype=np.float32
-        )
+TRAJ_CACHE = trajectory.TrajectoryCache()
 
-    def update_offsets( self, force=False ):
-        self.offset_file = self.xtc_file + ".offsets"
-        isfile_offset = os.path.isfile( self.offset_file )
-        mtime_offset = isfile_offset and os.path.getmtime( self.offset_file )
-        mtime_xtc = os.path.getmtime( self.xtc_file )
-        if not force and isfile_offset and mtime_offset >= mtime_xtc:
-            print "found offset file"
-            with open( self.offset_file, 'rb' ) as fp:
-                self.numframes, self.offsets = pickle.load( fp )
-        else:
-            print "create offset file"
-            self.numframes, self.offsets = libxdrfile2.read_xtc_numframes(
-                self.xtc_file
-            )
-            with open( self.offset_file, 'wb' ) as fp:
-                pickle.dump( ( self.numframes, self.offsets ), fp )
-
-    def get_frame( self, index ):
-        libxdrfile2.xdr_seek(
-            self.fp, long( self.offsets[ index ] ), libxdrfile2.SEEK_SET
-        )
-        status, step, ftime, prec = libxdrfile2.read_xtc(
-            self.fp, self.box, self.x
-        )
-        # print status, step, ftime, prec
-        return self.x
-
-    def get_coords( self, index, atom_indices=None, angstrom=True ):
-        coords = self.get_frame( int( index ) )
-        if atom_indices:
-            coords = np.concatenate([
-                coords[ i:j ].ravel() for i, j in atom_indices
-            ])
-        if angstrom:
-            coords *= 10
-        return coords
-
-    def __del__( self ):
-        if( self.fp ):
-            libxdrfile2.xdrfile_close( self.fp )
-
-
-def get_xtc_parts( name, directory ):
-    pattern = re.escape( name[1:-4] ) + "\.part[0-9]{4,4}\.xtc$"
-    parts = []
-    for f in os.listdir( directory ):
-        m = re.match( pattern, f )
-        if m and os.path.isfile( os.path.join( directory, f ) ):
-            parts.append( os.path.join( directory, f ) )
-    return sorted( parts )
-
-
-def get_split_xtc( directory ):
-    pattern = "(.*)\.part[0-9]{4,4}\.xtc$"
-    split = collections.defaultdict( int )
-    for f in os.listdir( directory ):
-        m = re.match( pattern, f )
-        if( m ):
-            split[ "@" + m.group(1) + ".xtc" ] += 1
-    return sorted( [ k for k, v in split.iteritems() if v > 1 ] )
-
-
-class XtcParts( object ):
-    def __init__( self, parts ):
-        self.parts = []
-        for f in sorted( parts ):
-            self.parts.append( get_xtc( f ) )
-        self.box = self.parts[ 0 ].box
-        self._update_numframes()
-
-    def _update_numframes( self ):
-        self.numframes = 0
-        for xtc in self.parts:
-            self.numframes += xtc.numframes
-
-    def update_offsets( self, force=False ):
-        for xtc in self.parts:
-            xtc.update_offsets( force=force )
-        self._update_numframes()
-
-    def get_coords( self, index, atom_indices=None, angstrom=True ):
-        i = 0
-        for xtc in self.parts:
-            if index < i + xtc.numframes:
-                break
-            i += xtc.numframes
-        return xtc.get_coords(
-            index - i, atom_indices=atom_indices, angstrom=angstrom
-        )
-
-    def __del__( self ):
-        for xtc in self.parts:
-            xtc.__del__()
-
-
-XTC_DICT = {}
-
-
-def get_xtc( path ):
-    if path not in XTC_DICT:
-        stem = os.path.basename( path )
-        if stem.startswith( "@" ):
-            XTC_DICT[ path ] = XtcParts(
-                get_xtc_parts( stem, os.path.dirname( path ) )
-            )
-        else:
-            XTC_DICT[ path ] = Xtc( str( path ) )
-    return XTC_DICT[ path ]
-
-
-@app.route( '/xtc/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
+@app.route( '/traj/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
 @requires_auth
-def xtc_serve( frame, root, filename ):
+def traj_serve( frame, root, filename ):
     directory = get_directory( root )
     if directory:
         path = os.path.join( directory, filename )
@@ -414,22 +329,18 @@ def xtc_serve( frame, root, filename ):
             for x in atom_indices.split( ";" )
         ]
     # print atom_indices
-    xtc = get_xtc( path )
-    coords = xtc.get_coords( frame, atom_indices=atom_indices )
-    box = xtc.box.flatten() * 10  # angstrom
-    return (
-        array.array( "f", box ).tostring() +
-        array.array( "f", coords ).tostring()
+    return TRAJ_CACHE.get( path ).get_frame(
+        frame, atom_indices=atom_indices
     )
 
 
-@app.route( '/xtc/numframes/<root>/<path:filename>' )
+@app.route( '/traj/numframes/<root>/<path:filename>' )
 @requires_auth
-def xtc_numframes( root, filename ):
+def traj_numframes( root, filename ):
     directory = get_directory( root )
     if directory:
         path = os.path.join( directory, filename )
-        return str( get_xtc( path ).numframes )
+        return str( TRAJ_CACHE.get( path ).numframes )
 
 
 ############################
@@ -438,10 +349,10 @@ def xtc_numframes( root, filename ):
 
 if __name__ == '__main__':
     app.run(
-        debug=app.config.get('DEBUG', False),
-        host=app.config.get('HOST', '127.0.0.1'),
-        port=app.config.get('PORT', 8010),
+        debug=app.config.get( 'DEBUG', False ),
+        host=app.config.get( 'HOST', '127.0.0.1' ),
+        port=app.config.get( 'PORT', 8010 ),
         threaded=True,
         processes=1,
-        extra_files=['app.cfg']
+        extra_files=[ 'app.cfg' ]
     )

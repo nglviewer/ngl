@@ -8,3 +8,6 @@ js/tracking.js
 js/examples.js
 
 *.offsets
+
+lib/build/*
+*.so

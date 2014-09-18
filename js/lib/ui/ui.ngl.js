@@ -201,7 +201,7 @@ UI.SelectionInput.prototype.setValue = function( value ){
 
     return this;
 
-}
+};
 
 UI.SelectionInput.prototype.onEnter = function( callback ){
 
@@ -212,13 +212,13 @@ UI.SelectionInput.prototype.onEnter = function( callback ){
 	var check = function( string ){
 
         var selection = new NGL.Selection( string );
-        
+
         return !selection.selection[ "error" ];
 
     }
 
     this.onKeyPress( function( e ){
-        
+
         var value = scope.getValue();
         var character = String.fromCharCode( e.which );
 
@@ -298,7 +298,7 @@ UI.SelectionPanel = function( selection ){
 
     return this;
 
-}
+};
 
 UI.SelectionPanel.prototype = Object.create( UI.Panel.prototype );
 
@@ -308,4 +308,109 @@ UI.SelectionPanel.prototype.setInputWidth = function( value ){
 
     return this;
 
-}
+};
+
+
+// Component
+
+UI.ComponentPanel = function( component ){
+
+    UI.Panel.call( this );
+
+    var stage = component.stage;
+    var signals = component.signals;
+
+    signals.nameChanged.add( function( value ){
+
+        name.setValue( value );
+
+    } );
+
+    signals.visibilityChanged.add( function( value ){
+
+        toggle.setValue( value );
+
+    } );
+
+    // Name
+
+    var name = new UI.Text( component.name )
+        .setWidth( "100px" )
+        .setWordWrap( "break-word" );
+
+    // Actions
+
+    var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
+        .setTitle( "hide/show" )
+        .setMarginLeft( "25px" )
+        .onClick( function(){
+
+            component.setVisibility( !toggle.getValue() );
+
+        } );
+
+    var center = new UI.Icon( "bullseye" )
+        .setTitle( "center" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            component.centerView( undefined, true );
+
+        } );
+
+    var dispose = new UI.Icon( "trash-o" )
+        .setTitle( "delete" )
+        .setMarginLeft( "10px" )
+        .onClick( function(){
+
+            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+
+                stage.removeComponent( component );
+
+            }else{
+
+                dispose.setColor( "rgb(178, 34, 34)" );
+
+                setTimeout( function(){
+                    dispose.setColor( "#888" );
+                }, 1000);
+
+            }
+
+        } );
+
+    // Menu
+
+    var menu = new UI.PopupMenu( "bars", component.type )
+        .setMarginLeft( "46px" )
+        .setEntryLabelWidth( "110px" );
+
+    //
+
+    this.add( name, toggle, center, dispose, menu );
+
+    //
+
+    this.menu = menu;
+
+    return this;
+
+};
+
+UI.ComponentPanel.prototype = Object.create( UI.Panel.prototype );
+
+UI.ComponentPanel.prototype.addMenuEntry = function( label, entry ){
+
+    this.menu.addEntry( label, entry );
+
+    return this;
+
+};
+
+UI.ComponentPanel.prototype.setMenuDisplay = function( value ){
+
+    this.menu.setMenuDisplay( value );
+
+    return this;
+
+};

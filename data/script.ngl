@@ -1,19 +1,75 @@
 
+var pdb = [];
 
-stage.loadFile( __dir__ + "1blu.pdb", function( o ){
+
+load( "1u19.pdb", function( o ){
+
+    pdb[ "1u19" ] = o;
 
     o.addRepresentation( "cartoon" );
-    o.addRepresentation( "licorice", {
-    	sele: "sidechainAttached and not( SF4 or CYS )", visible: false
-    } );
-    o.addRepresentation( "hyperball", {
-    	sele: "sidechainAttached and ( SF4 or CYS )"
-    } );
     o.centerView();
 
-    o.setName( "1BLU" );
-
-    finish();
+    o.setName( "1U19" );
 
 } );
 
+
+load( "3dqb.pdb", function( o ){
+
+    pdb[ "3dqb" ] = o;
+
+    o.addRepresentation( "cartoon" );
+    o.centerView();
+
+    o.setName( "3DQB" );
+
+} );
+
+
+then( function(){
+
+    pdb[ "1u19" ].superpose( pdb[ "3dqb" ], true );
+    pdb[ "3dqb" ].centerView();
+
+} );
+
+
+load( "1blu.pdb", function( o ){
+
+    pdb[ "1blu" ] = o;
+
+    o.addRepresentation( "cartoon" );
+    o.addRepresentation( "licorice", {
+        sele: "sidechainAttached and not( SF4 or CYS )", visible: false
+    } );
+    o.addRepresentation( "hyperball", {
+        sele: "sidechainAttached and ( SF4 or CYS )"
+    } );
+    // o.centerView();
+
+    o.setName( "1BLU" );
+
+} );
+
+
+then( function(){
+
+    var retinal = pdb[ "1u19" ].addRepresentation( "licorice", {
+        sele: "RET or 296", visible: true
+    } );
+
+    var btnShow = new UI.Button( "show retinal" ).onClick( function(){
+        retinal.setVisibility( true );
+        pdb[ "1u19" ].centerView( "RET and :A", true );
+    } );
+
+    var btnHide = new UI.Button( "hide retinal" ).onClick( function(){
+        retinal.setVisibility( false );
+    } );
+
+    panel.add( new UI.Text( "moin" ), new UI.Break() );
+    panel.add( btnShow, btnHide );
+
+    stage.centerView();
+
+} );
