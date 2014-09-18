@@ -767,6 +767,12 @@ NGL.ComponentWidget = function( component, stage ){
     var signals = component.signals;
     var container = new UI.CollapsibleIconPanel( "file" );
 
+    signals.requestGuiVisibility.add( function( value ){
+
+        container.setCollapsed( !value );
+
+    } );
+
     // Name
 
     var name = new UI.Text( component.name )
@@ -793,6 +799,12 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
+
+    signals.requestGuiVisibility.add( function( value ){
+
+        container.setCollapsed( !value );
+
+    } );
 
     signals.representationAdded.add( function( repr ){
 
@@ -976,6 +988,12 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     var reprContainer = new UI.Panel();
 
+    signals.requestGuiVisibility.add( function( value ){
+
+        container.setCollapsed( !value );
+
+    } );
+
     signals.representationAdded.add( function( repr ){
 
         reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
@@ -1020,6 +1038,12 @@ NGL.ScriptComponentWidget = function( component, stage ){
     var container = new UI.CollapsibleIconPanel( "file" );
 
     var panel = new UI.Panel().setMarginLeft( "20px" );
+
+    signals.requestGuiVisibility.add( function( value ){
+
+        container.setCollapsed( !value );
+
+    } );
 
     signals.nameChanged.add( function( value ){
 

@@ -322,6 +322,7 @@ NGL.Component = function( stage ){
         representationRemoved: new SIGNALS.Signal(),
         visibilityChanged: new SIGNALS.Signal(),
         nameChanged: new SIGNALS.Signal(),
+        requestGuiVisibility: new SIGNALS.Signal(),
 
     };
 
@@ -411,6 +412,12 @@ NGL.Component.prototype = {
     getCenter: function(){
 
         // console.warn( "not implemented" )
+
+    },
+
+    requestGuiVisibility: function( value ){
+
+        this.signals.requestGuiVisibility.dispatch( value );
 
     }
 
