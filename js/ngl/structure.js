@@ -1214,6 +1214,7 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
         gotNumframes: new SIGNALS.Signal(),
         frameChanged: new SIGNALS.Signal(),
         selectionChanged: new SIGNALS.Signal(),
+        playerChanged: new SIGNALS.Signal(),
 
         centerPbcParamChanged: new SIGNALS.Signal(),
         removePbcParamChanged: new SIGNALS.Signal(),
@@ -1425,6 +1426,8 @@ NGL.Trajectory.prototype = {
 
         if( i === undefined ) return this;
 
+        this.inProgress = true;
+
         i = parseInt( i );
 
         if( i === -1 || this.frameCache[ i ] ){
@@ -1436,8 +1439,6 @@ NGL.Trajectory.prototype = {
             this.loadFrame( i, callback );
 
         }
-
-        this.currentFrame = i;
 
         return this;
 
@@ -1527,6 +1528,10 @@ NGL.Trajectory.prototype = {
             callback();
 
         }
+
+        this.currentFrame = i;
+
+        this.inProgress = false;
 
         this.signals.frameChanged.dispatch( i );
 
@@ -1659,9 +1664,111 @@ NGL.Trajectory.prototype = {
 
         this.frameCache = [];  // aid GC
 
+    },
+
+    setPlayer: function( player ){
+
+        this.player = player;
+        this.signals.playerChanged.dispatch( this.player );
+
     }
 
 };
+
+
+NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        startedRunning: new SIGNALS.Signal(),
+        haltedRunning: new SIGNALS.Signal(),
+
+    };
+
+    var scope = this;
+
+    traj.signals.playerChanged.add( function( player ){
+        if( player !== scope ){
+            scope.pause();
+        }
+    } );
+
+    this.traj = traj;
+    this.step = step || 1;
+    this.timeout = timeout || 50;
+    this.start = start || 0;
+    this.end = end || traj.numframes;
+
+    this._stopFlag = false;
+    this._running = false;
+
+};
+
+NGL.TrajectoryPlayer.prototype = {
+
+    _animate: function(){
+
+        this._running = true;
+
+        if( !this.traj.inProgress && !this._stopFlag ){
+            var i = this.traj.currentFrame + this.step;
+            if( i >= this.end || i < this.start ){
+                i = this.start;
+            }
+            this.traj.setFrame( i );
+        }
+
+        if( !this._stopFlag ){
+            setTimeout( this._animate.bind( this ), this.timeout );
+        }else{
+            this._running = false;
+        }
+
+    },
+
+    toggle: function(){
+
+        if( this._running ){
+            this.pause();
+        }else{
+            this.play();
+        }
+
+    },
+
+    play: function(){
+
+        if( !this._running ){
+            if( this.traj.player !== this ){
+                this.traj.setPlayer( this );
+            }
+            this._stopFlag = false;
+            this._animate();
+            this.signals.startedRunning.dispatch();
+        }
+
+    },
+
+    pause: function(){
+
+        if( this._running ){
+            this._stopFlag = true;
+            this.signals.haltedRunning.dispatch();
+        }
+
+    },
+
+    stop: function(){
+
+        this.traj.setFrame( start );
+        this.pause();
+
+    }
+
+};
+
 
 
 NGL.Matrix = function( columns, rows ){
@@ -1670,7 +1777,7 @@ NGL.Matrix = function( columns, rows ){
 
     return new jsfeat.matrix_t( columns, rows, dtype );
 
-}
+};
 
 //////////////////
 // Superposition

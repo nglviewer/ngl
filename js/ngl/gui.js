@@ -1370,6 +1370,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         // 1000 = n / step
         step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
 
+        player.step = step.getValue();
+        player.end = value;
+
     } );
 
     signals.frameChanged.add( function( value ){
@@ -1378,8 +1381,6 @@ NGL.TrajectoryWidget = function( traj, component ){
         frameRange.setValue( value );
 
         numframes.clear().add( frame.setWidth( "70px" ) );
-
-        inProgress = false;
 
     } );
 
@@ -1407,86 +1408,74 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var step = new UI.Integer( 1 )
         .setWidth( "30px" )
-        .setRange( 1, 10000 );
+        .setRange( 1, 10000 )
+        .onChange( function(){
+            player.step = step.getValue();
+        } );
 
     var frameRow = new UI.Panel();
 
-    var inProgress = false;
-
     var frameRange = new UI.Range( -1, -1, -1, 1 )
-        .setWidth( "198px" )
+        .setWidth( "197px" )
         .setMargin( "0px" )
         .setPadding( "0px" )
         .setBorder( "0px" )
         .onInput( function( e ){
 
-            if( !inProgress && frameRange.getValue() !== traj.currentFrame ){
-                inProgress = true;
-                // console.log( "input", e );
-                traj.setFrame( frameRange.getValue() );
+            var value = frameRange.getValue();
+
+            if( value === traj.currentFrame ){
+                return;
             }
 
-        } )
-        .onChange( function( e ){
+            if( traj.player && traj.player._running ){
 
-            // ensure the last requested frame gets displayed eventually
+                traj.setPlayer();
+                traj.setFrame( value );
 
-            if( frameRange.getValue() !== traj.currentFrame ){
-                inProgress = true;
-                // console.log( "change", e );
-                traj.setFrame( frameRange.getValue() );
+            }else if( !traj.inProgress ){
+
+                traj.setFrame( value );
+
             }
 
         } );
 
-    // animation
+    // player
 
-    var i = 0;
-    var animStopFlag = true;
-    var animFunc = function(){
-
-        if( !inProgress ){
-            inProgress = true;
-            traj.setFrame( i );
-            i += step.getValue() || 1;
-            if( i >= traj.numframes ) i = 0;
-        }
-
-        if( !animStopFlag ){
-            setTimeout( animFunc, animTimeout.getValue() || 50 );
-        }
-
-    }
-
-    var animTimeout = new UI.Integer( 50 )
+    var timeout = new UI.Integer( 50 )
         .setWidth( "30px" )
-        .setRange( 10, 1000 );
+        .setRange( 10, 1000 )
+        .onChange( function(){
+            player.timeout = timeout.getValue();
+        } );
 
-    var animButton = new UI.ToggleIcon( true, "play", "pause" )
+    var player = new NGL.TrajectoryPlayer(
+        traj, step.getValue(), timeout.getValue(), 0, traj.numframes
+    );
+
+    var playerButton = new UI.ToggleIcon( true, "play", "pause" )
         .setMarginRight( "10px" )
         .setMarginLeft( "20px" )
+        .setWidth( "12px" )
         .setTitle( "play" )
         .onClick( function(){
-
-            if( animButton.getValue() ){
-
-                animStopFlag = false;
-                i = Math.max( 0, traj.currentFrame );
-                animFunc();
-                animButton.setTitle( "pause" )
-
-            }else{
-
-                animStopFlag = true;
-                animButton.setTitle( "play" )
-
-            }
-
-            animButton.setValue( !animButton.getValue() );
-
+            player.toggle()
         } );
 
-    frameRow.add( animButton );
+    player.signals.startedRunning.add( function(){
+        playerButton
+            .setTitle( "pause" )
+            .setValue( false );
+    } );
+
+    player.signals.haltedRunning.add( function(){
+        playerButton
+            .setTitle( "play" )
+            .setValue( true );
+    } );
+
+    frameRow.add( playerButton );
     frameRow.add( frameRange );
 
     // Selection
@@ -1538,7 +1527,7 @@ NGL.TrajectoryWidget = function( traj, component ){
         .addEntry( "Remove PBC", setRemovePbc )
         .addEntry( "Superpose", setSuperpose )
         .addEntry( "Step", step )
-        .addEntry( "Timeout", animTimeout )
+        .addEntry( "Timeout", timeout )
         .addEntry(
             "File", new UI.Text( traj.trajPath )
                         .setMaxWidth( "100px" )
