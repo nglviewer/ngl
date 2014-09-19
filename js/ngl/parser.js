@@ -104,6 +104,8 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
+                // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
+
                 altloc = line[ 16 ];
                 if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
 
@@ -112,7 +114,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 element = line.substr( 76, 2 ).trim();
                 chainname = line[  21 ];
                 resno = parseInt( line.substr( 22, 5 ) );
-                resname = line.substr( 17, 3 ).trim();
+                resname = line.substr( 17, 4 ).trim();
 
                 if( !a ){
 
@@ -354,10 +356,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 };
 
 
-/**
- * An object fro representing a GRO file.
- * @class
- */
 NGL.GroParser = function( name, path ){
 
     NGL.StructureParser.call( this, name, path );
