@@ -3180,10 +3180,15 @@ NGL.Residue.prototype = {
 
     },
 
-    addAtom: function(){
+    addAtom: function( a ){
 
-        var a = new NGL.Atom( this );
-        a.index = this.nextAtomIndex();
+        if( !a ){
+            a = new NGL.Atom( this );
+            a.index = this.nextAtomIndex();
+        }else{
+            this.atomCount += 1;
+            a.residue = this;
+        }
         this.atoms.push( a );
         return a;
 

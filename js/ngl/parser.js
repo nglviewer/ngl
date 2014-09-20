@@ -367,11 +367,49 @@ NGL.GroParser = function( name, path ){
 
 NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
+NGL.GroParser.prototype._build = function(){
+
+    var s = this.structure;
+    var n = s.atoms.length;
+
+    var i, a;
+
+    var m = s.addModel();
+    var c = m.addChain();
+
+    var r = c.addResidue();
+    r.resno = s.atoms[ 0 ].resno;
+    r.resname = s.atoms[ 0 ].resname;
+
+    var currentResno = s.atoms[ 0 ].resno;
+
+    for( i = 0; i < n; ++i ){
+
+        a = s.atoms[ i ];
+
+        if( currentResno !== a.resno ){
+
+            r = c.addResidue();
+            r.resno = a.resno;
+            r.resname = a.resname;
+
+        }
+
+        r.addAtom( a );
+
+        currentResno = a.resno;
+
+    }
+
+}
+
 NGL.GroParser.prototype._parse = function( str, callback ){
 
     console.time( "NGL.GroParser._parse" );
 
     var s = this.structure;
+
+    var scope = this;
 
     var atoms = s.atoms;
 
@@ -395,11 +433,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
     var atomArray = new NGL.AtomArray( s.size );
 
-    var m = s.addModel();
-    var c = m.addChain();
-    var r = c.addResidue();
-
-    var a, currentResno;
+    var a;
 
     var n = lines.length - 1;
 
@@ -417,25 +451,9 @@ NGL.GroParser.prototype._parse = function( str, callback ){
             resno = parseInt( line.substr( 0, 5 ) )
             resname = line.substr( 5, 5 ).trim();
 
-            if( !a ){
-
-                r.resno = resno;
-                r.resname = resname;
-                currentResno = resno;
-
-            }
-
-            if( currentResno!==resno ){
-
-                r = c.addResidue();
-                r.resno = resno;
-                r.resname = resname;
-
-            }
-
             element = guessElem( atomname );
 
-            a = r.addProxyAtom( atomArray );
+            a = new NGL.ProxyAtom( atomArray, s.nextAtomIndex() );
 
             a.resname = resname;
             a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
@@ -451,8 +469,6 @@ NGL.GroParser.prototype._parse = function( str, callback ){
             a.vdw = vdwRadii[ element ];
             a.covalent = covRadii[ element ];
 
-            currentResno = resno;
-
             atoms.push( a );
 
         }
@@ -460,6 +476,9 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         if( _n === n ){
 
             console.timeEnd( "NGL.GroParser._parse" );
+
+            scope._build();
+
             callback( s );
 
         }else{
