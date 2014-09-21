@@ -7,23 +7,6 @@
 var NGL = NGL || {};
 
 
-/*
-if( typeof importScripts === 'function' ){
-    importScripts( 'three/three.js', 'lib/ui/signals.min.js' );
-}
-onmessage = function( event ){
-
-    var pdbStructure = new NGL.PdbStructure();
-
-    pdbStructure._parse( event.data );
-
-    postMessage( pdbStructure );
-    // postMessage( "moin" );
-
-};
-*/
-
-
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 NGL.ElementColors = {
     "H": 0xFFFFFF, "HE": 0xD9FFFF, "LI": 0xCC80FF, "BE": 0xC2FF00, "B": 0xFFB5B5,
@@ -3395,33 +3378,153 @@ NGL.Atom.prototype = {
 }
 
 
-NGL.AtomArray = function( size ){
+NGL.AtomArray = function( sizeOrObject ){
 
-    this.length = size;
+    if( Number.isInteger( sizeOrObject ) ){
 
-    this.atomno = new Int32Array( size );
-    this.resname = new Uint8Array( 5 * size );
-    this.x = new Float32Array( size );
-    this.y = new Float32Array( size );
-    this.z = new Float32Array( size );
-    this.element = new Uint8Array( 3 * size );
-    this.chainname = new Uint8Array( size );
-    this.resno = new Int32Array( size );
-    this.serial = new Int32Array( size );
-    this.ss = new Uint8Array( size );
-    this.vdw = new Float32Array( size );
-    this.covalent = new Float32Array( size );
-    this.hetero = new Uint8Array( size );
-    this.bfactor = new Float32Array( size );
-    this.bonds = new Array( size );
-    this.altloc = new Uint8Array( size );
-    this.atomname = new Uint8Array( 4 * size );
+        this.init( sizeOrObject );
 
-    this.residue = new Array( size );
+    }else{
+
+        this.fromObject( sizeOrObject );
+
+    }
 
 };
 
 NGL.AtomArray.prototype = {
+
+    init: function( size ){
+
+        this.length = size;
+
+        this.atomno = new Int32Array( size );
+        this.resname = new Uint8Array( 5 * size );
+        this.x = new Float32Array( size );
+        this.y = new Float32Array( size );
+        this.z = new Float32Array( size );
+        this.element = new Uint8Array( 3 * size );
+        this.chainname = new Uint8Array( size );
+        this.resno = new Int32Array( size );
+        this.serial = new Int32Array( size );
+        this.ss = new Uint8Array( size );
+        this.vdw = new Float32Array( size );
+        this.covalent = new Float32Array( size );
+        this.hetero = new Uint8Array( size );
+        this.bfactor = new Float32Array( size );
+
+        this.altloc = new Uint8Array( size );
+        this.atomname = new Uint8Array( 4 * size );
+
+        this.makeBonds();
+        this.makeResidue();
+
+    },
+
+    getBufferList: function(){
+
+        this._bufferList = [
+            this.atomno.buffer,
+            this.resname.buffer,
+            this.x.buffer,
+            this.y.buffer,
+            this.z.buffer,
+            this.element.buffer,
+            this.chainname.buffer,
+            this.resno.buffer,
+            this.serial.buffer,
+            this.ss.buffer,
+            this.vdw.buffer,
+            this.covalent.buffer,
+            this.hetero.buffer,
+            this.bfactor.buffer,
+            this.altloc.buffer,
+            this.atomname.buffer
+        ];
+
+    },
+
+    makeResidue: function(){
+
+        this.residue = new Array( this.length );
+
+    },
+
+    makeBonds: function(){
+
+        var size = this.length;
+
+        this.bonds = new Array( size );
+
+        for( var i = 0; i < size; ++i ){
+            this.bonds[ i ] = [];
+        }
+
+    },
+
+    toObject: function(){
+
+        return {
+            length: this.length,
+
+            atomno: this.atomno,
+            resname: this.resname,
+            x: this.x,
+            y: this.y,
+            z: this.z,
+            element: this.element,
+            chainname: this.chainname,
+            resno: this.resno,
+            serial: this.serial,
+            ss: this.ss,
+            vdw: this.vdw,
+            covalent: this.covalent,
+            hetero: this.hetero,
+            bfactor: this.bfactor,
+            bonds: this.bonds,
+            altloc: this.altloc,
+            atomname: this.atomname,
+
+            residue: this.residue
+        };
+
+    },
+
+    fromObject: function( obj ){
+
+        this.length = obj.length;
+
+        this.atomno = obj.atomno;
+        this.resname = obj.resname;
+        this.x = obj.x;
+        this.y = obj.y;
+        this.z = obj.z;
+        this.element = obj.element;
+        this.chainname = obj.chainname;
+        this.resno = obj.resno;
+        this.serial = obj.serial;
+        this.ss = obj.ss;
+        this.vdw = obj.vdw;
+        this.covalent = obj.covalent;
+        this.hetero = obj.hetero;
+        this.bfactor = obj.bfactor;
+
+        this.altloc = obj.altloc;
+        this.atomname = obj.atomname;
+
+        if( obj.bonds ){
+            this.bonds = obj.bonds;
+        }else{
+            this.makeBonds();
+        }
+
+        if( obj.residue ){
+            this.residue = obj.residue;
+        }else{
+            this.makeResidue();
+        }
+
+    },
 
     setResname: function( i, str ){
 

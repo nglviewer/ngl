@@ -587,11 +587,16 @@ NGL.Examples = {
 
         "largeGro": function( stage ){
 
-            console.time( "test" );
+            stage.loadFile( "__example__/1crn.gro", function( o ){
 
-            stage.loadFile( "__example__/3l5q.gro", function( o ){
+                o.addRepresentation( "ribbon", { color: "residueindex" } );
+                o.centerView();
 
-                o.addRepresentation( "trace", { color: "residueindex" } );
+            } );
+
+            stage.loadFile( "__example__/water.gro", function( o ){
+
+                o.addRepresentation( "line", { color: "residueindex" } );
                 o.centerView();
 
             } );

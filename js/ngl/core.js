@@ -7,7 +7,8 @@
 //////////////
 // Polyfills
 
-if( !HTMLCanvasElement.prototype.toBlob ){
+if( typeof importScripts !== 'function' &&
+        !HTMLCanvasElement.prototype.toBlob ){
 
     HTMLCanvasElement.prototype.toBlob = function(){
 
@@ -47,6 +48,17 @@ if( !HTMLCanvasElement.prototype.toBlob ){
         }
 
     }();
+
+}
+
+
+if ( !Number.isInteger ) {
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
+
+    Number.isInteger = function isInteger( nVal ){
+        return typeof nVal === "number" && isFinite( nVal ) && nVal > -9007199254740992 && nVal < 9007199254740992 && Math.floor( nVal ) === nVal;
+    };
 
 }
 
