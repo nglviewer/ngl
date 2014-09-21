@@ -287,6 +287,7 @@ NGL.AA1 = {
 };
 
 
+// FIXME not synced with worker
 NGL.nextGlobalAtomindex = 0;
 
 
@@ -3180,10 +3181,15 @@ NGL.Residue.prototype = {
 
     },
 
-    addAtom: function(){
+    addAtom: function( a ){
 
-        var a = new NGL.Atom( this );
-        a.index = this.nextAtomIndex();
+        if( !a ){
+            a = new NGL.Atom( this );
+            a.index = this.nextAtomIndex();
+        }else{
+            this.atomCount += 1;
+            a.residue = this;
+        }
         this.atoms.push( a );
         return a;
 
@@ -3390,6 +3396,8 @@ NGL.Atom.prototype = {
 
 
 NGL.AtomArray = function( size ){
+
+    this.length = size;
 
     this.atomno = new Int32Array( size );
     this.resname = new Uint8Array( 5 * size );

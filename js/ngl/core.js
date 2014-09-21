@@ -163,13 +163,11 @@ NGL.unicodeHelper = function(){
 
     return function( str ){
 
-        str = str.replace(
+        return str.replace(
             rg, function( s, p1, p2, offset, sx ){
                 return replace_map[ String( s ) ];
             }
         );
-
-        return str;
 
     };
 
