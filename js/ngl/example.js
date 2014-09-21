@@ -583,7 +583,20 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1crn.obj" );
 
-        }
+        },
+
+        "largeGro": function( stage ){
+
+            console.time( "test" );
+
+            stage.loadFile( "__example__/3l5q.gro", function( o ){
+
+                o.addRepresentation( "trace", { color: "residueindex" } );
+                o.centerView();
+
+            } );
+
+        },
 
     }
 
