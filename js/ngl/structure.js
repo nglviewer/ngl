@@ -3380,6 +3380,8 @@ NGL.Atom.prototype = {
 
 NGL.AtomArray = function( sizeOrObject ){
 
+    this.useBuffer = true;
+
     if( Number.isInteger( sizeOrObject ) ){
 
         this.init( sizeOrObject );
@@ -3398,23 +3400,32 @@ NGL.AtomArray.prototype = {
 
         this.length = size;
 
-        this.atomno = new Int32Array( size );
-        this.resname = new Uint8Array( 5 * size );
-        this.x = new Float32Array( size );
-        this.y = new Float32Array( size );
-        this.z = new Float32Array( size );
-        this.element = new Uint8Array( 3 * size );
-        this.chainname = new Uint8Array( size );
-        this.resno = new Int32Array( size );
-        this.serial = new Int32Array( size );
-        this.ss = new Uint8Array( size );
-        this.vdw = new Float32Array( size );
-        this.covalent = new Float32Array( size );
-        this.hetero = new Uint8Array( size );
-        this.bfactor = new Float32Array( size );
+        if( this.useBuffer ){
 
-        this.altloc = new Uint8Array( size );
-        this.atomname = new Uint8Array( 4 * size );
+            this.makeOffsetAndSize();
+            this.buffer = new ArrayBuffer( this.byteLength );
+            this.makeTypedArrays();
+
+        }else{
+
+            this.atomno = new Int32Array( size );
+            this.resname = new Uint8Array( 5 * size );
+            this.x = new Float32Array( size );
+            this.y = new Float32Array( size );
+            this.z = new Float32Array( size );
+            this.element = new Uint8Array( 3 * size );
+            this.chainname = new Uint8Array( size );
+            this.resno = new Int32Array( size );
+            this.serial = new Int32Array( size );
+            this.ss = new Uint8Array( size );
+            this.vdw = new Float32Array( size );
+            this.covalent = new Float32Array( size );
+            this.hetero = new Uint8Array( size );
+            this.bfactor = new Float32Array( size );
+            this.altloc = new Uint8Array( size );
+            this.atomname = new Uint8Array( 4 * size );
+
+        }
 
         this.makeBonds();
         this.makeResidue();
@@ -3423,24 +3434,114 @@ NGL.AtomArray.prototype = {
 
     getBufferList: function(){
 
-        this._bufferList = [
-            this.atomno.buffer,
-            this.resname.buffer,
-            this.x.buffer,
-            this.y.buffer,
-            this.z.buffer,
-            this.element.buffer,
-            this.chainname.buffer,
-            this.resno.buffer,
-            this.serial.buffer,
-            this.ss.buffer,
-            this.vdw.buffer,
-            this.covalent.buffer,
-            this.hetero.buffer,
-            this.bfactor.buffer,
-            this.altloc.buffer,
-            this.atomname.buffer
-        ];
+        if( this.useBuffer ){
+
+            return [ this.buffer ];
+
+        }else{
+
+            return [
+                this.atomno.buffer,
+                this.resname.buffer,
+                this.x.buffer,
+                this.y.buffer,
+                this.z.buffer,
+                this.element.buffer,
+                this.chainname.buffer,
+                this.resno.buffer,
+                this.serial.buffer,
+                this.ss.buffer,
+                this.vdw.buffer,
+                this.covalent.buffer,
+                this.hetero.buffer,
+                this.bfactor.buffer,
+                this.altloc.buffer,
+                this.atomname.buffer
+            ];
+
+        }
+
+    },
+
+    makeOffsetAndSize: function(){
+
+        var size = this.length;
+
+        // align the offset to multiple of 4
+        // (offset + 3) & ~0x3 == (offset + 3) / 4 * 4;
+
+        this.atomnoOffset = 0;
+        this.atomnoSize = 4 * size;
+
+        this.resnameOffset = this.atomnoSize;
+        this.resnameSize =  5 * size;
+
+        this.xOffset = ( this.resnameOffset + this.resnameSize + 3 ) & ~0x3;
+        this.xSize = 4 * size;
+
+        this.yOffset = this.xOffset + this.xSize;
+        this.ySize = 4 * size;
+
+        this.zOffset = this.yOffset + this.ySize;
+        this.zSize = 4 * size;
+
+        this.elementOffset = this.zOffset + this.zSize;
+        this.elementSize = 3 * size;
+
+        this.chainnameOffset = this.elementOffset + this.elementSize;
+        this.chainnameSize = size;
+
+        this.resnoOffset = ( this.chainnameOffset + this.chainnameSize + 3 ) & ~0x3;
+        this.resnoSize = 4 * size;
+
+        this.serialOffset = this.resnoOffset + this.resnoSize;
+        this.serialSize = 4 * size;
+
+        this.ssOffset = this.serialOffset + this.serialSize;
+        this.ssSize = size;
+
+        this.vdwOffset = ( this.ssOffset + this.ssSize + 3 ) & ~0x3;
+        this.vdwSize = 4 * size;
+
+        this.covalentOffset = this.vdwOffset + this.vdwSize;
+        this.covalentSize = 4 * size;
+
+        this.heteroOffset = this.covalentOffset + this.covalentSize;
+        this.heteroSize = size;
+
+        this.bfactorOffset = ( this.heteroOffset + this.heteroSize + 3 ) & ~0x3;
+        this.bfactorSize = 4 * size;
+
+        this.altlocOffset = this.bfactorOffset + this.bfactorSize;
+        this.altlocSize = size;
+
+        this.atomnameOffset = this.altlocOffset + this.altlocSize;
+        this.atomnameSize = 4 * size;
+
+        this.byteLength = this.atomnameOffset + this.atomnameSize;
+
+    },
+
+    makeTypedArrays: function(){
+
+        var size = this.length;
+
+        this.atomno = new Int32Array( this.buffer, this.atomnoOffset, this.atomnoSize / 4 );
+        this.resname = new Uint8Array( this.buffer, this.resnameOffset, this.resnameSize );
+        this.x = new Float32Array( this.buffer, this.xOffset, this.xSize / 4 );
+        this.y = new Float32Array( this.buffer, this.yOffset, this.ySize / 4 );
+        this.z = new Float32Array( this.buffer, this.zOffset, this.zSize / 4 );
+        this.element = new Uint8Array( this.buffer, this.elementOffset, this.elementSize );
+        this.chainname = new Uint8Array( this.buffer, this.chainnameOffset, this.chainnameSize );
+        this.resno = new Int32Array( this.buffer, this.resnoOffset, this.resnoSize / 4 );
+        this.serial = new Int32Array( this.buffer, this.serialOffset, this.serialSize / 4 );
+        this.ss = new Uint8Array( this.buffer, this.ssOffset, this.ssSize );
+        this.vdw = new Float32Array( this.buffer, this.vdwOffset, this.vdwSize / 4 );
+        this.covalent = new Float32Array( this.buffer, this.covalentOffset, this.covalentSize / 4 );
+        this.hetero = new Uint8Array( this.buffer, this.heteroOffset, this.heteroSize );
+        this.bfactor = new Float32Array( this.buffer, this.bfactorOffset, this.bfactorSize / 4 );
+        this.altloc = new Uint8Array( this.buffer, this.altlocOffset, this.altlocSize );
+        this.atomname = new Uint8Array( this.buffer, this.atomnameOffset, this.atomnameSize );
 
     },
 
@@ -3464,29 +3565,44 @@ NGL.AtomArray.prototype = {
 
     toObject: function(){
 
-        return {
-            length: this.length,
+        if( this.useBuffer ){
 
-            atomno: this.atomno,
-            resname: this.resname,
-            x: this.x,
-            y: this.y,
-            z: this.z,
-            element: this.element,
-            chainname: this.chainname,
-            resno: this.resno,
-            serial: this.serial,
-            ss: this.ss,
-            vdw: this.vdw,
-            covalent: this.covalent,
-            hetero: this.hetero,
-            bfactor: this.bfactor,
-            bonds: this.bonds,
-            altloc: this.altloc,
-            atomname: this.atomname,
+            return {
+                length: this.length,
 
-            residue: this.residue
-        };
+                buffer: this.buffer,
+
+                bonds: this.bonds,
+                residue: this.residue
+            };
+
+        }else{
+
+            return {
+                length: this.length,
+
+                atomno: this.atomno,
+                resname: this.resname,
+                x: this.x,
+                y: this.y,
+                z: this.z,
+                element: this.element,
+                chainname: this.chainname,
+                resno: this.resno,
+                serial: this.serial,
+                ss: this.ss,
+                vdw: this.vdw,
+                covalent: this.covalent,
+                hetero: this.hetero,
+                bfactor: this.bfactor,
+                altloc: this.altloc,
+                atomname: this.atomname,
+
+                bonds: this.bonds,
+                residue: this.residue
+            };
+
+        }
 
     },
 
@@ -3494,23 +3610,32 @@ NGL.AtomArray.prototype = {
 
         this.length = obj.length;
 
-        this.atomno = obj.atomno;
-        this.resname = obj.resname;
-        this.x = obj.x;
-        this.y = obj.y;
-        this.z = obj.z;
-        this.element = obj.element;
-        this.chainname = obj.chainname;
-        this.resno = obj.resno;
-        this.serial = obj.serial;
-        this.ss = obj.ss;
-        this.vdw = obj.vdw;
-        this.covalent = obj.covalent;
-        this.hetero = obj.hetero;
-        this.bfactor = obj.bfactor;
+        if( this.useBuffer ){
 
-        this.altloc = obj.altloc;
-        this.atomname = obj.atomname;
+            this.makeOffsetAndSize();
+            this.buffer = obj.buffer;
+            this.makeTypedArrays();
+
+        }else{
+
+            this.atomno = obj.atomno;
+            this.resname = obj.resname;
+            this.x = obj.x;
+            this.y = obj.y;
+            this.z = obj.z;
+            this.element = obj.element;
+            this.chainname = obj.chainname;
+            this.resno = obj.resno;
+            this.serial = obj.serial;
+            this.ss = obj.ss;
+            this.vdw = obj.vdw;
+            this.covalent = obj.covalent;
+            this.hetero = obj.hetero;
+            this.bfactor = obj.bfactor;
+            this.altloc = obj.altloc;
+            this.atomname = obj.atomname;
+
+        }
 
         if( obj.bonds ){
             this.bonds = obj.bonds;
