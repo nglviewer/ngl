@@ -2196,8 +2196,8 @@ NGL.Structure.prototype = {
             }else if( r1.isCg() && r2.isCg() ){
 
                 bondSet.addBondIfConnected(
-                    r1.getAtomByName( "CA" ),
-                    r2.getAtomByName( "CA" )
+                    r1.getAtomByName([ "CA", "BB" ]),
+                    r2.getAtomByName([ "CA", "BB" ])
                 );
 
             }
@@ -2853,8 +2853,8 @@ NGL.Chain.prototype = {
 
             }else if( r1.isCg() && r2.isCg() ){
 
-                a1 = r1.getAtomByName( 'CA' );
-                a2 = r2.getAtomByName( 'CA' );
+                a1 = r1.getAtomByName([ 'CA', 'BB' ]);
+                a2 = r2.getAtomByName([ 'CA', 'BB' ]);
 
             }else{
 
@@ -2921,9 +2921,9 @@ NGL.Fiber = function( residues, structure ){
 
     }else if( this.isCg() ){
 
-        this.traceAtomname = "CA";
-        this.directionAtomname1 = "CA";
-        this.directionAtomname2 = "CA";
+        this.traceAtomname = [ "CA", "BB" ];
+        this.directionAtomname1 = this.traceAtomname;
+        this.directionAtomname2 = this.traceAtomname;
 
     }
 
@@ -3048,8 +3048,9 @@ NGL.Residue.prototype = {
 
             if( this._cg === undefined ){
 
-                this._cg = !this.isProtein() && this.getAtomByName( "CA" ) &&
-                    this.atomCount <= 4 &&
+                this._cg = !this.isProtein() &&
+                    this.getAtomByName([ "CA", "BB" ]) &&
+                    this.atomCount <= 5 &&
                     AA3.indexOf( this.resname ) !== -1;
 
             }
@@ -3111,7 +3112,7 @@ NGL.Residue.prototype = {
 
     isWater: function(){
 
-        var water = [ "SOL", "WAT", "HOH", "H2O" ];
+        var water = [ "SOL", "WAT", "HOH", "H2O", "W" ];
 
         return function(){
 
@@ -3269,7 +3270,7 @@ NGL.Residue.prototype = {
 
         }else if( this.isCg() ){
 
-            return this.getAtomByName( 'CA' );
+            return this.getAtomByName([ 'CA', 'BB' ]);
 
         }
 
@@ -3287,7 +3288,7 @@ NGL.Residue.prototype = {
 
         }else if( this.isCg() ){
 
-            return this.getAtomByName( 'CA' );
+            return this.getAtomByName([ 'CA', 'BB' ]);
 
         }
 
@@ -4419,7 +4420,7 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( ( c.length >= 2 && c.length <= 4 ) &&
+            if( ( c.length >= 1 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
 
@@ -4609,7 +4610,7 @@ NGL.Selection.prototype = {
             "O3*", "O5*", "C5*", "C4*", "C3*"
         ];
         var backboneCg = [
-            "CA"
+            "CA", "BB"
         ];
 
         var fn = function( a, s ){
