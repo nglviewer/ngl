@@ -587,6 +587,8 @@ NGL.Examples = {
 
         "largeGro": function( stage ){
 
+            console.time( "test" );
+
             // stage.loadFile( "__example__/1crn.gro", function( o ){
 
             //     o.addRepresentation( "ribbon", { color: "residueindex" } );
@@ -594,19 +596,27 @@ NGL.Examples = {
 
             // } );
 
-            // stage.loadFile( "__example__/water.gro", function( o ){
+            stage.loadFile( "__example__/water.gro", function( o ){
 
-            //     o.addRepresentation( "line", { color: "residueindex" } );
-            //     stage.centerView();
+                o.addRepresentation( "line", { color: "residueindex" } );
+                stage.centerView();
 
-            // } );
+                o.viewer.render();
 
-            stage.loadFile( "__example__/3l5q.gro", function( o ){
+                console.timeEnd( "test" );
+
+            } );
+
+            /*stage.loadFile( "__example__/3l5q.gro", function( o ){
 
                 o.addRepresentation( "trace", { color: "residueindex", subdiv: 3 } );
                 stage.centerView();
 
-            } );
+                o.viewer.render();
+
+                console.timeEnd( "test" );
+
+            } );*/
 
         },
 

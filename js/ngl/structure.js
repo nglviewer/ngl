@@ -1087,7 +1087,7 @@ NGL.BondSet.prototype = {
 
         if( bondDict[ qn ] ){
 
-            // console.debug( "bond already known" );
+            // console.debug( "bond already known", qn );
 
         }else{
 
@@ -3335,7 +3335,7 @@ NGL.Atom.prototype = {
     altloc: undefined,
     atomname: undefined,
 
-    connectedTo: function( atom, foo ){
+    connectedTo: function( atom ){
 
         if( this.hetero && atom.hetero &&
             this.residue.chain.model.structure.hasConnect ) return false;

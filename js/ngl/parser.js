@@ -123,14 +123,20 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     var n = lines.length;
 
-    var atomCount = 0;
-    for( i = 0; i < n; ++i ){
-        recordName = lines[ i ].substr( 0, 6 )
-        if( recordName === 'ATOM  ' || recordName === 'HETATM' ) ++atomCount;
-    }
+    var useArray = false;
 
-    this.atomArray = new NGL.AtomArray( atomCount );
-    var atomArray = this.atomArray;
+    if( useArray ){
+
+        var atomCount = 0;
+        for( i = 0; i < n; ++i ){
+            recordName = lines[ i ].substr( 0, 6 )
+            if( recordName === 'ATOM  ' || recordName === 'HETATM' ) ++atomCount;
+        }
+
+        this.atomArray = new NGL.AtomArray( atomCount );
+        var atomArray = this.atomArray;
+
+    }
 
     var _i = 0;
     var _step = 10000;
@@ -197,7 +203,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 if( !element ) element = guessElem( atomname );
 
-                if( false ){
+                if( useArray ){
 
                     a = r.addProxyAtom( atomArray );
                     var index = a.index;
@@ -498,15 +504,24 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
     parser( str, function( atomArray ){
 
-        s.atomArray = atomArray;
         s.atomCount = atomArray.length;
 
-        var i;
-        var n = s.atomCount;
+        if( !Array.isArray( atomArray ) ){
 
-        for( i = 0; i < n; ++i ){
+            s.atomArray = atomArray;
 
-            s.atoms.push( new NGL.ProxyAtom( atomArray, i ) );
+            var i;
+            var n = s.atomCount;
+
+            for( i = 0; i < n; ++i ){
+
+                s.atoms.push( new NGL.ProxyAtom( atomArray, i ) );
+
+            }
+
+        }else{
+
+            s.atoms = atomArray;
 
         }
 
@@ -524,7 +539,7 @@ NGL.GroParser.parseAtoms = function( str, callback ){
 
     console.time( "NGL.GroParser._parseAtoms" );
 
-    var lines = str.split( "\n" );
+    var lines = str.trim().split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -575,7 +590,7 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
     console.time( "NGL.GroParser._parseAtomsChunked" );
 
-    var lines = str.split( "\n" );
+    var lines = str.trim().split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -584,10 +599,20 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
     var i;
     var line, atomname, element, resname;
 
-    var atomArray = new NGL.AtomArray( parseInt( lines[ 1 ] ) );
-
-    var a = new NGL.ProxyAtom( atomArray, 0 );
     var index = 0;
+    var useArray = false;
+
+    if( useArray ){
+
+        var atomArray = new NGL.AtomArray( parseInt( lines[ 1 ] ) );
+        var a = new NGL.ProxyAtom( atomArray, 0 );
+
+    }else{
+
+        var a;
+        var atoms = [];
+
+    }
 
     var n = lines.length - 1;
 
@@ -606,7 +631,7 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
             element = guessElem( atomname );
 
-            if( true ){
+            if( useArray ){
 
                 atomArray.setResname( index, resname );
                 atomArray.x[ index ] = parseFloat( line.substr( 20, 8 ) ) * 10;
@@ -620,9 +645,10 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
                 atomArray.vdw[ index ] = vdwRadii[ element ];
                 atomArray.covalent[ index ] = covRadii[ element ];
 
-                index += 1;
-
             }else{
+
+                a = new NGL.Atom();
+                a.bonds = [];
 
                 a.resname = resname;
                 a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
@@ -636,9 +662,12 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
                 a.vdw = vdwRadii[ element ];
                 a.covalent = covRadii[ element ];
 
-                a.index += 1;
+                atoms.push( a );
 
             }
+
+            a.index = index;
+            index += 1;
 
         }
 
@@ -646,7 +675,11 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
             console.timeEnd( "NGL.GroParser._parseAtomsChunked" );
 
-            callback( atomArray );
+            if( useArray ){
+                callback( atomArray );
+            }else{
+                callback( atoms );
+            }
 
         }else{
 
