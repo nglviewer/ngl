@@ -30,15 +30,15 @@
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
-varying float vRadius;
+// varying float vRadius;
 
 varying vec3 point;
 varying vec3 axis;
-varying vec3 base;
-varying vec3 end;
+varying vec4 base_radius;
+varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
-varying float b;
+// varying float b;
 
 #ifdef PICKING
     varying vec3 vPickingColor;
@@ -71,6 +71,12 @@ const float opacity = 1.0;
 
 void main()
 {
+
+    // unpacking
+    vec3 base = base_radius.xyz;
+    float vRadius = base_radius.w;
+    vec3 end = end_b.xyz;
+    float b = end_b.w;
 
     vec3 end_cyl = end;
     vec3 surface_point = point;
