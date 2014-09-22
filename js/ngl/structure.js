@@ -1754,7 +1754,6 @@ NGL.TrajectoryPlayer.prototype = {
 };
 
 
-
 NGL.Matrix = function( columns, rows ){
 
     var dtype = jsfeat.F32_t | jsfeat.C1_t;
@@ -2456,10 +2455,6 @@ NGL.Structure.prototype = {
     }()
 
 };
-
-// ATOM      1    N ILE A   1       3.751   6.807  -2.135  1.00  0.00           N
-// ATOM      1    N ILE A   1       3.751   6.807-  2.135- 1.00- 0.00      -   -N
-// ATOM      1  N   ILE A   1       3.751   6.807  -2.135  1.00  0.00           N
 
 NGL.AtomSet.prototype.apply( NGL.Structure.prototype );
 

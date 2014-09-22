@@ -284,6 +284,10 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
 NGL.SpacefillRepresentation = function( structure, viewer, params ){
 
+    params = params || {};
+
+    this.sphereDetail = params.sphereDetail || 1;
+
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -294,13 +298,22 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     name: "spacefill",
 
+    parameters: {
+
+        sphereDetail: {
+            type: "integer", max: 3, min: 0
+        }
+
+    },
+
     create: function(){
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" )
+            this.atomSet.atomColor( null, "picking" ),
+            this.sphereDetail
         );
 
         this.bufferList = [ this.sphereBuffer ];
@@ -337,6 +350,24 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer.setAttributes( sphereData );
 
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "sphereDetail" ]!==undefined ){
+
+            this.sphereDetail = params[ "sphereDetail" ];
+            rebuild = true;
+
+        }
+
+        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+
+        return this;
+
     }
 
 } );
@@ -348,6 +379,8 @@ NGL.BallAndStickRepresentation = function( structure, viewer, params ){
     params.radius = params.radius || this.defaultSize;
 
     this.aspectRatio = params.aspectRatio || 2.0;
+    this.sphereDetail = params.sphereDetail || 1;
+    this.radiusSegments = params.radiusSegments || 10;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
@@ -365,6 +398,12 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
+        },
+        sphereDetail: {
+            type: "integer", max: 3, min: 0
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5
         }
 
     },
@@ -377,7 +416,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.atomSet.atomRadius(
                 null, this.radius, this.scale * this.aspectRatio
             ),
-            this.atomSet.atomColor( null, "picking" )
+            this.atomSet.atomColor( null, "picking" ),
+            this.sphereDetail
         );
 
         this.__center = new Float32Array( this.atomSet.bondCount * 3 );
@@ -391,7 +431,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             null,
             null,
             this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" )
+            this.atomSet.bondColor( null, 1, "picking" ),
+            this.radiusSegments
         );
 
         this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -461,6 +502,20 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "sphereDetail" ]!==undefined ){
+
+            this.sphereDetail = params[ "sphereDetail" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radiusSegments" ] ){
+
+            this.radiusSegments = params[ "radiusSegments" ];
+            rebuild = true;
+
+        }
+
         NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
@@ -475,6 +530,9 @@ NGL.LicoriceRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.radius = params.radius || this.defaultSize;
 
+    this.sphereDetail = params.sphereDetail || 1;
+    this.radiusSegments = params.radiusSegments || 10;
+
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -487,13 +545,25 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     defaultSize: 0.15,
 
+    parameters: {
+
+        sphereDetail: {
+            type: "integer", max: 3, min: 0
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5
+        }
+
+    },
+
     create: function(){
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" )
+            this.atomSet.atomColor( null, "picking" ),
+            this.sphereDetail
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -505,7 +575,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             null,
             null,
             this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" )
+            this.atomSet.bondColor( null, 1, "picking" ),
+            this.radiusSegments
         );
 
         this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -517,6 +588,31 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
         this.aspectRatio = 1.0;
 
         NGL.BallAndStickRepresentation.prototype.update.call( this, what );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "sphereDetail" ]!==undefined ){
+
+            this.sphereDetail = params[ "sphereDetail" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radiusSegments" ] ){
+
+            this.radiusSegments = params[ "radiusSegments" ];
+            rebuild = true;
+
+        }
+
+        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+
+        return this;
 
     }
 
@@ -711,6 +807,10 @@ NGL.BackboneRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.radius = params.radius || this.defaultSize;
 
+    this.aspectRatio = params.aspectRatio || 1.0;
+    this.sphereDetail = params.sphereDetail || 1;
+    this.radiusSegments = params.radiusSegments || 10;
+
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -722,6 +822,20 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
     name: "backbone",
 
     defaultSize: 0.25,
+
+    parameters: {
+
+        aspectRatio: {
+            type: "number", precision: 1, max: 10.0, min: 1.0
+        },
+        sphereDetail: {
+            type: "integer", max: 3, min: 0
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5
+        }
+
+    },
 
     create: function(){
 
@@ -735,6 +849,9 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         var color = this.color;
         var radius = this.radius;
         var scale = this.scale;
+        var aspectRatio = this.aspectRatio;
+        var sphereDetail = this.sphereDetail;
+        var radiusSegments = this.radiusSegments;
         var test = this.selection.test;
 
         this.structure.eachFiber( function( f ){
@@ -775,8 +892,9 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             sphereBuffer = new NGL.SphereBuffer(
                 backboneAtomSet.atomPosition(),
                 backboneAtomSet.atomColor( null, color ),
-                backboneAtomSet.atomRadius( null, radius, scale ),
-                backboneAtomSet.atomColor( null, "picking" )
+                backboneAtomSet.atomRadius( null, radius, scale * aspectRatio ),
+                backboneAtomSet.atomColor( null, "picking" ),
+                sphereDetail
             );
 
             cylinderBuffer = new NGL.CylinderBuffer(
@@ -788,7 +906,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 null,
                 null,
                 backboneBondSet.bondColor( null, 0, "picking" ),
-                backboneBondSet.bondColor( null, 1, "picking" )
+                backboneBondSet.bondColor( null, 1, "picking" ),
+                radiusSegments
             );
 
             bufferList.push( sphereBuffer )
@@ -854,11 +973,11 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             if( what[ "radius" ] || what[ "scale" ] ){
 
                 sphereData[ "radius" ] = backboneAtomSet.atomRadius(
-                    null, this.radius, this.scale
+                    null, this.radius, this.scale * this.aspectRatio
                 );
 
                 cylinderData[ "radius" ] = backboneBondSet.bondRadius(
-                    null, null, this.radius, this.scale
+                    null, 0, this.radius, this.scale
                 );
 
             }
@@ -867,6 +986,39 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             cylinderBuffer.setAttributes( cylinderData );
 
         }
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "aspectRatio" ] ){
+
+            this.aspectRatio = params[ "aspectRatio" ];
+            what[ "radius" ] = true;
+            what[ "scale" ] = true;
+
+        }
+
+        if( params && params[ "sphereDetail" ]!==undefined ){
+
+            this.sphereDetail = params[ "sphereDetail" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radiusSegments" ] ){
+
+            this.radiusSegments = params[ "radiusSegments" ];
+            rebuild = true;
+
+        }
+
+        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+
+        return this;
 
     }
 

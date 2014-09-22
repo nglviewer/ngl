@@ -2644,9 +2644,11 @@ NGL.GeometryBuffer.prototype = {
 }
 
 
-NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor ){
+NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, detail ){
 
-    this.geo = new THREE.IcosahedronGeometry( 1, 2 );
+    detail = detail!==undefined ? detail : 1;
+
+    this.geo = new THREE.IcosahedronGeometry( 1, detail );
 
     this.setPositionTransform( radius );
 
@@ -2682,13 +2684,15 @@ NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
 }
 
 
-NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2 ){
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments ){
+
+    radiusSegments = radiusSegments || 10;
 
     this.updateNormals = true;
 
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
 
-    this.geo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
+    this.geo = new THREE.CylinderGeometry(1, 1, 1, radiusSegments, 1, true);
     this.geo.applyMatrix( matrix );
 
     var n = from.length;
@@ -3883,11 +3887,11 @@ NGL.TubeMeshBuffer.prototype = {
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, detail ){
 
     if( NGL.disableImpostor ){
 
-        return new NGL.SphereGeometryBuffer( position, color, radius, pickingColor );
+        return new NGL.SphereGeometryBuffer( position, color, radius, pickingColor, detail );
 
     }else{
 
@@ -3898,12 +3902,12 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor ){
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2 ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments ){
 
     if( NGL.disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
-            from, to, color, color2, radius, pickingColor, pickingColor2
+            from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments
         );
 
     }else{
