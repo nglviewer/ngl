@@ -394,6 +394,24 @@ NGL.MenubarHelpWidget = function( stage ){
         window.open( '../test/bench/benchmarks.html', '_blank' );
     }
 
+    function onPreferencesOptionClick () {
+
+        preferencesWidget
+            .setOpacity( "0.8" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setDisplay( "block" );
+
+        return;
+
+    }
+
+    // export image
+
+    var preferencesWidget = new NGL.PreferencesWidget( stage )
+        .setDisplay( "none" )
+        .attach();
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -403,12 +421,104 @@ NGL.MenubarHelpWidget = function( stage ){
         createOption( 'Documentation', onDocOptionClick ),
         createDivider(),
         createOption( 'Unittests', onUnittestsOptionClick ),
-        createOption( 'Benchmarks', onBenchmarksOptionClick )
+        createOption( 'Benchmarks', onBenchmarksOptionClick ),
+        createDivider(),
+        createOption( 'Prefereces', onPreferencesOptionClick, 'sliders' )
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
     return UI.MenubarHelper.createMenuContainer( 'Help', optionsPanel );
+
+};
+
+
+// Preferences
+
+NGL.Preferences = function( stage ){
+
+    this.stage = stage;
+
+};
+
+NGL.Preferences.prototype = {
+
+    setTheme: function( value ) {
+
+        var cssPath, viewerBackground;
+
+        if( value === "light" ){
+            cssPath = "../css/light.css";
+            viewerBackground = "white";
+        }else{
+            cssPath = "../css/dark.css";
+            viewerBackground = "black";
+        }
+
+        document.getElementById( 'theme' ).href = cssPath;
+        this.stage.viewer.setBackground( viewerBackground );
+
+    }
+
+};
+
+
+NGL.PreferencesWidget = function( stage ){
+
+    var preferences = new NGL.Preferences( stage );
+
+    var container = new UI.OverlayPanel();
+
+    var headingPanel = new UI.Panel()
+        .setBorderBottom( "1px solid #555" )
+        .setHeight( "25px" );
+
+    var listingPanel = new UI.Panel()
+        .setMarginTop( "10px" )
+        .setMinHeight( "100px" )
+        .setMaxHeight( "500px" )
+        .setOverflow( "auto" );
+
+    headingPanel.add( new UI.Text( "Preferences" ) );
+    headingPanel.add(
+        new UI.Icon( "times" )
+            .setMarginLeft( "20px" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                container.setDisplay( "none" );
+
+            } )
+    );
+
+    container.add( headingPanel );
+    container.add( listingPanel );
+
+    //
+
+    var themeSelect = new UI.Select()
+        .setOptions( { "dark": "dark", "light": "light" } )
+        .setValue( "dark" )
+        .onChange( function(){
+
+            preferences.setTheme( themeSelect.getValue() );
+
+        } );
+
+    //
+
+    function addEntry( label, entry ){
+
+        listingPanel
+            .add( new UI.Text( label ).setWidth( "80px" ) )
+            .add( entry || new UI.Panel() )
+            .add( new UI.Break() );
+
+    }
+
+    addEntry( "theme", themeSelect );
+
+    return container;
 
 };
 
