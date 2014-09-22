@@ -3911,23 +3911,49 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.residue[ this.index ] = value;
     },
 
+    // connectedTo: function( atom ){
+
+    //     if( this.hetero && atom.hetero ) return false;
+
+    //     var x = this.x - atom.x;
+    //     var y = this.y - atom.y;
+    //     var z = this.z - atom.z;
+
+    //     var distSquared = x * x + y * y + z * z;
+
+    //     // console.log( distSquared );
+    //     if( this.residue.isCg() && distSquared < 28.0 ) return true;
+
+    //     if( isNaN( distSquared ) ) return false;
+    //     if( distSquared < 0.5 ) return false; // duplicate or altloc
+
+    //     var d = this.covalent + atom.covalent + 0.3;
+    //     return distSquared < ( d * d );
+
+    // },
+
     connectedTo: function( atom ){
 
-        if( this.hetero && atom.hetero ) return false;
+        var taa = this.atomArray;
+        var aaa = atom.atomArray;
+        var ti = this.index;
+        var ai = atom.index;
 
-        var x = this.x - atom.x;
-        var y = this.y - atom.y;
-        var z = this.z - atom.z;
+        if( taa.hetero[ ti ] && aaa.hetero[ ai ] ) return false;
+
+        var x = taa.x[ ti ] - aaa.x[ ai ];
+        var y = taa.y[ ti ] - aaa.y[ ai ];
+        var z = taa.z[ ti ] - aaa.z[ ai ];
 
         var distSquared = x * x + y * y + z * z;
 
         // console.log( distSquared );
-        if( this.residue.isCg() && distSquared < 28.0 ) return true;
+        if( taa.residue[ ti ].isCg() && distSquared < 28.0 ) return true;
 
         if( isNaN( distSquared ) ) return false;
         if( distSquared < 0.5 ) return false; // duplicate or altloc
 
-        var d = this.covalent + atom.covalent + 0.3;
+        var d = taa.covalent[ ti ] + aaa.covalent[ ai ] + 0.3;
         return distSquared < ( d * d );
 
     },

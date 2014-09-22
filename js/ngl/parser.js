@@ -78,7 +78,9 @@ NGL.PdbParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
-    console.time( "NGL.PdbParser._parse" );
+    var __timeName = "NGL.PdbParser._parse " + this.name;
+
+    console.time( __timeName );
 
     var s = this.structure;
 
@@ -120,6 +122,15 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var a, currentChainname, currentResno, currentBiomol;
 
     var n = lines.length;
+
+    var atomCount = 0;
+    for( i = 0; i < n; ++i ){
+        recordName = lines[ i ].substr( 0, 6 )
+        if( recordName === 'ATOM  ' || recordName === 'HETATM' ) ++atomCount;
+    }
+
+    this.atomArray = new NGL.AtomArray( atomCount );
+    var atomArray = this.atomArray;
 
     var _i = 0;
     var _step = 10000;
@@ -186,26 +197,51 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 if( !element ) element = guessElem( atomname );
 
-                a = r.addAtom();
+                if( false ){
+
+                    a = r.addProxyAtom( atomArray );
+                    var index = a.index;
+
+                    atomArray.setResname( index, resname );
+                    atomArray.x[ index ] = parseFloat( line.substr( 30, 8 ) );
+                    atomArray.y[ index ] = parseFloat( line.substr( 38, 8 ) );
+                    atomArray.z[ index ] = parseFloat( line.substr( 46, 8 ) );
+                    atomArray.setElement( index, element );
+                    atomArray.hetero[ index ] = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                    atomArray.chainname[ index ] = chainname.charCodeAt( 0 );
+                    atomArray.resno[ index ] = resno;
+                    atomArray.serial[ index ] = serial;
+                    atomArray.setAtomname( index, atomname );
+                    atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
+                    atomArray.bfactor[ index ] = parseFloat( line.substr( 60, 8 ) );
+                    atomArray.altloc[ index ] = altloc.charCodeAt( 0 );
+                    atomArray.vdw[ index ] = vdwRadii[ element ];
+                    atomArray.covalent[ index ] = covRadii[ element ];
+
+                }else{
+
+                    a = r.addAtom();
+                    a.bonds = [];
+
+                    a.resname = resname;
+                    a.x = parseFloat( line.substr( 30, 8 ) );
+                    a.y = parseFloat( line.substr( 38, 8 ) );
+                    a.z = parseFloat( line.substr( 46, 8 ) );
+                    a.element = element;
+                    a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
+                    a.chainname = chainname;
+                    a.resno = resno;
+                    a.serial = serial;
+                    a.atomname = atomname;
+                    a.ss = 'c';
+                    a.bfactor = parseFloat( line.substr( 60, 8 ) );
+                    a.altloc = altloc;
+                    a.vdw = vdwRadii[ element ];
+                    a.covalent = covRadii[ element ];
+
+                }
 
                 serialDict[ serial ] = a;
-
-                a.resname = resname;
-                a.x = parseFloat( line.substr( 30, 8 ) );
-                a.y = parseFloat( line.substr( 38, 8 ) );
-                a.z = parseFloat( line.substr( 46, 8 ) );
-                a.element = element;
-                a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
-                a.chainname = chainname;
-                a.resno = resno;
-                a.serial = serial;
-                a.atomname = atomname;
-                a.bonds = [];
-                a.ss = 'c';
-                a.bfactor = parseFloat( line.substr( 60, 8 ) );
-                a.altloc = altloc;
-                a.vdw = vdwRadii[ element ];
-                a.covalent = covRadii[ element ];
 
                 currentChainname = chainname;
                 currentResno = resno;
@@ -313,7 +349,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
         if( _n === n ){
 
-            console.timeEnd( "NGL.PdbParser._parse" );
+            console.timeEnd( __timeName );
 
             _postProcess();
             callback( s );
@@ -551,6 +587,7 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
     var atomArray = new NGL.AtomArray( parseInt( lines[ 1 ] ) );
 
     var a = new NGL.ProxyAtom( atomArray, 0 );
+    var index = 0;
 
     var n = lines.length - 1;
 
@@ -569,20 +606,39 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
             element = guessElem( atomname );
 
-            a.resname = resname;
-            a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
-            a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
-            a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
-            a.element = element;
-            a.resno = parseInt( line.substr( 0, 5 ) );
-            a.serial = parseInt( line.substr( 15, 5 ) );
-            a.atomname = atomname;
-            a.ss = 'c';
+            if( true ){
 
-            a.vdw = vdwRadii[ element ];
-            a.covalent = covRadii[ element ];
+                atomArray.setResname( index, resname );
+                atomArray.x[ index ] = parseFloat( line.substr( 20, 8 ) ) * 10;
+                atomArray.y[ index ] = parseFloat( line.substr( 28, 8 ) ) * 10;
+                atomArray.z[ index ] = parseFloat( line.substr( 36, 8 ) ) * 10;
+                atomArray.setElement( index, element );
+                atomArray.resno[ index ] = parseInt( line.substr( 0, 5 ) );
+                atomArray.serial[ index ] = parseInt( line.substr( 15, 5 ) );
+                atomArray.setAtomname( index, atomname );
+                atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
+                atomArray.vdw[ index ] = vdwRadii[ element ];
+                atomArray.covalent[ index ] = covRadii[ element ];
 
-            a.index += 1;
+                index += 1;
+
+            }else{
+
+                a.resname = resname;
+                a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
+                a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
+                a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
+                a.element = element;
+                a.resno = parseInt( line.substr( 0, 5 ) );
+                a.serial = parseInt( line.substr( 15, 5 ) );
+                a.atomname = atomname;
+                a.ss = 'c';
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
+
+                a.index += 1;
+
+            }
 
         }
 
