@@ -1031,8 +1031,8 @@ NGL.TubeRepresentation = function( structure, viewer, params ){
     params.color = params.color || "ss";
     params.radius = params.radius || this.defaultSize;
 
-    this.subdiv = params.subdiv || 10;
-    this.radialSegments = params.radialSegments || 12;
+    this.subdiv = params.subdiv || 6;
+    this.radialSegments = params.radialSegments || 10;
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
     this.wireframe = params.wireframe || false;
@@ -1222,8 +1222,8 @@ NGL.CartoonRepresentation = function( structure, viewer, params ){
     params.radius = params.radius || "ss";
 
     this.aspectRatio = params.aspectRatio || 3.0;
-    this.subdiv = params.subdiv || 10;
-    this.radialSegments = params.radialSegments || 12;
+    this.subdiv = params.subdiv || 6;
+    this.radialSegments = params.radialSegments || 10;
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
     this.wireframe = params.wireframe || false;
@@ -1428,7 +1428,7 @@ NGL.RibbonRepresentation = function( structure, viewer, params ){
     params.radius = params.radius || "ss";
     params.scale = params.scale || 3.0;
 
-    this.subdiv = params.subdiv || 10;
+    this.subdiv = params.subdiv || 6;
     this.tension = params.tension || NaN;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
@@ -1577,7 +1577,7 @@ NGL.TraceRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.color = params.color || "ss";
 
-    this.subdiv = params.subdiv || 10;
+    this.subdiv = params.subdiv || 6;
     this.tension = params.tension || NaN;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
