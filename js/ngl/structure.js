@@ -1653,7 +1653,7 @@ NGL.Trajectory.prototype = {
     setPlayer: function( player ){
 
         this.player = player;
-        this.signals.playerChanged.dispatch( this.player );
+        this.signals.playerChanged.dispatch( player );
 
     }
 
@@ -1685,6 +1685,9 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     this.start = start || 0;
     this.end = end || traj.numframes;
 
+    this.mode = "loop"; // loop, once
+    this.direction = "forward"; // forward, backward
+
     this._stopFlag = false;
     this._running = false;
 
@@ -1694,14 +1697,43 @@ NGL.TrajectoryPlayer.prototype = {
 
     _animate: function(){
 
+        var i;
         this._running = true;
 
         if( !this.traj.inProgress && !this._stopFlag ){
-            var i = this.traj.currentFrame + this.step;
-            if( i >= this.end || i < this.start ){
-                i = this.start;
+
+            if( this.direction === "forward" ){
+                i = this.traj.currentFrame + this.step;
+            }else{
+                i = this.traj.currentFrame - this.step;
             }
+
+            if( i >= this.end || i < this.start ){
+
+                if( this.mode === "once" ){
+
+                    this.pause();
+
+                    if( this.direction === "forward" ){
+                        i = this.end;
+                    }else{
+                        i = this.start;
+                    }
+
+                }else{
+
+                    if( this.direction === "forward" ){
+                        i = this.start;
+                    }else{
+                        i = this.end;
+                    }
+
+                }
+
+            }
+
             this.traj.setFrame( i );
+
         }
 
         if( !this._stopFlag ){
@@ -1725,12 +1757,33 @@ NGL.TrajectoryPlayer.prototype = {
     play: function(){
 
         if( !this._running ){
+
             if( this.traj.player !== this ){
                 this.traj.setPlayer( this );
             }
+
+            if( this.mode === "once" ){
+
+                var i = this.traj.currentFrame;
+
+                if( i >= this.end || i <= this.start ){
+
+                    if( this.direction === "forward" ){
+                        i = this.start;
+                    }else{
+                        i = this.end;
+                    }
+
+                    this.traj.setFrame( i );
+
+                }
+
+            }
+
             this._stopFlag = false;
             this._animate();
             this.signals.startedRunning.dispatch();
+
         }
 
     },
