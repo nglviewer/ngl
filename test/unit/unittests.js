@@ -314,7 +314,7 @@ QUnit.test( "negate parens 3", function( assert ) {
                         "operator": "AND",
                         "rules": [
                             { "resno": [ 10, 15 ] },
-                            { "resno": [ 15, 20 ] } 
+                            { "resno": [ 15, 20 ] }
                         ]
                     }
                 ]
@@ -616,13 +616,7 @@ QUnit.test( "MET or sidechain", function( assert ) {
         "operator": "OR",
         "rules": [
             { "resname": "MET" },
-            {
-                "operator": undefined,
-                "negate": true,
-                "rules": [
-                    { "keyword": "BACKBONE" }
-                ]
-            }
+            { "keyword": "SIDECHAIN" }
         ]
     };
 
@@ -645,13 +639,7 @@ QUnit.test( "MET or not sidechain", function( assert ) {
                 "operator": undefined,
                 "negate": true,
                 "rules": [
-                    {
-                        "operator": undefined,
-                        "negate": true,
-                        "rules": [
-                            { "keyword": "BACKBONE" }
-                        ]
-                    }
+                    { "keyword": "SIDECHAIN" }
                 ]
             }
         ]
@@ -728,7 +716,7 @@ QUnit.asyncTest( "backbone", function( assert ) {
 
         assert.equal( atomSet.atomCount, 184, "Passed!" );
         assert.equal( atomSet.atoms[ 0 ].atomname, "N", "Passed!" );
-        
+
         QUnit.start()
 
     } );
@@ -750,7 +738,7 @@ QUnit.asyncTest( ".CA", function( assert ) {
 
         assert.equal( atomSet.atomCount, 46, "Passed!" );
         assert.equal( atomSet.atoms[ 30 ].atomname, "CA", "Passed!" );
-        
+
         QUnit.start()
 
     } );
@@ -772,7 +760,7 @@ QUnit.asyncTest( "not backbone", function( assert ) {
 
         assert.equal( atomSet.atomCount, 143, "Passed!" );
         assert.equal( atomSet.atoms[ 0 ].atomname, "CB", "Passed!" );
-        
+
         QUnit.start()
 
     } );
@@ -795,7 +783,7 @@ QUnit.asyncTest( "not backbone or .CA", function( assert ) {
         assert.equal( atomSet.atomCount, 189, "Passed!" );
         assert.equal( atomSet.atoms[ 0 ].atomname, "CA", "Passed!" );
         assert.equal( atomSet.atoms[ 1 ].atomname, "CB", "Passed!" );
-        
+
         QUnit.start()
 
     } );
@@ -816,7 +804,7 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
         var atomSet2 = new NGL.AtomSet( structure, selection2 );
 
         assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
-        
+
         QUnit.start()
 
     } );
@@ -837,7 +825,7 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
         var atomSet2 = new NGL.AtomSet( structure, selection2 );
 
         assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
-        
+
         QUnit.start()
 
     } );
@@ -873,7 +861,7 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
     NGL.autoLoad( path, function( structure ){
 
         var subset = new NGL.StructureSubset( structure, "not 10-30" );
-        
+
         assert.equal( structure.atomCount, 774, "Passed!" );
         assert.equal( subset.atomCount, 563, "Passed!" );
 
@@ -915,7 +903,7 @@ QUnit.asyncTest( "structure fiber no chains", function( assert ) {
             i += 1;
 
         } );
-        
+
         assert.equal( i, 3, "Passed!" );
 
         QUnit.start()
@@ -939,7 +927,7 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
             i += 1;
 
         }, undefined, true );
-        
+
         assert.equal( i, 3, "Passed!" );
 
         QUnit.start()

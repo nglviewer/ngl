@@ -4417,13 +4417,7 @@ NGL.Selection.prototype = {
             }
 
             if( c.toUpperCase() === "SIDECHAIN" ){
-                sele = {
-                    operator: undefined,
-                    negate: true,
-                    rules: [
-                        { keyword: "BACKBONE" }
-                    ]
-                };
+                sele.keyword = "SIDECHAIN";
                 pushRule( sele );
                 continue;
             }
@@ -4440,14 +4434,9 @@ NGL.Selection.prototype = {
                                 { atomname: "N" },
                             ]
                         },
-                        {
-                            operator: undefined,
-                            negate: true,
-                            rules: [
-                                { keyword: "BACKBONE" }
-                            ]
-                        },
-                        { atomname: "CA" }
+                        { keyword: "SIDECHAIN" },
+                        { atomname: "CA" },
+                        { atomname: "BB" }
                     ]
                 };
                 pushRule( sele );
@@ -4680,6 +4669,15 @@ NGL.Selection.prototype = {
                             backboneNucleic.indexOf( a.atomname )!==-1 ) ||
                         ( a.residue.isCg() &&
                             backboneCg.indexOf( a.atomname )!==-1 )
+                    )
+                ) return true;
+                if( s.keyword==="SIDECHAIN" && (
+                        ( a.residue.isProtein() &&
+                            backboneProtein.indexOf( a.atomname )===-1 ) ||
+                        ( a.residue.isNucleic() &&
+                            backboneNucleic.indexOf( a.atomname )===-1 ) ||
+                        ( a.residue.isCg() &&
+                            backboneCg.indexOf( a.atomname )===-1 )
                     )
                 ) return true;
 
