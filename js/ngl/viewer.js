@@ -467,8 +467,6 @@ NGL.Utils = {
  */
 NGL.init = function( onload ){
 
-    NGL.disableImpostor = NGL.GET( "disableImpostor" );
-
     NGL.materialCache = {};
 
     this.textures = [];
@@ -751,6 +749,8 @@ NGL.Viewer.prototype = {
 
             specular: 0x050505,
 
+
+
         };
 
     },
@@ -799,9 +799,9 @@ NGL.Viewer.prototype = {
             'EXT_frag_depth'
         );
         if( !_glExtensionFragDepth ){
-            NGL.disableImpostor = true;
             console.info( "EXT_frag_depth not available" );
         }
+        NGL.extensionFragDepth = _glExtensionFragDepth;
 
         var _glStandardDerivatives = this.renderer.context.getExtension(
             'OES_standard_derivatives'
@@ -3887,9 +3887,9 @@ NGL.TubeMeshBuffer.prototype = {
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor, detail ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disableImpostor ){
 
-    if( NGL.disableImpostor ){
+    if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.SphereGeometryBuffer( position, color, radius, pickingColor, detail );
 
@@ -3902,9 +3902,9 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor, detail ){
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments, disableImpostor ){
 
-    if( NGL.disableImpostor ){
+    if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments
@@ -3921,9 +3921,9 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2 ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, disableImpostor ){
 
-    if( NGL.disableImpostor ){
+    if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2,

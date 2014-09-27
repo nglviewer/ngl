@@ -443,7 +443,79 @@ NGL.Preferences = function( stage ){
 
 NGL.Preferences.prototype = {
 
+    setImpostor: function( value ) {
+
+        this.impostor = value;
+
+        var types = [
+            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
+        ];
+
+        this.stage.eachComponent( function( o ){
+
+            o.reprList.slice( 0 ).forEach( function( repr ){
+
+                if( types.indexOf( repr.name ) === -1 ){
+                    return;
+                }
+
+                var p = repr.getParameters();
+
+                p.disableImpostor = !value;
+
+                o.addRepresentation( repr.name, p );
+                o.removeRepresentation( repr );
+
+            } );
+
+        }, NGL.StructureComponent );
+
+    },
+
+    setQuality: function( value ) {
+
+        this.qualiy = value;
+
+        var types = [
+            "tube", "cartoon", "ribbon", "trace"
+        ];
+
+        var impostorTypes = [
+            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
+        ];
+
+        this.stage.eachComponent( function( o ){
+
+            o.reprList.slice( 0 ).forEach( function( repr ){
+
+                var p = repr.getParameters();
+
+                if( types.indexOf( repr.name ) === -1 ){
+
+                    if( impostorTypes.indexOf( repr.name ) === -1 ){
+                        return;
+                    }
+
+                    if( NGL.extensionFragDepth && !p.disableImpostor ){
+                        return;
+                    }
+
+                }
+
+                p.quality = value;
+
+                o.addRepresentation( repr.name, p );
+                o.removeRepresentation( repr );
+
+            } );
+
+        }, NGL.StructureComponent );
+
+    },
+
     setTheme: function( value ) {
+
+        this.theme = value;
 
         var cssPath, viewerBackground;
 
@@ -507,6 +579,31 @@ NGL.PreferencesWidget = function( stage ){
 
     //
 
+    var qualitySelect = new UI.Select()
+        .setOptions( {
+            "low": "low",
+            "medium": "medium",
+            "high": "high"
+        } )
+        .setValue( "medium" )
+        .onChange( function(){
+
+            preferences.setQuality( qualitySelect.getValue() );
+
+        } );
+
+    //
+
+    var impostorCheckbox = new UI.Checkbox()
+        .setValue( true )
+        .onChange( function(){
+
+            preferences.setImpostor( impostorCheckbox.getValue() );
+
+        } );
+
+    //
+
     function addEntry( label, entry ){
 
         listingPanel
@@ -517,6 +614,8 @@ NGL.PreferencesWidget = function( stage ){
     }
 
     addEntry( "theme", themeSelect );
+    addEntry( "quality", qualitySelect );
+    addEntry( "impostor", impostorCheckbox );
 
     return container;
 
@@ -632,7 +731,6 @@ NGL.ExportImageWidget = function( stage ){
 
     function exportImage( factor, type, quality, antialias, transparent, trim ){
 
-        var i = 0;
         var paramsList = [];
 
         stage.eachComponent( function( o ){
@@ -649,11 +747,12 @@ NGL.ExportImageWidget = function( stage ){
                     p.radialSegments = Math.max( 20, p.radialSegments );
                 }
 
+                p.quality = null;
+
                 o.addRepresentation( repr.name, p );
                 o.removeRepresentation( repr );
 
                 paramsList.push( repr.getParameters() );
-                i += 1;
 
             } );
 
@@ -676,16 +775,16 @@ NGL.ExportImageWidget = function( stage ){
                     progress.setDisplay( "none" );
                     exportButton.setDisplay( "inline-block" );
 
-                    i = 0;
+                    var j = 0;
 
                     stage.eachComponent( function( o ){
 
                         o.reprList.slice( 0 ).forEach( function( repr ){
 
-                            o.addRepresentation( repr.name, paramsList[ i ] );
+                            o.addRepresentation( repr.name, paramsList[ j ] );
                             o.removeRepresentation( repr );
 
-                            i += 1;
+                            j += 1;
 
                         } );
 

@@ -124,7 +124,8 @@ NGL.Representation.prototype = {
             radius: this.radius,
             scale: this.scale,
             visible: this.visible,
-            sele: this.selection.string
+            sele: this.selection.string,
+            disableImpostor: this.disableImpostor
 
         };
 
@@ -286,7 +287,17 @@ NGL.SpacefillRepresentation = function( structure, viewer, params ){
 
     params = params || {};
 
-    this.sphereDetail = params.sphereDetail || 1;
+    this.disableImpostor = params.disableImpostor || false;
+
+    if( params.quality === "low" ){
+        this.sphereDetail = 0;
+    }else if( params.quality === "medium" ){
+        this.sphereDetail = 1;
+    }else if( params.quality === "high" ){
+        this.sphereDetail = 2;
+    }else{
+        this.sphereDetail = params.sphereDetail || 1;
+    }
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
@@ -313,7 +324,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail
+            this.sphereDetail,
+            this.disableImpostor
         );
 
         this.bufferList = [ this.sphereBuffer ];
@@ -378,9 +390,23 @@ NGL.BallAndStickRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.radius = params.radius || this.defaultSize;
 
+    this.disableImpostor = params.disableImpostor || false;
+
+    if( params.quality === "low" ){
+        this.sphereDetail = 0;
+        this.radiusSegments = 5;
+    }else if( params.quality === "medium" ){
+        this.sphereDetail = 1;
+        this.radiusSegments = 10;
+    }else if( params.quality === "high" ){
+        this.sphereDetail = 2;
+        this.radiusSegments = 20;
+    }else{
+        this.sphereDetail = params.sphereDetail || 1;
+        this.radiusSegments = params.radiusSegments || 10;
+    }
+
     this.aspectRatio = params.aspectRatio || 2.0;
-    this.sphereDetail = params.sphereDetail || 1;
-    this.radiusSegments = params.radiusSegments || 10;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
@@ -417,7 +443,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 null, this.radius, this.scale * this.aspectRatio
             ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail
+            this.sphereDetail,
+            this.disableImpostor
         );
 
         this.__center = new Float32Array( this.atomSet.bondCount * 3 );
@@ -432,7 +459,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             null,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments
+            this.radiusSegments,
+            this.disableImpostor
         );
 
         this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -530,8 +558,21 @@ NGL.LicoriceRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.radius = params.radius || this.defaultSize;
 
-    this.sphereDetail = params.sphereDetail || 1;
-    this.radiusSegments = params.radiusSegments || 10;
+    this.disableImpostor = params.disableImpostor || false;
+
+    if( params.quality === "low" ){
+        this.sphereDetail = 0;
+        this.radiusSegments = 5;
+    }else if( params.quality === "medium" ){
+        this.sphereDetail = 1;
+        this.radiusSegments = 10;
+    }else if( params.quality === "high" ){
+        this.sphereDetail = 2;
+        this.radiusSegments = 20;
+    }else{
+        this.sphereDetail = params.sphereDetail || 1;
+        this.radiusSegments = params.radiusSegments || 10;
+    }
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
@@ -563,7 +604,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail
+            this.sphereDetail,
+            this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -576,7 +618,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             null,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments
+            this.radiusSegments,
+            this.disableImpostor
         );
 
         this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
@@ -807,9 +850,23 @@ NGL.BackboneRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.radius = params.radius || this.defaultSize;
 
+    this.disableImpostor = params.disableImpostor || false;
+
+    if( params.quality === "low" ){
+        this.sphereDetail = 0;
+        this.radiusSegments = 5;
+    }else if( params.quality === "medium" ){
+        this.sphereDetail = 1;
+        this.radiusSegments = 10;
+    }else if( params.quality === "high" ){
+        this.sphereDetail = 2;
+        this.radiusSegments = 20;
+    }else{
+        this.sphereDetail = params.sphereDetail || 1;
+        this.radiusSegments = params.radiusSegments || 10;
+    }
+
     this.aspectRatio = params.aspectRatio || 1.0;
-    this.sphereDetail = params.sphereDetail || 1;
-    this.radiusSegments = params.radiusSegments || 10;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
@@ -853,6 +910,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         var sphereDetail = this.sphereDetail;
         var radiusSegments = this.radiusSegments;
         var test = this.selection.test;
+        var disableImpostor = this.disableImpostor;
 
         this.structure.eachFiber( function( f ){
 
@@ -894,7 +952,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 backboneAtomSet.atomColor( null, color ),
                 backboneAtomSet.atomRadius( null, radius, scale * aspectRatio ),
                 backboneAtomSet.atomColor( null, "picking" ),
-                sphereDetail
+                sphereDetail,
+                disableImpostor
             );
 
             cylinderBuffer = new NGL.CylinderBuffer(
@@ -907,7 +966,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 null,
                 backboneBondSet.bondColor( null, 0, "picking" ),
                 backboneBondSet.bondColor( null, 1, "picking" ),
-                radiusSegments
+                radiusSegments,
+                disableImpostor
             );
 
             bufferList.push( sphereBuffer )
@@ -1031,8 +1091,20 @@ NGL.TubeRepresentation = function( structure, viewer, params ){
     params.color = params.color || "ss";
     params.radius = params.radius || this.defaultSize;
 
-    this.subdiv = params.subdiv || 6;
-    this.radialSegments = params.radialSegments || 10;
+    if( params.quality === "low" ){
+        this.subdiv = 3;
+        this.radialSegments = 5;
+    }else if( params.quality === "medium" ){
+        this.subdiv = 6;
+        this.radialSegments = 10;
+    }else if( params.quality === "high" ){
+        this.subdiv = 12;
+        this.radialSegments = 20;
+    }else{
+        this.subdiv = params.subdiv || 6;
+        this.radialSegments = params.radialSegments || 10;
+    }
+
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
     this.wireframe = params.wireframe || false;
@@ -1221,9 +1293,21 @@ NGL.CartoonRepresentation = function( structure, viewer, params ){
     params.color = params.color || "ss";
     params.radius = params.radius || "ss";
 
+    if( params.quality === "low" ){
+        this.subdiv = 3;
+        this.radialSegments = 6;
+    }else if( params.quality === "medium" ){
+        this.subdiv = 6;
+        this.radialSegments = 10;
+    }else if( params.quality === "high" ){
+        this.subdiv = 12;
+        this.radialSegments = 20;
+    }else{
+        this.subdiv = params.subdiv || 6;
+        this.radialSegments = params.radialSegments || 10;
+    }
+
     this.aspectRatio = params.aspectRatio || 3.0;
-    this.subdiv = params.subdiv || 6;
-    this.radialSegments = params.radialSegments || 10;
     this.tension = params.tension || NaN;
     this.capped = params.capped || true;
     this.wireframe = params.wireframe || false;
@@ -1428,7 +1512,16 @@ NGL.RibbonRepresentation = function( structure, viewer, params ){
     params.radius = params.radius || "ss";
     params.scale = params.scale || 3.0;
 
-    this.subdiv = params.subdiv || 6;
+    if( params.quality === "low" ){
+        this.subdiv = 3;
+    }else if( params.quality === "medium" ){
+        this.subdiv = 6;
+    }else if( params.quality === "high" ){
+        this.subdiv = 12;
+    }else{
+        this.subdiv = params.subdiv || 6;
+    }
+
     this.tension = params.tension || NaN;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
@@ -1577,7 +1670,16 @@ NGL.TraceRepresentation = function( structure, viewer, params ){
     params = params || {};
     params.color = params.color || "ss";
 
-    this.subdiv = params.subdiv || 6;
+    if( params.quality === "low" ){
+        this.subdiv = 3;
+    }else if( params.quality === "medium" ){
+        this.subdiv = 6;
+    }else if( params.quality === "high" ){
+        this.subdiv = 12;
+    }else{
+        this.subdiv = params.subdiv || 6;
+    }
+
     this.tension = params.tension || NaN;
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
