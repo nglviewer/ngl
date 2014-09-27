@@ -883,19 +883,70 @@ NGL.ComponentWidget = function( component, stage ){
 
     } );
 
+    signals.statusChanged.add( function( value ){
+
+        var names = {
+            404: "Error: file not found"
+        }
+
+        var status = names[ component.status ] || component.status;
+
+        container.setCollapsed( false );
+
+        container.add(
+
+            new UI.Text( status )
+                .setMarginLeft( "20px" )
+                .setWidth( "200px" )
+                .setWordWrap( "break-word" )
+
+        );
+
+        container.removeStatic( loading );
+        container.addStatic( dispose );
+
+    } );
+
     // Name
 
     var name = new UI.Text( component.name )
         .setWidth( "100px" )
         .setWordWrap( "break-word" );
 
-    // Status
+    // Loading indicator
 
-    var status = new UI.Icon( "spinner" )
-        .addClass( "spin" )
-        .setMarginLeft( "25px" );
+    var loading = new UI.Panel()
+        .setDisplay( "inline" )
+        .add(
+             new UI.Icon( "spinner" )
+                .addClass( "spin" )
+                .setMarginLeft( "25px" )
+        );
 
-    container.addStatic( name, status );
+    // Dispose
+
+    var dispose = new UI.Icon( "trash-o" )
+        .setTitle( "delete" )
+        .setMarginLeft( "25px" )
+        .onClick( function(){
+
+            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+
+                stage.removeComponent( component );
+
+            }else{
+
+                dispose.setColor( "rgb(178, 34, 34)" );
+
+                setTimeout( function(){
+                    dispose.setColor( "#888" );
+                }, 1000);
+
+            }
+
+        } );
+
+    container.addStatic( name, loading );
 
     return container;
 

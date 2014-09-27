@@ -200,7 +200,7 @@ NGL.Stage.prototype = {
         var component;
         var scope = this;
 
-        NGL.autoLoad( path, function( object ){
+        function load( object ){
 
             // check for placeholder component
             if( component ){
@@ -240,9 +240,28 @@ NGL.Stage.prototype = {
 
             }
 
-        });
+        }
 
-        // ensure that component is ready yet
+        function progress( e ){
+
+            console.log( "progress", e );
+
+        }
+
+        function error( e ){
+
+            if( component ){
+
+                component.setStatus( e );
+
+            }
+
+        }
+
+        // NGL.autoLoad( path, load, progress, error );
+        NGL.autoLoad( path, load, null, error );
+
+        // ensure that component isn't ready yet
         if( !component ){
 
             component = new NGL.Component( this );
@@ -323,6 +342,8 @@ NGL.Component = function( stage ){
         visibilityChanged: new SIGNALS.Signal(),
         nameChanged: new SIGNALS.Signal(),
         requestGuiVisibility: new SIGNALS.Signal(),
+
+        statusChanged: new SIGNALS.Signal(),
 
     };
 
@@ -406,6 +427,13 @@ NGL.Component.prototype = {
 
         this.name = value;
         this.signals.nameChanged.dispatch( value );
+
+    },
+
+    setStatus: function( value ){
+
+        this.status = value;
+        this.signals.statusChanged.dispatch( value );
 
     },
 

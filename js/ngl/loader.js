@@ -7,6 +7,101 @@
 ///////////
 // Loader
 
+
+
+NGL.XHRLoader = function ( manager ) {
+
+    /**
+     * @author mrdoob / http://mrdoob.com/
+     */
+
+    this.cache = new THREE.Cache();
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.XHRLoader.prototype = {
+
+    constructor: NGL.XHRLoader,
+
+    load: function ( url, onLoad, onProgress, onError ) {
+
+        var scope = this;
+
+        var cached = scope.cache.get( url );
+
+        if ( cached !== undefined ) {
+
+            if ( onLoad ) onLoad( cached );
+            return;
+
+        }
+
+        var request = new XMLHttpRequest();
+        request.open( 'GET', url, true );
+
+        request.addEventListener( 'load', function ( event ) {
+
+            if ( request.status === 200 || request.status === 304 ) {
+
+                scope.cache.add( url, this.response )
+
+                if ( onLoad ) onLoad( this.response );
+
+            } else {
+
+                if ( onError ) onError( request.status );
+
+            }
+
+            scope.manager.itemEnd( url );
+
+        }, false );
+
+        if ( onProgress !== undefined ) {
+
+            request.addEventListener( 'progress', function ( event ) {
+
+                onProgress( event );
+
+            }, false );
+
+        }
+
+        if ( onError !== undefined ) {
+
+            request.addEventListener( 'error', function ( event ) {
+
+                onError( event );
+
+            }, false );
+
+        }
+
+        if ( this.crossOrigin !== undefined ) request.crossOrigin = this.crossOrigin;
+        if ( this.responseType !== undefined ) request.responseType = this.responseType;
+
+        request.send( null );
+
+        scope.manager.itemStart( url );
+
+    },
+
+    setResponseType: function ( value ) {
+
+        this.responseType = value;
+
+    },
+
+    setCrossOrigin: function ( value ) {
+
+        this.crossOrigin = value;
+
+    }
+
+};
+
+
 NGL.FileLoader = function( manager ){
 
     this.cache = new THREE.Cache();
@@ -18,7 +113,7 @@ NGL.FileLoader.prototype = {
 
     constructor: NGL.FileLoader,
 
-    load: function ( file, onLoad ) {
+    load: function ( file, onLoad, onProgress, onError ) {
 
         var scope = this;
 
@@ -42,6 +137,26 @@ NGL.FileLoader.prototype = {
 
         }
 
+        if ( onProgress !== undefined ) {
+
+            reader.onprogress = function ( event ) {
+
+                onProgress( event );
+
+            }
+
+        }
+
+        if ( onError !== undefined ) {
+
+            reader.onerror = function ( event ) {
+
+                onError( event );
+
+            }
+
+        }
+
         // TODO binary?
         reader.readAsText( file );
 
@@ -59,7 +174,7 @@ NGL.StructureLoader = function( manager ){
 
 };
 
-NGL.StructureLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
 NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback ){
 
@@ -134,7 +249,7 @@ NGL.ScriptLoader = function( manager ){
 
 };
 
-NGL.ScriptLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+NGL.ScriptLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
 NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 
@@ -161,7 +276,7 @@ NGL.autoLoad = function(){
 
     }
 
-    return function( file, onLoad ){
+    return function( file, onLoad, onProgress, onError ){
 
         var object, rcsb;
 
@@ -191,11 +306,30 @@ NGL.autoLoad = function(){
 
         function init( data ){
 
-            object = loader.init( data, name, path, ext, function( _object ){
+            if( data ){
 
-                if( typeof onLoad === "function" ) onLoad( _object );
+                object = loader.init( data, name, path, ext, function( _object ){
 
-            } );
+                    if( typeof onLoad === "function" ) onLoad( _object );
+
+                } );
+
+            }else{
+
+                error( "empty response" );
+
+            }
+
+        }
+
+        function progress( e ){
+
+            if( typeof onProgress === "function" ) onProgress( e );
+        }
+
+        function error( e ){
+
+            if( typeof onError === "function" ) onError( e );
 
         }
 
@@ -204,15 +338,15 @@ NGL.autoLoad = function(){
             name = file.name;
 
             var fileLoader = new NGL.FileLoader();
-            fileLoader.load( file, init )
+            fileLoader.load( file, init, progress, error );
 
         }else if( rcsb ){
 
-            loader.load( file, init );
+            loader.load( file, init, progress, error );
 
         }else{
 
-            loader.load( "../data/" + file, init );
+            loader.load( "../data/" + file, init, progress, error );
 
         }
 
