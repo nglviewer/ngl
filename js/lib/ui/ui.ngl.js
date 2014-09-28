@@ -156,6 +156,14 @@ UI.ColorPopupMenu.prototype.setValue = function( value ){
 
 };
 
+UI.ColorPopupMenu.prototype.dispose = function(){
+
+    this.menu.dispose();
+
+    UI.Panel.prototype.dispose.call( this );
+
+};
+
 
 // Selection
 

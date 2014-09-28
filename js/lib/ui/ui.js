@@ -21,7 +21,7 @@ UI.Element.prototype = {
     setId: function ( id ) {
 
         this.dom.id = id;
-        
+
         return this;
 
     },
@@ -29,7 +29,7 @@ UI.Element.prototype = {
     setTitle: function ( title ) {
 
         this.dom.title = title;
-        
+
         return this;
 
     },
@@ -81,7 +81,7 @@ UI.Element.prototype = {
     },
 
     dispose: function(){
-        
+
         this.dom.parentNode.removeChild( this.dom );
 
     }
@@ -90,7 +90,7 @@ UI.Element.prototype = {
 
 // properties
 
-var properties = [ 
+var properties = [
     'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border',
     'borderLeft', 'borderTop', 'borderRight', 'borderBottom', 'borderColor',
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
@@ -103,7 +103,7 @@ var properties = [
 
 properties.forEach( function ( property ) {
 
-    var methodSuffix = property.substr( 0, 1 ).toUpperCase() + 
+    var methodSuffix = property.substr( 0, 1 ).toUpperCase() +
                         property.substr( 1, property.length );
 
     UI.Element.prototype[ 'set' + methodSuffix ] = function () {
@@ -1162,7 +1162,7 @@ UI.MenubarHelper = {
         return container;
 
     },
-    
+
     createOption: function ( name, callbackHandler, icon ) {
 
         var option = new UI.Panel();
@@ -1178,7 +1178,7 @@ UI.MenubarHelper = {
             option.setTextContent( name );
 
         }
-        
+
         option.onClick( callbackHandler );
 
         return option;

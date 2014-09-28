@@ -1314,11 +1314,18 @@ NGL.RepresentationWidget = function( repr, component ){
 
     } );
 
-    component.signals.representationRemoved.add( function( _repr ){
+    var reprRemovedBinding = component.signals.representationRemoved.add(
 
-        if( repr === _repr ) container.dispose();
+         function( _repr ){
+            if( repr === _repr ){
+                menu.dispose();
+                colorWidget.dispose();
+                container.dispose();
+                reprRemovedBinding.detach();
+            }
+        }
 
-    } );
+    );
 
     // Actions
 
@@ -1331,21 +1338,21 @@ NGL.RepresentationWidget = function( repr, component ){
 
         } );
 
-    var dispose = new UI.Icon( "trash-o" )
+    var disposeIcon = new UI.Icon( "trash-o" )
         .setTitle( "delete" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
+            if( disposeIcon.getColor() === "rgb(178, 34, 34)" ){
 
                 component.removeRepresentation( repr );
 
             }else{
 
-                dispose.setColor( "rgb(178, 34, 34)" );
+                disposeIcon.setColor( "rgb(178, 34, 34)" );
 
                 setTimeout( function(){
-                    dispose.setColor( "#888" );
+                    disposeIcon.setColor( "#888" );
                 }, 1000);
 
             }
@@ -1376,7 +1383,7 @@ NGL.RepresentationWidget = function( repr, component ){
     container
         .addStatic( new UI.Text( repr.name ).setWidth( "80px" ) )
         .addStatic( toggle )
-        .addStatic( dispose )
+        .addStatic( disposeIcon )
         .addStatic( colorWidget );
 
     // Selection
