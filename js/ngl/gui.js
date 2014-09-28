@@ -435,109 +435,9 @@ NGL.MenubarHelpWidget = function( stage ){
 
 // Preferences
 
-NGL.Preferences = function( stage ){
-
-    this.stage = stage;
-
-};
-
-NGL.Preferences.prototype = {
-
-    setImpostor: function( value ) {
-
-        this.impostor = value;
-
-        var types = [
-            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
-        ];
-
-        this.stage.eachComponent( function( o ){
-
-            o.reprList.slice( 0 ).forEach( function( repr ){
-
-                if( types.indexOf( repr.name ) === -1 ){
-                    return;
-                }
-
-                var p = repr.getParameters();
-
-                p.disableImpostor = !value;
-
-                o.addRepresentation( repr.name, p );
-                o.removeRepresentation( repr );
-
-            } );
-
-        }, NGL.StructureComponent );
-
-    },
-
-    setQuality: function( value ) {
-
-        this.qualiy = value;
-
-        var types = [
-            "tube", "cartoon", "ribbon", "trace"
-        ];
-
-        var impostorTypes = [
-            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
-        ];
-
-        this.stage.eachComponent( function( o ){
-
-            o.reprList.slice( 0 ).forEach( function( repr ){
-
-                var p = repr.getParameters();
-
-                if( types.indexOf( repr.name ) === -1 ){
-
-                    if( impostorTypes.indexOf( repr.name ) === -1 ){
-                        return;
-                    }
-
-                    if( NGL.extensionFragDepth && !p.disableImpostor ){
-                        return;
-                    }
-
-                }
-
-                p.quality = value;
-
-                o.addRepresentation( repr.name, p );
-                o.removeRepresentation( repr );
-
-            } );
-
-        }, NGL.StructureComponent );
-
-    },
-
-    setTheme: function( value ) {
-
-        this.theme = value;
-
-        var cssPath, viewerBackground;
-
-        if( value === "light" ){
-            cssPath = "../css/light.css";
-            viewerBackground = "white";
-        }else{
-            cssPath = "../css/dark.css";
-            viewerBackground = "black";
-        }
-
-        document.getElementById( 'theme' ).href = cssPath;
-        this.stage.viewer.setBackground( viewerBackground );
-
-    }
-
-};
-
-
 NGL.PreferencesWidget = function( stage ){
 
-    var preferences = new NGL.Preferences( stage );
+    var preferences = stage.preferences;
 
     var container = new UI.OverlayPanel();
 
@@ -570,7 +470,7 @@ NGL.PreferencesWidget = function( stage ){
 
     var themeSelect = new UI.Select()
         .setOptions( { "dark": "dark", "light": "light" } )
-        .setValue( "dark" )
+        .setValue( preferences.theme )
         .onChange( function(){
 
             preferences.setTheme( themeSelect.getValue() );
@@ -585,7 +485,7 @@ NGL.PreferencesWidget = function( stage ){
             "medium": "medium",
             "high": "high"
         } )
-        .setValue( "medium" )
+        .setValue( preferences.quality )
         .onChange( function(){
 
             preferences.setQuality( qualitySelect.getValue() );
@@ -595,7 +495,7 @@ NGL.PreferencesWidget = function( stage ){
     //
 
     var impostorCheckbox = new UI.Checkbox()
-        .setValue( true )
+        .setValue( preferences.impostor )
         .onChange( function(){
 
             preferences.setImpostor( impostorCheckbox.getValue() );

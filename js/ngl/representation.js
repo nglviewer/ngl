@@ -29,6 +29,7 @@ NGL.Representation = function( object, viewer, params ){
     params = params || {};
 
     this.visible = params.visible === undefined ? true : params.visible;
+    this.quality = params.quality;
 
 };
 
@@ -125,7 +126,8 @@ NGL.Representation.prototype = {
             scale: this.scale,
             visible: this.visible,
             sele: this.selection.string,
-            disableImpostor: this.disableImpostor
+            disableImpostor: this.disableImpostor,
+            quality: this.quality
 
         };
 
@@ -143,11 +145,11 @@ NGL.Representation.prototype = {
 
     dispose: function(){
 
-        var viewer = this.viewer;
+        var scope = this;
 
         this.bufferList.forEach( function( buffer ){
 
-            viewer.remove( buffer );
+            scope.viewer.remove( buffer );
             buffer.dispose();
             buffer = null;  // aid GC
 

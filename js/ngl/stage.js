@@ -7,114 +7,6 @@
 //////////
 // Stage
 
-NGL.PickingControls = function( viewer, stage ){
-
-    var gl = viewer.renderer.getContext();
-    var pixelBuffer = new Uint8Array( 4 );
-
-    var mouse = {
-
-        position: new THREE.Vector2(),
-        down: new THREE.Vector2(),
-        moving: false,
-        distance: function(){
-            return mouse.position.distanceTo( mouse.down );
-        }
-
-    };
-
-    viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
-
-        mouse.moving = true;
-        mouse.position.x = e.layerX;
-        mouse.position.y = e.layerY;
-
-    } );
-
-    viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
-
-        mouse.moving = false;
-        mouse.down.x = e.layerX;
-        mouse.down.y = e.layerY;
-
-    } );
-
-    viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
-
-        if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
-
-        viewer.render( null, true );
-
-        var box = viewer.renderer.domElement.getBoundingClientRect();
-
-        var offsetX = e.clientX - box.left;
-        var offsetY = e.clientY - box.top;
-
-        gl.readPixels(
-            offsetX * window.devicePixelRatio,
-            (box.height - offsetY) * window.devicePixelRatio,
-            1, 1,
-            gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
-        );
-
-        var rgba = Array.apply( [], pixelBuffer );
-
-        var id =
-            ( pixelBuffer[0] << 16 ) |
-            ( pixelBuffer[1] << 8 ) |
-            ( pixelBuffer[2] );
-
-        // TODO early exit, binary search
-        var pickedAtom = undefined;
-        stage.eachComponent( function( o ){
-
-            o.structure.eachAtom( function( a ){
-
-                if( a.globalindex === ( id - 1 ) ){
-                    pickedAtom = a;
-                }
-
-            } );
-
-        }, NGL.StructureComponent );
-
-        stage.signals.atomPicked.dispatch( pickedAtom );
-
-        if( NGL.GET( "debug" ) ){
-
-            console.log(
-                "picked color",
-                [
-                    ( rgba[0]/255 ).toPrecision(2),
-                    ( rgba[1]/255 ).toPrecision(2),
-                    ( rgba[2]/255 ).toPrecision(2),
-                    ( rgba[3]/255 ).toPrecision(2)
-                ]
-            );
-            console.log( "picked id", id );
-            console.log(
-                "picked position",
-                offsetX, box.height - offsetY
-            );
-            console.log( "devicePixelRatio", window.devicePixelRatio );
-
-        }else{
-
-            viewer.requestRender();
-
-        }
-
-        if( pickedAtom && e.which === NGL.MiddleMouseButton ){
-
-            viewer.centerView( pickedAtom );
-
-        }
-
-    } );
-
-};
-
-
 NGL.Stage = function( eid ){
 
     var SIGNALS = signals;
@@ -133,6 +25,8 @@ NGL.Stage = function( eid ){
     };
 
     this.compList = [];
+
+    this.preferences =  new NGL.Preferences( this );
 
     this.viewer = new NGL.Viewer( eid );
 
@@ -328,6 +222,224 @@ NGL.Stage.prototype = {
 }
 
 
+////////////
+// Picking
+
+NGL.PickingControls = function( viewer, stage ){
+
+    var gl = viewer.renderer.getContext();
+    var pixelBuffer = new Uint8Array( 4 );
+
+    var mouse = {
+
+        position: new THREE.Vector2(),
+        down: new THREE.Vector2(),
+        moving: false,
+        distance: function(){
+            return mouse.position.distanceTo( mouse.down );
+        }
+
+    };
+
+    viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
+
+        mouse.moving = true;
+        mouse.position.x = e.layerX;
+        mouse.position.y = e.layerY;
+
+    } );
+
+    viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
+
+        mouse.moving = false;
+        mouse.down.x = e.layerX;
+        mouse.down.y = e.layerY;
+
+    } );
+
+    viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
+
+        if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
+
+        viewer.render( null, true );
+
+        var box = viewer.renderer.domElement.getBoundingClientRect();
+
+        var offsetX = e.clientX - box.left;
+        var offsetY = e.clientY - box.top;
+
+        gl.readPixels(
+            offsetX * window.devicePixelRatio,
+            (box.height - offsetY) * window.devicePixelRatio,
+            1, 1,
+            gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
+        );
+
+        var rgba = Array.apply( [], pixelBuffer );
+
+        var id =
+            ( pixelBuffer[0] << 16 ) |
+            ( pixelBuffer[1] << 8 ) |
+            ( pixelBuffer[2] );
+
+        // TODO early exit, binary search
+        var pickedAtom = undefined;
+        stage.eachComponent( function( o ){
+
+            o.structure.eachAtom( function( a ){
+
+                if( a.globalindex === ( id - 1 ) ){
+                    pickedAtom = a;
+                }
+
+            } );
+
+        }, NGL.StructureComponent );
+
+        stage.signals.atomPicked.dispatch( pickedAtom );
+
+        if( NGL.GET( "debug" ) ){
+
+            console.log(
+                "picked color",
+                [
+                    ( rgba[0]/255 ).toPrecision(2),
+                    ( rgba[1]/255 ).toPrecision(2),
+                    ( rgba[2]/255 ).toPrecision(2),
+                    ( rgba[3]/255 ).toPrecision(2)
+                ]
+            );
+            console.log( "picked id", id );
+            console.log(
+                "picked position",
+                offsetX, box.height - offsetY
+            );
+            console.log( "devicePixelRatio", window.devicePixelRatio );
+
+        }else{
+
+            viewer.requestRender();
+
+        }
+
+        if( pickedAtom && e.which === NGL.MiddleMouseButton ){
+
+            viewer.centerView( pickedAtom );
+
+        }
+
+    } );
+
+};
+
+
+////////////////
+// Preferences
+
+NGL.Preferences = function( stage ){
+
+    this.stage = stage;
+
+    this.impostor = false;
+    this.quality = "low";
+    this.theme = "dark";
+
+};
+
+NGL.Preferences.prototype = {
+
+    setImpostor: function( value ) {
+
+        this.impostor = value;
+
+        var types = [
+            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
+        ];
+
+        this.stage.eachComponent( function( o ){
+
+            o.reprList.slice( 0 ).forEach( function( repr ){
+
+                if( types.indexOf( repr.name ) === -1 ){
+                    return;
+                }
+
+                var p = repr.getParameters();
+
+                p.disableImpostor = !value;
+
+                o.removeRepresentation( repr );
+                o.addRepresentation( repr.name, p );
+
+            } );
+
+        }, NGL.StructureComponent );
+
+    },
+
+    setQuality: function( value ) {
+
+        this.quality = value;
+
+        var types = [
+            "tube", "cartoon", "ribbon", "trace"
+        ];
+
+        var impostorTypes = [
+            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
+        ];
+
+        this.stage.eachComponent( function( o ){
+
+            o.reprList.slice( 0 ).forEach( function( repr ){
+
+                var p = repr.getParameters();
+
+                if( types.indexOf( repr.name ) === -1 ){
+
+                    if( impostorTypes.indexOf( repr.name ) === -1 ){
+                        return;
+                    }
+
+                    if( NGL.extensionFragDepth && !p.disableImpostor ){
+                        return;
+                    }
+
+                }
+
+                p.quality = value;
+
+                o.removeRepresentation( repr );
+                o.addRepresentation( repr.name, p );
+
+            } );
+
+        }, NGL.StructureComponent );
+
+    },
+
+    setTheme: function( value ) {
+
+        this.theme = value;
+
+        var cssPath, viewerBackground;
+
+        if( value === "light" ){
+            cssPath = "../css/light.css";
+            viewerBackground = "white";
+        }else{
+            cssPath = "../css/dark.css";
+            viewerBackground = "black";
+        }
+
+        document.getElementById( 'theme' ).href = cssPath;
+        this.stage.viewer.setBackground( viewerBackground );
+
+    }
+
+};
+
+
 //////////////
 // Component
 
@@ -379,9 +491,9 @@ NGL.Component.prototype = {
 
         }
 
-        repr.dispose();
-
         this.signals.representationRemoved.dispatch( repr );
+
+        repr.dispose();
 
     },
 
@@ -406,7 +518,7 @@ NGL.Component.prototype = {
 
         } );
 
-        this.reprList = [];
+        delete this.reprList;
 
     },
 
@@ -557,10 +669,17 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         if( !ReprClass ){
 
-            console.error( "NGL.StructureComponent.add: representation type unknown" );
+            console.error(
+                "NGL.StructureComponent.add: representation type unknown"
+            );
             return;
 
         }
+
+        var pref = this.stage.preferences;
+        params || {};
+        params.quality = params.quality || pref.quality;
+        params.disableImpostor = params.disableImpostor || !pref.impostor;
 
         var repr = new ReprClass( this.structure, this.viewer, params );
 
