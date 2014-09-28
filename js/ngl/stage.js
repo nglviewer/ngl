@@ -733,7 +733,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
         }
 
         var pref = this.stage.preferences;
-        params || {};
+        params = params || {};
         params.quality = params.quality || pref.getKey( "quality" );
         params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
 
