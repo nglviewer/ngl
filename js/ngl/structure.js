@@ -1069,7 +1069,7 @@ NGL.AtomSet.prototype = {
 NGL.BondSet = function(){
 
     this.bonds = [];
-    this.bondDict = Object.create( null );
+    this.bondCount = 0;
 
 };
 
@@ -1077,38 +1077,25 @@ NGL.BondSet.prototype = {
 
     constructor: NGL.BondSet,
 
-    addBond: function( atom1, atom2, onlyHere ){
-
-        var bonds = this.bonds;
-        var bondDict = this.bondDict;
+    addBond: function( atom1, atom2, notToAtoms ){
 
         var b = new NGL.Bond( atom1, atom2 );
-        var qn = b.qualifiedName();
 
-        if( bondDict[ qn ] ){
-
-            // console.debug( "bond already known", qn );
-
-        }else{
-
-            if( !onlyHere ){
-                atom1.bonds.push( b );
-                atom2.bonds.push( b );
-            }
-            bonds.push( b );
-            bondDict[ qn ] = b;
-
+        if( !notToAtoms ){
+            atom1.bonds.push( b );
+            atom2.bonds.push( b );
         }
+        this.bonds.push( b );
 
-        this.bondCount = bonds.length;
+        this.bondCount += 1;
 
     },
 
-    addBondIfConnected: function( atom1, atom2, onlyHere ){
+    addBondIfConnected: function( atom1, atom2, notToAtoms ){
 
         if( atom1.connectedTo( atom2 ) ){
 
-            this.addBond( atom1, atom2, onlyHere );
+            this.addBond( atom1, atom2, notToAtoms );
 
         }
 
