@@ -322,11 +322,6 @@ NGL.autoLoad = function(){
 
         }
 
-        function progress( e ){
-
-            if( typeof onProgress === "function" ) onProgress( e );
-        }
-
         function error( e ){
 
             if( typeof onError === "function" ) onError( e );
@@ -338,15 +333,15 @@ NGL.autoLoad = function(){
             name = file.name;
 
             var fileLoader = new NGL.FileLoader();
-            fileLoader.load( file, init, progress, error );
+            fileLoader.load( file, init, onProgress, error );
 
         }else if( rcsb ){
 
-            loader.load( file, init, progress, error );
+            loader.load( file, init, onProgress, error );
 
         }else{
 
-            loader.load( "../data/" + file, init, progress, error );
+            loader.load( "../data/" + file, init, onProgress, error );
 
         }
 

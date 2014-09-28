@@ -138,12 +138,6 @@ NGL.Stage.prototype = {
 
         }
 
-        function progress( e ){
-
-            console.log( "progress", e );
-
-        }
-
         function error( e ){
 
             if( component ){
@@ -154,8 +148,7 @@ NGL.Stage.prototype = {
 
         }
 
-        // NGL.autoLoad( path, load, progress, error );
-        NGL.autoLoad( path, load, null, error );
+        NGL.autoLoad( path, load, undefined, error );
 
         // ensure that component isn't ready yet
         if( !component ){
