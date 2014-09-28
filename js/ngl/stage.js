@@ -30,6 +30,8 @@ NGL.Stage = function( eid ){
 
     this.viewer = new NGL.Viewer( eid );
 
+    this.preferences.setTheme();
+
     this.initFileDragDrop();
 
     this.viewer.animate();
@@ -336,13 +338,35 @@ NGL.PickingControls = function( viewer, stage ){
 ////////////////
 // Preferences
 
-NGL.Preferences = function( stage ){
+NGL.Preferences = function( stage, id ){
+
+    this.id = id || "ngl-stage";
 
     this.stage = stage;
 
-    this.impostor = false;
-    this.quality = "low";
-    this.theme = "dark";
+    this.storage = {
+
+        impostor: true,
+        quality: "medium",
+        theme: "dark",
+
+    };
+
+    if ( window.localStorage[ this.id ] === undefined ) {
+
+        window.localStorage[ this.id ] = JSON.stringify( this.storage );
+
+    } else {
+
+        var data = JSON.parse( window.localStorage[ this.id ] );
+
+        for ( var key in data ) {
+
+            this.storage[ key ] = data[ key ];
+
+        }
+
+    }
 
 };
 
@@ -350,7 +374,11 @@ NGL.Preferences.prototype = {
 
     setImpostor: function( value ) {
 
-        this.impostor = value;
+        if( value !== undefined ){
+            this.setKey( "impostor", value );
+        }else{
+            value = this.getKey( "impostor" );
+        }
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
@@ -379,7 +407,11 @@ NGL.Preferences.prototype = {
 
     setQuality: function( value ) {
 
-        this.quality = value;
+        if( value !== undefined ){
+            this.setKey( "quality", value );
+        }else{
+            value = this.getKey( "quality" );
+        }
 
         var types = [
             "tube", "cartoon", "ribbon", "trace"
@@ -420,7 +452,11 @@ NGL.Preferences.prototype = {
 
     setTheme: function( value ) {
 
-        this.theme = value;
+        if( value !== undefined ){
+            this.setKey( "theme", value );
+        }else{
+            value = this.getKey( "theme" );
+        }
 
         var cssPath, viewerBackground;
 
@@ -434,6 +470,26 @@ NGL.Preferences.prototype = {
 
         document.getElementById( 'theme' ).href = cssPath;
         this.stage.viewer.setBackground( viewerBackground );
+
+    },
+
+    getKey: function( key ){
+
+        return this.storage[ key ];
+
+    },
+
+    setKey: function( key, value ){
+
+        this.storage[ key ] = value;
+
+        window.localStorage[ this.id ] = JSON.stringify( this.storage );
+
+    },
+
+    clear: function(){
+
+        delete window.localStorage[ this.id ];
 
     }
 
@@ -678,8 +734,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         var pref = this.stage.preferences;
         params || {};
-        params.quality = params.quality || pref.quality;
-        params.disableImpostor = params.disableImpostor || !pref.impostor;
+        params.quality = params.quality || pref.getKey( "quality" );
+        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
 
         var repr = new ReprClass( this.structure, this.viewer, params );
 

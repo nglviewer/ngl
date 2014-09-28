@@ -470,7 +470,7 @@ NGL.PreferencesWidget = function( stage ){
 
     var themeSelect = new UI.Select()
         .setOptions( { "dark": "dark", "light": "light" } )
-        .setValue( preferences.theme )
+        .setValue( preferences.getKey( "theme" ) )
         .onChange( function(){
 
             preferences.setTheme( themeSelect.getValue() );
@@ -485,7 +485,7 @@ NGL.PreferencesWidget = function( stage ){
             "medium": "medium",
             "high": "high"
         } )
-        .setValue( preferences.quality )
+        .setValue( preferences.getKey( "quality" ) )
         .onChange( function(){
 
             preferences.setQuality( qualitySelect.getValue() );
@@ -495,7 +495,7 @@ NGL.PreferencesWidget = function( stage ){
     //
 
     var impostorCheckbox = new UI.Checkbox()
-        .setValue( preferences.impostor )
+        .setValue( preferences.getKey( "impostor" ) )
         .onChange( function(){
 
             preferences.setImpostor( impostorCheckbox.getValue() );
