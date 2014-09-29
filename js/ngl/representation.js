@@ -26,10 +26,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
-    params = params || {};
-
-    this.visible = params.visible === undefined ? true : params.visible;
-    this.quality = params.quality;
+    this.init( params );
 
 };
 
@@ -38,6 +35,15 @@ NGL.Representation.prototype = {
     name: "",
 
     parameters: {},
+
+    init: function( params ){
+
+        params = params || {};
+
+        this.visible = params.visible === undefined ? true : params.visible;
+        this.quality = params.quality;
+
+    },
 
     setColor: function( type ){
 
@@ -66,7 +72,11 @@ NGL.Representation.prototype = {
 
     },
 
-    rebuild: function(){
+    rebuild: function( params ){
+
+        if( params ){
+            this.init( params );
+        }
 
         this.dispose();
         this.create();
@@ -167,29 +177,22 @@ NGL.Representation.prototype = {
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
 
-    NGL.Representation.call( this, structure, viewer, params );
-
-    var scope = this;
-
     this.structure = structure;
-    this.viewer = viewer;
-
-    params = params || {};
-
-    this.color = params.color || "element";
-    this.radius = params.radius || "vdw";
-    this.scale = params.scale || 1.0;
 
     this.selection = new NGL.Selection( params.sele );
 
     this.atomSet = new NGL.AtomSet( this.structure, this.selection );
     this.bondSet = this.structure.bondSet;
 
+    NGL.Representation.call( this, structure, viewer, params );
+
     // must come after atomSet to ensure selection change signals
     // have already updated the atomSet
     this.selection.signals.stringChanged.add( function( string ){
-        scope.rebuild();
-    } );
+
+        this.rebuild();
+
+    }, this );
 
     this.create();
     this.attach();
@@ -211,9 +214,23 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     defaultSize: 1.0,
 
-    setSelection: function( string ){
+    init: function( params ){
 
-        this.selection.setString( string );
+        params = params || {};
+
+        this.color = params.color || "element";
+        this.radius = params.radius || "vdw";
+        this.scale = params.scale || 1.0;
+
+        this.setSelection( params.sele, true );
+
+        NGL.Representation.prototype.init.call( this, params );
+
+    },
+
+    setSelection: function( string, silent ){
+
+        this.selection.setString( string, silent );
 
         return this;
 
@@ -287,20 +304,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
 NGL.SpacefillRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-
-    this.disableImpostor = params.disableImpostor || false;
-
-    if( params.quality === "low" ){
-        this.sphereDetail = 0;
-    }else if( params.quality === "medium" ){
-        this.sphereDetail = 1;
-    }else if( params.quality === "high" ){
-        this.sphereDetail = 2;
-    }else{
-        this.sphereDetail = params.sphereDetail || 1;
-    }
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -316,6 +319,26 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
         sphereDetail: {
             type: "integer", max: 3, min: 0
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+        }
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -387,27 +410,6 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
 NGL.BallAndStickRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.radius = params.radius || this.defaultSize;
-
-    this.disableImpostor = params.disableImpostor || false;
-
-    if( params.quality === "low" ){
-        this.sphereDetail = 0;
-        this.radiusSegments = 5;
-    }else if( params.quality === "medium" ){
-        this.sphereDetail = 1;
-        this.radiusSegments = 10;
-    }else if( params.quality === "high" ){
-        this.sphereDetail = 2;
-        this.radiusSegments = 20;
-    }else{
-        this.sphereDetail = params.sphereDetail || 1;
-        this.radiusSegments = params.radiusSegments || 10;
-    }
-
-    this.aspectRatio = params.aspectRatio || 2.0;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -431,6 +433,33 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.radius = params.radius || this.defaultSize;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        this.aspectRatio = params.aspectRatio || 2.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -553,25 +582,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
 NGL.LicoriceRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.radius = params.radius || this.defaultSize;
-
-    this.disableImpostor = params.disableImpostor || false;
-
-    if( params.quality === "low" ){
-        this.sphereDetail = 0;
-        this.radiusSegments = 5;
-    }else if( params.quality === "medium" ){
-        this.sphereDetail = 1;
-        this.radiusSegments = 10;
-    }else if( params.quality === "high" ){
-        this.sphereDetail = 2;
-        this.radiusSegments = 20;
-    }else{
-        this.sphereDetail = params.sphereDetail || 1;
-        this.radiusSegments = params.radiusSegments || 10;
-    }
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -592,6 +602,31 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.radius = params.radius || this.defaultSize;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -714,11 +749,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
 NGL.HyperballRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.scale = params.scale || 0.2;
-
-    this.shrink = params.shrink || 0.12;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
     this.defaultScale[ "vdw" ] = 0.2;
@@ -736,6 +766,17 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         shrink: {
             type: "number", precision: 3, max: 1.0, min: 0.001
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.scale = params.scale || 0.2;
+
+        this.shrink = params.shrink || 0.12;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -841,27 +882,6 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
 NGL.BackboneRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.radius = params.radius || this.defaultSize;
-
-    this.disableImpostor = params.disableImpostor || false;
-
-    if( params.quality === "low" ){
-        this.sphereDetail = 0;
-        this.radiusSegments = 5;
-    }else if( params.quality === "medium" ){
-        this.sphereDetail = 1;
-        this.radiusSegments = 10;
-    }else if( params.quality === "high" ){
-        this.sphereDetail = 2;
-        this.radiusSegments = 20;
-    }else{
-        this.sphereDetail = params.sphereDetail || 1;
-        this.radiusSegments = params.radiusSegments || 10;
-    }
-
-    this.aspectRatio = params.aspectRatio || 1.0;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -885,6 +905,33 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.radius = params.radius || this.defaultSize;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        this.aspectRatio = params.aspectRatio || 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -1079,28 +1126,6 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
 NGL.TubeRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.color = params.color || "ss";
-    params.radius = params.radius || this.defaultSize;
-
-    if( params.quality === "low" ){
-        this.subdiv = 3;
-        this.radialSegments = 5;
-    }else if( params.quality === "medium" ){
-        this.subdiv = 6;
-        this.radialSegments = 10;
-    }else if( params.quality === "high" ){
-        this.subdiv = 12;
-        this.radialSegments = 20;
-    }else{
-        this.subdiv = params.subdiv || 6;
-        this.radialSegments = params.radialSegments || 10;
-    }
-
-    this.tension = params.tension || NaN;
-    this.capped = params.capped || true;
-    this.wireframe = params.wireframe || false;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -1130,6 +1155,34 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         wireframe: {
             type: "boolean"
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+        params.radius = params.radius || this.defaultSize;
+
+        if( params.quality === "low" ){
+            this.subdiv = 3;
+            this.radialSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.subdiv = 6;
+            this.radialSegments = 10;
+        }else if( params.quality === "high" ){
+            this.subdiv = 12;
+            this.radialSegments = 20;
+        }else{
+            this.subdiv = params.subdiv || 6;
+            this.radialSegments = params.radialSegments || 10;
+        }
+
+        this.tension = params.tension || NaN;
+        this.capped = params.capped || true;
+        this.wireframe = params.wireframe || false;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -1279,29 +1332,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
 NGL.CartoonRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.color = params.color || "ss";
-    params.radius = params.radius || "ss";
-
-    if( params.quality === "low" ){
-        this.subdiv = 3;
-        this.radialSegments = 6;
-    }else if( params.quality === "medium" ){
-        this.subdiv = 6;
-        this.radialSegments = 10;
-    }else if( params.quality === "high" ){
-        this.subdiv = 12;
-        this.radialSegments = 20;
-    }else{
-        this.subdiv = params.subdiv || 6;
-        this.radialSegments = params.radialSegments || 10;
-    }
-
-    this.aspectRatio = params.aspectRatio || 3.0;
-    this.tension = params.tension || NaN;
-    this.capped = params.capped || true;
-    this.wireframe = params.wireframe || false;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -1332,6 +1362,35 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         wireframe: {
             type: "boolean"
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+        params.radius = params.radius || "ss";
+
+        if( params.quality === "low" ){
+            this.subdiv = 3;
+            this.radialSegments = 6;
+        }else if( params.quality === "medium" ){
+            this.subdiv = 6;
+            this.radialSegments = 10;
+        }else if( params.quality === "high" ){
+            this.subdiv = 12;
+            this.radialSegments = 20;
+        }else{
+            this.subdiv = params.subdiv || 6;
+            this.radialSegments = params.radialSegments || 10;
+        }
+
+        this.aspectRatio = params.aspectRatio || 3.0;
+        this.tension = params.tension || NaN;
+        this.capped = params.capped || true;
+        this.wireframe = params.wireframe || false;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -1495,23 +1554,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
 NGL.RibbonRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.color = params.color || "ss";
-    params.radius = params.radius || "ss";
-    params.scale = params.scale || 3.0;
-
-    if( params.quality === "low" ){
-        this.subdiv = 3;
-    }else if( params.quality === "medium" ){
-        this.subdiv = 6;
-    }else if( params.quality === "high" ){
-        this.subdiv = 12;
-    }else{
-        this.subdiv = params.subdiv || 6;
-    }
-
-    this.tension = params.tension || NaN;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
     this.defaultScale[ "ss" ] *= 3.0;
@@ -1532,6 +1574,29 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+        params.radius = params.radius || "ss";
+        params.scale = params.scale || 3.0;
+
+        if( params.quality === "low" ){
+            this.subdiv = 3;
+        }else if( params.quality === "medium" ){
+            this.subdiv = 6;
+        }else if( params.quality === "high" ){
+            this.subdiv = 12;
+        }else{
+            this.subdiv = params.subdiv || 6;
+        }
+
+        this.tension = params.tension || NaN;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -1653,21 +1718,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
 NGL.TraceRepresentation = function( structure, viewer, params ){
 
-    params = params || {};
-    params.color = params.color || "ss";
-
-    if( params.quality === "low" ){
-        this.subdiv = 3;
-    }else if( params.quality === "medium" ){
-        this.subdiv = 6;
-    }else if( params.quality === "high" ){
-        this.subdiv = 12;
-    }else{
-        this.subdiv = params.subdiv || 6;
-    }
-
-    this.tension = params.tension || NaN;
-
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -1686,6 +1736,27 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+
+        if( params.quality === "low" ){
+            this.subdiv = 3;
+        }else if( params.quality === "medium" ){
+            this.subdiv = 6;
+        }else if( params.quality === "high" ){
+            this.subdiv = 12;
+        }else{
+            this.subdiv = params.subdiv || 6;
+        }
+
+        this.tension = params.tension || NaN;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
 
     },
 
@@ -1787,13 +1858,6 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
     NGL.Representation.call( this, surface, viewer, params );
 
     this.surface = surface;
-    this.viewer = viewer;
-
-    params = params || {};
-
-    this.color = params.color || 0xDDDDDD;
-    this.background = params.background || true;
-    this.wireframe = params.wireframe || false;
 
     this.create();
     this.attach();
@@ -1814,6 +1878,18 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         background: {
             type: "boolean"
         }
+
+    },
+
+    init: function( params ){
+
+        params = params || {};
+
+        this.color = params.color || 0xDDDDDD;
+        this.background = params.background || true;
+        this.wireframe = params.wireframe || false;
+
+        NGL.Representation.prototype.init.call( this, params );
 
     },
 

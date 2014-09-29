@@ -386,11 +386,8 @@ NGL.Preferences.prototype = {
                 }
 
                 var p = repr.getParameters();
-
                 p.disableImpostor = !value;
-
-                o.removeRepresentation( repr );
-                o.addRepresentation( repr.name, p );
+                repr.rebuild( p );
 
             } );
 
@@ -427,15 +424,14 @@ NGL.Preferences.prototype = {
                     }
 
                     if( NGL.extensionFragDepth && !p.disableImpostor ){
+                        repr.quality = value;
                         return;
                     }
 
                 }
 
                 p.quality = value;
-
-                o.removeRepresentation( repr );
-                o.addRepresentation( repr.name, p );
+                repr.rebuild( p );
 
             } );
 
@@ -641,18 +637,16 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     initSelection: function( string ){
 
-        var scope = this;
-
         this.selection = new NGL.Selection( string );
 
         this.selection.signals.stringChanged.add( function( string ){
 
-            scope.applySelection();
+            this.applySelection();
 
-            scope.rebuildRepresentations();
-            scope.rebuildTrajectories();
+            this.rebuildRepresentations();
+            this.rebuildTrajectories();
 
-        } );
+        }, this );
 
         this.applySelection();
 
@@ -684,13 +678,9 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     rebuildRepresentations: function(){
 
-        var scope = this;
+        this.reprList.forEach( function( repr ){
 
-        this.reprList.slice( 0 ).forEach( function( repr ){
-
-            scope.addRepresentation( repr.name, repr.getParameters() );
-
-            scope.removeRepresentation( repr );
+            repr.rebuild( repr.getParameters() );;
 
         } );
 
@@ -702,8 +692,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         scope.trajList.slice( 0 ).forEach( function( traj ){
 
+            // TODO should use traj.rebuild when available
             scope.addTrajectory( traj.trajPath, traj._sele, traj.currentFrame );
-
             scope.removeTrajectory( traj );
 
         } );

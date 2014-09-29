@@ -4148,7 +4148,7 @@ NGL.Selection.prototype = {
 
     constructor: NGL.Selection,
 
-    setString: function( string ){
+    setString: function( string, silent ){
 
         string = string || "";
 
@@ -4174,7 +4174,9 @@ NGL.Selection.prototype = {
         this.chainTest = this.makeChainTest();
         this.modelTest = this.makeModelTest();
 
-        this.signals.stringChanged.dispatch( string );
+        if( !silent ){
+            this.signals.stringChanged.dispatch( string );
+        }
 
     },
 

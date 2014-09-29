@@ -635,7 +635,9 @@ NGL.ExportImageWidget = function( stage ){
 
         stage.eachComponent( function( o ){
 
-            o.reprList.slice( 0 ).forEach( function( repr ){
+            o.reprList.forEach( function( repr ){
+
+                paramsList.push( repr.getParameters() );
 
                 var p = repr.getParameters();
 
@@ -649,10 +651,7 @@ NGL.ExportImageWidget = function( stage ){
 
                 p.quality = null;
 
-                o.addRepresentation( repr.name, p );
-                o.removeRepresentation( repr );
-
-                paramsList.push( repr.getParameters() );
+                repr.rebuild( p );
 
             } );
 
@@ -679,11 +678,9 @@ NGL.ExportImageWidget = function( stage ){
 
                     stage.eachComponent( function( o ){
 
-                        o.reprList.slice( 0 ).forEach( function( repr ){
+                        o.reprList.forEach( function( repr ){
 
-                            o.addRepresentation( repr.name, paramsList[ j ] );
-                            o.removeRepresentation( repr );
-
+                            repr.rebuild( paramsList[ j ] );
                             j += 1;
 
                         } );
