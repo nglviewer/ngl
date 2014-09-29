@@ -336,8 +336,6 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        NGL.Representation.prototype.update.call( this );
-
         what = what || { "position": true };
 
         var sphereData = {};
@@ -470,8 +468,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
-
-        NGL.Representation.prototype.update.call( this );
 
         what = what || { "position": true };
 
@@ -691,8 +687,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        NGL.Representation.prototype.update.call( this );
-
         what = what || { "position": true };
 
         var lineData = {};
@@ -773,8 +767,6 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
-
-        NGL.Representation.prototype.update.call( this );
 
         what = what || { "position": true };
 
@@ -985,8 +977,6 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        NGL.Representation.prototype.update.call( this );
-
         what = what || { "position": true };
 
         var backboneAtomSet, backboneBondSet;
@@ -1190,8 +1180,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
-
-        NGL.Representation.prototype.update.call( this );
 
         what = what || { "position": true };
 
@@ -1399,8 +1387,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        NGL.Representation.prototype.update.call( this );
-
         what = what || { "position": true };
 
         var i = 0;
@@ -1588,8 +1574,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        NGL.Representation.prototype.update.call( this );
-
         what = what || { "position": true };
 
         var i = 0;
@@ -1730,8 +1714,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
-
-        NGL.Representation.prototype.update.call( this );
 
         what = what || { "position": true };
 
