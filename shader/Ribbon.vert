@@ -14,7 +14,7 @@ attribute float inputSize;
 
 void main(void){
 
-	#ifdef PICKING
+    #ifdef PICKING
         vPickingColor = pickingColor;
     #else
         color = inputColor;

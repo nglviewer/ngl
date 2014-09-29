@@ -17,10 +17,10 @@ void main() {
         gl_FragColor.xyz = vPickingColor;
         //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
     #else
-    	vec3 transformedNormal = normalize( vNormal );
-    	#ifdef DOUBLE_SIDED
-    		transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
-    	#endif
+        vec3 transformedNormal = normalize( vNormal );
+        #ifdef DOUBLE_SIDED
+            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
+        #endif
 
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
 

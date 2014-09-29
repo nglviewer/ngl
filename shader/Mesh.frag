@@ -16,15 +16,16 @@ void main()
 {
 
     vec3 transformedNormal = normalize( vNormal );
-    if( !gl_FrontFacing ) transformedNormal = -normalize( vNormal );
-        
+    #ifdef DOUBLE_SIDED
+        transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
+    #endif
 
     #ifdef PICKING
 
         gl_FragColor.xyz = vPickingColor;
 
     #else
-        
+
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
 
         #ifndef NOLIGHT
@@ -32,11 +33,11 @@ void main()
         #endif
 
         gl_FragColor = vec4( vColor, 1.0 );
-        
+
         #ifndef NOLIGHT
             gl_FragColor.xyz *= vLightFront;
         #endif
-        
+
     #endif
 
     #include fog
