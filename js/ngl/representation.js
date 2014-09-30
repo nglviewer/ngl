@@ -2004,19 +2004,17 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 } );
 
 
-//
+/////////////////////////
+// Representation types
 
-NGL.representationTypes = {
+NGL.representationTypes = {};
 
-    "spacefill":    NGL.SpacefillRepresentation,
-    "ball+stick":   NGL.BallAndStickRepresentation,
-    "licorice":     NGL.LicoriceRepresentation,
-    "hyperball":    NGL.HyperballRepresentation,
-    "line":         NGL.LineRepresentation,
-    "backbone":     NGL.BackboneRepresentation,
-    "tube":         NGL.TubeRepresentation,
-    "cartoon":      NGL.CartoonRepresentation,
-    "ribbon":       NGL.RibbonRepresentation,
-    "trace":        NGL.TraceRepresentation,
+for( var key in NGL ){
 
-};
+    if( NGL[ key ].prototype instanceof NGL.StructureRepresentation ){
+
+        NGL.representationTypes[ NGL[ key ].prototype.name ] = NGL[ key ];
+
+    }
+
+}
