@@ -182,7 +182,6 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     this.selection = new NGL.Selection( params.sele );
 
     this.atomSet = new NGL.AtomSet( this.structure, this.selection );
-    this.bondSet = this.structure.bondSet;
 
     NGL.Representation.call( this, structure, viewer, params );
 
