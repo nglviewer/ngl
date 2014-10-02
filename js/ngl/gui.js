@@ -633,27 +633,24 @@ NGL.ExportImageWidget = function( stage ){
 
         var paramsList = [];
 
-        stage.eachComponent( function( o ){
+        stage.eachRepresentation( function( repr ){
 
-            o.reprList.forEach( function( repr ){
+            paramsList.push( repr.getParameters() );
 
-                paramsList.push( repr.getParameters() );
+            var p = repr.getParameters();
 
-                var p = repr.getParameters();
+            if( p.subdiv !== undefined ){
+                p.subdiv = Math.max( 20, p.subdiv );
+            }
 
-                if( p.subdiv !== undefined ){
-                    p.subdiv = Math.max( 20, p.subdiv );
-                }
+            if( p.radialSegments !== undefined ){
+                p.radialSegments = Math.max( 20, p.radialSegments );
+            }
 
-                if( p.radialSegments !== undefined ){
-                    p.radialSegments = Math.max( 20, p.radialSegments );
-                }
+            // prevent automatic quality settings
+            p.quality = null;
 
-                p.quality = null;
-
-                repr.rebuild( p );
-
-            } );
+            repr.rebuild( p );
 
         }, NGL.StructureComponent );
 
@@ -676,14 +673,10 @@ NGL.ExportImageWidget = function( stage ){
 
                     var j = 0;
 
-                    stage.eachComponent( function( o ){
+                    stage.eachRepresentation( function( repr ){
 
-                        o.reprList.forEach( function( repr ){
-
-                            repr.rebuild( paramsList[ j ] );
-                            j += 1;
-
-                        } );
+                        repr.rebuild( paramsList[ j ] );
+                        j += 1;
 
                     }, NGL.StructureComponent );
                 }

@@ -212,6 +212,20 @@ NGL.Stage.prototype = {
 
         } );
 
+    },
+
+    eachRepresentation: function( callback, componentType ){
+
+        this.eachComponent( function( o ){
+
+            o.reprList.forEach( function( repr ){
+
+                callback( repr, o );
+
+            } );
+
+        }, componentType );
+
     }
 
 }
@@ -377,19 +391,15 @@ NGL.Preferences.prototype = {
             "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
         ];
 
-        this.stage.eachComponent( function( o ){
+        this.stage.eachRepresentation( function( repr ){
 
-            o.reprList.slice( 0 ).forEach( function( repr ){
+            if( types.indexOf( repr.name ) === -1 ){
+                return;
+            }
 
-                if( types.indexOf( repr.name ) === -1 ){
-                    return;
-                }
-
-                var p = repr.getParameters();
-                p.disableImpostor = !value;
-                repr.rebuild( p );
-
-            } );
+            var p = repr.getParameters();
+            p.disableImpostor = !value;
+            repr.rebuild( p );
 
         }, NGL.StructureComponent );
 
@@ -411,29 +421,25 @@ NGL.Preferences.prototype = {
             "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
         ];
 
-        this.stage.eachComponent( function( o ){
+        this.stage.eachRepresentation( function( repr ){
 
-            o.reprList.slice( 0 ).forEach( function( repr ){
+            var p = repr.getParameters();
 
-                var p = repr.getParameters();
+            if( types.indexOf( repr.name ) === -1 ){
 
-                if( types.indexOf( repr.name ) === -1 ){
-
-                    if( impostorTypes.indexOf( repr.name ) === -1 ){
-                        return;
-                    }
-
-                    if( NGL.extensionFragDepth && !p.disableImpostor ){
-                        repr.quality = value;
-                        return;
-                    }
-
+                if( impostorTypes.indexOf( repr.name ) === -1 ){
+                    return;
                 }
 
-                p.quality = value;
-                repr.rebuild( p );
+                if( NGL.extensionFragDepth && !p.disableImpostor ){
+                    repr.quality = value;
+                    return;
+                }
 
-            } );
+            }
+
+            p.quality = value;
+            repr.rebuild( p );
 
         }, NGL.StructureComponent );
 
