@@ -1694,6 +1694,10 @@ NGL.Viewer.prototype = {
 
     setOrientation: function( orientation ){
 
+        // remove any paning/translation
+        this.controls.object.position.sub( this.controls.target );
+        this.controls.target.copy( this.controls.target0 );
+
         this.camera.position.fromArray( orientation[ 0 ] );
         this.camera.up.fromArray( orientation[ 1 ] );
 
