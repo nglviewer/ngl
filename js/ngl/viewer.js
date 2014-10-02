@@ -930,10 +930,8 @@ NGL.Viewer.prototype = {
         this.controls.rotateSpeed = 2.0;
         this.controls.zoomSpeed = 1.2;
         this.controls.panSpeed = 0.8;
-        this.controls.noZoom = false;
-        this.controls.noPan = false;
         this.controls.staticMoving = true;
-        this.controls.dynamicDampingFactor = 0.3;
+        // this.controls.dynamicDampingFactor = 0.3;
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener( 'change', this.render.bind( this ) );
@@ -1103,6 +1101,8 @@ NGL.Viewer.prototype = {
             } );
 
         }
+
+        this.controls.maxDistance = bb.size().length() * 10;
 
         if( NGL.GET( "debug" ) ){
 
