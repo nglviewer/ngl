@@ -65,6 +65,13 @@ textarea {
 
 textarea, input { outline: none; } /* osx */
 
+input[type=range]:focus:after {
+    position: absolute;
+    transform: translate(-100%,-50% );
+    content: attr(value);
+    font-size: 12px;
+}
+
 .Icon {
     cursor: default;
 }
@@ -165,7 +172,7 @@ textarea, input { outline: none; } /* osx */
 
 
 /* FlexiColorPicker */
-.picker-wrapper, 
+.picker-wrapper,
 .slide-wrapper {
     position: relative;
     float: left;

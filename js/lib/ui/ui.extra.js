@@ -206,6 +206,12 @@ UI.Range = function( min, max, value, step ) {
     this.dom = dom;
     this.dom.textContent = value;
 
+    this.onInput( function(){
+
+        this.dom.setAttribute( "value", this.getValue() );
+
+    } );
+
     return this;
 
 };
