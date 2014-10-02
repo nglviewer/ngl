@@ -200,6 +200,23 @@ NGL.Stage.prototype = {
 
     },
 
+    setTheme: function( value ){
+
+        var cssPath, viewerBackground;
+
+        if( value === "light" ){
+            cssPath = "../css/light.css";
+            viewerBackground = "white";
+        }else{
+            cssPath = "../css/dark.css";
+            viewerBackground = "black";
+        }
+
+        document.getElementById( 'theme' ).href = cssPath;
+        this.viewer.setBackground( viewerBackground );
+
+    },
+
     eachComponent: function( callback, type ){
 
         this.compList.forEach( function( o, i ){
@@ -453,18 +470,7 @@ NGL.Preferences.prototype = {
             value = this.getKey( "theme" );
         }
 
-        var cssPath, viewerBackground;
-
-        if( value === "light" ){
-            cssPath = "../css/light.css";
-            viewerBackground = "white";
-        }else{
-            cssPath = "../css/dark.css";
-            viewerBackground = "black";
-        }
-
-        document.getElementById( 'theme' ).href = cssPath;
-        this.stage.viewer.setBackground( viewerBackground );
+        this.stage.setTheme( value );
 
     },
 
