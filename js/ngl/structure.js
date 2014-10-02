@@ -5016,6 +5016,8 @@ NGL.Spline.prototype = {
         var vTang = new THREE.Vector3();
         var vBin = new THREE.Vector3();
 
+        var vBinPrev = new THREE.Vector3();
+
         var first = true;
 
         return function( r1, r2, r3, r4, pos, tan, norm, bin ){
@@ -5040,19 +5042,18 @@ NGL.Spline.prototype = {
                 if( first ){
                     cAtom = r2.getAtomByName( directionAtomname1 );
                     oAtom = r2.getAtomByName( directionAtomname2 );
-                    vTmp.copy( cAtom );
-                    vDir2.copy( oAtom ).sub( vTmp ).normalize();
+                    vDir2.copy( oAtom ).sub( cAtom ).normalize();
                     vNorm2.copy( a1 ).sub( a3 ).cross( vDir2 ).normalize();
                     first = false;
                 }
 
                 cAtom = r3.getAtomByName( directionAtomname1 );
                 oAtom = r3.getAtomByName( directionAtomname2 );
-                vTmp.copy( cAtom );
                 vPos3.copy( a3 );
-                vDir3.copy( oAtom ).sub( vTmp ).normalize();
+                vDir3.copy( oAtom ).sub( cAtom ).normalize();
 
             }
+
 
             // ensure the direction vector does not flip
             if( vDir2.dot( vDir3 ) < 0 ) vDir3.multiplyScalar( -1 );
@@ -5072,6 +5073,7 @@ NGL.Spline.prototype = {
                     d1 * vDir2.y + d * vDir3.y,
                     d1 * vDir2.z + d * vDir3.z
                 ).normalize();
+
                 norm[ l + 0 ] = vNorm.x;
                 norm[ l + 1 ] = vNorm.y;
                 norm[ l + 2 ] = vNorm.z;
@@ -5081,12 +5083,23 @@ NGL.Spline.prototype = {
                 tan[ l + 1 ] = vTang.y;
                 tan[ l + 2 ] = vTang.z;
 
+                //
+
                 vBin.copy( vNorm ).cross( vTang ).normalize();
+
+                // ensure binormal vector does not flip
+                if( vBinPrev.dot( vBin ) < 0 ) vBin.multiplyScalar( -1 );
+
                 bin[ l + 0 ] = vBin.x;
                 bin[ l + 1 ] = vBin.y;
                 bin[ l + 2 ] = vBin.z;
 
+                vBinPrev.copy( vBin );
+
+                //
+
                 vNorm.copy( vTang ).cross( vBin ).normalize();
+
                 norm[ l + 0 ] = vNorm.x;
                 norm[ l + 1 ] = vNorm.y;
                 norm[ l + 2 ] = vNorm.z;
