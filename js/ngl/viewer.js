@@ -1950,7 +1950,6 @@ NGL.Buffer.prototype = {
             if( o.material ){
                 o.material.dispose();
             }
-            o.dispose();
         } );
 
         if( this.pickable ){
@@ -1958,7 +1957,6 @@ NGL.Buffer.prototype = {
                 if( o.material ){
                     o.material.dispose();
                 }
-                o.dispose();
             } );
         }
 
