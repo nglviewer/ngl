@@ -4931,6 +4931,80 @@ NGL.Spline.prototype = {
         norm[ n1 * m * 3 + 1 ] = norm[ n1 * m * 3 - 2 ];
         norm[ n1 * m * 3 + 2 ] = norm[ n1 * m * 3 - 1 ];
 
+        //
+
+        var nx = n * m - 6;
+        var i, j;
+
+        var vBin1 = new THREE.Vector3();
+        var vBin2 = new THREE.Vector3();
+        var vBin3 = new THREE.Vector3();
+
+        var vNorm1 = new THREE.Vector3();
+        var vNorm2 = new THREE.Vector3();
+        var vNorm3 = new THREE.Vector3();
+
+        var vTan2 = new THREE.Vector3();
+
+        for( i = 0; i < nx; ++i ){
+
+            j = i * 3;
+
+            vBin1.set(
+                bin[ j + 0 + 0 ], bin[ j + 0 + 1 ], bin[ j + 0 + 2 ]
+            );
+            vBin2.set(
+                bin[ j + 3 + 0 ], bin[ j + 3 + 1 ], bin[ j + 3 + 2 ]
+            );
+            vBin3.set(
+                bin[ j + 6 + 0 ], bin[ j + 6 + 1 ], bin[ j + 6 + 2 ]
+            );
+
+            vNorm1.set(
+                norm[ j + 0 + 0 ], norm[ j + 0 + 1 ], norm[ j + 0 + 2 ]
+            );
+            vNorm2.set(
+                norm[ j + 3 + 0 ], norm[ j + 3 + 1 ], norm[ j + 3 + 2 ]
+            );
+            vNorm3.set(
+                norm[ j + 6 + 0 ], norm[ j + 6 + 1 ], norm[ j + 6 + 2 ]
+            );
+
+            if( Math.abs( vNorm1.dot( vNorm2 ) ) + Math.abs( vBin1.dot( vBin2 ) ) <
+                    Math.abs( vNorm1.dot( vNorm3 ) ) + Math.abs( vBin1.dot( vBin3 ) ) ){
+
+                // console.log( i / m, "foo", vNorm1.dot( vNorm2 ), vNorm1.dot( vNorm3 ) )
+
+                if( vBin1.dot( vBin3 ) < 0 ) vBin1.multiplyScalar( -1 );
+
+                vBin2.set(
+                    0.5 * vBin1.x + 0.5 * vBin3.x,
+                    0.5 * vBin1.y + 0.5 * vBin3.y,
+                    0.5 * vBin1.z + 0.5 * vBin3.z
+                ).normalize();
+
+                bin[ j + 3 + 0 ] = vBin2.x;
+                bin[ j + 3 + 1 ] = vBin2.y;
+                bin[ j + 3 + 2 ] = vBin2.z;
+
+                vTan2.set(
+                    tan[ j + 3 + 0 ], tan[ j + 3 + 1 ], tan[ j + 3 + 2 ]
+                );
+
+                vNorm2.copy( vTan2 ).cross( vBin2 ).normalize();
+
+                norm[ j + 3 + 0 ] = vNorm2.x;
+                norm[ j + 3 + 1 ] = vNorm2.y;
+                norm[ j + 3 + 2 ] = vNorm2.z;
+
+                ++i
+
+            }
+
+        }
+
+        //
+
         return {
 
             "position": pos,
