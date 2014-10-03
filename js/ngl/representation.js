@@ -26,6 +26,8 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
+    this.helperBufferList = [];
+
     this.init( params );
 
 };
@@ -98,7 +100,13 @@ NGL.Representation.prototype = {
 
             buffer.setVisibility( value );
 
-        });
+        } );
+
+        this.helperBufferList.forEach( function( helperBuffer ){
+
+            helperBuffer.setVisibility( value );
+
+        } );
 
         this.viewer.requestRender();
 
@@ -141,13 +149,11 @@ NGL.Representation.prototype = {
 
         };
 
-        var scope = this;
-
         Object.keys( this.parameters ).forEach( function( name ){
 
-            params[ name ] = scope[ name ];
+            params[ name ] = this[ name ];
 
-        } );
+        }, this );
 
         return params;
 
@@ -155,17 +161,25 @@ NGL.Representation.prototype = {
 
     dispose: function(){
 
-        var scope = this;
-
         this.bufferList.forEach( function( buffer ){
 
-            scope.viewer.remove( buffer );
+            this.viewer.remove( buffer );
             buffer.dispose();
             buffer = null;  // aid GC
 
-        });
+        }, this );
 
         this.bufferList = [];
+
+        this.helperBufferList.forEach( function( helperBuffer ){
+
+            this.viewer.remove( helperBuffer );
+            helperBuffer.dispose();
+            helperBuffer = null;  // aid GC
+
+        }, this );
+
+        this.helperBufferList = [];
 
     }
 
@@ -299,7 +313,17 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                 viewer.add( buffer );
             }
 
-        });
+        } );
+
+        this.helperBufferList.forEach( function( helperBuffer ){
+
+            if( matrixList.length > 1 ){
+                viewer.add( helperBuffer, matrixList );
+            }else{
+                viewer.add( helperBuffer );
+            }
+
+        } );
 
         this.setVisibility( this.visible );
 
@@ -1407,6 +1431,12 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
+        if( NGL.GET( "debug" ) ){
+
+            scope.helperBufferList = [];
+
+        }
+
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -1443,6 +1473,43 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                 )
 
             );
+
+            if( NGL.GET( "debug" ) ){
+
+                scope.helperBufferList.push(
+
+                    new NGL.BufferVectorHelper(
+                        subPos.position,
+                        subPos.normal,
+                        "skyblue",
+                        1.5
+                    )
+
+                );
+
+                scope.helperBufferList.push(
+
+                    new NGL.BufferVectorHelper(
+                        subPos.position,
+                        subPos.binormal,
+                        "lightgreen",
+                        1.5
+                    )
+
+                );
+
+                scope.helperBufferList.push(
+
+                    new NGL.BufferVectorHelper(
+                        subPos.position,
+                        subPos.tangent,
+                        "orange",
+                        1.5
+                    )
+
+                );
+
+            }
 
             scope.fiberList.push( fiber );
 
@@ -1495,6 +1562,14 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             }
 
             this.bufferList[ i ].setAttributes( bufferData );
+
+            if( NGL.GET( "debug" ) ){
+
+                this.helperBufferList[ i * 3 + 0 ].setAttributes( bufferData );
+                this.helperBufferList[ i * 3 + 1 ].setAttributes( bufferData );
+                this.helperBufferList[ i * 3 + 2 ].setAttributes( bufferData );
+
+            }
 
         };
 
