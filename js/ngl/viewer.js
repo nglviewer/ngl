@@ -4140,47 +4140,86 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
 
     var n = position.length/3;
     var n2 = n * 2;
-    var n6 = n * 6;
 
-    var geometry = new THREE.BufferGeometry();
+    this.size = n;
 
-    var aPosition = new Float32Array( n2 * 3 );
-    geometry.addAttribute( 'position', new THREE.BufferAttribute( aPosition, 3 ) );
+    this.geometry = new THREE.BufferGeometry();
 
-    var i, j;
+    this.geometry.addAttribute(
+        'position',
+        new THREE.BufferAttribute( new Float32Array( n2 * 3 ), 3 )
+    );
 
-    for( var v = 0; v < n; v++ ){
+    this.color = color;
+    this.scale = scale;
 
-        i = v * 2 * 3;
-        j = v * 3;
-
-        aPosition[ i + 0 ] = position[ j + 0 ];
-        aPosition[ i + 1 ] = position[ j + 1 ];
-        aPosition[ i + 2 ] = position[ j + 2 ];
-        aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
-        aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
-        aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
-
-    }
-
-    // console.log( "position", aPosition );
-
-    this.geometry = geometry;
-
-    this.getMesh = function(){
-
-        var material = new THREE.LineBasicMaterial( {
-            color: color, fog: true
-        } );
-
-        return new THREE.Line( geometry, material, THREE.LinePieces );;
-
-    }
-
-    this.setVisibility = NGL.Buffer.prototype.setVisibility;
-
-    this.dispose = NGL.Buffer.prototype.dispose;
+    this.setAttributes({
+        position: position,
+        vector: vector
+    });
 
 };
+
+NGL.BufferVectorHelper.prototype = {
+
+    setAttributes: function( data ){
+
+        var n = this.size;
+
+        var attributes = this.geometry.attributes;
+
+        var position;
+        var aPosition;
+
+        if( data[ "position" ] ){
+            position = data[ "position" ];
+            aPosition = attributes[ "position" ].array;
+            attributes[ "position" ].needsUpdate = true;
+        }
+
+        if( data[ "vector" ] ){
+            this.vector = data[ "vector" ];
+        }
+
+        var scale = this.scale;
+        var vector = this.vector;
+
+        var i, j;
+
+        if( data[ "position" ] ){
+
+            for( var v = 0; v < n; v++ ){
+
+                i = v * 2 * 3;
+                j = v * 3;
+
+                aPosition[ i + 0 ] = position[ j + 0 ];
+                aPosition[ i + 1 ] = position[ j + 1 ];
+                aPosition[ i + 2 ] = position[ j + 2 ];
+                aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
+                aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
+                aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
+
+            }
+
+        }
+
+    },
+
+    getMesh: function(){
+
+        var material = new THREE.LineBasicMaterial( {
+            color: this.color, fog: true
+        } );
+
+        return new THREE.Line( this.geometry, material, THREE.LinePieces );;
+
+    },
+
+    setVisibility: NGL.Buffer.prototype.setVisibility,
+
+    dispose: NGL.Buffer.prototype.dispose
+
+}
 
 
