@@ -655,7 +655,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
             this.applySelection();
 
-            this.rebuildRepresentations();
+            this.rebuildRepresentations( true );
             this.rebuildTrajectories();
 
         }, this );
@@ -688,13 +688,17 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    rebuildRepresentations: function(){
+    rebuildRepresentations: function( setStructure ){
 
         this.reprList.forEach( function( repr ){
 
-            repr.rebuild( repr.getParameters() );;
+            if( setStructure ){
+                repr.setStructure( this.structure );
+            }
 
-        } );
+            repr.rebuild( repr.getParameters() );
+
+        }, this );
 
     },
 

@@ -177,11 +177,9 @@ NGL.Representation.prototype = {
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
 
-    this.structure = structure;
-
     this.selection = new NGL.Selection( params.sele );
 
-    this.atomSet = new NGL.AtomSet( this.structure, this.selection );
+    this.setStructure( structure );
 
     NGL.Representation.call( this, structure, viewer, params );
 
@@ -224,6 +222,15 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.setSelection( params.sele, true );
 
         NGL.Representation.prototype.init.call( this, params );
+
+    },
+
+    setStructure: function( structure ){
+
+        this.structure = structure;
+        this.atomSet = new NGL.AtomSet( this.structure, this.selection );
+
+        return this;
 
     },
 
