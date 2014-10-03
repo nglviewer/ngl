@@ -26,7 +26,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
-    this.helperBufferList = [];
+    this.debugBufferList = [];
 
     this.init( params );
 
@@ -102,9 +102,9 @@ NGL.Representation.prototype = {
 
         } );
 
-        this.helperBufferList.forEach( function( helperBuffer ){
+        this.debugBufferList.forEach( function( debugBuffer ){
 
-            helperBuffer.setVisibility( value );
+            debugBuffer.setVisibility( value );
 
         } );
 
@@ -171,15 +171,15 @@ NGL.Representation.prototype = {
 
         this.bufferList = [];
 
-        this.helperBufferList.forEach( function( helperBuffer ){
+        this.debugBufferList.forEach( function( debugBuffer ){
 
-            this.viewer.remove( helperBuffer );
-            helperBuffer.dispose();
-            helperBuffer = null;  // aid GC
+            this.viewer.remove( debugBuffer );
+            debugBuffer.dispose();
+            debugBuffer = null;  // aid GC
 
         }, this );
 
-        this.helperBufferList = [];
+        this.debugBufferList = [];
 
     }
 
@@ -315,12 +315,12 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         } );
 
-        this.helperBufferList.forEach( function( helperBuffer ){
+        this.debugBufferList.forEach( function( debugBuffer ){
 
             if( matrixList.length > 1 ){
-                viewer.add( helperBuffer, matrixList );
+                viewer.add( debugBuffer, matrixList );
             }else{
-                viewer.add( helperBuffer );
+                viewer.add( debugBuffer );
             }
 
         } );
@@ -1433,7 +1433,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         if( NGL.GET( "debug" ) ){
 
-            scope.helperBufferList = [];
+            scope.debugBufferList = [];
 
         }
 
@@ -1476,7 +1476,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( NGL.GET( "debug" ) ){
 
-                scope.helperBufferList.push(
+                scope.debugBufferList.push(
 
                     new NGL.BufferVectorHelper(
                         subPos.position,
@@ -1487,7 +1487,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
                 );
 
-                scope.helperBufferList.push(
+                scope.debugBufferList.push(
 
                     new NGL.BufferVectorHelper(
                         subPos.position,
@@ -1498,7 +1498,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
                 );
 
-                scope.helperBufferList.push(
+                scope.debugBufferList.push(
 
                     new NGL.BufferVectorHelper(
                         subPos.position,
@@ -1565,9 +1565,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( NGL.GET( "debug" ) ){
 
-                this.helperBufferList[ i * 3 + 0 ].setAttributes( bufferData );
-                this.helperBufferList[ i * 3 + 1 ].setAttributes( bufferData );
-                this.helperBufferList[ i * 3 + 2 ].setAttributes( bufferData );
+                this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
+                this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
+                this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
 
             }
 
