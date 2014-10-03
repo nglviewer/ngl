@@ -61,10 +61,18 @@ NGL.Script.prototype = {
             var loadFn = queue.load.bind( queue );
             var thenFn = queue.then.bind( queue );
 
-            this.fn(
-                stage, component, loadFn, thenFn, panel,
-                this.name, this.path, this.dir
-            );
+            try{
+
+                this.fn(
+                    stage, component, loadFn, thenFn, panel,
+                    this.name, this.path, this.dir
+                );
+
+            }catch( e ){
+
+                console.error( "NGL.Script.fn", e );
+
+            }
 
         }else{
 
@@ -72,15 +80,16 @@ NGL.Script.prototype = {
 
         }
 
-        queue.then( function(){
+        function finish(){
+            if( typeof onFinish === "function" ) onFinish();
+        }
 
-            if( typeof onFinish === "function" ){
+        function error(){
+            panel.add( new UI.Text( "ERROR" ) );
+            finish();
+        }
 
-                onFinish();
-
-            }
-
-        } );
+        queue.then( finish, error );
 
     }
 
@@ -105,41 +114,50 @@ NGL.ScriptQueue.prototype = {
 
     load: function( file, callback, params ){
 
-        var status;
+        var status = {};
 
         // TODO check for pdbid or http...
         var path = this.dir + file;
 
-        this.stage.loadFile( path, function( component ){
+        this.stage.loadFile(
 
-            callback( component );
+            path,
 
-            if( typeof status === "function" ){
+            function( component ){
 
-                status();
+                callback( component );
 
-            }else{
+                if( status.resolve ){
+                    status.resolve();
+                }else{
+                    status.success = true;
+                }
 
-                status = true;
+            },
+
+            params,
+
+            function( e ){
+
+                if( status.reject ){
+                    status.reject( e );
+                }else{
+                    status.error = e || "error";
+                }
 
             }
 
-        }, params );
+        );
 
         var handle = function( resolve, reject ){
 
-            if( status === true ){
-
+            if( status.success === true ){
                 resolve();
-
+            }else if( status.error !== undefined ){
+                reject( status.error );
             }else{
-
-                status = function(){
-
-                    resolve();
-
-                };
-
+                status.resolve = resolve;
+                status.reject = reject;
             }
 
         };
@@ -152,9 +170,15 @@ NGL.ScriptQueue.prototype = {
 
     },
 
-    then: function( callback ){
+    then: function( callback, onError ){
 
-        this.promise = this.promise.then( callback );
+        this.promise = this.promise.then( callback, function( e ){
+
+            console.error( "NGL.ScriptQueue.then", e );
+
+            if( typeof onError === "function" ) onError();
+
+        } );
 
     }
 

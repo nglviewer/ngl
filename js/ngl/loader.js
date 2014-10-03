@@ -278,7 +278,7 @@ NGL.autoLoad = function(){
 
     return function( file, onLoad, onProgress, onError ){
 
-        var object, rcsb;
+        var object, rcsb, loader;
 
         var path = ( file instanceof File ) ? file.name : file;
         var name = path.replace( /^.*[\\\/]/, '' );
@@ -295,11 +295,14 @@ NGL.autoLoad = function(){
 
         }
 
-        var loader = new loaders[ ext ];
+        if( ext in loaders ){
 
-        if( !loader ){
+            loader = new loaders[ ext ];
 
-            console.error( "NGL.autoLoading: ext '" + ext + "' unknown" );
+        }else{
+
+            error( "NGL.autoLoading: ext '" + ext + "' unknown" );
+
             return null;
 
         }
@@ -324,7 +327,15 @@ NGL.autoLoad = function(){
 
         function error( e ){
 
-            if( typeof onError === "function" ) onError( e );
+            if( typeof onError === "function" ){
+
+                onError( e );
+
+            }else{
+
+                console.error( e );
+
+            }
 
         }
 

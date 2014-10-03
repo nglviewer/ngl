@@ -91,7 +91,7 @@ NGL.Stage.prototype = {
 
     },
 
-    loadFile: function( path, onLoad, params ){
+    loadFile: function( path, onLoad, params, onError ){
 
         var component;
         var scope = this;
@@ -138,13 +138,15 @@ NGL.Stage.prototype = {
 
         }
 
+        var _e;
+
         function error( e ){
 
-            if( component ){
+            _e = e;
 
-                component.setStatus( e );
+            if( component ) component.setStatus( e );
 
-            }
+            if( typeof onError === "function" ) onError( e );
 
         }
 
@@ -160,6 +162,9 @@ NGL.Stage.prototype = {
             this.addComponent( component );
 
         }
+
+        // set error status when already known
+        if( _e ) component.setStatus( _e );
 
     },
 
