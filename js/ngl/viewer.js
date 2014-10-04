@@ -3876,30 +3876,25 @@ NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, 
 ////////////////
 // Text & Font
 
-/**
- * See {@tutorial font} for background info.
- *
- * @param {String} name - Font name, e.g. 'Arial'.
- *
- */
+
 NGL.getFont = function( name ){
 
-    var fnt = NGL.Resources[ 'fonts/' + name + '.fnt' ].split('\n');
+    var fnt = NGL.Resources[ '../fonts/' + name + '.fnt' ].split('\n');
     var font = {};
     var tWidth = 1024;
     var tHeight = 1024;
-    var base = 29;
-    var lineHeight = 37;
+    var base = 58;
+    var lineHeight = 74;
 
     fnt.forEach( function( line ){
 
-        if( line.substr( 0, 5 )=='char ' ){
+        if( line.substr( 0, 5 ) === 'char ' ){
 
             var character = {};
-            var ls = line.substr(5).split( /\s+/ );
+            var ls = line.substr( 5 ).split( /\s+/ );
             ls.forEach( function( field ){
-                var fs = field.split('=');
-                character[ fs[0] ] = parseInt( fs[1] );
+                var fs = field.split( '=' );
+                character[ fs[ 0 ] ] = parseInt( fs[ 1 ] );
             });
             var x = character.x;
             var y = character.y;
@@ -3911,13 +3906,13 @@ NGL.getFont = function( name ){
                 (x+width)/tWidth    ,1 - y/tHeight,                 // top right
                 (x+width)/tWidth    ,1 - (y+height)/tHeight,        // bottom right
             ]);
-            character.width2 = (20*width)/tWidth;
-            character.height2 = (20*height)/tHeight;
-            character.xadvance2 = (20*(character.xadvance))/tWidth;
-            character.xoffset2 = (20*(character.xoffset))/tWidth;
-            character.yoffset2 = (20*(character.yoffset))/tHeight;
-            character.lineHeight = (20*37)/512;
-            font[ character['id'] ] = character;
+            character.width2 = (10*width)/tWidth;
+            character.height2 = (10*height)/tHeight;
+            character.xadvance2 = (10*(character.xadvance))/tWidth;
+            character.xoffset2 = (10*(character.xoffset))/tWidth;
+            character.yoffset2 = (10*(character.yoffset))/tHeight;
+            character.lineHeight = (10*74)/1024;
+            font[ character[ 'id' ] ] = character;
 
         }else{
 
@@ -3932,24 +3927,17 @@ NGL.getFont = function( name ){
 };
 
 
-/**
- * [TextBuffer description]
- * @class
- * @augments {NGL.QuadBuffer}
- * @param {Float32Array} position
- * @param {Float32Array} size
- * @param {String[]} text
- */
 NGL.TextBuffer = function( position, size, text ){
 
-    // FIXME texture memory handling
-
     var type = 'Arial';
-    var font = NGL.getFont( type );
-    var tex = new THREE.Texture( NGL.Resources[ 'fonts/' + type + '.png' ] );
-    tex.needsUpdate = true;
+
+    this.font = NGL.getFont( type );
+
+    this.tex = new THREE.Texture( NGL.Resources[ '../fonts/' + type + '.png' ] );
+    this.tex.needsUpdate = true;
 
     var n = position.length / 3;
+    this.positionCount = n;
 
     if( !text ){
         text = [];
@@ -3960,6 +3948,7 @@ NGL.TextBuffer = function( position, size, text ){
 
     var charCount = 0;
     text.forEach( function( t ){ charCount += t.length; } );
+    this.text = text;
 
     this.size = charCount;
     this.vertexShader = 'SDFFont.vert';
@@ -3969,20 +3958,106 @@ NGL.TextBuffer = function( position, size, text ){
 
     this.addUniforms({
         "color"  : { type: "c", value: new THREE.Color( 0xFFFFFF ) },
-        "fontTexture"  : { type: "t", value: tex }
+        "fontTexture"  : { type: "t", value: this.tex }
     });
 
-    NGL.textures.push({ uniform: this.uniforms.fontTexture, tex: tex });
+    // NGL.textures.push({ uniform: this.uniforms.fontTexture, tex: tex });
 
     this.addAttributes({
         "inputTexCoord": { type: "v2", value: null },
         "inputSize": { type: "f", value: null },
     });
 
-    var aPosition = this.geometry.attributes[ "position" ].array;
+    this.setAttributes({
+        "position": position,
+        "size": size
+    });
+
+    this.finalize();
+
+};
+
+NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
+
+NGL.TextBuffer.prototype.getMaterial = function(){
+
+    var material = NGL.Buffer.prototype.getMaterial.call( this );
+
+    material.transparent = true;
+    material.depthWrite = false;
+    material.lights = false;
+    material.blending = THREE.AdditiveBlending;
+
+    material.uniforms.fontTexture.value = this.tex;
+    material.needsUpdate = true;
+
+    return material;
+
+};
+
+NGL.TextBuffer.prototype.setAttributes = function( data ){
+
+    var position, size;
+    var aPosition, inputSize;
+
+    var text = this.text;
+    var attributes = this.geometry.attributes;
+
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
+
+    if( data[ "size" ] ){
+        size = data[ "size" ];
+        inputSize = attributes[ "inputSize" ].array;
+        attributes[ "inputSize" ].needsUpdate = true;
+    }
+
+    var n = this.positionCount;
+
+    var i, j, o;
+    var iCharAll = 0;
+    var txt, iChar, nChar;
+
+    for( var v = 0; v < n; v++ ) {
+
+        o = 3 * v;
+        txt = text[ v ];
+        nChar = txt.length;
+
+        for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
+
+            i = iCharAll * 2 * 4;
+
+            for( var m = 0; m < 4; m++ ) {
+
+                j = iCharAll * 4 * 3 + (3 * m);
+
+                aPosition[ j + 0 ] = position[ o + 0 ];
+                aPosition[ j + 1 ] = position[ o + 1 ];
+                aPosition[ j + 2 ] = position[ o + 2 ];
+
+                inputSize[ (iCharAll * 4) + m ] = size[ v ];
+
+            }
+
+        }
+
+    }
+
+};
+
+NGL.TextBuffer.prototype.makeMapping = function(){
+
+    var font = this.font;
+    var text = this.text;
+
     var inputTexCoord = this.geometry.attributes[ "inputTexCoord" ].array;
-    var inputSize = this.geometry.attributes[ "inputSize" ].array;
     var inputMapping = this.geometry.attributes[ "mapping" ].array;
+
+    var n = this.positionCount;
 
     var c;
     var i, j, o;
@@ -4016,45 +4091,11 @@ NGL.TextBuffer = function( position, size, text ){
 
             inputTexCoord.set( c.textureCoords, i );
 
-            for( var m = 0; m < 4; m++ ) {
-
-                j = iCharAll * 4 * 3 + (3 * m);
-
-                aPosition[ j + 0 ] = position[ o + 0 ];
-                aPosition[ j + 1 ] = position[ o + 1 ];
-                aPosition[ j + 2 ] = position[ o + 2 ];
-
-                inputSize[ (iCharAll * 4) + m ] = size[ v ];
-
-            }
-
             xadvance += c.xadvance2;
+
         }
 
     }
-
-    this.finalize();
-
-    this.material.transparent = true;
-    this.material.depthWrite = false;
-    this.material.lights = false;
-    this.material.blending = THREE.AdditiveBlending;
-
-};
-
-NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
-
-NGL.TextBuffer.prototype.setAttributes = function( data ){
-
-    // TODO implement; move code from contructor here
-
-    // NGL.QuadBuffer.prototype.setAttributes.call( this, data );
-
-};
-
-NGL.TextBuffer.prototype.makeMapping = function(){
-
-    // mapping done in the contructor
 
 };
 
