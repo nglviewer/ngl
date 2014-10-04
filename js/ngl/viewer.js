@@ -462,12 +462,7 @@ NGL.Utils = {
 };
 
 
-/**
- * Initialize the global NGL object, i.e. get resources
- */
 NGL.init = function( onload ){
-
-    NGL.materialCache = {};
 
     this.textures = [];
 
@@ -478,10 +473,6 @@ NGL.init = function( onload ){
 };
 
 
-/**
- * Get resources for the global NGL object
- * @private
- */
 NGL.initResources = function( onLoad ){
 
     var loadingManager = new THREE.LoadingManager( function(){
@@ -527,31 +518,6 @@ NGL.initResources = function( onLoad ){
 };
 
 
-/**
- * [getMaterial description]
- * @private
- * @param  {Object} params
- * @return {THREE.Material}
- */
-NGL.getMaterial = function( params ){
-
-    var key = JSON.stringify( params );
-
-    if( !NGL.materialCache[ key ] ){
-        NGL.materialCache[ key ] = new THREE.MeshLambertMaterial( params )
-    }
-
-    return NGL.materialCache[ key ];
-
-};
-
-
-/**
- * [getShader description]
- * @private
- * @param  {String} name
- * @return {String}
- */
 NGL.getShader = function( name ){
 
     var shader = NGL.Resources[ '../shader/' + name ];
@@ -948,14 +914,6 @@ NGL.Viewer.prototype = {
 
     },
 
-    /**
-     * Adds a buffer to the scene
-     * @param {NGL.Buffer} buffer
-     * @example
-     * var viewer = new NGL.Viewer( "eid" );
-     * var buffer = new NGL.Buffer();
-     * viewer.add( buffer );
-     */
     add: function( buffer, matrixList ){
 
         var group, pickingGroup;
@@ -1441,9 +1399,6 @@ NGL.Viewer.prototype = {
 
     },
 
-    /**
-     * Renders the scene.
-     */
     render: function( e, picking, tileing ){
 
         if( this._rendering ){
@@ -1501,11 +1456,6 @@ NGL.Viewer.prototype = {
             this.updateDynamicUniforms( this.modelGroup );
             this.updateDynamicUniforms( this.backgroundModelGroup );
         }
-
-        // FIXME needed for font texture, but unclear why
-        NGL.textures.forEach( function( v ){
-            v.uniform.value = v.tex;
-        });
 
         if( this.ssaoEffect.enabled || this.fxaaEffect.enabled ||
             this.dotScreenEffect.enabled ){
@@ -1621,9 +1571,6 @@ NGL.Viewer.prototype = {
 
     }(),
 
-    /**
-     * Clears the scene.
-     */
     clear: function(){
 
         console.log( "scene cleared" );
@@ -2068,13 +2015,6 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
         this.attributes[ name ].needsUpdate = true;
 
     }, this );
-
-    if( this.mesh ){
-        this.mesh.geometry.computeBoundingBox();
-        this.mesh.geometry.computeBoundingSphere();
-    }
-
-    // console.log( "mesh", this.mesh );
 
 };
 
@@ -3410,18 +3350,6 @@ NGL.RibbonBuffer.prototype = {
             }
 
         }
-
-        // console.log( n, n4 )
-        // console.log( "inputDir", inputDir );
-        // console.log( "inputNormal", inputNormal );
-        // console.log( "RibbonBuffer aPosition", aPosition, aPosition.length );
-        // console.log( position );
-        // console.log( "inputSize", inputSize, size );
-        // console.log( "inputColor", inputColor );
-        // console.log( "inputPickingColor", inputPickingColor );
-
-        // new NGL.BufferVectorHelper( position, normal, new THREE.Color("rgb(255,0,0)") );
-        // new NGL.BufferVectorHelper( position, dir, new THREE.Color("rgb(255,255,0)") );
 
     },
 
