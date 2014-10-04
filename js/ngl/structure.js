@@ -327,6 +327,22 @@ NGL.ColorFactory = function( type, structure ){
 
 }
 
+NGL.ColorFactory.types = {
+
+    "": "",
+    "element": "by element",
+    "resname": "by residue name",
+    "ss": "by secondary structure",
+    "atomindex": "by atom index",
+    "residueindex": "by residue index",
+    "chainindex": "by chain index",
+    "modelindex": "by model index",
+    "picking": "by picking id",
+    "random": "random",
+    "color": "color"
+
+}
+
 NGL.ColorFactory.prototype = {
 
     atomColor: function( a ){
@@ -442,6 +458,17 @@ NGL.RadiusFactory = function( type, scale ){
 
 }
 
+NGL.RadiusFactory.types = {
+
+    "": "",
+    "vdw": "by vdW radius",
+    "covalent": "by covalent radius",
+    "ss": "by secondary structure",
+    "bfactor": "by bfactor",
+    "size": "size"
+
+}
+
 NGL.RadiusFactory.prototype = {
 
     atomRadius: function( a ){
@@ -507,6 +534,16 @@ NGL.LabelFactory = function( type ){
 
 }
 
+NGL.LabelFactory.types = {
+
+    "": "",
+    "atomname": "atom name",
+    "resname": "residue name",
+    "resno": "residue no",
+    "res": "residue name + no"
+
+};
+
 NGL.LabelFactory.prototype = {
 
     atomLabel: function( a ){
@@ -517,9 +554,14 @@ NGL.LabelFactory.prototype = {
 
         switch( type ){
 
+            case "atomname":
+
+                l = a.atomname;
+                break;
+
             case "resname":
 
-                l = "[" + a.resname + "]";
+                l = a.resname;
                 break;
 
             case "resno":

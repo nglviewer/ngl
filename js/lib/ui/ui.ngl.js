@@ -32,19 +32,7 @@ UI.ColorPopupMenu = function(){
     this.schemeSelector = new UI.Select()
         .setColor( '#444' )
         .setWidth( "" )
-        .setOptions({
-            "": "",
-            "element": "by element",
-            "resname": "by residue name",
-            "ss": "by secondary structure",
-            "atomindex": "by atom index",
-            "residueindex": "by residue index",
-            "chainindex": "by chain index",
-            "modelindex": "by model index",
-            "picking": "by picking id",
-            "random": "random",
-            "color": "color"
-        })
+        .setOptions( NGL.ColorFactory.types )
         .onChange( function(){
 
             scope.setScheme( scope.schemeSelector.getValue() );

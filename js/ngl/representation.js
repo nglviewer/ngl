@@ -450,11 +450,21 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     name: "label",
 
+    parameters: {
+
+        labelType: {
+            type: "select", options: NGL.LabelFactory.types
+        }
+
+    },
+
     init: function( params ){
 
         params = params || {};
 
         params.color = params.color || 0xFFFFFF;
+
+        this.labelType = params.labelType || "res";
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -463,7 +473,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var text = [];
-        var labelFactory = new NGL.LabelFactory( "res" );
+        var labelFactory = new NGL.LabelFactory( this.labelType );
 
         this.atomSet.eachAtom( function( a ){
 
@@ -511,6 +521,24 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         }
 
         this.textBuffer.setAttributes( textData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "labelType" ] ){
+
+            this.labelType = params[ "labelType" ];
+            rebuild = true;
+
+        }
+
+        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+
+        return this;
 
     }
 

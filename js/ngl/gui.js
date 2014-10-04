@@ -1393,14 +1393,7 @@ NGL.RepresentationWidget = function( repr, component ){
     var radiusSelector = new UI.Select()
         .setColor( '#444' )
         .setWidth( "" )
-        .setOptions({
-            "": "",
-            "vdw": "by vdW radius",
-            "covalent": "by covalent radius",
-            "ss": "by secondary structure",
-            "bfactor": "by bfactor",
-            "size": "size"
-        })
+        .setOptions( NGL.RadiusFactory.types )
         .setValue( parseFloat( repr.radius ) ? "size" : repr.radius )
         .onChange( function(){
 
@@ -1461,6 +1454,13 @@ NGL.RepresentationWidget = function( repr, component ){
         }else if( p.type === "boolean" ){
 
             input = new UI.Checkbox( repr[ name ] );
+
+        }else if( p.type === "select" ){
+
+            input = new UI.Select()
+                .setWidth( "" )
+                .setOptions( p.options )
+                .setValue( repr[ name ] );
 
         }
 
