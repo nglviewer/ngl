@@ -438,6 +438,56 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.LabelRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.LabelRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    name: "label",
+
+    create: function(){
+
+        this.textBuffer = new NGL.TextBuffer(
+            this.atomSet.atomPosition(),
+            this.atomSet.atomRadius( null, this.radius, this.scale )
+        );
+
+        this.bufferList = [ this.textBuffer ];
+
+    },
+
+    update: function( what ){
+
+        what = what || { "position": true };
+
+        var textData = {};
+
+        if( what[ "position" ] ){
+
+            textData[ "position" ] = this.atomSet.atomPosition();
+
+        }
+
+        if( what[ "size" ] || what[ "scale" ] ){
+
+            textData[ "size" ] = this.atomSet.atomRadius(
+                null, this.radius, this.scale
+            );
+
+        }
+
+        this.textBuffer.setAttributes( textData );
+
+    }
+
+} );
+
+
 NGL.BallAndStickRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
