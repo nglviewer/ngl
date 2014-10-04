@@ -7,7 +7,7 @@
 ///////////
 // Script
 
-NGL.Script = function( str, name, path ){
+NGL.Script = function( functionBody, name, path ){
 
     var SIGNALS = signals;
 
@@ -24,9 +24,14 @@ NGL.Script = function( str, name, path ){
     try {
 
         this.fn = new Function(
-            'stage', 'component', 'load', 'then', 'panel',
+
+            'stage', 'script', 'panel',
             '__name__', '__path__', '__dir__',
-            str
+
+            Object.keys( NGL.makeScriptHelper() ).join( ',' ),
+
+            functionBody
+
         );
 
     }catch( e ){
@@ -55,17 +60,19 @@ NGL.Script.prototype = {
         };
 
         var queue = new NGL.ScriptQueue( stage, this.dir, onFinish );
+        var helper = NGL.makeScriptHelper( stage, queue, panel );
 
         if( this.fn ){
 
-            var loadFn = queue.load.bind( queue );
-            var thenFn = queue.then.bind( queue );
+            var args = [
+                stage, component, panel,
+                this.name, this.path, this.dir
+            ];
 
             try{
 
-                this.fn(
-                    stage, component, loadFn, thenFn, panel,
-                    this.name, this.path, this.dir
+                this.fn.apply(
+                    null, args.concat( Object.values( helper ) )
                 );
 
             }catch( e ){
@@ -181,5 +188,202 @@ NGL.ScriptQueue.prototype = {
         } );
 
     }
+
+};
+
+
+NGL.makeScriptHelper = function( stage, queue, panel ){
+
+    function load(){
+
+        queue.load.apply( queue, arguments );
+
+    }
+
+    function then(){
+
+        queue.then.apply( queue, arguments );
+
+    }
+
+    // TODO
+    // get, color, radius, center
+    // alias, to create some sort of variables?
+
+    function test( what, repr, comp ){
+
+        what = what || {};
+
+        if( what[ "repr" ] &&
+            (
+                (
+                    Array.isArray( what[ "repr" ] ) &&
+                    what[ "repr" ].indexOf( repr.name ) === -1
+                )
+                ||
+                (
+                    !Array.isArray( what[ "repr" ] ) &&
+                    what[ "repr" ] !== repr.name
+                )
+            )
+        ){
+            return false;
+        }
+
+        if( what[ "comp" ] && what[ "comp" ] !== comp.name ){
+            return false;
+        }
+
+        return true;
+
+    }
+
+
+    function vis( what, value ){
+
+        if( what ){
+
+            stage.eachRepresentation( function( repr, comp ){
+
+                if( test( what, repr, comp ) ){
+                    repr.setVisibility( value );
+                }
+
+            } );
+
+        }else{
+
+            stage.eachComponent( function( comp ){
+
+                comp.setVisibility( value );
+
+            } );
+
+        }
+
+    }
+
+
+    function hide( what ){
+
+        vis( what, false );
+
+    }
+
+
+    function show( what, only ){
+
+        if( only ) hide();
+
+        vis( what, true );
+
+    }
+
+
+    function button( label, callback ){
+
+        var btn = new UI.Button( label ).onClick( callback );
+
+        return btn;
+
+    }
+
+
+    function visBtn( label, objList ){
+
+        var forEach;
+
+        if( objList ){
+
+            if( !Array.isArray( objList ) ){
+                objList = [ objList ];
+            }
+
+            forEach = function( callback ){
+                objList.forEach( callback );
+            };
+
+        }else{
+
+            label = label || "all";
+
+            forEach = function( callback ){
+                stage.eachComponent( callback, NGL.StructureComponent );
+            };
+
+        }
+
+        function isVisible(){
+            var visible = false;
+            forEach( function( obj ){
+                if( obj.visible ){
+                    visible = true;
+                }
+            } );
+            return visible;
+        }
+
+        function setVisibility( value ){
+            forEach( function( obj ){
+                obj.setVisibility( value )
+            } );
+        }
+
+        function getLabel( value ){
+            return ( isVisible() ? "hide " : "show " ) + label;
+        }
+
+        var btn = new UI.Button( getLabel() )
+            .onClick( function(){
+                setVisibility( !isVisible() );
+            } )
+
+        forEach( function( obj ){
+            obj.signals.visibilityChanged.add( function( value ){
+                btn.setLabel( getLabel() );
+            } );
+        } );
+
+        return btn;
+
+    }
+
+
+    function playBtn( label, traj, step, timeout, start, end ){
+
+        var player = new NGL.TrajectoryPlayer( traj, step, timeout, start, end );
+        player.mode = "once";
+
+        var btn = new UI.Button( "play " + label )
+            .onClick( function(){
+                player.toggle();
+            } );
+
+        player.signals.startedRunning.add( function(){
+            btn.setLabel( "pause " + label );
+        } );
+
+        player.signals.haltedRunning.add( function(){
+            btn.setLabel( "play " + label );
+        } );
+
+        return btn;
+
+    }
+
+
+    return {
+
+        'load': load,
+        'then': then,
+
+        'vis': vis,
+        'hide': hide,
+        'show': show,
+        'button': button,
+        'visBtn': visBtn,
+        'playBtn': playBtn,
+
+    };
 
 };
