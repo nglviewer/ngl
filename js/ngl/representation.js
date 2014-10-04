@@ -452,9 +452,19 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        var text = [];
+        var labelFactory = new NGL.LabelFactory( "res" );
+
+        this.atomSet.eachAtom( function( a ){
+
+            text.push( labelFactory.atomLabel( a ) );
+
+        } );
+
         this.textBuffer = new NGL.TextBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomRadius( null, this.radius, this.scale )
+            this.atomSet.atomRadius( null, this.radius, this.scale ),
+            text
         );
 
         this.bufferList = [ this.textBuffer ];

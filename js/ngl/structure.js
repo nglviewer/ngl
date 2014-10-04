@@ -501,6 +501,51 @@ NGL.RadiusFactory.prototype = {
 };
 
 
+NGL.LabelFactory = function( type ){
+
+    this.type = type;
+
+}
+
+NGL.LabelFactory.prototype = {
+
+    atomLabel: function( a ){
+
+        var type = this.type;
+
+        var l;
+
+        switch( type ){
+
+            case "resname":
+
+                l = "[" + a.resname + "]";
+                break;
+
+            case "resno":
+
+                l = "" + a.resno;
+                break;
+
+            case "res":
+
+                l = ( NGL.AA1[ a.resname.toUpperCase() ] || '' ) + a.resno;
+                break;
+
+            default:
+
+                l = a.qualifiedName();
+                break;
+
+        }
+
+        return l;
+
+    }
+
+};
+
+
 ////////
 // Set
 
