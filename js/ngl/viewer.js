@@ -4035,11 +4035,15 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
 
                 j = iCharAll * 4 * 3 + (3 * m);
 
-                aPosition[ j + 0 ] = position[ o + 0 ];
-                aPosition[ j + 1 ] = position[ o + 1 ];
-                aPosition[ j + 2 ] = position[ o + 2 ];
+                if( data[ "position" ] ){
+                    aPosition[ j + 0 ] = position[ o + 0 ];
+                    aPosition[ j + 1 ] = position[ o + 1 ];
+                    aPosition[ j + 2 ] = position[ o + 2 ];
+                }
 
-                inputSize[ (iCharAll * 4) + m ] = size[ v ];
+                if( data[ "size" ] ){
+                    inputSize[ (iCharAll * 4) + m ] = size[ v ];
+                }
 
             }
 
