@@ -3927,7 +3927,7 @@ NGL.getFont = function( name ){
 };
 
 
-NGL.TextBuffer = function( position, size, text ){
+NGL.TextBuffer = function( position, size, color, text ){
 
     var type = 'Arial';
 
@@ -3937,31 +3937,24 @@ NGL.TextBuffer = function( position, size, text ){
     this.tex.needsUpdate = true;
 
     var n = position.length / 3;
-    this.positionCount = n;
-
-    if( !text ){
-        text = [];
-        for( var i = 0; i < n; i++ ){
-            text.push( "#" + i );
-        }
-    }
 
     var charCount = 0;
-    text.forEach( function( t ){ charCount += t.length; } );
-    this.text = text;
+    for( var i = 0; i < n; ++i ){
+        charCount += text[ i ].length;
+    }
 
+    this.text = text;
     this.size = charCount;
+    this.positionCount = n;
+
     this.vertexShader = 'SDFFont.vert';
     this.fragmentShader = 'SDFFont.frag';
 
     NGL.QuadBuffer.call( this );
 
     this.addUniforms({
-        "color"  : { type: "c", value: new THREE.Color( 0xFFFFFF ) },
         "fontTexture"  : { type: "t", value: this.tex }
     });
-
-    // NGL.textures.push({ uniform: this.uniforms.fontTexture, tex: tex });
 
     this.addAttributes({
         "inputTexCoord": { type: "v2", value: null },
@@ -3970,7 +3963,8 @@ NGL.TextBuffer = function( position, size, text ){
 
     this.setAttributes({
         "position": position,
-        "size": size
+        "size": size,
+        "color": color
     });
 
     this.finalize();
@@ -3997,8 +3991,8 @@ NGL.TextBuffer.prototype.getMaterial = function(){
 
 NGL.TextBuffer.prototype.setAttributes = function( data ){
 
-    var position, size;
-    var aPosition, inputSize;
+    var position, size, color;
+    var aPosition, inputSize, aColor;
 
     var text = this.text;
     var attributes = this.geometry.attributes;
@@ -4013,6 +4007,12 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
         size = data[ "size" ];
         inputSize = attributes[ "inputSize" ].array;
         attributes[ "inputSize" ].needsUpdate = true;
+    }
+
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
     }
 
     var n = this.positionCount;
@@ -4036,13 +4036,25 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
                 j = iCharAll * 4 * 3 + (3 * m);
 
                 if( data[ "position" ] ){
+
                     aPosition[ j + 0 ] = position[ o + 0 ];
                     aPosition[ j + 1 ] = position[ o + 1 ];
                     aPosition[ j + 2 ] = position[ o + 2 ];
+
                 }
 
                 if( data[ "size" ] ){
+
                     inputSize[ (iCharAll * 4) + m ] = size[ v ];
+
+                }
+
+                if( color ){
+
+                    aColor[ j + 0 ] = color[ o + 0 ];
+                    aColor[ j + 1 ] = color[ o + 1 ];
+                    aColor[ j + 2 ] = color[ o + 2 ];
+
                 }
 
             }

@@ -229,7 +229,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         params = params || {};
 
-        this.color = params.color || "element";
+        this.color = params.color === undefined ? "element" : params.color;
         this.radius = params.radius || "vdw";
         this.scale = params.scale || 1.0;
 
@@ -450,6 +450,16 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     name: "label",
 
+    init: function( params ){
+
+        params = params || {};
+
+        params.color = params.color || 0xFFFFFF;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
     create: function(){
 
         var text = [];
@@ -464,6 +474,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         this.textBuffer = new NGL.TextBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
+            this.atomSet.atomColor( null, this.color ),
             text
         );
 
@@ -487,6 +498,14 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
             textData[ "size" ] = this.atomSet.atomRadius(
                 null, this.radius, this.scale
+            );
+
+        }
+
+        if( what[ "color" ] ){
+
+            textData[ "color" ] = this.atomSet.atomColor(
+                null, this.color
             );
 
         }
