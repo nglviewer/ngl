@@ -181,6 +181,12 @@ def css( filename ):
     return send_from_directory( os.path.join( APP_PATH, "css/" ), filename )
 
 
+@app.route( '/img/<path:filename>' )
+@requires_auth
+def img( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "img/" ), filename )
+
+
 @app.route( '/html/<path:filename>' )
 @requires_auth
 @crossdomain( origin='*' )
