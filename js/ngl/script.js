@@ -194,11 +194,16 @@ NGL.ScriptQueue.prototype = {
 
 NGL.makeScriptHelper = function( stage, queue, panel ){
 
+    var U = NGL.unicodeHelper;
+
+    //
+
     function load(){
 
         queue.load.apply( queue, arguments );
 
     }
+
 
     function then(){
 
@@ -239,7 +244,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
-    function vis( what, value ){
+    function visibility( what, value ){
 
         if( what ){
 
@@ -266,7 +271,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     function hide( what ){
 
-        vis( what, false );
+        visibility( what, false );
 
     }
 
@@ -275,21 +280,50 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         if( only ) hide();
 
-        vis( what, true );
+        visibility( what, true );
+
+    }
+
+    //
+
+    function uiText( text, newline ){
+
+        var elm = new UI.Text( U( text ) );
+
+        panel.add( elm );
+
+        if( newline ) uiBreak( 1 );
+
+        return elm;
 
     }
 
 
-    function button( label, callback ){
+    function uiBreak( n ){
 
-        var btn = new UI.Button( label ).onClick( callback );
+        n = n === undefined ? 1 : n;
+
+        for( var i = 0; i < n; ++i ){
+
+            panel.add( new UI.Break() );
+
+        }
+
+    }
+
+
+    function uiButton( label, callback ){
+
+        var btn = new UI.Button( U( label ) ).onClick( callback );
+
+        panel.add( btn );
 
         return btn;
 
     }
 
 
-    function visBtn( label, objList ){
+    function uiVisibilityButton( label, objList ){
 
         var forEach;
 
@@ -312,6 +346,8 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
             };
 
         }
+
+        label = U( label );
 
         function isVisible(){
             var visible = false;
@@ -344,12 +380,16 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
             } );
         } );
 
+        panel.add( btn );
+
         return btn;
 
     }
 
 
-    function playBtn( label, traj, step, timeout, start, end ){
+    function uiPlayButton( label, traj, step, timeout, start, end ){
+
+        label = U( label );
 
         var player = new NGL.TrajectoryPlayer( traj, step, timeout, start, end );
         player.mode = "once";
@@ -367,22 +407,28 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
             btn.setLabel( "play " + label );
         } );
 
+        panel.add( btn );
+
         return btn;
 
     }
 
+    //
 
     return {
 
         'load': load,
         'then': then,
 
-        'vis': vis,
+        'visibility': visibility,
         'hide': hide,
         'show': show,
-        'button': button,
-        'visBtn': visBtn,
-        'playBtn': playBtn,
+
+        'uiText': uiText,
+        'uiBreak': uiBreak,
+        'uiButton': uiButton,
+        'uiVisibilityButton': uiVisibilityButton,
+        'uiPlayButton': uiPlayButton,
 
     };
 
