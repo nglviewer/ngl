@@ -17,6 +17,8 @@ void main(void){
     vec4 cameraCornerPos = vec4( cameraPos, 1.0 );
     cameraCornerPos.xy += mapping * inputSize;
 
+    cameraCornerPos.z += 0.5;
+
     gl_Position = projectionMatrix * cameraCornerPos;
 
 }
