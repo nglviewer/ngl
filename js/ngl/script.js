@@ -288,6 +288,21 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
+
+    function superpose( comp1, comp2, align, sele1, sele2 ){
+
+        NGL.superpose(
+            comp1.structure,
+            comp2.structure,
+            align,
+            sele1,
+            sele2
+        );
+
+        comp1.updateRepresentations();
+
+    }
+
     //
 
     function uiText( text, newline ){
@@ -429,6 +444,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'visibility': visibility,
         'hide': hide,
         'show': show,
+        'superpose': superpose,
 
         'uiText': uiText,
         'uiBreak': uiBreak,

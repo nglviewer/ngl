@@ -87,7 +87,7 @@ if ( !Object.assign ) {
 
                 var nextSource = arguments[i];
                 if (nextSource === undefined || nextSource === null)
-                  continue;
+                    continue;
 
                 var keysArray = Object.keys(Object(nextSource));
                 for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
