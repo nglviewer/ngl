@@ -1371,7 +1371,7 @@ NGL.RepresentationWidget = function( repr, component ){
         })() );
 
     container
-        .addStatic( new UI.Text( repr.name ).setWidth( "80px" ) )
+        .addStatic( new UI.Text( repr.type ).setWidth( "80px" ) )
         .addStatic( toggle )
         .addStatic( disposeIcon )
         .addStatic( colorWidget );

@@ -9,20 +9,7 @@
 
 NGL.Representation = function( object, viewer, params ){
 
-    var scope = this;
-
-    var SIGNALS = signals;
-
-    // TODO
-    this.signals = {
-
-        visibilityChanged: new SIGNALS.Signal(),
-        colorChanged: new SIGNALS.Signal(),
-        radiusChanged: new SIGNALS.Signal(),
-        scaleChanged: new SIGNALS.Signal(),
-        parametersChanged: new SIGNALS.Signal(),
-
-    };
+    this.signals = NGL.makeObjectSignals( this );
 
     this.viewer = viewer;
 
@@ -34,7 +21,18 @@ NGL.Representation = function( object, viewer, params ){
 
 NGL.Representation.prototype = {
 
-    name: "",
+    type: "",
+
+    signals: {
+
+        // TODO not all generally applicable, move downstream
+        visibilityChanged: null,
+        colorChanged: null,
+        radiusChanged: null,
+        scaleChanged: null,
+        parametersChanged: null,
+
+    },
 
     parameters: {},
 
@@ -185,6 +183,8 @@ NGL.Representation.prototype = {
 
 };
 
+NGL.ObjectMetadata.prototype.apply( NGL.Representation.prototype );
+
 
 /////////////////////////////
 // Structure representation
@@ -214,7 +214,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     NGL.Representation.prototype, {
 
-    name: "",
+    type: "",
 
     defaultScale: {
         "vdw": 1.0,
@@ -342,7 +342,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "spacefill",
+    type: "spacefill",
 
     parameters: {
 
@@ -448,7 +448,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "label",
+    type: "label",
 
     parameters: {
 
@@ -555,7 +555,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "ball+stick",
+    type: "ball+stick",
 
     defaultSize: 0.15,
 
@@ -727,7 +727,7 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "licorice",
+    type: "licorice",
 
     defaultSize: 0.15,
 
@@ -842,7 +842,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "line",
+    type: "line",
 
     create: function(){
 
@@ -896,7 +896,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "hyperball",
+    type: "hyperball",
 
     parameters: {
 
@@ -1027,7 +1027,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "backbone",
+    type: "backbone",
 
     defaultSize: 0.25,
 
@@ -1271,7 +1271,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "tube",
+    type: "tube",
 
     defaultSize: 0.25,
 
@@ -1477,7 +1477,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "cartoon",
+    type: "cartoon",
 
     parameters: {
 
@@ -1752,7 +1752,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "ribbon",
+    type: "ribbon",
 
     parameters: {
 
@@ -1914,7 +1914,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    name: "trace",
+    type: "trace",
 
     parameters: {
 
@@ -2056,7 +2056,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     NGL.Representation.prototype, {
 
-    name: "",
+    type: "",
 
     parameters: {
 
@@ -2202,7 +2202,7 @@ for( var key in NGL ){
 
     if( NGL[ key ].prototype instanceof NGL.StructureRepresentation ){
 
-        NGL.representationTypes[ NGL[ key ].prototype.name ] = NGL[ key ];
+        NGL.representationTypes[ NGL[ key ].prototype.type ] = NGL[ key ];
 
     }
 
