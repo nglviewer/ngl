@@ -14,6 +14,7 @@ NGL.Script = function( functionBody, name, path ){
     this.signals = {
 
         elementAdded: new SIGNALS.Signal(),
+        nameChanged: new SIGNALS.Signal(),
 
     };
 
@@ -25,7 +26,7 @@ NGL.Script = function( functionBody, name, path ){
 
         this.fn = new Function(
 
-            'stage', 'script', 'panel',
+            'stage', 'panel',
             '__name__', '__path__', '__dir__',
 
             Object.keys( NGL.makeScriptHelper() ).join( ',' ),
@@ -45,7 +46,7 @@ NGL.Script = function( functionBody, name, path ){
 
 NGL.Script.prototype = {
 
-    call: function( stage, component, onFinish ){
+    call: function( stage, onFinish ){
 
         var scope = this;
 
@@ -54,6 +55,12 @@ NGL.Script.prototype = {
             add: function( element ){
 
                 scope.signals.elementAdded.dispatch( arguments );
+
+            },
+
+            setName: function( value ){
+
+                scope.signals.nameChanged.dispatch( value );
 
             }
 
@@ -65,7 +72,7 @@ NGL.Script.prototype = {
         if( this.fn ){
 
             var args = [
-                stage, component, panel,
+                stage, panel,
                 this.name, this.path, this.dir
             ];
 
@@ -119,7 +126,7 @@ NGL.ScriptQueue = function( stage, dir, onFinish ){
 
 NGL.ScriptQueue.prototype = {
 
-    load: function( file, callback, params ){
+    load: function( file, params, callback ){
 
         var status = {};
 
@@ -132,7 +139,11 @@ NGL.ScriptQueue.prototype = {
 
             function( component ){
 
-                callback( component );
+                component.requestGuiVisibility( false );
+
+                if( typeof callback === "function" ){
+                    callback( component );
+                }
 
                 if( status.resolve ){
                     status.resolve();
@@ -215,31 +226,21 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     // get, color, radius, center
     // alias, to create some sort of variables?
 
-    function test( what, repr, comp ){
+    function structure( name ){
 
-        what = what || {};
+        var component;
 
-        if( what[ "repr" ] &&
-            (
-                (
-                    Array.isArray( what[ "repr" ] ) &&
-                    what[ "repr" ].indexOf( repr.name ) === -1
-                )
-                ||
-                (
-                    !Array.isArray( what[ "repr" ] ) &&
-                    what[ "repr" ] !== repr.name
-                )
-            )
-        ){
-            return false;
-        }
+        stage.eachComponent( function( o ){
 
-        if( what[ "comp" ] && what[ "comp" ] !== comp.name ){
-            return false;
-        }
+            if( name === o.name ){
 
-        return true;
+                component = o;
+
+            }
+
+        }, NGL.StructureComponent );
+
+        return component;
 
     }
 
@@ -250,7 +251,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
             stage.eachRepresentation( function( repr, comp ){
 
-                if( test( what, repr, comp ) ){
+                if( NGL.ObjectMetadata.test( what, repr, comp ) ){
                     repr.setVisibility( value );
                 }
 
@@ -419,6 +420,8 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         'load': load,
         'then': then,
+
+        'structure': structure,
 
         'visibility': visibility,
         'hide': hide,

@@ -898,7 +898,7 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( component.name )
+    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
         .setWidth( "100px" )
         .setWordWrap( "break-word" );
 
@@ -1197,7 +1197,7 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     signals.nameChanged.add( function( value ){
 
-        name.setValue( value );
+        name.setValue( NGL.unicodeHelper( value ) );
 
     } );
 
@@ -1243,7 +1243,7 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( component.name )
+    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
         .setWidth( "100px" )
         .setWordWrap( "break-word" );
 
