@@ -1324,7 +1324,7 @@ NGL.RepresentationWidget = function( repr, component ){
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            repr.setVisibility( !toggle.getValue() );
+            component.setReprVisibility( repr, !toggle.getValue() )
 
         } );
 

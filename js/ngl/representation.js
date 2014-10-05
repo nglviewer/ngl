@@ -90,9 +90,7 @@ NGL.Representation.prototype = {
 
     },
 
-    setVisibility: function( value ){
-
-        this.visible = value;
+    applyVisibility: function( value ){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -107,6 +105,14 @@ NGL.Representation.prototype = {
         } );
 
         this.viewer.requestRender();
+
+    },
+
+    setVisibility: function( value, notApply ){
+
+        this.visible = value;
+
+        if( !notApply ) this.applyVisibility( value );
 
         this.signals.visibilityChanged.dispatch( value );
 

@@ -594,12 +594,36 @@ NGL.Component.prototype = {
 
         this.reprList.forEach( function( repr ){
 
-            repr.setVisibility( value );
+            if( value ){
+                repr.applyVisibility( repr.visible );
+            }else{
+                repr.applyVisibility( false );
+            }
 
-        } );
+        }, this );
 
         this.visible = value;
         this.signals.visibilityChanged.dispatch( value );
+
+        return this;
+
+    },
+
+    setReprVisibility: function( repr, value ){
+
+        this.reprList.forEach( function( _repr ){
+
+            if( _repr === repr ){
+
+                if( this.visible ){
+                    repr.setVisibility( value );
+                }else{
+                    repr.setVisibility( value, true );
+                }
+
+            }
+
+        }, this );
 
         return this;
 
@@ -751,6 +775,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
         params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
 
         var repr = new ReprClass( this.structure, this.viewer, params );
+
+        repr.applyVisibility( this.visible );
 
         console.timeEnd( "NGL.StructureComponent.add " + type );
 

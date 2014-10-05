@@ -252,7 +252,10 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
             stage.eachRepresentation( function( repr, comp ){
 
                 if( NGL.ObjectMetadata.test( what, repr, comp ) ){
-                    repr.setVisibility( value );
+
+                    comp.setVisibility( value );
+                    comp.setReprVisibility( repr, value );
+
                 }
 
             } );
