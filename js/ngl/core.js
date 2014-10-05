@@ -184,3 +184,90 @@ NGL.unicodeHelper = function(){
     };
 
 }();
+
+
+///////////
+// Object
+
+NGL.makeObjectSignals = function( object ){
+
+    var s = {};
+
+    Object.keys( object.signals ).forEach( function( name ){
+
+        s[ name ] = new signals.Signal();
+
+    } );
+
+    return s;
+
+};
+
+
+NGL.ObjectMetadata = function(){};
+
+NGL.ObjectMetadata.test = function( what, repr, comp ){
+
+    what = what || {};
+
+    if( what[ "repr" ] &&
+        (
+            (
+                Array.isArray( what[ "repr" ] ) &&
+                what[ "repr" ].indexOf( repr.type ) === -1
+            )
+            ||
+            (
+                !Array.isArray( what[ "repr" ] ) &&
+                what[ "repr" ] !== repr.type
+            )
+        )
+    ){
+        return false;
+    }
+
+    if( what[ "comp" ] && what[ "comp" ] !== comp.name ){
+        return false;
+    }
+
+    return true;
+
+}
+
+NGL.ObjectMetadata.prototype = {
+
+    apply: function( object ){
+
+        object.setName = NGL.ObjectMetadata.prototype.setName;
+        object.addTag = NGL.ObjectMetadata.prototype.addTag;
+        object.removeTag = NGL.ObjectMetadata.prototype.removeTag;
+        object.setTags = NGL.ObjectMetadata.prototype.setTags;
+
+        object.tags = [];
+
+        object.signals[ "nameChanged" ] = null;
+
+    },
+
+    setName: function( value ){
+
+        this.name = value;
+        this.signals.nameChanged.dispatch( value );
+
+    },
+
+    addTag: function( value ){
+
+    },
+
+    removeTag: function( value ){
+
+    },
+
+    setTags: function( value ){
+
+        this.tags = arguments || [];
+
+    },
+
+};
