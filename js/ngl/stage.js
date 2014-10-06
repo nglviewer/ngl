@@ -545,7 +545,7 @@ NGL.Component.prototype = {
 
         this.signals.representationAdded.dispatch( repr );
 
-        return repr;
+        return this;
 
     },
 
@@ -619,6 +619,7 @@ NGL.Component.prototype = {
                     repr.setVisibility( value );
                 }else{
                     repr.setVisibility( value, true );
+                    repr.applyVisibility( false );
                 }
 
             }
@@ -776,11 +777,11 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         var repr = new ReprClass( this.structure, this.viewer, params );
 
-        repr.applyVisibility( this.visible );
-
         console.timeEnd( "NGL.StructureComponent.add " + type );
 
         NGL.Component.prototype.addRepresentation.call( this, repr );
+
+        this.setReprVisibility( repr, repr.visible );
 
         return returnRepr ? repr : this;
 
