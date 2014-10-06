@@ -245,30 +245,40 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
+    function color( what, value ){
+
+        stage.eachRepresentation( function( repr, comp ){
+
+            if( NGL.ObjectMetadata.test( what, repr, comp ) ){
+
+                repr.setColor( value );
+
+            }
+
+        } );
+
+    }
+
+
     function visibility( what, value ){
 
-        if( what ){
+        stage.eachComponent( function( comp ){
 
-            stage.eachRepresentation( function( repr, comp ){
-
-                if( NGL.ObjectMetadata.test( what, repr, comp ) ){
-
-                    comp.setVisibility( value );
-                    comp.setReprVisibility( repr, value );
-
-                }
-
-            } );
-
-        }else{
-
-            stage.eachComponent( function( comp ){
-
+            if( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ){
                 comp.setVisibility( value );
+            }
 
-            } );
+            if( what && what[ "repr" ] || !what ){
+                comp.eachRepresentation( function( repr ){
 
-        }
+                    if( NGL.ObjectMetadata.test( what, repr, comp ) ){
+                        comp.setReprVisibility( repr, value );
+                    }
+
+                } );
+            }
+
+        } );
 
     }
 
@@ -342,62 +352,77 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
-    function uiVisibilityButton( label, objList ){
+    function uiVisibilityButton( label, what ){
 
-        var forEach;
-
-        if( objList ){
-
-            if( !Array.isArray( objList ) ){
-                objList = [ objList ];
-            }
-
-            forEach = function( callback ){
-                objList.forEach( callback );
-            };
-
-        }else{
-
-            label = label || "all";
-
-            forEach = function( callback ){
-                stage.eachComponent( callback, NGL.StructureComponent );
-            };
-
-        }
-
+        if( !label ) label = what ? "": "all";
         label = U( label );
 
         function isVisible(){
+
             var visible = false;
-            forEach( function( obj ){
-                if( obj.visible ){
+
+            stage.eachComponent( function( comp ){
+
+                if( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) && comp.visible ){
                     visible = true;
                 }
-            } );
-            return visible;
-        }
 
-        function setVisibility( value ){
-            forEach( function( obj ){
-                obj.setVisibility( value )
+                if( what && what[ "repr" ] || !what ){
+                    comp.eachRepresentation( function( repr ){
+
+                        if( NGL.ObjectMetadata.test( what, repr, comp ) && repr.visible ){
+                            visible = true;
+                        }
+
+                    } );
+                }
+
             } );
+
+            return visible;
+
         }
 
         function getLabel( value ){
+
             return ( isVisible() ? "hide " : "show " ) + label;
+
         }
+
+        stage.eachComponent( function( comp ){
+
+            if( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ){
+
+                comp.signals.visibilityChanged.add( function( value ){
+
+                    btn.setLabel( getLabel() );
+
+                } );
+
+            }
+
+            comp.eachRepresentation( function( repr ){
+
+                if( NGL.ObjectMetadata.test( what, repr, comp ) ){
+
+                    repr.signals.visibilityChanged.add( function( value ){
+
+                        btn.setLabel( getLabel() );
+
+                    } );
+
+                }
+
+            } );
+
+        } );
 
         var btn = new UI.Button( getLabel() )
             .onClick( function(){
-                setVisibility( !isVisible() );
-            } )
 
-        forEach( function( obj ){
-            obj.signals.visibilityChanged.add( function( value ){
-                btn.setLabel( getLabel() );
-            } );
-        } );
+                visibility( what, !isVisible() );
+
+            } )
 
         panel.add( btn );
 

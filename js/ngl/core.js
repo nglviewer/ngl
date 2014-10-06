@@ -267,7 +267,7 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
 
     what = what || {};
 
-    if( what[ "repr" ] &&
+    if( repr && what[ "repr" ] &&
         (
             (
                 Array.isArray( what[ "repr" ] ) &&
@@ -283,7 +283,23 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
         return false;
     }
 
-    if( what[ "comp" ] && what[ "comp" ] !== comp.name ){
+    if( what[ "tag" ] &&
+        (
+            (
+                Array.isArray( what[ "tag" ] ) &&
+                what[ "tag" ].indexOf( repr.type ) === -1
+            )
+            ||
+            (
+                !Array.isArray( what[ "tag" ] ) &&
+                what[ "tag" ] !== repr.type
+            )
+        )
+    ){
+        return false;
+    }
+
+    if( comp && what[ "comp" ] && what[ "comp" ] !== comp.name ){
         return false;
     }
 

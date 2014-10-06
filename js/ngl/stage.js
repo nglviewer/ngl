@@ -651,6 +651,12 @@ NGL.Component.prototype = {
 
         return this;
 
+    },
+
+    eachRepresentation: function( callback ){
+
+        this.reprList.forEach( callback );
+
     }
 
 };
