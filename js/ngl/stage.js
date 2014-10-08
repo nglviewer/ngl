@@ -512,6 +512,7 @@ NGL.Component = function( stage, params ){
     if( params.name !== undefined ){
         this.name = params.name;
     }
+    this.id = params.id;
     this.tags = params.tags || [];
     this.visible = params.visible !== undefined ? params.visible : true;
 
@@ -670,7 +671,7 @@ NGL.StructureComponent = function( stage, structure, params ){
 
     this.__structure = structure;
     this.structure = structure;
-    this.name = structure.name;
+    this.name = structure.name;  // may get overwritten by params.name
 
     NGL.Component.call( this, stage, params );
 
