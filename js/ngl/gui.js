@@ -1064,7 +1064,9 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         stage.eachComponent( function( o, i ){
 
-            if( o !== component ) superposeOptions[ i ] = o.name;
+            if( o !== component ){
+                superposeOptions[ i ] = NGL.unicodeHelper( o.name );
+            }
 
         }, NGL.StructureComponent );
 
