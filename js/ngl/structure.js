@@ -5691,11 +5691,13 @@ NGL.Alignment.prototype = {
 };
 
 
-NGL.superpose = function( s1, s2, align, sele1, sele2 ){
+NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
 
     align = align || false;
     sele1 = sele1 || "";
     sele2 = sele2 || "";
+    xsele1 = xsele1 || "";
+    xsele2 = xsele2 || "";
 
     var atoms1, atoms2;
 
@@ -5799,6 +5801,41 @@ NGL.superpose = function( s1, s2, align, sele1, sele2 ){
         atoms2 = new NGL.AtomSet(
             s2, new NGL.Selection( sele2 + " and .CA" )
         );
+
+    }
+
+    if( xsele1 && xsele2 ){
+
+        var _atoms1 = new NGL.AtomSet();
+        var _atoms2 = new NGL.AtomSet();
+
+        var xselection1 = new NGL.Selection( xsele1 );
+        var xselection2 = new NGL.Selection( xsele2 );
+
+        var test1 = xselection1.test;
+        var test2 = xselection2.test;
+
+        var i, a1, a2;
+        var n = atoms1.atomCount;
+
+        for( i = 0; i < n; ++i ){
+
+            a1 = atoms1.atoms[ i ];
+            a2 = atoms2.atoms[ i ];
+
+            if( test1( a1 ) && test2( a2 ) ){
+
+                _atoms1.addAtom( a1 );
+                _atoms2.addAtom( a2 );
+
+                // console.log( a1.qualifiedName(), a2.qualifiedName() )
+
+            }
+
+        }
+
+        atoms1 = _atoms1;
+        atoms2 = _atoms2;
 
     }
 
