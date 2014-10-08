@@ -8,7 +8,6 @@
 // Loader
 
 
-
 NGL.XHRLoader = function ( manager ) {
 
     /**

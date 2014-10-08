@@ -299,7 +299,10 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
         return false;
     }
 
-    if( comp && what[ "comp" ] && what[ "comp" ] !== comp.name ){
+    if( comp && what[ "comp" ] &&
+            what[ "comp" ] !== comp.name &&
+            what[ "comp" ] !== comp.id
+    ){
         return false;
     }
 

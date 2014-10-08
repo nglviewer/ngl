@@ -232,7 +232,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         stage.eachComponent( function( o ){
 
-            if( name === o.name ){
+            if( name === o.name || name === o.id ){
 
                 component = o;
 
@@ -255,7 +255,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
             }
 
-        } );
+        }, NGL.StructureComponent );
 
     }
 
@@ -264,11 +264,11 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         stage.eachComponent( function( comp ){
 
-            if( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ){
+            if( !what || ( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ) ){
                 comp.setVisibility( value );
             }
 
-            if( what && what[ "repr" ] || !what ){
+            if( what && what[ "repr" ] ){
                 comp.eachRepresentation( function( repr ){
 
                     if( NGL.ObjectMetadata.test( what, repr, comp ) ){
@@ -278,7 +278,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
                 } );
             }
 
-        } );
+        }, NGL.StructureComponent );
 
     }
 
@@ -299,14 +299,16 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
-    function superpose( comp1, comp2, align, sele1, sele2 ){
+    function superpose( comp1, comp2, align, sele1, sele2, xsele1, xsele2 ){
 
         NGL.superpose(
             comp1.structure,
             comp2.structure,
             align,
             sele1,
-            sele2
+            sele2,
+            xsele1,
+            xsele2
         );
 
         comp1.updateRepresentations();
@@ -363,11 +365,11 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
             stage.eachComponent( function( comp ){
 
-                if( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) && comp.visible ){
+                if( ( !what || ( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ) ) && comp.visible ){
                     visible = true;
                 }
 
-                if( what && what[ "repr" ] || !what ){
+                if( what && what[ "repr" ] ){
                     comp.eachRepresentation( function( repr ){
 
                         if( NGL.ObjectMetadata.test( what, repr, comp ) && repr.visible ){
@@ -377,7 +379,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
                     } );
                 }
 
-            } );
+            }, NGL.StructureComponent );
 
             return visible;
 
@@ -391,7 +393,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         stage.eachComponent( function( comp ){
 
-            if( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ){
+            if( !what || ( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ) ){
 
                 comp.signals.visibilityChanged.add( function( value ){
 
@@ -415,7 +417,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
             } );
 
-        } );
+        }, NGL.StructureComponent );
 
         var btn = new UI.Button( getLabel() )
             .onClick( function(){
