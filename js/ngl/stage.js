@@ -984,8 +984,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
         "visibilityChanged": null,
         "colorChanged": null,
-        "radiusChanged": null,
-        "scaleChanged": null,
         "parametersChanged": null,
 
     }, NGL.Component.prototype.signals ),
@@ -1065,25 +1063,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     getParameters: function(){
 
         return this.repr.getParameters();
-
-    },
-
-    setRadius: function( type, scale ){
-
-        this.repr.setRadius( type, scale );
-        this.signals.radiusChanged.dispatch( this.repr.radius );
-        this.signals.scaleChanged.dispatch( this.repr.scale );
-
-        return this;
-
-    },
-
-    setScale: function( scale ){
-
-        this.repr.setScale( scale );
-        this.signals.scaleChanged.dispatch( this.repr.scale );
-
-        return this;
 
     },
 

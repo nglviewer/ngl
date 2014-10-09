@@ -237,6 +237,20 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     type: "",
 
+    parameters: Object.assign( {
+
+        radiusType: {
+            type: "select", options: NGL.RadiusFactory.types
+        },
+        radius: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        scale: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+
+    }, NGL.Representation.prototype.parameters ),
+
     defaultScale: {
         "vdw": 1.0,
         "covalent": 1.0,
@@ -277,30 +291,38 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
-    setRadius: function( type, scale ){
+    setParameters: function( params, what, rebuild ){
 
-        if( type && type !== this.radius ){
+        what = what || {};
 
-            this.radius = type === "size" ? this.defaultSize : type;
-            this.scale = scale || this.defaultScale[ type ] || 1.0;
+        if( params && params[ "radiusType" ]!==undefined ){
 
-            this.update({ "radius": true, "scale": true });
+            if( params[ "radiusType" ] === "size" ){
+                this.radius = this.defaultSize;
+            }else{
+                this.radius = params[ "radiusType" ];
+            }
+            what[ "radius" ] = true;
+
+        }
+
+        if( params && params[ "radius" ]!==undefined ){
+
+            this.radius = params[ "radius" ];
+            what[ "radius" ] = true;
 
         }
 
-        return this;
+        if( params && params[ "scale" ]!==undefined ){
 
-    },
-
-    setScale: function( scale ){
-
-        if( scale && scale !== this.scale ){
-
-            this.scale = scale;
-
-            this.update({ "scale": true });
+            this.scale = params[ "scale" ];
+            what[ "scale" ] = true;
 
         }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -362,13 +384,13 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     type: "spacefill",
 
-    parameters: {
+    parameters: Object.assign( {
 
         sphereDetail: {
             type: "integer", max: 3, min: 0
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -447,7 +469,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -468,13 +492,13 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     type: "label",
 
-    parameters: {
+    parameters: Object.assign( {
 
         labelType: {
             type: "select", options: NGL.LabelFactory.types
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -554,7 +578,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -577,7 +603,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     defaultSize: 0.15,
 
-    parameters: {
+    parameters: Object.assign( {
 
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
@@ -589,7 +615,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             type: "integer", max: 25, min: 5
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -726,7 +752,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -749,7 +777,7 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     defaultSize: 0.15,
 
-    parameters: {
+    parameters: Object.assign( {
 
         sphereDetail: {
             type: "integer", max: 3, min: 0
@@ -758,7 +786,7 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             type: "integer", max: 25, min: 5
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -841,7 +869,9 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -861,6 +891,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     NGL.StructureRepresentation.prototype, {
 
     type: "line",
+
+    parameters: Object.assign( {}, NGL.Representation.prototype.parameters ),
 
     create: function(){
 
@@ -916,13 +948,13 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     type: "hyperball",
 
-    parameters: {
+    parameters: Object.assign( {
 
         shrink: {
             type: "number", precision: 3, max: 1.0, min: 0.001
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -1026,7 +1058,9 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -1049,7 +1083,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     defaultSize: 0.25,
 
-    parameters: {
+    parameters: Object.assign( {
 
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
@@ -1061,7 +1095,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             type: "integer", max: 25, min: 5
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -1270,7 +1304,9 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -1293,7 +1329,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
     defaultSize: 0.25,
 
-    parameters: {
+    parameters: Object.assign( {
 
         subdiv: {
             type: "integer", max: 50, min: 1
@@ -1311,7 +1347,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
             type: "boolean"
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -1476,7 +1512,9 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -1497,7 +1535,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     type: "cartoon",
 
-    parameters: {
+    parameters: Object.assign( {
 
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
@@ -1518,7 +1556,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             type: "boolean"
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -1749,7 +1787,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -1772,7 +1812,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     type: "ribbon",
 
-    parameters: {
+    parameters: Object.assign( {
 
         subdiv: {
             type: "integer", max: 50, min: 1
@@ -1781,7 +1821,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         }
 
-    },
+    }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
@@ -1913,7 +1953,9 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -1934,7 +1976,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     type: "trace",
 
-    parameters: {
+    parameters: Object.assign( {
 
         subdiv: {
             type: "integer", max: 50, min: 1
@@ -1943,7 +1985,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         }
 
-    },
+    }, NGL.Representation.prototype.parameters ),
 
     init: function( params ){
 
@@ -2047,7 +2089,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 
@@ -2076,7 +2120,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     type: "",
 
-    parameters: {
+    parameters: Object.assign( {
 
         wireframe: {
             type: "boolean"
@@ -2085,7 +2129,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             type: "boolean"
         }
 
-    },
+    }, NGL.Representation.prototype.parameters ),
 
     init: function( params ){
 
@@ -2202,7 +2246,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call( this, params, what, rebuild );
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
 
         return this;
 

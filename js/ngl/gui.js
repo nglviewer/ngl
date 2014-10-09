@@ -1266,24 +1266,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
-    signals.radiusChanged.add( function( value ){
-
-        if( parseFloat( value ) ){
-            radiusSelector.setValue( "size" );
-            sizeInput.setValue( value );
-        }else{
-            radiusSelector.setValue( value );
-            sizeInput.dom.value = NaN;
-        }
-
-    } );
-
-    signals.scaleChanged.add( function( value ){
-
-        scaleInput.setValue( value );
-
-    } );
-
     signals.disposed.add( function(){
 
         menu.dispose();
@@ -1352,47 +1334,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Menu
 
-    var radiusSelector = new UI.Select()
-        .setColor( '#444' )
-        .setWidth( "" )
-        .setOptions( NGL.RadiusFactory.types )
-        .setValue( parseFloat( component.repr.radius ) ? "size" : component.repr.radius )
-        .onChange( function(){
-
-            component.setRadius( radiusSelector.getValue() );
-            component.viewer.requestRender();
-
-        } );
-
-    var sizeInput = new UI.Number(
-            parseFloat( component.repr.radius ) ? parseFloat( component.repr.radius ) : NaN
-        )
-        .setRange( 0.001, 10 )
-        .setPrecision( 3 )
-        .onChange( function(){
-
-            component.setRadius( sizeInput.getValue() );
-            component.viewer.requestRender();
-
-        } );
-
-    var scaleInput = new UI.Number( component.repr.scale )
-        .setRange( 0.001, 10 )
-        .setPrecision( 3 )
-        .onChange( function(){
-
-            component.setScale( scaleInput.getValue() );
-            component.viewer.requestRender();
-
-        } );
-
     var menu = new UI.PopupMenu( "bars", "Representation" )
         .setMarginLeft( "45px" )
-        .setEntryLabelWidth( "110px" )
-        .addEntry( "Radius type", radiusSelector )
-        .addEntry( "Radius size", sizeInput )
-        .addEntry( "Radius scale", scaleInput )
-        ;
+        .setEntryLabelWidth( "110px" );
 
     // Parameters
 
@@ -1406,10 +1350,10 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         if( p.type === "number" || p.type === "integer" ){
 
             if( p.type === "number" ){
-                input = new UI.Number( repr[ name ] )
+                input = new UI.Number( parseFloat( repr[ name ] ) || NaN )
                     .setPrecision( p.precision );
             }else{
-                input = new UI.Integer( repr[ name ] );
+                input = new UI.Integer( parseInt( repr[ name ] ) || NaN );
             }
 
             input.setRange( p.min, p.max )
