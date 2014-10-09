@@ -640,11 +640,11 @@ NGL.ExportImageWidget = function( stage ){
             var p = repr.getParameters();
 
             if( p.subdiv !== undefined ){
-                p.subdiv = Math.max( 20, p.subdiv );
+                p.subdiv = Math.max( 25, p.subdiv );
             }
 
             if( p.radialSegments !== undefined ){
-                p.radialSegments = Math.max( 20, p.radialSegments );
+                p.radialSegments = Math.max( 25, p.radialSegments );
             }
 
             // prevent automatic quality settings
@@ -958,7 +958,9 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     signals.representationAdded.add( function( repr ){
 
-        reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
+        reprContainer.add(
+            new NGL.RepresentationComponentWidget( repr, stage )
+        );
 
     } );
 
@@ -1148,7 +1150,9 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     signals.representationAdded.add( function( repr ){
 
-        reprContainer.add( new NGL.RepresentationWidget( repr, component ) );
+        reprContainer.add(
+            new NGL.RepresentationComponentWidget( repr, stage )
+        );
 
     } );
 
@@ -1269,9 +1273,9 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
 // Representation
 
-NGL.RepresentationWidget = function( repr, component ){
+NGL.RepresentationComponentWidget = function( component, stage ){
 
-    var signals = repr.signals;
+    var signals = component.signals;
 
     var container = new UI.CollapsibleIconPanel( "bookmark" )
         .setMarginLeft( "20px" );
@@ -1306,7 +1310,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     } );
 
-    var reprRemovedBinding = component.signals.representationRemoved.add(
+    /*var reprRemovedBinding = component.signals.representationRemoved.add(
 
          function( _repr ){
             if( repr === _repr ){
@@ -1317,16 +1321,16 @@ NGL.RepresentationWidget = function( repr, component ){
             }
         }
 
-    );
+    );*/
 
     // Actions
 
-    var toggle = new UI.ToggleIcon( repr.visible, "eye", "eye-slash" )
+    var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            component.setReprVisibility( repr, !toggle.getValue() )
+            component.setVisibility( !component.visible )
 
         } );
 
@@ -1337,7 +1341,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
             if( disposeIcon.getColor() === "rgb(178, 34, 34)" ){
 
-                component.removeRepresentation( repr );
+                component.dispose();
 
             }else{
 
@@ -1353,7 +1357,7 @@ NGL.RepresentationWidget = function( repr, component ){
 
     var colorWidget = new UI.ColorPopupMenu()
         .setMarginLeft( "10px" )
-        .setValue( repr.color )
+        .setValue( component.repr.color )
         .onChange( (function(){
 
             var c = new THREE.Color();
@@ -1362,28 +1366,28 @@ NGL.RepresentationWidget = function( repr, component ){
                 var scheme = colorWidget.getScheme();
                 if( scheme === "color" ){
                     c.setStyle( colorWidget.getColor() );
-                    repr.setColor( c.getHex() );
+                    component.setColor( c.getHex() );
                 }else{
-                    repr.setColor( scheme );
+                    component.setColor( scheme );
                 }
-                repr.viewer.render();
+                component.viewer.requestRender();
 
             }
 
         })() );
 
     container
-        .addStatic( new UI.Text( repr.type ).setWidth( "80px" ) )
+        .addStatic( new UI.Text( component.repr.type ).setWidth( "80px" ) )
         .addStatic( toggle )
         .addStatic( disposeIcon )
         .addStatic( colorWidget );
 
     // Selection
 
-    if( component instanceof NGL.StructureComponent ){
+    if( component.parent instanceof NGL.StructureComponent ){
 
         container.add(
-            new UI.SelectionPanel( repr.selection )
+            new UI.SelectionPanel( component.repr.selection )
                 .setMarginLeft( "20px" )
                 .setInputWidth( '194px' )
         );
@@ -1396,33 +1400,33 @@ NGL.RepresentationWidget = function( repr, component ){
         .setColor( '#444' )
         .setWidth( "" )
         .setOptions( NGL.RadiusFactory.types )
-        .setValue( parseFloat( repr.radius ) ? "size" : repr.radius )
+        .setValue( parseFloat( component.repr.radius ) ? "size" : component.repr.radius )
         .onChange( function(){
 
-            repr.setRadius( radiusSelector.getValue() );
-            repr.viewer.render();
+            component.setRadius( radiusSelector.getValue() );
+            component.viewer.requestRender();
 
         } );
 
     var sizeInput = new UI.Number(
-            parseFloat( repr.radius ) ? parseFloat( repr.radius ) : NaN
+            parseFloat( component.repr.radius ) ? parseFloat( component.repr.radius ) : NaN
         )
         .setRange( 0.001, 10 )
         .setPrecision( 3 )
         .onChange( function(){
 
-            repr.setRadius( sizeInput.getValue() );
-            repr.viewer.render();
+            component.setRadius( sizeInput.getValue() );
+            component.viewer.requestRender();
 
         } );
 
-    var scaleInput = new UI.Number( repr.scale )
+    var scaleInput = new UI.Number( component.repr.scale )
         .setRange( 0.001, 10 )
         .setPrecision( 3 )
         .onChange( function(){
 
-            repr.setScale( scaleInput.getValue() );
-            repr.viewer.render();
+            component.setScale( scaleInput.getValue() );
+            component.viewer.requestRender();
 
         } );
 
@@ -1436,7 +1440,9 @@ NGL.RepresentationWidget = function( repr, component ){
 
     // Parameters
 
-    Object.keys( repr.parameters ).forEach( function( name ){
+    Object.keys( component.repr.parameters ).forEach( function( name ){
+
+        var repr = component.repr;
 
         var input;
         var p = repr.parameters[ name ];

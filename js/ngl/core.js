@@ -271,12 +271,12 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
         (
             (
                 Array.isArray( what[ "repr" ] ) &&
-                what[ "repr" ].indexOf( repr.type ) === -1
+                what[ "repr" ].indexOf( repr.name ) === -1
             )
             ||
             (
                 !Array.isArray( what[ "repr" ] ) &&
-                what[ "repr" ] !== repr.type
+                what[ "repr" ] !== repr.name
             )
         )
     ){
@@ -287,12 +287,12 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
         (
             (
                 Array.isArray( what[ "tag" ] ) &&
-                what[ "tag" ].indexOf( repr.type ) === -1
+                what[ "tag" ].indexOf( repr.name ) === -1
             )
             ||
             (
                 !Array.isArray( what[ "tag" ] ) &&
-                what[ "tag" ] !== repr.type
+                what[ "tag" ] !== repr.name
             )
         )
     ){

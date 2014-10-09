@@ -341,7 +341,7 @@ UI.ComponentPanel = function( component ){
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            component.setVisibility( !toggle.getValue() );
+            component.setVisibility( !component.visible );
 
         } );
 

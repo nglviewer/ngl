@@ -272,7 +272,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
                 comp.eachRepresentation( function( repr ){
 
                     if( NGL.ObjectMetadata.test( what, repr, comp ) ){
-                        comp.setReprVisibility( repr, value );
+                        repr.setVisibility( value );
                     }
 
                 } );
@@ -311,7 +311,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
             xsele2
         );
 
-        comp1.updateRepresentations();
+        comp1.updateRepresentations( { "position": true } );
 
     }
 

@@ -566,11 +566,11 @@ NGL.Component.prototype = {
 
     },
 
-    updateRepresentations: function(){
+    updateRepresentations: function( what ){
 
         this.reprList.forEach( function( repr ){
 
-            repr.update();
+            repr.update( what );
 
         } );
 
@@ -593,39 +593,15 @@ NGL.Component.prototype = {
 
     setVisibility: function( value ){
 
-        this.reprList.forEach( function( repr ){
-
-            if( value ){
-                repr.applyVisibility( repr.visible );
-            }else{
-                repr.applyVisibility( false );
-            }
-
-        }, this );
-
         this.visible = value;
+
+        this.eachRepresentation( function( repr ){
+
+            repr.updateVisibility();
+
+        } );
+
         this.signals.visibilityChanged.dispatch( value );
-
-        return this;
-
-    },
-
-    setReprVisibility: function( repr, value ){
-
-        this.reprList.forEach( function( _repr ){
-
-            if( _repr === repr ){
-
-                if( this.visible ){
-                    repr.setVisibility( value );
-                }else{
-                    repr.setVisibility( value, true );
-                    repr.applyVisibility( false );
-                }
-
-            }
-
-        }, this );
 
         return this;
 
@@ -764,39 +740,26 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params, returnRepr ){
 
-        console.time( "NGL.StructureComponent.add " + type );
-
-        var ReprClass = NGL.representationTypes[ type ];
-
-        if( !ReprClass ){
-
-            console.error(
-                "NGL.StructureComponent.add: representation type unknown"
-            );
-            return;
-
-        }
-
         var pref = this.stage.preferences;
         params = params || {};
         params.quality = params.quality || pref.getKey( "quality" );
         params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
 
-        var repr = new ReprClass( this.structure, this.viewer, params );
+        var repr = NGL.makeRepresentation(
+            type, this.structure, this.viewer, params
+        );
 
-        console.timeEnd( "NGL.StructureComponent.add " + type );
+        var reprComp = new NGL.RepresentationComponent(
+            this.stage, repr, {}, this
+        );
 
-        NGL.Component.prototype.addRepresentation.call( this, repr );
+        NGL.Component.prototype.addRepresentation.call( this, reprComp );
 
-        this.setReprVisibility( repr, repr.visible );
-
-        return returnRepr ? repr : this;
+        return returnRepr ? reprComp : this;
 
     },
 
     addTrajectory: function( trajPath, sele, i ){
-
-        var scope = this;
 
         var traj = new NGL.Trajectory( trajPath, this.structure, sele );
 
@@ -804,13 +767,9 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         traj.signals.frameChanged.add( function( value ){
 
-            // console.time( "frameUpdate" );
+            this.updateRepresentations( { "position": true } );
 
-            scope.updateRepresentations();
-
-            // console.timeEnd( "frameUpdate" );
-
-        } );
+        }, this );
 
         this.trajList.push( traj );
 
@@ -888,17 +847,19 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    superpose: function( component, align, sele1, sele2 ){
+    superpose: function( component, align, sele1, sele2, xsele1, xsele2 ){
 
         NGL.superpose(
             this.structure,
             component.structure,
             align,
             sele1,
-            sele2
+            sele2,
+            xsele1,
+            xsele2
         );
 
-        this.updateRepresentations();
+        this.updateRepresentations( { "position": true } );
 
         return this;
 
@@ -991,6 +952,143 @@ NGL.ScriptComponent.prototype = NGL.createObject(
     },
 
     setVisibility: function( value ){},
+
+    getCenter: function(){}
+
+} );
+
+
+NGL.RepresentationComponent = function( stage, repr, params, parent ){
+
+    this.name = repr.type;
+    this.parent = parent;
+
+    NGL.Component.call( this, stage, params );
+
+    this.setRepresentation( repr );
+
+};
+
+NGL.RepresentationComponent.prototype = NGL.createObject(
+
+    NGL.Component.prototype, {
+
+    type: "representation",
+
+    signals: {
+
+        // TODO not all generally applicable, move downstream
+        visibilityChanged: null,
+        colorChanged: null,
+        radiusChanged: null,
+        scaleChanged: null,
+        parametersChanged: null,
+
+    },
+
+    setRepresentation: function( repr ){
+
+        if( this.repr ){
+            this.repr.dispose();
+        }
+
+        this.repr = repr;
+        this.name = repr.type;
+
+        this.updateVisibility();
+
+    },
+
+    addRepresentation: function( type ){},
+
+    removeRepresentation: function( repr ){},
+
+    dispose: function(){
+
+        if( this.parent ){
+
+            this.parent.removeRepresentation( this );
+
+        }
+
+        this.repr.dispose();
+
+    },
+
+    setVisibility: function( value ){
+
+        this.visible = value;
+        this.updateVisibility();
+        this.signals.visibilityChanged.dispatch( this.visible );
+
+        return this;
+
+    },
+
+    updateVisibility: function(){
+
+        if( this.parent ){
+
+            this.repr.setVisibility( this.parent.visible && this.visible );
+
+        }else{
+
+            this.repr.setVisibility( this.visible );
+
+        }
+
+    },
+
+    update: function( what ){
+
+        this.repr.update( what );
+
+        return this;
+
+    },
+
+    setParameters: function( params ){
+
+        this.repr.setParameters( params );
+        this.signals.parametersChanged.dispatch();
+
+        return this;
+
+    },
+
+    getParameters: function(){
+
+        return this.repr.getParameters();
+
+    },
+
+    setRadius: function( type, scale ){
+
+        this.repr.setRadius( type, scale );
+        this.signals.radiusChanged.dispatch( this.repr.radius );
+        this.signals.scaleChanged.dispatch( this.repr.scale );
+
+        return this;
+
+    },
+
+    setScale: function( scale ){
+
+        this.repr.setScale( scale );
+        this.signals.scaleChanged.dispatch( this.repr.scale );
+
+        return this;
+
+    },
+
+    setColor: function( value ){
+
+        this.repr.setColor( value );
+        this.signals.colorChanged.dispatch( this.repr.color );
+
+        return this;
+
+    },
 
     getCenter: function(){}
 

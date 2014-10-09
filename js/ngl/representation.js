@@ -4,12 +4,51 @@
  */
 
 
+NGL.makeRepresentation = function( type, object, viewer, params ){
+
+    console.time( "NGL.makeRepresentation " + type );
+
+    var ReprClass;
+
+    if( object instanceof NGL.Structure ){
+
+        ReprClass = NGL.representationTypes[ type ];
+
+        if( !ReprClass ){
+
+            console.error(
+                "NGL.makeRepresentation: representation type " + type + " unknown"
+            );
+            return;
+
+        }
+
+    }else if( object instanceof NGL.Surface ){
+
+        ReprClass = NGL.SurfaceRepresentation;
+
+    }else{
+
+        console.error(
+            "NGL.makeRepresentation: object " + object + " unknown"
+        );
+        return;
+
+    }
+
+    var repr = new ReprClass( object, viewer, params );
+
+    console.timeEnd( "NGL.makeRepresentation " + type );
+
+    return repr;
+
+};
+
+
 ///////////////////
 // Representation
 
 NGL.Representation = function( object, viewer, params ){
-
-    this.signals = NGL.makeObjectSignals( this );
 
     this.viewer = viewer;
 
@@ -22,17 +61,6 @@ NGL.Representation = function( object, viewer, params ){
 NGL.Representation.prototype = {
 
     type: "",
-
-    signals: {
-
-        // TODO not all generally applicable, move downstream
-        visibilityChanged: null,
-        colorChanged: null,
-        radiusChanged: null,
-        scaleChanged: null,
-        parametersChanged: null,
-
-    },
 
     parameters: {},
 
@@ -52,7 +80,6 @@ NGL.Representation.prototype = {
             this.color = type;
 
             this.update({ "color": true });
-            this.signals.colorChanged.dispatch( this.color );
 
         }
 
@@ -90,7 +117,9 @@ NGL.Representation.prototype = {
 
     },
 
-    applyVisibility: function( value ){
+    setVisibility: function( value ){
+
+        this.visible = value;
 
         this.bufferList.forEach( function( buffer ){
 
@@ -105,16 +134,6 @@ NGL.Representation.prototype = {
         } );
 
         this.viewer.requestRender();
-
-    },
-
-    setVisibility: function( value, notApply ){
-
-        this.visible = value;
-
-        if( !notApply ) this.applyVisibility( value );
-
-        this.signals.visibilityChanged.dispatch( value );
 
         return this;
 
@@ -131,8 +150,6 @@ NGL.Representation.prototype = {
             this.update( what );
 
         }
-
-        this.signals.parametersChanged.dispatch();
 
         return this;
 
@@ -188,8 +205,6 @@ NGL.Representation.prototype = {
     }
 
 };
-
-NGL.ObjectMetadata.prototype.apply( NGL.Representation.prototype );
 
 
 /////////////////////////////
@@ -270,8 +285,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             this.scale = scale || this.defaultScale[ type ] || 1.0;
 
             this.update({ "radius": true, "scale": true });
-            this.signals.radiusChanged.dispatch( this.radius );
-            this.signals.scaleChanged.dispatch( this.scale );
 
         }
 
@@ -286,7 +299,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             this.scale = scale;
 
             this.update({ "scale": true });
-            this.signals.scaleChanged.dispatch( this.scale );
 
         }
 
@@ -395,7 +407,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var sphereData = {};
 
@@ -500,7 +512,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var textData = {};
 
@@ -641,7 +653,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var sphereData = {};
         var cylinderData = {};
@@ -865,7 +877,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var lineData = {};
 
@@ -952,7 +964,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var sphereData = {};
         var cylinderData = {};
@@ -1167,7 +1179,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var backboneAtomSet, backboneBondSet;
         var sphereBuffer, cylinderBuffer;
@@ -1377,7 +1389,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var i = 0;
         var n = this.fiberList.length;
@@ -1632,7 +1644,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var i = 0;
         var n = this.fiberList.length;
@@ -1833,7 +1845,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var i = 0;
         var n = this.fiberList.length;
@@ -1980,7 +1992,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        what = what || { "position": true };
+        what = what || {};
 
         var i = 0;
         var n = this.fiberList.length;
