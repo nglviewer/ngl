@@ -885,11 +885,15 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
-        var repr = new NGL.SurfaceRepresentation(
-            this.surface, this.stage.viewer, params
+        var repr = NGL.makeRepresentation(
+            type, this.surface, this.viewer, params
         );
 
-        return NGL.Component.prototype.addRepresentation.call( this, repr );
+        var reprComp = new NGL.RepresentationComponent(
+            this.stage, repr, {}, this
+        );
+
+        return NGL.Component.prototype.addRepresentation.call( this, reprComp );
 
     },
 
