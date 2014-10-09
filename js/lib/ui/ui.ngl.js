@@ -328,6 +328,12 @@ UI.ComponentPanel = function( component ){
 
     } );
 
+    signals.disposed.add( function(){
+
+        menu.dispose();
+
+    } );
+
     // Name
 
     var name = new UI.Text( NGL.unicodeHelper( component.name ) )
@@ -354,24 +360,11 @@ UI.ComponentPanel = function( component ){
 
         } );
 
-    var dispose = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
+    var dispose = new UI.DisposeIcon()
         .setMarginLeft( "10px" )
-        .onClick( function(){
+        .setDisposeFunction( function(){
 
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
-
-                stage.removeComponent( component );
-
-            }else{
-
-                dispose.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){
-                    dispose.setColor( "#888" );
-                }, 1000);
-
-            }
+            stage.removeComponent( component );
 
         } );
 

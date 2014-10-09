@@ -537,6 +537,7 @@ NGL.Component.prototype = {
         requestGuiVisibility: null,
 
         statusChanged: null,
+        disposed: null,
 
     },
 
@@ -562,8 +563,6 @@ NGL.Component.prototype = {
 
         this.signals.representationRemoved.dispatch( repr );
 
-        repr.dispose();
-
     },
 
     updateRepresentations: function( what ){
@@ -588,6 +587,8 @@ NGL.Component.prototype = {
         } );
 
         delete this.reprList;
+
+        this.signals.disposed.dispatch();
 
     },
 
@@ -797,8 +798,6 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     dispose: function(){
 
-        NGL.Component.prototype.dispose.call( this );
-
         // copy via .slice because side effects may change trajList
         this.trajList.slice().forEach( function( traj ){
 
@@ -807,6 +806,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
         } );
 
         this.trajList = [];
+
+        NGL.Component.prototype.dispose.call( this );
 
     },
 
@@ -951,7 +952,7 @@ NGL.ScriptComponent.prototype = NGL.createObject(
 
     dispose: function(){
 
-        // TODO
+        this.signals.disposed.dispatch();
 
     },
 
@@ -979,16 +980,15 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     type: "representation",
 
-    signals: {
+    signals: Object.assign( {
 
-        // TODO not all generally applicable, move downstream
-        visibilityChanged: null,
-        colorChanged: null,
-        radiusChanged: null,
-        scaleChanged: null,
-        parametersChanged: null,
+        "visibilityChanged": null,
+        "colorChanged": null,
+        "radiusChanged": null,
+        "scaleChanged": null,
+        "parametersChanged": null,
 
-    },
+    }, NGL.Component.prototype.signals ),
 
     setRepresentation: function( repr ){
 
@@ -1016,6 +1016,8 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
         }
 
         this.repr.dispose();
+
+        this.signals.disposed.dispatch();
 
     },
 

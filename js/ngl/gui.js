@@ -914,24 +914,11 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Dispose
 
-    var dispose = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
-        .setMarginLeft( "25px" )
-        .onClick( function(){
+    var dispose = new UI.DisposeIcon()
+        .setMarginLeft( "10px" )
+        .setDisposeFunction( function(){
 
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
-
-                stage.removeComponent( component );
-
-            }else{
-
-                dispose.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){
-                    dispose.setColor( "#888" );
-                }, 1000);
-
-            }
+            stage.removeComponent( component );
 
         } );
 
@@ -1226,24 +1213,11 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Actions
 
-    var dispose = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
-        .setMarginLeft( "25px" )
-        .onClick( function(){
+    var dispose = new UI.DisposeIcon()
+        .setMarginLeft( "10px" )
+        .setDisposeFunction( function(){
 
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
-
-                stage.removeComponent( component );
-
-            }else{
-
-                dispose.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){
-                    dispose.setColor( "#888" );
-                }, 1000);
-
-            }
+            stage.removeComponent( component );
 
         } );
 
@@ -1310,18 +1284,13 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
-    /*var reprRemovedBinding = component.signals.representationRemoved.add(
+    signals.disposed.add( function(){
 
-         function( _repr ){
-            if( repr === _repr ){
-                menu.dispose();
-                colorWidget.dispose();
-                container.dispose();
-                reprRemovedBinding.detach();
-            }
-        }
+        menu.dispose();
+        colorWidget.dispose();
+        container.dispose();
 
-    );*/
+    } );
 
     // Actions
 
@@ -1334,24 +1303,11 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         } );
 
-    var disposeIcon = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
+    var disposeIcon = new UI.DisposeIcon()
         .setMarginLeft( "10px" )
-        .onClick( function(){
+        .setDisposeFunction( function(){
 
-            if( disposeIcon.getColor() === "rgb(178, 34, 34)" ){
-
-                component.dispose();
-
-            }else{
-
-                disposeIcon.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){
-                    disposeIcon.setColor( "#888" );
-                }, 1000);
-
-            }
+            component.dispose();
 
         } );
 

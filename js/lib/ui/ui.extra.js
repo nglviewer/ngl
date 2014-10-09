@@ -137,6 +137,58 @@ UI.ToggleIcon.prototype.getValue = function(){
 }
 
 
+// Dispose Icon
+
+UI.DisposeIcon = function(){
+
+    UI.Icon.call( this, "trash-o" );
+
+    var flag = false;
+    var scope = this;
+
+    this.setTitle( "delete" );
+
+    this.onClick( function(){
+
+        if( flag === true ){
+
+            if( typeof scope.disposeFunction === "function" ){
+
+                scope.disposeFunction();
+
+            }
+
+        }else{
+
+            scope.setColor( "rgb(178, 34, 34)" );
+            flag = true;
+
+            setTimeout( function(){
+
+                scope.setColor( "#888" );
+                flag = false;
+
+            }, 1000);
+
+        }
+
+    } )
+
+    return this;
+
+};
+
+UI.DisposeIcon.prototype = Object.create( UI.Icon.prototype );
+
+UI.DisposeIcon.prototype.setDisposeFunction = function( fn ){
+
+    this.disposeFunction = fn;
+
+    return this;
+
+}
+
+
 // Progress
 
 UI.Progress = function( max, value ) {
