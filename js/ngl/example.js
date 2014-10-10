@@ -137,12 +137,13 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1blu.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { sele: "*" } );
-                o.addRepresentation( "backbone", {
-                    sele: "*", scale: 1.0, aspectRatio: 1.5,
-                    color: new THREE.Color( "lightgreen" ).getHex()
-                } );
-                o.addRepresentation( "licorice", { sele: "*", scale: 1.0 } );
+                // o.addRepresentation( "cartoon", { sele: "*" } );
+                // o.addRepresentation( "backbone", {
+                //     sele: "*", scale: 1.0, aspectRatio: 1.5,
+                //     color: new THREE.Color( "lightgreen" ).getHex()
+                // } );
+                // o.addRepresentation( "licorice", { sele: "*", scale: 1.0 } );
+                o.addRepresentation( "helixorient", { sele: "*", radius: 2.6 } );
                 o.centerView();
 
             } );

@@ -5847,3 +5847,229 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
     s1.center = s1.atomCenter();
 
 }
+
+
+////////////////
+// Helixorient
+
+NGL.Helixorient = function( fiber ){
+
+    this.fiber = fiber;
+    this.traceAtomname = fiber.traceAtomname;
+
+    this.size = fiber.residueCount;
+
+};
+
+NGL.Helixorient.prototype = {
+
+    getColor: function( type ){
+
+        var n = this.size;
+        var traceAtomname = this.traceAtomname;
+
+        var col = new Float32Array( n * 3 );
+        var pcol = new Float32Array( n * 3 );
+
+        var colorFactory = new NGL.ColorFactory( type );
+
+        var i = 0;
+        var a;
+
+        this.fiber.eachResidue( function( r ){
+
+            a = r.getAtomByName( traceAtomname );
+
+            c = colorFactory.atomColor( a );
+            pc = a.globalindex + 1;
+
+            col[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+            col[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+            col[ i + 2 ] = ( c & 255 ) / 255;
+
+            pcol[ i + 0 ] = ( pc >> 16 & 255 ) / 255;
+            pcol[ i + 1 ] = ( pc >> 8 & 255 ) / 255;
+            pcol[ i + 2 ] = ( pc & 255 ) / 255;
+
+            i += 3;
+
+        } );
+
+        return {
+            "color": col,
+            "pickingColor": pcol
+        };
+
+    },
+
+    getSize: function( type, scale ){
+
+        var n = this.size;
+        var traceAtomname = this.traceAtomname;
+
+        var size = new Float32Array( n );
+
+        var radiusFactory = new NGL.RadiusFactory( type, scale );
+
+        var i = 0;
+        var a;
+
+        this.fiber.eachResidue( function( r ){
+
+            a = r.getAtomByName( traceAtomname );
+
+            size[ i ] = radiusFactory.atomRadius( a );
+
+            i += 1;
+
+        } );
+
+        return {
+            "size": size
+        };
+
+    },
+
+    getPosition: function(){
+
+        var traceAtomname = this.traceAtomname;
+
+        var i = 0;
+
+        var center = new Float32Array( 3 * this.size );
+        var axis = new Float32Array( 3 * this.size );
+        var diff = new Float32Array( this.size );
+        var radius = new Float32Array( this.size );
+        var rise = new Float32Array( this.size );
+        var twist = new Float32Array( this.size );
+        var resdir = new Float32Array( 3 * this.size );
+        var crossdir = new Float32Array( 3 * this.size );
+
+        var tubedir1 = new Float32Array( 3 * this.size );
+        var tubedir2 = new Float32Array( 3 * this.size );
+
+        var tmp;
+        var a1, a2, a3, a4;
+        var diff13Length, diff24Length;
+
+        var r12 = new THREE.Vector3();
+        var r23 = new THREE.Vector3();
+        var r34 = new THREE.Vector3();
+
+        var diff13 = new THREE.Vector3();
+        var diff24 = new THREE.Vector3();
+
+        var v1 = new THREE.Vector3();
+        var v2 = new THREE.Vector3();
+
+        var _axis = new THREE.Vector3();
+        var _prevAxis = new THREE.Vector3();
+
+        var _resdir = new THREE.Vector3();
+        var _crossdir = new THREE.Vector3();
+        var _center = new THREE.Vector3( 0, 0, 0 );
+
+        var _tubedir1 = new THREE.Vector3();
+        var _tubedir2 = new THREE.Vector3();
+        var _xdir = new THREE.Vector3( 1, 0, 0 );
+
+        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+
+            j = 3 * i;
+
+            a1 = r1.getAtomByName( traceAtomname );
+            a2 = r2.getAtomByName( traceAtomname );
+            a3 = r3.getAtomByName( traceAtomname );
+            a4 = r4.getAtomByName( traceAtomname );
+
+            // ported from GROMACS src/tools/gmx_helixorient.c
+
+            r12.subVectors( a2, a1 );
+            r23.subVectors( a3, a2 );
+            r34.subVectors( a4, a3 );
+
+            diff13.subVectors( r12, r23 );
+            diff24.subVectors( r23, r34 );
+
+            _axis.crossVectors( diff13, diff24 ).normalize();
+            axis[ j + 0 ] = _axis.x;
+            axis[ j + 1 ] = _axis.y;
+            axis[ j + 2 ] = _axis.z;
+
+            if( i > 0 ){
+                diff[ i ] = _axis.angleTo( _prevAxis );
+            }
+
+            tmp = Math.cos( diff13.angleTo( diff24 ) );
+            twist[ i ] = 180.0 / Math.PI * Math.acos( tmp );
+
+            diff13Length = diff13.length();
+            diff24Length = diff24.length();
+
+            radius[ i ] = (
+                Math.sqrt( diff24Length * diff13Length ) /
+                ( 2.0 * ( 1.0 - tmp ) )
+            );
+
+            rise[ i ] = Math.abs( r23.dot( _axis ) );
+
+            //
+
+            v1.copy( diff13 ).multiplyScalar( radius[ i ] / diff13Length );
+            v2.copy( diff24 ).multiplyScalar( radius[ i ] / diff24Length );
+
+            v1.subVectors( a2, v1 );
+            v2.subVectors( a3, v2 );
+
+            center[ j + 3 + 0 ] = v1.x;
+            center[ j + 3 + 1 ] = v1.y;
+            center[ j + 3 + 2 ] = v1.z;
+
+            center[ j + 6 + 0 ] = v2.x;
+            center[ j + 6 + 1 ] = v2.y;
+            center[ j + 6 + 2 ] = v2.z;
+
+            //
+
+            _resdir.subVectors( a1, _center );
+            resdir[ j + 0 ] = _resdir.x;
+            resdir[ j + 1 ] = _resdir.y;
+            resdir[ j + 2 ] = _resdir.z;
+
+            _crossdir.crossVectors( _resdir, _axis );
+            crossdir[ j + 0 ] = _crossdir.x;
+            crossdir[ j + 1 ] = _crossdir.y;
+            crossdir[ j + 2 ] = _crossdir.z;
+
+            _tubedir1.crossVectors( _xdir, _axis ).normalize();
+            tubedir1[ j + 0 ] = _tubedir1.x;
+            tubedir1[ j + 1 ] = _tubedir1.y;
+            tubedir1[ j + 2 ] = _tubedir1.z;
+
+            _tubedir2.crossVectors( _tubedir1, _axis ).normalize();
+            tubedir2[ j + 0 ] = _tubedir2.x;
+            tubedir2[ j + 1 ] = _tubedir2.y;
+            tubedir2[ j + 2 ] = _tubedir2.z;
+
+            i += 1;
+            _prevAxis.copy( _axis );
+            _center.copy( v1 );
+
+        } );
+
+        return {
+            "center": center,
+            "axis": axis,
+            "diff": diff,
+            "radius": radius,
+            "rise": rise,
+            "twist": twist,
+            "resdir": resdir,
+            "crossdir": crossdir,
+            "tubedir1": tubedir1,
+            "tubedir2": tubedir2,
+        };
+
+    }
+
+};

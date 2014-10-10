@@ -2100,6 +2100,195 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.HelixorientRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.HelixorientRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "helixorient",
+
+    parameters: Object.assign( {
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        var scope = this;
+
+        this.bufferList = [];
+        this.fiberList = [];
+
+        if( NGL.GET( "debug" ) ){
+
+            scope.debugBufferList = [];
+
+        }
+
+        var rx = 1.0;
+        scope.radialSegments = 10;
+
+        this.structure.eachFiber( function( fiber ){
+
+            if( fiber.residueCount < 4 ) return;
+
+            var helixorient = new NGL.Helixorient( fiber );
+            var position = helixorient.getPosition();
+            var color = helixorient.getColor( scope.color );
+            var size = helixorient.getSize( scope.radius, scope.scale );
+
+            console.log( position, color, size )
+
+            /*scope.bufferList.push(
+
+                new NGL.SphereBuffer(
+                    position.center,
+                    color.color,
+                    size.size,
+                    color.pickingColor,
+                    scope.sphereDetail,
+                    scope.disableImpostor
+                )
+
+            );*/
+
+            scope.bufferList.push(
+
+                new NGL.TubeMeshBuffer(
+                    position.center,
+                    position.tubedir1,
+                    position.tubedir2,
+                    position.axis,
+                    color.color,
+                    size.size,
+                    scope.radialSegments,
+                    color.pickingColor,
+                    rx,
+                    rx,
+                    scope.capped,
+                    scope.wireframe
+                )
+
+            );
+
+            if( NGL.GET( "debug" ) ){
+
+                scope.debugBufferList.push(
+
+                    new NGL.BufferVectorHelper(
+                        position.center,
+                        position.axis,
+                        "skyblue",
+                        1.5
+                    )
+
+                );
+
+                scope.debugBufferList.push(
+
+                    new NGL.BufferVectorHelper(
+                        position.center,
+                        position.resdir,
+                        "lightgreen",
+                        1.5
+                    )
+
+                );
+
+                scope.debugBufferList.push(
+
+                    new NGL.BufferVectorHelper(
+                        position.center,
+                        position.crossdir,
+                        "tomato",
+                        1.5
+                    )
+
+                );
+
+            }
+
+            scope.fiberList.push( fiber );
+
+        }, this.selection );
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var i = 0;
+        var n = this.fiberList.length;
+
+        for( i = 0; i < n; ++i ){
+
+            var fiber = this.fiberList[ i ]
+
+            if( fiber.residueCount < 4 ) return;
+
+            var bufferData = {};
+            var helixorient = new NGL.Helixorient( fiber );
+
+            if( what[ "position" ] ){
+
+                var position = helixorient.getPosition();
+
+                bufferData[ "position" ] = position.center;
+
+            }
+
+            if( what[ "color" ] ){
+
+                var color = helixorient.getColor( this.color );
+
+                bufferData[ "color" ] = color.color;
+
+            }
+
+            if( what[ "radius" ] || what[ "scale" ] ){
+
+                var size = helixorient.getSize( this.radius, this.scale );
+
+                bufferData[ "radius" ] = size.size;
+
+            }
+
+            this.bufferList[ i ].setAttributes( bufferData );
+
+        };
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    }
+
+} );
+
+
 ///////////////////////////
 // Surface representation
 
