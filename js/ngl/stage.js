@@ -1051,6 +1051,22 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     },
 
+    rebuild: function( params ){
+
+        this.repr.rebuild( params );
+
+        return this;
+
+    },
+
+    setStructure: function( structure ){
+
+        this.repr.setStructure( structure );
+
+        return this;
+
+    },
+
     setParameters: function( params ){
 
         this.repr.setParameters( params );
