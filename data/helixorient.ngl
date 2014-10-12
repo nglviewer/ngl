@@ -1,0 +1,45 @@
+
+
+
+load( "1crn.pdb" );
+
+
+then( function(){
+
+    structure( "1crn.pdb" )
+        .addRepresentation( "helixorient" )
+        .addRepresentation( "backbone" )
+        .addRepresentation( "rope", { visible: false, radius: 0.1 } )
+        .centerView()
+
+    var s = structure( "1crn.pdb" ).structure;
+
+    s.eachFiber( function( f ){
+
+        var helixorient = new NGL.Helixorient( f );
+
+        var pos = helixorient.getPosition();
+
+        if( false ){
+
+            NGL.download(
+                new Blob( [
+                    Array.prototype.slice.call( pos.center ).join( "   " ),
+                    {type : 'text/plain'}
+                ] ),
+                "center.txt"
+            );
+
+            NGL.download(
+                new Blob( [
+                    Array.prototype.slice.call( pos.axis ).join( "   " ),
+                    {type : 'text/plain'}
+                ] ),
+                "helixaxis.txt"
+            );
+
+        }
+
+    } );
+
+} );

@@ -626,16 +626,7 @@ NGL.Examples = {
 
         "helixorient": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
-
-                o.addRepresentation( "helixorient" );
-                o.addRepresentation( "backbone" );
-                o.addRepresentation( "rope", { visible: false } );
-                stage.centerView();
-
-                o.viewer.render();
-
-            } );
+            stage.loadFile( "__example__/helixorient.ngl" );
 
         },
 

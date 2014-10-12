@@ -1,0 +1,12 @@
+# This file was created Sun Oct 12 19:10:17 2014
+# by the following command:
+# g_helixorient -s topol.tpr -f conf.gro 
+#
+# g_helixorient is part of G R O M A C S:
+#
+# Gnomes, ROck Monsters And Chili Sauce
+#
+@    title "Cumulative local helix rotation"
+@    xaxis  label "Time(ps)"
+@    yaxis  label "Rotation (degrees)"
+@TYPE xy

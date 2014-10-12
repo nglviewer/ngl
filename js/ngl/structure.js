@@ -5910,6 +5910,7 @@ NGL.Helixorient.prototype = {
             a.atomname = fa.atomname;
             a.index = fa.index;
             a.resname = fa.resname;
+            a.bfactor = fa.bfactor;
             a.ss = fa.ss;
 
             residues.push( r );
@@ -6050,9 +6051,9 @@ NGL.Helixorient.prototype = {
             diff24.subVectors( r23, r34 );
 
             _axis.crossVectors( diff13, diff24 ).normalize();
-            axis[ j + 0 ] = _axis.x;
-            axis[ j + 1 ] = _axis.y;
-            axis[ j + 2 ] = _axis.z;
+            axis[ j + 3 + 0 ] = _axis.x;
+            axis[ j + 3 + 1 ] = _axis.y;
+            axis[ j + 3 + 2 ] = _axis.z;
 
             if( i > 0 ){
                 diff[ i ] = _axis.angleTo( _prevAxis );
@@ -6121,6 +6122,12 @@ NGL.Helixorient.prototype = {
         center[ 1 ] = v1.y;
         center[ 2 ] = v1.z;
 
+        // calc first resdir
+        _resdir.subVectors( _center, v1 );
+        resdir[ 0 ] = _resdir.x;
+        resdir[ 1 ] = _resdir.y;
+        resdir[ 2 ] = _resdir.z;
+
         // calc axis as dir of n-1 and n-2 center pos
         // project last traceAtom onto axis to get last center pos
         v1.set( center[ 3 * n - 6 ], center[ 3 * n - 5 ], center[ 3 * n - 4 ] );
@@ -6132,6 +6139,20 @@ NGL.Helixorient.prototype = {
         center[ 3 * n - 2 ] = v1.y;
         center[ 3 * n - 1 ] = v1.z;
 
+        // calc last three resdir
+        for( i = n - 3; i < n; ++i ){
+
+            j = 3 * i;
+
+            v1.set( center[ j + 0 ], center[ j + 1 ], center[ j + 2 ] );
+            _center.copy( res[ i ].getAtomByName( traceAtomname ) );
+
+            _resdir.subVectors( _center, v1 );
+            resdir[ j + 0 ] = _resdir.x;
+            resdir[ j + 1 ] = _resdir.y;
+            resdir[ j + 2 ] = _resdir.z;
+
+        }
 
         return {
             "center": center,
