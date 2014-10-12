@@ -2184,7 +2184,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             scope.fiberList.push( fiber );
 
-        }, this.selection, true );
+        }, this.selection );
 
     },
 
@@ -2363,7 +2363,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             scope.fiberList.push( fiber );
 
-        }, this.selection, true );
+        }, this.selection );
 
     },
 

@@ -5870,6 +5870,8 @@ NGL.Helixorient.prototype = {
 
     getFiber: function(){
 
+        // TODO better padding in case of selection
+
         var center = this.getPosition().center;
 
         var i, j, a, r;
@@ -5898,6 +5900,10 @@ NGL.Helixorient.prototype = {
             a.ss = fa.ss;
 
             residues.push( r );
+
+            if( i === 0 || i === n-1 ){
+                residues.push( r );
+            }
 
         }
 
@@ -6081,13 +6087,38 @@ NGL.Helixorient.prototype = {
 
         } );
 
-        center[ 0 ] = center[ 3 + 0 ];
-        center[ 1 ] = center[ 3 + 1 ];
-        center[ 2 ] = center[ 3 + 2 ];
+        function pointVectorIntersection( a, b, vector ){
 
-        center[ 3 * n - 3 ] = center[ 3 * n - 6 ];
-        center[ 3 * n - 2 ] = center[ 3 * n - 5 ];
-        center[ 3 * n - 1 ] = center[ 3 * n - 4 ];
+            var v1 = new THREE.Vector3().subVectors( a, b );
+            var len_b_i = Math.cos( vector.angleTo( v1 ) ) * v1.length();
+            var vec_i = vector.normalize().multiplyScalar( len_b_i );
+            var p_i = new THREE.Vector3().addVectors( vec_i, b );
+
+            return p_i;
+        }
+
+        var res = this.fiber.residues;
+
+        // project first traceAtom onto second axis to get first center pos
+        _axis.set( axis[ 3 ], axis[ 4 ], axis[ 5 ] );
+        _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
+        v1.set( center[ 3 ], center[ 4 ], center[ 5 ] );
+        v1 = pointVectorIntersection( _center, v1, _axis );
+        center[ 0 ] = v1.x;
+        center[ 1 ] = v1.y;
+        center[ 2 ] = v1.z;
+
+        // calc axis as dir of n-1 and n-2 center pos
+        // project last traceAtom onto axis to get last center pos
+        v1.set( center[ 3 * n - 6 ], center[ 3 * n - 5 ], center[ 3 * n - 4 ] );
+        v2.set( center[ 3 * n - 9 ], center[ 3 * n - 8 ], center[ 3 * n - 7 ] );
+        _axis.subVectors( v1, v2 ).normalize();
+        _center.copy( res[ n - 1 ].getAtomByName( traceAtomname ) );
+        v1 = pointVectorIntersection( _center, v1, _axis );
+        center[ 3 * n - 3 ] = v1.x;
+        center[ 3 * n - 2 ] = v1.y;
+        center[ 3 * n - 1 ] = v1.z;
+
 
         return {
             "center": center,
