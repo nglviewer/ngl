@@ -143,7 +143,7 @@ NGL.Examples = {
                 //     color: new THREE.Color( "lightgreen" ).getHex()
                 // } );
                 // o.addRepresentation( "licorice", { sele: "*", scale: 1.0 } );
-                o.addRepresentation( "helixorient", { sele: "*", radius: 2.6 } );
+                o.addRepresentation( "rope", { sele: "*", radius: "ss" } );
                 o.centerView();
 
             } );

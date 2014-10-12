@@ -1443,7 +1443,9 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
             if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
+                var subPos = spline.getSubdividedPosition(
+                    this.subdiv, this.tension
+                );
                 var subSize = spline.getSubdividedSize(
                     this.subdiv, this.radius, this.scale
                 );
@@ -1458,7 +1460,9 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.color
+                );
 
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
@@ -2140,6 +2144,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         var rx = 1.0;
         scope.radialSegments = 10;
+        scope.subdiv = 10;
+        scope.tension = 0.5;
 
         this.structure.eachFiber( function( fiber ){
 
@@ -2150,39 +2156,71 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
             var color = helixorient.getColor( scope.color );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
-            console.log( position, color, size )
+            console.log( position, color, size );
+            console.log( helixorient.getFiber() );
 
-            /*scope.bufferList.push(
+            // scope.bufferList.push(
 
-                new NGL.SphereBuffer(
-                    position.center,
-                    color.color,
-                    size.size,
-                    color.pickingColor,
-                    scope.sphereDetail,
-                    scope.disableImpostor
-                )
+            //     new NGL.SphereBuffer(
+            //         position.center,
+            //         color.color,
+            //         size.size,
+            //         color.pickingColor,
+            //         scope.sphereDetail,
+            //         scope.disableImpostor
+            //     )
 
-            );*/
+            // );
+
+            var spline = new NGL.Spline( helixorient.getFiber() );
+            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+            var subSize = spline.getSubdividedSize(
+                scope.subdiv,
+                1.0,  // scope.radius,
+                scope.scale
+            );
+
+            var rx = 1.0;
+            var ry = 1.0;
 
             scope.bufferList.push(
 
                 new NGL.TubeMeshBuffer(
-                    position.center,
-                    position.tubedir1,
-                    position.tubedir2,
-                    position.axis,
-                    color.color,
-                    size.size,
+                    subPos.position,
+                    subPos.normal,
+                    subPos.binormal,
+                    subPos.tangent,
+                    subCol.color,
+                    subSize.size,
                     scope.radialSegments,
-                    color.pickingColor,
+                    subCol.pickingColor,
                     rx,
-                    rx,
+                    ry,
                     scope.capped,
                     scope.wireframe
                 )
 
             );
+
+            // scope.bufferList.push(
+
+            //     new NGL.TubeMeshBuffer(
+            //         position.center,
+            //         position.tubedir1,
+            //         position.tubedir2,
+            //         position.axis,
+            //         color.color,
+            //         size.size,
+            //         scope.radialSegments,
+            //         color.pickingColor,
+            //         rx,
+            //         rx,
+            //         scope.capped,
+            //         scope.wireframe
+            //     )
+
+            // );
 
             if( NGL.GET( "debug" ) ){
 
@@ -2192,7 +2230,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         position.center,
                         position.axis,
                         "skyblue",
-                        1.5
+                        5
                     )
 
                 );
@@ -2201,9 +2239,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
                     new NGL.BufferVectorHelper(
                         position.center,
-                        position.resdir,
+                        position.tubedir1,
                         "lightgreen",
-                        1.5
+                        5
                     )
 
                 );
@@ -2212,9 +2250,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
                     new NGL.BufferVectorHelper(
                         position.center,
-                        position.crossdir,
+                        position.tubedir2,
                         "tomato",
-                        1.5
+                        5
                     )
 
                 );
@@ -2223,7 +2261,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             scope.fiberList.push( fiber );
 
-        }, this.selection );
+        }, this.selection, true );
 
     },
 
@@ -2277,6 +2315,215 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         var rebuild = false;
         var what = {};
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    }
+
+} );
+
+
+NGL.RopeRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.RopeRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "rope",
+
+    parameters: Object.assign( {
+
+        subdiv: {
+            type: "integer", max: 50, min: 1
+        },
+        radialSegments: {
+            type: "integer", max: 50, min: 1
+        },
+        tension: {
+            type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        capped: {
+            type: "boolean"
+        },
+        wireframe: {
+            type: "boolean"
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+        params.radius = params.radius || this.defaultSize;
+
+        if( params.quality === "low" ){
+            this.subdiv = 3;
+            this.radialSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.subdiv = 6;
+            this.radialSegments = 10;
+        }else if( params.quality === "high" ){
+            this.subdiv = 12;
+            this.radialSegments = 20;
+        }else{
+            this.subdiv = params.subdiv || 6;
+            this.radialSegments = params.radialSegments || 10;
+        }
+
+        this.tension = params.tension || 0.5;
+        this.capped = params.capped || true;
+        this.wireframe = params.wireframe || false;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        var scope = this;
+
+        this.bufferList = [];
+        this.fiberList = [];
+
+        this.structure.eachFiber( function( fiber ){
+
+            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
+
+            var helixorient = new NGL.Helixorient( fiber );
+
+            var spline = new NGL.Spline( helixorient.getFiber() );
+            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+            var subSize = spline.getSubdividedSize(
+                scope.subdiv, scope.radius, scope.scale
+            );
+
+            var rx = 1.0;
+            var ry = 1.0;
+
+            scope.bufferList.push(
+
+                new NGL.TubeMeshBuffer(
+                    subPos.position,
+                    subPos.normal,
+                    subPos.binormal,
+                    subPos.tangent,
+                    subCol.color,
+                    subSize.size,
+                    scope.radialSegments,
+                    subCol.pickingColor,
+                    rx,
+                    ry,
+                    scope.capped,
+                    scope.wireframe
+                )
+
+            );
+
+            scope.fiberList.push( fiber );
+
+        }, this.selection, true );
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var i = 0;
+        var n = this.fiberList.length;
+
+        for( i = 0; i < n; ++i ){
+
+            var fiber = this.fiberList[ i ]
+
+            if( fiber.residueCount < 4 ) return;
+
+            var bufferData = {};
+            var helixorient = new NGL.Helixorient( fiber );
+            var spline = new NGL.Spline( helixorient.getFiber() );
+
+            if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
+
+                var subPos = spline.getSubdividedPosition(
+                    this.subdiv, this.tension
+                );
+                var subSize = spline.getSubdividedSize(
+                    this.subdiv, this.radius, this.scale
+                );
+
+                bufferData[ "position" ] = subPos.position;
+                bufferData[ "normal" ] = subPos.normal;
+                bufferData[ "binormal" ] = subPos.binormal;
+                bufferData[ "tangent" ] = subPos.tangent;
+                bufferData[ "size" ] = subSize.size;
+
+            }
+
+            if( what[ "color" ] ){
+
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.color
+                );
+
+                bufferData[ "color" ] = subCol.color;
+                bufferData[ "pickingColor" ] = subCol.pickingColor;
+
+            }
+
+            this.bufferList[ i ].setAttributes( bufferData );
+
+        };
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "subdiv" ] ){
+
+            this.subdiv = params[ "subdiv" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radialSegments" ] ){
+
+            this.radialSegments = params[ "radialSegments" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "tension" ] ){
+
+            this.tension = params[ "tension" ];
+            what[ "radius" ] = true;
+
+        }
+
+        if( params && params[ "capped" ] !== undefined ){
+            this.capped = params[ "capped" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "wireframe" ] !== undefined ){
+
+            this.wireframe = params[ "wireframe" ];
+            rebuild = true;
+
+        }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild

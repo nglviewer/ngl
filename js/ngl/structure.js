@@ -3431,11 +3431,14 @@ NGL.Residue.prototype = {
 NGL.AtomSet.prototype.apply( NGL.Residue.prototype );
 
 
-NGL.Atom = function( residue ){
+NGL.Atom = function( residue, globalindex ){
 
     this.residue = residue;
 
-    this.globalindex = NGL.nextGlobalAtomindex++;
+    if( globalindex === undefined ){
+        globalindex = NGL.nextGlobalAtomindex++;
+    }
+    this.globalindex = globalindex;
 
 }
 
@@ -5865,6 +5868,47 @@ NGL.Helixorient = function( fiber ){
 
 NGL.Helixorient.prototype = {
 
+    getFiber: function(){
+
+        var center = this.getPosition().center;
+
+        var i, j, a, r;
+        var residues = [];
+        var n = center.length / 3;
+
+        for( i = 0; i < n; ++i ){
+
+            fr = this.fiber.residues[ i ];
+            fa = fr.getAtomByName( this.traceAtomname );
+
+            j = 3 * i;
+
+            r = new NGL.Residue();
+            a = new NGL.Atom( r, fa.globalindex );
+
+            r.addAtom( a );
+            r.resname = fr.resname;
+
+            a.x = center[ j + 0 ];
+            a.y = center[ j + 1 ];
+            a.z = center[ j + 2 ];
+
+            a.atomname = fa.atomname;
+            a.resname = fa.resname;
+            a.ss = fa.ss;
+
+            residues.push( r );
+
+        }
+
+        var f = new NGL.Fiber( residues );
+
+        // console.log( f );
+
+        return f;
+
+    },
+
     getColor: function( type ){
 
         var n = this.size;
@@ -5937,18 +5981,19 @@ NGL.Helixorient.prototype = {
         var traceAtomname = this.traceAtomname;
 
         var i = 0;
+        var n = this.size;
 
-        var center = new Float32Array( 3 * this.size );
-        var axis = new Float32Array( 3 * this.size );
-        var diff = new Float32Array( this.size );
-        var radius = new Float32Array( this.size );
-        var rise = new Float32Array( this.size );
-        var twist = new Float32Array( this.size );
-        var resdir = new Float32Array( 3 * this.size );
-        var crossdir = new Float32Array( 3 * this.size );
+        var center = new Float32Array( 3 * n );
+        var axis = new Float32Array( 3 * n );
+        var diff = new Float32Array( n );
+        var radius = new Float32Array( n );
+        var rise = new Float32Array( n );
+        var twist = new Float32Array( n );
+        var resdir = new Float32Array( 3 * n );
+        var crossdir = new Float32Array( 3 * n );
 
-        var tubedir1 = new Float32Array( 3 * this.size );
-        var tubedir2 = new Float32Array( 3 * this.size );
+        var tubedir1 = new Float32Array( 3 * n );
+        var tubedir2 = new Float32Array( 3 * n );
 
         var tmp;
         var a1, a2, a3, a4;
@@ -6044,11 +6089,11 @@ NGL.Helixorient.prototype = {
             crossdir[ j + 2 ] = _crossdir.z;
 
             _tubedir1.crossVectors( _xdir, _axis ).normalize();
+            _tubedir2.crossVectors( _axis, _tubedir1 ).normalize();
+
             tubedir1[ j + 0 ] = _tubedir1.x;
             tubedir1[ j + 1 ] = _tubedir1.y;
             tubedir1[ j + 2 ] = _tubedir1.z;
-
-            _tubedir2.crossVectors( _tubedir1, _axis ).normalize();
             tubedir2[ j + 0 ] = _tubedir2.x;
             tubedir2[ j + 1 ] = _tubedir2.y;
             tubedir2[ j + 2 ] = _tubedir2.z;
@@ -6056,8 +6101,17 @@ NGL.Helixorient.prototype = {
             i += 1;
             _prevAxis.copy( _axis );
             _center.copy( v1 );
+            _xdir.copy( i % 1 ? _tubedir1 : _tubedir2 );
 
         } );
+
+        center[ 0 ] = center[ 3 + 0 ];
+        center[ 1 ] = center[ 3 + 1 ];
+        center[ 2 ] = center[ 3 + 2 ];
+
+        center[ 3 * n - 3 ] = center[ 3 * n - 6 ];
+        center[ 3 * n - 2 ] = center[ 3 * n - 5 ];
+        center[ 3 * n - 1 ] = center[ 3 * n - 4 ];
 
         return {
             "center": center,
