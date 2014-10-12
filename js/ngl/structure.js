@@ -5990,10 +5990,6 @@ NGL.Helixorient.prototype = {
         var rise = new Float32Array( n );
         var twist = new Float32Array( n );
         var resdir = new Float32Array( 3 * n );
-        var crossdir = new Float32Array( 3 * n );
-
-        var tubedir1 = new Float32Array( 3 * n );
-        var tubedir2 = new Float32Array( 3 * n );
 
         var tmp;
         var a1, a2, a3, a4;
@@ -6015,10 +6011,6 @@ NGL.Helixorient.prototype = {
         var _resdir = new THREE.Vector3();
         var _crossdir = new THREE.Vector3();
         var _center = new THREE.Vector3( 0, 0, 0 );
-
-        var _tubedir1 = new THREE.Vector3();
-        var _tubedir2 = new THREE.Vector3();
-        var _xdir = new THREE.Vector3( 1, 0, 0 );
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
@@ -6083,25 +6075,9 @@ NGL.Helixorient.prototype = {
             resdir[ j + 1 ] = _resdir.y;
             resdir[ j + 2 ] = _resdir.z;
 
-            _crossdir.crossVectors( _resdir, _axis );
-            crossdir[ j + 0 ] = _crossdir.x;
-            crossdir[ j + 1 ] = _crossdir.y;
-            crossdir[ j + 2 ] = _crossdir.z;
-
-            _tubedir1.crossVectors( _xdir, _axis ).normalize();
-            _tubedir2.crossVectors( _axis, _tubedir1 ).normalize();
-
-            tubedir1[ j + 0 ] = _tubedir1.x;
-            tubedir1[ j + 1 ] = _tubedir1.y;
-            tubedir1[ j + 2 ] = _tubedir1.z;
-            tubedir2[ j + 0 ] = _tubedir2.x;
-            tubedir2[ j + 1 ] = _tubedir2.y;
-            tubedir2[ j + 2 ] = _tubedir2.z;
-
             i += 1;
             _prevAxis.copy( _axis );
             _center.copy( v1 );
-            _xdir.copy( i % 1 ? _tubedir1 : _tubedir2 );
 
         } );
 
@@ -6121,9 +6097,6 @@ NGL.Helixorient.prototype = {
             "rise": rise,
             "twist": twist,
             "resdir": resdir,
-            "crossdir": crossdir,
-            "tubedir1": tubedir1,
-            "tubedir2": tubedir2,
         };
 
     }

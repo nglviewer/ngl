@@ -2124,6 +2124,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         params = params || {};
         params.color = params.color || "ss";
+        params.radius = params.radius || 0.15;
+        params.scale = params.scale || 1.0;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -2136,128 +2138,49 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
-        if( NGL.GET( "debug" ) ){
-
-            scope.debugBufferList = [];
-
-        }
-
-        var rx = 1.0;
-        scope.radialSegments = 10;
-        scope.subdiv = 10;
-        scope.tension = 0.5;
-
         this.structure.eachFiber( function( fiber ){
 
-            if( fiber.residueCount < 4 ) return;
+            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
 
             var helixorient = new NGL.Helixorient( fiber );
             var position = helixorient.getPosition();
             var color = helixorient.getColor( scope.color );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
-            console.log( position, color, size );
-            console.log( helixorient.getFiber() );
-
-            // scope.bufferList.push(
-
-            //     new NGL.SphereBuffer(
-            //         position.center,
-            //         color.color,
-            //         size.size,
-            //         color.pickingColor,
-            //         scope.sphereDetail,
-            //         scope.disableImpostor
-            //     )
-
-            // );
-
-            var spline = new NGL.Spline( helixorient.getFiber() );
-            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-            var subSize = spline.getSubdividedSize(
-                scope.subdiv,
-                1.0,  // scope.radius,
-                scope.scale
-            );
-
-            var rx = 1.0;
-            var ry = 1.0;
-
             scope.bufferList.push(
 
-                new NGL.TubeMeshBuffer(
-                    subPos.position,
-                    subPos.normal,
-                    subPos.binormal,
-                    subPos.tangent,
-                    subCol.color,
-                    subSize.size,
-                    scope.radialSegments,
-                    subCol.pickingColor,
-                    rx,
-                    ry,
-                    scope.capped,
-                    scope.wireframe
+                new NGL.SphereBuffer(
+                    position.center,
+                    color.color,
+                    size.size,
+                    color.pickingColor,
+                    scope.sphereDetail,
+                    scope.disableImpostor
                 )
 
             );
 
-            // scope.bufferList.push(
+            scope.bufferList.push(
 
-            //     new NGL.TubeMeshBuffer(
-            //         position.center,
-            //         position.tubedir1,
-            //         position.tubedir2,
-            //         position.axis,
-            //         color.color,
-            //         size.size,
-            //         scope.radialSegments,
-            //         color.pickingColor,
-            //         rx,
-            //         rx,
-            //         scope.capped,
-            //         scope.wireframe
-            //     )
+                new NGL.BufferVectorHelper(
+                    position.center,
+                    position.axis,
+                    "skyblue",
+                    1
+                )
 
-            // );
+            );
 
-            if( NGL.GET( "debug" ) ){
+            scope.bufferList.push(
 
-                scope.debugBufferList.push(
+                new NGL.BufferVectorHelper(
+                    position.center,
+                    position.resdir,
+                    "lightgreen",
+                    1
+                )
 
-                    new NGL.BufferVectorHelper(
-                        position.center,
-                        position.axis,
-                        "skyblue",
-                        5
-                    )
-
-                );
-
-                scope.debugBufferList.push(
-
-                    new NGL.BufferVectorHelper(
-                        position.center,
-                        position.tubedir1,
-                        "lightgreen",
-                        5
-                    )
-
-                );
-
-                scope.debugBufferList.push(
-
-                    new NGL.BufferVectorHelper(
-                        position.center,
-                        position.tubedir2,
-                        "tomato",
-                        5
-                    )
-
-                );
-
-            }
+            );
 
             scope.fiberList.push( fiber );
 
@@ -2287,6 +2210,15 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
                 bufferData[ "position" ] = position.center;
 
+                this.bufferList[ i * 3 + 1 ].setAttributes( {
+                    "position": position.center,
+                    "vector": position.axis,
+                } );
+                this.bufferList[ i * 3 + 2 ].setAttributes( {
+                    "position": position.center,
+                    "vector": position.redir,
+                } );
+
             }
 
             if( what[ "color" ] ){
@@ -2305,7 +2237,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             }
 
-            this.bufferList[ i ].setAttributes( bufferData );
+            this.bufferList[ i * 3 ].setAttributes( bufferData );
 
         };
 
