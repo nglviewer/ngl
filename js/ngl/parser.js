@@ -410,7 +410,15 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
         console.timeEnd( "NGL.PdbStructure.parse ss" );
 
         if( sheet.length === 0 && helix.length === 0 ){
+
             s._doAutoSS = true;
+
+        }else{
+
+            s.eachResidue( function( r ){
+                if( !r.ss && r.isProtein() ) r.ss = "c";
+            } );
+
         }
 
         // check for chain names
