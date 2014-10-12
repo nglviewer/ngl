@@ -5868,7 +5868,7 @@ NGL.Helixorient = function( fiber ){
 
 NGL.Helixorient.prototype = {
 
-    getFiber: function(){
+    getFiber: function( smooth ){
 
         // TODO better padding in case of selection
 
@@ -5890,12 +5890,25 @@ NGL.Helixorient.prototype = {
 
             r.addAtom( a );
             r.resname = fr.resname;
+            r.index = fr.index;
+            r.chain = fr.chain;
 
-            a.x = center[ j + 0 ];
-            a.y = center[ j + 1 ];
-            a.z = center[ j + 2 ];
+            if( smooth && i > 1 && i < n - 1 ){
+
+                a.x = ( center[ j + 0 ] + center[ j + 3 ] ) / 2;
+                a.y = ( center[ j + 1 ] + center[ j + 4 ] ) / 2;
+                a.z = ( center[ j + 2 ] + center[ j + 5 ] ) / 2;
+
+            }else{
+
+                a.x = center[ j + 0 ];
+                a.y = center[ j + 1 ];
+                a.z = center[ j + 2 ];
+
+            }
 
             a.atomname = fa.atomname;
+            a.index = fa.index;
             a.resname = fa.resname;
             a.ss = fa.ss;
 
@@ -5907,7 +5920,7 @@ NGL.Helixorient.prototype = {
 
         }
 
-        var f = new NGL.Fiber( residues );
+        var f = new NGL.Fiber( residues, this.fiber.structure );
 
         // console.log( f );
 

@@ -2287,6 +2287,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         },
         wireframe: {
             type: "boolean"
+        },
+        smooth: {
+            type: "boolean"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2314,6 +2317,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         this.tension = params.tension || 0.5;
         this.capped = params.capped || true;
         this.wireframe = params.wireframe || false;
+        this.smooth = params.smooth || true;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -2332,7 +2336,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             var helixorient = new NGL.Helixorient( fiber );
 
-            var spline = new NGL.Spline( helixorient.getFiber() );
+            var spline = new NGL.Spline( helixorient.getFiber( scope.smooth ) );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
             var subSize = spline.getSubdividedSize(
@@ -2382,7 +2386,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             var bufferData = {};
             var helixorient = new NGL.Helixorient( fiber );
-            var spline = new NGL.Spline( helixorient.getFiber() );
+            var spline = new NGL.Spline( helixorient.getFiber( this.smooth ) );
 
             if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
@@ -2453,6 +2457,13 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         if( params && params[ "wireframe" ] !== undefined ){
 
             this.wireframe = params[ "wireframe" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "smooth" ] !== undefined ){
+
+            this.smooth = params[ "smooth" ];
             rebuild = true;
 
         }
