@@ -1756,10 +1756,11 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     } );
 
     this.traj = traj;
-    this.step = step || 1;
+    this.step = step || Math.ceil( ( traj.numframes + 1 ) / 100 );
     this.timeout = timeout || 50;
     this.start = start || 0;
-    this.end = end || traj.numframes;
+    this.end = end || traj.numframes - 1;
+    this.end = Math.min( this.end, traj.numframes - 1 );
 
     this.mode = "loop"; // loop, once
     this.direction = "forward"; // forward, backward
