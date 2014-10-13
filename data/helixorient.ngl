@@ -12,33 +12,45 @@ then( function(){
         .addRepresentation( "rope", { visible: false, radius: 0.1 } )
         .centerView()
 
+    function download( arr, itemSize, name ){
+
+        var i, j, row;
+        var n = arr.length;
+        var arr2 = [];
+
+        var fs = [];
+        for( j = 0; j < itemSize; ++j ) fs.push( "%8.3f" );
+        fs = fs.join( "\t" );
+
+        for( i = 0; i < n; i += itemSize ){
+
+            row = [ fs ];
+            for( j = 0; j < itemSize; ++j ) row.push( arr[ i + j ] );
+            arr2.push( sprintf.apply( null, row ) );
+
+        }
+
+        NGL.download(
+            new Blob( [ arr2.join( "\n" ) ], {type : 'text/plain'} ),
+            name
+        );
+
+    }
+
     var s = structure( "1crn.pdb" ).structure;
 
     s.eachFiber( function( f ){
 
         var helixorient = new NGL.Helixorient( f );
-
         var pos = helixorient.getPosition();
 
-        if( false ){
+        uiButton( "download", function(){
 
-            NGL.download(
-                new Blob( [
-                    Array.prototype.slice.call( pos.center ).join( "   " ),
-                    {type : 'text/plain'}
-                ] ),
-                "center.txt"
-            );
+            download( pos.center, 3, "center.txt" );
+            download( pos.axis, 3, "helixaxis.txt" );
+            download( pos.radius, 1, "radius.txt" );
 
-            NGL.download(
-                new Blob( [
-                    Array.prototype.slice.call( pos.axis ).join( "   " ),
-                    {type : 'text/plain'}
-                ] ),
-                "helixaxis.txt"
-            );
-
-        }
+        } );
 
     } );
 
