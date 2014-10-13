@@ -457,7 +457,47 @@ NGL.Utils = {
 
         return mean;
 
-    }
+    },
+
+    calculateMeanVector3: function( array ){
+
+        var n = array.length;
+        var m = array.length / 3;
+
+        var x = 0;
+        var y = 0;
+        var z = 0;
+
+        for( i = 0; i < n; i += 3 ){
+
+            x += array[ i + 0 ];
+            y += array[ i + 1 ];
+            z += array[ i + 2 ];
+
+        }
+
+        return new THREE.Vector3( x / m, y / m, z / m );
+
+    },
+
+    pointVectorIntersection: function(){
+
+        var v = new THREE.Vector3();
+
+        return function( a, b, vector ){
+
+            v.copy( vector );
+
+            var v1 = new THREE.Vector3().subVectors( a, b );
+            var len_b_i = Math.cos( v.angleTo( v1 ) ) * v1.length();
+            var vec_i = v.normalize().multiplyScalar( len_b_i );
+            var p_i = new THREE.Vector3().addVectors( vec_i, b );
+
+            return p_i;
+
+        }
+
+    }()
 
 };
 

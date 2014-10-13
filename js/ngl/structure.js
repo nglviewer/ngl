@@ -5995,6 +5995,35 @@ NGL.Helixorient.prototype = {
 
     },
 
+    getAxis: function( pos ){
+
+        if( !pos ) pos = this.getPosition();
+
+        var axis = NGL.Utils.calculateMeanVector3( pos.axis ).normalize();
+        var center = NGL.Utils.calculateMeanVector3( pos.center );
+
+        var n = pos.center.length;
+        var pc = pos.center;
+
+        var beg = new THREE.Vector3( pc[ 0 ], pc[ 1 ], pc[ 2 ] );
+        beg = NGL.Utils.pointVectorIntersection( beg, center, axis );
+
+        var end = new THREE.Vector3( pc[ n - 3 ], pc[ n - 2 ], pc[ n - 1 ] );
+        end = NGL.Utils.pointVectorIntersection( end, center, axis );
+
+        axis.subVectors( end, beg );
+
+        return {
+
+            "axis": axis,
+            "center": center,
+            "begin": beg,
+            "end": end
+
+        };
+
+    },
+
     getPosition: function(){
 
         var traceAtomname = this.traceAtomname;
@@ -6100,15 +6129,7 @@ NGL.Helixorient.prototype = {
 
         } );
 
-        function pointVectorIntersection( a, b, vector ){
-
-            var v1 = new THREE.Vector3().subVectors( a, b );
-            var len_b_i = Math.cos( vector.angleTo( v1 ) ) * v1.length();
-            var vec_i = vector.normalize().multiplyScalar( len_b_i );
-            var p_i = new THREE.Vector3().addVectors( vec_i, b );
-
-            return p_i;
-        }
+        //
 
         var res = this.fiber.residues;
 
@@ -6116,7 +6137,7 @@ NGL.Helixorient.prototype = {
         _axis.set( axis[ 3 ], axis[ 4 ], axis[ 5 ] );
         _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
         v1.set( center[ 3 ], center[ 4 ], center[ 5 ] );
-        v1 = pointVectorIntersection( _center, v1, _axis );
+        v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         center[ 0 ] = v1.x;
         center[ 1 ] = v1.y;
         center[ 2 ] = v1.z;
@@ -6133,7 +6154,7 @@ NGL.Helixorient.prototype = {
         v2.set( center[ 3 * n - 9 ], center[ 3 * n - 8 ], center[ 3 * n - 7 ] );
         _axis.subVectors( v1, v2 ).normalize();
         _center.copy( res[ n - 1 ].getAtomByName( traceAtomname ) );
-        v1 = pointVectorIntersection( _center, v1, _axis );
+        v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         center[ 3 * n - 3 ] = v1.x;
         center[ 3 * n - 2 ] = v1.y;
         center[ 3 * n - 1 ] = v1.z;
@@ -6153,11 +6174,49 @@ NGL.Helixorient.prototype = {
 
         }
 
+        // average measures to define them on the residues
+
+        var residueradius = new Float32Array( n );
+
+        residueradius[ 1 ] = radius[ 0 ];
+
+        for( i = 2; i < n - 2; i++ ){
+
+            residueradius[ i ] = 0.5 * ( radius[ i - 2 ] + radius[ i - 1 ] );
+            // residuetwist[i]=0.5*(twist[i-2]+twist[i-1]);
+            // residuerise[i]=0.5*(rise[i-2]+rise[i-1]);
+            // residuebending[i] = 180.0/M_PI*acos( cos_angle(helixaxis[i-2],helixaxis[i-1]) );
+
+        }
+
+        residueradius[ n - 2 ] = radius[ n - 4 ];
+
+        // average helix axes to define them on the residues
+
+        var residuehelixaxis = new Float32Array( 3 * n );
+
+        for( i = 2; i < n - 2; i++ ){
+
+            j = 3 * ( i - 2 );
+            v1.set( axis[ j + 0 ], axis[ j + 1 ], axis[ j + 2 ] );
+
+            j = 3 * ( i - 1 );
+            v2.set( axis[ j + 0 ], axis[ j + 1 ], axis[ j + 2 ] );
+
+            _axis.addVectors( v2, v1 ).multiplyScalar( 0.5 ).normalize();
+
+            j = 3 * i;
+            residuehelixaxis[ j + 0 ] = _axis.x;
+            residuehelixaxis[ j + 1 ] = _axis.y;
+            residuehelixaxis[ j + 2 ] = _axis.z;
+
+        }
+
         return {
             "center": center,
-            "axis": axis,
+            "axis": residuehelixaxis,
             "diff": diff,
-            "radius": radius,
+            "radius": residueradius,
             "rise": rise,
             "twist": twist,
             "resdir": resdir,

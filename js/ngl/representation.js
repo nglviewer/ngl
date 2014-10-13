@@ -2147,6 +2147,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
             var color = helixorient.getColor( scope.color );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
+            var axis = helixorient.getAxis();
+
             scope.bufferList.push(
 
                 new NGL.SphereBuffer(
@@ -2177,6 +2179,21 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     position.center,
                     position.resdir,
                     "lightgreen",
+                    1
+                )
+
+            );
+
+            scope.bufferList.push(
+
+                new NGL.BufferVectorHelper(
+                    new Float32Array( [
+                        axis.begin.x, axis.begin.y, axis.begin.z
+                    ] ),
+                    new Float32Array( [
+                        axis.axis.x, axis.axis.y, axis.axis.z
+                    ] ),
+                    "tomato",
                     1
                 )
 
