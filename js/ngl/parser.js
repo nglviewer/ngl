@@ -413,12 +413,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             s._doAutoSS = true;
 
-        }else{
-
-            s.eachResidue( function( r ){
-                if( !r.ss && r.isProtein() ) r.ss = "c";
-            } );
-
         }
 
         // check for chain names

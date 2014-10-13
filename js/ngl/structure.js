@@ -421,11 +421,9 @@ NGL.ColorFactory.prototype = {
                     c = strucColors[ "alphaHelix" ];
                 }else if( a.ss === "s" ){
                     c = strucColors[ "betaStrand" ];
-                }else if( a.ss === "c" ){
-                    c = strucColors[ "coil" ];
                 }else if( a.residue.isNucleic() ){
                     c = strucColors[ "dna" ];
-                }else if( a.residue.isProtein() ){
+                }else if( a.residue.isProtein() || a.ss === "c" ){
                     c = strucColors[ "coil" ];
                 }else{
                     c = defaultStrucColor;
