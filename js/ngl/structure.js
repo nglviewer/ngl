@@ -701,7 +701,7 @@ NGL.AtomSet.prototype = {
 
                 if( test( a ) ){
 
-                    vector.set( a.x, a.y, a.z );
+                    vector.copy( a );
                     box.expandByPoint( vector );
 
                 }
@@ -712,9 +712,7 @@ NGL.AtomSet.prototype = {
 
             for( i = 0; i < n; ++i ){
 
-                a = this.atoms[ i ];
-
-                vector.set( a.x, a.y, a.z );
+                vector.copy( this.atoms[ i ] );
                 box.expandByPoint( vector );
 
             };
@@ -903,7 +901,7 @@ NGL.AtomSet.prototype = {
 
                     if( test( a ) ){
 
-                        vector.set( a.x, a.y, a.z );
+                        vector.copy( a );
                         box.expandByPoint( vector );
 
                     }
@@ -914,9 +912,7 @@ NGL.AtomSet.prototype = {
 
                 for( i = 0; i < n; ++i ){
 
-                    a = this.atoms[ i ];
-
-                    vector.set( a.x, a.y, a.z );
+                    vector.copy( this.atoms[ i ] );
                     box.expandByPoint( vector );
 
                 };
@@ -5041,25 +5037,13 @@ NGL.Spline.prototype = {
 
             j = i * 3;
 
-            vBin1.set(
-                bin[ j + 0 + 0 ], bin[ j + 0 + 1 ], bin[ j + 0 + 2 ]
-            );
-            vBin2.set(
-                bin[ j + 3 + 0 ], bin[ j + 3 + 1 ], bin[ j + 3 + 2 ]
-            );
-            vBin3.set(
-                bin[ j + 6 + 0 ], bin[ j + 6 + 1 ], bin[ j + 6 + 2 ]
-            );
+            vBin1.fromArray( bin, j + 0 );
+            vBin2.fromArray( bin, j + 3 );
+            vBin3.fromArray( bin, j + 6 );
 
-            vNorm1.set(
-                norm[ j + 0 + 0 ], norm[ j + 0 + 1 ], norm[ j + 0 + 2 ]
-            );
-            vNorm2.set(
-                norm[ j + 3 + 0 ], norm[ j + 3 + 1 ], norm[ j + 3 + 2 ]
-            );
-            vNorm3.set(
-                norm[ j + 6 + 0 ], norm[ j + 6 + 1 ], norm[ j + 6 + 2 ]
-            );
+            vNorm1.fromArray( norm, j + 0 );
+            vNorm2.fromArray( norm, j + 3 );
+            vNorm3.fromArray( norm, j + 6 );
 
             if( Math.abs( vNorm1.dot( vNorm2 ) ) + Math.abs( vBin1.dot( vBin2 ) ) <
                     Math.abs( vNorm1.dot( vNorm3 ) ) + Math.abs( vBin1.dot( vBin3 ) ) ){
@@ -5078,10 +5062,7 @@ NGL.Spline.prototype = {
                 bin[ j + 3 + 1 ] = vBin2.y;
                 bin[ j + 3 + 2 ] = vBin2.z;
 
-                vTan2.set(
-                    tan[ j + 3 + 0 ], tan[ j + 3 + 1 ], tan[ j + 3 + 2 ]
-                );
-
+                vTan2.fromArray( tan, j + 3 );
                 vNorm2.copy( vTan2 ).cross( vBin2 ).normalize();
 
                 norm[ j + 3 + 0 ] = vNorm2.x;
@@ -6005,10 +5986,10 @@ NGL.Helixorient.prototype = {
         var n = pos.center.length;
         var pc = pos.center;
 
-        var beg = new THREE.Vector3( pc[ 0 ], pc[ 1 ], pc[ 2 ] );
+        var beg = new THREE.Vector3().fromArray( pos.center );
         beg = NGL.Utils.pointVectorIntersection( beg, center, axis );
 
-        var end = new THREE.Vector3( pc[ n - 3 ], pc[ n - 2 ], pc[ n - 1 ] );
+        var end = new THREE.Vector3().fromArray( pos.center, n - 3 );
         end = NGL.Utils.pointVectorIntersection( end, center, axis );
 
         axis.subVectors( end, beg );
@@ -6134,9 +6115,9 @@ NGL.Helixorient.prototype = {
         var res = this.fiber.residues;
 
         // project first traceAtom onto second axis to get first center pos
-        _axis.set( axis[ 3 ], axis[ 4 ], axis[ 5 ] );
+        _axis.fromArray( axis, 3 );
         _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
-        v1.set( center[ 3 ], center[ 4 ], center[ 5 ] );
+        v1.fromArray( center, 3 );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         center[ 0 ] = v1.x;
         center[ 1 ] = v1.y;
@@ -6150,8 +6131,8 @@ NGL.Helixorient.prototype = {
 
         // calc axis as dir of n-1 and n-2 center pos
         // project last traceAtom onto axis to get last center pos
-        v1.set( center[ 3 * n - 6 ], center[ 3 * n - 5 ], center[ 3 * n - 4 ] );
-        v2.set( center[ 3 * n - 9 ], center[ 3 * n - 8 ], center[ 3 * n - 7 ] );
+        v1.fromArray( center, 3 * n - 6 );
+        v2.fromArray( center, 3 * n - 9 );
         _axis.subVectors( v1, v2 ).normalize();
         _center.copy( res[ n - 1 ].getAtomByName( traceAtomname ) );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
@@ -6164,7 +6145,7 @@ NGL.Helixorient.prototype = {
 
             j = 3 * i;
 
-            v1.set( center[ j + 0 ], center[ j + 1 ], center[ j + 2 ] );
+            v1.fromArray( center, j );
             _center.copy( res[ i ].getAtomByName( traceAtomname ) );
 
             _resdir.subVectors( _center, v1 );
@@ -6197,11 +6178,8 @@ NGL.Helixorient.prototype = {
 
         for( i = 2; i < n - 2; i++ ){
 
-            j = 3 * ( i - 2 );
-            v1.set( axis[ j + 0 ], axis[ j + 1 ], axis[ j + 2 ] );
-
-            j = 3 * ( i - 1 );
-            v2.set( axis[ j + 0 ], axis[ j + 1 ], axis[ j + 2 ] );
+            v1.fromArray( axis, 3 * ( i - 2 ) );
+            v2.fromArray( axis, 3 * ( i - 1 ) );
 
             _axis.addVectors( v2, v1 ).multiplyScalar( 0.5 ).normalize();
 

@@ -2719,8 +2719,8 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
 
     this.applyPositionTransform = function( matrix, i, i3 ){
 
-        eye.set( from[ i3 + 0 ], from[ i3 + 1 ], from[ i3 + 2 ] );
-        target.set( to[ i3 + 0 ], to[ i3 + 1 ], to[ i3 + 2 ] );
+        eye.fromArray( from, i3 );
+        target.fromArray( to, i3 );
         matrix.lookAt( eye, target, up );
 
         r = radius[ i ];
