@@ -497,7 +497,28 @@ NGL.Utils = {
 
         }
 
-    }()
+    }(),
+
+    copyArray: function( src, dst, srcOffset, dstOffset, length ){
+
+        var i;
+        var n = length;
+
+        for( i = 0; i < n; ++i ){
+
+            dst[ dstOffset + i ] = src[ srcOffset + i ];
+
+        }
+
+    },
+
+    pushVector3ToArray: function( v, array ){
+
+        array.push( v.x );
+        array.push( v.y );
+        array.push( v.z );
+
+    }
 
 };
 

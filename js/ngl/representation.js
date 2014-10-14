@@ -2187,12 +2187,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
             scope.bufferList.push(
 
                 new NGL.BufferVectorHelper(
-                    new Float32Array( [
-                        axis.begin.x, axis.begin.y, axis.begin.z
-                    ] ),
-                    new Float32Array( [
-                        axis.axis.x, axis.axis.y, axis.axis.z
-                    ] ),
+                    axis.begin,
+                    axis.axis,
                     "tomato",
                     1
                 )

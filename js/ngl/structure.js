@@ -5980,27 +5980,66 @@ NGL.Helixorient.prototype = {
 
         if( !pos ) pos = this.getPosition();
 
-        var axis = NGL.Utils.calculateMeanVector3( pos.axis ).normalize();
-        var center = NGL.Utils.calculateMeanVector3( pos.center );
+        var i;
+        var j = 0;
+        var n = this.size;
 
-        var n = pos.center.length;
-        var pc = pos.center;
+        var res = this.fiber.residues;
 
-        var beg = new THREE.Vector3().fromArray( pos.center );
-        beg = NGL.Utils.pointVectorIntersection( beg, center, axis );
+        var axis = [];
+        var center = [];
+        var beg = [];
+        var end = [];
 
-        var end = new THREE.Vector3().fromArray( pos.center, n - 3 );
-        end = NGL.Utils.pointVectorIntersection( end, center, axis );
+        var tmpAxis = [];
+        var tmpCenter = [];
 
-        axis.subVectors( end, beg );
+        var _axis, _center
+        var _beg = new THREE.Vector3();
+        var _end = new THREE.Vector3();
+
+        for( i = 1; i < n; ++i ){
+
+            r = res[ i ];
+
+            if( i === n - 1 || r.ss !== res[ i + 1 ].ss || pos.bending[ i ] > 10 ){
+
+                if( i - j < 2 ){
+                    j = i;
+                    continue;
+                }
+
+                // ignore first and last axis
+                tmpAxis = pos.axis.subarray( j * 3 + 3, i * 3 );
+                tmpCenter = pos.center.subarray( j * 3, i * 3 + 3 );
+
+                _axis = NGL.Utils.calculateMeanVector3( tmpAxis ).normalize();
+                _center = NGL.Utils.calculateMeanVector3( tmpCenter );
+
+                _beg.fromArray( tmpCenter );
+                _beg = NGL.Utils.pointVectorIntersection( _beg, _center, _axis );
+
+                _end.fromArray( tmpCenter, tmpCenter.length - 3 );
+                _end = NGL.Utils.pointVectorIntersection( _end, _center, _axis );
+
+                _axis.subVectors( _end, _beg );
+
+                NGL.Utils.pushVector3ToArray( _axis, axis );
+                NGL.Utils.pushVector3ToArray( _center, center );
+                NGL.Utils.pushVector3ToArray( _beg, beg );
+                NGL.Utils.pushVector3ToArray( _end, end );
+
+                j = i;
+
+            }
+
+        }
 
         return {
-
-            "axis": axis,
-            "center": center,
-            "begin": beg,
-            "end": end
-
+            "axis": new Float32Array( axis ),
+            "center": new Float32Array( center ),
+            "begin": new Float32Array( beg ),
+            "end": new Float32Array( end )
         };
 
     },
@@ -6060,9 +6099,9 @@ NGL.Helixorient.prototype = {
             diff24.subVectors( r23, r34 );
 
             _axis.crossVectors( diff13, diff24 ).normalize();
-            axis[ j + 3 + 0 ] = _axis.x;
-            axis[ j + 3 + 1 ] = _axis.y;
-            axis[ j + 3 + 2 ] = _axis.z;
+            axis[ j + 0 ] = _axis.x;
+            axis[ j + 1 ] = _axis.y;
+            axis[ j + 2 ] = _axis.z;
 
             if( i > 0 ){
                 diff[ i ] = _axis.angleTo( _prevAxis );
@@ -6157,24 +6196,37 @@ NGL.Helixorient.prototype = {
 
         // average measures to define them on the residues
 
-        var residueradius = new Float32Array( n );
+        var resRadius = new Float32Array( n );
+        var resTwist = new Float32Array( n );
+        var resRise = new Float32Array( n );
+        var resBending = new Float32Array( n );
 
-        residueradius[ 1 ] = radius[ 0 ];
+        resRadius[ 1 ] = radius[ 0 ];
+        resTwist[ 1 ] = twist[ 0 ];
+        resRise[ 1 ] = radius[ 0 ];
 
         for( i = 2; i < n - 2; i++ ){
 
-            residueradius[ i ] = 0.5 * ( radius[ i - 2 ] + radius[ i - 1 ] );
-            // residuetwist[i]=0.5*(twist[i-2]+twist[i-1]);
-            // residuerise[i]=0.5*(rise[i-2]+rise[i-1]);
-            // residuebending[i] = 180.0/M_PI*acos( cos_angle(helixaxis[i-2],helixaxis[i-1]) );
+            resRadius[ i ] = 0.5 * ( radius[ i - 2 ] + radius[ i - 1 ] );
+            resTwist[ i ] = 0.5 * ( twist[ i - 2 ] + twist[ i - 1 ] );
+            resRise[ i ] = 0.5 * ( rise[ i - 2 ] + rise[ i - 1 ] );
+
+            v1.fromArray( axis, 3 * ( i - 2 ) );
+            v2.fromArray( axis, 3 * ( i - 1 ) );
+            resBending[ i ] = 180.0 / Math.PI * Math.acos( Math.cos( v1.angleTo( v2 ) ) );
 
         }
 
-        residueradius[ n - 2 ] = radius[ n - 4 ];
+        resRadius[ n - 2 ] = radius[ n - 4 ];
+        resTwist[ n - 2 ] = twist[ n - 4 ];
+        resRise[ n - 2 ] = rise[ n - 4 ];
 
         // average helix axes to define them on the residues
 
-        var residuehelixaxis = new Float32Array( 3 * n );
+        var resAxis = new Float32Array( 3 * n );
+
+        NGL.Utils.copyArray( axis, resAxis, 0, 0, 3 );
+        NGL.Utils.copyArray( axis, resAxis, 0, 3, 3 );
 
         for( i = 2; i < n - 2; i++ ){
 
@@ -6184,19 +6236,22 @@ NGL.Helixorient.prototype = {
             _axis.addVectors( v2, v1 ).multiplyScalar( 0.5 ).normalize();
 
             j = 3 * i;
-            residuehelixaxis[ j + 0 ] = _axis.x;
-            residuehelixaxis[ j + 1 ] = _axis.y;
-            residuehelixaxis[ j + 2 ] = _axis.z;
+            resAxis[ j + 0 ] = _axis.x;
+            resAxis[ j + 1 ] = _axis.y;
+            resAxis[ j + 2 ] = _axis.z;
 
         }
 
+        NGL.Utils.copyArray( axis, resAxis, 3 * n - 12, 3 * n - 6, 3 );
+        NGL.Utils.copyArray( axis, resAxis, 3 * n - 12, 3 * n - 3, 3 );
+
         return {
             "center": center,
-            "axis": residuehelixaxis,
-            "diff": diff,
-            "radius": residueradius,
-            "rise": rise,
-            "twist": twist,
+            "axis": resAxis,
+            "bending": resBending,
+            "radius": resRadius,
+            "rise": resRise,
+            "twist": resTwist,
             "resdir": resdir,
         };
 
