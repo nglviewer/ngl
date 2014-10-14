@@ -415,7 +415,7 @@ NGL.Preferences.prototype = {
 
         this.stage.eachRepresentation( function( repr ){
 
-            if( types.indexOf( repr.type ) === -1 ){
+            if( types.indexOf( repr.getType() ) === -1 ){
                 return;
             }
 
@@ -447,14 +447,14 @@ NGL.Preferences.prototype = {
 
             var p = repr.getParameters();
 
-            if( types.indexOf( repr.type ) === -1 ){
+            if( types.indexOf( repr.getType() ) === -1 ){
 
-                if( impostorTypes.indexOf( repr.type ) === -1 ){
+                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
                     return;
                 }
 
                 if( NGL.extensionFragDepth && !p.disableImpostor ){
-                    repr.quality = value;
+                    repr.repr.quality = value;
                     return;
                 }
 
@@ -987,6 +987,12 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
         "parametersChanged": null,
 
     }, NGL.Component.prototype.signals ),
+
+    getType: function(){
+
+        return this.repr.type;
+
+    },
 
     setRepresentation: function( repr ){
 
