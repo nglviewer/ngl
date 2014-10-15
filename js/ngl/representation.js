@@ -2272,6 +2272,144 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.RocketRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.RocketRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "rocket",
+
+    parameters: Object.assign( {
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+        params.radius = params.radius || 0.15;
+        params.scale = params.scale || 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        var scope = this;
+
+        this.bufferList = [];
+        this.fiberList = [];
+        this.centerList = [];
+
+        this.structure.eachFiber( function( fiber ){
+
+            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
+
+            var helixorient = new NGL.Helixorient( fiber );
+            var position = helixorient.getPosition();
+            var color = helixorient.getColor( scope.color );
+            var size = helixorient.getSize( scope.radius, scope.scale );
+
+            var axis = helixorient.getAxis();
+
+            scope.bufferList.push(
+
+                new NGL.CylinderBuffer(
+                    axis.begin,
+                    axis.end,
+                    axis.color,
+                    axis.color,
+                    axis.size,
+                    null,
+                    null,
+                    axis.pickingColor,
+                    axis.pickingColor,
+                    scope.radiusSegments,
+                    scope.disableImpostor
+                )
+
+            );
+
+            scope.fiberList.push( fiber );
+
+            scope.centerList.push( new Float32Array( axis.begin.length ) );
+
+        }, this.selection );
+
+    },
+
+    update: function( what ){
+
+        this.rebuild();
+
+        return;
+
+        what = what || {};
+
+        var i = 0;
+        var n = this.fiberList.length;
+
+        for( i = 0; i < n; ++i ){
+
+            var fiber = this.fiberList[ i ]
+
+            if( fiber.residueCount < 4 ) return;
+
+            var bufferData = {};
+            var helixorient = new NGL.Helixorient( fiber );
+            var axis = helixorient.getAxis();
+
+            if( what[ "position" ] ){
+
+                bufferData[ "position" ] = NGL.Utils.calculateCenterArray(
+                    axis.begin, axis.end, this.centerList[ i ]
+                );
+                bufferData[ "position1" ] = axis.begin;
+                bufferData[ "position2" ] = axis.end;
+
+            }
+
+            if( what[ "color" ] ){
+
+                bufferData[ "color" ] = axis.color;
+                bufferData[ "color2" ] = axis.color;
+
+            }
+
+            if( what[ "radius" ] || what[ "scale" ] ){
+
+                bufferData[ "radius" ] = axis.size;
+
+            }
+
+            this.bufferList[ i ].setAttributes( bufferData );
+
+        };
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    }
+
+} );
+
+
 NGL.RopeRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );

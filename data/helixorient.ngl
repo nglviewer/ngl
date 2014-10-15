@@ -7,7 +7,7 @@ load( "1crn.pdb" );
 then( function(){
 
     structure( "1crn.pdb" )
-        .addRepresentation( "helixorient", { sele: "helix" } )
+        .addRepresentation( "rocket", { sele: "helix" } )
         .addRepresentation( "backbone" )
         .addRepresentation( "rope", { visible: false, radius: 0.1 } )
         .centerView()

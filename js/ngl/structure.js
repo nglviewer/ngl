@@ -5980,9 +5980,13 @@ NGL.Helixorient.prototype = {
 
         if( !pos ) pos = this.getPosition();
 
-        var i;
+        var colorFactory = new NGL.ColorFactory( "ss" );
+        var radiusFactory = new NGL.RadiusFactory( 1.5 );
+
+        var i, r, a;
         var j = 0;
         var n = this.size;
+        var traceAtomname = this.traceAtomname;
 
         var res = this.fiber.residues;
 
@@ -5990,6 +5994,9 @@ NGL.Helixorient.prototype = {
         var center = [];
         var beg = [];
         var end = [];
+        var col = [];
+        var pcol = [];
+        var size = [];
 
         var tmpAxis = [];
         var tmpCenter = [];
@@ -5998,7 +6005,7 @@ NGL.Helixorient.prototype = {
         var _beg = new THREE.Vector3();
         var _end = new THREE.Vector3();
 
-        for( i = 1; i < n; ++i ){
+        for( i = 0; i < n; ++i ){
 
             r = res[ i ];
 
@@ -6008,6 +6015,8 @@ NGL.Helixorient.prototype = {
                     j = i;
                     continue;
                 }
+
+                a = r.getAtomByName( traceAtomname );
 
                 // ignore first and last axis
                 tmpAxis = pos.axis.subarray( j * 3 + 3, i * 3 );
@@ -6029,6 +6038,19 @@ NGL.Helixorient.prototype = {
                 NGL.Utils.pushVector3ToArray( _beg, beg );
                 NGL.Utils.pushVector3ToArray( _end, end );
 
+                c = colorFactory.atomColor( a );
+                pc = a.globalindex + 1;
+
+                col.push( ( c >> 16 & 255 ) / 255 );
+                col.push( ( c >> 8 & 255 ) / 255 );
+                col.push( ( c & 255 ) / 255 );
+
+                pcol.push( ( pc >> 16 & 255 ) / 255 );
+                pcol.push( ( pc >> 8 & 255 ) / 255 );
+                pcol.push( ( pc & 255 ) / 255 );
+
+                size.push( radiusFactory.atomRadius( a ) );
+
                 j = i;
 
             }
@@ -6039,7 +6061,10 @@ NGL.Helixorient.prototype = {
             "axis": new Float32Array( axis ),
             "center": new Float32Array( center ),
             "begin": new Float32Array( beg ),
-            "end": new Float32Array( end )
+            "end": new Float32Array( end ),
+            "color": new Float32Array( col ),
+            "pickingColor": new Float32Array( pcol ),
+            "size": new Float32Array( size ),
         };
 
     },
