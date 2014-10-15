@@ -301,17 +301,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     function superpose( comp1, comp2, align, sele1, sele2, xsele1, xsele2 ){
 
-        NGL.superpose(
-            comp1.structure,
-            comp2.structure,
-            align,
-            sele1,
-            sele2,
-            xsele1,
-            xsele2
-        );
-
-        comp1.updateRepresentations( { "position": true } );
+        comp1.superpose( comp2, align, sele1, sele2, xsele1, xsele2 );
 
     }
 

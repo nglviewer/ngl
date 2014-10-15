@@ -851,14 +851,20 @@ NGL.StructureComponent.prototype = NGL.createObject(
     superpose: function( component, align, sele1, sele2, xsele1, xsele2 ){
 
         NGL.superpose(
-            this.structure,
-            component.structure,
-            align,
-            sele1,
-            sele2,
-            xsele1,
-            xsele2
+            this.structure, component.structure,
+            align, sele1, sele2, xsele1, xsele2
         );
+
+
+        // FIXME there should be a better way
+        if( this.structure !== this.__structure ){
+
+            NGL.superpose(
+                this.__structure, component.structure,
+                align, sele1, sele2, xsele1, xsele2
+            );
+
+        }
 
         this.updateRepresentations( { "position": true } );
 

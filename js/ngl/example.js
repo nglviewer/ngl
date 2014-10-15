@@ -185,27 +185,22 @@ NGL.Examples = {
 
         "superpose": function( stage ){
 
-            stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
+            stage.loadFile( "__example__/1u19.pdb", function( o1 ){
 
                 var s = "1-320:A";
 
                 o1.addRepresentation( "cartoon", { sele: s } );
 
-                stage.loadFile( "__example__/1u19.pdb", function( o2 ){
+                stage.loadFile( "__example__/3dqb.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon", { sele: s } );
 
-                    var s1 = o1.structure;
-                    var s2 = o2.structure;
-
-                    NGL.superpose( s1, s2, false, s );
-
-                    o1.updateRepresentations();
+                    o1.superpose( o2, false, s );
                     o1.centerView( ":A" );
 
                 } );
 
-            } );
+            }, { sele: ":A" } );
 
         },
 
