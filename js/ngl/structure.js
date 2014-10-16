@@ -444,6 +444,21 @@ NGL.ColorFactory.prototype = {
 
         return c;
 
+    },
+
+    atomColorToArray: function( a, array, offset ){
+
+        var c = this.atomColor( a );
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
+        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
+        array[ offset + 2 ] = ( c & 255 ) / 255;
+
+        return array;
+
     }
 
 };
@@ -3496,6 +3511,31 @@ NGL.Atom.prototype = {
 
         return name;
 
+    },
+
+    positionFromArray: function( array, offset ){
+
+        if( offset === undefined ) offset = 0;
+
+        this.x = array[ offset + 0 ];
+        this.y = array[ offset + 1 ];
+        this.z = array[ offset + 2 ];
+
+        return this;
+
+    },
+
+    positionToArray: function( array, offset ){
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = this.x;
+        array[ offset + 1 ] = this.y;
+        array[ offset + 2 ] = this.z;
+
+        return array;
+
     }
 
 }
@@ -4095,6 +4135,31 @@ NGL.ProxyAtom.prototype = {
         }
 
         return name;
+
+    },
+
+    positionFromArray: function( array, offset ){
+
+        if( offset === undefined ) offset = 0;
+
+        this.x = array[ offset + 0 ];
+        this.y = array[ offset + 1 ];
+        this.z = array[ offset + 2 ];
+
+        return this;
+
+    },
+
+    positionToArray: function( array, offset ){
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = this.x;
+        array[ offset + 1 ] = this.y;
+        array[ offset + 2 ] = this.z;
+
+        return array;
 
     }
 
@@ -5002,21 +5067,13 @@ NGL.Spline.prototype = {
         var rn = this.fiber.residues[ n ];
         var can = rn.getAtomByName( traceAtomname );
 
-        pos[ n1 * m * 3 + 0 ] = can.x;
-        pos[ n1 * m * 3 + 1 ] = can.y;
-        pos[ n1 * m * 3 + 2 ] = can.z;
+        var o = n1 * m * 3;
 
-        bin[ n1 * m * 3 + 0 ] = bin[ n1 * m * 3 - 3 ];
-        bin[ n1 * m * 3 + 1 ] = bin[ n1 * m * 3 - 2 ];
-        bin[ n1 * m * 3 + 2 ] = bin[ n1 * m * 3 - 1 ];
+        can.positionToArray( pos, n1 * m * 3 );
 
-        tan[ n1 * m * 3 + 0 ] = tan[ n1 * m * 3 - 3 ];
-        tan[ n1 * m * 3 + 1 ] = tan[ n1 * m * 3 - 2 ];
-        tan[ n1 * m * 3 + 2 ] = tan[ n1 * m * 3 - 1 ];
-
-        norm[ n1 * m * 3 + 0 ] = norm[ n1 * m * 3 - 3 ];
-        norm[ n1 * m * 3 + 1 ] = norm[ n1 * m * 3 - 2 ];
-        norm[ n1 * m * 3 + 2 ] = norm[ n1 * m * 3 - 1 ];
+        NGL.Utils.copyArray( bin, bin, o - 3, o, 3 );
+        NGL.Utils.copyArray( tan, tan, o - 3, o, 3 );
+        NGL.Utils.copyArray( norm, norm, o - 3, o, 3 );
 
         //
 
@@ -5063,7 +5120,8 @@ NGL.Spline.prototype = {
                 vNorm2.copy( vTan2 ).cross( vBin2 ).normalize();
                 vNorm2.toArray( norm, j + 3 );
 
-                ++i
+                // FIXME what was this for?
+                // ++i
 
             }
 
@@ -5864,9 +5922,7 @@ NGL.Helixorient.prototype = {
 
             }else{
 
-                a.x = center[ j + 0 ];
-                a.y = center[ j + 1 ];
-                a.z = center[ j + 2 ];
+                a.positionFromArray( center, j );
 
             }
 
@@ -5910,12 +5966,9 @@ NGL.Helixorient.prototype = {
             a = r.getAtomByName( traceAtomname );
 
             c = colorFactory.atomColor( a );
+            colorFactory.atomColorToArray( a, col, i );
+
             pc = a.globalindex + 1;
-
-            col[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-            col[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-            col[ i + 2 ] = ( c & 255 ) / 255;
-
             pcol[ i + 0 ] = ( pc >> 16 & 255 ) / 255;
             pcol[ i + 1 ] = ( pc >> 8 & 255 ) / 255;
             pcol[ i + 2 ] = ( pc & 255 ) / 255;
@@ -5968,6 +6021,7 @@ NGL.Helixorient.prototype = {
 
         var i, r, a;
         var j = 0;
+        var k = 0;
         var n = this.size;
         var traceAtomname = this.traceAtomname;
 
@@ -6016,24 +6070,22 @@ NGL.Helixorient.prototype = {
 
                 _axis.subVectors( _end, _beg );
 
-                NGL.Utils.pushVector3ToArray( _axis, axis );
-                NGL.Utils.pushVector3ToArray( _center, center );
-                NGL.Utils.pushVector3ToArray( _beg, beg );
-                NGL.Utils.pushVector3ToArray( _end, end );
+                _axis.toArray( axis, k );
+                _center.toArray( center, k );
+                _beg.toArray( beg, k );
+                _end.toArray( end, k );
 
                 c = colorFactory.atomColor( a );
+                colorFactory.atomColorToArray( a, col, k );
+
                 pc = a.globalindex + 1;
-
-                col.push( ( c >> 16 & 255 ) / 255 );
-                col.push( ( c >> 8 & 255 ) / 255 );
-                col.push( ( c & 255 ) / 255 );
-
-                pcol.push( ( pc >> 16 & 255 ) / 255 );
-                pcol.push( ( pc >> 8 & 255 ) / 255 );
-                pcol.push( ( pc & 255 ) / 255 );
+                pcol[ k + 0 ] = ( pc >> 16 & 255 ) / 255;
+                pcol[ k + 1 ] = ( pc >> 8 & 255 ) / 255;
+                pcol[ k + 2 ] = ( pc & 255 ) / 255;
 
                 size.push( radiusFactory.atomRadius( a ) );
 
+                k += 3;
                 j = i;
 
             }

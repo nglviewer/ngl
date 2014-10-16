@@ -510,14 +510,6 @@ NGL.Utils = {
 
         }
 
-    },
-
-    pushVector3ToArray: function( v, array ){
-
-        array.push( v.x );
-        array.push( v.y );
-        array.push( v.z );
-
     }
 
 };
