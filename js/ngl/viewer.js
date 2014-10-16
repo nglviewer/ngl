@@ -2309,6 +2309,8 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 
     if( !shift ) shift = 0;
 
+    this.cap = cap === undefined ? true : cap;
+
     this.size = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
     this.fragmentShader = 'CylinderImpostor.frag';
@@ -2363,6 +2365,18 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 };
 
 NGL.CylinderImpostorBuffer.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
+
+NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
+
+    var material = NGL.Buffer.prototype.getMaterial.call( this, type );
+
+    if( this.cap ){
+        material.defines[ "CAP" ] = 1;
+    }
+
+    return material;
+
+}
 
 
 NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2 ){
@@ -3888,6 +3902,8 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disa
 NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
+
+        // FIXME cap support missing
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments

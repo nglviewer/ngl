@@ -410,7 +410,8 @@ NGL.Preferences.prototype = {
         }
 
         var types = [
-            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket"
         ];
 
         this.stage.eachRepresentation( function( repr ){
@@ -436,11 +437,12 @@ NGL.Preferences.prototype = {
         }
 
         var types = [
-            "tube", "cartoon", "ribbon", "trace"
+            "tube", "cartoon", "ribbon", "trace", "rope"
         ];
 
         var impostorTypes = [
-            "spacefill", "ball+stick", "licorice", "hyperball", "backbone"
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket"
         ];
 
         this.stage.eachRepresentation( function( repr ){

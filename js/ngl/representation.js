@@ -666,7 +666,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.atomSet.bondColor( null, 1, this.color ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
             null,
-            null,
+            true,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
             this.radiusSegments,
@@ -831,7 +831,7 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             this.atomSet.bondColor( null, 1, this.color ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
             null,
-            null,
+            true,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
             this.radiusSegments,
@@ -1193,7 +1193,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 backboneBondSet.bondColor( null, 1, color ),
                 backboneBondSet.bondRadius( null, 0, radius, scale ),
                 null,
-                null,
+                true,
                 backboneBondSet.bondColor( null, 0, "picking" ),
                 backboneBondSet.bondColor( null, 1, "picking" ),
                 radiusSegments,
@@ -2268,6 +2268,9 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         },
         ssBorder: {
             type: "boolean"
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2278,6 +2281,18 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         params.color = params.color || "ss";
         params.radius = params.radius || 0.15;
         params.scale = params.scale || 1.0;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.radiusSegments = 20;
+        }else{
+            this.radiusSegments = params.radiusSegments || 10;
+        }
 
         this.localAngle = params.localAngle || 30;
         this.centerDist = params.centerDist || 2.5;
@@ -2313,7 +2328,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                     axis.color,
                     axis.size,
                     null,
-                    null,
+                    true,
                     axis.pickingColor,
                     axis.pickingColor,
                     scope.radiusSegments,
@@ -2358,6 +2373,13 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         if( params && params[ "ssBorder" ] !== undefined ){
 
             this.ssBorder = params[ "ssBorder" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radiusSegments" ] ){
+
+            this.radiusSegments = params[ "radiusSegments" ];
             rebuild = true;
 
         }
