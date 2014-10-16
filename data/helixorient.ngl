@@ -1,12 +1,12 @@
 
 
 
-load( "1crn.pdb" );
+load( "3sn6.pdb" );
 
 
 then( function(){
 
-    structure( "1crn.pdb" )
+    structure( "3sn6.pdb" )
         .addRepresentation( "rocket", { sele: "helix" } )
         .addRepresentation( "backbone" )
         .addRepresentation( "rope", { visible: false, radius: 0.1 } )
@@ -37,7 +37,7 @@ then( function(){
 
     }
 
-    var s = structure( "1crn.pdb" ).structure;
+    var s = structure( "3sn6.pdb" ).structure;
 
     s.eachFiber( function( f ){
 

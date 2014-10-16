@@ -2149,6 +2149,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             var axis = helixorient.getAxis();
 
+            // TODO find out where the NaN comes from
+            if( !axis.begin.length || isNaN( axis.begin[ 0 ] ) ) return;
+
             scope.bufferList.push(
 
                 new NGL.SphereBuffer(
@@ -2317,6 +2320,9 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             var size = helixorient.getSize( scope.radius, scope.scale );
 
             var axis = helixorient.getAxis();
+
+            // TODO find out where the NaN comes from
+            if( !axis.begin.length || isNaN( axis.begin[ 0 ] ) ) return;
 
             scope.bufferList.push(
 
