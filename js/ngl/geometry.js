@@ -547,98 +547,6 @@ NGL.Helixorient.prototype = {
 
     },
 
-    getAxis: function( pos ){
-
-        if( !pos ) pos = this.getPosition();
-
-        var colorFactory = new NGL.ColorFactory( "ss" );
-        var radiusFactory = new NGL.RadiusFactory( 1.5 );
-
-        var i, r, a;
-        var j = 0;
-        var k = 0;
-        var n = this.size;
-        var traceAtomname = this.traceAtomname;
-
-        var res = this.fiber.residues;
-
-        var axis = [];
-        var center = [];
-        var beg = [];
-        var end = [];
-        var col = [];
-        var pcol = [];
-        var size = [];
-
-        var tmpAxis = [];
-        var tmpCenter = [];
-
-        var _axis, _center
-        var _beg = new THREE.Vector3();
-        var _end = new THREE.Vector3();
-
-        for( i = 0; i < n; ++i ){
-
-            r = res[ i ];
-
-            if( i === n - 1 || r.ss !== res[ i + 1 ].ss || pos.bending[ i ] > 10 ){
-
-                if( i - j < 2 ){
-                    j = i;
-                    continue;
-                }
-
-                a = r.getAtomByName( traceAtomname );
-
-                // ignore first and last axis
-                tmpAxis = pos.axis.subarray( j * 3 + 3, i * 3 );
-                tmpCenter = pos.center.subarray( j * 3, i * 3 + 3 );
-
-                _axis = NGL.Utils.calculateMeanVector3( tmpAxis ).normalize();
-                _center = NGL.Utils.calculateMeanVector3( tmpCenter );
-
-                _beg.fromArray( tmpCenter );
-                _beg = NGL.Utils.pointVectorIntersection( _beg, _center, _axis );
-
-                _end.fromArray( tmpCenter, tmpCenter.length - 3 );
-                _end = NGL.Utils.pointVectorIntersection( _end, _center, _axis );
-
-                _axis.subVectors( _end, _beg );
-
-                _axis.toArray( axis, k );
-                _center.toArray( center, k );
-                _beg.toArray( beg, k );
-                _end.toArray( end, k );
-
-                c = colorFactory.atomColor( a );
-                colorFactory.atomColorToArray( a, col, k );
-
-                pc = a.globalindex + 1;
-                pcol[ k + 0 ] = ( pc >> 16 & 255 ) / 255;
-                pcol[ k + 1 ] = ( pc >> 8 & 255 ) / 255;
-                pcol[ k + 2 ] = ( pc & 255 ) / 255;
-
-                size.push( radiusFactory.atomRadius( a ) );
-
-                k += 3;
-                j = i;
-
-            }
-
-        }
-
-        return {
-            "axis": new Float32Array( axis ),
-            "center": new Float32Array( center ),
-            "begin": new Float32Array( beg ),
-            "end": new Float32Array( end ),
-            "color": new Float32Array( col ),
-            "pickingColor": new Float32Array( pcol ),
-            "size": new Float32Array( size ),
-        };
-
-    },
-
     getPosition: function(){
 
         var traceAtomname = this.traceAtomname;
@@ -826,6 +734,166 @@ NGL.Helixorient.prototype = {
             "twist": resTwist,
             "resdir": resdir,
         };
+
+    }
+
+};
+
+
+////////////////
+// Helixbundle
+
+NGL.Helixbundle = function( fiber ){
+
+    this.fiber = fiber;
+    this.traceAtomname = fiber.traceAtomname;
+
+    this.helixorient = new NGL.Helixorient( fiber );
+    this.position = this.helixorient.getPosition();
+
+    this.size = fiber.residueCount;
+
+};
+
+NGL.Helixbundle.prototype = {
+
+    getFiber: function( smooth ){
+
+    },
+
+    getColor: function( type ){
+
+    },
+
+    getSize: function( type, scale ){
+
+    },
+
+    getAxis: function( localAngle, centerDist, ssBorder ){
+
+        localAngle = localAngle || 30;
+        centerDist = centerDist || 2.5;
+        ssBorder = ssBorder === undefined ? false : ssBorder;
+
+        var pos = this.position;
+
+        var colorFactory = new NGL.ColorFactory( "ss" );
+        var radiusFactory = new NGL.RadiusFactory( 1.5 );
+
+        var i, r, r2, a;
+        var j = 0;
+        var k = 0;
+        var n = this.size;
+        var traceAtomname = this.traceAtomname;
+
+        var res = this.fiber.residues;
+
+        var axis = [];
+        var center = [];
+        var beg = [];
+        var end = [];
+        var col = [];
+        var pcol = [];
+        var size = [];
+
+        var tmpAxis = [];
+        var tmpCenter = [];
+
+        var _axis, _center
+        var _beg = new THREE.Vector3();
+        var _end = new THREE.Vector3();
+
+        var c = new THREE.Vector3();
+        var c2 = new THREE.Vector3();
+
+        var split = false;
+
+        for( i = 0; i < n; ++i ){
+
+            r = res[ i ];
+            c.fromArray( pos.center, i * 3 );
+
+            if( i === n - 1 ){
+                split = true;
+            }else{
+
+                r2 = res[ i + 1 ];
+                c2.fromArray( pos.center, i * 3 + 3 );
+
+                // console.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
+
+                if( ssBorder && r.ss !== r2.ss ){
+                    split = true;
+                }else if( c.distanceTo( c2 ) > centerDist ){
+                    split = true;
+                }else if( pos.bending[ i ] > localAngle ){
+                    split = true;
+                }
+
+            }
+
+            if( split ){
+
+                if( i - j < 4 ){
+
+                    j = i;
+                    split = false;
+                    continue;
+
+                }
+
+                a = r.getAtomByName( traceAtomname );
+
+                // ignore first and last axis
+                tmpAxis = pos.axis.subarray( j * 3 + 3, i * 3 );
+                tmpCenter = pos.center.subarray( j * 3, i * 3 + 3 );
+
+                _axis = NGL.Utils.calculateMeanVector3( tmpAxis ).normalize();
+                _center = NGL.Utils.calculateMeanVector3( tmpCenter );
+
+                _beg.fromArray( tmpCenter );
+                _beg = NGL.Utils.pointVectorIntersection( _beg, _center, _axis );
+
+                _end.fromArray( tmpCenter, tmpCenter.length - 3 );
+                _end = NGL.Utils.pointVectorIntersection( _end, _center, _axis );
+
+                _axis.subVectors( _end, _beg );
+
+                _axis.toArray( axis, k );
+                _center.toArray( center, k );
+                _beg.toArray( beg, k );
+                _end.toArray( end, k );
+
+                colorFactory.atomColorToArray( a, col, k );
+
+                var pc = a.globalindex + 1;
+                pcol[ k + 0 ] = ( pc >> 16 & 255 ) / 255;
+                pcol[ k + 1 ] = ( pc >> 8 & 255 ) / 255;
+                pcol[ k + 2 ] = ( pc & 255 ) / 255;
+
+                size.push( radiusFactory.atomRadius( a ) );
+
+                k += 3;
+                j = i;
+                split = false;
+
+            }
+
+        }
+
+        return {
+            "axis": new Float32Array( axis ),
+            "center": new Float32Array( center ),
+            "begin": new Float32Array( beg ),
+            "end": new Float32Array( end ),
+            "color": new Float32Array( col ),
+            "pickingColor": new Float32Array( pcol ),
+            "size": new Float32Array( size ),
+        };
+
+    },
+
+    getPosition: function(){
 
     }
 

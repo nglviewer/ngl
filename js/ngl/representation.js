@@ -2147,11 +2147,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
             var color = helixorient.getColor( scope.color );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
-            var axis = helixorient.getAxis();
-
-            // TODO find out where the NaN comes from
-            if( !axis.begin.length || isNaN( axis.begin[ 0 ] ) ) return;
-
             scope.bufferList.push(
 
                 new NGL.SphereBuffer(
@@ -2187,17 +2182,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             );
 
-            scope.bufferList.push(
-
-                new NGL.BufferVectorHelper(
-                    axis.begin,
-                    axis.axis,
-                    "tomato",
-                    1
-                )
-
-            );
-
             scope.fiberList.push( fiber );
 
         }, this.selection );
@@ -2208,10 +2192,13 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
+        var j;
         var i = 0;
         var n = this.fiberList.length;
 
         for( i = 0; i < n; ++i ){
+
+            j = i * 3;
 
             var fiber = this.fiberList[ i ]
 
@@ -2226,34 +2213,18 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
                 bufferData[ "position" ] = position.center;
 
-                this.bufferList[ i * 3 + 1 ].setAttributes( {
+                this.bufferList[ j + 1 ].setAttributes( {
                     "position": position.center,
                     "vector": position.axis,
                 } );
-                this.bufferList[ i * 3 + 2 ].setAttributes( {
+                this.bufferList[ j + 2 ].setAttributes( {
                     "position": position.center,
                     "vector": position.redir,
                 } );
 
             }
 
-            if( what[ "color" ] ){
-
-                var color = helixorient.getColor( this.color );
-
-                bufferData[ "color" ] = color.color;
-
-            }
-
-            if( what[ "radius" ] || what[ "scale" ] ){
-
-                var size = helixorient.getSize( this.radius, this.scale );
-
-                bufferData[ "radius" ] = size.size;
-
-            }
-
-            this.bufferList[ i * 3 ].setAttributes( bufferData );
+            this.bufferList[ j ].setAttributes( bufferData );
 
         };
 
@@ -2289,6 +2260,16 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        localAngle: {
+            type: "integer", max: 180, min: 0
+        },
+        centerDist: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        ssBorder: {
+            type: "boolean"
+        }
+
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
@@ -2297,6 +2278,10 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         params.color = params.color || "ss";
         params.radius = params.radius || 0.15;
         params.scale = params.scale || 1.0;
+
+        this.localAngle = params.localAngle || 30;
+        this.centerDist = params.centerDist || 2.5;
+        this.ssBorder = params.ssBorder === undefined ? false : params.ssBorder;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -2314,15 +2299,10 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
             if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
 
-            var helixorient = new NGL.Helixorient( fiber );
-            var position = helixorient.getPosition();
-            var color = helixorient.getColor( scope.color );
-            var size = helixorient.getSize( scope.radius, scope.scale );
-
-            var axis = helixorient.getAxis();
-
-            // TODO find out where the NaN comes from
-            if( !axis.begin.length || isNaN( axis.begin[ 0 ] ) ) return;
+            var helixbundle = new NGL.Helixbundle( fiber );
+            var axis = helixbundle.getAxis(
+                scope.localAngle, scope.centerDist, scope.ssBorder
+            );
 
             scope.bufferList.push(
 
@@ -2354,56 +2334,33 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         this.rebuild();
 
-        return;
-
-        what = what || {};
-
-        var i = 0;
-        var n = this.fiberList.length;
-
-        for( i = 0; i < n; ++i ){
-
-            var fiber = this.fiberList[ i ]
-
-            if( fiber.residueCount < 4 ) return;
-
-            var bufferData = {};
-            var helixorient = new NGL.Helixorient( fiber );
-            var axis = helixorient.getAxis();
-
-            if( what[ "position" ] ){
-
-                bufferData[ "position" ] = NGL.Utils.calculateCenterArray(
-                    axis.begin, axis.end, this.centerList[ i ]
-                );
-                bufferData[ "position1" ] = axis.begin;
-                bufferData[ "position2" ] = axis.end;
-
-            }
-
-            if( what[ "color" ] ){
-
-                bufferData[ "color" ] = axis.color;
-                bufferData[ "color2" ] = axis.color;
-
-            }
-
-            if( what[ "radius" ] || what[ "scale" ] ){
-
-                bufferData[ "radius" ] = axis.size;
-
-            }
-
-            this.bufferList[ i ].setAttributes( bufferData );
-
-        };
-
     },
 
     setParameters: function( params ){
 
         var rebuild = false;
         var what = {};
+
+        if( params && params[ "localAngle" ] !== undefined ){
+
+            this.localAngle = params[ "localAngle" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "centerDist" ] !== undefined ){
+
+            this.centerDist = params[ "centerDist" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "ssBorder" ] !== undefined ){
+
+            this.ssBorder = params[ "ssBorder" ];
+            rebuild = true;
+
+        }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
@@ -2606,6 +2563,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         }
 
         if( params && params[ "capped" ] !== undefined ){
+
             this.capped = params[ "capped" ];
             rebuild = true;
 
