@@ -5057,17 +5057,11 @@ NGL.Spline.prototype = {
                     0.5 * vBin1.y + 0.5 * vBin3.y,
                     0.5 * vBin1.z + 0.5 * vBin3.z
                 ).normalize();
-
-                bin[ j + 3 + 0 ] = vBin2.x;
-                bin[ j + 3 + 1 ] = vBin2.y;
-                bin[ j + 3 + 2 ] = vBin2.z;
+                vBin2.toArray( bin, j + 3 );
 
                 vTan2.fromArray( tan, j + 3 );
                 vNorm2.copy( vTan2 ).cross( vBin2 ).normalize();
-
-                norm[ j + 3 + 0 ] = vNorm2.x;
-                norm[ j + 3 + 1 ] = vNorm2.y;
-                norm[ j + 3 + 2 ] = vNorm2.z;
+                vNorm2.toArray( norm, j + 3 );
 
                 ++i
 
@@ -5219,15 +5213,10 @@ NGL.Spline.prototype = {
                     d1 * vDir2.y + d * vDir3.y,
                     d1 * vDir2.z + d * vDir3.z
                 ).normalize();
-
-                norm[ l + 0 ] = vNorm.x;
-                norm[ l + 1 ] = vNorm.y;
-                norm[ l + 2 ] = vNorm.z;
+                vNorm.toArray( norm, l );
 
                 getTangent( a1, a2, a3, a4, d, vTang );
-                tan[ l + 0 ] = vTang.x;
-                tan[ l + 1 ] = vTang.y;
-                tan[ l + 2 ] = vTang.z;
+                vTang.toArray( tan, l );
 
                 //
 
@@ -5236,19 +5225,13 @@ NGL.Spline.prototype = {
                 // ensure binormal vector does not flip
                 if( vBinPrev.dot( vBin ) < 0 ) vBin.multiplyScalar( -1 );
 
-                bin[ l + 0 ] = vBin.x;
-                bin[ l + 1 ] = vBin.y;
-                bin[ l + 2 ] = vBin.z;
-
+                vBin.toArray( bin, l );
                 vBinPrev.copy( vBin );
 
                 //
 
                 vNorm.copy( vTang ).cross( vBin ).normalize();
-
-                norm[ l + 0 ] = vNorm.x;
-                norm[ l + 1 ] = vNorm.y;
-                norm[ l + 2 ] = vNorm.z;
+                vNorm.toArray( norm, l );
 
             }
 
@@ -6124,9 +6107,7 @@ NGL.Helixorient.prototype = {
             diff24.subVectors( r23, r34 );
 
             _axis.crossVectors( diff13, diff24 ).normalize();
-            axis[ j + 0 ] = _axis.x;
-            axis[ j + 1 ] = _axis.y;
-            axis[ j + 2 ] = _axis.z;
+            _axis.toArray( axis, j );
 
             if( i > 0 ){
                 diff[ i ] = _axis.angleTo( _prevAxis );
@@ -6153,20 +6134,13 @@ NGL.Helixorient.prototype = {
             v1.subVectors( a2, v1 );
             v2.subVectors( a3, v2 );
 
-            center[ j + 3 + 0 ] = v1.x;
-            center[ j + 3 + 1 ] = v1.y;
-            center[ j + 3 + 2 ] = v1.z;
-
-            center[ j + 6 + 0 ] = v2.x;
-            center[ j + 6 + 1 ] = v2.y;
-            center[ j + 6 + 2 ] = v2.z;
+            v1.toArray( center, j + 3 );
+            v2.toArray( center, j + 6 );
 
             //
 
             _resdir.subVectors( a1, _center );
-            resdir[ j + 0 ] = _resdir.x;
-            resdir[ j + 1 ] = _resdir.y;
-            resdir[ j + 2 ] = _resdir.z;
+            _resdir.toArray( resdir, j );
 
             i += 1;
             _prevAxis.copy( _axis );
@@ -6183,15 +6157,11 @@ NGL.Helixorient.prototype = {
         _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
         v1.fromArray( center, 3 );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
-        center[ 0 ] = v1.x;
-        center[ 1 ] = v1.y;
-        center[ 2 ] = v1.z;
+        v1.toArray( center, 0 );
 
         // calc first resdir
         _resdir.subVectors( _center, v1 );
-        resdir[ 0 ] = _resdir.x;
-        resdir[ 1 ] = _resdir.y;
-        resdir[ 2 ] = _resdir.z;
+        _resdir.toArray( _resdir, 0 );
 
         // calc axis as dir of n-1 and n-2 center pos
         // project last traceAtom onto axis to get last center pos
@@ -6200,22 +6170,16 @@ NGL.Helixorient.prototype = {
         _axis.subVectors( v1, v2 ).normalize();
         _center.copy( res[ n - 1 ].getAtomByName( traceAtomname ) );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
-        center[ 3 * n - 3 ] = v1.x;
-        center[ 3 * n - 2 ] = v1.y;
-        center[ 3 * n - 1 ] = v1.z;
+        v1.toArray( center, 3 * n - 3 )
 
         // calc last three resdir
         for( i = n - 3; i < n; ++i ){
-
-            j = 3 * i;
 
             v1.fromArray( center, j );
             _center.copy( res[ i ].getAtomByName( traceAtomname ) );
 
             _resdir.subVectors( _center, v1 );
-            resdir[ j + 0 ] = _resdir.x;
-            resdir[ j + 1 ] = _resdir.y;
-            resdir[ j + 2 ] = _resdir.z;
+            _resdir.toArray( resdir, 3 * i );
 
         }
 
@@ -6259,11 +6223,7 @@ NGL.Helixorient.prototype = {
             v2.fromArray( axis, 3 * ( i - 1 ) );
 
             _axis.addVectors( v2, v1 ).multiplyScalar( 0.5 ).normalize();
-
-            j = 3 * i;
-            resAxis[ j + 0 ] = _axis.x;
-            resAxis[ j + 1 ] = _axis.y;
-            resAxis[ j + 2 ] = _axis.z;
+            _axis.toArray( resAxis, 3 * i );
 
         }
 
