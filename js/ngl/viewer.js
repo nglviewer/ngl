@@ -447,15 +447,15 @@ NGL.Utils = {
     calculateMinArray: function( array1, array2 ){
 
         var n = array1.length;
-        var mean = new Float32Array( n );
+        var min = new Float32Array( n );
 
         for( var i = 0; i < n; i++ ){
 
-            mean[ i ] = Math.min( array1[ i ],  array2[ i ] );
+            min[ i ] = Math.min( array1[ i ],  array2[ i ] );
 
         }
 
-        return mean;
+        return min;
 
     },
 
