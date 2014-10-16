@@ -483,17 +483,17 @@ NGL.Utils = {
     pointVectorIntersection: function(){
 
         var v = new THREE.Vector3();
+        var v1 = new THREE.Vector3();
 
-        return function( a, b, vector ){
+        return function( point, origin, vector ){
 
             v.copy( vector );
+            v1.subVectors( point, origin );
+            var distOriginI = Math.cos( v.angleTo( v1 ) ) * v1.length();
+            var vectorI = v.normalize().multiplyScalar( distOriginI );
+            var pointI = new THREE.Vector3().addVectors( vectorI, origin );
 
-            var v1 = new THREE.Vector3().subVectors( a, b );
-            var len_b_i = Math.cos( v.angleTo( v1 ) ) * v1.length();
-            var vec_i = v.normalize().multiplyScalar( len_b_i );
-            var p_i = new THREE.Vector3().addVectors( vec_i, b );
-
-            return p_i;
+            return pointI;
 
         }
 
