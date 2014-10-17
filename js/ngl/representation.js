@@ -2425,7 +2425,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
             type: "boolean"
         },
         smooth: {
-            type: "boolean"
+            type: "integer", max: 10, min: 0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2453,7 +2453,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         this.tension = params.tension || 0.5;
         this.capped = params.capped || true;
         this.wireframe = params.wireframe || false;
-        this.smooth = params.smooth || true;
+        this.smooth = params.smooth === undefined ? 2 : params.smooth;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 

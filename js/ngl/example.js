@@ -126,6 +126,7 @@ NGL.Examples = {
                 } );
                 o.addRepresentation( "ball+stick", { sele: "135:A or 347:B or 223:A" } );
                 o.addRepresentation( "licorice", { sele: "hetero" } );
+                o.addRepresentation( "rope", { smooth: 2 } );
 
                 o.centerView();
 

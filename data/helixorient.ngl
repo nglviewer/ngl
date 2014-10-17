@@ -7,9 +7,10 @@ load( "1crn.pdb" );
 then( function(){
 
     structure( "1crn.pdb" )
-        .addRepresentation( "rocket", { sele: "*" } )
+        .addRepresentation( "rocket", { visible: false, sele: "*" } )
         .addRepresentation( "backbone" )
-        .addRepresentation( "rope", { visible: false, radius: 0.1 } )
+        .addRepresentation( "helixorient" )
+        .addRepresentation( "rope", { visible: true, radius: 0.1 } )
         .centerView()
 
     function download( arr, itemSize, name ){

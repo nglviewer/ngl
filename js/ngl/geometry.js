@@ -428,6 +428,8 @@ NGL.Helixorient.prototype = {
 
         // TODO better padding in case of selection
 
+        smooth = smooth === undefined ? 2 : smooth
+
         var center = this.getPosition().center;
 
         var i, j, a, r;
@@ -439,8 +441,6 @@ NGL.Helixorient.prototype = {
             fr = this.fiber.residues[ i ];
             fa = fr.getAtomByName( this.traceAtomname );
 
-            j = 3 * i;
-
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );
 
@@ -449,11 +449,31 @@ NGL.Helixorient.prototype = {
             r.index = fr.index;
             r.chain = fr.chain;
 
-            if( smooth && i > 1 && i < n - 1 ){
+            j = 3 * i;
 
-                a.x = ( center[ j + 0 ] + center[ j + 3 ] ) / 2;
-                a.y = ( center[ j + 1 ] + center[ j + 4 ] ) / 2;
-                a.z = ( center[ j + 2 ] + center[ j + 5 ] ) / 2;
+            if( smooth ){
+
+                var l, k, t;
+                var w = Math.min( smooth, i, n - i - 1 );
+
+                a.x = center[ j + 0 ];
+                a.y = center[ j + 1 ];
+                a.z = center[ j + 2 ];
+
+                for( k = 1; k <= w; ++k ){
+
+                    l = k * 3;
+                    t = ( w + 1 - k ) / ( w + 1 );
+
+                    a.x += t * center[ j - l + 0 ] + t * center[ j + l + 0 ];
+                    a.y += t * center[ j - l + 1 ] + t * center[ j + l + 1 ];
+                    a.z += t * center[ j - l + 2 ] + t * center[ j + l + 2 ];
+
+                }
+
+                a.x /= w + 1;
+                a.y /= w + 1;
+                a.z /= w + 1;
 
             }else{
 
