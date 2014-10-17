@@ -656,7 +656,7 @@ NGL.Helixorient.prototype = {
 
         // calc first resdir
         _resdir.subVectors( _center, v1 );
-        _resdir.toArray( _resdir, 0 );
+        _resdir.toArray( resdir, 0 );
 
         // calc axis as dir of n-1 and n-2 center pos
         // project last traceAtom onto axis to get last center pos
@@ -670,7 +670,7 @@ NGL.Helixorient.prototype = {
         // calc last three resdir
         for( i = n - 3; i < n; ++i ){
 
-            v1.fromArray( center, j );
+            v1.fromArray( center, 3 * i );
             _center.copy( res[ i ].getAtomByName( traceAtomname ) );
 
             _resdir.subVectors( _center, v1 );
