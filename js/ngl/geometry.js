@@ -424,11 +424,7 @@ NGL.Helixorient = function( fiber ){
 
 NGL.Helixorient.prototype = {
 
-    getFiber: function( smooth ){
-
-        // TODO better padding in case of selection
-
-        smooth = smooth === undefined ? 2 : smooth
+    getFiber: function( smooth, padded ){
 
         var center = this.getPosition().center;
 
@@ -483,7 +479,7 @@ NGL.Helixorient.prototype = {
 
             residues.push( r );
 
-            if( i === 0 || i === n-1 ){
+            if( padded && ( i === 0 || i === n-1 ) ){
                 residues.push( r );
             }
 
@@ -661,8 +657,8 @@ NGL.Helixorient.prototype = {
 
         var res = this.fiber.residues;
 
-        // project first traceAtom onto second axis to get first center pos
-        _axis.fromArray( axis, 3 );
+        // project first traceAtom onto first axis to get first center pos
+        _axis.fromArray( axis, 0 );
         _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
         v1.fromArray( center, 3 );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );

@@ -2350,7 +2350,7 @@ NGL.Structure.prototype = {
 
     autoSS: function(){
 
-        // Implementation based on "pv"
+        // Implementation for proteins based on "pv"
         //
         // assigns secondary structure information based on a simple and very fast
         // algorithm published by Zhang and Skolnick in their TM-align paper.
@@ -2414,7 +2414,72 @@ NGL.Structure.prototype = {
 
         };
 
-        var i, n;
+        var proteinFiber = function( f ){
+
+            var i;
+
+            var n = f.residueCount;
+
+            for( i = 0; i < n; ++i ){
+
+                if( isHelical( f, i ) ){
+
+                    f.residues[ i ].ss = "h";
+
+                }else if( isSheet( f, i ) ){
+
+                    f.residues[ i ].ss = "s";
+
+                }else{
+
+                    f.residues[ i ].ss = "c";
+
+                }
+
+            }
+
+        }
+
+        var cgFiber = function( f ){
+
+            var localAngle = 20;
+            var centerDist = 2.0;
+
+            var helixbundle = new NGL.Helixbundle( f );
+
+            var pos = helixbundle.position;
+            var res = helixbundle.fiber.residues;
+
+            var n = helixbundle.size;
+
+            var c = new THREE.Vector3();
+            var c2 = new THREE.Vector3();
+
+            var i, d;
+
+            for( i = 0; i < n - 1; ++i ){
+
+                r = res[ i ];
+                r2 = res[ i + 1 ];
+
+                c.fromArray( pos.center, i * 3 );
+                c2.fromArray( pos.center, i * 3 + 3 );
+
+                d = c.distanceTo( c2 );
+
+                // console.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
+
+                if( d < centerDist && d > 1.0 &&
+                        pos.bending[ i ] < localAngle ){
+
+                    r.ss = "h";
+                    r2.ss = "h";
+
+                }
+
+            }
+
+        }
 
         return function(){
 
@@ -2422,31 +2487,13 @@ NGL.Structure.prototype = {
 
             this.eachFiber( function( f ){
 
-                if( !f.isProtein() ) return;
+                if( f.isProtein() ){
 
-                n = f.residueCount;
+                    proteinFiber( f );
 
-                for( i = 0; i < n; ++i ){
+                }else if( f.isCg() ){
 
-                    if( isHelical( f, i ) ){
-
-                        // console.log( "helix", i, f.residues[ i ] );
-
-                        f.residues[ i ].ss = "h";
-
-                    }else if( isSheet( f, i ) ){
-
-                        // console.log( "sheet", i, f.residues[ i ] );
-
-                        f.residues[ i ].ss = "s";
-
-                    }else{
-
-                        // console.log( "no helix, no sheet", i );
-
-                        f.residues[ i ].ss = "c";
-
-                    }
+                    cgFiber( f );
 
                 }
 

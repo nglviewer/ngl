@@ -325,6 +325,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/BaceCg.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
+                o.addRepresentation( "rope", { sele: "helix" } );
                 o.addRepresentation( "ball+stick" );
                 o.centerView();
 

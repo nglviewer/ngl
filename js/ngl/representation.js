@@ -2472,7 +2472,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             var helixorient = new NGL.Helixorient( fiber );
 
-            var spline = new NGL.Spline( helixorient.getFiber( scope.smooth ) );
+            var spline = new NGL.Spline( helixorient.getFiber( scope.smooth, true ) );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
             var subSize = spline.getSubdividedSize(
@@ -2522,7 +2522,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             var bufferData = {};
             var helixorient = new NGL.Helixorient( fiber );
-            var spline = new NGL.Spline( helixorient.getFiber( this.smooth ) );
+            var spline = new NGL.Spline( helixorient.getFiber( this.smooth, true ) );
 
             if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
