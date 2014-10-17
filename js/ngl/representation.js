@@ -2279,7 +2279,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         params = params || {};
         params.color = params.color || "ss";
-        params.radius = params.radius || 0.15;
+        params.radius = params.radius || 1.5;
         params.scale = params.scale || 1.0;
 
         this.disableImpostor = params.disableImpostor || false;
@@ -2316,7 +2316,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
             var helixbundle = new NGL.Helixbundle( fiber );
             var axis = helixbundle.getAxis(
-                scope.localAngle, scope.centerDist, scope.ssBorder
+                scope.localAngle, scope.centerDist, scope.ssBorder,
+                scope.color, scope.radius, scope.scale
             );
 
             scope.bufferList.push(

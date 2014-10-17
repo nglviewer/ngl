@@ -1,16 +1,30 @@
 
+var pdb = "3pqr.pdb";
 
 
-load( "1crn.pdb" );
+load( pdb );
 
 
 then( function(){
 
-    structure( "1crn.pdb" )
-        .addRepresentation( "rocket", { visible: false, sele: "*" } )
-        .addRepresentation( "backbone" )
-        .addRepresentation( "helixorient" )
-        .addRepresentation( "rope", { visible: true, radius: 0.1 } )
+    var localAngle = 20;
+    var centerDist = 2.0;
+
+    structure( pdb )
+        .addRepresentation( "rocket", {
+            visible: true, sele: "*", color: "chainindex",
+            localAngle: localAngle, centerDist: centerDist
+        } )
+        .addRepresentation( "backbone", {
+            visible: false
+        }  )
+        .addRepresentation( "helixorient", {
+            visible: false
+        }  )
+        .addRepresentation( "rope", {
+            visible: true, smooth: 1,
+            radius: 0.15, color: "chainindex"
+        } )
         .centerView()
 
     function download( arr, itemSize, name ){
@@ -38,7 +52,9 @@ then( function(){
 
     }
 
-    var s = structure( "1crn.pdb" ).structure;
+    var s = structure( pdb ).structure;
+
+    var helices = [];
 
     s.eachFiber( function( f ){
 
@@ -53,6 +69,34 @@ then( function(){
 
         } );
 
+        var helixbundle = new NGL.Helixbundle( f );
+        var axis = helixbundle.getAxis( localAngle, centerDist );
+
+        for( var i = 0; i < axis.residue.length; ++i ){
+
+            var helix = new NGL.Helix();
+            helix.fromHelixbundleAxis( axis, i );
+            helices.push( helix );
+
+        }
+
     } );
+
+    for( var i = 0; i < helices.length; ++i ){
+
+        var h1 = helices[ i ];
+
+        for( var j = i + 1; j < helices.length; ++j ){
+
+            var h2 = helices[ j ];
+
+            console.log(
+                h1.distanceTo( h2 ),
+                h1.angleTo( h2 ) / ( Math.PI / 180 )
+            );
+
+        }
+
+    }
 
 } );

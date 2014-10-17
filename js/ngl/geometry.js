@@ -474,6 +474,7 @@ NGL.Helixorient.prototype = {
             a.atomname = fa.atomname;
             a.index = fa.index;
             a.resname = fa.resname;
+            a.chainname = fa.chainname;
             a.bfactor = fa.bfactor;
             a.ss = fa.ss;
 
@@ -750,6 +751,94 @@ NGL.Helixorient.prototype = {
 };
 
 
+//////////
+// Helix
+
+NGL.Helix = function(){
+
+    this.begin = new THREE.Vector3();
+    this.end = new THREE.Vector3();
+    this.axis = new THREE.Vector3();
+    this.center = new THREE.Vector3();
+
+    this.length = 0;
+
+    this.residues = [];
+    this.size = 0;
+
+};
+
+NGL.Helix.prototype = {
+
+    fromHelixbundleAxis: function(){
+
+        var v = new THREE.Vector3();
+
+        return function( axis, i ){
+
+            this.begin.fromArray( axis.begin, i * 3 );
+            this.end.fromArray( axis.end, i * 3 );
+            this.axis.fromArray( axis.axis, i * 3 );
+            this.center.fromArray( axis.center, i * 3 );
+
+            this.length = v.subVectors( this.begin, this.end ).length();
+
+            this.residues = axis.residue[ i ];
+            this.size = this.residues.length;
+
+            return this;
+
+        }
+
+    }(),
+
+    angleTo: function( helix ){
+
+        return this.axis.angleTo( helix.axis );
+
+    },
+
+    distanceTo: function(){
+
+        var w = new THREE.Vector3();
+        var x = new THREE.Vector3();
+        var y = new THREE.Vector3();
+        var c = new THREE.Vector3();
+
+        var v = new THREE.Vector3();
+        var ca = new THREE.Vector3();
+        var cb = new THREE.Vector3();
+
+        return function( helix ){
+
+            // U = A2-A1;
+            // V = B2-B1;
+            // W = cross(U,V);
+            // X = A1 + dot(cross(B1-A1,V),W)/dot(W,W)*U;
+            // Y = B1 + dot(cross(B1-A1,U),W)/dot(W,W)*V;
+            // d = norm(Y-X);
+
+            w.crossVectors( this.axis, helix.axis );
+            v.subVectors( helix.begin, this.begin );
+
+            var dotWW = w.dot( w );
+            var dotA = ca.crossVectors( v, helix.axis ).dot( w );
+            var dotB = cb.crossVectors( v, this.axis ).dot( w );
+
+            x.copy( this.axis ).multiplyScalar( dotA / dotWW ).add( this.begin );
+            y.copy( helix.axis ).multiplyScalar( dotB / dotWW ).add( helix.begin );
+
+            c.subVectors( y, x );
+
+            return c.length();
+
+        }
+
+    }()
+
+};
+
+
 ////////////////
 // Helixbundle
 
@@ -779,7 +868,7 @@ NGL.Helixbundle.prototype = {
 
     },
 
-    getAxis: function( localAngle, centerDist, ssBorder ){
+    getAxis: function( localAngle, centerDist, ssBorder, color, radius, scale ){
 
         localAngle = localAngle || 30;
         centerDist = centerDist || 2.5;
@@ -787,8 +876,8 @@ NGL.Helixbundle.prototype = {
 
         var pos = this.position;
 
-        var colorFactory = new NGL.ColorFactory( "ss" );
-        var radiusFactory = new NGL.RadiusFactory( 1.5 );
+        var colorFactory = new NGL.ColorFactory( color, this.fiber.structure );
+        var radiusFactory = new NGL.RadiusFactory( radius, scale );
 
         var i, r, r2, a;
         var j = 0;
@@ -805,6 +894,7 @@ NGL.Helixbundle.prototype = {
         var col = [];
         var pcol = [];
         var size = [];
+        var residue = [];
 
         var tmpAxis = [];
         var tmpCenter = [];
@@ -883,6 +973,8 @@ NGL.Helixbundle.prototype = {
 
                 size.push( radiusFactory.atomRadius( a ) );
 
+                residue.push( res.slice( j, i + 1 ) );
+
                 k += 3;
                 j = i;
                 split = false;
@@ -899,6 +991,7 @@ NGL.Helixbundle.prototype = {
             "color": new Float32Array( col ),
             "pickingColor": new Float32Array( pcol ),
             "size": new Float32Array( size ),
+            "residue": residue,
         };
 
     },
