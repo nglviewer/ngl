@@ -451,14 +451,12 @@ NGL.Helixorient.prototype = {
 
             j = 3 * i;
 
+            a.positionFromArray( center, j );
+
             if( smooth ){
 
                 var l, k, t;
                 var w = Math.min( smooth, i, n - i - 1 );
-
-                a.x = center[ j + 0 ];
-                a.y = center[ j + 1 ];
-                a.z = center[ j + 2 ];
 
                 for( k = 1; k <= w; ++k ){
 
@@ -474,10 +472,6 @@ NGL.Helixorient.prototype = {
                 a.x /= w + 1;
                 a.y /= w + 1;
                 a.z /= w + 1;
-
-            }else{
-
-                a.positionFromArray( center, j );
 
             }
 

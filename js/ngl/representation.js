@@ -2425,7 +2425,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
             type: "boolean"
         },
         smooth: {
-            type: "integer", max: 10, min: 0
+            type: "integer", max: 15, min: 0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
