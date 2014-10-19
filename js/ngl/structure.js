@@ -543,9 +543,10 @@ NGL.RadiusFactory.prototype = {
 };
 
 
-NGL.LabelFactory = function( type ){
+NGL.LabelFactory = function( type, text ){
 
     this.type = type;
+    this.text = text || {};
 
 }
 
@@ -555,7 +556,8 @@ NGL.LabelFactory.types = {
     "atomname": "atom name",
     "resname": "residue name",
     "resno": "residue no",
-    "res": "residue name + no"
+    "res": "residue name + no",
+    "text": "text"
 
 };
 
@@ -589,6 +591,11 @@ NGL.LabelFactory.prototype = {
                 l = ( NGL.AA1[ a.resname.toUpperCase() ] || '' ) + a.resno;
                 break;
 
+            case "text":
+
+                l = this.text[ a.globalindex ];
+                break;
+
             default:
 
                 l = a.qualifiedName();
@@ -596,7 +603,7 @@ NGL.LabelFactory.prototype = {
 
         }
 
-        return l;
+        return l === undefined ? '' : l;
 
     }
 
@@ -4639,6 +4646,12 @@ NGL.Selection.prototype = {
 
             // handle atom expressions
 
+            if( c.charAt( 0 ) === "@" ){
+                sele.globalindex = parseInt( c.substr( 1 ) );
+                pushRule( sele );
+                continue;
+            }
+
             if( c.charAt( 0 ) === "#" ){
                 sele.element = c.substr( 1 ).toUpperCase();
                 pushRule( sele );
@@ -4873,6 +4886,7 @@ NGL.Selection.prototype = {
 
             }
 
+            if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
             if( s.resname!==undefined && s.resname!==a.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
             if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;

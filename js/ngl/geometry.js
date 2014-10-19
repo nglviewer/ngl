@@ -800,16 +800,30 @@ NGL.Helix.prototype = {
 
     distanceTo: function(){
 
-        var w = new THREE.Vector3();
         var x = new THREE.Vector3();
         var y = new THREE.Vector3();
         var c = new THREE.Vector3();
 
+        return function( helix ){
+
+            this.crossingPoints( helix, x, y );
+
+            c.subVectors( y, x );
+
+            return c.length();
+
+        }
+
+    }(),
+
+    crossingPoints: function(){
+
+        var w = new THREE.Vector3();
         var v = new THREE.Vector3();
         var ca = new THREE.Vector3();
         var cb = new THREE.Vector3();
 
-        return function( helix ){
+        return function( helix, x, y ){
 
             // U = A2-A1;
             // V = B2-B1;
@@ -817,6 +831,9 @@ NGL.Helix.prototype = {
             // X = A1 + dot(cross(B1-A1,V),W)/dot(W,W)*U;
             // Y = B1 + dot(cross(B1-A1,U),W)/dot(W,W)*V;
             // d = norm(Y-X);
+
+            if( !x ) x = new THREE.Vector3();
+            if( !y ) y = new THREE.Vector3();
 
             w.crossVectors( this.axis, helix.axis );
             v.subVectors( helix.begin, this.begin );
@@ -828,13 +845,140 @@ NGL.Helix.prototype = {
             x.copy( this.axis ).multiplyScalar( dotA / dotWW ).add( this.begin );
             y.copy( helix.axis ).multiplyScalar( dotB / dotWW ).add( helix.begin );
 
-            c.subVectors( y, x );
-
-            return c.length();
+            return [ x, y ];
 
         }
 
-    }()
+    }(),
+
+    crossing: function( helix ){
+
+        var data = {};
+
+        var angle = this.angleTo( helix ) / ( Math.PI / 180 );
+        var cp = this.crossingPoints( helix );
+
+        var lineContact = (
+            NGL.Utils.isPointOnSegment( cp[ 0 ], this.begin, this.end ) &&
+            NGL.Utils.isPointOnSegment( cp[ 1 ], helix.begin, helix.end )
+        );
+
+        if( !lineContact ){
+
+            // maxAngleDeviation
+            var mad = 25;
+
+            var candidates = [];
+
+            var i1 = NGL.Utils.pointVectorIntersection(
+                this.begin, helix.begin, helix.axis
+            );
+            var c1 = NGL.Utils.isPointOnSegment(
+                i1, helix.begin, helix.end
+            );
+            candidates.push( {
+                "distance": this.begin.distanceTo( i1 ),
+                "contact": c1 && ( angle > 180 - mad || angle < mad ),
+                "p1": this.begin,
+                "p2": i1
+            } );
+
+            var i2 = NGL.Utils.pointVectorIntersection(
+                this.end, helix.begin, helix.axis
+            );
+            var c2 = NGL.Utils.isPointOnSegment(
+                i2, helix.begin, helix.end
+            );
+            candidates.push( {
+                "distance": this.end.distanceTo( i2 ),
+                "contact": c2 && ( angle > 180 - mad || angle < mad ),
+                "p1": this.end,
+                "p2": i2
+            } );
+
+            var i3 = NGL.Utils.pointVectorIntersection(
+                helix.begin, this.begin, this.axis
+            );
+            var c3 = NGL.Utils.isPointOnSegment(
+                i3, this.begin, this.end
+            );
+            candidates.push( {
+                "distance": helix.begin.distanceTo( i3 ),
+                "contact": c3 && ( angle > 180 - mad || angle < mad ),
+                "p1": helix.begin,
+                "p2": i3
+            } );
+
+            var i4 = NGL.Utils.pointVectorIntersection(
+                helix.end, this.begin, this.axis
+            );
+            var c4 = NGL.Utils.isPointOnSegment(
+                i4, this.begin, this.end
+            );
+            candidates.push( {
+                "distance": helix.end.distanceTo( i4 ),
+                "contact": c4 && ( angle > 180 - mad || angle < mad ),
+                "p1": helix.end,
+                "p2": i4
+            } );
+
+            //
+
+            candidates.push( {
+                "distance": this.begin.distanceTo( helix.begin ),
+                "contact": ( angle > 180 - mad ),
+                "p1": this.begin,
+                "p2": helix.begin
+            } );
+
+            candidates.push( {
+                "distance": this.begin.distanceTo( helix.end ),
+                "contact": ( angle > 180 - mad ),
+                "p1": this.begin,
+                "p2": helix.end
+            } );
+
+            candidates.push( {
+                "distance": this.end.distanceTo( helix.begin ),
+                "contact": ( angle > 180 - mad ),
+                "p1": this.end,
+                "p2": helix.begin
+            } );
+
+            candidates.push( {
+                "distance": this.end.distanceTo( helix.end ),
+                "contact": ( angle > 180 - mad ),
+                "p1": this.end,
+                "p2": helix.end
+            } );
+
+            //
+
+            data.distance = Infinity;
+            candidates.forEach( function( c ){
+                if( c.contact && c.distance < data.distance ){
+                    data = c;
+                }
+            } );
+
+        }else{
+
+            data = {
+                "distance": this.distanceTo( helix ),
+                "contact": true,
+                "p1": cp[ 0 ],
+                "p2": cp[ 1 ]
+            };
+
+        }
+
+        return Object.assign( {
+            "distance": Infinity,
+            "contact": false,
+            "angle": angle,
+        }, data );
+
+    }
 
 };
 

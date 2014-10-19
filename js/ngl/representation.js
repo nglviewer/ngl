@@ -507,6 +507,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         params.color = params.color || 0xFFFFFF;
 
         this.labelType = params.labelType || "res";
+        this.labelText = params.labelText || {};
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -515,7 +516,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var text = [];
-        var labelFactory = new NGL.LabelFactory( this.labelType );
+        var labelFactory = new NGL.LabelFactory(
+            this.labelType, this.labelText
+        );
 
         this.atomSet.eachAtom( function( a ){
 

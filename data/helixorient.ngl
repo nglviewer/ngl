@@ -7,12 +7,13 @@ load( pdb );
 
 then( function(){
 
-    var localAngle = 20;
-    var centerDist = 2.0;
+    var localAngle = 30;
+    var centerDist = 2.2;
 
     structure( pdb )
         .addRepresentation( "rocket", {
             visible: true, sele: "*", color: "chainindex",
+            radius: 0.5,
             localAngle: localAngle, centerDist: centerDist
         } )
         .addRepresentation( "backbone", {
@@ -58,16 +59,16 @@ then( function(){
 
     s.eachFiber( function( f ){
 
-        var helixorient = new NGL.Helixorient( f );
-        var pos = helixorient.getPosition();
+        // var helixorient = new NGL.Helixorient( f );
+        // var pos = helixorient.getPosition();
 
-        uiButton( "download", function(){
+        // uiButton( "download", function(){
 
-            download( pos.center, 3, "center.txt" );
-            download( pos.axis, 3, "helixaxis.txt" );
-            download( pos.radius, 1, "radius.txt" );
+        //     download( pos.center, 3, "center.txt" );
+        //     download( pos.axis, 3, "helixaxis.txt" );
+        //     download( pos.radius, 1, "radius.txt" );
 
-        } );
+        // } );
 
         var helixbundle = new NGL.Helixbundle( f );
         var axis = helixbundle.getAxis( localAngle, centerDist );
@@ -82,21 +83,66 @@ then( function(){
 
     } );
 
+    var labelSele = [];
+    var labelText = {};
+
+    var crossingBeg = [];
+    var crossingEnd = [];
+
+    var k = 0;
+
     for( var i = 0; i < helices.length; ++i ){
 
         var h1 = helices[ i ];
 
+        var res = h1.residues;
+        var rh = Math.floor( res.length / 2 );
+        var gi = res[ rh ].atoms[ 0 ].globalindex;
+
+        labelSele.push( "@" + gi );
+        labelText[ gi ] = "H" + ( i + 1 );
+
         for( var j = i + 1; j < helices.length; ++j ){
 
-            var h2 = helices[ j ];
+            var c = h1.crossing( helices[ j ] );
 
-            console.log(
-                h1.distanceTo( h2 ),
-                h1.angleTo( h2 ) / ( Math.PI / 180 )
-            );
+            if( c.contact && c.distance < 12 ){
+                console.log( i + 1, j + 1, c.angle, c.distance );
+                c.p1.toArray( crossingBeg, k * 3 );
+                c.p2.toArray( crossingEnd, k * 3 );
+                k += 1;
+            }
 
         }
 
     }
+
+    structure( pdb )
+        .addRepresentation( "label", {
+            visible: true, sele: labelSele.join( " " ),
+            labelType: "text", labelText: labelText
+        } )
+
+    //
+
+    var n = crossingEnd.length / 3;
+
+    stage.viewer.add(
+
+        new NGL.CylinderBuffer(
+            new Float32Array( crossingBeg ),
+            new Float32Array( crossingEnd ),
+            NGL.Utils.uniformArray3( n, 1, 0, 0 ),
+            NGL.Utils.uniformArray3( n, 1, 0, 0 ),
+            NGL.Utils.uniformArray( n, 0.1 ),
+            null,
+            true,
+            NGL.Utils.uniformArray3( n, 0, 0, 0 ),
+            NGL.Utils.uniformArray3( n, 0, 0, 0 ),
+            this.radiusSegments,
+            this.disableImpostor
+        )
+
+    );
 
 } );

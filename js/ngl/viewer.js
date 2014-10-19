@@ -355,6 +355,20 @@ NGL.Utils = {
 
     },
 
+    uniformArray: function( n, a ){
+
+        var array = new Float32Array( n );
+
+        for( var i = 0; i < n; ++i ){
+
+            array[ i ] = a;
+
+        }
+
+        return array;
+
+    },
+
     uniformArray3: function( n, a, b, c ){
 
         var array = new Float32Array( n * 3 );
@@ -477,6 +491,14 @@ NGL.Utils = {
         }
 
         return new THREE.Vector3( x / m, y / m, z / m );
+
+    },
+
+    isPointOnSegment: function( p, l1, l2 ){
+
+        var len = l1.distanceTo( l2 );
+
+        return p.distanceTo( l1 ) <= len && p.distanceTo( l2 ) <= len;
 
     },
 
