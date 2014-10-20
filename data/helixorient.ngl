@@ -1,5 +1,5 @@
 
-var pdb = "3pqr.pdb";
+var pdb = "3dqb.pdb";
 
 
 load( pdb );
@@ -107,7 +107,7 @@ then( function(){
             var c = h1.crossing( helices[ j ] );
 
             if( c.contact && c.distance < 12 ){
-                console.log( i + 1, j + 1, c.angle, c.distance );
+                console.log( i + 1, j + 1, c.angle, c.distance, c.maxOverlap );
                 c.p1.toArray( crossingBeg, k * 3 );
                 c.p2.toArray( crossingEnd, k * 3 );
                 k += 1;

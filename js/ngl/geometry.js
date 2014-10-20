@@ -863,94 +863,142 @@ NGL.Helix.prototype = {
             NGL.Utils.isPointOnSegment( cp[ 1 ], helix.begin, helix.end )
         );
 
-        if( !lineContact ){
+        var i1 = NGL.Utils.pointVectorIntersection(
+            this.begin, helix.begin, helix.axis
+        );
+        var i2 = NGL.Utils.pointVectorIntersection(
+            this.end, helix.begin, helix.axis
+        );
+        var i3 = NGL.Utils.pointVectorIntersection(
+            helix.begin, this.begin, this.axis
+        );
+        var i4 = NGL.Utils.pointVectorIntersection(
+            helix.end, this.begin, this.axis
+        );
 
-            // maxAngleDeviation
-            var mad = 25;
+        var c1 = NGL.Utils.isPointOnSegment(
+            i1, helix.begin, helix.end
+        );
+        var c2 = NGL.Utils.isPointOnSegment(
+            i2, helix.begin, helix.end
+        );
+        var c3 = NGL.Utils.isPointOnSegment(
+            i3, this.begin, this.end
+        );
+        var c4 = NGL.Utils.isPointOnSegment(
+            i4, this.begin, this.end
+        );
+
+        var overlap = [ 0, 0, 0, 0 ];
+
+        if( c1 && c2 ){
+            overlap[ 0 ] = i1.distanceTo( i2 ).toFixed( 1 );
+        }
+        if( c3 && c4 ){
+            overlap[ 1 ] = i3.distanceTo( i4 ).toFixed( 1 );
+        }
+        if( c1 && !c2 ){
+            if( i2.distanceTo( helix.begin ) < i2.distanceTo( helix.end ) ){
+                overlap[ 2 ] = i1.distanceTo( helix.begin ).toFixed( 1 );
+            }else{
+                overlap[ 2 ] = i1.distanceTo( helix.end ).toFixed( 1 );
+            }
+        }
+        if( !c1 && c2 ){
+            if( i1.distanceTo( helix.begin ) < i1.distanceTo( helix.end ) ){
+                overlap[ 2 ] = i2.distanceTo( helix.begin ).toFixed( 1 );
+            }else{
+                overlap[ 2 ] = i2.distanceTo( helix.end ).toFixed( 1 );
+            }
+        }
+        if( c3 && !c4 ){
+            if( i4.distanceTo( this.begin ) < i4.distanceTo( this.end ) ){
+                overlap[ 3 ] = i3.distanceTo( this.begin ).toFixed( 1 );
+            }else{
+                overlap[ 3 ] = i3.distanceTo( this.end ).toFixed( 1 );
+            }
+        }
+        if( !c3 && c4 ){
+            if( i3.distanceTo( this.begin ) < i3.distanceTo( this.end ) ){
+                overlap[ 3 ] = i4.distanceTo( this.begin ).toFixed( 1 );
+            }else{
+                overlap[ 3 ] = i4.distanceTo( this.end ).toFixed( 1 );
+            }
+        }
+
+        var maxOverlap = Math.max.apply( null, overlap );
+
+        var onSegment = [ c1, c2, c3, c4 ];
+
+        if( !lineContact ){
 
             var candidates = [];
 
-            var i1 = NGL.Utils.pointVectorIntersection(
-                this.begin, helix.begin, helix.axis
-            );
-            var c1 = NGL.Utils.isPointOnSegment(
-                i1, helix.begin, helix.end
-            );
-            candidates.push( {
-                "distance": this.begin.distanceTo( i1 ),
-                "contact": c1 && ( angle > 180 - mad || angle < mad ),
-                "p1": this.begin,
-                "p2": i1
-            } );
+            if( angle > 120 || angle < 60 ){
 
-            var i2 = NGL.Utils.pointVectorIntersection(
-                this.end, helix.begin, helix.axis
-            );
-            var c2 = NGL.Utils.isPointOnSegment(
-                i2, helix.begin, helix.end
-            );
-            candidates.push( {
-                "distance": this.end.distanceTo( i2 ),
-                "contact": c2 && ( angle > 180 - mad || angle < mad ),
-                "p1": this.end,
-                "p2": i2
-            } );
+                candidates.push( {
+                    "distance": this.begin.distanceTo( i1 ),
+                    "contact": c1,
+                    "p1": this.begin,
+                    "p2": i1
+                } );
 
-            var i3 = NGL.Utils.pointVectorIntersection(
-                helix.begin, this.begin, this.axis
-            );
-            var c3 = NGL.Utils.isPointOnSegment(
-                i3, this.begin, this.end
-            );
-            candidates.push( {
-                "distance": helix.begin.distanceTo( i3 ),
-                "contact": c3 && ( angle > 180 - mad || angle < mad ),
-                "p1": helix.begin,
-                "p2": i3
-            } );
+                candidates.push( {
+                    "distance": this.end.distanceTo( i2 ),
+                    "contact": c2,
+                    "p1": this.end,
+                    "p2": i2
+                } );
 
-            var i4 = NGL.Utils.pointVectorIntersection(
-                helix.end, this.begin, this.axis
-            );
-            var c4 = NGL.Utils.isPointOnSegment(
-                i4, this.begin, this.end
-            );
-            candidates.push( {
-                "distance": helix.end.distanceTo( i4 ),
-                "contact": c4 && ( angle > 180 - mad || angle < mad ),
-                "p1": helix.end,
-                "p2": i4
-            } );
+                candidates.push( {
+                    "distance": helix.begin.distanceTo( i3 ),
+                    "contact": c3,
+                    "p1": helix.begin,
+                    "p2": i3
+                } );
+
+                candidates.push( {
+                    "distance": helix.end.distanceTo( i4 ),
+                    "contact": c4,
+                    "p1": helix.end,
+                    "p2": i4
+                } );
+
+            }
 
             //
 
-            candidates.push( {
-                "distance": this.begin.distanceTo( helix.begin ),
-                "contact": ( angle > 180 - mad ),
-                "p1": this.begin,
-                "p2": helix.begin
-            } );
+            if( maxOverlap > 0 && ( angle > 120 || angle < 60 ) ){
 
-            candidates.push( {
-                "distance": this.begin.distanceTo( helix.end ),
-                "contact": ( angle > 180 - mad ),
-                "p1": this.begin,
-                "p2": helix.end
-            } );
+                candidates.push( {
+                    "distance": this.begin.distanceTo( helix.begin ),
+                    "contact": true,
+                    "p1": this.begin,
+                    "p2": helix.begin
+                } );
 
-            candidates.push( {
-                "distance": this.end.distanceTo( helix.begin ),
-                "contact": ( angle > 180 - mad ),
-                "p1": this.end,
-                "p2": helix.begin
-            } );
+                candidates.push( {
+                    "distance": this.begin.distanceTo( helix.end ),
+                    "contact": true,
+                    "p1": this.begin,
+                    "p2": helix.end
+                } );
 
-            candidates.push( {
-                "distance": this.end.distanceTo( helix.end ),
-                "contact": ( angle > 180 - mad ),
-                "p1": this.end,
-                "p2": helix.end
-            } );
+                candidates.push( {
+                    "distance": this.end.distanceTo( helix.begin ),
+                    "contact": true,
+                    "p1": this.end,
+                    "p2": helix.begin
+                } );
+
+                candidates.push( {
+                    "distance": this.end.distanceTo( helix.end ),
+                    "contact": true,
+                    "p1": this.end,
+                    "p2": helix.end
+                } );
+
+            }
 
             //
 
@@ -976,6 +1024,10 @@ NGL.Helix.prototype = {
             "distance": Infinity,
             "contact": false,
             "angle": angle,
+            "onSegment": onSegment,
+            "overlap": overlap,
+            "maxOverlap": maxOverlap,
+            "lineContact": lineContact
         }, data );
 
     }
