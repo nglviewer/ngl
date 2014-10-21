@@ -266,7 +266,8 @@ NGL.AA1 = {
     'TYR': 'Y',
     'ASP': 'D',
     'GLU': 'E',
-    'THR': 'T'
+    'THR': 'T',
+    'UNK': ''
 };
 
 
@@ -3112,6 +3113,10 @@ NGL.Fiber = function( residues, structure ){
         this.traceAtomname = [ "CA", "BB" ];
         this.directionAtomname1 = this.traceAtomname;
         this.directionAtomname2 = this.traceAtomname;
+
+    }else{
+
+        console.error( "NGL.fiber: could not determine molecule type" );
 
     }
 

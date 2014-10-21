@@ -488,8 +488,6 @@ NGL.Helixorient.prototype = {
 
         var f = new NGL.Fiber( residues, this.fiber.structure );
 
-        // console.log( f );
-
         return f;
 
     },
