@@ -2620,6 +2620,249 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.CrossingRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.CrossingRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "crossing",
+
+    parameters: Object.assign( {
+
+        localAngle: {
+            type: "integer", max: 180, min: 0
+        },
+        centerDist: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        ssBorder: {
+            type: "boolean"
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5
+        },
+        helixDist: {
+            type: "number", precision: 1, max: 30, min: 0
+        },
+        displayLabel: {
+            type: "boolean"
+        },
+        download: {
+            type: "button", methodName: "download"
+        },
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.color = params.color || "ss";
+        params.radius = params.radius || 0.7;
+        params.scale = params.scale || 1.0;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.radiusSegments = 20;
+        }else{
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        this.localAngle = params.localAngle || 30;
+        this.centerDist = params.centerDist || 2.5;
+        this.ssBorder = params.ssBorder === (
+            undefined ? false : params.ssBorder
+        );
+        this.helixDist = params.helixDist || 12;
+        this.displayLabel = params.displayLabel === (
+            undefined ? true : params.displayLabel
+        );
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        var scope = this;
+
+        this.bufferList = [];
+        this.fiberList = [];
+        this.centerList = [];
+        this.helixList = [];
+
+        this.structure.eachFiber( function( fiber ){
+
+            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
+
+            var helixbundle = new NGL.Helixbundle( fiber );
+            var axis = helixbundle.getAxis(
+                scope.localAngle, scope.centerDist, scope.ssBorder,
+                scope.color, scope.radius, scope.scale
+            );
+
+            scope.bufferList.push(
+
+                new NGL.CylinderBuffer(
+                    axis.begin,
+                    axis.end,
+                    axis.color,
+                    axis.color,
+                    axis.size,
+                    null,
+                    true,
+                    axis.pickingColor,
+                    axis.pickingColor,
+                    scope.radiusSegments,
+                    scope.disableImpostor
+                )
+
+            );
+
+            scope.fiberList.push( fiber );
+
+            scope.centerList.push( new Float32Array( axis.begin.length ) );
+
+            for( var i = 0; i < axis.residue.length; ++i ){
+
+                var helix = new NGL.Helix();
+                helix.fromHelixbundleAxis( axis, i );
+                scope.helixList.push( helix );
+
+            }
+
+        }, this.selection );
+
+        //
+
+        var helixCrossing = new NGL.HelixCrossing( this.helixList );
+        var crossing = helixCrossing.getCrossing( this.helixDist );
+
+        this.crossing = crossing;
+
+        var n = crossing.end.length / 3;
+
+        this.bufferList.push(
+
+            new NGL.CylinderBuffer(
+                new Float32Array( crossing.begin ),
+                new Float32Array( crossing.end ),
+                NGL.Utils.uniformArray3( n, 0.2, 0.2, 0.9 ),
+                NGL.Utils.uniformArray3( n, 0.2, 0.2, 0.9 ),
+                NGL.Utils.uniformArray( n, 0.1 ),
+                null,
+                true,
+                NGL.Utils.uniformArray3( n, 0, 0, 0 ),
+                NGL.Utils.uniformArray3( n, 0, 0, 0 ),
+                this.radiusSegments,
+                this.disableImpostor
+            )
+
+        );
+
+        if( this.displayLabel ){
+
+            var m = crossing.helixLabel.length;
+
+            this.bufferList.push(
+
+                new NGL.TextBuffer(
+                    crossing.helixCenter,
+                    NGL.Utils.uniformArray( m, 2.5 ),
+                    NGL.Utils.uniformArray3( m, 1.0, 1.0, 1.0 ),
+                    crossing.helixLabel
+                )
+
+            );
+
+        }
+
+    },
+
+    update: function( what ){
+
+        this.rebuild();
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "localAngle" ] !== undefined ){
+
+            this.localAngle = params[ "localAngle" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "centerDist" ] !== undefined ){
+
+            this.centerDist = params[ "centerDist" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "helixDist" ] !== undefined ){
+
+            this.helixDist = params[ "helixDist" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "ssBorder" ] !== undefined ){
+
+            this.ssBorder = params[ "ssBorder" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "displayLabel" ] !== undefined ){
+
+            this.displayLabel = params[ "displayLabel" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radiusSegments" ] ){
+
+            this.radiusSegments = params[ "radiusSegments" ];
+            rebuild = true;
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    },
+
+    download: function(){
+
+        var json = JSON.stringify( this.crossing.info, null, '\t' );
+
+        NGL.download(
+            new Blob( [ json ], {type : 'text/plain'} ),
+            "helixCrossing.json"
+        );
+
+    }
+
+} );
+
+
 ///////////////////////////
 // Surface representation
 

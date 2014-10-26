@@ -790,11 +790,21 @@ NGL.Helix.prototype = {
 
     }(),
 
-    angleTo: function( helix ){
+    angleTo: function(){
 
-        return this.axis.angleTo( helix.axis );
+        var v = new THREE.Vector3();
 
-    },
+        return function( helix ){
+
+            var s = v.crossVectors( this.axis, helix.axis ).length();
+            var c = this.axis.dot( helix.axis );
+            var angle = Math.atan2( s, c );
+
+            return c < 0 ? -angle : angle;
+
+        }
+
+    }(),
 
     distanceTo: function(){
 
@@ -890,37 +900,37 @@ NGL.Helix.prototype = {
         var overlap = [ 0, 0, 0, 0 ];
 
         if( c1 && c2 ){
-            overlap[ 0 ] = i1.distanceTo( i2 ).toFixed( 1 );
+            overlap[ 0 ] = i1.distanceTo( i2 );
         }
         if( c3 && c4 ){
-            overlap[ 1 ] = i3.distanceTo( i4 ).toFixed( 1 );
+            overlap[ 1 ] = i3.distanceTo( i4 );
         }
         if( c1 && !c2 ){
             if( i2.distanceTo( helix.begin ) < i2.distanceTo( helix.end ) ){
-                overlap[ 2 ] = i1.distanceTo( helix.begin ).toFixed( 1 );
+                overlap[ 2 ] = i1.distanceTo( helix.begin );
             }else{
-                overlap[ 2 ] = i1.distanceTo( helix.end ).toFixed( 1 );
+                overlap[ 2 ] = i1.distanceTo( helix.end );
             }
         }
         if( !c1 && c2 ){
             if( i1.distanceTo( helix.begin ) < i1.distanceTo( helix.end ) ){
-                overlap[ 2 ] = i2.distanceTo( helix.begin ).toFixed( 1 );
+                overlap[ 2 ] = i2.distanceTo( helix.begin );
             }else{
-                overlap[ 2 ] = i2.distanceTo( helix.end ).toFixed( 1 );
+                overlap[ 2 ] = i2.distanceTo( helix.end );
             }
         }
         if( c3 && !c4 ){
             if( i4.distanceTo( this.begin ) < i4.distanceTo( this.end ) ){
-                overlap[ 3 ] = i3.distanceTo( this.begin ).toFixed( 1 );
+                overlap[ 3 ] = i3.distanceTo( this.begin );
             }else{
-                overlap[ 3 ] = i3.distanceTo( this.end ).toFixed( 1 );
+                overlap[ 3 ] = i3.distanceTo( this.end );
             }
         }
         if( !c3 && c4 ){
             if( i3.distanceTo( this.begin ) < i3.distanceTo( this.end ) ){
-                overlap[ 3 ] = i4.distanceTo( this.begin ).toFixed( 1 );
+                overlap[ 3 ] = i4.distanceTo( this.begin );
             }else{
-                overlap[ 3 ] = i4.distanceTo( this.end ).toFixed( 1 );
+                overlap[ 3 ] = i4.distanceTo( this.end );
             }
         }
 
@@ -1195,3 +1205,73 @@ NGL.Helixbundle.prototype = {
     }
 
 };
+
+
+/////////////////
+// HelixCrossing
+
+NGL.HelixCrossing = function( helices ){
+
+    this.helices = helices;
+
+};
+
+NGL.HelixCrossing.prototype = {
+
+    getCrossing: function( minDistance ){
+
+        minDistance = minDistance || 12;
+
+        var helices = this.helices;
+
+        var helixLabel = [];
+        var helixCenter = [];
+        var crossingBeg = [];
+        var crossingEnd = [];
+        var info = [];
+
+        var k = 0;
+
+        for( var i = 0; i < helices.length; ++i ){
+
+            var h1 = helices[ i ];
+
+            helixLabel.push( "H" + ( i + 1 ) );
+            h1.center.toArray( helixCenter, i * 3 );
+
+            for( var j = i + 1; j < helices.length; ++j ){
+
+                var c = h1.crossing( helices[ j ] );
+
+                if( c.contact && c.distance < minDistance ){
+
+                    info.push( {
+                        "helix1": i + 1,
+                        "helix2": j + 1,
+                        "angle": c.angle,
+                        "distance": c.distance,
+                        "overlap": c.maxOverlap
+                    } );
+
+                    c.p1.toArray( crossingBeg, k * 3 );
+                    c.p2.toArray( crossingEnd, k * 3 );
+                    k += 1;
+
+                }
+
+            }
+
+        }
+
+        return {
+            "helixLabel": helixLabel,
+            "helixCenter": helixCenter,
+            "begin": crossingBeg,
+            "end": crossingEnd,
+            "info": info
+        }
+
+    }
+
+};
+

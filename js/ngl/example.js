@@ -623,7 +623,18 @@ NGL.Examples = {
 
         "helixorient": function( stage ){
 
-            stage.loadFile( "__example__/helixorient.ngl" );
+            stage.loadFile( "__example__/3dqb.pdb", function( o ){
+
+                o.addRepresentation( "crossing", {
+                    ssBorder: true, radius: 0.6
+                } );
+                o.addRepresentation( "rope", {
+                    radius: 0.2
+                } );
+
+                o.centerView();
+
+            } );
 
         },
 

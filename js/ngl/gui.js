@@ -1370,6 +1370,15 @@ NGL.RepresentationComponentWidget = function( component, stage ){
                 .setOptions( p.options )
                 .setValue( repr[ name ] );
 
+        }else if( p.type === "button" ){
+
+            input = new UI.Button( name )
+                .onClick( function(){
+
+                    repr[ name ]();
+
+                } );
+
         }
 
         if( input ){
