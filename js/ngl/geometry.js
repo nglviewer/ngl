@@ -1124,8 +1124,6 @@ NGL.Helixbundle.prototype = {
                 r2 = res[ i + 1 ];
                 c2.fromArray( pos.center, i * 3 + 3 );
 
-                // console.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
-
                 if( ssBorder && r.ss !== r2.ss ){
                     split = true;
                 }else if( c.distanceTo( c2 ) > centerDist ){

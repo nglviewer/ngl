@@ -2679,13 +2679,9 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
         this.localAngle = params.localAngle || 30;
         this.centerDist = params.centerDist || 2.5;
-        this.ssBorder = params.ssBorder === (
-            undefined ? false : params.ssBorder
-        );
+        this.ssBorder = params.ssBorder === undefined ? false : params.ssBorder;
         this.helixDist = params.helixDist || 12;
-        this.displayLabel = params.displayLabel === (
-            undefined ? true : params.displayLabel
-        );
+        this.displayLabel = params.displayLabel === undefined ? true : params.displayLabel;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
