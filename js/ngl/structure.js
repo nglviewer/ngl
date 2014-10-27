@@ -4269,6 +4269,7 @@ NGL.StructureSubset.prototype._build = function(){
                 _r = _c.addResidue();
                 _r.resno = r.resno;
                 _r.resname = r.resname;
+                _r.ss = r.ss;
 
                 r.eachAtom( function( a ){
 
