@@ -120,15 +120,21 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "tube", {
-                    sele: "*", color: "atomindex", radius: "bfactor", scale: 0.01,
-                    subdiv: 50, radialSegments: 50, visible: true
-                } );
-                o.addRepresentation( "ball+stick", { sele: "135:A or 347:B or 223:A" } );
-                o.addRepresentation( "licorice", { sele: "hetero" } );
-                o.addRepresentation( "rope", { smooth: 2 } );
+                o.addRepresentation( "cartoon", { sele: "*", wireframe: false } );
+                o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
+                o.addRepresentation( "rope", { sele: "*" }, true )
+                    .setParameters( { subdiv: 2 } );
+                o.addRepresentation( "licorice", { sele: ".C or .CA or .O" } );
 
-                o.centerView();
+                // o.addRepresentation( "tube", {
+                //     sele: "*", color: "atomindex", radius: "bfactor", scale: 0.01,
+                //     subdiv: 50, radialSegments: 50, visible: true
+                // } );
+                // o.addRepresentation( "ball+stick", { sele: "135:A or 347:B or 223:A" } );
+                // o.addRepresentation( "licorice", { sele: "hetero" } );
+                // o.addRepresentation( "rope", { smooth: 2 } );
+
+                o.centerView( "238" );
 
             } );
 
