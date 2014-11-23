@@ -1318,6 +1318,254 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.BaseRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.BaseRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "base",
+
+    defaultSize: 0.2,
+
+    parameters: Object.assign( {
+
+        aspectRatio: {
+            type: "number", precision: 1, max: 10.0, min: 1.0
+        },
+        sphereDetail: {
+            type: "integer", max: 3, min: 0
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.radius = params.radius || this.defaultSize;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        this.aspectRatio = params.aspectRatio || 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        var baseAtomSet, baseBondSet;
+        var sphereBuffer, cylinderBuffer;
+
+        var bufferList = [];
+        var atomSetList = [];
+        var bondSetList = [];
+
+        var color = this.color;
+        var radius = this.radius;
+        var scale = this.scale;
+        var aspectRatio = this.aspectRatio;
+        var sphereDetail = this.sphereDetail;
+        var radiusSegments = this.radiusSegments;
+        var test = this.selection.test;
+        var disableImpostor = this.disableImpostor;
+
+        this.structure.eachFiber( function( f ){
+
+            if( f.residueCount < 1 || !f.isNucleic() ) return;
+
+            baseAtomSet = new NGL.AtomSet();
+            baseBondSet = new NGL.BondSet();
+
+            baseAtomSet.structure = f.structure;
+            baseBondSet.structure = f.structure;
+
+            atomSetList.push( baseAtomSet );
+            bondSetList.push( baseBondSet );
+
+            var a1, a2;
+            var bases = [ "A", "G", "DA", "DG" ];
+
+            f.eachResidue( function( r ){
+
+                a1 = r.getAtomByName( f.traceAtomname );
+                // a1 = r.getAtomByName( "P" );
+
+                if( bases.indexOf( r.resname ) !== -1 ){
+                    a2 = r.getAtomByName( "N1" );
+                }else{
+                    a2 = r.getAtomByName( "N3" );
+                }
+
+                if( test( a1 ) ){
+
+                    baseAtomSet.addAtom( a1 );
+                    baseAtomSet.addAtom( a2 );
+                    baseBondSet.addBond( a1, a2, true );
+
+                }
+
+            } );
+
+            sphereBuffer = new NGL.SphereBuffer(
+                baseAtomSet.atomPosition(),
+                baseAtomSet.atomColor( null, color ),
+                baseAtomSet.atomRadius( null, radius, scale * aspectRatio ),
+                baseAtomSet.atomColor( null, "picking" ),
+                sphereDetail,
+                disableImpostor
+            );
+
+            cylinderBuffer = new NGL.CylinderBuffer(
+                baseBondSet.bondPosition( null, 0 ),
+                baseBondSet.bondPosition( null, 1 ),
+                baseBondSet.bondColor( null, 0, color ),
+                baseBondSet.bondColor( null, 1, color ),
+                baseBondSet.bondRadius( null, 0, radius, scale ),
+                null,
+                true,
+                baseBondSet.bondColor( null, 0, "picking" ),
+                baseBondSet.bondColor( null, 1, "picking" ),
+                radiusSegments,
+                disableImpostor
+            );
+
+            bufferList.push( sphereBuffer )
+            bufferList.push( cylinderBuffer );
+
+        } );
+
+        this.bufferList = bufferList;
+        this.atomSetList = atomSetList;
+        this.bondSetList = bondSetList;
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var backboneAtomSet, backboneBondSet;
+        var sphereBuffer, cylinderBuffer;
+        var sphereData, cylinderData;
+
+        var i;
+        var color = this.color;
+        var n = this.atomSetList.length;
+
+        for( i = 0; i < n; ++i ){
+
+            backboneAtomSet = this.atomSetList[ i ];
+            backboneBondSet = this.bondSetList[ i ];
+
+            sphereBuffer = this.bufferList[ i * 2 ];
+            cylinderBuffer = this.bufferList[ i * 2 + 1 ];
+
+            sphereData = {};
+            cylinderData = {};
+
+            if( what[ "position" ] ){
+
+                sphereData[ "position" ] = backboneAtomSet.atomPosition();
+
+                var from = backboneBondSet.bondPosition( null, 0 );
+                var to = backboneBondSet.bondPosition( null, 1 );
+
+                cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
+                    from, to
+                );
+                cylinderData[ "position1" ] = from;
+                cylinderData[ "position2" ] = to;
+
+            }
+
+            if( what[ "color" ] ){
+
+                sphereData[ "color" ] = backboneAtomSet.atomColor( null, this.color );
+
+                cylinderData[ "color" ] = backboneBondSet.bondColor( null, 0, this.color );
+                cylinderData[ "color2" ] = backboneBondSet.bondColor( null, 1, this.color );
+
+            }
+
+            if( what[ "radius" ] || what[ "scale" ] ){
+
+                sphereData[ "radius" ] = backboneAtomSet.atomRadius(
+                    null, this.radius, this.scale * this.aspectRatio
+                );
+
+                cylinderData[ "radius" ] = backboneBondSet.bondRadius(
+                    null, 0, this.radius, this.scale
+                );
+
+            }
+
+            sphereBuffer.setAttributes( sphereData );
+            cylinderBuffer.setAttributes( cylinderData );
+
+        }
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "aspectRatio" ] ){
+
+            this.aspectRatio = params[ "aspectRatio" ];
+            what[ "radius" ] = true;
+            what[ "scale" ] = true;
+
+        }
+
+        if( params && params[ "sphereDetail" ]!==undefined ){
+
+            this.sphereDetail = params[ "sphereDetail" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "radiusSegments" ] ){
+
+            this.radiusSegments = params[ "radiusSegments" ];
+            rebuild = true;
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    }
+
+} );
+
+
 NGL.TubeRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );

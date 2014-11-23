@@ -488,8 +488,11 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", {
                     sele: "nucleic", wireframe: false
                 } );
+                o.addRepresentation( "base", {
+                    sele: "*", color: "resname"
+                } );
                 o.addRepresentation( "licorice", {
-                    sele: "nucleic", color: "element"
+                    sele: "nucleic", color: "element", visible: false
                 } );
 
                 o.centerView( "nucleic" );

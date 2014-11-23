@@ -415,9 +415,7 @@ NGL.Spline.prototype = {
                 vTan.fromArray( tan, l );
 
                 vBin.crossVectors( vDir, vTan ).normalize();
-                // if( !first && vBinPrev.dot( vBin ) < 0 ) vBin.multiplyScalar( -1 );
                 vBin.toArray( bin, l );
-                // vBinPrev.copy( vBin );
 
                 vNorm.crossVectors( vTan, vBin ).normalize();
                 vNorm.toArray( norm, l );

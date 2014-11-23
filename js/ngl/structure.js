@@ -519,7 +519,7 @@ NGL.RadiusFactory.prototype = {
         var defaultCovalentRadius = NGL.CovalentRadii[""];
         var defaultBfactor = 1;
 
-        var nucleic = [ "C3'", "C3*", "P" ];
+        var nucleic = [ "C3'", "C3*", "C4'", "C4*", "P" ];
 
         var r;
 
@@ -3132,15 +3132,20 @@ NGL.Fiber = function( residues, structure ){
 
     }else if( this.isNucleic() ){
 
-        this.traceAtomname = [ "C3'", "C3*" ];
-
         var bases = [ "A", "C", "T", "G", "U" ];
+
         if( bases.indexOf( this.residues[ 0 ].resname ) !== -1 ){
+
+            this.traceAtomname = [ "C4'", "C4*" ];
             this.directionAtomname1 = [ "C1'", "C1*" ];
             this.directionAtomname2 = [ "C3'", "C3*" ];
+
         }else{
+
+            this.traceAtomname = [ "C3'", "C3*" ];
             this.directionAtomname1 = [ "C2'", "C2*" ];
             this.directionAtomname2 = [ "O4'", "O4*" ];
+
         }
 
     }else if( this.isCg() ){
