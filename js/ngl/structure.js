@@ -147,6 +147,22 @@ NGL.StructureColors = {
 }
 
 
+// PDB helix record encoding
+NGL.HelixTypes = {
+    1: "h",  // Right-handed alpha (default)
+    2: "h",  // Right-handed omega
+    3: "i",  // Right-handed pi
+    4: "h",  // Right-handed gamma
+    5: "g",  // Right-handed 310
+    6: "h",  // Left-handed alpha
+    7: "h",  // Left-handed omega
+    8: "h",  // Left-handed gamma
+    9: "h",  // 27 ribbon/helix
+    10: "h",  // Polyproline
+    "": "h",
+}
+
+
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
 NGL.VdwRadii = {
     "H": 1.1, "HE": 1.4, "LI": 1.81, "BE": 1.53, "B": 1.92, "C": 1.7,
@@ -237,6 +253,7 @@ NGL.guessElement = function(){
 }();
 
 
+// molecule types
 NGL.UnknownType = 0;
 NGL.CgType = 1;
 NGL.ProteinType = 2;
@@ -420,6 +437,10 @@ NGL.ColorFactory.prototype = {
 
                 if( a.ss === "h" ){
                     c = strucColors[ "alphaHelix" ];
+                }else if( a.ss === "g" ){
+                    c = strucColors[ "3_10Helix" ];
+                }else if( a.ss === "i" ){
+                    c = strucColors[ "piHelix" ];
                 }else if( a.ss === "s" ){
                     c = strucColors[ "betaStrand" ];
                 }else if( a.residue.isNucleic() ){
@@ -520,6 +541,10 @@ NGL.RadiusFactory.prototype = {
             case "ss":
 
                 if( a.ss === "h" ){
+                    r = 0.25;
+                }else if( a.ss === "g" ){
+                    r = 0.25;
+                }else if( a.ss === "i" ){
                     r = 0.25;
                 }else if( a.ss === "s" ){
                     r = 0.25;

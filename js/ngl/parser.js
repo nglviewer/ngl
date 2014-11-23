@@ -100,6 +100,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
     var vdwRadii = NGL.VdwRadii;
+    var helixTypes = NGL.HelixTypes;
 
     var i, j;
     var line, recordName;
@@ -276,7 +277,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var startResi = parseInt( line.substr( 21, 4 ) );
                 var endChain = line[ 31 ];
                 var endResi = parseInt( line.substr( 33, 4 ) );
-                helix.push([ startChain, startResi, endChain, endResi ]);
+                var helixType = parseInt( line.substr( 39, 1 ) );
+                helixType = helixTypes[ helixType ] || helixTypes[""];
+                helix.push([ startChain, startResi, endChain, endResi, helixType ]);
 
             }else if( recordName === 'SHEET ' ){
 
@@ -399,9 +402,11 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
             );
 
+            var helixType = helix[j][4];
+
             s.eachResidue( function( r ){
 
-                r.ss = "h";
+                r.ss = helixType;
 
             }, selection );
 
