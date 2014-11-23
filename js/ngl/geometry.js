@@ -15,6 +15,9 @@ NGL.Spline = function( fiber ){
     this.directionAtomname1 = fiber.directionAtomname1;
     this.directionAtomname2 = fiber.directionAtomname2;
 
+    this.isNucleic = this.fiber.residues[ 0 ].isNucleic();
+    this.tension = this.isNucleic ? 0.5 : 0.9;
+
 };
 
 NGL.Spline.prototype = {
@@ -110,9 +113,7 @@ NGL.Spline.prototype = {
 
     getSubdividedPosition: function( m, tension ){
 
-        if( isNaN( tension ) ){
-            tension = this.fiber.residues[ 0 ].isNucleic() ? 0.6 : 0.9;
-        }
+        if( isNaN( tension ) ) tension = this.tension;
 
         var pos = this.getPosition( m, tension );
         var tan = this.getTangent( m, tension );
@@ -170,9 +171,7 @@ NGL.Spline.prototype = {
 
     getPosition: function( m, tension, atomname ){
 
-        if( isNaN( tension ) ){
-            tension = this.fiber.residues[ 0 ].isNucleic() ? 0.6 : 0.9;
-        }
+        if( isNaN( tension ) ) tension = this.tension;
 
         if( !atomname ){
             atomname = this.traceAtomname;
@@ -213,7 +212,7 @@ NGL.Spline.prototype = {
 
         } );
 
-        a4.positionToArray( pos, k );
+        a3.positionToArray( pos, k );
 
         return pos;
 
@@ -221,9 +220,7 @@ NGL.Spline.prototype = {
 
     getTangent: function( m, tension, atomname ){
 
-        if( isNaN( tension ) ){
-            tension = this.fiber.residues[ 0 ].isNucleic() ? 0.6 : 0.9;
-        }
+        if( isNaN( tension ) ) tension = this.tension;
 
         if( !atomname ){
             atomname = this.traceAtomname;
@@ -296,6 +293,7 @@ NGL.Spline.prototype = {
         var traceAtomname = this.traceAtomname;
         var directionAtomname1 = this.directionAtomname1;
         var directionAtomname2 = this.directionAtomname2;
+        var isNucleic = this.isNucleic;
 
         var n = this.size;
         var n1 = n - 1;
@@ -396,8 +394,10 @@ NGL.Spline.prototype = {
 
                 }else{
 
-                    // shift half a residue
-                    l += m2 * 3;
+                    if( !isNucleic ){
+                        // shift half a residue
+                        l += m2 * 3;
+                    }
                     d = dt * j
 
                     p1.x = interpolate( d1a1.x, d1a2.x, d1a3.x, d1a4.x, d, tension );
@@ -415,7 +415,9 @@ NGL.Spline.prototype = {
                 vTan.fromArray( tan, l );
 
                 vBin.crossVectors( vDir, vTan ).normalize();
+                // if( !first && vBinPrev.dot( vBin ) < 0 ) vBin.multiplyScalar( -1 );
                 vBin.toArray( bin, l );
+                // vBinPrev.copy( vBin );
 
                 vNorm.crossVectors( vTan, vBin ).normalize();
                 vNorm.toArray( norm, l );
@@ -426,7 +428,7 @@ NGL.Spline.prototype = {
 
         } );
 
-        if( traceAtomname !== directionAtomname1 ){
+        if( traceAtomname !== directionAtomname1 && !isNucleic ){
 
             vBin.fromArray( bin, m2 * 3 );
             vNorm.fromArray( norm, m2 * 3 );

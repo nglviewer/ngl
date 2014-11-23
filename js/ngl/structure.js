@@ -519,6 +519,8 @@ NGL.RadiusFactory.prototype = {
         var defaultCovalentRadius = NGL.CovalentRadii[""];
         var defaultBfactor = 1;
 
+        var nucleic = [ "C3'", "C3*", "P" ];
+
         var r;
 
         switch( type ){
@@ -548,7 +550,8 @@ NGL.RadiusFactory.prototype = {
                     r = 0.25;
                 }else if( a.ss === "s" ){
                     r = 0.25;
-                }else if( a.atomname === "P" ){
+                // }else if( a.atomname === "P" ){
+                }else if( nucleic.indexOf( a.atomname ) !== -1 ){
                     r = 0.4;
                 }else{
                     r = 0.1;
@@ -3129,9 +3132,16 @@ NGL.Fiber = function( residues, structure ){
 
     }else if( this.isNucleic() ){
 
-        this.traceAtomname = "P";
-        this.directionAtomname1 = [ "OP1", "O1P" ];
-        this.directionAtomname2 = [ "OP2", "O2P" ];
+        this.traceAtomname = [ "C3'", "C3*" ];
+
+        var bases = [ "A", "C", "T", "G", "U" ];
+        if( bases.indexOf( this.residues[ 0 ].resname ) !== -1 ){
+            this.directionAtomname1 = [ "C1'", "C1*" ];
+            this.directionAtomname2 = [ "C3'", "C3*" ];
+        }else{
+            this.directionAtomname1 = [ "C2'", "C2*" ];
+            this.directionAtomname2 = [ "O4'", "O4*" ];
+        }
 
     }else if( this.isCg() ){
 
@@ -3189,9 +3199,7 @@ NGL.Fiber.prototype = {
 
         return this._nucleic;
 
-    },
-
-    getType: NGL.Chain.prototype.getType
+    }
 
 };
 
@@ -3290,7 +3298,7 @@ NGL.Residue.prototype = {
 
             if( this._nucleic === undefined ){
 
-                this._nucleic = ( this.getAtomByName( "P" ) !== undefined
+                this._nucleic = ( this.getAtomByName([ "C3'", "C3*" ]) !== undefined
                         || bases.indexOf( this.resname ) !== -1
                     ) &&
                     this.getAtomByName([ "O3'", "O3*" ]) !== undefined;
@@ -3308,7 +3316,7 @@ NGL.Residue.prototype = {
         if( this._nucleicBackbone === undefined ){
 
             this._nucleicBackbone = this.isNucleic() &&
-                this.getAtomByName( "P" ) !== undefined;
+                this.getAtomByName([ "C3'", "C3*" ]) !== undefined;
 
         }
 
@@ -3503,6 +3511,7 @@ NGL.Residue.prototype = {
         }else if( this.hasNucleicBackbone() ){
 
             return this.getAtomByName( 'P' );
+            // return this.getAtomByName([ "C3'", "C3*" ]);
 
         }else if( this.isCg() ){
 

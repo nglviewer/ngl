@@ -120,7 +120,7 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/3pqr.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { sele: "*", wireframe: false } );
+                o.addRepresentation( "cartoon", { sele: "1-320", wireframe: false } );
                 o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
                 o.addRepresentation( "rope", { sele: "*" }, true )
                     .setParameters( { subdiv: 2 } );
@@ -134,7 +134,7 @@ NGL.Examples = {
                 // o.addRepresentation( "licorice", { sele: "hetero" } );
                 // o.addRepresentation( "rope", { smooth: 2 } );
 
-                o.centerView( "238" );
+                o.centerView( "320" );
 
             } );
 
@@ -486,10 +486,10 @@ NGL.Examples = {
             stage.loadFile( "__example__/1d66.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
-                    sele: "nucleic", wireframe: true
+                    sele: "nucleic", wireframe: false
                 } );
                 o.addRepresentation( "licorice", {
-                    sele: "nucleic", color: "atomindex"
+                    sele: "nucleic", color: "element"
                 } );
 
                 o.centerView( "nucleic" );
