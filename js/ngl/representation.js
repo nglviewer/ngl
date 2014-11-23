@@ -1057,7 +1057,9 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         if( params && params[ "shrink" ] ){
 
             this.shrink = params[ "shrink" ];
-            this.cylinderBuffer.uniforms[ "shrink" ].value = this.shrink;
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.cylinderBuffer.uniforms[ "shrink" ].value = this.shrink;
+            rebuild = true;
 
         }
 
@@ -1596,35 +1598,47 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         },
         wireframe: {
             type: "boolean"
+        },
+        transparent: {
+            type: "boolean"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.color = p.color || "ss";
+        p.radius = p.radius || this.defaultSize;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.subdiv = 3;
             this.radialSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.subdiv = 6;
             this.radialSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.subdiv = 12;
             this.radialSegments = 20;
         }else{
-            this.subdiv = params.subdiv || 6;
-            this.radialSegments = params.radialSegments || 10;
+            this.subdiv = p.subdiv || 6;
+            this.radialSegments = p.radialSegments || 10;
         }
 
-        this.tension = params.tension || NaN;
-        this.capped = params.capped || true;
-        this.wireframe = params.wireframe || false;
+        this.tension = p.tension || NaN;
+        this.capped = p.capped || true;
+        this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -1663,7 +1677,10 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                     rx,
                     ry,
                     scope.capped,
-                    scope.wireframe
+                    scope.wireframe,
+                    scope.transparent,
+                    parseInt( scope.side ),
+                    scope.opacity
                 )
 
             );
@@ -1767,6 +1784,29 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "side" ] !== undefined ){
+
+            this.side = params[ "side" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
+
+        }
+
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -1809,36 +1849,48 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         wireframe: {
             type: "boolean"
+        },
+        transparent: {
+            type: "boolean"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
-        params.radius = params.radius || "ss";
+        var p = params || {};
+        p.color = p.color || "ss";
+        p.radius = p.radius || "ss";
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.subdiv = 3;
             this.radialSegments = 6;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.subdiv = 6;
             this.radialSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.subdiv = 12;
             this.radialSegments = 20;
         }else{
-            this.subdiv = params.subdiv || 6;
-            this.radialSegments = params.radialSegments || 10;
+            this.subdiv = p.subdiv || 6;
+            this.radialSegments = p.radialSegments || 10;
         }
 
-        this.aspectRatio = params.aspectRatio || 3.0;
-        this.tension = params.tension || NaN;
-        this.capped = params.capped || true;
-        this.wireframe = params.wireframe || false;
+        this.aspectRatio = p.aspectRatio || 3.0;
+        this.tension = p.tension || NaN;
+        this.capped = p.capped || true;
+        this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -1887,7 +1939,10 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     rx,
                     ry,
                     scope.capped,
-                    scope.wireframe
+                    scope.wireframe,
+                    scope.transparent,
+                    parseInt( scope.side ),
+                    scope.opacity
                 )
 
             );
@@ -2042,6 +2097,29 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "side" ] !== undefined ){
+
+            this.side = params[ "side" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
+
+        }
+
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -2074,30 +2152,42 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        transparent: {
+            type: "boolean"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
-        params.radius = params.radius || "ss";
-        params.scale = params.scale || 3.0;
+        var p = params || {};
+        p.color = p.color || "ss";
+        p.radius = p.radius || "ss";
+        p.scale = p.scale || 3.0;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.subdiv = 3;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.subdiv = 6;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.subdiv = 12;
         }else{
-            this.subdiv = params.subdiv || 6;
+            this.subdiv = p.subdiv || 6;
         }
 
-        this.tension = params.tension || NaN;
+        this.tension = p.tension || NaN;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -2127,7 +2217,10 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     subPos.normal,
                     subCol.color,
                     subSize.size,
-                    subCol.pickingColor
+                    subCol.pickingColor,
+                    scope.transparent,
+                    parseInt( scope.side ),
+                    scope.opacity
                 )
 
             );
@@ -2205,6 +2298,29 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             this.tension = params[ "tension" ];
             this.update({ "position": true });
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "side" ] !== undefined ){
+
+            this.side = params[ "side" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
 
         }
 
@@ -2678,36 +2794,48 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         },
         smooth: {
             type: "integer", max: 15, min: 0
+        },
+        transparent: {
+            type: "boolean"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.color = p.color || "ss";
+        p.radius = p.radius || this.defaultSize;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.subdiv = 3;
             this.radialSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.subdiv = 6;
             this.radialSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.subdiv = 12;
             this.radialSegments = 20;
         }else{
-            this.subdiv = params.subdiv || 6;
-            this.radialSegments = params.radialSegments || 10;
+            this.subdiv = p.subdiv || 6;
+            this.radialSegments = p.radialSegments || 10;
         }
 
-        this.tension = params.tension || 0.5;
-        this.capped = params.capped || true;
-        this.wireframe = params.wireframe || false;
-        this.smooth = params.smooth === undefined ? 2 : params.smooth;
+        this.tension = p.tension || 0.5;
+        this.capped = p.capped || true;
+        this.wireframe = p.wireframe || false;
+        this.smooth = p.smooth === undefined ? 2 : p.smooth;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -2748,7 +2876,10 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                     rx,
                     ry,
                     scope.capped,
-                    scope.wireframe
+                    scope.wireframe,
+                    scope.transparent,
+                    parseInt( scope.side ),
+                    scope.opacity
                 )
 
             );
@@ -2853,6 +2984,29 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         if( params && params[ "smooth" ] !== undefined ){
 
             this.smooth = params[ "smooth" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "side" ] !== undefined ){
+
+            this.side = params[ "side" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
             rebuild = true;
 
         }
@@ -3134,19 +3288,31 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         },
         background: {
             type: "boolean"
+        },
+        transparent: {
+            type: "boolean"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
         }
 
     }, NGL.Representation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
+        p = params || {};
 
-        this.color = params.color || 0xDDDDDD;
-        this.background = params.background || true;
-        this.wireframe = params.wireframe || false;
+        this.color = p.color || 0xDDDDDD;
+        this.background = p.background || false;
+        this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.Representation.prototype.init.call( this, params );
+        NGL.Representation.prototype.init.call( this, p );
 
     },
 
@@ -3226,11 +3392,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
-        var meshBuffer = new NGL.MeshBuffer(
-            position, color, index, normal, undefined, this.wireframe
+        this.meshBuffer = new NGL.MeshBuffer(
+            position, color, index, normal, undefined, this.wireframe,
+            this.transparent, parseInt( this.side ), this.opacity
         );
 
-        this.bufferList = [ meshBuffer ];
+        this.bufferList = [ this.meshBuffer ];
 
     },
 
@@ -3249,6 +3416,29 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         if( params && params[ "background" ] !== undefined ){
 
             this.background = params[ "background" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "side" ] !== undefined ){
+
+            this.side = params[ "side" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
             rebuild = true;
 
         }

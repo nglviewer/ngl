@@ -158,6 +158,12 @@ NGL.MiddleMouseButton = 2;
 NGL.RightMouseButton = 3;
 
 
+NGL.SideTypes = {};
+NGL.SideTypes[ THREE.FrontSide ] = "front";
+NGL.SideTypes[ THREE.BackSide ] = "back";
+NGL.SideTypes[ THREE.DoubleSide ] = "double";
+
+
 NGL.GET = function( id ){
 
     var a = new RegExp( id + "=([^&#=]*)" );

@@ -1,4 +1,6 @@
 
+uniform float opacity;
+
 varying vec3 vNormal;
 
 #ifdef PICKING
@@ -32,7 +34,7 @@ void main()
             #include light
         #endif
 
-        gl_FragColor = vec4( vColor, 1.0 );
+        gl_FragColor = vec4( vColor, opacity );
 
         #ifndef NOLIGHT
             gl_FragColor.xyz *= vLightFront;

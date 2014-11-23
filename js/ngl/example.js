@@ -197,15 +197,17 @@ NGL.Examples = {
                 var s = "1-320:A";
 
                 o1.addRepresentation( "cartoon", { sele: s } );
+                o1.addRepresentation( "ball+stick", { sele: s } );
 
                 stage.loadFile( "__example__/3dqb.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon", { sele: s } );
+                    o2.addRepresentation( "licorice", { sele: s } );
 
                     o1.superpose( o2, false, s );
                     o1.centerView( ":A" );
 
-                } );
+                }, { sele: ":A" } );
 
             }, { sele: ":A" } );
 

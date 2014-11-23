@@ -1755,7 +1755,9 @@ NGL.Buffer = function( position, color, pickingColor ){
     // - fragmentShader
 
     this.pickable = false;
-    this.side = this.side || THREE.FrontSide;
+    this.transparent = this.transparent || false;
+    this.side = this.side !== undefined ? this.side : THREE.DoubleSide;
+    this.opacity = this.opacity !== undefined ? this.opacity : 1.0;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -1778,6 +1780,9 @@ NGL.Buffer = function( position, color, pickingColor ){
     this.uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
+        {
+            "opacity": { type: "f", value: this.opacity },
+        }
     ]);
 
 };
@@ -1855,7 +1860,7 @@ NGL.Buffer.prototype = {
                 vertexShader: NGL.getShader( this.vertexShader ),
                 fragmentShader: NGL.getShader( this.fragmentShader ),
                 depthTest: true,
-                transparent: false,
+                transparent: this.transparent,
                 depthWrite: true,
                 lights: true,
                 fog: true
@@ -1998,10 +2003,12 @@ NGL.Buffer.prototype = {
  * @param {Float32Array} index
  * @param {Float32Array} normal
  */
-NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe ){
+NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe, transparent, side, opacity ){
 
-    this.side = THREE.DoubleSide;
     this.wireframe = wireframe || false;
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -3220,12 +3227,15 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 
-NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
+NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, transparent, side, opacity ){
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
-    this.side = THREE.DoubleSide;
     this.size = ( position.length/3 ) - 1;
+
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     var n = this.size;
     var n4 = n * 4;
@@ -3243,6 +3253,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor ){
     this.uniforms = THREE.UniformsUtils.merge( [
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
+        {
+            "opacity": { type: "f", value: this.opacity },
+        }
     ]);
 
     this.geometry = new THREE.BufferGeometry();
@@ -3490,12 +3503,15 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe, transparent, side, opacity ){
 
     this.rx = rx || 1.5;
     this.ry = ry || 0.5;
 
     this.wireframe = wireframe || false;
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.radialSegments = radialSegments || 4;
     this.capVertices = capped ? this.radialSegments : 0;
@@ -3530,7 +3546,8 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, this.wireframe
+        this.meshNormal, this.meshPickingColor, this.wireframe,
+        this.transparent, this.side, this.opacity
     );
 
     this.pickable = this.meshBuffer.pickable;
