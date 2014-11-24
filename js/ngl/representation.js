@@ -1649,6 +1649,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
+        var opacity = this.transparent ? this.opacity : 1.0;
+
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -1680,7 +1682,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                     scope.wireframe,
                     scope.transparent,
                     parseInt( scope.side ),
-                    scope.opacity
+                    opacity
                 )
 
             );
@@ -1901,6 +1903,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
+        var opacity = this.transparent ? this.opacity : 1.0;
+
         if( NGL.GET( "debug" ) ){
 
             scope.debugBufferList = [];
@@ -1942,7 +1946,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     scope.wireframe,
                     scope.transparent,
                     parseInt( scope.side ),
-                    scope.opacity
+                    opacity
                 )
 
             );
@@ -2198,6 +2202,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
+        var opacity = this.transparent ? this.opacity : 1.0;
+
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -2220,7 +2226,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     scope.transparent,
                     parseInt( scope.side ),
-                    scope.opacity
+                    opacity
                 )
 
             );
@@ -2846,6 +2852,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
+        var opacity = this.transparent ? this.opacity : 1.0;
+
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
@@ -2879,7 +2887,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                     scope.wireframe,
                     scope.transparent,
                     parseInt( scope.side ),
-                    scope.opacity
+                    opacity
                 )
 
             );
@@ -3392,9 +3400,11 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
+        var opacity = this.transparent ? this.opacity : 1.0;
+
         this.meshBuffer = new NGL.MeshBuffer(
             position, color, index, normal, undefined, this.wireframe,
-            this.transparent, parseInt( this.side ), this.opacity
+            this.transparent, parseInt( this.side ), opacity
         );
 
         this.bufferList = [ this.meshBuffer ];
