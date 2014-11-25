@@ -4619,6 +4619,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "POLYMER" ){
+                sele.keyword = "POLYMER";
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "HYDROGEN" ){
                 sele.element = "H";
                 pushRule( sele );
@@ -4903,8 +4909,17 @@ NGL.Selection.prototype = {
             if( s.keyword!==undefined ){
 
                 if( s.keyword==="HETERO" && a.hetero===true ) return true;
-                if( s.keyword==="PROTEIN" && a.residue.isProtein() ) return true;
+                if( s.keyword==="PROTEIN" && (
+                        a.residue.isProtein() || a.residue.isCg()
+                    )
+                ) return true;
                 if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
+                if( s.keyword==="POLYMER" && (
+                        a.residue.isProtein() ||
+                        a.residue.isNucleic() ||
+                        a.residue.isCg()
+                    )
+                ) return true;
                 if( s.keyword==="WATER" && a.residue.isWater() ) return true;
                 if( s.keyword==="HELIX" && a.ss==="h" ) return true;
                 if( s.keyword==="SHEET" && a.ss==="s" ) return true;
@@ -4964,8 +4979,13 @@ NGL.Selection.prototype = {
             if( s.keyword!==undefined ){
 
                 if( s.keyword==="HETERO" && r.isHetero() ) return true;
-                if( s.keyword==="PROTEIN" && r.isProtein() ) return true;
+                if( s.keyword==="PROTEIN" && (
+                        r.isProtein() || r.isCg() )
+                ) return true;
                 if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
+                if( s.keyword==="POLYMER" && (
+                        r.isProtein() || r.isNucleic() || r.isCg() )
+                ) return true;
                 if( s.keyword==="WATER" && r.isWater() ) return true;
 
             }
