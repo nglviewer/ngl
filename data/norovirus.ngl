@@ -1,0 +1,30 @@
+
+panel.setName( "Noro virus" );
+
+load( "1IHM.pdb", {}, function( o ){
+
+    o.addRepresentation( "rope", {
+        subdiv: 3, radialSegments: 6, color: "chainindex",
+        transparent: false, opacity: 0.8, side: THREE.FrontSide,
+        scale: 4.0
+    } );
+
+} );
+
+
+then( function(){
+
+	stage.centerView();
+
+    uiToggleButton(
+        "show full virus", "see inside virus",
+        function(){
+            stage.viewer.setClip( 1, 100 );
+        },
+        function(){
+            stage.viewer.setClip( 42, 100 );
+        }
+    );
+
+} );
+

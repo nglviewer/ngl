@@ -335,7 +335,38 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     function uiButton( label, callback ){
 
-        var btn = new UI.Button( U( label ) ).onClick( callback );
+        var btn = new UI.Button( U( label ) ).onClick( function(){
+            callback( btn );
+        } );
+
+        panel.add( btn );
+
+        return btn;
+
+    }
+
+
+    function uiToggleButton( labelA, labelB, callbackA, callbackB ){
+
+        var flag = true;
+
+        var btn = new UI.Button( U( labelB ) ).onClick( function(){
+
+            if( flag ){
+
+                flag = false;
+                btn.setLabel( U( labelB ) );
+                callbackB();
+
+            }else{
+
+                flag = true;
+                btn.setLabel( U( labelA ) );
+                callbackA();
+
+            }
+
+        } );
 
         panel.add( btn );
 
@@ -466,6 +497,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'uiText': uiText,
         'uiBreak': uiBreak,
         'uiButton': uiButton,
+        'uiToggleButton': uiToggleButton,
         'uiVisibilityButton': uiVisibilityButton,
         'uiPlayButton': uiPlayButton,
 

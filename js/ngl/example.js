@@ -656,6 +656,12 @@ NGL.Examples = {
 
         },
 
+        "norovirus": function( stage ){
+
+            stage.loadFile( "__example__/norovirus.ngl" );
+
+        },
+
     }
 
 };

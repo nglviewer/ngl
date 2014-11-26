@@ -2,7 +2,7 @@
 var pdb = [];
 
 
-load( "1u19.pdb", function( o ){
+load( "1u19.pdb", {}, function( o ){
 
     pdb[ "1u19" ] = o;
 
@@ -14,7 +14,7 @@ load( "1u19.pdb", function( o ){
 } );
 
 
-load( "3dqb.pdb", function( o ){
+load( "3dqb.pdb", {}, function( o ){
 
     pdb[ "3dqb" ] = o;
 
@@ -34,7 +34,7 @@ then( function(){
 } );
 
 
-load( "1blu.pdb", function( o ){
+load( "1blu.pdb", {}, function( o ){
 
     pdb[ "1blu" ] = o;
 
