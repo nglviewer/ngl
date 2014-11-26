@@ -6,7 +6,7 @@ load( "1IHM.pdb", {}, function( o ){
     o.addRepresentation( "rope", {
         subdiv: 3, radialSegments: 6, color: "chainindex",
         transparent: false, opacity: 0.8, side: THREE.FrontSide,
-        scale: 4.0
+        scale: 4.0, quality: "low"
     } );
 
 } );

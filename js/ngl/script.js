@@ -355,13 +355,13 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
             if( flag ){
 
                 flag = false;
-                btn.setLabel( U( labelB ) );
+                btn.setLabel( U( labelA ) );
                 callbackB();
 
             }else{
 
                 flag = true;
-                btn.setLabel( U( labelA ) );
+                btn.setLabel( U( labelB ) );
                 callbackA();
 
             }
