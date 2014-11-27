@@ -1,6 +1,7 @@
 
 panel.setName( "Noro virus" );
 
+
 load( "1IHM.pdb", {}, function( o ){
 
     o.addRepresentation( "rope", {
@@ -12,18 +13,57 @@ load( "1IHM.pdb", {}, function( o ){
 } );
 
 
+load( "2L1F.pdb", { sele: "/0" }, function( o ){
+
+    o.addRepresentation( "cartoon", {
+        color: "ss", aspectRatio: 2.5, scale: 2.0
+    } );
+
+    o.addRepresentation( "base", {
+        color: "resname", radius: 0.7
+    } );
+
+} );
+
+
+function pdbLink( id ){
+
+    var url = "http://www.rcsb.org/pdb/explore/explore.do?structureId=";
+
+    return "<a href='" + url + id + "'>" + id + "</a>";
+
+}
+
+
 then( function(){
 
 	stage.centerView();
 
+    uiHtml(
+        "Structure of the Noro virus capsid " +
+        "(" + pdbLink( "1IHM" ) + "), " +
+        "that forms the outer shell of the virus."
+    );
+
+    uiBreak( 2 );
+
     uiToggleButton(
-        "show full virus", "see inside virus",
+        "show full virus capsid", "look inside virus capsid",
         function(){
             stage.viewer.setClip( 1, 100 );
         },
         function(){
             stage.viewer.setClip( 42, 100 );
         }
+    );
+
+    uiBreak( 2 );
+
+    uiHtml(
+        "Inside the virus capsid is the " +
+        "structure of a conserved retroviral RNA packaging element " +
+        "from the Moloney murine leukemia virus " +
+        "(" + pdbLink( "2LIF" ) + "), for size comparision."
     );
 
 } );
