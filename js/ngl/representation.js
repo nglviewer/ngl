@@ -497,6 +497,13 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         labelType: {
             type: "select", options: NGL.LabelFactory.types
         },
+        font: {
+            type: "select", options: {
+                "Arial": "Arial",
+                "DejaVu": "DejaVu",
+                "LatoBlack": "LatoBlack"
+            }
+        },
         antialias: {
             type: "boolean"
         }
@@ -511,6 +518,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         this.labelType = params.labelType || "res";
         this.labelText = params.labelText || {};
+        this.font = params.font || 'Arial';
         this.antialias = params.antialias || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
@@ -535,6 +543,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, this.color ),
             text,
+            this.font,
             this.antialias
         );
 
@@ -582,6 +591,13 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         if( params && params[ "labelType" ] ){
 
             this.labelType = params[ "labelType" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "font" ] !== undefined ){
+
+            this.font = params[ "font" ];
             rebuild = true;
 
         }

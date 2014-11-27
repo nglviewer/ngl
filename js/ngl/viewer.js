@@ -14,6 +14,10 @@ NGL.Resources = {
     // fonts
     '../fonts/Arial.fnt': '',
     '../fonts/Arial.png': 'image',
+    '../fonts/DejaVu.fnt': '',
+    '../fonts/DejaVu.png': 'image',
+    '../fonts/LatoBlack.fnt': '',
+    '../fonts/LatoBlack.png': 'image',
 
     // shaders
     '../shader/CylinderImpostor.vert': '',
@@ -3989,10 +3993,7 @@ NGL.getFont = function( name ){
 
     var fnt = NGL.Resources[ '../fonts/' + name + '.fnt' ].split('\n');
     var font = {};
-    var tWidth = 1024;
-    var tHeight = 1024;
-    var base = 58;
-    var lineHeight = 74;
+    var m, tWidth, tHeight, base, lineHeight;
 
     fnt.forEach( function( line ){
 
@@ -4019,8 +4020,24 @@ NGL.getFont = function( name ){
             character.xadvance2 = (10*(character.xadvance))/tWidth;
             character.xoffset2 = (10*(character.xoffset))/tWidth;
             character.yoffset2 = (10*(character.yoffset))/tHeight;
-            character.lineHeight = (10*74)/1024;
+            character.lineHeight = (10*lineHeight)/tHeight;
             font[ character[ 'id' ] ] = character;
+
+        }else if( line.substr( 0, 7 ) === 'common ' ){
+
+            // common lineHeight=38 base=30 scaleW=512 scaleH=512 pages=1 packed=0
+
+            m = line.match( /scaleW=([0-9]+)/ );
+            if( m !== null ) tWidth = m[ 1 ];
+
+            m = line.match( /scaleH=([0-9]+)/ );
+            if( m !== null ) tHeight = m[ 1 ];
+
+            m = line.match( /base=([0-9]+)/ );
+            if( m !== null ) base = m[ 1 ];
+
+            m = line.match( /lineHeight=([0-9]+)/ );
+            if( m !== null ) lineHeight = m[ 1 ];
 
         }else{
 
@@ -4035,15 +4052,16 @@ NGL.getFont = function( name ){
 };
 
 
-NGL.TextBuffer = function( position, size, color, text, antialias ){
+NGL.TextBuffer = function( position, size, color, text, font, antialias ){
 
     this.antialias = antialias || false;
 
-    var type = 'Arial';
+    var fontName = font || 'Arial';
+    this.font = NGL.getFont( fontName );
 
-    this.font = NGL.getFont( type );
-
-    this.tex = new THREE.Texture( NGL.Resources[ '../fonts/' + type + '.png' ] );
+    this.tex = new THREE.Texture(
+        NGL.Resources[ '../fonts/' + fontName + '.png' ]
+    );
     this.tex.needsUpdate = true;
 
     var n = position.length / 3;
@@ -4094,13 +4112,7 @@ NGL.TextBuffer.prototype.getMaterial = function(){
         material.blending = THREE.AdditiveBlending;
         material.defines[ "ANTIALIAS" ] = 1;
 
-    }/*else{
-
-        material.transparent = false;
-        material.depthWrite = true;
-        material.blending = THREE.NoBlending;
-
-    }*/
+    }
 
     material.lights = false;
     material.uniforms.fontTexture.value = this.tex;
