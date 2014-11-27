@@ -662,6 +662,21 @@ NGL.Examples = {
 
         },
 
+        "label": function( stage ){
+
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "ball+stick" );
+                o.addRepresentation( "label", {
+                    sele: "*", color: "element"
+                } );
+                stage.centerView();
+
+            } );
+
+        },
+
     }
 
 };

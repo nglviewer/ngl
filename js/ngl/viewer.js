@@ -4035,7 +4035,9 @@ NGL.getFont = function( name ){
 };
 
 
-NGL.TextBuffer = function( position, size, color, text ){
+NGL.TextBuffer = function( position, size, color, text, antialias ){
+
+    this.antialias = antialias || false;
 
     var type = 'Arial';
 
@@ -4085,11 +4087,22 @@ NGL.TextBuffer.prototype.getMaterial = function(){
 
     var material = NGL.Buffer.prototype.getMaterial.call( this );
 
-    material.transparent = true;
-    material.depthWrite = false;
-    material.lights = false;
-    material.blending = THREE.AdditiveBlending;
+    if( this.antialias ){
 
+        material.transparent = true;
+        material.depthWrite = false;
+        material.blending = THREE.AdditiveBlending;
+        material.defines[ "ANTIALIAS" ] = 1;
+
+    }/*else{
+
+        material.transparent = false;
+        material.depthWrite = true;
+        material.blending = THREE.NoBlending;
+
+    }*/
+
+    material.lights = false;
     material.uniforms.fontTexture.value = this.tex;
     material.needsUpdate = true;
 

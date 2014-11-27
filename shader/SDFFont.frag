@@ -8,25 +8,12 @@ varying vec2 texCoord;
 
 #include fog_params
 
-// The right value for crisp fonts is 0.25 / (spread * scale),
-// where spread is the value you used when generating the font,
-// and scale is the scale you're drawing it at.
-// const float smoothing = 0.25 / (4.0 * 4.0);
+#ifndef ANTIALIAS
+    const float smoothness = 8.0;
+#else
+    const float smoothness = 16.0;
+#endif
 
-// void main2() {
-
-//     float distance = texture2D( fontTexture, texCoord ).a;
-//     float alpha = smoothstep( 0.5 - smoothing, 0.5 + smoothing, distance );
-//     gl_FragColor = vec4( colorx, alpha );
-
-//     // gl_FragColor = texture2D( fontTexture, texCoord );
-
-//     #include fog_fragment
-// }
-
-
-
-const float smoothness = 16.0;
 const float gamma = 2.2;
 
 void main() {
@@ -42,10 +29,17 @@ void main() {
     );
     float a = smoothstep( 0.5 - w, 0.5 + w, sdf );
 
-    // gamma correction for linear attenuation
-    a = pow( a, 1.0 / gamma );
+    #ifndef ANTIALIAS
+        if( a < 0.5 ) discard;
+        a = 1.0;
+    #else
+        // gamma correction for linear attenuation
+        a = pow( a, 1.0 / gamma );
+    #endif
+
     gl_FragColor = vec4( vColor, a );
 
     #include fog
 
 }
+

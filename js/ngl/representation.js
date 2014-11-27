@@ -496,6 +496,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         labelType: {
             type: "select", options: NGL.LabelFactory.types
+        },
+        antialias: {
+            type: "boolean"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -508,6 +511,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         this.labelType = params.labelType || "res";
         this.labelText = params.labelText || {};
+        this.antialias = params.antialias || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -530,7 +534,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             this.atomSet.atomPosition(),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, this.color ),
-            text
+            text,
+            this.antialias
         );
 
         this.bufferList = [ this.textBuffer ];
@@ -577,6 +582,13 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         if( params && params[ "labelType" ] ){
 
             this.labelType = params[ "labelType" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "antialias" ] !== undefined ){
+
+            this.antialias = params[ "antialias" ];
             rebuild = true;
 
         }
