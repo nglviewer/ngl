@@ -320,6 +320,19 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
+    function uiHtml( html, newline ){
+
+        var elm = new UI.Html( U( html ) );
+
+        panel.add( elm );
+
+        if( newline ) uiBreak( 1 );
+
+        return elm;
+
+    }
+
+
     function uiBreak( n ){
 
         n = n === undefined ? 1 : n;
@@ -495,6 +508,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'superpose': superpose,
 
         'uiText': uiText,
+        'uiHtml': uiHtml,
         'uiBreak': uiBreak,
         'uiButton': uiButton,
         'uiToggleButton': uiToggleButton,

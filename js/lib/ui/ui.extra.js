@@ -3,6 +3,40 @@
  */
 
 
+// Html
+
+UI.Html = function ( html ) {
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'span' );
+    dom.className = 'Html';
+    dom.style.cursor = 'default';
+    dom.style.display = 'inline-block';
+    dom.style.verticalAlign = 'middle';
+
+    this.dom = dom;
+    this.setValue( html );
+
+    return this;
+
+};
+
+UI.Html.prototype = Object.create( UI.Element.prototype );
+
+UI.Html.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.dom.innerHTML = value;
+
+    }
+
+    return this;
+
+};
+
+
 // Overlay Panel
 
 UI.OverlayPanel = function(){
