@@ -68,7 +68,11 @@ NGL.StructureParser.prototype = {
 }
 
 
-NGL.PdbParser = function( name, path ){
+NGL.PdbParser = function( name, path, onlyFirstModel ){
+
+    // FIXME
+    // this.onlyFirstModel = onlyFirstModel;
+    this.onlyFirstModel = true;
 
     NGL.StructureParser.call( this, name, path );
 
@@ -83,6 +87,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     console.time( __timeName );
 
     var s = this.structure;
+    var onlyFirstModel = this.onlyFirstModel;
 
     s.title = '';
     s.id = '';
@@ -352,7 +357,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }
 
+            }else if( recordName === 'ENDMDL' ){
+
+                if( onlyFirstModel ){
+
+                    _n = n;
+                    break;
+
+                }
+
             }
+
 
         }
 
