@@ -4902,6 +4902,10 @@ NGL.Selection.prototype = {
             "CA", "BB"
         ];
 
+        var helixTypes = [
+            "h", "g", "i"
+        ];
+
         var fn = function( a, s ){
 
             // returning -1 means the rule is not applicable
@@ -4921,7 +4925,7 @@ NGL.Selection.prototype = {
                     )
                 ) return true;
                 if( s.keyword==="WATER" && a.residue.isWater() ) return true;
-                if( s.keyword==="HELIX" && a.ss==="h" ) return true;
+                if( s.keyword==="HELIX" && helixTypes.indexOf( a.ss )!==-1 ) return true;
                 if( s.keyword==="SHEET" && a.ss==="s" ) return true;
                 if( s.keyword==="BACKBONE" && (
                         ( a.residue.isProtein() &&
