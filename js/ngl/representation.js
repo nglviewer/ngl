@@ -512,16 +512,16 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
+        var p = params || {};
 
-        params.color = params.color || 0xFFFFFF;
+        p.color = p.color || 0xFFFFFF;
 
-        this.labelType = params.labelType || "res";
-        this.labelText = params.labelText || {};
-        this.font = params.font || 'Arial';
-        this.antialias = params.antialias || false;
+        this.labelType = p.labelType || "res";
+        this.labelText = p.labelText || {};
+        this.font = p.font || 'Arial';
+        this.antialias = p.antialias !== undefined ? p.antialias : true;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 

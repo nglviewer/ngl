@@ -4062,7 +4062,7 @@ NGL.getFont = function( name ){
 
 NGL.TextBuffer = function( position, size, color, text, font, antialias ){
 
-    this.antialias = antialias || false;
+    this.antialias = antialias !== undefined ? antialias : true;
 
     var fontName = font || 'Arial';
     this.font = NGL.getFont( fontName );
@@ -4117,8 +4117,8 @@ NGL.TextBuffer.prototype.getMaterial = function(){
     if( this.antialias ){
 
         material.transparent = true;
-        material.depthWrite = false;
-        material.blending = THREE.AdditiveBlending;
+        material.depthWrite = true;
+        material.blending = THREE.NormalBlending;
         material.defines[ "ANTIALIAS" ] = 1;
 
     }

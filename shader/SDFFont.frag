@@ -30,10 +30,11 @@ void main() {
 
     #ifndef ANTIALIAS
         gl_FragColor = vec4( mix( backgroundColor, vColor, a ), 1.0 );
-        if( a < 0.2 ) discard;
     #else
         gl_FragColor = vec4( vColor, a );
     #endif
+
+    if( a < 0.2 ) discard;
 
     #include fog
 
