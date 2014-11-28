@@ -993,7 +993,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    add: function( buffer, matrixList ){
+    add: function( buffer, matrixList, background ){
 
         var group, pickingGroup;
 
@@ -1006,43 +1006,25 @@ NGL.Viewer.prototype = {
 
             matrixList.forEach( function( matrix ){
 
-                var mesh = buffer.getMesh();
-                mesh.frustumCulled = false;
-                mesh.applyMatrix( matrix );
-                mesh.userData[ "matrix" ] = matrix;
-                group.add( mesh );
-
-                if( buffer.pickable ){
-
-                    var pickingMesh = buffer.getMesh( "picking" );
-                    pickingMesh.frustumCulled = false;
-                    pickingMesh.applyMatrix( matrix );
-                    pickingMesh.userData[ "matrix" ] = matrix;
-                    pickingGroup.add( pickingMesh );
-
-                }
-
-                this.updateBoundingBox( buffer.geometry, matrix );
+                this.addBuffer(
+                    buffer, group, pickingGroup, background, matrix
+                );
 
             }, this );
 
         }else{
 
-            var mesh = buffer.getMesh();
-            mesh.frustumCulled = false;
-            group.add( mesh );
-
-            if( buffer.pickable ){
-                var pickingMesh = buffer.getMesh( "picking" );
-                pickingMesh.frustumCulled = false;
-                pickingGroup.add( pickingMesh );
-            }
-
-            this.updateBoundingBox( buffer.geometry );
+            this.addBuffer(
+                buffer, group, pickingGroup, background
+            );
 
         }
 
-        this.modelGroup.add( group );
+        if( background ){
+            this.backgroundModelGroup.add( group );
+        }else{
+            this.modelGroup.add( group );
+        }
         if( buffer.pickable ){
             this.pickingModelGroup.add( pickingGroup );
         }
@@ -1056,18 +1038,27 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBackground: function( buffer ){
+    addBuffer: function( buffer, group, pickingGroup, background, matrix ){
 
-        var mesh = buffer.getMesh( "background" );
+        var mesh = buffer.getMesh( background ? "background" : undefined );
         mesh.frustumCulled = false;
+        if( matrix ){
+            mesh.applyMatrix( matrix );
+            mesh.userData[ "matrix" ] = matrix;
+        }
+        group.add( mesh );
 
-        this.backgroundModelGroup.add( mesh );
+        if( buffer.pickable ){
+            var pickingMesh = buffer.getMesh( "picking" );
+            pickingMesh.frustumCulled = false;
+            if( matrix ){
+                pickingMesh.applyMatrix( matrix );
+                pickingMesh.userData[ "matrix" ] = matrix;
+            }
+            pickingGroup.add( pickingMesh );
+        }
 
-        this.updateBoundingBox( buffer.geometry );
-
-        buffer.group = mesh;
-
-        this.requestRender();
+        this.updateBoundingBox( buffer.geometry, matrix );
 
     },
 

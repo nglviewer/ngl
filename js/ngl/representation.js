@@ -3354,22 +3354,11 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     attach: function(){
 
-        var viewer = this.viewer;
-        var background = this.background;
-
         this.bufferList.forEach( function( buffer ){
 
-            if( background ){
+            this.viewer.add( buffer, undefined, this.background );
 
-                viewer.addBackground( buffer );
-
-            }else{
-
-                viewer.add( buffer );
-
-            }
-
-        });
+        }, this );
 
         this.setVisibility( this.visible );
 
@@ -3420,6 +3409,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             normal = geo.attributes.normal.array;
 
         }else{
+
+            // FIXME
+            console.log( "TODO non BufferGeometry surface" );
 
             position = NGL.Utils.positionFromGeometry( geo );
             color = NGL.Utils.colorFromGeometry( geo );
