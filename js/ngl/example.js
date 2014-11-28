@@ -666,10 +666,10 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1crn.pdb", function( o ){
 
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "ball+stick" );
+                o.addRepresentation( "tube", { radius: "ss" } );
+                o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
                 o.addRepresentation( "label", {
-                    sele: "*", color: "element"
+                    sele: ".CA", color: "element"
                 } );
                 stage.centerView();
 
