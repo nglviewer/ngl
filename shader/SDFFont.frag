@@ -1,6 +1,7 @@
 
 #extension GL_OES_standard_derivatives : enable
 
+uniform vec3 backgroundColor;
 uniform sampler2D fontTexture;
 
 varying vec3 vColor;
@@ -8,12 +9,7 @@ varying vec2 texCoord;
 
 #include fog_params
 
-#ifndef ANTIALIAS
-    const float smoothness = 8.0;
-#else
-    const float smoothness = 16.0;
-#endif
-
+const float smoothness = 16.0;
 const float gamma = 2.2;
 
 void main() {
@@ -29,15 +25,15 @@ void main() {
     );
     float a = smoothstep( 0.5 - w, 0.5 + w, sdf );
 
-    #ifndef ANTIALIAS
-        if( a < 0.5 ) discard;
-        a = 1.0;
-    #else
-        // gamma correction for linear attenuation
-        a = pow( a, 1.0 / gamma );
-    #endif
+    // gamma correction for linear attenuation
+    a = pow( a, 1.0 / gamma );
 
-    gl_FragColor = vec4( vColor, a );
+    #ifndef ANTIALIAS
+        gl_FragColor = vec4( mix( backgroundColor, vColor, a ), 1.0 );
+        if( a < 0.2 ) discard;
+    #else
+        gl_FragColor = vec4( vColor, a );
+    #endif
 
     #include fog
 

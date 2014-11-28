@@ -1568,10 +1568,14 @@ NGL.Viewer.prototype = {
 
         var u;
         var matrix = new THREE.Matrix4();
+        var bgColor = new THREE.Color();
 
         return function( group ){
 
             var camera = this.camera;
+            var params = this.params;
+
+            bgColor.set( params.backgroundColor );
 
             group.traverse( function ( o ){
 
@@ -1579,6 +1583,10 @@ NGL.Viewer.prototype = {
 
                 u = o.material.uniforms;
                 if( !u ) return;
+
+                if( u.backgroundColor ){
+                    u.backgroundColor.value = bgColor;
+                }
 
                 if( u.modelViewMatrixInverse ){
                     matrix.multiplyMatrices(
@@ -4081,7 +4089,8 @@ NGL.TextBuffer = function( position, size, color, text, font, antialias ){
     NGL.QuadBuffer.call( this );
 
     this.addUniforms({
-        "fontTexture"  : { type: "t", value: this.tex }
+        "fontTexture"  : { type: "t", value: this.tex },
+        "backgroundColor"  : { type: "c", value: new THREE.Color( "black" ) }
     });
 
     this.addAttributes({
