@@ -3422,12 +3422,30 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        this.surfaceBuffer = new NGL.SurfaceBuffer(
-            position, color, index, normal, undefined, this.wireframe,
-            this.transparent, parseInt( this.side ), opacity
-        );
+        if( this.transparent && parseInt( this.side ) === THREE.DoubleSide ){
 
-        this.bufferList = [ this.surfaceBuffer ];
+            var frontBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined, this.wireframe,
+                this.transparent, THREE.FrontSide, opacity
+            );
+
+            var backBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined, this.wireframe,
+                this.transparent, THREE.BackSide, opacity
+            );
+
+            this.bufferList = [ frontBuffer, backBuffer ];
+
+        }else{
+
+            this.surfaceBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined, this.wireframe,
+                this.transparent, parseInt( this.side ), opacity
+            );
+
+            this.bufferList = [ this.surfaceBuffer ];
+
+        }
 
     },
 

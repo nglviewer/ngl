@@ -22,6 +22,10 @@ void main()
         transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
     #endif
 
+    #ifdef FLIP_SIDED
+        transformedNormal = -transformedNormal;
+    #endif
+
     #ifdef PICKING
 
         gl_FragColor.xyz = vPickingColor;
