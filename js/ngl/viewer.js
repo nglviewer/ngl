@@ -878,6 +878,10 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
+        this.transparentGroup = new THREE.Group();
+        this.transparentGroup.name = "transparentGroup";
+        this.rotationGroup.add( this.transparentGroup );
+
         this.textGroup = new THREE.Group();
         this.textGroup.name = "textGroup";
         this.rotationGroup.add( this.textGroup );
@@ -958,6 +962,8 @@ NGL.Viewer.prototype = {
             this.backgroundGroup.add( group );
         }else if( buffer instanceof NGL.TextBuffer ){
             this.textGroup.add( group );
+        }else if( buffer.transparent ){
+            this.transparentGroup.add( group );
         }else{
             this.modelGroup.add( group );
         }
@@ -1446,8 +1452,9 @@ NGL.Viewer.prototype = {
         if( picking ){
             this.renderer.render( this.pickingGroup, this.camera );
         }else{
-            this.renderer.render( this.textGroup, this.camera );
             this.renderer.render( this.modelGroup, this.camera );
+            this.renderer.render( this.textGroup, this.camera );
+            this.renderer.render( this.transparentGroup, this.camera );
         }
 
         this._rendering = false;
