@@ -916,48 +916,27 @@ NGL.Viewer.prototype = {
 
         if( !this.scene ){
             this.scene = new THREE.Scene();
-            this.pickingScene = new THREE.Scene();
-            this.backgroundScene = new THREE.Scene();
-            this.textScene = new THREE.Scene();
         }
+
+        this.rotationGroup = new THREE.Group();
+        this.rotationGroup.name = "rotationGroup";
+        this.scene.add( this.rotationGroup );
 
         this.modelGroup = new THREE.Group();
         this.modelGroup.name = "modelGroup";
-        this.rotationGroup = new THREE.Group();
-        this.rotationGroup.name = "rotationGroup";
-
         this.rotationGroup.add( this.modelGroup );
-        this.scene.add( this.rotationGroup );
 
-        // picking
+        this.pickingGroup = new THREE.Group();
+        this.pickingGroup.name = "pickingGroup";
+        this.rotationGroup.add( this.pickingGroup );
 
-        this.pickingModelGroup = new THREE.Group();
-        this.pickingModelGroup.name = "pickingModelGroup";
-        this.pickingRotationGroup = new THREE.Group();
-        this.pickingRotationGroup.name = "pickingRotationGroup";
+        this.backgroundGroup = new THREE.Group();
+        this.backgroundGroup.name = "backgroundGroup";
+        this.rotationGroup.add( this.backgroundGroup );
 
-        this.pickingRotationGroup.add( this.pickingModelGroup );
-        this.pickingScene.add( this.pickingRotationGroup );
-
-        // background
-
-        this.backgroundModelGroup = new THREE.Group();
-        this.backgroundModelGroup.name = "backgroundModelGroup";
-        this.backgroundRotationGroup = new THREE.Group();
-        this.backgroundRotationGroup.name = "backgroundRotationGroup";
-
-        this.backgroundRotationGroup.add( this.backgroundModelGroup );
-        this.backgroundScene.add( this.backgroundRotationGroup );
-
-        // text
-
-        this.textModelGroup = new THREE.Group();
-        this.textModelGroup.name = "textModelGroup";
-        this.textRotationGroup = new THREE.Group();
-        this.textRotationGroup.name = "textRotationGroup";
-
-        this.textRotationGroup.add( this.textModelGroup );
-        this.textScene.add( this.textRotationGroup );
+        this.textGroup = new THREE.Group();
+        this.textGroup.name = "textGroup";
+        this.rotationGroup.add( this.textGroup );
 
     },
 
@@ -1032,15 +1011,15 @@ NGL.Viewer.prototype = {
         }
 
         if( background ){
-            this.backgroundModelGroup.add( group );
+            this.backgroundGroup.add( group );
         }else if( buffer instanceof NGL.TextBuffer ){
-            this.textModelGroup.add( group );
+            this.textGroup.add( group );
         }else{
             this.modelGroup.add( group );
         }
 
         if( buffer.pickable ){
-            this.pickingModelGroup.add( pickingGroup );
+            this.pickingGroup.add( pickingGroup );
         }
 
         buffer.group = group;
@@ -1048,6 +1027,7 @@ NGL.Viewer.prototype = {
             buffer.pickingGroup = pickingGroup;
         }
 
+        this.rotationGroup.updateMatrixWorld();
         this.requestRender();
 
     },
@@ -1078,14 +1058,13 @@ NGL.Viewer.prototype = {
 
     remove: function( buffer ){
 
-        this.modelGroup.remove( buffer.group );
+        this.rotationGroup.children.forEach( function( group ){
+            group.remove( buffer.group );
+        } );
+
         if( buffer.pickable ){
-            this.pickingModelGroup.remove( buffer.pickingGroup );
+            this.pickingGroup.remove( buffer.pickingGroup );
         }
-
-        this.backgroundModelGroup.remove( buffer.group );
-
-        this.textModelGroup.remove( buffer.group );
 
         this.updateBoundingBox();
 
@@ -1494,10 +1473,7 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
-        this.renderer.clear( true, true, true );
-
-        // needed for picking to work on the first pick
-        this.pickingRotationGroup.updateMatrixWorld();
+        this.renderer.clear();
 
         // clipping
 
@@ -1524,7 +1500,6 @@ NGL.Viewer.prototype = {
             Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
-        this.textScene.fog = this.scene.fog;
 
         if( NGL.GET( "disableClipping" ) ){
             this.camera.near = 0.1;
@@ -1537,13 +1512,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        if( picking ){
-            this.updateDynamicUniforms( this.pickingModelGroup );
-        }else{
-            this.updateDynamicUniforms( this.modelGroup );
-            this.updateDynamicUniforms( this.backgroundModelGroup );
-            this.updateDynamicUniforms( this.textModelGroup );
-        }
+        this.updateDynamicUniforms( this.scene );
 
         if( this.ssaoEffect.enabled || this.fxaaEffect.enabled ||
                 this.dotScreenEffect.enabled ){
@@ -1558,14 +1527,14 @@ NGL.Viewer.prototype = {
 
         }else{
 
-            this.renderer.render( this.backgroundScene, this.camera );
-            this.renderer.clear( false, true, false );
+            this.renderer.render( this.backgroundGroup, this.camera );
+            this.renderer.clearDepth();
 
             if( picking ){
-                this.renderer.render( this.pickingScene, this.camera );
+                this.renderer.render( this.pickingGroup, this.camera );
             }else{
-                this.renderer.render( this.textScene, this.camera );
-                this.renderer.render( this.scene, this.camera );
+                this.renderer.render( this.textGroup, this.camera );
+                this.renderer.render( this.modelGroup, this.camera );
             }
 
         }
@@ -1673,8 +1642,6 @@ NGL.Viewer.prototype = {
         console.log( "scene cleared" );
 
         this.scene.remove( this.rotationGroup );
-        this.pickingScene.remove( this.pickingRotationGroup );
-        this.textScene.remove( this.textRotationGroup );
 
         this.initScene();
 
@@ -1714,14 +1681,7 @@ NGL.Viewer.prototype = {
             }
 
             this.rotationGroup.position.copy( t );
-            this.pickingRotationGroup.position.copy( t );
-            this.backgroundRotationGroup.position.copy( t );
-            this.textRotationGroup.position.copy( t );
-
             this.rotationGroup.updateMatrixWorld();
-            this.pickingRotationGroup.updateMatrixWorld();
-            this.backgroundRotationGroup.updateMatrixWorld();
-            this.textRotationGroup.updateMatrixWorld();
 
             this.requestRender();
 
@@ -1749,14 +1709,7 @@ NGL.Viewer.prototype = {
         this.camera.up.fromArray( orientation[ 1 ] );
 
         this.rotationGroup.position.fromArray( orientation[ 2 ] );
-        this.pickingRotationGroup.position.fromArray( orientation[ 2 ] );
-        this.backgroundRotationGroup.position.fromArray( orientation[ 2 ] );
-        this.textRotationGroup.position.fromArray( orientation[ 2 ] );
-
         this.rotationGroup.updateMatrixWorld();
-        this.pickingRotationGroup.updateMatrixWorld();
-        this.backgroundRotationGroup.updateMatrixWorld();
-        this.textRotationGroup.updateMatrixWorld();
 
         this.requestRender();
 
