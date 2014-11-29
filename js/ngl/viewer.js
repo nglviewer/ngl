@@ -825,7 +825,7 @@ NGL.Viewer.prototype = {
         });
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = false;
-        this.renderer.sortObjects = false;
+        this.renderer.sortObjects = true;
 
         var _glExtensionFragDepth = this.renderer.context.getExtension(
             'EXT_frag_depth'
@@ -881,6 +881,10 @@ NGL.Viewer.prototype = {
         this.transparentGroup = new THREE.Group();
         this.transparentGroup.name = "transparentGroup";
         this.rotationGroup.add( this.transparentGroup );
+
+        this.surfaceGroup = new THREE.Group();
+        this.surfaceGroup.name = "surfaceGroup";
+        this.rotationGroup.add( this.surfaceGroup );
 
         this.textGroup = new THREE.Group();
         this.textGroup.name = "textGroup";
@@ -963,7 +967,11 @@ NGL.Viewer.prototype = {
         }else if( buffer instanceof NGL.TextBuffer ){
             this.textGroup.add( group );
         }else if( buffer.transparent ){
-            this.transparentGroup.add( group );
+            if( buffer instanceof NGL.SurfaceBuffer ){
+                this.surfaceGroup.add( group );
+            }else{
+                this.transparentGroup.add( group );
+            }
         }else{
             this.modelGroup.add( group );
         }
@@ -1462,6 +1470,7 @@ NGL.Viewer.prototype = {
             this.renderer.render( this.modelGroup, this.camera );
             this.renderer.render( this.textGroup, this.camera );
             this.renderer.render( this.transparentGroup, this.camera );
+            this.renderer.render( this.surfaceGroup, this.camera );
 
         }
 
@@ -3824,6 +3833,15 @@ NGL.TubeMeshBuffer.prototype = {
     dispose: NGL.Buffer.prototype.dispose
 
 };
+
+
+NGL.SurfaceBuffer = function(){
+
+    NGL.MeshBuffer.apply( this, arguments );
+
+}
+
+NGL.SurfaceBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
 
 ///////////////////

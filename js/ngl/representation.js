@@ -3422,12 +3422,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        this.meshBuffer = new NGL.MeshBuffer(
+        this.surfaceBuffer = new NGL.SurfaceBuffer(
             position, color, index, normal, undefined, this.wireframe,
             this.transparent, parseInt( this.side ), opacity
         );
 
-        this.bufferList = [ this.meshBuffer ];
+        this.bufferList = [ this.surfaceBuffer ];
 
     },
 
@@ -3468,7 +3468,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
             this.opacity = params[ "opacity" ];
             // FIXME uniforms are cloned and not accessible at the moment
-            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            // this.surfaceBuffer.uniforms[ "opacity" ].value = this.opacity;
             rebuild = true;
 
         }
