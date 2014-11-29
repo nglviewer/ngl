@@ -794,8 +794,6 @@ NGL.Viewer.prototype = {
 
             specular: 0x050505,
 
-
-
         };
 
     },
@@ -866,49 +864,6 @@ NGL.Viewer.prototype = {
         if( this.eid ){
             this.container.appendChild( this.renderer.domElement );
         }
-
-        // postprocessing
-        this.composer = new THREE.EffectComposer( this.renderer );
-        this.composer.setSize( this.width, this.height );
-        this.composer.addPass( new THREE.RenderPass( this.scene, this.camera ) );
-
-        this.depthScale = 0.5;
-        this.depthTarget = new THREE.WebGLRenderTarget(
-            this.width * this.depthScale, this.height * this.depthScale,
-            { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter }
-        );
-
-        this.ssaoEffect = new THREE.ShaderPass( THREE.SSAOShader );
-        this.ssaoEffect.uniforms[ 'tDepth' ].value = this.depthTarget;
-        this.ssaoEffect.uniforms[ 'size' ].value.set(
-            this.width * this.depthScale, this.height * this.depthScale
-        );
-        this.ssaoEffect.uniforms[ 'cameraNear' ].value = this.camera.near;
-        this.ssaoEffect.uniforms[ 'cameraFar' ].value = this.camera.far;
-        this.ssaoEffect.enabled = false;
-        this.composer.addPass( this.ssaoEffect );
-
-        this.dotScreenEffect = new THREE.ShaderPass( THREE.DotScreenShader );
-        this.dotScreenEffect.uniforms[ 'scale' ].value = 4;
-        this.dotScreenEffect.enabled = false;
-        this.composer.addPass( this.dotScreenEffect );
-
-        this.fxaaEffect = new THREE.ShaderPass( THREE.FXAAShader );
-        this.fxaaEffect.uniforms[ 'resolution' ].value = new THREE.Vector2(
-            1 / this.width, 1 / this.height
-        );
-        this.fxaaEffect.enabled = false;
-        this.composer.addPass( this.fxaaEffect );
-
-        var effect = new THREE.ShaderPass( THREE.CopyShader );
-        effect.renderToScreen = true;
-        this.composer.addPass( effect );
-
-        // depth pass
-        this.depthPassPlugin = new THREE.DepthPassPlugin();
-        this.depthPassPlugin.renderTarget = this.depthTarget;
-
-        this.renderer.addPrePlugin( this.depthPassPlugin );
 
     },
 
@@ -1269,12 +1224,7 @@ NGL.Viewer.prototype = {
 
         this.camera.updateProjectionMatrix();
         this.renderer.setSize( this.width, this.height );
-        this.composer.setSize( this.width, this.height );
         this.controls.handleResize();
-
-        this.fxaaEffect.uniforms[ 'resolution' ].value.set(
-            1 / this.width, 1 / this.height
-        );
 
         this.requestRender();
 
@@ -1514,29 +1464,14 @@ NGL.Viewer.prototype = {
 
         this.updateDynamicUniforms( this.scene );
 
-        if( this.ssaoEffect.enabled || this.fxaaEffect.enabled ||
-                this.dotScreenEffect.enabled ){
+        this.renderer.render( this.backgroundGroup, this.camera );
+        this.renderer.clearDepth();
 
-            if( this.ssaoEffect.enabled ){
-                this.depthPassPlugin.enabled = true;
-                this.renderer.autoClear = false;
-                this.renderer.render( this.scene, this.camera );
-            }
-            this.depthPassPlugin.enabled = false;
-            this.composer.render();
-
+        if( picking ){
+            this.renderer.render( this.pickingGroup, this.camera );
         }else{
-
-            this.renderer.render( this.backgroundGroup, this.camera );
-            this.renderer.clearDepth();
-
-            if( picking ){
-                this.renderer.render( this.pickingGroup, this.camera );
-            }else{
-                this.renderer.render( this.textGroup, this.camera );
-                this.renderer.render( this.modelGroup, this.camera );
-            }
-
+            this.renderer.render( this.textGroup, this.camera );
+            this.renderer.render( this.modelGroup, this.camera );
         }
 
         this._rendering = false;
