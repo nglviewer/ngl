@@ -3392,7 +3392,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         if( geo instanceof THREE.BufferGeometry ){
 
-            var n = geo.attributes.position.array.length / 3;
             var an = geo.attributes.normal.array;
 
             // assume there are no normals if the first is zero
@@ -3401,10 +3400,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             }
 
             position = geo.attributes.position.array;
-            var tc = new THREE.Color( this.color );
-            color = NGL.Utils.uniformArray3(
-                n, tc.r, tc.g, tc.b
-            );
             index = null;
             normal = geo.attributes.normal.array;
 
@@ -3414,11 +3409,16 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             console.log( "TODO non BufferGeometry surface" );
 
             position = NGL.Utils.positionFromGeometry( geo );
-            color = NGL.Utils.colorFromGeometry( geo );
             index = NGL.Utils.indexFromGeometry( geo );
             normal = NGL.Utils.normalFromGeometry( geo );
 
         }
+
+        var n = position.length / 3;
+        var tc = new THREE.Color( this.color );
+        color = NGL.Utils.uniformArray3(
+            n, tc.r, tc.g, tc.b
+        );
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
