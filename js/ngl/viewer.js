@@ -918,6 +918,7 @@ NGL.Viewer.prototype = {
             this.scene = new THREE.Scene();
             this.pickingScene = new THREE.Scene();
             this.backgroundScene = new THREE.Scene();
+            this.textScene = new THREE.Scene();
         }
 
         this.modelGroup = new THREE.Group();
@@ -947,6 +948,16 @@ NGL.Viewer.prototype = {
 
         this.backgroundRotationGroup.add( this.backgroundModelGroup );
         this.backgroundScene.add( this.backgroundRotationGroup );
+
+        // text
+
+        this.textModelGroup = new THREE.Group();
+        this.textModelGroup.name = "textModelGroup";
+        this.textRotationGroup = new THREE.Group();
+        this.textRotationGroup.name = "textRotationGroup";
+
+        this.textRotationGroup.add( this.textModelGroup );
+        this.textScene.add( this.textRotationGroup );
 
     },
 
@@ -1022,9 +1033,12 @@ NGL.Viewer.prototype = {
 
         if( background ){
             this.backgroundModelGroup.add( group );
+        }else if( buffer instanceof NGL.TextBuffer ){
+            this.textModelGroup.add( group );
         }else{
             this.modelGroup.add( group );
         }
+
         if( buffer.pickable ){
             this.pickingModelGroup.add( pickingGroup );
         }
@@ -1070,6 +1084,8 @@ NGL.Viewer.prototype = {
         }
 
         this.backgroundModelGroup.remove( buffer.group );
+
+        this.textModelGroup.remove( buffer.group );
 
         this.updateBoundingBox();
 
@@ -1508,6 +1524,7 @@ NGL.Viewer.prototype = {
             Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
+        this.textScene.fog = this.scene.fog;
 
         if( NGL.GET( "disableClipping" ) ){
             this.camera.near = 0.1;
@@ -1525,10 +1542,11 @@ NGL.Viewer.prototype = {
         }else{
             this.updateDynamicUniforms( this.modelGroup );
             this.updateDynamicUniforms( this.backgroundModelGroup );
+            this.updateDynamicUniforms( this.textModelGroup );
         }
 
         if( this.ssaoEffect.enabled || this.fxaaEffect.enabled ||
-            this.dotScreenEffect.enabled ){
+                this.dotScreenEffect.enabled ){
 
             if( this.ssaoEffect.enabled ){
                 this.depthPassPlugin.enabled = true;
@@ -1546,6 +1564,7 @@ NGL.Viewer.prototype = {
             if( picking ){
                 this.renderer.render( this.pickingScene, this.camera );
             }else{
+                this.renderer.render( this.textScene, this.camera );
                 this.renderer.render( this.scene, this.camera );
             }
 
@@ -1655,6 +1674,7 @@ NGL.Viewer.prototype = {
 
         this.scene.remove( this.rotationGroup );
         this.pickingScene.remove( this.pickingRotationGroup );
+        this.textScene.remove( this.textRotationGroup );
 
         this.initScene();
 
@@ -1696,10 +1716,12 @@ NGL.Viewer.prototype = {
             this.rotationGroup.position.copy( t );
             this.pickingRotationGroup.position.copy( t );
             this.backgroundRotationGroup.position.copy( t );
+            this.textRotationGroup.position.copy( t );
 
             this.rotationGroup.updateMatrixWorld();
             this.pickingRotationGroup.updateMatrixWorld();
             this.backgroundRotationGroup.updateMatrixWorld();
+            this.textRotationGroup.updateMatrixWorld();
 
             this.requestRender();
 
@@ -1729,10 +1751,12 @@ NGL.Viewer.prototype = {
         this.rotationGroup.position.fromArray( orientation[ 2 ] );
         this.pickingRotationGroup.position.fromArray( orientation[ 2 ] );
         this.backgroundRotationGroup.position.fromArray( orientation[ 2 ] );
+        this.textRotationGroup.position.fromArray( orientation[ 2 ] );
 
         this.rotationGroup.updateMatrixWorld();
         this.pickingRotationGroup.updateMatrixWorld();
         this.backgroundRotationGroup.updateMatrixWorld();
+        this.textRotationGroup.updateMatrixWorld();
 
         this.requestRender();
 
