@@ -809,18 +809,7 @@ NGL.Viewer.prototype = {
         this.perspectiveCamera.position.z = p.cameraZ;
         this.perspectiveCamera.lookAt( lookAt );
 
-        this.orthographicCamera = new THREE.OrthographicCamera(
-            this.width / - 2, this.width / 2, this.height / 2, this.height / - 2,
-            p.cameraNear, p.cameraFar
-        );
-        this.orthographicCamera.position.z = p.cameraZ/2;
-        this.orthographicCamera.lookAt( lookAt );
-
-        if( p.cameraType ){
-            this.camera = this.perspectiveCamera;
-        }else{
-            this.camera = this.orthographicCamera;
-        }
+        this.camera = this.perspectiveCamera;
 
         this.camera.updateProjectionMatrix();
 
@@ -1169,18 +1158,11 @@ NGL.Viewer.prototype = {
         if( near ) p.cameraNear = near;
         if( far ) p.cameraFar = far;
 
-        if( p.cameraType ){
-            this.camera = this.perspectiveCamera;
-        }else{
-            this.camera = this.orthographicCamera;
-        }
+        this.camera = this.perspectiveCamera;
 
         this.perspectiveCamera.fov = p.cameraFov;
         this.perspectiveCamera.near = p.cameraNear;
         this.perspectiveCamera.far = p.cameraFar;
-
-        this.orthographicCamera.near = p.cameraNear;
-        this.orthographicCamera.far = p.cameraFar;
 
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
@@ -1215,12 +1197,6 @@ NGL.Viewer.prototype = {
         this.aspect = this.width / this.height;
 
         this.perspectiveCamera.aspect = this.aspect;
-
-        var az = this.controls.accumulatedZoom;
-        this.orthographicCamera.left = az * -this.width / 2;
-        this.orthographicCamera.right = az * this.width / 2;
-        this.orthographicCamera.top = az * this.height / 2;
-        this.orthographicCamera.bottom = az * -this.height / 2;
 
         this.camera.updateProjectionMatrix();
         this.renderer.setSize( this.width, this.height );
