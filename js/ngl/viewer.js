@@ -1051,7 +1051,7 @@ NGL.Viewer.prototype = {
 
             bb.makeEmpty();
 
-            this.modelGroup.traverse( function ( node ){
+            this.rotationGroup.traverse( function ( node ){
 
                 if ( node.geometry !== undefined ){
 
