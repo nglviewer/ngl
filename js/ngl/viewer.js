@@ -1405,8 +1405,6 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
-        this.renderer.clear();
-
         // clipping
 
         var bRadius = this.boundingBox.size().length() * 0.5;
@@ -1439,6 +1437,8 @@ NGL.Viewer.prototype = {
             this.scene.fog = null;
         }
 
+        //
+
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld( true );
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
@@ -1446,15 +1446,23 @@ NGL.Viewer.prototype = {
 
         this.updateDynamicUniforms( this.scene );
 
-        this.renderer.render( this.backgroundGroup, this.camera );
-        this.renderer.clearDepth();
+        // render
+
+        this.renderer.clear();
 
         if( picking ){
+
             this.renderer.render( this.pickingGroup, this.camera );
+
         }else{
+
+            this.renderer.render( this.backgroundGroup, this.camera );
+            this.renderer.clearDepth();
+
             this.renderer.render( this.modelGroup, this.camera );
             this.renderer.render( this.textGroup, this.camera );
             this.renderer.render( this.transparentGroup, this.camera );
+
         }
 
         this._rendering = false;
