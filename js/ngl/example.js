@@ -166,7 +166,7 @@ NGL.Examples = {
 
                 // console.log( o.structure.toPdb() );
 
-            } );
+            }, null, null, { firstModelOnly: false } );
 
         },
 

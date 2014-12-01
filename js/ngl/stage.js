@@ -91,7 +91,7 @@ NGL.Stage.prototype = {
 
     },
 
-    loadFile: function( path, onLoad, params, onError ){
+    loadFile: function( path, onLoad, params, onError, loadParams ){
 
         var component;
         var scope = this;
@@ -150,7 +150,7 @@ NGL.Stage.prototype = {
 
         }
 
-        NGL.autoLoad( path, load, undefined, error );
+        NGL.autoLoad( path, load, undefined, error, loadParams );
 
         // ensure that component isn't ready yet
         if( !component ){

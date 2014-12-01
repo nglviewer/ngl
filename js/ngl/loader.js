@@ -175,16 +175,22 @@ NGL.StructureLoader = function( manager ){
 
 NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
-NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback ){
+NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, params ){
 
-    var parsers = {
+    var p = params || {};
+
+    var parsersClasses = {
 
         "gro": NGL.GroParser,
         "pdb": NGL.PdbParser,
 
     };
 
-    return new parsers[ ext ]( name, path ).parse( str, callback );
+    var parser = new parsersClasses[ ext ](
+        name, path, p.firstModelOnly, p.asTrajectory
+    );
+
+    return parser.parse( str, callback );
 
 };
 
@@ -275,7 +281,7 @@ NGL.autoLoad = function(){
 
     }
 
-    return function( file, onLoad, onProgress, onError ){
+    return function( file, onLoad, onProgress, onError, params ){
 
         var object, rcsb, loader;
 
@@ -314,7 +320,7 @@ NGL.autoLoad = function(){
 
                     if( typeof onLoad === "function" ) onLoad( _object );
 
-                } );
+                }, params );
 
             }else{
 

@@ -34,10 +34,13 @@ if( typeof importScripts === 'function' ){
 }
 
 
-NGL.StructureParser = function( name, path ){
+NGL.StructureParser = function( name, path, firstModelOnly, asTrajectory ){
 
     this.name = name;
     this.path = path;
+
+    this.firstModelOnly = firstModelOnly !== undefined ? firstModelOnly : true;
+    this.asTrajectory = asTrajectory || false;
 
     this.structure = new NGL.Structure( this.name, this.path );
 
@@ -68,13 +71,9 @@ NGL.StructureParser.prototype = {
 }
 
 
-NGL.PdbParser = function( name, path, onlyFirstModel ){
+NGL.PdbParser = function( name, path, firstModelOnly, asTrajectory ){
 
-    // FIXME
-    // this.onlyFirstModel = onlyFirstModel;
-    this.onlyFirstModel = true;
-
-    NGL.StructureParser.call( this, name, path );
+    NGL.StructureParser.call( this, name, path, firstModelOnly, asTrajectory );
 
 };
 
@@ -87,7 +86,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     console.time( __timeName );
 
     var s = this.structure;
-    var onlyFirstModel = this.onlyFirstModel;
+    var firstModelOnly = this.firstModelOnly;
 
     s.title = '';
     s.id = '';
@@ -359,7 +358,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             }else if( recordName === 'ENDMDL' ){
 
-                if( onlyFirstModel ){
+                if( firstModelOnly ){
 
                     _n = n;
                     break;
@@ -450,9 +449,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 };
 
 
-NGL.GroParser = function( name, path ){
+NGL.GroParser = function( name, path, firstModelOnly, asTrajectory ){
 
-    NGL.StructureParser.call( this, name, path );
+    NGL.StructureParser.call( this, name, path, firstModelOnly, asTrajectory );
 
     this.structure._doAutoSS = true;
     this.structure._doAutoChainName = true;

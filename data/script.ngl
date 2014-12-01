@@ -2,6 +2,14 @@
 var pdb = [];
 
 
+load( "1LVZ.pdb", {}, function( o ){
+
+    o.addRepresentation( "cartoon" );
+    o.centerView();
+
+}, { firstModelOnly: true } );
+
+
 load( "1u19.pdb", {}, function( o ){
 
     pdb[ "1u19" ] = o;
