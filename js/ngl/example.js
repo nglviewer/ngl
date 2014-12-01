@@ -164,9 +164,11 @@ NGL.Examples = {
                 // o.addRepresentation( "licorice", { sele: "*" } );
                 o.centerView();
 
+                o.addTrajectory( "" );
+
                 // console.log( o.structure.toPdb() );
 
-            }, null, null, { firstModelOnly: false } );
+            }, null, null, { asTrajectory: true } );
 
         },
 

@@ -13,7 +13,7 @@ load( "1IHM.pdb", {}, function( o ){
 } );
 
 
-load( "2L1F.pdb", { sele: "/0" }, function( o ){
+load( "2L1F.pdb", {}, function( o ){
 
     o.addRepresentation( "cartoon", {
         color: "ss", aspectRatio: 2.5, scale: 2.0
@@ -23,7 +23,7 @@ load( "2L1F.pdb", { sele: "/0" }, function( o ){
         color: "resname", radius: 0.7
     } );
 
-} );
+}, { firstModelOnly: true } );
 
 
 function pdbLink( id ){

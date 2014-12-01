@@ -764,7 +764,17 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     addTrajectory: function( trajPath, sele, i ){
 
-        var traj = new NGL.Trajectory( trajPath, this.structure, sele );
+        var traj;
+
+        if( !trajPath && this.structure.frames ){
+
+            traj = new NGL.StructureTrajectory( trajPath, this.structure, sele );
+
+        }else{
+
+            traj = new NGL.RemoteTrajectory( trajPath, this.structure, sele );
+
+        }
 
         traj.setFrame( i );
 

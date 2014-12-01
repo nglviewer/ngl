@@ -39,7 +39,7 @@ NGL.StructureParser = function( name, path, firstModelOnly, asTrajectory ){
     this.name = name;
     this.path = path;
 
-    this.firstModelOnly = firstModelOnly !== undefined ? firstModelOnly : true;
+    this.firstModelOnly = firstModelOnly || false;
     this.asTrajectory = asTrajectory || false;
 
     this.structure = new NGL.Structure( this.name, this.path );
@@ -87,6 +87,11 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
+    var asTrajectory = this.asTrajectory;
+
+    var frames = [];
+    var doFrames = false;
+    var currentFrame, currentCoord;
 
     s.title = '';
     s.id = '';
@@ -157,6 +162,24 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
             if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
                 // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
+
+                var x = parseFloat( line.substr( 30, 8 ) );
+                var y = parseFloat( line.substr( 38, 8 ) );
+                var z = parseFloat( line.substr( 46, 8 ) );
+
+                if( asTrajectory ){
+
+                    var j = currentCoord * 3;
+
+                    currentFrame[ j + 0 ] = x;
+                    currentFrame[ j + 1 ] = y;
+                    currentFrame[ j + 2 ] = z;
+
+                    currentCoord += 1;
+
+                    if( doFrames ) continue;
+
+                }
 
                 altloc = line[ 16 ];
                 if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
@@ -235,9 +258,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                     a.bonds = [];
 
                     a.resname = resname;
-                    a.x = parseFloat( line.substr( 30, 8 ) );
-                    a.y = parseFloat( line.substr( 38, 8 ) );
-                    a.z = parseFloat( line.substr( 46, 8 ) );
+                    a.x = x;
+                    a.y = y;
+                    a.z = z;
                     a.element = element;
                     a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
                     a.chainname = chainname;
@@ -344,7 +367,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             }else if( recordName === 'MODEL ' ){
 
-                if( a ){
+                if( asTrajectory ){
+
+                    if( doFrames ){
+                        currentFrame = new Float32Array( atoms.length * 3 );
+                        frames.push( currentFrame );
+                    }else{
+                        currentFrame = [];
+                    }
+                    currentCoord = 0;
+
+                }else if( a ){
 
                     m = s.addModel();
                     c = m.addChain();
@@ -365,6 +398,13 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }
 
+                if( asTrajectory && !doFrames ){
+
+                    frames.push( new Float32Array( currentFrame ) );
+                    doFrames = true;
+
+                }
+
             }
 
 
@@ -374,10 +414,13 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             console.timeEnd( __timeName );
 
+            s.frames = frames;
             _postProcess();
             callback( s );
 
             // console.log( biomolDict );
+            // console.log( frames );
+
 
         }else{
 

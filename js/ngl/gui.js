@@ -1435,7 +1435,7 @@ NGL.TrajectoryWidget = function( traj, component ){
                 .setMarginRight( "69px" )
         );
 
-    signals.gotNumframes.add( function( value ){
+    function init( value ){
 
         numframes.clear().add( frame.setWidth( "70px" ) );
         frame.setRange( -1, value - 1 );
@@ -1447,7 +1447,9 @@ NGL.TrajectoryWidget = function( traj, component ){
         player.step = step.getValue();
         player.end = value;
 
-    } );
+    }
+
+    signals.gotNumframes.add( init );
 
     signals.frameChanged.add( function( value ){
 
@@ -1591,6 +1593,12 @@ NGL.TrajectoryWidget = function( traj, component ){
     signals.superposeParamChanged.add( function( value ){
         setSuperpose.setValue( value );
     } );
+
+    //
+
+    if( traj.numframes ){
+        init( traj.numframes );
+    }
 
     // Menu
 
