@@ -90,6 +90,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
 
     var frames = [];
+    var boxes = [];
     var doFrames = false;
     var currentFrame, currentCoord;
 
@@ -405,6 +406,19 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }
 
+            }else if( recordName === 'CRYST1' ){
+
+                // CRYST1   55.989   55.989   55.989  90.00  90.00  90.00 P 1           1
+                //  7 - 15       Real(9.3)      a (Angstroms)
+                // 16 - 24       Real(9.3)      b (Angstroms)
+                // 25 - 33       Real(9.3)      c (Angstroms)
+
+                var box = new Float32Array( 9 );
+                box[ 0 ] = parseFloat( line.substr( 6, 9 ) );
+                box[ 4 ] = parseFloat( line.substr( 15, 9 ) );
+                box[ 8 ] = parseFloat( line.substr( 24, 9 ) );
+                boxes.push( box );
+
             }
 
 
@@ -414,12 +428,16 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             console.timeEnd( __timeName );
 
-            s.frames = frames;
+            if( asTrajectory ){
+                s.frames = frames;
+                s.boxes = boxes;
+            }
             _postProcess();
             callback( s );
 
             // console.log( biomolDict );
             // console.log( frames );
+            // console.log( boxes );
 
 
         }else{
@@ -548,6 +566,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     console.time( "NGL.GroParser._parse" );
 
     var s = this.structure;
+    var firstModelOnly = this.firstModelOnly;
+    var asTrajectory = this.asTrajectory;
 
     var scope = this;
 
@@ -566,9 +586,16 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var parser = NGL.GroParser.parseAtomsChunked;
     // var parser = NGL.GroParser.parseAtomsWorker;
 
-    parser( str, function( atomArray ){
+    parser( str, firstModelOnly, asTrajectory, function( atomArray, frames, boxes ){
 
         s.atomCount = atomArray.length;
+
+        if( asTrajectory ){
+
+            s.frames = frames;
+            s.boxes = boxes;
+
+        }
 
         if( !Array.isArray( atomArray ) ){
 
@@ -599,7 +626,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
 };
 
-NGL.GroParser.parseAtoms = function( str, callback ){
+NGL.GroParser.parseAtoms = function( str, firstModelOnly, asTrajectory, callback ){
 
     console.time( "NGL.GroParser._parseAtoms" );
 
@@ -650,11 +677,16 @@ NGL.GroParser.parseAtoms = function( str, callback ){
 
 };
 
-NGL.GroParser.parseAtomsChunked = function( str, callback ){
+NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, callback ){
 
     console.time( "NGL.GroParser._parseAtomsChunked" );
 
     var lines = str.trim().split( "\n" );
+
+    var frames = [];
+    var boxes = [];
+    var doFrames = false;
+    var currentFrame, currentCoord;
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -663,12 +695,15 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
     var i;
     var line, atomname, element, resname;
 
+    var atomCount = parseInt( lines[ 1 ] );
+    var modelLineCount = atomCount + 3;
+
     var index = 0;
     var useArray = false;
 
     if( useArray ){
 
-        var atomArray = new NGL.AtomArray( parseInt( lines[ 1 ] ) );
+        var atomArray = new NGL.AtomArray( atomCount );
         var a = new NGL.ProxyAtom( atomArray, 0 );
 
     }else{
@@ -678,11 +713,11 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
     }
 
-    var n = lines.length - 1;
+    var n = lines.length;
 
-    var _i = 2;
+    var _i = 0;
     var _step = 10000;
-    var _n = Math.min( _step + 2, n );
+    var _n = Math.min( _step, n );
 
     function _chunked(){
 
@@ -690,48 +725,102 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
             line = lines[ i ];
 
-            atomname = line.substr( 10, 5 ).trim();
-            resname = line.substr( 5, 5 ).trim();
+            if( i % modelLineCount === 0 ){
 
-            element = guessElem( atomname );
+                // console.log( "title", line )
 
-            if( useArray ){
+                if( asTrajectory ){
 
-                atomArray.setResname( index, resname );
-                atomArray.x[ index ] = parseFloat( line.substr( 20, 8 ) ) * 10;
-                atomArray.y[ index ] = parseFloat( line.substr( 28, 8 ) ) * 10;
-                atomArray.z[ index ] = parseFloat( line.substr( 36, 8 ) ) * 10;
-                atomArray.setElement( index, element );
-                atomArray.resno[ index ] = parseInt( line.substr( 0, 5 ) );
-                atomArray.serial[ index ] = parseInt( line.substr( 15, 5 ) );
-                atomArray.setAtomname( index, atomname );
-                atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
-                atomArray.vdw[ index ] = vdwRadii[ element ];
-                atomArray.covalent[ index ] = covRadii[ element ];
+                    currentFrame = new Float32Array( atomCount * 3 );
+                    frames.push( currentFrame );
+                    currentCoord = 0;
+
+                }
+
+            }else if( i % modelLineCount === 1 ){
+
+                // console.log( "atomCount", line )
+
+            }else if( i % modelLineCount === modelLineCount - 1 ){
+
+                var str = line.trim().split( /\s+/ );
+                var box = new Float32Array( 9 );
+                box[ 0 ] = parseFloat( box[ 0 ] ) * 10;
+                box[ 4 ] = parseFloat( box[ 1 ] ) * 10;
+                box[ 8 ] = parseFloat( box[ 2 ] ) * 10;
+                boxes.push( box );
+
+                if( firstModelOnly ){
+
+                    _n = n;
+                    break;
+
+                }
 
             }else{
 
-                a = new NGL.Atom();
-                a.bonds = [];
+                var x = parseFloat( line.substr( 20, 8 ) ) * 10;
+                var y = parseFloat( line.substr( 28, 8 ) ) * 10;
+                var z = parseFloat( line.substr( 36, 8 ) ) * 10;
 
-                a.resname = resname;
-                a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
-                a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
-                a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
-                a.element = element;
-                a.resno = parseInt( line.substr( 0, 5 ) );
-                a.serial = parseInt( line.substr( 15, 5 ) );
-                a.atomname = atomname;
-                a.ss = 'c';
-                a.vdw = vdwRadii[ element ];
-                a.covalent = covRadii[ element ];
+                if( asTrajectory ){
 
-                atoms.push( a );
+                    var j = currentCoord * 3;
+
+                    currentFrame[ j + 0 ] = x;
+                    currentFrame[ j + 1 ] = y;
+                    currentFrame[ j + 2 ] = z;
+
+                    currentCoord += 1;
+
+                    if( i > modelLineCount ) continue;
+
+                }
+
+                atomname = line.substr( 10, 5 ).trim();
+                resname = line.substr( 5, 5 ).trim();
+
+                element = guessElem( atomname );
+
+                if( useArray ){
+
+                    atomArray.setResname( index, resname );
+                    atomArray.x[ index ] = x;
+                    atomArray.y[ index ] = y;
+                    atomArray.z[ index ] = z;
+                    atomArray.setElement( index, element );
+                    atomArray.resno[ index ] = parseInt( line.substr( 0, 5 ) );
+                    atomArray.serial[ index ] = parseInt( line.substr( 15, 5 ) );
+                    atomArray.setAtomname( index, atomname );
+                    atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
+                    atomArray.vdw[ index ] = vdwRadii[ element ];
+                    atomArray.covalent[ index ] = covRadii[ element ];
+
+                }else{
+
+                    a = new NGL.Atom();
+                    a.bonds = [];
+
+                    a.resname = resname;
+                    a.x = x;
+                    a.y = y;
+                    a.z = z;
+                    a.element = element;
+                    a.resno = parseInt( line.substr( 0, 5 ) );
+                    a.serial = parseInt( line.substr( 15, 5 ) );
+                    a.atomname = atomname;
+                    a.ss = 'c';
+                    a.vdw = vdwRadii[ element ];
+                    a.covalent = covRadii[ element ];
+
+                    atoms.push( a );
+
+                }
+
+                a.index = index;
+                index += 1;
 
             }
-
-            a.index = index;
-            index += 1;
 
         }
 
@@ -739,10 +828,12 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
             console.timeEnd( "NGL.GroParser._parseAtomsChunked" );
 
+            // console.log( atoms, frames, boxes );
+
             if( useArray ){
                 callback( atomArray );
             }else{
-                callback( atoms );
+                callback( atoms, frames, boxes );
             }
 
         }else{
@@ -760,7 +851,7 @@ NGL.GroParser.parseAtomsChunked = function( str, callback ){
 
 };
 
-NGL.GroParser.parseAtomsWorker = function( str, callback ){
+NGL.GroParser.parseAtomsWorker = function( str, firstModelOnly, asTrajectory, callback ){
 
     console.time( "NGL.GroParser._parseAtomsWorker" );
 

@@ -504,6 +504,8 @@ NGL.RemoteTrajectory.prototype.getNumframes = function(){
 
 NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
+    if( !trajPath ) trajPath = structure.path;
+
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
 }
@@ -512,8 +514,33 @@ NGL.StructureTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
 
 NGL.StructureTrajectory.prototype.loadFrame = function( i, callback ){
 
-    this.frameCache[ i ] = this.structure.frames[ i ];
-    this.frameCacheSize += 1;
+    var coords = new Float32Array( this.structure.frames[ i ] );
+    var box = this.structure.boxes[ i ];
+
+    if( box ){
+
+        if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+            var mean = this.getCircularMean(
+                this.backboneIndices, coords, box2
+            );
+            this.centerPbc( coords, mean, box2 );
+        }
+
+        if( this.params.removePbc ){
+            this.removePbc( coords, box );
+        }
+
+    }
+
+    if( this.indices.length > 0 && this.params.superpose ){
+        this.superpose( coords );
+    }
+
+    if( !this.frameCache[ i ] ){
+        this.frameCache[ i ] = coords;
+        this.frameCacheSize += 1;
+    }
 
     this.updateStructure( i, callback );
 

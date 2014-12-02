@@ -158,15 +158,23 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            stage.loadFile( "__example__/1LVZ.pdb", function( o ){
+            // stage.loadFile( "__example__/1LVZ.pdb", function( o ){
+
+            //     o.addRepresentation( "cartoon", { sele: "*" } );
+            //     // o.addRepresentation( "licorice", { sele: "*" } );
+            //     o.centerView();
+
+            //     o.addTrajectory();
+
+            // }, null, null, { asTrajectory: true } );
+
+            stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 // o.addRepresentation( "licorice", { sele: "*" } );
                 o.centerView();
 
-                o.addTrajectory( "" );
-
-                // console.log( o.structure.toPdb() );
+                o.addTrajectory();
 
             }, null, null, { asTrajectory: true } );
 
