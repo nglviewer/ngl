@@ -695,6 +695,19 @@ NGL.Examples = {
 
         },
 
+        "cif": function( stage ){
+
+            stage.loadFile( "__example__/3SN6.cif", function( o ){
+            // stage.loadFile( "__example__/1CRN.cif", function( o ){
+
+                o.addRepresentation( "tube", { radius: "ss" } );
+                o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
+                stage.centerView();
+
+            } );
+
+        },
+
     }
 
 };

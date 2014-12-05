@@ -131,7 +131,7 @@ NGL.MenubarWidget = function( stage ){
 
 NGL.MenubarFileWidget = function( stage ){
 
-    var fileTypesOpen = [ "pdb", "gro", "obj", "ply", "ngz" ];
+    var fileTypesOpen = [ "pdb", "gro", "cif", "obj", "ply", "ngz" ];
     var fileTypesImport = fileTypesOpen + [ "ngl" ];
 
     var fileInput = document.createElement("input");
