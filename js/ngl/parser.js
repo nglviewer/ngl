@@ -949,6 +949,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var currentString = null;
     var pendingLoop = false;
     var loopPointers = null;
+    var currentCategory = null;
+    var currentName = null;
 
     //
 
@@ -967,42 +969,51 @@ NGL.CifParser.prototype._parse = function( str, callback ){
             if( !line || line[0]==="#" ){
 
                 // console.log( "NEW BLOCK" );
+
                 pendingString = false;
                 pendingLoop = false;
                 loopPointers = null;
+                currentCategory = null;
+                currentName = null;
 
             }else if( line.substring( 0, 5 )==="data_" ){
 
                 var data = line.substring( 5 );
+
                 // console.log( "DATA", data );
 
             }else if( line[0]===";" ){
 
                 if( pendingString ){
 
-                    console.log( "STRING END" );
+                    // console.log( "STRING END" );
+
+                    cif[ currentCategory ][ currentName ] = currentString;
+
                     pendingString = false;
                     currentString = null;
 
                 }else{
 
-                    console.log( "STRING START" );
+                    // console.log( "STRING START" );
+
                     pendingString = true;
                     currentString = line.substring( 1 );
 
                 }
 
-                // console.log( line );
-
             }else if( line==="loop_" ){
 
                 // console.log( "LOOP START" );
+
                 pendingLoop = true;
                 loopPointers = [];
 
             }else if( line[0]==="_" ){
 
                 if( pendingLoop ){
+
+                    // console.log( "LOOP KEY", line );
 
                     var ks = line.split(".");
                     var category = ks[ 0 ].substring( 1 );
@@ -1016,11 +1027,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         loopPointers.push( cif[ category ][ name ] );
                     }
 
-                    // console.log( "LOOP KEY", line );
-
-                }else if( pendingString ){
-
-                    console.log( "???", line );
+                    currentCategory = category;
+                    currentName = name;
 
                 }else{
 
@@ -1038,7 +1046,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         cif[ category ][ name ] = value;
                     }
 
-                    // console.log( line.split(/\s+/) );
+                    currentCategory = category;
+                    currentName = name;
 
                 }
 
@@ -1046,23 +1055,43 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 if( pendingLoop ){
 
-                    // console.log( "loopPointers", loopPointers )
-
-                    var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
-                    var m = ls.length;
-                    for( var j = 0; j < m; ++j ){
-                        loopPointers[ j ].push( ls[ j ] );
-                    }
-
                     // console.log( "LOOP VALUE", line );
+
+                    if( currentCategory==="atom_site" ){
+
+                        var ls = line.split(/\s+/);
+                        var m = ls.length;
+                        for( var j = 0; j < m; ++j ){
+                            loopPointers[ j ].push( ls[ j ] );
+                        }
+
+                    }else{
+
+                        var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
+                        var m = ls.length;
+                        for( var j = 0; j < m; ++j ){
+                            loopPointers[ j ].push( ls[ j ] );
+                        }
+
+                    }
 
                 }else if( pendingString ){
 
-                    console.log( "STRING VALUE", line );
+                    // console.log( "STRING VALUE", line );
+
+                    currentString += " " + line;
+
+                }else if( line[0]==="'" && line.substring( line.length-1 )==="'" ){
+
+                    // console.log( "NEWLINE STRING", line );
+
+                    cif[ currentCategory ][ currentName ] = line.substring(
+                        1, line.length - 2
+                    );
 
                 }else{
 
-                    console.log( line );
+                    console.log( "???", line );
 
                 }
 
@@ -1104,12 +1133,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
         var at = cif.atom_site;
         var o = at.id.length;
 
-        var m = s.addModel();
-        var c = m.addChain();
+        // var m = s.addModel();
+        // var c = m.addChain();
+        // var r = c.addResidue();
 
-        var r = c.addResidue();
         r.resno = at.label_seq_id[ 0 ];
         r.resname = at.label_comp_id[ 0 ];
+
+        var a;
 
         var currentResno = at.label_seq_id[ 0 ];
 
@@ -1125,9 +1156,39 @@ NGL.CifParser.prototype._parse = function( str, callback ){
             var serial = parseInt( at.id[ j ] );
             var atomname = at.label_atom_id[ j ];
             var element = at.type_symbol[ j ];
-            var chainname = at.label_seq_id[ j ];
+            var chainname = at.label_asym_id[ j ];
             var resno = at.label_seq_id[ j ];
             var resname = at.label_comp_id[ j ]
+
+            if( !a ){
+
+                c.chainname = chainname;
+                chainDict[ chainname ] = c;
+
+                r.resno = resno;
+                r.resname = resname;
+
+                currentChainname = chainname;
+                currentResno = resno;
+
+            }
+
+            if( currentChainname!==chainname ){
+
+                if( !chainDict[ chainname ] ){
+
+                    c = m.addChain();
+                    c.chainname = chainname;
+
+                    chainDict[ chainname ] = c;
+
+                }else{
+
+                    c = chainDict[ chainname ];
+
+                }
+
+            }
 
             if( currentResno !== resno ){
 
@@ -1137,7 +1198,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             }
 
-            var a = r.addAtom();
+            a = r.addAtom();
             a.bonds = [];
 
             a.resname = resname;
@@ -1161,6 +1222,75 @@ NGL.CifParser.prototype._parse = function( str, callback ){
             atoms.push( a );
 
         }
+
+        //
+
+        var sc = cif.struct_conf;
+        var o = sc.id.length;
+
+        if( sc ){
+
+            for( var j = 0; j < o; ++j ){
+
+                var selection = new NGL.Selection(
+                    sc.beg_label_seq_id[ j ] + "-" +
+                    sc.end_label_seq_id[ j ] + ":" +
+                    sc.beg_label_asym_id[ j ]
+                );
+
+                var helixType = parseInt( sc.pdbx_PDB_helix_class[ j ] );
+                helixType = helixTypes[ helixType ] || helixTypes[""];
+
+                s.eachResidue( function( r ){
+
+                    r.ss = helixType;
+
+                }, selection );
+
+            }
+
+        }
+
+        //
+
+        var ssr = cif.struct_sheet_range;
+        var o = ssr.id.length;
+
+        if( ssr ){
+
+            for( var j = 0; j < o; ++j ){
+
+                var selection = new NGL.Selection(
+                    ssr.beg_label_seq_id[ j ] + "-" +
+                    ssr.end_label_seq_id[ j ] + ":" +
+                    ssr.beg_label_asym_id[ j ]
+                );
+
+                s.eachResidue( function( r ){
+
+                    r.ss = "s";
+
+                }, selection );
+
+            }
+
+        }
+
+        //
+
+        if( !sc && !ssr ){
+
+            s._doAutoSS = true;
+
+        }
+
+        // check for chain names
+
+        var _doAutoChainName = true;
+        s.eachChain( function( c ){
+            if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+        } );
+        s._doAutoChainName = _doAutoChainName;
 
         console.timeEnd( "NGL.CifParser _postProcess" );
 
