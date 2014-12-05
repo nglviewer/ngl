@@ -4,6 +4,24 @@
  */
 
 
+
+NGL.makeTrajectory = function( trajPath, structure, sele ){
+
+    if( !trajPath && structure.frames ){
+
+        traj = new NGL.StructureTrajectory( trajPath, structure, sele );
+
+    }else{
+
+        traj = new NGL.RemoteTrajectory( trajPath, structure, sele );
+
+    }
+
+    return traj;
+
+}
+
+
 ///////////////
 // Trajectory
 
@@ -21,10 +39,6 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
         selectionChanged: new SIGNALS.Signal(),
         playerChanged: new SIGNALS.Signal(),
 
-        centerPbcParamChanged: new SIGNALS.Signal(),
-        removePbcParamChanged: new SIGNALS.Signal(),
-        superposeParamChanged: new SIGNALS.Signal(),
-
     };
 
     this.params = {
@@ -36,51 +50,11 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
     this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
     this.trajPath = trajPath;
-    this.structure = structure;
-    this.atomCount = structure.atomCount;
 
-    this.frameCache = [];
-    this.frameCacheSize = 0;
-    this.currentFrame = -1;
+    this.setStructure( structure );
 
     this.numframes = undefined;
     this.getNumframes();
-
-    if( structure instanceof NGL.StructureSubset ){
-
-        this.atomIndices = [];
-
-        var indices = structure.structure.atomIndex( structure.selection );
-
-        var i, r;
-        var p = indices[ 0 ];
-        var q = indices[ 0 ];
-        var n = indices.length;
-
-        for( i = 1; i < n; ++i ){
-
-            r = indices[ i ];
-
-            if( q + 1 < r ){
-
-                this.atomIndices.push( [ p, q + 1 ] );
-                p = r;
-
-            }
-
-            q = r;
-
-        }
-
-        this.atomIndices.push( [ p, q + 1 ] );
-
-    }else{
-
-        this.atomIndices = [ [ 0, this.atomCount ] ];
-
-    }
-
-    this.saveInitialStructure();
 
     this.selection = new NGL.Selection(
         selectionString || "backbone and not hydrogen"
@@ -93,16 +67,64 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
 
     } );
 
-    this.backboneIndices = this.structure.atomIndex(
-        new NGL.Selection( "backbone and not hydrogen" )
-    );
-    this.makeIndices();
-
 };
 
 NGL.Trajectory.prototype = {
 
     constructor: NGL.Trajectory,
+
+    setStructure: function( structure ){
+
+        this.structure = structure;
+        this.atomCount = structure.atomCount;
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            this.atomIndices = [];
+
+            var indices = structure.structure.atomIndex( structure.selection );
+
+            var i, r;
+            var p = indices[ 0 ];
+            var q = indices[ 0 ];
+            var n = indices.length;
+
+            for( i = 1; i < n; ++i ){
+
+                r = indices[ i ];
+
+                if( q + 1 < r ){
+
+                    this.atomIndices.push( [ p, q + 1 ] );
+                    p = r;
+
+                }
+
+                q = r;
+
+            }
+
+            this.atomIndices.push( [ p, q + 1 ] );
+
+        }else{
+
+            this.atomIndices = [ [ 0, this.atomCount ] ];
+
+        }
+
+        this.saveInitialStructure();
+
+        this.backboneIndices = this.structure.atomIndex(
+            new NGL.Selection( "backbone and not hydrogen" )
+        );
+        this.makeIndices();
+
+        this.frameCache = [];
+        this.boxCache = [];
+        this.frameCacheSize = 0;
+        this.currentFrame = -1;
+
+    },
 
     saveInitialStructure: function(){
 
@@ -165,6 +187,7 @@ NGL.Trajectory.prototype = {
     resetCache: function(){
 
         this.frameCache = [];
+        this.boxCache = [];
         this.frameCacheSize = 0;
         this.setFrame( this.currentFrame );
 
@@ -172,45 +195,34 @@ NGL.Trajectory.prototype = {
 
     },
 
-    setCenterPbc: function( value ){
+    setParameters: function( params ){
 
-        if( value !== this.params.centerPbc ){
+        var p = params;
+        var tp = this.params;
+        var resetCache = false;
 
-            this.params.centerPbc = value;
-            this.resetCache();
-            this.signals.centerPbcParamChanged.dispatch( value );
+        if( p.centerPbc !== tp.centerPbc ){
 
-        }
-
-        return this;
-
-    },
-
-    setRemovePbc: function( value ){
-
-        if( value !== this.params.removePbc ){
-
-            this.params.removePbc = value;
-            this.resetCache();
-            this.signals.removePbcParamChanged.dispatch( value );
+            tp.centerPbc = p.centerPbc;
+            resetCache = true;
 
         }
 
-        return this;
+        if( p.removePbc !== tp.removePbc ){
 
-    },
-
-    setSuperpose: function( value ){
-
-        if( value !== this.params.superpose ){
-
-            this.params.superpose = value;
-            this.resetCache();
-            this.signals.superposeParamChanged.dispatch( value );
+            tp.removePbc = p.removePbc;
+            resetCache = true;
 
         }
 
-        return this;
+        if( p.superpose !== tp.superpose ){
+
+            tp.superpose = p.superpose;
+            resetCache = true;
+
+        }
+
+        if( resetCache ) this.resetCache();
 
     },
 
@@ -407,6 +419,61 @@ NGL.Trajectory.prototype = {
         this.player = player;
         this.signals.playerChanged.dispatch( player );
 
+    },
+
+    getPath: function( index, callback ){
+
+        console.error( "Trajectory.getPath not implemented" );
+
+    },
+
+    download: function( step ){
+
+        // TODO format needs to include the number of atoms
+        // TODO lower precision, e.g. 20 bit integers
+        // TODO don't process, use raw data
+
+        var scope = this;
+
+        var n = this.numframes;
+        var k = step;
+
+        var m = Math.ceil( n / k );
+        var u = 0;
+
+        var bbt = new Float32Array( m * ( 9 + 3 * this.atomCount ) );
+
+        function getData( j, v ){
+
+            var l = v * ( 9 + 3 * scope.atomCount );
+
+            bbt.set( scope.boxCache[ j ], l );
+            bbt.set( scope.frameCache[ j ], l + 9 );
+
+            if( v === m - 1 ){
+
+                var blob = new Blob(
+                    [ bbt ], { type: 'application/octet-binary' }
+                );
+
+                NGL.download( blob, "traj.bbt" );
+
+            }
+
+        }
+
+        for( var i = 0; i < n; i += k ){
+
+            this.loadFrame( i, function(){
+
+                getData( i, u );
+
+            } );
+
+            u += 1;
+
+        }
+
     }
 
 };
@@ -471,6 +538,7 @@ NGL.RemoteTrajectory.prototype.loadFrame = function( i, callback ){
 
         if( !scope.frameCache[ i ] ){
             scope.frameCache[ i ] = coords;
+            scope.boxCache[ i ] = box;
             scope.frameCacheSize += 1;
         }
 
@@ -504,7 +572,8 @@ NGL.RemoteTrajectory.prototype.getNumframes = function(){
 
 NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
-    if( !trajPath ) trajPath = structure.path;
+    // if( !trajPath ) trajPath = structure.path;
+    trajPath = "";
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
@@ -539,6 +608,7 @@ NGL.StructureTrajectory.prototype.loadFrame = function( i, callback ){
 
     if( !this.frameCache[ i ] ){
         this.frameCache[ i ] = coords;
+        this.boxCache[ i ] = box;
         this.frameCacheSize += 1;
     }
 
@@ -547,6 +617,82 @@ NGL.StructureTrajectory.prototype.loadFrame = function( i, callback ){
 };
 
 NGL.StructureTrajectory.prototype.getNumframes = function(){
+
+    this.numframes = this.structure.frames.length;
+    this.signals.gotNumframes.dispatch( this.numframes );
+
+};
+
+NGL.StructureTrajectory.prototype.getPath = function( index, callback ){
+
+    var i, j, f;
+    var n = this.numframes;
+    var k = index * 3;
+
+    var path = new Float32Array( n * 3 );
+
+    for( i = 0; i < n; ++i ){
+
+        j = 3 * i;
+        f = this.structure.frames[ i ];
+
+        path[ j + 0 ] = f[ k + 0 ];
+        path[ j + 1 ] = f[ k + 1 ];
+        path[ j + 2 ] = f[ k + 2 ];
+
+    }
+
+    callback( path );
+
+};
+
+
+NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
+
+    if( !trajPath ) trajPath = structure.path;
+
+    NGL.Trajectory.call( this, trajPath, structure, selectionString );
+
+}
+
+NGL.BinaryTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+
+NGL.BinaryTrajectory.prototype.loadFrame = function( i, callback ){
+
+    var coords = new Float32Array( this.structure.frames[ i ] );
+    var box = this.structure.boxes[ i ];
+
+    if( box ){
+
+        if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+            var mean = this.getCircularMean(
+                this.backboneIndices, coords, box2
+            );
+            this.centerPbc( coords, mean, box2 );
+        }
+
+        if( this.params.removePbc ){
+            this.removePbc( coords, box );
+        }
+
+    }
+
+    if( this.indices.length > 0 && this.params.superpose ){
+        this.superpose( coords );
+    }
+
+    if( !this.frameCache[ i ] ){
+        this.frameCache[ i ] = coords;
+        this.boxCache[ i ] = box;
+        this.frameCacheSize += 1;
+    }
+
+    this.updateStructure( i, callback );
+
+};
+
+NGL.BinaryTrajectory.prototype.getNumframes = function(){
 
     this.numframes = this.structure.frames.length;
     this.signals.gotNumframes.dispatch( this.numframes );

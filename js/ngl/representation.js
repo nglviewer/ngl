@@ -27,6 +27,10 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
         ReprClass = NGL.SurfaceRepresentation;
 
+    }else if( object instanceof NGL.Trajectory ){
+
+        ReprClass = NGL.TrajectoryRepresentation;
+
     }else{
 
         console.error(
@@ -3291,6 +3295,182 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
             new Blob( [ json ], {type : 'text/plain'} ),
             "helixCrossing.json"
         );
+
+    }
+
+} );
+
+
+//////////////////////////////
+// Trajectory representation
+
+NGL.TrajectoryRepresentation = function( trajectory, viewer, params ){
+
+    this.trajectory = trajectory;
+
+    NGL.StructureRepresentation.call(
+        this, trajectory.structure, viewer, params
+    );
+
+};
+
+NGL.TrajectoryRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "",
+
+    parameters: Object.assign( {
+
+        wireframe: {
+            type: "boolean"
+        },
+        background: {
+            type: "boolean"
+        },
+        transparent: {
+            type: "boolean"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
+        }
+
+    }, NGL.Representation.prototype.parameters ),
+
+    init: function( params ){
+
+        p = params || {};
+
+        this.color = p.color || 0xDDDDDD;
+        this.background = p.background || false;
+        this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.Representation.prototype.init.call( this, p );
+
+    },
+
+    attach: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.add( buffer );
+
+        }, this );
+
+        this.setVisibility( this.visible );
+
+    },
+
+    create: function(){
+
+        var color = this.color;
+        var radius = this.radius;
+        var scale = this.scale;
+        var aspectRatio = this.aspectRatio;
+        var sphereDetail = this.sphereDetail;
+        var radiusSegments = this.radiusSegments;
+        var disableImpostor = this.disableImpostor;
+
+        var bufferList = [];
+
+        this.trajectory.getPath( 107, function( path ){
+
+            var n = path.length / 3;
+            var tc = new THREE.Color( this.color );
+
+            var sphereBuffer = new NGL.SphereBuffer(
+                path,
+                NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
+                NGL.Utils.uniformArray( n, 0.2 ),
+                NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
+                sphereDetail,
+                disableImpostor
+            );
+
+            var cylinderBuffer = new NGL.CylinderBuffer(
+                path.subarray( 0, -3 ),
+                path.subarray( 3 ),
+                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                NGL.Utils.uniformArray( n, 0.05 ),
+                null,
+                true,
+                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                radiusSegments,
+                disableImpostor
+            );
+
+            var lineBuffer = new NGL.LineBuffer(
+                path.subarray( 0, -3 ),
+                path.subarray( 3 ),
+                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b )
+            );
+
+            bufferList.push( sphereBuffer );
+            // bufferList.push( cylinderBuffer );
+            bufferList.push( lineBuffer );
+
+        } );
+
+        this.bufferList = bufferList;
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "wireframe" ] !== undefined ){
+
+            this.wireframe = params[ "wireframe" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "background" ] !== undefined ){
+
+            this.background = params[ "background" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "side" ] !== undefined ){
+
+            this.side = params[ "side" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.surfaceBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
+
+        }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 

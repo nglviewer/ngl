@@ -3751,6 +3751,9 @@ NGL.StructureSubset.prototype._build = function(){
     _s.center = _s.atomCenter();
     _s.boundingBox = _s.getBoundingBox();
 
+    if( structure.frames ) _s.frames = structure.frames;
+    if( structure.boxes ) _s.boxes = structure.boxes;
+
     console.timeEnd( "NGL.StructureSubset._build" );
 
 }

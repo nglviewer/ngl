@@ -953,7 +953,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     signals.trajectoryAdded.add( function( traj ){
 
-        trajContainer.add( new NGL.TrajectoryWidget( traj, component ) );
+        trajContainer.add( new NGL.TrajectoryComponentWidget( traj, stage ) );
 
     } );
 
@@ -1322,7 +1322,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Selection
 
-    if( component.parent instanceof NGL.StructureComponent ){
+    if( component.parent instanceof NGL.StructureComponent ||
+            component.parent instanceof NGL.TrajectoryComponent ){
 
         container.add(
             new UI.SelectionPanel( component.repr.selection )
@@ -1414,16 +1415,27 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
 // Trajectory
 
-NGL.TrajectoryWidget = function( traj, component ){
+NGL.TrajectoryComponentWidget = function( component, stage ){
 
-    var signals = traj.signals;
+    var signals = component.signals;
+    var traj = component.trajectory;
 
     var container = new UI.CollapsibleIconPanel( "database" )
         .setMarginLeft( "20px" );
 
-    component.signals.trajectoryRemoved.add( function( _traj ){
+    var reprContainer = new UI.Panel();
 
-        if( traj === _traj ) container.dispose();
+    // component.signals.trajectoryRemoved.add( function( _traj ){
+
+    //     if( traj === _traj ) container.dispose();
+
+    // } );
+
+    signals.representationAdded.add( function( repr ){
+
+        reprContainer.add(
+            new NGL.RepresentationComponentWidget( repr, stage )
+        );
 
     } );
 
@@ -1566,33 +1578,48 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     var setCenterPbc = new UI.Checkbox( traj.params.centerPbc )
         .onChange( function(){
-            traj.setCenterPbc( setCenterPbc.getValue() );
+            component.setParameters( {
+                "centerPbc": setCenterPbc.getValue()
+            } );
             menu.setMenuDisplay( "none" );
         } );
-
-    signals.centerPbcParamChanged.add( function( value ){
-        setCenterPbc.setValue( value );
-    } );
 
     var setRemovePbc = new UI.Checkbox( traj.params.removePbc )
         .onChange( function(){
-            traj.setRemovePbc( setRemovePbc.getValue() );
+            component.setParameters( {
+                "removePbc": setRemovePbc.getValue()
+            } );
             menu.setMenuDisplay( "none" );
         } );
-
-    signals.removePbcParamChanged.add( function( value ){
-        setRemovePbc.setValue( value );
-    } );
 
     var setSuperpose = new UI.Checkbox( traj.params.superpose )
         .onChange( function(){
-            traj.setSuperpose( setSuperpose.getValue() );
+            component.setParameters( {
+                "superpose": setSuperpose.getValue()
+            } );
             menu.setMenuDisplay( "none" );
         } );
 
-    signals.superposeParamChanged.add( function( value ){
-        setSuperpose.setValue( value );
+    signals.parametersChanged.add( function( params ){
+        setCenterPbc.setValue( params.centerPbc );
+        setRemovePbc.setValue( params.removePbc );
+        setSuperpose.setValue( params.superpose );
     } );
+
+    var download = new UI.Button( "download" )
+        .onClick( function(){
+            traj.download( step.getValue() );
+        } );
+
+    // Add representation
+
+    var repr = new UI.Button( "add" )
+        .onClick( function(){
+
+            component.addRepresentation();
+            menu.setMenuDisplay( "none" );
+
+        } );
 
     //
 
@@ -1605,11 +1632,13 @@ NGL.TrajectoryWidget = function( traj, component ){
     var menu = new UI.PopupMenu( "bars", "Trajectory" )
         .setMarginLeft( "10px" )
         .setEntryLabelWidth( "110px" )
+        .addEntry( "Path", repr )
         .addEntry( "Center", setCenterPbc )
         .addEntry( "Remove PBC", setRemovePbc )
         .addEntry( "Superpose", setSuperpose )
         .addEntry( "Step", step )
         .addEntry( "Timeout", timeout )
+        // .addEntry( "Download", download )
         .addEntry(
             "File", new UI.Text( traj.trajPath )
                         .setMaxWidth( "100px" )
@@ -1620,6 +1649,9 @@ NGL.TrajectoryWidget = function( traj, component ){
 
     container
         .add( frameRow );
+
+    container
+        .add( reprContainer );
 
     return container;
 

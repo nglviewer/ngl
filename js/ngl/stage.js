@@ -729,15 +729,11 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     rebuildTrajectories: function(){
 
-        var scope = this;
+        this.trajList.slice( 0 ).forEach( function( trajComp ){
 
-        scope.trajList.slice( 0 ).forEach( function( traj ){
+            trajComp.trajectory.setStructure( this.structure );
 
-            // TODO should use traj.rebuild when available
-            scope.addTrajectory( traj.trajPath, traj._sele, traj.currentFrame );
-            scope.removeTrajectory( traj );
-
-        } );
+        }, this );
 
     },
 
@@ -764,19 +760,11 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     addTrajectory: function( trajPath, sele, i ){
 
-        var traj;
+        var params = { "i": i };
 
-        if( !trajPath && this.structure.frames ){
-
-            traj = new NGL.StructureTrajectory( trajPath, this.structure, sele );
-
-        }else{
-
-            traj = new NGL.RemoteTrajectory( trajPath, this.structure, sele );
-
-        }
-
-        traj.setFrame( i );
+        var traj = NGL.makeTrajectory(
+            trajPath, this.structure, sele
+        );
 
         traj.signals.frameChanged.add( function( value ){
 
@@ -784,11 +772,15 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         }, this );
 
-        this.trajList.push( traj );
+        var trajComp = new NGL.TrajectoryComponent(
+            this.stage, traj, params, parent
+        );
 
-        this.signals.trajectoryAdded.dispatch( traj );
+        this.trajList.push( trajComp );
 
-        return traj;
+        this.signals.trajectoryAdded.dispatch( trajComp );
+
+        return trajComp;
 
     },
 
@@ -921,6 +913,107 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
         this.viewer.centerView();
 
     },
+
+} );
+
+
+NGL.TrajectoryComponent = function( stage, trajectory, params, parent ){
+
+    params = params || {}
+
+    this.trajectory = trajectory;
+    this.name = trajectory.name;
+    this.parent = parent;
+
+    this.status = "loaded";
+
+    NGL.Component.call( this, stage, params );
+
+    // signals
+
+    trajectory.signals.frameChanged.add( function( i ){
+
+        this.signals.frameChanged.dispatch( i );
+
+    }, this );
+
+    trajectory.signals.playerChanged.add( function( player ){
+
+        this.signals.playerChanged.dispatch( player );
+
+    }, this );
+
+    trajectory.signals.gotNumframes.add( function( n ){
+
+        this.signals.gotNumframes.dispatch( n );
+
+    }, this );
+
+    //
+
+    if( params.i !== undefined ){
+
+        this.setFrame( params.i );
+
+    }
+
+};
+
+NGL.TrajectoryComponent.prototype = NGL.createObject(
+
+    NGL.Component.prototype, {
+
+    type: "trajectory",
+
+    signals: Object.assign( {
+
+        "frameChanged": null,
+        "playerChanged": null,
+        "gotNumframes": null,
+        "parametersChanged": null
+
+    }, NGL.Component.prototype.signals ),
+
+    addRepresentation: function( type, params ){
+
+        params = params || {};
+
+        var repr = NGL.makeRepresentation(
+            type, traj, this.viewer, params
+        );
+
+        var reprComp = new NGL.RepresentationComponent(
+            this.stage, repr, {}, this
+        );
+
+        return NGL.Component.prototype.addRepresentation.call( this, reprComp );
+
+    },
+
+    setFrame: function( i ){
+
+        this.trajectory.setFrame( i );
+
+    },
+
+    setParameters: function( params ){
+
+        this.trajectory.setParameters( params );
+        this.signals.parametersChanged.dispatch( params );
+
+        return this;
+
+    },
+
+    dispose: function(){
+
+        this.trajectory.dispose();
+
+    },
+
+    setVisibility: function( value ){},
+
+    getCenter: function(){}
 
 } );
 
