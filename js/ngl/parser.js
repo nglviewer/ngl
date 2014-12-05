@@ -455,7 +455,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
         // assign secondary structures
 
-        console.time( "NGL.PdbParser._parse ss" );
+        console.time( "NGL.PdbParser parse ss" );
 
         for( j = 0; j < sheet.length; j++ ){
 
@@ -487,7 +487,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
         }
 
-        console.timeEnd( "NGL.PdbStructure.parse ss" );
+        console.timeEnd( "NGL.PdbParser parse ss" );
 
         if( sheet.length === 0 && helix.length === 0 ){
 
@@ -878,3 +878,295 @@ NGL.GroParser.parseAtomsWorker = function( str, firstModelOnly, asTrajectory, ca
     worker.postMessage( str );
 
 }
+
+
+NGL.CifParser = function( name, path, firstModelOnly, asTrajectory ){
+
+    NGL.StructureParser.call( this, name, path, firstModelOnly, asTrajectory );
+
+};
+
+NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
+
+NGL.CifParser.prototype._parse = function( str, callback ){
+
+    var __timeName = "NGL.CifParser._parse " + this.name;
+
+    console.time( __timeName );
+
+    var s = this.structure;
+    var firstModelOnly = this.firstModelOnly;
+    var asTrajectory = this.asTrajectory;
+
+    var frames = [];
+    var boxes = [];
+    var doFrames = false;
+    var currentFrame, currentCoord;
+
+    s.title = '';
+    s.id = '';
+    s.sheet = [];
+    s.helix = [];
+
+    s.biomolDict = {};
+    var biomolDict = s.biomolDict;
+
+    var atoms = s.atoms;
+    var bondSet = s.bondSet;
+
+    var lines = str.split( "\n" );
+
+    var guessElem = NGL.guessElement;
+    var covRadii = NGL.CovalentRadii;
+    var vdwRadii = NGL.VdwRadii;
+    var helixTypes = NGL.HelixTypes;
+
+    var i, j;
+    var line, recordName;
+    var altloc, serial, elem, chainname, resno, resname, atomname, element;
+
+    var m = s.addModel();
+    var c = m.addChain();
+    var r = c.addResidue();
+
+    var chainDict = {};
+    var serialDict = {};
+
+    var id = s.id;
+    var title = s.title;
+    var sheet = s.sheet;
+    var helix = s.helix;
+
+    s.hasConnect = false;
+
+    var a, currentChainname, currentResno, currentBiomol;
+
+    //
+
+    var cif = {};
+
+    var pendingString = false;
+    var currentString = null;
+    var pendingLoop = false;
+    var loopPointers = null;
+
+    //
+
+    var n = lines.length;
+
+    var _i = 0;
+    var _step = 10000;
+    var _n = Math.min( _step, n );
+
+    function _chunked(){
+
+        for( i = _i; i < _n; i++ ){
+
+            line = lines[i].trim();
+
+            if( !line || line[0]==="#" ){
+
+                // console.log( "NEW BLOCK" );
+                pendingString = false;
+                pendingLoop = false;
+                loopPointers = null;
+
+            }else if( line.substring( 0, 5 )==="data_" ){
+
+                var data = line.substring( 5 );
+                // console.log( "DATA", data );
+
+            }else if( line[0]===";" ){
+
+                if( pendingString ){
+
+                    console.log( "STRING END" );
+                    pendingString = false;
+                    currentString = null;
+
+                }else{
+
+                    console.log( "STRING START" );
+                    pendingString = true;
+                    currentString = line.substring( 1 );
+
+                }
+
+                // console.log( line );
+
+            }else if( line==="loop_" ){
+
+                // console.log( "LOOP START" );
+                pendingLoop = true;
+                loopPointers = [];
+
+            }else if( line[0]==="_" ){
+
+                if( pendingLoop ){
+
+                    var ks = line.split(".");
+                    var category = ks[ 0 ].substring( 1 );
+                    var name = ks[ 1 ];
+
+                    if( !cif[ category ] ) cif[ category ] = {};
+                    if( cif[ category ][ name ] ){
+                        console.warn( category, name, "already exists" );
+                    }else{
+                        cif[ category ][ name ] = [];
+                        loopPointers.push( cif[ category ][ name ] );
+                    }
+
+                    // console.log( "LOOP KEY", line );
+
+                }else if( pendingString ){
+
+                    console.log( "???", line );
+
+                }else{
+
+                    var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
+                    var key = ls[ 0 ];
+                    var value = ls[ 1 ];
+                    var ks = key.split(".");
+                    var category = ks[ 0 ].substring( 1 );
+                    var name = ks[ 1 ];
+
+                    if( !cif[ category ] ) cif[ category ] = {};
+                    if( cif[ category ][ name ] ){
+                        console.warn( category, name, "already exists" );
+                    }else{
+                        cif[ category ][ name ] = value;
+                    }
+
+                    // console.log( line.split(/\s+/) );
+
+                }
+
+            }else{
+
+                if( pendingLoop ){
+
+                    // console.log( "loopPointers", loopPointers )
+
+                    var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
+                    var m = ls.length;
+                    for( var j = 0; j < m; ++j ){
+                        loopPointers[ j ].push( ls[ j ] );
+                    }
+
+                    // console.log( "LOOP VALUE", line );
+
+                }else if( pendingString ){
+
+                    console.log( "STRING VALUE", line );
+
+                }else{
+
+                    console.log( line );
+
+                }
+
+            }
+
+
+        }
+
+        if( _n === n ){
+
+            console.timeEnd( __timeName );
+
+            // console.log( cif );
+
+            if( asTrajectory ){
+                s.frames = frames;
+                s.boxes = boxes;
+            }
+            _postProcess();
+            callback( s );
+
+        }else{
+
+            console.log( _i, n );
+
+            _i += _step;
+            _n = Math.min( _n + _step, n );
+
+            setTimeout( _chunked );
+
+        }
+
+    }
+
+    function _postProcess(){
+
+        console.time( "NGL.CifParser _postProcess" );
+
+        var at = cif.atom_site;
+        var o = at.id.length;
+
+        var m = s.addModel();
+        var c = m.addChain();
+
+        var r = c.addResidue();
+        r.resno = at.label_seq_id[ 0 ];
+        r.resname = at.label_comp_id[ 0 ];
+
+        var currentResno = at.label_seq_id[ 0 ];
+
+        for( var j = 0; j < o; ++j ){
+
+            var x = parseFloat( at.Cartn_x[ j ] );
+            var y = parseFloat( at.Cartn_y[ j ] );
+            var z = parseFloat( at.Cartn_z[ j ] );
+
+            var altloc = at.label_alt_id[ j ];
+            if( altloc !== '.' && altloc !== 'A' ) continue; // FIXME: ad hoc
+
+            var serial = parseInt( at.id[ j ] );
+            var atomname = at.label_atom_id[ j ];
+            var element = at.type_symbol[ j ];
+            var chainname = at.label_seq_id[ j ];
+            var resno = at.label_seq_id[ j ];
+            var resname = at.label_comp_id[ j ]
+
+            if( currentResno !== resno ){
+
+                r = c.addResidue();
+                r.resno = resno;
+                r.resname = resname;
+
+            }
+
+            var a = r.addAtom();
+            a.bonds = [];
+
+            a.resname = resname;
+            a.x = x;
+            a.y = y;
+            a.z = z;
+            a.element = element;
+            a.hetero = ( at.group_PDB[ j ][ 0 ] === 'H' ) ? true : false;
+            a.chainname = chainname;
+            a.resno = resno;
+            a.serial = serial;
+            a.atomname = atomname;
+            a.ss = 'c';
+            a.bfactor = parseFloat( at.B_iso_or_equiv[ j ] );
+            a.altloc = altloc;
+            a.vdw = vdwRadii[ element ];
+            a.covalent = covRadii[ element ];
+
+            currentResno = resno;
+
+            atoms.push( a );
+
+        }
+
+        console.timeEnd( "NGL.CifParser _postProcess" );
+
+    }
+
+    setTimeout( _chunked );
+
+};
+
