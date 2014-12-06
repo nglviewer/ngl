@@ -34,13 +34,15 @@ if( typeof importScripts === 'function' ){
 }
 
 
-NGL.StructureParser = function( name, path, firstModelOnly, asTrajectory ){
+NGL.StructureParser = function( name, path, params ){
+
+    params = params || {};
 
     this.name = name;
     this.path = path;
 
-    this.firstModelOnly = firstModelOnly || false;
-    this.asTrajectory = asTrajectory || false;
+    this.firstModelOnly = params.firstModelOnly || false;
+    this.asTrajectory = params.asTrajectory || false;
 
     this.structure = new NGL.Structure( this.name, this.path );
 
@@ -71,9 +73,9 @@ NGL.StructureParser.prototype = {
 }
 
 
-NGL.PdbParser = function( name, path, firstModelOnly, asTrajectory ){
+NGL.PdbParser = function( name, path, params ){
 
-    NGL.StructureParser.call( this, name, path, firstModelOnly, asTrajectory );
+    NGL.StructureParser.call( this, name, path, params );
 
 };
 
@@ -510,9 +512,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 };
 
 
-NGL.GroParser = function( name, path, firstModelOnly, asTrajectory ){
+NGL.GroParser = function( name, path, params ){
 
-    NGL.StructureParser.call( this, name, path, firstModelOnly, asTrajectory );
+    NGL.StructureParser.call( this, name, path, params );
 
     this.structure._doAutoSS = true;
     this.structure._doAutoChainName = true;
@@ -880,9 +882,12 @@ NGL.GroParser.parseAtomsWorker = function( str, firstModelOnly, asTrajectory, ca
 }
 
 
-NGL.CifParser = function( name, path, firstModelOnly, asTrajectory ){
+NGL.CifParser = function( name, path, params ){
 
-    NGL.StructureParser.call( this, name, path, firstModelOnly, asTrajectory );
+    params = params || {};
+
+
+    NGL.StructureParser.call( this, name, path, params );
 
 };
 

@@ -177,7 +177,7 @@ NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
 NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, params ){
 
-    var p = params || {};
+    params = params || {};
 
     var parsersClasses = {
 
@@ -188,7 +188,7 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
     };
 
     var parser = new parsersClasses[ ext ](
-        name, path, p.firstModelOnly, p.asTrajectory
+        name, path, params
     );
 
     return parser.parse( str, callback );
