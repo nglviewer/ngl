@@ -355,28 +355,32 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/4UPY.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
+                o.addRepresentation( "cartoon", { quality: "low" } );
+                o.addRepresentation( "base" );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPX.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
+                o.addRepresentation( "cartoon", { quality: "low" } );
+                o.addRepresentation( "base" );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UQ5.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
+                o.addRepresentation( "cartoon", { quality: "low" } );
+                o.addRepresentation( "base" );
                 stage.centerView();
 
             } );
 
             stage.loadFile( "__example__/4UPW.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
+                o.addRepresentation( "cartoon", { quality: "low" } );
+                o.addRepresentation( "base" );
                 stage.centerView();
 
             } );
@@ -409,6 +413,38 @@ NGL.Examples = {
             stage.loadFile( "__example__/4UPW.pdb", function( o ){
 
                 o.addRepresentation( "line" );
+                stage.centerView();
+
+            } );
+
+        },
+
+        "ribosome3": function( stage ){
+
+            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+
+                o.addRepresentation( "trace" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+
+                o.addRepresentation( "trace" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+
+                o.addRepresentation( "trace" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+
+                o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
