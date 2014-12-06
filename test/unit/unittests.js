@@ -146,14 +146,18 @@ QUnit.test( "parsing error atomname", function( assert ) {
 });
 
 
-QUnit.test( "parsing error chain", function( assert ) {
+QUnit.test( "parsing multi-char chain", function( assert ) {
 
-    var sele = ":FOO";
+    var sele = ":ABJ/0";
 
     var selection = new NGL.Selection( sele );
 
     var selectionObj = {
-        "error": "chain identifier must be one character"
+        "operator": "AND",
+        "rules": [
+            { "model": 0 },
+            { "chainname": "ABJ" }
+        ]
     };
 
     assert.deepEqual( selection.selection, selectionObj, "Passed!" );

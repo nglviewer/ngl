@@ -4131,11 +4131,8 @@ NGL.Selection.prototype = {
 
             chain = atomname[0].split(":");
             if( chain.length > 1 && chain[1] ){
-                if( chain[1].length > 1 ){
-                    throw new Error( "chain identifier must be one character" );
-                }
                 sele.rules.push( {
-                    chainname: chain[1][0]
+                    chainname: chain[1]
                 } );
             }
 
