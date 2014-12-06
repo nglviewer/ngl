@@ -923,6 +923,9 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var lines = str.split( "\n" );
 
+    // safeguard
+    if( lines.length > 1000000 ) cAlphaOnly = true;
+
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
     var vdwRadii = NGL.VdwRadii;

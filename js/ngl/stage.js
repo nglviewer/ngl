@@ -46,6 +46,8 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
+            if( object.structure.atomCount > 100000 ) return;
+
             object.addRepresentation( "cartoon", { sele: "*" } );
             object.addRepresentation( "licorice", { sele: "hetero" } );
             object.centerView( undefined, true );
