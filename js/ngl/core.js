@@ -249,6 +249,19 @@ NGL.unicodeHelper = function(){
 }();
 
 
+NGL.getFileInfo = function( file ){
+
+    var path = ( file instanceof File ) ? file.name : file;
+
+    return {
+        "path": path,
+        "name": path.replace( /^.*[\\\/]/, '' ),
+        "ext": path.split('.').pop().toLowerCase()
+    };
+
+}
+
+
 ///////////
 // Object
 

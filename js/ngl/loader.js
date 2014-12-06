@@ -129,9 +129,29 @@ NGL.FileLoader.prototype = {
 
         reader.onload = function( event ){
 
-            scope.cache.add( file, this.response );
+            // scope.cache.add( file, this.response );
 
-            onLoad( event.target.result );
+            var data = event.target.result;
+
+            if( scope.responseType === "arraybuffer" ){
+
+                console.time( "NGL.FileLoader ungzip" );
+
+                data = new Uint8Array( data );
+                var gz = pako.ungzip( data, { "to": "string" } );
+                // console.log( gz );
+                data = gz;
+
+                console.timeEnd( "NGL.FileLoader ungzip" );
+
+                // var zip = new JSZip( data );
+                // console.log( zip );
+
+                // return;
+
+            }
+
+            onLoad( data );
             scope.manager.itemEnd( file );
 
         }
@@ -156,10 +176,24 @@ NGL.FileLoader.prototype = {
 
         }
 
-        // TODO binary?
-        reader.readAsText( file );
+        if( this.responseType === "arraybuffer" ){
+
+            console.log( "moin" )
+            reader.readAsArrayBuffer( file );
+
+        }else{
+
+            reader.readAsText( file );
+
+        }
 
         scope.manager.itemStart( file );
+
+    },
+
+    setResponseType: function ( value ) {
+
+        this.responseType = value.toLowerCase();
 
     }
 
@@ -287,9 +321,13 @@ NGL.autoLoad = function(){
 
         var object, rcsb, loader;
 
-        var path = ( file instanceof File ) ? file.name : file;
-        var name = path.replace( /^.*[\\\/]/, '' );
-        var ext = path.split('.').pop().toLowerCase();
+        var fileInfo = NGL.getFileInfo( file );
+
+        var path = fileInfo.path;
+        var name = fileInfo.name;
+        var ext = fileInfo.ext;
+
+        var compressed = false;
 
         // FIXME can lead to false positives
         // maybe use a fake protocoll like rcsb://
@@ -299,6 +337,15 @@ NGL.autoLoad = function(){
             file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
 
             rcsb = true;
+
+        }
+
+        if( ext === "gz" ){
+
+            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 3 ) );
+            ext = fileInfo.ext;
+
+            compressed = true;
 
         }
 
@@ -351,6 +398,7 @@ NGL.autoLoad = function(){
             name = file.name;
 
             var fileLoader = new NGL.FileLoader();
+            if( compressed ) fileLoader.setResponseType( "arraybuffer" );
             fileLoader.load( file, init, onProgress, error );
 
         }else if( rcsb ){
