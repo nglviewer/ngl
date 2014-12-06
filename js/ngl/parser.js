@@ -886,6 +886,7 @@ NGL.CifParser = function( name, path, params ){
 
     params = params || {};
 
+    this.cAlphaOnly = params.cAlphaOnly || false;
 
     NGL.StructureParser.call( this, name, path, params );
 
@@ -902,6 +903,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
+    var cAlphaOnly = this.cAlphaOnly;
 
     var frames = [];
     var boxes = [];
@@ -956,6 +958,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var loopPointers = null;
     var currentCategory = null;
     var currentName = null;
+    var first = null;
+    var indexList = null;
+    var pointerNames = null;
+
+    var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
+        type_symbol, label_asym_id, label_seq_id, label_comp_id,
+        group_PDB, B_iso_or_equiv;
 
     //
 
@@ -980,6 +989,9 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 loopPointers = null;
                 currentCategory = null;
                 currentName = null;
+                first = null;
+                indexList = null;
+                pointerNames = null;
 
             }else if( line.substring( 0, 5 )==="data_" ){
 
@@ -1013,6 +1025,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 pendingLoop = true;
                 loopPointers = [];
+                pointerNames = [];
 
             }else if( line[0]==="_" ){
 
@@ -1030,10 +1043,12 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     }else{
                         cif[ category ][ name ] = [];
                         loopPointers.push( cif[ category ][ name ] );
+                        pointerNames.push( name );
                     }
 
                     currentCategory = category;
                     currentName = name;
+                    first = true;
 
                 }else{
 
@@ -1064,17 +1079,134 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                     if( currentCategory==="atom_site" ){
 
+                        var nn = pointerNames.length;
+
                         var ls = line.split(/\s+/);
-                        var m = ls.length;
-                        for( var j = 0; j < m; ++j ){
-                            loopPointers[ j ].push( ls[ j ] );
+                        var k;
+
+                        if( first ){
+
+                            var names = [
+                                "group_PDB", "id", "label_atom_id", "label_seq_id",
+                                "label_comp_id", "type_symbol", "label_asym_id",
+                                "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
+                                "label_alt_id"
+                            ];
+
+                            indexList = [];
+
+                            for( var j = 0; j < nn; ++j ){
+
+                                if( names.indexOf( pointerNames[ j ] ) !== -1 ){
+                                    indexList.push( j );
+                                }
+
+                            }
+
+                            label_atom_id = pointerNames.indexOf( "label_atom_id" );
+                            label_alt_id = pointerNames.indexOf( "label_alt_id" );
+                            Cartn_x = pointerNames.indexOf( "Cartn_x" );
+                            Cartn_y = pointerNames.indexOf( "Cartn_y" );
+                            Cartn_z = pointerNames.indexOf( "Cartn_z" );
+                            id = pointerNames.indexOf( "id" );
+                            type_symbol = pointerNames.indexOf( "type_symbol" );
+                            label_asym_id = pointerNames.indexOf( "label_asym_id" );
+                            label_seq_id = pointerNames.indexOf( "label_seq_id" );
+                            label_comp_id = pointerNames.indexOf( "label_comp_id" );
+                            group_PDB = pointerNames.indexOf( "group_PDB" );
+                            B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
+
+                            first = false;
+
+                            r.resno = ls[ label_seq_id ];
+                            r.resname = ls[ label_comp_id ];
+
                         }
+
+                        //
+
+                        var atomname = ls[ label_atom_id ];
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var altloc = ls[ label_alt_id ];
+                        if( altloc !== '.' && altloc !== 'A' ) continue; // FIXME: ad hoc
+
+                        var x = parseFloat( ls[ Cartn_x ] );
+                        var y = parseFloat( ls[ Cartn_y ] );
+                        var z = parseFloat( ls[ Cartn_z ] );
+
+                        var serial = parseInt( ls[ id ] );
+                        var element = ls[ type_symbol ];
+                        var chainname = ls[ label_asym_id ];
+                        var resno = ls[ label_seq_id ];
+                        var resname = ls[ label_comp_id ];
+
+                        if( !a ){
+
+                            c.chainname = chainname;
+                            chainDict[ chainname ] = c;
+
+                            r.resno = resno;
+                            r.resname = resname;
+
+                            currentChainname = chainname;
+                            currentResno = resno;
+
+                        }
+
+                        if( currentChainname!==chainname ){
+
+                            if( !chainDict[ chainname ] ){
+
+                                c = m.addChain();
+                                c.chainname = chainname;
+
+                                chainDict[ chainname ] = c;
+
+                            }else{
+
+                                c = chainDict[ chainname ];
+
+                            }
+
+                        }
+
+                        if( currentResno !== resno ){
+
+                            r = c.addResidue();
+                            r.resno = resno;
+                            r.resname = resname;
+
+                        }
+
+                        a = r.addAtom();
+                        a.bonds = [];
+
+                        a.resname = resname;
+                        a.x = x;
+                        a.y = y;
+                        a.z = z;
+                        a.element = element;
+                        a.hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
+                        a.chainname = chainname;
+                        a.resno = resno;
+                        a.serial = serial;
+                        a.atomname = atomname;
+                        a.ss = 'c';
+                        a.bfactor = parseFloat( ls[ B_iso_or_equiv ] );
+                        a.altloc = altloc;
+                        a.vdw = vdwRadii[ element ];
+                        a.covalent = covRadii[ element ];
+
+                        currentResno = resno;
+
+                        atoms.push( a );
 
                     }else{
 
                         var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
-                        var m = ls.length;
-                        for( var j = 0; j < m; ++j ){
+                        var nn = ls.length;
+                        for( var j = 0; j < nn; ++j ){
                             loopPointers[ j ].push( ls[ j ] );
                         }
 
@@ -1115,6 +1247,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
+
             _postProcess();
             callback( s );
 
@@ -1134,101 +1267,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     function _postProcess(){
 
         console.time( "NGL.CifParser _postProcess" );
-
-        var at = cif.atom_site;
-        var o = at.id.length;
-
-        // var m = s.addModel();
-        // var c = m.addChain();
-        // var r = c.addResidue();
-
-        r.resno = at.label_seq_id[ 0 ];
-        r.resname = at.label_comp_id[ 0 ];
-
-        var a;
-
-        var currentResno = at.label_seq_id[ 0 ];
-
-        for( var j = 0; j < o; ++j ){
-
-            var x = parseFloat( at.Cartn_x[ j ] );
-            var y = parseFloat( at.Cartn_y[ j ] );
-            var z = parseFloat( at.Cartn_z[ j ] );
-
-            var altloc = at.label_alt_id[ j ];
-            if( altloc !== '.' && altloc !== 'A' ) continue; // FIXME: ad hoc
-
-            var serial = parseInt( at.id[ j ] );
-            var atomname = at.label_atom_id[ j ];
-            var element = at.type_symbol[ j ];
-            var chainname = at.label_asym_id[ j ];
-            var resno = at.label_seq_id[ j ];
-            var resname = at.label_comp_id[ j ]
-
-            if( !a ){
-
-                c.chainname = chainname;
-                chainDict[ chainname ] = c;
-
-                r.resno = resno;
-                r.resname = resname;
-
-                currentChainname = chainname;
-                currentResno = resno;
-
-            }
-
-            if( currentChainname!==chainname ){
-
-                if( !chainDict[ chainname ] ){
-
-                    c = m.addChain();
-                    c.chainname = chainname;
-
-                    chainDict[ chainname ] = c;
-
-                }else{
-
-                    c = chainDict[ chainname ];
-
-                }
-
-            }
-
-            if( currentResno !== resno ){
-
-                r = c.addResidue();
-                r.resno = resno;
-                r.resname = resname;
-
-            }
-
-            a = r.addAtom();
-            a.bonds = [];
-
-            a.resname = resname;
-            a.x = x;
-            a.y = y;
-            a.z = z;
-            a.element = element;
-            a.hetero = ( at.group_PDB[ j ][ 0 ] === 'H' ) ? true : false;
-            a.chainname = chainname;
-            a.resno = resno;
-            a.serial = serial;
-            a.atomname = atomname;
-            a.ss = 'c';
-            a.bfactor = parseFloat( at.B_iso_or_equiv[ j ] );
-            a.altloc = altloc;
-            a.vdw = vdwRadii[ element ];
-            a.covalent = covRadii[ element ];
-
-            currentResno = resno;
-
-            atoms.push( a );
-
-        }
-
-        //
 
         var sc = cif.struct_conf;
         var o = sc.id.length;
@@ -1293,11 +1331,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
         var _doAutoChainName = true;
         s.eachChain( function( c ){
-            if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+            if( c.chainname ) _doAutoChainName = false;
         } );
         s._doAutoChainName = _doAutoChainName;
 
         console.timeEnd( "NGL.CifParser _postProcess" );
+
+        // console.log( s )
 
     }
 
