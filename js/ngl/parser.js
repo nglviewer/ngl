@@ -953,6 +953,9 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     //
 
+    var reWhitespace = /\s+/;
+    var reQuotedWhitespace = /\s+(?=(?:[^']*'[^']*')*[^']*$)/;
+
     var cif = {};
 
     var pendingString = false;
@@ -1055,7 +1058,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 }else{
 
-                    var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
+                    var ls = line.split( reQuotedWhitespace );
                     var key = ls[ 0 ];
                     var value = ls[ 1 ];
                     var ks = key.split(".");
@@ -1084,7 +1087,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var nn = pointerNames.length;
 
-                        var ls = line.split(/\s+/);
+                        var ls = line.split( reWhitespace );
                         var k;
 
                         if( first ){
@@ -1207,7 +1210,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                     }else{
 
-                        var ls = line.split(/\s+(?=(?:[^']*'[^']*')*[^']*$)/);
+                        var ls = line.split( reQuotedWhitespace );
                         var nn = ls.length;
                         for( var j = 0; j < nn; ++j ){
                             loopPointers[ j ].push( ls[ j ] );
