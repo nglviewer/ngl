@@ -116,11 +116,21 @@ NGL.Spline.prototype = {
         if( isNaN( tension ) ) tension = this.tension;
 
         var pos = this.getPosition( m, tension );
+
+        return {
+            "position": pos
+        }
+
+    },
+
+    getSubdividedOrientation: function( m, tension ){
+
+        if( isNaN( tension ) ) tension = this.tension;
+
         var tan = this.getTangent( m, tension );
         var normals = this.getNormals( m, tension, tan );
 
         return {
-            "position": pos,
             "tangent": tan,
             "normal": normals.normal,
             "binormal": normals.binormal

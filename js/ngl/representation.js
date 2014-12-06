@@ -1689,6 +1689,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
             var spline = new NGL.Spline( fiber );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
             var subSize = spline.getSubdividedSize(
                 scope.subdiv, scope.radius, scope.scale
@@ -1701,9 +1702,9 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
                 new NGL.TubeMeshBuffer(
                     subPos.position,
-                    subPos.normal,
-                    subPos.binormal,
-                    subPos.tangent,
+                    subOri.normal,
+                    subOri.binormal,
+                    subOri.tangent,
                     subCol.color,
                     subSize.size,
                     scope.radialSegments,
@@ -1748,14 +1749,17 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                 var subPos = spline.getSubdividedPosition(
                     this.subdiv, this.tension
                 );
+                var subOri = spline.getSubdividedOrientation(
+                    this.subdiv, this.tension
+                );
                 var subSize = spline.getSubdividedSize(
                     this.subdiv, this.radius, this.scale
                 );
 
                 bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subPos.normal;
-                bufferData[ "binormal" ] = subPos.binormal;
-                bufferData[ "tangent" ] = subPos.tangent;
+                bufferData[ "normal" ] = subOri.normal;
+                bufferData[ "binormal" ] = subOri.binormal;
+                bufferData[ "tangent" ] = subOri.tangent;
                 bufferData[ "size" ] = subSize.size;
 
             }
@@ -1949,6 +1953,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             var spline = new NGL.Spline( fiber );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
             var subSize = spline.getSubdividedSize(
                 scope.subdiv, scope.radius, scope.scale
@@ -1965,9 +1970,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
                 new NGL.TubeMeshBuffer(
                     subPos.position,
-                    subPos.normal,
-                    subPos.binormal,
-                    subPos.tangent,
+                    subOri.normal,
+                    subOri.binormal,
+                    subOri.tangent,
                     subCol.color,
                     subSize.size,
                     scope.radialSegments,
@@ -2049,14 +2054,15 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
                 var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
+                var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
                 var subSize = spline.getSubdividedSize(
                     this.subdiv, this.radius, this.scale
                 );
 
                 bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subPos.normal;
-                bufferData[ "binormal" ] = subPos.binormal;
-                bufferData[ "tangent" ] = subPos.tangent;
+                bufferData[ "normal" ] = subOri.normal;
+                bufferData[ "binormal" ] = subOri.binormal;
+                bufferData[ "tangent" ] = subOri.tangent;
                 bufferData[ "size" ] = subSize.size;
 
             }
@@ -2242,6 +2248,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             var spline = new NGL.Spline( fiber );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
             var subSize = spline.getSubdividedSize(
                 scope.subdiv, scope.radius, scope.scale
@@ -2251,8 +2258,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
                 new NGL.RibbonBuffer(
                     subPos.position,
-                    subPos.binormal,
-                    subPos.normal,
+                    subOri.binormal,
+                    subOri.normal,
                     subCol.color,
                     subSize.size,
                     subCol.pickingColor,
@@ -2288,10 +2295,11 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             if( what[ "position" ] ){
 
                 var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
+                var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
 
                 bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subPos.binormal;
-                bufferData[ "dir" ] = subPos.normal;
+                bufferData[ "normal" ] = subOri.binormal;
+                bufferData[ "dir" ] = subOri.normal;
 
             }
 
@@ -2894,6 +2902,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             var spline = new NGL.Spline( helixorient.getFiber( scope.smooth, true ) );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
             var subSize = spline.getSubdividedSize(
                 scope.subdiv, scope.radius, scope.scale
@@ -2906,9 +2915,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
                 new NGL.TubeMeshBuffer(
                     subPos.position,
-                    subPos.normal,
-                    subPos.binormal,
-                    subPos.tangent,
+                    subOri.normal,
+                    subOri.binormal,
+                    subOri.tangent,
                     subCol.color,
                     subSize.size,
                     scope.radialSegments,
@@ -2952,14 +2961,17 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                 var subPos = spline.getSubdividedPosition(
                     this.subdiv, this.tension
                 );
+                var subOri = spline.getSubdividedOrientation(
+                    this.subdiv, this.tension
+                );
                 var subSize = spline.getSubdividedSize(
                     this.subdiv, this.radius, this.scale
                 );
 
                 bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subPos.normal;
-                bufferData[ "binormal" ] = subPos.binormal;
-                bufferData[ "tangent" ] = subPos.tangent;
+                bufferData[ "normal" ] = subOri.normal;
+                bufferData[ "binormal" ] = subOri.binormal;
+                bufferData[ "tangent" ] = subOri.tangent;
                 bufferData[ "size" ] = subSize.size;
 
             }
