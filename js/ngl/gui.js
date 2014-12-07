@@ -1348,6 +1348,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         var input;
         var p = repr.parameters[ name ];
 
+        if( !p ) return;
+
         if( p.type === "number" || p.type === "integer" ){
 
             if( p.type === "number" ){

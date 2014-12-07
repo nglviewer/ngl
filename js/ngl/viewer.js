@@ -24,6 +24,8 @@ NGL.Resources = {
     '../shader/CylinderImpostor.frag': '',
     '../shader/HyperballStickImpostor.vert': '',
     '../shader/HyperballStickImpostor.frag': '',
+    '../shader/Line.vert': '',
+    '../shader/Line.frag': '',
     '../shader/LineSprite.vert': '',
     '../shader/LineSprite.frag': '',
     '../shader/Mesh.vert': '',
@@ -2862,9 +2864,15 @@ NGL.PointBuffer.prototype = {
  * @param {Float32Array} color
  * @param {Float32Array} color2
  */
-NGL.LineBuffer = function( from, to, color, color2 ){
+NGL.LineBuffer = function( from, to, color, color2, lineWidth, transparent, opacity ){
+
+    this.lineWidth = lineWidth || 1;
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.size = from.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
 
     var n = this.size;
     var n6 = n * 6;
@@ -2890,6 +2898,13 @@ NGL.LineBuffer = function( from, to, color, color2 ){
         color: color,
         color2: color2
     });
+
+    this.uniforms = THREE.UniformsUtils.merge( [
+        NGL.UniformsLib[ "fog" ],
+        {
+            "opacity": { type: "f", value: this.opacity },
+        }
+    ]);
 
 };
 
@@ -3002,10 +3017,19 @@ NGL.LineBuffer.prototype = {
 
     getMaterial: function( type ){
 
-        return new THREE.LineBasicMaterial({
+        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
+
+        return new THREE.ShaderMaterial( {
+            uniforms: uniforms,
             attributes: this.attributes,
-            vertexColors: true,
-            fog: true
+            vertexShader: NGL.getShader( this.vertexShader ),
+            fragmentShader: NGL.getShader( this.fragmentShader ),
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            linewidth: this.lineWidth
         });
 
     },

@@ -744,6 +744,20 @@ NGL.Examples = {
 
         },
 
+        "1crn": function( stage ){
+
+            stage.loadFile( "__example__/1crn.pdb", function( o ){
+
+                o.addRepresentation( "line", {
+                    lineWidth: 5, transparent: true, opacity: 0.5
+                } );
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+        },
+
     }
 
 };

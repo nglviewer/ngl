@@ -561,7 +561,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             type: "boolean"
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.StructureRepresentation.prototype.parameters, { side: null } ),
 
     init: function( params ){
 
@@ -998,15 +998,44 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     type: "line",
 
-    parameters: Object.assign( {}, NGL.Representation.prototype.parameters ),
+    parameters: Object.assign( {
+
+        lineWidth: {
+            type: "integer", max: 20, min: 1
+        },
+        transparent: {
+            type: "boolean"
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
+        }
+
+    }, NGL.Representation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        this.lineWidth = p.lineWidth || 1;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
 
     create: function(){
+
+        var opacity = this.transparent ? this.opacity : 1.0;
 
         this.lineBuffer = new NGL.LineBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
             this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color )
+            this.atomSet.bondColor( null, 1, this.color ),
+            this.lineWidth,
+            this.transparent,
+            opacity
         );
 
         this.bufferList = [ this.lineBuffer ];
@@ -1034,6 +1063,41 @@ NGL.LineRepresentation.prototype = NGL.createObject(
         }
 
         this.lineBuffer.setAttributes( lineData );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        what = what || {};
+
+        if( params && params[ "lineWidth" ] !== undefined ){
+
+            this.lineWidth = params[ "lineWidth" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 
