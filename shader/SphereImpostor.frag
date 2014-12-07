@@ -5,6 +5,8 @@
 // #extension GL_ARB_conservative_depth : enable
 // layout(depth_less) out float gl_FragDepthEXT;
 
+uniform float opacity;
+
 uniform mat4 projectionMatrix;
 
 varying vec3 point;
@@ -16,8 +18,6 @@ varying float sphereRadius;
 #else
     varying vec3 vColor;
 #endif
-
-const float opacity = 1.0;
 
 #include light_params
 
@@ -111,7 +111,7 @@ void main(void)
         discard;
 
     #ifdef PICKING
-        gl_FragColor.xyz = vPickingColor;
+        gl_FragColor = vec4( vPickingColor, 1.0 );
         //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
     #else
         vec3 transformedNormal = cameraNormal;

@@ -27,6 +27,8 @@
 
 #extension GL_EXT_frag_depth : enable
 
+uniform float opacity;
+
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
@@ -47,8 +49,6 @@ varying vec3 V;
     varying vec3 vColor;
     varying vec3 vColor2;
 #endif
-
-const float opacity = 1.0;
 
 #include light_params
 

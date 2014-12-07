@@ -2193,7 +2193,11 @@ NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
  * @param {Float32Array} color
  * @param {Float32Array} radius
  */
-NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor ){
+NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, transparent, side, opacity ){
+
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.size = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
@@ -2249,11 +2253,14 @@ NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
  *      to i.e. get multiple aligned cylinders.
  * @param {Boolean} cap - If true the cylinders are capped.
  */
-NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2 ){
+NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, transparent, side, opacity ){
 
     if( !shift ) shift = 0;
 
     this.cap = cap === undefined ? true : cap;
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.size = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
@@ -2323,7 +2330,11 @@ NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 }
 
 
-NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2 ){
+NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, transparent, side, opacity ){
+
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.size = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
@@ -2391,7 +2402,12 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
  * @private
  * @augments {NGL.MappedBuffer}
  */
-NGL.GeometryBuffer = function( position, color, pickingColor ){
+NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side, opacity ){
+
+    this.wireframe = false;
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.side = side !== undefined ? side : THREE.DoubleSide;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     var geo = this.geo;
 
@@ -2425,7 +2441,8 @@ NGL.GeometryBuffer = function( position, color, pickingColor ){
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor
+        this.meshNormal, this.meshPickingColor, this.wireframe,
+        this.transparent, this.side, this.opacity
     );
 
     this.pickable = this.meshBuffer.pickable;
@@ -2597,7 +2614,7 @@ NGL.GeometryBuffer.prototype = {
 }
 
 
-NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, detail ){
+NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, detail, transparent, side, opacity ){
 
     detail = detail!==undefined ? detail : 1;
 
@@ -2605,7 +2622,7 @@ NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, deta
 
     this.setPositionTransform( radius );
 
-    NGL.GeometryBuffer.call( this, position, color, pickingColor );
+    NGL.GeometryBuffer.call( this, position, color, pickingColor, transparent, side, opacity );
 
 };
 
@@ -2637,7 +2654,7 @@ NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
 }
 
 
-NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments ){
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments, transparent, side, opacity ){
 
     radiusSegments = radiusSegments || 10;
 
@@ -2673,7 +2690,8 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
     this.setPositionTransform( this._from, this._to, this._radius );
 
     NGL.GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor
+        this, this._position, this._color, this._pickingColor,
+        transparent, side, opacity
     );
 
 };
@@ -3847,35 +3865,45 @@ NGL.SurfaceBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disableImpostor ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disableImpostor, transparent, side, opacity ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
-        return new NGL.SphereGeometryBuffer( position, color, radius, pickingColor, detail );
+        return new NGL.SphereGeometryBuffer(
+            position, color, radius, pickingColor, detail,
+            transparent, side, opacity
+        );
 
     }else{
 
-        return new NGL.SphereImpostorBuffer( position, color, radius, pickingColor );
+        return new NGL.SphereImpostorBuffer(
+            position, color, radius, pickingColor,
+            transparent, side, opacity
+        );
 
     }
 
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments, disableImpostor ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments, disableImpostor, transparent, side, opacity ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
         // FIXME cap support missing
 
         return new NGL.CylinderGeometryBuffer(
-            from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments
+            from, to, color, color2, radius,
+            pickingColor, pickingColor2, radiusSegments,
+            transparent, side, opacity
         );
 
     }else{
 
         return new NGL.CylinderImpostorBuffer(
-            from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2
+            from, to, color, color2, radius, shift, cap,
+            pickingColor, pickingColor2,
+            transparent, side, opacity
         );
 
     }
@@ -3883,21 +3911,23 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, disableImpostor ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, radiusSegments, disableImpostor, transparent, side, opacity ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2,
             NGL.Utils.calculateMinArray( radius1, radius2 ),
-            0, false, pickingColor, pickingColor2
+            pickingColor, pickingColor2, radiusSegments,
+            transparent, side, opacity
         );
 
     }else{
 
         return new NGL.HyperballStickImpostorBuffer(
             from, to, color, color2, radius1, radius2, shrink,
-            pickingColor, pickingColor2
+            pickingColor, pickingColor2,
+            transparent, side, opacity
         );
 
     }

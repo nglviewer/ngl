@@ -1,7 +1,7 @@
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
-// Departement des Sciences de la Simulation et de l'Information (CEA). 
+// Departement des Sciences de la Simulation et de l'Information (CEA).
 
 // License: CeCILL-C license (http://www.cecill.info/)
 
@@ -23,6 +23,8 @@ varying mat4 matrix_near;
 
 varying vec4 prime1;
 varying vec4 prime2;
+
+uniform float opacity;
 
 uniform float shrink;
 uniform mat4 modelViewProjectionMatrix;
@@ -196,7 +198,7 @@ void main()
 
     vec3 transformedNormal = normal;
     vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-    
+
     #include light
 
     // Mix the color bond in function of the two atom colors
@@ -220,7 +222,7 @@ void main()
         }else{
             diffusecolor = vColor2;
         }
-        gl_FragColor = vec4( diffusecolor, 1.0 );
+        gl_FragColor = vec4( diffusecolor, opacity );
         gl_FragColor.xyz *= vLightFront;
     #endif
 
