@@ -4002,9 +4002,10 @@ NGL.getFont = function( name ){
 };
 
 
-NGL.TextBuffer = function( position, size, color, text, font, antialias ){
+NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity ){
 
     this.antialias = antialias !== undefined ? antialias : true;
+    this.opacity = opacity || 1.0;
 
     var fontName = font || 'Arial';
     this.font = NGL.getFont( fontName );

@@ -580,6 +580,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        var opacity = this.transparent ? this.opacity : 1.0;
+
         var text = [];
         var labelFactory = new NGL.LabelFactory(
             this.labelType, this.labelText
@@ -597,7 +599,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             text,
             this.font,
-            this.antialias
+            this.antialias,
+            opacity
         );
 
         this.bufferList = [ this.textBuffer ];

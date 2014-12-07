@@ -4,6 +4,8 @@
 uniform vec3 backgroundColor;
 uniform sampler2D fontTexture;
 
+uniform float opacity;
+
 varying vec3 vColor;
 varying vec2 texCoord;
 
@@ -28,13 +30,15 @@ void main() {
     // gamma correction for linear attenuation
     a = pow( a, 1.0 / gamma );
 
+    if( a < 0.2 ) discard;
+
+    a *= opacity;
+
     #ifndef ANTIALIAS
         gl_FragColor = vec4( mix( backgroundColor, vColor, a ), 1.0 );
     #else
         gl_FragColor = vec4( vColor, a );
     #endif
-
-    if( a < 0.2 ) discard;
 
     #include fog
 
