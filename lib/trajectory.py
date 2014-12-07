@@ -85,6 +85,18 @@ class Trajectory( object ):
             array.array( "f", coords ).tostring()
         )
 
+    def get_path( self, atom_index, frame_indices=None ):
+        if( frame_indices ):
+            size = len( frame_indices )
+            frames = map( int, frame_indices )
+        else:
+            size = self.numframes
+            frames = range( size )
+        path = np.zeros( ( size, 3 ), dtype=np.float32 )
+        for i in frames:
+            box, coords = self._get_frame( i )
+            path[ i ] = coords[ atom_index ]
+        return array.array( "f", path.flatten() ).tostring()
     def __del__( self ):
         pass
 

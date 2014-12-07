@@ -111,7 +111,7 @@ NGL.Representation.prototype = {
 
         this.dispose();
         this.create();
-        this.attach();
+        if( !this.manualAttach ) this.attach();
 
     },
 
@@ -231,7 +231,7 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     }, this );
 
     this.create();
-    this.attach();
+    if( !this.manualAttach ) this.attach();
 
 };
 
@@ -3405,6 +3405,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
 NGL.TrajectoryRepresentation = function( trajectory, viewer, params ){
 
+    this.manualAttach = true;
+
     this.trajectory = trajectory;
 
     NGL.StructureRepresentation.call(
@@ -3421,11 +3423,12 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        wireframe: {
-            type: "boolean"
-        },
-        background: {
-            type: "boolean"
+        drawLine: { type: "boolean" },
+        drawCylinder: { type: "boolean" },
+        drawSphere: { type: "boolean" },
+
+        lineWidth: {
+            type: "integer", max: 20, min: 1
         },
         transparent: {
             type: "boolean"
@@ -3443,14 +3446,18 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         p = params || {};
 
-        this.color = p.color || 0xDDDDDD;
-        this.background = p.background || false;
-        this.wireframe = p.wireframe || false;
+        p.color = p.color || 0xDDDDDD;
+
+        this.drawLine = p.drawLine || true;
+        this.drawCylinder = p.drawCylinder || false;
+        this.drawSphere = p.drawSphere || false;
+
+        this.lineWidth = p.lineWidth || 1;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.Representation.prototype.init.call( this, p );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -3471,73 +3478,81 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         // console.log( this.selection )
         // console.log( this.atomSet )
 
-        var bufferList = [];
+        this.bufferList = [];
 
         if( !this.atomSet.atoms.length ) return;
 
+        var scope = this;
+
         var opacity = this.transparent ? this.opacity : 1.0;
-
-        var color = this.color;
-        var radius = this.radius;
-        var scale = this.scale;
-        var aspectRatio = this.aspectRatio;
-        var sphereDetail = this.sphereDetail;
-        var radiusSegments = this.radiusSegments;
-        var disableImpostor = this.disableImpostor;
-        var transparent = this.transparent;
-        var side = this.side;
-
         var index = this.atomSet.atoms[ 0 ].index;
 
         this.trajectory.getPath( index, function( path ){
 
             var n = path.length / 3;
-            var tc = new THREE.Color( this.color );
+            var tc = new THREE.Color( scope.color );
 
-            var sphereBuffer = new NGL.SphereBuffer(
-                path,
-                NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
-                NGL.Utils.uniformArray( n, 0.2 ),
-                NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
-                sphereDetail,
-                disableImpostor,
-                transparent,
-                side,
-                opacity
-            );
+            if( scope.drawSphere ){
 
-            var cylinderBuffer = new NGL.CylinderBuffer(
-                path.subarray( 0, -3 ),
-                path.subarray( 3 ),
-                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                NGL.Utils.uniformArray( n, 0.05 ),
-                null,
-                true,
-                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                radiusSegments,
-                disableImpostor,
-                transparent,
-                side,
-                opacity
+                var sphereBuffer = new NGL.SphereBuffer(
+                    path,
+                    NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
+                    NGL.Utils.uniformArray( n, 0.2 ),
+                    NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
+                    scope.sphereDetail,
+                    scope.disableImpostor,
+                    scope.transparent,
+                    scope.side,
+                    opacity
+                );
 
-            );
+                scope.bufferList.push( sphereBuffer );
 
-            var lineBuffer = new NGL.LineBuffer(
-                path.subarray( 0, -3 ),
-                path.subarray( 3 ),
-                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b )
-            );
+            }
 
-            bufferList.push( sphereBuffer );
-            // bufferList.push( cylinderBuffer );
-            bufferList.push( lineBuffer );
+            if( scope.drawCylinder ){
+
+                var cylinderBuffer = new NGL.CylinderBuffer(
+                    path.subarray( 0, -3 ),
+                    path.subarray( 3 ),
+                    NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    NGL.Utils.uniformArray( n, 0.05 ),
+                    null,
+                    true,
+                    NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    scope.radiusSegments,
+                    scope.disableImpostor,
+                    scope.transparent,
+                    scope.side,
+                    opacity
+
+                );
+
+                scope.bufferList.push( cylinderBuffer );
+
+            }
+
+            if( scope.drawLine ){
+
+                var lineBuffer = new NGL.LineBuffer(
+                    path.subarray( 0, -3 ),
+                    path.subarray( 3 ),
+                    NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    scope.lineWidth,
+                    scope.transparent,
+                    opacity
+                );
+
+                scope.bufferList.push( lineBuffer );
+
+            }
+
+            scope.attach();
 
         } );
-
-        this.bufferList = bufferList;
 
     },
 
@@ -3546,16 +3561,32 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         var rebuild = false;
         var what = {};
 
-        if( params && params[ "wireframe" ] !== undefined ){
+        if( params && params[ "drawLine" ] !== undefined ){
 
-            this.wireframe = params[ "wireframe" ];
+            this.drawLine = params[ "drawLine" ];
             rebuild = true;
 
         }
 
-        if( params && params[ "background" ] !== undefined ){
+        if( params && params[ "drawCylinder" ] !== undefined ){
 
-            this.background = params[ "background" ];
+            this.drawCylinder = params[ "drawCylinder" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "drawSphere" ] !== undefined ){
+
+            this.drawSphere = params[ "drawSphere" ];
+            rebuild = true;
+
+        }
+
+        //
+
+        if( params && params[ "lineWidth" ] !== undefined ){
+
+            this.lineWidth = params[ "lineWidth" ];
             rebuild = true;
 
         }
@@ -3583,7 +3614,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         }
 
-        NGL.Representation.prototype.setParameters.call(
+        NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
 

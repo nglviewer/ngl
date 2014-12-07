@@ -46,6 +46,7 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
+            // safeguard
             if( object.structure.atomCount > 100000 ) return;
 
             object.addRepresentation( "cartoon", { sele: "*" } );
@@ -876,7 +877,21 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         return this;
 
-    }
+    },
+
+    setVisibility: function( value ){
+
+        NGL.Component.prototype.setVisibility.call( this, value );
+
+        this.trajList.forEach( function( traj ){
+
+            traj.setVisibility( value );
+
+        } );
+
+        return this;
+
+    },
 
 } );
 
@@ -1011,9 +1026,9 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
 
         this.trajectory.dispose();
 
-    },
+        NGL.Component.prototype.dispose.call( this );
 
-    setVisibility: function( value ){},
+    },
 
     getCenter: function(){}
 

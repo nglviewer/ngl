@@ -121,6 +121,7 @@ NGL.Trajectory.prototype = {
 
         this.frameCache = [];
         this.boxCache = [];
+        this.pathCache = [];
         this.frameCacheSize = 0;
         this.currentFrame = -1;
 
@@ -188,6 +189,7 @@ NGL.Trajectory.prototype = {
 
         this.frameCache = [];
         this.boxCache = [];
+        this.pathCache = [];
         this.frameCacheSize = 0;
         this.setFrame( this.currentFrame );
 
@@ -569,6 +571,54 @@ NGL.RemoteTrajectory.prototype.getNumframes = function(){
 
 };
 
+NGL.RemoteTrajectory.prototype.getPath = function( index, callback ){
+
+    if( this.pathCache[ index ] ){
+        callback( this.pathCache[ index ] );
+        return;
+    }
+
+    console.time( "loadPath" );
+
+    var scope = this;
+
+    var request = new XMLHttpRequest();
+
+    var url = "../traj/path/" + index + "/" + this.trajPath;
+    var params = "";
+    // var params = "frameIndices=" + this.atomIndices.join(";");
+
+    request.open( "POST", url, true );
+    request.responseType = "arraybuffer";
+    request.setRequestHeader(
+        "Content-type", "application/x-www-form-urlencoded"
+    );
+
+    request.addEventListener( 'load', function( event ){
+
+        console.timeEnd( "loadPath" );
+
+        var arrayBuffer = this.response;
+
+        if( !arrayBuffer ){
+            console.error( "empty arrayBuffer for '" + url + "'" );
+            return;
+        }
+
+        var path = new Float32Array( arrayBuffer );
+
+        scope.pathCache[ index ] = path;
+
+        // console.log( path )
+
+        callback( path );
+
+    }, false );
+
+    request.send( params );
+
+};
+
 
 NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
@@ -647,57 +697,57 @@ NGL.StructureTrajectory.prototype.getPath = function( index, callback ){
 };
 
 
-NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
+// NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
 
-    if( !trajPath ) trajPath = structure.path;
+//     if( !trajPath ) trajPath = structure.path;
 
-    NGL.Trajectory.call( this, trajPath, structure, selectionString );
+//     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-}
+// }
 
-NGL.BinaryTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+// NGL.BinaryTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
 
-NGL.BinaryTrajectory.prototype.loadFrame = function( i, callback ){
+// NGL.BinaryTrajectory.prototype.loadFrame = function( i, callback ){
 
-    var coords = new Float32Array( this.structure.frames[ i ] );
-    var box = this.structure.boxes[ i ];
+//     var coords = new Float32Array( this.structure.frames[ i ] );
+//     var box = this.structure.boxes[ i ];
 
-    if( box ){
+//     if( box ){
 
-        if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-            var mean = this.getCircularMean(
-                this.backboneIndices, coords, box2
-            );
-            this.centerPbc( coords, mean, box2 );
-        }
+//         if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+//             var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+//             var mean = this.getCircularMean(
+//                 this.backboneIndices, coords, box2
+//             );
+//             this.centerPbc( coords, mean, box2 );
+//         }
 
-        if( this.params.removePbc ){
-            this.removePbc( coords, box );
-        }
+//         if( this.params.removePbc ){
+//             this.removePbc( coords, box );
+//         }
 
-    }
+//     }
 
-    if( this.indices.length > 0 && this.params.superpose ){
-        this.superpose( coords );
-    }
+//     if( this.indices.length > 0 && this.params.superpose ){
+//         this.superpose( coords );
+//     }
 
-    if( !this.frameCache[ i ] ){
-        this.frameCache[ i ] = coords;
-        this.boxCache[ i ] = box;
-        this.frameCacheSize += 1;
-    }
+//     if( !this.frameCache[ i ] ){
+//         this.frameCache[ i ] = coords;
+//         this.boxCache[ i ] = box;
+//         this.frameCacheSize += 1;
+//     }
 
-    this.updateStructure( i, callback );
+//     this.updateStructure( i, callback );
 
-};
+// };
 
-NGL.BinaryTrajectory.prototype.getNumframes = function(){
+// NGL.BinaryTrajectory.prototype.getNumframes = function(){
 
-    this.numframes = this.structure.frames.length;
-    this.signals.gotNumframes.dispatch( this.numframes );
+//     this.numframes = this.structure.frames.length;
+//     this.signals.gotNumframes.dispatch( this.numframes );
 
-};
+// };
 
 
 ///////////

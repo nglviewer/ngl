@@ -276,6 +276,7 @@ def dir( root="", path="" ):
                 })
 
     for fname in trajectory.get_split_xtc( dir_path ):
+        fname = fname.decode( "utf-8" )
         dir_content.append({
             'name': fname,
             'path': os.path.join( root, path, fname ),
@@ -320,7 +321,7 @@ TRAJ_CACHE = trajectory.TrajectoryCache()
 
 @app.route( '/traj/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
 @requires_auth
-def traj_serve( frame, root, filename ):
+def traj_frame( frame, root, filename ):
     directory = get_directory( root )
     if directory:
         path = os.path.join( directory, filename )
@@ -346,7 +347,25 @@ def traj_numframes( root, filename ):
     directory = get_directory( root )
     if directory:
         path = os.path.join( directory, filename )
-        return str( TRAJ_CACHE.get( path ).numframes )
+    else:
+        return
+    return str( TRAJ_CACHE.get( path ).numframes )
+
+
+@app.route( '/traj/path/<int:index>/<root>/<path:filename>', methods=['POST'] )
+@requires_auth
+def traj_path( index, root, filename ):
+    directory = get_directory( root )
+    if directory:
+        path = os.path.join( directory, filename )
+    else:
+        return
+    frame_indices = request.form.get( "frameIndices" )
+    if frame_indices:
+        frame_indices = None
+    return TRAJ_CACHE.get( path ).get_path(
+        index, frame_indices=frame_indices
+    )
 
 
 ############################

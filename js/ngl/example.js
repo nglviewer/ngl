@@ -69,9 +69,11 @@ NGL.Examples = {
                 o.centerView();
 
                 o.addTrajectory( "__example__/ala3.dcd" )
-                    .setCenterPbc( false )
-                    .setRemovePbc( false )
-                    .setSuperpose( true );
+                    .setParameters( {
+                        "centerPbc": false,
+                        "removePbc": false,
+                        "superpose": true
+                    } );
 
             } );
 
@@ -86,9 +88,11 @@ NGL.Examples = {
                 o.centerView();
 
                 o.addTrajectory( "__example__/DPDP.nc" )
-                    .setCenterPbc( false )
-                    .setRemovePbc( false )
-                    .setSuperpose( true );
+                    .setParameters( {
+                        "centerPbc": false,
+                        "removePbc": false,
+                        "superpose": true
+                    } );
 
             } );
 
@@ -168,7 +172,8 @@ NGL.Examples = {
 
             // }, null, null, { asTrajectory: true } );
 
-            stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
+            // stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
+            stage.loadFile( "__example__/md_1u19_trj.gro", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 // o.addRepresentation( "licorice", { sele: "*" } );
