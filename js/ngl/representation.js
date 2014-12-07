@@ -2504,32 +2504,46 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        lineWidth: {
+            type: "integer", max: 20, min: 1
+        },
+        transparent: {
+            type: "boolean"
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
         }
 
     }, NGL.Representation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
+        var p = params || {};
+        p.color = p.color || "ss";
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.subdiv = 3;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.subdiv = 6;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.subdiv = 12;
         }else{
-            this.subdiv = params.subdiv || 6;
+            this.subdiv = p.subdiv || 6;
         }
 
-        this.tension = params.tension || NaN;
+        this.tension = p.tension || NaN;
+        this.lineWidth = p.lineWidth || 1;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
     create: function(){
+
+        var opacity = this.transparent ? this.opacity : 1.0;
 
         var scope = this;
 
@@ -2545,8 +2559,17 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
 
             scope.bufferList.push(
-                new NGL.TraceBuffer( subPos.position, subCol.color )
+
+                new NGL.TraceBuffer(
+                    subPos.position,
+                    subCol.color,
+                    scope.lineWidth,
+                    scope.transparent,
+                    opacity
+                )
+
             );
+
             scope.fiberList.push( fiber );
 
         }, this.selection, true );
@@ -2607,6 +2630,29 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
             this.tension = params[ "tension" ];
             what[ "position" ] = true;
+
+        }
+
+        if( params && params[ "lineWidth" ] !== undefined ){
+
+            this.lineWidth = params[ "lineWidth" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
 
         }
 

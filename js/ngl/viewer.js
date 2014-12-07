@@ -3041,7 +3041,7 @@ NGL.LineBuffer.prototype = {
 };
 
 
-NGL.TraceBuffer = function( position, color ){
+NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
 
     this.size = position.length / 3;
 
@@ -3059,7 +3059,8 @@ NGL.TraceBuffer = function( position, color ){
     });
 
     this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2
+        this.from, this.to, this.lineColor, this.lineColor2,
+        lineWidth, transparent, opacity
     );
 
     this.pickable = this.lineBuffer.pickable;
