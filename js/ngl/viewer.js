@@ -19,6 +19,10 @@ NGL.Resources = {
     '../fonts/LatoBlack.fnt': '',
     '../fonts/LatoBlack.png': 'image',
 
+    // sprites
+    '../img/circle.png': 'image',
+    '../img/spark1.png': 'image',
+
     // shaders
     '../shader/CylinderImpostor.vert': '',
     '../shader/CylinderImpostor.frag': '',
@@ -1821,7 +1825,7 @@ NGL.Buffer.prototype = {
             if( a.value ){
 
                 if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
-                    console.error( "attribute value has wrong length" );
+                    console.error( "attribute value has wrong length", name );
                 }
 
                 buf = a.value;
@@ -2807,50 +2811,53 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
  * @param {Float32Array} position
  * @param {Float32Array} color
  */
-NGL.PointBuffer = function( position, color ){
+NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, transparent, opacity ){
+
+    this.pointSize = pointSize || false;
+    this.sizeAttenuation = sizeAttenuation !== undefined ? sizeAttenuation : false;
+    this.transparent = transparent !== undefined ? transparent : false;
+    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     this.size = position.length / 3;
+    this.attributeSize = this.size;
+    // this.vertexShader = 'Point.vert';
+    // this.fragmentShader = 'Point.frag';
 
-    this.geometry = new THREE.BufferGeometry();
-
-    this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( position, 3 )
+    this.tex = new THREE.Texture(
+        NGL.Resources[ '../img/spark1.png' ]
+        // NGL.Resources[ '../img/circle.png' ]
     );
-    this.geometry.addAttribute(
-        'color', new THREE.BufferAttribute( color, 3 )
+    this.tex.needsUpdate = true;
+
+    NGL.Buffer.call( this, position, color );
+
+};
+
+NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
+
+NGL.PointBuffer.prototype.getMesh = function( type ){
+
+    return new THREE.PointCloud(
+        this.geometry, this.getMaterial( type )
     );
 
 };
 
-NGL.PointBuffer.prototype = {
+NGL.PointBuffer.prototype.getMaterial = function( type ){
 
-    setAttributes: function( data ){
+    return new THREE.PointCloudMaterial({
+        map: this.tex,
+        blending:       THREE.AdditiveBlending,
+        depthTest:      false,
+        transparent:    true,
 
-        // TODO
-
-    },
-
-    getMesh: function( type ){
-
-        return new THREE.PointCloud(
-            this.geometry, this.getMaterial( type )
-        );
-
-    },
-
-    getMaterial: function( type ){
-
-        return new THREE.PointCloudMaterial({
-            vertexColors: true,
-            sizeAttenuation: false,
-            fog: true
-        });
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+        vertexColors: true,
+        size: this.pointSize,
+        sizeAttenuation: this.sizeAttenuation,
+        // transparent: this.transparent,
+        opacity: this.opacity,
+        fog: true
+    });
 
 };
 

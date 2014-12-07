@@ -753,10 +753,15 @@ NGL.Examples = {
 
             stage.loadFile( "__example__/1crn.pdb", function( o ){
 
-                o.addRepresentation( "line", {
-                    lineWidth: 5, transparent: true, opacity: 0.5
+                // o.addRepresentation( "line", {
+                //     lineWidth: 5, transparent: true, opacity: 0.5
+                // } );
+                // o.addRepresentation( "cartoon" );
+
+                o.addRepresentation( "licorice" );
+                o.addRepresentation( "point", {
+                    sele: "#s", sizeAttenuation: true, pointSize: 12
                 } );
-                o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );

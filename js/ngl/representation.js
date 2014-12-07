@@ -533,6 +533,133 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.PointRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.PointRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    type: "point",
+
+    parameters: Object.assign( {
+
+        pointSize: {
+            type: "integer", max: 20, min: 1
+        },
+        sizeAttenuation: {
+            type: "boolean"
+        },
+        transparent: {
+            type: "boolean"
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0
+        }
+
+    }, NGL.Representation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        this.pointSize = p.pointSize || 1;
+        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    create: function(){
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        this.pointBuffer = new NGL.PointBuffer(
+            this.atomSet.atomPosition(),
+            this.atomSet.atomColor( null, this.color ),
+            this.pointSize,
+            this.sizeAttenuation,
+            this.transparent,
+            opacity
+        );
+
+        this.bufferList = [ this.pointBuffer ];
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var pointData = {};
+
+        if( what[ "position" ] ){
+
+            pointData[ "position" ] = this.atomSet.atomPosition();
+
+        }
+
+        if( what[ "color" ] ){
+
+            pointData[ "color" ] = this.atomSet.atomColor( null, this.color );
+
+        }
+
+        this.pointBuffer.setAttributes( pointData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "pointSize" ] !== undefined ){
+
+            this.pointSize = params[ "pointSize" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "sizeAttenuation" ] !== undefined ){
+
+            this.sizeAttenuation = params[ "sizeAttenuation" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "transparent" ] !== undefined ){
+
+            this.transparent = params[ "transparent" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "opacity" ] !== undefined ){
+
+            this.opacity = params[ "opacity" ];
+            // FIXME uniforms are cloned and not accessible at the moment
+            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
+            rebuild = true;
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    }
+
+} );
+
+
 NGL.LabelRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
@@ -3471,10 +3598,17 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         drawLine: { type: "boolean" },
         drawCylinder: { type: "boolean" },
+        drawPoint: { type: "boolean" },
         drawSphere: { type: "boolean" },
 
         lineWidth: {
             type: "integer", max: 20, min: 1
+        },
+        pointSize: {
+            type: "integer", max: 20, min: 1
+        },
+        sizeAttenuation: {
+            type: "boolean"
         },
         transparent: {
             type: "boolean"
@@ -3496,9 +3630,12 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         this.drawLine = p.drawLine || true;
         this.drawCylinder = p.drawCylinder || false;
+        this.drawPoint = p.drawPoint || false;
         this.drawSphere = p.drawSphere || false;
 
         this.lineWidth = p.lineWidth || 1;
+        this.pointSize = p.pointSize || 1;
+        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -3580,6 +3717,21 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
             }
 
+            if( scope.drawPoint ){
+
+                var pointBuffer = new NGL.PointBuffer(
+                    path,
+                    NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
+                    scope.pointSize,
+                    scope.sizeAttenuation,
+                    scope.transparent,
+                    opacity
+                );
+
+                scope.bufferList.push( pointBuffer );
+
+            }
+
             if( scope.drawLine ){
 
                 var lineBuffer = new NGL.LineBuffer(
@@ -3621,6 +3773,13 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "drawPoint" ] !== undefined ){
+
+            this.drawPoint = params[ "drawPoint" ];
+            rebuild = true;
+
+        }
+
         if( params && params[ "drawSphere" ] !== undefined ){
 
             this.drawSphere = params[ "drawSphere" ];
@@ -3633,6 +3792,20 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         if( params && params[ "lineWidth" ] !== undefined ){
 
             this.lineWidth = params[ "lineWidth" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "pointSize" ] !== undefined ){
+
+            this.pointSize = params[ "pointSize" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "sizeAttenuation" ] !== undefined ){
+
+            this.sizeAttenuation = params[ "sizeAttenuation" ];
             rebuild = true;
 
         }
