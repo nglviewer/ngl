@@ -4,6 +4,83 @@
  */
 
 
+NGL.Uint8ToString = function( u8a ){
+    // from http://stackoverflow.com/a/12713326/1435042
+    var CHUNK_SZ = 0x8000;
+    var c = [];
+    for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
+        c.push( String.fromCharCode.apply(
+            null, u8a.subarray( i, i + CHUNK_SZ )
+        ) );
+    }
+    return c.join("");
+}
+
+
+NGL.decompress = function( data, file ){
+
+    var decompressedData;
+    var ext = NGL.getFileInfo( file ).ext;
+
+    console.time( "decompress " + ext );
+
+    if( data instanceof ArrayBuffer ){
+        data = new Uint8Array( data );
+    }
+
+    if( ext === "gz" ){
+
+        var gz = pako.ungzip( data, { "to": "string" } );
+        decompressedData = gz;
+
+    }else if( ext === "zip" ){
+
+        var zip = new JSZip( data );
+        var name = Object.keys( zip.files )[ 0 ];
+        decompressedData = zip.files[ name ].asText();
+
+    }else if( ext === "lzma" ){
+
+        var inStream = {
+            data: data,
+            offset: 0,
+            readByte: function(){
+                return this.data[this.offset ++];
+            }
+        };
+
+        var outStream = {
+            data: [ /* Uncompressed data will be putted here */ ],
+            offset: 0,
+            writeByte: function(value){
+                this.data[this.offset ++] = value;
+            }
+        };
+
+        LZMA.decompressFile( inStream, outStream );
+        // console.log( outStream );
+        var bytes = new Uint8Array( outStream.data );
+        decompressedData = NGL.Uint8ToString( bytes );
+
+    }else if( ext === "bz2" ){
+
+        var bitstream = bzip2.array( data );
+        decompressedData = bzip2.simple( bitstream )
+
+    }else{
+
+        console.warn( "no decompression method available for '" + ext + "'" );
+        decompressedData = data;
+
+    }
+
+    console.timeEnd( "decompress " + ext );
+
+    return decompressedData;
+
+}
+
+
 ///////////
 // Loader
 
@@ -43,9 +120,17 @@ NGL.XHRLoader.prototype = {
 
             if ( request.status === 200 || request.status === 304 ) {
 
-                scope.cache.add( url, this.response )
+                var data = this.response;
 
-                if ( onLoad ) onLoad( this.response );
+                if( scope.responseType === "arraybuffer" ){
+
+                    data = NGL.decompress( data, url );
+
+                }
+
+                scope.cache.add( url, data );
+
+                if ( onLoad ) onLoad( data );
 
             } else {
 
@@ -135,19 +220,7 @@ NGL.FileLoader.prototype = {
 
             if( scope.responseType === "arraybuffer" ){
 
-                console.time( "NGL.FileLoader ungzip" );
-
-                data = new Uint8Array( data );
-                var gz = pako.ungzip( data, { "to": "string" } );
-                // console.log( gz );
-                data = gz;
-
-                console.timeEnd( "NGL.FileLoader ungzip" );
-
-                // var zip = new JSZip( data );
-                // console.log( zip );
-
-                // return;
+                data = NGL.decompress( data, file );
 
             }
 
@@ -341,12 +414,21 @@ NGL.autoLoad = function(){
         }
 
         if( ext === "gz" ){
-
             fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 3 ) );
             ext = fileInfo.ext;
-
             compressed = true;
-
+        }else if( ext === "zip" ){
+            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
+            ext = fileInfo.ext;
+            compressed = true;
+        }else if( ext === "lzma" ){
+            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 5 ) );
+            ext = fileInfo.ext;
+            compressed = true;
+        }else if( ext === "bz2" ){
+            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
+            ext = fileInfo.ext;
+            compressed = true;
         }
 
         if( ext in loaders ){
@@ -403,10 +485,12 @@ NGL.autoLoad = function(){
 
         }else if( rcsb ){
 
+            if( compressed ) loader.setResponseType( "arraybuffer" );
             loader.load( file, init, onProgress, error );
 
         }else{
 
+            if( compressed ) loader.setResponseType( "arraybuffer" );
             loader.load( "../data/" + file, init, onProgress, error );
 
         }

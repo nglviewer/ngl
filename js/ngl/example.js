@@ -768,6 +768,53 @@ NGL.Examples = {
 
         },
 
+        "decompress": function( stage ){
+
+            stage.loadFile( "__example__/1CRN.cif.gz", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/1CRN.cif.zip", function( o ){
+
+                o.addRepresentation( "licorice" );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/1CRN.cif.lzma", function( o ){
+
+                o.addRepresentation( "rocket", {
+                    transparent: true, opacity: 0.5
+                } );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "__example__/1CRN.cif.bz2", function( o ){
+
+                o.addRepresentation( "rope", { scale: 0.3 } );
+                stage.centerView();
+
+            } );
+
+        },
+
+        "hiv": function( stage ){
+
+            stage.loadFile( "__example__/3j3y.cif.gz", function( o ){
+
+                o.addRepresentation( "point", {
+                    color: "chainindex", pointSize: 7, sizeAttenuation: true
+                } );
+                o.centerView();
+
+            } );
+
+        },
+
     }
 
 };
