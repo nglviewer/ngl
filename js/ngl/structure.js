@@ -2700,6 +2700,7 @@ NGL.Residue.prototype = {
         if( this._nucleicBackbone === undefined ){
 
             this._nucleicBackbone = this.isNucleic() &&
+                this.getAtomByName([ "P" ]) !== undefined &&
                 this.getAtomByName([ "C3'", "C3*" ]) !== undefined;
 
         }
