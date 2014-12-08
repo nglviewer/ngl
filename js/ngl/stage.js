@@ -53,6 +53,9 @@ NGL.Stage.prototype = {
             object.addRepresentation( "licorice", { sele: "hetero" } );
             object.centerView( undefined, true );
 
+            // add frames as trajectory
+            if( object.structure.frames ) object.addTrajectory();
+
         }else if( object instanceof NGL.SurfaceComponent ){
 
             object.addRepresentation();

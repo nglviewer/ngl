@@ -131,7 +131,10 @@ NGL.MenubarWidget = function( stage ){
 
 NGL.MenubarFileWidget = function( stage ){
 
-    var fileTypesOpen = [ "pdb", "gro", "cif", "obj", "ply", "ngz" ];
+    var fileTypesOpen = [
+        "pdb", "gro", "cif", "obj", "ply", "ngz",
+        "gz", "lzma", "bz2", "zip"
+    ];
     var fileTypesImport = fileTypesOpen + [ "ngl" ];
 
     var fileInput = document.createElement("input");
@@ -146,7 +149,14 @@ NGL.MenubarFileWidget = function( stage ){
 
         for( var i=0; i<n; ++i ){
 
-            stage.loadFile( fileList[ i ] );
+            stage.loadFile(
+                fileList[ i ], undefined, undefined, undefined,
+                {
+                    asTrajectory: asTrajectory,
+                    firstModelOnly: firstModelOnly,
+                    cAlphaOnly: cAlphaOnly
+                }
+            );
 
         }
 
@@ -182,7 +192,14 @@ NGL.MenubarFileWidget = function( stage ){
 
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
 
-                    stage.loadFile( path.path );
+                    stage.loadFile(
+                        path.path, undefined, undefined, undefined,
+                        {
+                            asTrajectory: asTrajectory,
+                            firstModelOnly: firstModelOnly,
+                            cAlphaOnly: cAlphaOnly
+                        }
+                    );
 
                 }else{
 
@@ -226,23 +243,49 @@ NGL.MenubarFileWidget = function( stage ){
 
         if( e.keyCode === 13 ){
 
-            stage.loadFile( e.target.value );
+            stage.loadFile(
+                e.target.value, undefined, undefined, undefined,
+                {
+                    asTrajectory: asTrajectory,
+                    firstModelOnly: firstModelOnly,
+                    cAlphaOnly: cAlphaOnly
+                }
+            );
             e.target.value = "";
 
         }
 
     }
 
+    var asTrajectory = false;
+    function onAsTrajectoryChange ( e ) {
+        asTrajectory = e.target.checked;
+    }
+
+    var firstModelOnly = false;
+    function onFirstModelOnlyyChange ( e ) {
+        firstModelOnly = e.target.checked;
+    }
+
+    var cAlphaOnly = false;
+    function onCAlphaOnlyChange ( e ) {
+        cAlphaOnly = e.target.checked;
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
     var createInput = UI.MenubarHelper.createInput;
+    var createCheckbox = UI.MenubarHelper.createCheckbox;
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
         createOption( 'Open...', onOpenOptionClick ),
         createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
+        createCheckbox( 'asTrajectory', false, onAsTrajectoryChange ),
+        createCheckbox( 'firstModelOnly', false, onFirstModelOnlyyChange ),
+        createCheckbox( 'cAlphaOnly', false, onCAlphaOnlyChange ),
         createDivider(),
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),
@@ -682,8 +725,6 @@ NGL.ExportImageWidget = function( stage ){
                 }
             }
         );
-
-
 
     }
 

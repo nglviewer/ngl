@@ -1218,6 +1218,26 @@ UI.MenubarHelper = {
 
     },
 
+    createCheckbox: function ( name, value, callbackHandler ) {
+
+        var panel = new UI.Panel()
+            .setClass( 'option' );
+
+        var text = new UI.Text()
+            .setWidth( '70px' )
+            .setValue( name );
+
+        var checkbox = new UI.Checkbox()
+            .setValue( value )
+            .onClick( callbackHandler );
+
+        panel.add( checkbox );
+        panel.add( text );
+
+        return panel;
+
+    },
+
     createDivider: function () {
 
         return new UI.HorizontalRule();
