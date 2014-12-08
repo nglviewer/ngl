@@ -568,8 +568,8 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        p.transparent = p.transparent !== undefined ? p.transparent : true;
+        p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -3636,9 +3636,9 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.lineWidth = p.lineWidth || 1;
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        p.transparent = p.transparent !== undefined ? p.transparent : true;
+        p.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 

@@ -2828,6 +2828,7 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, transpa
         // NGL.Resources[ '../img/circle.png' ]
     );
     this.tex.needsUpdate = true;
+    this.tex.premultiplyAlpha = true;
 
     NGL.Buffer.call( this, position, color );
 
@@ -2837,9 +2838,15 @@ NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.PointBuffer.prototype.getMesh = function( type ){
 
-    return new THREE.PointCloud(
+    var points = new THREE.PointCloud(
         this.geometry, this.getMaterial( type )
     );
+
+    // not working with BufferGeometry
+    // TODO would be nice to have for screenshots
+    // points.sortParticles = true
+
+    return points;
 
 };
 
@@ -2847,9 +2854,19 @@ NGL.PointBuffer.prototype.getMaterial = function( type ){
 
     return new THREE.PointCloudMaterial({
         map: this.tex,
-        blending:       THREE.AdditiveBlending,
+        // blending:       THREE.AdditiveBlending,
         depthTest:      false,
+        // alphaTest:      0.001,
         transparent:    true,
+
+        blending: THREE.CustomBlending,
+        // blendSrc: THREE.SrcAlphaFactor,
+        // blendDst: THREE.OneMinusSrcAlphaFactor,
+        blendEquation: THREE.AddEquation,
+
+        // requires premultiplied alpha
+        blendSrc: THREE.OneFactor,
+        blendDst: THREE.OneMinusSrcAlphaFactor,
 
         vertexColors: true,
         size: this.pointSize,
