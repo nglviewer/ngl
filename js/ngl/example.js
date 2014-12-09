@@ -760,7 +760,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "point", {
-                    sele: "#s", sizeAttenuation: true, pointSize: 12
+                    sele: "*", sizeAttenuation: true, pointSize: 12, sort: true
                 } );
                 stage.centerView();
 

@@ -553,6 +553,9 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         sizeAttenuation: {
             type: "boolean"
         },
+        sort: {
+            type: "boolean"
+        },
         transparent: {
             type: "boolean"
         },
@@ -568,6 +571,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
+        this.sort = p.sort || true;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
@@ -584,6 +588,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             this.pointSize,
             this.sizeAttenuation,
+            this.sort,
             this.transparent,
             opacity
         );
@@ -629,6 +634,13 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         if( params && params[ "sizeAttenuation" ] !== undefined ){
 
             this.sizeAttenuation = params[ "sizeAttenuation" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "sort" ] !== undefined ){
+
+            this.sort = params[ "sort" ];
             rebuild = true;
 
         }
@@ -3610,6 +3622,9 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         sizeAttenuation: {
             type: "boolean"
         },
+        sort: {
+            type: "boolean"
+        },
         transparent: {
             type: "boolean"
         },
@@ -3618,7 +3633,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0
-        }
+        },
 
     }, NGL.Representation.prototype.parameters ),
 
@@ -3636,6 +3651,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.lineWidth = p.lineWidth || 1;
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
+        this.sort = p.sort || true;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
@@ -3724,6 +3740,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
                     scope.pointSize,
                     scope.sizeAttenuation,
+                    scope.sort,
                     scope.transparent,
                     opacity
                 );
@@ -3806,6 +3823,13 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         if( params && params[ "sizeAttenuation" ] !== undefined ){
 
             this.sizeAttenuation = params[ "sizeAttenuation" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "sort" ] !== undefined ){
+
+            this.sort = params[ "sort" ];
             rebuild = true;
 
         }

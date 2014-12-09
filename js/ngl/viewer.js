@@ -1460,6 +1460,8 @@ NGL.Viewer.prototype = {
 
         this.updateDynamicUniforms( this.scene );
 
+        this.sortProjectedPosition( this.scene, this.camera );
+
         // render
 
         this.renderer.clear();
@@ -1573,6 +1575,95 @@ NGL.Viewer.prototype = {
                 }
 
             } );
+
+        }
+
+    }(),
+
+    sortProjectedPosition: function(){
+
+        var lastCall = 0;
+
+        var vertex = new THREE.Vector3();
+        var matrix = new THREE.Matrix4();
+        var modelViewProjectionMatrix = new THREE.Matrix4();
+
+        var i, n, attributes, sortArray;
+
+        return function( scene, camera ){
+
+            // console.time( "sort" );
+
+            scene.traverseVisible( function ( o ){
+
+                if( o instanceof THREE.PointCloud && o.sortParticles ){
+
+                    matrix.multiplyMatrices(
+                        camera.matrixWorldInverse, o.matrixWorld
+                    );
+                    modelViewProjectionMatrix.multiplyMatrices(
+                        camera.projectionMatrix, matrix
+                    )
+                    attributes = o.geometry.attributes;
+                    n = attributes.position.length / 3;
+                    sortArray = [];
+
+                    for( i = 0; i < n; ++i ){
+
+                        vertex.fromArray( attributes.position.array, i * 3 );
+                        vertex.applyProjection( modelViewProjectionMatrix );
+
+                        sortArray[ i ] = [ vertex.z, i ];
+
+                    }
+
+                    sortArray.sort( function( a, b ){
+                        return b[ 0 ] - a[ 0 ];
+                    } );
+
+                    if( !o.userData.sortData ){
+                        o.userData.sortData = {};
+                    }
+
+                    var index, indexSrc, indexDst, tmpTab;
+
+                    for( var val in attributes ){
+
+                        if( !o.userData.sortData[ val ] ){
+                            o.userData.sortData[ val ] = new Float32Array(
+                                attributes[ val ].itemSize * n
+                            );
+                        }
+
+                        tmpTab = o.userData.sortData[ val ];
+                        o.userData.sortData[ val ] = attributes[ val ].array;
+
+                        // tmpTab = new Float32Array(
+                        //     attributes[ val ].itemSize * n
+                        // )
+
+                        for( i = 0; i < n; ++i ){
+
+                            index = sortArray[ i ][ 1 ];
+
+                            for( j = 0; j < attributes[ val ].itemSize; ++j ){
+                                indexSrc = index * attributes[ val ].itemSize + j;
+                                indexDst = i * attributes[ val ].itemSize + j;
+                                tmpTab[ indexDst ] = attributes[ val ].array[indexSrc];
+                            }
+
+                        }
+
+                        attributes[ val ].array = tmpTab;
+                        attributes[ val ].needsUpdate = true;
+
+                    }
+
+                }
+
+            } );
+
+            // console.timeEnd( "sort" );
 
         }
 
@@ -2811,10 +2902,11 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
  * @param {Float32Array} position
  * @param {Float32Array} color
  */
-NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, transparent, opacity ){
+NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, transparent, opacity ){
 
     this.pointSize = pointSize || false;
     this.sizeAttenuation = sizeAttenuation !== undefined ? sizeAttenuation : false;
+    this.sort = sort !== undefined ? sort : true;
     this.transparent = transparent !== undefined ? transparent : false;
     this.opacity = opacity !== undefined ? opacity : 1.0;
 
@@ -2828,7 +2920,7 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, transpa
         // NGL.Resources[ '../img/circle.png' ]
     );
     this.tex.needsUpdate = true;
-    this.tex.premultiplyAlpha = true;
+    if( !this.sort ) this.tex.premultiplyAlpha = true;
 
     NGL.Buffer.call( this, position, color );
 
@@ -2842,9 +2934,7 @@ NGL.PointBuffer.prototype.getMesh = function( type ){
         this.geometry, this.getMaterial( type )
     );
 
-    // not working with BufferGeometry
-    // TODO would be nice to have for screenshots
-    // points.sortParticles = true
+    if( this.sort ) points.sortParticles = true
 
     return points;
 
@@ -2852,29 +2942,54 @@ NGL.PointBuffer.prototype.getMesh = function( type ){
 
 NGL.PointBuffer.prototype.getMaterial = function( type ){
 
-    return new THREE.PointCloudMaterial({
-        map: this.tex,
-        // blending:       THREE.AdditiveBlending,
-        depthTest:      false,
-        // alphaTest:      0.001,
-        transparent:    true,
+    var material;
 
-        blending: THREE.CustomBlending,
-        // blendSrc: THREE.SrcAlphaFactor,
-        // blendDst: THREE.OneMinusSrcAlphaFactor,
-        blendEquation: THREE.AddEquation,
+    if( this.sort ){
 
-        // requires premultiplied alpha
-        blendSrc: THREE.OneFactor,
-        blendDst: THREE.OneMinusSrcAlphaFactor,
+        material = new THREE.PointCloudMaterial({
+            map: this.tex,
+            blending: THREE.NormalBlending,
+            // blending: THREE.AdditiveBlending,
+            depthTest:      true,
+            transparent:    true,
 
-        vertexColors: true,
-        size: this.pointSize,
-        sizeAttenuation: this.sizeAttenuation,
-        // transparent: this.transparent,
-        opacity: this.opacity,
-        fog: true
-    });
+            vertexColors: true,
+            size: this.pointSize,
+            sizeAttenuation: this.sizeAttenuation,
+            // transparent: this.transparent,
+            opacity: this.opacity,
+            fog: true
+        });
+
+    }else{
+
+        material = new THREE.PointCloudMaterial({
+            map: this.tex,
+            // blending:       THREE.AdditiveBlending,
+            depthTest:      false,
+            // alphaTest:      0.001,
+            transparent:    true,
+
+            blending: THREE.CustomBlending,
+            // blendSrc: THREE.SrcAlphaFactor,
+            // blendDst: THREE.OneMinusSrcAlphaFactor,
+            blendEquation: THREE.AddEquation,
+
+            // requires premultiplied alpha
+            blendSrc: THREE.OneFactor,
+            blendDst: THREE.OneMinusSrcAlphaFactor,
+
+            vertexColors: true,
+            size: this.pointSize,
+            sizeAttenuation: this.sizeAttenuation,
+            // transparent: this.transparent,
+            opacity: this.opacity,
+            fog: true
+        });
+
+    }
+
+    return material;
 
 };
 

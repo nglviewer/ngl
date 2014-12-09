@@ -288,7 +288,7 @@ NGL.AA1 = {
 };
 
 
-// FIXME not synced with worker
+// REMEMBER not synced with worker
 NGL.nextGlobalAtomindex = 0;
 
 
