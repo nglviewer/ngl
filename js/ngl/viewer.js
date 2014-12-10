@@ -1425,10 +1425,14 @@ NGL.Viewer.prototype = {
         var cDist = this.camera.position.length();
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
         var farFactor = - ( 50 - this.params.clipFar ) / 50;
+        // this.camera.near = Math.max(
+        //     0.1,
+        //     this.params.clipDist,
+        //     cDist - ( bRadius * nearFactor )
+        // );
         this.camera.near = Math.max(
             0.1,
-            this.params.clipDist,
-            cDist - ( bRadius * nearFactor )
+            this.params.clipDist
         );
         this.camera.far = Math.max(
             1,
@@ -1439,11 +1443,15 @@ NGL.Viewer.prototype = {
 
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
-        this.scene.fog = new THREE.Fog(
+        var fog = new THREE.Fog(
             this.params.fogColor,
             Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
+        this.modelGroup.fog = fog;
+        this.textGroup.fog = fog;
+        this.transparentGroup.fog = fog;
+        this.surfaceGroup.fog = fog;
 
         if( NGL.GET( "disableClipping" ) ){
             this.camera.near = 0.1;
@@ -1458,7 +1466,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        this.updateDynamicUniforms( this.scene );
+        this.updateDynamicUniforms( this.scene, cDist - ( bRadius * nearFactor ) );
 
         this.sortProjectedPosition( this.scene, this.camera );
 
@@ -1492,7 +1500,9 @@ NGL.Viewer.prototype = {
         var matrix = new THREE.Matrix4();
         var bgColor = new THREE.Color();
 
-        return function( group ){
+        return function( group, nearClip ){
+
+            console.log( nearClip )
 
             var camera = this.camera;
             var params = this.params;
@@ -1508,6 +1518,10 @@ NGL.Viewer.prototype = {
 
                 if( u.backgroundColor ){
                     u.backgroundColor.value = bgColor;
+                }
+
+                if( u.nearClip ){
+                    u.nearClip.value = nearClip;
                 }
 
                 if( u.modelViewMatrixInverse ){
@@ -1794,6 +1808,7 @@ NGL.Buffer = function( position, color, pickingColor ){
         NGL.UniformsLib[ "lights" ],
         {
             "opacity": { type: "f", value: this.opacity },
+            "nearClip": { type: "f", value: 0.0 },
         }
     ]);
 
@@ -3352,6 +3367,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, t
         NGL.UniformsLib[ "lights" ],
         {
             "opacity": { type: "f", value: this.opacity },
+            "nearClip": { type: "f", value: 0 },
         }
     ]);
 

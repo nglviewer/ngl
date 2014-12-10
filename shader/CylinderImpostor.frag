@@ -28,6 +28,7 @@
 #extension GL_EXT_frag_depth : enable
 
 uniform float opacity;
+uniform float nearClip;
 
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
@@ -41,6 +42,7 @@ varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
 // varying float b;
+varying vec4 point4;
 
 #ifdef PICKING
     varying vec3 vPickingColor;
@@ -71,6 +73,9 @@ varying vec3 V;
 
 void main()
 {
+
+    if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+        discard;
 
     // unpacking
     vec3 base = base_radius.xyz;

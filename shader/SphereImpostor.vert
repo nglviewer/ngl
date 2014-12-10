@@ -73,12 +73,12 @@ mat4 transpose( in mat4 inMatrix ) {
 //  Stephane Ploix (EDF)
 //
 // </verbatim>
-// 
+//
 // Contributions by Alexander Rose
 // - ported to WebGL
 // - adapted to work with quads
 void ComputePointSizeAndPositionInClipCoordSphere(){
-    
+
     vec2 xbc;
     vec2 ybc;
 
@@ -133,7 +133,7 @@ void main(void){
     // if( gl_Position.z-sphereRadius<=1.0 ){
     //     gl_Position.z = -10.0;
     // }
-    
+
 }
 
 

@@ -6,6 +6,7 @@
 // layout(depth_less) out float gl_FragDepthEXT;
 
 uniform float opacity;
+uniform float nearClip;
 
 uniform mat4 projectionMatrix;
 
@@ -90,7 +91,10 @@ bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 void main(void)
 {
 
-    bool flag = Impostor(cameraPos, cameraNormal);
+    bool flag = Impostor( cameraPos, cameraNormal );
+
+    if( dot( cameraSpherePos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+        discard;
 
     //Set the depth based on the new cameraPos.
     gl_FragDepthEXT = calcDepth( cameraPos );

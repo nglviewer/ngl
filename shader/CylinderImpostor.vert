@@ -40,6 +40,7 @@ varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
 // varying float b;
+varying vec4 point4;
 
 #ifdef PICKING
     attribute vec3 pickingColor;
@@ -113,6 +114,8 @@ void main()
         center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
     );
     point = w.xyz / w.w;
+
+    point4 = w;
 
     gl_Position = projectionMatrix * w;
 

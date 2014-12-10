@@ -641,6 +641,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "ball+stick" );
+                stage.viewer.setClip( 42, 100 );
                 stage.centerView();
 
             } );
@@ -648,7 +649,7 @@ NGL.Examples = {
             stage.loadFile( "__example__/1crn.ply", function( o ){
 
                 o.addRepresentation( undefined, {
-                    transparent: true, opacity: 0.3, side: THREE.FrontSide
+                    transparent: true, opacity: 0.3, side: THREE.DoubleSide
                 } );
 
             } );
