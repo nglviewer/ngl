@@ -1222,8 +1222,6 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        this.stats.update();
-
     },
 
     screenshot: function( factor, type, quality, antialias, transparent, trim, progressCallback ){
@@ -1415,13 +1413,10 @@ NGL.Viewer.prototype = {
         var cDist = this.camera.position.length();
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
         var farFactor = - ( 50 - this.params.clipFar ) / 50;
-        // this.camera.near = Math.max(
-        //     0.1,
-        //     this.params.clipDist,
-        //     cDist - ( bRadius * nearFactor )
-        // );
+        var nearClip = cDist - ( bRadius * nearFactor );
         this.camera.near = Math.max(
             0.1,
+            // cDist - ( bRadius * nearFactor ),
             this.params.clipDist
         );
         this.camera.far = Math.max(
@@ -1456,7 +1451,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        this.updateDynamicUniforms( this.scene, cDist - ( bRadius * nearFactor ) );
+        this.updateDynamicUniforms( this.scene, nearClip );
 
         this.sortProjectedPosition( this.scene, this.camera );
 
@@ -1491,8 +1486,6 @@ NGL.Viewer.prototype = {
         var bgColor = new THREE.Color();
 
         return function( group, nearClip ){
-
-            console.log( nearClip )
 
             var camera = this.camera;
             var params = this.params;
@@ -1774,6 +1767,7 @@ NGL.Buffer = function( position, color, pickingColor ){
     this.transparent = this.transparent || false;
     this.side = this.side !== undefined ? this.side : THREE.DoubleSide;
     this.opacity = this.opacity !== undefined ? this.opacity : 1.0;
+    this.nearClip = this.nearClip !== undefined ? this.nearClip : true;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -1890,6 +1884,12 @@ NGL.Buffer.prototype = {
                 material.defines[ "NOLIGHT" ] = 1;
 
             }
+
+        }
+
+        if( this.nearClip ){
+
+            material.defines[ "NEAR_CLIP" ] = 1;
 
         }
 
@@ -2020,12 +2020,13 @@ NGL.Buffer.prototype = {
  * @param {Float32Array} index
  * @param {Float32Array} normal
  */
-NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe, transparent, side, opacity ){
+NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe, transparent, side, opacity, nearClip ){
 
     this.wireframe = wireframe || false;
     this.transparent = transparent !== undefined ? transparent : false;
     this.side = side !== undefined ? side : THREE.DoubleSide;
     this.opacity = opacity !== undefined ? opacity : 1.0;
+    this.nearClip = nearClip !== undefined ? nearClip : true;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -3080,7 +3081,7 @@ NGL.LineBuffer.prototype = {
         var n = this.size;
         var n6 = n * 6;
 
-        var i, j;
+        var i, j, i2;
 
         var x, y, z, x1, y1, z1, x2, y2, z2;
 
@@ -3606,7 +3607,7 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe, transparent, side, opacity ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe, transparent, side, opacity, nearClip ){
 
     this.rx = rx || 1.5;
     this.ry = ry || 0.5;
@@ -3615,6 +3616,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.transparent = transparent !== undefined ? transparent : false;
     this.side = side !== undefined ? side : THREE.DoubleSide;
     this.opacity = opacity !== undefined ? opacity : 1.0;
+    this.nearClip = nearClip !== undefined ? nearClip : true;
 
     this.radialSegments = radialSegments || 4;
     this.capVertices = capped ? this.radialSegments : 0;
@@ -3650,7 +3652,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, this.wireframe,
-        this.transparent, this.side, this.opacity
+        this.transparent, this.side, this.opacity, this.nearClip
     );
 
     this.pickable = this.meshBuffer.pickable;

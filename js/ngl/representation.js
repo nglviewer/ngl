@@ -66,14 +66,22 @@ NGL.Representation.prototype = {
 
     type: "",
 
-    parameters: {},
+    parameters: {
+
+        nearClip: {
+            type: "boolean"
+        }
+
+    },
 
     init: function( params ){
 
-        params = params || {};
+        var p = params || {};
 
-        this.visible = params.visible === undefined ? true : params.visible;
-        this.quality = params.quality;
+        this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+
+        this.visible = p.visible === undefined ? true : p.visible;
+        this.quality = p.quality;
 
     },
 
@@ -144,6 +152,13 @@ NGL.Representation.prototype = {
     },
 
     setParameters: function( params, what, rebuild ){
+
+        if( params && params[ "nearClip" ] !== undefined ){
+
+            this.nearClip = params[ "nearClip" ];
+            rebuild = true;
+
+        }
 
         if( rebuild ){
 
@@ -2284,7 +2299,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     scope.wireframe,
                     scope.transparent,
                     parseInt( scope.side ),
-                    opacity
+                    opacity,
+                    scope.nearClip
                 )
 
             );
@@ -3639,7 +3655,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        p = params || {};
+        var p = params || {};
 
         p.color = p.color || 0xDDDDDD;
 
@@ -3910,7 +3926,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        p = params || {};
+        var p = params || {};
 
         this.color = p.color || 0xDDDDDD;
         this.background = p.background || false;
@@ -3997,12 +4013,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
             var frontBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined, this.wireframe,
-                this.transparent, THREE.FrontSide, opacity
+                this.transparent, THREE.FrontSide, opacity, this.nearClip
             );
 
             var backBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined, this.wireframe,
-                this.transparent, THREE.BackSide, opacity
+                this.transparent, THREE.BackSide, opacity, this.nearClip
             );
 
             this.bufferList = [ frontBuffer, backBuffer ];
@@ -4011,7 +4027,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
             this.surfaceBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined, this.wireframe,
-                this.transparent, parseInt( this.side ), opacity
+                this.transparent, parseInt( this.side ), opacity, this.nearClip
             );
 
             this.bufferList = [ this.surfaceBuffer ];
