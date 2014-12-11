@@ -481,7 +481,7 @@ NGL.Helixorient.prototype = {
 
         var center = this.getPosition().center;
 
-        var i, j, a, r;
+        var i, j, a, r, fr, fa;
         var residues = [];
         var n = center.length / 3;
 
@@ -556,7 +556,7 @@ NGL.Helixorient.prototype = {
         var colorFactory = new NGL.ColorFactory( type );
 
         var i = 0;
-        var a;
+        var a, c, pc;
 
         this.fiber.eachResidue( function( r ){
 
@@ -624,7 +624,7 @@ NGL.Helixorient.prototype = {
         var twist = new Float32Array( n );
         var resdir = new Float32Array( 3 * n );
 
-        var tmp;
+        var tmp, j;
         var a1, a2, a3, a4;
         var diff13Length, diff24Length;
 

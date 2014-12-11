@@ -95,7 +95,7 @@ NGL.Utils = {
      */
     lineLineIntersect: function( p1, p2, p3, p4 ){
 
-        var EPS = NGP.EPS;
+        var EPS = NGL.EPS;
 
         var p13 = new THREE.Vector3(),
             p43 = new THREE.Vector3(),
@@ -492,6 +492,8 @@ NGL.Utils = {
         var y = 0;
         var z = 0;
 
+        var i;
+
         for( i = 0; i < n; i += 3 ){
 
             x += array[ i + 0 ];
@@ -761,8 +763,6 @@ NGL.Viewer = function( eid ){
 
     this.initControls();
 
-    this.initStats();
-
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false );
 
     // fog & background
@@ -928,16 +928,6 @@ NGL.Viewer.prototype = {
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener( 'change', this.render.bind( this ) );
-
-    },
-
-    initStats: function(){
-
-        this.stats = new Stats();
-        this.stats.domElement.style.position = 'absolute';
-        this.stats.domElement.style.bottom = '0px';
-        this.stats.domElement.style.right = '0px';
-        this.container.appendChild( this.stats.domElement );
 
     },
 
@@ -1602,7 +1592,7 @@ NGL.Viewer.prototype = {
         var matrix = new THREE.Matrix4();
         var modelViewProjectionMatrix = new THREE.Matrix4();
 
-        var i, n, attributes, sortArray;
+        var i, j, n, attributes, sortArray;
 
         return function( scene, camera ){
 

@@ -4,9 +4,6 @@
  */
 
 
-var NGL = NGL || {};
-
-
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 NGL.ElementColors = {
     "H": 0xFFFFFF, "HE": 0xD9FFFF, "LI": 0xCC80FF, "BE": 0xC2FF00, "B": 0xFFB5B5,
@@ -41,7 +38,7 @@ NGL.ElementColors = {
 
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (protein + shapely for nucleic)
-NGL._ResidueColors = {
+/*NGL._ResidueColors = {
     "ALA": 0xC8C8C8,
     "ARG": 0x145AFF,
     "ASN": 0x00DCDC,
@@ -65,7 +62,7 @@ NGL._ResidueColors = {
 
     "ASX": 0xFF69B4,
     "GLX": 0xFF69B4,
-    "ASN": 0xFF69B4,
+    "ASH": 0xFF69B4,
     "GLH": 0xFF69B4,
 
     "A": 0xA0A0FF,
@@ -83,7 +80,7 @@ NGL._ResidueColors = {
     "DU": 0xFF8080,
 
     "": 0xBEA06E
-};
+};*/
 NGL.ResidueColors = {
     "ALA": 0x8CFF8C,
     "ARG": 0x00007C,
@@ -108,7 +105,7 @@ NGL.ResidueColors = {
 
     "ASX": 0xFF00FF,
     "GLX": 0xFF00FF,
-    "ASN": 0xFF00FF,
+    "ASH": 0xFF00FF,
     "GLH": 0xFF00FF,
 
     "A": 0xA0A0FF,
@@ -796,7 +793,7 @@ NGL.AtomSet.prototype = {
 
     atomPosition: function( selection ){
 
-        var j, position;
+        var j, position, a;
 
         var i = 0;
         var n = this.atomCount;
@@ -1062,7 +1059,7 @@ NGL.AtomSet.prototype = {
 
     bondPosition: function( selection, fromTo ){
 
-        var j, position;
+        var j, position, b;
 
         var i = 0;
         var n = this.bondCount;
@@ -1870,7 +1867,7 @@ NGL.Structure.prototype = {
             var c = new THREE.Vector3();
             var c2 = new THREE.Vector3();
 
-            var i, d;
+            var i, d, r, r2;
 
             for( i = 0; i < n - 1; ++i ){
 
@@ -2007,7 +2004,7 @@ NGL.Structure.prototype = {
             var pdbRecords = [];
 
             // FIXME multiline if title line longer than 80 chars
-            pdbRecords.push( sprintf( "TITEL %-74s\n", name ) );
+            pdbRecords.push( sprintf( "TITEL %-74s\n", this.name ) );
 
             if( this.trajectory ){
                 pdbRecords.push( sprintf(

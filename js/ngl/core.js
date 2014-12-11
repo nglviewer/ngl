@@ -143,7 +143,7 @@ Object.values = function ( obj ){
 ////////
 // NGL
 
-NGL = {
+var NGL = {
 
     REVISION: '1dev',
     EPS: 0.0000001,

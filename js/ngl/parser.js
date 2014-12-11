@@ -6,8 +6,6 @@
 
 if( typeof importScripts === 'function' ){
 
-    var NGL = {};
-
     importScripts(
         '../three/three.js',
         '../lib/ui/signals.min.js',
@@ -942,7 +940,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var chainDict = {};
     var serialDict = {};
 
-    var id = s.id;
     var title = s.title;
     var sheet = s.sheet;
     var helix = s.helix;
@@ -1303,11 +1300,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
         //
 
         var ssr = cif.struct_sheet_range;
-        var o = ssr.id.length;
+        var p = ssr.id.length;
 
         if( ssr ){
 
-            for( var j = 0; j < o; ++j ){
+            for( var j = 0; j < p; ++j ){
 
                 var selection = new NGL.Selection(
                     ssr.beg_label_seq_id[ j ] + "-" +

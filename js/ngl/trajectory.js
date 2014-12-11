@@ -7,6 +7,8 @@
 
 NGL.makeTrajectory = function( trajPath, structure, sele ){
 
+    var traj;
+
     if( !trajPath && structure.frames ){
 
         traj = new NGL.StructureTrajectory( trajPath, structure, sele );
@@ -893,7 +895,7 @@ NGL.TrajectoryPlayer.prototype = {
 
     stop: function(){
 
-        this.traj.setFrame( start );
+        this.traj.setFrame( this.start );
         this.pause();
 
     }

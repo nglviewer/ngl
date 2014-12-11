@@ -779,7 +779,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
         }, this );
 
         var trajComp = new NGL.TrajectoryComponent(
-            this.stage, traj, params, parent
+            this.stage, traj, params, this
         );
 
         this.trajList.push( trajComp );
@@ -999,7 +999,7 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
         params = params || {};
 
         var repr = NGL.makeRepresentation(
-            type, traj, this.viewer, params
+            type, this.trajectory, this.viewer, params
         );
 
         var reprComp = new NGL.RepresentationComponent(
