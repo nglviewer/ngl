@@ -20,6 +20,8 @@ NGL.Stage = function( eid ){
 
         atomPicked: new SIGNALS.Signal(),
 
+        requestTheme: new SIGNALS.Signal(),
+
         windowResize: new SIGNALS.Signal()
 
     };
@@ -213,17 +215,15 @@ NGL.Stage.prototype = {
 
     setTheme: function( value ){
 
-        var cssPath, viewerBackground;
+        var viewerBackground;
 
         if( value === "light" ){
-            cssPath = "../css/light.css";
             viewerBackground = "white";
         }else{
-            cssPath = "../css/dark.css";
             viewerBackground = "black";
         }
 
-        document.getElementById( 'theme' ).href = cssPath;
+        this.signals.requestTheme.dispatch( value );
         this.viewer.setBackground( viewerBackground );
 
     },

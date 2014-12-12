@@ -17,6 +17,7 @@ NGL.Widget.prototype = {
 
 NGL.StageWidget = function( stage ){
 
+    var signals = stage.signals;
     var viewer = stage.viewer;
     var renderer = viewer.renderer;
 
@@ -31,6 +32,21 @@ NGL.StageWidget = function( stage ){
 
     this.sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
     document.body.appendChild( this.sidebar.dom );
+
+    signals.requestTheme.add( function( value ){
+
+        var cssPath;
+
+        if( value === "light" ){
+            cssPath = "../css/light.css";
+        }else{
+            cssPath = "../css/dark.css";
+        }
+
+        // FIXME element must be created by a Widget
+        document.getElementById( 'theme' ).href = cssPath;
+
+    } );
 
     return this;
 
