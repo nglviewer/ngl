@@ -922,7 +922,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var lines = str.split( "\n" );
 
     // safeguard
-    if( lines.length > 1000000 ) cAlphaOnly = true;
+    // if( lines.length > 1000000 ) cAlphaOnly = true;
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -1250,6 +1250,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
+
+            // console.log( s );
 
             _postProcess();
             callback( s );

@@ -808,11 +808,12 @@ NGL.Examples = {
             stage.loadFile( "__example__/3j3y.cif.gz", function( o ){
 
                 o.addRepresentation( "point", {
-                    color: "chainindex", pointSize: 7, sizeAttenuation: true
+                    color: "chainindex", pointSize: 7, sizeAttenuation: true,
+                    sort: false
                 } );
                 o.centerView();
 
-            } );
+            }, null, null, { cAlphaOnly: true } );
 
         },
 
