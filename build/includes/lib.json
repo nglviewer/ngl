@@ -1,0 +1,11 @@
+[
+	"js/lib/bzip2.min.js",
+	"js/lib/chroma.min.js",
+	"js/lib/jszip.min.js",
+	"js/lib/lzma.min.js",
+	"js/lib/pako.min.js",
+	"js/lib/promise-6.0.0.min.js",
+	"js/lib/signals.min.js",
+	"js/lib/sprintf.min.js",
+	"js/lib/svd.min.js"
+]

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <title>NGL</title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+        <link rel="stylesheet" href="../css/font-awesome.min.css" />
+        <link rel="stylesheet" href="../css/main.css" />
+        <link rel="stylesheet" href="../css/dark.css" id="theme" />
+
+    </head>
+
+    <body>
+
+        <!-- THREE -->
+        <script src="../js/three/three.js"></script>
+        <script src="../js/three/Detector.js"></script>
+        <script src="../js/three/controls/TrackballControls.js"></script>
+        <script src="../js/three/loaders/OBJLoader.js"></script>
+        <script src="../js/three/loaders/PLYLoader.js"></script>
+
+        <!-- LIB -->
+        <script src="../js/lib/promise-6.0.0.min.js"></script>
+        <script src="../js/lib/sprintf.min.js"></script>
+        <script src="../js/lib/jszip.min.js"></script>
+        <script src="../js/lib/pako.min.js"></script>
+        <script src="../js/lib/lzma.js"></script>
+        <script src="../js/lib/bzip2.js"></script>
+        <script src="../js/lib/chroma.min.js"></script>
+        <script src="../js/lib/colorpicker.js"></script>
+        <script src="../js/lib/svd.js"></script>
+        <script src="../js/lib/vlist.js"></script>
+        <script src="../js/lib/tether.min.js"></script>
+        <script src="../js/lib/signals.min.js"></script>
+
+        <!-- NGL -->
+        <script src="../js/ngl/core.js"></script>
+        <script src="../js/ngl/geometry.js"></script>
+        <script src="../js/ngl/structure.js"></script>
+        <script src="../js/ngl/trajectory.js"></script>
+        <script src="../js/ngl/surface.js"></script>
+        <script src="../js/ngl/script.js"></script>
+        <script src="../js/ngl/parser.js"></script>
+        <script src="../js/ngl/loader.js"></script>
+        <script src="../js/ngl/viewer.js"></script>
+        <script src="../js/ngl/representation.js"></script>
+        <script src="../js/ngl/stage.js"></script>
+        <script src="../js/ngl/example.js"></script>
+
+        <!-- UI -->
+        <script src="../js/lib/ui/ui.js"></script>
+        <script src="../js/lib/ui/ui.extra.js"></script>
+        <script src="../js/lib/ui/ui.ngl.js"></script>
+        <script src="../js/ngl/gui.js"></script>
+
+        <!-- EXTRA -->
+        <script src="../js/examples.js"></script>
+
+        <script>
+
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            document.addEventListener("DOMContentLoaded", function() {
+
+                NGL.init( function(){
+
+                    var stage = new NGL.Stage();
+                    NGL.StageWidget( stage );
+
+                    // FIXME why and why twice?
+                    stage.viewer.onWindowResize();
+                    stage.viewer.onWindowResize();
+
+                    var example = NGL.GET( "example" );
+                    if( example ) NGL.Examples.load( example, stage );
+
+                    var pdb = NGL.GET( "pdb" );
+                    if( pdb ) stage.loadFile( pdb );
+
+                    var data = NGL.GET( "data" );
+                    if( data ) stage.loadFile( data );
+
+                } );
+
+            } );
+
+        </script>
+
+        <script src="../js/tracking.js"></script>
+
+    </body>
+
+</html>

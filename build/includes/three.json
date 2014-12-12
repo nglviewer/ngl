@@ -1,0 +1,7 @@
+[
+	"js/three/three.js",
+	"js/three/Detector.js",
+	"js/three/controls/TrackballControls.js",
+	"js/three/loaders/OBJLoader.js",
+	"js/three/loaders/PLYLoader.js"
+]

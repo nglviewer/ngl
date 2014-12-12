@@ -161,7 +161,7 @@ UI.SelectionInput = function( selection ){
 
 	this.setSpellcheck( false );
 
-    if( ! selection instanceof NGL.Selection ){
+    if( ! ( selection instanceof NGL.Selection ) ){
 
         console.error( "UI.SelectionInput: not a selection", selection );
 

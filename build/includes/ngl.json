@@ -1,0 +1,14 @@
+[
+	"js/ngl/core.js",
+	"js/ngl/geometry.js",
+	"js/ngl/structure.js",
+	"js/ngl/trajectory.js",
+	"js/ngl/surface.js",
+	"js/ngl/script.js",
+	"js/ngl/parser.js",
+	"js/ngl/loader.js",
+	"js/ngl/viewer.js",
+	"js/ngl/representation.js",
+	"js/ngl/stage.js",
+	"js/ngl/example.js"
+]
