@@ -31,6 +31,10 @@ For license texts see at the end of this document.
 	img/circle.png
 	img/spark1.png
 
+	// modified by Alexander S. Rose
+
+	build/build.py
+
 
 ////////////
 // Signals
@@ -163,8 +167,8 @@ For license texts see at the end of this document.
 	js/lib/bzip2.js
 
 
-/////////////////
-// jszip.min.js
+//////////
+// JSZip
 
 	http://stuk.github.io/jszip/
 	MIT License, Copyright (c) 2009-2014 Stuart Knightley, David Duponchel, Franz Buchinger, António Afonso
@@ -173,7 +177,7 @@ For license texts see at the end of this document.
 
 
 ////////////
-// lzma.js
+// js-lzma
 
 	https://code.google.com/p/js-lzma/
 	MIT License, Copyright (c) 2011 Juan Mellado
