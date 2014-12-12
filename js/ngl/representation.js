@@ -221,6 +221,8 @@ NGL.Representation.prototype = {
 
         this.debugBufferList = [];
 
+        this.viewer.requestRender();
+
     }
 
 };
@@ -586,7 +588,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort || true;
+        this.sort = p.sort !== undefined ? p.sort : true;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
@@ -3667,7 +3669,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.lineWidth = p.lineWidth || 1;
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort || true;
+        this.sort = p.sort !== undefined ? p.sort : true;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;

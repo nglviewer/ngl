@@ -982,7 +982,10 @@ NGL.Viewer.prototype = {
         }
 
         this.rotationGroup.updateMatrixWorld();
-        this.requestRender();
+
+        // When adding a lot of buffers at once, requesting
+        // a render somehow slows chrome drastically down.
+        // this.requestRender();
 
     },
 
@@ -1022,7 +1025,7 @@ NGL.Viewer.prototype = {
 
         this.updateBoundingBox();
 
-        this.requestRender();
+        // this.requestRender();
 
     },
 
