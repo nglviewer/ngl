@@ -9061,7 +9061,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var lines = str.split( "\n" );
 
     // safeguard
-    if( lines.length > 1000000 ) cAlphaOnly = true;
+    // if( lines.length > 1000000 ) cAlphaOnly = true;
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -9389,6 +9389,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
+
+            // console.log( s );
 
             _postProcess();
             callback( s );
@@ -10979,7 +10981,10 @@ NGL.Viewer.prototype = {
         }
 
         this.rotationGroup.updateMatrixWorld();
-        this.requestRender();
+
+        // When adding a lot of buffers at once, requesting
+        // a render somehow slows chrome drastically down.
+        // this.requestRender();
 
     },
 
@@ -11019,7 +11024,7 @@ NGL.Viewer.prototype = {
 
         this.updateBoundingBox();
 
-        this.requestRender();
+        // this.requestRender();
 
     },
 
@@ -14688,6 +14693,8 @@ NGL.Representation.prototype = {
 
         this.debugBufferList = [];
 
+        this.viewer.requestRender();
+
     }
 
 };
@@ -15053,7 +15060,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort || true;
+        this.sort = p.sort !== undefined ? p.sort : true;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
@@ -18134,7 +18141,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.lineWidth = p.lineWidth || 1;
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort || true;
+        this.sort = p.sort !== undefined ? p.sort : true;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
@@ -18595,6 +18602,8 @@ NGL.Stage = function( eid ){
 
         atomPicked: new SIGNALS.Signal(),
 
+        requestTheme: new SIGNALS.Signal(),
+
         windowResize: new SIGNALS.Signal()
 
     };
@@ -18788,17 +18797,15 @@ NGL.Stage.prototype = {
 
     setTheme: function( value ){
 
-        var cssPath, viewerBackground;
+        var viewerBackground;
 
         if( value === "light" ){
-            cssPath = "../css/light.css";
             viewerBackground = "white";
         }else{
-            cssPath = "../css/dark.css";
             viewerBackground = "black";
         }
 
-        document.getElementById( 'theme' ).href = cssPath;
+        this.signals.requestTheme.dispatch( value );
         this.viewer.setBackground( viewerBackground );
 
     },
@@ -20619,11 +20626,12 @@ NGL.Examples = {
             stage.loadFile( "__example__/3j3y.cif.gz", function( o ){
 
                 o.addRepresentation( "point", {
-                    color: "chainindex", pointSize: 7, sizeAttenuation: true
+                    color: "chainindex", pointSize: 7, sizeAttenuation: true,
+                    sort: false
                 } );
                 o.centerView();
 
-            } );
+            }, null, null, { cAlphaOnly: true } );
 
         },
 
