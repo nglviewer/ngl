@@ -229,7 +229,7 @@ void main()
     #include fog
 
     // ############## Fog effect #####################################################
-    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = É and   gl_FragColor.a = 1.0;
+    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;
     // and uncomment the next lines.
     // Color of the fog: white
     //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;
