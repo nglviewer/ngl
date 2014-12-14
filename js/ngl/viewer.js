@@ -549,18 +549,20 @@ NGL.Utils = {
 };
 
 
-NGL.init = function( onload ){
+NGL.init = function( onload, baseUrl ){
 
     this.textures = [];
 
-    NGL.initResources( onload );
+    NGL.initResources( onload, baseUrl );
 
     return this;
 
 };
 
 
-NGL.initResources = function( onLoad ){
+NGL.initResources = function( onLoad, baseUrl ){
+
+    baseUrl = baseUrl || "";
 
     var loadingManager = new THREE.LoadingManager( function(){
 
@@ -581,10 +583,11 @@ NGL.initResources = function( onLoad ){
     Object.keys( NGL.Resources ).forEach( function( url ){
 
         var v = NGL.Resources[ url ];
+        var url2 = baseUrl + url;
 
         if( v=="image" ){
 
-            imageLoader.load( url, function( image ){
+            imageLoader.load( url2, function( image ){
 
                 NGL.Resources[ url ] = image;
 
@@ -592,7 +595,7 @@ NGL.initResources = function( onLoad ){
 
         }else{
 
-            xhrLoader.load( url, function( data ){
+            xhrLoader.load( url2, function( data ){
 
                 NGL.Resources[ url ] = data;
 
