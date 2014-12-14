@@ -493,7 +493,8 @@ NGL.Helixorient.prototype = {
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );
 
-            r.addAtom( a );
+            r.atoms.push( a );
+            r.atomCount += 1;
             r.resname = fr.resname;
             r.index = fr.index;
             r.chain = fr.chain;

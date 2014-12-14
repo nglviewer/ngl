@@ -1507,18 +1507,48 @@ NGL.Structure.prototype = {
 
     postProcess: function( callback ){
 
-        this.autoBond();
+        var self = this;
 
-        if( this._doAutoSS ){
-            this.autoSS();
-        }
+        async.series( [
 
-        if( this._doAutoChainName ){
-            this.autoChainName();
-        }
+            function( wcallback ){
 
-        this.center = this.atomCenter();
-        this.boundingBox = this.getBoundingBox();
+                self.autoBond();
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
+                if( self._doAutoSS ){
+                    self.autoSS();
+                }
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
+                if( self._doAutoChainName ){
+                    self.autoChainName();
+                }
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
+                self.center = self.atomCenter();
+                self.boundingBox = self.getBoundingBox();
+                wcallback();
+
+            }
+
+        ], function(){
+
+            callback();
+
+        } );
 
     },
 
@@ -1689,13 +1719,86 @@ NGL.Structure.prototype = {
 
     },
 
+    // autoBond2: function( callback ){
+
+    //     console.time( "NGL.Structure.autoBond" );
+
+    //     var bondSet = this.bondSet;
+
+    //     var i, j, n, ra, a1, a2;
+
+    //     // bonds within a residue
+
+    //     console.time( "NGL.Structure.autoBond within" );
+
+    //     var chainRes = [];
+
+    //     this.eachChain( function( c ){
+
+    //         chainRes.push( c.residues );
+
+    //     } );
+
+    //     function _chunked( _i, _n ){
+
+    //         for( var k = _i; k < _n; ++k ){
+
+    //             var cr = chainRes[ k ];
+    //             var crn = cr.length
+
+    //             for( var l = 0; l < crn; ++l ){
+
+    //                 var r = cr[ l ];
+    //                 n = r.atomCount - 1;
+    //                 ra = r.atoms;
+
+    //                 for( i = 0; i < n; i++ ){
+
+    //                     a1 = ra[ i ];
+
+    //                     for( j = i + 1; j <= n; j++ ){
+
+    //                         a2 = ra[ j ];
+
+    //                         bondSet.addBondIfConnected( a1, a2 );
+
+    //                     }
+
+    //                 }
+
+    //             }
+
+    //         }
+
+    //     }
+
+    //     NGL.processArray(
+
+    //         chainRes,
+
+    //         _chunked,
+
+    //         function(){
+
+    //             console.timeEnd( "NGL.Structure.autoBond within" );
+
+    //             callback();
+
+    //         },
+
+    //         100
+
+    //     );
+
+    // },
+
     autoBond: function(){
 
         console.time( "NGL.Structure.autoBond" );
 
         var bondSet = this.bondSet;
 
-        var i, j, n, a1, a2;
+        var i, j, n, ra, a1, a2;
 
         // bonds within a residue
 
@@ -1703,15 +1806,16 @@ NGL.Structure.prototype = {
 
         this.eachResidue( function( r ){
 
+            ra = r.atoms;
             n = r.atomCount - 1;
 
             for( i = 0; i < n; i++ ){
 
-                a1 = r.atoms[ i ];
+                a1 = ra[ i ];
 
                 for( j = i + 1; j <= n; j++ ){
 
-                    a2 = r.atoms[ j ];
+                    a2 = ra[ j ];
 
                     bondSet.addBondIfConnected( a1, a2 );
 
@@ -2777,11 +2881,10 @@ NGL.Residue.prototype = {
 
         if( !a ){
             a = new NGL.Atom( this );
-            a.index = this.nextAtomIndex();
         }else{
-            this.atomCount += 1;
             a.residue = this;
         }
+        a.index = this.nextAtomIndex();
         this.atoms.push( a );
         return a;
 
@@ -2947,6 +3050,7 @@ NGL.Atom.prototype = {
     bonds: undefined,
     altloc: undefined,
     atomname: undefined,
+    modelindex: undefined,
 
     connectedTo: function( atom ){
 
@@ -3018,7 +3122,7 @@ NGL.Atom.prototype = {
 
 NGL.AtomArray = function( sizeOrObject ){
 
-    this.useBuffer = true;
+    this.useBuffer = false;
 
     if( Number.isInteger( sizeOrObject ) ){
 
@@ -3052,7 +3156,7 @@ NGL.AtomArray.prototype = {
             this.y = new Float32Array( size );
             this.z = new Float32Array( size );
             this.element = new Uint8Array( 3 * size );
-            this.chainname = new Uint8Array( size );
+            this.chainname = new Uint8Array( 4 * size );
             this.resno = new Int32Array( size );
             this.serial = new Int32Array( size );
             this.ss = new Uint8Array( size );
@@ -3127,7 +3231,7 @@ NGL.AtomArray.prototype = {
         this.elementSize = 3 * size;
 
         this.chainnameOffset = this.elementOffset + this.elementSize;
-        this.chainnameSize = size;
+        this.chainnameSize = 4 * size;
 
         this.resnoOffset = ( this.chainnameOffset + this.chainnameSize + 3 ) & ~0x3;
         this.resnoSize = 4 * size;
@@ -3345,14 +3449,28 @@ NGL.AtomArray.prototype = {
 
     setChainname: function( i, str ){
 
-        this.chainname[ i ] = str.charCodeAt( 0 );
+        var j = 4 * i;
+        this.chainname[ j ] = str.charCodeAt( 0 );
+        this.chainname[ j + 1 ] = str.charCodeAt( 1 );
+        this.chainname[ j + 2 ] = str.charCodeAt( 2 );
+        this.chainname[ j + 3 ] = str.charCodeAt( 3 );
 
     },
 
     getChainname: function( i ){
 
-        var code = this.chainname[ i ];
-        return code ? String.fromCharCode( code ) : "";
+        var code;
+        var chainname = "";
+        var j = 4 * i;
+        for( var k = 0; k < 4; ++k ){
+            code = this.chainname[ j + k ];
+            if( code ){
+                chainname += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return chainname;
 
     },
 

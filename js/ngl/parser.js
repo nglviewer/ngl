@@ -4,33 +4,225 @@
  */
 
 
-if( typeof importScripts === 'function' ){
+NGL.processArray = function( array, fn, callback, chunkSize ){
 
-    importScripts(
-        '../three/three.js',
-        '../lib/ui/signals.min.js',
-        'core.js',
-        'structure.js'
+    chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+
+    var n = array.length;
+
+    var _i = 0;
+    var _step = chunkSize;
+    var _n = Math.min( _step, n );
+
+    async.until(
+
+        function(){
+
+            return _i >= n;
+
+        },
+
+        function( wcallback ){
+
+            setTimeout( function(){
+
+                console.log( _i, _n, n );
+
+                var stop = fn( _i, _n, array );
+
+                if( stop ){
+
+                    _i = n;
+
+                }else{
+
+                    _i += _step;
+                    _n = Math.min( _n + _step, n );
+
+                }
+
+                wcallback();
+
+            }, 10 );
+
+        },
+
+        callback
+
     );
 
-    onmessage = function( event ){
+};
 
-        // TODO dispatch to function
 
-        NGL.GroParser.parseAtoms( event.data, function( atomArray ){
+NGL.buildStructure = function( structure, callback ){
 
-            var aa = atomArray.toObject();
-            aa.bonds = null;
-            aa.residue = null;
+    console.time( "NGL.buildStructure" );
 
-            postMessage( aa, atomArray.getBufferList() );
+    var m, c, r, a;
+    var i, chainDict;
 
-        } );
+    var currentModelindex = null;
+    var currentChainname;
+    var currentResno;
 
-    };
+    function _chunked( _i, _n, atoms ){
+
+        for( i = _i; i < _n; ++i ){
+
+            a = atoms[ i ];
+
+            var modelindex = a.modelindex;
+            var chainname = a.chainname;
+            var resno = a.resno;
+            var resname = a.resname;
+
+            if( currentModelindex!==modelindex ){
+
+                m = structure.addModel();
+                c = m.addChain();
+                r = c.addResidue();
+
+                chainDict = {};
+
+                c.chainname = chainname;
+                chainDict[ chainname ] = c;
+
+                r.resno = resno;
+                r.resname = resname;
+
+                currentChainname = chainname;
+                currentResno = resno;
+
+            }
+
+            if( currentChainname!==chainname ){
+
+                if( !chainDict[ chainname ] ){
+
+                    c = m.addChain();
+                    c.chainname = chainname;
+
+                    chainDict[ chainname ] = c;
+
+                }else{
+
+                    c = chainDict[ chainname ];
+
+                }
+
+            }
+
+            if( currentResno!==resno ){
+
+                r = c.addResidue();
+                r.resno = resno;
+                r.resname = resname;
+
+            }
+
+            r.addAtom( a );
+
+            // seems to slow down Chrome
+            // delete a.modelindex;
+
+            currentModelindex = modelindex;
+            currentChainname = chainname;
+            currentResno = resno;
+
+        }
+
+    }
+
+    NGL.processArray(
+
+        structure.atoms,
+
+        _chunked,
+
+        function(){
+
+            console.timeEnd( "NGL.buildStructure" );
+
+            callback();
+
+        }
+
+    );
+
+    return structure;
+
+};
+
+
+NGL.createAtomArray = function( structure, callback ){
+
+    console.time( "NGL.createAtomArray" );
+
+    var s = structure;
+    var atoms = s.atoms;
+    var n = atoms.length;
+
+    s.atomArray = new NGL.AtomArray( n );
+    var atomArray = s.atomArray;
+
+    function _chunked( _i, _n ){
+
+        for( var i = _i; i < _n; ++i ){
+
+            var ai = atoms[ i ];
+
+            var a = new NGL.ProxyAtom( atomArray );
+            a.index = i;
+
+            atomArray.setResname( i, ai.resname );
+            atomArray.x[ i ] = ai.x;
+            atomArray.y[ i ] = ai.y;
+            atomArray.z[ i ] = ai.z;
+            atomArray.setElement( i, ai.element );
+            atomArray.hetero[ i ] = ai.hetero;
+            atomArray.setChainname( i, ai.chainname );
+            atomArray.resno[ i ] = ai.resno;
+            atomArray.serial[ i ] = ai.serial;
+            atomArray.setAtomname( i, ai.atomname );
+            atomArray.ss[ i ] = ai.ss.charCodeAt( 0 );
+            atomArray.bfactor[ i ] = ai.bfactor;
+            atomArray.altloc[ i ] = ai.altloc.charCodeAt( 0 );
+            atomArray.vdw[ i ] = ai.vdw;
+            atomArray.covalent[ i ] = ai.covalent;
+            // FIXME atomArray.modelindex[ i ] = ai.modelindex;
+            a.modelindex = ai.modelindex;
+
+            atoms[ i ] = a;
+
+        }
+
+    }
+
+    NGL.processArray(
+
+        atoms,
+
+        _chunked,
+
+        function(){
+
+            console.timeEnd( "NGL.createAtomArray" );
+
+            callback();
+
+        },
+
+        50000
+
+    );
+
+    return structure;
 
 }
 
+
+////////////////////
+// StructureParser
 
 NGL.StructureParser = function( name, path, params ){
 
@@ -50,11 +242,51 @@ NGL.StructureParser.prototype = {
 
     parse: function( str, callback ){
 
-        this._parse( str, function( structure ){
+        var self = this;
 
-            structure.postProcess();
+        async.series( [
 
-            if( typeof callback === "function" ) callback( structure );
+            function( wcallback ){
+
+                self._parse( str, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                if( self.structure.atoms.length > 100000 ){
+
+                    NGL.createAtomArray( self.structure, wcallback );
+
+                }else{
+
+                    wcallback();
+
+                }
+
+            },
+
+            function( wcallback ){
+
+                NGL.buildStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                self._postProcess( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                self.structure.postProcess( wcallback );
+
+            }
+
+        ], function(){
+
+            callback( self.structure );
 
         } );
 
@@ -65,6 +297,14 @@ NGL.StructureParser.prototype = {
     _parse: function( str, callback ){
 
         console.warn( "NGL.StructureParser._parse not implemented" );
+        callback();
+
+    },
+
+    _postProcess: function( structure, callback ){
+
+        console.warn( "NGL.StructureParser._postProcess not implemented" );
+        callback();
 
     }
 
@@ -112,15 +352,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var vdwRadii = NGL.VdwRadii;
     var helixTypes = NGL.HelixTypes;
 
-    var i, j;
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
-    var m = s.addModel();
-    var c = m.addChain();
-    var r = c.addResidue();
-
-    var chainDict = {};
     var serialDict = {};
 
     var id = s.id;
@@ -130,34 +364,16 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     s.hasConnect = false;
 
-    var a, currentChainname, currentResno, currentBiomol;
+    var a, currentBiomol;
 
-    var n = lines.length;
+    var idx = 0;
+    var modelIdx = 0;
 
-    var useArray = false;
+    function _chunked( _i, _n ){
 
-    if( useArray ){
+        for( var i = _i; i < _n; ++i ){
 
-        var atomCount = 0;
-        for( i = 0; i < n; ++i ){
-            recordName = lines[ i ].substr( 0, 6 )
-            if( recordName === 'ATOM  ' || recordName === 'HETATM' ) ++atomCount;
-        }
-
-        this.atomArray = new NGL.AtomArray( atomCount );
-        var atomArray = this.atomArray;
-
-    }
-
-    var _i = 0;
-    var _step = 10000;
-    var _n = Math.min( _step, n );
-
-    function _chunked(){
-
-        for( i = _i; i < _n; i++ ){
-
-            line = lines[i];
+            line = lines[ i ];
             recordName = line.substr( 0, 6 );
 
             if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
@@ -192,95 +408,32 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 resno = parseInt( line.substr( 22, 5 ) );
                 resname = line.substr( 17, 4 ).trim();
 
-                if( !a ){
-
-                    c.chainname = chainname;
-                    chainDict[ chainname ] = c;
-
-                    r.resno = resno;
-                    r.resname = resname;
-
-                    currentChainname = chainname;
-                    currentResno = resno;
-
-                }
-
-                if( currentChainname!==chainname ){
-
-                    if( !chainDict[ chainname ] ){
-
-                        c = m.addChain();
-                        c.chainname = chainname;
-
-                        chainDict[ chainname ] = c;
-
-                    }else{
-
-                        c = chainDict[ chainname ];
-
-                    }
-
-                }
-
-                if( currentResno!==resno ){
-
-                    r = c.addResidue();
-                    r.resno = resno;
-                    r.resname = resname;
-
-                }
-
                 if( !element ) element = guessElem( atomname );
 
-                if( useArray ){
+                a = new NGL.Atom();
+                a.index = idx;
+                a.bonds = [];
 
-                    a = r.addProxyAtom( atomArray );
-                    var index = a.index;
-
-                    atomArray.setResname( index, resname );
-                    atomArray.x[ index ] = parseFloat( line.substr( 30, 8 ) );
-                    atomArray.y[ index ] = parseFloat( line.substr( 38, 8 ) );
-                    atomArray.z[ index ] = parseFloat( line.substr( 46, 8 ) );
-                    atomArray.setElement( index, element );
-                    atomArray.hetero[ index ] = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                    atomArray.chainname[ index ] = chainname.charCodeAt( 0 );
-                    atomArray.resno[ index ] = resno;
-                    atomArray.serial[ index ] = serial;
-                    atomArray.setAtomname( index, atomname );
-                    atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
-                    atomArray.bfactor[ index ] = parseFloat( line.substr( 60, 8 ) );
-                    atomArray.altloc[ index ] = altloc.charCodeAt( 0 );
-                    atomArray.vdw[ index ] = vdwRadii[ element ];
-                    atomArray.covalent[ index ] = covRadii[ element ];
-
-                }else{
-
-                    a = r.addAtom();
-                    a.bonds = [];
-
-                    a.resname = resname;
-                    a.x = x;
-                    a.y = y;
-                    a.z = z;
-                    a.element = element;
-                    a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
-                    a.chainname = chainname;
-                    a.resno = resno;
-                    a.serial = serial;
-                    a.atomname = atomname;
-                    a.ss = 'c';
-                    a.bfactor = parseFloat( line.substr( 60, 8 ) );
-                    a.altloc = altloc;
-                    a.vdw = vdwRadii[ element ];
-                    a.covalent = covRadii[ element ];
-
-                }
+                a.resname = resname;
+                a.x = x;
+                a.y = y;
+                a.z = z;
+                a.element = element;
+                a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
+                a.chainname = chainname;
+                a.resno = resno;
+                a.serial = serial;
+                a.atomname = atomname;
+                a.ss = 'c';
+                a.bfactor = parseFloat( line.substr( 60, 8 ) );
+                a.altloc = altloc;
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
+                a.modelindex = modelIdx;
 
                 serialDict[ serial ] = a;
 
-                currentChainname = chainname;
-                currentResno = resno;
-
+                idx += 1;
                 atoms.push( a );
 
             }else if( recordName === 'CONECT' ){
@@ -380,12 +533,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }else if( a ){
 
-                    m = s.addModel();
-                    c = m.addChain();
-                    r = c.addResidue();
-                    a = undefined;
-
-                    chainDict = {};
+                    modelIdx += 1;
                     serialDict = {};
 
                 }
@@ -394,8 +542,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 if( firstModelOnly ){
 
-                    _n = n;
-                    break;
+                    return true;
 
                 }
 
@@ -421,10 +568,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             }
 
-
         }
 
-        if( _n === n ){
+    }
+
+    NGL.processArray(
+
+        lines,
+
+        _chunked,
+
+        function(){
 
             console.timeEnd( __timeName );
 
@@ -432,80 +586,72 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
-            _postProcess();
-            callback( s );
 
-            // console.log( biomolDict );
-            // console.log( frames );
-            // console.log( boxes );
-
-
-        }else{
-
-            _i += _step;
-            _n = Math.min( _n + _step, n );
-
-            setTimeout( _chunked );
+            callback();
 
         }
+
+    );
+
+};
+
+NGL.PdbParser.prototype._postProcess = function( structure, callback ){
+
+    var s = structure
+    var helix = s.helix;
+    var sheet = s.sheet;
+
+    // assign secondary structures
+
+    console.time( "NGL.PdbParser parse ss" );
+
+    for( var j = 0; j < sheet.length; j++ ){
+
+        var selection = new NGL.Selection(
+            sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
+        );
+
+        s.eachResidue( function( r ){
+
+            r.ss = "s";
+
+        }, selection );
 
     }
 
-    function _postProcess(){
+    for( var j = 0; j < helix.length; j++ ){
 
-        // assign secondary structures
+        var selection = new NGL.Selection(
+            helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
+        );
 
-        console.time( "NGL.PdbParser parse ss" );
+        var helixType = helix[j][4];
 
-        for( j = 0; j < sheet.length; j++ ){
+        s.eachResidue( function( r ){
 
-            var selection = new NGL.Selection(
-                sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
-            );
+            r.ss = helixType;
 
-            s.eachResidue( function( r ){
-
-                r.ss = "s";
-
-            }, selection );
-
-        }
-
-        for( j = 0; j < helix.length; j++ ){
-
-            var selection = new NGL.Selection(
-                helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
-            );
-
-            var helixType = helix[j][4];
-
-            s.eachResidue( function( r ){
-
-                r.ss = helixType;
-
-            }, selection );
-
-        }
-
-        console.timeEnd( "NGL.PdbParser parse ss" );
-
-        if( sheet.length === 0 && helix.length === 0 ){
-
-            s._doAutoSS = true;
-
-        }
-
-        // check for chain names
-
-        var _doAutoChainName = true;
-        s.eachChain( function( c ){
-            if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
-        } );
-        s._doAutoChainName = _doAutoChainName;
+        }, selection );
 
     }
 
-    setTimeout( _chunked );
+    console.timeEnd( "NGL.PdbParser parse ss" );
+
+    if( sheet.length === 0 && helix.length === 0 ){
+
+        s._doAutoSS = true;
+
+    }
+
+    // check for chain names
+
+    var _doAutoChainName = true;
+    s.eachChain( function( c ){
+        if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+    } );
+    s._doAutoChainName = _doAutoChainName;
+
+    callback();
 
 };
 
@@ -521,57 +667,28 @@ NGL.GroParser = function( name, path, params ){
 
 NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
-NGL.GroParser.prototype._build = function(){
-
-    console.time( "NGL.GroParser._build" );
-
-    var s = this.structure;
-    var n = s.atoms.length;
-
-    var i, a;
-
-    var m = s.addModel();
-    var c = m.addChain();
-
-    var r = c.addResidue();
-    r.resno = s.atoms[ 0 ].resno;
-    r.resname = s.atoms[ 0 ].resname;
-
-    var currentResno = s.atoms[ 0 ].resno;
-
-    for( i = 0; i < n; ++i ){
-
-        a = s.atoms[ i ];
-
-        if( currentResno !== a.resno ){
-
-            r = c.addResidue();
-            r.resno = a.resno;
-            r.resname = a.resname;
-
-        }
-
-        r.addAtom( a );
-
-        currentResno = a.resno;
-
-    }
-
-    console.timeEnd( "NGL.GroParser._build" );
-
-}
-
 NGL.GroParser.prototype._parse = function( str, callback ){
 
-    console.time( "NGL.GroParser._parse" );
+    var __timeName = "NGL.GroParser._parse " + this.name;
+
+    console.time( __timeName );
 
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
 
-    var scope = this;
+    var frames = [];
+    var boxes = [];
+    var doFrames = false;
+    var currentFrame, currentCoord;
+
+    var atoms = s.atoms;
 
     var lines = str.split( "\n" );
+
+    var guessElem = NGL.guessElement;
+    var covRadii = NGL.CovalentRadii;
+    var vdwRadii = NGL.VdwRadii;
 
     s.title = lines[ 0 ].trim();
     s.size = parseInt( lines[ 1 ] );
@@ -582,148 +699,21 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         parseFloat( b[2] ) * 10
     ];
 
-    // var parser = NGL.GroParser.parseAtoms;
-    var parser = NGL.GroParser.parseAtomsChunked;
-    // var parser = NGL.GroParser.parseAtomsWorker;
+    //
 
-    parser( str, firstModelOnly, asTrajectory, function( atomArray, frames, boxes ){
-
-        s.atomCount = atomArray.length;
-
-        if( asTrajectory ){
-
-            s.frames = frames;
-            s.boxes = boxes;
-
-        }
-
-        if( !Array.isArray( atomArray ) ){
-
-            s.atomArray = atomArray;
-
-            var i;
-            var n = s.atomCount;
-
-            for( i = 0; i < n; ++i ){
-
-                s.atoms.push( new NGL.ProxyAtom( atomArray, i ) );
-
-            }
-
-        }else{
-
-            s.atoms = atomArray;
-
-        }
-
-        console.timeEnd( "NGL.GroParser._parse" );
-
-        scope._build();
-
-        callback( s );
-
-    } );
-
-};
-
-NGL.GroParser.parseAtoms = function( str, firstModelOnly, asTrajectory, callback ){
-
-    console.time( "NGL.GroParser._parseAtoms" );
-
-    var lines = str.trim().split( "\n" );
-
-    var guessElem = NGL.guessElement;
-    var covRadii = NGL.CovalentRadii;
-    var vdwRadii = NGL.VdwRadii;
-
-    var i;
-    var line, atomname, element, resname;
-
-    var atomArray = new NGL.AtomArray( parseInt( lines[ 1 ] ) );
-
-    var a = new NGL.ProxyAtom( atomArray, 0 );
-
-    var n = lines.length - 1;
-
-    for( i = 2; i < n; ++i ){
-
-        line = lines[i];
-
-        atomname = line.substr( 10, 5 ).trim();
-        resname = line.substr( 5, 5 ).trim();
-
-        element = guessElem( atomname );
-
-        a.resname = resname;
-        a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
-        a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
-        a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
-        a.element = element;
-        a.resno = parseInt( line.substr( 0, 5 ) );
-        a.serial = parseInt( line.substr( 15, 5 ) );
-        a.atomname = atomname;
-        a.ss = 'c';
-
-        a.vdw = vdwRadii[ element ];
-        a.covalent = covRadii[ element ];
-
-        a.index += 1;
-
-    }
-
-    console.timeEnd( "NGL.GroParser._parseAtoms" );
-
-    callback( atomArray );
-
-};
-
-NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, callback ){
-
-    console.time( "NGL.GroParser._parseAtomsChunked" );
-
-    var lines = str.trim().split( "\n" );
-
-    var frames = [];
-    var boxes = [];
-    var doFrames = false;
-    var currentFrame, currentCoord;
-
-    var guessElem = NGL.guessElement;
-    var covRadii = NGL.CovalentRadii;
-    var vdwRadii = NGL.VdwRadii;
-
-    var i;
-    var line, atomname, element, resname;
+    var atomname, resname, element;
 
     var atomCount = parseInt( lines[ 1 ] );
     var modelLineCount = atomCount + 3;
 
-    var index = 0;
-    var useArray = false;
+    var idx = 0;
+    var modelIdx = 0;
 
-    if( useArray ){
+    function _chunked( _i, _n ){
 
-        var atomArray = new NGL.AtomArray( atomCount );
-        var a = new NGL.ProxyAtom( atomArray, 0 );
+        for( var i = _i; i < _n; ++i ){
 
-    }else{
-
-        var a;
-        var atoms = [];
-
-    }
-
-    var n = lines.length;
-
-    var _i = 0;
-    var _step = 10000;
-    var _n = Math.min( _step, n );
-
-    function _chunked(){
-
-        for( i = _i; i < _n; ++i ){
-
-            line = lines[ i ];
+            var line = lines[ i ];
 
             if( i % modelLineCount === 0 ){
 
@@ -736,6 +726,8 @@ NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, c
                     currentCoord = 0;
 
                 }
+
+                modelIdx += 1;
 
             }else if( i % modelLineCount === 1 ){
 
@@ -752,8 +744,7 @@ NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, c
 
                 if( firstModelOnly ){
 
-                    _n = n;
-                    break;
+                    return true;
 
                 }
 
@@ -782,102 +773,62 @@ NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, c
 
                 element = guessElem( atomname );
 
-                if( useArray ){
+                var a = new NGL.Atom();
+                a.index = idx;
+                a.bonds = [];
 
-                    atomArray.setResname( index, resname );
-                    atomArray.x[ index ] = x;
-                    atomArray.y[ index ] = y;
-                    atomArray.z[ index ] = z;
-                    atomArray.setElement( index, element );
-                    atomArray.resno[ index ] = parseInt( line.substr( 0, 5 ) );
-                    atomArray.serial[ index ] = parseInt( line.substr( 15, 5 ) );
-                    atomArray.setAtomname( index, atomname );
-                    atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
-                    atomArray.vdw[ index ] = vdwRadii[ element ];
-                    atomArray.covalent[ index ] = covRadii[ element ];
+                a.resname = resname;
+                a.x = x;
+                a.y = y;
+                a.z = z;
+                a.element = element;
+                a.chainname = '';
+                a.resno = parseInt( line.substr( 0, 5 ) );
+                a.serial = parseInt( line.substr( 15, 5 ) );
+                a.atomname = atomname;
+                a.ss = 'c';
+                a.altloc = '';
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
+                a.modelindex = modelIdx;
 
-                }else{
-
-                    a = new NGL.Atom();
-                    a.bonds = [];
-
-                    a.resname = resname;
-                    a.x = x;
-                    a.y = y;
-                    a.z = z;
-                    a.element = element;
-                    a.resno = parseInt( line.substr( 0, 5 ) );
-                    a.serial = parseInt( line.substr( 15, 5 ) );
-                    a.atomname = atomname;
-                    a.ss = 'c';
-                    a.vdw = vdwRadii[ element ];
-                    a.covalent = covRadii[ element ];
-
-                    atoms.push( a );
-
-                }
-
-                a.index = index;
-                index += 1;
+                idx += 1;
+                atoms.push( a );
 
             }
-
-        }
-
-        if( _n === n ){
-
-            console.timeEnd( "NGL.GroParser._parseAtomsChunked" );
-
-            // console.log( atoms, frames, boxes );
-
-            if( useArray ){
-                callback( atomArray );
-            }else{
-                callback( atoms, frames, boxes );
-            }
-
-        }else{
-
-            _i += _step;
-            _n = Math.min( _n + _step, n );
-
-            setTimeout( _chunked );
 
         }
 
     }
 
-    setTimeout( _chunked );
+    NGL.processArray(
+
+        lines,
+
+        _chunked,
+
+        function(){
+
+            console.timeEnd( __timeName );
+
+            if( asTrajectory ){
+                s.frames = frames;
+                s.boxes = boxes;
+            }
+
+            callback();
+
+        }
+
+    );
 
 };
 
-NGL.GroParser.parseAtomsWorker = function( str, firstModelOnly, asTrajectory, callback ){
+NGL.GroParser.prototype._postProcess = function( structure, callback ){
 
-    console.time( "NGL.GroParser._parseAtomsWorker" );
+    callback();
 
-    var worker = new Worker( '../js/ngl/parser.js' );
-
-    worker.onmessage = function( event ){
-
-        worker.terminate();
-
-        var atomArray = new NGL.AtomArray( event.data );
-
-        console.timeEnd( "NGL.GroParser._parseAtomsWorker" );
-
-        callback( atomArray );
-
-    };
-
-    worker.onerror = function( event ){
-
-        console.error( event );
-
-    };
-
-    worker.postMessage( str );
-
-}
+};
 
 
 NGL.CifParser = function( name, path, params ){
@@ -921,23 +872,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var lines = str.split( "\n" );
 
-    // safeguard
-    // if( lines.length > 1000000 ) cAlphaOnly = true;
-
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
     var vdwRadii = NGL.VdwRadii;
     var helixTypes = NGL.HelixTypes;
 
-    var i, j;
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
-    var m = s.addModel();
-    var c = m.addChain();
-    var r = c.addResidue();
-
-    var chainDict = {};
     var serialDict = {};
 
     var title = s.title;
@@ -946,7 +888,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     s.hasConnect = false;
 
-    var a, currentChainname, currentResno, currentBiomol;
+    var a, currentBiomol;
 
     //
 
@@ -954,6 +896,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var reQuotedWhitespace = /\s+(?=(?:[^']*'[^']*')*[^']*$)/;
 
     var cif = {};
+    s.cif = cif;
 
     var pendingString = false;
     var currentString = null;
@@ -971,15 +914,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     //
 
-    var n = lines.length;
+    var useArray = lines.length > 300000 ? true : false;
 
-    var _i = 0;
-    var _step = 10000;
-    var _n = Math.min( _step, n );
+    var idx = 0;
+    var modelIdx = 0;
 
-    function _chunked(){
+    function _chunked( _i, _n ){
 
-        for( i = _i; i < _n; i++ ){
+        for( var i = _i; i < _n; ++i ){
 
             line = lines[i].trim();
 
@@ -1121,9 +1063,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                             first = false;
 
-                            r.resno = ls[ label_seq_id ];
-                            r.resname = ls[ label_comp_id ];
-
                         }
 
                         //
@@ -1144,45 +1083,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         var resno = ls[ label_seq_id ];
                         var resname = ls[ label_comp_id ];
 
-                        if( !a ){
-
-                            c.chainname = chainname;
-                            chainDict[ chainname ] = c;
-
-                            r.resno = resno;
-                            r.resname = resname;
-
-                            currentChainname = chainname;
-                            currentResno = resno;
-
-                        }
-
-                        if( currentChainname!==chainname ){
-
-                            if( !chainDict[ chainname ] ){
-
-                                c = m.addChain();
-                                c.chainname = chainname;
-
-                                chainDict[ chainname ] = c;
-
-                            }else{
-
-                                c = chainDict[ chainname ];
-
-                            }
-
-                        }
-
-                        if( currentResno !== resno ){
-
-                            r = c.addResidue();
-                            r.resno = resno;
-                            r.resname = resname;
-
-                        }
-
-                        a = r.addAtom();
+                        a = new NGL.Atom();
+                        a.index = idx;
                         a.bonds = [];
 
                         a.resname = resname;
@@ -1201,8 +1103,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
 
-                        currentResno = resno;
-
+                        idx += 1;
                         atoms.push( a );
 
                     }else{
@@ -1240,93 +1141,136 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
         }
 
-        if( _n === n ){
+    }
+
+    NGL.processArray(
+
+        lines,
+
+        _chunked,
+
+        function(){
 
             console.timeEnd( __timeName );
-
-            // console.log( cif );
 
             if( asTrajectory ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
 
-            // console.log( s );
-
-            _postProcess();
-            callback( s );
-
-        }else{
-
-            console.log( _i, n );
-
-            _i += _step;
-            _n = Math.min( _n + _step, n );
-
-            setTimeout( _chunked );
+            callback();
 
         }
 
-    }
+    );
 
-    function _postProcess(){
+}
 
-        console.time( "NGL.CifParser _postProcess" );
+NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
-        var sc = cif.struct_conf;
-        var o = sc.id.length;
+    console.time( "NGL.CifParser._postProcess" );
 
-        if( sc ){
+    var s = structure;
+    var cif = s.cif;
 
-            for( var j = 0; j < o; ++j ){
+    async.series( [
 
-                var selection = new NGL.Selection(
-                    sc.beg_label_seq_id[ j ] + "-" +
-                    sc.end_label_seq_id[ j ] + ":" +
-                    sc.beg_label_asym_id[ j ]
-                );
+        function( wcallback ){
 
-                var helixType = parseInt( sc.pdbx_PDB_helix_class[ j ] );
-                helixType = helixTypes[ helixType ] || helixTypes[""];
+            var helixTypes = NGL.HelixTypes;
 
-                s.eachResidue( function( r ){
+            var sc = cif.struct_conf;
+            var o = sc.id.length;
 
-                    r.ss = helixType;
+            if( !sc ){
 
-                }, selection );
+                wcallback();
+                return;
 
             }
 
-        }
+            NGL.processArray(
 
-        //
+                sc.beg_label_seq_id,
 
-        var ssr = cif.struct_sheet_range;
-        var p = ssr.id.length;
+                function( _i, _n ){
 
-        if( ssr ){
+                    for( var i = _i; i < _n; ++i ){
 
-            for( var j = 0; j < p; ++j ){
+                        var selection = new NGL.Selection(
+                            sc.beg_label_seq_id[ i ] + "-" +
+                            sc.end_label_seq_id[ i ] + ":" +
+                            sc.beg_label_asym_id[ i ]
+                        );
 
-                var selection = new NGL.Selection(
-                    ssr.beg_label_seq_id[ j ] + "-" +
-                    ssr.end_label_seq_id[ j ] + ":" +
-                    ssr.beg_label_asym_id[ j ]
-                );
+                        var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
+                        helixType = helixTypes[ helixType ] || helixTypes[""];
 
-                s.eachResidue( function( r ){
+                        s.eachResidue( function( r ){
 
-                    r.ss = "s";
+                            r.ss = helixType;
 
-                }, selection );
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        },
+
+        function( wcallback ){
+
+            var ssr = cif.struct_sheet_range;
+            var p = ssr.id.length;
+
+            if( !ssr ){
+
+                wcallback();
+                return;
 
             }
 
+            NGL.processArray(
+
+                ssr.beg_label_seq_id,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var selection = new NGL.Selection(
+                            ssr.beg_label_seq_id[ i ] + "-" +
+                            ssr.end_label_seq_id[ i ] + ":" +
+                            ssr.beg_label_asym_id[ i ]
+                        );
+
+                        s.eachResidue( function( r ){
+
+                            r.ss = "s";
+
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
         }
 
-        //
+    ], function(){
 
-        if( !sc && !ssr ){
+        if( !cif.struct_conf && !cif.struct_sheet_range ){
 
             s._doAutoSS = true;
 
@@ -1340,13 +1284,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
         } );
         s._doAutoChainName = _doAutoChainName;
 
-        console.timeEnd( "NGL.CifParser _postProcess" );
+        console.timeEnd( "NGL.CifParser._postProcess" );
 
-        // console.log( s )
+        callback();
 
-    }
-
-    setTimeout( _chunked );
+    } );
 
 };
 

@@ -51,7 +51,7 @@ load( "1blu.pdb", {}, function( o ){
         sele: "sidechainAttached and not( SF4 or CYS )", visible: false
     } );
     o.addRepresentation( "hyperball", {
-        sele: "sidechainAttached and ( SF4 or CYS )"
+        sele: "( sidechainAttached and CYS ) or SF4"
     } );
     // o.centerView();
 

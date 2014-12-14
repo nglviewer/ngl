@@ -162,15 +162,16 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            // stage.loadFile( "__example__/1LVZ.pdb", function( o ){
+            stage.loadFile( "__example__/1LVZ.pdb", function( o ){
 
-            //     o.addRepresentation( "cartoon", { sele: "*" } );
-            //     // o.addRepresentation( "licorice", { sele: "*" } );
-            //     o.centerView();
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                // o.addRepresentation( "licorice", { sele: "*" } );
+                o.centerView();
 
-            //     o.addTrajectory();
+                o.addTrajectory();
 
-            // }, null, null, { asTrajectory: true } );
+            }, null, null, { asTrajectory: true } );
+            // }, null, null, { firstModelOnly: true } );
 
             // stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
             stage.loadFile( "__example__/md_1u19_trj.gro", function( o ){
@@ -811,6 +812,9 @@ NGL.Examples = {
                     color: "chainindex", pointSize: 7, sizeAttenuation: true,
                     sort: false
                 } );
+                // o.addRepresentation( "ribbon", {
+                //     color: "chainindex"
+                // } );
                 o.centerView();
 
             }, null, null, { cAlphaOnly: true } );
