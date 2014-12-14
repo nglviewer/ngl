@@ -29,16 +29,20 @@
 # js minification
 
 # lib/bzip2
-java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js ../js/lib/bzip2.js --js_output_file ../js/lib/bzip2.min.js
+java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --js ../js/lib/bzip2.js --js_output_file ../js/lib/bzip2.min.js
 
 # lib/colorpicker
-java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js ../js/lib/colorpicker.js --js_output_file ../js/lib/colorpicker.min.js
+java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --js ../js/lib/colorpicker.js --js_output_file ../js/lib/colorpicker.min.js
 
 # lib/lzma
-java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js ../js/lib/lzma.js --js_output_file ../js/lib/lzma.min.js
+java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --js ../js/lib/lzma.js --js_output_file ../js/lib/lzma.min.js
 
 # lib/svd
-java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js ../js/lib/svd.js --js_output_file ../js/lib/svd.min.js
+java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --js ../js/lib/svd.js --js_output_file ../js/lib/svd.min.js
 
 # lib/vlist
-java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js ../js/lib/vlist.js --js_output_file ../js/lib/vlist.min.js
+java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --js ../js/lib/vlist.js --js_output_file ../js/lib/vlist.min.js
+
+# lib/async
+java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --externs externs/common.js --js ../js/lib/async.js --js_output_file ../js/lib/async.min.js
+

@@ -54,9 +54,9 @@ def main( argv=None ):
             filename = '../' + filename
             sources.append( filename )
             with open( filename, 'r', encoding='utf-8' ) as f:
-                if filename.endswith( ".glsl" ):
-                    tmp.write( 'THREE.ShaderChunk[ \'' + os.path.splitext(os.path.basename(filename))[0] + '\'] = "' )
-                    tmp.write( f.read().replace( '\n', '\\n' ) )
+                if filename[ -5: ] in [ ".glsl", ".frag", ".vert" ]:
+                    tmp.write( 'NGL.Resources[ \'' + filename + '\'] = "' )
+                    tmp.write( f.read().replace( '\n', '\\n' ).replace( '"', '\\"' ) )
                     tmp.write( u'";\n\n' )
                 else:
                     tmp.write( f.read() )
@@ -79,7 +79,7 @@ def main( argv=None ):
 
         externs = ' --externs '.join( args.externs )
         source = ' '.join(sources)
-        cmd = 'java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --externs %s --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js %s --js_output_file %s %s' % (externs, path, output, sourcemapargs)
+        cmd = 'java -jar closure-compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --externs %s --jscomp_off=checkTypes --language_in=ECMASCRIPT5 --js %s --js_output_file %s %s' % (externs, path, output, sourcemapargs)
         os.system(cmd)
 
         # header
