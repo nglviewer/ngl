@@ -54,9 +54,9 @@ def main( argv=None ):
             filename = '../' + filename
             sources.append( filename )
             with open( filename, 'r', encoding='utf-8' ) as f:
-                if filename.endswith( ".glsl" ):
-                    tmp.write( 'THREE.ShaderChunk[ \'' + os.path.splitext(os.path.basename(filename))[0] + '\'] = "' )
-                    tmp.write( f.read().replace( '\n', '\\n' ) )
+                if filename[ -5: ] in [ ".glsl", ".frag", ".vert" ]:
+                    tmp.write( 'NGL.Resources[ \'' + filename + '\'] = "' )
+                    tmp.write( f.read().replace( '\n', '\\n' ).replace( '"', '\\"' ) )
                     tmp.write( u'";\n\n' )
                 else:
                     tmp.write( f.read() )

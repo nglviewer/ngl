@@ -12,11 +12,11 @@
 NGL.Resources = {
 
     // fonts
-    '../fonts/Arial.fnt': '',
+    '../fonts/Arial.fnt': null,
     '../fonts/Arial.png': 'image',
-    '../fonts/DejaVu.fnt': '',
+    '../fonts/DejaVu.fnt': null,
     '../fonts/DejaVu.png': 'image',
-    '../fonts/LatoBlack.fnt': '',
+    '../fonts/LatoBlack.fnt': null,
     '../fonts/LatoBlack.png': 'image',
 
     // sprites
@@ -24,34 +24,34 @@ NGL.Resources = {
     '../img/spark1.png': 'image',
 
     // shaders
-    '../shader/CylinderImpostor.vert': '',
-    '../shader/CylinderImpostor.frag': '',
-    '../shader/HyperballStickImpostor.vert': '',
-    '../shader/HyperballStickImpostor.frag': '',
-    '../shader/Line.vert': '',
-    '../shader/Line.frag': '',
-    '../shader/LineSprite.vert': '',
-    '../shader/LineSprite.frag': '',
-    '../shader/Mesh.vert': '',
-    '../shader/Mesh.frag': '',
-    '../shader/ParticleSprite.vert': '',
-    '../shader/ParticleSprite.frag': '',
-    '../shader/Quad.vert': '',
-    '../shader/Quad.frag': '',
-    '../shader/Ribbon.vert': '',
-    '../shader/Ribbon.frag': '',
-    '../shader/SDFFont.vert': '',
-    '../shader/SDFFont.frag': '',
-    '../shader/SphereHalo.vert': '',
-    '../shader/SphereHalo.frag': '',
-    '../shader/SphereImpostor.vert': '',
-    '../shader/SphereImpostor.frag': '',
+    '../shader/CylinderImpostor.vert': null,
+    '../shader/CylinderImpostor.frag': null,
+    '../shader/HyperballStickImpostor.vert': null,
+    '../shader/HyperballStickImpostor.frag': null,
+    '../shader/Line.vert': null,
+    '../shader/Line.frag': null,
+    '../shader/LineSprite.vert': null,
+    '../shader/LineSprite.frag': null,
+    '../shader/Mesh.vert': null,
+    '../shader/Mesh.frag': null,
+    '../shader/ParticleSprite.vert': null,
+    '../shader/ParticleSprite.frag': null,
+    '../shader/Quad.vert': null,
+    '../shader/Quad.frag': null,
+    '../shader/Ribbon.vert': null,
+    '../shader/Ribbon.frag': null,
+    '../shader/SDFFont.vert': null,
+    '../shader/SDFFont.frag': null,
+    '../shader/SphereHalo.vert': null,
+    '../shader/SphereHalo.frag': null,
+    '../shader/SphereImpostor.vert': null,
+    '../shader/SphereImpostor.frag': null,
 
     // shader chunks
-    '../shader/chunk/fog.glsl': '',
-    '../shader/chunk/fog_params.glsl': '',
-    '../shader/chunk/light.glsl': '',
-    '../shader/chunk/light_params.glsl': '',
+    '../shader/chunk/fog.glsl': null,
+    '../shader/chunk/fog_params.glsl': null,
+    '../shader/chunk/light.glsl': null,
+    '../shader/chunk/light_params.glsl': null,
 
 };
 
@@ -585,13 +585,17 @@ NGL.initResources = function( onLoad, baseUrl ){
         var v = NGL.Resources[ url ];
         var url2 = baseUrl + url;
 
-        if( v=="image" ){
+        if( v==="image" ){
 
             imageLoader.load( url2, function( image ){
 
                 NGL.Resources[ url ] = image;
 
             });
+
+        }else if( v!==null ){
+
+            return;
 
         }else{
 
@@ -766,7 +770,9 @@ NGL.Viewer = function( eid ){
 
     this.initControls();
 
-    window.addEventListener( 'resize', this.onWindowResize.bind( this ), false );
+    window.addEventListener(
+        'resize', this.onWindowResize.bind( this ), false
+    );
 
     // fog & background
     this.setBackground();
