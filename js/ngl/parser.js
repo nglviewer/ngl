@@ -26,7 +26,7 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
 
             setTimeout( function(){
 
-                console.log( _i, _n, n );
+                // console.log( _i, _n, n );
 
                 var stop = fn( _i, _n, array );
 
