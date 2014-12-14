@@ -32,13 +32,13 @@ NGL.decompress = function( data, file, callback ){
 
     if( ext === "gz" ){
 
-        var binData = pako.ungzip( data );
+        binData = pako.ungzip( data );
 
     }else if( ext === "zip" ){
 
         var zip = new JSZip( data );
         var name = Object.keys( zip.files )[ 0 ];
-        var binData = zip.files[ name ].asUint8Array();
+        binData = zip.files[ name ].asUint8Array();
 
     }else if( ext === "lzma" ){
 

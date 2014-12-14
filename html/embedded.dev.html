@@ -53,12 +53,7 @@
 
                 NGL.init( function(){
 
-                    var stage = new NGL.Stage();
-
-                    // FIXME simplify: add viewer method
-                    stage.viewer.container = document.getElementById( "viewport" );
-                    stage.viewer.container.appendChild( stage.viewer.renderer.domElement );
-                    stage.viewer.onWindowResize();
+                    var stage = new NGL.Stage( "viewport" );
 
                     stage.loadFile( "__example__/1crn.pdb", function( o ){
 

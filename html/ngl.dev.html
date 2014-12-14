@@ -72,10 +72,6 @@
                     var stage = new NGL.Stage();
                     NGL.StageWidget( stage );
 
-                    // FIXME why and why twice?
-                    stage.viewer.onWindowResize();
-                    stage.viewer.onWindowResize();
-
                     var example = NGL.GET( "example" );
                     if( example ) NGL.Examples.load( example, stage );
 
