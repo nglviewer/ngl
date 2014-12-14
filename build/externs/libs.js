@@ -11,3 +11,4 @@ var pako;
 var ColorPicker;
 var VirtualList
 var Tether;
+var async;

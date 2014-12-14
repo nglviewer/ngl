@@ -866,7 +866,8 @@ NGL.Helixorient.prototype = {
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );
 
-            r.addAtom( a );
+            r.atoms.push( a );
+            r.atomCount += 1;
             r.resname = fr.resname;
             r.index = fr.index;
             r.chain = fr.chain;
@@ -3211,18 +3212,48 @@ NGL.Structure.prototype = {
 
     postProcess: function( callback ){
 
-        this.autoBond();
+        var self = this;
 
-        if( this._doAutoSS ){
-            this.autoSS();
-        }
+        async.series( [
 
-        if( this._doAutoChainName ){
-            this.autoChainName();
-        }
+            function( wcallback ){
 
-        this.center = this.atomCenter();
-        this.boundingBox = this.getBoundingBox();
+                self.autoBond();
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
+                if( self._doAutoSS ){
+                    self.autoSS();
+                }
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
+                if( self._doAutoChainName ){
+                    self.autoChainName();
+                }
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
+                self.center = self.atomCenter();
+                self.boundingBox = self.getBoundingBox();
+                wcallback();
+
+            }
+
+        ], function(){
+
+            callback();
+
+        } );
 
     },
 
@@ -3393,13 +3424,86 @@ NGL.Structure.prototype = {
 
     },
 
+    // autoBond2: function( callback ){
+
+    //     console.time( "NGL.Structure.autoBond" );
+
+    //     var bondSet = this.bondSet;
+
+    //     var i, j, n, ra, a1, a2;
+
+    //     // bonds within a residue
+
+    //     console.time( "NGL.Structure.autoBond within" );
+
+    //     var chainRes = [];
+
+    //     this.eachChain( function( c ){
+
+    //         chainRes.push( c.residues );
+
+    //     } );
+
+    //     function _chunked( _i, _n ){
+
+    //         for( var k = _i; k < _n; ++k ){
+
+    //             var cr = chainRes[ k ];
+    //             var crn = cr.length
+
+    //             for( var l = 0; l < crn; ++l ){
+
+    //                 var r = cr[ l ];
+    //                 n = r.atomCount - 1;
+    //                 ra = r.atoms;
+
+    //                 for( i = 0; i < n; i++ ){
+
+    //                     a1 = ra[ i ];
+
+    //                     for( j = i + 1; j <= n; j++ ){
+
+    //                         a2 = ra[ j ];
+
+    //                         bondSet.addBondIfConnected( a1, a2 );
+
+    //                     }
+
+    //                 }
+
+    //             }
+
+    //         }
+
+    //     }
+
+    //     NGL.processArray(
+
+    //         chainRes,
+
+    //         _chunked,
+
+    //         function(){
+
+    //             console.timeEnd( "NGL.Structure.autoBond within" );
+
+    //             callback();
+
+    //         },
+
+    //         100
+
+    //     );
+
+    // },
+
     autoBond: function(){
 
         console.time( "NGL.Structure.autoBond" );
 
         var bondSet = this.bondSet;
 
-        var i, j, n, a1, a2;
+        var i, j, n, ra, a1, a2;
 
         // bonds within a residue
 
@@ -3407,15 +3511,16 @@ NGL.Structure.prototype = {
 
         this.eachResidue( function( r ){
 
+            ra = r.atoms;
             n = r.atomCount - 1;
 
             for( i = 0; i < n; i++ ){
 
-                a1 = r.atoms[ i ];
+                a1 = ra[ i ];
 
                 for( j = i + 1; j <= n; j++ ){
 
-                    a2 = r.atoms[ j ];
+                    a2 = ra[ j ];
 
                     bondSet.addBondIfConnected( a1, a2 );
 
@@ -4481,11 +4586,10 @@ NGL.Residue.prototype = {
 
         if( !a ){
             a = new NGL.Atom( this );
-            a.index = this.nextAtomIndex();
         }else{
-            this.atomCount += 1;
             a.residue = this;
         }
+        a.index = this.nextAtomIndex();
         this.atoms.push( a );
         return a;
 
@@ -4651,6 +4755,7 @@ NGL.Atom.prototype = {
     bonds: undefined,
     altloc: undefined,
     atomname: undefined,
+    modelindex: undefined,
 
     connectedTo: function( atom ){
 
@@ -4722,7 +4827,7 @@ NGL.Atom.prototype = {
 
 NGL.AtomArray = function( sizeOrObject ){
 
-    this.useBuffer = true;
+    this.useBuffer = false;
 
     if( Number.isInteger( sizeOrObject ) ){
 
@@ -4756,7 +4861,7 @@ NGL.AtomArray.prototype = {
             this.y = new Float32Array( size );
             this.z = new Float32Array( size );
             this.element = new Uint8Array( 3 * size );
-            this.chainname = new Uint8Array( size );
+            this.chainname = new Uint8Array( 4 * size );
             this.resno = new Int32Array( size );
             this.serial = new Int32Array( size );
             this.ss = new Uint8Array( size );
@@ -4831,7 +4936,7 @@ NGL.AtomArray.prototype = {
         this.elementSize = 3 * size;
 
         this.chainnameOffset = this.elementOffset + this.elementSize;
-        this.chainnameSize = size;
+        this.chainnameSize = 4 * size;
 
         this.resnoOffset = ( this.chainnameOffset + this.chainnameSize + 3 ) & ~0x3;
         this.resnoSize = 4 * size;
@@ -5049,14 +5154,28 @@ NGL.AtomArray.prototype = {
 
     setChainname: function( i, str ){
 
-        this.chainname[ i ] = str.charCodeAt( 0 );
+        var j = 4 * i;
+        this.chainname[ j ] = str.charCodeAt( 0 );
+        this.chainname[ j + 1 ] = str.charCodeAt( 1 );
+        this.chainname[ j + 2 ] = str.charCodeAt( 2 );
+        this.chainname[ j + 3 ] = str.charCodeAt( 3 );
 
     },
 
     getChainname: function( i ){
 
-        var code = this.chainname[ i ];
-        return code ? String.fromCharCode( code ) : "";
+        var code;
+        var chainname = "";
+        var j = 4 * i;
+        for( var k = 0; k < 4; ++k ){
+            code = this.chainname[ j + k ];
+            if( code ){
+                chainname += String.fromCharCode( code );
+            }else{
+                break;
+            }
+        }
+        return chainname;
 
     },
 
@@ -8143,33 +8262,225 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
  */
 
 
-if( typeof importScripts === 'function' ){
+NGL.processArray = function( array, fn, callback, chunkSize ){
 
-    importScripts(
-        '../three/three.js',
-        '../lib/ui/signals.min.js',
-        'core.js',
-        'structure.js'
+    chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+
+    var n = array.length;
+
+    var _i = 0;
+    var _step = chunkSize;
+    var _n = Math.min( _step, n );
+
+    async.until(
+
+        function(){
+
+            return _i >= n;
+
+        },
+
+        function( wcallback ){
+
+            setTimeout( function(){
+
+                // console.log( _i, _n, n );
+
+                var stop = fn( _i, _n, array );
+
+                if( stop ){
+
+                    _i = n;
+
+                }else{
+
+                    _i += _step;
+                    _n = Math.min( _n + _step, n );
+
+                }
+
+                wcallback();
+
+            }, 10 );
+
+        },
+
+        callback
+
     );
 
-    onmessage = function( event ){
+};
 
-        // TODO dispatch to function
 
-        NGL.GroParser.parseAtoms( event.data, function( atomArray ){
+NGL.buildStructure = function( structure, callback ){
 
-            var aa = atomArray.toObject();
-            aa.bonds = null;
-            aa.residue = null;
+    console.time( "NGL.buildStructure" );
 
-            postMessage( aa, atomArray.getBufferList() );
+    var m, c, r, a;
+    var i, chainDict;
 
-        } );
+    var currentModelindex = null;
+    var currentChainname;
+    var currentResno;
 
-    };
+    function _chunked( _i, _n, atoms ){
+
+        for( i = _i; i < _n; ++i ){
+
+            a = atoms[ i ];
+
+            var modelindex = a.modelindex;
+            var chainname = a.chainname;
+            var resno = a.resno;
+            var resname = a.resname;
+
+            if( currentModelindex!==modelindex ){
+
+                m = structure.addModel();
+                c = m.addChain();
+                r = c.addResidue();
+
+                chainDict = {};
+
+                c.chainname = chainname;
+                chainDict[ chainname ] = c;
+
+                r.resno = resno;
+                r.resname = resname;
+
+                currentChainname = chainname;
+                currentResno = resno;
+
+            }
+
+            if( currentChainname!==chainname ){
+
+                if( !chainDict[ chainname ] ){
+
+                    c = m.addChain();
+                    c.chainname = chainname;
+
+                    chainDict[ chainname ] = c;
+
+                }else{
+
+                    c = chainDict[ chainname ];
+
+                }
+
+            }
+
+            if( currentResno!==resno ){
+
+                r = c.addResidue();
+                r.resno = resno;
+                r.resname = resname;
+
+            }
+
+            r.addAtom( a );
+
+            // seems to slow down Chrome
+            // delete a.modelindex;
+
+            currentModelindex = modelindex;
+            currentChainname = chainname;
+            currentResno = resno;
+
+        }
+
+    }
+
+    NGL.processArray(
+
+        structure.atoms,
+
+        _chunked,
+
+        function(){
+
+            console.timeEnd( "NGL.buildStructure" );
+
+            callback();
+
+        }
+
+    );
+
+    return structure;
+
+};
+
+
+NGL.createAtomArray = function( structure, callback ){
+
+    console.time( "NGL.createAtomArray" );
+
+    var s = structure;
+    var atoms = s.atoms;
+    var n = atoms.length;
+
+    s.atomArray = new NGL.AtomArray( n );
+    var atomArray = s.atomArray;
+
+    function _chunked( _i, _n ){
+
+        for( var i = _i; i < _n; ++i ){
+
+            var ai = atoms[ i ];
+
+            var a = new NGL.ProxyAtom( atomArray );
+            a.index = i;
+
+            atomArray.setResname( i, ai.resname );
+            atomArray.x[ i ] = ai.x;
+            atomArray.y[ i ] = ai.y;
+            atomArray.z[ i ] = ai.z;
+            atomArray.setElement( i, ai.element );
+            atomArray.hetero[ i ] = ai.hetero;
+            atomArray.setChainname( i, ai.chainname );
+            atomArray.resno[ i ] = ai.resno;
+            atomArray.serial[ i ] = ai.serial;
+            atomArray.setAtomname( i, ai.atomname );
+            atomArray.ss[ i ] = ai.ss.charCodeAt( 0 );
+            atomArray.bfactor[ i ] = ai.bfactor;
+            atomArray.altloc[ i ] = ai.altloc.charCodeAt( 0 );
+            atomArray.vdw[ i ] = ai.vdw;
+            atomArray.covalent[ i ] = ai.covalent;
+            // FIXME atomArray.modelindex[ i ] = ai.modelindex;
+            a.modelindex = ai.modelindex;
+
+            atoms[ i ] = a;
+
+        }
+
+    }
+
+    NGL.processArray(
+
+        atoms,
+
+        _chunked,
+
+        function(){
+
+            console.timeEnd( "NGL.createAtomArray" );
+
+            callback();
+
+        },
+
+        50000
+
+    );
+
+    return structure;
 
 }
 
+
+////////////////////
+// StructureParser
 
 NGL.StructureParser = function( name, path, params ){
 
@@ -8189,11 +8500,51 @@ NGL.StructureParser.prototype = {
 
     parse: function( str, callback ){
 
-        this._parse( str, function( structure ){
+        var self = this;
 
-            structure.postProcess();
+        async.series( [
 
-            if( typeof callback === "function" ) callback( structure );
+            function( wcallback ){
+
+                self._parse( str, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                if( self.structure.atoms.length > 100000 ){
+
+                    NGL.createAtomArray( self.structure, wcallback );
+
+                }else{
+
+                    wcallback();
+
+                }
+
+            },
+
+            function( wcallback ){
+
+                NGL.buildStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                self._postProcess( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                self.structure.postProcess( wcallback );
+
+            }
+
+        ], function(){
+
+            callback( self.structure );
 
         } );
 
@@ -8204,6 +8555,14 @@ NGL.StructureParser.prototype = {
     _parse: function( str, callback ){
 
         console.warn( "NGL.StructureParser._parse not implemented" );
+        callback();
+
+    },
+
+    _postProcess: function( structure, callback ){
+
+        console.warn( "NGL.StructureParser._postProcess not implemented" );
+        callback();
 
     }
 
@@ -8251,15 +8610,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var vdwRadii = NGL.VdwRadii;
     var helixTypes = NGL.HelixTypes;
 
-    var i, j;
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
-    var m = s.addModel();
-    var c = m.addChain();
-    var r = c.addResidue();
-
-    var chainDict = {};
     var serialDict = {};
 
     var id = s.id;
@@ -8269,34 +8622,16 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     s.hasConnect = false;
 
-    var a, currentChainname, currentResno, currentBiomol;
+    var a, currentBiomol;
 
-    var n = lines.length;
+    var idx = 0;
+    var modelIdx = 0;
 
-    var useArray = false;
+    function _chunked( _i, _n ){
 
-    if( useArray ){
+        for( var i = _i; i < _n; ++i ){
 
-        var atomCount = 0;
-        for( i = 0; i < n; ++i ){
-            recordName = lines[ i ].substr( 0, 6 )
-            if( recordName === 'ATOM  ' || recordName === 'HETATM' ) ++atomCount;
-        }
-
-        this.atomArray = new NGL.AtomArray( atomCount );
-        var atomArray = this.atomArray;
-
-    }
-
-    var _i = 0;
-    var _step = 10000;
-    var _n = Math.min( _step, n );
-
-    function _chunked(){
-
-        for( i = _i; i < _n; i++ ){
-
-            line = lines[i];
+            line = lines[ i ];
             recordName = line.substr( 0, 6 );
 
             if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
@@ -8331,95 +8666,32 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 resno = parseInt( line.substr( 22, 5 ) );
                 resname = line.substr( 17, 4 ).trim();
 
-                if( !a ){
-
-                    c.chainname = chainname;
-                    chainDict[ chainname ] = c;
-
-                    r.resno = resno;
-                    r.resname = resname;
-
-                    currentChainname = chainname;
-                    currentResno = resno;
-
-                }
-
-                if( currentChainname!==chainname ){
-
-                    if( !chainDict[ chainname ] ){
-
-                        c = m.addChain();
-                        c.chainname = chainname;
-
-                        chainDict[ chainname ] = c;
-
-                    }else{
-
-                        c = chainDict[ chainname ];
-
-                    }
-
-                }
-
-                if( currentResno!==resno ){
-
-                    r = c.addResidue();
-                    r.resno = resno;
-                    r.resname = resname;
-
-                }
-
                 if( !element ) element = guessElem( atomname );
 
-                if( useArray ){
+                a = new NGL.Atom();
+                a.index = idx;
+                a.bonds = [];
 
-                    a = r.addProxyAtom( atomArray );
-                    var index = a.index;
-
-                    atomArray.setResname( index, resname );
-                    atomArray.x[ index ] = parseFloat( line.substr( 30, 8 ) );
-                    atomArray.y[ index ] = parseFloat( line.substr( 38, 8 ) );
-                    atomArray.z[ index ] = parseFloat( line.substr( 46, 8 ) );
-                    atomArray.setElement( index, element );
-                    atomArray.hetero[ index ] = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                    atomArray.chainname[ index ] = chainname.charCodeAt( 0 );
-                    atomArray.resno[ index ] = resno;
-                    atomArray.serial[ index ] = serial;
-                    atomArray.setAtomname( index, atomname );
-                    atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
-                    atomArray.bfactor[ index ] = parseFloat( line.substr( 60, 8 ) );
-                    atomArray.altloc[ index ] = altloc.charCodeAt( 0 );
-                    atomArray.vdw[ index ] = vdwRadii[ element ];
-                    atomArray.covalent[ index ] = covRadii[ element ];
-
-                }else{
-
-                    a = r.addAtom();
-                    a.bonds = [];
-
-                    a.resname = resname;
-                    a.x = x;
-                    a.y = y;
-                    a.z = z;
-                    a.element = element;
-                    a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
-                    a.chainname = chainname;
-                    a.resno = resno;
-                    a.serial = serial;
-                    a.atomname = atomname;
-                    a.ss = 'c';
-                    a.bfactor = parseFloat( line.substr( 60, 8 ) );
-                    a.altloc = altloc;
-                    a.vdw = vdwRadii[ element ];
-                    a.covalent = covRadii[ element ];
-
-                }
+                a.resname = resname;
+                a.x = x;
+                a.y = y;
+                a.z = z;
+                a.element = element;
+                a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
+                a.chainname = chainname;
+                a.resno = resno;
+                a.serial = serial;
+                a.atomname = atomname;
+                a.ss = 'c';
+                a.bfactor = parseFloat( line.substr( 60, 8 ) );
+                a.altloc = altloc;
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
+                a.modelindex = modelIdx;
 
                 serialDict[ serial ] = a;
 
-                currentChainname = chainname;
-                currentResno = resno;
-
+                idx += 1;
                 atoms.push( a );
 
             }else if( recordName === 'CONECT' ){
@@ -8519,12 +8791,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }else if( a ){
 
-                    m = s.addModel();
-                    c = m.addChain();
-                    r = c.addResidue();
-                    a = undefined;
-
-                    chainDict = {};
+                    modelIdx += 1;
                     serialDict = {};
 
                 }
@@ -8533,8 +8800,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 if( firstModelOnly ){
 
-                    _n = n;
-                    break;
+                    return true;
 
                 }
 
@@ -8560,10 +8826,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             }
 
-
         }
 
-        if( _n === n ){
+    }
+
+    NGL.processArray(
+
+        lines,
+
+        _chunked,
+
+        function(){
 
             console.timeEnd( __timeName );
 
@@ -8571,80 +8844,72 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
-            _postProcess();
-            callback( s );
 
-            // console.log( biomolDict );
-            // console.log( frames );
-            // console.log( boxes );
-
-
-        }else{
-
-            _i += _step;
-            _n = Math.min( _n + _step, n );
-
-            setTimeout( _chunked );
+            callback();
 
         }
+
+    );
+
+};
+
+NGL.PdbParser.prototype._postProcess = function( structure, callback ){
+
+    var s = structure
+    var helix = s.helix;
+    var sheet = s.sheet;
+
+    // assign secondary structures
+
+    console.time( "NGL.PdbParser parse ss" );
+
+    for( var j = 0; j < sheet.length; j++ ){
+
+        var selection = new NGL.Selection(
+            sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
+        );
+
+        s.eachResidue( function( r ){
+
+            r.ss = "s";
+
+        }, selection );
 
     }
 
-    function _postProcess(){
+    for( var j = 0; j < helix.length; j++ ){
 
-        // assign secondary structures
+        var selection = new NGL.Selection(
+            helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
+        );
 
-        console.time( "NGL.PdbParser parse ss" );
+        var helixType = helix[j][4];
 
-        for( j = 0; j < sheet.length; j++ ){
+        s.eachResidue( function( r ){
 
-            var selection = new NGL.Selection(
-                sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
-            );
+            r.ss = helixType;
 
-            s.eachResidue( function( r ){
-
-                r.ss = "s";
-
-            }, selection );
-
-        }
-
-        for( j = 0; j < helix.length; j++ ){
-
-            var selection = new NGL.Selection(
-                helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
-            );
-
-            var helixType = helix[j][4];
-
-            s.eachResidue( function( r ){
-
-                r.ss = helixType;
-
-            }, selection );
-
-        }
-
-        console.timeEnd( "NGL.PdbParser parse ss" );
-
-        if( sheet.length === 0 && helix.length === 0 ){
-
-            s._doAutoSS = true;
-
-        }
-
-        // check for chain names
-
-        var _doAutoChainName = true;
-        s.eachChain( function( c ){
-            if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
-        } );
-        s._doAutoChainName = _doAutoChainName;
+        }, selection );
 
     }
 
-    setTimeout( _chunked );
+    console.timeEnd( "NGL.PdbParser parse ss" );
+
+    if( sheet.length === 0 && helix.length === 0 ){
+
+        s._doAutoSS = true;
+
+    }
+
+    // check for chain names
+
+    var _doAutoChainName = true;
+    s.eachChain( function( c ){
+        if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+    } );
+    s._doAutoChainName = _doAutoChainName;
+
+    callback();
 
 };
 
@@ -8660,57 +8925,28 @@ NGL.GroParser = function( name, path, params ){
 
 NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
-NGL.GroParser.prototype._build = function(){
-
-    console.time( "NGL.GroParser._build" );
-
-    var s = this.structure;
-    var n = s.atoms.length;
-
-    var i, a;
-
-    var m = s.addModel();
-    var c = m.addChain();
-
-    var r = c.addResidue();
-    r.resno = s.atoms[ 0 ].resno;
-    r.resname = s.atoms[ 0 ].resname;
-
-    var currentResno = s.atoms[ 0 ].resno;
-
-    for( i = 0; i < n; ++i ){
-
-        a = s.atoms[ i ];
-
-        if( currentResno !== a.resno ){
-
-            r = c.addResidue();
-            r.resno = a.resno;
-            r.resname = a.resname;
-
-        }
-
-        r.addAtom( a );
-
-        currentResno = a.resno;
-
-    }
-
-    console.timeEnd( "NGL.GroParser._build" );
-
-}
-
 NGL.GroParser.prototype._parse = function( str, callback ){
 
-    console.time( "NGL.GroParser._parse" );
+    var __timeName = "NGL.GroParser._parse " + this.name;
+
+    console.time( __timeName );
 
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
 
-    var scope = this;
+    var frames = [];
+    var boxes = [];
+    var doFrames = false;
+    var currentFrame, currentCoord;
+
+    var atoms = s.atoms;
 
     var lines = str.split( "\n" );
+
+    var guessElem = NGL.guessElement;
+    var covRadii = NGL.CovalentRadii;
+    var vdwRadii = NGL.VdwRadii;
 
     s.title = lines[ 0 ].trim();
     s.size = parseInt( lines[ 1 ] );
@@ -8721,148 +8957,21 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         parseFloat( b[2] ) * 10
     ];
 
-    // var parser = NGL.GroParser.parseAtoms;
-    var parser = NGL.GroParser.parseAtomsChunked;
-    // var parser = NGL.GroParser.parseAtomsWorker;
+    //
 
-    parser( str, firstModelOnly, asTrajectory, function( atomArray, frames, boxes ){
-
-        s.atomCount = atomArray.length;
-
-        if( asTrajectory ){
-
-            s.frames = frames;
-            s.boxes = boxes;
-
-        }
-
-        if( !Array.isArray( atomArray ) ){
-
-            s.atomArray = atomArray;
-
-            var i;
-            var n = s.atomCount;
-
-            for( i = 0; i < n; ++i ){
-
-                s.atoms.push( new NGL.ProxyAtom( atomArray, i ) );
-
-            }
-
-        }else{
-
-            s.atoms = atomArray;
-
-        }
-
-        console.timeEnd( "NGL.GroParser._parse" );
-
-        scope._build();
-
-        callback( s );
-
-    } );
-
-};
-
-NGL.GroParser.parseAtoms = function( str, firstModelOnly, asTrajectory, callback ){
-
-    console.time( "NGL.GroParser._parseAtoms" );
-
-    var lines = str.trim().split( "\n" );
-
-    var guessElem = NGL.guessElement;
-    var covRadii = NGL.CovalentRadii;
-    var vdwRadii = NGL.VdwRadii;
-
-    var i;
-    var line, atomname, element, resname;
-
-    var atomArray = new NGL.AtomArray( parseInt( lines[ 1 ] ) );
-
-    var a = new NGL.ProxyAtom( atomArray, 0 );
-
-    var n = lines.length - 1;
-
-    for( i = 2; i < n; ++i ){
-
-        line = lines[i];
-
-        atomname = line.substr( 10, 5 ).trim();
-        resname = line.substr( 5, 5 ).trim();
-
-        element = guessElem( atomname );
-
-        a.resname = resname;
-        a.x = parseFloat( line.substr( 20, 8 ) ) * 10;
-        a.y = parseFloat( line.substr( 28, 8 ) ) * 10;
-        a.z = parseFloat( line.substr( 36, 8 ) ) * 10;
-        a.element = element;
-        a.resno = parseInt( line.substr( 0, 5 ) );
-        a.serial = parseInt( line.substr( 15, 5 ) );
-        a.atomname = atomname;
-        a.ss = 'c';
-
-        a.vdw = vdwRadii[ element ];
-        a.covalent = covRadii[ element ];
-
-        a.index += 1;
-
-    }
-
-    console.timeEnd( "NGL.GroParser._parseAtoms" );
-
-    callback( atomArray );
-
-};
-
-NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, callback ){
-
-    console.time( "NGL.GroParser._parseAtomsChunked" );
-
-    var lines = str.trim().split( "\n" );
-
-    var frames = [];
-    var boxes = [];
-    var doFrames = false;
-    var currentFrame, currentCoord;
-
-    var guessElem = NGL.guessElement;
-    var covRadii = NGL.CovalentRadii;
-    var vdwRadii = NGL.VdwRadii;
-
-    var i;
-    var line, atomname, element, resname;
+    var atomname, resname, element;
 
     var atomCount = parseInt( lines[ 1 ] );
     var modelLineCount = atomCount + 3;
 
-    var index = 0;
-    var useArray = false;
+    var idx = 0;
+    var modelIdx = 0;
 
-    if( useArray ){
+    function _chunked( _i, _n ){
 
-        var atomArray = new NGL.AtomArray( atomCount );
-        var a = new NGL.ProxyAtom( atomArray, 0 );
+        for( var i = _i; i < _n; ++i ){
 
-    }else{
-
-        var a;
-        var atoms = [];
-
-    }
-
-    var n = lines.length;
-
-    var _i = 0;
-    var _step = 10000;
-    var _n = Math.min( _step, n );
-
-    function _chunked(){
-
-        for( i = _i; i < _n; ++i ){
-
-            line = lines[ i ];
+            var line = lines[ i ];
 
             if( i % modelLineCount === 0 ){
 
@@ -8875,6 +8984,8 @@ NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, c
                     currentCoord = 0;
 
                 }
+
+                modelIdx += 1;
 
             }else if( i % modelLineCount === 1 ){
 
@@ -8891,8 +9002,7 @@ NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, c
 
                 if( firstModelOnly ){
 
-                    _n = n;
-                    break;
+                    return true;
 
                 }
 
@@ -8921,102 +9031,62 @@ NGL.GroParser.parseAtomsChunked = function( str, firstModelOnly, asTrajectory, c
 
                 element = guessElem( atomname );
 
-                if( useArray ){
+                var a = new NGL.Atom();
+                a.index = idx;
+                a.bonds = [];
 
-                    atomArray.setResname( index, resname );
-                    atomArray.x[ index ] = x;
-                    atomArray.y[ index ] = y;
-                    atomArray.z[ index ] = z;
-                    atomArray.setElement( index, element );
-                    atomArray.resno[ index ] = parseInt( line.substr( 0, 5 ) );
-                    atomArray.serial[ index ] = parseInt( line.substr( 15, 5 ) );
-                    atomArray.setAtomname( index, atomname );
-                    atomArray.ss[ index ] = 'c'.charCodeAt( 0 );
-                    atomArray.vdw[ index ] = vdwRadii[ element ];
-                    atomArray.covalent[ index ] = covRadii[ element ];
+                a.resname = resname;
+                a.x = x;
+                a.y = y;
+                a.z = z;
+                a.element = element;
+                a.chainname = '';
+                a.resno = parseInt( line.substr( 0, 5 ) );
+                a.serial = parseInt( line.substr( 15, 5 ) );
+                a.atomname = atomname;
+                a.ss = 'c';
+                a.altloc = '';
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
+                a.modelindex = modelIdx;
 
-                }else{
-
-                    a = new NGL.Atom();
-                    a.bonds = [];
-
-                    a.resname = resname;
-                    a.x = x;
-                    a.y = y;
-                    a.z = z;
-                    a.element = element;
-                    a.resno = parseInt( line.substr( 0, 5 ) );
-                    a.serial = parseInt( line.substr( 15, 5 ) );
-                    a.atomname = atomname;
-                    a.ss = 'c';
-                    a.vdw = vdwRadii[ element ];
-                    a.covalent = covRadii[ element ];
-
-                    atoms.push( a );
-
-                }
-
-                a.index = index;
-                index += 1;
+                idx += 1;
+                atoms.push( a );
 
             }
-
-        }
-
-        if( _n === n ){
-
-            console.timeEnd( "NGL.GroParser._parseAtomsChunked" );
-
-            // console.log( atoms, frames, boxes );
-
-            if( useArray ){
-                callback( atomArray );
-            }else{
-                callback( atoms, frames, boxes );
-            }
-
-        }else{
-
-            _i += _step;
-            _n = Math.min( _n + _step, n );
-
-            setTimeout( _chunked );
 
         }
 
     }
 
-    setTimeout( _chunked );
+    NGL.processArray(
+
+        lines,
+
+        _chunked,
+
+        function(){
+
+            console.timeEnd( __timeName );
+
+            if( asTrajectory ){
+                s.frames = frames;
+                s.boxes = boxes;
+            }
+
+            callback();
+
+        }
+
+    );
 
 };
 
-NGL.GroParser.parseAtomsWorker = function( str, firstModelOnly, asTrajectory, callback ){
+NGL.GroParser.prototype._postProcess = function( structure, callback ){
 
-    console.time( "NGL.GroParser._parseAtomsWorker" );
+    callback();
 
-    var worker = new Worker( '../js/ngl/parser.js' );
-
-    worker.onmessage = function( event ){
-
-        worker.terminate();
-
-        var atomArray = new NGL.AtomArray( event.data );
-
-        console.timeEnd( "NGL.GroParser._parseAtomsWorker" );
-
-        callback( atomArray );
-
-    };
-
-    worker.onerror = function( event ){
-
-        console.error( event );
-
-    };
-
-    worker.postMessage( str );
-
-}
+};
 
 
 NGL.CifParser = function( name, path, params ){
@@ -9060,23 +9130,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var lines = str.split( "\n" );
 
-    // safeguard
-    // if( lines.length > 1000000 ) cAlphaOnly = true;
-
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
     var vdwRadii = NGL.VdwRadii;
     var helixTypes = NGL.HelixTypes;
 
-    var i, j;
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
-    var m = s.addModel();
-    var c = m.addChain();
-    var r = c.addResidue();
-
-    var chainDict = {};
     var serialDict = {};
 
     var title = s.title;
@@ -9085,7 +9146,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     s.hasConnect = false;
 
-    var a, currentChainname, currentResno, currentBiomol;
+    var a, currentBiomol;
 
     //
 
@@ -9093,6 +9154,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var reQuotedWhitespace = /\s+(?=(?:[^']*'[^']*')*[^']*$)/;
 
     var cif = {};
+    s.cif = cif;
 
     var pendingString = false;
     var currentString = null;
@@ -9110,15 +9172,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     //
 
-    var n = lines.length;
+    var useArray = lines.length > 300000 ? true : false;
 
-    var _i = 0;
-    var _step = 10000;
-    var _n = Math.min( _step, n );
+    var idx = 0;
+    var modelIdx = 0;
 
-    function _chunked(){
+    function _chunked( _i, _n ){
 
-        for( i = _i; i < _n; i++ ){
+        for( var i = _i; i < _n; ++i ){
 
             line = lines[i].trim();
 
@@ -9260,9 +9321,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                             first = false;
 
-                            r.resno = ls[ label_seq_id ];
-                            r.resname = ls[ label_comp_id ];
-
                         }
 
                         //
@@ -9283,45 +9341,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         var resno = ls[ label_seq_id ];
                         var resname = ls[ label_comp_id ];
 
-                        if( !a ){
-
-                            c.chainname = chainname;
-                            chainDict[ chainname ] = c;
-
-                            r.resno = resno;
-                            r.resname = resname;
-
-                            currentChainname = chainname;
-                            currentResno = resno;
-
-                        }
-
-                        if( currentChainname!==chainname ){
-
-                            if( !chainDict[ chainname ] ){
-
-                                c = m.addChain();
-                                c.chainname = chainname;
-
-                                chainDict[ chainname ] = c;
-
-                            }else{
-
-                                c = chainDict[ chainname ];
-
-                            }
-
-                        }
-
-                        if( currentResno !== resno ){
-
-                            r = c.addResidue();
-                            r.resno = resno;
-                            r.resname = resname;
-
-                        }
-
-                        a = r.addAtom();
+                        a = new NGL.Atom();
+                        a.index = idx;
                         a.bonds = [];
 
                         a.resname = resname;
@@ -9340,8 +9361,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
 
-                        currentResno = resno;
-
+                        idx += 1;
                         atoms.push( a );
 
                     }else{
@@ -9379,93 +9399,136 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
         }
 
-        if( _n === n ){
+    }
+
+    NGL.processArray(
+
+        lines,
+
+        _chunked,
+
+        function(){
 
             console.timeEnd( __timeName );
-
-            // console.log( cif );
 
             if( asTrajectory ){
                 s.frames = frames;
                 s.boxes = boxes;
             }
 
-            // console.log( s );
-
-            _postProcess();
-            callback( s );
-
-        }else{
-
-            console.log( _i, n );
-
-            _i += _step;
-            _n = Math.min( _n + _step, n );
-
-            setTimeout( _chunked );
+            callback();
 
         }
 
-    }
+    );
 
-    function _postProcess(){
+}
 
-        console.time( "NGL.CifParser _postProcess" );
+NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
-        var sc = cif.struct_conf;
-        var o = sc.id.length;
+    console.time( "NGL.CifParser._postProcess" );
 
-        if( sc ){
+    var s = structure;
+    var cif = s.cif;
 
-            for( var j = 0; j < o; ++j ){
+    async.series( [
 
-                var selection = new NGL.Selection(
-                    sc.beg_label_seq_id[ j ] + "-" +
-                    sc.end_label_seq_id[ j ] + ":" +
-                    sc.beg_label_asym_id[ j ]
-                );
+        function( wcallback ){
 
-                var helixType = parseInt( sc.pdbx_PDB_helix_class[ j ] );
-                helixType = helixTypes[ helixType ] || helixTypes[""];
+            var helixTypes = NGL.HelixTypes;
 
-                s.eachResidue( function( r ){
+            var sc = cif.struct_conf;
+            var o = sc.id.length;
 
-                    r.ss = helixType;
+            if( !sc ){
 
-                }, selection );
+                wcallback();
+                return;
 
             }
 
-        }
+            NGL.processArray(
 
-        //
+                sc.beg_label_seq_id,
 
-        var ssr = cif.struct_sheet_range;
-        var p = ssr.id.length;
+                function( _i, _n ){
 
-        if( ssr ){
+                    for( var i = _i; i < _n; ++i ){
 
-            for( var j = 0; j < p; ++j ){
+                        var selection = new NGL.Selection(
+                            sc.beg_label_seq_id[ i ] + "-" +
+                            sc.end_label_seq_id[ i ] + ":" +
+                            sc.beg_label_asym_id[ i ]
+                        );
 
-                var selection = new NGL.Selection(
-                    ssr.beg_label_seq_id[ j ] + "-" +
-                    ssr.end_label_seq_id[ j ] + ":" +
-                    ssr.beg_label_asym_id[ j ]
-                );
+                        var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
+                        helixType = helixTypes[ helixType ] || helixTypes[""];
 
-                s.eachResidue( function( r ){
+                        s.eachResidue( function( r ){
 
-                    r.ss = "s";
+                            r.ss = helixType;
 
-                }, selection );
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        },
+
+        function( wcallback ){
+
+            var ssr = cif.struct_sheet_range;
+            var p = ssr.id.length;
+
+            if( !ssr ){
+
+                wcallback();
+                return;
 
             }
 
+            NGL.processArray(
+
+                ssr.beg_label_seq_id,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var selection = new NGL.Selection(
+                            ssr.beg_label_seq_id[ i ] + "-" +
+                            ssr.end_label_seq_id[ i ] + ":" +
+                            ssr.beg_label_asym_id[ i ]
+                        );
+
+                        s.eachResidue( function( r ){
+
+                            r.ss = "s";
+
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
         }
 
-        //
+    ], function(){
 
-        if( !sc && !ssr ){
+        if( !cif.struct_conf && !cif.struct_sheet_range ){
 
             s._doAutoSS = true;
 
@@ -9479,13 +9542,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
         } );
         s._doAutoChainName = _doAutoChainName;
 
-        console.timeEnd( "NGL.CifParser _postProcess" );
+        console.timeEnd( "NGL.CifParser._postProcess" );
 
-        // console.log( s )
+        callback();
 
-    }
-
-    setTimeout( _chunked );
+    } );
 
 };
 
@@ -9511,27 +9572,28 @@ NGL.Uint8ToString = function( u8a ){
 }
 
 
-NGL.decompress = function( data, file ){
+NGL.decompress = function( data, file, callback ){
 
-    var decompressedData;
+    var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).ext;
 
     console.time( "decompress " + ext );
 
     if( data instanceof ArrayBuffer ){
+
         data = new Uint8Array( data );
+
     }
 
     if( ext === "gz" ){
 
-        var gz = pako.ungzip( data, { "to": "string" } );
-        decompressedData = gz;
+        binData = pako.ungzip( data );
 
     }else if( ext === "zip" ){
 
         var zip = new JSZip( data );
         var name = Object.keys( zip.files )[ 0 ];
-        decompressedData = zip.files[ name ].asText();
+        binData = zip.files[ name ].asUint8Array();
 
     }else if( ext === "lzma" ){
 
@@ -9539,22 +9601,20 @@ NGL.decompress = function( data, file ){
             data: data,
             offset: 0,
             readByte: function(){
-                return this.data[this.offset ++];
+                return this.data[ this.offset++ ];
             }
         };
 
         var outStream = {
             data: [ /* Uncompressed data will be putted here */ ],
             offset: 0,
-            writeByte: function(value){
-                this.data[this.offset ++] = value;
+            writeByte: function( value ){
+                this.data[ this.offset++ ] = value;
             }
         };
 
         LZMA.decompressFile( inStream, outStream );
-        // console.log( outStream );
-        var bytes = new Uint8Array( outStream.data );
-        decompressedData = NGL.Uint8ToString( bytes );
+        binData = new Uint8Array( outStream.data );
 
     }else if( ext === "bz2" ){
 
@@ -9565,6 +9625,28 @@ NGL.decompress = function( data, file ){
 
         console.warn( "no decompression method available for '" + ext + "'" );
         decompressedData = data;
+
+    }
+
+    if( typeof callback === "function" ){
+
+        if( decompressedData === undefined ){
+
+            NGL.Uint8ToString( binData, callback );
+
+        }else{
+
+            callback( decompressedData );
+
+        }
+
+    }else{
+
+        if( decompressedData === undefined ){
+
+            decompressedData = NGL.Uint8ToString( binData );
+
+        }
 
     }
 
@@ -10011,11 +10093,11 @@ NGL.autoLoad = function(){
 NGL.Resources = {
 
     // fonts
-    '../fonts/Arial.fnt': '',
+    '../fonts/Arial.fnt': null,
     '../fonts/Arial.png': 'image',
-    '../fonts/DejaVu.fnt': '',
+    '../fonts/DejaVu.fnt': null,
     '../fonts/DejaVu.png': 'image',
-    '../fonts/LatoBlack.fnt': '',
+    '../fonts/LatoBlack.fnt': null,
     '../fonts/LatoBlack.png': 'image',
 
     // sprites
@@ -10023,34 +10105,34 @@ NGL.Resources = {
     '../img/spark1.png': 'image',
 
     // shaders
-    '../shader/CylinderImpostor.vert': '',
-    '../shader/CylinderImpostor.frag': '',
-    '../shader/HyperballStickImpostor.vert': '',
-    '../shader/HyperballStickImpostor.frag': '',
-    '../shader/Line.vert': '',
-    '../shader/Line.frag': '',
-    '../shader/LineSprite.vert': '',
-    '../shader/LineSprite.frag': '',
-    '../shader/Mesh.vert': '',
-    '../shader/Mesh.frag': '',
-    '../shader/ParticleSprite.vert': '',
-    '../shader/ParticleSprite.frag': '',
-    '../shader/Quad.vert': '',
-    '../shader/Quad.frag': '',
-    '../shader/Ribbon.vert': '',
-    '../shader/Ribbon.frag': '',
-    '../shader/SDFFont.vert': '',
-    '../shader/SDFFont.frag': '',
-    '../shader/SphereHalo.vert': '',
-    '../shader/SphereHalo.frag': '',
-    '../shader/SphereImpostor.vert': '',
-    '../shader/SphereImpostor.frag': '',
+    '../shader/CylinderImpostor.vert': null,
+    '../shader/CylinderImpostor.frag': null,
+    '../shader/HyperballStickImpostor.vert': null,
+    '../shader/HyperballStickImpostor.frag': null,
+    '../shader/Line.vert': null,
+    '../shader/Line.frag': null,
+    '../shader/LineSprite.vert': null,
+    '../shader/LineSprite.frag': null,
+    '../shader/Mesh.vert': null,
+    '../shader/Mesh.frag': null,
+    '../shader/ParticleSprite.vert': null,
+    '../shader/ParticleSprite.frag': null,
+    '../shader/Quad.vert': null,
+    '../shader/Quad.frag': null,
+    '../shader/Ribbon.vert': null,
+    '../shader/Ribbon.frag': null,
+    '../shader/SDFFont.vert': null,
+    '../shader/SDFFont.frag': null,
+    '../shader/SphereHalo.vert': null,
+    '../shader/SphereHalo.frag': null,
+    '../shader/SphereImpostor.vert': null,
+    '../shader/SphereImpostor.frag': null,
 
     // shader chunks
-    '../shader/chunk/fog.glsl': '',
-    '../shader/chunk/fog_params.glsl': '',
-    '../shader/chunk/light.glsl': '',
-    '../shader/chunk/light_params.glsl': '',
+    '../shader/chunk/fog.glsl': null,
+    '../shader/chunk/fog_params.glsl': null,
+    '../shader/chunk/light.glsl': null,
+    '../shader/chunk/light_params.glsl': null,
 
 };
 
@@ -10548,18 +10630,20 @@ NGL.Utils = {
 };
 
 
-NGL.init = function( onload ){
+NGL.init = function( onload, baseUrl ){
 
     this.textures = [];
 
-    NGL.initResources( onload );
+    NGL.initResources( onload, baseUrl );
 
     return this;
 
 };
 
 
-NGL.initResources = function( onLoad ){
+NGL.initResources = function( onLoad, baseUrl ){
+
+    baseUrl = baseUrl || "";
 
     var loadingManager = new THREE.LoadingManager( function(){
 
@@ -10580,18 +10664,23 @@ NGL.initResources = function( onLoad ){
     Object.keys( NGL.Resources ).forEach( function( url ){
 
         var v = NGL.Resources[ url ];
+        var url2 = baseUrl + url;
 
-        if( v=="image" ){
+        if( v==="image" ){
 
-            imageLoader.load( url, function( image ){
+            imageLoader.load( url2, function( image ){
 
                 NGL.Resources[ url ] = image;
 
             });
 
+        }else if( v!==null ){
+
+            return;
+
         }else{
 
-            xhrLoader.load( url, function( data ){
+            xhrLoader.load( url2, function( data ){
 
                 NGL.Resources[ url ] = data;
 
@@ -10762,7 +10851,9 @@ NGL.Viewer = function( eid ){
 
     this.initControls();
 
-    window.addEventListener( 'resize', this.onWindowResize.bind( this ), false );
+    window.addEventListener(
+        'resize', this.onWindowResize.bind( this ), false
+    );
 
     // fog & background
     this.setBackground();
@@ -11889,7 +11980,7 @@ NGL.Buffer.prototype = {
 
         }
 
-        if( this.nearClip ){
+        if( this.nearClip && !( type === "wireframe" || this.wireframe ) ){
 
             material.defines[ "NEAR_CLIP" ] = 1;
 
@@ -19980,15 +20071,16 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            // stage.loadFile( "__example__/1LVZ.pdb", function( o ){
+            stage.loadFile( "__example__/1LVZ.pdb", function( o ){
 
-            //     o.addRepresentation( "cartoon", { sele: "*" } );
-            //     // o.addRepresentation( "licorice", { sele: "*" } );
-            //     o.centerView();
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                // o.addRepresentation( "licorice", { sele: "*" } );
+                o.centerView();
 
-            //     o.addTrajectory();
+                o.addTrajectory();
 
-            // }, null, null, { asTrajectory: true } );
+            }, null, null, { asTrajectory: true } );
+            // }, null, null, { firstModelOnly: true } );
 
             // stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
             stage.loadFile( "__example__/md_1u19_trj.gro", function( o ){
@@ -20629,6 +20721,9 @@ NGL.Examples = {
                     color: "chainindex", pointSize: 7, sizeAttenuation: true,
                     sort: false
                 } );
+                // o.addRepresentation( "ribbon", {
+                //     color: "chainindex"
+                // } );
                 o.centerView();
 
             }, null, null, { cAlphaOnly: true } );
@@ -20638,4 +20733,108 @@ NGL.Examples = {
     }
 
 };
+
+// File:shader/CylinderImpostor.vert
+
+NGL.Resources[ '../shader/CylinderImpostor.vert'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - shift\n\n\nattribute vec3 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\nattribute float radius;\n\n// varying float vRadius;\n\nvarying vec3 point;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\n// varying float b;\nvarying vec4 point4;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform mat4 modelViewMatrixInverse;\nuniform float shift;\n\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    // vRadius = radius;\n    base_radius.w = radius;\n\n    vec3 center = position;\n    vec3 dir = normalize( position2 - position1 );\n    float ext = length( position2 - position1 ) / 2.0;\n\n    vec3 cam_dir = normalize(\n        ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center\n    );\n\n    vec3 ldir;\n\n    float b = dot( cam_dir, dir );\n    end_b.w = b;\n    if( b < 0.0 ) // direction vector looks away, so flip\n        ldir = -ext * dir;\n    else // direction vector already looks in my direction\n        ldir = ext * dir;\n\n    vec3 left = normalize( cross( cam_dir, ldir ) );\n    vec3 leftShift = shift * left * radius;\n    if( b < 0.0 )\n        leftShift *= -1.0;\n    left = radius * left;\n    vec3 up = radius * normalize( cross( left, ldir ) );\n\n    // transform to modelview coordinates\n    axis =  normalize( normalMatrix * ldir );\n    U = normalize( normalMatrix * up );\n    V = normalize( normalMatrix * left );\n\n    vec4 base4 = modelViewMatrix * vec4( center - ldir + leftShift, 1.0 );\n    // base = base4.xyz / base4.w;\n    base_radius.xyz = base4.xyz / base4.w;\n\n    vec4 top_position = modelViewMatrix * vec4( center + ldir + leftShift, 1.0 );\n    vec4 end4 = top_position;\n    // end = end4.xyz / end4.w;\n    end_b.xyz = end4.xyz / end4.w;\n\n    vec4 w = modelViewMatrix * vec4(\n        center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\n    );\n    point = w.xyz / w.w;\n\n    point4 = w;\n\n    gl_Position = projectionMatrix * w;\n\n}\n\n\n";
+
+// File:shader/CylinderImpostor.frag
+
+NGL.Resources[ '../shader/CylinderImpostor.frag'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\nuniform mat3 normalMatrix;\n\n// varying float vRadius;\n\nvarying vec3 point;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\n// varying float b;\nvarying vec4 point4;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    vec2 clipZW = new_point.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    float depth2 = 0.5 + 0.5 * clipZW.x / clipZW.y;\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (depth2 <= 0.0)\n        discard;\n    if (depth2 >= 1.0)\n        discard;\n\n    gl_FragDepthEXT = depth2;\n\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    #ifdef PICKING\n        // TODO compare without sqrt\n        if( distance( new_point, end_cyl) < distance( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, 1.0 );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, 1.0 );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, 1.0 );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, 1.0 );\n            }\n        }\n    #else\n        // TODO compare without sqrt\n        if( distance( new_point, end_cyl) < distance( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }\n        gl_FragColor.xyz *= vLightFront;\n        //gl_FragColor.xyz = transformedNormal;\n    #endif\n\n    #include fog\n}\n\n\n\n\n\n\n\n\n";
+
+// File:shader/HyperballStickImpostor.vert
+
+NGL.Resources[ '../shader/HyperballStickImpostor.vert'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA). \n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\nattribute vec3 mapping;\nattribute float radius;\nattribute float radius2;\nattribute vec3 position1;\nattribute vec3 position2;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform float shrink;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewProjectionMatrixInverse;\n\n\nvoid main()\n{\n\n    vec4 spaceposition;\n    vec3 position_atom1;\n    vec3 position_atom2;\n    vec4 vertex_position;\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    float radius1 = radius;\n\n    position_atom1 = position1;\n    position_atom2 = position2;\n\n    float distance = distance( position_atom1, position_atom2 );\n\n    spaceposition.z = mapping.z * distance;\n\n    if (radius1 > radius2) {\n        spaceposition.y = mapping.y * 1.5 * radius1;\n        spaceposition.x = mapping.x * 1.5 * radius1;\n    } else {\n        spaceposition.y = mapping.y * 1.5 * radius2;\n        spaceposition.x = mapping.x * 1.5 * radius2;\n    }\n    spaceposition.w = 1.0;\n\n    vec4 e3 = vec4( 1.0 );\n    vec3 e1, e1_temp, e2, e2_temp;\n\n    // Calculation of bond direction: e3\n    e3.xyz = normalize(position_atom1-position_atom2);\n\n    // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\n    //if (e3.z == 0.0) { e3.z = 0.0000000000001;}\n    if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\n    if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\n    if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\n\n    // Focus calculation\n    vec4 focus = vec4( 1.0 );\n    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x + \n        ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\n    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y + \n        ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\n    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z + \n        ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\n\n    // e1 calculation\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    // e2 calculation\n    e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\n    e2 = normalize(e2_temp);\n\n    //ROTATION:\n    // final form of change of basis matrix:\n    mat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\n    // Apply rotation and translation to the bond primitive\n    vertex_position.xyz = R * spaceposition.xyz;\n    vertex_position.w = 1.0;\n\n    // TRANSLATION:\n    vertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\n    vertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\n    vertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\n\n    // New position\n    gl_Position = modelViewProjectionMatrix * vertex_position;\n\n    vec4 i_near, i_far;\n\n    // Calculate near from position\n    vec4 near = gl_Position ;\n    near.z = 0.0 ;\n    near = modelViewProjectionMatrixInverse * near;\n    i_near = near;\n\n    // Calculate far from position\n    vec4 far = gl_Position ;\n    far.z = far.w ;\n    i_far = modelViewProjectionMatrixInverse * far;\n\n    prime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\n    prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\n\n    float Rsquare = (radius1*radius1/shrink) - (\n                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) + \n                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) + \n                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z) \n                    );\n\n    focus.w = Rsquare;\n\n    matrix_near = mat4( i_near, i_far, focus, e3 );\n}\n\n";
+
+// File:shader/HyperballStickImpostor.frag
+
+NGL.Resources[ '../shader/HyperballStickImpostor.frag'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\n// varying vec3 mapping;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nuniform float opacity;\n\nuniform float shrink;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, 1.0 );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.xyz *= vLightFront;\n    #endif\n\n    #include fog\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n\n\n\n\n\n";
+
+// File:shader/Line.vert
+
+NGL.Resources[ '../shader/Line.vert'] = "\nattribute vec3 color;\nvarying vec3 vColor;\n\nvoid main()\n{\n\n    vColor = color;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}\n";
+
+// File:shader/Line.frag
+
+NGL.Resources[ '../shader/Line.frag'] = "\nuniform float opacity;\n\nvarying vec3 vColor;\n\n#include fog_params\n\n\nvoid main()\n{\n\n    gl_FragColor = vec4( vColor, opacity );\n\n    #include fog\n\n}\n";
+
+// File:shader/LineSprite.vert
+
+NGL.Resources[ '../shader/LineSprite.vert'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Note: here the box screen aligned code from Open-Source PyMOL is used\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - adapted for line sprites\n\n\nattribute lowp vec2 inputMapping;\nattribute lowp vec3 inputColor;\nattribute lowp vec3 inputColor2;\nattribute lowp vec3 inputAxis;\nattribute lowp float inputWidth;\n\nvarying float dist;\nvarying lowp vec3 color;\nvarying lowp vec3 color2;\n\n\n// void main2(void){\n//     colorx = inputColor;\n\n//     vec2 B;\n//     vec3 C;\n//     if (inputAxis.y != 0.0 || inputAxis.z != 0.0){\n//         C = vec3(1.0, 0.0, 0.0);\n//     }else{\n//         C = vec3(0.0, 1.0, 0.0);\n//     }\n//     B = normalize(cross(inputAxis, C).xy);\n\n//     vec4 cameraCornerPos = modelViewMatrix * vec4( position, 1.0 );\n//     cameraCornerPos.xy += inputMapping * (B.xy * inputWidth);\n\n//     gl_Position = projectionMatrix * cameraCornerPos;\n// }\n\n\nvoid main(void){\n    mat4 MVMatrix = modelViewMatrix;\n    mat4 PMatrix = projectionMatrix;\n    vec4 EyePoint = vec4( cameraPosition, 1.0 );\n\n    vec3 center = position.xyz;   \n    vec3 dir = normalize(inputAxis);\n    // float ext = inputCylinderHeight/2.0;\n    vec3 ldir;\n\n    vec3 cam_dir = normalize(EyePoint.xyz - center);\n    float b = dot(cam_dir, dir);\n    if(b<0.0) // direction vector looks away, so flip\n        //ldir = -ext*dir;\n        ldir = -(length(inputAxis)/2.0) * normalize(inputAxis);\n    else // direction vector already looks in my direction\n        //ldir = ext*dir;\n        ldir = (length(inputAxis)/2.0) * normalize(inputAxis);\n\n    vec3 left = cross(cam_dir, ldir);\n    vec3 up = cross(left, ldir);\n    left = inputWidth*normalize(left);\n    up = inputWidth*normalize(up);\n\n    vec4 w = MVMatrix * vec4( \n        center + inputMapping.x*ldir + inputMapping.y*left, 1.0 \n    );\n\n    gl_Position = PMatrix * w;\n\n\n    vec4 base4 = MVMatrix * vec4(center-ldir, 1.0);\n    vec3 base = base4.xyz / base4.w;\n\n    vec4 top_position = MVMatrix*(vec4(center+ldir,1.0));\n    vec4 end4 = top_position;\n    vec3 end = end4.xyz / end4.w;\n\n    vec3 point = w.xyz / w.w;\n\n    color = inputColor;\n    color2 = inputColor2;\n    \n    // TODO compare without sqrt\n    if( distance( point, end ) < distance( point, base ) ){\n        dist = b > 0.0 ? 1.0 : 0.0;\n    }else{\n        dist = b < 0.0 ? 1.0 : 0.0;\n    }\n\n}";
+
+// File:shader/LineSprite.frag
+
+NGL.Resources[ '../shader/LineSprite.frag'] = "\nvarying float dist;\nvarying highp vec3 color;\nvarying highp vec3 color2;\n\n#include fog_params\n\n\nvoid main() {\n\n    if( dist > 0.5 ){\n        gl_FragColor = vec4( color, 1.0 );    \n    }else{\n        gl_FragColor = vec4( color2, 1.0 );\n    }\n\n    #include fog\n}\n";
+
+// File:shader/Mesh.vert
+
+NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec3 vNormal;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n#endif\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n    #endif\n\n    vNormal = normalize( normalMatrix * normal );\n\n    cameraPos =  modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}\n";
+
+// File:shader/Mesh.frag
+
+NGL.Resources[ '../shader/Mesh.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vNormal;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    vec3 transformedNormal = normalize( vNormal );\n    #ifdef DOUBLE_SIDED\n        transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n    #endif\n\n    #ifdef FLIP_SIDED\n        transformedNormal = -transformedNormal;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor.xyz = vPickingColor;\n\n    #else\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        gl_FragColor = vec4( vColor, opacity );\n\n        #ifndef NOLIGHT\n            gl_FragColor.xyz *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
+
+// File:shader/ParticleSprite.vert
+
+NGL.Resources[ '../shader/ParticleSprite.vert'] = "\nattribute vec2 mapping;\nattribute vec3 color;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec3 vColor;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n// \n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n    \n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n}\n\n\nvoid main(void){\n\n    vColor = color;\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    sphereRadius = radius;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    if( gl_Position.z-sphereRadius<=1.0 )\n        gl_Position.z = -10.0;\n}\n\n\n\n\n";
+
+// File:shader/ParticleSprite.frag
+
+NGL.Resources[ '../shader/ParticleSprite.frag'] = "\nvarying vec3 point;\nvarying vec3 vColor;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\n#include fog_params\n\n\nvoid main() {\n\n    vec3 rayDirection = normalize( point );\n    \n    float B = -2.0 * dot(rayDirection, cameraSpherePos);\n    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0)\n        discard;\n\n	gl_FragColor = vec4( vColor, 1.0 );\n\n    #include fog\n\n}\n";
+
+// File:shader/Quad.vert
+
+NGL.Resources[ '../shader/Quad.vert'] = "attribute vec2 position;\nattribute vec2 texture;\nvarying vec2 texCoord;\nvoid main(void) {\n    texCoord = texture;\n    gl_Position = vec4(position, 0.0, 1.0);\n}";
+
+// File:shader/Quad.frag
+
+NGL.Resources[ '../shader/Quad.frag'] = "precision mediump float;\nuniform sampler2D diffuse;\nvarying vec2 texCoord;\nvoid main(void) {\n    vec4 color = texture2D(diffuse, texCoord);\n    gl_FragColor = vec4(color.rgb, color.a);\n}";
+
+// File:shader/Ribbon.vert
+
+NGL.Resources[ '../shader/Ribbon.vert'] = "\nattribute vec3 inputDir;\nattribute float inputSize;\n//attribute vec3 inputNormal;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 inputColor;\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        color = inputColor;\n        vNormal = normalize( normalMatrix * normal * -1.0 );;\n    #endif\n\n    cameraPos = modelViewMatrix * vec4( position + ( normalize(inputDir)*inputSize ), 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
+
+// File:shader/Ribbon.frag
+
+NGL.Resources[ '../shader/Ribbon.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n#else\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor.xyz = vPickingColor;\n        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = normalize( vNormal );\n        #ifdef DOUBLE_SIDED\n            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( color, opacity );\n        // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.xyz *= vLightFront;\n        // gl_FragColor.xyz = normalx;\n        //gl_FragColor.xyz = color;\n    #endif\n\n    #include fog\n}\n";
+
+// File:shader/SDFFont.vert
+
+NGL.Resources[ '../shader/SDFFont.vert'] = "\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\n\nvoid main(void){\n\n    vColor = color;\n    texCoord = inputTexCoord;\n\n    vec3 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    vec4 cameraCornerPos = vec4( cameraPos, 1.0 );\n    cameraCornerPos.xy += mapping * inputSize;\n\n    cameraCornerPos.z += 0.5;\n\n    gl_Position = projectionMatrix * cameraCornerPos;\n\n}\n";
+
+// File:shader/SDFFont.frag
+
+NGL.Resources[ '../shader/SDFFont.frag'] = "\n#extension GL_OES_standard_derivatives : enable\n\nuniform vec3 backgroundColor;\nuniform sampler2D fontTexture;\n\nuniform float opacity;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\n#include fog_params\n\nconst float smoothness = 16.0;\nconst float gamma = 2.2;\n\nvoid main() {\n\n    // retrieve signed distance\n    float sdf = texture2D( fontTexture, texCoord ).a;\n\n    // perform adaptive anti-aliasing of the edges\n    float w = clamp(\n        smoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n        0.0,\n        0.5\n    );\n    float a = smoothstep( 0.5 - w, 0.5 + w, sdf );\n\n    // gamma correction for linear attenuation\n    a = pow( a, 1.0 / gamma );\n\n    if( a < 0.2 ) discard;\n\n    a *= opacity;\n\n    #ifndef ANTIALIAS\n        gl_FragColor = vec4( mix( backgroundColor, vColor, a ), 1.0 );\n    #else\n        gl_FragColor = vec4( vColor, a );\n    #endif\n\n    #include fog\n\n}\n\n";
+
+// File:shader/SphereHalo.vert
+
+NGL.Resources[ '../shader/SphereHalo.vert'] = "\nattribute vec2 mapping;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n// \n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n    \n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n}\n\n\nvoid main(void){\n\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    sphereRadius = radius * 1.3;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    if( gl_Position.z-sphereRadius<=1.0 )\n        gl_Position.z = -10.0;\n}\n\n\n\n\n\n";
+
+// File:shader/SphereHalo.frag
+
+NGL.Resources[ '../shader/SphereHalo.frag'] = "\nvarying vec3 point;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform vec3 color;\n\n#include fog_params\n\n\nvoid main(void)\n{   \n    vec3 rayDirection = normalize( point );\n    \n    float B = -2.0 * dot(rayDirection, cameraSpherePos);\n    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0)\n        discard;\n\n    float r2 = sphereRadius*0.97;\n    B = -2.0 * dot(rayDirection, cameraSpherePos);\n    C = dot(cameraSpherePos, cameraSpherePos) - (r2*r2);\n    det = (B * B) - (4.0 * C);\n\n    if(det < 0.0){\n        gl_FragColor = vec4( color, 1.0 );\n\n    }else{\n    	gl_FragColor = vec4( color, 0.5 );\n    }\n    \n    #include fog\n}\n\n\n";
+
+// File:shader/SphereImpostor.vert
+
+NGL.Resources[ '../shader/SphereImpostor.vert'] = "\nattribute vec2 mapping;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n#endif\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n\n}\n\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n    #endif\n\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyzw;\n    sphereRadius = radius;\n\n    cameraSpherePos.z -= radius;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    // if( gl_Position.z-sphereRadius<=1.0 ){\n    //     gl_Position.z = -10.0;\n    // }\n\n}\n\n\n\n\n\n";
+
+// File:shader/SphereImpostor.frag
+
+NGL.Resources[ '../shader/SphereImpostor.frag'] = "\n#extension GL_EXT_frag_depth : enable\n\n// not available in WebGL\n// #extension GL_ARB_conservative_depth : enable\n// layout(depth_less) out float gl_FragDepthEXT;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvec3 cameraPos;\nvec3 cameraNormal;\n\n\n// vec4 poly_color = gl_Color;\n\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 camPos )\n{\n    vec2 clipZW = camPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nbool Impostor(out vec3 cameraPos, out vec3 cameraNormal)\n{\n\n    vec3 cameraSpherePos2 = cameraSpherePos.xyz;\n    cameraSpherePos2.z += sphereRadius;\n\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos2);\n    float C = dot(cameraSpherePos2, cameraSpherePos2) - (sphereRadius*sphereRadius);\n\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt(det);\n        float posT = (-B + sqrtDet)/2.0;\n        float negT = (-B - sqrtDet)/2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n        if( calcDepth( cameraPos ) <= 0.0 ){\n            cameraPos = rayDirection * max(posT, negT);\n            cameraNormal = vec3( 0.0, 0.0, 0.4 );\n            return false;\n        }else{\n            cameraNormal = normalize(cameraPos - cameraSpherePos2);\n        }\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\n\nvoid main(void)\n{\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    if( dot( cameraSpherePos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        if( gl_FragDepthEXT >= 0.0 ){\n            // clamp to near clipping plane and add a tiny value to\n            // make spheres with a greater radius occlude smaller ones\n            gl_FragDepthEXT = 0.0 + ( 0.000001 / sphereRadius );\n        }\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, 1.0 );\n        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = cameraNormal;\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( vColor, opacity );\n        gl_FragColor.xyz *= vLightFront;\n\n        // gl_FragColor.a = 0.5;\n        // gl_FragColor.xyz = transformedNormal;\n        // gl_FragColor.xyz = point;\n    #endif\n\n    #include fog\n\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( vColor, 1.0 );\n// }\n\n\n\n";
+
+// File:shader/chunk/fog.glsl
+
+NGL.Resources[ '../shader/chunk/fog.glsl'] = "#ifdef USE_FOG\n	float depth = gl_FragCoord.z / gl_FragCoord.w;\n	#ifdef FOG_EXP2\n		const float LOG2 = 1.442695;\n		float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n		fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n	#else\n		float fogFactor = smoothstep( fogNear, fogFar, depth );\n	#endif\n	gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n#endif";
+
+// File:shader/chunk/fog_params.glsl
+
+NGL.Resources[ '../shader/chunk/fog_params.glsl'] = "#ifdef USE_FOG\n	uniform vec3 fogColor;\n	#ifdef FOG_EXP2\n		uniform float fogDensity;\n	#else\n		uniform float fogNear;\n		uniform float fogFar;\n	#endif\n#endif";
+
+// File:shader/chunk/light.glsl
+
+NGL.Resources[ '../shader/chunk/light.glsl'] = "\n// LIGHT\n// IN: transformedNormal, vLightFront\n// OUT: vLightFront\n\n// #if MAX_DIR_LIGHTS > 0\n//     for( int i = 0; i < MAX_DIR_LIGHTS; i ++ ) {\n//         vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );\n//         vec3 dirVector = normalize( lDirection.xyz );\n//         float dotProduct = dot( transformedNormal, dirVector );\n//         vec3 directionalLightWeighting = vec3( max( dotProduct, 0.0 ) );\n//         vLightFront += directionalLightColor[ i ] * directionalLightWeighting;\n//     }\n// #endif\n// #if MAX_HEMI_LIGHTS > 0\n//     for( int i = 0; i < MAX_HEMI_LIGHTS; i ++ ) {\n//         vec4 lDirection = viewMatrix * vec4( hemisphereLightDirection[ i ], 0.0 );\n//         vec3 lVector = normalize( lDirection.xyz );\n//         float dotProduct = dot( transformedNormal, lVector );\n//         float hemiDiffuseWeight = 0.5 * dotProduct + 0.5;\n//         float hemiDiffuseWeightBack = -0.5 * dotProduct + 0.5;\n//         vLightFront += mix( hemisphereLightGroundColor[ i ], hemisphereLightSkyColor[ i ], hemiDiffuseWeight );\n//     }\n// #endif\n// // vLightFront = vLightFront * diffuse + ambient * ambientLightColor + emissive;\n// vLightFront = vLightFront + ambient * ambientLightColor + emissive;\n\n\n// Give light vector position perpendicular to the screen\nvec3 lightvec = normalize(vec3(0.0,0.0,1.2));\nvec3 eyepos = vec3(0.0,0.0,1.0);\n\n// calculate half-angle vector\nvec3 halfvec = normalize(lightvec + eyepos);\n\n// Parameters used to calculate per pixel lighting\n// see http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html\nfloat diffuse = dot(transformedNormal,lightvec);\nfloat specular = dot(transformedNormal, halfvec);\nvec4 lighting = lit(diffuse, specular, 512.0);\n\nvec3 specularcolor = vec3(1.0,1.0,1.0);\n\nvLightFront = ( vLightFront + lighting.y * vec3(1.0, 1.0, 1.0) + lighting.z * specularcolor ).xyz;\n\n\n";
+
+// File:shader/chunk/light_params.glsl
+
+NGL.Resources[ '../shader/chunk/light_params.glsl'] = "uniform vec3 ambient;\nuniform vec3 diffuse;\nuniform vec3 emissive;\n\nuniform vec3 ambientLightColor;\n\n#if MAX_DIR_LIGHTS > 0\n    uniform vec3 directionalLightColor[ MAX_DIR_LIGHTS ];\n    uniform vec3 directionalLightDirection[ MAX_DIR_LIGHTS ];\n#endif\n\n#if MAX_HEMI_LIGHTS > 0\n    uniform vec3 hemisphereLightSkyColor[ MAX_HEMI_LIGHTS ];\n    uniform vec3 hemisphereLightGroundColor[ MAX_HEMI_LIGHTS ];\n    uniform vec3 hemisphereLightDirection[ MAX_HEMI_LIGHTS ];\n#endif\n\n\n\nvec4 lit(float NdotL, float NdotH, float m) {\n    float ambient = 1.0;\n    float diffuse = max(NdotL, 0.0);\n    float specular = pow(abs(NdotH),m);\n    if(NdotL < 0.0 || NdotH < 0.0)\n        specular = 0.0;\n    return vec4(ambient, diffuse, specular, 1.0);\n}\n\n";
 

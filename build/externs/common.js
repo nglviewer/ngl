@@ -6,3 +6,4 @@ var define;
 var exports;
 var performance;
 var require;
+var process;
