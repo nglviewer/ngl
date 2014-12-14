@@ -1893,7 +1893,7 @@ NGL.Buffer.prototype = {
 
         }
 
-        if( this.nearClip ){
+        if( this.nearClip && !( type === "wireframe" || this.wireframe ) ){
 
             material.defines[ "NEAR_CLIP" ] = 1;
 
