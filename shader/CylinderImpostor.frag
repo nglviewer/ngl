@@ -35,14 +35,14 @@ uniform mat3 normalMatrix;
 
 // varying float vRadius;
 
-varying vec3 point;
+// varying vec3 point;
 varying vec3 axis;
 varying vec4 base_radius;
 varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
 // varying float b;
-varying vec4 point4;
+varying vec4 w;
 
 #ifdef PICKING
     varying vec3 vPickingColor;
@@ -73,6 +73,9 @@ varying vec4 point4;
 
 void main()
 {
+
+    vec3 point = w.xyz / w.w;
+    vec4 point4 = w;
 
     if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
         discard;

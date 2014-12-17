@@ -33,14 +33,14 @@ attribute float radius;
 
 // varying float vRadius;
 
-varying vec3 point;
+// varying vec3 point;
 varying vec3 axis;
 varying vec4 base_radius;
 varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
 // varying float b;
-varying vec4 point4;
+varying vec4 w;
 
 #ifdef PICKING
     attribute vec3 pickingColor;
@@ -110,12 +110,10 @@ void main()
     // end = end4.xyz / end4.w;
     end_b.xyz = end4.xyz / end4.w;
 
-    vec4 w = modelViewMatrix * vec4(
+    w = modelViewMatrix * vec4(
         center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
     );
-    point = w.xyz / w.w;
-
-    point4 = w;
+    // point = w.xyz / w.w;
 
     gl_Position = projectionMatrix * w;
 
