@@ -699,6 +699,16 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         parseFloat( b[2] ) * 10
     ];
 
+    // var xpos = 20;
+    // var ypos = 28;
+    // var zpos = 36;
+
+    var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf(".") - 1;
+    var lpos = 5 + ndec;
+    var xpos = 20;
+    var ypos = 20 + lpos;
+    var zpos = 20 + 2 * ( lpos );
+
     //
 
     var atomname, resname, element;
@@ -750,9 +760,9 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
             }else{
 
-                var x = parseFloat( line.substr( 20, 8 ) ) * 10;
-                var y = parseFloat( line.substr( 28, 8 ) ) * 10;
-                var z = parseFloat( line.substr( 36, 8 ) ) * 10;
+                var x = parseFloat( line.substr( xpos, lpos ) ) * 10;
+                var y = parseFloat( line.substr( ypos, lpos ) ) * 10;
+                var z = parseFloat( line.substr( zpos, lpos ) ) * 10;
 
                 if( asTrajectory ){
 
