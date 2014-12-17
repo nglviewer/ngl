@@ -220,6 +220,9 @@ def data( root, filename ):
 @requires_auth
 def dir( root="", path="" ):
 
+    root = root.encode( "utf-8" )
+    path = path.encode( "utf-8" )
+
     # auth = request.authorization
     # if not auth or not check_auth( auth.username, auth.password ):
     #     return authenticate()
@@ -228,6 +231,7 @@ def dir( root="", path="" ):
 
     if root == "":
         for fname in DATA_DIRS.keys():
+            fname = unicode( fname )
             if fname.startswith( '_' ):
                 continue
             dir_content.append({
@@ -238,7 +242,7 @@ def dir( root="", path="" ):
             })
         return json.dumps( dir_content )
 
-    directory = get_directory( root )
+    directory = get_directory( root ).encode( "utf-8" )
     if not directory:
         return json.dumps( dir_content )
 
@@ -258,9 +262,9 @@ def dir( root="", path="" ):
         })
 
     for fname in sorted( os.listdir( dir_path ) ):
+        fname = fname.decode( "utf-8" ).encode( "utf-8" )
         if( not fname.startswith('.') and
-                not (fname.startswith('#') and fname.endswith('#')) ):
-            fname = fname.decode( "utf-8" )
+                not ( fname.startswith('#') and fname.endswith('#') ) ):
             fpath = os.path.join( dir_path, fname )
             if os.path.isfile( fpath ):
                 dir_content.append({
@@ -276,7 +280,7 @@ def dir( root="", path="" ):
                 })
 
     for fname in trajectory.get_split_xtc( dir_path ):
-        fname = fname.decode( "utf-8" )
+        fname = fname.decode( "utf-8" ).encode( "utf-8" )
         dir_content.append({
             'name': fname,
             'path': os.path.join( root, path, fname ),
