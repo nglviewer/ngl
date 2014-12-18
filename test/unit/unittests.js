@@ -903,7 +903,6 @@ QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
         structure.eachFiber( function( f ){
 
-            console.log( f );
             i += 1;
 
         } );
@@ -927,7 +926,6 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
         structure.eachFiber( function( f ){
 
-            console.log( f );
             i += 1;
 
         }, undefined, true );

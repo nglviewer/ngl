@@ -4495,7 +4495,7 @@ NGL.Selection.prototype = {
             if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
 
             // support autoChainNames which work only on atoms
-            if( s.chainname!==" " && r.chain.chainname===" " ) return -1;
+            if( s.chainname!=="" && r.chain.chainname==="" ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -4527,7 +4527,7 @@ NGL.Selection.prototype = {
             if( s.chainname===undefined && s.model===undefined ) return -1;
 
             // support autoChainNames which work only on atoms
-            if( s.chainname!==" " && c.chainname===" " ) return -1;
+            if( s.chainname!=="" && c.chainname==="" ) return -1;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
             if( s.model!==undefined && s.model!==c.model.index ) return false;

@@ -404,7 +404,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 serial = parseInt( line.substr( 6, 5 ) );
                 atomname = line.substr( 12, 4 ).trim();
                 element = line.substr( 76, 2 ).trim();
-                chainname = line[ 21 ];
+                chainname = line[ 21 ].trim();
                 resno = parseInt( line.substr( 22, 5 ) );
                 resname = line.substr( 17, 4 ).trim();
 
@@ -647,7 +647,7 @@ NGL.PdbParser.prototype._postProcess = function( structure, callback ){
 
     var _doAutoChainName = true;
     s.eachChain( function( c ){
-        if( c.chainname && c.chainname !== " " ) _doAutoChainName = false;
+        if( c.chainname ) _doAutoChainName = false;
     } );
     s._doAutoChainName = _doAutoChainName;
 
