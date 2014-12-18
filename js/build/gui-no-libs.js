@@ -2473,6 +2473,8 @@ NGL.StageWidget = function( stage ){
 
     } );
 
+    stage.preferences.setTheme();
+
     viewer.onWindowResize();
 
     return this;
