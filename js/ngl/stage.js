@@ -281,7 +281,7 @@ NGL.PickingControls = function( viewer, stage ){
     viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
 
         e.preventDefault();
-        e.stopPropagation();
+        // e.stopPropagation();
 
         mouse.moving = true;
         mouse.position.x = e.layerX;
@@ -292,7 +292,7 @@ NGL.PickingControls = function( viewer, stage ){
     viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
 
         e.preventDefault();
-        e.stopPropagation();
+        // e.stopPropagation();
 
         mouse.moving = false;
         mouse.down.x = e.layerX;
@@ -303,7 +303,7 @@ NGL.PickingControls = function( viewer, stage ){
     viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
 
         e.preventDefault();
-        e.stopPropagation();
+        // e.stopPropagation();
 
         if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
 
