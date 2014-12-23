@@ -1,84 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<script src="../../list.js"></script>
-		<script src="../../page.js"></script>
-		<link type="text/css" rel="stylesheet" href="../../page.css" />
-	</head>
-	<body>
-		<h1>[name]</h1>
+    <head>
+        <meta charset="utf-8">
+        <script src="../../list.js"></script>
+        <script src="../../page.js"></script>
+        <link type="text/css" rel="stylesheet" href="../../page.css" />
+    </head>
+    <body>
+        <h1>[name]</h1>
 
-		Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory].
-
-
-		<h2>Example</h2>
-
-		Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of proline.
-
-		<code>not backbone or .CA or (PRO and .N)</code>
-
-		This selection is useful to display the sidechains together with a backbone trace. Hence there is also the keyword *sidechainAttached* for it.
+        Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory].
 
 
-		<h2>Language</h2>
+        <h2>Example</h2>
 
-		<h3>Keywords</h3>
+        Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of proline.
 
-		<ul>
-			<li>*sidechain*</li>
-			<li>*sidechainAttached*</li>
-			<li>*backbone*</li>
-			<li>*protein*</li>
-			<li>*nucleic*</li>
-			<li>*hetero*</li>
-			<li>*polymer*</li>
-			<li>*all*</li>
-			<li>*water*</li>
-			<li>*hydrogen*</li>
-			<li>*helix*</li>
-			<li>*sheet*</li>
-			<li>*turn*</li>
-		</ul>
+        <code>not backbone or .CA or (PRO and .N)</code>
+
+        This selection is useful to display the sidechains together with a backbone trace. Hence there is also the keyword *sidechainAttached* for it.
 
 
-		<h3>Expressions</h3>
+        <h2>Language</h2>
 
-		<ul>
-			<li>residue number: *1*, *2*, *100*</li>
-			<li>residue number range: *3-40* (Note that no spaces around <strong>-</strong> are allowed)</li>
-			<li>chain name: <strong>:A</strong></li>
-			<li>atom name: <strong>.CA</strong>, <strong>.C</strong>, <strong>.N</strong>, ...</li>
-			<li>model: <strong>/0</strong>, <strong>/1</strong>, ...</li>
-			<li>residue name: *ALA*, *GLU*, *SOL*, *DMPC*, ...</li>
-			<li>element name: <strong>#H</strong>, <strong>#C</strong>, <strong>#O</strong>, ...</li>
-		</ul>
+        <h3>Keywords</h3>
 
-		Some of these expressions can be combined (in this order) - residue numer (range), chain name, atom name, model - like this
-
-		<code>10-20:A.CA/0 # select C-alpha atoms of residues 10 to 20 from chain A in model 0</code>
-
-		which is the same as
-
-		<code>10-20 and :A and .CA and /0</code>
-
-		Single expressions may be left out as long as the order (see above) is kept, e.g.
-
-		<code>:A/0 # select chain A from model 0</code>
+        <ul>
+            <li>*sidechain*</li>
+            <li>*sidechainAttached*</li>
+            <li>*backbone*</li>
+            <li>*protein*</li>
+            <li>*nucleic*</li>
+            <li>*hetero*</li>
+            <li>*polymer*</li>
+            <li>*all*</li>
+            <li>*water*</li>
+            <li>*hydrogen*</li>
+            <li>*helix*</li>
+            <li>*sheet*</li>
+            <li>*turn*</li>
+        </ul>
 
 
-		<h3>Logical operators (in order of binding strength)</h3>
+        <h3>Expressions</h3>
 
-		<ul>
-			<li>*NOT*</li>
-			<li>*AND*</li>
-			<li>*OR*</li>
-		</ul>
+        <ul>
+            <li>residue number: *1*, *2*, *100*</li>
+            <li>residue number range: *3-40* (Note that no spaces around <strong>-</strong> are allowed)</li>
+            <li>chain name: <strong>:A</strong></li>
+            <li>atom name: <strong>.CA</strong>, <strong>.C</strong>, <strong>.N</strong>, ...</li>
+            <li>model: <strong>/0</strong>, <strong>/1</strong>, ...</li>
+            <li>residue name: *ALA*, *GLU*, *SOL*, *DMPC*, ...</li>
+            <li>element name: <strong>#H</strong>, <strong>#C</strong>, <strong>#O</strong>, ...</li>
+        </ul>
 
-		Additionally, parentheses *()* can be used for grouping:
+        Some of these expressions can be combined (in this order) - residue numer (range), chain name, atom name, model - like this
 
-		<code>:A and ( 1 or 10 or 100 ) # select residues 1, 10 and 100 from chain A</code>
+        <code>10-20:A.CA/0 # select C-alpha atoms of residues 10 to 20 from chain A in model 0</code>
+
+        which is the same as
+
+        <code>10-20 and :A and .CA and /0</code>
+
+        Single expressions may be left out as long as the order (see above) is kept, e.g.
+
+        <code>:A/0 # select chain A from model 0</code>
 
 
-	</body>
+        <h3>Logical operators (in order of binding strength)</h3>
+
+        <ul>
+            <li>*NOT*</li>
+            <li>*AND*</li>
+            <li>*OR*</li>
+        </ul>
+
+        Additionally, parentheses *()* can be used for grouping:
+
+        <code>:A and ( 1 or 10 or 100 ) # select residues 1, 10 and 100 from chain A</code>
+
+        <h2>Try it</h2>
+
+        <div>
+            <input id="input" type="text" />
+            <button id="btn">select</button>
+        </div>
+
+        <div id="viewport" style="width:500px; height:500px;"></div>
+
+        <script src="../../../js/build/ngl.embedded.min.js"></script>
+
+        <script>
+
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            document.addEventListener("DOMContentLoaded", function() {
+
+                var repr;
+                var input = document.getElementById( "input" );
+                var button = document.getElementById( "btn" );
+
+                NGL.init( function(){
+
+                    var stage = new NGL.Stage( "viewport" );
+
+                    stage.loadFile( "../../../data/__example__/1crn.pdb", function( o ){
+
+                        repr = o.addRepresentation( "licorice", {}, true );
+                        o.centerView();
+
+                    } );
+
+                    input.addEventListener( "keypress", function( e ){
+
+                        if( e.keyCode === 13 ){
+
+                            e.preventDefault();
+                            repr.setSelection( input.value );
+
+                        }
+
+                    } );
+
+                    button.addEventListener( "click", function( e ){
+
+                        repr.setSelection( input.value );
+
+                    } );
+
+                }, "../../" );
+
+            } );
+
+        </script>
+
+    </body>
 </html>

@@ -1213,6 +1213,14 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     },
 
+    setSelection: function( string ){
+
+        this.repr.setSelection( string );
+
+        return this;
+
+    },
+
     setParameters: function( params ){
 
         this.repr.setParameters( params );
