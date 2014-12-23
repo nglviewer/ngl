@@ -2001,6 +2001,8 @@ NGL.Structure.prototype = {
 
             console.time( "NGL.Structure.autoSS" );
 
+            // assign secondary structure
+
             this.eachFiber( function( f ){
 
                 if( f.isProtein() ){
@@ -2010,6 +2012,46 @@ NGL.Structure.prototype = {
                 }else if( f.isCg() ){
 
                     cgFiber( f );
+
+                }
+
+            } );
+
+            // set lone secondary structure assignments to "c"
+
+            this.eachFiber( function( f ){
+
+                if( !f.isProtein() && !f.isCg ) return;
+
+                var r;
+                var ssType = undefined;
+                var ssCount = 0;
+
+                f.eachResidueN( 2, function( r1, r2 ){
+
+                    if( r1.ss===r2.ss ){
+
+                        ssCount += 1;
+
+                    }else{
+
+                        if( ssCount===1 ){
+
+                            r1.ss = "c";
+
+                        }
+
+                        ssCount = 1;
+
+                    }
+
+                    r = r2;
+
+                } );
+
+                if( ssCount===1 ){
+
+                    r.ss = "c";
 
                 }
 
