@@ -441,10 +441,18 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
                 var pos = [ 11, 16, 21, 26 ];
 
+                if( from === undefined ){
+                    // console.log( "missing serial, probably alternative location to be fixed" );
+                    continue;
+                }
+
                 for (var j = 0; j < 4; j++) {
 
                     var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
-                    if( to === undefined ) continue;
+                    if( to === undefined ){
+                        // console.log( "missing serial, probably alternative location to be fixed" );
+                        continue;
+                    }
 
                     bondSet.addBond( from, to );
 
