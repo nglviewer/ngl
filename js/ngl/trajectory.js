@@ -858,23 +858,10 @@ NGL.TrajectoryPlayer.prototype = {
                 this.traj.setPlayer( this );
             }
 
-            if( this.mode === "once" ){
-
-                var i = this.traj.currentFrame;
-
-                if( i >= this.end || i <= this.start ){
-
-                    if( this.direction === "forward" ){
-                        i = this.start;
-                    }else{
-                        i = this.end;
-                    }
-
-                    this.traj.setFrame( i );
-
-                }
-
-            }
+            // snap to grid implied by this.step thus minimizing cache misses
+            this.traj.setFrame(
+                Math.ceil( this.traj.currentFrame / this.step ) * this.step
+            );
 
             this._stopFlag = false;
             this._animate();
