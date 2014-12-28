@@ -48,12 +48,18 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
-            // safeguard
-            if( object.structure.atomCount > 100000 ) return;
+            if( object.structure.atomCount > 100000 ){
 
-            object.addRepresentation( "cartoon", { sele: "*" } );
-            object.addRepresentation( "licorice", { sele: "hetero" } );
-            object.centerView( undefined, true );
+                object.addRepresentation( "line" );
+                object.centerView( undefined, true );
+
+            }else{
+
+                object.addRepresentation( "cartoon", { sele: "*" } );
+                object.addRepresentation( "licorice", { sele: "hetero" } );
+                object.centerView( undefined, true );
+
+            }
 
             // add frames as trajectory
             if( object.structure.frames ) object.addTrajectory();
