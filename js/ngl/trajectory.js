@@ -260,6 +260,8 @@ NGL.Trajectory.prototype = {
 
     updateStructure: function( i, callback ){
 
+        if( this._disposed ) return;
+
         if( i === -1 ){
 
             this.structure.updatePosition( this.initialStructure );
@@ -415,6 +417,8 @@ NGL.Trajectory.prototype = {
     dispose: function(){
 
         this.frameCache = [];  // aid GC
+        this._disposed = true;
+        if( this.player ) this.player.stop();
 
     },
 
