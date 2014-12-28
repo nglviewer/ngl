@@ -9,7 +9,7 @@
     <body>
         <h1>[name]</h1>
 
-        Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory].
+        Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory]. At the end of this page is an embedded NGL viewer for trying out the selection language.
 
 
         <h2>Example</h2>
@@ -46,7 +46,7 @@
 
         <ul>
             <li>residue number: *1*, *2*, *100*</li>
-            <li>residue number range: *3-40* (Note that no spaces around <strong>-</strong> are allowed)</li>
+            <li>residue number range: *3-40* (Note that around the dash <strong>-</strong> no spaces are allowed)</li>
             <li>chain name: <strong>:A</strong></li>
             <li>atom name: <strong>.CA</strong>, <strong>.C</strong>, <strong>.N</strong>, ...</li>
             <li>model: <strong>/0</strong>, <strong>/1</strong>, ...</li>
@@ -81,9 +81,13 @@
 
         <h2>Try it</h2>
 
+        Type in a selection string and press enter to filter the displayed atoms.
+
+        <br/><br/>
+
         <div>
             <input id="input" type="text" />
-            <button id="btn">select</button>
+            <button id="btn">filter</button>
         </div>
 
         <div id="viewport" style="width:500px; height:500px;"></div>
@@ -96,7 +100,7 @@
 
             document.addEventListener("DOMContentLoaded", function() {
 
-                var repr;
+                var licorice, cartoon;
                 var input = document.getElementById( "input" );
                 var button = document.getElementById( "btn" );
 
@@ -104,9 +108,10 @@
 
                     var stage = new NGL.Stage( "viewport" );
 
-                    stage.loadFile( "../../../data/__example__/1crn.pdb", function( o ){
+                    stage.loadFile( "../../files/1crn.pdb", function( o ){
 
-                        repr = o.addRepresentation( "licorice", {}, true );
+                        licorice = o.addRepresentation( "licorice", {}, true );
+                        cartoon = o.addRepresentation( "cartoon", {}, true );
                         o.centerView();
 
                     } );
@@ -116,7 +121,8 @@
                         if( e.keyCode === 13 ){
 
                             e.preventDefault();
-                            repr.setSelection( input.value );
+                            licorice.setSelection( input.value );
+                            cartoon.setSelection( input.value );
 
                         }
 
@@ -124,7 +130,8 @@
 
                     button.addEventListener( "click", function( e ){
 
-                        repr.setSelection( input.value );
+                        licorice.setSelection( input.value );
+                        cartoon.setSelection( input.value );
 
                     } );
 

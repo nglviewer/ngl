@@ -1,11 +1,15 @@
 var list = {
 
     "Manual": {
+        "Introduction": [
+            [ "Welcome", "manual/introduction/Welcome" ],
+            [ "Gallery", "manual/introduction/Gallery" ]
+        ],
         "Usage": [
             [ "Selection language", "manual/usage/Selection-language" ],
             [ "Molecular representations", "manual/usage/Molecular-representations" ],
             [ "User interface", "manual/usage/User-interface" ],
-            [ "Trajectory access", "manual/usage/Trajectory-access" ],
+            // [ "Trajectory access", "manual/usage/Trajectory-access" ],
             [ "Scripting", "manual/usage/Scripting" ]
         ],
         "Deployment": [
@@ -14,10 +18,10 @@ var list = {
             [ "Webserver", "manual/deployment/Webserver" ],
             [ "Filesystem", "manual/deployment/Filesystem" ]
         ],
-        "Methods": [
-            [ "Processing", "manual/methods/Processing" ],
-            [ "Rendering", "manual/methods/Rendering" ]
-        ],
+        // "Methods": [
+        //     [ "Processing", "manual/methods/Processing" ],
+        //     [ "Rendering", "manual/methods/Rendering" ]
+        // ],
         "Development": [
             [ "Acknowledgement", "manual/development/Acknowledgement" ],
             [ "Unittest", "manual/development/Unittest" ],

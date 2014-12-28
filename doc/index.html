@@ -381,7 +381,15 @@
 
 			window.addEventListener( 'hashchange', goToHash, false );
 
-			if ( window.location.hash.length > 0 ) goToHash();
+			if ( window.location.hash.length > 0 ){
+
+				goToHash();
+
+			}else{
+
+				goTo( "Manual", "Introduction", "Welcome" );
+
+			}
 
 		</script>
 	</body>
