@@ -230,6 +230,7 @@ NGL.StructureParser = function( name, path, params ){
 
     this.firstModelOnly = params.firstModelOnly || false;
     this.asTrajectory = params.asTrajectory || false;
+    this.cAlphaOnly = params.cAlphaOnly || false;
 
     this.structure = new NGL.Structure( this.name, this.path );
 
@@ -325,6 +326,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
+    var cAlphaOnly = this.cAlphaOnly;
 
     var frames = [];
     var boxes = [];
@@ -377,6 +379,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
 
+                atomname = line.substr( 12, 4 ).trim();
+                if( cAlphaOnly && atomname !== 'CA' ) continue;
+
                 var x = parseFloat( line.substr( 30, 8 ) );
                 var y = parseFloat( line.substr( 38, 8 ) );
                 var z = parseFloat( line.substr( 46, 8 ) );
@@ -399,7 +404,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
 
                 serial = parseInt( line.substr( 6, 5 ) );
-                atomname = line.substr( 12, 4 ).trim();
                 element = line.substr( 76, 2 ).trim();
                 chainname = line[ 21 ].trim();
                 resno = parseInt( line.substr( 22, 5 ) );
@@ -681,6 +685,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
+    var cAlphaOnly = this.cAlphaOnly;
 
     var frames = [];
     var boxes = [];
@@ -765,6 +770,9 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
             }else{
 
+                atomname = line.substr( 10, 5 ).trim();
+                if( cAlphaOnly && atomname !== 'CA' ) continue;
+
                 var x = parseFloat( line.substr( xpos, lpos ) ) * 10;
                 var y = parseFloat( line.substr( ypos, lpos ) ) * 10;
                 var z = parseFloat( line.substr( zpos, lpos ) ) * 10;
@@ -783,7 +791,6 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
                 }
 
-                atomname = line.substr( 10, 5 ).trim();
                 resname = line.substr( 5, 5 ).trim();
 
                 element = guessElem( atomname );
@@ -847,10 +854,6 @@ NGL.GroParser.prototype._postProcess = function( structure, callback ){
 
 
 NGL.CifParser = function( name, path, params ){
-
-    params = params || {};
-
-    this.cAlphaOnly = params.cAlphaOnly || false;
 
     NGL.StructureParser.call( this, name, path, params );
 
