@@ -921,6 +921,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var currentString = null;
     var pendingLoop = false;
     var loopPointers = null;
+    var currentLoopIndex = null;
     var currentCategory = null;
     var currentName = null;
     var first = null;
@@ -951,6 +952,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 pendingString = false;
                 pendingLoop = false;
                 loopPointers = null;
+                currentLoopIndex = null;
                 currentCategory = null;
                 currentName = null;
                 first = null;
@@ -990,6 +992,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 pendingLoop = true;
                 loopPointers = [];
                 pointerNames = [];
+                currentLoopIndex = 0;
 
             }else if( line[0]==="_" ){
 
@@ -1129,9 +1132,18 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var ls = line.split( reQuotedWhitespace );
                         var nn = ls.length;
+
+                        if( currentLoopIndex === loopPointers.length ){
+                            currentLoopIndex = 0;
+                        }/*else if( currentLoopIndex > loopPointers.length ){
+                            console.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
+                        }*/
+
                         for( var j = 0; j < nn; ++j ){
-                            loopPointers[ j ].push( ls[ j ] );
+                            loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
                         }
+
+                        currentLoopIndex += nn;
 
                     }
 
