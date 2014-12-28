@@ -79,29 +79,23 @@ NGL.buildStructure = function( structure, callback ){
             if( currentModelindex!==modelindex ){
 
                 m = structure.addModel();
-                c = m.addChain();
-                r = c.addResidue();
 
                 chainDict = {};
 
+                c = m.addChain();
                 c.chainname = chainname;
                 chainDict[ chainname ] = c;
 
+                r = c.addResidue();
                 r.resno = resno;
                 r.resname = resname;
 
-                currentChainname = chainname;
-                currentResno = resno;
-
-            }
-
-            if( currentChainname!==chainname ){
+            }else if( currentChainname!==chainname ){
 
                 if( !chainDict[ chainname ] ){
 
                     c = m.addChain();
                     c.chainname = chainname;
-
                     chainDict[ chainname ] = c;
 
                 }else{
@@ -110,9 +104,11 @@ NGL.buildStructure = function( structure, callback ){
 
                 }
 
-            }
+                r = c.addResidue();
+                r.resno = resno;
+                r.resname = resname;
 
-            if( currentResno!==resno ){
+            }else if( currentResno!==resno ){
 
                 r = c.addResidue();
                 r.resno = resno;
@@ -142,6 +138,7 @@ NGL.buildStructure = function( structure, callback ){
         function(){
 
             console.timeEnd( "NGL.buildStructure" );
+            // console.log( structure );
 
             callback();
 
@@ -912,6 +909,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var reWhitespace = /\s+/;
     var reQuotedWhitespace = /\s+(?=(?:[^']*'[^']*')*[^']*$)/;
+    var reDoubleQuote = /"/g;
 
     var cif = {};
     s.cif = cif;
@@ -1085,7 +1083,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         //
 
-                        var atomname = ls[ label_atom_id ];
+                        var atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
                         if( cAlphaOnly && atomname !== 'CA' ) continue;
 
                         var altloc = ls[ label_alt_id ];
