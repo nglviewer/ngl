@@ -941,7 +941,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             line = lines[i].trim();
 
-            if( !line || line[0]==="#" ){
+            if( ( !line && !pendingString ) || line[0]==="#" ){
 
                 // console.log( "NEW BLOCK" );
 
