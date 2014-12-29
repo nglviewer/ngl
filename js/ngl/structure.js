@@ -3157,6 +3157,34 @@ NGL.Atom.prototype = {
 
         return array;
 
+    },
+
+    copy: function( atom ){
+
+        this.index = atom.index;
+        this.atomno = atom.atomno;
+        this.resname = atom.resname;
+        this.x = atom.x;
+        this.y = atom.y;
+        this.z = atom.z;
+        this.element = atom.element;
+        this.chainname = atom.chainname;
+        this.resno = atom.resno;
+        this.serial = atom.serial;
+        this.ss = atom.ss;
+        this.vdw = atom.vdw;
+        this.covalent = atom.covalent;
+        this.hetero = atom.hetero;
+        this.bfactor = atom.bfactor;
+        this.bonds = atom.bonds;
+        this.altloc = atom.altloc;
+        this.atomname = atom.atomname;
+        this.modelindex = atom.modelindex;
+
+        this.residue = atom.residue;
+
+        return this;
+
     }
 
 }
@@ -3709,26 +3737,7 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.residue[ this.index ] = value;
     },
 
-    // connectedTo: function( atom ){
-
-    //     if( this.hetero && atom.hetero ) return false;
-
-    //     var x = this.x - atom.x;
-    //     var y = this.y - atom.y;
-    //     var z = this.z - atom.z;
-
-    //     var distSquared = x * x + y * y + z * z;
-
-    //     // console.log( distSquared );
-    //     if( this.residue.isCg() && distSquared < 28.0 ) return true;
-
-    //     if( isNaN( distSquared ) ) return false;
-    //     if( distSquared < 0.5 ) return false; // duplicate or altloc
-
-    //     var d = this.covalent + atom.covalent + 0.3;
-    //     return distSquared < ( d * d );
-
-    // },
+    // connectedTo: NGL.Atom.prototype.connectedTo,
 
     connectedTo: function( atom ){
 
@@ -3756,47 +3765,13 @@ NGL.ProxyAtom.prototype = {
 
     },
 
-    qualifiedName: function(){
+    qualifiedName: NGL.Atom.prototype.qualifiedName,
 
-        var name = "";
+    positionFromArray: NGL.Atom.prototype.positionFromArray,
 
-        if( this.resname ) name += "[" + this.resname + "]";
-        if( this.resno ) name += this.resno;
-        if( this.chainname ) name += ":" + this.chainname;
-        if( this.atomname ) name += "." + this.atomname;
-        if( this.residue && this.residue.chain &&
-                this.residue.chain.model ){
-            name += "/" + this.residue.chain.model.index;
-        }
+    positionToArray: NGL.Atom.prototype.positionToArray,
 
-        return name;
-
-    },
-
-    positionFromArray: function( array, offset ){
-
-        if( offset === undefined ) offset = 0;
-
-        this.x = array[ offset + 0 ];
-        this.y = array[ offset + 1 ];
-        this.z = array[ offset + 2 ];
-
-        return this;
-
-    },
-
-    positionToArray: function( array, offset ){
-
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
-
-        array[ offset + 0 ] = this.x;
-        array[ offset + 1 ] = this.y;
-        array[ offset + 2 ] = this.z;
-
-        return array;
-
-    }
+    copy: NGL.Atom.prototype.copy
 
 }
 
