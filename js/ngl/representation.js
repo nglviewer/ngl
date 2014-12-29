@@ -2217,6 +2217,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         wireframe: {
             type: "boolean"
+        },
+        arrows: {
+            type: "boolean"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2245,6 +2248,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
         this.wireframe = p.wireframe || false;
+        this.arrows = p.arrows || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -2269,7 +2273,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( fiber.residueCount < 4 ) return;
 
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( fiber, scope.arrows );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
             var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
@@ -2366,7 +2370,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             if( fiber.residueCount < 4 ) return;
 
             var bufferData = {};
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( fiber, this.arrows );
 
             this.bufferList[ i ].rx = this.aspectRatio;
 
@@ -2454,6 +2458,13 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         if( params && params[ "wireframe" ] !== undefined ){
 
             this.wireframe = params[ "wireframe" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "arrows" ] !== undefined ){
+
+            this.arrows = params[ "arrows" ];
             rebuild = true;
 
         }

@@ -7,7 +7,9 @@
 ///////////
 // Spline
 
-NGL.Spline = function( fiber ){
+NGL.Spline = function( fiber, arrows ){
+
+    this.arrows = arrows || false;
 
     this.fiber = fiber;
     this.size = fiber.residueCount - 2;
@@ -143,6 +145,7 @@ NGL.Spline.prototype = {
         var n = this.size;
         var n1 = n - 1;
         var traceAtomname = this.traceAtomname;
+        var arrows = this.arrows;
 
         var size = new Float32Array( n1 * m + 1 );
 
@@ -159,11 +162,40 @@ NGL.Spline.prototype = {
             s2 = radiusFactory.atomRadius( a2 );
             s3 = radiusFactory.atomRadius( a3 );
 
-            for( j = 0; j < m; ++j ){
+            if( arrows && (
+                    ( r2.ss==="s" && r3.ss!=="s" ) ||
+                    ( r2.ss==="h" && r3.ss!=="h" ) ||
+                    ( r2.ss==="g" && r3.ss!=="g" ) ||
+                    ( r2.ss==="i" && r3.ss!=="i" )
+                )
+            ){
 
-                // linear interpolation
-                t = j / m;
-                size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+                s2 *= 1.7;
+                var m2 = Math.ceil( m / 2 );
+
+                for( j = 0; j < m2; ++j ){
+
+                    // linear interpolation
+                    t = j / m2;
+                    size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+
+                }
+
+                for( j = m2; j < m; ++j ){
+
+                    size[ k + j ] = s3;
+
+                }
+
+            }else{
+
+                for( j = 0; j < m; ++j ){
+
+                    // linear interpolation
+                    t = j / m;
+                    size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+
+                }
 
             }
 
