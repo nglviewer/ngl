@@ -1312,6 +1312,110 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
         }
 
+        // biomol processing
+
+        var operDict = {};
+
+        s.biomolDict = {};
+        var biomolDict = s.biomolDict;
+
+        if( cif.pdbx_struct_oper_list ){
+
+            var op = cif.pdbx_struct_oper_list;
+
+            // ensure data is in lists
+            if( !Array.isArray( op.id ) ){
+                Object.keys( op ).forEach( function( key ){
+                    op[ key ] = [ op[ key ] ];
+                } );
+            }
+
+            op.id.forEach( function( id, i ){
+
+                var m = new THREE.Matrix4();
+                var elms = m.elements;
+
+                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                elms[ 12 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                elms[ 13 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                elms[ 14 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                operDict[ id ] = m;
+
+            } );
+
+        }
+
+        if( cif.pdbx_struct_assembly_gen ){
+
+            var gen = cif.pdbx_struct_assembly_gen;
+
+            // ensure data is in lists
+            if( !Array.isArray( gen.assembly_id ) ){
+                Object.keys( gen ).forEach( function( key ){
+                    gen[ key ] = [ gen[ key ] ];
+                } );
+            }
+
+            gen.assembly_id.forEach( function( id, i ){
+
+                var md = {};
+                var oe = gen.oper_expression[ i ];
+
+                if( oe.indexOf( ")(" ) !== -1 ){
+
+                    console.warn( "parsing of this oper_expression not implemented:", oe );
+                    return;
+
+                }else{
+
+                    var l = oe.replace( /[\(\)']/g, "" ).split( "," );
+
+                    l.forEach( function( e ){
+
+                        if( e.indexOf( "-" ) !== -1 ){
+
+                            var es = e.split( "-" );
+
+                            var j = parseInt( es[ 0 ] );
+                            var m = parseInt( es[ 1 ] );
+
+                            for( ; j <= m; ++j ){
+
+                                md[ j ] = operDict[ j ];
+
+                            }
+
+                        }else{
+
+                            md[ e ] = operDict[ e ];
+
+                        }
+
+                    } );
+
+                }
+
+                biomolDict[ id ] = {
+                    matrixDict: md,
+                    chainList: gen.asym_id_list[ i ].split( "," )
+                };
+
+            } );
+
+        }
+
         // check for chain names
 
         var _doAutoChainName = true;
