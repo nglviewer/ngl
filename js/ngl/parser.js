@@ -911,7 +911,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     //
 
     var reWhitespace = /\s+/;
-    var reQuotedWhitespace = /\s+(?=(?:[^']*'[^']*')*[^']*$)/;
+    var reQuotedWhitespace = /'(.*?)'|"(.*?)"|(\S+)/g;
     var reDoubleQuote = /"/g;
 
     var cif = {};
@@ -969,9 +969,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 if( pendingString ){
 
-                    // console.log( "STRING END" );
+                    // console.log( "STRING END", currentString );
 
-                    cif[ currentCategory ][ currentName ] = currentString;
+                    if( pendingLoop ){
+                        loopPointers[ currentLoopIndex ].push( currentString );
+                        currentLoopIndex += 1;
+                    }else{
+                        cif[ currentCategory ][ currentName ] = currentString;
+                    }
 
                     pendingString = false;
                     currentString = null;
@@ -1019,7 +1024,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 }else{
 
-                    var ls = line.split( reQuotedWhitespace );
+                    var ls = line.match( reQuotedWhitespace );
                     var key = ls[ 0 ];
                     var value = ls[ 1 ];
                     var ks = key.split(".");
@@ -1040,7 +1045,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             }else{
 
-                if( pendingLoop ){
+                if( pendingString ){
+
+                    // console.log( "STRING VALUE", line );
+
+                    currentString += " " + line;
+
+                }else if( pendingLoop ){
 
                     // console.log( "LOOP VALUE", line );
 
@@ -1130,7 +1141,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                     }else{
 
-                        var ls = line.split( reQuotedWhitespace );
+                        var ls = line.match( reQuotedWhitespace );
                         var nn = ls.length;
 
                         if( currentLoopIndex === loopPointers.length ){
@@ -1146,12 +1157,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         currentLoopIndex += nn;
 
                     }
-
-                }else if( pendingString ){
-
-                    // console.log( "STRING VALUE", line );
-
-                    currentString += " " + line;
 
                 }else if( line[0]==="'" && line.substring( line.length-1 )==="'" ){
 
