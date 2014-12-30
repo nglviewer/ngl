@@ -105,7 +105,6 @@ NGL.decompress = function( data, file, callback ){
 ///////////
 // Loader
 
-
 NGL.XHRLoader = function ( manager ) {
 
     /**
@@ -423,17 +422,6 @@ NGL.autoLoad = function(){
 
         var compressed = false;
 
-        // FIXME can lead to false positives
-        // maybe use a fake protocoll like rcsb://
-        if( name.length === 4 && name == path && name.toLowerCase() === ext ){
-
-            ext = "pdb";
-            file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
-
-            rcsb = true;
-
-        }
-
         if( ext === "gz" ){
             fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 3 ) );
             ext = fileInfo.ext;
@@ -450,6 +438,20 @@ NGL.autoLoad = function(){
             fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
             ext = fileInfo.ext;
             compressed = true;
+        }
+
+        // FIXME can lead to false positives
+        // maybe use a fake protocoll like rcsb://
+        if( name.length === 4 && name == path && name.toLowerCase() === ext ){
+
+            // ext = "pdb";
+            // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+            ext = "cif";
+            compressed = true;
+            file = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
+
+            rcsb = true;
+
         }
 
         if( ext in loaders ){
