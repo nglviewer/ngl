@@ -1216,7 +1216,6 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             var helixTypes = NGL.HelixTypes;
 
             var sc = cif.struct_conf;
-            var o = sc.id.length;
 
             if( !sc ){
 
@@ -1263,7 +1262,6 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
         function( wcallback ){
 
             var ssr = cif.struct_sheet_range;
-            var p = ssr.id.length;
 
             if( !ssr ){
 
