@@ -51,6 +51,8 @@ NGL.StageWidget = function( stage ){
     stage.preferences.setTheme();
 
     viewer.onWindowResize();
+    // FIXME hack for ie11
+    setTimeout( function(){ viewer.onWindowResize(); }, 500 );
 
     return this;
 
