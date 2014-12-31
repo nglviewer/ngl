@@ -10229,7 +10229,7 @@ NGL.autoLoad = function(){
             // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
             ext = "cif";
             compressed = "gz";
-            file = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
+            path = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
             protocol = "http";
 
         }
@@ -10250,7 +10250,7 @@ NGL.autoLoad = function(){
 
             if( data ){
 
-                object = loader.init( data, name, path, ext, function( _object ){
+                object = loader.init( data, name, file, ext, function( _object ){
 
                     if( typeof onLoad === "function" ) onLoad( _object );
 
@@ -10282,7 +10282,7 @@ NGL.autoLoad = function(){
 
             var fileLoader = new NGL.FileLoader();
             if( compressed ) fileLoader.setResponseType( "arraybuffer" );
-            fileLoader.load( path, init, onProgress, error );
+            fileLoader.load( file, init, onProgress, error );
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 

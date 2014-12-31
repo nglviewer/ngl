@@ -2587,7 +2587,8 @@ NGL.MenubarFileWidget = function( stage ){
     var fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.multiple = true;
-    fileInput.style = "visibility:hidden";
+    fileInput.style.display = "hidden";
+    document.body.appendChild( fileInput );
     fileInput.accept = "." + fileTypesOpen.join( ",." );
     fileInput.addEventListener( 'change', function( e ){
 
@@ -2619,11 +2620,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onOpenOptionClick () {
 
-        fileInput.dispatchEvent( new MouseEvent('click', {
-            'view': window,
-            'bubbles': true,
-            'cancelable': true
-        }));
+        fileInput.click();
 
     }
 
@@ -2691,7 +2688,8 @@ NGL.MenubarFileWidget = function( stage ){
         if( e.keyCode === 13 ){
 
             stage.loadFile(
-                e.target.value, undefined, undefined, undefined,
+                "rcsb://" + e.target.value,
+                undefined, undefined, undefined,
                 {
                     asTrajectory: asTrajectory,
                     firstModelOnly: firstModelOnly,
