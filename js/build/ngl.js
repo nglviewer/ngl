@@ -122,6 +122,31 @@ if ( !Object.assign ) {
 }
 
 
+////////////////
+// Workarounds
+
+HTMLElement.prototype.getBoundingClientRect = function(){
+
+    // workaround for ie11 behavior with disconnected dom nodes
+
+    var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+
+    return function(){
+        try{
+            return _getBoundingClientRect.apply( this, arguments );
+        }catch( e ){
+            return {
+                top: 0,
+                left: 0,
+                width: this.width,
+                height: this.height
+            };
+        }
+    };
+
+}();
+
+
 ///////////////
 // Extensions
 
@@ -253,12 +278,53 @@ NGL.unicodeHelper = function(){
 
 NGL.getFileInfo = function( file ){
 
-    var path = ( file instanceof File ) ? file.name : file;
+    var compressedExtList = [ "gz", "zip", "lzma", "bz2" ];
+
+    var path, compressed, protocol;
+
+    if( file instanceof File ){
+
+        path = file.name;
+
+    }else{
+
+        path = file
+
+    }
+
+    var name = path.replace( /^.*[\\\/]/, '' );
+    var base = name.substring( 0, name.lastIndexOf('.') );
+    var ext = path.split('.').pop().toLowerCase();
+
+    var protoMatch = path.match( /^(.+):\/\/(.+)$/ );
+    if( protoMatch ){
+        protocol = protoMatch[ 1 ].toLowerCase();
+        path = protoMatch[ 2 ];
+    }
+
+    if( compressedExtList.indexOf( ext ) !== -1 ){
+
+        compressed = ext;
+
+        var n = path.length - ext.length - 1;
+        ext = path.substr( 0, n ).split('.').pop().toLowerCase();
+
+        var m = base.length - ext.length - 1;
+        base = base.substr( 0, m );
+
+    }else{
+
+        compressed = false;
+
+    }
 
     return {
         "path": path,
-        "name": path.replace( /^.*[\\\/]/, '' ),
-        "ext": path.split('.').pop().toLowerCase()
+        "name": name,
+        "ext": ext,
+        "base": base,
+        "compressed": compressed,
+        "protocol": protocol
     };
 
 }
@@ -380,7 +446,9 @@ NGL.ObjectMetadata.prototype = {
 ///////////
 // Spline
 
-NGL.Spline = function( fiber ){
+NGL.Spline = function( fiber, arrows ){
+
+    this.arrows = arrows || false;
 
     this.fiber = fiber;
     this.size = fiber.residueCount - 2;
@@ -516,6 +584,7 @@ NGL.Spline.prototype = {
         var n = this.size;
         var n1 = n - 1;
         var traceAtomname = this.traceAtomname;
+        var arrows = this.arrows;
 
         var size = new Float32Array( n1 * m + 1 );
 
@@ -532,11 +601,40 @@ NGL.Spline.prototype = {
             s2 = radiusFactory.atomRadius( a2 );
             s3 = radiusFactory.atomRadius( a3 );
 
-            for( j = 0; j < m; ++j ){
+            if( arrows && (
+                    ( r2.ss==="s" && r3.ss!=="s" ) ||
+                    ( r2.ss==="h" && r3.ss!=="h" ) ||
+                    ( r2.ss==="g" && r3.ss!=="g" ) ||
+                    ( r2.ss==="i" && r3.ss!=="i" )
+                )
+            ){
 
-                // linear interpolation
-                t = j / m;
-                size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+                s2 *= 1.7;
+                var m2 = Math.ceil( m / 2 );
+
+                for( j = 0; j < m2; ++j ){
+
+                    // linear interpolation
+                    t = j / m2;
+                    size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+
+                }
+
+                for( j = m2; j < m; ++j ){
+
+                    size[ k + j ] = s3;
+
+                }
+
+            }else{
+
+                for( j = 0; j < m; ++j ){
+
+                    // linear interpolation
+                    t = j / m;
+                    size[ k + j ] = ( 1 - t ) * s2 + t * s3;
+
+                }
 
             }
 
@@ -3706,6 +3804,8 @@ NGL.Structure.prototype = {
 
             console.time( "NGL.Structure.autoSS" );
 
+            // assign secondary structure
+
             this.eachFiber( function( f ){
 
                 if( f.isProtein() ){
@@ -3715,6 +3815,46 @@ NGL.Structure.prototype = {
                 }else if( f.isCg() ){
 
                     cgFiber( f );
+
+                }
+
+            } );
+
+            // set lone secondary structure assignments to "c"
+
+            this.eachFiber( function( f ){
+
+                if( !f.isProtein() && !f.isCg ) return;
+
+                var r;
+                var ssType = undefined;
+                var ssCount = 0;
+
+                f.eachResidueN( 2, function( r1, r2 ){
+
+                    if( r1.ss===r2.ss ){
+
+                        ssCount += 1;
+
+                    }else{
+
+                        if( ssCount===1 ){
+
+                            r1.ss = "c";
+
+                        }
+
+                        ssCount = 1;
+
+                    }
+
+                    r = r2;
+
+                } );
+
+                if( ssCount===1 ){
+
+                    r.ss = "c";
 
                 }
 
@@ -4820,6 +4960,34 @@ NGL.Atom.prototype = {
 
         return array;
 
+    },
+
+    copy: function( atom ){
+
+        this.index = atom.index;
+        this.atomno = atom.atomno;
+        this.resname = atom.resname;
+        this.x = atom.x;
+        this.y = atom.y;
+        this.z = atom.z;
+        this.element = atom.element;
+        this.chainname = atom.chainname;
+        this.resno = atom.resno;
+        this.serial = atom.serial;
+        this.ss = atom.ss;
+        this.vdw = atom.vdw;
+        this.covalent = atom.covalent;
+        this.hetero = atom.hetero;
+        this.bfactor = atom.bfactor;
+        this.bonds = atom.bonds;
+        this.altloc = atom.altloc;
+        this.atomname = atom.atomname;
+        this.modelindex = atom.modelindex;
+
+        this.residue = atom.residue;
+
+        return this;
+
     }
 
 }
@@ -5372,26 +5540,7 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.residue[ this.index ] = value;
     },
 
-    // connectedTo: function( atom ){
-
-    //     if( this.hetero && atom.hetero ) return false;
-
-    //     var x = this.x - atom.x;
-    //     var y = this.y - atom.y;
-    //     var z = this.z - atom.z;
-
-    //     var distSquared = x * x + y * y + z * z;
-
-    //     // console.log( distSquared );
-    //     if( this.residue.isCg() && distSquared < 28.0 ) return true;
-
-    //     if( isNaN( distSquared ) ) return false;
-    //     if( distSquared < 0.5 ) return false; // duplicate or altloc
-
-    //     var d = this.covalent + atom.covalent + 0.3;
-    //     return distSquared < ( d * d );
-
-    // },
+    // connectedTo: NGL.Atom.prototype.connectedTo,
 
     connectedTo: function( atom ){
 
@@ -5419,47 +5568,13 @@ NGL.ProxyAtom.prototype = {
 
     },
 
-    qualifiedName: function(){
+    qualifiedName: NGL.Atom.prototype.qualifiedName,
 
-        var name = "";
+    positionFromArray: NGL.Atom.prototype.positionFromArray,
 
-        if( this.resname ) name += "[" + this.resname + "]";
-        if( this.resno ) name += this.resno;
-        if( this.chainname ) name += ":" + this.chainname;
-        if( this.atomname ) name += "." + this.atomname;
-        if( this.residue && this.residue.chain &&
-                this.residue.chain.model ){
-            name += "/" + this.residue.chain.model.index;
-        }
+    positionToArray: NGL.Atom.prototype.positionToArray,
 
-        return name;
-
-    },
-
-    positionFromArray: function( array, offset ){
-
-        if( offset === undefined ) offset = 0;
-
-        this.x = array[ offset + 0 ];
-        this.y = array[ offset + 1 ];
-        this.z = array[ offset + 2 ];
-
-        return this;
-
-    },
-
-    positionToArray: function( array, offset ){
-
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
-
-        array[ offset + 0 ] = this.x;
-        array[ offset + 1 ] = this.y;
-        array[ offset + 2 ] = this.z;
-
-        return array;
-
-    }
+    copy: NGL.Atom.prototype.copy
 
 }
 
@@ -7062,6 +7177,8 @@ NGL.Trajectory.prototype = {
 
     updateStructure: function( i, callback ){
 
+        if( this._disposed ) return;
+
         if( i === -1 ){
 
             this.structure.updatePosition( this.initialStructure );
@@ -7217,6 +7334,8 @@ NGL.Trajectory.prototype = {
     dispose: function(){
 
         this.frameCache = [];  // aid GC
+        this._disposed = true;
+        if( this.player ) this.player.stop();
 
     },
 
@@ -7660,23 +7779,10 @@ NGL.TrajectoryPlayer.prototype = {
                 this.traj.setPlayer( this );
             }
 
-            if( this.mode === "once" ){
-
-                var i = this.traj.currentFrame;
-
-                if( i >= this.end || i <= this.start ){
-
-                    if( this.direction === "forward" ){
-                        i = this.start;
-                    }else{
-                        i = this.end;
-                    }
-
-                    this.traj.setFrame( i );
-
-                }
-
-            }
+            // snap to grid implied by this.step thus minimizing cache misses
+            this.traj.setFrame(
+                Math.ceil( this.traj.currentFrame / this.step ) * this.step
+            );
 
             this._stopFlag = false;
             this._animate();
@@ -8337,29 +8443,23 @@ NGL.buildStructure = function( structure, callback ){
             if( currentModelindex!==modelindex ){
 
                 m = structure.addModel();
-                c = m.addChain();
-                r = c.addResidue();
 
                 chainDict = {};
 
+                c = m.addChain();
                 c.chainname = chainname;
                 chainDict[ chainname ] = c;
 
+                r = c.addResidue();
                 r.resno = resno;
                 r.resname = resname;
 
-                currentChainname = chainname;
-                currentResno = resno;
-
-            }
-
-            if( currentChainname!==chainname ){
+            }else if( currentChainname!==chainname ){
 
                 if( !chainDict[ chainname ] ){
 
                     c = m.addChain();
                     c.chainname = chainname;
-
                     chainDict[ chainname ] = c;
 
                 }else{
@@ -8368,9 +8468,11 @@ NGL.buildStructure = function( structure, callback ){
 
                 }
 
-            }
+                r = c.addResidue();
+                r.resno = resno;
+                r.resname = resname;
 
-            if( currentResno!==resno ){
+            }else if( currentResno!==resno ){
 
                 r = c.addResidue();
                 r.resno = resno;
@@ -8400,6 +8502,7 @@ NGL.buildStructure = function( structure, callback ){
         function(){
 
             console.timeEnd( "NGL.buildStructure" );
+            console.log( structure );
 
             callback();
 
@@ -8491,6 +8594,7 @@ NGL.StructureParser = function( name, path, params ){
 
     this.firstModelOnly = params.firstModelOnly || false;
     this.asTrajectory = params.asTrajectory || false;
+    this.cAlphaOnly = params.cAlphaOnly || false;
 
     this.structure = new NGL.Structure( this.name, this.path );
 
@@ -8586,6 +8690,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
+    var cAlphaOnly = this.cAlphaOnly;
 
     var frames = [];
     var boxes = [];
@@ -8638,6 +8743,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
 
+                atomname = line.substr( 12, 4 ).trim();
+                if( cAlphaOnly && atomname !== 'CA' ) continue;
+
                 var x = parseFloat( line.substr( 30, 8 ) );
                 var y = parseFloat( line.substr( 38, 8 ) );
                 var z = parseFloat( line.substr( 46, 8 ) );
@@ -8660,7 +8768,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
 
                 serial = parseInt( line.substr( 6, 5 ) );
-                atomname = line.substr( 12, 4 ).trim();
                 element = line.substr( 76, 2 ).trim();
                 chainname = line[ 21 ].trim();
                 resno = parseInt( line.substr( 22, 5 ) );
@@ -8699,10 +8806,18 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
                 var pos = [ 11, 16, 21, 26 ];
 
+                if( from === undefined ){
+                    // console.log( "missing serial, probably alternative location to be fixed" );
+                    continue;
+                }
+
                 for (var j = 0; j < 4; j++) {
 
                     var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
-                    if( to === undefined ) continue;
+                    if( to === undefined ){
+                        // console.log( "missing serial, probably alternative location to be fixed" );
+                        continue;
+                    }
 
                     bondSet.addBond( from, to );
 
@@ -8934,6 +9049,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
     var asTrajectory = this.asTrajectory;
+    var cAlphaOnly = this.cAlphaOnly;
 
     var frames = [];
     var boxes = [];
@@ -9018,6 +9134,9 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
             }else{
 
+                atomname = line.substr( 10, 5 ).trim();
+                if( cAlphaOnly && atomname !== 'CA' ) continue;
+
                 var x = parseFloat( line.substr( xpos, lpos ) ) * 10;
                 var y = parseFloat( line.substr( ypos, lpos ) ) * 10;
                 var z = parseFloat( line.substr( zpos, lpos ) ) * 10;
@@ -9036,7 +9155,6 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
                 }
 
-                atomname = line.substr( 10, 5 ).trim();
                 resname = line.substr( 5, 5 ).trim();
 
                 element = guessElem( atomname );
@@ -9101,10 +9219,6 @@ NGL.GroParser.prototype._postProcess = function( structure, callback ){
 
 NGL.CifParser = function( name, path, params ){
 
-    params = params || {};
-
-    this.cAlphaOnly = params.cAlphaOnly || false;
-
     NGL.StructureParser.call( this, name, path, params );
 
 };
@@ -9161,7 +9275,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     //
 
     var reWhitespace = /\s+/;
-    var reQuotedWhitespace = /\s+(?=(?:[^']*'[^']*')*[^']*$)/;
+    var reQuotedWhitespace = /'(.*?)'|"(.*?)"|(\S+)/g;
+    var reDoubleQuote = /"/g;
 
     var cif = {};
     s.cif = cif;
@@ -9170,6 +9285,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var currentString = null;
     var pendingLoop = false;
     var loopPointers = null;
+    var currentLoopIndex = null;
     var currentCategory = null;
     var currentName = null;
     var first = null;
@@ -9193,13 +9309,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             line = lines[i].trim();
 
-            if( !line || line[0]==="#" ){
+            if( ( !line && !pendingString ) || line[0]==="#" ){
 
                 // console.log( "NEW BLOCK" );
 
                 pendingString = false;
                 pendingLoop = false;
                 loopPointers = null;
+                currentLoopIndex = null;
                 currentCategory = null;
                 currentName = null;
                 first = null;
@@ -9216,9 +9333,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 if( pendingString ){
 
-                    // console.log( "STRING END" );
+                    // console.log( "STRING END", currentString );
 
-                    cif[ currentCategory ][ currentName ] = currentString;
+                    if( pendingLoop ){
+                        loopPointers[ currentLoopIndex ].push( currentString );
+                        currentLoopIndex += 1;
+                    }else{
+                        cif[ currentCategory ][ currentName ] = currentString;
+                    }
 
                     pendingString = false;
                     currentString = null;
@@ -9239,6 +9361,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 pendingLoop = true;
                 loopPointers = [];
                 pointerNames = [];
+                currentLoopIndex = 0;
 
             }else if( line[0]==="_" ){
 
@@ -9265,7 +9388,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 }else{
 
-                    var ls = line.split( reQuotedWhitespace );
+                    var ls = line.match( reQuotedWhitespace );
                     var key = ls[ 0 ];
                     var value = ls[ 1 ];
                     var ks = key.split(".");
@@ -9286,7 +9409,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             }else{
 
-                if( pendingLoop ){
+                if( pendingString ){
+
+                    // console.log( "STRING VALUE", line );
+
+                    currentString += " " + line;
+
+                }else if( pendingLoop ){
 
                     // console.log( "LOOP VALUE", line );
 
@@ -9335,7 +9464,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         //
 
-                        var atomname = ls[ label_atom_id ];
+                        var atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
                         if( cAlphaOnly && atomname !== 'CA' ) continue;
 
                         var altloc = ls[ label_alt_id ];
@@ -9376,19 +9505,22 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                     }else{
 
-                        var ls = line.split( reQuotedWhitespace );
+                        var ls = line.match( reQuotedWhitespace );
                         var nn = ls.length;
+
+                        if( currentLoopIndex === loopPointers.length ){
+                            currentLoopIndex = 0;
+                        }/*else if( currentLoopIndex > loopPointers.length ){
+                            console.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
+                        }*/
+
                         for( var j = 0; j < nn; ++j ){
-                            loopPointers[ j ].push( ls[ j ] );
+                            loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
                         }
 
+                        currentLoopIndex += nn;
+
                     }
-
-                }else if( pendingString ){
-
-                    // console.log( "STRING VALUE", line );
-
-                    currentString += " " + line;
 
                 }else if( line[0]==="'" && line.substring( line.length-1 )==="'" ){
 
@@ -9448,7 +9580,6 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             var helixTypes = NGL.HelixTypes;
 
             var sc = cif.struct_conf;
-            var o = sc.id.length;
 
             if( !sc ){
 
@@ -9495,7 +9626,6 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
         function( wcallback ){
 
             var ssr = cif.struct_sheet_range;
-            var p = ssr.id.length;
 
             if( !ssr ){
 
@@ -9544,6 +9674,110 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
         }
 
+        // biomol processing
+
+        var operDict = {};
+
+        s.biomolDict = {};
+        var biomolDict = s.biomolDict;
+
+        if( cif.pdbx_struct_oper_list ){
+
+            var op = cif.pdbx_struct_oper_list;
+
+            // ensure data is in lists
+            if( !Array.isArray( op.id ) ){
+                Object.keys( op ).forEach( function( key ){
+                    op[ key ] = [ op[ key ] ];
+                } );
+            }
+
+            op.id.forEach( function( id, i ){
+
+                var m = new THREE.Matrix4();
+                var elms = m.elements;
+
+                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                elms[ 12 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                elms[ 13 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                elms[ 14 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                operDict[ id ] = m;
+
+            } );
+
+        }
+
+        if( cif.pdbx_struct_assembly_gen ){
+
+            var gen = cif.pdbx_struct_assembly_gen;
+
+            // ensure data is in lists
+            if( !Array.isArray( gen.assembly_id ) ){
+                Object.keys( gen ).forEach( function( key ){
+                    gen[ key ] = [ gen[ key ] ];
+                } );
+            }
+
+            gen.assembly_id.forEach( function( id, i ){
+
+                var md = {};
+                var oe = gen.oper_expression[ i ];
+
+                if( oe.indexOf( ")(" ) !== -1 ){
+
+                    console.warn( "parsing of this oper_expression not implemented:", oe );
+                    return;
+
+                }else{
+
+                    var l = oe.replace( /[\(\)']/g, "" ).split( "," );
+
+                    l.forEach( function( e ){
+
+                        if( e.indexOf( "-" ) !== -1 ){
+
+                            var es = e.split( "-" );
+
+                            var j = parseInt( es[ 0 ] );
+                            var m = parseInt( es[ 1 ] );
+
+                            for( ; j <= m; ++j ){
+
+                                md[ j ] = operDict[ j ];
+
+                            }
+
+                        }else{
+
+                            md[ e ] = operDict[ e ];
+
+                        }
+
+                    } );
+
+                }
+
+                biomolDict[ id ] = {
+                    matrixDict: md,
+                    chainList: gen.asym_id_list[ i ].split( "," )
+                };
+
+            } );
+
+        }
+
         // check for chain names
 
         var _doAutoChainName = true;
@@ -9585,7 +9819,7 @@ NGL.Uint8ToString = function( u8a ){
 NGL.decompress = function( data, file, callback ){
 
     var binData, decompressedData;
-    var ext = NGL.getFileInfo( file ).ext;
+    var ext = NGL.getFileInfo( file ).compressed;
 
     console.time( "decompress " + ext );
 
@@ -9669,7 +9903,6 @@ NGL.decompress = function( data, file, callback ){
 
 ///////////
 // Loader
-
 
 NGL.XHRLoader = function ( manager ) {
 
@@ -9982,39 +10215,23 @@ NGL.autoLoad = function(){
 
         var fileInfo = NGL.getFileInfo( file );
 
+        console.log( fileInfo );
+
         var path = fileInfo.path;
         var name = fileInfo.name;
         var ext = fileInfo.ext;
+        var compressed = fileInfo.compressed;
+        var protocol = fileInfo.protocol;
 
-        var compressed = false;
+        if( protocol === "rcsb" ){
 
-        // FIXME can lead to false positives
-        // maybe use a fake protocoll like rcsb://
-        if( name.length === 4 && name == path && name.toLowerCase() === ext ){
+            // ext = "pdb";
+            // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+            ext = "cif";
+            compressed = "gz";
+            file = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
+            protocol = "http";
 
-            ext = "pdb";
-            file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
-
-            rcsb = true;
-
-        }
-
-        if( ext === "gz" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 3 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }else if( ext === "zip" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }else if( ext === "lzma" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 5 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }else if( ext === "bz2" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
-            ext = fileInfo.ext;
-            compressed = true;
         }
 
         if( ext in loaders ){
@@ -10063,21 +10280,24 @@ NGL.autoLoad = function(){
 
         if( file instanceof File ){
 
-            name = file.name;
-
             var fileLoader = new NGL.FileLoader();
             if( compressed ) fileLoader.setResponseType( "arraybuffer" );
-            fileLoader.load( file, init, onProgress, error );
+            fileLoader.load( path, init, onProgress, error );
 
-        }else if( rcsb ){
-
-            if( compressed ) loader.setResponseType( "arraybuffer" );
-            loader.load( file, init, onProgress, error );
-
-        }else{
+        }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
-            loader.load( "../data/" + file, init, onProgress, error );
+            loader.load( path, init, onProgress, error );
+
+        }else if( protocol === "data" ){
+
+            if( compressed ) loader.setResponseType( "arraybuffer" );
+            loader.load( "../data/" + path, init, onProgress, error );
+
+        }else{ // default: protocol === "file"
+
+            if( compressed ) loader.setResponseType( "arraybuffer" );
+            loader.load( "../file/" + path, init, onProgress, error );
 
         }
 
@@ -16790,6 +17010,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         wireframe: {
             type: "boolean"
+        },
+        arrows: {
+            type: "boolean"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -16818,6 +17041,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
         this.wireframe = p.wireframe || false;
+        this.arrows = p.arrows || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -16842,7 +17066,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( fiber.residueCount < 4 ) return;
 
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( fiber, scope.arrows );
             var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
             var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
             var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
@@ -16939,7 +17163,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             if( fiber.residueCount < 4 ) return;
 
             var bufferData = {};
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( fiber, this.arrows );
 
             this.bufferList[ i ].rx = this.aspectRatio;
 
@@ -17027,6 +17251,13 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         if( params && params[ "wireframe" ] !== undefined ){
 
             this.wireframe = params[ "wireframe" ];
+            rebuild = true;
+
+        }
+
+        if( params && params[ "arrows" ] !== undefined ){
+
+            this.arrows = params[ "arrows" ];
             rebuild = true;
 
         }
@@ -18731,12 +18962,18 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
-            // safeguard
-            if( object.structure.atomCount > 100000 ) return;
+            if( object.structure.atomCount > 100000 ){
 
-            object.addRepresentation( "cartoon", { sele: "*" } );
-            object.addRepresentation( "licorice", { sele: "hetero" } );
-            object.centerView( undefined, true );
+                object.addRepresentation( "line" );
+                object.centerView( undefined, true );
+
+            }else{
+
+                object.addRepresentation( "cartoon", { sele: "*" } );
+                object.addRepresentation( "licorice", { sele: "hetero" } );
+                object.centerView( undefined, true );
+
+            }
 
             // add frames as trajectory
             if( object.structure.frames ) object.addTrajectory();
@@ -18963,6 +19200,9 @@ NGL.PickingControls = function( viewer, stage ){
 
     viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
 
+        e.preventDefault();
+        // e.stopPropagation();
+
         mouse.moving = true;
         mouse.position.x = e.layerX;
         mouse.position.y = e.layerY;
@@ -18971,6 +19211,9 @@ NGL.PickingControls = function( viewer, stage ){
 
     viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
 
+        e.preventDefault();
+        // e.stopPropagation();
+
         mouse.moving = false;
         mouse.down.x = e.layerX;
         mouse.down.y = e.layerY;
@@ -18978,6 +19221,9 @@ NGL.PickingControls = function( viewer, stage ){
     } );
 
     viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
+
+        e.preventDefault();
+        // e.stopPropagation();
 
         if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
 
@@ -19887,6 +20133,14 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     },
 
+    setSelection: function( string ){
+
+        this.repr.setSelection( string );
+
+        return this;
+
+    },
+
     setParameters: function( params ){
 
         this.repr.setParameters( params );
@@ -19946,7 +20200,7 @@ NGL.Examples = {
                 // sele: "349-352",
             };
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -19957,7 +20211,7 @@ NGL.Examples = {
 
             }, params );
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "backbone", { sele: "protein", color: "ss" } );
 
@@ -19967,7 +20221,7 @@ NGL.Examples = {
 
         "trr_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "line" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -19981,7 +20235,7 @@ NGL.Examples = {
 
         "dcd_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/ala3.pdb", function( o ){
+            stage.loadFile( "data://ala3.pdb", function( o ){
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -20000,7 +20254,7 @@ NGL.Examples = {
 
         "netcdf_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/DPDP.pdb", function( o ){
+            stage.loadFile( "data://DPDP.pdb", function( o ){
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -20019,7 +20273,7 @@ NGL.Examples = {
 
         "anim_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "line", { sele: "not hydrogen and protein" } );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -20041,7 +20295,7 @@ NGL.Examples = {
 
         "3pqr": function( stage ){
 
-            stage.loadFile( "__example__/3pqr.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "1-320", wireframe: false } );
                 o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
@@ -20065,7 +20319,7 @@ NGL.Examples = {
 
         "1blu": function( stage ){
 
-            stage.loadFile( "__example__/1blu.pdb", function( o ){
+            stage.loadFile( "data://1blu.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "backbone", {
@@ -20081,7 +20335,7 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            stage.loadFile( "__example__/1LVZ.pdb", function( o ){
+            stage.loadFile( "data://1LVZ.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 // o.addRepresentation( "licorice", { sele: "*" } );
@@ -20092,8 +20346,8 @@ NGL.Examples = {
             }, null, null, { asTrajectory: true } );
             // }, null, null, { firstModelOnly: true } );
 
-            // stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
-            stage.loadFile( "__example__/md_1u19_trj.gro", function( o ){
+            // stage.loadFile( "data://md_ascii_trj.gro", function( o ){
+            stage.loadFile( "data://md_1u19_trj.gro", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 // o.addRepresentation( "licorice", { sele: "*" } );
@@ -20107,7 +20361,7 @@ NGL.Examples = {
 
         "multi_struc": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -20115,7 +20369,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/3pqr.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -20127,14 +20381,14 @@ NGL.Examples = {
 
         "superpose": function( stage ){
 
-            stage.loadFile( "__example__/1u19.pdb", function( o1 ){
+            stage.loadFile( "data://1u19.pdb", function( o1 ){
 
                 var s = "1-320:A";
 
                 o1.addRepresentation( "cartoon", { sele: s } );
                 o1.addRepresentation( "ball+stick", { sele: s } );
 
-                stage.loadFile( "__example__/3dqb.pdb", function( o2 ){
+                stage.loadFile( "data://3dqb.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon", { sele: s } );
                     o2.addRepresentation( "licorice", { sele: s } );
@@ -20150,13 +20404,13 @@ NGL.Examples = {
 
         "alignment": function( stage ){
 
-            stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
+            stage.loadFile( "data://3dqb.pdb", function( o1 ){
 
                 o1.addRepresentation( "cartoon" );
                 o1.addRepresentation( "ball+stick", { sele: "hetero" } );
                 o1.centerView();
 
-                stage.loadFile( "__example__/3sn6.pdb", function( o2 ){
+                stage.loadFile( "data://3sn6.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon" );
                     o2.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -20177,12 +20431,12 @@ NGL.Examples = {
 
         "alignment2": function( stage ){
 
-            stage.loadFile( "__example__/1gzm.pdb", function( o1 ){
+            stage.loadFile( "data://1gzm.pdb", function( o1 ){
 
                 o1.addRepresentation( "cartoon" );
                 o1.centerView();
 
-                stage.loadFile( "__example__/1u19.pdb", function( o2 ){
+                stage.loadFile( "data://1u19.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon" );
 
@@ -20202,7 +20456,7 @@ NGL.Examples = {
 
         "pbc": function( stage ){
 
-            stage.loadFile( "__example__/pbc.gro", function( o ){
+            stage.loadFile( "data://pbc.gro", function( o ){
 
                 // FIXME pbc centering and removal for files other then trajectories
 
@@ -20229,7 +20483,7 @@ NGL.Examples = {
 
         "xtc_parts": function( stage ){
 
-            stage.loadFile( "__example__/md_1u19.gro", function( o ){
+            stage.loadFile( "data://md_1u19.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "line", {
@@ -20246,7 +20500,7 @@ NGL.Examples = {
 
         "impostor": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 var _disableImpostor = NGL.disableImpostor;
 
@@ -20265,7 +20519,7 @@ NGL.Examples = {
 
         "cg": function( stage ){
 
-            stage.loadFile( "__example__/BaceCg.pdb", function( o ){
+            stage.loadFile( "data://BaceCg.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "rope", { sele: "helix" } );
@@ -20278,7 +20532,7 @@ NGL.Examples = {
 
         "ribosome": function( stage ){
 
-            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -20286,7 +20540,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -20294,7 +20548,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -20302,7 +20556,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -20314,28 +20568,28 @@ NGL.Examples = {
 
         "ribosome2": function( stage ){
 
-            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
@@ -20346,28 +20600,28 @@ NGL.Examples = {
 
         "ribosome3": function( stage ){
 
-            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
@@ -20378,7 +20632,7 @@ NGL.Examples = {
 
         "selection": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 var sele = "not backbone or .CA or (PRO and .N)";
 
@@ -20392,7 +20646,7 @@ NGL.Examples = {
 
         "spline": function( stage ){
 
-            stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
+            stage.loadFile( "data://BaceCgProteinAtomistic.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "10-20" } );
                 o.addRepresentation( "tube", {
@@ -20411,7 +20665,7 @@ NGL.Examples = {
                 sele: ":A or :B or DPPC"
             };
 
-            stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
+            stage.loadFile( "data://Bace1Trimer-inDPPC.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "licorice", { sele: "DPPC" } );
@@ -20423,13 +20677,13 @@ NGL.Examples = {
 
         "script": function( stage ){
 
-            stage.loadFile( "__example__/script.ngl" );
+            stage.loadFile( "data://script.ngl" );
 
         },
 
         "bfactor": function( stage ){
 
-            stage.loadFile( "__example__/1u19.pdb", function( o ){
+            stage.loadFile( "data://1u19.pdb", function( o ){
 
                 o.addRepresentation( "tube", {
                     sele: ":A", visible: false, bfactor: 0.005
@@ -20456,7 +20710,7 @@ NGL.Examples = {
 
         "1d66": function( stage ){
 
-            stage.loadFile( "__example__/1d66.pdb", function( o ){
+            stage.loadFile( "data://1d66.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
                     sele: "nucleic", wireframe: false
@@ -20476,7 +20730,7 @@ NGL.Examples = {
 
         "trajReprUpdate": function( stage ){
 
-            stage.loadFile( "__example__/md_1u19.gro", function( o ){
+            stage.loadFile( "data://md_1u19.gro", function( o ){
 
                 var spacefill = o.addRepresentation( "spacefill", {
                     sele: "1-30", color: 0x00CCFF, radius: 2.0, scale: 1.0
@@ -20524,7 +20778,7 @@ NGL.Examples = {
 
             console.time( "test" );
 
-            stage.loadFile( "__example__/3l5q.pdb", function( o ){
+            stage.loadFile( "data://3l5q.pdb", function( o ){
 
                 o.addRepresentation( "line", { color: "chainindex" } );
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
@@ -20544,7 +20798,7 @@ NGL.Examples = {
 
             console.time( "test" );
 
-            stage.loadFile( "__example__/1RB8.pdb", function( o ){
+            stage.loadFile( "data://1RB8.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 o.addRepresentation( "licorice" );
@@ -20557,7 +20811,7 @@ NGL.Examples = {
 
         "surface": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "ball+stick" );
@@ -20566,7 +20820,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/1crn.ply", function( o ){
+            stage.loadFile( "data://1crn.ply", function( o ){
 
                 o.addRepresentation( undefined, {
                     transparent: true, opacity: 0.3, side: THREE.DoubleSide
@@ -20580,14 +20834,14 @@ NGL.Examples = {
 
             console.time( "test" );
 
-            // stage.loadFile( "__example__/1crn.gro", function( o ){
+            // stage.loadFile( "data://1crn.gro", function( o ){
 
             //     o.addRepresentation( "ribbon", { color: "residueindex" } );
             //     stage.centerView();
 
             // } );
 
-            stage.loadFile( "__example__/water.gro", function( o ){
+            stage.loadFile( "data://water.gro", function( o ){
 
                 o.addRepresentation( "line", { color: "residueindex" } );
                 stage.centerView();
@@ -20598,7 +20852,7 @@ NGL.Examples = {
 
             } );
 
-            /*stage.loadFile( "__example__/3l5q.gro", function( o ){
+            /*stage.loadFile( "data://3l5q.gro", function( o ){
 
                 o.addRepresentation( "trace", { color: "residueindex", subdiv: 3 } );
                 stage.centerView();
@@ -20613,7 +20867,7 @@ NGL.Examples = {
 
         "helixorient": function( stage ){
 
-            stage.loadFile( "__example__/3dqb.pdb", function( o ){
+            stage.loadFile( "data://3dqb.pdb", function( o ){
 
                 o.addRepresentation( "crossing", {
                     ssBorder: true, radius: 0.6
@@ -20630,13 +20884,13 @@ NGL.Examples = {
 
         "norovirus": function( stage ){
 
-            stage.loadFile( "__example__/norovirus.ngl" );
+            stage.loadFile( "data://norovirus.ngl" );
 
         },
 
         "label": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "tube", { radius: "ss" } );
                 o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
@@ -20647,7 +20901,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/1crn.ply", function( o ){
+            stage.loadFile( "data://1crn.ply", function( o ){
 
                 o.addRepresentation( undefined, {
                     transparent: true, opacity: 0.3, side: THREE.FrontSide
@@ -20659,8 +20913,8 @@ NGL.Examples = {
 
         "cif": function( stage ){
 
-            stage.loadFile( "__example__/3SN6.cif", function( o ){
-            // stage.loadFile( "__example__/1CRN.cif", function( o ){
+            stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://1CRN.cif", function( o ){
 
                 o.addRepresentation( "cartoon", { radius: "ss" } );
                 // o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
@@ -20672,7 +20926,7 @@ NGL.Examples = {
 
         "1crn": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 // o.addRepresentation( "line", {
                 //     lineWidth: 5, transparent: true, opacity: 0.5
@@ -20691,21 +20945,21 @@ NGL.Examples = {
 
         "decompress": function( stage ){
 
-            stage.loadFile( "__example__/1CRN.cif.gz", function( o ){
+            stage.loadFile( "data://1CRN.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/1CRN.cif.zip", function( o ){
+            stage.loadFile( "data://1CRN.cif.zip", function( o ){
 
                 o.addRepresentation( "licorice" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/1CRN.cif.lzma", function( o ){
+            stage.loadFile( "data://1CRN.cif.lzma", function( o ){
 
                 o.addRepresentation( "rocket", {
                     transparent: true, opacity: 0.5
@@ -20714,7 +20968,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/1CRN.cif.bz2", function( o ){
+            stage.loadFile( "data://1CRN.cif.bz2", function( o ){
 
                 o.addRepresentation( "rope", { scale: 0.3 } );
                 stage.centerView();
@@ -20725,7 +20979,7 @@ NGL.Examples = {
 
         "hiv": function( stage ){
 
-            stage.loadFile( "__example__/3j3y.cif.gz", function( o ){
+            stage.loadFile( "data://3j3y.cif.gz", function( o ){
 
                 o.addRepresentation( "point", {
                     color: "chainindex", pointSize: 7, sizeAttenuation: true,

@@ -35216,7 +35216,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 				} else {
 
 					mouseOnBall.z = .5 / length;
-					
+
 				}
 
 			} else if ( length > 1.0 ) {
@@ -35285,7 +35285,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 		if ( _state === STATE.TOUCH_ZOOM_PAN ) {
 
 			var factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-			
+
 			if ( this.object instanceof THREE.PerspectiveCamera ) {
 
 				_eye.multiplyScalar( factor );
