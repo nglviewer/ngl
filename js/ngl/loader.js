@@ -430,7 +430,7 @@ NGL.autoLoad = function(){
             // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
             ext = "cif";
             compressed = "gz";
-            file = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
+            path = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
             protocol = "http";
 
         }

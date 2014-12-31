@@ -263,7 +263,8 @@ NGL.MenubarFileWidget = function( stage ){
         if( e.keyCode === 13 ){
 
             stage.loadFile(
-                e.target.value, undefined, undefined, undefined,
+                "rcsb://" + e.target.value,
+                undefined, undefined, undefined,
                 {
                     asTrajectory: asTrajectory,
                     firstModelOnly: firstModelOnly,
