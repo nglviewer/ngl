@@ -206,9 +206,15 @@ def test( filename ):
     return send_from_directory( os.path.join( APP_PATH, "test/" ), filename )
 
 
-@app.route( '/data/<root>/<path:filename>' )
+@app.route( '/data/<path:filename>' )
 @requires_auth
-def data( root, filename ):
+def data( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "data/" ), filename )
+
+
+@app.route( '/file/<root>/<path:filename>' )
+@requires_auth
+def file( root, filename ):
     directory = get_directory( root )
     if directory:
         return send_from_directory( directory, filename )

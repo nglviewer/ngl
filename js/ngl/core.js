@@ -123,13 +123,13 @@ if ( !Object.assign ) {
 ////////////////
 // Workarounds
 
-HTMLElement.prototype.getBoundingClientRect = ( function (){
+HTMLElement.prototype.getBoundingClientRect = function(){
 
     // workaround for ie11 behavior with disconnected dom nodes
 
     var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
-    return function() {
+    return function(){
         try{
             return _getBoundingClientRect.apply( this, arguments );
         }catch( e ){
@@ -142,7 +142,7 @@ HTMLElement.prototype.getBoundingClientRect = ( function (){
         }
     };
 
-} )();
+}();
 
 
 ///////////////
@@ -276,12 +276,53 @@ NGL.unicodeHelper = function(){
 
 NGL.getFileInfo = function( file ){
 
-    var path = ( file instanceof File ) ? file.name : file;
+    var compressedExtList = [ "gz", "zip", "lzma", "bz2" ];
+
+    var path, compressed, protocol;
+
+    if( file instanceof File ){
+
+        path = file.name;
+
+    }else{
+
+        path = file
+
+    }
+
+    var name = path.replace( /^.*[\\\/]/, '' );
+    var base = name.substring( 0, name.lastIndexOf('.') );
+    var ext = path.split('.').pop().toLowerCase();
+
+    var protoMatch = path.match( /^(.+):\/\/(.+)$/ );
+    if( protoMatch ){
+        protocol = protoMatch[ 1 ].toLowerCase();
+        path = protoMatch[ 2 ];
+    }
+
+    if( compressedExtList.indexOf( ext ) !== -1 ){
+
+        compressed = ext;
+
+        var n = path.length - ext.length - 1;
+        ext = path.substr( 0, n ).split('.').pop().toLowerCase();
+
+        var m = base.length - ext.length - 1;
+        base = base.substr( 0, m );
+
+    }else{
+
+        compressed = false;
+
+    }
 
     return {
         "path": path,
-        "name": path.replace( /^.*[\\\/]/, '' ),
-        "ext": path.split('.').pop().toLowerCase()
+        "name": name,
+        "ext": ext,
+        "base": base,
+        "compressed": compressed,
+        "protocol": protocol
     };
 
 }

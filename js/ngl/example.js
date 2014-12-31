@@ -27,7 +27,7 @@ NGL.Examples = {
                 // sele: "349-352",
             };
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -38,7 +38,7 @@ NGL.Examples = {
 
             }, params );
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "backbone", { sele: "protein", color: "ss" } );
 
@@ -48,7 +48,7 @@ NGL.Examples = {
 
         "trr_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "line" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -62,7 +62,7 @@ NGL.Examples = {
 
         "dcd_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/ala3.pdb", function( o ){
+            stage.loadFile( "data://ala3.pdb", function( o ){
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -81,7 +81,7 @@ NGL.Examples = {
 
         "netcdf_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/DPDP.pdb", function( o ){
+            stage.loadFile( "data://DPDP.pdb", function( o ){
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -100,7 +100,7 @@ NGL.Examples = {
 
         "anim_trajectory": function( stage ){
 
-            stage.loadFile( "__example__/md.gro", function( o ){
+            stage.loadFile( "data://md.gro", function( o ){
 
                 o.addRepresentation( "line", { sele: "not hydrogen and protein" } );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -122,7 +122,7 @@ NGL.Examples = {
 
         "3pqr": function( stage ){
 
-            stage.loadFile( "__example__/3pqr.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "1-320", wireframe: false } );
                 o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
@@ -146,7 +146,7 @@ NGL.Examples = {
 
         "1blu": function( stage ){
 
-            stage.loadFile( "__example__/1blu.pdb", function( o ){
+            stage.loadFile( "data://1blu.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "backbone", {
@@ -162,7 +162,7 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            stage.loadFile( "__example__/1LVZ.pdb", function( o ){
+            stage.loadFile( "data://1LVZ.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 // o.addRepresentation( "licorice", { sele: "*" } );
@@ -173,8 +173,8 @@ NGL.Examples = {
             }, null, null, { asTrajectory: true } );
             // }, null, null, { firstModelOnly: true } );
 
-            // stage.loadFile( "__example__/md_ascii_trj.gro", function( o ){
-            stage.loadFile( "__example__/md_1u19_trj.gro", function( o ){
+            // stage.loadFile( "data://md_ascii_trj.gro", function( o ){
+            stage.loadFile( "data://md_1u19_trj.gro", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 // o.addRepresentation( "licorice", { sele: "*" } );
@@ -188,7 +188,7 @@ NGL.Examples = {
 
         "multi_struc": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -196,7 +196,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/3pqr.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -208,14 +208,14 @@ NGL.Examples = {
 
         "superpose": function( stage ){
 
-            stage.loadFile( "__example__/1u19.pdb", function( o1 ){
+            stage.loadFile( "data://1u19.pdb", function( o1 ){
 
                 var s = "1-320:A";
 
                 o1.addRepresentation( "cartoon", { sele: s } );
                 o1.addRepresentation( "ball+stick", { sele: s } );
 
-                stage.loadFile( "__example__/3dqb.pdb", function( o2 ){
+                stage.loadFile( "data://3dqb.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon", { sele: s } );
                     o2.addRepresentation( "licorice", { sele: s } );
@@ -231,13 +231,13 @@ NGL.Examples = {
 
         "alignment": function( stage ){
 
-            stage.loadFile( "__example__/3dqb.pdb", function( o1 ){
+            stage.loadFile( "data://3dqb.pdb", function( o1 ){
 
                 o1.addRepresentation( "cartoon" );
                 o1.addRepresentation( "ball+stick", { sele: "hetero" } );
                 o1.centerView();
 
-                stage.loadFile( "__example__/3sn6.pdb", function( o2 ){
+                stage.loadFile( "data://3sn6.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon" );
                     o2.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -258,12 +258,12 @@ NGL.Examples = {
 
         "alignment2": function( stage ){
 
-            stage.loadFile( "__example__/1gzm.pdb", function( o1 ){
+            stage.loadFile( "data://1gzm.pdb", function( o1 ){
 
                 o1.addRepresentation( "cartoon" );
                 o1.centerView();
 
-                stage.loadFile( "__example__/1u19.pdb", function( o2 ){
+                stage.loadFile( "data://1u19.pdb", function( o2 ){
 
                     o2.addRepresentation( "cartoon" );
 
@@ -283,7 +283,7 @@ NGL.Examples = {
 
         "pbc": function( stage ){
 
-            stage.loadFile( "__example__/pbc.gro", function( o ){
+            stage.loadFile( "data://pbc.gro", function( o ){
 
                 // FIXME pbc centering and removal for files other then trajectories
 
@@ -310,7 +310,7 @@ NGL.Examples = {
 
         "xtc_parts": function( stage ){
 
-            stage.loadFile( "__example__/md_1u19.gro", function( o ){
+            stage.loadFile( "data://md_1u19.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "line", {
@@ -327,7 +327,7 @@ NGL.Examples = {
 
         "impostor": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 var _disableImpostor = NGL.disableImpostor;
 
@@ -346,7 +346,7 @@ NGL.Examples = {
 
         "cg": function( stage ){
 
-            stage.loadFile( "__example__/BaceCg.pdb", function( o ){
+            stage.loadFile( "data://BaceCg.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "rope", { sele: "helix" } );
@@ -359,7 +359,7 @@ NGL.Examples = {
 
         "ribosome": function( stage ){
 
-            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -367,7 +367,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -375,7 +375,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -383,7 +383,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
@@ -395,28 +395,28 @@ NGL.Examples = {
 
         "ribosome2": function( stage ){
 
-            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "line" );
                 stage.centerView();
@@ -427,28 +427,28 @@ NGL.Examples = {
 
         "ribosome3": function( stage ){
 
-            stage.loadFile( "__example__/4UPY.pdb", function( o ){
+            stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPX.pdb", function( o ){
+            stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UQ5.pdb", function( o ){
+            stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/4UPW.pdb", function( o ){
+            stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
                 stage.centerView();
@@ -459,7 +459,7 @@ NGL.Examples = {
 
         "selection": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 var sele = "not backbone or .CA or (PRO and .N)";
 
@@ -473,7 +473,7 @@ NGL.Examples = {
 
         "spline": function( stage ){
 
-            stage.loadFile( "__example__/BaceCgProteinAtomistic.pdb", function( o ){
+            stage.loadFile( "data://BaceCgProteinAtomistic.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "10-20" } );
                 o.addRepresentation( "tube", {
@@ -492,7 +492,7 @@ NGL.Examples = {
                 sele: ":A or :B or DPPC"
             };
 
-            stage.loadFile( "__example__/Bace1Trimer-inDPPC.gro", function( o ){
+            stage.loadFile( "data://Bace1Trimer-inDPPC.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "licorice", { sele: "DPPC" } );
@@ -504,13 +504,13 @@ NGL.Examples = {
 
         "script": function( stage ){
 
-            stage.loadFile( "__example__/script.ngl" );
+            stage.loadFile( "data://script.ngl" );
 
         },
 
         "bfactor": function( stage ){
 
-            stage.loadFile( "__example__/1u19.pdb", function( o ){
+            stage.loadFile( "data://1u19.pdb", function( o ){
 
                 o.addRepresentation( "tube", {
                     sele: ":A", visible: false, bfactor: 0.005
@@ -537,7 +537,7 @@ NGL.Examples = {
 
         "1d66": function( stage ){
 
-            stage.loadFile( "__example__/1d66.pdb", function( o ){
+            stage.loadFile( "data://1d66.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
                     sele: "nucleic", wireframe: false
@@ -557,7 +557,7 @@ NGL.Examples = {
 
         "trajReprUpdate": function( stage ){
 
-            stage.loadFile( "__example__/md_1u19.gro", function( o ){
+            stage.loadFile( "data://md_1u19.gro", function( o ){
 
                 var spacefill = o.addRepresentation( "spacefill", {
                     sele: "1-30", color: 0x00CCFF, radius: 2.0, scale: 1.0
@@ -605,7 +605,7 @@ NGL.Examples = {
 
             console.time( "test" );
 
-            stage.loadFile( "__example__/3l5q.pdb", function( o ){
+            stage.loadFile( "data://3l5q.pdb", function( o ){
 
                 o.addRepresentation( "line", { color: "chainindex" } );
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
@@ -625,7 +625,7 @@ NGL.Examples = {
 
             console.time( "test" );
 
-            stage.loadFile( "__example__/1RB8.pdb", function( o ){
+            stage.loadFile( "data://1RB8.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 o.addRepresentation( "licorice" );
@@ -638,7 +638,7 @@ NGL.Examples = {
 
         "surface": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "ball+stick" );
@@ -647,7 +647,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/1crn.ply", function( o ){
+            stage.loadFile( "data://1crn.ply", function( o ){
 
                 o.addRepresentation( undefined, {
                     transparent: true, opacity: 0.3, side: THREE.DoubleSide
@@ -661,14 +661,14 @@ NGL.Examples = {
 
             console.time( "test" );
 
-            // stage.loadFile( "__example__/1crn.gro", function( o ){
+            // stage.loadFile( "data://1crn.gro", function( o ){
 
             //     o.addRepresentation( "ribbon", { color: "residueindex" } );
             //     stage.centerView();
 
             // } );
 
-            stage.loadFile( "__example__/water.gro", function( o ){
+            stage.loadFile( "data://water.gro", function( o ){
 
                 o.addRepresentation( "line", { color: "residueindex" } );
                 stage.centerView();
@@ -679,7 +679,7 @@ NGL.Examples = {
 
             } );
 
-            /*stage.loadFile( "__example__/3l5q.gro", function( o ){
+            /*stage.loadFile( "data://3l5q.gro", function( o ){
 
                 o.addRepresentation( "trace", { color: "residueindex", subdiv: 3 } );
                 stage.centerView();
@@ -694,7 +694,7 @@ NGL.Examples = {
 
         "helixorient": function( stage ){
 
-            stage.loadFile( "__example__/3dqb.pdb", function( o ){
+            stage.loadFile( "data://3dqb.pdb", function( o ){
 
                 o.addRepresentation( "crossing", {
                     ssBorder: true, radius: 0.6
@@ -711,13 +711,13 @@ NGL.Examples = {
 
         "norovirus": function( stage ){
 
-            stage.loadFile( "__example__/norovirus.ngl" );
+            stage.loadFile( "data://norovirus.ngl" );
 
         },
 
         "label": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "tube", { radius: "ss" } );
                 o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
@@ -728,7 +728,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/1crn.ply", function( o ){
+            stage.loadFile( "data://1crn.ply", function( o ){
 
                 o.addRepresentation( undefined, {
                     transparent: true, opacity: 0.3, side: THREE.FrontSide
@@ -740,8 +740,8 @@ NGL.Examples = {
 
         "cif": function( stage ){
 
-            stage.loadFile( "__example__/3SN6.cif", function( o ){
-            // stage.loadFile( "__example__/1CRN.cif", function( o ){
+            stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://1CRN.cif", function( o ){
 
                 o.addRepresentation( "cartoon", { radius: "ss" } );
                 // o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
@@ -753,7 +753,7 @@ NGL.Examples = {
 
         "1crn": function( stage ){
 
-            stage.loadFile( "__example__/1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 // o.addRepresentation( "line", {
                 //     lineWidth: 5, transparent: true, opacity: 0.5
@@ -772,21 +772,21 @@ NGL.Examples = {
 
         "decompress": function( stage ){
 
-            stage.loadFile( "__example__/1CRN.cif.gz", function( o ){
+            stage.loadFile( "data://1CRN.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/1CRN.cif.zip", function( o ){
+            stage.loadFile( "data://1CRN.cif.zip", function( o ){
 
                 o.addRepresentation( "licorice" );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "__example__/1CRN.cif.lzma", function( o ){
+            stage.loadFile( "data://1CRN.cif.lzma", function( o ){
 
                 o.addRepresentation( "rocket", {
                     transparent: true, opacity: 0.5
@@ -795,7 +795,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "__example__/1CRN.cif.bz2", function( o ){
+            stage.loadFile( "data://1CRN.cif.bz2", function( o ){
 
                 o.addRepresentation( "rope", { scale: 0.3 } );
                 stage.centerView();
@@ -806,7 +806,7 @@ NGL.Examples = {
 
         "hiv": function( stage ){
 
-            stage.loadFile( "__example__/3j3y.cif.gz", function( o ){
+            stage.loadFile( "data://3j3y.cif.gz", function( o ){
 
                 o.addRepresentation( "point", {
                     color: "chainindex", pointSize: 7, sizeAttenuation: true,

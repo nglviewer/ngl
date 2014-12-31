@@ -138,7 +138,7 @@ NGL.buildStructure = function( structure, callback ){
         function(){
 
             console.timeEnd( "NGL.buildStructure" );
-            // console.log( structure );
+            console.log( structure );
 
             callback();
 

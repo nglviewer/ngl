@@ -20,7 +20,7 @@ NGL.Uint8ToString = function( u8a ){
 NGL.decompress = function( data, file, callback ){
 
     var binData, decompressedData;
-    var ext = NGL.getFileInfo( file ).ext;
+    var ext = NGL.getFileInfo( file ).compressed;
 
     console.time( "decompress " + ext );
 
@@ -416,41 +416,22 @@ NGL.autoLoad = function(){
 
         var fileInfo = NGL.getFileInfo( file );
 
+        console.log( fileInfo );
+
         var path = fileInfo.path;
         var name = fileInfo.name;
         var ext = fileInfo.ext;
+        var compressed = fileInfo.compressed;
+        var protocol = fileInfo.protocol;
 
-        var compressed = false;
-
-        if( ext === "gz" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 3 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }else if( ext === "zip" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }else if( ext === "lzma" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 5 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }else if( ext === "bz2" ){
-            fileInfo = NGL.getFileInfo( path.substr( 0, path.length - 4 ) );
-            ext = fileInfo.ext;
-            compressed = true;
-        }
-
-        // FIXME can lead to false positives
-        // maybe use a fake protocoll like rcsb://
-        if( name.length === 4 && name == path && name.toLowerCase() === ext ){
+        if( protocol === "rcsb" ){
 
             // ext = "pdb";
             // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
             ext = "cif";
-            compressed = true;
+            compressed = "gz";
             file = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
-
-            rcsb = true;
+            protocol = "http";
 
         }
 
@@ -500,21 +481,24 @@ NGL.autoLoad = function(){
 
         if( file instanceof File ){
 
-            name = file.name;
-
             var fileLoader = new NGL.FileLoader();
             if( compressed ) fileLoader.setResponseType( "arraybuffer" );
-            fileLoader.load( file, init, onProgress, error );
+            fileLoader.load( path, init, onProgress, error );
 
-        }else if( rcsb ){
-
-            if( compressed ) loader.setResponseType( "arraybuffer" );
-            loader.load( file, init, onProgress, error );
-
-        }else{
+        }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
-            loader.load( "../data/" + file, init, onProgress, error );
+            loader.load( path, init, onProgress, error );
+
+        }else if( protocol === "data" ){
+
+            if( compressed ) loader.setResponseType( "arraybuffer" );
+            loader.load( "../data/" + path, init, onProgress, error );
+
+        }else{ // default: protocol === "file"
+
+            if( compressed ) loader.setResponseType( "arraybuffer" );
+            loader.load( "../file/" + path, init, onProgress, error );
 
         }
 
