@@ -451,7 +451,7 @@ NGL.autoLoad = function(){
 
             if( data ){
 
-                object = loader.init( data, name, path, ext, function( _object ){
+                object = loader.init( data, name, file, ext, function( _object ){
 
                     if( typeof onLoad === "function" ) onLoad( _object );
 
