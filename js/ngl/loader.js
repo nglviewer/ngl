@@ -483,7 +483,7 @@ NGL.autoLoad = function(){
 
             var fileLoader = new NGL.FileLoader();
             if( compressed ) fileLoader.setResponseType( "arraybuffer" );
-            fileLoader.load( path, init, onProgress, error );
+            fileLoader.load( file, init, onProgress, error );
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
