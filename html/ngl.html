@@ -33,11 +33,8 @@
                     var example = NGL.GET( "example" );
                     if( example ) NGL.Examples.load( example, stage );
 
-                    var pdb = NGL.GET( "pdb" );
-                    if( pdb ) stage.loadFile( pdb );
-
-                    var data = NGL.GET( "data" );
-                    if( data ) stage.loadFile( data );
+                    var load = NGL.GET( "load" );
+                    if( load ) stage.loadFile( load );
 
                 } );
 
