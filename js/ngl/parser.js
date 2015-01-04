@@ -1211,6 +1211,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     async.series( [
 
+        // assign helix
         function( wcallback ){
 
             var helixTypes = NGL.HelixTypes;
@@ -1259,6 +1260,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
         },
 
+        // assign strand
         function( wcallback ){
 
             var ssr = cif.struct_sheet_range;
@@ -1289,6 +1291,62 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                             r.ss = "s";
 
                         }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        },
+
+        // add connections
+        function( wcallback ){
+
+            var sc = cif.struct_conn;
+
+            if( !sc ){
+
+                wcallback();
+                return;
+
+            }
+
+            NGL.processArray(
+
+                sc.id,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var selection1 = new NGL.Selection(
+                            sc.ptnr1_auth_seq_id[ i ] + ":" +
+                            sc.ptnr1_label_asym_id[ i ] + "." +
+                            sc.ptnr1_label_atom_id[ i ]
+                        );
+                        var atom1 = s.getAtoms( selection1, true );
+
+                        var selection2 = new NGL.Selection(
+                            sc.ptnr2_auth_seq_id[ i ] + ":" +
+                            sc.ptnr2_label_asym_id[ i ] + "." +
+                            sc.ptnr2_label_atom_id[ i ]
+                        );
+                        var atom2 = s.getAtoms( selection2, true );
+
+                        if( atom1 && atom2 ){
+
+                            s.bondSet.addBond( atom1, atom2 );
+
+                        }else{
+
+                            // console.log( "atoms for connection not found" );
+
+                        }
 
                     }
 

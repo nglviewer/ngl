@@ -658,6 +658,8 @@ NGL.AtomSet.prototype = {
 
     apply: function( object ){
 
+        object.getAtoms = NGL.AtomSet.prototype.getAtoms;
+
         object.getBoundingBox = NGL.AtomSet.prototype.getBoundingBox;
 
         object.atomPosition = NGL.AtomSet.prototype.atomPosition;
@@ -665,6 +667,39 @@ NGL.AtomSet.prototype = {
         object.atomRadius = NGL.AtomSet.prototype.atomRadius;
         object.atomCenter = NGL.AtomSet.prototype.atomCenter;
         object.atomIndex = NGL.AtomSet.prototype.atomIndex;
+
+    },
+
+    getAtoms: function( selection, first ){
+
+        var atoms;
+
+        if( selection ){
+
+            atoms = [];
+
+            this.eachAtom( function( a ){
+
+                atoms.push( a );
+
+            }, selection );
+
+        }else{
+
+            atoms = this.atoms;
+
+        }
+
+        if( first ){
+
+            // TODO early exit after first atom is found
+            return atoms[ 0 ];
+
+        }else{
+
+            return atoms;
+
+        }
 
     },
 
@@ -1719,78 +1754,78 @@ NGL.Structure.prototype = {
 
     },
 
-    // autoBond2: function( callback ){
+    /*autoBond2: function( callback ){
 
-    //     console.time( "NGL.Structure.autoBond" );
+        console.time( "NGL.Structure.autoBond" );
 
-    //     var bondSet = this.bondSet;
+        var bondSet = this.bondSet;
 
-    //     var i, j, n, ra, a1, a2;
+        var i, j, n, ra, a1, a2;
 
-    //     // bonds within a residue
+        // bonds within a residue
 
-    //     console.time( "NGL.Structure.autoBond within" );
+        console.time( "NGL.Structure.autoBond within" );
 
-    //     var chainRes = [];
+        var chainRes = [];
 
-    //     this.eachChain( function( c ){
+        this.eachChain( function( c ){
 
-    //         chainRes.push( c.residues );
+            chainRes.push( c.residues );
 
-    //     } );
+        } );
 
-    //     function _chunked( _i, _n ){
+        function _chunked( _i, _n ){
 
-    //         for( var k = _i; k < _n; ++k ){
+            for( var k = _i; k < _n; ++k ){
 
-    //             var cr = chainRes[ k ];
-    //             var crn = cr.length
+                var cr = chainRes[ k ];
+                var crn = cr.length
 
-    //             for( var l = 0; l < crn; ++l ){
+                for( var l = 0; l < crn; ++l ){
 
-    //                 var r = cr[ l ];
-    //                 n = r.atomCount - 1;
-    //                 ra = r.atoms;
+                    var r = cr[ l ];
+                    n = r.atomCount - 1;
+                    ra = r.atoms;
 
-    //                 for( i = 0; i < n; i++ ){
+                    for( i = 0; i < n; i++ ){
 
-    //                     a1 = ra[ i ];
+                        a1 = ra[ i ];
 
-    //                     for( j = i + 1; j <= n; j++ ){
+                        for( j = i + 1; j <= n; j++ ){
 
-    //                         a2 = ra[ j ];
+                            a2 = ra[ j ];
 
-    //                         bondSet.addBondIfConnected( a1, a2 );
+                            bondSet.addBondIfConnected( a1, a2 );
 
-    //                     }
+                        }
 
-    //                 }
+                    }
 
-    //             }
+                }
 
-    //         }
+            }
 
-    //     }
+        }
 
-    //     NGL.processArray(
+        NGL.processArray(
 
-    //         chainRes,
+            chainRes,
 
-    //         _chunked,
+            _chunked,
 
-    //         function(){
+            function(){
 
-    //             console.timeEnd( "NGL.Structure.autoBond within" );
+                console.timeEnd( "NGL.Structure.autoBond within" );
 
-    //             callback();
+                callback();
 
-    //         },
+            },
 
-    //         100
+            100
 
-    //     );
+        );
 
-    // },
+    },*/
 
     autoBond: function(){
 
