@@ -1065,10 +1065,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         if( first ){
 
                             var names = [
-                                "group_PDB", "id", "label_atom_id", "label_seq_id",
+                                "group_PDB", "id", "label_atom_id",
+                                // "label_seq_id",
                                 "label_comp_id", "type_symbol", "label_asym_id",
                                 "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
-                                "label_alt_id"
+                                "label_alt_id", "auth_seq_id"
                             ];
 
                             indexList = [];
@@ -1089,10 +1090,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                             id = pointerNames.indexOf( "id" );
                             type_symbol = pointerNames.indexOf( "type_symbol" );
                             label_asym_id = pointerNames.indexOf( "label_asym_id" );
-                            label_seq_id = pointerNames.indexOf( "label_seq_id" );
+                            // label_seq_id = pointerNames.indexOf( "label_seq_id" );
                             label_comp_id = pointerNames.indexOf( "label_comp_id" );
                             group_PDB = pointerNames.indexOf( "group_PDB" );
                             B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
+                            auth_seq_id = pointerNames.indexOf( "auth_seq_id" );
 
                             first = false;
 
@@ -1113,7 +1115,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
                         var chainname = ls[ label_asym_id ];
-                        var resno = ls[ label_seq_id ];
+                        // var resno = parseInt( ls[ label_seq_id ] );
+                        var resno = parseInt( ls[ auth_seq_id ] );
                         var resname = ls[ label_comp_id ];
 
                         a = new NGL.Atom();
