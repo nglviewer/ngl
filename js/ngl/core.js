@@ -62,6 +62,18 @@ if ( !Number.isInteger ) {
 }
 
 
+if ( !Number.isNaN ) {
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
+
+    Number.isNaN = function isNaN( nVal ){
+        return value !== value;
+    };
+
+}
+
+
+
 if ( !Object.assign ) {
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign

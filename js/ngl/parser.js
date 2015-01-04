@@ -352,7 +352,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var helixTypes = NGL.HelixTypes;
 
     var line, recordName;
-    var altloc, serial, elem, chainname, resno, resname, atomname, element;
+    var serial, elem, chainname, resno, resname, atomname, element;
 
     var serialDict = {};
 
@@ -400,9 +400,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }
 
-                altloc = line[ 16 ];
-                if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
-
                 serial = parseInt( line.substr( 6, 5 ) );
                 element = line.substr( 76, 2 ).trim();
                 chainname = line[ 21 ].trim();
@@ -427,7 +424,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 a.atomname = atomname;
                 a.ss = 'c';
                 a.bfactor = parseFloat( line.substr( 60, 8 ) );
-                a.altloc = altloc;
+                a.altloc = line[ 16 ].trim();
                 a.vdw = vdwRadii[ element ];
                 a.covalent = covRadii[ element ];
                 a.modelindex = modelIdx;
@@ -443,15 +440,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var pos = [ 11, 16, 21, 26 ];
 
                 if( from === undefined ){
-                    // console.log( "missing serial, probably alternative location to be fixed" );
+                    // console.log( "missing CONNECT serial" );
                     continue;
                 }
 
                 for (var j = 0; j < 4; j++) {
 
-                    var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
+                    var to = parseInt( line.substr( pos[ j ], 5 ) );
+                    if( Number.isNaN( to ) ) continue;
+                    to = serialDict[ to ];
                     if( to === undefined ){
-                        // console.log( "missing serial, probably alternative location to be fixed" );
+                        // console.log( "missing CONNECT serial" );
                         continue;
                     }
 
@@ -1105,9 +1104,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         var atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
                         if( cAlphaOnly && atomname !== 'CA' ) continue;
 
-                        var altloc = ls[ label_alt_id ];
-                        if( altloc !== '.' && altloc !== 'A' ) continue; // FIXME: ad hoc
-
                         var x = parseFloat( ls[ Cartn_x ] );
                         var y = parseFloat( ls[ Cartn_y ] );
                         var z = parseFloat( ls[ Cartn_z ] );
@@ -1118,6 +1114,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         // var resno = parseInt( ls[ label_seq_id ] );
                         var resno = parseInt( ls[ auth_seq_id ] );
                         var resname = ls[ label_comp_id ];
+                        var altloc = ls[ label_alt_id ];
 
                         a = new NGL.Atom();
                         a.index = idx;
@@ -1135,7 +1132,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         a.atomname = atomname;
                         a.ss = 'c';
                         a.bfactor = parseFloat( ls[ B_iso_or_equiv ] );
-                        a.altloc = altloc;
+                        a.altloc = ( altloc === '.' ) ? '' : altloc;
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
 

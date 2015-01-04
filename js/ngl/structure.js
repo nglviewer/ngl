@@ -3099,6 +3099,9 @@ NGL.Atom.prototype = {
         if( this.hetero && atom.hetero &&
             this.residue.chain.model.structure.hasConnect ) return false;
 
+        if( !( this.altloc === '' || atom.altloc === '' ||
+                ( this.altloc === atom.altloc ) ) ) return false;
+
         var x = this.x - atom.x;
         var y = this.y - atom.y;
         var z = this.z - atom.z;
@@ -3748,6 +3751,11 @@ NGL.ProxyAtom.prototype = {
 
         if( taa.hetero[ ti ] && aaa.hetero[ ai ] ) return false;
 
+        var ta = this.altloc;
+        var aa = atom.altloc;
+
+        if( !( ta === '' || aa === '' || ( ta === aa ) ) ) return false;
+
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
         var z = taa.z[ ti ] - aaa.z[ ai ];
@@ -4224,6 +4232,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.charAt( 0 ) === "~" ){
+                sele.altloc = c.substr( 1 );
+                pushRule( sele );
+                continue;
+            }
+
             if( ( c.length >= 1 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
@@ -4477,6 +4491,8 @@ NGL.Selection.prototype = {
             }
 
             if( s.element!==undefined && s.element!==a.element ) return false;
+
+            if( s.altloc!==undefined && s.altloc!==a.altloc ) return false;
 
             return true;
 
