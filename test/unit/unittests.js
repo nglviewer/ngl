@@ -1,5 +1,8 @@
 
 
+////////////////////
+// Selection parse
+//
 QUnit.module( "selection parse" );
 
 
@@ -32,6 +35,42 @@ QUnit.test( "chain resno range", function( assert ) {
         "rules": [
             { "chainname": "A" },
             { "resno": [ 1, 100 ] }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "modelindex", function( assert ) {
+
+    var sele = "/1";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "rules": [
+            { "model": 1 }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "altloc", function( assert ) {
+
+    var sele = "~A";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "rules": [
+            { "altloc": "A" }
         ]
     };
 
@@ -703,6 +742,9 @@ QUnit.test( "(CYS and .CA) or (CYS and hydrogen)", function( assert ) {
 });
 
 
+///////////////////
+// Selection test
+//
 QUnit.module( "selection test" );
 
 
@@ -712,7 +754,7 @@ QUnit.asyncTest( "backbone", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "../../data/__example__/1crn.pdb";
+    var path = "http://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -734,7 +776,7 @@ QUnit.asyncTest( ".CA", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "../../data/__example__/1crn.pdb";
+    var path = "http://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -756,7 +798,7 @@ QUnit.asyncTest( "not backbone", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "../../data/__example__/1crn.pdb";
+    var path = "http://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -778,7 +820,7 @@ QUnit.asyncTest( "not backbone or .CA", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "../../data/__example__/1crn.pdb";
+    var path = "http://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -800,7 +842,7 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
     var selection1 = new NGL.Selection( "TYR" );
     var selection2 = new NGL.Selection( "not not TYR" );
 
-    var path = "../../data/__example__/1crn.pdb";
+    var path = "http://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -821,7 +863,7 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
     var selection1 = new NGL.Selection( "not ( 12 and .CA )" );
     var selection2 = new NGL.Selection( "not ( 12.CA )" );
 
-    var path = "../../data/__example__/1crn.pdb";
+    var path = "http://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -837,12 +879,38 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
 });
 
 
+QUnit.asyncTest( "/1", function( assert ) {
+
+    var sele = "/1";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "http://../../data/1LVZ.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+        var n = atomSet.atoms.length - 1;
+
+        assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
+        assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
+//////////////
+// Structure
+//
 QUnit.module( "structure" );
 
 
 QUnit.asyncTest( "structure subset", function( assert ) {
 
-    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -860,7 +928,7 @@ QUnit.asyncTest( "structure subset", function( assert ) {
 
 QUnit.asyncTest( "structure subset not", function( assert ) {
 
-    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -875,9 +943,10 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
 
 });
 
+
 QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
-    var path = "../../data/__example__/Bace1Trimer-inDPPC.gro";
+    var path = "http://../../data/Bace1Trimer-inDPPC.gro";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -895,7 +964,7 @@ QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
 QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
-    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -918,7 +987,7 @@ QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
 QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
-    var path = "../../data/__example__/BaceCgProteinAtomistic.pdb";
+    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -939,6 +1008,9 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 });
 
 
+////////
+// SVD
+//
 QUnit.module( "svd" );
 
 
