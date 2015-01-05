@@ -379,6 +379,8 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
 
+                if( firstModelOnly && modelIdx > 0 ) continue;
+
                 atomname = line.substr( 12, 4 ).trim();
                 if( cAlphaOnly && atomname !== 'CA' ) continue;
 
@@ -542,17 +544,11 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 }else if( a ){
 
                     modelIdx += 1;
-                    serialDict = {};
+                    if( !firstModelOnly ) serialDict = {};
 
                 }
 
             }else if( recordName === 'ENDMDL' ){
-
-                if( firstModelOnly ){
-
-                    return true;
-
-                }
 
                 if( asTrajectory && !doFrames ){
 
