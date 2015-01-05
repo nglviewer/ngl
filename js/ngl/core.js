@@ -66,7 +66,7 @@ if ( !Number.isNaN ) {
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
 
-    Number.isNaN = function isNaN( nVal ){
+    Number.isNaN = function isNaN( value ){
         return value !== value;
     };
 
