@@ -924,8 +924,10 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var pointerNames = null;
 
     var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
-        type_symbol, label_asym_id, label_seq_id, label_comp_id,
-        group_PDB, B_iso_or_equiv;
+        type_symbol, label_asym_id,
+        // label_seq_id,
+        label_comp_id,
+        group_PDB, B_iso_or_equiv, auth_seq_id, pdbx_PDB_model_num;
 
     //
 
@@ -933,6 +935,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var idx = 0;
     var modelIdx = 0;
+    var modelNum;
 
     function _chunked( _i, _n ){
 
@@ -1064,7 +1067,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                                 // "label_seq_id",
                                 "label_comp_id", "type_symbol", "label_asym_id",
                                 "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
-                                "label_alt_id", "auth_seq_id"
+                                "label_alt_id", "auth_seq_id", "pdbx_PDB_model_num"
                             ];
 
                             indexList = [];
@@ -1090,10 +1093,37 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                             group_PDB = pointerNames.indexOf( "group_PDB" );
                             B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
                             auth_seq_id = pointerNames.indexOf( "auth_seq_id" );
+                            pdbx_PDB_model_num = pointerNames.indexOf( "pdbx_PDB_model_num" );
 
                             first = false;
 
+                            modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
+                            currentFrame = [];
+                            currentCoord = 0;
+
                         }
+
+                        //
+
+                        var _modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
+
+                        if( modelNum !== _modelNum ){
+
+                            if( modelIdx === 0 ){
+                                frames.push( new Float32Array( currentFrame ) );
+                            }
+
+                            currentFrame = new Float32Array( atoms.length * 3 );
+                            frames.push( currentFrame );
+                            currentCoord = 0;
+
+                            modelIdx += 1;
+
+                        }
+
+                        modelNum = _modelNum;
+
+                        if( firstModelOnly && modelIdx > 0 ) continue;
 
                         //
 
@@ -1103,6 +1133,22 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         var x = parseFloat( ls[ Cartn_x ] );
                         var y = parseFloat( ls[ Cartn_y ] );
                         var z = parseFloat( ls[ Cartn_z ] );
+
+                        if( asTrajectory ){
+
+                            var j = currentCoord * 3;
+
+                            currentFrame[ j + 0 ] = x;
+                            currentFrame[ j + 1 ] = y;
+                            currentFrame[ j + 2 ] = z;
+
+                            currentCoord += 1;
+
+                            if( modelIdx > 0 ) continue;
+
+                        }
+
+                        //
 
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
@@ -1131,6 +1177,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         a.altloc = ( altloc === '.' ) ? '' : altloc;
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
+                        a.modelindex = modelIdx;
 
                         idx += 1;
                         atoms.push( a );
