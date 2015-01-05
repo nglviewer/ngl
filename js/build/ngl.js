@@ -64,6 +64,18 @@ if ( !Number.isInteger ) {
 }
 
 
+if ( !Number.isNaN ) {
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
+
+    Number.isNaN = function isNaN( value ){
+        return value !== value;
+    };
+
+}
+
+
+
 if ( !Object.assign ) {
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
@@ -2461,6 +2473,8 @@ NGL.AtomSet.prototype = {
 
     apply: function( object ){
 
+        object.getAtoms = NGL.AtomSet.prototype.getAtoms;
+
         object.getBoundingBox = NGL.AtomSet.prototype.getBoundingBox;
 
         object.atomPosition = NGL.AtomSet.prototype.atomPosition;
@@ -2468,6 +2482,39 @@ NGL.AtomSet.prototype = {
         object.atomRadius = NGL.AtomSet.prototype.atomRadius;
         object.atomCenter = NGL.AtomSet.prototype.atomCenter;
         object.atomIndex = NGL.AtomSet.prototype.atomIndex;
+
+    },
+
+    getAtoms: function( selection, first ){
+
+        var atoms;
+
+        if( selection ){
+
+            atoms = [];
+
+            this.eachAtom( function( a ){
+
+                atoms.push( a );
+
+            }, selection );
+
+        }else{
+
+            atoms = this.atoms;
+
+        }
+
+        if( first ){
+
+            // TODO early exit after first atom is found
+            return atoms[ 0 ];
+
+        }else{
+
+            return atoms;
+
+        }
 
     },
 
@@ -3522,78 +3569,78 @@ NGL.Structure.prototype = {
 
     },
 
-    // autoBond2: function( callback ){
+    /*autoBond2: function( callback ){
 
-    //     console.time( "NGL.Structure.autoBond" );
+        console.time( "NGL.Structure.autoBond" );
 
-    //     var bondSet = this.bondSet;
+        var bondSet = this.bondSet;
 
-    //     var i, j, n, ra, a1, a2;
+        var i, j, n, ra, a1, a2;
 
-    //     // bonds within a residue
+        // bonds within a residue
 
-    //     console.time( "NGL.Structure.autoBond within" );
+        console.time( "NGL.Structure.autoBond within" );
 
-    //     var chainRes = [];
+        var chainRes = [];
 
-    //     this.eachChain( function( c ){
+        this.eachChain( function( c ){
 
-    //         chainRes.push( c.residues );
+            chainRes.push( c.residues );
 
-    //     } );
+        } );
 
-    //     function _chunked( _i, _n ){
+        function _chunked( _i, _n ){
 
-    //         for( var k = _i; k < _n; ++k ){
+            for( var k = _i; k < _n; ++k ){
 
-    //             var cr = chainRes[ k ];
-    //             var crn = cr.length
+                var cr = chainRes[ k ];
+                var crn = cr.length
 
-    //             for( var l = 0; l < crn; ++l ){
+                for( var l = 0; l < crn; ++l ){
 
-    //                 var r = cr[ l ];
-    //                 n = r.atomCount - 1;
-    //                 ra = r.atoms;
+                    var r = cr[ l ];
+                    n = r.atomCount - 1;
+                    ra = r.atoms;
 
-    //                 for( i = 0; i < n; i++ ){
+                    for( i = 0; i < n; i++ ){
 
-    //                     a1 = ra[ i ];
+                        a1 = ra[ i ];
 
-    //                     for( j = i + 1; j <= n; j++ ){
+                        for( j = i + 1; j <= n; j++ ){
 
-    //                         a2 = ra[ j ];
+                            a2 = ra[ j ];
 
-    //                         bondSet.addBondIfConnected( a1, a2 );
+                            bondSet.addBondIfConnected( a1, a2 );
 
-    //                     }
+                        }
 
-    //                 }
+                    }
 
-    //             }
+                }
 
-    //         }
+            }
 
-    //     }
+        }
 
-    //     NGL.processArray(
+        NGL.processArray(
 
-    //         chainRes,
+            chainRes,
 
-    //         _chunked,
+            _chunked,
 
-    //         function(){
+            function(){
 
-    //             console.timeEnd( "NGL.Structure.autoBond within" );
+                console.timeEnd( "NGL.Structure.autoBond within" );
 
-    //             callback();
+                callback();
 
-    //         },
+            },
 
-    //         100
+            100
 
-    //     );
+        );
 
-    // },
+    },*/
 
     autoBond: function(){
 
@@ -4902,6 +4949,9 @@ NGL.Atom.prototype = {
         if( this.hetero && atom.hetero &&
             this.residue.chain.model.structure.hasConnect ) return false;
 
+        if( !( this.altloc === '' || atom.altloc === '' ||
+                ( this.altloc === atom.altloc ) ) ) return false;
+
         var x = this.x - atom.x;
         var y = this.y - atom.y;
         var z = this.z - atom.z;
@@ -5551,6 +5601,11 @@ NGL.ProxyAtom.prototype = {
 
         if( taa.hetero[ ti ] && aaa.hetero[ ai ] ) return false;
 
+        var ta = this.altloc;
+        var aa = atom.altloc;
+
+        if( !( ta === '' || aa === '' || ( ta === aa ) ) ) return false;
+
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
         var z = taa.z[ ti ] - aaa.z[ ai ];
@@ -6027,6 +6082,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.charAt( 0 ) === "~" ){
+                sele.altloc = c.substr( 1 );
+                pushRule( sele );
+                continue;
+            }
+
             if( ( c.length >= 1 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
@@ -6280,6 +6341,8 @@ NGL.Selection.prototype = {
             }
 
             if( s.element!==undefined && s.element!==a.element ) return false;
+
+            if( s.altloc!==undefined && s.altloc!==a.altloc ) return false;
 
             return true;
 
@@ -8716,7 +8779,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var helixTypes = NGL.HelixTypes;
 
     var line, recordName;
-    var altloc, serial, elem, chainname, resno, resname, atomname, element;
+    var serial, elem, chainname, resno, resname, atomname, element;
 
     var serialDict = {};
 
@@ -8743,6 +8806,8 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
 
+                if( firstModelOnly && modelIdx > 0 ) continue;
+
                 atomname = line.substr( 12, 4 ).trim();
                 if( cAlphaOnly && atomname !== 'CA' ) continue;
 
@@ -8763,9 +8828,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                     if( doFrames ) continue;
 
                 }
-
-                altloc = line[ 16 ];
-                if( altloc !== ' ' && altloc !== 'A' ) continue; // FIXME: ad hoc
 
                 serial = parseInt( line.substr( 6, 5 ) );
                 element = line.substr( 76, 2 ).trim();
@@ -8791,7 +8853,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 a.atomname = atomname;
                 a.ss = 'c';
                 a.bfactor = parseFloat( line.substr( 60, 8 ) );
-                a.altloc = altloc;
+                a.altloc = line[ 16 ].trim();
                 a.vdw = vdwRadii[ element ];
                 a.covalent = covRadii[ element ];
                 a.modelindex = modelIdx;
@@ -8807,15 +8869,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var pos = [ 11, 16, 21, 26 ];
 
                 if( from === undefined ){
-                    // console.log( "missing serial, probably alternative location to be fixed" );
+                    // console.log( "missing CONNECT serial" );
                     continue;
                 }
 
                 for (var j = 0; j < 4; j++) {
 
-                    var to = serialDict[ parseInt( line.substr( pos[ j ], 5 ) ) ];
+                    var to = parseInt( line.substr( pos[ j ], 5 ) );
+                    if( Number.isNaN( to ) ) continue;
+                    to = serialDict[ to ];
                     if( to === undefined ){
-                        // console.log( "missing serial, probably alternative location to be fixed" );
+                        // console.log( "missing CONNECT serial" );
                         continue;
                     }
 
@@ -8907,17 +8971,11 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 }else if( a ){
 
                     modelIdx += 1;
-                    serialDict = {};
+                    if( !firstModelOnly ) serialDict = {};
 
                 }
 
             }else if( recordName === 'ENDMDL' ){
-
-                if( firstModelOnly ){
-
-                    return true;
-
-                }
 
                 if( asTrajectory && !doFrames ){
 
@@ -9293,8 +9351,10 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var pointerNames = null;
 
     var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
-        type_symbol, label_asym_id, label_seq_id, label_comp_id,
-        group_PDB, B_iso_or_equiv;
+        type_symbol, label_asym_id,
+        // label_seq_id,
+        label_comp_id,
+        group_PDB, B_iso_or_equiv, auth_seq_id, pdbx_PDB_model_num;
 
     //
 
@@ -9302,6 +9362,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var idx = 0;
     var modelIdx = 0;
+    var modelNum;
 
     function _chunked( _i, _n ){
 
@@ -9429,10 +9490,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         if( first ){
 
                             var names = [
-                                "group_PDB", "id", "label_atom_id", "label_seq_id",
+                                "group_PDB", "id", "label_atom_id",
+                                // "label_seq_id",
                                 "label_comp_id", "type_symbol", "label_asym_id",
                                 "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
-                                "label_alt_id"
+                                "label_alt_id", "auth_seq_id", "pdbx_PDB_model_num"
                             ];
 
                             indexList = [];
@@ -9453,32 +9515,75 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                             id = pointerNames.indexOf( "id" );
                             type_symbol = pointerNames.indexOf( "type_symbol" );
                             label_asym_id = pointerNames.indexOf( "label_asym_id" );
-                            label_seq_id = pointerNames.indexOf( "label_seq_id" );
+                            // label_seq_id = pointerNames.indexOf( "label_seq_id" );
                             label_comp_id = pointerNames.indexOf( "label_comp_id" );
                             group_PDB = pointerNames.indexOf( "group_PDB" );
                             B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
+                            auth_seq_id = pointerNames.indexOf( "auth_seq_id" );
+                            pdbx_PDB_model_num = pointerNames.indexOf( "pdbx_PDB_model_num" );
 
                             first = false;
 
+                            modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
+                            currentFrame = [];
+                            currentCoord = 0;
+
                         }
+
+                        //
+
+                        var _modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
+
+                        if( modelNum !== _modelNum ){
+
+                            if( modelIdx === 0 ){
+                                frames.push( new Float32Array( currentFrame ) );
+                            }
+
+                            currentFrame = new Float32Array( atoms.length * 3 );
+                            frames.push( currentFrame );
+                            currentCoord = 0;
+
+                            modelIdx += 1;
+
+                        }
+
+                        modelNum = _modelNum;
+
+                        if( firstModelOnly && modelIdx > 0 ) continue;
 
                         //
 
                         var atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
                         if( cAlphaOnly && atomname !== 'CA' ) continue;
 
-                        var altloc = ls[ label_alt_id ];
-                        if( altloc !== '.' && altloc !== 'A' ) continue; // FIXME: ad hoc
-
                         var x = parseFloat( ls[ Cartn_x ] );
                         var y = parseFloat( ls[ Cartn_y ] );
                         var z = parseFloat( ls[ Cartn_z ] );
 
+                        if( asTrajectory ){
+
+                            var j = currentCoord * 3;
+
+                            currentFrame[ j + 0 ] = x;
+                            currentFrame[ j + 1 ] = y;
+                            currentFrame[ j + 2 ] = z;
+
+                            currentCoord += 1;
+
+                            if( modelIdx > 0 ) continue;
+
+                        }
+
+                        //
+
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
                         var chainname = ls[ label_asym_id ];
-                        var resno = ls[ label_seq_id ];
+                        // var resno = parseInt( ls[ label_seq_id ] );
+                        var resno = parseInt( ls[ auth_seq_id ] );
                         var resname = ls[ label_comp_id ];
+                        var altloc = ls[ label_alt_id ];
 
                         a = new NGL.Atom();
                         a.index = idx;
@@ -9496,9 +9601,10 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         a.atomname = atomname;
                         a.ss = 'c';
                         a.bfactor = parseFloat( ls[ B_iso_or_equiv ] );
-                        a.altloc = altloc;
+                        a.altloc = ( altloc === '.' ) ? '' : altloc;
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
+                        a.modelindex = modelIdx;
 
                         idx += 1;
                         atoms.push( a );
@@ -9575,6 +9681,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     async.series( [
 
+        // assign helix
         function( wcallback ){
 
             var helixTypes = NGL.HelixTypes;
@@ -9590,24 +9697,73 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             NGL.processArray(
 
-                sc.beg_label_seq_id,
+                sc.beg_auth_seq_id,
 
                 function( _i, _n ){
 
                     for( var i = _i; i < _n; ++i ){
 
                         var selection = new NGL.Selection(
-                            sc.beg_label_seq_id[ i ] + "-" +
-                            sc.end_label_seq_id[ i ] + ":" +
+                            sc.beg_auth_seq_id[ i ] + "-" +
+                            sc.end_auth_seq_id[ i ] + ":" +
                             sc.beg_label_asym_id[ i ]
                         );
 
                         var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
-                        helixType = helixTypes[ helixType ] || helixTypes[""];
+
+                        if( !Number.isNaN( helixType ) ){
+
+                            helixType = helixTypes[ helixType ] || helixTypes[""];
+
+                            s.eachResidue( function( r ){
+
+                                r.ss = helixType;
+
+                            }, selection );
+
+                        }
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        },
+
+        // assign strand
+        function( wcallback ){
+
+            var ssr = cif.struct_sheet_range;
+
+            if( !ssr ){
+
+                wcallback();
+                return;
+
+            }
+
+            NGL.processArray(
+
+                ssr.beg_auth_seq_id,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var selection = new NGL.Selection(
+                            ssr.beg_auth_seq_id[ i ] + "-" +
+                            ssr.end_auth_seq_id[ i ] + ":" +
+                            ssr.beg_label_asym_id[ i ]
+                        );
 
                         s.eachResidue( function( r ){
 
-                            r.ss = helixType;
+                            r.ss = "s";
 
                         }, selection );
 
@@ -9623,11 +9779,12 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
         },
 
+        // add connections
         function( wcallback ){
 
-            var ssr = cif.struct_sheet_range;
+            var sc = cif.struct_conn;
 
-            if( !ssr ){
+            if( !sc ){
 
                 wcallback();
                 return;
@@ -9636,23 +9793,45 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             NGL.processArray(
 
-                ssr.beg_label_seq_id,
+                sc.id,
 
                 function( _i, _n ){
 
                     for( var i = _i; i < _n; ++i ){
 
-                        var selection = new NGL.Selection(
-                            ssr.beg_label_seq_id[ i ] + "-" +
-                            ssr.end_label_seq_id[ i ] + ":" +
-                            ssr.beg_label_asym_id[ i ]
+                        var selection1 = new NGL.Selection(
+                            sc.ptnr1_auth_seq_id[ i ] + ":" +
+                            sc.ptnr1_label_asym_id[ i ] + "." +
+                            sc.ptnr1_label_atom_id[ i ]
                         );
+                        var atoms1 = s.getAtoms( selection1 );
 
-                        s.eachResidue( function( r ){
+                        var selection2 = new NGL.Selection(
+                            sc.ptnr2_auth_seq_id[ i ] + ":" +
+                            sc.ptnr2_label_asym_id[ i ] + "." +
+                            sc.ptnr2_label_atom_id[ i ]
+                        );
+                        var atoms2 = s.getAtoms( selection2 );
 
-                            r.ss = "s";
+                        var a1, a2;
+                        var m = atoms1.length;
 
-                        }, selection );
+                        for( var j = 0; j < m; ++j ){
+
+                            a1 = atoms1[ j ];
+                            a2 = atoms2[ j ];
+
+                            if( a1 && a2 ){
+
+                                s.bondSet.addBond( a1, a2 );
+
+                            }else{
+
+                                console.log( "atoms for connection not found" );
+
+                            }
+
+                        }
 
                     }
 
