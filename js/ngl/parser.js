@@ -1334,22 +1334,32 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                             sc.ptnr1_label_asym_id[ i ] + "." +
                             sc.ptnr1_label_atom_id[ i ]
                         );
-                        var atom1 = s.getAtoms( selection1, true );
+                        var atoms1 = s.getAtoms( selection1 );
 
                         var selection2 = new NGL.Selection(
                             sc.ptnr2_auth_seq_id[ i ] + ":" +
                             sc.ptnr2_label_asym_id[ i ] + "." +
                             sc.ptnr2_label_atom_id[ i ]
                         );
-                        var atom2 = s.getAtoms( selection2, true );
+                        var atoms2 = s.getAtoms( selection2 );
 
-                        if( atom1 && atom2 ){
+                        var a1, a2;
+                        var m = atoms1.length;
 
-                            s.bondSet.addBond( atom1, atom2 );
+                        for( var j = 0; j < m; ++j ){
 
-                        }else{
+                            a1 = atoms1[ j ];
+                            a2 = atoms2[ j ];
 
-                            // console.log( "atoms for connection not found" );
+                            if( a1 && a2 ){
+
+                                s.bondSet.addBond( a1, a2 );
+
+                            }else{
+
+                                console.log( "atoms for connection not found" );
+
+                            }
 
                         }
 
