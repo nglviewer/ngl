@@ -1240,13 +1240,18 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                         );
 
                         var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
-                        helixType = helixTypes[ helixType ] || helixTypes[""];
 
-                        s.eachResidue( function( r ){
+                        if( !Number.isNaN( helixType ) ){
 
-                            r.ss = helixType;
+                            helixType = helixTypes[ helixType ] || helixTypes[""];
 
-                        }, selection );
+                            s.eachResidue( function( r ){
+
+                                r.ss = helixType;
+
+                            }, selection );
+
+                        }
 
                     }
 
