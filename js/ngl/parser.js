@@ -1270,15 +1270,15 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             NGL.processArray(
 
-                sc.beg_label_seq_id,
+                sc.beg_auth_seq_id,
 
                 function( _i, _n ){
 
                     for( var i = _i; i < _n; ++i ){
 
                         var selection = new NGL.Selection(
-                            sc.beg_label_seq_id[ i ] + "-" +
-                            sc.end_label_seq_id[ i ] + ":" +
+                            sc.beg_auth_seq_id[ i ] + "-" +
+                            sc.end_auth_seq_id[ i ] + ":" +
                             sc.beg_label_asym_id[ i ]
                         );
 
@@ -1322,15 +1322,15 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             NGL.processArray(
 
-                ssr.beg_label_seq_id,
+                ssr.beg_auth_seq_id,
 
                 function( _i, _n ){
 
                     for( var i = _i; i < _n; ++i ){
 
                         var selection = new NGL.Selection(
-                            ssr.beg_label_seq_id[ i ] + "-" +
-                            ssr.end_label_seq_id[ i ] + ":" +
+                            ssr.beg_auth_seq_id[ i ] + "-" +
+                            ssr.end_auth_seq_id[ i ] + ":" +
                             ssr.beg_label_asym_id[ i ]
                         );
 
