@@ -1406,6 +1406,12 @@ NGL.Viewer.prototype = {
 
     requestRender: function(){
 
+        if( this._renderPending ){
+            // console.info( "there is still a 'render' call pending" );
+            return;
+        }
+
+        this._renderPending = true;
         requestAnimationFrame( this.render.bind( this ) );
 
     },
@@ -1488,6 +1494,7 @@ NGL.Viewer.prototype = {
         }
 
         this._rendering = false;
+        this._renderPending = false;
 
     },
 
