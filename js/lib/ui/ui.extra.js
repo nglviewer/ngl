@@ -696,8 +696,8 @@ UI.ColorPicker = function(){
 
     // event
 
-    var changeEvent = document.createEvent('Event');
-    changeEvent.initEvent('change', true, true);
+    var changeEvent = document.createEvent( 'Event' );
+    changeEvent.initEvent( 'change', true, true );
 
     // finalize
 
@@ -731,7 +731,7 @@ UI.ColorPicker = function(){
 
             if( !scope._settingValue ){
 
-                scope.dom.dispatchEvent( changeEvent, hex, hsv, rgb );
+                scope.dom.dispatchEvent( changeEvent );
 
             }
 
