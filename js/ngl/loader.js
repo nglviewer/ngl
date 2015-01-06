@@ -451,11 +451,20 @@ NGL.autoLoad = function(){
 
             if( data ){
 
-                object = loader.init( data, name, file, ext, function( _object ){
+                try{
 
-                    if( typeof onLoad === "function" ) onLoad( _object );
+                    object = loader.init( data, name, file, ext, function( _object ){
 
-                }, params );
+                        if( typeof onLoad === "function" ) onLoad( _object );
+
+                    }, params );
+
+                }catch( e ){
+
+                    console.error( e );
+                    error( "initialization failed" );
+
+                }
 
             }else{
 
