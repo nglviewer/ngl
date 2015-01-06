@@ -1252,6 +1252,16 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
     var s = structure;
     var cif = s.cif;
 
+    function _ensureArray( dict, field ){
+
+        if( !Array.isArray( dict[ field ] ) ){
+            Object.keys( dict ).forEach( function( key ){
+                dict[ key ] = [ dict[ key ] ];
+            } );
+        }
+
+    }
+
     async.series( [
 
         // assign helix
@@ -1267,6 +1277,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            // ensure data is in lists
+            _ensureArray( sc, "id" );
 
             NGL.processArray(
 
@@ -1320,6 +1333,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             }
 
+            // ensure data is in lists
+            _ensureArray( ssr, "id" );
+
             NGL.processArray(
 
                 ssr.beg_auth_seq_id,
@@ -1363,6 +1379,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            // ensure data is in lists
+            _ensureArray( sc, "id" );
 
             NGL.processArray(
 
@@ -1438,11 +1457,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             var op = cif.pdbx_struct_oper_list;
 
             // ensure data is in lists
-            if( !Array.isArray( op.id ) ){
-                Object.keys( op ).forEach( function( key ){
-                    op[ key ] = [ op[ key ] ];
-                } );
-            }
+            _ensureArray( op, "id" );
 
             op.id.forEach( function( id, i ){
 
@@ -1476,11 +1491,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             var gen = cif.pdbx_struct_assembly_gen;
 
             // ensure data is in lists
-            if( !Array.isArray( gen.assembly_id ) ){
-                Object.keys( gen ).forEach( function( key ){
-                    gen[ key ] = [ gen[ key ] ];
-                } );
-            }
+            _ensureArray( gen, "assembly_id" );
 
             gen.assembly_id.forEach( function( id, i ){
 
