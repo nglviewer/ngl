@@ -1429,6 +1429,10 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
             input = new UI.Checkbox( repr[ name ] );
 
+        }else if( p.type === "text" ){
+
+            input = new UI.Input( repr[ name ] );
+
         }else if( p.type === "select" ){
 
             input = new UI.Select()

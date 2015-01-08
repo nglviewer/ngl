@@ -241,6 +241,19 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
     NGL.Representation.call( this, structure, viewer, params );
 
+    if( structure.biomolDict ){
+        var biomolOptions = {};
+        Object.keys( structure.biomolDict ).forEach( function( k ){
+            biomolOptions[ k ] = k;
+        } );
+        this.parameters.assembly = {
+            type: "select",
+            options: biomolOptions
+        };
+    }else{
+        this.parameters.assembly = null;
+    }
+
     // must come after atomSet to ensure selection change signals
     // have already updated the atomSet
     this.selection.signals.stringChanged.add( function( string ){
@@ -281,6 +294,9 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0
+        },
+        assembly: {
+            type: "text"
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -304,6 +320,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.assembly = p.assembly || "";
 
         this.setSelection( p.sele, true );
 
@@ -389,6 +406,13 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "assembly" ] !== undefined ){
+
+            this.assembly = params[ "assembly" ];
+            rebuild = true;
+
+        }
+
         NGL.Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -402,14 +426,18 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var viewer = this.viewer;
         var structure = this.structure;
 
-        console.log( structure.biomolDict )
+        var assembly = this.assembly || "1";
+
+        // console.log( structure.biomolDict )
         // console.log( Object.values( structure.biomolDict[ 1 ].matrixDict ) );
 
         var matrixList;
 
         // TODO
-        if( structure.biomolDict && structure.biomolDict[ 1 ] ){
-            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict )
+        if( structure.biomolDict && structure.biomolDict[ assembly ] ){
+            matrixList = Object.values(
+                structure.biomolDict[ assembly ].matrixDict
+            )
         }else{
             matrixList = [];
         }
