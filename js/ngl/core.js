@@ -409,6 +409,8 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
 
 NGL.ObjectMetadata.prototype = {
 
+    constructor: NGL.ObjectMetadata,
+
     apply: function( object ){
 
         object.setName = NGL.ObjectMetadata.prototype.setName;

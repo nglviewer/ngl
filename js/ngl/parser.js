@@ -238,6 +238,8 @@ NGL.StructureParser = function( name, path, params ){
 
 NGL.StructureParser.prototype = {
 
+    constructor: NGL.StructureParser,
+
     parse: function( str, callback ){
 
         var self = this;
@@ -316,6 +318,8 @@ NGL.PdbParser = function( name, path, params ){
 };
 
 NGL.PdbParser.prototype = Object.create( NGL.StructureParser.prototype );
+
+NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
@@ -671,6 +675,8 @@ NGL.GroParser = function( name, path, params ){
 
 NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
+NGL.PdbParser.prototype.constructor = NGL.GroParser;
+
 NGL.GroParser.prototype._parse = function( str, callback ){
 
     var __timeName = "NGL.GroParser._parse " + this.name;
@@ -855,6 +861,8 @@ NGL.CifParser = function( name, path, params ){
 };
 
 NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
+
+NGL.PdbParser.prototype.constructor = NGL.CifParser;
 
 NGL.CifParser.prototype._parse = function( str, callback ){
 

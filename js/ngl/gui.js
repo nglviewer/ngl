@@ -10,6 +10,8 @@ NGL.Widget = function(){
 
 NGL.Widget.prototype = {
 
+    constructor: NGL.Widget,
+
 };
 
 
@@ -1738,6 +1740,8 @@ NGL.DirectoryListing = function(){
 };
 
 NGL.DirectoryListing.prototype = {
+
+    constructor: NGL.DirectoryListing,
 
     getListing: function( path ){
 

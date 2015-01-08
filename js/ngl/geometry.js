@@ -24,6 +24,8 @@ NGL.Spline = function( fiber, arrows ){
 
 NGL.Spline.prototype = {
 
+    constructor: NGL.Spline,
+
     // from THREE.js
     // ASR added tension
     interpolate: function( p0, p1, p2, p3, t, tension ) {
@@ -509,6 +511,8 @@ NGL.Helixorient = function( fiber ){
 
 NGL.Helixorient.prototype = {
 
+    constructor: NGL.Helixorient,
+
     getFiber: function( smooth, padded ){
 
         var center = this.getPosition().center;
@@ -854,6 +858,8 @@ NGL.Helix = function(){
 
 NGL.Helix.prototype = {
 
+    constructor: NGL.Helix,
+
     fromHelixbundleAxis: function(){
 
         var v = new THREE.Vector3();
@@ -1146,6 +1152,8 @@ NGL.Helixbundle = function( fiber ){
 
 NGL.Helixbundle.prototype = {
 
+    constructor: NGL.Helixbundle,
+
     getFiber: function( smooth ){
 
     },
@@ -1301,6 +1309,8 @@ NGL.HelixCrossing = function( helices ){
 };
 
 NGL.HelixCrossing.prototype = {
+
+    constructor: NGL.HelixCrossing,
 
     getCrossing: function( minDistance ){
 

@@ -44,6 +44,8 @@ NGL.Stage = function( eid ){
 
 NGL.Stage.prototype = {
 
+    constructor: NGL.Stage,
+
     defaultFileRepresentation: function( object ){
 
         if( object instanceof NGL.StructureComponent ){
@@ -422,6 +424,8 @@ NGL.Preferences = function( stage, id ){
 
 NGL.Preferences.prototype = {
 
+    constructor: NGL.Preferences,
+
     setImpostor: function( value ) {
 
         if( value !== undefined ){
@@ -549,6 +553,8 @@ NGL.Component = function( stage, params ){
 }
 
 NGL.Component.prototype = {
+
+    constructor: NGL.Component,
 
     type: "component",
 
@@ -683,6 +689,8 @@ NGL.StructureComponent = function( stage, structure, params ){
 NGL.StructureComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    constructor: NGL.StructureComponent,
 
     type: "structure",
 
@@ -927,6 +935,8 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
 
+    constructor: NGL.SurfaceComponent,
+
     type: "surface",
 
     addRepresentation: function( type, params ){
@@ -997,6 +1007,8 @@ NGL.TrajectoryComponent = function( stage, trajectory, params, parent ){
 NGL.TrajectoryComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    constructor: NGL.TrajectoryComponent,
 
     type: "trajectory",
 
@@ -1074,6 +1086,8 @@ NGL.ScriptComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
 
+    constructor: NGL.ScriptComponent,
+
     type: "script",
 
     addRepresentation: function( type ){},
@@ -1123,6 +1137,8 @@ NGL.RepresentationComponent = function( stage, repr, params, parent ){
 NGL.RepresentationComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    constructor: NGL.RepresentationComponent,
 
     type: "representation",
 

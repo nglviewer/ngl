@@ -302,6 +302,8 @@ NGL.StructureLoader = function( manager ){
 
 NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
+NGL.StructureLoader.prototype.constructor = NGL.StructureLoader;
+
 NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, params ){
 
     params = params || {};
@@ -332,6 +334,8 @@ NGL.ObjLoader = function( manager ){
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
+NGL.StructureLoader.prototype.constructor = NGL.ObjLoader;
+
 NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
     if( typeof data === "string" ){
@@ -358,6 +362,8 @@ NGL.PlyLoader = function( manager ){
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
+NGL.StructureLoader.prototype.constructor = NGL.PlyLoader;
+
 NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
 
     if( typeof data === "string" ){
@@ -383,6 +389,8 @@ NGL.ScriptLoader = function( manager ){
 };
 
 NGL.ScriptLoader.prototype = Object.create( NGL.XHRLoader.prototype );
+
+NGL.StructureLoader.prototype.constructor = NGL.ScriptLoader;
 
 NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 

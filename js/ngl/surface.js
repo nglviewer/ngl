@@ -18,4 +18,6 @@ NGL.Surface = function( object, name, path ){
 
 NGL.Surface.prototype = {
 
+	constructor: NGL.Surface,
+
 }

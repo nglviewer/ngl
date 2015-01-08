@@ -360,6 +360,8 @@ NGL.ColorFactory.types = {
 
 NGL.ColorFactory.prototype = {
 
+    constructor: NGL.ColorFactory,
+
     atomColor: function( a ){
 
         var type = this.type;
@@ -505,6 +507,8 @@ NGL.RadiusFactory.types = {
 
 NGL.RadiusFactory.prototype = {
 
+    constructor: NGL.RadiusFactory,
+
     atomRadius: function( a ){
 
         var type = this.type;
@@ -588,6 +592,8 @@ NGL.LabelFactory.types = {
 };
 
 NGL.LabelFactory.prototype = {
+
+    constructor: NGL.LabelFactory,
 
     atomLabel: function( a ){
 
@@ -1323,6 +1329,8 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
 
 NGL.Bond.prototype = {
 
+    constructor: NGL.Bond,
+
     atom1: undefined,
     atom2: undefined,
     bondOrder: undefined,
@@ -1391,6 +1399,8 @@ NGL.Superposition = function( atoms1, atoms2 ){
 };
 
 NGL.Superposition.prototype = {
+
+    constructor: NGL.Superposition,
 
     _superpose: function( coords1, coords2 ){
 
@@ -2251,6 +2261,8 @@ NGL.Model = function( structure ){
 
 NGL.Model.prototype = {
 
+    constructor: NGL.Model,
+
     modelno: undefined,
 
     nextAtomIndex: function(){
@@ -2426,6 +2438,8 @@ NGL.Chain = function( model ){
 };
 
 NGL.Chain.prototype = {
+
+    constructor: NGL.Chain,
 
     chainname: undefined,
 
@@ -2721,6 +2735,8 @@ NGL.Fiber = function( residues, structure ){
 
 NGL.Fiber.prototype = {
 
+    constructor: NGL.Fiber,
+
     eachAtom: NGL.Chain.prototype.eachAtom,
 
     eachResidue: NGL.Chain.prototype.eachResidue,
@@ -2776,6 +2792,8 @@ NGL.Residue = function( chain ){
 };
 
 NGL.Residue.prototype = {
+
+    constructor: NGL.Residue,
 
     index: undefined,
     resno: undefined,
@@ -3109,6 +3127,8 @@ NGL.Atom = function( residue, globalindex ){
 
 NGL.Atom.prototype = {
 
+    constructor: NGL.Atom,
+
     index: undefined,
     atomno: undefined,
     resname: undefined,
@@ -3245,6 +3265,8 @@ NGL.AtomArray = function( sizeOrObject ){
 };
 
 NGL.AtomArray.prototype = {
+
+    constructor: NGL.AtomArray,
 
     init: function( size ){
 
@@ -3649,6 +3671,8 @@ NGL.ProxyAtom = function( atomArray, index ){
 
 NGL.ProxyAtom.prototype = {
 
+    constructor: NGL.ProxyAtom,
+
     get atomno () {
         return this.atomArray.atomno[ this.index ];
     },
@@ -3834,6 +3858,8 @@ NGL.StructureSubset = function( structure, sele ){
 };
 
 NGL.StructureSubset.prototype = Object.create( NGL.Structure.prototype );
+
+NGL.StructureSubset.prototype.constructor = NGL.StructureSubset;
 
 NGL.StructureSubset.prototype._build = function(){
 
@@ -4743,6 +4769,8 @@ NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatr
 };
 
 NGL.Alignment.prototype = {
+
+    constructor: NGL.Alignment,
 
     initMatrices: function(){
 

@@ -493,137 +493,145 @@ NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
 
 }
 
-NGL.RemoteTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+NGL.RemoteTrajectory.prototype = NGL.createObject(
 
-NGL.RemoteTrajectory.prototype.loadFrame = function( i, callback ){
+    NGL.Trajectory.prototype, {
 
-    // TODO implement max frameCache size, re-use arrays
+    constructor: NGL.RemoteTrajectory,
 
-    // console.time( "loadFrame" );
+    type: "remote",
 
-    var scope = this;
+    loadFrame: function( i, callback ){
 
-    var request = new XMLHttpRequest();
+        // TODO implement max frameCache size, re-use arrays
 
-    var url = "../traj/frame/" + i + "/" + this.trajPath;
-    var params = "atomIndices=" + this.atomIndices.join(";");
+        // console.time( "loadFrame" );
 
-    request.open( "POST", url, true );
-    request.responseType = "arraybuffer";
-    request.setRequestHeader(
-        "Content-type", "application/x-www-form-urlencoded"
-    );
+        var scope = this;
 
-    request.addEventListener( 'load', function( event ){
+        var request = new XMLHttpRequest();
 
-        // console.timeEnd( "loadFrame" );
+        var url = "../traj/frame/" + i + "/" + this.trajPath;
+        var params = "atomIndices=" + this.atomIndices.join(";");
 
-        var arrayBuffer = this.response;
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
 
-        if( !arrayBuffer ){
-            console.error( "empty arrayBuffer for '" + url + "'" );
+        request.addEventListener( 'load', function( event ){
+
+            // console.timeEnd( "loadFrame" );
+
+            var arrayBuffer = this.response;
+
+            if( !arrayBuffer ){
+                console.error( "empty arrayBuffer for '" + url + "'" );
+                return;
+            }
+
+            var box = new Float32Array( arrayBuffer, 0, 9 );
+            var coords = new Float32Array( arrayBuffer, 9 * 4 );
+
+            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = scope.getCircularMean(
+                    scope.backboneIndices, coords, box2
+                );
+                scope.centerPbc( coords, mean, box2 );
+            }
+
+            if( scope.params.removePbc ){
+                scope.removePbc( coords, box );
+            }
+
+            if( scope.indices.length > 0 && scope.params.superpose ){
+                scope.superpose( coords );
+            }
+
+            if( !scope.frameCache[ i ] ){
+                scope.frameCache[ i ] = coords;
+                scope.boxCache[ i ] = box;
+                scope.frameCacheSize += 1;
+            }
+
+            scope.updateStructure( i, callback );
+
+        }, false );
+
+        request.send( params );
+
+    },
+
+    getNumframes: function(){
+
+        var scope = this;
+
+        var loader = new THREE.XHRLoader();
+        var url = "../traj/numframes/" + this.trajPath;
+
+        loader.load( url, function( n ){
+
+            n = parseInt( n );
+            // console.log( "numframes", n );
+
+            scope.numframes = n;
+            scope.signals.gotNumframes.dispatch( n );
+
+        });
+
+    },
+
+    getPath: function( index, callback ){
+
+        if( this.pathCache[ index ] ){
+            callback( this.pathCache[ index ] );
             return;
         }
 
-        var box = new Float32Array( arrayBuffer, 0, 9 );
-        var coords = new Float32Array( arrayBuffer, 9 * 4 );
+        console.time( "loadPath" );
 
-        if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
-            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-            var mean = scope.getCircularMean(
-                scope.backboneIndices, coords, box2
-            );
-            scope.centerPbc( coords, mean, box2 );
-        }
+        var scope = this;
 
-        if( scope.params.removePbc ){
-            scope.removePbc( coords, box );
-        }
+        var request = new XMLHttpRequest();
 
-        if( scope.indices.length > 0 && scope.params.superpose ){
-            scope.superpose( coords );
-        }
+        var url = "../traj/path/" + index + "/" + this.trajPath;
+        var params = "";
+        // var params = "frameIndices=" + this.atomIndices.join(";");
 
-        if( !scope.frameCache[ i ] ){
-            scope.frameCache[ i ] = coords;
-            scope.boxCache[ i ] = box;
-            scope.frameCacheSize += 1;
-        }
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
 
-        scope.updateStructure( i, callback );
+        request.addEventListener( 'load', function( event ){
 
-    }, false );
+            console.timeEnd( "loadPath" );
 
-    request.send( params );
+            var arrayBuffer = this.response;
 
-};
+            if( !arrayBuffer ){
+                console.error( "empty arrayBuffer for '" + url + "'" );
+                return;
+            }
 
-NGL.RemoteTrajectory.prototype.getNumframes = function(){
+            var path = new Float32Array( arrayBuffer );
 
-    var scope = this;
+            scope.pathCache[ index ] = path;
 
-    var loader = new THREE.XHRLoader();
-    var url = "../traj/numframes/" + this.trajPath;
+            // console.log( path )
 
-    loader.load( url, function( n ){
+            callback( path );
 
-        n = parseInt( n );
-        // console.log( "numframes", n );
+        }, false );
 
-        scope.numframes = n;
-        scope.signals.gotNumframes.dispatch( n );
+        request.send( params );
 
-    });
-
-};
-
-NGL.RemoteTrajectory.prototype.getPath = function( index, callback ){
-
-    if( this.pathCache[ index ] ){
-        callback( this.pathCache[ index ] );
-        return;
     }
 
-    console.time( "loadPath" );
-
-    var scope = this;
-
-    var request = new XMLHttpRequest();
-
-    var url = "../traj/path/" + index + "/" + this.trajPath;
-    var params = "";
-    // var params = "frameIndices=" + this.atomIndices.join(";");
-
-    request.open( "POST", url, true );
-    request.responseType = "arraybuffer";
-    request.setRequestHeader(
-        "Content-type", "application/x-www-form-urlencoded"
-    );
-
-    request.addEventListener( 'load', function( event ){
-
-        console.timeEnd( "loadPath" );
-
-        var arrayBuffer = this.response;
-
-        if( !arrayBuffer ){
-            console.error( "empty arrayBuffer for '" + url + "'" );
-            return;
-        }
-
-        var path = new Float32Array( arrayBuffer );
-
-        scope.pathCache[ index ] = path;
-
-        // console.log( path )
-
-        callback( path );
-
-    }, false );
-
-    request.send( params );
-
-};
+} );
 
 
 NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
@@ -635,125 +643,141 @@ NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
 }
 
-NGL.StructureTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+NGL.StructureTrajectory.prototype = NGL.createObject(
 
-NGL.StructureTrajectory.prototype.loadFrame = function( i, callback ){
+    NGL.Trajectory.prototype, {
 
-    var coords = new Float32Array( this.structure.frames[ i ] );
-    var box = this.structure.boxes[ i ];
+    constructor: NGL.StructureTrajectory,
 
-    if( box ){
+    type: "structure",
 
-        if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-            var mean = this.getCircularMean(
-                this.backboneIndices, coords, box2
-            );
-            this.centerPbc( coords, mean, box2 );
+    loadFrame: function( i, callback ){
+
+        var coords = new Float32Array( this.structure.frames[ i ] );
+        var box = this.structure.boxes[ i ];
+
+        if( box ){
+
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
+
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
+
         }
 
-        if( this.params.removePbc ){
-            this.removePbc( coords, box );
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
         }
 
-    }
+        if( !this.frameCache[ i ] ){
+            this.frameCache[ i ] = coords;
+            this.boxCache[ i ] = box;
+            this.frameCacheSize += 1;
+        }
 
-    if( this.indices.length > 0 && this.params.superpose ){
-        this.superpose( coords );
-    }
+        this.updateStructure( i, callback );
 
-    if( !this.frameCache[ i ] ){
-        this.frameCache[ i ] = coords;
-        this.boxCache[ i ] = box;
-        this.frameCacheSize += 1;
-    }
+    },
 
-    this.updateStructure( i, callback );
+    getNumframes: function(){
 
-};
+        this.numframes = this.structure.frames.length;
+        this.signals.gotNumframes.dispatch( this.numframes );
 
-NGL.StructureTrajectory.prototype.getNumframes = function(){
+    },
 
-    this.numframes = this.structure.frames.length;
-    this.signals.gotNumframes.dispatch( this.numframes );
+    getPath: function( index, callback ){
 
-};
+        var i, j, f;
+        var n = this.numframes;
+        var k = index * 3;
 
-NGL.StructureTrajectory.prototype.getPath = function( index, callback ){
+        var path = new Float32Array( n * 3 );
 
-    var i, j, f;
-    var n = this.numframes;
-    var k = index * 3;
+        for( i = 0; i < n; ++i ){
 
-    var path = new Float32Array( n * 3 );
+            j = 3 * i;
+            f = this.structure.frames[ i ];
 
-    for( i = 0; i < n; ++i ){
+            path[ j + 0 ] = f[ k + 0 ];
+            path[ j + 1 ] = f[ k + 1 ];
+            path[ j + 2 ] = f[ k + 2 ];
 
-        j = 3 * i;
-        f = this.structure.frames[ i ];
+        }
 
-        path[ j + 0 ] = f[ k + 0 ];
-        path[ j + 1 ] = f[ k + 1 ];
-        path[ j + 2 ] = f[ k + 2 ];
+        callback( path );
 
     }
 
-    callback( path );
-
-};
+} );
 
 
-// NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
+/*NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
 
-//     if( !trajPath ) trajPath = structure.path;
+    if( !trajPath ) trajPath = structure.path;
 
-//     NGL.Trajectory.call( this, trajPath, structure, selectionString );
+    NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-// }
+}
 
-// NGL.BinaryTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+NGL.BinaryTrajectory.prototype = NGL.createObject(
 
-// NGL.BinaryTrajectory.prototype.loadFrame = function( i, callback ){
+    NGL.Trajectory.prototype, {
 
-//     var coords = new Float32Array( this.structure.frames[ i ] );
-//     var box = this.structure.boxes[ i ];
+    constructor: NGL.BinaryTrajectory,
 
-//     if( box ){
+    type: "binary",
 
-//         if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-//             var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-//             var mean = this.getCircularMean(
-//                 this.backboneIndices, coords, box2
-//             );
-//             this.centerPbc( coords, mean, box2 );
-//         }
+    loadFrame: function( i, callback ){
 
-//         if( this.params.removePbc ){
-//             this.removePbc( coords, box );
-//         }
+        var coords = new Float32Array( this.structure.frames[ i ] );
+        var box = this.structure.boxes[ i ];
 
-//     }
+        if( box ){
 
-//     if( this.indices.length > 0 && this.params.superpose ){
-//         this.superpose( coords );
-//     }
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
 
-//     if( !this.frameCache[ i ] ){
-//         this.frameCache[ i ] = coords;
-//         this.boxCache[ i ] = box;
-//         this.frameCacheSize += 1;
-//     }
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
 
-//     this.updateStructure( i, callback );
+        }
 
-// };
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
+        }
 
-// NGL.BinaryTrajectory.prototype.getNumframes = function(){
+        if( !this.frameCache[ i ] ){
+            this.frameCache[ i ] = coords;
+            this.boxCache[ i ] = box;
+            this.frameCacheSize += 1;
+        }
 
-//     this.numframes = this.structure.frames.length;
-//     this.signals.gotNumframes.dispatch( this.numframes );
+        this.updateStructure( i, callback );
 
-// };
+    },
+
+    getNumframes: function(){
+
+        this.numframes = this.structure.frames.length;
+        this.signals.gotNumframes.dispatch( this.numframes );
+
+    }
+
+} );*/
 
 
 ///////////
@@ -794,6 +818,8 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
 };
 
 NGL.TrajectoryPlayer.prototype = {
+
+    constructor: NGL.TrajectoryPlayer,
 
     _animate: function(){
 

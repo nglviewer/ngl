@@ -2066,6 +2066,8 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
 
 NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
+NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
+
 
 /**
  * [MappedBuffer description]
@@ -2087,6 +2089,8 @@ NGL.MappedBuffer = function(){
 };
 
 NGL.MappedBuffer.prototype = Object.create( NGL.Buffer.prototype );
+
+NGL.MappedBuffer.prototype.constructor = NGL.MappedBuffer;
 
 NGL.MappedBuffer.prototype.finalize = function(){
 
@@ -2221,6 +2225,8 @@ NGL.QuadBuffer = function(){
 
 NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
+NGL.QuadBuffer.prototype.constructor = NGL.QuadBuffer;
+
 
 /**
  * [BoxBuffer description]
@@ -2267,6 +2273,8 @@ NGL.BoxBuffer = function(){
 
 NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
+NGL.BoxBuffer.prototype.constructor = NGL.BoxBuffer;
+
 
 /**
  * [AlignedBoxBuffer description]
@@ -2302,6 +2310,8 @@ NGL.AlignedBoxBuffer = function(){
 };
 
 NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
+
+NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 
 
 ////////////////////////
@@ -2360,6 +2370,8 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, tran
 };
 
 NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
+
+NGL.SphereImpostorBuffer.prototype.constructor = NGL.SphereImpostorBuffer;
 
 
 /**
@@ -2439,6 +2451,8 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 
 NGL.CylinderImpostorBuffer.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
 
+NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
+
 NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 
     var material = NGL.Buffer.prototype.getMaterial.call( this, type );
@@ -2513,6 +2527,8 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
 NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
 
+NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpostorBuffer;
+
 
 ////////////////////////
 // Geometry Primitives
@@ -2573,6 +2589,8 @@ NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side,
 };
 
 NGL.GeometryBuffer.prototype = {
+
+    constructor: NGL.GeometryBuffer,
 
     applyPositionTransform: function(){},
 
@@ -2750,6 +2768,8 @@ NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, deta
 
 NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
 
+NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
+
 NGL.SphereGeometryBuffer.prototype.setPositionTransform = function( radius ){
 
     var r;
@@ -2819,6 +2839,8 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
 };
 
 NGL.CylinderGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+
+NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
 
 NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, radius ){
 
@@ -2953,6 +2975,8 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, t
 
 NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
+NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
+
 NGL.PointBuffer.prototype.getMesh = function( type ){
 
     var points = new THREE.PointCloud(
@@ -3073,6 +3097,8 @@ NGL.LineBuffer = function( from, to, color, color2, lineWidth, transparent, opac
 };
 
 NGL.LineBuffer.prototype = {
+
+    constructor: NGL.LineBuffer,
 
     setAttributes: function( data ){
 
@@ -3234,6 +3260,8 @@ NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
 
 NGL.TraceBuffer.prototype = {
 
+    constructor: NGL.TraceBuffer,
+
     setAttributes: function( data ){
 
         var position, color;
@@ -3348,6 +3376,8 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
+NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
+
 
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, transparent, side, opacity ){
 
@@ -3419,6 +3449,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, t
 };
 
 NGL.RibbonBuffer.prototype = {
+
+    constructor: NGL.RibbonBuffer,
 
     setAttributes: function( data ){
 
@@ -3680,6 +3712,8 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 }
 
 NGL.TubeMeshBuffer.prototype = {
+
+    constructor: NGL.TubeMeshBuffer,
 
     setAttributes: function(){
 
@@ -4052,6 +4086,8 @@ NGL.SurfaceBuffer = function(){
 
 NGL.SurfaceBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
+NGL.SurfaceBuffer.prototype.constructor = NGL.SurfaceBuffer;
+
 
 ///////////////////
 // API Primitives
@@ -4244,6 +4280,8 @@ NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity
 
 NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
+NGL.TextBuffer.prototype.constructor = NGL.TextBuffer;
+
 NGL.TextBuffer.prototype.getMaterial = function(){
 
     var material = NGL.Buffer.prototype.getMaterial.call( this );
@@ -4422,6 +4460,8 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
 };
 
 NGL.BufferVectorHelper.prototype = {
+
+    constructor: NGL.BufferVectorHelper,
 
     setAttributes: function( data ){
 

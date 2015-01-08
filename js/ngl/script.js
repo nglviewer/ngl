@@ -46,6 +46,8 @@ NGL.Script = function( functionBody, name, path ){
 
 NGL.Script.prototype = {
 
+    constructor: NGL.Script,
+
     call: function( stage, onFinish ){
 
         var scope = this;
@@ -125,6 +127,8 @@ NGL.ScriptQueue = function( stage, dir, onFinish ){
 };
 
 NGL.ScriptQueue.prototype = {
+
+    constructor: NGL.ScriptQueue,
 
     load: function( file, params, callback, loadParams ){
 
