@@ -519,7 +519,10 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                     line.substr( 41, 30 ).split( "," ).forEach( function( v ){
 
-                        currentBiomol.chainList.push( v.trim() )
+                        var c = v.trim();
+                        if( c ){
+                            currentBiomol.chainList.push( c )
+                        }
 
                     } );
 
