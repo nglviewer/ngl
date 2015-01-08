@@ -271,7 +271,6 @@ NGL.FileLoader.prototype = {
 
         if( this.responseType === "arraybuffer" ){
 
-            console.log( "moin" )
             reader.readAsArrayBuffer( file );
 
         }else{
@@ -424,7 +423,7 @@ NGL.autoLoad = function(){
 
         var fileInfo = NGL.getFileInfo( file );
 
-        console.log( fileInfo );
+        // console.log( fileInfo );
 
         var path = fileInfo.path;
         var name = fileInfo.name;

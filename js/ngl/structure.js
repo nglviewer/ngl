@@ -2303,7 +2303,13 @@ NGL.Model.prototype = {
 
             this.chains.forEach( function( c ){
 
-                if( test( c ) ) c.eachAtom( callback, selection );
+                // console.log( c.chainname, selection.selection, selection.string )
+
+                if( test( c ) ){
+                    c.eachAtom( callback, selection );
+                }else{
+                    // console.log( "chain", c.chainname );
+                }
 
             } );
 
@@ -4398,7 +4404,7 @@ NGL.Selection.prototype = {
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
 
-        var i, s, and, ret;
+        var i, s, and, ret, na;
 
         var subTests = [];
 
@@ -4417,6 +4423,7 @@ NGL.Selection.prototype = {
         return function( entity ){
 
             and = selection.operator === "AND";
+            na = false;
 
             for( i=0; i<n; ++i ){
 
@@ -4428,7 +4435,9 @@ NGL.Selection.prototype = {
 
                     if( ret === -1 ){
 
-                        return -1;
+                        // return -1;
+                        na = true;
+                        continue;
 
                     }else if( ret === true){
 
@@ -4452,7 +4461,9 @@ NGL.Selection.prototype = {
 
                     if( ret === -1 ){
 
-                        return -1;
+                        // return -1;
+                        na = true;
+                        continue;
 
                     }else if( ret === true){
 
@@ -4468,7 +4479,15 @@ NGL.Selection.prototype = {
 
             }
 
-            if( and ){ return t; }else{ return f; }
+            if( na ){
+
+                return -1;
+
+            }else{
+
+                if( and ){ return t; }else{ return f; }
+
+            }
 
         }
 
@@ -4633,6 +4652,47 @@ NGL.Selection.prototype = {
         return this._makeTest( fn );
 
     },
+
+    /*makeChainTest: function(){
+
+        var fn = function( c, s ){
+
+            // returning -1 means the rule is not applicable
+
+            console.log( c, s );
+
+            if( s.chainname!==undefined && c.chainname===undefined ){
+                console.log( -1, "s.chainname!==undefined && c.chainname===undefined" );
+                return -1;
+            }
+            if( s.chainname===undefined && s.model===undefined ){
+                console.log( -1, "s.chainname===undefined && s.model===undefined" );
+                return -1;
+            }
+
+            // support autoChainNames which work only on atoms
+            if( s.chainname!=="" && c.chainname==="" ){
+                console.log( -1, s.chainname!=="" && c.chainname==="" );
+                return -1;
+            }
+
+            if( s.chainname!==undefined && s.chainname!==c.chainname ){
+                console.log( false );
+                return false;
+            }
+            if( s.model!==undefined && s.model!==c.model.index ){
+                console.log( false );
+                return false;
+            }
+
+            console.log( true );
+            return true;
+
+        }
+
+        return this._makeTest( fn );
+
+    },*/
 
     makeModelTest: function(){
 

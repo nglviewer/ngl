@@ -1399,6 +1399,8 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                     for( var i = _i; i < _n; ++i ){
 
+                        if( sc.conn_type_id[ i ] === "hydrog" ) continue;
+
                         var selection1 = new NGL.Selection(
                             sc.ptnr1_auth_seq_id[ i ] + ":" +
                             sc.ptnr1_label_asym_id[ i ] + "." +
@@ -1439,7 +1441,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                 wcallback,
 
-                1000
+                500
 
             );
 
