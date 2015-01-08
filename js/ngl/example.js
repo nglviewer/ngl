@@ -623,8 +623,6 @@ NGL.Examples = {
 
         "capsid": function( stage ){
 
-            console.time( "test" );
-
             stage.loadFile( "data://1RB8.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );

@@ -402,21 +402,21 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var viewer = this.viewer;
         var structure = this.structure;
 
-        // console.log( structure.biomolDict )
+        console.log( structure.biomolDict )
         // console.log( Object.values( structure.biomolDict[ 1 ].matrixDict ) );
 
         var matrixList;
 
         // TODO
         if( structure.biomolDict && structure.biomolDict[ 1 ] ){
-            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict )//.slice(0,5);
+            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict )
         }else{
             matrixList = [];
         }
 
         this.bufferList.forEach( function( buffer ){
 
-            if( matrixList.length > 1 ){
+            if( matrixList.length >= 1 ){
                 viewer.add( buffer, matrixList );
             }else{
                 viewer.add( buffer );
