@@ -4653,47 +4653,6 @@ NGL.Selection.prototype = {
 
     },
 
-    /*makeChainTest: function(){
-
-        var fn = function( c, s ){
-
-            // returning -1 means the rule is not applicable
-
-            console.log( c, s );
-
-            if( s.chainname!==undefined && c.chainname===undefined ){
-                console.log( -1, "s.chainname!==undefined && c.chainname===undefined" );
-                return -1;
-            }
-            if( s.chainname===undefined && s.model===undefined ){
-                console.log( -1, "s.chainname===undefined && s.model===undefined" );
-                return -1;
-            }
-
-            // support autoChainNames which work only on atoms
-            if( s.chainname!=="" && c.chainname==="" ){
-                console.log( -1, s.chainname!=="" && c.chainname==="" );
-                return -1;
-            }
-
-            if( s.chainname!==undefined && s.chainname!==c.chainname ){
-                console.log( false );
-                return false;
-            }
-            if( s.model!==undefined && s.model!==c.model.index ){
-                console.log( false );
-                return false;
-            }
-
-            console.log( true );
-            return true;
-
-        }
-
-        return this._makeTest( fn );
-
-    },*/
-
     makeModelTest: function(){
 
         var fn = function( m, s ){

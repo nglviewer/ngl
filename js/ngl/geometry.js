@@ -419,8 +419,12 @@ NGL.Spline.prototype = {
 
             }
 
-            d1a4.copy( r4.getAtomByName( directionAtomname1 ) );
-            d2a4.copy( r4.getAtomByName( directionAtomname2 ) );
+            try{
+                d1a4.copy( r4.getAtomByName( directionAtomname1 ) );
+                d2a4.copy( r4.getAtomByName( directionAtomname2 ) );
+            }catch( e ){
+                console.warn( r4, directionAtomname1, directionAtomname2 )
+            }
 
             vSub4.subVectors( d2a4, d1a4 );
             if( vSub3.dot( vSub4 ) < 0 ){
