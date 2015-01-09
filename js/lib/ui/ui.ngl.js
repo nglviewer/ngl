@@ -46,6 +46,7 @@ UI.ColorPopupMenu = function(){
     this.colorInput = new UI.Input()
         .onChange( function(){
 
+            scope.setScheme( "color" );
             scope.setColor( scope.colorInput.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -56,6 +57,7 @@ UI.ColorPopupMenu = function(){
         .setValue( "#20bc3f" )
         .onChange( function( e ){
 
+            scope.setScheme( "color" );
             scope.setColor( scope.colorPicker.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -82,6 +84,10 @@ UI.ColorPopupMenu.prototype.setScheme = function( value ){
     this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
     this.schemeSelector.setValue( value );
 
+    if( value !== "color" ){
+        this.setColor( "#888888" );
+    }
+
     return this;
 
 };
@@ -96,12 +102,10 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 
     var c = new THREE.Color();
 
-    return function( value, ignorePicker ){
+    return function( value ){
 
         c.set( value );
         value = "#" + c.getHexString();
-
-        this.setScheme( "color" );
 
         this.colorInput
             .setBackgroundColor( value )
@@ -111,10 +115,19 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 
         this.iconSquare.setColor( value );
 
-        if( ( c.r + c.g + c.b ) > 1.5 ){
-            this.iconText.setColor( "#000" );
+        // perceived brightness (http://alienryderflex.com/hsp.html)
+        var brightness = Math.sqrt(
+              c.r*255 * c.r*255 * 0.241 +
+              c.g*255 * c.g*255 * 0.691 +
+              c.b*255 * c.b*255 * 0.068
+        );
+
+        if( brightness > 130 ){
+            this.iconText.setColor( "#000000" );
+            this.colorInput.setColor( "#000000" );
         }else{
-            this.iconText.setColor( "#FFF" );
+            this.iconText.setColor( "#FFFFFF" );
+            this.colorInput.setColor( "#FFFFFF" );
         }
 
         return this;
@@ -133,6 +146,7 @@ UI.ColorPopupMenu.prototype.setValue = function( value ){
 
     if( parseInt( value ) === value ){
         this.setColor( value );
+        this.setScheme( "color" );
     }else{
         this.setScheme( value );
     }
