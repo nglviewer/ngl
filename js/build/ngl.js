@@ -411,6 +411,8 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
 
 NGL.ObjectMetadata.prototype = {
 
+    constructor: NGL.ObjectMetadata,
+
     apply: function( object ){
 
         object.setName = NGL.ObjectMetadata.prototype.setName;
@@ -474,6 +476,8 @@ NGL.Spline = function( fiber, arrows ){
 };
 
 NGL.Spline.prototype = {
+
+    constructor: NGL.Spline,
 
     // from THREE.js
     // ASR added tension
@@ -868,8 +872,12 @@ NGL.Spline.prototype = {
 
             }
 
-            d1a4.copy( r4.getAtomByName( directionAtomname1 ) );
-            d2a4.copy( r4.getAtomByName( directionAtomname2 ) );
+            try{
+                d1a4.copy( r4.getAtomByName( directionAtomname1 ) );
+                d2a4.copy( r4.getAtomByName( directionAtomname2 ) );
+            }catch( e ){
+                console.warn( r4, directionAtomname1, directionAtomname2 )
+            }
 
             vSub4.subVectors( d2a4, d1a4 );
             if( vSub3.dot( vSub4 ) < 0 ){
@@ -959,6 +967,8 @@ NGL.Helixorient = function( fiber ){
 };
 
 NGL.Helixorient.prototype = {
+
+    constructor: NGL.Helixorient,
 
     getFiber: function( smooth, padded ){
 
@@ -1305,6 +1315,8 @@ NGL.Helix = function(){
 
 NGL.Helix.prototype = {
 
+    constructor: NGL.Helix,
+
     fromHelixbundleAxis: function(){
 
         var v = new THREE.Vector3();
@@ -1597,6 +1609,8 @@ NGL.Helixbundle = function( fiber ){
 
 NGL.Helixbundle.prototype = {
 
+    constructor: NGL.Helixbundle,
+
     getFiber: function( smooth ){
 
     },
@@ -1752,6 +1766,8 @@ NGL.HelixCrossing = function( helices ){
 };
 
 NGL.HelixCrossing.prototype = {
+
+    constructor: NGL.HelixCrossing,
 
     getCrossing: function( minDistance ){
 
@@ -2175,6 +2191,8 @@ NGL.ColorFactory.types = {
 
 NGL.ColorFactory.prototype = {
 
+    constructor: NGL.ColorFactory,
+
     atomColor: function( a ){
 
         var type = this.type;
@@ -2320,6 +2338,8 @@ NGL.RadiusFactory.types = {
 
 NGL.RadiusFactory.prototype = {
 
+    constructor: NGL.RadiusFactory,
+
     atomRadius: function( a ){
 
         var type = this.type;
@@ -2403,6 +2423,8 @@ NGL.LabelFactory.types = {
 };
 
 NGL.LabelFactory.prototype = {
+
+    constructor: NGL.LabelFactory,
 
     atomLabel: function( a ){
 
@@ -3138,6 +3160,8 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
 
 NGL.Bond.prototype = {
 
+    constructor: NGL.Bond,
+
     atom1: undefined,
     atom2: undefined,
     bondOrder: undefined,
@@ -3206,6 +3230,8 @@ NGL.Superposition = function( atoms1, atoms2 ){
 };
 
 NGL.Superposition.prototype = {
+
+    constructor: NGL.Superposition,
 
     _superpose: function( coords1, coords2 ){
 
@@ -4066,6 +4092,8 @@ NGL.Model = function( structure ){
 
 NGL.Model.prototype = {
 
+    constructor: NGL.Model,
+
     modelno: undefined,
 
     nextAtomIndex: function(){
@@ -4106,7 +4134,13 @@ NGL.Model.prototype = {
 
             this.chains.forEach( function( c ){
 
-                if( test( c ) ) c.eachAtom( callback, selection );
+                // console.log( c.chainname, selection.selection, selection.string )
+
+                if( test( c ) ){
+                    c.eachAtom( callback, selection );
+                }else{
+                    // console.log( "chain", c.chainname );
+                }
 
             } );
 
@@ -4241,6 +4275,8 @@ NGL.Chain = function( model ){
 };
 
 NGL.Chain.prototype = {
+
+    constructor: NGL.Chain,
 
     chainname: undefined,
 
@@ -4428,7 +4464,7 @@ NGL.Chain.prototype = {
 
         this.eachResidueN( 2, function( r1, r2 ){
 
-            // console.log( r1.resno, r2.resno, r1.isProtein() );
+            // console.log( r1.resno, r2.resno );
 
             if( r1.hasProteinBackbone() && r2.hasProteinBackbone() ){
 
@@ -4536,6 +4572,8 @@ NGL.Fiber = function( residues, structure ){
 
 NGL.Fiber.prototype = {
 
+    constructor: NGL.Fiber,
+
     eachAtom: NGL.Chain.prototype.eachAtom,
 
     eachResidue: NGL.Chain.prototype.eachResidue,
@@ -4591,6 +4629,8 @@ NGL.Residue = function( chain ){
 };
 
 NGL.Residue.prototype = {
+
+    constructor: NGL.Residue,
 
     index: undefined,
     resno: undefined,
@@ -4742,7 +4782,9 @@ NGL.Residue.prototype = {
 
         if( this._type === undefined ){
 
-            if( this.isProtein() ){
+            if( this.hasProteinBackbone() ){
+                this._type = NGL.ProteinBackboneType;
+            }else if( this.isProtein() ){
                 this._type = NGL.ProteinType;
             }else if( this.hasNucleicBackbone() ){
                 this._type = NGL.NucleicBackboneType;
@@ -4924,6 +4966,8 @@ NGL.Atom = function( residue, globalindex ){
 
 NGL.Atom.prototype = {
 
+    constructor: NGL.Atom,
+
     index: undefined,
     atomno: undefined,
     resname: undefined,
@@ -5060,6 +5104,8 @@ NGL.AtomArray = function( sizeOrObject ){
 };
 
 NGL.AtomArray.prototype = {
+
+    constructor: NGL.AtomArray,
 
     init: function( size ){
 
@@ -5464,6 +5510,8 @@ NGL.ProxyAtom = function( atomArray, index ){
 
 NGL.ProxyAtom.prototype = {
 
+    constructor: NGL.ProxyAtom,
+
     get atomno () {
         return this.atomArray.atomno[ this.index ];
     },
@@ -5649,6 +5697,8 @@ NGL.StructureSubset = function( structure, sele ){
 };
 
 NGL.StructureSubset.prototype = Object.create( NGL.Structure.prototype );
+
+NGL.StructureSubset.prototype.constructor = NGL.StructureSubset;
 
 NGL.StructureSubset.prototype._build = function(){
 
@@ -6187,7 +6237,7 @@ NGL.Selection.prototype = {
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
 
-        var i, s, and, ret;
+        var i, s, and, ret, na;
 
         var subTests = [];
 
@@ -6206,6 +6256,7 @@ NGL.Selection.prototype = {
         return function( entity ){
 
             and = selection.operator === "AND";
+            na = false;
 
             for( i=0; i<n; ++i ){
 
@@ -6217,7 +6268,9 @@ NGL.Selection.prototype = {
 
                     if( ret === -1 ){
 
-                        return -1;
+                        // return -1;
+                        na = true;
+                        continue;
 
                     }else if( ret === true){
 
@@ -6241,7 +6294,9 @@ NGL.Selection.prototype = {
 
                     if( ret === -1 ){
 
-                        return -1;
+                        // return -1;
+                        na = true;
+                        continue;
 
                     }else if( ret === true){
 
@@ -6257,7 +6312,15 @@ NGL.Selection.prototype = {
 
             }
 
-            if( and ){ return t; }else{ return f; }
+            if( na ){
+
+                return -1;
+
+            }else{
+
+                if( and ){ return t; }else{ return f; }
+
+            }
 
         }
 
@@ -6558,6 +6621,8 @@ NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatr
 };
 
 NGL.Alignment.prototype = {
+
+    constructor: NGL.Alignment,
 
     initMatrices: function(){
 
@@ -7473,137 +7538,145 @@ NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
 
 }
 
-NGL.RemoteTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+NGL.RemoteTrajectory.prototype = NGL.createObject(
 
-NGL.RemoteTrajectory.prototype.loadFrame = function( i, callback ){
+    NGL.Trajectory.prototype, {
 
-    // TODO implement max frameCache size, re-use arrays
+    constructor: NGL.RemoteTrajectory,
 
-    // console.time( "loadFrame" );
+    type: "remote",
 
-    var scope = this;
+    loadFrame: function( i, callback ){
 
-    var request = new XMLHttpRequest();
+        // TODO implement max frameCache size, re-use arrays
 
-    var url = "../traj/frame/" + i + "/" + this.trajPath;
-    var params = "atomIndices=" + this.atomIndices.join(";");
+        // console.time( "loadFrame" );
 
-    request.open( "POST", url, true );
-    request.responseType = "arraybuffer";
-    request.setRequestHeader(
-        "Content-type", "application/x-www-form-urlencoded"
-    );
+        var scope = this;
 
-    request.addEventListener( 'load', function( event ){
+        var request = new XMLHttpRequest();
 
-        // console.timeEnd( "loadFrame" );
+        var url = "../traj/frame/" + i + "/" + this.trajPath;
+        var params = "atomIndices=" + this.atomIndices.join(";");
 
-        var arrayBuffer = this.response;
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
 
-        if( !arrayBuffer ){
-            console.error( "empty arrayBuffer for '" + url + "'" );
+        request.addEventListener( 'load', function( event ){
+
+            // console.timeEnd( "loadFrame" );
+
+            var arrayBuffer = this.response;
+
+            if( !arrayBuffer ){
+                console.error( "empty arrayBuffer for '" + url + "'" );
+                return;
+            }
+
+            var box = new Float32Array( arrayBuffer, 0, 9 );
+            var coords = new Float32Array( arrayBuffer, 9 * 4 );
+
+            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = scope.getCircularMean(
+                    scope.backboneIndices, coords, box2
+                );
+                scope.centerPbc( coords, mean, box2 );
+            }
+
+            if( scope.params.removePbc ){
+                scope.removePbc( coords, box );
+            }
+
+            if( scope.indices.length > 0 && scope.params.superpose ){
+                scope.superpose( coords );
+            }
+
+            if( !scope.frameCache[ i ] ){
+                scope.frameCache[ i ] = coords;
+                scope.boxCache[ i ] = box;
+                scope.frameCacheSize += 1;
+            }
+
+            scope.updateStructure( i, callback );
+
+        }, false );
+
+        request.send( params );
+
+    },
+
+    getNumframes: function(){
+
+        var scope = this;
+
+        var loader = new THREE.XHRLoader();
+        var url = "../traj/numframes/" + this.trajPath;
+
+        loader.load( url, function( n ){
+
+            n = parseInt( n );
+            // console.log( "numframes", n );
+
+            scope.numframes = n;
+            scope.signals.gotNumframes.dispatch( n );
+
+        });
+
+    },
+
+    getPath: function( index, callback ){
+
+        if( this.pathCache[ index ] ){
+            callback( this.pathCache[ index ] );
             return;
         }
 
-        var box = new Float32Array( arrayBuffer, 0, 9 );
-        var coords = new Float32Array( arrayBuffer, 9 * 4 );
+        console.time( "loadPath" );
 
-        if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
-            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-            var mean = scope.getCircularMean(
-                scope.backboneIndices, coords, box2
-            );
-            scope.centerPbc( coords, mean, box2 );
-        }
+        var scope = this;
 
-        if( scope.params.removePbc ){
-            scope.removePbc( coords, box );
-        }
+        var request = new XMLHttpRequest();
 
-        if( scope.indices.length > 0 && scope.params.superpose ){
-            scope.superpose( coords );
-        }
+        var url = "../traj/path/" + index + "/" + this.trajPath;
+        var params = "";
+        // var params = "frameIndices=" + this.atomIndices.join(";");
 
-        if( !scope.frameCache[ i ] ){
-            scope.frameCache[ i ] = coords;
-            scope.boxCache[ i ] = box;
-            scope.frameCacheSize += 1;
-        }
+        request.open( "POST", url, true );
+        request.responseType = "arraybuffer";
+        request.setRequestHeader(
+            "Content-type", "application/x-www-form-urlencoded"
+        );
 
-        scope.updateStructure( i, callback );
+        request.addEventListener( 'load', function( event ){
 
-    }, false );
+            console.timeEnd( "loadPath" );
 
-    request.send( params );
+            var arrayBuffer = this.response;
 
-};
+            if( !arrayBuffer ){
+                console.error( "empty arrayBuffer for '" + url + "'" );
+                return;
+            }
 
-NGL.RemoteTrajectory.prototype.getNumframes = function(){
+            var path = new Float32Array( arrayBuffer );
 
-    var scope = this;
+            scope.pathCache[ index ] = path;
 
-    var loader = new THREE.XHRLoader();
-    var url = "../traj/numframes/" + this.trajPath;
+            // console.log( path )
 
-    loader.load( url, function( n ){
+            callback( path );
 
-        n = parseInt( n );
-        // console.log( "numframes", n );
+        }, false );
 
-        scope.numframes = n;
-        scope.signals.gotNumframes.dispatch( n );
+        request.send( params );
 
-    });
-
-};
-
-NGL.RemoteTrajectory.prototype.getPath = function( index, callback ){
-
-    if( this.pathCache[ index ] ){
-        callback( this.pathCache[ index ] );
-        return;
     }
 
-    console.time( "loadPath" );
-
-    var scope = this;
-
-    var request = new XMLHttpRequest();
-
-    var url = "../traj/path/" + index + "/" + this.trajPath;
-    var params = "";
-    // var params = "frameIndices=" + this.atomIndices.join(";");
-
-    request.open( "POST", url, true );
-    request.responseType = "arraybuffer";
-    request.setRequestHeader(
-        "Content-type", "application/x-www-form-urlencoded"
-    );
-
-    request.addEventListener( 'load', function( event ){
-
-        console.timeEnd( "loadPath" );
-
-        var arrayBuffer = this.response;
-
-        if( !arrayBuffer ){
-            console.error( "empty arrayBuffer for '" + url + "'" );
-            return;
-        }
-
-        var path = new Float32Array( arrayBuffer );
-
-        scope.pathCache[ index ] = path;
-
-        // console.log( path )
-
-        callback( path );
-
-    }, false );
-
-    request.send( params );
-
-};
+} );
 
 
 NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
@@ -7615,125 +7688,141 @@ NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
 }
 
-NGL.StructureTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+NGL.StructureTrajectory.prototype = NGL.createObject(
 
-NGL.StructureTrajectory.prototype.loadFrame = function( i, callback ){
+    NGL.Trajectory.prototype, {
 
-    var coords = new Float32Array( this.structure.frames[ i ] );
-    var box = this.structure.boxes[ i ];
+    constructor: NGL.StructureTrajectory,
 
-    if( box ){
+    type: "structure",
 
-        if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-            var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-            var mean = this.getCircularMean(
-                this.backboneIndices, coords, box2
-            );
-            this.centerPbc( coords, mean, box2 );
+    loadFrame: function( i, callback ){
+
+        var coords = new Float32Array( this.structure.frames[ i ] );
+        var box = this.structure.boxes[ i ];
+
+        if( box ){
+
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
+
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
+
         }
 
-        if( this.params.removePbc ){
-            this.removePbc( coords, box );
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
         }
 
-    }
+        if( !this.frameCache[ i ] ){
+            this.frameCache[ i ] = coords;
+            this.boxCache[ i ] = box;
+            this.frameCacheSize += 1;
+        }
 
-    if( this.indices.length > 0 && this.params.superpose ){
-        this.superpose( coords );
-    }
+        this.updateStructure( i, callback );
 
-    if( !this.frameCache[ i ] ){
-        this.frameCache[ i ] = coords;
-        this.boxCache[ i ] = box;
-        this.frameCacheSize += 1;
-    }
+    },
 
-    this.updateStructure( i, callback );
+    getNumframes: function(){
 
-};
+        this.numframes = this.structure.frames.length;
+        this.signals.gotNumframes.dispatch( this.numframes );
 
-NGL.StructureTrajectory.prototype.getNumframes = function(){
+    },
 
-    this.numframes = this.structure.frames.length;
-    this.signals.gotNumframes.dispatch( this.numframes );
+    getPath: function( index, callback ){
 
-};
+        var i, j, f;
+        var n = this.numframes;
+        var k = index * 3;
 
-NGL.StructureTrajectory.prototype.getPath = function( index, callback ){
+        var path = new Float32Array( n * 3 );
 
-    var i, j, f;
-    var n = this.numframes;
-    var k = index * 3;
+        for( i = 0; i < n; ++i ){
 
-    var path = new Float32Array( n * 3 );
+            j = 3 * i;
+            f = this.structure.frames[ i ];
 
-    for( i = 0; i < n; ++i ){
+            path[ j + 0 ] = f[ k + 0 ];
+            path[ j + 1 ] = f[ k + 1 ];
+            path[ j + 2 ] = f[ k + 2 ];
 
-        j = 3 * i;
-        f = this.structure.frames[ i ];
+        }
 
-        path[ j + 0 ] = f[ k + 0 ];
-        path[ j + 1 ] = f[ k + 1 ];
-        path[ j + 2 ] = f[ k + 2 ];
+        callback( path );
 
     }
 
-    callback( path );
-
-};
+} );
 
 
-// NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
+/*NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
 
-//     if( !trajPath ) trajPath = structure.path;
+    if( !trajPath ) trajPath = structure.path;
 
-//     NGL.Trajectory.call( this, trajPath, structure, selectionString );
+    NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-// }
+}
 
-// NGL.BinaryTrajectory.prototype = Object.create( NGL.Trajectory.prototype );
+NGL.BinaryTrajectory.prototype = NGL.createObject(
 
-// NGL.BinaryTrajectory.prototype.loadFrame = function( i, callback ){
+    NGL.Trajectory.prototype, {
 
-//     var coords = new Float32Array( this.structure.frames[ i ] );
-//     var box = this.structure.boxes[ i ];
+    constructor: NGL.BinaryTrajectory,
 
-//     if( box ){
+    type: "binary",
 
-//         if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-//             var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-//             var mean = this.getCircularMean(
-//                 this.backboneIndices, coords, box2
-//             );
-//             this.centerPbc( coords, mean, box2 );
-//         }
+    loadFrame: function( i, callback ){
 
-//         if( this.params.removePbc ){
-//             this.removePbc( coords, box );
-//         }
+        var coords = new Float32Array( this.structure.frames[ i ] );
+        var box = this.structure.boxes[ i ];
 
-//     }
+        if( box ){
 
-//     if( this.indices.length > 0 && this.params.superpose ){
-//         this.superpose( coords );
-//     }
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
 
-//     if( !this.frameCache[ i ] ){
-//         this.frameCache[ i ] = coords;
-//         this.boxCache[ i ] = box;
-//         this.frameCacheSize += 1;
-//     }
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
 
-//     this.updateStructure( i, callback );
+        }
 
-// };
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
+        }
 
-// NGL.BinaryTrajectory.prototype.getNumframes = function(){
+        if( !this.frameCache[ i ] ){
+            this.frameCache[ i ] = coords;
+            this.boxCache[ i ] = box;
+            this.frameCacheSize += 1;
+        }
 
-//     this.numframes = this.structure.frames.length;
-//     this.signals.gotNumframes.dispatch( this.numframes );
+        this.updateStructure( i, callback );
 
-// };
+    },
+
+    getNumframes: function(){
+
+        this.numframes = this.structure.frames.length;
+        this.signals.gotNumframes.dispatch( this.numframes );
+
+    }
+
+} );*/
 
 
 ///////////
@@ -7774,6 +7863,8 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
 };
 
 NGL.TrajectoryPlayer.prototype = {
+
+    constructor: NGL.TrajectoryPlayer,
 
     _animate: function(){
 
@@ -7896,6 +7987,8 @@ NGL.Surface = function( object, name, path ){
 
 NGL.Surface.prototype = {
 
+	constructor: NGL.Surface,
+
 }
 
 // File:js/ngl/script.js
@@ -7947,6 +8040,8 @@ NGL.Script = function( functionBody, name, path ){
 }
 
 NGL.Script.prototype = {
+
+    constructor: NGL.Script,
 
     call: function( stage, onFinish ){
 
@@ -8027,6 +8122,8 @@ NGL.ScriptQueue = function( stage, dir, onFinish ){
 };
 
 NGL.ScriptQueue.prototype = {
+
+    constructor: NGL.ScriptQueue,
 
     load: function( file, params, callback, loadParams ){
 
@@ -8665,6 +8762,8 @@ NGL.StructureParser = function( name, path, params ){
 
 NGL.StructureParser.prototype = {
 
+    constructor: NGL.StructureParser,
+
     parse: function( str, callback ){
 
         var self = this;
@@ -8743,6 +8842,8 @@ NGL.PdbParser = function( name, path, params ){
 };
 
 NGL.PdbParser.prototype = Object.create( NGL.StructureParser.prototype );
+
+NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
@@ -8942,7 +9043,10 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                     line.substr( 41, 30 ).split( "," ).forEach( function( v ){
 
-                        currentBiomol.chainList.push( v.trim() )
+                        var c = v.trim();
+                        if( c ){
+                            currentBiomol.chainList.push( c )
+                        }
 
                     } );
 
@@ -9097,6 +9201,8 @@ NGL.GroParser = function( name, path, params ){
 };
 
 NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
+
+NGL.GroParser.prototype.constructor = NGL.GroParser;
 
 NGL.GroParser.prototype._parse = function( str, callback ){
 
@@ -9283,6 +9389,8 @@ NGL.CifParser = function( name, path, params ){
 
 NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
 
+NGL.CifParser.prototype.constructor = NGL.CifParser;
+
 NGL.CifParser.prototype._parse = function( str, callback ){
 
     var __timeName = "NGL.CifParser._parse " + this.name;
@@ -9397,10 +9505,17 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     // console.log( "STRING END", currentString );
 
                     if( pendingLoop ){
+
+                        if( currentLoopIndex === loopPointers.length ){
+                            currentLoopIndex = 0;
+                        }
                         loopPointers[ currentLoopIndex ].push( currentString );
                         currentLoopIndex += 1;
+
                     }else{
+
                         cif[ currentCategory ][ currentName ] = currentString;
+
                     }
 
                     pendingString = false;
@@ -9679,6 +9794,16 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
     var s = structure;
     var cif = s.cif;
 
+    function _ensureArray( dict, field ){
+
+        if( !Array.isArray( dict[ field ] ) ){
+            Object.keys( dict ).forEach( function( key ){
+                dict[ key ] = [ dict[ key ] ];
+            } );
+        }
+
+    }
+
     async.series( [
 
         // assign helix
@@ -9694,6 +9819,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            // ensure data is in lists
+            _ensureArray( sc, "id" );
 
             NGL.processArray(
 
@@ -9747,6 +9875,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             }
 
+            // ensure data is in lists
+            _ensureArray( ssr, "id" );
+
             NGL.processArray(
 
                 ssr.beg_auth_seq_id,
@@ -9791,6 +9922,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
             }
 
+            // ensure data is in lists
+            _ensureArray( sc, "id" );
+
             NGL.processArray(
 
                 sc.id,
@@ -9798,6 +9932,8 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 function( _i, _n ){
 
                     for( var i = _i; i < _n; ++i ){
+
+                        if( sc.conn_type_id[ i ] === "hydrog" ) continue;
 
                         var selection1 = new NGL.Selection(
                             sc.ptnr1_auth_seq_id[ i ] + ":" +
@@ -9839,7 +9975,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                 wcallback,
 
-                1000
+                500
 
             );
 
@@ -9865,11 +10001,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             var op = cif.pdbx_struct_oper_list;
 
             // ensure data is in lists
-            if( !Array.isArray( op.id ) ){
-                Object.keys( op ).forEach( function( key ){
-                    op[ key ] = [ op[ key ] ];
-                } );
-            }
+            _ensureArray( op, "id" );
 
             op.id.forEach( function( id, i ){
 
@@ -9888,9 +10020,11 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
                 elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
 
-                elms[ 12 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                elms[ 13 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                elms[ 14 ] = parseFloat( op[ "vector[3]" ][ i ] );
+                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                m.transpose();
 
                 operDict[ id ] = m;
 
@@ -9903,10 +10037,39 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             var gen = cif.pdbx_struct_assembly_gen;
 
             // ensure data is in lists
-            if( !Array.isArray( gen.assembly_id ) ){
-                Object.keys( gen ).forEach( function( key ){
-                    gen[ key ] = [ gen[ key ] ];
+            _ensureArray( gen, "assembly_id" );
+
+            function getMatrixDict( expr ){
+
+                var matDict = {};
+
+                var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+
+                l.forEach( function( e ){
+
+                    if( e.indexOf( "-" ) !== -1 ){
+
+                        var es = e.split( "-" );
+
+                        var j = parseInt( es[ 0 ] );
+                        var m = parseInt( es[ 1 ] );
+
+                        for( ; j <= m; ++j ){
+
+                            matDict[ j ] = operDict[ j ];
+
+                        }
+
+                    }else{
+
+                        matDict[ e ] = operDict[ e ];
+
+                    }
+
                 } );
+
+                return matDict;
+
             }
 
             gen.assembly_id.forEach( function( id, i ){
@@ -9916,41 +10079,35 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                 if( oe.indexOf( ")(" ) !== -1 ){
 
-                    console.warn( "parsing of this oper_expression not implemented:", oe );
-                    return;
+                    oe = oe.split( ")(" );
+
+                    var md1 = getMatrixDict( oe[ 0 ] );
+                    var md2 = getMatrixDict( oe[ 1 ] );
+
+                    Object.keys( md1 ).forEach( function( k1 ){
+
+                        Object.keys( md2 ).forEach( function( k2 ){
+
+                            var mat = new THREE.Matrix4();
+
+                            mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
+                            md[ k1 + "x" + k2 ] = mat;
+
+                        } );
+
+                    } );
 
                 }else{
 
-                    var l = oe.replace( /[\(\)']/g, "" ).split( "," );
-
-                    l.forEach( function( e ){
-
-                        if( e.indexOf( "-" ) !== -1 ){
-
-                            var es = e.split( "-" );
-
-                            var j = parseInt( es[ 0 ] );
-                            var m = parseInt( es[ 1 ] );
-
-                            for( ; j <= m; ++j ){
-
-                                md[ j ] = operDict[ j ];
-
-                            }
-
-                        }else{
-
-                            md[ e ] = operDict[ e ];
-
-                        }
-
-                    } );
+                    md = getMatrixDict( oe );
 
                 }
 
                 biomolDict[ id ] = {
+
                     matrixDict: md,
                     chainList: gen.asym_id_list[ i ].split( "," )
+
                 };
 
             } );
@@ -10249,7 +10406,6 @@ NGL.FileLoader.prototype = {
 
         if( this.responseType === "arraybuffer" ){
 
-            console.log( "moin" )
             reader.readAsArrayBuffer( file );
 
         }else{
@@ -10279,6 +10435,8 @@ NGL.StructureLoader = function( manager ){
 };
 
 NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
+
+NGL.StructureLoader.prototype.constructor = NGL.StructureLoader;
 
 NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, params ){
 
@@ -10310,6 +10468,8 @@ NGL.ObjLoader = function( manager ){
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
+NGL.StructureLoader.prototype.constructor = NGL.ObjLoader;
+
 NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
     if( typeof data === "string" ){
@@ -10336,6 +10496,8 @@ NGL.PlyLoader = function( manager ){
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
+NGL.StructureLoader.prototype.constructor = NGL.PlyLoader;
+
 NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
 
     if( typeof data === "string" ){
@@ -10361,6 +10523,8 @@ NGL.ScriptLoader = function( manager ){
 };
 
 NGL.ScriptLoader.prototype = Object.create( NGL.XHRLoader.prototype );
+
+NGL.StructureLoader.prototype.constructor = NGL.ScriptLoader;
 
 NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 
@@ -10394,7 +10558,7 @@ NGL.autoLoad = function(){
 
         var fileInfo = NGL.getFileInfo( file );
 
-        console.log( fileInfo );
+        // console.log( fileInfo );
 
         var path = fileInfo.path;
         var name = fileInfo.name;
@@ -10429,11 +10593,20 @@ NGL.autoLoad = function(){
 
             if( data ){
 
-                object = loader.init( data, name, file, ext, function( _object ){
+                try{
 
-                    if( typeof onLoad === "function" ) onLoad( _object );
+                    object = loader.init( data, name, file, ext, function( _object ){
 
-                }, params );
+                        if( typeof onLoad === "function" ) onLoad( _object );
+
+                    }, params );
+
+                }catch( e ){
+
+                    console.error( e );
+                    error( "initialization failed" );
+
+                }
 
             }else{
 
@@ -11896,6 +12069,12 @@ NGL.Viewer.prototype = {
 
     requestRender: function(){
 
+        if( this._renderPending ){
+            // console.info( "there is still a 'render' call pending" );
+            return;
+        }
+
+        this._renderPending = true;
         requestAnimationFrame( this.render.bind( this ) );
 
     },
@@ -11978,6 +12157,7 @@ NGL.Viewer.prototype = {
         }
 
         this._rendering = false;
+        this._renderPending = false;
 
     },
 
@@ -12549,6 +12729,8 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
 
 NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
+NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
+
 
 /**
  * [MappedBuffer description]
@@ -12570,6 +12752,8 @@ NGL.MappedBuffer = function(){
 };
 
 NGL.MappedBuffer.prototype = Object.create( NGL.Buffer.prototype );
+
+NGL.MappedBuffer.prototype.constructor = NGL.MappedBuffer;
 
 NGL.MappedBuffer.prototype.finalize = function(){
 
@@ -12704,6 +12888,8 @@ NGL.QuadBuffer = function(){
 
 NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
+NGL.QuadBuffer.prototype.constructor = NGL.QuadBuffer;
+
 
 /**
  * [BoxBuffer description]
@@ -12750,6 +12936,8 @@ NGL.BoxBuffer = function(){
 
 NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 
+NGL.BoxBuffer.prototype.constructor = NGL.BoxBuffer;
+
 
 /**
  * [AlignedBoxBuffer description]
@@ -12785,6 +12973,8 @@ NGL.AlignedBoxBuffer = function(){
 };
 
 NGL.AlignedBoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
+
+NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 
 
 ////////////////////////
@@ -12843,6 +13033,8 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, tran
 };
 
 NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
+
+NGL.SphereImpostorBuffer.prototype.constructor = NGL.SphereImpostorBuffer;
 
 
 /**
@@ -12922,6 +13114,8 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
 
 NGL.CylinderImpostorBuffer.prototype = Object.create( NGL.AlignedBoxBuffer.prototype );
 
+NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
+
 NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 
     var material = NGL.Buffer.prototype.getMaterial.call( this, type );
@@ -12996,6 +13190,8 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
 NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
 
+NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpostorBuffer;
+
 
 ////////////////////////
 // Geometry Primitives
@@ -13056,6 +13252,8 @@ NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side,
 };
 
 NGL.GeometryBuffer.prototype = {
+
+    constructor: NGL.GeometryBuffer,
 
     applyPositionTransform: function(){},
 
@@ -13233,6 +13431,8 @@ NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, deta
 
 NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
 
+NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
+
 NGL.SphereGeometryBuffer.prototype.setPositionTransform = function( radius ){
 
     var r;
@@ -13302,6 +13502,8 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
 };
 
 NGL.CylinderGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
+
+NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
 
 NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, radius ){
 
@@ -13436,6 +13638,8 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, t
 
 NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
+NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
+
 NGL.PointBuffer.prototype.getMesh = function( type ){
 
     var points = new THREE.PointCloud(
@@ -13556,6 +13760,8 @@ NGL.LineBuffer = function( from, to, color, color2, lineWidth, transparent, opac
 };
 
 NGL.LineBuffer.prototype = {
+
+    constructor: NGL.LineBuffer,
 
     setAttributes: function( data ){
 
@@ -13717,6 +13923,8 @@ NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
 
 NGL.TraceBuffer.prototype = {
 
+    constructor: NGL.TraceBuffer,
+
     setAttributes: function( data ){
 
         var position, color;
@@ -13831,6 +14039,8 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
 NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
+NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
+
 
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, transparent, side, opacity ){
 
@@ -13902,6 +14112,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, t
 };
 
 NGL.RibbonBuffer.prototype = {
+
+    constructor: NGL.RibbonBuffer,
 
     setAttributes: function( data ){
 
@@ -14163,6 +14375,8 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 }
 
 NGL.TubeMeshBuffer.prototype = {
+
+    constructor: NGL.TubeMeshBuffer,
 
     setAttributes: function(){
 
@@ -14535,6 +14749,8 @@ NGL.SurfaceBuffer = function(){
 
 NGL.SurfaceBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
+NGL.SurfaceBuffer.prototype.constructor = NGL.SurfaceBuffer;
+
 
 ///////////////////
 // API Primitives
@@ -14727,6 +14943,8 @@ NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity
 
 NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
+NGL.TextBuffer.prototype.constructor = NGL.TextBuffer;
+
 NGL.TextBuffer.prototype.getMaterial = function(){
 
     var material = NGL.Buffer.prototype.getMaterial.call( this );
@@ -14906,6 +15124,8 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
 
 NGL.BufferVectorHelper.prototype = {
 
+    constructor: NGL.BufferVectorHelper,
+
     setAttributes: function( data ){
 
         var n = this.size;
@@ -15035,6 +15255,8 @@ NGL.Representation = function( object, viewer, params ){
 };
 
 NGL.Representation.prototype = {
+
+    constructor: NGL.Representation,
 
     type: "",
 
@@ -15211,6 +15433,19 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
     NGL.Representation.call( this, structure, viewer, params );
 
+    if( structure.biomolDict ){
+        var biomolOptions = { "__AU": "AU" };
+        Object.keys( structure.biomolDict ).forEach( function( k ){
+            biomolOptions[ k ] = k;
+        } );
+        this.parameters.assembly = {
+            type: "select",
+            options: biomolOptions
+        };
+    }else{
+        this.parameters.assembly = null;
+    }
+
     // must come after atomSet to ensure selection change signals
     // have already updated the atomSet
     this.selection.signals.stringChanged.add( function( string ){
@@ -15227,6 +15462,8 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 NGL.StructureRepresentation.prototype = NGL.createObject(
 
     NGL.Representation.prototype, {
+
+    constructor: NGL.StructureRepresentation,
 
     type: "",
 
@@ -15249,7 +15486,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0
-        }
+        },
+        assembly: null
 
     }, NGL.Representation.prototype.parameters ),
 
@@ -15272,6 +15510,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.assembly = p.assembly || "1";
 
         this.setSelection( p.sele, true );
 
@@ -15357,6 +15596,13 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "assembly" ] !== undefined ){
+
+            this.assembly = params[ "assembly" ];
+            rebuild = true;
+
+        }
+
         NGL.Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -15369,22 +15615,23 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         var viewer = this.viewer;
         var structure = this.structure;
+        var assembly = this.assembly;
 
-        // console.log( structure.biomolDict )
-        // console.log( Object.values( structure.biomolDict[ 1 ].matrixDict ) );
+        // console.log( structure.biomolDict );
 
-        var matrixList;
+        var matrixList = [];
 
-        // TODO
-        if( structure.biomolDict && structure.biomolDict[ 1 ] ){
-            matrixList = Object.values( structure.biomolDict[ 1 ].matrixDict )//.slice(0,5);
-        }else{
-            matrixList = [];
+        if( structure.biomolDict && structure.biomolDict[ assembly ] ){
+
+            matrixList = Object.values(
+                structure.biomolDict[ assembly ].matrixDict
+            );
+
         }
 
         this.bufferList.forEach( function( buffer ){
 
-            if( matrixList.length > 1 ){
+            if( matrixList.length >= 1 ){
                 viewer.add( buffer, matrixList );
             }else{
                 viewer.add( buffer );
@@ -15418,6 +15665,8 @@ NGL.SpacefillRepresentation = function( structure, viewer, params ){
 NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.SpacefillRepresentation,
 
     type: "spacefill",
 
@@ -15531,6 +15780,8 @@ NGL.PointRepresentation = function( structure, viewer, params ){
 NGL.PointRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.PointRepresentation,
 
     type: "point",
 
@@ -15670,6 +15921,8 @@ NGL.LabelRepresentation = function( structure, viewer, params ){
 NGL.LabelRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.LabelRepresentation,
 
     type: "label",
 
@@ -15813,6 +16066,8 @@ NGL.BallAndStickRepresentation = function( structure, viewer, params ){
 NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.BallAndStickRepresentation,
 
     type: "ball+stick",
 
@@ -15999,6 +16254,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
+    constructor: NGL.LicoriceRepresentation,
+
     type: "licorice",
 
     defaultSize: 0.15,
@@ -16124,6 +16381,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
+    constructor: NGL.LineRepresentation,
+
     type: "line",
 
     parameters: Object.assign( {
@@ -16243,6 +16502,8 @@ NGL.HyperballRepresentation = function( structure, viewer, params ){
 NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.HyperballRepresentation,
 
     type: "hyperball",
 
@@ -16426,6 +16687,8 @@ NGL.BackboneRepresentation = function( structure, viewer, params ){
 NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.BackboneRepresentation,
 
     type: "backbone",
 
@@ -16685,6 +16948,8 @@ NGL.BaseRepresentation = function( structure, viewer, params ){
 NGL.BaseRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.BaseRepresentation,
 
     type: "base",
 
@@ -16947,6 +17212,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
+    constructor: NGL.TubeRepresentation,
+
     type: "tube",
 
     defaultSize: 0.25,
@@ -17167,6 +17434,8 @@ NGL.CartoonRepresentation = function( structure, viewer, params ){
 NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.CartoonRepresentation,
 
     type: "cartoon",
 
@@ -17464,6 +17733,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
+    constructor: NGL.RibbonRepresentation,
+
     type: "ribbon",
 
     parameters: Object.assign( {
@@ -17634,6 +17905,8 @@ NGL.TraceRepresentation = function( structure, viewer, params ){
 NGL.TraceRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.TraceRepresentation,
 
     type: "trace",
 
@@ -17817,6 +18090,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
+    constructor: NGL.HelixorientRepresentation,
+
     type: "helixorient",
 
     parameters: Object.assign( {
@@ -17963,6 +18238,8 @@ NGL.RocketRepresentation = function( structure, viewer, params ){
 NGL.RocketRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.RocketRepresentation,
 
     type: "rocket",
 
@@ -18118,6 +18395,8 @@ NGL.RopeRepresentation = function( structure, viewer, params ){
 NGL.RopeRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.RopeRepresentation,
 
     type: "rope",
 
@@ -18348,6 +18627,8 @@ NGL.CrossingRepresentation = function( structure, viewer, params ){
 NGL.CrossingRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.CrossingRepresentation,
 
     type: "crossing",
 
@@ -18604,6 +18885,8 @@ NGL.TrajectoryRepresentation = function( trajectory, viewer, params ){
 NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.TrajectoryRepresentation,
 
     type: "",
 
@@ -18887,6 +19170,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     NGL.Representation.prototype, {
 
+    constructor: NGL.SurfaceRepresentation,
+
     type: "",
 
     parameters: Object.assign( {
@@ -19136,6 +19421,8 @@ NGL.Stage = function( eid ){
 }
 
 NGL.Stage.prototype = {
+
+    constructor: NGL.Stage,
 
     defaultFileRepresentation: function( object ){
 
@@ -19515,6 +19802,8 @@ NGL.Preferences = function( stage, id ){
 
 NGL.Preferences.prototype = {
 
+    constructor: NGL.Preferences,
+
     setImpostor: function( value ) {
 
         if( value !== undefined ){
@@ -19642,6 +19931,8 @@ NGL.Component = function( stage, params ){
 }
 
 NGL.Component.prototype = {
+
+    constructor: NGL.Component,
 
     type: "component",
 
@@ -19776,6 +20067,8 @@ NGL.StructureComponent = function( stage, structure, params ){
 NGL.StructureComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    constructor: NGL.StructureComponent,
 
     type: "structure",
 
@@ -20020,6 +20313,8 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
 
+    constructor: NGL.SurfaceComponent,
+
     type: "surface",
 
     addRepresentation: function( type, params ){
@@ -20090,6 +20385,8 @@ NGL.TrajectoryComponent = function( stage, trajectory, params, parent ){
 NGL.TrajectoryComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    constructor: NGL.TrajectoryComponent,
 
     type: "trajectory",
 
@@ -20167,6 +20464,8 @@ NGL.ScriptComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
 
+    constructor: NGL.ScriptComponent,
+
     type: "script",
 
     addRepresentation: function( type ){},
@@ -20216,6 +20515,8 @@ NGL.RepresentationComponent = function( stage, repr, params, parent ){
 NGL.RepresentationComponent.prototype = NGL.createObject(
 
     NGL.Component.prototype, {
+
+    constructor: NGL.RepresentationComponent,
 
     type: "representation",
 
@@ -20974,8 +21275,6 @@ NGL.Examples = {
         },
 
         "capsid": function( stage ){
-
-            console.time( "test" );
 
             stage.loadFile( "data://1RB8.pdb", function( o ){
 

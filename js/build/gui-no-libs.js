@@ -1948,8 +1948,8 @@ UI.ColorPicker = function(){
 
     // event
 
-    var changeEvent = document.createEvent('Event');
-    changeEvent.initEvent('change', true, true);
+    var changeEvent = document.createEvent( 'Event' );
+    changeEvent.initEvent( 'change', true, true );
 
     // finalize
 
@@ -1983,7 +1983,7 @@ UI.ColorPicker = function(){
 
             if( !scope._settingValue ){
 
-                scope.dom.dispatchEvent( changeEvent, hex, hsv, rgb );
+                scope.dom.dispatchEvent( changeEvent );
 
             }
 
@@ -2043,8 +2043,8 @@ UI.ColorPopupMenu = function(){
         .add( this.iconSquare )
         .add( this.iconText )
 
-    var changeEvent = document.createEvent('Event');
-    changeEvent.initEvent('change', true, true);
+    var changeEvent = document.createEvent( 'Event' );
+    changeEvent.initEvent( 'change', true, true );
 
     this.schemeSelector = new UI.Select()
         .setColor( '#444' )
@@ -2063,6 +2063,7 @@ UI.ColorPopupMenu = function(){
     this.colorInput = new UI.Input()
         .onChange( function(){
 
+            scope.setScheme( "color" );
             scope.setColor( scope.colorInput.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -2070,8 +2071,10 @@ UI.ColorPopupMenu = function(){
 
     this.colorPicker = new UI.ColorPicker()
         .setDisplay( "inline-block" )
-        .onChange( function( e, hex, hsv, rgb ){
+        .setValue( "#20bc3f" )
+        .onChange( function( e ){
 
+            scope.setScheme( "color" );
             scope.setColor( scope.colorPicker.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -2095,12 +2098,12 @@ UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPopupMenu.prototype.setScheme = function( value ){
 
-    if( value !== "color" ){
-        this.setColor( "#888" );
-    }
-
     this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
     this.schemeSelector.setValue( value );
+
+    if( value !== "color" ){
+        this.setColor( "#888888" );
+    }
 
     return this;
 
@@ -2118,7 +2121,8 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 
     return function( value ){
 
-        this.setScheme( "color" );
+        c.set( value );
+        value = "#" + c.getHexString();
 
         this.colorInput
             .setBackgroundColor( value )
@@ -2128,11 +2132,19 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 
         this.iconSquare.setColor( value );
 
-        c.setStyle( value );
-        if( ( c.r + c.g + c.b ) > 1.5 ){
-            this.iconText.setColor( "#000" );
+        // perceived brightness (http://alienryderflex.com/hsp.html)
+        var brightness = Math.sqrt(
+              c.r*255 * c.r*255 * 0.241 +
+              c.g*255 * c.g*255 * 0.691 +
+              c.b*255 * c.b*255 * 0.068
+        );
+
+        if( brightness > 130 ){
+            this.iconText.setColor( "#000000" );
+            this.colorInput.setColor( "#000000" );
         }else{
-            this.iconText.setColor( "#FFF" );
+            this.iconText.setColor( "#FFFFFF" );
+            this.colorInput.setColor( "#FFFFFF" );
         }
 
         return this;
@@ -2150,9 +2162,8 @@ UI.ColorPopupMenu.prototype.getColor = function(){
 UI.ColorPopupMenu.prototype.setValue = function( value ){
 
     if( parseInt( value ) === value ){
-        this.setColor(
-            "#" + ( new THREE.Color( value ).getHexString() )
-        );
+        this.setColor( value );
+        this.setScheme( "color" );
     }else{
         this.setScheme( value );
     }
@@ -2434,6 +2445,8 @@ NGL.Widget = function(){
 };
 
 NGL.Widget.prototype = {
+
+    constructor: NGL.Widget,
 
 };
 
@@ -3852,6 +3865,10 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
             input = new UI.Checkbox( repr[ name ] );
 
+        }else if( p.type === "text" ){
+
+            input = new UI.Input( repr[ name ] );
+
         }else if( p.type === "select" ){
 
             input = new UI.Select()
@@ -4163,6 +4180,8 @@ NGL.DirectoryListing = function(){
 };
 
 NGL.DirectoryListing.prototype = {
+
+    constructor: NGL.DirectoryListing,
 
     getListing: function( path ){
 
