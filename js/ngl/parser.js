@@ -981,10 +981,17 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     // console.log( "STRING END", currentString );
 
                     if( pendingLoop ){
+
+                        if( currentLoopIndex === loopPointers.length ){
+                            currentLoopIndex = 0;
+                        }
                         loopPointers[ currentLoopIndex ].push( currentString );
                         currentLoopIndex += 1;
+
                     }else{
+
                         cif[ currentCategory ][ currentName ] = currentString;
+
                     }
 
                     pendingString = false;
