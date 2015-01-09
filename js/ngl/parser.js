@@ -678,7 +678,7 @@ NGL.GroParser = function( name, path, params ){
 
 NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
-NGL.PdbParser.prototype.constructor = NGL.GroParser;
+NGL.GroParser.prototype.constructor = NGL.GroParser;
 
 NGL.GroParser.prototype._parse = function( str, callback ){
 
@@ -865,7 +865,7 @@ NGL.CifParser = function( name, path, params ){
 
 NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
 
-NGL.PdbParser.prototype.constructor = NGL.CifParser;
+NGL.CifParser.prototype.constructor = NGL.CifParser;
 
 NGL.CifParser.prototype._parse = function( str, callback ){
 

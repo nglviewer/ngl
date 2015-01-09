@@ -2633,7 +2633,7 @@ NGL.Chain.prototype = {
 
         this.eachResidueN( 2, function( r1, r2 ){
 
-            // console.log( r1.resno, r2.resno, r1.isProtein() );
+            // console.log( r1.resno, r2.resno );
 
             if( r1.hasProteinBackbone() && r2.hasProteinBackbone() ){
 
@@ -2951,7 +2951,9 @@ NGL.Residue.prototype = {
 
         if( this._type === undefined ){
 
-            if( this.isProtein() ){
+            if( this.hasProteinBackbone() ){
+                this._type = NGL.ProteinBackboneType;
+            }else if( this.isProtein() ){
                 this._type = NGL.ProteinType;
             }else if( this.hasNucleicBackbone() ){
                 this._type = NGL.NucleicBackboneType;
