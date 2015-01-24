@@ -113,7 +113,8 @@ NGL.ToolbarWidget = function( stage ){
     var signals = stage.signals;
     var container = new UI.Panel();
 
-    var messagePanel = new UI.Panel();
+    var messagePanel = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
+    var statsPanel = new UI.Panel().setDisplay( "inline" ).setFloat( "right" );
 
     signals.atomPicked.add( function( atom ){
 
@@ -130,7 +131,21 @@ NGL.ToolbarWidget = function( stage ){
 
     } );
 
+    stage.viewer.stats.signals.updated.add( function(){
+
+        statsPanel
+            .clear()
+            .add(
+                new UI.Text(
+                    stage.viewer.stats.lastDuration + " ms | " +
+                    stage.viewer.stats.lastFps + " fps"
+                )
+            );
+
+    } );
+
     container.add( messagePanel );
+    container.add( statsPanel );
 
     return container;
 

@@ -725,6 +725,76 @@ NGL.trimCanvas = function( canvas, r, g, b, a ){
 }
 
 
+//////////
+// Stats
+
+NGL.Stats = function(){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        updated: new SIGNALS.Signal(),
+
+    };
+
+    this.begin();
+
+    this.maxDuration = -Infinity;
+    this.minDuration = Infinity;
+    this.lastDuration = Infinity;
+
+    this.lastFps = Infinity;
+
+}
+
+NGL.Stats.prototype = {
+
+    update: function(){
+
+        this.startTime = this.end();
+
+        this.signals.updated.dispatch();
+
+    },
+
+    begin: function(){
+
+        this.startTime = Date.now();
+        this.prevFpsTime = this.startTime;
+
+    },
+
+    end: function(){
+
+        var time = Date.now();
+
+        this.lastDuration = time - this.startTime;
+
+        this.minDuration = Math.min( this.minDuration, this.lastDuration );
+        this.maxDuration = Math.max( this.maxDuration, this.lastDuration );
+
+        this.frames += 1;
+
+        if( time > this.prevFpsTime + 1000 ) {
+
+            this.lastFps = Math.round(
+                ( this.frames * 1000 ) / ( time - this.startTime )
+            );
+
+            this.prevFpsTime = time;
+
+        }
+
+        this.frames = 0;
+
+        return time;
+
+    }
+
+};
+
+
 ///////////
 // Viewer
 
@@ -769,6 +839,8 @@ NGL.Viewer = function( eid ){
     this.initLights();
 
     this.initControls();
+
+    this.initStats();
 
     window.addEventListener(
         'resize', this.onWindowResize.bind( this ), false
@@ -937,6 +1009,12 @@ NGL.Viewer.prototype = {
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener( 'change', this.render.bind( this ) );
+
+    },
+
+    initStats: function(){
+
+        this.stats = new NGL.Stats();
 
     },
 
@@ -1233,6 +1311,7 @@ NGL.Viewer.prototype = {
         requestAnimationFrame( this.animate.bind( this ) );
 
         this.controls.update();
+        this.stats.update();
 
     },
 
