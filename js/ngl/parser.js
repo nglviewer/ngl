@@ -498,8 +498,10 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }else if( line.substr( 13, 5 ) === "BIOMT" ){
 
+                    var ls = line.split( /\s+/ );
+
                     var row = parseInt( line[ 18 ] ) - 1;
-                    var mat = line.substr( 20, 3 ).trim();
+                    var mat = ls[ 3 ].trim();
 
                     if( row === 0 ){
                         currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
@@ -507,10 +509,10 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                     var elms = currentBiomol.matrixDict[ mat ].elements;
 
-                    elms[ 4 * 0 + row ] = parseFloat( line.substr( 24, 9 ) );
-                    elms[ 4 * 1 + row ] = parseFloat( line.substr( 34, 9 ) );
-                    elms[ 4 * 2 + row ] = parseFloat( line.substr( 44, 9 ) );
-                    elms[ 4 * 3 + row ] = parseFloat( line.substr( 54, 14 ) );
+                    elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
+                    elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
+                    elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
+                    elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
 
                 }else if(
                     line.substr( 11, 30 ) === 'APPLY THE FOLLOWING TO CHAINS:' ||
