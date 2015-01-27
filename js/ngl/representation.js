@@ -2366,7 +2366,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
                     new NGL.BufferVectorHelper(
                         subPos.position,
-                        subPos.normal,
+                        subOri.normal,
                         "skyblue",
                         1.5
                     )
@@ -2377,7 +2377,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
                     new NGL.BufferVectorHelper(
                         subPos.position,
-                        subPos.binormal,
+                        subOri.binormal,
                         "lightgreen",
                         1.5
                     )
@@ -2388,7 +2388,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
                     new NGL.BufferVectorHelper(
                         subPos.position,
-                        subPos.tangent,
+                        subOri.tangent,
                         "orange",
                         1.5
                     )
