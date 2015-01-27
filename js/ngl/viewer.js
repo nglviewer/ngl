@@ -1506,8 +1506,13 @@ NGL.Viewer.prototype = {
 
         // clipping
 
-        var bRadius = this.boundingBox.size().length() * 0.5;
         var cDist = this.camera.position.length();
+        if( !cDist ){
+            // recover from a broken (NaN) camera position
+            this.camera.position.set( 0, 0, this.params.cameraZ );
+        }
+
+        var bRadius = this.boundingBox.size().length() * 0.5;
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
         var farFactor = - ( 50 - this.params.clipFar ) / 50;
         var nearClip = cDist - ( bRadius * nearFactor );
@@ -1534,12 +1539,6 @@ NGL.Viewer.prototype = {
         this.textGroup.fog = fog;
         this.transparentGroup.fog = fog;
         this.surfaceGroup.fog = fog;
-
-        if( NGL.GET( "disableClipping" ) ){
-            this.camera.near = 0.1;
-            this.camera.far = 10000;
-            this.scene.fog = null;
-        }
 
         //
 
@@ -1793,6 +1792,9 @@ NGL.Viewer.prototype = {
             if( zoom ){
 
                 if( zoom === true ){
+
+                    // automatic zoom that shows
+                    // everything inside the bounding box
 
                     zoom = this.boundingBox.size().length() /
                         2 / Math.tan( Math.PI * this.camera.fov / 360 );
