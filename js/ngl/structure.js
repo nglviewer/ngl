@@ -2050,6 +2050,8 @@ NGL.Structure.prototype = {
 
             this.eachFiber( function( f ){
 
+                if( f.residueCount < 4 ) return;
+
                 if( f.isProtein() ){
 
                     proteinFiber( f );
