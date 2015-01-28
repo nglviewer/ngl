@@ -51,13 +51,6 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
 
     this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
-    this.trajPath = trajPath;
-
-    this.setStructure( structure );
-
-    this.numframes = undefined;
-    this.getNumframes();
-
     this.selection = new NGL.Selection(
         selectionString || "backbone and not hydrogen"
     );
@@ -68,6 +61,14 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
         scope.resetCache();
 
     } );
+
+    // should come after this.selection is set
+    this.setStructure( structure );
+
+    this.trajPath = trajPath;
+
+    this.numframes = undefined;
+    this.getNumframes();
 
 };
 
