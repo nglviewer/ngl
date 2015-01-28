@@ -907,9 +907,9 @@ NGL.Viewer.prototype = {
         this.renderer = new THREE.WebGLRenderer({
             preserveDrawingBuffer: true,
             alpha: true,
-            antialias: true,
-            devicePixelRatio: window.devicePixelRatio
+            antialias: true
         });
+        this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = false;
         this.renderer.sortObjects = true;
@@ -1286,7 +1286,7 @@ NGL.Viewer.prototype = {
 
     onWindowResize: function(){
 
-        this.renderer.devicePixelRatio = window.devicePixelRatio;
+        this.renderer.setPixelRatio( window.devicePixelRatio );
 
         if ( this.container === document ) {
             this.width = window.innerWidth;
