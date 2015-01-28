@@ -773,6 +773,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
             var line = lines[ i ];
 
+            if( !line ) continue;
+
             if( i % modelLineCount === 0 ){
 
                 // console.log( "title", line )
