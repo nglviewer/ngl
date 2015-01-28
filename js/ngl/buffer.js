@@ -44,7 +44,7 @@ NGL.Buffer = function( position, color, pickingColor ){
 
     }
 
-    this.uniforms = THREE.UniformsUtils.merge( [
+    this.uniforms = THREE.UniformsUtils.merge([
         NGL.UniformsLib[ "fog" ],
         NGL.UniformsLib[ "lights" ],
         {
@@ -156,7 +156,9 @@ NGL.Buffer.prototype = {
 
     addUniforms: function( uniforms ){
 
-        this.uniforms = THREE.UniformsUtils.merge([ this.uniforms, uniforms ]);
+        this.uniforms = THREE.UniformsUtils.merge(
+            [ this.uniforms, uniforms ]
+        );
 
     },
 

@@ -458,7 +458,12 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                     if( to === undefined ){
                         // console.log( "missing CONNECT serial" );
                         continue;
-                    }
+                    }/*else if( to < from ){
+                        // likely a duplicate in standard PDB format
+                        // but not necessarily so better remove duplicates
+                        // in a pass after parsing (and auto bonding)
+                        continue;
+                    }*/
 
                     bondSet.addBond( from, to );
 
@@ -589,7 +594,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var sGroup = line.substr( 55, 11 ).trim();
                 var z = parseInt( line.substr( 66, 4 ) );
 
-                console.log( a, b, c, alpha, beta, gamma, sGroup, z )
+                // console.log( a, b, c, alpha, beta, gamma, sGroup, z )
 
                 if( a===1.0 && b===1.0 && c===1.0 &&
                     alpha===90.0 && beta===90.0 && gamma===90.0 &&

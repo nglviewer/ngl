@@ -71,7 +71,7 @@ NGL.Representation.prototype = {
     parameters: {
 
         nearClip: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         }
 
     },
@@ -155,18 +155,69 @@ NGL.Representation.prototype = {
 
     setParameters: function( params, what, rebuild ){
 
-        if( params && params[ "nearClip" ] !== undefined ){
+        var p = params;
+        var tp = this.parameters;
 
-            this.nearClip = params[ "nearClip" ];
-            rebuild = true;
+        rebuild = rebuild || false;
 
-        }
+        Object.keys( tp ).forEach( function( name ){
+
+            if( p[ name ] === undefined ) return;
+            if( tp[ name ] === undefined ) return;
+
+            this[ name ] = p[ name ];
+
+            // update buffer uniform
+
+            if( tp[ name ].uniform ){
+
+                function update( mesh ){
+
+                    var u = mesh.material.uniforms;
+
+                    if( u && u[ name ] ){
+
+                        u[ name ].value = p[ name ];
+
+                    }else{
+
+                        // happens when the buffers in a repr
+                        // do not suppport the same parameters
+
+                        // console.info( name )
+
+                    }
+
+                }
+
+                this.bufferList.forEach( function( buffer ){
+
+                    buffer.group.children.forEach( update );
+                    if( buffer.pickingGroup ){
+                        buffer.pickingGroup.children.forEach( update );
+                    }
+
+                } );
+
+            }
+
+            // mark for rebuild
+
+            if( tp[ name ].rebuild ){
+
+                rebuild = true;
+
+            }
+
+        }, this );
 
         if( rebuild ){
 
             this.rebuild();
 
         }else if( what && Object.keys( what ).length ){
+
+            // update buffer attribute
 
             this.update( what );
 
@@ -248,7 +299,8 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
         } );
         this.parameters.assembly = {
             type: "select",
-            options: biomolOptions
+            options: biomolOptions,
+            rebuild: true
         };
     }else{
         this.parameters.assembly = null;
@@ -287,13 +339,14 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
         transparent: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes
+            type: "select", options: NGL.SideTypes, rebuild: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0
+            type: "number", precision: 1, max: 1, min: 0,
+            uniform: true
         },
         assembly: null
 
@@ -381,36 +434,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "transparent" ] !== undefined ){
-
-            this.transparent = params[ "transparent" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "side" ] !== undefined ){
-
-            this.side = params[ "side" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "opacity" ] !== undefined ){
-
-            this.opacity = params[ "opacity" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
-            rebuild = true;
-
-        }
-
-        if( params && params[ "assembly" ] !== undefined ){
-
-            this.assembly = params[ "assembly" ];
-            rebuild = true;
-
-        }
-
         NGL.Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -481,7 +504,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         sphereDetail: {
-            type: "integer", max: 3, min: 0
+            type: "integer", max: 3, min: 0, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -554,26 +577,6 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer.setAttributes( sphereData );
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "sphereDetail" ]!==undefined ){
-
-            this.sphereDetail = params[ "sphereDetail" ];
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -596,19 +599,22 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         pointSize: {
-            type: "integer", max: 20, min: 1
+            type: "integer", max: 20, min: 1, rebuild: true
         },
         sizeAttenuation: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         sort: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         transparent: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0
+            type: "number", precision: 1, max: 1, min: 0,
+            // FIXME should be uniform but currently incompatible
+            // with the underlying PointCloudMaterial
+            rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -665,56 +671,6 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointBuffer.setAttributes( pointData );
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "pointSize" ] !== undefined ){
-
-            this.pointSize = params[ "pointSize" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "sizeAttenuation" ] !== undefined ){
-
-            this.sizeAttenuation = params[ "sizeAttenuation" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "sort" ] !== undefined ){
-
-            this.sort = params[ "sort" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "transparent" ] !== undefined ){
-
-            this.transparent = params[ "transparent" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "opacity" ] !== undefined ){
-
-            this.opacity = params[ "opacity" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -737,17 +693,18 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         labelType: {
-            type: "select", options: NGL.LabelFactory.types
+            type: "select", options: NGL.LabelFactory.types, rebuild: true
         },
         font: {
             type: "select", options: {
                 "Arial": "Arial",
                 "DejaVu": "DejaVu",
                 "LatoBlack": "LatoBlack"
-            }
+            },
+            rebuild: true
         },
         antialias: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, { side: null } ),
@@ -826,40 +783,6 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         this.textBuffer.setAttributes( textData );
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "labelType" ] ){
-
-            this.labelType = params[ "labelType" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "font" ] !== undefined ){
-
-            this.font = params[ "font" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "antialias" ] !== undefined ){
-
-            this.antialias = params[ "antialias" ];
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -887,10 +810,10 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0
+            type: "integer", max: 3, min: 0, rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 25, min: 5, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1027,20 +950,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "sphereDetail" ]!==undefined ){
-
-            this.sphereDetail = params[ "sphereDetail" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -1071,10 +980,10 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         sphereDetail: {
-            type: "integer", max: 3, min: 0
+            type: "integer", max: 3, min: 0, rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 25, min: 5, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1147,33 +1056,6 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
         NGL.BallAndStickRepresentation.prototype.update.call( this, what );
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "sphereDetail" ]!==undefined ){
-
-            this.sphereDetail = params[ "sphereDetail" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -1196,13 +1078,16 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         lineWidth: {
-            type: "integer", max: 20, min: 1
+            type: "integer", max: 20, min: 1, rebuild: true
         },
         transparent: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0
+            type: "number", precision: 1, max: 1, min: 0,
+            // FIXME should be uniform but currently incompatible
+            // with the underlying Material
+            rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -1259,41 +1144,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         this.lineBuffer.setAttributes( lineData );
 
-    },
-
-    setParameters: function( params, what, rebuild ){
-
-        what = what || {};
-
-        if( params && params[ "lineWidth" ] !== undefined ){
-
-            this.lineWidth = params[ "lineWidth" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "transparent" ] !== undefined ){
-
-            this.transparent = params[ "transparent" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "opacity" ] !== undefined ){
-
-            this.opacity = params[ "opacity" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -1318,13 +1168,13 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         shrink: {
-            type: "number", precision: 3, max: 1.0, min: 0.001
+            type: "number", precision: 3, max: 1.0, min: 0.001, uniform: true
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0
+            type: "integer", max: 3, min: 0, rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 25, min: 5, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1445,42 +1295,6 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         this.sphereBuffer.setAttributes( sphereData );
         this.cylinderBuffer.setAttributes( cylinderData );
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "shrink" ] ){
-
-            this.shrink = params[ "shrink" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.cylinderBuffer.uniforms[ "shrink" ].value = this.shrink;
-            rebuild = true;
-
-        }
-
-        if( params && params[ "sphereDetail" ]!==undefined ){
-
-            this.sphereDetail = params[ "sphereDetail" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -1508,10 +1322,10 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0
+            type: "integer", max: 3, min: 0, rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 50, min: 5, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1722,20 +1536,6 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "sphereDetail" ]!==undefined ){
-
-            this.sphereDetail = params[ "sphereDetail" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -1769,10 +1569,10 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0
+            type: "integer", max: 3, min: 0, rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 50, min: 5, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1985,20 +1785,6 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "sphereDetail" ]!==undefined ){
-
-            this.sphereDetail = params[ "sphereDetail" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -2029,19 +1815,19 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         subdiv: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         radialSegments: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         capped: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         wireframe: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2188,37 +1974,10 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         var rebuild = false;
         var what = {};
 
-        if( params && params[ "subdiv" ] ){
-
-            this.subdiv = params[ "subdiv" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radialSegments" ] ){
-
-            this.radialSegments = params[ "radialSegments" ];
-            rebuild = true;
-
-        }
-
         if( params && params[ "tension" ] ){
 
             this.tension = params[ "tension" ];
-            what[ "radius" ] = true;
-
-        }
-
-        if( params && params[ "capped" ] !== undefined ){
-            this.capped = params[ "capped" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "wireframe" ] !== undefined ){
-
-            this.wireframe = params[ "wireframe" ];
-            rebuild = true;
+            what[ "position" ] = true;
 
         }
 
@@ -2253,22 +2012,22 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         subdiv: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         radialSegments: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         capped: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         wireframe: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         arrows: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2476,45 +2235,10 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "subdiv" ] ){
-
-            this.subdiv = params[ "subdiv" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radialSegments" ] ){
-
-            this.radialSegments = params[ "radialSegments" ];
-            rebuild = true;
-
-        }
-
         if( params && params[ "tension" ] ){
 
             this.tension = params[ "tension" ];
             what[ "position" ] = true;
-
-        }
-
-        if( params && params[ "capped" ] !== undefined ){
-
-            this.capped = params[ "capped" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "wireframe" ] !== undefined ){
-
-            this.wireframe = params[ "wireframe" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "arrows" ] !== undefined ){
-
-            this.arrows = params[ "arrows" ];
-            rebuild = true;
 
         }
 
@@ -2548,7 +2272,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         subdiv: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
@@ -2679,17 +2403,10 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         var rebuild = false;
         var what = {};
 
-        if( params && params[ "subdiv" ] ){
-
-            this.subdiv = params[ "subdiv" ];
-            rebuild = true;
-
-        }
-
         if( params && params[ "tension" ] ){
 
             this.tension = params[ "tension" ];
-            this.update({ "position": true });
+            what[ "position" ] = true;
 
         }
 
@@ -2721,19 +2438,22 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         subdiv: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         lineWidth: {
-            type: "integer", max: 20, min: 1
+            type: "integer", max: 20, min: 1, rebuild: true
         },
         transparent: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0
+            type: "number", precision: 1, max: 1, min: 0,
+            // FIXME should be uniform but currently incompatible
+            // with the underlying Material
+            rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -2840,40 +2560,10 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         var rebuild = false;
         var what = {};
 
-        if( params && params[ "subdiv" ] ){
-
-            this.subdiv = params[ "subdiv" ];
-            rebuild = true;
-
-        }
-
         if( params && params[ "tension" ] ){
 
             this.tension = params[ "tension" ];
             what[ "position" ] = true;
-
-        }
-
-        if( params && params[ "lineWidth" ] !== undefined ){
-
-            this.lineWidth = params[ "lineWidth" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "transparent" ] !== undefined ){
-
-            this.transparent = params[ "transparent" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "opacity" ] !== undefined ){
-
-            this.opacity = params[ "opacity" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.meshBuffer.uniforms[ "opacity" ].value = this.opacity;
-            rebuild = true;
 
         }
 
@@ -3019,19 +2709,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         };
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -3054,16 +2731,16 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         localAngle: {
-            type: "integer", max: 180, min: 0
+            type: "integer", max: 180, min: 0, rebuild: true
         },
         centerDist: {
-            type: "number", precision: 1, max: 10, min: 0
+            type: "number", precision: 1, max: 10, min: 0, rebuild: true
         },
         ssBorder: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 25, min: 5, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -3148,47 +2825,6 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         this.rebuild();
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "localAngle" ] !== undefined ){
-
-            this.localAngle = params[ "localAngle" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "centerDist" ] !== undefined ){
-
-            this.centerDist = params[ "centerDist" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "ssBorder" ] !== undefined ){
-
-            this.ssBorder = params[ "ssBorder" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -3211,22 +2847,22 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         subdiv: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         radialSegments: {
-            type: "integer", max: 50, min: 1
+            type: "integer", max: 50, min: 1, rebuild: true
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         capped: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         wireframe: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         smooth: {
-            type: "integer", max: 15, min: 0
+            type: "integer", max: 15, min: 0, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -3373,45 +3009,10 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         var rebuild = false;
         var what = {};
 
-        if( params && params[ "subdiv" ] ){
-
-            this.subdiv = params[ "subdiv" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radialSegments" ] ){
-
-            this.radialSegments = params[ "radialSegments" ];
-            rebuild = true;
-
-        }
-
         if( params && params[ "tension" ] ){
 
             this.tension = params[ "tension" ];
             what[ "radius" ] = true;
-
-        }
-
-        if( params && params[ "capped" ] !== undefined ){
-
-            this.capped = params[ "capped" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "wireframe" ] !== undefined ){
-
-            this.wireframe = params[ "wireframe" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "smooth" ] !== undefined ){
-
-            this.smooth = params[ "smooth" ];
-            rebuild = true;
 
         }
 
@@ -3443,22 +3044,22 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         localAngle: {
-            type: "integer", max: 180, min: 0
+            type: "integer", max: 180, min: 0, rebuild: true
         },
         centerDist: {
-            type: "number", precision: 1, max: 10, min: 0
+            type: "number", precision: 1, max: 10, min: 0, rebuild: true
         },
         ssBorder: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5
+            type: "integer", max: 25, min: 5, rebuild: true
         },
         helixDist: {
-            type: "number", precision: 1, max: 30, min: 0
+            type: "number", precision: 1, max: 30, min: 0, rebuild: true
         },
         displayLabel: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         download: {
             type: "button", methodName: "download"
@@ -3606,61 +3207,6 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
     },
 
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "localAngle" ] !== undefined ){
-
-            this.localAngle = params[ "localAngle" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "centerDist" ] !== undefined ){
-
-            this.centerDist = params[ "centerDist" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "helixDist" ] !== undefined ){
-
-            this.helixDist = params[ "helixDist" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "ssBorder" ] !== undefined ){
-
-            this.ssBorder = params[ "ssBorder" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "displayLabel" ] !== undefined ){
-
-            this.displayLabel = params[ "displayLabel" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "radiusSegments" ] ){
-
-            this.radiusSegments = params[ "radiusSegments" ];
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
-    },
-
     download: function(){
 
         var json = JSON.stringify( this.crossing.info, null, '\t' );
@@ -3700,31 +3246,42 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        drawLine: { type: "boolean" },
-        drawCylinder: { type: "boolean" },
-        drawPoint: { type: "boolean" },
-        drawSphere: { type: "boolean" },
+        drawLine: {
+            type: "boolean", rebuild: true
+        },
+        drawCylinder: {
+            type: "boolean", rebuild: true
+        },
+        drawPoint: {
+            type: "boolean", rebuild: true
+        },
+        drawSphere: {
+            type: "boolean", rebuild: true
+        },
 
         lineWidth: {
-            type: "integer", max: 20, min: 1
+            type: "integer", max: 20, min: 1, rebuild: true
         },
         pointSize: {
-            type: "integer", max: 20, min: 1
+            type: "integer", max: 20, min: 1, rebuild: true
         },
         sizeAttenuation: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         sort: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         transparent: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes
+            type: "select", options: NGL.SideTypes, rebuild: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0
+            type: "number", precision: 1, max: 1, min: 0,
+            // FIXME should be uniform but currently incompatible
+            // with the underlying Material
+            rebuild: true
         },
 
     }, NGL.Representation.prototype.parameters ),
@@ -3861,100 +3418,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         } );
 
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "drawLine" ] !== undefined ){
-
-            this.drawLine = params[ "drawLine" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "drawCylinder" ] !== undefined ){
-
-            this.drawCylinder = params[ "drawCylinder" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "drawPoint" ] !== undefined ){
-
-            this.drawPoint = params[ "drawPoint" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "drawSphere" ] !== undefined ){
-
-            this.drawSphere = params[ "drawSphere" ];
-            rebuild = true;
-
-        }
-
-        //
-
-        if( params && params[ "lineWidth" ] !== undefined ){
-
-            this.lineWidth = params[ "lineWidth" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "pointSize" ] !== undefined ){
-
-            this.pointSize = params[ "pointSize" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "sizeAttenuation" ] !== undefined ){
-
-            this.sizeAttenuation = params[ "sizeAttenuation" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "sort" ] !== undefined ){
-
-            this.sort = params[ "sort" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "transparent" ] !== undefined ){
-
-            this.transparent = params[ "transparent" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "side" ] !== undefined ){
-
-            this.side = params[ "side" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "opacity" ] !== undefined ){
-
-            this.opacity = params[ "opacity" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.surfaceBuffer.uniforms[ "opacity" ].value = this.opacity;
-            rebuild = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
     }
 
 } );
@@ -3985,19 +3448,19 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         wireframe: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         background: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         transparent: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes
+            type: "select", options: NGL.SideTypes, rebuild: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0
+            type: "number", precision: 1, max: 1, min: 0, uniform: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -4111,56 +3574,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             this.bufferList = [ this.surfaceBuffer ];
 
         }
-
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "wireframe" ] !== undefined ){
-
-            this.wireframe = params[ "wireframe" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "background" ] !== undefined ){
-
-            this.background = params[ "background" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "transparent" ] !== undefined ){
-
-            this.transparent = params[ "transparent" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "side" ] !== undefined ){
-
-            this.side = params[ "side" ];
-            rebuild = true;
-
-        }
-
-        if( params && params[ "opacity" ] !== undefined ){
-
-            this.opacity = params[ "opacity" ];
-            // FIXME uniforms are cloned and not accessible at the moment
-            // this.surfaceBuffer.uniforms[ "opacity" ].value = this.opacity;
-            rebuild = true;
-
-        }
-
-        NGL.Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
 
     }
 

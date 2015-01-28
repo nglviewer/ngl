@@ -1847,5 +1847,3 @@ NGL.Viewer.prototype = {
     }
 
 };
-
-
