@@ -572,12 +572,44 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 //  7 - 15       Real(9.3)      a (Angstroms)
                 // 16 - 24       Real(9.3)      b (Angstroms)
                 // 25 - 33       Real(9.3)      c (Angstroms)
+                // 34 - 40       Real(7.2)      alpha         alpha (degrees).
+                // 41 - 47       Real(7.2)      beta          beta (degrees).
+                // 48 - 54       Real(7.2)      gamma         gamma (degrees).
+                // 56 - 66       LString        sGroup        Space group.
+                // 67 - 70       Integer        z             Z value.
 
-                var box = new Float32Array( 9 );
-                box[ 0 ] = parseFloat( line.substr( 6, 9 ) );
-                box[ 4 ] = parseFloat( line.substr( 15, 9 ) );
-                box[ 8 ] = parseFloat( line.substr( 24, 9 ) );
-                boxes.push( box );
+                var a = parseFloat( line.substr( 6, 9 ) );
+                var b = parseFloat( line.substr( 15, 9 ) );
+                var c = parseFloat( line.substr( 24, 9 ) );
+
+                var alpha = parseFloat( line.substr( 33, 7 ) );
+                var beta = parseFloat( line.substr( 40, 7 ) );
+                var gamma = parseFloat( line.substr( 47, 7 ) );
+
+                var sGroup = line.substr( 55, 11 ).trim();
+                var z = parseInt( line.substr( 66, 4 ) );
+
+                console.log( a, b, c, alpha, beta, gamma, sGroup, z )
+
+                if( a===1.0 && b===1.0 && c===1.0 &&
+                    alpha===90.0 && beta===90.0 && gamma===90.0 &&
+                    sGroup==="P 1" && z===1
+                ){
+
+                    // console.info(
+                    //     "unitcell is just a unit cube, " +
+                    //     "likely meaningless, so ignore"
+                    // );
+
+                }else{
+
+                    var box = new Float32Array( 9 );
+                    box[ 0 ] = a;
+                    box[ 4 ] = b;
+                    box[ 8 ] = c;
+                    boxes.push( box );
+
+                }
 
             }
 
