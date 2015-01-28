@@ -42,12 +42,12 @@ var suite = new Benchmark.Suite( "bench",
 );
 
 var data = {
-    "1crn": "../../data/__example__/1crn.pdb",
-    "1crn.gro": "../../data/__example__/1crn.gro",
-    "3dqb": "../../data/__example__/3dqb.pdb",
-    "3l5q": "../../data/__example__/3l5q.pdb",
+    "1crn": "../../data/1crn.pdb",
+    "1crn.gro": "../../data/1crn.gro",
+    "3dqb": "../../data/3dqb.pdb",
+    "3l5q": "../../data/3l5q.pdb",
 
-    "pbc": "../../data/__example__/pbc.gro",
+    "pbc": "../../data/pbc.gro",
 };
 
 var loadingManager = new THREE.LoadingManager( function(){
@@ -75,7 +75,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '1crn parse',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -94,7 +94,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '1crn.gro parse',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -113,7 +113,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '1crn.gro parse2',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -132,7 +132,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '1crn parse web worker',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -154,11 +154,11 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '1crn autoBond',
-    
+
 //     {
 //         async: true,
 //         fn: function(){
-    
+
 //             pdbStructure.bondSet = new NGL.BondSet();
 //             pdbStructure.autoBond();
 
@@ -173,7 +173,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '3dqb parse',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -192,7 +192,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '3dqb parse web worker',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -218,7 +218,7 @@ Object.keys( data ).forEach( function( name ){
 //     {
 //         async: true,
 //         fn: function(){
-    
+
 //             pdbStructure.bondSet = new NGL.BondSet();
 //             pdbStructure.autoBond();
 
@@ -233,7 +233,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '3l5q parse',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -252,7 +252,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 // suite.add( '3l5q parse web worker',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -278,7 +278,7 @@ Object.keys( data ).forEach( function( name ){
 //     {
 //         async: true,
 //         fn: function(){
-    
+
 //             pdbStructure.bondSet = new NGL.BondSet();
 //             pdbStructure.autoBond();
 
@@ -293,7 +293,7 @@ Object.keys( data ).forEach( function( name ){
 
 
 suite.add( 'pbc parse',
-    
+
     {
         async: true,
         defer: true,
@@ -312,7 +312,7 @@ suite.add( 'pbc parse',
 
 
 // suite.add( 'pbc parse2',
-    
+
 //     {
 //         async: true,
 //         defer: true,
@@ -332,7 +332,7 @@ suite.add( 'pbc parse',
 
 
 suite.add( 'pbc parse3',
-    
+
     {
         async: true,
         defer: true,
