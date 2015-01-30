@@ -1107,7 +1107,15 @@ NGL.Viewer.prototype = {
 
         // console.time( "Viewer.addBuffer" );
 
-        var mesh = buffer.getMesh( background ? "background" : undefined );
+        var bg = background ? "background" : undefined;
+
+        if( !buffer.material ){
+            buffer.material = buffer.getMaterial( bg );
+        }
+
+        var mesh = buffer.getMesh(
+            bg, buffer.material
+        );
         mesh.frustumCulled = false;
         if( matrix ){
             mesh.applyMatrix( matrix );
@@ -1116,13 +1124,21 @@ NGL.Viewer.prototype = {
         group.add( mesh );
 
         if( buffer.pickable ){
-            var pickingMesh = buffer.getMesh( "picking" );
+
+            if( !buffer.pickingMaterial ){
+                buffer.pickingMaterial = buffer.getMaterial( "picking" );
+            }
+
+            var pickingMesh = buffer.getMesh(
+                "picking", buffer.pickingMaterial
+            );
             pickingMesh.frustumCulled = false;
             if( matrix ){
                 pickingMesh.applyMatrix( matrix );
                 pickingMesh.userData[ "matrix" ] = matrix;
             }
             pickingGroup.add( pickingMesh );
+
         }
 
         this.updateBoundingBox( buffer.geometry, matrix );

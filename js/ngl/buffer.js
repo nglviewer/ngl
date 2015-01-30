@@ -71,9 +71,9 @@ NGL.Buffer.prototype = {
 
     },
 
-    getMesh: function( type ){
+    getMesh: function( type, material ){
 
-        var material = this.getMaterial( type );
+        material = material || this.getMaterial( type );
 
         if( type === "wireframe" || this.wireframe ){
 
@@ -981,9 +981,15 @@ NGL.GeometryBuffer.prototype = {
 
     },
 
-    getMesh: function( type ){
+    getMesh: function( type, material ){
 
-        return this.meshBuffer.getMesh( type );
+        return this.meshBuffer.getMesh( type, material );
+
+    },
+
+    getMaterial: function( type ){
+
+        return this.meshBuffer.getMaterial( type );
 
     },
 
@@ -1217,10 +1223,12 @@ NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
 
-NGL.PointBuffer.prototype.getMesh = function( type ){
+NGL.PointBuffer.prototype.getMesh = function( type, material ){
+
+    material = material || this.getMaterial( type );
 
     var points = new THREE.PointCloud(
-        this.geometry, this.getMaterial( type )
+        this.geometry, material
     );
 
     if( this.sort ) points.sortParticles = true
@@ -1445,10 +1453,12 @@ NGL.LineBuffer.prototype = {
 
     },
 
-    getMesh: function( type ){
+    getMesh: function( type, material ){
+
+        material = material || this.getMaterial( type );
 
         return new THREE.Line(
-            this.geometry, this.getMaterial( type ), THREE.LinePieces
+            this.geometry, material, THREE.LinePieces
         );
 
     },
@@ -1578,9 +1588,15 @@ NGL.TraceBuffer.prototype = {
 
     },
 
-    getMesh: function( type ){
+    getMesh: function( type, material ){
 
-        return this.lineBuffer.getMesh( type );
+        return this.lineBuffer.getMesh( type, material );
+
+    },
+
+    getMaterial: function( type ){
+
+        return this.lineBuffer.getMaterial( type );
 
     },
 
@@ -2313,9 +2329,15 @@ NGL.TubeMeshBuffer.prototype = {
 
     },
 
-    getMesh: function( type ){
+    getMesh: function( type, material ){
 
-        return this.meshBuffer.getMesh( type );
+        return this.meshBuffer.getMesh( type, material );
+
+    },
+
+    getMaterial: function( type ){
+
+        return this.meshBuffer.getMaterial( type );
 
     },
 
@@ -2763,13 +2785,19 @@ NGL.BufferVectorHelper.prototype = {
 
     },
 
-    getMesh: function(){
+    getMesh: function( type, material ){
 
-        var material = new THREE.LineBasicMaterial( {
-            color: this.color, fog: true
-        } );
+        material = material || this.getMaterial( type );
 
         return new THREE.Line( this.geometry, material, THREE.LinePieces );;
+
+    },
+
+    getMaterial: function( type ){
+
+        return new THREE.LineBasicMaterial( {
+            color: this.color, fog: true
+        } );
 
     },
 
