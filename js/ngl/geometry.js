@@ -750,10 +750,12 @@ NGL.Helixorient.prototype = {
 
         var res = this.fiber.residues;
 
-        // project first traceAtom onto first axis to get first center pos
-        _axis.fromArray( axis, 0 );
-        _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
+        // calc axis as dir of second and third center pos
+        // project first traceAtom onto axis to get first center pos
         v1.fromArray( center, 3 );
+        v2.fromArray( center, 6 );
+        _axis.subVectors( v1, v2 ).normalize();
+        _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         v1.toArray( center, 0 );
 
@@ -768,7 +770,7 @@ NGL.Helixorient.prototype = {
         _axis.subVectors( v1, v2 ).normalize();
         _center.copy( res[ n - 1 ].getAtomByName( traceAtomname ) );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
-        v1.toArray( center, 3 * n - 3 )
+        v1.toArray( center, 3 * n - 3 );
 
         // calc last three resdir
         for( i = n - 3; i < n; ++i ){
