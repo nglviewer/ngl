@@ -352,7 +352,7 @@ NGL.PickingControls = function( viewer, stage ){
 
         stage.signals.atomPicked.dispatch( pickedAtom );
 
-        if( NGL.GET( "debug" ) ){
+        if( NGL.debug ){
 
             console.log(
                 "picked color",

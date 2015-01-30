@@ -2071,7 +2071,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        if( NGL.GET( "debug" ) ){
+        if( NGL.debug ){
 
             scope.debugBufferList = [];
 
@@ -2119,7 +2119,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             );
 
-            if( NGL.GET( "debug" ) ){
+            if( NGL.debug ){
 
                 scope.debugBufferList.push(
 
@@ -2209,7 +2209,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-            if( NGL.GET( "debug" ) ){
+            if( NGL.debug ){
 
                 this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
                 this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );

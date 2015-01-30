@@ -549,7 +549,12 @@ NGL.Utils = {
 };
 
 
+NGL.debug = false;
+
+
 NGL.init = function( onload, baseUrl ){
+
+    NGL.debug = NGL.GET( "debug" );
 
     this.textures = [];
 
@@ -612,21 +617,33 @@ NGL.initResources = function( onLoad, baseUrl ){
 };
 
 
-NGL.getShader = function( name ){
+NGL.getShader = function(){
 
-    var shader = NGL.Resources[ '../shader/' + name ];
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
+    var cache = {};
 
-    return shader.replace( re, function( match, p1 ){
+    return function( name ){
 
-        var path = '../shader/chunk/' + p1 + '.glsl';
-        var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
+        var shader = NGL.Resources[ '../shader/' + name ];
 
-        return chunk ? chunk : "";
+        if( !cache[ name ] ){
 
-    });
+            cache[ name ] = shader.replace( re, function( match, p1 ){
 
-};
+                var path = '../shader/chunk/' + p1 + '.glsl';
+                var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
+
+                return chunk ? chunk : "";
+
+            });
+
+        }
+
+        return cache[ name ];
+
+    }
+
+}();
 
 
 NGL.trimCanvas = function( canvas, r, g, b, a ){
@@ -1022,6 +1039,8 @@ NGL.Viewer.prototype = {
 
     add: function( buffer, matrixList, background ){
 
+        // console.time( "Viewer.add" );
+
         var group, pickingGroup;
 
         group = new THREE.Group();
@@ -1029,40 +1048,44 @@ NGL.Viewer.prototype = {
             pickingGroup = new THREE.Group();
         }
 
-        if( matrixList ){
+        if( buffer.size > 0 ){
 
-            matrixList.forEach( function( matrix ){
+            if( matrixList ){
+
+                matrixList.forEach( function( matrix ){
+
+                    this.addBuffer(
+                        buffer, group, pickingGroup, background, matrix
+                    );
+
+                }, this );
+
+            }else{
 
                 this.addBuffer(
-                    buffer, group, pickingGroup, background, matrix
+                    buffer, group, pickingGroup, background
                 );
 
-            }, this );
-
-        }else{
-
-            this.addBuffer(
-                buffer, group, pickingGroup, background
-            );
-
-        }
-
-        if( background ){
-            this.backgroundGroup.add( group );
-        }else if( buffer instanceof NGL.TextBuffer ){
-            this.textGroup.add( group );
-        }else if( buffer.transparent ){
-            if( buffer instanceof NGL.SurfaceBuffer ){
-                this.surfaceGroup.add( group );
-            }else{
-                this.transparentGroup.add( group );
             }
-        }else{
-            this.modelGroup.add( group );
-        }
 
-        if( buffer.pickable ){
-            this.pickingGroup.add( pickingGroup );
+            if( background ){
+                this.backgroundGroup.add( group );
+            }else if( buffer instanceof NGL.TextBuffer ){
+                this.textGroup.add( group );
+            }else if( buffer.transparent ){
+                if( buffer instanceof NGL.SurfaceBuffer ){
+                    this.surfaceGroup.add( group );
+                }else{
+                    this.transparentGroup.add( group );
+                }
+            }else{
+                this.modelGroup.add( group );
+            }
+
+            if( buffer.pickable ){
+                this.pickingGroup.add( pickingGroup );
+            }
+
         }
 
         buffer.group = group;
@@ -1076,9 +1099,13 @@ NGL.Viewer.prototype = {
         // a render somehow slows chrome drastically down.
         // this.requestRender();
 
+        // console.timeEnd( "Viewer.add" );
+
     },
 
     addBuffer: function( buffer, group, pickingGroup, background, matrix ){
+
+        // console.time( "Viewer.addBuffer" );
 
         var mesh = buffer.getMesh( background ? "background" : undefined );
         mesh.frustumCulled = false;
@@ -1099,6 +1126,8 @@ NGL.Viewer.prototype = {
         }
 
         this.updateBoundingBox( buffer.geometry, matrix );
+
+        // console.timeEnd( "Viewer.addBuffer" );
 
     },
 
@@ -1173,7 +1202,7 @@ NGL.Viewer.prototype = {
 
         this.controls.maxDistance = bb.size().length() * 10;
 
-        if( NGL.GET( "debug" ) ){
+        if( NGL.debug ){
 
             var bbSize = bb.size();
             var material = new THREE.MeshBasicMaterial( {
@@ -1499,6 +1528,8 @@ NGL.Viewer.prototype = {
 
     render: function( e, picking, tileing ){
 
+        // console.time( "Viewer.render" );
+
         if( this._rendering ){
             console.warn( "tried to call 'render' from within 'render'" );
             return;
@@ -1575,6 +1606,8 @@ NGL.Viewer.prototype = {
 
         this._rendering = false;
         this._renderPending = false;
+
+        // console.timeEnd( "Viewer.render" );
 
     },
 
