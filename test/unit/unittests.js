@@ -879,13 +879,36 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
 });
 
 
-QUnit.asyncTest( "/1", function( assert ) {
+QUnit.asyncTest( "/1 PDB", function( assert ) {
 
     var sele = "/1";
 
     var selection = new NGL.Selection( sele );
 
     var path = "http://../../data/1LVZ.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+        var n = atomSet.atoms.length - 1;
+
+        assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
+        assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "/1 CIF", function( assert ) {
+
+    var sele = "/1";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "http://../../data/1LVZ.cif";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1071,3 +1094,26 @@ QUnit.test( "svd", function( assert ) {
 
 });
 
+
+////////////
+// Parsing
+//
+QUnit.module( "parsing" );
+
+
+/*QUnit.asyncTest( "structure subset", function( assert ) {
+
+    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var subset = new NGL.StructureSubset( structure, "10-30" );
+
+        assert.equal( structure.atomCount, 774, "Passed!" );
+        assert.equal( subset.atomCount, 211, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});*/

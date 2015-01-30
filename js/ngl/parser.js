@@ -557,7 +557,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 }else if( a ){
 
-                    modelIdx += 1;
                     if( !firstModelOnly ) serialDict = {};
 
                 }
@@ -570,6 +569,8 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                     doFrames = true;
 
                 }
+
+                modelIdx += 1;
 
             }else if( recordName === 'CRYST1' ){
 
@@ -792,8 +793,6 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
                 }
 
-                modelIdx += 1;
-
             }else if( i % modelLineCount === 1 ){
 
                 // console.log( "atomCount", line )
@@ -812,6 +811,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
                     return true;
 
                 }
+
+                modelIdx += 1;
 
             }else{
 
