@@ -1282,6 +1282,14 @@ NGL.PointBuffer.prototype.getMaterial = function( type ){
 
 };
 
+NGL.PointBuffer.prototype.dispose = function(){
+
+    NGL.Buffer.prototype.dispose.call( this );
+
+    this.tex.dispose();
+
+};
+
 
 /**
  * [LineBuffer description]
@@ -2666,6 +2674,14 @@ NGL.TextBuffer.prototype.makeMapping = function(){
         }
 
     }
+
+};
+
+NGL.TextBuffer.prototype.dispose = function(){
+
+    NGL.Buffer.prototype.dispose.call( this );
+
+    this.tex.dispose();
 
 };
 
