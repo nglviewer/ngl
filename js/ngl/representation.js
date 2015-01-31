@@ -2077,6 +2077,23 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         }
 
+        /*
+            var l = {
+
+                position: [],
+                normal: [],
+                binormal: [],
+                tangent: [],
+                color: [],
+                size: [],
+                pickingColor: []
+
+            };
+
+            var n = 0;
+            var length = 0;
+        */
+
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -2156,9 +2173,96 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             }
 
+            /*
+                l.position.push( subPos.position );
+                l.normal.push( subOri.normal );
+                l.binormal.push( subOri.binormal );
+                l.tangent.push( subOri.tangent );
+                l.color.push( subCol.color );
+                l.size.push( subSize.size );
+                l.pickingColor.push( subCol.pickingColor );
+
+                n += 1;
+                length += subSize.size.length;
+            */
+
             scope.fiberList.push( fiber );
 
         }, this.selection, true );
+
+        /*
+            var rx = 1.0 * this.aspectRatio;
+            var ry = 1.0;
+
+            if( this.fiberList[ 0 ].isCg() ){
+                ry = rx;
+            }
+
+            var position = new Float32Array( 3 * length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                position.set( l.position[ i ], offset );
+                offset += l.position[ i ].length;
+            }
+
+            var normal = new Float32Array( 3 * length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                normal.set( l.normal[ i ], offset );
+                offset += l.normal[ i ].length;
+            }
+
+            var binormal = new Float32Array( 3 * length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                binormal.set( l.binormal[ i ], offset );
+                offset += l.binormal[ i ].length;
+            }
+
+            var tangent = new Float32Array( 3 * length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                tangent.set( l.tangent[ i ], offset );
+                offset += l.tangent[ i ].length;
+            }
+
+            var color = new Float32Array( 3 * length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                color.set( l.color[ i ], offset );
+                offset += l.color[ i ].length;
+            }
+
+            var size = new Float32Array( length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                size.set( l.size[ i ], offset );
+                offset += l.size[ i ].length;
+            }
+
+            var pickingColor = new Float32Array( 3 * length );
+            for( var i = 0, offset = 0; i < n; ++i ){
+                pickingColor.set( l.pickingColor[ i ], offset );
+                offset += l.pickingColor[ i ].length;
+            }
+
+            this.bufferList.push(
+
+                new NGL.TubeMeshBuffer(
+                    position,
+                    normal,
+                    binormal,
+                    tangent,
+                    color,
+                    size,
+                    this.radialSegments,
+                    pickingColor,
+                    rx,
+                    ry,
+                    this.capped,
+                    this.wireframe,
+                    this.transparent,
+                    parseInt( this.side ),
+                    opacity,
+                    this.nearClip
+                )
+
+            );
+        */
 
     },
 
