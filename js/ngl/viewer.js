@@ -869,6 +869,23 @@ NGL.Viewer = function( eid ){
 
     this.boundingBox = new THREE.Box3();
 
+    this.info = {
+
+        memory: {
+            programs: 0,
+            geometries: 0,
+            textures: 0
+        },
+
+        render: {
+            calls: 0,
+            vertices: 0,
+            faces: 0,
+            points: 0
+        }
+
+    };
+
 };
 
 NGL.Viewer.prototype = {
@@ -1353,29 +1370,48 @@ NGL.Viewer.prototype = {
 
     },
 
+    updateInfo: function( reset ){
+
+        var info = this.info;
+        var memory = info.memory;
+        var render = info.render;
+
+        if( reset ){
+
+            memory.programs = 0;
+            memory.geometries = 0;
+            memory.textures = 0;
+
+            render.calls = 0;
+            render.vertices = 0;
+            render.faces = 0;
+            render.points = 0;
+
+        }else{
+
+            var rInfo = this.renderer.info;
+            var rMemory = rInfo.memory;
+            var rRender = rInfo.render;
+
+            memory.programs = rMemory.programs;
+            memory.geometries = rMemory.geometries;
+            memory.textures = rMemory.textures;
+
+            render.calls += rRender.calls;
+            render.vertices += rRender.vertices;
+            render.faces += rRender.faces;
+            render.points += rRender.points;
+
+        }
+
+    },
+
     animate: function(){
 
         requestAnimationFrame( this.animate.bind( this ) );
 
         this.controls.update();
         this.stats.update();
-
-    },
-
-
-
-
-
-        }else{
-
-
-
-
-        }
-
-
-
-
 
     },
 
@@ -1459,19 +1495,30 @@ NGL.Viewer.prototype = {
 
         this.renderer.clear();
 
+        this.updateInfo( true );
+
         if( picking ){
 
             this.renderer.render( this.pickingGroup, this.camera );
+            this.updateInfo();
 
         }else{
 
             this.renderer.render( this.backgroundGroup, this.camera );
             this.renderer.clearDepth();
+            this.updateInfo();
 
             this.renderer.render( this.modelGroup, this.camera );
+            this.updateInfo();
+
             this.renderer.render( this.textGroup, this.camera );
+            this.updateInfo();
+
             this.renderer.render( this.transparentGroup, this.camera );
+            this.updateInfo();
+
             this.renderer.render( this.surfaceGroup, this.camera );
+            this.updateInfo();
 
         }
 
@@ -1479,6 +1526,7 @@ NGL.Viewer.prototype = {
         this._renderPending = false;
 
         // console.timeEnd( "Viewer.render" );
+        // console.log( this.info.memory, this.info.render );
 
     },
 
