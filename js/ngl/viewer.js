@@ -22,6 +22,7 @@ NGL.Resources = {
     // sprites
     '../img/circle.png': 'image',
     '../img/spark1.png': 'image',
+    '../img/radial.png': 'image',
 
     // shaders
     '../shader/CylinderImpostor.vert': null,

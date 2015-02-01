@@ -1209,7 +1209,8 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, t
     // this.fragmentShader = 'Point.frag';
 
     this.tex = new THREE.Texture(
-        NGL.Resources[ '../img/spark1.png' ]
+        NGL.Resources[ '../img/radial.png' ]
+        // NGL.Resources[ '../img/spark1.png' ]
         // NGL.Resources[ '../img/circle.png' ]
     );
     this.tex.needsUpdate = true;
