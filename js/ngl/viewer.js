@@ -1362,171 +1362,26 @@ NGL.Viewer.prototype = {
 
     },
 
-    screenshot: function( factor, type, quality, antialias, transparent, trim, progressCallback ){
 
-        // FIXME don't show rendered parts
-        // FIXME controls need to be disabled
 
-        var scope = this;
 
-        if( antialias ) factor *= 2;
-
-        var i;
-        var n = factor * factor;
-
-        if( transparent ){
-
-            this.renderer.setClearColor( this.params.backgroundColor, 0 );
-
-        }
-
-        var canvas = document.createElement( 'canvas' );
-        canvas.style.display = "hidden";
-        document.body.appendChild( canvas );
-
-        if( antialias ){
-
-            canvas.width = this.width * factor / 2;
-            canvas.height = this.height * factor / 2;
 
         }else{
 
-            canvas.width = this.width * factor;
-            canvas.height = this.height * factor;
+
+
 
         }
 
-        var ctx = canvas.getContext( '2d' );
 
-        var shearMatrix = new THREE.Matrix4();
-        var scaleMatrix = new THREE.Matrix4();
 
-        var near = this.camera.near;
-        var top = Math.tan( THREE.Math.degToRad( this.camera.fov * 0.5 ) ) * near;
-        var bottom = - top;
-        var left = this.camera.aspect * bottom;
-        var right = this.camera.aspect * top;
-        var width = Math.abs( right - left );
-        var height = Math.abs( top - bottom );
 
-        function makeAsymmetricFrustum( projectionMatrix, i ){
 
-            var x = i % factor;
-            var y = Math.floor( i / factor );
+    },
 
-            shearMatrix.set(
-                1, 0, ( x - ( factor - 1 ) * 0.5 ) * width / near, 0,
-                0, 1, -( y - ( factor - 1 ) * 0.5 ) * height / near, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1
-            );
+    screenshot: function( params ){
 
-            scaleMatrix.set(
-                factor, 0, 0, 0,
-                0, factor, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1
-            );
-
-            return projectionMatrix.multiply( shearMatrix ).multiply( scaleMatrix );
-
-        }
-
-        function render( i, n ){
-
-            makeAsymmetricFrustum( scope.camera.projectionMatrix, i );
-
-            scope.render( null, null, true );
-
-            var x = ( i % factor ) * scope.width;
-            var y = Math.floor( i / factor ) * scope.height;
-
-            if( antialias ){
-
-                ctx.drawImage(
-                    scope.renderer.domElement,
-                    Math.round( x / 2 ),
-                    Math.round( y / 2 ),
-                    Math.round( scope.width / 2 ),
-                    Math.round( scope.height / 2 )
-                );
-
-            }else{
-
-                ctx.drawImage( scope.renderer.domElement, x, y );
-
-            }
-
-            scope.camera.updateProjectionMatrix();
-
-            if( typeof progressCallback === "function" ){
-
-                progressCallback( i + 1, n, false );
-
-            }
-
-        }
-
-        for( i = 0; i <= n; ++i ){
-
-            setTimeout( (function( i, n ){
-
-                return function(){
-
-                    if( i === n ){
-
-                        save( n );
-
-                        if( transparent ){
-
-                            scope.renderer.setClearColor(
-                                scope.params.backgroundColor, 1
-                            );
-
-                        }
-
-                    }else{
-
-                        render( i, n );
-
-                    }
-
-                }
-
-            })( i, n ) );
-
-        }
-
-        function save( n ){
-
-            var ext = type.split( "/" )[ 1 ];
-
-            if( trim ){
-
-                var bg = new THREE.Color( scope.params.backgroundColor );
-                var r = ( bg.r * 255 ) | 0;
-                var g = ( bg.g * 255 ) | 0;
-                var b = ( bg.b * 255 ) | 0;
-                var a = transparent ? 0 : 255;
-
-                canvas = NGL.trimCanvas( canvas, r, g, b, a );
-
-            }
-
-            canvas.toBlob(
-                function( blob ){
-                    NGL.download( blob, "screenshot." + ext );
-                    document.body.removeChild( canvas );
-                    if( typeof progressCallback === "function" ){
-                        progressCallback( n, n, true );
-                    }
-                },
-                type, quality
-            );
-
-            scope.requestRender();
-
-        }
+        NGL.screenshot( this, params );
 
     },
 
@@ -1892,6 +1747,311 @@ NGL.Viewer.prototype = {
         this.rotationGroup.updateMatrixWorld();
 
         this.requestRender();
+
+    }
+
+};
+
+
+/////////////
+// Renderer
+
+NGL.TiledRenderer = function( renderer, camera, viewer, params ){
+
+    var p = params || {};
+
+    this.renderer = renderer;
+    this.camera = camera;
+    this.viewer = viewer;
+
+    this.factor = p.factor!==undefined ? p.factor : 2;
+    this.antialias = p.antialias!==undefined ? p.antialias : false;
+
+    this.onProgress = p.onProgress;
+    this.onFinish = p.onFinish;
+
+    this.init();
+
+};
+
+NGL.TiledRenderer.prototype = {
+
+    init: function(){
+
+        if( this.antialias ) this.factor *= 2;
+
+        this.n = this.factor * this.factor;
+
+        // canvas
+
+        var canvas = document.createElement( 'canvas' );
+        canvas.style.display = "hidden";
+        document.body.appendChild( canvas );
+
+        if( this.antialias ){
+
+            canvas.width = this.viewer.width * this.factor / 2;
+            canvas.height = this.viewer.height * this.factor / 2;
+
+        }else{
+
+            canvas.width = this.viewer.width * this.factor;
+            canvas.height = this.viewer.height * this.factor;
+
+        }
+
+        this.ctx = canvas.getContext( '2d' );
+        this.canvas = canvas;
+
+        //
+
+        this.shearMatrix = new THREE.Matrix4();
+        this.scaleMatrix = new THREE.Matrix4();
+
+        var halfFov = THREE.Math.degToRad( this.camera.fov * 0.5 );
+
+        this.near = this.camera.near;
+        this.top = Math.tan( halfFov ) * this.near;
+        this.bottom = -this.top;
+        this.left = this.camera.aspect * this.bottom;
+        this.right = this.camera.aspect * this.top;
+        this.width = Math.abs( this.right - this.left );
+        this.height = Math.abs( this.top - this.bottom );
+
+    },
+
+    makeAsymmetricFrustum: function( projectionMatrix, i ){
+
+        var factor = this.factor;
+        var near = this.near;
+        var width = this.width;
+        var height = this.height;
+
+        var x = i % factor;
+        var y = Math.floor( i / factor );
+
+        this.shearMatrix.set(
+            1, 0, ( x - ( factor - 1 ) * 0.5 ) * width / near, 0,
+            0, 1, -( y - ( factor - 1 ) * 0.5 ) * height / near, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        this.scaleMatrix.set(
+            factor, 0, 0, 0,
+            0, factor, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        projectionMatrix
+            .multiply( this.shearMatrix )
+            .multiply( this.scaleMatrix );
+
+        return projectionMatrix;
+
+    },
+
+    renderTile: function( i ){
+
+        this.makeAsymmetricFrustum( this.camera.projectionMatrix, i );
+
+        this.viewer.render( null, null, true );
+
+        var x = ( i % this.factor ) * this.viewer.width;
+        var y = Math.floor( i / this.factor ) * this.viewer.height;
+
+        if( this.antialias ){
+
+            this.ctx.drawImage(
+                this.renderer.domElement,
+                Math.round( x / 2 ),
+                Math.round( y / 2 ),
+                Math.round( this.viewer.width / 2 ),
+                Math.round( this.viewer.height / 2 )
+            );
+
+        }else{
+
+            this.ctx.drawImage( this.renderer.domElement, x, y );
+
+        }
+
+        this.camera.updateProjectionMatrix();
+
+        if( typeof this.onProgress === "function" ){
+
+            this.onProgress( i + 1, this.n, false );
+
+        }
+
+    },
+
+    render: function(){
+
+        var n = this.n;
+
+        for( var i = 0; i <= n; ++i ){
+
+            if( i === n ){
+
+                if( typeof this.onFinish === "function" ){
+
+                    this.onFinish( i + 1, n, false );
+
+                }
+
+            }else{
+
+                this.renderTile( i );
+
+            }
+
+        }
+
+    },
+
+    renderAsync: function(){
+
+        var n = this.n;
+        var renderTile = this.renderTile.bind( this );
+        var onFinish = this.onFinish;
+
+        for( var i = 0; i <= n; ++i ){
+
+            setTimeout( ( function( i ){
+
+                return function(){
+
+                    if( i === n ){
+
+                        if( typeof onFinish === "function" ){
+
+                            onFinish( i + 1, n, false );
+
+                        }
+
+                    }else{
+
+                        renderTile( i );
+
+                    }
+
+                }
+
+            } )( i ) );
+
+        }
+
+    },
+
+    dispose: function(){
+
+        document.body.removeChild( this.canvas );
+
+    }
+
+};
+
+
+NGL.screenshot = function( viewer, params ){
+
+    var p = params || {};
+
+    var trim = p.trim!==undefined ? p.trim : false;
+    var type = p.type!==undefined ? p.type : "image/png";
+    var quality = p.quality!==undefined ? p.quality : 1.0;
+    var transparent = p.transparent!==undefined ? p.transparent : false;
+
+    var factor = p.factor!==undefined ? p.factor : false;
+    var antialias = p.antialias!==undefined ? p.antialias : false;
+
+    var renderer = viewer.renderer;
+    var camera = viewer.camera;
+
+    var originalClearAlpha = renderer.getClearAlpha();
+    var backgroundColor = renderer.getClearColor();
+
+    if( transparent ){
+
+        renderer.setClearAlpha( 0 );
+
+    }
+
+    var tiledRenderer = new NGL.TiledRenderer(
+
+        renderer, camera, viewer,
+        {
+            factor: factor,
+            antialias: antialias,
+            onProgress: onProgress,
+            onFinish: onFinish
+        }
+
+    );
+
+    tiledRenderer.renderAsync();
+
+    //
+
+    function onProgress( i, n, finished ){
+
+        if( typeof p.onProgress === "function" ){
+
+            p.onProgress( i, n, finished );
+
+        }
+
+    }
+
+    function onFinish( i, n ){
+
+        save( n );
+
+        if( transparent ){
+
+            renderer.setClearAlpha( originalClearAlpha );
+
+        }
+
+        viewer.requestRender();
+
+    }
+
+    function save( n ){
+
+        var canvas;
+        var ext = type.split( "/" )[ 1 ];
+
+        if( trim ){
+
+            var bg = backgroundColor;
+            var r = ( bg.r * 255 ) | 0;
+            var g = ( bg.g * 255 ) | 0;
+            var b = ( bg.b * 255 ) | 0;
+            var a = transparent ? 0 : 255;
+
+            canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
+
+        }else{
+
+            canvas = tiledRenderer.canvas;
+
+        }
+
+        canvas.toBlob(
+
+            function( blob ){
+
+                NGL.download( blob, "screenshot." + ext );
+                onProgress( n, n, true );
+
+                tiledRenderer.dispose();
+
+            },
+            type, quality
+
+        );
 
     }
 

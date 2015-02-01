@@ -271,7 +271,14 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onScreenshotOptionClick () {
 
-        stage.viewer.screenshot( 1, "image/png", 1.0, true, false, false );
+        stage.viewer.screenshot( {
+            factor: 1,
+            type: "image/png",
+            quality: 1.0,
+            antialias: true,
+            transparent: false,
+            trim: false
+        } );
 
     }
 
@@ -734,15 +741,19 @@ NGL.ExportImageWidget = function( stage ){
 
         }, NGL.StructureComponent );
 
-        stage.viewer.screenshot(
-            factor, type, quality, antialias, transparent, trim,
-            function( i, n, finished ){
+        stage.viewer.screenshot( {
+
+            factor: factor,
+            type: type,
+            quality: quality,
+            antialias: antialias,
+            transparent: transparent,
+            trim: trim,
+            onProgress: function( i, n, finished ){
                 if( i === 1 ){
                     progress.setMax( n );
                 }
-                // FIXME "i + 1" case should not be needed but
-                // without it the progress element is updated too late
-                if( i === n || i + 1 === n ){
+                if( i >= n ){
                     progress.setIndeterminate();
                 }else{
                     progress.setValue( i );
@@ -761,7 +772,8 @@ NGL.ExportImageWidget = function( stage ){
                     }, NGL.StructureComponent );
                 }
             }
-        );
+
+        } );
 
     }
 
