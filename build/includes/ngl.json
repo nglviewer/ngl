@@ -39,5 +39,10 @@
     "shader/chunk/fog.glsl",
     "shader/chunk/fog_params.glsl",
     "shader/chunk/light.glsl",
-    "shader/chunk/light_params.glsl"
+    "shader/chunk/light_params.glsl",
+
+    "fonts/LatoBlack.fnt",
+    "fonts/LatoBlack.png",
+
+    "img/radial.png"
 ]

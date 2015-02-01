@@ -566,6 +566,16 @@ NGL.init = function( onload, baseUrl ){
 };
 
 
+NGL.dataURItoImage = function( dataURI ){
+
+    var img = document.createElement( "img" );
+    img.src = dataURI;
+
+    return img;
+
+};
+
+
 NGL.initResources = function( onLoad, baseUrl ){
 
     baseUrl = baseUrl || "";

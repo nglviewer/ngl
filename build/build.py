@@ -10,6 +10,7 @@ if sys.version_info < (2, 7):
 import argparse
 import json
 import os
+import re
 import shutil
 import tempfile
 
@@ -53,14 +54,21 @@ def main( argv=None ):
             tmp.write( u'\n\n' )
             filename = '../' + filename
             sources.append( filename )
-            with open( filename, 'r', encoding='utf-8' ) as f:
-                if filename[ -5: ] in [ ".glsl", ".frag", ".vert" ]:
+            if re.match( ".*\.(glsl|frag|vert|fnt)$", filename ):
+                with open( filename, 'r', encoding='utf-8' ) as f:
                     tmp.write( 'NGL.Resources[ \'' + filename + '\'] = "' )
                     tmp.write( f.read().replace( '\n', '\\n' ).replace( '"', '\\"' ) )
                     tmp.write( u'";\n\n' )
-                else:
+            elif re.match( ".*\.(js)$", filename ):
+                with open( filename, 'r', encoding='utf-8' ) as f:
                     tmp.write( f.read() )
                     tmp.write( u'\n' )
+            elif re.match( ".*\.(png)$", filename ):
+                with open( filename, 'rb' ) as f:
+                    tmp.write( u'NGL.Resources[ \'' + filename + '\'] = ' )
+                    tmp.write( u'NGL.dataURItoImage("data:image/png;base64,' )
+                    tmp.write( unicode( f.read().encode( "base64" ).replace( '\n', '\\n' ) ) )
+                    tmp.write( u'");\n\n' )
 
     tmp.close()
 

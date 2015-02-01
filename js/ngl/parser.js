@@ -367,7 +367,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     s.hasConnect = false;
 
-    var a, currentBiomol;
+    var currentBiomol;
 
     var idx = 0;
     var modelIdx = 0;
@@ -414,7 +414,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 if( !element ) element = guessElem( atomname );
 
-                a = new NGL.Atom();
+                var a = new NGL.Atom();
                 a.index = idx;
                 a.bonds = [];
 
@@ -954,7 +954,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     s.hasConnect = false;
 
-    var a, currentBiomol;
+    var currentBiomol;
 
     //
 
@@ -1218,7 +1218,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         var resname = ls[ label_comp_id ];
                         var altloc = ls[ label_alt_id ];
 
-                        a = new NGL.Atom();
+                        var a = new NGL.Atom();
                         a.index = idx;
                         a.bonds = [];
 
