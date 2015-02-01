@@ -2650,6 +2650,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
         this.bufferList = [];
         this.fiberList = [];
 
+        // TODO reduce buffer count as in e.g. rocket repr
+
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
@@ -3209,6 +3211,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         this.fiberList = [];
         this.centerList = [];
         this.helixList = [];
+
+        // TODO reduce buffer count as in e.g. rocket repr
 
         this.structure.eachFiber( function( fiber ){
 
