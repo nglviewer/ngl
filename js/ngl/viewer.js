@@ -949,7 +949,7 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new THREE.WebGLRenderer({
+        this.renderer = new NGL.WebGLRenderer({
             preserveDrawingBuffer: true,
             alpha: true,
             antialias: true
@@ -1498,7 +1498,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        this.updateDynamicUniforms( this.scene, nearClip );
+        // this.updateDynamicUniforms( this.scene, nearClip );
 
         this.sortProjectedPosition( this.scene, this.camera );
 
@@ -1814,6 +1814,117 @@ NGL.Viewer.prototype = {
 
 /////////////
 // Renderer
+
+NGL.WebGLRenderer = function(){
+
+    var _this = this;
+
+    THREE.WebGLRenderer.apply( this, arguments );
+
+    var matrix = new THREE.Matrix4();
+    var bgColor = new THREE.Color();
+
+    function updateUniforms( o, camera ){
+
+        // console.log( o )
+        // console.log( o.material )
+        // console.log( o.material.uniforms )
+
+        if( !o.material ) return;
+
+        var u = o.material.uniforms;
+        if( !u ) return;
+
+        if( u.backgroundColor ){
+            u.backgroundColor.value = bgColor;
+        }
+
+        // if( u.nearClip ){
+        //     u.nearClip.value = nearClip;
+        // }
+
+        if( u.modelViewMatrixInverse ){
+            matrix.multiplyMatrices(
+                camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewMatrixInverse.value.getInverse( matrix );
+        }
+
+        if( u.modelViewMatrixInverseTranspose ){
+            if( u.modelViewMatrixInverse ){
+                u.modelViewMatrixInverseTranspose.value.copy(
+                    u.modelViewMatrixInverse.value
+                ).transpose();
+            }else{
+                matrix.multiplyMatrices(
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                u.modelViewMatrixInverseTranspose.value
+                    .getInverse( matrix )
+                    .transpose();
+            }
+        }
+
+        if( u.projectionMatrixInverse ){
+            u.projectionMatrixInverse.value.getInverse(
+                camera.projectionMatrix
+            );
+        }
+
+        if( u.projectionMatrixTranspose ){
+            u.projectionMatrixTranspose.value.copy(
+                camera.projectionMatrix
+            ).transpose();
+        }
+
+        if( u.modelViewProjectionMatrix ){
+            matrix.multiplyMatrices(
+                camera.matrixWorldInverse, o.matrixWorld
+            );
+            u.modelViewProjectionMatrix.value.multiplyMatrices(
+                camera.projectionMatrix, matrix
+            )
+        }
+
+        if( u.modelViewProjectionMatrixInverse ){
+            if( u.modelViewProjectionMatrix ){
+                u.modelViewProjectionMatrixInverse.value.copy(
+                    u.modelViewProjectionMatrix.value
+                );
+                u.modelViewProjectionMatrixInverse.value.getInverse(
+                    u.modelViewProjectionMatrixInverse.value
+                );
+            }else{
+                matrix.multiplyMatrices(
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
+                    camera.projectionMatrix, matrix
+                )
+                u.modelViewProjectionMatrixInverse.value.getInverse(
+                    u.modelViewProjectionMatrixInverse.value
+                );
+            }
+        }
+
+    }
+
+    var setProgram = this.setProgram;
+
+    this.setProgram = function( camera, lights, fog, material, object ){
+
+        var program = setProgram( camera, lights, fog, material, object );
+
+        updateUniforms( object, camera );
+
+        _this.loadUniformsGeneric( material.uniformsList );
+
+        return program;
+
+    };
+
+};
+
 
 NGL.TiledRenderer = function( renderer, camera, viewer, params ){
 
