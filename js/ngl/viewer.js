@@ -1162,7 +1162,11 @@ NGL.Viewer.prototype = {
             );
             pickingMesh.frustumCulled = false;
             if( matrix ){
-                pickingMesh.applyMatrix( matrix );
+                // pickingMesh.applyMatrix( matrix );
+                pickingMesh.matrix.copy( mesh.matrix );
+                pickingMesh.position.copy( mesh.position );
+                pickingMesh.quaternion.copy( mesh.quaternion );
+                pickingMesh.scale.copy( mesh.scale );
                 pickingMesh.userData[ "matrix" ] = matrix;
             }
             pickingGroup.add( pickingMesh );
