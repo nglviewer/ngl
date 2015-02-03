@@ -34,8 +34,6 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
 
-	this.accumulatedZoom = 1;
-
 	// internals
 
 	this.target = new THREE.Vector3();
@@ -220,21 +218,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 		if ( _state === STATE.TOUCH_ZOOM_PAN ) {
 
 			var factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-
-			if ( this.object instanceof THREE.PerspectiveCamera ) {
-
-				_eye.multiplyScalar( factor );
-
-			} else {
-
-				// added by patrickfuller to handle OrthographicCamera zoom
-				this.object.left *= factor;
-				this.object.right *= factor;
-				this.object.top *= factor;
-				this.object.bottom *= factor;
-
-				this.object.updateProjectionMatrix();
-			}
+			_touchZoomDistanceStart = _touchZoomDistanceEnd;
+			_eye.multiplyScalar( factor );
 
 		} else {
 
@@ -242,20 +227,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 			if ( factor !== 1.0 && factor > 0.0 ) {
 
-				if ( this.object instanceof THREE.PerspectiveCamera ) {
-
-					_eye.multiplyScalar( factor );
-
-				} else {
-
-					// added by patrickfuller to handle OrthographicCamera zoom
-					this.object.left *= factor;
-					this.object.right *= factor;
-					this.object.top *= factor;
-					this.object.bottom *= factor;
-
-					this.object.updateProjectionMatrix();
-				}
+				_eye.multiplyScalar( factor );
 
 				if ( _this.staticMoving ) {
 
@@ -270,8 +242,6 @@ THREE.TrackballControls = function ( object, domElement ) {
 			}
 
 		}
-
-		_this.accumulatedZoom *= factor;
 
 	};
 
@@ -639,3 +609,4 @@ THREE.TrackballControls = function ( object, domElement ) {
 };
 
 THREE.TrackballControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+THREE.TrackballControls.prototype.constructor = THREE.TrackballControls;
