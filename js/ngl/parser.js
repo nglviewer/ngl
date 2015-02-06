@@ -189,6 +189,28 @@ NGL.createAtomArray = function( structure, callback ){
             // FIXME atomArray.modelindex[ i ] = ai.modelindex;
             a.modelindex = ai.modelindex;
 
+            // set proxy atoms in already existing bonds
+
+            if( ai.bonds.length ){
+
+                a.bonds = ai.bonds;
+
+                a.bonds.forEach( function( b ){
+
+                    if( b.atom1.index === a.index ){
+                        b.atom1 = a;
+                    }else if( b.atom2.index === a.index ){
+                        b.atom2 = a;
+                    }else{
+                        console.warn(
+                            "NGL.createAtomArray: bond atom not found"
+                        );
+                    }
+
+                } );
+
+            }
+
             atoms[ i ] = a;
 
         }
@@ -220,6 +242,8 @@ NGL.createAtomArray = function( structure, callback ){
 
 ////////////////////
 // StructureParser
+
+NGL.useAtomArrayThreshold = 100000;
 
 NGL.StructureParser = function( name, path, params ){
 
@@ -254,7 +278,7 @@ NGL.StructureParser.prototype = {
 
             function( wcallback ){
 
-                if( self.structure.atoms.length > 100000 ){
+                if( self.structure.atoms.length > NGL.useAtomArrayThreshold ){
 
                     NGL.createAtomArray( self.structure, wcallback );
 

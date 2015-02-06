@@ -770,6 +770,33 @@ QUnit.asyncTest( "backbone", function( assert ) {
 });
 
 
+QUnit.asyncTest( "backbone [atomArray]", function( assert ) {
+
+    var _useAtomArrayThreshold = NGL.useAtomArrayThreshold;
+    NGL.useAtomArrayThreshold = 100;
+
+    var sele = "backbone";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "http://../../data/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atomCount, 184, "Passed!" );
+        assert.equal( atomSet.atoms[ 0 ].atomname, "N", "Passed!" );
+
+        NGL.useAtomArrayThreshold = _useAtomArrayThreshold;
+
+        QUnit.start()
+
+    } );
+
+});
+
+
 QUnit.asyncTest( ".CA", function( assert ) {
 
     var sele = ".CA";
