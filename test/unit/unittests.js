@@ -1031,6 +1031,58 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 });
 
 
+QUnit.asyncTest( "clone", function( assert ) {
+
+    var path = "http://../../data/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var clone = structure.clone();
+
+        assert.notEqual( structure, clone, "Passed!" );
+        assert.notEqual( structure.bondSet, clone.bondSet, "Passed!" );
+
+        assert.equal( structure.atoms.length, clone.atoms.length, "Passed!" );
+        assert.equal( structure.atomCount, clone.atomCount, "Passed!" );
+        assert.equal( structure.residueCount, clone.residueCount, "Passed!" );
+        assert.equal( structure.chainCount, clone.chainCount, "Passed!" );
+        assert.equal( structure.modelCount, clone.modelCount, "Passed!" );
+
+        assert.equal( structure.bondSet.bondCount, clone.bondSet.bondCount, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "clone multimodel", function( assert ) {
+
+    var path = "http://../../data/1LVZ.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var clone = structure.clone();
+
+        assert.notEqual( structure, clone, "Passed!" );
+        assert.notEqual( structure.bondSet, clone.bondSet, "Passed!" );
+
+        assert.equal( structure.atoms.length, clone.atoms.length, "Passed!" );
+        assert.equal( structure.atomCount, clone.atomCount, "Passed!" );
+        assert.equal( structure.residueCount, clone.residueCount, "Passed!" );
+        assert.equal( structure.chainCount, clone.chainCount, "Passed!" );
+        assert.equal( structure.modelCount, clone.modelCount, "Passed!" );
+
+        assert.equal( structure.bondSet.bondCount, clone.bondSet.bondCount, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
 ////////
 // SVD
 //

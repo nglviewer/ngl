@@ -1067,7 +1067,7 @@ NGL.Viewer.prototype = {
 
     add: function( buffer, matrixList, background ){
 
-        // console.time( "Viewer.add" );
+        console.time( "Viewer.add" );
 
         var group, pickingGroup;
 
@@ -1127,7 +1127,7 @@ NGL.Viewer.prototype = {
         // a render somehow slows chrome drastically down.
         // this.requestRender();
 
-        // console.timeEnd( "Viewer.add" );
+        console.timeEnd( "Viewer.add" );
 
     },
 

@@ -1305,7 +1305,7 @@ NGL.BondSet.prototype = {
 
     bondColor: NGL.AtomSet.prototype.bondColor,
 
-    bondRadius: NGL.AtomSet.prototype.bondRadius,
+    bondRadius: NGL.AtomSet.prototype.bondRadius
 
 };
 
@@ -1537,6 +1537,10 @@ NGL.Structure.prototype = {
 
     constructor: NGL.Structure,
 
+    atomArray: undefined,
+    frames: undefined,
+    boxes: undefined,
+
     reset: function(){
 
         this.atomCount = 0;
@@ -1621,9 +1625,13 @@ NGL.Structure.prototype = {
 
     },
 
-    addModel: function(){
+    addModel: function( m ){
 
-        var m = new NGL.Model( this );
+        if( !m ){
+            m = new NGL.Model( this );
+        }else{
+            m.structure = this;
+        }
         m.index = this.nextModelIndex();
         this.models.push( m );
         return m;
@@ -2243,7 +2251,87 @@ NGL.Structure.prototype = {
 
         }
 
-    }()
+    }(),
+
+    clone: function(){
+
+        console.time( "NGL.Structure.clone" );
+
+        var s = new NGL.Structure();
+
+        s.name = this.name;
+        s.path = this.path;
+
+        s.title = this.title;
+        s.id = this.id;
+
+        if( this.biomolDict ) s.biomolDict = this.biomolDict;
+
+        s.center = this.center.clone();
+        s.boundingBox = this.boundingBox.clone();
+
+        this.eachModel( function( m ){
+
+            s.addModel( m.clone( s ) );
+
+        } );
+
+        s.eachAtom( function( a ){
+
+            s.atoms.push( a );
+
+        } );
+
+        // clone atomArray
+
+        if( this.atomArray ){
+
+            s.atomArray = this.atomArray.clone();
+
+            s.eachAtom( function( a ){
+
+                a.atomArray = s.atomArray;
+
+            } );
+
+        }
+
+        // clone trajectory
+
+        if( this.frames ){
+
+            // TODO clone
+            s.frames = this.frames;
+
+        }
+
+        if( this.boxes ){
+
+            // TODO clone
+            s.boxes = this.boxes;
+
+        }
+
+        // clone bonds
+
+        this.bondSet.eachBond( function( b ){
+
+            s.bondSet.addBond(
+
+                s.atoms[ b.atom1.index ],
+                s.atoms[ b.atom2.index ]
+
+            );
+
+        } );
+
+        console.timeEnd( "NGL.Structure.clone" );
+
+        // console.log( s );
+
+        return s;
+
+    }
 
 };
 
@@ -2288,9 +2376,13 @@ NGL.Model.prototype = {
 
     },
 
-    addChain: function(){
+    addChain: function( c ){
 
-        var c = new NGL.Chain( this );
+        if( !c ){
+            c = new NGL.Chain( this );
+        }else{
+            c.model = this;
+        }
         c.index = this.nextChainIndex();
         this.chains.push( c );
         return c;
@@ -2428,6 +2520,20 @@ NGL.Model.prototype = {
 
         }
 
+    },
+
+    clone: function( s ){
+
+        var m = new NGL.Model( s );
+
+        this.eachChain( function( c ){
+
+            m.addChain( c.clone( m ) );
+
+        } );
+
+        return m;
+
     }
 
 };
@@ -2465,9 +2571,13 @@ NGL.Chain.prototype = {
 
     },
 
-    addResidue: function(){
+    addResidue: function( r ){
 
-        var r = new NGL.Residue( this );
+        if( !r ){
+            r = new NGL.Residue( this );
+        }else{
+            r.chain = this;
+        }
         r.index = this.nextResidueIndex();
         this.residues.push( r );
         return r;
@@ -2688,6 +2798,20 @@ NGL.Chain.prototype = {
             callback( scope.getFiber( i, j, padded ) );
 
         }
+
+    },
+
+    clone: function( m ){
+
+        var c = new NGL.Chain( m );
+
+        this.eachResidue( function( r ){
+
+            c.addResidue( r.clone( c ) );
+
+        } );
+
+        return c;
 
     }
 
@@ -3117,6 +3241,23 @@ NGL.Residue.prototype = {
             rNext.getBackboneAtomEnd()
         );
 
+    },
+
+    clone: function( c ){
+
+        var r = new NGL.Residue( c );
+
+        r.resno = this.resno;
+        r.resname = this.resname;
+
+        this.eachAtom( function( a ){
+
+            r.addAtom( a.clone() );
+
+        } );
+
+        return r;
+
     }
 
 };
@@ -3132,6 +3273,8 @@ NGL.Atom = function( residue, globalindex ){
         globalindex = NGL.nextGlobalAtomindex++;
     }
     this.globalindex = globalindex;
+
+    this.bonds = [];
 
 }
 
@@ -3252,6 +3395,34 @@ NGL.Atom.prototype = {
         this.residue = atom.residue;
 
         return this;
+
+    },
+
+    clone: function(){
+
+        var a = new NGL.Atom();
+
+        a.index = this.index;
+        a.atomno = this.atomno;
+        a.resname = this.resname;
+        a.x = this.x;
+        a.y = this.y;
+        a.z = this.z;
+        a.element = this.element;
+        a.chainname = this.chainname;
+        a.resno = this.resno;
+        a.serial = this.serial;
+        a.ss = this.ss;
+        a.vdw = this.vdw;
+        a.covalent = this.covalent;
+        a.hetero = this.hetero;
+        a.bfactor = this.bfactor;
+        // a.bonds = this.bonds;  // cloned in structure.clone()
+        a.altloc = this.altloc;
+        a.atomname = this.atomname;
+        a.modelindex = this.modelindex;
+
+        return a;
 
     }
 
@@ -3665,6 +3836,31 @@ NGL.AtomArray.prototype = {
         }
         return atomname;
 
+    },
+
+    clone: function(){
+
+        var aa = new NGL.AtomArray( this.length );
+
+        aa.atomno.set( this.atomno );
+        aa.resname.set( this.resname );
+        aa.x.set( this.x );
+        aa.y.set( this.y );
+        aa.z.set( this.z );
+        aa.element.set( this.element );
+        aa.chainname.set( this.chainname );
+        aa.resno.set( this.resno );
+        aa.serial.set( this.serial );
+        aa.ss.set( this.ss );
+        aa.vdw.set( this.vdw );
+        aa.covalent.set( this.covalent );
+        aa.hetero.set( this.hetero );
+        aa.bfactor.set( this.bfactor );
+        aa.altloc.set( this.altloc );
+        aa.atomname.set( this.atomname );
+
+        return aa;
+
     }
 
 };
@@ -3848,7 +4044,21 @@ NGL.ProxyAtom.prototype = {
 
     positionToArray: NGL.Atom.prototype.positionToArray,
 
-    copy: NGL.Atom.prototype.copy
+    copy: NGL.Atom.prototype.copy,
+
+    clone: function(){
+
+        var a = new NGL.ProxyAtom();
+
+        a.atomArray = this.atomArray;
+        a.index = this.index;
+
+        // FIXME
+        a.modelindex = this.modelindex;
+
+        return a;
+
+    }
 
 }
 

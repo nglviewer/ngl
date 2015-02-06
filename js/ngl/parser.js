@@ -416,7 +416,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 var a = new NGL.Atom();
                 a.index = idx;
-                a.bonds = [];
 
                 a.resname = resname;
                 a.x = x;
@@ -843,7 +842,6 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
                 var a = new NGL.Atom();
                 a.index = idx;
-                a.bonds = [];
 
                 a.resname = resname;
                 a.x = x;
@@ -1220,7 +1218,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var a = new NGL.Atom();
                         a.index = idx;
-                        a.bonds = [];
 
                         a.resname = resname;
                         a.x = x;

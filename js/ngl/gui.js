@@ -1185,6 +1185,22 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     } );
 
+    // duplicate structure
+
+    var duplicateButton = new UI.Button( "duplicate" ).onClick( function(){
+
+        stage.addComponent(
+            new NGL.StructureComponent(
+                stage,
+                component.structure.clone(),
+                {}
+            )
+        );
+
+        componentPanel.setMenuDisplay( "none" );
+
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1195,6 +1211,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
+        .addMenuEntry( "Structure", duplicateButton )
         .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
