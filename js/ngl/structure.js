@@ -2270,6 +2270,16 @@ NGL.Structure.prototype = {
         s.center = this.center.clone();
         s.boundingBox = this.boundingBox.clone();
 
+        // clone atomArray
+
+        if( this.atomArray ){
+
+            s.atomArray = this.atomArray.clone();
+
+        }
+
+        // clone entities
+
         this.eachModel( function( m ){
 
             s.addModel( m.clone( s ) );
@@ -2282,32 +2292,18 @@ NGL.Structure.prototype = {
 
         } );
 
-        // clone atomArray
-
-        if( this.atomArray ){
-
-            s.atomArray = this.atomArray.clone();
-
-            s.eachAtom( function( a ){
-
-                a.atomArray = s.atomArray;
-
-            } );
-
-        }
-
         // clone trajectory
 
         if( this.frames ){
 
-            // TODO clone
+            // FIXME clone
             s.frames = this.frames;
 
         }
 
         if( this.boxes ){
 
-            // TODO clone
+            // TODO clone?
             s.boxes = this.boxes;
 
         }
@@ -2327,7 +2323,7 @@ NGL.Structure.prototype = {
 
         console.timeEnd( "NGL.Structure.clone" );
 
-        // console.log( s );
+        console.log( s );
 
         return s;
 
@@ -3252,7 +3248,7 @@ NGL.Residue.prototype = {
 
         this.eachAtom( function( a ){
 
-            r.addAtom( a.clone() );
+            r.addAtom( a.clone( r ) );
 
         } );
 
@@ -3398,9 +3394,9 @@ NGL.Atom.prototype = {
 
     },
 
-    clone: function(){
+    clone: function( r ){
 
-        var a = new NGL.Atom();
+        var a = new NGL.Atom( r );
 
         a.index = this.index;
         a.atomno = this.atomno;
@@ -4046,11 +4042,12 @@ NGL.ProxyAtom.prototype = {
 
     copy: NGL.Atom.prototype.copy,
 
-    clone: function(){
+    clone: function( r ){
 
-        var a = new NGL.ProxyAtom();
+        var atomArray = r.chain.model.structure.atomArray;
 
-        a.atomArray = this.atomArray;
+        var a = new NGL.ProxyAtom( atomArray );
+
         a.index = this.index;
 
         // FIXME
