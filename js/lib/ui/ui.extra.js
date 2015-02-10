@@ -195,14 +195,16 @@ UI.DisposeIcon = function(){
         }else{
 
             scope.setColor( "rgb(178, 34, 34)" );
+            scope.dom.classList.add( "deleteInfo" );
             flag = true;
 
             setTimeout( function(){
 
                 scope.setColor( "#888" );
+                scope.dom.classList.remove( "deleteInfo" );
                 flag = false;
 
-            }, 1000);
+            }, 1500);
 
         }
 
