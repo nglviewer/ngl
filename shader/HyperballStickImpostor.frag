@@ -25,8 +25,10 @@ varying vec4 prime1;
 varying vec4 prime2;
 
 uniform float opacity;
+uniform float nearClip;
 
 uniform float shrink;
+uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 
@@ -178,6 +180,11 @@ void main()
     // Intersection between ray and surface for each pixel
     vec3 M;
     M = isect_surf(ray, mat);
+
+    // custom clipping plane
+    // FIXME optimize, don't calculate values more than once
+    if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+        discard;
 
     // Recalculate the depth in function of the new pixel position
     gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;

@@ -93,9 +93,10 @@ void main(void)
 
     bool flag = Impostor( cameraPos, cameraNormal );
 
-    if( dot( cameraSpherePos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+    if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
         discard;
 
+    // FIXME not compatible with custom clipping plane
     //Set the depth based on the new cameraPos.
     gl_FragDepthEXT = calcDepth( cameraPos );
     if( !flag ){

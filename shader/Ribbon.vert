@@ -20,10 +20,12 @@ void main(void){
         vPickingColor = pickingColor;
     #else
         color = inputColor;
-        vNormal = normalize( normalMatrix * normal * -1.0 );;
+        vNormal = normalize( normalMatrix * normal * -1.0 );
     #endif
 
-    cameraPos = modelViewMatrix * vec4( position + ( normalize(inputDir)*inputSize ), 1.0 );
+    cameraPos = modelViewMatrix * vec4(
+        position + ( normalize( inputDir ) * inputSize ), 1.0
+    );
 
     gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );
 

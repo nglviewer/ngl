@@ -1348,6 +1348,7 @@ NGL.LineBuffer = function( from, to, color, color2, lineWidth, transparent, opac
         NGL.UniformsLib[ "fog" ],
         {
             "opacity": { type: "f", value: this.opacity },
+            "nearClip": { type: "f", value: 0.0 },
         }
     ]);
 

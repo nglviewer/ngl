@@ -23,6 +23,6 @@ void main()
 
     cameraPos =  modelViewMatrix * vec4( position, 1.0 );
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );
 
 }
