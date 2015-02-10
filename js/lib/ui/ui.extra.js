@@ -561,6 +561,14 @@ UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
 }
 
+UI.PopupMenu.prototype.setIconTitle = function( value ){
+
+    this.icon.setTitle( value );
+
+    return this;
+
+}
+
 UI.PopupMenu.prototype.dispose = function(){
 
     this.panel.dispose();
