@@ -1447,14 +1447,16 @@ UI.DisposeIcon = function(){
         }else{
 
             scope.setColor( "rgb(178, 34, 34)" );
+            scope.dom.classList.add( "deleteInfo" );
             flag = true;
 
             setTimeout( function(){
 
                 scope.setColor( "#888" );
+                scope.dom.classList.remove( "deleteInfo" );
                 flag = false;
 
-            }, 1000);
+            }, 1500);
 
         }
 
@@ -2581,7 +2583,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    container.add( statsPanel );
+    // container.add( statsPanel );
 
     return container;
 
@@ -3621,6 +3623,22 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     } );
 
+    // duplicate structure
+
+    var duplicateButton = new UI.Button( "duplicate" ).onClick( function(){
+
+        stage.addComponent(
+            new NGL.StructureComponent(
+                stage,
+                component.structure.clone(),
+                {}
+            )
+        );
+
+        componentPanel.setMenuDisplay( "none" );
+
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -3631,6 +3649,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
+        .addMenuEntry( "Structure", duplicateButton )
         .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
