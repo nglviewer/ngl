@@ -145,7 +145,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    container.add( statsPanel );
+    // container.add( statsPanel );
 
     return container;
 
