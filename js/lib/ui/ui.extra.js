@@ -195,14 +195,16 @@ UI.DisposeIcon = function(){
         }else{
 
             scope.setColor( "rgb(178, 34, 34)" );
+            scope.dom.classList.add( "deleteInfo" );
             flag = true;
 
             setTimeout( function(){
 
                 scope.setColor( "#888" );
+                scope.dom.classList.remove( "deleteInfo" );
                 flag = false;
 
-            }, 1000);
+            }, 1500);
 
         }
 
@@ -554,6 +556,14 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     this.panel.setDisplay( value );
+
+    return this;
+
+}
+
+UI.PopupMenu.prototype.setIconTitle = function( value ){
+
+    this.icon.setTitle( value );
 
     return this;
 

@@ -145,7 +145,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    container.add( statsPanel );
+    // container.add( statsPanel );
 
     return container;
 
@@ -847,6 +847,7 @@ NGL.SidebarWidget = function( stage ){
     // actions
 
     var expandAll = new UI.Icon( "plus-square" )
+        .setTitle( "expand all" )
         .onClick( function(){
 
             widgetList.forEach( function( widget ){
@@ -856,6 +857,7 @@ NGL.SidebarWidget = function( stage ){
         } );
 
     var collapseAll = new UI.Icon( "minus-square" )
+        .setTitle( "collapse all" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -866,6 +868,7 @@ NGL.SidebarWidget = function( stage ){
         } );
 
     var centerAll = new UI.Icon( "bullseye" )
+        .setTitle( "center all" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -874,6 +877,7 @@ NGL.SidebarWidget = function( stage ){
         } );
 
     var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
+        .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
 
     // clipping
@@ -954,7 +958,8 @@ NGL.SidebarWidget = function( stage ){
 NGL.ComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "file" )
+        .setTitle( "expand/collapse" );
 
     signals.requestGuiVisibility.add( function( value ){
 
@@ -1022,7 +1027,8 @@ NGL.ComponentWidget = function( component, stage ){
 NGL.StructureComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "file" )
+        .setTitle( "expand/collapse" );
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
@@ -1232,7 +1238,8 @@ NGL.StructureComponentWidget = function( component, stage ){
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "file" )
+        .setTitle( "expand/collapse" );
 
     var reprContainer = new UI.Panel();
 
@@ -1285,7 +1292,8 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 NGL.ScriptComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "file" )
+        .setTitle( "expand/collapse" );
 
     var panel = new UI.Panel().setMarginLeft( "20px" );
 
@@ -1359,6 +1367,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     var signals = component.signals;
 
     var container = new UI.CollapsibleIconPanel( "bookmark" )
+        .setTitle( "expand/collapse" )
         .setMarginLeft( "20px" );
 
     signals.visibilityChanged.add( function( value ){
@@ -1534,6 +1543,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var traj = component.trajectory;
 
     var container = new UI.CollapsibleIconPanel( "database" )
+        .setTitle( "expand/collapse" )
         .setMarginLeft( "20px" );
 
     var reprContainer = new UI.Panel();

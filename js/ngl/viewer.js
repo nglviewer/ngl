@@ -949,11 +949,11 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new NGL.WebGLRenderer({
+        this.renderer = new THREE.WebGLRenderer( {
             preserveDrawingBuffer: true,
             alpha: true,
             antialias: true
-        });
+        } );
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = false;
@@ -985,6 +985,26 @@ NGL.Viewer.prototype = {
         if( this.eid ){
             this.container.appendChild( this.renderer.domElement );
         }
+
+        //
+
+        var scope = this;
+
+        var originalSetProgram = this.renderer.setProgram;
+
+        this.renderer.setProgram = function( camera, lights, fog, material, object ){
+
+            var program = originalSetProgram(
+                camera, lights, fog, material, object
+            );
+
+            scope.updateObjectUniforms( object, material, camera );
+
+            scope.renderer.loadUniformsGeneric( material.uniformsList );
+
+            return program;
+
+        };
 
     },
 
@@ -1067,7 +1087,7 @@ NGL.Viewer.prototype = {
 
     add: function( buffer, matrixList, background ){
 
-        console.time( "Viewer.add" );
+        // console.time( "Viewer.add" );
 
         var group, pickingGroup;
 
@@ -1127,7 +1147,7 @@ NGL.Viewer.prototype = {
         // a render somehow slows chrome drastically down.
         // this.requestRender();
 
-        console.timeEnd( "Viewer.add" );
+        // console.timeEnd( "Viewer.add" );
 
     },
 
@@ -1480,6 +1500,7 @@ NGL.Viewer.prototype = {
             1,
             cDist + ( bRadius * farFactor )
         );
+        this.nearClip = nearClip;
 
         // fog
 
@@ -1502,8 +1523,7 @@ NGL.Viewer.prototype = {
         this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        // this.updateDynamicUniforms( this.scene, nearClip );
-
+        this.updateMaterialUniforms( this.scene, this.camera );
         this.sortProjectedPosition( this.scene, this.camera );
 
         // render
@@ -1545,18 +1565,23 @@ NGL.Viewer.prototype = {
 
     },
 
-    updateDynamicUniforms: function(){
+    updateMaterialUniforms: function(){
 
-        var u;
-        var matrix = new THREE.Matrix4();
-        var bgColor = new THREE.Color();
+        var projectionMatrixInverse = new THREE.Matrix4();
+        var projectionMatrixTranspose = new THREE.Matrix4();
 
-        return function( group, nearClip ){
+        return function( group, camera ){
 
-            var camera = this.camera;
-            var params = this.params;
+            var bgColor = this.params.backgroundColor;
+            var nearClip = this.nearClip;
 
-            bgColor.set( params.backgroundColor );
+            projectionMatrixInverse.getInverse(
+                camera.projectionMatrix
+            );
+
+            projectionMatrixTranspose.copy(
+                camera.projectionMatrix
+            ).transpose();
 
             group.traverse( function ( o ){
 
@@ -1566,78 +1591,85 @@ NGL.Viewer.prototype = {
                 if( !u ) return;
 
                 if( u.backgroundColor ){
-                    u.backgroundColor.value = bgColor;
+                    u.backgroundColor.value.set( bgColor );
                 }
 
                 if( u.nearClip ){
                     u.nearClip.value = nearClip;
                 }
 
-                if( u.modelViewMatrixInverse ){
-                    matrix.multiplyMatrices(
-                        camera.matrixWorldInverse, o.matrixWorld
-                    );
-                    u.modelViewMatrixInverse.value.getInverse( matrix );
-                }
-
-                if( u.modelViewMatrixInverseTranspose ){
-                    if( u.modelViewMatrixInverse ){
-                        u.modelViewMatrixInverseTranspose.value.copy(
-                            u.modelViewMatrixInverse.value
-                        ).transpose();
-                    }else{
-                        matrix.multiplyMatrices(
-                            camera.matrixWorldInverse, o.matrixWorld
-                        );
-                        u.modelViewMatrixInverseTranspose.value
-                            .getInverse( matrix )
-                            .transpose();
-                    }
-                }
-
                 if( u.projectionMatrixInverse ){
-                    u.projectionMatrixInverse.value.getInverse(
-                        camera.projectionMatrix
+                    u.projectionMatrixInverse.value.copy(
+                        projectionMatrixInverse
                     );
                 }
 
                 if( u.projectionMatrixTranspose ){
                     u.projectionMatrixTranspose.value.copy(
-                        camera.projectionMatrix
-                    ).transpose();
-                }
-
-                if( u.modelViewProjectionMatrix ){
-                    matrix.multiplyMatrices(
-                        camera.matrixWorldInverse, o.matrixWorld
+                        projectionMatrixTranspose
                     );
-                    u.modelViewProjectionMatrix.value.multiplyMatrices(
-                        camera.projectionMatrix, matrix
-                    )
-                }
-
-                if( u.modelViewProjectionMatrixInverse ){
-                    if( u.modelViewProjectionMatrix ){
-                        u.modelViewProjectionMatrixInverse.value.copy(
-                            u.modelViewProjectionMatrix.value
-                        );
-                        u.modelViewProjectionMatrixInverse.value.getInverse(
-                            u.modelViewProjectionMatrixInverse.value
-                        );
-                    }else{
-                        matrix.multiplyMatrices(
-                            camera.matrixWorldInverse, o.matrixWorld
-                        );
-                        u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
-                            camera.projectionMatrix, matrix
-                        )
-                        u.modelViewProjectionMatrixInverse.value.getInverse(
-                            u.modelViewProjectionMatrixInverse.value
-                        );
-                    }
                 }
 
             } );
+
+        }
+
+    }(),
+
+    updateObjectUniforms: function(){
+
+        var matrix = new THREE.Matrix4();
+
+        return function( object, material, camera ){
+
+            var o = object;
+
+            if( !o.material ) return;
+
+            var u = o.material.uniforms;
+            if( !u ) return;
+
+            if( u.modelViewMatrixInverse ){
+                u.modelViewMatrixInverse.value.getInverse(
+                    o._modelViewMatrix
+                );
+            }
+
+            if( u.modelViewMatrixInverseTranspose ){
+                if( u.modelViewMatrixInverse ){
+                    u.modelViewMatrixInverseTranspose.value.copy(
+                        u.modelViewMatrixInverse.value
+                    ).transpose();
+                }else{
+                    u.modelViewMatrixInverseTranspose.value
+                        .getInverse( o._modelViewMatrix )
+                        .transpose();
+                }
+            }
+
+            if( u.modelViewProjectionMatrix ){
+                u.modelViewProjectionMatrix.value.multiplyMatrices(
+                    camera.projectionMatrix, o._modelViewMatrix
+                );
+            }
+
+            if( u.modelViewProjectionMatrixInverse ){
+                if( u.modelViewProjectionMatrix ){
+                    matrix.copy(
+                        u.modelViewProjectionMatrix.value
+                    );
+                    u.modelViewProjectionMatrixInverse.value.getInverse(
+                        matrix
+                    );
+                }else{
+                    matrix.multiplyMatrices(
+                        camera.projectionMatrix, o._modelViewMatrix
+                    );
+                    u.modelViewProjectionMatrixInverse.value.getInverse(
+                        matrix
+                    );
+                }
+            }
 
         }
 
@@ -1818,117 +1850,6 @@ NGL.Viewer.prototype = {
 
 /////////////
 // Renderer
-
-NGL.WebGLRenderer = function(){
-
-    var _this = this;
-
-    THREE.WebGLRenderer.apply( this, arguments );
-
-    var matrix = new THREE.Matrix4();
-    var bgColor = new THREE.Color();
-
-    function updateUniforms( o, camera ){
-
-        // console.log( o )
-        // console.log( o.material )
-        // console.log( o.material.uniforms )
-
-        if( !o.material ) return;
-
-        var u = o.material.uniforms;
-        if( !u ) return;
-
-        if( u.backgroundColor ){
-            u.backgroundColor.value = bgColor;
-        }
-
-        // if( u.nearClip ){
-        //     u.nearClip.value = nearClip;
-        // }
-
-        if( u.modelViewMatrixInverse ){
-            matrix.multiplyMatrices(
-                camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewMatrixInverse.value.getInverse( matrix );
-        }
-
-        if( u.modelViewMatrixInverseTranspose ){
-            if( u.modelViewMatrixInverse ){
-                u.modelViewMatrixInverseTranspose.value.copy(
-                    u.modelViewMatrixInverse.value
-                ).transpose();
-            }else{
-                matrix.multiplyMatrices(
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
-                u.modelViewMatrixInverseTranspose.value
-                    .getInverse( matrix )
-                    .transpose();
-            }
-        }
-
-        if( u.projectionMatrixInverse ){
-            u.projectionMatrixInverse.value.getInverse(
-                camera.projectionMatrix
-            );
-        }
-
-        if( u.projectionMatrixTranspose ){
-            u.projectionMatrixTranspose.value.copy(
-                camera.projectionMatrix
-            ).transpose();
-        }
-
-        if( u.modelViewProjectionMatrix ){
-            matrix.multiplyMatrices(
-                camera.matrixWorldInverse, o.matrixWorld
-            );
-            u.modelViewProjectionMatrix.value.multiplyMatrices(
-                camera.projectionMatrix, matrix
-            )
-        }
-
-        if( u.modelViewProjectionMatrixInverse ){
-            if( u.modelViewProjectionMatrix ){
-                u.modelViewProjectionMatrixInverse.value.copy(
-                    u.modelViewProjectionMatrix.value
-                );
-                u.modelViewProjectionMatrixInverse.value.getInverse(
-                    u.modelViewProjectionMatrixInverse.value
-                );
-            }else{
-                matrix.multiplyMatrices(
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
-                u.modelViewProjectionMatrixInverse.value.multiplyMatrices(
-                    camera.projectionMatrix, matrix
-                )
-                u.modelViewProjectionMatrixInverse.value.getInverse(
-                    u.modelViewProjectionMatrixInverse.value
-                );
-            }
-        }
-
-    }
-
-    var setProgram = this.setProgram;
-
-    this.setProgram = function( camera, lights, fog, material, object ){
-
-        var program = setProgram( camera, lights, fog, material, object );
-
-        updateUniforms( object, camera );
-
-        _this.loadUniformsGeneric( material.uniformsList );
-
-        return program;
-
-    };
-
-};
-
 
 NGL.TiledRenderer = function( renderer, camera, viewer, params ){
 

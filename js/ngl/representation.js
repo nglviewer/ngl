@@ -1831,7 +1831,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                     scope.wireframe,
                     scope.transparent,
                     parseInt( scope.side ),
-                    opacity
+                    opacity,
+                    scope.nearClip
                 )
 
             );
@@ -3044,7 +3045,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                     scope.wireframe,
                     scope.transparent,
                     parseInt( scope.side ),
-                    opacity
+                    opacity,
+                    scope.nearClip
                 )
 
             );

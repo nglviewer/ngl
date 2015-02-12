@@ -76,6 +76,14 @@ input[type=range]:focus:after {
     cursor: default;
 }
 
+.deleteInfo:after {
+    position: absolute;
+    transform: translate(-50%,-250% );
+    content: "click again to delete";
+    font-size: 10px;
+    display: block;
+}
+
 .Panel {
 
     -moz-user-select: none;
