@@ -1587,7 +1587,7 @@ NGL.Viewer.prototype = {
 
                 if( !o.material ) return;
 
-                u = o.material.uniforms;
+                var u = o.material.uniforms;
                 if( !u ) return;
 
                 if( u.backgroundColor ){
