@@ -473,8 +473,9 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
-    function uiPlayButton( label, traj, step, timeout, start, end ){
+    function uiPlayButton( label, trajComp, step, timeout, start, end ){
 
+        var traj = trajComp.trajectory;
         label = U( label );
 
         var player = new NGL.TrajectoryPlayer( traj, step, timeout, start, end );
