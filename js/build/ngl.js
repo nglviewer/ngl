@@ -8141,10 +8141,24 @@ NGL.TrajectoryPlayer.prototype = {
                 this.traj.setPlayer( this );
             }
 
-            // snap to grid implied by this.step thus minimizing cache misses
-            this.traj.setFrame(
-                Math.ceil( this.traj.currentFrame / this.step ) * this.step
-            );
+            var frame = this.traj.currentFrame;
+
+            // snap to the grid implied by this.step division and multiplication
+            // thus minimizing cache misses
+            var i = Math.ceil( frame / this.step ) * this.step
+
+            // wrap when restarting from the limit (i.e. end or start)
+            if( this.direction === "forward" && frame >= this.end ){
+
+                i = this.start;
+
+            }else if( this.direction === "backward" && frame <= this.start ){
+
+                i = this.end;
+
+            }
+
+            this.traj.setFrame( i );
 
             this._stopFlag = false;
             this._animate();
@@ -8676,8 +8690,9 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
     }
 
 
-    function uiPlayButton( label, traj, step, timeout, start, end ){
+    function uiPlayButton( label, trajComp, step, timeout, start, end ){
 
+        var traj = trajComp.trajectory;
         label = U( label );
 
         var player = new NGL.TrajectoryPlayer( traj, step, timeout, start, end );
