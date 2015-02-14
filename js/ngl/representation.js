@@ -625,7 +625,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort !== undefined ? p.sort : true;
+        this.sort = p.sort !== undefined ? p.sort : false;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 

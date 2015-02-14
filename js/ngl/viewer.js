@@ -1709,76 +1709,86 @@ NGL.Viewer.prototype = {
         var matrix = new THREE.Matrix4();
         var modelViewProjectionMatrix = new THREE.Matrix4();
 
-        var i, j, n, attributes, sortArray;
-
         return function( scene, camera ){
 
             // console.time( "sort" );
 
             scene.traverseVisible( function ( o ){
 
-                if( o instanceof THREE.PointCloud && o.sortParticles ){
+                if( ! ( o instanceof THREE.PointCloud ) || ! o.sortParticles ){
 
-                    matrix.multiplyMatrices(
-                        camera.matrixWorldInverse, o.matrixWorld
-                    );
-                    modelViewProjectionMatrix.multiplyMatrices(
-                        camera.projectionMatrix, matrix
-                    )
-                    attributes = o.geometry.attributes;
-                    n = attributes.position.length / 3;
-                    sortArray = [];
+                    return;
 
-                    for( i = 0; i < n; ++i ){
+                }
 
-                        vertex.fromArray( attributes.position.array, i * 3 );
-                        vertex.applyProjection( modelViewProjectionMatrix );
+                matrix.multiplyMatrices(
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                modelViewProjectionMatrix.multiplyMatrices(
+                    camera.projectionMatrix, matrix
+                )
 
-                        sortArray[ i ] = [ vertex.z, i ];
+                var attributes = o.geometry.attributes;
+                var n = attributes.position.length / 3;
 
+                if( !o.userData.sortData ){
+                    o.userData.sortData = {};
+                }
+
+                var sortData = o.userData.sortData;
+
+                if( !sortData.__sortArray ){
+                    sortData.__sortArray = new Float32Array( n * 2 );
+                }
+
+                var sortArray = sortData.__sortArray;
+
+                for( var i = 0; i < n; ++i ){
+
+                    var i2 = 2 * i;
+
+                    vertex.fromArray( attributes.position.array, i * 3 );
+                    vertex.applyProjection( modelViewProjectionMatrix );
+
+                    // negate, so that sorting order is reversed
+                    sortArray[ i2 ] = -vertex.z;
+                    sortArray[ i2 + 1 ] = i;
+
+                }
+
+                THREE.TypedArrayUtils.quicksortIP( sortArray, 2, 0 );
+
+                var index, indexSrc, indexDst, tmpTab;
+
+                for( var name in attributes ){
+
+                    var attr = attributes[ name ];
+                    var array = attr.array;
+                    var itemSize = attr.itemSize;
+
+                    if( !sortData[ name ] ){
+                        sortData[ name ] = new Float32Array(
+                            itemSize * n
+                        );
                     }
 
-                    sortArray.sort( function( a, b ){
-                        return b[ 0 ] - a[ 0 ];
-                    } );
+                    tmpTab = sortData[ name ];
+                    sortData[ name ] = array;
 
-                    if( !o.userData.sortData ){
-                        o.userData.sortData = {};
-                    }
+                    for( var i = 0; i < n; ++i ){
 
-                    var index, indexSrc, indexDst, tmpTab;
+                        index = sortArray[ i * 2 + 1 ];
 
-                    for( var val in attributes ){
-
-                        if( !o.userData.sortData[ val ] ){
-                            o.userData.sortData[ val ] = new Float32Array(
-                                attributes[ val ].itemSize * n
-                            );
+                        for( var j = 0; j < itemSize; ++j ){
+                            indexSrc = index * itemSize + j;
+                            indexDst = i * itemSize + j;
+                            tmpTab[ indexDst ] = array[ indexSrc ];
                         }
 
-                        tmpTab = o.userData.sortData[ val ];
-                        o.userData.sortData[ val ] = attributes[ val ].array;
-
-                        // tmpTab = new Float32Array(
-                        //     attributes[ val ].itemSize * n
-                        // )
-
-                        for( i = 0; i < n; ++i ){
-
-                            index = sortArray[ i ][ 1 ];
-
-                            for( j = 0; j < attributes[ val ].itemSize; ++j ){
-                                indexSrc = index * attributes[ val ].itemSize + j;
-                                indexDst = i * attributes[ val ].itemSize + j;
-                                tmpTab[ indexDst ] = attributes[ val ].array[indexSrc];
-                            }
-
-                        }
-
-                        attributes[ val ].array = tmpTab;
-                        attributes[ val ].needsUpdate = true;
-
                     }
+
+                    attributes[ name ].array = tmpTab;
+                    attributes[ name ].needsUpdate = true;
 
                 }
 
