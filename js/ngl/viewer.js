@@ -1005,13 +1005,19 @@ NGL.Viewer.prototype = {
             console.error( "OES_texture_float not supported" );
         }
 
+        if( !gl.getExtension( "WEBGL_color_buffer_float" ) ){
+            console.error( "WEBGL_color_buffer_float not supported" );
+        }
+
         this.pickingTexture = new THREE.WebGLRenderTarget(
             this.width * window.devicePixelRatio,
             this.height * window.devicePixelRatio,
             {
-                "minFilter": THREE.NearestFilter,
-                "format": THREE.RGBAFormat,
-                "type": THREE.UnsignedByteType
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                stencilBuffer: false,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType
             }
         );
         this.pickingTexture.generateMipmaps = false;
@@ -1474,6 +1480,66 @@ NGL.Viewer.prototype = {
         NGL.screenshot( this, params );
 
     },
+
+    pick: function(){
+
+        var pixelBuffer = new Float32Array( 4 );
+
+        return function( x, y ){
+
+            this.render( null, true );
+
+            var gl = this.renderer.context;
+
+            this.renderer.setRenderTarget( this.pickingTexture );
+
+            gl.readPixels(
+                x * window.devicePixelRatio,
+                y * window.devicePixelRatio,
+                1,
+                1,
+                gl.RGBA,
+                gl.FLOAT,
+                pixelBuffer
+            );
+
+            this.renderer.setRenderTarget();
+
+            var rgba = Array.apply( [], pixelBuffer );
+
+            // TODO simplify ...
+            var id =
+                ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
+                ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
+                ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+
+            if( NGL.debug ){
+
+                console.log( pixelBuffer );
+
+                console.log(
+                    "picked color",
+                    [
+                        ( rgba[0] ).toPrecision(2),
+                        ( rgba[1] ).toPrecision(2),
+                        ( rgba[2] ).toPrecision(2),
+                        ( rgba[3] ).toPrecision(2)
+                    ]
+                );
+                console.log( "picked id", id );
+                console.log( "picked position", x, y );
+                console.log( "devicePixelRatio", window.devicePixelRatio );
+
+            }
+
+            return {
+                "id": id,
+                // "instance": instance
+            };
+
+        };
+
+    }(),
 
     requestRender: function(){
 

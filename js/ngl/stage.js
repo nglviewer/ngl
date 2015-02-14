@@ -272,9 +272,6 @@ NGL.Stage.prototype = {
 
 NGL.PickingControls = function( viewer, stage ){
 
-    var pickingTexture = viewer.pickingTexture;
-    var pixelBuffer = new Uint8Array( 4 );
-
     var mouse = {
 
         position: new THREE.Vector2(),
@@ -315,28 +312,16 @@ NGL.PickingControls = function( viewer, stage ){
 
         if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
 
-        viewer.render( null, true );
-
         var box = viewer.renderer.domElement.getBoundingClientRect();
 
         var offsetX = e.clientX - box.left;
         var offsetY = e.clientY - box.top;
 
-        viewer.renderer.readRenderTargetPixels(
-            pickingTexture,
-            offsetX * window.devicePixelRatio,
-            (box.height - offsetY) * window.devicePixelRatio,
-            1,
-            1,
-            pixelBuffer
+        var pickingData = viewer.pick(
+            offsetX,
+            box.height - offsetY
         );
-
-        var rgba = Array.apply( [], pixelBuffer );
-
-        var id =
-            ( pixelBuffer[0] << 16 ) |
-            ( pixelBuffer[1] << 8 ) |
-            ( pixelBuffer[2] );
+        var id = pickingData.id;
 
         // TODO early exit, binary search
         var pickedAtom = undefined;
@@ -352,33 +337,13 @@ NGL.PickingControls = function( viewer, stage ){
 
         }, NGL.StructureComponent );
 
-        stage.signals.atomPicked.dispatch( pickedAtom );
-
-        if( NGL.debug ){
-
-            console.log(
-                "picked color",
-                [
-                    ( rgba[0]/255 ).toPrecision(2),
-                    ( rgba[1]/255 ).toPrecision(2),
-                    ( rgba[2]/255 ).toPrecision(2),
-                    ( rgba[3]/255 ).toPrecision(2)
-                ]
-            );
-            console.log( "picked id", id );
-            console.log(
-                "picked position",
-                offsetX, box.height - offsetY
-            );
-            console.log( "devicePixelRatio", window.devicePixelRatio );
-
-        }
-
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
             viewer.centerView( pickedAtom );
 
         }
+
+        stage.signals.atomPicked.dispatch( pickedAtom );
 
     } );
 
