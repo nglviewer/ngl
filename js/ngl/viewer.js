@@ -959,27 +959,20 @@ NGL.Viewer.prototype = {
         this.renderer.autoClear = false;
         this.renderer.sortObjects = true;
 
-        var _glExtensionFragDepth = this.renderer.context.getExtension(
-            'EXT_frag_depth'
-        );
-        if( !_glExtensionFragDepth ){
-            console.info( "EXT_frag_depth not available" );
-        }
-        NGL.extensionFragDepth = _glExtensionFragDepth;
+        var gl = this.renderer.context;
 
-        var _glStandardDerivatives = this.renderer.context.getExtension(
-            'OES_standard_derivatives'
-        );
-        if( !_glStandardDerivatives ){
-            console.error( "OES_standard_derivatives not available" );
+        NGL.extensionFragDepth = gl.getExtension( 'EXT_frag_depth' );
+        if( !NGL.extensionFragDepth ){
+            console.info( "EXT_frag_depth not supported" );
         }
 
-        var _glElementIndexUint = this.renderer.context.getExtension(
-            'OES_element_index_uint'
-        );
-        if( !_glElementIndexUint ){
+        if( !this.renderer.supportsStandardDerivatives() ){
+            console.error( "OES_standard_derivatives not supported" );
+        }
+
+        if( !gl.getExtension( 'OES_element_index_uint' ) ){
             NGL.indexUint16 = true;
-            console.info( "OES_element_index_uint not available" );
+            console.info( "OES_element_index_uint not supported" );
         }
 
         if( this.eid ){
@@ -1005,6 +998,23 @@ NGL.Viewer.prototype = {
             return program;
 
         };
+
+        // picking texture
+
+        if( !this.renderer.supportsFloatTextures() ){
+            console.error( "OES_texture_float not supported" );
+        }
+
+        this.pickingTexture = new THREE.WebGLRenderTarget(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio,
+            {
+                "minFilter": THREE.NearestFilter,
+                "format": THREE.RGBAFormat,
+                "type": THREE.UnsignedByteType
+            }
+        );
+        this.pickingTexture.generateMipmaps = false;
 
     },
 
@@ -1383,22 +1393,31 @@ NGL.Viewer.prototype = {
 
     onWindowResize: function(){
 
-        this.renderer.setPixelRatio( window.devicePixelRatio );
+        if( this.container === document ){
 
-        if ( this.container === document ) {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
-        } else {
+
+        }else{
+
             var box = this.container.getBoundingClientRect();
             this.width = box.width;
             this.height = box.height;
+
         }
+
         this.aspect = this.width / this.height;
-
         this.perspectiveCamera.aspect = this.aspect;
-
         this.camera.updateProjectionMatrix();
+
+        this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
+
+        this.pickingTexture.setSize(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio
+        );
+
         this.controls.handleResize();
 
         this.requestRender();
@@ -1528,16 +1547,23 @@ NGL.Viewer.prototype = {
 
         // render
 
-        this.renderer.clear();
-
         this.updateInfo( true );
 
         if( picking ){
 
-            this.renderer.render( this.pickingGroup, this.camera );
+            this.renderer.clearTarget( this.pickingTexture );
+
+            this.renderer.render(
+                this.pickingGroup, this.camera, this.pickingTexture
+            );
             this.updateInfo();
 
+            // FIXME required, maybe a three.js bug
+            this.renderer.setRenderTarget();
+
         }else{
+
+            this.renderer.clear();
 
             this.renderer.render( this.backgroundGroup, this.camera );
             this.renderer.clearDepth();

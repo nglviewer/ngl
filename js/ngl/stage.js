@@ -272,7 +272,7 @@ NGL.Stage.prototype = {
 
 NGL.PickingControls = function( viewer, stage ){
 
-    var gl = viewer.renderer.getContext();
+    var pickingTexture = viewer.pickingTexture;
     var pixelBuffer = new Uint8Array( 4 );
 
     var mouse = {
@@ -322,11 +322,13 @@ NGL.PickingControls = function( viewer, stage ){
         var offsetX = e.clientX - box.left;
         var offsetY = e.clientY - box.top;
 
-        gl.readPixels(
+        viewer.renderer.readRenderTargetPixels(
+            pickingTexture,
             offsetX * window.devicePixelRatio,
             (box.height - offsetY) * window.devicePixelRatio,
-            1, 1,
-            gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
+            1,
+            1,
+            pixelBuffer
         );
 
         var rgba = Array.apply( [], pixelBuffer );
@@ -369,10 +371,6 @@ NGL.PickingControls = function( viewer, stage ){
                 offsetX, box.height - offsetY
             );
             console.log( "devicePixelRatio", window.devicePixelRatio );
-
-        }else{
-
-            viewer.requestRender();
 
         }
 
