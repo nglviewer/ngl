@@ -1504,7 +1504,7 @@ NGL.Viewer.prototype = {
         requestAnimationFrame( this.animate.bind( this ) );
 
         this.controls.update();
-        this.stats.update();
+        // this.stats.update();
 
     },
 
