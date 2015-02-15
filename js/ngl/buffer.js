@@ -54,6 +54,11 @@ NGL.Buffer = function( position, color, pickingColor ){
         }
     ]);
 
+    this.pickingUniforms = {
+        "nearClip": { type: "f", value: 0.0 },
+        "objectId": { type: "f", value: 0.0 },
+    };
+
 };
 
 NGL.Buffer.prototype = {
@@ -93,20 +98,21 @@ NGL.Buffer.prototype = {
     getMaterial: function( type ){
 
         var material;
-        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
 
         if( type === "picking" ){
 
             material = new THREE.ShaderMaterial( {
-                uniforms: uniforms,
+
+                uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
                 attributes: this.attributes,
                 vertexShader: NGL.getShader( this.vertexShader ),
                 fragmentShader: NGL.getShader( this.fragmentShader ),
                 depthTest: true,
                 transparent: false,
                 depthWrite: true,
-                lights: true,
+                lights: false,
                 fog: false
+
             });
 
             material.side = this.side;
@@ -115,24 +121,30 @@ NGL.Buffer.prototype = {
         }else if( type === "wireframe" || this.wireframe ){
 
             material = new THREE.LineBasicMaterial({
-                uniforms: uniforms,
+
+                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
                 vertexColors: true,
+                lights: false,
                 fog: true
+
             });
 
         }else{
 
             material = new THREE.ShaderMaterial( {
-                uniforms: uniforms,
+
+                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
                 vertexShader: NGL.getShader( this.vertexShader ),
                 fragmentShader: NGL.getShader( this.fragmentShader ),
                 depthTest: true,
                 transparent: this.transparent,
                 depthWrite: true,
-                lights: true,
+                // lights: true,
+                lights: false,
                 fog: true
+
             });
 
             material.side = this.side;
@@ -1678,6 +1690,11 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, t
             "objectId": { type: "f", value: 0.0 },
         }
     ]);
+
+    this.pickingUniforms = {
+        "nearClip": { type: "f", value: 0.0 },
+        "objectId": { type: "f", value: 0.0 },
+    };
 
     this.geometry = new THREE.BufferGeometry();
 

@@ -452,6 +452,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     attach: function(){
 
+        console.time( "StructureRepresentation.attach" );
+
         var viewer = this.viewer;
         var structure = this.structure;
         var assembly = this.assembly;
@@ -500,6 +502,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         } );
 
         this.setVisibility( this.visible );
+
+        console.timeEnd( "StructureRepresentation.attach" );
 
     },
 
