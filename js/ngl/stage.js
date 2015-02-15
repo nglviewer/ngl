@@ -272,6 +272,8 @@ NGL.Stage.prototype = {
 
 NGL.PickingControls = function( viewer, stage ){
 
+    var v3 = new THREE.Vector3();
+
     var mouse = {
 
         position: new THREE.Vector2(),
@@ -322,6 +324,7 @@ NGL.PickingControls = function( viewer, stage ){
             box.height - offsetY
         );
         var id = pickingData.id;
+        var instance = pickingData.instance;
 
         // TODO early exit, binary search
         var pickedAtom = undefined;
@@ -339,7 +342,19 @@ NGL.PickingControls = function( viewer, stage ){
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
-            viewer.centerView( pickedAtom );
+            v3.copy( pickedAtom );
+
+            if( instance ){
+
+                // var structure = pickedAtom.residue.chain.model.structure;
+                // var biomol = structure.biomolDict[ instance.assembly ];
+                // var matrix = biomol.matrixDict[ instance.name ];
+
+                v3.applyProjection( instance.matrix );
+
+            }
+
+            viewer.centerView( v3 );
 
         }
 

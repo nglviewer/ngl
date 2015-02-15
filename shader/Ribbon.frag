@@ -5,6 +5,7 @@ uniform float nearClip;
 varying vec4 cameraPos;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
 #else
     varying vec3 color;
@@ -22,8 +23,8 @@ void main() {
         discard;
 
     #ifdef PICKING
-        gl_FragColor.xyz = vPickingColor;
-        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+        gl_FragColor = vec4( vPickingColor, objectId );
+        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
     #else
         vec3 transformedNormal = normalize( vNormal );
         #ifdef DOUBLE_SIDED
@@ -35,10 +36,10 @@ void main() {
         #include light
 
         gl_FragColor = vec4( color, opacity );
-        // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
-        gl_FragColor.xyz *= vLightFront;
-        // gl_FragColor.xyz = normalx;
-        //gl_FragColor.xyz = color;
+        // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
+        gl_FragColor.rgb *= vLightFront;
+        // gl_FragColor.rgb = normalx;
+        //gl_FragColor.rgb = color;
     #endif
 
     #include fog

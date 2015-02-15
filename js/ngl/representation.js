@@ -450,20 +450,31 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         // console.log( structure.biomolDict );
 
-        var matrixList = [];
+        var instanceList = [];
 
         if( structure.biomolDict && structure.biomolDict[ assembly ] ){
 
-            matrixList = Object.values(
-                structure.biomolDict[ assembly ].matrixDict
-            );
+            var matrixDict = structure.biomolDict[ assembly ].matrixDict;
+
+            Object.keys( matrixDict ).forEach( function( name, i ){
+
+                instanceList.push( {
+
+                    id: i + 1,
+                    name: name,
+                    assembly: assembly,
+                    matrix: matrixDict[ name ]
+
+                } );
+
+            } );
 
         }
 
         this.bufferList.forEach( function( buffer ){
 
-            if( matrixList.length >= 1 ){
-                viewer.add( buffer, matrixList );
+            if( instanceList.length >= 1 ){
+                viewer.add( buffer, instanceList );
             }else{
                 viewer.add( buffer );
             }
@@ -472,8 +483,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
-            if( matrixList.length > 1 ){
-                viewer.add( debugBuffer, matrixList );
+            if( instanceList.length > 1 ){
+                viewer.add( debugBuffer, instanceList );
             }else{
                 viewer.add( debugBuffer );
             }

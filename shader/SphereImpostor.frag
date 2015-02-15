@@ -15,6 +15,7 @@ varying vec4 cameraSpherePos;
 varying float sphereRadius;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
 #else
     varying vec3 vColor;
@@ -116,8 +117,8 @@ void main(void)
         discard;
 
     #ifdef PICKING
-        gl_FragColor = vec4( vPickingColor, 1.0 );
-        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+        gl_FragColor = vec4( vPickingColor, objectId );
+        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
     #else
         vec3 transformedNormal = cameraNormal;
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
@@ -125,11 +126,11 @@ void main(void)
         #include light
 
         gl_FragColor = vec4( vColor, opacity );
-        gl_FragColor.xyz *= vLightFront;
+        gl_FragColor.rgb *= vLightFront;
 
         // gl_FragColor.a = 0.5;
-        // gl_FragColor.xyz = transformedNormal;
-        // gl_FragColor.xyz = point;
+        // gl_FragColor.rgb = transformedNormal;
+        // gl_FragColor.rgb = point;
     #endif
 
     #include fog

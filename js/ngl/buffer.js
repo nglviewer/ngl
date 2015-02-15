@@ -50,6 +50,7 @@ NGL.Buffer = function( position, color, pickingColor ){
         {
             "opacity": { type: "f", value: this.opacity },
             "nearClip": { type: "f", value: 0.0 },
+            "objectId": { type: "f", value: 0.0 },
         }
     ]);
 
@@ -1673,7 +1674,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, t
         NGL.UniformsLib[ "lights" ],
         {
             "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0 },
+            "nearClip": { type: "f", value: 0.0 },
+            "objectId": { type: "f", value: 0.0 },
         }
     ]);
 

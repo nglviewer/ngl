@@ -33,6 +33,7 @@ uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
@@ -220,7 +221,7 @@ void main()
         }else{
             diffusecolor = vPickingColor2;
         }
-        gl_FragColor = vec4( diffusecolor, 1.0 );
+        gl_FragColor = vec4( diffusecolor, objectId );
     #else
         // lerp function not in GLSL. Find something else ...
         vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );
@@ -230,7 +231,7 @@ void main()
             diffusecolor = vColor2;
         }
         gl_FragColor = vec4( diffusecolor, opacity );
-        gl_FragColor.xyz *= vLightFront;
+        gl_FragColor.rgb *= vLightFront;
     #endif
 
     #include fog

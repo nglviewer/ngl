@@ -45,6 +45,7 @@ varying vec3 V;
 varying vec4 w;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
@@ -207,15 +208,15 @@ void main()
         // TODO compare without sqrt
         if( distance( new_point, end_cyl) < distance( new_point, base ) ){
             if( b < 0.0 ){
-                gl_FragColor = vec4( vPickingColor, 1.0 );
+                gl_FragColor = vec4( vPickingColor, objectId );
             }else{
-                gl_FragColor = vec4( vPickingColor2, 1.0 );
+                gl_FragColor = vec4( vPickingColor2, objectId );
             }
         }else{
             if( b > 0.0 ){
-                gl_FragColor = vec4( vPickingColor, 1.0 );
+                gl_FragColor = vec4( vPickingColor, objectId );
             }else{
-                gl_FragColor = vec4( vPickingColor2, 1.0 );
+                gl_FragColor = vec4( vPickingColor2, objectId );
             }
         }
     #else
@@ -233,8 +234,8 @@ void main()
                 gl_FragColor = vec4( vColor2, opacity );
             }
         }
-        gl_FragColor.xyz *= vLightFront;
-        //gl_FragColor.xyz = transformedNormal;
+        gl_FragColor.rgb *= vLightFront;
+        //gl_FragColor.rgb = transformedNormal;
     #endif
 
     #include fog

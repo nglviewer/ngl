@@ -6,6 +6,7 @@ varying vec3 vNormal;
 varying vec4 cameraPos;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
 #else
     varying vec3 vColor;
@@ -35,7 +36,7 @@ void main()
 
     #ifdef PICKING
 
-        gl_FragColor.xyz = vPickingColor;
+        gl_FragColor = vec4( vPickingColor, objectId );
 
     #else
 
@@ -48,7 +49,7 @@ void main()
         gl_FragColor = vec4( vColor, opacity );
 
         #ifndef NOLIGHT
-            gl_FragColor.xyz *= vLightFront;
+            gl_FragColor.rgb *= vLightFront;
         #endif
 
     #endif

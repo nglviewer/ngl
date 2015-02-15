@@ -201,6 +201,53 @@ NGL.SideTypes[ THREE.BackSide ] = "back";
 NGL.SideTypes[ THREE.DoubleSide ] = "double";
 
 
+NGL.browser = function(){
+
+    var ua = navigator.userAgent;
+
+    if ( /Arora/i.test( ua ) ) {
+
+        return 'Arora';
+
+    } else if ( /Opera|OPR/.test( ua ) ) {
+
+        return 'Opera';
+
+    } else if ( /Chrome/i.test( ua ) ) {
+
+        return 'Chrome';
+
+    } else if ( /Epiphany/i.test( ua ) ) {
+
+        return 'Epiphany';
+
+    } else if ( /Firefox/i.test( ua ) ) {
+
+        return 'Firefox';
+
+    } else if ( /Mobile(\/.*)? Safari/i.test( ua ) ) {
+
+        return 'Mobile Safari';
+
+    } else if ( /MSIE/i.test( ua ) ) {
+
+        return 'Internet Explorer';
+
+    } else if ( /Midori/i.test( ua ) ) {
+
+        return 'Midori';
+
+    } else if ( /Safari/i.test( ua ) ) {
+
+        return 'Safari';
+
+    }
+
+    return false;
+
+}();
+
+
 NGL.GET = function( id ){
 
     var a = new RegExp( id + "=([^&#=]*)" );
@@ -337,7 +384,7 @@ NGL.getFileInfo = function( file ){
         "protocol": protocol
     };
 
-}
+};
 
 
 ///////////
@@ -405,7 +452,7 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
 
     return true;
 
-}
+};
 
 NGL.ObjectMetadata.prototype = {
 

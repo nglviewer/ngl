@@ -1017,12 +1017,40 @@ NGL.Viewer.prototype = {
                 magFilter: THREE.NearestFilter,
                 stencilBuffer: false,
                 format: THREE.RGBAFormat,
-                type: THREE.FloatType
+                type: this.supportsReadPixelsFloat() ? THREE.FloatType : THREE.UnsignedByteType
             }
         );
         this.pickingTexture.generateMipmaps = false;
 
     },
+
+    supportsReadPixelsFloat: function(){
+
+        var value = undefined;
+
+        return function(){
+
+            if( value === undefined ){
+
+                var gl = this.renderer.context;
+
+                value = (
+
+                    ( NGL.browser === "Chrome" &&
+                        this.renderer.supportsFloatTextures() ) ||
+
+                    ( this.renderer.supportsFloatTextures() &&
+                        gl.getExtension( "WEBGL_color_buffer_float" ) )
+
+                );
+
+            }
+
+            return value;
+
+        }
+
+    }(),
 
     initScene: function(){
 
@@ -1101,7 +1129,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    add: function( buffer, matrixList, background ){
+    add: function( buffer, instanceList, background ){
 
         // console.time( "Viewer.add" );
 
@@ -1114,12 +1142,12 @@ NGL.Viewer.prototype = {
 
         if( buffer.size > 0 ){
 
-            if( matrixList ){
+            if( instanceList ){
 
-                matrixList.forEach( function( matrix ){
+                instanceList.forEach( function( instance ){
 
                     this.addBuffer(
-                        buffer, group, pickingGroup, background, matrix
+                        buffer, group, pickingGroup, background, instance
                     );
 
                 }, this );
@@ -1167,7 +1195,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBuffer: function( buffer, group, pickingGroup, background, matrix ){
+    addBuffer: function( buffer, group, pickingGroup, background, instance ){
 
         // console.time( "Viewer.addBuffer" );
 
@@ -1181,9 +1209,8 @@ NGL.Viewer.prototype = {
             bg, buffer.material
         );
         mesh.frustumCulled = false;
-        if( matrix ){
-            mesh.applyMatrix( matrix );
-            mesh.userData[ "matrix" ] = matrix;
+        if( instance ){
+            mesh.applyMatrix( instance.matrix );
         }
         group.add( mesh );
 
@@ -1197,19 +1224,25 @@ NGL.Viewer.prototype = {
                 "picking", buffer.pickingMaterial
             );
             pickingMesh.frustumCulled = false;
-            if( matrix ){
-                // pickingMesh.applyMatrix( matrix );
+            if( instance ){
+                // pickingMesh.applyMatrix( instance.matrix );
                 pickingMesh.matrix.copy( mesh.matrix );
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                pickingMesh.userData[ "matrix" ] = matrix;
+                pickingMesh.userData[ "instance" ] = instance;
             }
             pickingGroup.add( pickingMesh );
 
+            // console.log( pickingMesh )
+
         }
 
-        this.updateBoundingBox( buffer.geometry, matrix );
+        if( instance ){
+            this.updateBoundingBox( buffer.geometry, instance.matrix );
+        }else{
+            this.updateBoundingBox( buffer.geometry );
+        }
 
         // console.timeEnd( "Viewer.addBuffer" );
 
@@ -1483,9 +1516,14 @@ NGL.Viewer.prototype = {
 
     pick: function(){
 
-        var pixelBuffer = new Float32Array( 4 );
+        var pixelBufferFloat = new Float32Array( 4 );
+        var pixelBufferUint = new Uint8Array( 4 );
 
         return function( x, y ){
+
+            var id, object, instance;
+
+            var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
 
             this.render( null, true );
 
@@ -1499,21 +1537,42 @@ NGL.Viewer.prototype = {
                 1,
                 1,
                 gl.RGBA,
-                gl.FLOAT,
+                this.supportsReadPixelsFloat() ? gl.FLOAT : gl.UNSIGNED_BYTE,
                 pixelBuffer
             );
 
             this.renderer.setRenderTarget();
 
-            var rgba = Array.apply( [], pixelBuffer );
+            if( this.supportsReadPixelsFloat() ){
 
-            // TODO simplify ...
-            var id =
-                ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
-                ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
-                ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+                // TODO simplify ...
+                id =
+                    ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
+                    ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
+                    ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+
+            }else{
+
+                id =
+                    ( pixelBuffer[0] << 16 ) |
+                    ( pixelBuffer[1] << 8 ) |
+                    ( pixelBuffer[2] );
+
+            }
+
+            object = this.pickingGroup.getObjectById(
+                Math.round( pixelBuffer[ 3 ] )
+            );
+
+            if( object && object.userData.instance ){
+
+                instance = object.userData.instance;
+
+            }
 
             if( NGL.debug ){
+
+                var rgba = Array.apply( [], pixelBuffer );
 
                 console.log( pixelBuffer );
 
@@ -1527,6 +1586,7 @@ NGL.Viewer.prototype = {
                     ]
                 );
                 console.log( "picked id", id );
+                console.log( "picked instance", instance );
                 console.log( "picked position", x, y );
                 console.log( "devicePixelRatio", window.devicePixelRatio );
 
@@ -1534,7 +1594,7 @@ NGL.Viewer.prototype = {
 
             return {
                 "id": id,
-                // "instance": instance
+                "instance": instance
             };
 
         };
@@ -1720,6 +1780,10 @@ NGL.Viewer.prototype = {
 
             var u = o.material.uniforms;
             if( !u ) return;
+
+            if( u.objectId ){
+                u.objectId.value = this.supportsReadPixelsFloat() ? o.id : o.id / 255;
+            }
 
             if( u.modelViewMatrixInverse ){
                 u.modelViewMatrixInverse.value.getInverse(
