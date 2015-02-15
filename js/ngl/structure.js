@@ -739,7 +739,7 @@ NGL.AtomSet.prototype = {
 
         // atoms
 
-        this.atoms = [];
+        this.atoms.length = 0;
         var atoms = this.atoms;
 
         this.structure.eachAtom( function( a ){
@@ -755,7 +755,7 @@ NGL.AtomSet.prototype = {
 
         // bonds
 
-        this.bonds = [];
+        this.bonds.length = 0;
         var bonds = this.bonds;
 
         this.structure.bondSet.eachBond( function( b ){
@@ -1233,6 +1233,15 @@ NGL.AtomSet.prototype = {
 
         return new Float32Array( radius );
 
+    },
+
+    dispose: function(){
+
+        this.atoms.length = 0;
+        this.bonds.length = 0;
+
+        delete this.structure;
+
     }
 
 };
@@ -1305,7 +1314,14 @@ NGL.BondSet.prototype = {
 
     bondColor: NGL.AtomSet.prototype.bondColor,
 
-    bondRadius: NGL.AtomSet.prototype.bondRadius
+    bondRadius: NGL.AtomSet.prototype.bondRadius,
+
+    dispose: function(){
+
+        this.bonds.length = 0;
+        this.bondCount = 0;
+
+    }
 
 };
 
@@ -1529,6 +1545,9 @@ NGL.Structure = function( name, path ){
     this.name = name;
     this.path = path;
 
+    this.atoms = [];
+    this.models = [];
+
     this.reset();
 
 };
@@ -1548,8 +1567,8 @@ NGL.Structure.prototype = {
         this.chainCount = 0;
         this.modelCount = 0;
 
-        this.atoms = [];
-        this.models = [];
+        this.atoms.length = 0;
+        this.models.length = 0;
         this.bondSet = new NGL.BondSet();
 
     },
@@ -2323,9 +2342,30 @@ NGL.Structure.prototype = {
 
         console.timeEnd( "NGL.Structure.clone" );
 
-        console.log( s );
+        if( NGL.debug ) console.log( s );
 
         return s;
+
+    },
+
+    dispose: function(){
+
+        this.atomCount = 0;
+        this.residueCount = 0;
+        this.chainCount = 0;
+        this.modelCount = 0;
+
+        this.atoms.length = 0;
+        this.models.length = 0;
+
+        if( this.cif ) delete this.cif;
+
+        if( this.frames ) this.frames.length = 0;
+        if( this.boxes ) this.boxes.length = 0;
+
+        this.bondSet.dispose();
+
+        if( this.atomArray ) this.atomArray.dispose();
 
     }
 
@@ -3857,6 +3897,38 @@ NGL.AtomArray.prototype = {
 
         return aa;
 
+    },
+
+    dispose: function(){
+
+        if( this.useBuffer ){
+
+            delete this.buffer;
+
+        }
+
+        delete this.atomno;
+        delete this.resname;
+        delete this.x;
+        delete this.y;
+        delete this.z;
+        delete this.element;
+        delete this.chainname;
+        delete this.resno;
+        delete this.serial;
+        delete this.ss;
+        delete this.vdw;
+        delete this.covalent;
+        delete this.hetero;
+        delete this.bfactor;
+        delete this.altloc;
+        delete this.atomname;
+
+        delete this.bonds;
+        delete this.residue;
+
+        this.length = 0;
+
     }
 
 };
@@ -5016,28 +5088,37 @@ NGL.Alignment.prototype = {
         this.V = [];
         this.H = [];
 
-        for(var i = 0; i <= this.n; i++){
-            this.S[i] = [];
-            this.V[i] = [];
-            this.H[i] = [];
-            for(var j = 0; j <= this.m; j++){
-                this.S[i][j] = 0;
-                this.V[i][j] = 0;
-                this.H[i][j] = 0;
+        for( var i = 0; i <= this.n; ++i ){
+
+            this.S[ i ] = [];
+            this.V[ i ] = [];
+            this.H[ i ] = [];
+
+            for( var j = 0; j <= this.m; ++j ){
+
+                this.S[ i ][ j ] = 0;
+                this.V[ i ][ j ] = 0;
+                this.H[ i ][ j ] = 0;
+
             }
+
         }
 
-        for(var i = 0; i <= this.n; ++i){
-            this.S[i][0] = this.gap(0);
-            this.H[i][0] = -Infinity;
+        for( var i = 0; i <= this.n; ++i ){
+
+            this.S[ i ][ 0 ] = this.gap( 0 );
+            this.H[ i ][ 0 ] = -Infinity;
+
         }
 
-        for(var j = 0; j <= this.m; ++j){
-            this.S[0][j] = this.gap(0);
-            this.V[0][j] = -Infinity;
+        for( var j = 0; j <= this.m; ++j ){
+
+            this.S[ 0 ][ j ] = this.gap( 0 );
+            this.V[ 0 ][ j ] = -Infinity;
+
         }
 
-        this.S[0][0] = 0;
+        this.S[ 0 ][ 0 ] = 0;
 
         // console.log(this.S, this.V, this.H);
 
@@ -5062,13 +5143,17 @@ NGL.Alignment.prototype = {
 
             return function( i, j ){
 
-                c1 = seq1[i];
-                c2 = seq2[j];
+                c1 = seq1[ i ];
+                c2 = seq2[ j ];
 
                 try{
+
                     return substMatrix[ c1 ][ c2 ];
-                }catch(e){
+
+                }catch( e ){
+
                     return -4;
+
                 }
 
             }
@@ -5079,10 +5164,10 @@ NGL.Alignment.prototype = {
 
             return function( i, j ){
 
-                c1 = seq1[i];
-                c2 = seq2[j];
+                c1 = seq1[ i ];
+                c2 = seq2[ j ];
 
-                return c1==c2 ? 5 : -3;
+                return c1 === c2 ? 5 : -3;
 
             }
 
@@ -5113,29 +5198,29 @@ NGL.Alignment.prototype = {
 
         for( i = 1; i <= n; ++i ){
 
-            Si1 = S[i-1];
-            Vi1 = V[i-1];
+            Si1 = S[ i - 1 ];
+            Vi1 = V[ i - 1 ];
 
-            Vi = V[i];
-            Hi = H[i];
-            Si = S[i];
+            Vi = V[ i ];
+            Hi = H[ i ];
+            Si = S[ i ];
 
             for( j = 1; j <= m; ++j ){
 
                 Vi[j] = Math.max(
-                    Si1[j] + gap0,
-                    Vi1[j] + gapExtensionPenalty
+                    Si1[ j ] + gap0,
+                    Vi1[ j ] + gapExtensionPenalty
                 );
 
                 Hi[j] = Math.max(
-                    Si[j-1] + gap0,
-                    Hi[j-1] + gapExtensionPenalty
+                    Si[ j - 1 ] + gap0,
+                    Hi[ j - 1 ] + gapExtensionPenalty
                 );
 
                 Si[j] = Math.max(
-                    Si1[j-1] + scoreFn(i-1, j-1), // match
-                    Vi[j], //del
-                    Hi[j] // ins
+                    Si1[ j - 1 ] + scoreFn( i - 1, j - 1 ), // match
+                    Vi[ j ], //del
+                    Hi[ j ]  // ins
                 );
 
             }
@@ -5239,7 +5324,7 @@ NGL.Alignment.prototype = {
 
         while( i > 0 ){
 
-            this.ali1 = this.seq1[i-1] + this.ali1;
+            this.ali1 = this.seq1[ i - 1 ] + this.ali1;
             this.ali2 = '-' + this.ali2;
             --i;
 
@@ -5248,7 +5333,7 @@ NGL.Alignment.prototype = {
         while( j > 0 ){
 
             this.ali1 = '-' + this.ali1;
-            this.ali2 = this.seq2[j-1] + this.ali2;
+            this.ali2 = this.seq2[ j - 1 ] + this.ali2;
             --j;
 
         }

@@ -138,7 +138,8 @@ NGL.buildStructure = function( structure, callback ){
         function(){
 
             console.timeEnd( "NGL.buildStructure" );
-            console.log( structure );
+
+            if( NGL.debug ) console.log( structure );
 
             callback();
 
@@ -990,13 +991,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var pendingString = false;
     var currentString = null;
     var pendingLoop = false;
-    var loopPointers = null;
+    var loopPointers = [];
     var currentLoopIndex = null;
     var currentCategory = null;
     var currentName = null;
     var first = null;
-    var indexList = null;
-    var pointerNames = null;
+    var indexList = [];
+    var pointerNames = [];
 
     var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
         type_symbol, label_asym_id,
@@ -1024,13 +1025,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 pendingString = false;
                 pendingLoop = false;
-                loopPointers = null;
+                loopPointers.length = 0;
                 currentLoopIndex = null;
                 currentCategory = null;
                 currentName = null;
                 first = null;
-                indexList = null;
-                pointerNames = null;
+                indexList.length = 0;
+                pointerNames.length = 0;
 
             }else if( line.substring( 0, 5 )==="data_" ){
 
@@ -1075,8 +1076,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 // console.log( "LOOP START" );
 
                 pendingLoop = true;
-                loopPointers = [];
-                pointerNames = [];
+                loopPointers.length = 0;
+                pointerNames.length = 0;
                 currentLoopIndex = 0;
 
             }else if( line[0]==="_" ){
@@ -1152,7 +1153,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                                 "label_alt_id", "auth_seq_id", "pdbx_PDB_model_num"
                             ];
 
-                            indexList = [];
+                            indexList.length = 0;
 
                             for( var j = 0; j < nn; ++j ){
 

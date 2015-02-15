@@ -967,7 +967,7 @@ NGL.Viewer.prototype = {
         }
 
         if( !this.renderer.supportsStandardDerivatives() ){
-            console.error( "OES_standard_derivatives not supported" );
+            console.warn( "OES_standard_derivatives not supported" );
         }
 
         if( !gl.getExtension( 'OES_element_index_uint' ) ){
@@ -1002,11 +1002,11 @@ NGL.Viewer.prototype = {
         // picking texture
 
         if( !this.renderer.supportsFloatTextures() ){
-            console.error( "OES_texture_float not supported" );
+            console.warn( "OES_texture_float not supported" );
         }
 
         if( !gl.getExtension( "WEBGL_color_buffer_float" ) ){
-            console.error( "WEBGL_color_buffer_float not supported" );
+            console.warn( "WEBGL_color_buffer_float not supported" );
         }
 
         this.pickingTexture = new THREE.WebGLRenderTarget(

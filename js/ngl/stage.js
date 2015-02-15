@@ -818,6 +818,9 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         this.trajList = [];
 
+        this.structure.dispose();
+        this.__structure.dispose();
+
         NGL.Component.prototype.dispose.call( this );
 
     },

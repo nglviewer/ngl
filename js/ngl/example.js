@@ -573,6 +573,9 @@ NGL.Examples = {
                 var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
                 var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
                 var trace = o.addRepresentation( "trace", { sele: "270-300" } );
+                var rope = o.addRepresentation( "rope", {
+                    sele: "300-330", color: "residueindex"
+                } );
 
                 o.centerView();
 

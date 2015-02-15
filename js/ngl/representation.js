@@ -56,6 +56,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
+    this.bufferList = [];
     this.debugBufferList = [];
 
     this.init( params );
@@ -103,7 +104,8 @@ NGL.Representation.prototype = {
 
     create: function(){
 
-        this.bufferList = [];
+        // this.bufferList.length = 0;
+        // this.debugBufferList.length = 0;
 
     },
 
@@ -119,7 +121,7 @@ NGL.Representation.prototype = {
             this.init( params );
         }
 
-        this.dispose();
+        this.clear();
         this.create();
         if( !this.manualAttach ) this.attach();
 
@@ -252,29 +254,33 @@ NGL.Representation.prototype = {
 
     },
 
-    dispose: function(){
+    clear: function(){
 
         this.bufferList.forEach( function( buffer ){
 
             this.viewer.remove( buffer );
             buffer.dispose();
-            buffer = null;  // aid GC
 
         }, this );
 
-        this.bufferList = [];
+        this.bufferList.length = 0;
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
             this.viewer.remove( debugBuffer );
             debugBuffer.dispose();
-            debugBuffer = null;  // aid GC
 
         }, this );
 
-        this.debugBufferList = [];
+        this.debugBufferList.length = 0;
 
         this.viewer.requestRender();
+
+    },
+
+    dispose: function(){
+
+        this.clear();
 
     }
 
@@ -285,6 +291,8 @@ NGL.Representation.prototype = {
 // Structure representation
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
+
+    this.fiberList = [];
 
     this.selection = new NGL.Selection( params.sele );
 
@@ -493,6 +501,24 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.setVisibility( this.visible );
 
+    },
+
+    clear: function(){
+
+        this.fiberList.length = 0;
+
+        NGL.Representation.prototype.clear.call( this );
+
+    },
+
+    dispose: function(){
+
+        this.atomSet.dispose();
+
+        delete this.structure;
+
+        NGL.Representation.prototype.dispose.call( this );
+
     }
 
 } );
@@ -556,7 +582,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.sphereBuffer ];
+        this.bufferList.push( this.sphereBuffer );
 
     },
 
@@ -658,7 +684,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.pointBuffer ];
+        this.bufferList.push( this.pointBuffer );
 
     },
 
@@ -760,7 +786,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.textBuffer ];
+        this.bufferList.push( this.textBuffer );
 
     },
 
@@ -893,7 +919,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -1057,7 +1083,7 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -1129,7 +1155,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.lineBuffer ];
+        this.bufferList.push( this.lineBuffer );
 
     },
 
@@ -1252,7 +1278,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -1442,7 +1468,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -1518,6 +1544,15 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    },
+
+    clear: function(){
+
+        if( this.backboneAtomSet ) this.backboneAtomSet.dispose();
+        if( this.backboneBondSet ) this.backboneBondSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -1655,7 +1690,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -1732,6 +1767,15 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         return this;
 
+    },
+
+    clear: function(){
+
+        if( this.baseAtomSet ) this.baseAtomSet.dispose();
+        if( this.baseBondSet ) this.baseAtomSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
+
     }
 
 } );
@@ -1804,9 +1848,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var scope = this;
-
-        this.bufferList = [];
-        this.fiberList = [];
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -2008,14 +2049,11 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         var opacity = this.transparent ? this.opacity : 1.0;
 
         if( NGL.debug ){
 
-            scope.debugBufferList = [];
+            scope.debugBufferList.length = 0;
 
         }
 
@@ -2353,9 +2391,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.structure.eachFiber( function( fiber ){
@@ -2534,9 +2569,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -2659,9 +2691,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         // TODO reduce buffer count as in e.g. rocket repr
 
         this.structure.eachFiber( function( fiber ){
@@ -2764,6 +2793,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
 NGL.RocketRepresentation = function( structure, viewer, params ){
 
+    this.helixbundleList = [];
+
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -2828,7 +2859,6 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         var length = 0;
         var axisList = [];
-        this.helixbundleList = [];
 
         this.structure.eachFiber( function( fiber ){
 
@@ -2886,7 +2916,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             opacity
         );
 
-        this.bufferList = [ this.cylinderBuffer ];
+        this.bufferList.push( this.cylinderBuffer );
 
     },
 
@@ -2941,6 +2971,14 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         }
 
         this.cylinderBuffer.setAttributes( cylinderData );
+
+    },
+
+    clear: function(){
+
+        this.helixbundleList.length = 0;
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -3016,9 +3054,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var scope = this;
-
-        this.bufferList = [];
-        this.fiberList = [];
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -3220,10 +3255,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        this.bufferList = [];
-        this.fiberList = [];
-        this.centerList = [];
-        this.helixList = [];
+        var helixList = [];
 
         // TODO reduce buffer count as in e.g. rocket repr
 
@@ -3260,13 +3292,11 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
             scope.fiberList.push( fiber );
 
-            scope.centerList.push( new Float32Array( axis.begin.length ) );
-
             for( var i = 0; i < axis.residue.length; ++i ){
 
                 var helix = new NGL.Helix();
                 helix.fromHelixbundleAxis( axis, i );
-                scope.helixList.push( helix );
+                helixList.push( helix );
 
             }
 
@@ -3274,7 +3304,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
         //
 
-        var helixCrossing = new NGL.HelixCrossing( this.helixList );
+        var helixCrossing = new NGL.HelixCrossing( helixList );
         var crossing = helixCrossing.getCrossing( this.helixDist );
 
         this.crossing = crossing;
@@ -3445,8 +3475,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         // console.log( this.selection )
         // console.log( this.atomSet )
-
-        this.bufferList = [];
 
         if( !this.atomSet.atoms.length ) return;
 
@@ -3682,7 +3710,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 this.transparent, THREE.BackSide, opacity, this.nearClip
             );
 
-            this.bufferList = [ frontBuffer, backBuffer ];
+            this.bufferList.push( frontBuffer, backBuffer );
 
         }else{
 
@@ -3691,7 +3719,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 this.transparent, parseInt( this.side ), opacity, this.nearClip
             );
 
-            this.bufferList = [ this.surfaceBuffer ];
+            this.bufferList.push( this.surfaceBuffer );
 
         }
 
