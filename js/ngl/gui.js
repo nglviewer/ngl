@@ -1562,6 +1562,13 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     } );
 
+    signals.disposed.add( function(){
+
+        menu.dispose();
+        container.dispose();
+
+    } );
+
     var numframes = new UI.Panel()
         .setMarginLeft( "10px" )
         .setDisplay( "inline" )
@@ -1704,7 +1711,6 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             component.setParameters( {
                 "centerPbc": setCenterPbc.getValue()
             } );
-            menu.setMenuDisplay( "none" );
         } );
 
     var setRemovePbc = new UI.Checkbox( traj.params.removePbc )
@@ -1712,7 +1718,6 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             component.setParameters( {
                 "removePbc": setRemovePbc.getValue()
             } );
-            menu.setMenuDisplay( "none" );
         } );
 
     var setSuperpose = new UI.Checkbox( traj.params.superpose )
@@ -1720,7 +1725,6 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             component.setParameters( {
                 "superpose": setSuperpose.getValue()
             } );
-            menu.setMenuDisplay( "none" );
         } );
 
     signals.parametersChanged.add( function( params ){
@@ -1740,7 +1744,15 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
         .onClick( function(){
 
             component.addRepresentation();
-            menu.setMenuDisplay( "none" );
+
+        } );
+
+    // Dispose
+
+    var dispose = new UI.DisposeIcon()
+        .setDisposeFunction( function(){
+
+            component.parent.removeTrajectory( component );
 
         } );
 
@@ -1765,7 +1777,8 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
         .addEntry(
             "File", new UI.Text( traj.trajPath )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addEntry( "Dispose", dispose );
 
     container
         .addStatic( menu );

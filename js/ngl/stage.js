@@ -1014,7 +1014,9 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
             this.stage, repr, {}, this
         );
 
-        return NGL.Component.prototype.addRepresentation.call( this, reprComp );
+        return NGL.Component.prototype.addRepresentation.call(
+            this, reprComp
+        );
 
     },
 
