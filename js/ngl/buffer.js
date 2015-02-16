@@ -950,7 +950,7 @@ NGL.GeometryBuffer.prototype = {
 
 NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
 
-    var detail = params.detail !== undefined ? params.detail : 1;
+    var detail = params.sphereDetail !== undefined ? params.sphereDetail : 1;
 
     this.geo = new THREE.IcosahedronGeometry( 1, detail );
 

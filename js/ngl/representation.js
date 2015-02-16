@@ -72,7 +72,7 @@ NGL.Representation.prototype = {
     parameters: {
 
         nearClip: {
-            type: "boolean", rebuild: true
+            type: "boolean", define: "NEAR_CLIP"
         }
 
     },
@@ -94,7 +94,7 @@ NGL.Representation.prototype = {
 
             this.color = type;
 
-            this.update({ "color": true });
+            this.update( { "color": true } );
 
         }
 
@@ -117,6 +117,8 @@ NGL.Representation.prototype = {
 
     rebuild: function( params ){
 
+        console.time( "NGL.Representation.rebuild " + this.type );
+
         if( params ){
             this.init( params );
         }
@@ -124,6 +126,8 @@ NGL.Representation.prototype = {
         this.clear();
         this.create();
         if( !this.manualAttach ) this.attach();
+
+        console.timeEnd( "NGL.Representation.rebuild " + this.type );
 
     },
 
@@ -157,6 +161,8 @@ NGL.Representation.prototype = {
 
     setParameters: function( params, what, rebuild ){
 
+        var scope = this;
+
         var p = params;
         var tp = this.parameters;
 
@@ -167,13 +173,16 @@ NGL.Representation.prototype = {
             if( p[ name ] === undefined ) return;
             if( tp[ name ] === undefined ) return;
 
+            if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
+            if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
+
             this[ name ] = p[ name ];
 
-            // update buffer uniform
+            // update buffer material uniform
 
             if( tp[ name ].uniform ){
 
-                function update( mesh ){
+                function updateUniform( mesh ){
 
                     var u = mesh.material.uniforms;
 
@@ -194,9 +203,78 @@ NGL.Representation.prototype = {
 
                 this.bufferList.forEach( function( buffer ){
 
-                    buffer.group.children.forEach( update );
+                    buffer.group.children.forEach( updateUniform );
                     if( buffer.pickingGroup ){
-                        buffer.pickingGroup.children.forEach( update );
+                        buffer.pickingGroup.children.forEach( updateUniform );
+                    }
+
+                } );
+
+            }
+
+            // update buffer material define
+
+            if( tp[ name ].define ){
+
+                function updateDefine( mesh ){
+
+                    if( p[ name ] ){
+
+                        mesh.material.defines[ tp[ name ].define ] = 1;
+
+                    }else{
+
+                        delete mesh.material.defines[ tp[ name ].define ];
+
+                    }
+
+                    mesh.material.needsUpdate = true;
+
+                }
+
+                this.bufferList.forEach( function( buffer ){
+
+                    buffer.group.children.forEach( updateDefine );
+                    if( buffer.pickingGroup ){
+                        buffer.pickingGroup.children.forEach( updateDefine );
+                    }
+
+                } );
+
+            }
+
+            // update buffer material property
+
+            if( tp[ name ].property ){
+
+                var propertyName = (
+                    tp[ name ].property === true ? name : tp[ name ].property
+                );
+
+                function updateProperty( mesh ){
+
+                    if( propertyName in mesh.material ){
+
+                        mesh.material[ propertyName ] = p[ name ];
+
+                    }else{
+
+                        // happens when the buffers in a repr
+                        // do not suppport the same parameters
+
+                        // console.info( name )
+
+                    }
+
+                    mesh.material.needsUpdate = true;
+
+                }
+
+                this.bufferList.forEach( function( buffer ){
+
+                    buffer.group.children.forEach( updateProperty );
+                    if( buffer.pickingGroup ){
+                        buffer.pickingGroup.children.forEach( updateProperty );
                     }
 
                 } );
@@ -205,7 +283,10 @@ NGL.Representation.prototype = {
 
             // mark for rebuild
 
-            if( tp[ name ].rebuild ){
+            if( tp[ name ].rebuild &&
+                !( tp[ name ].rebuild === "impostor" &&
+                    NGL.extensionFragDepth && !this.disableImpostor )
+            ){
 
                 rebuild = true;
 
@@ -347,10 +428,11 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true
+            type: "select", options: NGL.SideTypes, property: true,
+            int: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
@@ -408,7 +490,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        if( params && params[ "radiusType" ]!==undefined ){
+        if( params && params[ "radiusType" ] !== undefined ){
 
             if( params[ "radiusType" ] === "size" ){
                 this.radius = this.defaultSize;
@@ -422,7 +504,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "radius" ]!==undefined ){
+        if( params && params[ "radius" ] !== undefined ){
 
             this.radius = params[ "radius" ];
             what[ "radius" ] = true;
@@ -432,7 +514,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "scale" ]!==undefined ){
+        if( params && params[ "scale" ] !== undefined ){
 
             this.scale = params[ "scale" ];
             what[ "scale" ] = true;
@@ -545,7 +627,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -643,32 +725,31 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         pointSize: {
-            type: "integer", max: 20, min: 1, rebuild: true
+            type: "integer", max: 20, min: 1, property: "size"
         },
         sizeAttenuation: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         sort: {
             type: "boolean", rebuild: true
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying PointCloudMaterial
-            rebuild: true
+            property: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+        // FIXME nearClip support missing
+    }, NGL.Representation.prototype.parameters, { nearClip: null } ),
 
     init: function( params ){
 
         var p = params || {};
 
         this.pointSize = p.pointSize || 1;
-        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
+        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
         this.sort = p.sort !== undefined ? p.sort : false;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
@@ -751,7 +832,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             rebuild: true
         },
         antialias: {
-            type: "boolean", rebuild: true
+            type: "boolean", define: "ANTIALIAS"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, { side: null } ),
@@ -860,10 +941,10 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1035,10 +1116,10 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1139,16 +1220,14 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         lineWidth: {
-            type: "integer", max: 20, min: 1, rebuild: true
+            type: "integer", max: 20, min: 1, property: "linewidth"
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying Material
-            rebuild: true
+            uniform: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -1235,10 +1314,10 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             type: "number", precision: 3, max: 1.0, min: 0.001, uniform: true
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1392,10 +1471,10 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 50, min: 5, rebuild: true
+            type: "integer", max: 50, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1620,10 +1699,10 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 50, min: 5, rebuild: true
+            type: "integer", max: 50, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1929,7 +2008,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                         capped: scope.capped,
                         wireframe: scope.wireframe,
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -2152,7 +2231,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                         capped: scope.capped,
                         wireframe: scope.wireframe,
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -2282,7 +2361,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     this.capped,
                     this.wireframe,
                     this.transparent,
-                    parseInt( this.side ),
+                    this.side,
                     opacity,
                     this.nearClip
                 )
@@ -2462,7 +2541,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     {
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -2574,16 +2653,14 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         lineWidth: {
-            type: "integer", max: 20, min: 1, rebuild: true
+            type: "integer", max: 20, min: 1, property: "linewidth"
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying Material
-            rebuild: true
+            uniform: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -2874,7 +2951,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -3149,7 +3226,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                         capped: scope.capped,
                         wireframe: scope.wireframe,
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -3266,7 +3343,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         helixDist: {
             type: "number", precision: 1, max: 30, min: 0, rebuild: true
@@ -3494,7 +3571,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
@@ -3686,7 +3764,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0, uniform: true
@@ -3779,7 +3858,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        if( this.transparent && parseInt( this.side ) === THREE.DoubleSide ){
+        if( this.transparent && this.side === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
@@ -3812,7 +3891,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 {
                     wireframe: this.wireframe,
                     transparent: this.transparent,
-                    side: parseInt( this.side ),
+                    side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip
                 }
