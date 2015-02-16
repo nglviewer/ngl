@@ -78,8 +78,10 @@ void main()
     vec3 point = w.xyz / w.w;
     vec4 point4 = w;
 
-    if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-        discard;
+    #ifdef NEAR_CLIP
+        if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            discard;
+    #endif
 
     // unpacking
     vec3 base = base_radius.xyz;

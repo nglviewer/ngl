@@ -11,8 +11,10 @@ varying vec4 cameraPos;
 void main()
 {
 
-	if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-        discard;
+	#ifdef NEAR_CLIP
+		if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+        	discard;
+    #endif
 
     gl_FragColor = vec4( vColor, opacity );
 

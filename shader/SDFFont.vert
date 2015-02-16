@@ -23,8 +23,10 @@ void main(void){
 
     gl_Position = projectionMatrix * cameraCornerPos;
 
-    // move out of viewing frustum for custom clipping
-    if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-       gl_Position.w = -10.0;
+    #ifdef NEAR_CLIP
+        // move out of viewing frustum for custom clipping
+        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            gl_Position.w = -10.0;
+    #endif
 
 }

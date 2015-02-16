@@ -583,7 +583,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -688,7 +689,8 @@ NGL.PointRepresentation.prototype = NGL.createObject(
                 sizeAttenuation: this.sizeAttenuation,
                 sort: this.sort,
                 transparent: this.transparent,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             }
         );
 
@@ -792,7 +794,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             {
                 font: this.font,
                 antialias: this.antialias,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             }
         );
 
@@ -906,7 +909,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -927,7 +931,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 radiusSegments: this.radiusSegments,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1076,7 +1081,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1095,7 +1101,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 radiusSegments: this.radiusSegments,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1170,7 +1177,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
             {
                 lineWidth: this.lineWidth,
                 transparent: this.transparent,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             }
         );
 
@@ -1275,7 +1283,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1296,7 +1305,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 radiusSegments: this.radiusSegments,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1471,7 +1481,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1490,7 +1501,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 radiusSegments: this.radiusSegments,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1698,7 +1710,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -1717,7 +1730,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 radiusSegments: this.radiusSegments,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -2449,7 +2463,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     {
                         transparent: scope.transparent,
                         side: parseInt( scope.side ),
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     }
                 )
 
@@ -2619,7 +2634,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                     {
                         lineWidth: scope.lineWidth,
                         transparent: scope.transparent,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     }
                 )
 
@@ -2749,7 +2765,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         sphereDetail: scope.sphereDetail,
                         transparent: scope.transparent,
                         side: scope.side,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     },
                     scope.disableImpostor
                 )
@@ -2951,7 +2968,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 radiusSegments: this.radiusSegments,
                 transparent: this.transparent,
                 side: this.side,
-                opacity: opacity
+                opacity: opacity,
+                nearClip: this.nearClip
             },
             this.disableImpostor
         );
@@ -3327,7 +3345,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         radiusSegments: scope.radiusSegments,
                         transparent: scope.transparent,
                         side: scope.side,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     },
                     scope.disableImpostor
                 )
@@ -3371,7 +3390,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     radiusSegments: this.radiusSegments,
                     transparent: this.transparent,
                     side: this.side,
-                    opacity: opacity
+                    opacity: opacity,
+                    nearClip: this.nearClip
                 },
                 this.disableImpostor
             )
@@ -3390,7 +3410,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( m, 1.0, 1.0, 1.0 ),
                     crossing.helixLabel,
                     {
-                        // params
+                        nearClip: this.nearClip
                     }
                 )
 
@@ -3548,7 +3568,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         sphereDetail: scope.sphereDetail,
                         transparent: scope.transparent,
                         side: scope.side,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     },
                     scope.disableImpostor
                 );
@@ -3573,7 +3594,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         radiusSegments: this.radiusSegments,
                         transparent: this.transparent,
                         side: this.side,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     },
                     this.disableImpostor
 
@@ -3593,7 +3615,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         sizeAttenuation: scope.sizeAttenuation,
                         sort: scope.sort,
                         transparent: scope.transparent,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     }
                 );
 
@@ -3611,7 +3634,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     {
                         lineWidth: scope.lineWidth,
                         transparent: scope.transparent,
-                        opacity: opacity
+                        opacity: opacity,
+                        nearClip: scope.nearClip
                     }
                 );
 

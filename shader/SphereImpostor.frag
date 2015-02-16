@@ -94,8 +94,10 @@ void main(void)
 
     bool flag = Impostor( cameraPos, cameraNormal );
 
-    if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-        discard;
+    #ifdef NEAR_CLIP
+        if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            discard;
+    #endif
 
     // FIXME not compatible with custom clipping plane
     //Set the depth based on the new cameraPos.

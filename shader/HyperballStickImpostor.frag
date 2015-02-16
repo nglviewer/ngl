@@ -182,10 +182,12 @@ void main()
     vec3 M;
     M = isect_surf(ray, mat);
 
-    // custom clipping plane
-    // FIXME optimize, don't calculate values more than once
-    if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-        discard;
+    #ifdef NEAR_CLIP
+        // custom clipping plane
+        // FIXME optimize, don't calculate values more than once
+        if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            discard;
+    #endif
 
     // Recalculate the depth in function of the new pixel position
     gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
