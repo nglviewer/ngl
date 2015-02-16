@@ -705,10 +705,10 @@ NGL.ExportImageWidget = function( stage ){
     }
 
     addEntry( "scale", factorSelect );
-    addEntry( "type", typeSelect );
-    addEntry( "quality", qualitySelect );
+    // addEntry( "type", typeSelect ); // commented out to always use png
+    // addEntry( "quality", qualitySelect ); // not png
     addEntry( "antialias", antialiasCheckbox );
-    addEntry( "transparent", transparentCheckbox );
+    addEntry( "transparent", transparentCheckbox ); // not jpeg
     addEntry( "trim", trimCheckbox );
 
     listingPanel.add(
