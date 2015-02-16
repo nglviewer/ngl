@@ -75,7 +75,6 @@ if ( !Number.isNaN ) {
 }
 
 
-
 if ( !Object.assign ) {
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
@@ -159,6 +158,94 @@ HTMLElement.prototype.getBoundingClientRect = function(){
 }();
 
 
+if( WebGLRenderingContext ){
+
+    // wrap webgl debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+}
+
+
 ///////////////
 // Extensions
 
@@ -201,6 +288,53 @@ NGL.SideTypes = {};
 NGL.SideTypes[ THREE.FrontSide ] = "front";
 NGL.SideTypes[ THREE.BackSide ] = "back";
 NGL.SideTypes[ THREE.DoubleSide ] = "double";
+
+
+NGL.browser = function(){
+
+    var ua = navigator.userAgent;
+
+    if ( /Arora/i.test( ua ) ) {
+
+        return 'Arora';
+
+    } else if ( /Opera|OPR/.test( ua ) ) {
+
+        return 'Opera';
+
+    } else if ( /Chrome/i.test( ua ) ) {
+
+        return 'Chrome';
+
+    } else if ( /Epiphany/i.test( ua ) ) {
+
+        return 'Epiphany';
+
+    } else if ( /Firefox/i.test( ua ) ) {
+
+        return 'Firefox';
+
+    } else if ( /Mobile(\/.*)? Safari/i.test( ua ) ) {
+
+        return 'Mobile Safari';
+
+    } else if ( /MSIE/i.test( ua ) ) {
+
+        return 'Internet Explorer';
+
+    } else if ( /Midori/i.test( ua ) ) {
+
+        return 'Midori';
+
+    } else if ( /Safari/i.test( ua ) ) {
+
+        return 'Safari';
+
+    }
+
+    return false;
+
+}();
 
 
 NGL.GET = function( id ){
@@ -308,10 +442,10 @@ NGL.getFileInfo = function( file ){
     var base = name.substring( 0, name.lastIndexOf('.') );
     var ext = path.split('.').pop().toLowerCase();
 
-    var protoMatch = path.match( /^(.+):\/\/(.+)$/ );
-    if( protoMatch ){
-        protocol = protoMatch[ 1 ].toLowerCase();
-        path = protoMatch[ 2 ];
+    var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
+    if( protocolMatch ){
+        protocol = protocolMatch[ 1 ].toLowerCase();
+        path = protocolMatch[ 2 ];
     }
 
     if( compressedExtList.indexOf( ext ) !== -1 ){
@@ -339,7 +473,7 @@ NGL.getFileInfo = function( file ){
         "protocol": protocol
     };
 
-}
+};
 
 
 ///////////
@@ -407,7 +541,7 @@ NGL.ObjectMetadata.test = function( what, repr, comp ){
 
     return true;
 
-}
+};
 
 NGL.ObjectMetadata.prototype = {
 
@@ -2568,7 +2702,7 @@ NGL.AtomSet.prototype = {
 
         // atoms
 
-        this.atoms = [];
+        this.atoms.length = 0;
         var atoms = this.atoms;
 
         this.structure.eachAtom( function( a ){
@@ -2584,7 +2718,7 @@ NGL.AtomSet.prototype = {
 
         // bonds
 
-        this.bonds = [];
+        this.bonds.length = 0;
         var bonds = this.bonds;
 
         this.structure.bondSet.eachBond( function( b ){
@@ -3062,6 +3196,15 @@ NGL.AtomSet.prototype = {
 
         return new Float32Array( radius );
 
+    },
+
+    dispose: function(){
+
+        this.atoms.length = 0;
+        this.bonds.length = 0;
+
+        delete this.structure;
+
     }
 
 };
@@ -3134,7 +3277,14 @@ NGL.BondSet.prototype = {
 
     bondColor: NGL.AtomSet.prototype.bondColor,
 
-    bondRadius: NGL.AtomSet.prototype.bondRadius
+    bondRadius: NGL.AtomSet.prototype.bondRadius,
+
+    dispose: function(){
+
+        this.bonds.length = 0;
+        this.bondCount = 0;
+
+    }
 
 };
 
@@ -3358,6 +3508,9 @@ NGL.Structure = function( name, path ){
     this.name = name;
     this.path = path;
 
+    this.atoms = [];
+    this.models = [];
+
     this.reset();
 
 };
@@ -3377,8 +3530,8 @@ NGL.Structure.prototype = {
         this.chainCount = 0;
         this.modelCount = 0;
 
-        this.atoms = [];
-        this.models = [];
+        this.atoms.length = 0;
+        this.models.length = 0;
         this.bondSet = new NGL.BondSet();
 
     },
@@ -4152,9 +4305,30 @@ NGL.Structure.prototype = {
 
         console.timeEnd( "NGL.Structure.clone" );
 
-        console.log( s );
+        if( NGL.debug ) console.log( s );
 
         return s;
+
+    },
+
+    dispose: function(){
+
+        this.atomCount = 0;
+        this.residueCount = 0;
+        this.chainCount = 0;
+        this.modelCount = 0;
+
+        this.atoms.length = 0;
+        this.models.length = 0;
+
+        if( this.cif ) delete this.cif;
+
+        if( this.frames ) this.frames.length = 0;
+        if( this.boxes ) this.boxes.length = 0;
+
+        this.bondSet.dispose();
+
+        if( this.atomArray ) this.atomArray.dispose();
 
     }
 
@@ -5686,6 +5860,38 @@ NGL.AtomArray.prototype = {
 
         return aa;
 
+    },
+
+    dispose: function(){
+
+        if( this.useBuffer ){
+
+            delete this.buffer;
+
+        }
+
+        delete this.atomno;
+        delete this.resname;
+        delete this.x;
+        delete this.y;
+        delete this.z;
+        delete this.element;
+        delete this.chainname;
+        delete this.resno;
+        delete this.serial;
+        delete this.ss;
+        delete this.vdw;
+        delete this.covalent;
+        delete this.hetero;
+        delete this.bfactor;
+        delete this.altloc;
+        delete this.atomname;
+
+        delete this.bonds;
+        delete this.residue;
+
+        this.length = 0;
+
     }
 
 };
@@ -6845,28 +7051,37 @@ NGL.Alignment.prototype = {
         this.V = [];
         this.H = [];
 
-        for(var i = 0; i <= this.n; i++){
-            this.S[i] = [];
-            this.V[i] = [];
-            this.H[i] = [];
-            for(var j = 0; j <= this.m; j++){
-                this.S[i][j] = 0;
-                this.V[i][j] = 0;
-                this.H[i][j] = 0;
+        for( var i = 0; i <= this.n; ++i ){
+
+            this.S[ i ] = [];
+            this.V[ i ] = [];
+            this.H[ i ] = [];
+
+            for( var j = 0; j <= this.m; ++j ){
+
+                this.S[ i ][ j ] = 0;
+                this.V[ i ][ j ] = 0;
+                this.H[ i ][ j ] = 0;
+
             }
+
         }
 
-        for(var i = 0; i <= this.n; ++i){
-            this.S[i][0] = this.gap(0);
-            this.H[i][0] = -Infinity;
+        for( var i = 0; i <= this.n; ++i ){
+
+            this.S[ i ][ 0 ] = this.gap( 0 );
+            this.H[ i ][ 0 ] = -Infinity;
+
         }
 
-        for(var j = 0; j <= this.m; ++j){
-            this.S[0][j] = this.gap(0);
-            this.V[0][j] = -Infinity;
+        for( var j = 0; j <= this.m; ++j ){
+
+            this.S[ 0 ][ j ] = this.gap( 0 );
+            this.V[ 0 ][ j ] = -Infinity;
+
         }
 
-        this.S[0][0] = 0;
+        this.S[ 0 ][ 0 ] = 0;
 
         // console.log(this.S, this.V, this.H);
 
@@ -6891,13 +7106,17 @@ NGL.Alignment.prototype = {
 
             return function( i, j ){
 
-                c1 = seq1[i];
-                c2 = seq2[j];
+                c1 = seq1[ i ];
+                c2 = seq2[ j ];
 
                 try{
+
                     return substMatrix[ c1 ][ c2 ];
-                }catch(e){
+
+                }catch( e ){
+
                     return -4;
+
                 }
 
             }
@@ -6908,10 +7127,10 @@ NGL.Alignment.prototype = {
 
             return function( i, j ){
 
-                c1 = seq1[i];
-                c2 = seq2[j];
+                c1 = seq1[ i ];
+                c2 = seq2[ j ];
 
-                return c1==c2 ? 5 : -3;
+                return c1 === c2 ? 5 : -3;
 
             }
 
@@ -6942,29 +7161,29 @@ NGL.Alignment.prototype = {
 
         for( i = 1; i <= n; ++i ){
 
-            Si1 = S[i-1];
-            Vi1 = V[i-1];
+            Si1 = S[ i - 1 ];
+            Vi1 = V[ i - 1 ];
 
-            Vi = V[i];
-            Hi = H[i];
-            Si = S[i];
+            Vi = V[ i ];
+            Hi = H[ i ];
+            Si = S[ i ];
 
             for( j = 1; j <= m; ++j ){
 
                 Vi[j] = Math.max(
-                    Si1[j] + gap0,
-                    Vi1[j] + gapExtensionPenalty
+                    Si1[ j ] + gap0,
+                    Vi1[ j ] + gapExtensionPenalty
                 );
 
                 Hi[j] = Math.max(
-                    Si[j-1] + gap0,
-                    Hi[j-1] + gapExtensionPenalty
+                    Si[ j - 1 ] + gap0,
+                    Hi[ j - 1 ] + gapExtensionPenalty
                 );
 
                 Si[j] = Math.max(
-                    Si1[j-1] + scoreFn(i-1, j-1), // match
-                    Vi[j], //del
-                    Hi[j] // ins
+                    Si1[ j - 1 ] + scoreFn( i - 1, j - 1 ), // match
+                    Vi[ j ], //del
+                    Hi[ j ]  // ins
                 );
 
             }
@@ -7068,7 +7287,7 @@ NGL.Alignment.prototype = {
 
         while( i > 0 ){
 
-            this.ali1 = this.seq1[i-1] + this.ali1;
+            this.ali1 = this.seq1[ i - 1 ] + this.ali1;
             this.ali2 = '-' + this.ali2;
             --i;
 
@@ -7077,7 +7296,7 @@ NGL.Alignment.prototype = {
         while( j > 0 ){
 
             this.ali1 = '-' + this.ali1;
-            this.ali2 = this.seq2[j-1] + this.ali2;
+            this.ali2 = this.seq2[ j - 1 ] + this.ali2;
             --j;
 
         }
@@ -8885,7 +9104,8 @@ NGL.buildStructure = function( structure, callback ){
         function(){
 
             console.timeEnd( "NGL.buildStructure" );
-            console.log( structure );
+
+            if( NGL.debug ) console.log( structure );
 
             callback();
 
@@ -9737,13 +9957,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var pendingString = false;
     var currentString = null;
     var pendingLoop = false;
-    var loopPointers = null;
+    var loopPointers = [];
     var currentLoopIndex = null;
     var currentCategory = null;
     var currentName = null;
     var first = null;
-    var indexList = null;
-    var pointerNames = null;
+    var indexList = [];
+    var pointerNames = [];
 
     var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
         type_symbol, label_asym_id,
@@ -9771,13 +9991,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 pendingString = false;
                 pendingLoop = false;
-                loopPointers = null;
+                loopPointers.length = 0;
                 currentLoopIndex = null;
                 currentCategory = null;
                 currentName = null;
                 first = null;
-                indexList = null;
-                pointerNames = null;
+                indexList.length = 0;
+                pointerNames.length = 0;
 
             }else if( line.substring( 0, 5 )==="data_" ){
 
@@ -9822,8 +10042,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 // console.log( "LOOP START" );
 
                 pendingLoop = true;
-                loopPointers = [];
-                pointerNames = [];
+                loopPointers.length = 0;
+                pointerNames.length = 0;
                 currentLoopIndex = 0;
 
             }else if( line[0]==="_" ){
@@ -9899,7 +10119,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                                 "label_alt_id", "auth_seq_id", "pdbx_PDB_model_num"
                             ];
 
-                            indexList = [];
+                            indexList.length = 0;
 
                             for( var j = 0; j < nn; ++j ){
 
@@ -11908,27 +12128,20 @@ NGL.Viewer.prototype = {
         this.renderer.autoClear = false;
         this.renderer.sortObjects = true;
 
-        var _glExtensionFragDepth = this.renderer.context.getExtension(
-            'EXT_frag_depth'
-        );
-        if( !_glExtensionFragDepth ){
-            console.info( "EXT_frag_depth not available" );
-        }
-        NGL.extensionFragDepth = _glExtensionFragDepth;
+        var gl = this.renderer.context;
 
-        var _glStandardDerivatives = this.renderer.context.getExtension(
-            'OES_standard_derivatives'
-        );
-        if( !_glStandardDerivatives ){
-            console.error( "OES_standard_derivatives not available" );
+        NGL.extensionFragDepth = gl.getExtension( 'EXT_frag_depth' );
+        if( !NGL.extensionFragDepth ){
+            console.info( "EXT_frag_depth not supported" );
         }
 
-        var _glElementIndexUint = this.renderer.context.getExtension(
-            'OES_element_index_uint'
-        );
-        if( !_glElementIndexUint ){
+        if( !this.renderer.supportsStandardDerivatives() ){
+            console.warn( "OES_standard_derivatives not supported" );
+        }
+
+        if( !gl.getExtension( 'OES_element_index_uint' ) ){
             NGL.indexUint16 = true;
-            console.info( "OES_element_index_uint not available" );
+            console.info( "OES_element_index_uint not supported" );
         }
 
         if( this.eid ){
@@ -11955,7 +12168,58 @@ NGL.Viewer.prototype = {
 
         };
 
+        // picking texture
+
+        if( !this.renderer.supportsFloatTextures() ){
+            console.warn( "OES_texture_float not supported" );
+        }
+
+        if( !gl.getExtension( "WEBGL_color_buffer_float" ) ){
+            console.warn( "WEBGL_color_buffer_float not supported" );
+        }
+
+        this.pickingTexture = new THREE.WebGLRenderTarget(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                stencilBuffer: false,
+                format: THREE.RGBAFormat,
+                type: this.supportsReadPixelsFloat() ? THREE.FloatType : THREE.UnsignedByteType
+            }
+        );
+        this.pickingTexture.generateMipmaps = false;
+
     },
+
+    supportsReadPixelsFloat: function(){
+
+        var value = undefined;
+
+        return function(){
+
+            if( value === undefined ){
+
+                var gl = this.renderer.context;
+
+                value = (
+
+                    ( NGL.browser === "Chrome" &&
+                        this.renderer.supportsFloatTextures() ) ||
+
+                    ( this.renderer.supportsFloatTextures() &&
+                        gl.getExtension( "WEBGL_color_buffer_float" ) )
+
+                );
+
+            }
+
+            return value;
+
+        }
+
+    }(),
 
     initScene: function(){
 
@@ -12034,7 +12298,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    add: function( buffer, matrixList, background ){
+    add: function( buffer, instanceList, background ){
 
         // console.time( "Viewer.add" );
 
@@ -12047,12 +12311,12 @@ NGL.Viewer.prototype = {
 
         if( buffer.size > 0 ){
 
-            if( matrixList ){
+            if( instanceList ){
 
-                matrixList.forEach( function( matrix ){
+                instanceList.forEach( function( instance ){
 
                     this.addBuffer(
-                        buffer, group, pickingGroup, background, matrix
+                        buffer, group, pickingGroup, background, instance
                     );
 
                 }, this );
@@ -12100,7 +12364,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBuffer: function( buffer, group, pickingGroup, background, matrix ){
+    addBuffer: function( buffer, group, pickingGroup, background, instance ){
 
         // console.time( "Viewer.addBuffer" );
 
@@ -12114,9 +12378,8 @@ NGL.Viewer.prototype = {
             bg, buffer.material
         );
         mesh.frustumCulled = false;
-        if( matrix ){
-            mesh.applyMatrix( matrix );
-            mesh.userData[ "matrix" ] = matrix;
+        if( instance ){
+            mesh.applyMatrix( instance.matrix );
         }
         group.add( mesh );
 
@@ -12130,19 +12393,25 @@ NGL.Viewer.prototype = {
                 "picking", buffer.pickingMaterial
             );
             pickingMesh.frustumCulled = false;
-            if( matrix ){
-                // pickingMesh.applyMatrix( matrix );
+            if( instance ){
+                // pickingMesh.applyMatrix( instance.matrix );
                 pickingMesh.matrix.copy( mesh.matrix );
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                pickingMesh.userData[ "matrix" ] = matrix;
+                pickingMesh.userData[ "instance" ] = instance;
             }
             pickingGroup.add( pickingMesh );
 
+            // console.log( pickingMesh )
+
         }
 
-        this.updateBoundingBox( buffer.geometry, matrix );
+        if( instance ){
+            this.updateBoundingBox( buffer.geometry, instance.matrix );
+        }else{
+            this.updateBoundingBox( buffer.geometry );
+        }
 
         // console.timeEnd( "Viewer.addBuffer" );
 
@@ -12332,22 +12601,31 @@ NGL.Viewer.prototype = {
 
     onWindowResize: function(){
 
-        this.renderer.setPixelRatio( window.devicePixelRatio );
+        if( this.container === document ){
 
-        if ( this.container === document ) {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
-        } else {
+
+        }else{
+
             var box = this.container.getBoundingClientRect();
             this.width = box.width;
             this.height = box.height;
+
         }
+
         this.aspect = this.width / this.height;
-
         this.perspectiveCamera.aspect = this.aspect;
-
         this.camera.updateProjectionMatrix();
+
+        this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
+
+        this.pickingTexture.setSize(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio
+        );
+
         this.controls.handleResize();
 
         this.requestRender();
@@ -12395,7 +12673,7 @@ NGL.Viewer.prototype = {
         requestAnimationFrame( this.animate.bind( this ) );
 
         this.controls.update();
-        this.stats.update();
+        // this.stats.update();
 
     },
 
@@ -12404,6 +12682,93 @@ NGL.Viewer.prototype = {
         NGL.screenshot( this, params );
 
     },
+
+    pick: function(){
+
+        var pixelBufferFloat = new Float32Array( 4 );
+        var pixelBufferUint = new Uint8Array( 4 );
+
+        return function( x, y ){
+
+            var id, object, instance;
+
+            var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
+
+            this.render( null, true );
+
+            var gl = this.renderer.context;
+
+            this.renderer.setRenderTarget( this.pickingTexture );
+
+            gl.readPixels(
+                x * window.devicePixelRatio,
+                y * window.devicePixelRatio,
+                1,
+                1,
+                gl.RGBA,
+                this.supportsReadPixelsFloat() ? gl.FLOAT : gl.UNSIGNED_BYTE,
+                pixelBuffer
+            );
+
+            this.renderer.setRenderTarget();
+
+            if( this.supportsReadPixelsFloat() ){
+
+                // TODO simplify ...
+                id =
+                    ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
+                    ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
+                    ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+
+            }else{
+
+                id =
+                    ( pixelBuffer[0] << 16 ) |
+                    ( pixelBuffer[1] << 8 ) |
+                    ( pixelBuffer[2] );
+
+            }
+
+            object = this.pickingGroup.getObjectById(
+                Math.round( pixelBuffer[ 3 ] )
+            );
+
+            if( object && object.userData.instance ){
+
+                instance = object.userData.instance;
+
+            }
+
+            if( NGL.debug ){
+
+                var rgba = Array.apply( [], pixelBuffer );
+
+                console.log( pixelBuffer );
+
+                console.log(
+                    "picked color",
+                    [
+                        ( rgba[0] ).toPrecision(2),
+                        ( rgba[1] ).toPrecision(2),
+                        ( rgba[2] ).toPrecision(2),
+                        ( rgba[3] ).toPrecision(2)
+                    ]
+                );
+                console.log( "picked id", id );
+                console.log( "picked instance", instance );
+                console.log( "picked position", x, y );
+                console.log( "devicePixelRatio", window.devicePixelRatio );
+
+            }
+
+            return {
+                "id": id,
+                "instance": instance
+            };
+
+        };
+
+    }(),
 
     requestRender: function(){
 
@@ -12477,16 +12842,23 @@ NGL.Viewer.prototype = {
 
         // render
 
-        this.renderer.clear();
-
         this.updateInfo( true );
 
         if( picking ){
 
-            this.renderer.render( this.pickingGroup, this.camera );
+            this.renderer.clearTarget( this.pickingTexture );
+
+            this.renderer.render(
+                this.pickingGroup, this.camera, this.pickingTexture
+            );
             this.updateInfo();
 
+            // FIXME required, maybe a three.js bug
+            this.renderer.setRenderTarget();
+
         }else{
+
+            this.renderer.clear();
 
             this.renderer.render( this.backgroundGroup, this.camera );
             this.renderer.clearDepth();
@@ -12578,6 +12950,10 @@ NGL.Viewer.prototype = {
             var u = o.material.uniforms;
             if( !u ) return;
 
+            if( u.objectId ){
+                u.objectId.value = this.supportsReadPixelsFloat() ? o.id : o.id / 255;
+            }
+
             if( u.modelViewMatrixInverse ){
                 u.modelViewMatrixInverse.value.getInverse(
                     o._modelViewMatrix
@@ -12632,76 +13008,86 @@ NGL.Viewer.prototype = {
         var matrix = new THREE.Matrix4();
         var modelViewProjectionMatrix = new THREE.Matrix4();
 
-        var i, j, n, attributes, sortArray;
-
         return function( scene, camera ){
 
             // console.time( "sort" );
 
             scene.traverseVisible( function ( o ){
 
-                if( o instanceof THREE.PointCloud && o.sortParticles ){
+                if( ! ( o instanceof THREE.PointCloud ) || ! o.sortParticles ){
 
-                    matrix.multiplyMatrices(
-                        camera.matrixWorldInverse, o.matrixWorld
-                    );
-                    modelViewProjectionMatrix.multiplyMatrices(
-                        camera.projectionMatrix, matrix
-                    )
-                    attributes = o.geometry.attributes;
-                    n = attributes.position.length / 3;
-                    sortArray = [];
+                    return;
 
-                    for( i = 0; i < n; ++i ){
+                }
 
-                        vertex.fromArray( attributes.position.array, i * 3 );
-                        vertex.applyProjection( modelViewProjectionMatrix );
+                matrix.multiplyMatrices(
+                    camera.matrixWorldInverse, o.matrixWorld
+                );
+                modelViewProjectionMatrix.multiplyMatrices(
+                    camera.projectionMatrix, matrix
+                )
 
-                        sortArray[ i ] = [ vertex.z, i ];
+                var attributes = o.geometry.attributes;
+                var n = attributes.position.length / 3;
 
+                if( !o.userData.sortData ){
+                    o.userData.sortData = {};
+                }
+
+                var sortData = o.userData.sortData;
+
+                if( !sortData.__sortArray ){
+                    sortData.__sortArray = new Float32Array( n * 2 );
+                }
+
+                var sortArray = sortData.__sortArray;
+
+                for( var i = 0; i < n; ++i ){
+
+                    var i2 = 2 * i;
+
+                    vertex.fromArray( attributes.position.array, i * 3 );
+                    vertex.applyProjection( modelViewProjectionMatrix );
+
+                    // negate, so that sorting order is reversed
+                    sortArray[ i2 ] = -vertex.z;
+                    sortArray[ i2 + 1 ] = i;
+
+                }
+
+                THREE.TypedArrayUtils.quicksortIP( sortArray, 2, 0 );
+
+                var index, indexSrc, indexDst, tmpTab;
+
+                for( var name in attributes ){
+
+                    var attr = attributes[ name ];
+                    var array = attr.array;
+                    var itemSize = attr.itemSize;
+
+                    if( !sortData[ name ] ){
+                        sortData[ name ] = new Float32Array(
+                            itemSize * n
+                        );
                     }
 
-                    sortArray.sort( function( a, b ){
-                        return b[ 0 ] - a[ 0 ];
-                    } );
+                    tmpTab = sortData[ name ];
+                    sortData[ name ] = array;
 
-                    if( !o.userData.sortData ){
-                        o.userData.sortData = {};
-                    }
+                    for( var i = 0; i < n; ++i ){
 
-                    var index, indexSrc, indexDst, tmpTab;
+                        index = sortArray[ i * 2 + 1 ];
 
-                    for( var val in attributes ){
-
-                        if( !o.userData.sortData[ val ] ){
-                            o.userData.sortData[ val ] = new Float32Array(
-                                attributes[ val ].itemSize * n
-                            );
+                        for( var j = 0; j < itemSize; ++j ){
+                            indexSrc = index * itemSize + j;
+                            indexDst = i * itemSize + j;
+                            tmpTab[ indexDst ] = array[ indexSrc ];
                         }
 
-                        tmpTab = o.userData.sortData[ val ];
-                        o.userData.sortData[ val ] = attributes[ val ].array;
-
-                        // tmpTab = new Float32Array(
-                        //     attributes[ val ].itemSize * n
-                        // )
-
-                        for( i = 0; i < n; ++i ){
-
-                            index = sortArray[ i ][ 1 ];
-
-                            for( j = 0; j < attributes[ val ].itemSize; ++j ){
-                                indexSrc = index * attributes[ val ].itemSize + j;
-                                indexDst = i * attributes[ val ].itemSize + j;
-                                tmpTab[ indexDst ] = attributes[ val ].array[indexSrc];
-                            }
-
-                        }
-
-                        attributes[ val ].array = tmpTab;
-                        attributes[ val ].needsUpdate = true;
-
                     }
+
+                    attributes[ name ].array = tmpTab;
+                    attributes[ name ].needsUpdate = true;
 
                 }
 
@@ -13117,7 +13503,9 @@ NGL.screenshot = function( viewer, params ){
  * @class
  * @private
  */
-NGL.Buffer = function( position, color, pickingColor ){
+NGL.Buffer = function( position, color, pickingColor, params ){
+
+    var p = params || {};
 
     // required properties:
     // - size
@@ -13126,10 +13514,11 @@ NGL.Buffer = function( position, color, pickingColor ){
     // - fragmentShader
 
     this.pickable = false;
-    this.transparent = this.transparent || false;
-    this.side = this.side !== undefined ? this.side : THREE.DoubleSide;
-    this.opacity = this.opacity !== undefined ? this.opacity : 1.0;
-    this.nearClip = this.nearClip !== undefined ? this.nearClip : true;
+
+    this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -13155,8 +13544,14 @@ NGL.Buffer = function( position, color, pickingColor ){
         {
             "opacity": { type: "f", value: this.opacity },
             "nearClip": { type: "f", value: 0.0 },
+            "objectId": { type: "f", value: 0.0 },
         }
     ]);
+
+    this.pickingUniforms = {
+        "nearClip": { type: "f", value: 0.0 },
+        "objectId": { type: "f", value: 0.0 },
+    };
 
 };
 
@@ -13197,20 +13592,21 @@ NGL.Buffer.prototype = {
     getMaterial: function( type ){
 
         var material;
-        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
 
         if( type === "picking" ){
 
             material = new THREE.ShaderMaterial( {
-                uniforms: uniforms,
+
+                uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
                 attributes: this.attributes,
                 vertexShader: NGL.getShader( this.vertexShader ),
                 fragmentShader: NGL.getShader( this.fragmentShader ),
                 depthTest: true,
                 transparent: false,
                 depthWrite: true,
-                lights: true,
+                lights: false,
                 fog: false
+
             });
 
             material.side = this.side;
@@ -13219,24 +13615,30 @@ NGL.Buffer.prototype = {
         }else if( type === "wireframe" || this.wireframe ){
 
             material = new THREE.LineBasicMaterial({
-                uniforms: uniforms,
+
+                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
                 vertexColors: true,
+                lights: false,
                 fog: true
+
             });
 
         }else{
 
             material = new THREE.ShaderMaterial( {
-                uniforms: uniforms,
+
+                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
                 vertexShader: NGL.getShader( this.vertexShader ),
                 fragmentShader: NGL.getShader( this.fragmentShader ),
                 depthTest: true,
                 transparent: this.transparent,
                 depthWrite: true,
-                lights: true,
+                // lights: true,
+                lights: false,
                 fog: true
+
             });
 
             material.side = this.side;
@@ -13375,22 +13777,11 @@ NGL.Buffer.prototype = {
 };
 
 
-/**
- * [MeshBuffer description]
- * @class
- * @augments {NGL.Buffer}
- * @param {Float32Array} position
- * @param {Float32Array} color
- * @param {Float32Array} index
- * @param {Float32Array} normal
- */
-NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe, transparent, side, opacity, nearClip ){
+NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params ){
 
-    this.wireframe = wireframe || false;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
-    this.nearClip = nearClip !== undefined ? nearClip : true;
+    var p = params || {};
+
+    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -13399,7 +13790,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
 
     this.index = index;
 
-    NGL.Buffer.call( this, position, color, pickingColor );
+    NGL.Buffer.call( this, position, color, pickingColor, p );
 
     this.addAttributes({
         "normal": { type: "v3", value: normal },
@@ -13414,18 +13805,12 @@ NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
 NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
 
 
-/**
- * [MappedBuffer description]
- * @class
- * @private
- * @augments {NGL.Buffer}
- */
-NGL.MappedBuffer = function(){
+NGL.MappedBuffer = function( params ){
 
     this.mappedSize = this.size * this.mappingSize;
     this.attributeSize = this.mappedSize;
 
-    NGL.Buffer.call( this );
+    NGL.Buffer.call( this, null, null, null, params );
 
     this.addAttributes({
         "mapping": { type: this.mappingType, value: null },
@@ -13539,13 +13924,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 };
 
 
-/**
- * [QuadBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.QuadBuffer = function(){
+NGL.QuadBuffer = function( params ){
 
     this.mapping = new Float32Array([
         -1.0,  1.0,
@@ -13564,7 +13943,7 @@ NGL.QuadBuffer = function(){
     this.mappingSize = 4;
     this.mappingItemSize = 2;
 
-    NGL.MappedBuffer.call( this );
+    NGL.MappedBuffer.call( this, params );
 
 };
 
@@ -13573,13 +13952,7 @@ NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 NGL.QuadBuffer.prototype.constructor = NGL.QuadBuffer;
 
 
-/**
- * [BoxBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.BoxBuffer = function(){
+NGL.BoxBuffer = function( params ){
 
     this.mapping = new Float32Array([
         -1.0, -1.0, -1.0,
@@ -13612,7 +13985,7 @@ NGL.BoxBuffer = function(){
     this.mappingSize = 8;
     this.mappingItemSize = 3;
 
-    NGL.MappedBuffer.call( this );
+    NGL.MappedBuffer.call( this, params );
 
 };
 
@@ -13621,13 +13994,7 @@ NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 NGL.BoxBuffer.prototype.constructor = NGL.BoxBuffer;
 
 
-/**
- * [AlignedBoxBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.AlignedBoxBuffer = function(){
+NGL.AlignedBoxBuffer = function( params ){
 
     this.mapping = new Float32Array([
         -1.0,  1.0, -1.0,
@@ -13650,7 +14017,7 @@ NGL.AlignedBoxBuffer = function(){
     this.mappingSize = 6;
     this.mappingItemSize = 3;
 
-    NGL.MappedBuffer.call( this );
+    NGL.MappedBuffer.call( this, params );
 
 };
 
@@ -13662,25 +14029,13 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 ////////////////////////
 // Impostor Primitives
 
-/**
- * [SphereImpostorBuffer description]
- * @class
- * @augments {NGL.MappedBuffer}
- * @param {Float32Array} position
- * @param {Float32Array} color
- * @param {Float32Array} radius
- */
-NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, transparent, side, opacity ){
-
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
     this.size = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
     this.fragmentShader = 'SphereImpostor.frag';
 
-    NGL.QuadBuffer.call( this );
+    NGL.QuadBuffer.call( this, params );
 
     this.addUniforms({
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
@@ -13719,37 +14074,25 @@ NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 NGL.SphereImpostorBuffer.prototype.constructor = NGL.SphereImpostorBuffer;
 
 
-/**
- * [CylinderImpostorBuffer description]
- * @class
- * @augments {NGL.AlignedBoxBuffer}
- * @param {Float32Array} from
- * @param {Float32Array} to
- * @param {Float32Array} color
- * @param {Float32Array} color2
- * @param {Float32Array} radius
- * @param {Float} shift - Moves the cylinder in camera space
- *      to i.e. get multiple aligned cylinders.
- * @param {Boolean} cap - If true the cylinders are capped.
- */
-NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, transparent, side, opacity ){
+NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    if( !shift ) shift = 0;
+    var p = params || p;
 
-    this.cap = cap === undefined ? true : cap;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    // Moves the cylinder in camera space to get, for example,
+    // one of multiple shifted screen-aligned cylinders.
+    this.shift = p.shift !== undefined ? p.shift : 0;
+
+    this.cap = p.cap !== undefined ? p.cap : true;
 
     this.size = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
     this.fragmentShader = 'CylinderImpostor.frag';
 
-    NGL.AlignedBoxBuffer.call( this );
+    NGL.AlignedBoxBuffer.call( this, p );
 
     this.addUniforms({
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'shift': { type: "f", value: shift },
+        'shift': { type: "f", value: this.shift },
     });
 
     this.addAttributes({
@@ -13788,7 +14131,7 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
     this.finalize();
 
     // FIXME
-    // if( cap ){
+    // if( this.cap ){
     //     this.material.defines[ "CAP" ] = 1;
     // }
 
@@ -13811,17 +14154,17 @@ NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 }
 
 
-NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, transparent, side, opacity ){
+NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    var p = params || p;
+
+    var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
     this.size = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
     this.fragmentShader = 'HyperballStickImpostor.frag';
 
-    NGL.BoxBuffer.call( this );
+    NGL.BoxBuffer.call( this, p );
 
     this.addUniforms({
         'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
@@ -13879,18 +14222,10 @@ NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpos
 // Geometry Primitives
 
 
-/**
- * [GeometryBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side, opacity ){
+NGL.GeometryBuffer = function( position, color, pickingColor, params ){
 
-    this.wireframe = false;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    // required properties:
+    // - geo
 
     var geo = this.geo;
 
@@ -13924,8 +14259,7 @@ NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side,
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, this.wireframe,
-        this.transparent, this.side, this.opacity
+        this.meshNormal, this.meshPickingColor, params
     );
 
     this.pickable = this.meshBuffer.pickable;
@@ -14105,15 +14439,15 @@ NGL.GeometryBuffer.prototype = {
 }
 
 
-NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, detail, transparent, side, opacity ){
+NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
 
-    detail = detail!==undefined ? detail : 1;
+    var detail = params.detail !== undefined ? params.detail : 1;
 
     this.geo = new THREE.IcosahedronGeometry( 1, detail );
 
     this.setPositionTransform( radius );
 
-    NGL.GeometryBuffer.call( this, position, color, pickingColor, transparent, side, opacity );
+    NGL.GeometryBuffer.call( this, position, color, pickingColor, params );
 
 };
 
@@ -14147,15 +14481,16 @@ NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
 }
 
 
-NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments, transparent, side, opacity ){
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    radiusSegments = radiusSegments || 10;
+    var radiusSegments = params.radiusSegments !== undefined ? params.radiusSegments : 10;
 
     this.updateNormals = true;
 
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
 
-    this.geo = new THREE.CylinderGeometry(1, 1, 1, radiusSegments, 1, true);
+    // FIXME params.cap
+    this.geo = new THREE.CylinderGeometry( 1, 1, 1, radiusSegments, 1, true );
     this.geo.applyMatrix( matrix );
 
     var n = from.length;
@@ -14183,8 +14518,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
     this.setPositionTransform( this._from, this._to, this._radius );
 
     NGL.GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor,
-        transparent, side, opacity
+        this, this._position, this._color, this._pickingColor, params
     );
 
 };
@@ -14293,20 +14627,13 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
 //////////////////////
 // Pixel Primitives
 
-/**
- * [PointBuffer description]
- * @class
- * @todo  Inherit from NGL.Buffer
- * @param {Float32Array} position
- * @param {Float32Array} color
- */
-NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, transparent, opacity ){
+NGL.PointBuffer = function( position, color, params ){
 
-    this.pointSize = pointSize || false;
-    this.sizeAttenuation = sizeAttenuation !== undefined ? sizeAttenuation : false;
-    this.sort = sort !== undefined ? sort : true;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    var p = params || {};
+
+    this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
+    this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
+    this.sort = p.sort !== undefined ? p.sort : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -14321,7 +14648,7 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, t
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
 
-    NGL.Buffer.call( this, position, color );
+    NGL.Buffer.call( this, position, color, null, p );
 
 };
 
@@ -14405,20 +14732,14 @@ NGL.PointBuffer.prototype.dispose = function(){
 };
 
 
-/**
- * [LineBuffer description]
- * @class
- * @todo  Inherit from NGL.Buffer
- * @param {Float32Array} from
- * @param {Float32Array} to
- * @param {Float32Array} color
- * @param {Float32Array} color2
- */
-NGL.LineBuffer = function( from, to, color, color2, lineWidth, transparent, opacity ){
+NGL.LineBuffer = function( from, to, color, color2, params ){
 
-    this.lineWidth = lineWidth || 1;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    var p = params || {};
+
+    this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
 
     this.size = from.length / 3;
     this.vertexShader = 'Line.vert';
@@ -14596,7 +14917,7 @@ NGL.LineBuffer.prototype = {
 };
 
 
-NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
+NGL.TraceBuffer = function( position, color, params ){
 
     this.size = position.length / 3;
 
@@ -14614,8 +14935,7 @@ NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
     });
 
     this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2,
-        lineWidth, transparent, opacity
+        this.from, this.to, this.lineColor, this.lineColor2, params
     );
 
     this.pickable = this.lineBuffer.pickable;
@@ -14750,15 +15070,18 @@ NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
 
 
-NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, transparent, side, opacity ){
+NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, params ){
+
+    var p = params || {};
+
+    this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
     this.size = ( position.length/3 ) - 1;
-
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     var n = this.size;
     var n4 = n * 4;
@@ -14778,9 +15101,15 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, t
         NGL.UniformsLib[ "lights" ],
         {
             "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0 },
+            "nearClip": { type: "f", value: 0.0 },
+            "objectId": { type: "f", value: 0.0 },
         }
     ]);
+
+    this.pickingUniforms = {
+        "nearClip": { type: "f", value: 0.0 },
+        "objectId": { type: "f", value: 0.0 },
+    };
 
     this.geometry = new THREE.BufferGeometry();
 
@@ -15029,20 +15358,17 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe, transparent, side, opacity, nearClip ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, pickingColor, params ){
 
-    this.rx = rx || 1.5;
-    this.ry = ry || 0.5;
+    var p = params || {};
 
-    this.wireframe = wireframe || false;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
-    this.nearClip = nearClip !== undefined ? nearClip : true;
+    this.rx = p.rx !== undefined ? p.rx : 1.5;
+    this.ry = p.ry !== undefined ? p.ry : 0.5;
+    this.radialSegments = p.radialSegments !== undefined ? p.radialSegments : 4;
+    this.capped = p.capped !== undefined ? p.capped : false;
 
-    this.radialSegments = radialSegments || 4;
-    this.capVertices = capped ? this.radialSegments : 0;
-    this.capTriangles = capped ? this.radialSegments - 2 : 0;
+    this.capVertices = this.capped ? this.radialSegments : 0;
+    this.capTriangles = this.capped ? this.radialSegments - 2 : 0;
     this.size = position.length / 3;
 
     var n = this.size;
@@ -15056,7 +15382,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = new Float32Array( x );
     this.meshIndex = new Uint32Array(
-        n1 * 2 * radialSegments * 3 + 2 * this.capTriangles * 3
+        n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
     );
 
     this.makeIndex();
@@ -15073,8 +15399,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, this.wireframe,
-        this.transparent, this.side, this.opacity, this.nearClip
+        this.meshNormal, this.meshPickingColor, p
     );
 
     this.pickable = this.meshBuffer.pickable;
@@ -15469,20 +15794,18 @@ NGL.SurfaceBuffer.prototype.constructor = NGL.SurfaceBuffer;
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disableImpostor, transparent, side, opacity ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, params, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.SphereGeometryBuffer(
-            position, color, radius, pickingColor, detail,
-            transparent, side, opacity
+            position, color, radius, pickingColor, params
         );
 
     }else{
 
         return new NGL.SphereImpostorBuffer(
-            position, color, radius, pickingColor,
-            transparent, side, opacity
+            position, color, radius, pickingColor, params
         );
 
     }
@@ -15490,7 +15813,7 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disa
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments, disableImpostor, transparent, side, opacity ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
@@ -15498,16 +15821,14 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2, radius,
-            pickingColor, pickingColor2, radiusSegments,
-            transparent, side, opacity
+            pickingColor, pickingColor2, params
         );
 
     }else{
 
         return new NGL.CylinderImpostorBuffer(
-            from, to, color, color2, radius, shift, cap,
-            pickingColor, pickingColor2,
-            transparent, side, opacity
+            from, to, color, color2, radius,
+            pickingColor, pickingColor2, params
         );
 
     }
@@ -15515,23 +15836,22 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, radiusSegments, disableImpostor, transparent, side, opacity ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2,
             NGL.Utils.calculateMinArray( radius1, radius2 ),
-            pickingColor, pickingColor2, radiusSegments,
-            transparent, side, opacity
+            pickingColor, pickingColor2, params
         );
 
     }else{
 
         return new NGL.HyperballStickImpostorBuffer(
-            from, to, color, color2, radius1, radius2, shrink,
-            pickingColor, pickingColor2,
-            transparent, side, opacity
+            from, to, color, color2,
+            radius1, radius2,
+            pickingColor, pickingColor2, params
         );
 
     }
@@ -15606,12 +15926,13 @@ NGL.getFont = function( name ){
 };
 
 
-NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity ){
+NGL.TextBuffer = function( position, size, color, text, params ){
 
-    this.antialias = antialias !== undefined ? antialias : true;
-    this.opacity = opacity || 1.0;
+    var p = params || {};
 
-    var fontName = font || 'Arial';
+    this.antialias = p.antialias !== undefined ? p.antialias : true;
+
+    var fontName = p.font !== undefined ? p.font : 'Arial';
     this.font = NGL.getFont( fontName );
 
     this.tex = new THREE.Texture(
@@ -15633,7 +15954,7 @@ NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity
     this.vertexShader = 'SDFFont.vert';
     this.fragmentShader = 'SDFFont.frag';
 
-    NGL.QuadBuffer.call( this );
+    NGL.QuadBuffer.call( this, p );
 
     this.addUniforms({
         "fontTexture"  : { type: "t", value: this.tex },
@@ -15975,6 +16296,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
+    this.bufferList = [];
     this.debugBufferList = [];
 
     this.init( params );
@@ -16022,7 +16344,8 @@ NGL.Representation.prototype = {
 
     create: function(){
 
-        this.bufferList = [];
+        // this.bufferList.length = 0;
+        // this.debugBufferList.length = 0;
 
     },
 
@@ -16038,7 +16361,7 @@ NGL.Representation.prototype = {
             this.init( params );
         }
 
-        this.dispose();
+        this.clear();
         this.create();
         if( !this.manualAttach ) this.attach();
 
@@ -16171,29 +16494,33 @@ NGL.Representation.prototype = {
 
     },
 
-    dispose: function(){
+    clear: function(){
 
         this.bufferList.forEach( function( buffer ){
 
             this.viewer.remove( buffer );
             buffer.dispose();
-            buffer = null;  // aid GC
 
         }, this );
 
-        this.bufferList = [];
+        this.bufferList.length = 0;
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
             this.viewer.remove( debugBuffer );
             debugBuffer.dispose();
-            debugBuffer = null;  // aid GC
 
         }, this );
 
-        this.debugBufferList = [];
+        this.debugBufferList.length = 0;
 
         this.viewer.requestRender();
+
+    },
+
+    dispose: function(){
+
+        this.clear();
 
     }
 
@@ -16204,6 +16531,8 @@ NGL.Representation.prototype = {
 // Structure representation
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
+
+    this.fiberList = [];
 
     this.selection = new NGL.Selection( params.sele );
 
@@ -16363,26 +16692,39 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     attach: function(){
 
+        console.time( "StructureRepresentation.attach" );
+
         var viewer = this.viewer;
         var structure = this.structure;
         var assembly = this.assembly;
 
         // console.log( structure.biomolDict );
 
-        var matrixList = [];
+        var instanceList = [];
 
         if( structure.biomolDict && structure.biomolDict[ assembly ] ){
 
-            matrixList = Object.values(
-                structure.biomolDict[ assembly ].matrixDict
-            );
+            var matrixDict = structure.biomolDict[ assembly ].matrixDict;
+
+            Object.keys( matrixDict ).forEach( function( name, i ){
+
+                instanceList.push( {
+
+                    id: i + 1,
+                    name: name,
+                    assembly: assembly,
+                    matrix: matrixDict[ name ]
+
+                } );
+
+            } );
 
         }
 
         this.bufferList.forEach( function( buffer ){
 
-            if( matrixList.length >= 1 ){
-                viewer.add( buffer, matrixList );
+            if( instanceList.length >= 1 ){
+                viewer.add( buffer, instanceList );
             }else{
                 viewer.add( buffer );
             }
@@ -16391,8 +16733,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
-            if( matrixList.length > 1 ){
-                viewer.add( debugBuffer, matrixList );
+            if( instanceList.length > 1 ){
+                viewer.add( debugBuffer, instanceList );
             }else{
                 viewer.add( debugBuffer );
             }
@@ -16400,6 +16742,26 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         } );
 
         this.setVisibility( this.visible );
+
+        console.timeEnd( "StructureRepresentation.attach" );
+
+    },
+
+    clear: function(){
+
+        this.fiberList.length = 0;
+
+        NGL.Representation.prototype.clear.call( this );
+
+    },
+
+    dispose: function(){
+
+        this.atomSet.dispose();
+
+        delete this.structure;
+
+        NGL.Representation.prototype.dispose.call( this );
 
     }
 
@@ -16457,14 +16819,17 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.sphereBuffer ];
+        this.bufferList.push( this.sphereBuffer );
 
     },
 
@@ -16544,7 +16909,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort !== undefined ? p.sort : true;
+        this.sort = p.sort !== undefined ? p.sort : false;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
@@ -16559,14 +16924,17 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         this.pointBuffer = new NGL.PointBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.color ),
-            this.pointSize,
-            this.sizeAttenuation,
-            this.sort,
-            this.transparent,
-            opacity
+            {
+                pointSize: this.pointSize,
+                sizeAttenuation: this.sizeAttenuation,
+                sort: this.sort,
+                transparent: this.transparent,
+                opacity: opacity,
+                nearClip: this.nearClip
+            }
         );
 
-        this.bufferList = [ this.pointBuffer ];
+        this.bufferList.push( this.pointBuffer );
 
     },
 
@@ -16663,12 +17031,15 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, this.color ),
             text,
-            this.font,
-            this.antialias,
-            opacity
+            {
+                font: this.font,
+                antialias: this.antialias,
+                opacity: opacity,
+                nearClip: this.nearClip
+            }
         );
 
-        this.bufferList = [ this.textBuffer ];
+        this.bufferList.push( this.textBuffer );
 
     },
 
@@ -16767,19 +17138,21 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var opacity = this.transparent ? this.opacity : 1.0;
+        var atomScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.color ),
-            this.atomSet.atomRadius(
-                null, this.radius, this.scale * this.aspectRatio
-            ),
+            this.atomSet.atomRadius( null, this.radius, atomScale ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
         this.__center = new Float32Array( this.atomSet.bondCount * 3 );
@@ -16790,18 +17163,21 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.atomSet.bondColor( null, 0, this.color ),
             this.atomSet.bondColor( null, 1, this.color ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            null,
-            true,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -16941,11 +17317,14 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -16954,18 +17333,21 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             this.atomSet.bondColor( null, 0, this.color ),
             this.atomSet.bondColor( null, 1, this.color ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            null,
-            true,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -17032,12 +17414,15 @@ NGL.LineRepresentation.prototype = NGL.createObject(
             this.atomSet.bondPosition( null, 1 ),
             this.atomSet.bondColor( null, 0, this.color ),
             this.atomSet.bondColor( null, 1, this.color ),
-            this.lineWidth,
-            this.transparent,
-            opacity
+            {
+                lineWidth: this.lineWidth,
+                transparent: this.transparent,
+                opacity: opacity,
+                nearClip: this.nearClip
+            }
         );
 
-        this.bufferList = [ this.lineBuffer ];
+        this.bufferList.push( this.lineBuffer );
 
     },
 
@@ -17134,11 +17519,14 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.color ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, "picking" ),
-            this.sphereDetail,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
         this.__center = new Float32Array( this.atomSet.bondCount * 3 );
@@ -17150,17 +17538,20 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             this.atomSet.bondColor( null, 1, this.color ),
             this.atomSet.bondRadius( null, 0, this.radius, this.scale ),
             this.atomSet.bondRadius( null, 1, this.radius, this.scale ),
-            this.shrink,
             this.atomSet.bondColor( null, 0, "picking" ),
             this.atomSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                shrink: this.shrink,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -17319,18 +17710,21 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         } );
 
+        var sphereScale = this.scale * this.aspectRatio;
+
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
             baSet.atomColor( null, this.color ),
-            baSet.atomRadius(
-                null, this.radius, this.scale * this.aspectRatio
-            ),
+            baSet.atomRadius( null, this.radius, sphereScale ),
             baSet.atomColor( null, "picking" ),
-            this.sphereDetail,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -17339,18 +17733,21 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             bbSet.bondColor( null, 0, this.color ),
             bbSet.bondColor( null, 1, this.color ),
             bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            null,
-            true,
             bbSet.bondColor( null, 0, "picking" ),
             bbSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -17426,6 +17823,15 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    },
+
+    clear: function(){
+
+        if( this.backboneAtomSet ) this.backboneAtomSet.dispose();
+        if( this.backboneBondSet ) this.backboneBondSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -17533,17 +17939,21 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         } );
 
+        var sphereScale = this.scale * this.aspectRatio;
+
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
             baSet.atomColor( null, this.color ),
-            baSet.atomRadius(
-                null, this.radius, this.scale * this.aspectRatio ),
+            baSet.atomRadius( null, this.radius, sphereScale ),
             baSet.atomColor( null, "picking" ),
-            this.sphereDetail,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
@@ -17552,18 +17962,21 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
             bbSet.bondColor( null, 0, this.color ),
             bbSet.bondColor( null, 1, this.color ),
             bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            null,
-            true,
             bbSet.bondColor( null, 0, "picking" ),
             bbSet.bondColor( null, 1, "picking" ),
-            this.radiusSegments,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.sphereBuffer, this.cylinderBuffer ];
+        this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
 
     },
 
@@ -17640,6 +18053,15 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         return this;
 
+    },
+
+    clear: function(){
+
+        if( this.baseAtomSet ) this.baseAtomSet.dispose();
+        if( this.baseBondSet ) this.baseAtomSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
+
     }
 
 } );
@@ -17713,9 +18135,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.structure.eachFiber( function( fiber ){
@@ -17742,16 +18161,18 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                     subOri.tangent,
                     subCol.color,
                     subSize.size,
-                    scope.radialSegments,
                     subCol.pickingColor,
-                    rx,
-                    ry,
-                    scope.capped,
-                    scope.wireframe,
-                    scope.transparent,
-                    parseInt( scope.side ),
-                    opacity,
-                    scope.nearClip
+                    {
+                        radialSegments: scope.radialSegments,
+                        rx: rx,
+                        ry: ry,
+                        capped: scope.capped,
+                        wireframe: scope.wireframe,
+                        transparent: scope.transparent,
+                        side: parseInt( scope.side ),
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 )
 
             );
@@ -17916,16 +18337,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         var opacity = this.transparent ? this.opacity : 1.0;
-
-        if( NGL.debug ){
-
-            scope.debugBufferList = [];
-
-        }
 
         /*
             var l = {
@@ -17972,56 +18384,60 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     subOri.tangent,
                     subCol.color,
                     subSize.size,
-                    scope.radialSegments,
                     subCol.pickingColor,
-                    rx,
-                    ry,
-                    scope.capped,
-                    scope.wireframe,
-                    scope.transparent,
-                    parseInt( scope.side ),
-                    opacity,
-                    scope.nearClip
+                    {
+                        radialSegments: scope.radialSegments,
+                        rx: rx,
+                        ry: ry,
+                        capped: scope.capped,
+                        wireframe: scope.wireframe,
+                        transparent: scope.transparent,
+                        side: parseInt( scope.side ),
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 )
 
             );
 
-            if( NGL.debug ){
+            /*
+                if( NGL.debug ){
 
-                scope.debugBufferList.push(
+                    scope.debugBufferList.push(
 
-                    new NGL.BufferVectorHelper(
-                        subPos.position,
-                        subOri.normal,
-                        "skyblue",
-                        1.5
-                    )
+                        new NGL.BufferVectorHelper(
+                            subPos.position,
+                            subOri.normal,
+                            "skyblue",
+                            1.5
+                        )
 
-                );
+                    );
 
-                scope.debugBufferList.push(
+                    scope.debugBufferList.push(
 
-                    new NGL.BufferVectorHelper(
-                        subPos.position,
-                        subOri.binormal,
-                        "lightgreen",
-                        1.5
-                    )
+                        new NGL.BufferVectorHelper(
+                            subPos.position,
+                            subOri.binormal,
+                            "lightgreen",
+                            1.5
+                        )
 
-                );
+                    );
 
-                scope.debugBufferList.push(
+                    scope.debugBufferList.push(
 
-                    new NGL.BufferVectorHelper(
-                        subPos.position,
-                        subOri.tangent,
-                        "orange",
-                        1.5
-                    )
+                        new NGL.BufferVectorHelper(
+                            subPos.position,
+                            subOri.tangent,
+                            "orange",
+                            1.5
+                        )
 
-                );
+                    );
 
-            }
+                }
+            */
 
             /*
                 l.position.push( subPos.position );
@@ -18261,9 +18677,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.structure.eachFiber( function( fiber ){
@@ -18287,9 +18700,12 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     subCol.color,
                     subSize.size,
                     subCol.pickingColor,
-                    scope.transparent,
-                    parseInt( scope.side ),
-                    opacity
+                    {
+                        transparent: scope.transparent,
+                        side: parseInt( scope.side ),
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 )
 
             );
@@ -18442,9 +18858,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -18458,9 +18871,12 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                 new NGL.TraceBuffer(
                     subPos.position,
                     subCol.color,
-                    scope.lineWidth,
-                    scope.transparent,
-                    opacity
+                    {
+                        lineWidth: scope.lineWidth,
+                        transparent: scope.transparent,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 )
 
             );
@@ -18567,9 +18983,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         // TODO reduce buffer count as in e.g. rocket repr
 
         this.structure.eachFiber( function( fiber ){
@@ -18588,11 +19001,14 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     color.color,
                     size.size,
                     color.pickingColor,
-                    scope.sphereDetail,
-                    scope.disableImpostor,
-                    scope.transparent,
-                    scope.side,
-                    opacity
+                    {
+                        sphereDetail: scope.sphereDetail,
+                        transparent: scope.transparent,
+                        side: scope.side,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    },
+                    scope.disableImpostor
                 )
 
             );
@@ -18672,6 +19088,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
 NGL.RocketRepresentation = function( structure, viewer, params ){
 
+    this.helixbundleList = [];
+
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
@@ -18736,7 +19154,6 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         var length = 0;
         var axisList = [];
-        this.helixbundleList = [];
 
         this.structure.eachFiber( function( fiber ){
 
@@ -18783,18 +19200,21 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             ad.color,
             ad.color,
             ad.size,
-            null,
-            true,
             ad.pickingColor,
             ad.pickingColor,
-            this.radiusSegments,
-            this.disableImpostor,
-            this.transparent,
-            this.side,
-            opacity
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
         );
 
-        this.bufferList = [ this.cylinderBuffer ];
+        this.bufferList.push( this.cylinderBuffer );
 
     },
 
@@ -18849,6 +19269,14 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         }
 
         this.cylinderBuffer.setAttributes( cylinderData );
+
+    },
+
+    clear: function(){
+
+        this.helixbundleList.length = 0;
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -18925,9 +19353,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        this.bufferList = [];
-        this.fiberList = [];
-
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.structure.eachFiber( function( fiber ){
@@ -18956,16 +19381,18 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                     subOri.tangent,
                     subCol.color,
                     subSize.size,
-                    scope.radialSegments,
                     subCol.pickingColor,
-                    rx,
-                    ry,
-                    scope.capped,
-                    scope.wireframe,
-                    scope.transparent,
-                    parseInt( scope.side ),
-                    opacity,
-                    scope.nearClip
+                    {
+                        radialSegments: scope.radialSegments,
+                        rx: rx,
+                        ry: ry,
+                        capped: scope.capped,
+                        wireframe: scope.wireframe,
+                        transparent: scope.transparent,
+                        side: parseInt( scope.side ),
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 )
 
             );
@@ -19128,10 +19555,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        this.bufferList = [];
-        this.fiberList = [];
-        this.centerList = [];
-        this.helixList = [];
+        var helixList = [];
 
         // TODO reduce buffer count as in e.g. rocket repr
 
@@ -19153,28 +19577,29 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     axis.color,
                     axis.color,
                     axis.size,
-                    null,
-                    true,
                     axis.pickingColor,
                     axis.pickingColor,
-                    scope.radiusSegments,
-                    scope.disableImpostor,
-                    scope.transparent,
-                    scope.side,
-                    opacity
+                    {
+                        shift: 0,
+                        cap: true,
+                        radiusSegments: scope.radiusSegments,
+                        transparent: scope.transparent,
+                        side: scope.side,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    },
+                    scope.disableImpostor
                 )
 
             );
 
             scope.fiberList.push( fiber );
 
-            scope.centerList.push( new Float32Array( axis.begin.length ) );
-
             for( var i = 0; i < axis.residue.length; ++i ){
 
                 var helix = new NGL.Helix();
                 helix.fromHelixbundleAxis( axis, i );
-                scope.helixList.push( helix );
+                helixList.push( helix );
 
             }
 
@@ -19182,7 +19607,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
         //
 
-        var helixCrossing = new NGL.HelixCrossing( this.helixList );
+        var helixCrossing = new NGL.HelixCrossing( helixList );
         var crossing = helixCrossing.getCrossing( this.helixDist );
 
         this.crossing = crossing;
@@ -19197,15 +19622,18 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                 NGL.Utils.uniformArray3( n, 0.2, 0.2, 0.9 ),
                 NGL.Utils.uniformArray3( n, 0.2, 0.2, 0.9 ),
                 NGL.Utils.uniformArray( n, 0.1 ),
-                null,
-                true,
                 NGL.Utils.uniformArray3( n, 0, 0, 0 ),
                 NGL.Utils.uniformArray3( n, 0, 0, 0 ),
-                this.radiusSegments,
-                this.disableImpostor,
-                this.transparent,
-                this.side,
-                opacity
+                {
+                    shift: 0,
+                    cap: true,
+                    radiusSegments: this.radiusSegments,
+                    transparent: this.transparent,
+                    side: this.side,
+                    opacity: opacity,
+                    nearClip: this.nearClip
+                },
+                this.disableImpostor
             )
 
         );
@@ -19220,7 +19648,10 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     crossing.helixCenter,
                     NGL.Utils.uniformArray( m, 2.5 ),
                     NGL.Utils.uniformArray3( m, 1.0, 1.0, 1.0 ),
-                    crossing.helixLabel
+                    crossing.helixLabel,
+                    {
+                        nearClip: this.nearClip
+                    }
                 )
 
             );
@@ -19354,8 +19785,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         // console.log( this.selection )
         // console.log( this.atomSet )
 
-        this.bufferList = [];
-
         if( !this.atomSet.atoms.length ) return;
 
         var scope = this;
@@ -19375,11 +19804,14 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray( n, 0.2 ),
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
-                    scope.sphereDetail,
-                    scope.disableImpostor,
-                    scope.transparent,
-                    scope.side,
-                    opacity
+                    {
+                        sphereDetail: scope.sphereDetail,
+                        transparent: scope.transparent,
+                        side: scope.side,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    },
+                    scope.disableImpostor
                 );
 
                 scope.bufferList.push( sphereBuffer );
@@ -19394,15 +19826,18 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray( n, 0.05 ),
-                    null,
-                    true,
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    scope.radiusSegments,
-                    scope.disableImpostor,
-                    scope.transparent,
-                    scope.side,
-                    opacity
+                    {
+                        shift: 0,
+                        cap: true,
+                        radiusSegments: this.radiusSegments,
+                        transparent: this.transparent,
+                        side: this.side,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    },
+                    this.disableImpostor
 
                 );
 
@@ -19415,11 +19850,14 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                 var pointBuffer = new NGL.PointBuffer(
                     path,
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
-                    scope.pointSize,
-                    scope.sizeAttenuation,
-                    scope.sort,
-                    scope.transparent,
-                    opacity
+                    {
+                        pointSize: scope.pointSize,
+                        sizeAttenuation: scope.sizeAttenuation,
+                        sort: scope.sort,
+                        transparent: scope.transparent,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 );
 
                 scope.bufferList.push( pointBuffer );
@@ -19433,9 +19871,12 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     path.subarray( 3 ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    scope.lineWidth,
-                    scope.transparent,
-                    opacity
+                    {
+                        lineWidth: scope.lineWidth,
+                        transparent: scope.transparent,
+                        opacity: opacity,
+                        nearClip: scope.nearClip
+                    }
                 );
 
                 scope.bufferList.push( lineBuffer );
@@ -19581,25 +20022,43 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         if( this.transparent && parseInt( this.side ) === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined, this.wireframe,
-                this.transparent, THREE.FrontSide, opacity, this.nearClip
+                position, color, index, normal, undefined,
+                {
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    side: THREE.FrontSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip
+                }
             );
 
             var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined, this.wireframe,
-                this.transparent, THREE.BackSide, opacity, this.nearClip
+                position, color, index, normal, undefined,
+                {
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    side: THREE.BackSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip
+                }
             );
 
-            this.bufferList = [ frontBuffer, backBuffer ];
+            this.bufferList.push( frontBuffer, backBuffer );
 
         }else{
 
             this.surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined, this.wireframe,
-                this.transparent, parseInt( this.side ), opacity, this.nearClip
+                position, color, index, normal, undefined,
+                {
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    side: parseInt( this.side ),
+                    opacity: opacity,
+                    nearClip: this.nearClip
+                }
             );
 
-            this.bufferList = [ this.surfaceBuffer ];
+            this.bufferList.push( this.surfaceBuffer );
 
         }
 
@@ -19899,8 +20358,7 @@ NGL.Stage.prototype = {
 
 NGL.PickingControls = function( viewer, stage ){
 
-    var gl = viewer.renderer.getContext();
-    var pixelBuffer = new Uint8Array( 4 );
+    var v3 = new THREE.Vector3();
 
     var mouse = {
 
@@ -19942,26 +20400,17 @@ NGL.PickingControls = function( viewer, stage ){
 
         if( mouse.distance() > 3 || e.which === NGL.RightMouseButton ) return;
 
-        viewer.render( null, true );
-
         var box = viewer.renderer.domElement.getBoundingClientRect();
 
         var offsetX = e.clientX - box.left;
         var offsetY = e.clientY - box.top;
 
-        gl.readPixels(
-            offsetX * window.devicePixelRatio,
-            (box.height - offsetY) * window.devicePixelRatio,
-            1, 1,
-            gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer
+        var pickingData = viewer.pick(
+            offsetX,
+            box.height - offsetY
         );
-
-        var rgba = Array.apply( [], pixelBuffer );
-
-        var id =
-            ( pixelBuffer[0] << 16 ) |
-            ( pixelBuffer[1] << 8 ) |
-            ( pixelBuffer[2] );
+        var id = pickingData.id;
+        var instance = pickingData.instance;
 
         // TODO early exit, binary search
         var pickedAtom = undefined;
@@ -19977,37 +20426,25 @@ NGL.PickingControls = function( viewer, stage ){
 
         }, NGL.StructureComponent );
 
-        stage.signals.atomPicked.dispatch( pickedAtom );
-
-        if( NGL.debug ){
-
-            console.log(
-                "picked color",
-                [
-                    ( rgba[0]/255 ).toPrecision(2),
-                    ( rgba[1]/255 ).toPrecision(2),
-                    ( rgba[2]/255 ).toPrecision(2),
-                    ( rgba[3]/255 ).toPrecision(2)
-                ]
-            );
-            console.log( "picked id", id );
-            console.log(
-                "picked position",
-                offsetX, box.height - offsetY
-            );
-            console.log( "devicePixelRatio", window.devicePixelRatio );
-
-        }else{
-
-            viewer.requestRender();
-
-        }
-
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
-            viewer.centerView( pickedAtom );
+            v3.copy( pickedAtom );
+
+            if( instance ){
+
+                // var structure = pickedAtom.residue.chain.model.structure;
+                // var biomol = structure.biomolDict[ instance.assembly ];
+                // var matrix = biomol.matrixDict[ instance.name ];
+
+                v3.applyProjection( instance.matrix );
+
+            }
+
+            viewer.centerView( v3 );
 
         }
+
+        stage.signals.atomPicked.dispatch( pickedAtom );
 
     } );
 
@@ -20467,6 +20904,9 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         this.trajList = [];
 
+        this.structure.dispose();
+        this.__structure.dispose();
+
         NGL.Component.prototype.dispose.call( this );
 
     },
@@ -20660,7 +21100,9 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
             this.stage, repr, {}, this
         );
 
-        return NGL.Component.prototype.addRepresentation.call( this, reprComp );
+        return NGL.Component.prototype.addRepresentation.call(
+            this, reprComp
+        );
 
     },
 
@@ -21475,6 +21917,9 @@ NGL.Examples = {
                 var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
                 var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
                 var trace = o.addRepresentation( "trace", { sele: "270-300" } );
+                var rope = o.addRepresentation( "rope", {
+                    sele: "300-330", color: "residueindex"
+                } );
 
                 o.centerView();
 
@@ -21731,7 +22176,7 @@ NGL.Resources[ '../shader/CylinderImpostor.vert'] = "// Open-Source PyMOL is Cop
 
 // File:shader/CylinderImpostor.frag
 
-NGL.Resources[ '../shader/CylinderImpostor.frag'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\nuniform mat3 normalMatrix;\n\n// varying float vRadius;\n\n// varying vec3 point;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\n// varying float b;\nvarying vec4 w;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec3 point = w.xyz / w.w;\n    vec4 point4 = w;\n\n    if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    vec2 clipZW = new_point.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    float depth2 = 0.5 + 0.5 * clipZW.x / clipZW.y;\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (depth2 <= 0.0)\n        discard;\n    if (depth2 >= 1.0)\n        discard;\n\n    gl_FragDepthEXT = depth2;\n\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    #ifdef PICKING\n        // TODO compare without sqrt\n        if( distance( new_point, end_cyl) < distance( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, 1.0 );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, 1.0 );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, 1.0 );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, 1.0 );\n            }\n        }\n    #else\n        // TODO compare without sqrt\n        if( distance( new_point, end_cyl) < distance( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }\n        gl_FragColor.xyz *= vLightFront;\n        //gl_FragColor.xyz = transformedNormal;\n    #endif\n\n    #include fog\n}\n\n\n\n\n\n\n\n\n";
+NGL.Resources[ '../shader/CylinderImpostor.frag'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\nuniform mat3 normalMatrix;\n\n// varying float vRadius;\n\n// varying vec3 point;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\n// varying float b;\nvarying vec4 w;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec3 point = w.xyz / w.w;\n    vec4 point4 = w;\n\n    #ifdef NEAR_CLIP\n        if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    vec2 clipZW = new_point.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    float depth2 = 0.5 + 0.5 * clipZW.x / clipZW.y;\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (depth2 <= 0.0)\n        discard;\n    if (depth2 >= 1.0)\n        discard;\n\n    gl_FragDepthEXT = depth2;\n\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    #ifdef PICKING\n        // TODO compare without sqrt\n        if( distance( new_point, end_cyl) < distance( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }\n    #else\n        // TODO compare without sqrt\n        if( distance( new_point, end_cyl) < distance( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }\n        gl_FragColor.rgb *= vLightFront;\n        //gl_FragColor.rgb = transformedNormal;\n    #endif\n\n    #include fog\n}\n\n\n\n\n\n\n\n\n";
 
 // File:shader/HyperballStickImpostor.vert
 
@@ -21739,7 +22184,7 @@ NGL.Resources[ '../shader/HyperballStickImpostor.vert'] = "// Copyright (C) 2010
 
 // File:shader/HyperballStickImpostor.frag
 
-NGL.Resources[ '../shader/HyperballStickImpostor.frag'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\n// varying vec3 mapping;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    // custom clipping plane\n    // FIXME optimize, don't calculate values more than once\n    if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, 1.0 );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.xyz *= vLightFront;\n    #endif\n\n    #include fog\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n\n\n\n\n\n";
+NGL.Resources[ '../shader/HyperballStickImpostor.frag'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\n// varying vec3 mapping;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    #ifdef NEAR_CLIP\n        // custom clipping plane\n        // FIXME optimize, don't calculate values more than once\n        if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, objectId );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n    #endif\n\n    #include fog\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n\n\n\n\n\n";
 
 // File:shader/Line.vert
 
@@ -21747,7 +22192,7 @@ NGL.Resources[ '../shader/Line.vert'] = "\nattribute vec3 color;\n\nvarying vec3
 
 // File:shader/Line.frag
 
-NGL.Resources[ '../shader/Line.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vColor;\nvarying vec4 cameraPos;\n\n#include fog_params\n\n\nvoid main()\n{\n\n	if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    gl_FragColor = vec4( vColor, opacity );\n\n    #include fog\n\n}\n";
+NGL.Resources[ '../shader/Line.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vColor;\nvarying vec4 cameraPos;\n\n#include fog_params\n\n\nvoid main()\n{\n\n	#ifdef NEAR_CLIP\n		if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        	discard;\n    #endif\n\n    gl_FragColor = vec4( vColor, opacity );\n\n    #include fog\n\n}\n";
 
 // File:shader/LineSprite.vert
 
@@ -21763,7 +22208,7 @@ NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec3 vNormal;\nvarying vec4 c
 
 // File:shader/Mesh.frag
 
-NGL.Resources[ '../shader/Mesh.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vNormal;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    vec3 transformedNormal = normalize( vNormal );\n    #ifdef DOUBLE_SIDED\n        transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n    #endif\n\n    #ifdef FLIP_SIDED\n        transformedNormal = -transformedNormal;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor.xyz = vPickingColor;\n\n    #else\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        gl_FragColor = vec4( vColor, opacity );\n\n        #ifndef NOLIGHT\n            gl_FragColor.xyz *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
+NGL.Resources[ '../shader/Mesh.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vNormal;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    vec3 transformedNormal = normalize( vNormal );\n    #ifdef DOUBLE_SIDED\n        transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n    #endif\n\n    #ifdef FLIP_SIDED\n        transformedNormal = -transformedNormal;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        gl_FragColor = vec4( vColor, opacity );\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
 
 // File:shader/ParticleSprite.vert
 
@@ -21787,11 +22232,11 @@ NGL.Resources[ '../shader/Ribbon.vert'] = "\nattribute vec3 inputDir;\nattribute
 
 // File:shader/Ribbon.frag
 
-NGL.Resources[ '../shader/Ribbon.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n#else\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor.xyz = vPickingColor;\n        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = normalize( vNormal );\n        #ifdef DOUBLE_SIDED\n            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( color, opacity );\n        // gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.xyz *= vLightFront;\n        // gl_FragColor.xyz = normalx;\n        //gl_FragColor.xyz = color;\n    #endif\n\n    #include fog\n}\n";
+NGL.Resources[ '../shader/Ribbon.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = normalize( vNormal );\n        #ifdef DOUBLE_SIDED\n            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( color, opacity );\n        // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.rgb *= vLightFront;\n        // gl_FragColor.rgb = normalx;\n        //gl_FragColor.rgb = color;\n    #endif\n\n    #include fog\n}\n";
 
 // File:shader/SDFFont.vert
 
-NGL.Resources[ '../shader/SDFFont.vert'] = "\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\nuniform float nearClip;\n\n\nvoid main(void){\n\n    vColor = color;\n    texCoord = inputTexCoord;\n\n    vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );\n    vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\n    cameraCornerPos.xy += mapping * inputSize;\n\n    cameraCornerPos.z += 0.5;\n\n    gl_Position = projectionMatrix * cameraCornerPos;\n\n    // move out of viewing frustum for custom clipping\n    if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n       gl_Position.w = -10.0;\n\n}\n";
+NGL.Resources[ '../shader/SDFFont.vert'] = "\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\nuniform float nearClip;\n\n\nvoid main(void){\n\n    vColor = color;\n    texCoord = inputTexCoord;\n\n    vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );\n    vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\n    cameraCornerPos.xy += mapping * inputSize;\n\n    cameraCornerPos.z += 0.5;\n\n    gl_Position = projectionMatrix * cameraCornerPos;\n\n    #ifdef NEAR_CLIP\n        // move out of viewing frustum for custom clipping\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            gl_Position.w = -10.0;\n    #endif\n\n}\n";
 
 // File:shader/SDFFont.frag
 
@@ -21811,7 +22256,7 @@ NGL.Resources[ '../shader/SphereImpostor.vert'] = "\nattribute vec2 mapping;\nat
 
 // File:shader/SphereImpostor.frag
 
-NGL.Resources[ '../shader/SphereImpostor.frag'] = "\n#extension GL_EXT_frag_depth : enable\n\n// not available in WebGL\n// #extension GL_ARB_conservative_depth : enable\n// layout(depth_less) out float gl_FragDepthEXT;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvec3 cameraPos;\nvec3 cameraNormal;\n\n\n// vec4 poly_color = gl_Color;\n\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 camPos )\n{\n    vec2 clipZW = camPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nbool Impostor(out vec3 cameraPos, out vec3 cameraNormal)\n{\n\n    vec3 cameraSpherePos2 = cameraSpherePos.xyz;\n    cameraSpherePos2.z += sphereRadius;\n\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos2);\n    float C = dot(cameraSpherePos2, cameraSpherePos2) - (sphereRadius*sphereRadius);\n\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt(det);\n        float posT = (-B + sqrtDet)/2.0;\n        float negT = (-B - sqrtDet)/2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n        if( calcDepth( cameraPos ) <= 0.0 ){\n            cameraPos = rayDirection * max(posT, negT);\n            cameraNormal = vec3( 0.0, 0.0, 0.4 );\n            return false;\n        }else{\n            cameraNormal = normalize(cameraPos - cameraSpherePos2);\n        }\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\n\nvoid main(void)\n{\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        discard;\n\n    // FIXME not compatible with custom clipping plane\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        if( gl_FragDepthEXT >= 0.0 ){\n            // clamp to near clipping plane and add a tiny value to\n            // make spheres with a greater radius occlude smaller ones\n            gl_FragDepthEXT = 0.0 + ( 0.000001 / sphereRadius );\n        }\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, 1.0 );\n        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = cameraNormal;\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( vColor, opacity );\n        gl_FragColor.xyz *= vLightFront;\n\n        // gl_FragColor.a = 0.5;\n        // gl_FragColor.xyz = transformedNormal;\n        // gl_FragColor.xyz = point;\n    #endif\n\n    #include fog\n\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( vColor, 1.0 );\n// }\n\n\n\n";
+NGL.Resources[ '../shader/SphereImpostor.frag'] = "\n#extension GL_EXT_frag_depth : enable\n\n// not available in WebGL\n// #extension GL_ARB_conservative_depth : enable\n// layout(depth_less) out float gl_FragDepthEXT;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvec3 cameraPos;\nvec3 cameraNormal;\n\n\n// vec4 poly_color = gl_Color;\n\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 camPos )\n{\n    vec2 clipZW = camPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nbool Impostor(out vec3 cameraPos, out vec3 cameraNormal)\n{\n\n    vec3 cameraSpherePos2 = cameraSpherePos.xyz;\n    cameraSpherePos2.z += sphereRadius;\n\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos2);\n    float C = dot(cameraSpherePos2, cameraSpherePos2) - (sphereRadius*sphereRadius);\n\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt(det);\n        float posT = (-B + sqrtDet)/2.0;\n        float negT = (-B - sqrtDet)/2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n        if( calcDepth( cameraPos ) <= 0.0 ){\n            cameraPos = rayDirection * max(posT, negT);\n            cameraNormal = vec3( 0.0, 0.0, 0.4 );\n            return false;\n        }else{\n            cameraNormal = normalize(cameraPos - cameraSpherePos2);\n        }\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\n\nvoid main(void)\n{\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    #ifdef NEAR_CLIP\n        if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    // FIXME not compatible with custom clipping plane\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        if( gl_FragDepthEXT >= 0.0 ){\n            // clamp to near clipping plane and add a tiny value to\n            // make spheres with a greater radius occlude smaller ones\n            gl_FragDepthEXT = 0.0 + ( 0.000001 / sphereRadius );\n        }\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = cameraNormal;\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( vColor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n\n        // gl_FragColor.a = 0.5;\n        // gl_FragColor.rgb = transformedNormal;\n        // gl_FragColor.rgb = point;\n    #endif\n\n    #include fog\n\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( vColor, 1.0 );\n// }\n\n\n\n";
 
 // File:shader/chunk/fog.glsl
 
