@@ -1301,9 +1301,9 @@ NGL.Viewer.prototype = {
                         node.geometry.computeBoundingBox();
                     }
 
-                    if( node.userData[ "matrix" ] ){
+                    if( node.userData[ "instance" ] ){
                         gbb = node.geometry.boundingBox.clone();
-                        gbb.applyMatrix4( node.userData[ "matrix" ] );
+                        gbb.applyMatrix4( node.userData[ "instance" ].matrix );
                     }else{
                         gbb = node.geometry.boundingBox;
                     }
