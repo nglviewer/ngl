@@ -12,7 +12,9 @@
  * @class
  * @private
  */
-NGL.Buffer = function( position, color, pickingColor ){
+NGL.Buffer = function( position, color, pickingColor, params ){
+
+    var p = params || {};
 
     // required properties:
     // - size
@@ -21,10 +23,11 @@ NGL.Buffer = function( position, color, pickingColor ){
     // - fragmentShader
 
     this.pickable = false;
-    this.transparent = this.transparent || false;
-    this.side = this.side !== undefined ? this.side : THREE.DoubleSide;
-    this.opacity = this.opacity !== undefined ? this.opacity : 1.0;
-    this.nearClip = this.nearClip !== undefined ? this.nearClip : true;
+
+    this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -283,22 +286,11 @@ NGL.Buffer.prototype = {
 };
 
 
-/**
- * [MeshBuffer description]
- * @class
- * @augments {NGL.Buffer}
- * @param {Float32Array} position
- * @param {Float32Array} color
- * @param {Float32Array} index
- * @param {Float32Array} normal
- */
-NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wireframe, transparent, side, opacity, nearClip ){
+NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params ){
 
-    this.wireframe = wireframe || false;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
-    this.nearClip = nearClip !== undefined ? nearClip : true;
+    var p = params || {};
+
+    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -307,7 +299,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, wirefra
 
     this.index = index;
 
-    NGL.Buffer.call( this, position, color, pickingColor );
+    NGL.Buffer.call( this, position, color, pickingColor, p );
 
     this.addAttributes({
         "normal": { type: "v3", value: normal },
@@ -322,18 +314,12 @@ NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );
 NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
 
 
-/**
- * [MappedBuffer description]
- * @class
- * @private
- * @augments {NGL.Buffer}
- */
-NGL.MappedBuffer = function(){
+NGL.MappedBuffer = function( params ){
 
     this.mappedSize = this.size * this.mappingSize;
     this.attributeSize = this.mappedSize;
 
-    NGL.Buffer.call( this );
+    NGL.Buffer.call( this, null, null, null, params );
 
     this.addAttributes({
         "mapping": { type: this.mappingType, value: null },
@@ -447,13 +433,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 };
 
 
-/**
- * [QuadBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.QuadBuffer = function(){
+NGL.QuadBuffer = function( params ){
 
     this.mapping = new Float32Array([
         -1.0,  1.0,
@@ -472,7 +452,7 @@ NGL.QuadBuffer = function(){
     this.mappingSize = 4;
     this.mappingItemSize = 2;
 
-    NGL.MappedBuffer.call( this );
+    NGL.MappedBuffer.call( this, params );
 
 };
 
@@ -481,13 +461,7 @@ NGL.QuadBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 NGL.QuadBuffer.prototype.constructor = NGL.QuadBuffer;
 
 
-/**
- * [BoxBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.BoxBuffer = function(){
+NGL.BoxBuffer = function( params ){
 
     this.mapping = new Float32Array([
         -1.0, -1.0, -1.0,
@@ -520,7 +494,7 @@ NGL.BoxBuffer = function(){
     this.mappingSize = 8;
     this.mappingItemSize = 3;
 
-    NGL.MappedBuffer.call( this );
+    NGL.MappedBuffer.call( this, params );
 
 };
 
@@ -529,13 +503,7 @@ NGL.BoxBuffer.prototype = Object.create( NGL.MappedBuffer.prototype );
 NGL.BoxBuffer.prototype.constructor = NGL.BoxBuffer;
 
 
-/**
- * [AlignedBoxBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.AlignedBoxBuffer = function(){
+NGL.AlignedBoxBuffer = function( params ){
 
     this.mapping = new Float32Array([
         -1.0,  1.0, -1.0,
@@ -558,7 +526,7 @@ NGL.AlignedBoxBuffer = function(){
     this.mappingSize = 6;
     this.mappingItemSize = 3;
 
-    NGL.MappedBuffer.call( this );
+    NGL.MappedBuffer.call( this, params );
 
 };
 
@@ -570,25 +538,13 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 ////////////////////////
 // Impostor Primitives
 
-/**
- * [SphereImpostorBuffer description]
- * @class
- * @augments {NGL.MappedBuffer}
- * @param {Float32Array} position
- * @param {Float32Array} color
- * @param {Float32Array} radius
- */
-NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, transparent, side, opacity ){
-
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
     this.size = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
     this.fragmentShader = 'SphereImpostor.frag';
 
-    NGL.QuadBuffer.call( this );
+    NGL.QuadBuffer.call( this, params );
 
     this.addUniforms({
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
@@ -627,37 +583,25 @@ NGL.SphereImpostorBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 NGL.SphereImpostorBuffer.prototype.constructor = NGL.SphereImpostorBuffer;
 
 
-/**
- * [CylinderImpostorBuffer description]
- * @class
- * @augments {NGL.AlignedBoxBuffer}
- * @param {Float32Array} from
- * @param {Float32Array} to
- * @param {Float32Array} color
- * @param {Float32Array} color2
- * @param {Float32Array} radius
- * @param {Float} shift - Moves the cylinder in camera space
- *      to i.e. get multiple aligned cylinders.
- * @param {Boolean} cap - If true the cylinders are capped.
- */
-NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, transparent, side, opacity ){
+NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    if( !shift ) shift = 0;
+    var p = params || p;
 
-    this.cap = cap === undefined ? true : cap;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    // Moves the cylinder in camera space to get, for example,
+    // one of multiple shifted screen-aligned cylinders.
+    this.shift = p.shift !== undefined ? p.shift : 0;
+
+    this.cap = p.cap !== undefined ? p.cap : true;
 
     this.size = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
     this.fragmentShader = 'CylinderImpostor.frag';
 
-    NGL.AlignedBoxBuffer.call( this );
+    NGL.AlignedBoxBuffer.call( this, p );
 
     this.addUniforms({
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'shift': { type: "f", value: shift },
+        'shift': { type: "f", value: this.shift },
     });
 
     this.addAttributes({
@@ -696,7 +640,7 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, shift, c
     this.finalize();
 
     // FIXME
-    // if( cap ){
+    // if( this.cap ){
     //     this.material.defines[ "CAP" ] = 1;
     // }
 
@@ -719,17 +663,17 @@ NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 }
 
 
-NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, transparent, side, opacity ){
+NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    var p = params || p;
+
+    var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
     this.size = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
     this.fragmentShader = 'HyperballStickImpostor.frag';
 
-    NGL.BoxBuffer.call( this );
+    NGL.BoxBuffer.call( this, p );
 
     this.addUniforms({
         'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
@@ -787,18 +731,10 @@ NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpos
 // Geometry Primitives
 
 
-/**
- * [GeometryBuffer description]
- * @class
- * @private
- * @augments {NGL.MappedBuffer}
- */
-NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side, opacity ){
+NGL.GeometryBuffer = function( position, color, pickingColor, params ){
 
-    this.wireframe = false;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    // required properties:
+    // - geo
 
     var geo = this.geo;
 
@@ -832,8 +768,7 @@ NGL.GeometryBuffer = function( position, color, pickingColor, transparent, side,
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, this.wireframe,
-        this.transparent, this.side, this.opacity
+        this.meshNormal, this.meshPickingColor, params
     );
 
     this.pickable = this.meshBuffer.pickable;
@@ -1013,15 +948,15 @@ NGL.GeometryBuffer.prototype = {
 }
 
 
-NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, detail, transparent, side, opacity ){
+NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
 
-    detail = detail!==undefined ? detail : 1;
+    var detail = params.detail !== undefined ? params.detail : 1;
 
     this.geo = new THREE.IcosahedronGeometry( 1, detail );
 
     this.setPositionTransform( radius );
 
-    NGL.GeometryBuffer.call( this, position, color, pickingColor, transparent, side, opacity );
+    NGL.GeometryBuffer.call( this, position, color, pickingColor, params );
 
 };
 
@@ -1055,15 +990,16 @@ NGL.SphereGeometryBuffer.prototype.setAttributes = function( data ){
 }
 
 
-NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, radiusSegments, transparent, side, opacity ){
+NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    radiusSegments = radiusSegments || 10;
+    var radiusSegments = params.radiusSegments !== undefined ? params.radiusSegments : 10;
 
     this.updateNormals = true;
 
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
 
-    this.geo = new THREE.CylinderGeometry(1, 1, 1, radiusSegments, 1, true);
+    // FIXME params.cap
+    this.geo = new THREE.CylinderGeometry( 1, 1, 1, radiusSegments, 1, true );
     this.geo.applyMatrix( matrix );
 
     var n = from.length;
@@ -1091,8 +1027,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
     this.setPositionTransform( this._from, this._to, this._radius );
 
     NGL.GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor,
-        transparent, side, opacity
+        this, this._position, this._color, this._pickingColor, params
     );
 
 };
@@ -1201,20 +1136,13 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
 //////////////////////
 // Pixel Primitives
 
-/**
- * [PointBuffer description]
- * @class
- * @todo  Inherit from NGL.Buffer
- * @param {Float32Array} position
- * @param {Float32Array} color
- */
-NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, transparent, opacity ){
+NGL.PointBuffer = function( position, color, params ){
 
-    this.pointSize = pointSize || false;
-    this.sizeAttenuation = sizeAttenuation !== undefined ? sizeAttenuation : false;
-    this.sort = sort !== undefined ? sort : true;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    var p = params || {};
+
+    this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
+    this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
+    this.sort = p.sort !== undefined ? p.sort : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -1229,7 +1157,7 @@ NGL.PointBuffer = function( position, color, pointSize, sizeAttenuation, sort, t
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
 
-    NGL.Buffer.call( this, position, color );
+    NGL.Buffer.call( this, position, color, null, p );
 
 };
 
@@ -1313,20 +1241,14 @@ NGL.PointBuffer.prototype.dispose = function(){
 };
 
 
-/**
- * [LineBuffer description]
- * @class
- * @todo  Inherit from NGL.Buffer
- * @param {Float32Array} from
- * @param {Float32Array} to
- * @param {Float32Array} color
- * @param {Float32Array} color2
- */
-NGL.LineBuffer = function( from, to, color, color2, lineWidth, transparent, opacity ){
+NGL.LineBuffer = function( from, to, color, color2, params ){
 
-    this.lineWidth = lineWidth || 1;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
+    var p = params || {};
+
+    this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
 
     this.size = from.length / 3;
     this.vertexShader = 'Line.vert';
@@ -1504,7 +1426,7 @@ NGL.LineBuffer.prototype = {
 };
 
 
-NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
+NGL.TraceBuffer = function( position, color, params ){
 
     this.size = position.length / 3;
 
@@ -1522,8 +1444,7 @@ NGL.TraceBuffer = function( position, color, lineWidth, transparent, opacity ){
     });
 
     this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2,
-        lineWidth, transparent, opacity
+        this.from, this.to, this.lineColor, this.lineColor2, params
     );
 
     this.pickable = this.lineBuffer.pickable;
@@ -1658,15 +1579,18 @@ NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
 
 
-NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, transparent, side, opacity ){
+NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, params ){
+
+    var p = params || {};
+
+    this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
     this.size = ( position.length/3 ) - 1;
-
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
 
     var n = this.size;
     var n4 = n * 4;
@@ -1943,20 +1867,17 @@ NGL.RibbonBuffer.prototype = {
 ////////////////////
 // Mesh Primitives
 
-NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, radialSegments, pickingColor, rx, ry, capped, wireframe, transparent, side, opacity, nearClip ){
+NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size, pickingColor, params ){
 
-    this.rx = rx || 1.5;
-    this.ry = ry || 0.5;
+    var p = params || {};
 
-    this.wireframe = wireframe || false;
-    this.transparent = transparent !== undefined ? transparent : false;
-    this.side = side !== undefined ? side : THREE.DoubleSide;
-    this.opacity = opacity !== undefined ? opacity : 1.0;
-    this.nearClip = nearClip !== undefined ? nearClip : true;
+    this.rx = p.rx !== undefined ? p.rx : 1.5;
+    this.ry = p.ry !== undefined ? p.ry : 0.5;
+    this.radialSegments = p.radialSegments !== undefined ? p.radialSegments : 4;
+    this.capped = p.capped !== undefined ? p.capped : false;
 
-    this.radialSegments = radialSegments || 4;
-    this.capVertices = capped ? this.radialSegments : 0;
-    this.capTriangles = capped ? this.radialSegments - 2 : 0;
+    this.capVertices = this.capped ? this.radialSegments : 0;
+    this.capTriangles = this.capped ? this.radialSegments - 2 : 0;
     this.size = position.length / 3;
 
     var n = this.size;
@@ -1970,7 +1891,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = new Float32Array( x );
     this.meshIndex = new Uint32Array(
-        n1 * 2 * radialSegments * 3 + 2 * this.capTriangles * 3
+        n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
     );
 
     this.makeIndex();
@@ -1987,8 +1908,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     this.meshBuffer = new NGL.MeshBuffer(
         this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, this.wireframe,
-        this.transparent, this.side, this.opacity, this.nearClip
+        this.meshNormal, this.meshPickingColor, p
     );
 
     this.pickable = this.meshBuffer.pickable;
@@ -2383,20 +2303,18 @@ NGL.SurfaceBuffer.prototype.constructor = NGL.SurfaceBuffer;
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disableImpostor, transparent, side, opacity ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, params, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.SphereGeometryBuffer(
-            position, color, radius, pickingColor, detail,
-            transparent, side, opacity
+            position, color, radius, pickingColor, params
         );
 
     }else{
 
         return new NGL.SphereImpostorBuffer(
-            position, color, radius, pickingColor,
-            transparent, side, opacity
+            position, color, radius, pickingColor, params
         );
 
     }
@@ -2404,7 +2322,7 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor, detail, disa
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pickingColor, pickingColor2, radiusSegments, disableImpostor, transparent, side, opacity ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
@@ -2412,16 +2330,14 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2, radius,
-            pickingColor, pickingColor2, radiusSegments,
-            transparent, side, opacity
+            pickingColor, pickingColor2, params
         );
 
     }else{
 
         return new NGL.CylinderImpostorBuffer(
-            from, to, color, color2, radius, shift, cap,
-            pickingColor, pickingColor2,
-            transparent, side, opacity
+            from, to, color, color2, radius,
+            pickingColor, pickingColor2, params
         );
 
     }
@@ -2429,23 +2345,22 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, shift, cap, pick
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, shrink, pickingColor, pickingColor2, radiusSegments, disableImpostor, transparent, side, opacity ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params, disableImpostor ){
 
     if( !NGL.extensionFragDepth || disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2,
             NGL.Utils.calculateMinArray( radius1, radius2 ),
-            pickingColor, pickingColor2, radiusSegments,
-            transparent, side, opacity
+            pickingColor, pickingColor2, params
         );
 
     }else{
 
         return new NGL.HyperballStickImpostorBuffer(
-            from, to, color, color2, radius1, radius2, shrink,
-            pickingColor, pickingColor2,
-            transparent, side, opacity
+            from, to, color, color2,
+            radius1, radius2,
+            pickingColor, pickingColor2, params
         );
 
     }
@@ -2520,12 +2435,13 @@ NGL.getFont = function( name ){
 };
 
 
-NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity ){
+NGL.TextBuffer = function( position, size, color, text, params ){
 
-    this.antialias = antialias !== undefined ? antialias : true;
-    this.opacity = opacity || 1.0;
+    var p = params || {};
 
-    var fontName = font || 'Arial';
+    this.antialias = p.antialias !== undefined ? p.antialias : true;
+
+    var fontName = p.font !== undefined ? p.font : 'Arial';
     this.font = NGL.getFont( fontName );
 
     this.tex = new THREE.Texture(
@@ -2547,7 +2463,7 @@ NGL.TextBuffer = function( position, size, color, text, font, antialias, opacity
     this.vertexShader = 'SDFFont.vert';
     this.fragmentShader = 'SDFFont.frag';
 
-    NGL.QuadBuffer.call( this );
+    NGL.QuadBuffer.call( this, p );
 
     this.addUniforms({
         "fontTexture"  : { type: "t", value: this.tex },
