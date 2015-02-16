@@ -73,7 +73,6 @@ if ( !Number.isNaN ) {
 }
 
 
-
 if ( !Object.assign ) {
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
@@ -155,6 +154,94 @@ HTMLElement.prototype.getBoundingClientRect = function(){
     };
 
 }();
+
+
+if( WebGLRenderingContext ){
+
+    // wrap webgl debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+}
 
 
 ///////////////
@@ -353,10 +440,10 @@ NGL.getFileInfo = function( file ){
     var base = name.substring( 0, name.lastIndexOf('.') );
     var ext = path.split('.').pop().toLowerCase();
 
-    var protoMatch = path.match( /^(.+):\/\/(.+)$/ );
-    if( protoMatch ){
-        protocol = protoMatch[ 1 ].toLowerCase();
-        path = protoMatch[ 2 ];
+    var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
+    if( protocolMatch ){
+        protocol = protocolMatch[ 1 ].toLowerCase();
+        path = protocolMatch[ 2 ];
     }
 
     if( compressedExtList.indexOf( ext ) !== -1 ){

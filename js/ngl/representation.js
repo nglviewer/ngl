@@ -2120,42 +2120,42 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             );
 
-            if( NGL.debug ){
+            // if( NGL.debug ){
 
-                scope.debugBufferList.push(
+            //     scope.debugBufferList.push(
 
-                    new NGL.BufferVectorHelper(
-                        subPos.position,
-                        subOri.normal,
-                        "skyblue",
-                        1.5
-                    )
+            //         new NGL.BufferVectorHelper(
+            //             subPos.position,
+            //             subOri.normal,
+            //             "skyblue",
+            //             1.5
+            //         )
 
-                );
+            //     );
 
-                scope.debugBufferList.push(
+            //     scope.debugBufferList.push(
 
-                    new NGL.BufferVectorHelper(
-                        subPos.position,
-                        subOri.binormal,
-                        "lightgreen",
-                        1.5
-                    )
+            //         new NGL.BufferVectorHelper(
+            //             subPos.position,
+            //             subOri.binormal,
+            //             "lightgreen",
+            //             1.5
+            //         )
 
-                );
+            //     );
 
-                scope.debugBufferList.push(
+            //     scope.debugBufferList.push(
 
-                    new NGL.BufferVectorHelper(
-                        subPos.position,
-                        subOri.tangent,
-                        "orange",
-                        1.5
-                    )
+            //         new NGL.BufferVectorHelper(
+            //             subPos.position,
+            //             subOri.tangent,
+            //             "orange",
+            //             1.5
+            //         )
 
-                );
+            //     );
 
-            }
+            // }
 
             /*
                 l.position.push( subPos.position );
