@@ -822,6 +822,54 @@ NGL.Examples = {
 
         },
 
+        "kdtree": function( stage ){
+
+            stage.loadFile( "data://3SN6.cif", function( o ){
+
+                o.addRepresentation( "cartoon", {
+                    color: "chainindex"
+                } );
+                o.centerView();
+
+                var s = o.structure;
+                var points = new Float32Array( s.atomPosition() );  // copy
+                var metric = function( a, b ){
+                    return Math.sqrt(
+                        Math.pow( a[0] - b[0], 2 ) +
+                        Math.pow( a[1] - b[1], 2 ) +
+                        Math.pow( a[2] - b[2], 2 )
+                    )
+                };
+
+                console.time( "kdtree build" );
+
+                var kdtree = new THREE.TypedArrayUtils.Kdtree(
+                    points, metric, 3
+                );
+
+                console.timeEnd( "kdtree build" );
+
+                console.log( points );
+                console.log( kdtree );
+
+                var p1 = new THREE.Vector3().fromArray( points, 0 );
+
+                console.time( "kdtree nearest" );
+
+                var res = kdtree.nearest( p1.toArray(), 2 );
+
+                console.timeEnd( "kdtree nearest" );
+
+                console.log( res );
+
+                var p2 = new THREE.Vector3().fromArray( points, res[0][0].pos * 3 );
+
+                console.log( p2 )
+
+            } );
+
+        },
+
     }
 
 };
