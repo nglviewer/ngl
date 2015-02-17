@@ -2967,6 +2967,10 @@ NGL.Residue.prototype = {
     resno: undefined,
     resname: undefined,
 
+    chain: undefined,
+    atoms: undefined,
+    atomCount: undefined,
+
     _ss: undefined,
     get ss () {
         return this._ss;
@@ -3338,6 +3342,10 @@ NGL.Atom.prototype = {
     atomname: undefined,
     modelindex: undefined,
 
+    residue: undefined,
+    globalindex: undefined,
+    bonds: undefined,
+
     connectedTo: function( atom ){
 
         if( this.hetero && atom.hetero &&
@@ -3427,6 +3435,7 @@ NGL.Atom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
+        // a.globalindex = this.globalindex;  // ???
 
         this.residue = atom.residue;
 
@@ -3513,6 +3522,8 @@ NGL.AtomArray.prototype = {
             this.bfactor = new Float32Array( size );
             this.altloc = new Uint8Array( size );
             this.atomname = new Uint8Array( 4 * size );
+            this.modelindex = new Int32Array( size );
+            this.globalindex = new Int32Array( size );
 
         }
 
@@ -3545,7 +3556,9 @@ NGL.AtomArray.prototype = {
                 this.hetero.buffer,
                 this.bfactor.buffer,
                 this.altloc.buffer,
-                this.atomname.buffer
+                this.atomname.buffer,
+                this.modelindex.buffer,
+                this.globalindex.buffer
             ];
 
         }
@@ -3607,7 +3620,13 @@ NGL.AtomArray.prototype = {
         this.atomnameOffset = this.altlocOffset + this.altlocSize;
         this.atomnameSize = 4 * size;
 
-        this.byteLength = this.atomnameOffset + this.atomnameSize;
+        this.modelindexOffset = this.atomnameOffset + this.atomnameSize;
+        this.modelindexSize = 4 * size;
+
+        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
+        this.globalindexSize = 4 * size;
+
+        this.byteLength = this.globalindexOffset + this.globalindexSize;
 
     },
 
@@ -3631,6 +3650,8 @@ NGL.AtomArray.prototype = {
         this.bfactor = new Float32Array( this.buffer, this.bfactorOffset, this.bfactorSize / 4 );
         this.altloc = new Uint8Array( this.buffer, this.altlocOffset, this.altlocSize );
         this.atomname = new Uint8Array( this.buffer, this.atomnameOffset, this.atomnameSize );
+        this.modelindex = new Int32Array( this.buffer, this.modelindexOffset, this.modelindexSize / 4 );
+        this.globalindex = new Int32Array( this.buffer, this.globalindexOffset, this.globalindexSize / 4 );
 
     },
 
@@ -3686,6 +3707,8 @@ NGL.AtomArray.prototype = {
                 bfactor: this.bfactor,
                 altloc: this.altloc,
                 atomname: this.atomname,
+                modelindex: this.modelindex,
+                globalindex: this.globalindex,
 
                 bonds: this.bonds,
                 residue: this.residue
@@ -3723,6 +3746,8 @@ NGL.AtomArray.prototype = {
             this.bfactor = obj.bfactor;
             this.altloc = obj.altloc;
             this.atomname = obj.atomname;
+            this.modelindex = obj.modelindex;
+            this.globalindex = obj.globalindex;
 
         }
 
@@ -3894,6 +3919,8 @@ NGL.AtomArray.prototype = {
         aa.bfactor.set( this.bfactor );
         aa.altloc.set( this.altloc );
         aa.atomname.set( this.atomname );
+        aa.modelindex.set( this.modelindex );
+        aa.globalindex.set( this.globalindex );
 
         return aa;
 
@@ -3923,6 +3950,8 @@ NGL.AtomArray.prototype = {
         delete this.bfactor;
         delete this.altloc;
         delete this.atomname;
+        delete this.modelindex;
+        delete this.globalindex;
 
         delete this.bonds;
         delete this.residue;
@@ -3946,6 +3975,9 @@ NGL.ProxyAtom = function( atomArray, index ){
 NGL.ProxyAtom.prototype = {
 
     constructor: NGL.ProxyAtom,
+
+    atomArray: undefined,
+    index: undefined,
 
     get atomno () {
         return this.atomArray.atomno[ this.index ];
@@ -4073,6 +4105,20 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.residue[ this.index ] = value;
     },
 
+    get modelindex () {
+        return this.atomArray.modelindex[ this.index ];
+    },
+    set modelindex ( value ) {
+        this.atomArray.modelindex[ this.index ] = value;
+    },
+
+    get globalindex () {
+        return this.atomArray.globalindex[ this.index ];
+    },
+    set globalindex ( value ) {
+        this.atomArray.globalindex[ this.index ] = value;
+    },
+
     // connectedTo: NGL.Atom.prototype.connectedTo,
 
     connectedTo: function( atom ){
@@ -4118,12 +4164,7 @@ NGL.ProxyAtom.prototype = {
 
         var atomArray = r.chain.model.structure.atomArray;
 
-        var a = new NGL.ProxyAtom( atomArray );
-
-        a.index = this.index;
-
-        // FIXME
-        a.modelindex = this.modelindex;
+        var a = new NGL.ProxyAtom( atomArray, this.index );
 
         return a;
 

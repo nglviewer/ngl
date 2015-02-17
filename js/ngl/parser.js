@@ -169,8 +169,7 @@ NGL.createAtomArray = function( structure, callback ){
 
             var ai = atoms[ i ];
 
-            var a = new NGL.ProxyAtom( atomArray );
-            a.index = i;
+            var a = new NGL.ProxyAtom( atomArray, i );
 
             atomArray.setResname( i, ai.resname );
             atomArray.x[ i ] = ai.x;
@@ -187,8 +186,7 @@ NGL.createAtomArray = function( structure, callback ){
             atomArray.altloc[ i ] = ai.altloc.charCodeAt( 0 );
             atomArray.vdw[ i ] = ai.vdw;
             atomArray.covalent[ i ] = ai.covalent;
-            // FIXME atomArray.modelindex[ i ] = ai.modelindex;
-            a.modelindex = ai.modelindex;
+            atomArray.modelindex[ i ] = ai.modelindex;
 
             // set proxy atoms in already existing bonds
 
@@ -279,7 +277,7 @@ NGL.StructureParser.prototype = {
 
             function( wcallback ){
 
-                if( self.structure.atoms.length > NGL.useAtomArrayThreshold ){
+                if( !self.structure.atomArray && self.structure.atoms.length > NGL.useAtomArrayThreshold ){
 
                     NGL.createAtomArray( self.structure, wcallback );
 
@@ -1007,7 +1005,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     //
 
-    var useArray = lines.length > 300000 ? true : false;
+    var atomArray;
+    if( lines.length > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lines.length );
+        s.atomArray = atomArray;
+    }
 
     var idx = 0;
     var modelIdx = 0;
@@ -1235,31 +1237,61 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
+                        var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
                         var chainname = ls[ label_asym_id ];
                         // var resno = parseInt( ls[ label_seq_id ] );
                         var resno = parseInt( ls[ auth_seq_id ] );
                         var resname = ls[ label_comp_id ];
+                        var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
                         var altloc = ls[ label_alt_id ];
+                        altloc = ( altloc === '.' ) ? '' : altloc;
 
-                        var a = new NGL.Atom();
-                        a.index = idx;
+                        var a;
 
-                        a.resname = resname;
-                        a.x = x;
-                        a.y = y;
-                        a.z = z;
-                        a.element = element;
-                        a.hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
-                        a.chainname = chainname;
-                        a.resno = resno;
-                        a.serial = serial;
-                        a.atomname = atomname;
-                        a.ss = 'c';
-                        a.bfactor = parseFloat( ls[ B_iso_or_equiv ] );
-                        a.altloc = ( altloc === '.' ) ? '' : altloc;
-                        a.vdw = vdwRadii[ element ];
-                        a.covalent = covRadii[ element ];
-                        a.modelindex = modelIdx;
+                        if( atomArray ){
+
+                            a = new NGL.ProxyAtom( atomArray, idx );
+
+                            atomArray.setResname( idx, resname );
+                            atomArray.x[ idx ] = x;
+                            atomArray.y[ idx ] = y;
+                            atomArray.z[ idx ] = z;
+                            atomArray.setElement( idx, element );
+                            atomArray.hetero[ idx ] = hetero;
+                            atomArray.setChainname( idx, chainname );
+                            atomArray.resno[ idx ] = resno;
+                            atomArray.serial[ idx ] = serial;
+                            atomArray.setAtomname( idx, atomname );
+                            atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                            atomArray.bfactor[ idx ] = bfactor;
+                            atomArray.altloc[ idx ] = altloc.charCodeAt( 0 );
+                            atomArray.vdw[ idx ] = vdwRadii[ element ];
+                            atomArray.covalent[ idx ] = covRadii[ element ];
+                            atomArray.modelindex[ idx ] = modelIdx;
+
+                        }else{
+
+                            a = new NGL.Atom();
+                            a.index = idx;
+
+                            a.resname = resname;
+                            a.x = x;
+                            a.y = y;
+                            a.z = z;
+                            a.element = element;
+                            a.hetero = hetero;
+                            a.chainname = chainname;
+                            a.resno = resno;
+                            a.serial = serial;
+                            a.atomname = atomname;
+                            a.ss = 'c';
+                            a.bfactor = bfactor;
+                            a.altloc = altloc;
+                            a.vdw = vdwRadii[ element ];
+                            a.covalent = covRadii[ element ];
+                            a.modelindex = modelIdx;
+
+                        }
 
                         idx += 1;
                         atoms.push( a );
@@ -1371,15 +1403,15 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                     for( var i = _i; i < _n; ++i ){
 
-                        var selection = new NGL.Selection(
-                            sc.beg_auth_seq_id[ i ] + "-" +
-                            sc.end_auth_seq_id[ i ] + ":" +
-                            sc.beg_label_asym_id[ i ]
-                        );
-
                         var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
 
                         if( !Number.isNaN( helixType ) ){
+
+                            var selection = new NGL.Selection(
+                                sc.beg_auth_seq_id[ i ] + "-" +
+                                sc.end_auth_seq_id[ i ] + ":" +
+                                sc.beg_label_asym_id[ i ]
+                            );
 
                             helixType = helixTypes[ helixType ] || helixTypes[""];
 
