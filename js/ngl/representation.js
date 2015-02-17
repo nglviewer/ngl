@@ -2418,13 +2418,13 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-            if( NGL.debug ){
+            // if( NGL.debug ){
 
-                this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
-                this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
-                this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
+            //     this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
+            //     this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
+            //     this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
 
-            }
+            // }
 
         };
 
