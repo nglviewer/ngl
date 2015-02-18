@@ -1371,3 +1371,92 @@ NGL.HelixCrossing.prototype = {
 
 };
 
+
+///////////
+// Kdtree
+
+NGL.Kdtree = function( atomSet ){
+
+    console.time( "NGL.Kdtree build" );
+
+    var metric = function( a, b ){
+
+        var dx = a[0] - b[0];
+        var dy = a[1] - b[1];
+        var dz = a[2] - b[2];
+
+        // return dx*dx + dy*dy + dz*dz;
+        return Math.sqrt( dx*dx + dy*dy + dz*dz );
+
+    };
+
+    var p = atomSet.atomPosition();
+    var n = p.length;
+    var n3 = n / 3;
+
+    var points = new Float32Array( n + n3 );
+
+    for( var i = 0; i < n3; ++i ){
+
+        var i3 = i * 3;
+        var i4 = i * 4;
+
+        points[ i4 + 0 ] = p[ i3 + 0 ];
+        points[ i4 + 1 ] = p[ i3 + 1 ];
+        points[ i4 + 2 ] = p[ i3 + 2 ];
+        points[ i4 + 3 ] = i;
+
+    }
+
+    this.atomSet = atomSet;
+    this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4 );
+
+    console.timeEnd( "NGL.Kdtree build" );
+
+};
+
+NGL.Kdtree.prototype = {
+
+    nearest: function(){
+
+        var p = new THREE.Vector3();
+
+        return function( point, maxNodes, maxDistance ){
+
+            console.time( "NGL.Kdtree nearest" );
+
+            if( point instanceof THREE.Vector3 ){
+
+                point = point.toArray();
+
+            }else if( point instanceof NGL.Atom ){
+
+                point = point.positionToArray();
+
+            }
+
+            var nodeList = this.kdtree.nearest(
+                point, maxNodes, maxDistance
+            );
+
+            var atomSet = this.atomSet;
+            var atomList = [];
+
+            nodeList.forEach( function( nodeDist ){
+
+                var node = nodeDist[ 0 ];
+                var dist = nodeDist[ 1 ];
+
+                atomList.push( atomSet.atoms[ node.obj[ 3 ] ] );
+
+            } );
+
+            console.timeEnd( "NGL.Kdtree nearest" );
+
+            return atomList;
+
+        }
+
+    }()
+
+};

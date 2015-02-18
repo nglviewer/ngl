@@ -824,47 +824,42 @@ NGL.Examples = {
 
         "kdtree": function( stage ){
 
-            stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://3l5q.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
+
+                var centerSele = "@10";
+                var centerSelection = new NGL.Selection( centerSele );
 
                 o.addRepresentation( "cartoon", {
-                    color: "chainindex"
+                    color: "chainindex", transparent: true, opacity: 0.5,
+                    side: THREE.FrontSide
                 } );
-                o.centerView();
+                o.addRepresentation( "line" );
+                o.centerView( centerSele );
 
-                var s = o.structure;
-                var points = new Float32Array( s.atomPosition() );  // copy
-                var metric = function( a, b ){
-                    return Math.sqrt(
-                        Math.pow( a[0] - b[0], 2 ) +
-                        Math.pow( a[1] - b[1], 2 ) +
-                        Math.pow( a[2] - b[2], 2 )
-                    )
-                };
+                var kdtree = new NGL.Kdtree( o.structure );
+                var nearest = kdtree.nearest(
+                    o.structure.getAtoms( centerSelection, true ), Infinity, 6
+                )
 
-                console.time( "kdtree build" );
+                // console.log( kdtree );
+                // console.log( nearest );
 
-                var kdtree = new THREE.TypedArrayUtils.Kdtree(
-                    points, metric, 3
-                );
+                var names = [];
+                nearest.forEach( function( a ){
+                    // names.push( a.qualifiedName( true ) );
+                    names.push( "@" + a.index );
+                } );
 
-                console.timeEnd( "kdtree build" );
+                var contactSele = names.join( " OR " );
+                o.addRepresentation( "licorice", {
+                    sele: contactSele
+                } );
 
-                console.log( points );
-                console.log( kdtree );
-
-                var p1 = new THREE.Vector3().fromArray( points, 0 );
-
-                console.time( "kdtree nearest" );
-
-                var res = kdtree.nearest( p1.toArray(), 2 );
-
-                console.timeEnd( "kdtree nearest" );
-
-                console.log( res );
-
-                var p2 = new THREE.Vector3().fromArray( points, res[0][0].pos * 3 );
-
-                console.log( p2 )
+                o.addRepresentation( "spacefill", {
+                    sele: centerSele, transparent: true, opacity: 0.5
+                } );
 
             } );
 

@@ -3372,11 +3372,11 @@ NGL.Atom.prototype = {
 
     },
 
-    qualifiedName: function(){
+    qualifiedName: function( noResname ){
 
         var name = "";
 
-        if( this.resname ) name += "[" + this.resname + "]";
+        if( this.resname && !noResname ) name += "[" + this.resname + "]";
         if( this.resno ) name += this.resno;
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;

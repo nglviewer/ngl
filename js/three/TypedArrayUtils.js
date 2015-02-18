@@ -12,7 +12,7 @@ THREE.TypedArrayUtils = {};
  *
  * Complexity: http://bigocheatsheet.com/ see Quicksort
  *
- * Example: 
+ * Example:
  * points: [x, y, z, x, y, z, x, y, z, ...]
  * eleSize: 3 //because of (x, y, z)
  * orderElement: 0 //order according to x
@@ -39,7 +39,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 		}
 
 	};
-	
+
 	var i, j, swap = new Float32Array( eleSize ), temp = new Float32Array( eleSize );
 
 	while ( true ) {
@@ -49,13 +49,13 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 			for ( j= left + 1; j <= right; j ++ ) {
 
 				for ( x = 0; x < eleSize; x ++ ) {
-			
+
 					swap[ x ] = arr[ j * eleSize + x ];
 
 				}
-				
+
 				i = j - 1;
-				
+
 				while ( i >= left && arr[ i * eleSize + orderElement ] > swap[orderElement ] ) {
 
 					for ( x = 0; x < eleSize; x ++ ) {
@@ -75,7 +75,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 				}
 
 			}
-			
+
 			if ( sp == -1 ) break;
 
 			right = stack[ sp -- ]; //?
@@ -87,25 +87,25 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			i = left + 1;
 			j = right;
-	
+
 			swapF( median, i );
 
 			if ( arr[ left * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
-		
+
 				swapF( left, right );
-				
+
 			}
 
 			if ( arr[ i * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
-		
+
 				swapF( i, right );
-		
+
 			}
 
 			if ( arr[ left * eleSize + orderElement ] > arr[ i * eleSize + orderElement ] ) {
-		
+
 				swapF( left, i );
-			
+
 			}
 
 			for ( x = 0; x < eleSize; x ++ ) {
@@ -113,16 +113,16 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 				temp[ x ] = arr[ i * eleSize + x ];
 
 			}
-			
+
 			while ( true ) {
-				
+
 				do i ++; while ( arr[ i * eleSize + orderElement ] < temp[ orderElement ] );
 				do j --; while ( arr[ j * eleSize + orderElement ] > temp[ orderElement ] );
-				
+
 				if ( j < i ) break;
-		
+
 				swapF( i, j );
-			
+
 			}
 
 			for ( x = 0; x < eleSize; x ++ ) {
@@ -160,7 +160,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  * k-d Tree for typed arrays (e.g. for Float32Array), in-place
  * provides fast nearest neighbour search
  * useful e.g. for a custom shader and/or BufferGeometry, saves tons of memory
- * has no insert and remove, only buildup and neares neighbour search
+ * has no insert and remove, only buildup and nearest neighbour search
  *
  * Based on https://github.com/ubilabs/kd-tree-javascript by Ubilabs
  *
@@ -170,7 +170,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  *
  * Requires typed array quicksort
  *
- * Example: 
+ * Example:
  * points: [x, y, z, x, y, z, x, y, z, ...]
  * metric: function(a, b){	return Math.pow(a[0] - b[0], 2) +  Math.pow(a[1] - b[1], 2) +  Math.pow(a[2] - b[2], 2); }  //Manhatten distance
  * eleSize: 3 //because of (x, y, z)
@@ -182,18 +182,18 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  * If you want to further minimize memory usage, remove Node.depth and replace in search algorithm with a traversal to root node (see comments at THREE.TypedArrayUtils.Kdtree.prototype.Node)
  */
 
- THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
+THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 	var self = this;
-	
+
 	var maxDepth = 0;
-	
+
 	var getPointSet = function ( points, pos ) {
 
 		return points.subarray( pos * eleSize, pos * eleSize + eleSize );
 
 	};
-		
+
 	function buildTree( points, depth, parent, pos ) {
 
 		var dim = depth % eleSize,
@@ -202,7 +202,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 			plength = points.length / eleSize;
 
 		if ( depth > maxDepth ) maxDepth = depth;
-		
+
 		if ( plength === 0 ) return null;
 		if ( plength === 1 ) {
 
@@ -211,27 +211,26 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 		}
 
 		THREE.TypedArrayUtils.quicksortIP( points, eleSize, dim );
-		
+
 		median = Math.floor( plength / 2 );
-		
-		node = new self.Node( getPointSet( points, median ) , depth, parent, median + pos );
+
+		node = new self.Node( getPointSet( points, median ), depth, parent, median + pos );
 		node.left = buildTree( points.subarray( 0, median * eleSize), depth + 1, node, pos );
 		node.right = buildTree( points.subarray( ( median + 1 ) * eleSize, points.length ), depth + 1, node, pos + median + 1 );
 
 		return node;
-	
+
 	}
 
 	this.root = buildTree( points, 0, null, 0 );
-		
+
 	this.getMaxDepth = function () { return maxDepth; };
-	
-	this.nearest = function ( point, maxNodes , maxDistance ) {
-	
-		 /* point: array of size eleSize 
-			maxNodes: max amount of nodes to return 
-			maxDistance: maximum distance to point result nodes should have
-			condition (not implemented): function to test node before it's added to the result list, e.g. test for view frustum
+
+	this.nearest = function ( point, maxNodes, maxDistance ) {
+
+		 /* point: array of elements with size eleSize
+			maxNodes: max amount of nodes to return
+			maxDistance: maximum distance of point to result nodes
 		*/
 
 		var i,
@@ -248,7 +247,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			var bestChild,
 				dimension = node.depth % eleSize,
-				ownDistance = metric(point, node.obj),
+				ownDistance = metric( point, node.obj ),
 				linearDistance = 0,
 				otherChild,
 				i,
@@ -286,7 +285,8 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			if ( node.right === null && node.left === null ) {
 
-				if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+				// if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+				if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance < maxDistance ) {
 
 					saveNode( node, ownDistance );
 
@@ -322,7 +322,8 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			nearestSearch( bestChild );
 
-			if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+			// if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+			if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ) {
 
 				saveNode( node, ownDistance );
 
@@ -330,7 +331,8 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			// if there's still room or the current distance is nearer than the best distance
 
-			if ( bestNodes.size() < maxNodes || Math.abs(linearDistance) < bestNodes.peek()[ 1 ] ) {
+			// if ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) {
+			if ( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) && Math.abs( linearDistance ) <= maxDistance ) {
 
 				if ( bestChild === node.left ) {
 
@@ -352,34 +354,43 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 		}
 
-		if ( maxDistance ) {
+		// if ( maxDistance ) {
 
-			for ( i = 0; i < maxNodes; i += 1 ) {
+		// 	for ( i = 0; i < maxNodes; i += 1 ) {
 
-				bestNodes.push( [ null, maxDistance ] );
+		// 		bestNodes.push( [ null, maxDistance ] );
 
-			}
+		// 	}
 
-		}
+		// }
 
 		nearestSearch( self.root );
 
 		result = [];
 
-		for ( i = 0; i < maxNodes; i += 1 ) {
+		// for ( i = 0; i < maxNodes; i += 1 ) {
+		for ( i = 0; i < Math.min( bestNodes.size(), maxNodes ); i += 1 ) {
 
-			if ( bestNodes.content[ i ][ 0 ] ) {
+			/*if ( bestNodes.content[ i ][ 0 ] ) {
 
 				result.push( [ bestNodes.content[ i ][ 0 ], bestNodes.content[ i ][ 1 ] ] );
+
+			}*/
+
+			var inode = bestNodes.content[ i ];
+
+			if ( inode && inode[ 0 ] ) {
+
+				result.push( [ inode[ 0 ], inode[ 1 ] ] );
 
 			}
 
 		}
-		
+
 		return result;
-	
+
 	};
-	
+
 };
 
 /**
@@ -406,7 +417,7 @@ THREE.TypedArrayUtils.Kdtree.prototype.Node = function ( obj, depth, parent, pos
 	this.depth = depth;
 	this.pos = pos;
 
-}; 
+};
 
 /**
  * Binary heap implementation
