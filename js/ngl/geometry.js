@@ -1377,7 +1377,7 @@ NGL.HelixCrossing.prototype = {
 
 NGL.Kdtree = function( atomSet ){
 
-    console.time( "NGL.Kdtree build" );
+    // console.time( "NGL.Kdtree build" );
 
     var metric = function( a, b ){
 
@@ -1411,7 +1411,7 @@ NGL.Kdtree = function( atomSet ){
     this.atomSet = atomSet;
     this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4 );
 
-    console.timeEnd( "NGL.Kdtree build" );
+    // console.timeEnd( "NGL.Kdtree build" );
 
 };
 
@@ -1423,13 +1423,13 @@ NGL.Kdtree.prototype = {
 
         return function( point, maxNodes, maxDistance ){
 
-            console.time( "NGL.Kdtree nearest" );
+            // console.time( "NGL.Kdtree nearest" );
 
             if( point instanceof THREE.Vector3 ){
 
                 point = point.toArray();
 
-            }else if( point instanceof NGL.Atom ){
+            }else if( point instanceof NGL.Atom || point instanceof NGL.ProxyAtom ){
 
                 point = point.positionToArray();
 
@@ -1451,7 +1451,7 @@ NGL.Kdtree.prototype = {
 
             } );
 
-            console.timeEnd( "NGL.Kdtree nearest" );
+            // console.timeEnd( "NGL.Kdtree nearest" );
 
             return atomList;
 
