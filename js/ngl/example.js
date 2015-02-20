@@ -829,115 +829,55 @@ NGL.Examples = {
             // stage.loadFile( "data://3l5q.pdb", function( o ){
             stage.loadFile( "data://1crn.pdb", function( o ){
 
-                setTimeout( function(){
+                var centerSele = "@10";
+                var centerSelection = new NGL.Selection( centerSele );
 
-                    var centerSele = "@10";
-                    var centerSelection = new NGL.Selection( centerSele );
+                o.addRepresentation( "cartoon", {
+                    color: "chainindex"
+                } );
+                o.addRepresentation( "line" );
+                o.centerView( centerSele );
 
-                    o.addRepresentation( "cartoon", {
-                        color: "chainindex",
-                        // transparent: true, opacity: 0.5, side: THREE.FrontSide
-                    } );
-                    o.addRepresentation( "line" );
-                    o.centerView( centerSele );
+                var kdtree = new NGL.Kdtree( o.structure );
+                var nearest = kdtree.nearest(
+                    o.structure.getAtoms( centerSelection, true ), Infinity, 4
+                )
 
-                    var kdtree = new NGL.Kdtree( o.structure );
-                    var nearest = kdtree.nearest(
-                        o.structure.getAtoms( centerSelection, true ), Infinity, 10
-                    )
+                // console.log( kdtree );
+                // console.log( nearest );
 
-                    // console.log( kdtree );
-                    // console.log( nearest );
+                var names = [];
+                nearest.forEach( function( atomDist ){
+                    // names.push( atomDist.atom.qualifiedName( true ) );
+                    names.push( "@" + atomDist.atom.index );
+                } );
 
-                    var names = [];
-                    nearest.forEach( function( a ){
-                        // names.push( a.qualifiedName( true ) );
-                        names.push( "@" + a.index );
-                    } );
+                var contactSele = names.join( " OR " );
+                o.addRepresentation( "licorice", {
+                    sele: contactSele
+                } );
 
-                    var contactSele = names.join( " OR " );
-                    o.addRepresentation( "licorice", {
-                        sele: contactSele
-                    } );
+                o.addRepresentation( "spacefill", {
+                    sele: centerSele, transparent: true, opacity: 0.5
+                } );
 
-                    o.addRepresentation( "spacefill", {
-                        sele: centerSele, transparent: true, opacity: 0.5
-                    } );
+            } );
 
-                    var donSele = "" +
-                        "( ARG and ( .NE or .NH1 or .NH2 ) ) or " +
-                        "( ASP and .ND2 ) or " +
-                        "( GLN and .NE2 ) or " +
-                        "( HIS and ( .ND1 or .NE2 ) ) or " +
-                        "( LYS and .NZ ) or " +
-                        "( SER and .OG ) or " +
-                        "( THR and .OG1 ) or " +
-                        "( TRP and .NE1 ) or " +
-                        "( TYR and .OH )" +
-                    "";
+        },
 
-                    var accSele = "" +
-                        "( ASN and .OD1 ) or " +
-                        "( ASP and ( OD1 or .OD2 ) ) or " +
-                        "( GLN and .OE1 ) or " +
-                        "( GLU and ( .OE1 or .OE2 ) ) or " +
-                        "( HIS and ( .ND1 or .NE2 ) ) or " +
-                        "( SER and .OG ) or " +
-                        "( THR and .OG1 ) or " +
-                        "( TYR and .OH )" +
-                    "";
+        "contact": function( stage ){
 
-                    o.addRepresentation( "spacefill", {
-                        sele: donSele, scale: 0.25
-                    } );
+            // stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
+            // stage.loadFile( "data://3l5q.pdb", function( o ){
+            stage.loadFile( "data://1blu.pdb", function( o ){
 
-                    o.addRepresentation( "spacefill", {
-                        sele: accSele, scale: 0.25
-                    } );
-
-                    var donSelection = new NGL.Selection( donSele );
-                    var accSelection = new NGL.Selection( accSele );
-
-                    var donAtomSet = new NGL.AtomSet( o.structure, donSelection );
-                    var accAtomSet = new NGL.AtomSet( o.structure, accSelection );
-
-                    // console.log( donAtomSet );
-                    // console.log( accAtomSet );
-
-                    var donKdtree = new NGL.Kdtree( donAtomSet );
-                    var accKdtree = new NGL.Kdtree( accAtomSet );
-
-                    console.time( "hb test" )
-
-                    var hbNames = [];
-
-                    donAtomSet.eachAtom( function( don ){
-
-                        var flag = 0;
-                        var hb = accKdtree.nearest( don, Infinity, 3.5 );
-
-                        hb.forEach( function( acc ){
-                            if( acc.residue !== don.residue ){
-                                hbNames.push( "@" + acc.index );
-                            }else{
-                                flag = 1;
-                            }
-                        } );
-
-                        if( hb.length - flag > 0 ){
-                            hbNames.push( "@" + don.index );
-                        }
-
-                    } );
-
-                    console.timeEnd( "hb test" );
-
-                    var hbSele = hbNames.join( " OR " );
-                    o.addRepresentation( "hyperball", {
-                        sele: hbSele
-                    } );
-
-                }, 100 );
+                o.addRepresentation( "cartoon", {
+                    color: "chainindex"
+                } );
+                o.addRepresentation( "contact" );
+                o.addRepresentation( "line" );
+                o.centerView();
 
             } );
 

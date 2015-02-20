@@ -4180,9 +4180,6 @@ NGL.StructureSubset = function( structure, sele ){
     this.structure = structure;
     this.selection = new NGL.Selection( sele );
 
-    this.atoms = [];
-    this.bondSet = new NGL.BondSet();
-
     this._build();
 
 };

@@ -3517,6 +3517,209 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.ContactRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.ContactRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.ContactRepresentation,
+
+    type: "contact",
+
+    defaultSize: 0.25,
+
+    parameters: Object.assign( {
+
+        // aspectRatio: {
+        //     type: "number", precision: 1, max: 10.0, min: 1.0
+        // },
+        // sphereDetail: {
+        //     type: "integer", max: 3, min: 0, rebuild: "impostor"
+        // },
+        radiusSegments: {
+            type: "integer", max: 50, min: 5, rebuild: "impostor"
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.radius = params.radius || this.defaultSize;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        this.aspectRatio = params.aspectRatio || 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        var structureSubset = new NGL.StructureSubset(
+            this.structure, this.selection.string
+        );
+
+        var contactData = NGL.polarContacts(
+            structureSubset, 3.5
+        );
+
+        this.atomSet = contactData.atomSet;
+        this.bondSet = contactData.bondSet;
+
+        var atomSet = this.atomSet;
+        var bondSet = this.bondSet;
+
+        var sphereScale = this.scale * this.aspectRatio;
+
+        // this.sphereBuffer = new NGL.SphereBuffer(
+        //     atomSet.atomPosition(),
+        //     atomSet.atomColor( null, this.color ),
+        //     atomSet.atomRadius( null, this.radius, sphereScale ),
+        //     atomSet.atomColor( null, "picking" ),
+        //     {
+        //         sphereDetail: this.sphereDetail,
+        //         transparent: this.transparent,
+        //         side: this.side,
+        //         opacity: opacity,
+        //         nearClip: this.nearClip
+        //     },
+        //     this.disableImpostor
+        // );
+
+        this.cylinderBuffer = new NGL.CylinderBuffer(
+            bondSet.bondPosition( null, 0 ),
+            bondSet.bondPosition( null, 1 ),
+            bondSet.bondColor( null, 0, this.color ),
+            bondSet.bondColor( null, 1, this.color ),
+            bondSet.bondRadius( null, 0, this.radius, this.scale ),
+            bondSet.bondColor( null, 0, "picking" ),
+            bondSet.bondColor( null, 1, "picking" ),
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip
+            },
+            this.disableImpostor
+        );
+
+        this.bufferList.push( /*this.sphereBuffer,*/ this.cylinderBuffer );
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var atomSet = this.atomSet;
+        var bondSet = this.bondSet;
+
+        var sphereData = {};
+        var cylinderData = {};
+
+        if( what[ "position" ] ){
+
+            // sphereData[ "position" ] = atomSet.atomPosition();
+
+            var from = bondSet.bondPosition( null, 0 );
+            var to = bondSet.bondPosition( null, 1 );
+
+            cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
+                from, to
+            );
+            cylinderData[ "position1" ] = from;
+            cylinderData[ "position2" ] = to;
+
+        }
+
+        if( what[ "color" ] ){
+
+            // sphereData[ "color" ] = atomSet.atomColor( null, this.color );
+
+            cylinderData[ "color" ] = bondSet.bondColor( null, 0, this.color );
+            cylinderData[ "color2" ] = bondSet.bondColor( null, 1, this.color );
+
+        }
+
+        if( what[ "radius" ] || what[ "scale" ] ){
+
+            // sphereData[ "radius" ] = atomSet.atomRadius(
+            //     null, this.radius, this.scale * this.aspectRatio
+            // );
+
+            cylinderData[ "radius" ] = bondSet.bondRadius(
+                null, 0, this.radius, this.scale
+            );
+
+        }
+
+        // this.sphereBuffer.setAttributes( sphereData );
+        this.cylinderBuffer.setAttributes( cylinderData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "aspectRatio" ] ){
+
+            this.aspectRatio = params[ "aspectRatio" ];
+            what[ "radius" ] = true;
+            what[ "scale" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    },
+
+    clear: function(){
+
+        if( this.atomSet ) this.atomSet.dispose();
+        if( this.bondSet ) this.bondSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
+
+    }
+
+} );
+
+
 //////////////////////////////
 // Trajectory representation
 

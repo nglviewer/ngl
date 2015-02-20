@@ -1417,46 +1417,139 @@ NGL.Kdtree = function( atomSet ){
 
 NGL.Kdtree.prototype = {
 
-    nearest: function(){
+    nearest: function( point, maxNodes, maxDistance ){
 
-        var p = new THREE.Vector3();
+        // console.time( "NGL.Kdtree nearest" );
 
-        return function( point, maxNodes, maxDistance ){
+        if( point instanceof THREE.Vector3 ){
 
-            // console.time( "NGL.Kdtree nearest" );
+            point = point.toArray();
 
-            if( point instanceof THREE.Vector3 ){
+        }else if( point instanceof NGL.Atom || point instanceof NGL.ProxyAtom ){
 
-                point = point.toArray();
-
-            }else if( point instanceof NGL.Atom || point instanceof NGL.ProxyAtom ){
-
-                point = point.positionToArray();
-
-            }
-
-            var nodeList = this.kdtree.nearest(
-                point, maxNodes, maxDistance
-            );
-
-            var atomSet = this.atomSet;
-            var atomList = [];
-
-            nodeList.forEach( function( nodeDist ){
-
-                var node = nodeDist[ 0 ];
-                var dist = nodeDist[ 1 ];
-
-                atomList.push( atomSet.atoms[ node.obj[ 3 ] ] );
-
-            } );
-
-            // console.timeEnd( "NGL.Kdtree nearest" );
-
-            return atomList;
+            point = point.positionToArray();
 
         }
 
-    }()
+        var nodeList = this.kdtree.nearest(
+            point, maxNodes, maxDistance
+        );
+
+        var atomSet = this.atomSet;
+        var atomList = [];
+
+        nodeList.forEach( function( nodeDist ){
+
+            var node = nodeDist[ 0 ];
+            var dist = nodeDist[ 1 ];
+
+            atomList.push( {
+                atom: atomSet.atoms[ node.obj[ 3 ] ],
+                distance: dist
+            } );
+
+        } );
+
+        // console.timeEnd( "NGL.Kdtree nearest" );
+
+        return atomList;
+
+    }
 
 };
+
+
+// Contact
+
+NGL.Contact = function( atomSet1, atomSet2 ){
+
+    this.atomSet1 = atomSet1;
+    this.atomSet2 = atomSet2;
+
+    this.kdtree1 = new NGL.Kdtree( atomSet1 );
+    this.kdtree2 = new NGL.Kdtree( atomSet2 );
+
+}
+
+NGL.Contact.prototype = {
+
+    within: function( maxDistance ){
+
+        var atomSet = new NGL.AtomSet();
+        var bondSet = new NGL.BondSet();
+
+        var kdtree1 = this.kdtree1;
+        var kdtree2 = this.kdtree2;
+
+        this.atomSet1.eachAtom( function( atom1 ){
+
+            var found = false;
+            var contacts = kdtree2.nearest(
+                atom1, Infinity, maxDistance
+            );
+
+            contacts.forEach( function( atomDist ){
+
+                var atom2 = atomDist.atom;
+
+                if( atom1.residue !== atom2.residue ){
+                    found = true;
+                    atomSet.addAtom( atom2 );
+                    bondSet.addBond( atom1, atom2, true );
+                }
+
+            } );
+
+            if( found ){
+                atomSet.addAtom( atom1 );
+            }
+
+        } );
+
+        return {
+            atomSet: atomSet,
+            bondSet: bondSet
+        };
+
+    }
+
+}
+
+
+NGL.polarContacts = function( structure, maxDistance ){
+
+    var donorSelection = new NGL.Selection(
+        "( ARG and ( .NE or .NH1 or .NH2 ) ) or " +
+        "( ASP and .ND2 ) or " +
+        "( GLN and .NE2 ) or " +
+        "( HIS and ( .ND1 or .NE2 ) ) or " +
+        "( LYS and .NZ ) or " +
+        "( SER and .OG ) or " +
+        "( THR and .OG1 ) or " +
+        "( TRP and .NE1 ) or " +
+        "( TYR and .OH )"
+    );
+
+    var acceptorSelection = new NGL.Selection(
+        "( ASN and .OD1 ) or " +
+        "( ASP and ( OD1 or .OD2 ) ) or " +
+        "( GLN and .OE1 ) or " +
+        "( GLU and ( .OE1 or .OE2 ) ) or " +
+        "( HIS and ( .ND1 or .NE2 ) ) or " +
+        "( SER and .OG ) or " +
+        "( THR and .OG1 ) or " +
+        "( TYR and .OH )"
+    );
+
+    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
+    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+
+    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var data = contact.within( maxDistance );
+
+    data.atomSet.structure = structure;
+    data.bondSet.structure = structure;
+
+    return data;
+
+}
