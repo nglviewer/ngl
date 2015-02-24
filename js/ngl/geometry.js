@@ -1417,48 +1417,55 @@ NGL.Kdtree = function( atomSet ){
 
 NGL.Kdtree.prototype = {
 
-    nearest: function( point, maxNodes, maxDistance ){
+    nearest: function(){
 
-        // console.time( "NGL.Kdtree nearest" );
+        var pointArray = new Float32Array( 3 );
 
-        if( point instanceof THREE.Vector3 ){
+        return function( point, maxNodes, maxDistance ){
 
-            point = point.toArray();
+            // console.time( "NGL.Kdtree nearest" );
 
-        }else if( point instanceof NGL.Atom || point instanceof NGL.ProxyAtom ){
+            if( point instanceof THREE.Vector3 ){
 
-            point = point.positionToArray();
+                point.toArray( pointArray );
 
-        }
+            }else if( point instanceof NGL.Atom || point instanceof NGL.ProxyAtom ){
 
-        var nodeList = this.kdtree.nearest(
-            point, maxNodes, maxDistance
-        );
+                point.positionToArray( pointArray );
 
-        var atomSet = this.atomSet;
-        var atomList = [];
+            }
 
-        nodeList.forEach( function( nodeDist ){
+            var nodeList = this.kdtree.nearest(
+                pointArray, maxNodes, maxDistance
+            );
 
-            var node = nodeDist[ 0 ];
-            var dist = nodeDist[ 1 ];
+            var atomSet = this.atomSet;
+            var atomList = [];
 
-            atomList.push( {
-                atom: atomSet.atoms[ node.obj[ 3 ] ],
-                distance: dist
+            nodeList.forEach( function( nodeDist ){
+
+                var node = nodeDist[ 0 ];
+                var dist = nodeDist[ 1 ];
+
+                atomList.push( {
+                    atom: atomSet.atoms[ node.obj[ 3 ] ],
+                    distance: dist
+                } );
+
             } );
 
-        } );
+            // console.timeEnd( "NGL.Kdtree nearest" );
 
-        // console.timeEnd( "NGL.Kdtree nearest" );
+            return atomList;
 
-        return atomList;
+        };
 
-    }
+    }()
 
 };
 
 
+////////////
 // Contact
 
 NGL.Contact = function( atomSet1, atomSet2 ){
