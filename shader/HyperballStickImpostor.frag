@@ -73,7 +73,7 @@ vec3 isect_surf(Ray r, mat4 matrix_coef){
     gl_FragColor.a = 1.0;
     if (delta<0.0){
         discard;
-        gl_FragColor.a = 0.5;
+        // gl_FragColor.a = 0.5;
     }
     float t1 =(-b-sqrt(delta))/a;
 
@@ -254,8 +254,3 @@ void main()
     // ##################################################################################
 
 }
-
-
-
-
-
