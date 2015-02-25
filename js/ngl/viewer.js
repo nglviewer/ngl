@@ -2188,27 +2188,23 @@ NGL.TiledRenderer.prototype = {
 
         for( var i = 0; i <= n; ++i ){
 
-            setTimeout( ( function( i ){
+            setTimeout( function( i ){
 
-                return function(){
+                if( i === n ){
 
-                    if( i === n ){
+                    if( typeof onFinish === "function" ){
 
-                        if( typeof onFinish === "function" ){
-
-                            onFinish( i + 1, n, false );
-
-                        }
-
-                    }else{
-
-                        renderTile( i );
+                        onFinish( i + 1, n, false );
 
                     }
 
+                }else{
+
+                    renderTile( i );
+
                 }
 
-            } )( i ) );
+            }, 0, i );
 
         }
 
