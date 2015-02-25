@@ -106,15 +106,17 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", { sele: "protein" } );
                 o.centerView();
 
-                var traj = o.addTrajectory( "__example__/md.xtc" );
+                var trajComp = o.addTrajectory( "__example__/md.xtc" );
 
-                var i = 0;
-                var foo = setInterval(function(){
+                trajComp.trajectory.signals.gotNumframes.add( function(){
 
-                    traj.setFrame( i++ % 51 );
-                    if( i >= 102 ) clearInterval( foo );
+                    var player = new NGL.TrajectoryPlayer(
+                        trajComp.trajectory, 1, 100
+                    );
+                    player.mode = "once";
+                    player.play();
 
-                }, 100);
+                } );
 
             } );
 
