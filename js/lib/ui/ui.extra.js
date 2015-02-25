@@ -41,12 +41,42 @@ UI.Html.prototype.setValue = function ( value ) {
 
 UI.EllipsisText = function ( text ) {
 
+    UI.Text.call( this, text );
+
+    this.setWhiteSpace( "nowrap" );
+    this.setOverflow( "hidden" );
+    this.setTextOverflow( "ellipsis" );
+
+    return this;
+
+};
+
+UI.EllipsisText.prototype = Object.create( UI.Text.prototype );
+
+UI.EllipsisText.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.dom.textContent = value;
+        this.setTitle( value );
+
+    }
+
+    return this;
+
+};
+
+
+// Ellipsis Multiline Text
+
+UI.EllipsisMultilineText = function ( text ) {
+
     // http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/
 
     UI.Element.call( this );
 
     var dom = document.createElement( 'span' );
-    dom.className = 'EllipsisText';
+    dom.className = 'EllipsisMultilineText';
     dom.style.cursor = 'default';
     dom.style.display = 'inline-block';
     dom.style.verticalAlign = 'middle';
@@ -63,9 +93,9 @@ UI.EllipsisText = function ( text ) {
 
 };
 
-UI.EllipsisText.prototype = Object.create( UI.Element.prototype );
+UI.EllipsisMultilineText.prototype = Object.create( UI.Element.prototype );
 
-UI.EllipsisText.prototype.setValue = function ( value ) {
+UI.EllipsisMultilineText.prototype.setValue = function ( value ) {
 
     if ( value !== undefined ) {
 

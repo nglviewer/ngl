@@ -232,20 +232,20 @@ input[type=range]:focus:after {
 
 /* http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/ */
 
-.EllipsisText {
+.EllipsisMultilineText {
     overflow: hidden;
     max-height: 2.6em;
     line-height: 1.3em;
 }
 
-.EllipsisText:before {
+.EllipsisMultilineText:before {
     content:"";
     float: left;
     width: 5px;
     max-height: 2.6em;
 }
 
-.EllipsisText > *:first-child {
+.EllipsisMultilineText > *:first-child {
     float: right;
     width: 100%;
     margin-top: 0px;
@@ -254,7 +254,7 @@ input[type=range]:focus:after {
     word-wrap: break-word;
 }
 
-.EllipsisText:after {
+.EllipsisMultilineText:after {
     content: "\02026";
 
     box-sizing: content-box;

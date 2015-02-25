@@ -177,6 +177,6 @@ input.Number {
     }
 
 
-.EllipsisText:after {
+.EllipsisMultilineText:after {
     background: linear-gradient(to right, rgba(255, 255, 255, 0), #eee 50%, #eee);
 }
