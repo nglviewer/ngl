@@ -2115,6 +2115,10 @@ NGL.TiledRenderer.prototype = {
 
     renderTile: function( i ){
 
+        this.viewer.renderer.setPixelRatio(
+            window.devicePixelRatio * this.factor
+        );
+
         this.makeAsymmetricFrustum( this.camera.projectionMatrix, i );
 
         this.viewer.render( null, null, true );
@@ -2145,6 +2149,10 @@ NGL.TiledRenderer.prototype = {
             this.onProgress( i + 1, this.n, false );
 
         }
+
+        this.viewer.renderer.setPixelRatio(
+            window.devicePixelRatio
+        );
 
     },
 
