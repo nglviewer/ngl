@@ -72,10 +72,6 @@ input[type=range]:focus:after {
     font-size: 12px;
 }
 
-.Icon {
-    cursor: default;
-}
-
 .deleteInfo:after {
     position: absolute;
     transform: translate(-50%,-250% );

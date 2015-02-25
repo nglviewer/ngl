@@ -12,6 +12,7 @@ UI.ColorPopupMenu = function(){
     UI.Panel.call( this );
 
     this.iconText = new UI.Text( "" )
+        .setCursor( "pointer" )
         .setClass( "fa-stack-1x" )
         .setColor( "#111" );
 
@@ -355,6 +356,7 @@ UI.ComponentPanel = function( component ){
 
     var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
+        .setCursor( "pointer" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
@@ -364,6 +366,7 @@ UI.ComponentPanel = function( component ){
 
     var center = new UI.Icon( "bullseye" )
         .setTitle( "center" )
+        .setCursor( "pointer" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 

@@ -181,6 +181,7 @@ UI.DisposeIcon = function(){
     var scope = this;
 
     this.setTitle( "delete" );
+    this.setCursor( "pointer" )
 
     this.onClick( function(){
 
@@ -477,6 +478,7 @@ UI.PopupMenu = function( iconClass, heading ){
         .add(
             new UI.Icon( "times" )
                 .setFloat( "right" )
+                .setCursor( "pointer" )
                 .onClick( function(){
 
                     panel.setDisplay( "none" );
@@ -490,6 +492,7 @@ UI.PopupMenu = function( iconClass, heading ){
     panel.add( headingPanel );
 
     icon.setTitle( "menu" );
+    icon.setCursor( "pointer" )
     icon.onClick( function( e ){
 
         if( panel.getDisplay() === "block" ){
@@ -597,7 +600,10 @@ UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
     }
 
     this.button = new UI.Icon( iconClass1 )
-        .setWidth( "12px" ).setMarginRight( "6px" );
+        .setTitle( "expand/collapse" )
+        .setCursor( "pointer" )
+        .setWidth( "12px" )
+        .setMarginRight( "6px" );
     this.addStatic( this.button );
 
     var scope = this;
