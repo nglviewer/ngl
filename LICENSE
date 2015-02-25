@@ -15,7 +15,6 @@ For license texts see at the end of this document.
 
 	The MIT License, Copyright &copy; 2010-2014 three.js authors
 
-	js/three.js
 	js/three/*
 	js/lib/ui/ui.js
 
@@ -96,6 +95,16 @@ For license texts see at the end of this document.
 	test/unit/qunit-1.14.0.js
 	test/unit/qunit-1.14.0.css
 	test/unit/qunit-assert-close.js
+
+
+///////////////
+// Blanket.js
+
+	http://blanketjs.org/
+	https://github.com/alex-seville/blanket
+	MIT License, Copyright 2013, Alex Seville
+
+	test/unit/blanket.min.js
 
 
 /////////////////
@@ -201,6 +210,15 @@ For license texts see at the end of this document.
 	MIT License, Copyright (c) 2013 Forbes Lindesay
 
 	js/lib/promise-6.0.0.min.js
+
+
+/////////////
+// async.js
+
+	https://github.com/caolan/async
+	MIT license, Copyright 2010-2014, Caolan McMahon
+
+	js/lib/async.js
 
 
 /////////////////////
