@@ -229,3 +229,42 @@ input[type=range]:focus:after {
     border-radius: 4px;
     background-color: white;
 }
+
+/* http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/ */
+
+.EllipsisText {
+    overflow: hidden;
+    max-height: 2.6em;
+    line-height: 1.3em;
+}
+
+.EllipsisText:before {
+    content:"";
+    float: left;
+    width: 5px;
+    max-height: 2.6em;
+}
+
+.EllipsisText > *:first-child {
+    float: right;
+    width: 100%;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: -5px;
+    word-wrap: break-word;
+}
+
+.EllipsisText:after {
+    content: "\02026";
+
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+
+    float: right; position: relative;
+    top: 1.3em; left: 100%;
+    width: 3em; margin-left: -3em;
+    padding-right: 5px;
+
+    text-align: right;
+}

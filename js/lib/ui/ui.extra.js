@@ -37,6 +37,48 @@ UI.Html.prototype.setValue = function ( value ) {
 };
 
 
+// Ellipsis Text
+
+UI.EllipsisText = function ( text ) {
+
+    // http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'span' );
+    dom.className = 'EllipsisText';
+    dom.style.cursor = 'default';
+    dom.style.display = 'inline-block';
+    dom.style.verticalAlign = 'middle';
+
+    var content = document.createElement( 'p' );
+    dom.appendChild( content );
+
+    this.dom = dom;
+    this.content = content;
+
+    this.setValue( text );
+
+    return this;
+
+};
+
+UI.EllipsisText.prototype = Object.create( UI.Element.prototype );
+
+UI.EllipsisText.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.content.textContent = value;
+        this.setTitle( value );
+
+    }
+
+    return this;
+
+};
+
+
 // Overlay Panel
 
 UI.OverlayPanel = function(){
