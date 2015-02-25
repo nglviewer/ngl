@@ -265,8 +265,6 @@ NGL.MenubarFileWidget = function( stage ){
             .setTop( "80px" )
             .setDisplay( "block" );
 
-        return;
-
     }
 
     function onScreenshotOptionClick () {
@@ -683,14 +681,31 @@ NGL.ExportImageWidget = function( stage ){
             progress.setDisplay( "inline-block" );
 
             setTimeout( function(){
-                exportImage(
+
+                stage.exportImage(
+
                     parseInt( factorSelect.getValue() ),
-                    typeSelect.getValue(),
-                    parseFloat( qualitySelect.getValue() ),
                     antialiasCheckbox.getValue(),
                     transparentCheckbox.getValue(),
-                    trimCheckbox.getValue()
-                )
+                    trimCheckbox.getValue(),
+
+                    function( i, n, finished ){
+                        if( i === 1 ){
+                            progress.setMax( n );
+                        }
+                        if( i >= n ){
+                            progress.setIndeterminate();
+                        }else{
+                            progress.setValue( i );
+                        }
+                        if( finished ){
+                            progress.setDisplay( "none" );
+                            exportButton.setDisplay( "inline-block" );
+                        }
+                    }
+
+                );
+
             }, 50 );
 
         } );
@@ -706,76 +721,15 @@ NGL.ExportImageWidget = function( stage ){
 
     addEntry( "scale", factorSelect );
     // addEntry( "type", typeSelect ); // commented out to always use png
-    // addEntry( "quality", qualitySelect ); // not png
+    // addEntry( "quality", qualitySelect ); // not available for png
     addEntry( "antialias", antialiasCheckbox );
-    addEntry( "transparent", transparentCheckbox ); // not jpeg
+    addEntry( "transparent", transparentCheckbox ); // not available for jpeg
     addEntry( "trim", trimCheckbox );
 
     listingPanel.add(
         new UI.Break(),
         exportButton, progress
     );
-
-    function exportImage( factor, type, quality, antialias, transparent, trim ){
-
-        var paramsList = [];
-
-        stage.eachRepresentation( function( repr ){
-
-            paramsList.push( repr.getParameters() );
-
-            var p = repr.getParameters();
-
-            if( p.subdiv !== undefined ){
-                p.subdiv = Math.max( 25, p.subdiv );
-            }
-
-            if( p.radialSegments !== undefined ){
-                p.radialSegments = Math.max( 25, p.radialSegments );
-            }
-
-            // prevent automatic quality settings
-            p.quality = null;
-
-            repr.rebuild( p );
-
-        }, NGL.StructureComponent );
-
-        stage.viewer.screenshot( {
-
-            factor: factor,
-            type: type,
-            quality: quality,
-            antialias: antialias,
-            transparent: transparent,
-            trim: trim,
-            onProgress: function( i, n, finished ){
-                if( i === 1 ){
-                    progress.setMax( n );
-                }
-                if( i >= n ){
-                    progress.setIndeterminate();
-                }else{
-                    progress.setValue( i );
-                }
-                if( finished ){
-                    progress.setDisplay( "none" );
-                    exportButton.setDisplay( "inline-block" );
-
-                    var j = 0;
-
-                    stage.eachRepresentation( function( repr ){
-
-                        repr.rebuild( paramsList[ j ] );
-                        j += 1;
-
-                    }, NGL.StructureComponent );
-                }
-            }
-
-        } );
-
-    }
 
     return container;
 

@@ -221,6 +221,79 @@ NGL.Stage.prototype = {
 
     },
 
+    exportImage: function( factor, antialias, transparent, trim, onProgress ){
+
+        var reprParamsList = [];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr.visible && repr.parent.visible ){
+
+                reprParamsList.push( {
+                    repr: repr,
+                    params: repr.getParameters()
+                } );
+
+                var p = repr.getParameters();
+
+                if( p.subdiv !== undefined ){
+                    p.subdiv = Math.max( 12, p.subdiv );
+                }
+
+                if( p.radialSegments !== undefined ){
+                    p.radialSegments = Math.max( 20, p.radialSegments );
+                }
+
+                if( p.sphereDetail !== undefined ){
+                    p.sphereDetail = Math.max( 2, p.sphereDetail );
+                }
+
+                if( p.radiusSegments !== undefined ){
+                    p.radiusSegments = Math.max( 20, p.radiusSegments );
+                }
+
+                // prevent automatic quality settings
+                p.quality = null;
+
+                repr.rebuild( p );
+
+            }
+
+        }, NGL.StructureComponent );
+
+        this.viewer.screenshot( {
+
+            factor: factor,
+            type: "image/png",
+            quality: 1.0,
+            antialias: antialias,
+            transparent: transparent,
+            trim: trim,
+
+            onProgress: function( i, n, finished ){
+
+                if( typeof onProgress === "function" ){
+
+                    onProgress( i, n, finished );
+
+                }
+
+                if( finished ){
+
+                    reprParamsList.forEach( function( d ){
+
+                        d.repr.rebuild( d.params );
+
+                    } );
+
+                }
+
+            }
+
+        } );
+
+    },
+
     setTheme: function( value ){
 
         var viewerBackground;
