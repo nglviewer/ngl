@@ -962,7 +962,7 @@ NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, para
 
 NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
 
-NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
+NGL.SphereGeometryBuffer.prototype.constructor = NGL.SphereGeometryBuffer;
 
 NGL.SphereGeometryBuffer.prototype.setPositionTransform = function( radius ){
 
