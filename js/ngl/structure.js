@@ -4240,6 +4240,8 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.bonds = [];
                     _a.altloc = a.altloc;
                     _a.atomname = a.atomname;
+                    _a.modelindex = a.modelindex;
+                    _a.globalindex = a.globalindex;
 
                     atomIndexDict[ a.index ] = _a;
                     atoms.push( _a );
