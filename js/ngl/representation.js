@@ -659,6 +659,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -765,6 +767,8 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.pointBuffer = new NGL.PointBuffer(
@@ -858,6 +862,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -982,6 +988,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
         var atomScale = this.scale * this.aspectRatio;
@@ -1156,6 +1164,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -1250,6 +1260,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -1355,6 +1367,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -1519,6 +1533,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var test = this.selection.test;
@@ -1559,6 +1575,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             }
 
         } );
+
+        if( baSet.atomCount === 0 ) return;
 
         var sphereScale = this.scale * this.aspectRatio;
 
@@ -1747,6 +1765,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var test = this.selection.test;
@@ -1789,7 +1809,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         } );
 
-        if( !baSet.atomCount ) return;
+        if( baSet.atomCount === 0 ) return;
 
         var sphereScale = this.scale * this.aspectRatio;
 
@@ -1984,6 +2004,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var scope = this;
 
@@ -2186,6 +2208,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var scope = this;
 
@@ -2527,6 +2551,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -2704,6 +2730,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var scope = this;
@@ -2828,6 +2856,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -2997,6 +3027,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -3201,6 +3233,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -3401,6 +3435,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -3589,6 +3625,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var structureSubset = new NGL.StructureSubset(
@@ -3604,6 +3642,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         var atomSet = this.atomSet;
         var bondSet = this.bondSet;
+
+        if( atomSet.atomCount === 0 ) return;
 
         var sphereScale = this.scale * this.aspectRatio;
 
