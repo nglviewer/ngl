@@ -579,13 +579,19 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		var delta = 0;
 
-		if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
+		// if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
 
-			delta = event.wheelDelta / 40;
+		// 	delta = event.wheelDelta / 40;
 
-		} else if ( event.detail ) { // Firefox
+		// } else if ( event.detail ) { // Firefox
 
-			delta = - event.detail / 3;
+		// 	delta = - event.detail / 3;
+
+		// }
+
+		if( event.deltaY !== undefined ){
+
+			delta = - Math.sign( event.deltaY ) * 6;
 
 		}
 
@@ -716,8 +722,10 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	this.domElement.addEventListener( 'mousedown', mousedown, false );
 
-	this.domElement.addEventListener( 'mousewheel', mousewheel, false );
-	this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+	// this.domElement.addEventListener( 'mousewheel', mousewheel, false );
+	// this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+
+	this.domElement.addEventListener( 'wheel', mousewheel, false );
 
 	this.domElement.addEventListener( 'touchstart', touchstart, false );
 	this.domElement.addEventListener( 'touchend', touchend, false );
