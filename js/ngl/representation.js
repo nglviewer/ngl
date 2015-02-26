@@ -3637,11 +3637,11 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             structureSubset, 3.5
         );
 
-        this.atomSet = contactData.atomSet;
-        this.bondSet = contactData.bondSet;
+        this.contactAtomSet = contactData.atomSet;
+        this.contactBondSet = contactData.bondSet;
 
-        var atomSet = this.atomSet;
-        var bondSet = this.bondSet;
+        var atomSet = this.contactAtomSet;
+        var bondSet = this.contactBondSet;
 
         if( atomSet.atomCount === 0 ) return;
 
@@ -3690,8 +3690,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        var atomSet = this.atomSet;
-        var bondSet = this.bondSet;
+        var atomSet = this.contactAtomSet;
+        var bondSet = this.contactBondSet;
 
         var sphereData = {};
         var cylinderData = {};
@@ -3763,8 +3763,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     clear: function(){
 
-        if( this.atomSet ) this.atomSet.dispose();
-        if( this.bondSet ) this.bondSet.dispose();
+        if( this.contactAtomSet ) this.contactAtomSet.dispose();
+        if( this.contactBondSet ) this.contactBondSet.dispose();
 
         NGL.StructureRepresentation.prototype.clear.call( this );
 
