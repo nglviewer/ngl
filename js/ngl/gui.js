@@ -835,6 +835,18 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
+    var disposeAll = new UI.DisposeIcon()
+        .setMarginLeft( "10px" )
+        .setDisposeFunction( function(){
+
+            stage.eachComponent( function( component ){
+
+                stage.removeComponent( component );
+
+            } );
+
+        } );
+
     var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
@@ -899,6 +911,7 @@ NGL.SidebarWidget = function( stage ){
             expandAll,
             collapseAll,
             centerAll,
+            disposeAll,
             settingsMenu
         );
 
