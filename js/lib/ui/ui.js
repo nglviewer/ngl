@@ -96,7 +96,7 @@ var properties = [
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
-    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
+    'fontWeight', 'fontStyle', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
     'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
     'wordWrap', 'spellcheck', 'lineHeight', 'whiteSpace', 'textOverflow'
 ];

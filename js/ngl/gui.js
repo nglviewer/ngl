@@ -491,11 +491,33 @@ NGL.MenubarHelpWidget = function( stage ){
 
     }
 
+    function onOverviewOptionClick () {
+
+        overviewWidget
+            .setOpacity( "0.8" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setDisplay( "block" );
+
+        return;
+
+    }
+
     // export image
 
     var preferencesWidget = new NGL.PreferencesWidget( stage )
         .setDisplay( "none" )
         .attach();
+
+    // overview
+
+    var overviewWidget = new NGL.OverviewWidget()
+        .setDisplay( "none" )
+        .attach();
+
+    if( NGL.GET( "overview" ) ){
+        onOverviewOptionClick();
+    }
 
     // configure menu contents
 
@@ -503,6 +525,7 @@ NGL.MenubarHelpWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
+        createOption( 'Overview', onOverviewOptionClick ),
         createOption( 'Documentation', onDocOptionClick ),
         createDivider(),
         createOption( 'Unittests', onUnittestsOptionClick ),
@@ -514,6 +537,79 @@ NGL.MenubarHelpWidget = function( stage ){
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
     return UI.MenubarHelper.createMenuContainer( 'Help', optionsPanel );
+
+};
+
+
+// Overview
+
+NGL.OverviewWidget = function(){
+
+    var container = new UI.OverlayPanel();
+
+    var headingPanel = new UI.Panel()
+        .setBorderBottom( "1px solid #555" )
+        .setHeight( "25px" );
+
+    var listingPanel = new UI.Panel()
+        .setMarginTop( "10px" )
+        .setMinHeight( "100px" )
+        .setMaxHeight( "500px" )
+        .setMaxWidth( "500px" )
+        .setOverflow( "auto" );
+
+    headingPanel.add(
+        new UI.Text( "NGL Viewer" ).setFontStyle( "italic" ),
+        new UI.Html( "&nbsp;&mdash;&nbsp;Overview" )
+    );
+    headingPanel.add(
+        new UI.Icon( "times" )
+            .setCursor( "pointer" )
+            .setMarginLeft( "20px" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                container.setDisplay( "none" );
+
+            } )
+    );
+
+    container.add( headingPanel );
+    container.add( listingPanel );
+
+    //
+
+    function addIcon( name, text ){
+
+        var panel = new UI.Panel();
+
+        var icon = new UI.Icon( name )
+            .setFloat( "left" );
+
+        var label = new UI.Text( text )
+            .setDisplay( "inline" )
+            .setMarginLeft( "10px" );
+
+        panel.add( icon, label );
+        listingPanel.add( panel, new UI.Break() );
+
+    }
+
+    listingPanel
+        .add( new UI.Text( "A number of clickable icons provide common actions. Most icons can by click on, just try it or hover the mouse pointer over it to see a tooltip." ) )
+        .add( new UI.Break(), new UI.Break() );
+
+    addIcon( "eye", "Controls the visibility of a component." );
+
+    addIcon( "trash-o", "Deletes a component. Note that a second click is required to confirm the action." );
+
+    addIcon( "bullseye", "Centers a component." );
+
+    addIcon( "bars", "Opens a menu with further options." );
+
+    addIcon( "square", "Opens a menu with coloring options." );
+
+    return container;
 
 };
 
