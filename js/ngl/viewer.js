@@ -1189,7 +1189,7 @@ NGL.Viewer.prototype = {
         this.rotationGroup.updateMatrixWorld();
 
         // When adding a lot of buffers at once, requesting
-        // a render somehow slows chrome drastically down.
+        // a render somehow slows Chrome drastically down.
         // this.requestRender();
 
         // console.timeEnd( "Viewer.add" );
@@ -1687,6 +1687,13 @@ NGL.Viewer.prototype = {
 
             // FIXME required, maybe a three.js bug
             this.renderer.setRenderTarget();
+
+            if( NGL.debug ){
+
+                this.renderer.clear();
+                this.renderer.render( this.pickingGroup, this.camera );
+
+            }
 
         }else{
 
