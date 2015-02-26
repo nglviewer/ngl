@@ -348,9 +348,8 @@ UI.ComponentPanel = function( component ){
 
     // Name
 
-    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Actions
 

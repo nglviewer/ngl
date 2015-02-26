@@ -949,9 +949,8 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Loading indicator
 
@@ -1291,9 +1290,8 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Status
 
@@ -1342,6 +1340,11 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
+    // Name
+
+    var name = new UI.EllipsisText( component.repr.type )
+        .setWidth( "80px" );
+
     // Actions
 
     var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
@@ -1384,7 +1387,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         })() );
 
     container
-        .addStatic( new UI.Text( component.repr.type ).setWidth( "80px" ) )
+        .addStatic( name )
         .addStatic( toggle )
         .addStatic( disposeIcon )
         .addStatic( colorWidget );
@@ -1556,9 +1559,8 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( traj.name )
-        .setWidth( "108px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( traj.name )
+        .setWidth( "108px" );
 
     container.addStatic( name );
     container.addStatic( numframes );
