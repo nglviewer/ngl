@@ -1115,6 +1115,7 @@ NGL.Viewer.prototype = {
         this.controls.panSpeed = 0.8;
         this.controls.staticMoving = true;
         // this.controls.dynamicDampingFactor = 0.3;
+        this.controls.cylindricalRotation = false;
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener(
