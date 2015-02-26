@@ -229,33 +229,39 @@ NGL.Stage.prototype = {
 
             if( repr.visible && repr.parent.visible ){
 
+                var r = repr.repr;
+
+                var op = {
+                    subdiv: r.subdiv,
+                    radialSegments: r.radialSegments,
+                    sphereDetail: r.sphereDetail,
+                    radiusSegments: r.radiusSegments
+                }
+
                 reprParamsList.push( {
                     repr: repr,
-                    params: repr.getParameters()
+                    params: op
                 } );
 
-                var p = repr.getParameters();
+                var p = {};
 
-                if( p.subdiv !== undefined ){
-                    p.subdiv = Math.max( 12, p.subdiv );
+                if( op.subdiv !== undefined ){
+                    p.subdiv = Math.max( 12, op.subdiv );
                 }
 
-                if( p.radialSegments !== undefined ){
-                    p.radialSegments = Math.max( 20, p.radialSegments );
+                if( op.radialSegments !== undefined ){
+                    p.radialSegments = Math.max( 20, op.radialSegments );
                 }
 
-                if( p.sphereDetail !== undefined ){
-                    p.sphereDetail = Math.max( 2, p.sphereDetail );
+                if( op.sphereDetail !== undefined ){
+                    p.sphereDetail = Math.max( 2, op.sphereDetail );
                 }
 
-                if( p.radiusSegments !== undefined ){
-                    p.radiusSegments = Math.max( 20, p.radiusSegments );
+                if( op.radiusSegments !== undefined ){
+                    p.radiusSegments = Math.max( 20, op.radiusSegments );
                 }
 
-                // prevent automatic quality settings
-                p.quality = null;
-
-                repr.rebuild( p );
+                repr.setParameters( p );
 
             }
 
@@ -282,7 +288,7 @@ NGL.Stage.prototype = {
 
                     reprParamsList.forEach( function( d ){
 
-                        d.repr.rebuild( d.params );
+                        d.repr.setParameters( d.params );
 
                     } );
 
@@ -518,7 +524,7 @@ NGL.Preferences.prototype = {
 
         var impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing"
+            "backbone", "rocket", "crossing", "connect"
         ];
 
         this.stage.eachRepresentation( function( repr ){
@@ -1302,7 +1308,7 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     setParameters: function( params ){
 
         this.repr.setParameters( params );
-        this.signals.parametersChanged.dispatch();
+        this.signals.parametersChanged.dispatch( params );
 
         return this;
 

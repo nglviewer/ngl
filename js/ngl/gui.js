@@ -1462,9 +1462,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         if( input ){
 
-            signals.parametersChanged.add( function( value ){
+            signals.parametersChanged.add( function( params ){
 
-                input.setValue( repr[ name ] );
+                input.setValue( params[ name ] );
 
             } );
 

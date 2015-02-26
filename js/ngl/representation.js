@@ -161,8 +161,6 @@ NGL.Representation.prototype = {
 
     setParameters: function( params, what, rebuild ){
 
-        var scope = this;
-
         var p = params;
         var tp = this.parameters;
 
@@ -175,6 +173,9 @@ NGL.Representation.prototype = {
 
             if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
             if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
+
+            // no value change
+            if( p[ name ] === this[ name ] ) return;
 
             this[ name ] = p[ name ];
 
@@ -312,12 +313,9 @@ NGL.Representation.prototype = {
 
     getParameters: function(){
 
-        // TODO
         var params = {
 
             color: this.color,
-            radius: this.radius,
-            scale: this.scale,
             visible: this.visible,
             sele: this.selection.string,
             disableImpostor: this.disableImpostor,
@@ -330,6 +328,13 @@ NGL.Representation.prototype = {
             params[ name ] = this[ name ];
 
         }, this );
+
+        if( typeof this.radius === "string" ){
+
+            params[ "radiusType" ] = this.radius;
+            delete params[ "radius" ];
+
+        }
 
         return params;
 
