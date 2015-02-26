@@ -2130,15 +2130,21 @@ NGL.TiledRenderer.prototype = {
 
             this.ctx.drawImage(
                 this.renderer.domElement,
-                Math.round( x / 2 ),
-                Math.round( y / 2 ),
-                Math.round( this.viewer.width / 2 ),
-                Math.round( this.viewer.height / 2 )
+                Math.floor( x / 2 ),
+                Math.floor( y / 2 ),
+                Math.ceil( this.viewer.width / 2 ),
+                Math.ceil( this.viewer.height / 2 )
             );
 
         }else{
 
-            this.ctx.drawImage( this.renderer.domElement, x, y );
+            this.ctx.drawImage(
+                this.renderer.domElement,
+                Math.floor( x ),
+                Math.floor( y ),
+                Math.ceil( this.viewer.width ),
+                Math.ceil( this.viewer.height )
+            );
 
         }
 
