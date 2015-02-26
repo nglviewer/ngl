@@ -650,6 +650,8 @@ NGL.AtomSet = function( structure, selection ){
     this.atoms = [];
     this.bonds = [];
 
+    this.atomCount = 0;
+
     if( structure ){
 
         this.fromStructure( structure, selection );

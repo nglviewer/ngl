@@ -1789,6 +1789,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         } );
 
+        if( !baSet.atomCount ) return;
+
         var sphereScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
