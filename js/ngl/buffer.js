@@ -176,6 +176,10 @@ NGL.Buffer.prototype = {
             [ this.uniforms, uniforms ]
         );
 
+        this.pickingUniforms = THREE.UniformsUtils.merge(
+            [ this.pickingUniforms, uniforms ]
+        );
+
     },
 
     addAttributes: function( attributes ){
