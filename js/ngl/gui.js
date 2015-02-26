@@ -539,6 +539,7 @@ NGL.PreferencesWidget = function( stage ){
     headingPanel.add( new UI.Text( "Preferences" ) );
     headingPanel.add(
         new UI.Icon( "times" )
+            .setCursor( "pointer" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
@@ -626,6 +627,7 @@ NGL.ExportImageWidget = function( stage ){
     headingPanel.add( new UI.Text( "Image export" ) );
     headingPanel.add(
         new UI.Icon( "times" )
+            .setCursor( "pointer" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
@@ -1851,6 +1853,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     headingPanel.add( folderSelect );
     headingPanel.add(
         new UI.Icon( "times" )
+            .setCursor( "pointer" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
