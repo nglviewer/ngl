@@ -1115,11 +1115,23 @@ NGL.Viewer.prototype = {
         this.controls.panSpeed = 0.8;
         this.controls.staticMoving = true;
         // this.controls.dynamicDampingFactor = 0.3;
-        this.controls.cylindricalRotation = false;
+        this.controls.cylindricalRotation = true;
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener(
             'change', this.requestRender.bind( this )
+        );
+
+        document.addEventListener(
+            'mousemove',
+            this.controls.update.bind( this.controls ),
+            false
+        );
+
+        document.addEventListener(
+            'touchmove',
+            this.controls.update.bind( this.controls ),
+            false
         );
 
     },
