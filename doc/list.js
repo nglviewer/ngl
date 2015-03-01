@@ -1,12 +1,13 @@
 var list = {
 
-    "Manual": {
+    "User manual": {
         "Introduction": [
             [ "Welcome", "manual/introduction/Welcome" ],
             [ "Gallery", "manual/introduction/Gallery" ]
         ],
         "Usage": [
             [ "Selection language", "manual/usage/Selection-language" ],
+            [ "File formats", "manual/usage/File-formats" ],
             [ "Molecular representations", "manual/usage/Molecular-representations" ],
             [ "User interface", "manual/usage/User-interface" ],
             // [ "Trajectory access", "manual/usage/Trajectory-access" ],
@@ -23,14 +24,15 @@ var list = {
         //     [ "Rendering", "manual/methods/Rendering" ]
         // ],
         "Development": [
-            [ "Acknowledgement", "manual/development/Acknowledgement" ],
+            [ "Repository", "manual/development/Repository" ],
             [ "Unittest", "manual/development/Unittest" ],
             [ "Benchmark", "manual/development/Benchmark" ],
-            [ "Font", "manual/development/Font" ]
+            [ "Font", "manual/development/Font" ],
+            [ "Acknowledgement", "manual/development/Acknowledgement" ]
         ]
     },
 
-    "Reference": {
+    "API reference": {
         "Core": [
             [ "Stage", "api/core/Stage" ],
             [ "Viewer", "api/core/Viewer" ]
@@ -48,10 +50,10 @@ var list = {
             [ "SpacefillRepresentation", "api/representation/SpacefillRepresentation" ],
             [ "RibbonRepresentation", "api/representation/RibbonRepresentation" ]
         ],
-        "Algorithm": [
-            [ "Alignment", "api/algorithm/Alignment" ],
-            [ "Superposition", "api/algorithm/Superposition" ]
-        ]
+        // "Algorithm": [
+        //     [ "Alignment", "api/algorithm/Alignment" ],
+        //     [ "Superposition", "api/algorithm/Superposition" ]
+        // ]
     },
 
 };

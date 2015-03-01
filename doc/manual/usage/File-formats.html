@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		The following file formats are supported.
+
+
+		<h2>Structures</h2>
+
+		Loading flags (available from the *File* menu):
+
+		<ul>
+			<li>*asTrajectory*: load the topology from first model and add the coordinates from it and the remaining models as trajectory frames. Note that this assumes that all models share the same topology.</li>
+			<li>*firstModelOnly*: load only the first model.</li>
+			<li>*cAlphaOnly*: load only C-alpha atoms.</li>
+		</ul>
+
+
+		<h3>mmCIF</h3>
+
+		Extension: <strong>.cif</strong>
+
+		<br/>
+
+		Supported features:
+
+		<ul>
+			<li>Atom data:
+			<li>Secondary structure</li>
+		</ul>
+
+
+		<h3>PDB</h3>
+
+		Extension: <strong>.pdb</strong>
+
+		<br/>
+
+		Supported features:
+
+		<ul>
+			<li>Secondary structure</li>
+		</ul>
+
+
+		<h3>GRO</h3>
+
+		Extension: <strong>.gro</strong>
+
+		<br/>
+
+		Supported features:
+
+		<ul>
+			<li>Atom data</li>
+				<ul>
+					<li>*resname*: read from ... field</li>
+					<li>*x*, *y*, *z*: read from ... field</li>
+					<li>*resno*: read from ... field</li>
+					<li>*serial*: read from ... field</li>
+					<li>*atomname*: read from ... field</li>
+					<li>*chainname*: not available, automatically assigned during post-processing</li>
+					<li>*element*: deduced from *atomname*</li>
+					<li>*vdw*: deduced from *element*</li>
+					<li>*covalent*: deduced from *element*</li>
+					<li>*altloc*: not available, left empty</li>
+				 	<li>*index*: running atom index that is unique within the structure</li>
+				 	<li>*modelindex*: running model index that is unique within the structure</li>
+				 	<li>*globalindex*: globally unique running atom index</li>
+			 	</ul>
+			<li>Box coordinates:</li>
+			<li>Secondary structure: not available in the format, automatically calculated during post-processing</li>
+		</ul>
+
+		TODO:
+
+		<ul>
+			<li>Read velocity data from *GRO* files that includes it (and create a new *Representation* to display it).</li>
+		</ul>
+
+
+		<h2>Trajectories</h2>
+
+		Structure files in *mmCIF*, *PDB* or *GRO* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these files.
+
+
+		<h3>XTC</h3>
+
+		Extension: <strong>.xtc</strong>
+
+
+		<h3>netCDF</h3>
+
+		Extension: <strong>.netcdf</strong>
+
+
+		<h3>DCD</h3>
+
+		Extension: <strong>.dcd</strong>
+
+
+		<h2>Surfaces</h2>
+
+
+		<h3>OBJ</h3>
+
+		Extension: <strong>.obj</strong>
+
+		<br/>
+
+		The *PyMOL* molecular visualization system can export surfaces in the *OBJ* format.
+
+
+		<h3>PLY</h3>
+
+		Extension: <strong>.ply</strong>
+
+		<br/>
+
+		The *EDTsurf* program outputs surfaces in the *PLY* format.
+
+
+	</body>
+</html>
