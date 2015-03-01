@@ -555,7 +555,7 @@ NGL.OverviewWidget = function(){
         .setMarginTop( "10px" )
         .setMinHeight( "100px" )
         .setMaxHeight( "500px" )
-        .setMaxWidth( "500px" )
+        .setMaxWidth( "600px" )
         .setOverflow( "auto" );
 
     headingPanel.add(
@@ -590,8 +590,10 @@ NGL.OverviewWidget = function(){
             .setDisplay( "inline" )
             .setMarginLeft( "10px" );
 
-        panel.add( icon, label );
-        listingPanel.add( panel, new UI.Break() );
+        panel
+            .setMarginLeft( "20px" )
+            .add( icon, label );
+        listingPanel.add( panel );
 
     }
 
@@ -600,14 +602,34 @@ NGL.OverviewWidget = function(){
         .add( new UI.Break(), new UI.Break() );
 
     addIcon( "eye", "Controls the visibility of a component." );
-
     addIcon( "trash-o", "Deletes a component. Note that a second click is required to confirm the action." );
-
     addIcon( "bullseye", "Centers a component." );
-
     addIcon( "bars", "Opens a menu with further options." );
-
     addIcon( "square", "Opens a menu with coloring options." );
+    addIcon( "filter", "Indicate an atom-selection input fields." );
+
+    listingPanel
+        .add( new UI.Text( "Mouse controls" ) )
+        .add( new UI.Html(
+            "<ul>" +
+                "<li>Left button hold and move: rotate camera around center.</li>" +
+                "<li>Left button click: pick atom.</li>" +
+                "<li>Middle button hold and move: zoom camera in and out.</li>" +
+                "<li>Middle button click: center camera on atom.</li>" +
+                "<li>Right button hold and move: translate camera in screen plane.</li>" +
+            "</ul>"
+        ) );
+
+    listingPanel
+        .add( new UI.Panel().add( new UI.Html(
+            "For more information please visit the <a href=''>documentation pages</a>."
+        ) ) );
+
+    // addIcon( "file", "In front of atom-selection input fields." );
+
+    // addIcon( "bookmark", "In front of atom-selection input fields." );
+
+    // addIcon( "database", "In front of atom-selection input fields." );
 
     return container;
 
