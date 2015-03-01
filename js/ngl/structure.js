@@ -3348,6 +3348,18 @@ NGL.Atom.prototype = {
     globalindex: undefined,
     bonds: undefined,
 
+    distanceTo: function( atom ){
+
+        var x = this.x - atom.x;
+        var y = this.y - atom.y;
+        var z = this.z - atom.z;
+
+        var distSquared = x * x + y * y + z * z;
+
+        return Math.sqrt( distSquared );
+
+    },
+
     connectedTo: function( atom ){
 
         if( this.hetero && atom.hetero &&
@@ -4119,6 +4131,25 @@ NGL.ProxyAtom.prototype = {
     },
     set globalindex ( value ) {
         this.atomArray.globalindex[ this.index ] = value;
+    },
+
+    // distanceTo: NGL.Atom.prototype.distanceTo,
+
+    distanceTo: function( atom ){
+
+        var taa = this.atomArray;
+        var aaa = atom.atomArray;
+        var ti = this.index;
+        var ai = atom.index;
+
+        var x = taa.x[ ti ] - aaa.x[ ai ];
+        var y = taa.y[ ti ] - aaa.y[ ai ];
+        var z = taa.z[ ti ] - aaa.z[ ai ];
+
+        var distSquared = x * x + y * y + z * z;
+
+        return Math.sqrt( distSquared );
+
     },
 
     // connectedTo: NGL.Atom.prototype.connectedTo,

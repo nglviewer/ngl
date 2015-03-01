@@ -1377,7 +1377,7 @@ NGL.HelixCrossing.prototype = {
 
 NGL.Kdtree = function( atomSet ){
 
-    // console.time( "NGL.Kdtree build" );
+    console.time( "NGL.Kdtree build" );
 
     var metric = function( a, b ){
 
@@ -1411,7 +1411,7 @@ NGL.Kdtree = function( atomSet ){
     this.atomSet = atomSet;
     this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4 );
 
-    // console.timeEnd( "NGL.Kdtree build" );
+    console.timeEnd( "NGL.Kdtree build" );
 
 };
 
@@ -1439,20 +1439,21 @@ NGL.Kdtree.prototype = {
                 pointArray, maxNodes, maxDistance
             );
 
-            var atomSet = this.atomSet;
+            var atoms = this.atomSet.atoms;
             var atomList = [];
 
-            nodeList.forEach( function( nodeDist ){
+            for( var i = 0, n = nodeList.length; i < n; ++i ){
 
-                var node = nodeDist[ 0 ];
-                var dist = nodeDist[ 1 ];
+                var d = nodeList[ i ];
+                var node = d[ 0 ];
+                var dist = d[ 1 ];
 
                 atomList.push( {
-                    atom: atomSet.atoms[ node.obj[ 3 ] ],
+                    atom: atoms[ node.obj[ 3 ] ],
                     distance: dist
                 } );
 
-            } );
+            }
 
             // console.timeEnd( "NGL.Kdtree nearest" );
 
@@ -1480,7 +1481,9 @@ NGL.Contact = function( atomSet1, atomSet2 ){
 
 NGL.Contact.prototype = {
 
-    within: function( maxDistance ){
+    within: function( maxDistance, minDistance ){
+
+        console.time( "NGL.Contact within" );
 
         var atomSet = new NGL.AtomSet();
         var bondSet = new NGL.BondSet();
@@ -1488,30 +1491,38 @@ NGL.Contact.prototype = {
         var kdtree1 = this.kdtree1;
         var kdtree2 = this.kdtree2;
 
-        this.atomSet1.eachAtom( function( atom1 ){
+        var atoms = this.atomSet1.atoms;
 
+        for( var i = 0, n = atoms.length; i < n; ++i ){
+
+            var atom1 = atoms[ i ];
             var found = false;
             var contacts = kdtree2.nearest(
                 atom1, Infinity, maxDistance
             );
 
-            contacts.forEach( function( atomDist ){
+            for( var j = 0, m = contacts.length; j < m; ++j ){
 
-                var atom2 = atomDist.atom;
+                var d = contacts[ j ];
+                var atom2 = d.atom;
+                var dist = d.distance;
 
-                if( atom1.residue !== atom2.residue ){
+                if( atom1.residue !== atom2.residue &&
+                    ( !minDistance || dist > minDistance ) ){
                     found = true;
                     atomSet.addAtom( atom2 );
                     bondSet.addBond( atom1, atom2, true );
                 }
 
-            } );
+            }
 
             if( found ){
                 atomSet.addAtom( atom1 );
             }
 
-        } );
+        }
+
+        console.timeEnd( "NGL.Contact within" );
 
         return {
             atomSet: atomSet,
@@ -1523,7 +1534,10 @@ NGL.Contact.prototype = {
 }
 
 
-NGL.polarContacts = function( structure, maxDistance ){
+NGL.polarContacts = function( structure, maxDistance, maxAngle ){
+
+    maxDistance = maxDistance || 3.5;
+    maxAngle = maxAngle || 40;
 
     var donorSelection = new NGL.Selection(
         "( ARG and ( .NE or .NH1 or .NH2 ) ) or " +
@@ -1534,7 +1548,8 @@ NGL.polarContacts = function( structure, maxDistance ){
         "( SER and .OG ) or " +
         "( THR and .OG1 ) or " +
         "( TRP and .NE1 ) or " +
-        "( TYR and .OH )"
+        "( TYR and .OH ) or " +
+        "( PROTEIN and .N )"
     );
 
     var acceptorSelection = new NGL.Selection(
@@ -1545,7 +1560,8 @@ NGL.polarContacts = function( structure, maxDistance ){
         "( HIS and ( .ND1 or .NE2 ) ) or " +
         "( SER and .OG ) or " +
         "( THR and .OG1 ) or " +
-        "( TYR and .OH )"
+        "( TYR and .OH ) or " +
+        "( PROTEIN and .O )"
     );
 
     var donAtomSet = new NGL.AtomSet( structure, donorSelection );
@@ -1556,6 +1572,126 @@ NGL.polarContacts = function( structure, maxDistance ){
 
     data.atomSet.structure = structure;
     data.bondSet.structure = structure;
+
+    var bondSet = new NGL.BondSet();
+    var vecOC = new THREE.Vector3();
+    var vecNC = new THREE.Vector3();
+
+    var checkAngle = function( atom1, atom2, oName, cName ){
+
+        var atomO, atomN;
+
+        if( atom1.atomname === oName ){
+            atomO = atom1;
+            atomN = atom2;
+        }else{
+            atomO = atom2;
+            atomN = atom1;
+        }
+
+        var atomC = atomO.residue.getAtomByName( cName );
+
+        vecOC.subVectors( atomC, atomO );
+        vecNC.subVectors( atomC, atomN );
+
+        return THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle;
+
+    }
+
+    data.bondSet.eachBond( function( b ){
+
+        var a1 = b.atom1;
+        var a2 = b.atom2;
+
+        if( ( a1.atomname === "O" && a2.atomname === "N" ) ||
+            ( a1.atomname === "N" && a2.atomname === "O" )
+        ){
+
+            // ignore backbone to backbone contacts
+            return;
+
+        }else if( a1.atomname === "O" || a2.atomname === "O" ){
+
+            if( checkAngle( a1, a2, "O", "C" ) ){
+                bondSet.addBond( a1, a2, true );
+            }
+
+        }else if(
+            ( a1.atomname === "OH" && a1.resname === "TYR" ) ||
+            ( a2.atomname === "OH" && a2.resname === "TYR" )
+        ){
+
+            if( checkAngle( a1, a2, "OH", "CZ" ) ){
+                bondSet.addBond( a1, a2, true );
+            }
+
+        }else{
+
+            bondSet.addBond( a1, a2, true );
+
+        }
+
+    } );
+
+    bondSet.structure = structure;
+    data.bondSet = bondSet;
+
+    return data;
+
+}
+
+
+NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
+
+    maxDistance = maxDistance || 3.5;
+    maxAngle = maxAngle || 40;
+
+    var donorSelection = new NGL.Selection(
+        "( PROTEIN and .N )"
+    );
+
+    var acceptorSelection = new NGL.Selection(
+        "( PROTEIN and .O )"
+    );
+
+    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
+    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+
+    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var data = contact.within( maxDistance );
+
+    data.atomSet.structure = structure;
+    data.bondSet.structure = structure;
+
+    var bondSet = new NGL.BondSet();
+    var vecOC = new THREE.Vector3();
+    var vecNC = new THREE.Vector3();
+
+    data.bondSet.eachBond( function( b ){
+
+        var atomO, atomN;
+
+        if( b.atom1.atomname === "O" ){
+            atomO = b.atom1;
+            atomN = b.atom2;
+        }else{
+            atomO = b.atom2;
+            atomN = b.atom1;
+        }
+
+        var atomC = atomO.residue.getAtomByName( "C" );
+
+        vecOC.subVectors( atomC, atomO );
+        vecNC.subVectors( atomC, atomN );
+
+        if( THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle ){
+            bondSet.addBond( atomO, atomN, true );
+        }
+
+    } );
+
+    bondSet.structure = structure;
+    data.bondSet = bondSet;
 
     return data;
 

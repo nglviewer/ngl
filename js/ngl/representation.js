@@ -3592,6 +3592,19 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         // },
         radiusSegments: {
             type: "integer", max: 50, min: 5, rebuild: "impostor"
+        },
+        contactType: {
+            type: "select", rebuild: true,
+            options: {
+                "polar": "polar",
+                "polarBackbone": "polar backbone"
+            }
+        },
+        maxDistance: {
+            type: "number", precision: 1, max: 10, min: 0.1, rebuild: true
+        },
+        maxAngle: {
+            type: "integer", max: 180, min: 0, rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -3617,7 +3630,10 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             this.radiusSegments = params.radiusSegments || 10;
         }
 
-        this.aspectRatio = params.aspectRatio || 1.0;
+        this.contactType = params.contactType || "polar";
+        this.maxDistance = params.maxDistance || 3.5;
+        this.maxAngle = params.maxAngle || 40;
+        // this.aspectRatio = params.aspectRatio || 1.0;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -3633,8 +3649,13 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             this.structure, this.selection.string
         );
 
-        var contactData = NGL.polarContacts(
-            structureSubset, 3.5
+        var contactsFnDict = {
+            "polar": NGL.polarContacts,
+            "polarBackbone": NGL.polarBackboneContacts
+        };
+
+        var contactData = contactsFnDict[ this.contactType ](
+            structureSubset, this.maxDistance, this.maxAngle
         );
 
         this.contactAtomSet = contactData.atomSet;
@@ -3645,7 +3666,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( atomSet.atomCount === 0 ) return;
 
-        var sphereScale = this.scale * this.aspectRatio;
+        // var sphereScale = this.scale * this.aspectRatio;
 
         // this.sphereBuffer = new NGL.SphereBuffer(
         //     atomSet.atomPosition(),
