@@ -3339,7 +3339,6 @@ NGL.Atom.prototype = {
     covalent: undefined,
     hetero: undefined,
     bfactor: undefined,
-    bonds: undefined,
     altloc: undefined,
     atomname: undefined,
     modelindex: undefined,
