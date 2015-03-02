@@ -45,16 +45,20 @@
                                 name, { visible: false }, true
                             );
 
-                            document.getElementById( name )
-                                .addEventListener( "click", function(){
-                                    var repr = reprDict[ name ];
-                                    repr.setVisibility( !repr.visible );
-                                } );
+                            var btn = document.getElementById( name );
+                            var repr = reprDict[ name ];
+
+                            btn.addEventListener( "click", function(){
+                                repr.setVisibility( !repr.visible );
+                                btn.style.backgroundColor = repr.visible ? "#2194CE" : "";
+                            } );
 
                         } );
 
                         reprDict[ "cartoon" ].setVisibility( true );
-                        o.centerView();
+                        document.getElementById( "cartoon" )
+                            .style.backgroundColor = "#2194CE";
+                        stage.centerView();
 
                     } );
 
