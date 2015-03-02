@@ -9,44 +9,40 @@
 
 if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob ){
 
-    HTMLCanvasElement.prototype.toBlob = function(){
+    // http://code.google.com/p/chromium/issues/detail?id=67587#57
 
-        function dataURLToBlob( dataURL ){
+    Object.defineProperty( HTMLCanvasElement.prototype, 'toBlob', {
 
-            // https://github.com/ebidel/filer.js/blob/master/src/filer.js
+        value: function( callback, type, quality ){
 
-            var base64Marker = ';base64,';
+            var bin = atob( this.toDataURL( type, quality ).split( ',' )[ 1 ] ),
+                len = bin.length,
+                len32 = len >> 2,
+                a8 = new Uint8Array( len ),
+                a32 = new Uint32Array( a8.buffer, 0, len32 );
 
-            if( dataURL.indexOf( base64Marker ) === -1) {
-                var parts = dataURL.split( ',' );
-                var contentType = parts[ 0 ].split( ':' )[ 1 ];
-                var raw = decodeURIComponent( parts[ 1 ] );
+            for( var i=0, j=0; i < len32; i++ ) {
 
-                return new Blob( [ raw ], { type: contentType } );
+                a32[i] = bin.charCodeAt( j++ ) |
+                    bin.charCodeAt( j++ ) << 8 |
+                    bin.charCodeAt( j++ ) << 16 |
+                    bin.charCodeAt( j++ ) << 24;
+
             }
 
-            var parts = dataURL.split( base64Marker );
-            var contentType = parts[ 0 ].split( ':' )[ 1 ];
-            var raw = window.atob( parts[ 1 ] );
-            var rawLength = raw.length;
+            var tailLength = len & 3;
 
-            var uInt8Array = new Uint8Array( rawLength );
+            while( tailLength-- ){
 
-            for( var i = 0; i < rawLength; ++i ){
-                uInt8Array[ i ] = raw.charCodeAt( i );
+                a8[ j ] = bin.charCodeAt( j++ );
+
             }
 
-            return new Blob( [ uInt8Array ], { type: contentType } );
+            callback( new Blob( [ a8 ], { 'type': type || 'image/png' } ) );
 
         }
 
-        return function( callback, type, quality ){
-
-            callback( dataURLToBlob( this.toDataURL( type, quality ) ) );
-
-        }
-
-    }();
+    } );
 
 }
 
