@@ -584,11 +584,12 @@ NGL.OverviewWidget = function(){
         var panel = new UI.Panel();
 
         var icon = new UI.Icon( name )
+            .setWidth( "20px" )
             .setFloat( "left" );
 
         var label = new UI.Text( text )
             .setDisplay( "inline" )
-            .setMarginLeft( "10px" );
+            .setMarginLeft( "5px" );
 
         panel
             .setMarginLeft( "20px" )
@@ -598,31 +599,35 @@ NGL.OverviewWidget = function(){
     }
 
     listingPanel
-        .add( new UI.Text( "A number of clickable icons provide common actions. Most icons can by click on, just try it or hover the mouse pointer over it to see a tooltip." ) )
-        .add( new UI.Break(), new UI.Break() );
+        .add( new UI.Panel().add( new UI.Html( "To load a new structure use the <i>File</i> menu in the top left via drag'n'drop." ) ) )
+        .add( new UI.Break() );
+
+    listingPanel
+        .add( new UI.Panel().add( new UI.Text( "A number of clickable icons provide common actions. Most icons can be clicked on, just try it or hover the mouse pointer over it to see a tooltip." ) ) )
+        .add( new UI.Break() );
 
     addIcon( "eye", "Controls the visibility of a component." );
-    addIcon( "trash-o", "Deletes a component. Note that a second click is required to confirm the action." );
+    addIcon( "trash-o", "Deletes a cmopvponent. Note that a second click is required to confirm the action." );
     addIcon( "bullseye", "Centers a component." );
     addIcon( "bars", "Opens a menu with further options." );
     addIcon( "square", "Opens a menu with coloring options." );
-    addIcon( "filter", "Indicate an atom-selection input fields." );
+    addIcon( "filter", "Indicates an atom-selection input fields." );
 
     listingPanel
         .add( new UI.Text( "Mouse controls" ) )
         .add( new UI.Html(
             "<ul>" +
-                "<li>Left button hold and move: rotate camera around center.</li>" +
-                "<li>Left button click: pick atom.</li>" +
-                "<li>Middle button hold and move: zoom camera in and out.</li>" +
-                "<li>Middle button click: center camera on atom.</li>" +
-                "<li>Right button hold and move: translate camera in screen plane.</li>" +
+                "<li>Left button hold and move to rotate camera around center.</li>" +
+                "<li>Left button click to pick atom.</li>" +
+                "<li>Middle button hold and move to zoom camera in and out.</li>" +
+                "<li>Middle button click to center camera on atom.</li>" +
+                "<li>Right button hold and move to translate camera in the screen plane.</li>" +
             "</ul>"
         ) );
 
     listingPanel
         .add( new UI.Panel().add( new UI.Html(
-            "For more information please visit the <a href=''>documentation pages</a>."
+            "For more information please visit the <a href='../doc/index.html' target='_blank'>documentation pages</a>."
         ) ) );
 
     // addIcon( "file", "In front of atom-selection input fields." );
