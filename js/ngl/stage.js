@@ -215,6 +215,20 @@ NGL.Stage.prototype = {
 
     },
 
+    removeAllComponents: function( type ){
+
+        this.compList.slice().forEach( function( o, i ){
+
+            if( !type || o instanceof type ){
+
+                this.removeComponent( o );
+
+            }
+
+        }, this );
+
+    },
+
     centerView: function(){
 
         this.viewer.centerView( undefined, true );

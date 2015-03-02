@@ -957,11 +957,7 @@ NGL.SidebarWidget = function( stage ){
         .setMarginLeft( "10px" )
         .setDisposeFunction( function(){
 
-            stage.eachComponent( function( component ){
-
-                stage.removeComponent( component );
-
-            } );
+            stage.removeAllComponents()
 
         } );
 
