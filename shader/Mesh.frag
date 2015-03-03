@@ -46,8 +46,14 @@ void main()
             transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
         #endif
 
-        #ifdef FLIP_SIDED
-            transformedNormal = -transformedNormal;
+        #ifdef FLAT_SHADED
+            if( !gl_FrontFacing ){
+                transformedNormal = -transformedNormal;
+            }
+        #else
+            #ifdef FLIP_SIDED
+                transformedNormal = -transformedNormal;
+            #endif
         #endif
 
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
