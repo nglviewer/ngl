@@ -1574,8 +1574,8 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
     data.bondSet.structure = structure;
 
     var bondSet = new NGL.BondSet();
-    var vecOC = new THREE.Vector3();
-    var vecNC = new THREE.Vector3();
+    var v1 = new THREE.Vector3();
+    var v2 = new THREE.Vector3();
 
     var checkAngle = function( atom1, atom2, oName, cName ){
 
@@ -1591,10 +1591,10 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
 
         var atomC = atomO.residue.getAtomByName( cName );
 
-        vecOC.subVectors( atomC, atomO );
-        vecNC.subVectors( atomC, atomN );
+        v1.subVectors( atomC, atomO );
+        v2.subVectors( atomC, atomN );
 
-        return THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle;
+        return THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle;
 
     }
 
@@ -1610,9 +1610,33 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
             // ignore backbone to backbone contacts
             return;
 
-        }else if( a1.atomname === "O" || a2.atomname === "O" ){
+        }else if( a1.atomname === "N" || a2.atomname === "N" ){
 
-            if( checkAngle( a1, a2, "O", "C" ) ){
+            var atomN, atomX;
+
+            if( a1.atomname === "N" ){
+                atomN = a1;
+                atomX = a2;
+            }else{
+                atomN = a2;
+                atomX = a1;
+            }
+
+            var atomCA = atomN.residue.getAtomByName( "CA" );
+            if( !atomCA ) return;
+
+            var prevRes = atomN.residue.getPreviousResidue();
+            if( !prevRes ) return;
+
+            var atomC = prevRes.getAtomByName( "C" );
+            if( !atomC ) return;
+
+            v1.subVectors( atomN, atomC );
+            v2.subVectors( atomN, atomCA );
+            v1.add( v2 ).multiplyScalar( 0.5 );
+            v2.subVectors( atomX, atomN );
+
+            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
                 bondSet.addBond( a1, a2, true );
             }
 
@@ -1664,28 +1688,42 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
     data.bondSet.structure = structure;
 
     var bondSet = new NGL.BondSet();
-    var vecOC = new THREE.Vector3();
-    var vecNC = new THREE.Vector3();
+    var v1 = new THREE.Vector3();
+    var v2 = new THREE.Vector3();
 
     data.bondSet.eachBond( function( b ){
 
-        var atomO, atomN;
+        var a1 = b.atom1;
+        var a2 = b.atom2;
 
-        if( b.atom1.atomname === "O" ){
-            atomO = b.atom1;
-            atomN = b.atom2;
+        var atomN, atomO;
+
+        if( a1.atomname === "N" ){
+            atomN = a1;
+            atomO = a2;
         }else{
-            atomO = b.atom2;
-            atomN = b.atom1;
+            atomN = a2;
+            atomO = a1;
         }
 
-        var atomC = atomO.residue.getAtomByName( "C" );
+        var atomCA = atomN.residue.getAtomByName( "CA" );
+        if( !atomCA ) return;
 
-        vecOC.subVectors( atomC, atomO );
-        vecNC.subVectors( atomC, atomN );
+        var prevRes = atomN.residue.getPreviousResidue();
+        if( !prevRes ) return;
 
-        if( THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle ){
-            bondSet.addBond( atomO, atomN, true );
+        var atomC = prevRes.getAtomByName( "C" );
+        if( !atomC ) return;
+
+        v1.subVectors( atomN, atomC );
+        v2.subVectors( atomN, atomCA );
+        v1.add( v2 ).multiplyScalar( 0.5 );
+        v2.subVectors( atomO, atomN );
+
+        // console.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
+
+        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
+            bondSet.addBond( a1, a2, true );
         }
 
     } );

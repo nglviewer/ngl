@@ -873,7 +873,8 @@ NGL.Examples = {
             // stage.loadFile( "data://4UJD.cif.gz", function( o ){
             // stage.loadFile( "data://3l5q.pdb", function( o ){
             // stage.loadFile( "data://1blu.pdb", function( o ){
-            stage.loadFile( "data://3pqr.pdb", function( o ){
+            // stage.loadFile( "data://3pqr.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
                     color: "ss", flatShaded: true
@@ -881,9 +882,10 @@ NGL.Examples = {
                 o.addRepresentation( "ribbon", {
                     color: "ss", flatShaded: true
                 } );
-                o.addRepresentation( "contact", { contactType: "polar" } );
+                o.addRepresentation( "contact", { contactType: "polarBackbone" } );
                 o.addRepresentation( "trace" );
-                o.centerView( "135" );
+                o.addRepresentation( "line" );
+                o.centerView();
 
             } );
 
