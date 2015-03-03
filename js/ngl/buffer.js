@@ -158,6 +158,12 @@ NGL.Buffer.prototype = {
 
             }
 
+            if( this.flatShaded ){
+
+                material.defines[ "FLAT_SHADED" ] = 1;
+
+            }
+
         }
 
         if( this.nearClip && !( type === "wireframe" || this.wireframe ) ){
@@ -295,6 +301,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
     var p = params || {};
 
     this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;

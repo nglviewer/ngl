@@ -1,4 +1,6 @@
 
+#extension GL_OES_standard_derivatives : enable
+
 uniform float opacity;
 uniform float nearClip;
 
@@ -28,9 +30,22 @@ void main() {
         gl_FragColor = vec4( vPickingColor, objectId );
         //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
     #else
-        vec3 transformedNormal = normalize( vNormal );
+
+        #ifdef FLAT_SHADED
+            vec3 fdx = dFdx( cameraPos.xyz );
+            vec3 fdy = dFdy( cameraPos.xyz );
+            vec3 normal = normalize( cross( fdx, fdy ) );
+        #else
+            vec3 normal = normalize( vNormal );
+        #endif
+
+        vec3 transformedNormal = normalize( normal );
         #ifdef DOUBLE_SIDED
             transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
+        #endif
+
+        #ifdef FLIP_SIDED
+            transformedNormal = -transformedNormal;
         #endif
 
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );

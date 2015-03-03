@@ -73,6 +73,9 @@ NGL.Representation.prototype = {
 
         nearClip: {
             type: "boolean", define: "NEAR_CLIP"
+        },
+        flatShaded: {
+            type: "boolean", define: "FLAT_SHADED"
         }
 
     },
@@ -82,6 +85,7 @@ NGL.Representation.prototype = {
         var p = params || {};
 
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+        this.flatShaded = p.flatShaded || false;
 
         this.visible = p.visible === undefined ? true : p.visible;
         this.quality = p.quality;
@@ -673,7 +677,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -749,7 +754,11 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         }
 
         // FIXME nearClip support missing
-    }, NGL.Representation.prototype.parameters, { nearClip: null } ),
+    }, NGL.Representation.prototype.parameters, {
+
+        nearClip: null, flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -842,9 +851,14 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         },
         antialias: {
             type: "boolean", define: "ANTIALIAS"
-        }
+        },
+        flatShaded: null
 
-    }, NGL.StructureRepresentation.prototype.parameters, { side: null } ),
+    }, NGL.StructureRepresentation.prototype.parameters, {
+
+        side: null, flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -1004,7 +1018,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1026,7 +1041,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1178,7 +1194,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1198,7 +1215,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1245,7 +1263,11 @@ NGL.LineRepresentation.prototype = NGL.createObject(
             uniform: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+    }, NGL.Representation.prototype.parameters, {
+
+        flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -1382,7 +1404,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1404,7 +1427,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1590,7 +1614,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1610,7 +1635,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1823,7 +1849,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -1843,7 +1870,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -2042,6 +2070,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                         ry: ry,
                         capped: scope.capped,
                         wireframe: scope.wireframe,
+                        flatShaded: scope.flatShaded,
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
@@ -2267,6 +2296,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                         ry: ry,
                         capped: scope.capped,
                         wireframe: scope.wireframe,
+                        flatShaded: scope.flatShaded,
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
@@ -2582,7 +2612,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     }
                 )
 
@@ -2702,7 +2733,11 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             uniform: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+    }, NGL.Representation.prototype.parameters, {
+
+        flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -2886,7 +2921,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     scope.disableImpostor
                 )
@@ -3091,7 +3127,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -3272,6 +3309,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                         ry: ry,
                         capped: scope.capped,
                         wireframe: scope.wireframe,
+                        flatShaded: scope.flatShaded,
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
@@ -3472,7 +3510,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     scope.disableImpostor
                 )
@@ -3517,7 +3556,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     transparent: this.transparent,
                     side: this.side,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 },
                 this.disableImpostor
             )
@@ -3678,7 +3718,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         //         transparent: this.transparent,
         //         side: this.side,
         //         opacity: opacity,
-        //         nearClip: this.nearClip
+        //         nearClip: this.nearClip,
+        //         flatShaded: this.flatShaded
         //     },
         //     this.disableImpostor
         // );
@@ -3698,7 +3739,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -3924,7 +3966,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     scope.disableImpostor
                 );
@@ -3950,7 +3993,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         transparent: this.transparent,
                         side: this.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     this.disableImpostor
 
@@ -3971,7 +4015,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         sort: scope.sort,
                         transparent: scope.transparent,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     }
                 );
 
@@ -3990,7 +4035,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         lineWidth: scope.lineWidth,
                         transparent: scope.transparent,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     }
                 );
 
@@ -4141,10 +4187,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
+                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: THREE.FrontSide,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 }
             );
 
@@ -4152,10 +4200,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
+                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: THREE.BackSide,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 }
             );
 
@@ -4167,10 +4217,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
+                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: this.side,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 }
             );
 
