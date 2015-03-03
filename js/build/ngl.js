@@ -11,44 +11,40 @@
 
 if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob ){
 
-    HTMLCanvasElement.prototype.toBlob = function(){
+    // http://code.google.com/p/chromium/issues/detail?id=67587#57
 
-        function dataURLToBlob( dataURL ){
+    Object.defineProperty( HTMLCanvasElement.prototype, 'toBlob', {
 
-            // https://github.com/ebidel/filer.js/blob/master/src/filer.js
+        value: function( callback, type, quality ){
 
-            var base64Marker = ';base64,';
+            var bin = window.atob( this.toDataURL( type, quality ).split( ',' )[ 1 ] ),
+                len = bin.length,
+                len32 = len >> 2,
+                a8 = new Uint8Array( len ),
+                a32 = new Uint32Array( a8.buffer, 0, len32 );
 
-            if( dataURL.indexOf( base64Marker ) === -1) {
-                var parts = dataURL.split( ',' );
-                var contentType = parts[ 0 ].split( ':' )[ 1 ];
-                var raw = decodeURIComponent( parts[ 1 ] );
+            for( var i=0, j=0; i < len32; i++ ) {
 
-                return new Blob( [ raw ], { type: contentType } );
+                a32[i] = bin.charCodeAt( j++ ) |
+                    bin.charCodeAt( j++ ) << 8 |
+                    bin.charCodeAt( j++ ) << 16 |
+                    bin.charCodeAt( j++ ) << 24;
+
             }
 
-            var parts = dataURL.split( base64Marker );
-            var contentType = parts[ 0 ].split( ':' )[ 1 ];
-            var raw = window.atob( parts[ 1 ] );
-            var rawLength = raw.length;
+            var tailLength = len & 3;
 
-            var uInt8Array = new Uint8Array( rawLength );
+            while( tailLength-- ){
 
-            for( var i = 0; i < rawLength; ++i ){
-                uInt8Array[ i ] = raw.charCodeAt( i );
+                a8[ j ] = bin.charCodeAt( j++ );
+
             }
 
-            return new Blob( [ uInt8Array ], { type: contentType } );
+            callback( new Blob( [ a8 ], { 'type': type || 'image/png' } ) );
 
         }
 
-        return function( callback, type, quality ){
-
-            callback( dataURLToBlob( this.toDataURL( type, quality ) ) );
-
-        }
-
-    }();
+    } );
 
 }
 
@@ -1959,6 +1955,331 @@ NGL.HelixCrossing.prototype = {
 };
 
 
+///////////
+// Kdtree
+
+NGL.Kdtree = function( atomSet ){
+
+    console.time( "NGL.Kdtree build" );
+
+    var metric = function( a, b ){
+
+        var dx = a[0] - b[0];
+        var dy = a[1] - b[1];
+        var dz = a[2] - b[2];
+
+        // return dx*dx + dy*dy + dz*dz;
+        return Math.sqrt( dx*dx + dy*dy + dz*dz );
+
+    };
+
+    var p = atomSet.atomPosition();
+    var n = p.length;
+    var n3 = n / 3;
+
+    var points = new Float32Array( n + n3 );
+
+    for( var i = 0; i < n3; ++i ){
+
+        var i3 = i * 3;
+        var i4 = i * 4;
+
+        points[ i4 + 0 ] = p[ i3 + 0 ];
+        points[ i4 + 1 ] = p[ i3 + 1 ];
+        points[ i4 + 2 ] = p[ i3 + 2 ];
+        points[ i4 + 3 ] = i;
+
+    }
+
+    this.atomSet = atomSet;
+    this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4 );
+
+    console.timeEnd( "NGL.Kdtree build" );
+
+};
+
+NGL.Kdtree.prototype = {
+
+    nearest: function(){
+
+        var pointArray = new Float32Array( 3 );
+
+        return function( point, maxNodes, maxDistance ){
+
+            // console.time( "NGL.Kdtree nearest" );
+
+            if( point instanceof THREE.Vector3 ){
+
+                point.toArray( pointArray );
+
+            }else if( point instanceof NGL.Atom || point instanceof NGL.ProxyAtom ){
+
+                point.positionToArray( pointArray );
+
+            }
+
+            var nodeList = this.kdtree.nearest(
+                pointArray, maxNodes, maxDistance
+            );
+
+            var atoms = this.atomSet.atoms;
+            var atomList = [];
+
+            for( var i = 0, n = nodeList.length; i < n; ++i ){
+
+                var d = nodeList[ i ];
+                var node = d[ 0 ];
+                var dist = d[ 1 ];
+
+                atomList.push( {
+                    atom: atoms[ node.obj[ 3 ] ],
+                    distance: dist
+                } );
+
+            }
+
+            // console.timeEnd( "NGL.Kdtree nearest" );
+
+            return atomList;
+
+        };
+
+    }()
+
+};
+
+
+////////////
+// Contact
+
+NGL.Contact = function( atomSet1, atomSet2 ){
+
+    this.atomSet1 = atomSet1;
+    this.atomSet2 = atomSet2;
+
+    this.kdtree1 = new NGL.Kdtree( atomSet1 );
+    this.kdtree2 = new NGL.Kdtree( atomSet2 );
+
+}
+
+NGL.Contact.prototype = {
+
+    within: function( maxDistance, minDistance ){
+
+        console.time( "NGL.Contact within" );
+
+        var atomSet = new NGL.AtomSet();
+        var bondSet = new NGL.BondSet();
+
+        var kdtree1 = this.kdtree1;
+        var kdtree2 = this.kdtree2;
+
+        var atoms = this.atomSet1.atoms;
+
+        for( var i = 0, n = atoms.length; i < n; ++i ){
+
+            var atom1 = atoms[ i ];
+            var found = false;
+            var contacts = kdtree2.nearest(
+                atom1, Infinity, maxDistance
+            );
+
+            for( var j = 0, m = contacts.length; j < m; ++j ){
+
+                var d = contacts[ j ];
+                var atom2 = d.atom;
+                var dist = d.distance;
+
+                if( atom1.residue !== atom2.residue &&
+                    ( !minDistance || dist > minDistance ) ){
+                    found = true;
+                    atomSet.addAtom( atom2 );
+                    bondSet.addBond( atom1, atom2, true );
+                }
+
+            }
+
+            if( found ){
+                atomSet.addAtom( atom1 );
+            }
+
+        }
+
+        console.timeEnd( "NGL.Contact within" );
+
+        return {
+            atomSet: atomSet,
+            bondSet: bondSet
+        };
+
+    }
+
+}
+
+
+NGL.polarContacts = function( structure, maxDistance, maxAngle ){
+
+    maxDistance = maxDistance || 3.5;
+    maxAngle = maxAngle || 40;
+
+    var donorSelection = new NGL.Selection(
+        "( ARG and ( .NE or .NH1 or .NH2 ) ) or " +
+        "( ASP and .ND2 ) or " +
+        "( GLN and .NE2 ) or " +
+        "( HIS and ( .ND1 or .NE2 ) ) or " +
+        "( LYS and .NZ ) or " +
+        "( SER and .OG ) or " +
+        "( THR and .OG1 ) or " +
+        "( TRP and .NE1 ) or " +
+        "( TYR and .OH ) or " +
+        "( PROTEIN and .N )"
+    );
+
+    var acceptorSelection = new NGL.Selection(
+        "( ASN and .OD1 ) or " +
+        "( ASP and ( OD1 or .OD2 ) ) or " +
+        "( GLN and .OE1 ) or " +
+        "( GLU and ( .OE1 or .OE2 ) ) or " +
+        "( HIS and ( .ND1 or .NE2 ) ) or " +
+        "( SER and .OG ) or " +
+        "( THR and .OG1 ) or " +
+        "( TYR and .OH ) or " +
+        "( PROTEIN and .O )"
+    );
+
+    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
+    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+
+    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var data = contact.within( maxDistance );
+
+    data.atomSet.structure = structure;
+    data.bondSet.structure = structure;
+
+    var bondSet = new NGL.BondSet();
+    var vecOC = new THREE.Vector3();
+    var vecNC = new THREE.Vector3();
+
+    var checkAngle = function( atom1, atom2, oName, cName ){
+
+        var atomO, atomN;
+
+        if( atom1.atomname === oName ){
+            atomO = atom1;
+            atomN = atom2;
+        }else{
+            atomO = atom2;
+            atomN = atom1;
+        }
+
+        var atomC = atomO.residue.getAtomByName( cName );
+
+        vecOC.subVectors( atomC, atomO );
+        vecNC.subVectors( atomC, atomN );
+
+        return THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle;
+
+    }
+
+    data.bondSet.eachBond( function( b ){
+
+        var a1 = b.atom1;
+        var a2 = b.atom2;
+
+        if( ( a1.atomname === "O" && a2.atomname === "N" ) ||
+            ( a1.atomname === "N" && a2.atomname === "O" )
+        ){
+
+            // ignore backbone to backbone contacts
+            return;
+
+        }else if( a1.atomname === "O" || a2.atomname === "O" ){
+
+            if( checkAngle( a1, a2, "O", "C" ) ){
+                bondSet.addBond( a1, a2, true );
+            }
+
+        }else if(
+            ( a1.atomname === "OH" && a1.resname === "TYR" ) ||
+            ( a2.atomname === "OH" && a2.resname === "TYR" )
+        ){
+
+            if( checkAngle( a1, a2, "OH", "CZ" ) ){
+                bondSet.addBond( a1, a2, true );
+            }
+
+        }else{
+
+            bondSet.addBond( a1, a2, true );
+
+        }
+
+    } );
+
+    bondSet.structure = structure;
+    data.bondSet = bondSet;
+
+    return data;
+
+}
+
+
+NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
+
+    maxDistance = maxDistance || 3.5;
+    maxAngle = maxAngle || 40;
+
+    var donorSelection = new NGL.Selection(
+        "( PROTEIN and .N )"
+    );
+
+    var acceptorSelection = new NGL.Selection(
+        "( PROTEIN and .O )"
+    );
+
+    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
+    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+
+    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var data = contact.within( maxDistance );
+
+    data.atomSet.structure = structure;
+    data.bondSet.structure = structure;
+
+    var bondSet = new NGL.BondSet();
+    var vecOC = new THREE.Vector3();
+    var vecNC = new THREE.Vector3();
+
+    data.bondSet.eachBond( function( b ){
+
+        var atomO, atomN;
+
+        if( b.atom1.atomname === "O" ){
+            atomO = b.atom1;
+            atomN = b.atom2;
+        }else{
+            atomO = b.atom2;
+            atomN = b.atom1;
+        }
+
+        var atomC = atomO.residue.getAtomByName( "C" );
+
+        vecOC.subVectors( atomC, atomO );
+        vecNC.subVectors( atomC, atomN );
+
+        if( THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle ){
+            bondSet.addBond( atomO, atomN, true );
+        }
+
+    } );
+
+    bondSet.structure = structure;
+    data.bondSet = bondSet;
+
+    return data;
+
+}
+
 // File:js/ngl/structure.js
 
 /**
@@ -2612,6 +2933,8 @@ NGL.AtomSet = function( structure, selection ){
 
     this.atoms = [];
     this.bonds = [];
+
+    this.atomCount = 0;
 
     if( structure ){
 
@@ -4930,6 +5253,10 @@ NGL.Residue.prototype = {
     resno: undefined,
     resname: undefined,
 
+    chain: undefined,
+    atoms: undefined,
+    atomCount: undefined,
+
     _ss: undefined,
     get ss () {
         return this._ss;
@@ -5296,10 +5623,25 @@ NGL.Atom.prototype = {
     covalent: undefined,
     hetero: undefined,
     bfactor: undefined,
-    bonds: undefined,
     altloc: undefined,
     atomname: undefined,
     modelindex: undefined,
+
+    residue: undefined,
+    globalindex: undefined,
+    bonds: undefined,
+
+    distanceTo: function( atom ){
+
+        var x = this.x - atom.x;
+        var y = this.y - atom.y;
+        var z = this.z - atom.z;
+
+        var distSquared = x * x + y * y + z * z;
+
+        return Math.sqrt( distSquared );
+
+    },
 
     connectedTo: function( atom ){
 
@@ -5327,11 +5669,11 @@ NGL.Atom.prototype = {
 
     },
 
-    qualifiedName: function(){
+    qualifiedName: function( noResname ){
 
         var name = "";
 
-        if( this.resname ) name += "[" + this.resname + "]";
+        if( this.resname && !noResname ) name += "[" + this.resname + "]";
         if( this.resno ) name += this.resno;
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
@@ -5390,6 +5732,7 @@ NGL.Atom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
+        // a.globalindex = this.globalindex;  // ???
 
         this.residue = atom.residue;
 
@@ -5476,6 +5819,8 @@ NGL.AtomArray.prototype = {
             this.bfactor = new Float32Array( size );
             this.altloc = new Uint8Array( size );
             this.atomname = new Uint8Array( 4 * size );
+            this.modelindex = new Int32Array( size );
+            this.globalindex = new Int32Array( size );
 
         }
 
@@ -5508,7 +5853,9 @@ NGL.AtomArray.prototype = {
                 this.hetero.buffer,
                 this.bfactor.buffer,
                 this.altloc.buffer,
-                this.atomname.buffer
+                this.atomname.buffer,
+                this.modelindex.buffer,
+                this.globalindex.buffer
             ];
 
         }
@@ -5570,7 +5917,13 @@ NGL.AtomArray.prototype = {
         this.atomnameOffset = this.altlocOffset + this.altlocSize;
         this.atomnameSize = 4 * size;
 
-        this.byteLength = this.atomnameOffset + this.atomnameSize;
+        this.modelindexOffset = this.atomnameOffset + this.atomnameSize;
+        this.modelindexSize = 4 * size;
+
+        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
+        this.globalindexSize = 4 * size;
+
+        this.byteLength = this.globalindexOffset + this.globalindexSize;
 
     },
 
@@ -5594,6 +5947,8 @@ NGL.AtomArray.prototype = {
         this.bfactor = new Float32Array( this.buffer, this.bfactorOffset, this.bfactorSize / 4 );
         this.altloc = new Uint8Array( this.buffer, this.altlocOffset, this.altlocSize );
         this.atomname = new Uint8Array( this.buffer, this.atomnameOffset, this.atomnameSize );
+        this.modelindex = new Int32Array( this.buffer, this.modelindexOffset, this.modelindexSize / 4 );
+        this.globalindex = new Int32Array( this.buffer, this.globalindexOffset, this.globalindexSize / 4 );
 
     },
 
@@ -5649,6 +6004,8 @@ NGL.AtomArray.prototype = {
                 bfactor: this.bfactor,
                 altloc: this.altloc,
                 atomname: this.atomname,
+                modelindex: this.modelindex,
+                globalindex: this.globalindex,
 
                 bonds: this.bonds,
                 residue: this.residue
@@ -5686,6 +6043,8 @@ NGL.AtomArray.prototype = {
             this.bfactor = obj.bfactor;
             this.altloc = obj.altloc;
             this.atomname = obj.atomname;
+            this.modelindex = obj.modelindex;
+            this.globalindex = obj.globalindex;
 
         }
 
@@ -5857,6 +6216,8 @@ NGL.AtomArray.prototype = {
         aa.bfactor.set( this.bfactor );
         aa.altloc.set( this.altloc );
         aa.atomname.set( this.atomname );
+        aa.modelindex.set( this.modelindex );
+        aa.globalindex.set( this.globalindex );
 
         return aa;
 
@@ -5886,6 +6247,8 @@ NGL.AtomArray.prototype = {
         delete this.bfactor;
         delete this.altloc;
         delete this.atomname;
+        delete this.modelindex;
+        delete this.globalindex;
 
         delete this.bonds;
         delete this.residue;
@@ -5909,6 +6272,9 @@ NGL.ProxyAtom = function( atomArray, index ){
 NGL.ProxyAtom.prototype = {
 
     constructor: NGL.ProxyAtom,
+
+    atomArray: undefined,
+    index: undefined,
 
     get atomno () {
         return this.atomArray.atomno[ this.index ];
@@ -6036,6 +6402,39 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.residue[ this.index ] = value;
     },
 
+    get modelindex () {
+        return this.atomArray.modelindex[ this.index ];
+    },
+    set modelindex ( value ) {
+        this.atomArray.modelindex[ this.index ] = value;
+    },
+
+    get globalindex () {
+        return this.atomArray.globalindex[ this.index ];
+    },
+    set globalindex ( value ) {
+        this.atomArray.globalindex[ this.index ] = value;
+    },
+
+    // distanceTo: NGL.Atom.prototype.distanceTo,
+
+    distanceTo: function( atom ){
+
+        var taa = this.atomArray;
+        var aaa = atom.atomArray;
+        var ti = this.index;
+        var ai = atom.index;
+
+        var x = taa.x[ ti ] - aaa.x[ ai ];
+        var y = taa.y[ ti ] - aaa.y[ ai ];
+        var z = taa.z[ ti ] - aaa.z[ ai ];
+
+        var distSquared = x * x + y * y + z * z;
+
+        return Math.sqrt( distSquared );
+
+    },
+
     // connectedTo: NGL.Atom.prototype.connectedTo,
 
     connectedTo: function( atom ){
@@ -6081,12 +6480,7 @@ NGL.ProxyAtom.prototype = {
 
         var atomArray = r.chain.model.structure.atomArray;
 
-        var a = new NGL.ProxyAtom( atomArray );
-
-        a.index = this.index;
-
-        // FIXME
-        a.modelindex = this.modelindex;
+        var a = new NGL.ProxyAtom( atomArray, this.index );
 
         return a;
 
@@ -6101,9 +6495,6 @@ NGL.StructureSubset = function( structure, sele ){
 
     this.structure = structure;
     this.selection = new NGL.Selection( sele );
-
-    this.atoms = [];
-    this.bondSet = new NGL.BondSet();
 
     this._build();
 
@@ -6163,6 +6554,8 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.bonds = [];
                     _a.altloc = a.altloc;
                     _a.atomname = a.atomname;
+                    _a.modelindex = a.modelindex;
+                    _a.globalindex = a.globalindex;
 
                     atomIndexDict[ a.index ] = _a;
                     atoms.push( _a );
@@ -9135,8 +9528,7 @@ NGL.createAtomArray = function( structure, callback ){
 
             var ai = atoms[ i ];
 
-            var a = new NGL.ProxyAtom( atomArray );
-            a.index = i;
+            var a = new NGL.ProxyAtom( atomArray, i );
 
             atomArray.setResname( i, ai.resname );
             atomArray.x[ i ] = ai.x;
@@ -9153,8 +9545,7 @@ NGL.createAtomArray = function( structure, callback ){
             atomArray.altloc[ i ] = ai.altloc.charCodeAt( 0 );
             atomArray.vdw[ i ] = ai.vdw;
             atomArray.covalent[ i ] = ai.covalent;
-            // FIXME atomArray.modelindex[ i ] = ai.modelindex;
-            a.modelindex = ai.modelindex;
+            atomArray.modelindex[ i ] = ai.modelindex;
 
             // set proxy atoms in already existing bonds
 
@@ -9245,7 +9636,7 @@ NGL.StructureParser.prototype = {
 
             function( wcallback ){
 
-                if( self.structure.atoms.length > NGL.useAtomArrayThreshold ){
+                if( !self.structure.atomArray && self.structure.atoms.length > NGL.useAtomArrayThreshold ){
 
                     NGL.createAtomArray( self.structure, wcallback );
 
@@ -9973,7 +10364,11 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     //
 
-    var useArray = lines.length > 300000 ? true : false;
+    var atomArray;
+    if( lines.length > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lines.length );
+        s.atomArray = atomArray;
+    }
 
     var idx = 0;
     var modelIdx = 0;
@@ -10201,31 +10596,61 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
+                        var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
                         var chainname = ls[ label_asym_id ];
                         // var resno = parseInt( ls[ label_seq_id ] );
                         var resno = parseInt( ls[ auth_seq_id ] );
                         var resname = ls[ label_comp_id ];
+                        var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
                         var altloc = ls[ label_alt_id ];
+                        altloc = ( altloc === '.' ) ? '' : altloc;
 
-                        var a = new NGL.Atom();
-                        a.index = idx;
+                        var a;
 
-                        a.resname = resname;
-                        a.x = x;
-                        a.y = y;
-                        a.z = z;
-                        a.element = element;
-                        a.hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
-                        a.chainname = chainname;
-                        a.resno = resno;
-                        a.serial = serial;
-                        a.atomname = atomname;
-                        a.ss = 'c';
-                        a.bfactor = parseFloat( ls[ B_iso_or_equiv ] );
-                        a.altloc = ( altloc === '.' ) ? '' : altloc;
-                        a.vdw = vdwRadii[ element ];
-                        a.covalent = covRadii[ element ];
-                        a.modelindex = modelIdx;
+                        if( atomArray ){
+
+                            a = new NGL.ProxyAtom( atomArray, idx );
+
+                            atomArray.setResname( idx, resname );
+                            atomArray.x[ idx ] = x;
+                            atomArray.y[ idx ] = y;
+                            atomArray.z[ idx ] = z;
+                            atomArray.setElement( idx, element );
+                            atomArray.hetero[ idx ] = hetero;
+                            atomArray.setChainname( idx, chainname );
+                            atomArray.resno[ idx ] = resno;
+                            atomArray.serial[ idx ] = serial;
+                            atomArray.setAtomname( idx, atomname );
+                            atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                            atomArray.bfactor[ idx ] = bfactor;
+                            atomArray.altloc[ idx ] = altloc.charCodeAt( 0 );
+                            atomArray.vdw[ idx ] = vdwRadii[ element ];
+                            atomArray.covalent[ idx ] = covRadii[ element ];
+                            atomArray.modelindex[ idx ] = modelIdx;
+
+                        }else{
+
+                            a = new NGL.Atom();
+                            a.index = idx;
+
+                            a.resname = resname;
+                            a.x = x;
+                            a.y = y;
+                            a.z = z;
+                            a.element = element;
+                            a.hetero = hetero;
+                            a.chainname = chainname;
+                            a.resno = resno;
+                            a.serial = serial;
+                            a.atomname = atomname;
+                            a.ss = 'c';
+                            a.bfactor = bfactor;
+                            a.altloc = altloc;
+                            a.vdw = vdwRadii[ element ];
+                            a.covalent = covRadii[ element ];
+                            a.modelindex = modelIdx;
+
+                        }
 
                         idx += 1;
                         atoms.push( a );
@@ -10337,15 +10762,15 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                     for( var i = _i; i < _n; ++i ){
 
-                        var selection = new NGL.Selection(
-                            sc.beg_auth_seq_id[ i ] + "-" +
-                            sc.end_auth_seq_id[ i ] + ":" +
-                            sc.beg_label_asym_id[ i ]
-                        );
-
                         var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
 
                         if( !Number.isNaN( helixType ) ){
+
+                            var selection = new NGL.Selection(
+                                sc.beg_auth_seq_id[ i ] + "-" +
+                                sc.end_auth_seq_id[ i ] + ":" +
+                                sc.beg_label_asym_id[ i ]
+                            );
 
                             helixType = helixTypes[ helixType ] || helixTypes[""];
 
@@ -11075,10 +11500,10 @@ NGL.autoLoad = function(){
         if( protocol === "rcsb" ){
 
             // ext = "pdb";
-            // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+            // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
             ext = "cif";
             compressed = "gz";
-            path = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
+            path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
             protocol = "http";
 
         }
@@ -11144,8 +11569,10 @@ NGL.autoLoad = function(){
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
+            loader.setCrossOrigin( true );
+
             if( compressed ) loader.setResponseType( "arraybuffer" );
-            loader.load( path, init, onProgress, error );
+            loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
@@ -12284,10 +12711,23 @@ NGL.Viewer.prototype = {
         this.controls.panSpeed = 0.8;
         this.controls.staticMoving = true;
         // this.controls.dynamicDampingFactor = 0.3;
+        this.controls.cylindricalRotation = true;
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener(
             'change', this.requestRender.bind( this )
+        );
+
+        document.addEventListener(
+            'mousemove',
+            this.controls.update.bind( this.controls ),
+            false
+        );
+
+        document.addEventListener(
+            'touchmove',
+            this.controls.update.bind( this.controls ),
+            false
         );
 
     },
@@ -12357,7 +12797,7 @@ NGL.Viewer.prototype = {
         this.rotationGroup.updateMatrixWorld();
 
         // When adding a lot of buffers at once, requesting
-        // a render somehow slows chrome drastically down.
+        // a render somehow slows Chrome drastically down.
         // this.requestRender();
 
         // console.timeEnd( "Viewer.add" );
@@ -12470,9 +12910,9 @@ NGL.Viewer.prototype = {
                         node.geometry.computeBoundingBox();
                     }
 
-                    if( node.userData[ "matrix" ] ){
+                    if( node.userData[ "instance" ] ){
                         gbb = node.geometry.boundingBox.clone();
-                        gbb.applyMatrix4( node.userData[ "matrix" ] );
+                        gbb.applyMatrix4( node.userData[ "instance" ].matrix );
                     }else{
                         gbb = node.geometry.boundingBox;
                     }
@@ -12855,6 +13295,13 @@ NGL.Viewer.prototype = {
 
             // FIXME required, maybe a three.js bug
             this.renderer.setRenderTarget();
+
+            if( NGL.debug ){
+
+                this.renderer.clear();
+                this.renderer.render( this.pickingGroup, this.camera );
+
+            }
 
         }else{
 
@@ -13284,6 +13731,10 @@ NGL.TiledRenderer.prototype = {
 
     renderTile: function( i ){
 
+        this.viewer.renderer.setPixelRatio(
+            window.devicePixelRatio * this.factor
+        );
+
         this.makeAsymmetricFrustum( this.camera.projectionMatrix, i );
 
         this.viewer.render( null, null, true );
@@ -13295,15 +13746,21 @@ NGL.TiledRenderer.prototype = {
 
             this.ctx.drawImage(
                 this.renderer.domElement,
-                Math.round( x / 2 ),
-                Math.round( y / 2 ),
-                Math.round( this.viewer.width / 2 ),
-                Math.round( this.viewer.height / 2 )
+                Math.floor( x / 2 ),
+                Math.floor( y / 2 ),
+                Math.ceil( this.viewer.width / 2 ),
+                Math.ceil( this.viewer.height / 2 )
             );
 
         }else{
 
-            this.ctx.drawImage( this.renderer.domElement, x, y );
+            this.ctx.drawImage(
+                this.renderer.domElement,
+                Math.floor( x ),
+                Math.floor( y ),
+                Math.ceil( this.viewer.width ),
+                Math.ceil( this.viewer.height )
+            );
 
         }
 
@@ -13314,6 +13771,10 @@ NGL.TiledRenderer.prototype = {
             this.onProgress( i + 1, this.n, false );
 
         }
+
+        this.viewer.renderer.setPixelRatio(
+            window.devicePixelRatio
+        );
 
     },
 
@@ -13349,27 +13810,23 @@ NGL.TiledRenderer.prototype = {
 
         for( var i = 0; i <= n; ++i ){
 
-            setTimeout( ( function( i ){
+            setTimeout( function( i ){
 
-                return function(){
+                if( i === n ){
 
-                    if( i === n ){
+                    if( typeof onFinish === "function" ){
 
-                        if( typeof onFinish === "function" ){
-
-                            onFinish( i + 1, n, false );
-
-                        }
-
-                    }else{
-
-                        renderTile( i );
+                        onFinish( i + 1, n, false );
 
                     }
 
+                }else{
+
+                    renderTile( i );
+
                 }
 
-            } )( i ) );
+            }, 0, i );
 
         }
 
@@ -13649,6 +14106,12 @@ NGL.Buffer.prototype = {
 
             }
 
+            if( this.flatShaded ){
+
+                material.defines[ "FLAT_SHADED" ] = 1;
+
+            }
+
         }
 
         if( this.nearClip && !( type === "wireframe" || this.wireframe ) ){
@@ -13665,6 +14128,10 @@ NGL.Buffer.prototype = {
 
         this.uniforms = THREE.UniformsUtils.merge(
             [ this.uniforms, uniforms ]
+        );
+
+        this.pickingUniforms = THREE.UniformsUtils.merge(
+            [ this.pickingUniforms, uniforms ]
         );
 
     },
@@ -13782,6 +14249,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
     var p = params || {};
 
     this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
@@ -14441,7 +14909,7 @@ NGL.GeometryBuffer.prototype = {
 
 NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
 
-    var detail = params.detail !== undefined ? params.detail : 1;
+    var detail = params.sphereDetail !== undefined ? params.sphereDetail : 1;
 
     this.geo = new THREE.IcosahedronGeometry( 1, detail );
 
@@ -14453,7 +14921,7 @@ NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, para
 
 NGL.SphereGeometryBuffer.prototype = Object.create( NGL.GeometryBuffer.prototype );
 
-NGL.CylinderImpostorBuffer.prototype.constructor = NGL.CylinderImpostorBuffer;
+NGL.SphereGeometryBuffer.prototype.constructor = NGL.SphereGeometryBuffer;
 
 NGL.SphereGeometryBuffer.prototype.setPositionTransform = function( radius ){
 
@@ -15078,6 +15546,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
@@ -15229,21 +15698,21 @@ NGL.RibbonBuffer.prototype = {
 
             if( normal ){
 
-                inputNormal[ k + 0 ] = normal[ v3 + 0 ];
-                inputNormal[ k + 1 ] = normal[ v3 + 1 ];
-                inputNormal[ k + 2 ] = normal[ v3 + 2 ];
+                inputNormal[ k + 0 ] = -normal[ v3 + 0 ];
+                inputNormal[ k + 1 ] = -normal[ v3 + 1 ];
+                inputNormal[ k + 2 ] = -normal[ v3 + 2 ];
 
-                inputNormal[ k + 3 ] = normal[ v3 + 0 ];
-                inputNormal[ k + 4 ] = normal[ v3 + 1 ];
-                inputNormal[ k + 5 ] = normal[ v3 + 2 ];
+                inputNormal[ k + 3 ] = -normal[ v3 + 0 ];
+                inputNormal[ k + 4 ] = -normal[ v3 + 1 ];
+                inputNormal[ k + 5 ] = -normal[ v3 + 2 ];
 
-                inputNormal[ k + 6 ] = normal[ v3 + 3 ];
-                inputNormal[ k + 7 ] = normal[ v3 + 4 ];
-                inputNormal[ k + 8 ] = normal[ v3 + 5 ];
+                inputNormal[ k + 6 ] = -normal[ v3 + 3 ];
+                inputNormal[ k + 7 ] = -normal[ v3 + 4 ];
+                inputNormal[ k + 8 ] = -normal[ v3 + 5 ];
 
-                inputNormal[ k + 9 ] = normal[ v3 + 3 ];
-                inputNormal[ k + 10 ] = normal[ v3 + 4 ];
-                inputNormal[ k + 11 ] = normal[ v3 + 5 ];
+                inputNormal[ k + 9 ] = -normal[ v3 + 3 ];
+                inputNormal[ k + 10 ] = -normal[ v3 + 4 ];
+                inputNormal[ k + 11 ] = -normal[ v3 + 5 ];
 
             }
 
@@ -16312,7 +16781,10 @@ NGL.Representation.prototype = {
     parameters: {
 
         nearClip: {
-            type: "boolean", rebuild: true
+            type: "boolean", define: "NEAR_CLIP"
+        },
+        flatShaded: {
+            type: "boolean", define: "FLAT_SHADED"
         }
 
     },
@@ -16322,6 +16794,7 @@ NGL.Representation.prototype = {
         var p = params || {};
 
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+        this.flatShaded = p.flatShaded || false;
 
         this.visible = p.visible === undefined ? true : p.visible;
         this.quality = p.quality;
@@ -16334,7 +16807,7 @@ NGL.Representation.prototype = {
 
             this.color = type;
 
-            this.update({ "color": true });
+            this.update( { "color": true } );
 
         }
 
@@ -16357,6 +16830,8 @@ NGL.Representation.prototype = {
 
     rebuild: function( params ){
 
+        console.time( "NGL.Representation.rebuild " + this.type );
+
         if( params ){
             this.init( params );
         }
@@ -16364,6 +16839,8 @@ NGL.Representation.prototype = {
         this.clear();
         this.create();
         if( !this.manualAttach ) this.attach();
+
+        console.timeEnd( "NGL.Representation.rebuild " + this.type );
 
     },
 
@@ -16407,13 +16884,19 @@ NGL.Representation.prototype = {
             if( p[ name ] === undefined ) return;
             if( tp[ name ] === undefined ) return;
 
+            if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
+            if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
+
+            // no value change
+            if( p[ name ] === this[ name ] ) return;
+
             this[ name ] = p[ name ];
 
-            // update buffer uniform
+            // update buffer material uniform
 
             if( tp[ name ].uniform ){
 
-                function update( mesh ){
+                function updateUniform( mesh ){
 
                     var u = mesh.material.uniforms;
 
@@ -16434,9 +16917,78 @@ NGL.Representation.prototype = {
 
                 this.bufferList.forEach( function( buffer ){
 
-                    buffer.group.children.forEach( update );
+                    buffer.group.children.forEach( updateUniform );
                     if( buffer.pickingGroup ){
-                        buffer.pickingGroup.children.forEach( update );
+                        buffer.pickingGroup.children.forEach( updateUniform );
+                    }
+
+                } );
+
+            }
+
+            // update buffer material define
+
+            if( tp[ name ].define ){
+
+                function updateDefine( mesh ){
+
+                    if( p[ name ] ){
+
+                        mesh.material.defines[ tp[ name ].define ] = 1;
+
+                    }else{
+
+                        delete mesh.material.defines[ tp[ name ].define ];
+
+                    }
+
+                    mesh.material.needsUpdate = true;
+
+                }
+
+                this.bufferList.forEach( function( buffer ){
+
+                    buffer.group.children.forEach( updateDefine );
+                    if( buffer.pickingGroup ){
+                        buffer.pickingGroup.children.forEach( updateDefine );
+                    }
+
+                } );
+
+            }
+
+            // update buffer material property
+
+            if( tp[ name ].property ){
+
+                var propertyName = (
+                    tp[ name ].property === true ? name : tp[ name ].property
+                );
+
+                function updateProperty( mesh ){
+
+                    if( propertyName in mesh.material ){
+
+                        mesh.material[ propertyName ] = p[ name ];
+
+                    }else{
+
+                        // happens when the buffers in a repr
+                        // do not suppport the same parameters
+
+                        // console.info( name )
+
+                    }
+
+                    mesh.material.needsUpdate = true;
+
+                }
+
+                this.bufferList.forEach( function( buffer ){
+
+                    buffer.group.children.forEach( updateProperty );
+                    if( buffer.pickingGroup ){
+                        buffer.pickingGroup.children.forEach( updateProperty );
                     }
 
                 } );
@@ -16445,7 +16997,10 @@ NGL.Representation.prototype = {
 
             // mark for rebuild
 
-            if( tp[ name ].rebuild ){
+            if( tp[ name ].rebuild &&
+                !( tp[ name ].rebuild === "impostor" &&
+                    NGL.extensionFragDepth && !this.disableImpostor )
+            ){
 
                 rebuild = true;
 
@@ -16471,12 +17026,9 @@ NGL.Representation.prototype = {
 
     getParameters: function(){
 
-        // TODO
         var params = {
 
             color: this.color,
-            radius: this.radius,
-            scale: this.scale,
             visible: this.visible,
             sele: this.selection.string,
             disableImpostor: this.disableImpostor,
@@ -16489,6 +17041,13 @@ NGL.Representation.prototype = {
             params[ name ] = this[ name ];
 
         }, this );
+
+        if( typeof this.radius === "string" ){
+
+            params[ "radiusType" ] = this.radius;
+            delete params[ "radius" ];
+
+        }
 
         return params;
 
@@ -16587,10 +17146,11 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true
+            type: "select", options: NGL.SideTypes, property: true,
+            int: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
@@ -16648,7 +17208,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        if( params && params[ "radiusType" ]!==undefined ){
+        if( params && params[ "radiusType" ] !== undefined ){
 
             if( params[ "radiusType" ] === "size" ){
                 this.radius = this.defaultSize;
@@ -16662,7 +17222,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "radius" ]!==undefined ){
+        if( params && params[ "radius" ] !== undefined ){
 
             this.radius = params[ "radius" ];
             what[ "radius" ] = true;
@@ -16672,7 +17232,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( params && params[ "scale" ]!==undefined ){
+        if( params && params[ "scale" ] !== undefined ){
 
             this.scale = params[ "scale" ];
             what[ "scale" ] = true;
@@ -16785,7 +17345,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -16812,6 +17372,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -16824,7 +17386,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -16883,32 +17446,35 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         pointSize: {
-            type: "integer", max: 20, min: 1, rebuild: true
+            type: "integer", max: 20, min: 1, property: "size"
         },
         sizeAttenuation: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         sort: {
             type: "boolean", rebuild: true
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying PointCloudMaterial
-            rebuild: true
+            property: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+        // FIXME nearClip support missing
+    }, NGL.Representation.prototype.parameters, {
+
+        nearClip: null, flatShaded: null
+
+    } ),
 
     init: function( params ){
 
         var p = params || {};
 
         this.pointSize = p.pointSize || 1;
-        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
+        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
         this.sort = p.sort !== undefined ? p.sort : false;
         p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
@@ -16918,6 +17484,8 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -16991,10 +17559,15 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             rebuild: true
         },
         antialias: {
-            type: "boolean", rebuild: true
-        }
+            type: "boolean", define: "ANTIALIAS"
+        },
+        flatShaded: null
 
-    }, NGL.StructureRepresentation.prototype.parameters, { side: null } ),
+    }, NGL.StructureRepresentation.prototype.parameters, {
+
+        side: null, flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -17012,6 +17585,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -17100,10 +17675,10 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -17137,6 +17712,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
         var atomScale = this.scale * this.aspectRatio;
 
@@ -17150,7 +17727,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17172,7 +17750,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17275,10 +17854,10 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -17310,6 +17889,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -17322,7 +17903,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17342,7 +17924,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17379,19 +17962,21 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         lineWidth: {
-            type: "integer", max: 20, min: 1, rebuild: true
+            type: "integer", max: 20, min: 1, property: "linewidth"
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying Material
-            rebuild: true
+            uniform: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+    }, NGL.Representation.prototype.parameters, {
+
+        flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -17406,6 +17991,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -17475,10 +18062,10 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             type: "number", precision: 3, max: 1.0, min: 0.001, uniform: true
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -17512,6 +18099,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -17524,7 +18113,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17546,7 +18136,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17580,10 +18171,16 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            sphereData[ "color" ] = this.atomSet.atomColor(
+                null, this.color
+            );
 
-            cylinderData[ "color" ] = this.atomSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = this.atomSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = this.atomSet.bondColor(
+                null, 0, this.color
+            );
+            cylinderData[ "color2" ] = this.atomSet.bondColor(
+                null, 1, this.color
+            );
 
         }
 
@@ -17632,10 +18229,10 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 50, min: 5, rebuild: true
+            type: "integer", max: 50, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -17668,6 +18265,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -17710,6 +18309,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         } );
 
+        if( baSet.atomCount === 0 ) return;
+
         var sphereScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -17722,7 +18323,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17742,7 +18344,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17860,10 +18463,10 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
         sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: true
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         radiusSegments: {
-            type: "integer", max: 50, min: 5, rebuild: true
+            type: "integer", max: 50, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -17896,6 +18499,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -17939,6 +18544,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         } );
 
+        if( baSet.atomCount === 0 ) return;
+
         var sphereScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -17951,7 +18558,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -17971,7 +18579,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -18133,6 +18742,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -18168,8 +18779,9 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                         ry: ry,
                         capped: scope.capped,
                         wireframe: scope.wireframe,
+                        flatShaded: scope.flatShaded,
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -18335,6 +18947,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -18391,8 +19005,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                         ry: ry,
                         capped: scope.capped,
                         wireframe: scope.wireframe,
+                        flatShaded: scope.flatShaded,
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -18522,7 +19137,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     this.capped,
                     this.wireframe,
                     this.transparent,
-                    parseInt( this.side ),
+                    this.side,
                     opacity,
                     this.nearClip
                 )
@@ -18579,13 +19194,13 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-            if( NGL.debug ){
+            // if( NGL.debug ){
 
-                this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
-                this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
-                this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
+            //     this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
+            //     this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
+            //     this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
 
-            }
+            // }
 
         };
 
@@ -18675,6 +19290,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -18702,9 +19319,10 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     {
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     }
                 )
 
@@ -18814,19 +19432,21 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         lineWidth: {
-            type: "integer", max: 20, min: 1, rebuild: true
+            type: "integer", max: 20, min: 1, property: "linewidth"
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying Material
-            rebuild: true
+            uniform: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+    }, NGL.Representation.prototype.parameters, {
+
+        flatShaded: null
+
+    } ),
 
     init: function( params ){
 
@@ -18853,6 +19473,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -18979,6 +19601,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var scope = this;
@@ -19006,7 +19630,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     scope.disableImpostor
                 )
@@ -19114,7 +19739,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -19147,6 +19772,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -19209,7 +19836,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 transparent: this.transparent,
                 side: this.side,
                 opacity: opacity,
-                nearClip: this.nearClip
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
             },
             this.disableImpostor
         );
@@ -19351,6 +19979,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -19388,8 +20018,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                         ry: ry,
                         capped: scope.capped,
                         wireframe: scope.wireframe,
+                        flatShaded: scope.flatShaded,
                         transparent: scope.transparent,
-                        side: parseInt( scope.side ),
+                        side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip
                     }
@@ -19506,7 +20137,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: true
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         helixDist: {
             type: "number", precision: 1, max: 30, min: 0, rebuild: true
@@ -19551,6 +20182,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
@@ -19586,7 +20219,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     scope.disableImpostor
                 )
@@ -19631,7 +20265,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     transparent: this.transparent,
                     side: this.side,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 },
                 this.disableImpostor
             )
@@ -19674,6 +20309,236 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
             new Blob( [ json ], {type : 'text/plain'} ),
             "helixCrossing.json"
         );
+
+    }
+
+} );
+
+
+NGL.ContactRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.ContactRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.ContactRepresentation,
+
+    type: "contact",
+
+    defaultSize: 0.25,
+
+    parameters: Object.assign( {
+
+        // aspectRatio: {
+        //     type: "number", precision: 1, max: 10.0, min: 1.0
+        // },
+        // sphereDetail: {
+        //     type: "integer", max: 3, min: 0, rebuild: "impostor"
+        // },
+        radiusSegments: {
+            type: "integer", max: 50, min: 5, rebuild: "impostor"
+        },
+        contactType: {
+            type: "select", rebuild: true,
+            options: {
+                "polar": "polar",
+                "polarBackbone": "polar backbone"
+            }
+        },
+        maxDistance: {
+            type: "number", precision: 1, max: 10, min: 0.1, rebuild: true
+        },
+        maxAngle: {
+            type: "integer", max: 180, min: 0, rebuild: true
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        params = params || {};
+        params.radius = params.radius || this.defaultSize;
+
+        this.disableImpostor = params.disableImpostor || false;
+
+        if( params.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( params.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( params.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = params.sphereDetail || 1;
+            this.radiusSegments = params.radiusSegments || 10;
+        }
+
+        this.contactType = params.contactType || "polar";
+        this.maxDistance = params.maxDistance || 3.5;
+        this.maxAngle = params.maxAngle || 40;
+        // this.aspectRatio = params.aspectRatio || 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        var structureSubset = new NGL.StructureSubset(
+            this.structure, this.selection.string
+        );
+
+        var contactsFnDict = {
+            "polar": NGL.polarContacts,
+            "polarBackbone": NGL.polarBackboneContacts
+        };
+
+        var contactData = contactsFnDict[ this.contactType ](
+            structureSubset, this.maxDistance, this.maxAngle
+        );
+
+        this.contactAtomSet = contactData.atomSet;
+        this.contactBondSet = contactData.bondSet;
+
+        var atomSet = this.contactAtomSet;
+        var bondSet = this.contactBondSet;
+
+        if( atomSet.atomCount === 0 ) return;
+
+        // var sphereScale = this.scale * this.aspectRatio;
+
+        // this.sphereBuffer = new NGL.SphereBuffer(
+        //     atomSet.atomPosition(),
+        //     atomSet.atomColor( null, this.color ),
+        //     atomSet.atomRadius( null, this.radius, sphereScale ),
+        //     atomSet.atomColor( null, "picking" ),
+        //     {
+        //         sphereDetail: this.sphereDetail,
+        //         transparent: this.transparent,
+        //         side: this.side,
+        //         opacity: opacity,
+        //         nearClip: this.nearClip,
+        //         flatShaded: this.flatShaded
+        //     },
+        //     this.disableImpostor
+        // );
+
+        this.cylinderBuffer = new NGL.CylinderBuffer(
+            bondSet.bondPosition( null, 0 ),
+            bondSet.bondPosition( null, 1 ),
+            bondSet.bondColor( null, 0, this.color ),
+            bondSet.bondColor( null, 1, this.color ),
+            bondSet.bondRadius( null, 0, this.radius, this.scale ),
+            bondSet.bondColor( null, 0, "picking" ),
+            bondSet.bondColor( null, 1, "picking" ),
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
+            },
+            this.disableImpostor
+        );
+
+        this.bufferList.push( /*this.sphereBuffer,*/ this.cylinderBuffer );
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var atomSet = this.contactAtomSet;
+        var bondSet = this.contactBondSet;
+
+        var sphereData = {};
+        var cylinderData = {};
+
+        if( what[ "position" ] ){
+
+            // sphereData[ "position" ] = atomSet.atomPosition();
+
+            var from = bondSet.bondPosition( null, 0 );
+            var to = bondSet.bondPosition( null, 1 );
+
+            cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
+                from, to
+            );
+            cylinderData[ "position1" ] = from;
+            cylinderData[ "position2" ] = to;
+
+        }
+
+        if( what[ "color" ] ){
+
+            // sphereData[ "color" ] = atomSet.atomColor( null, this.color );
+
+            cylinderData[ "color" ] = bondSet.bondColor( null, 0, this.color );
+            cylinderData[ "color2" ] = bondSet.bondColor( null, 1, this.color );
+
+        }
+
+        if( what[ "radius" ] || what[ "scale" ] ){
+
+            // sphereData[ "radius" ] = atomSet.atomRadius(
+            //     null, this.radius, this.scale * this.aspectRatio
+            // );
+
+            cylinderData[ "radius" ] = bondSet.bondRadius(
+                null, 0, this.radius, this.scale
+            );
+
+        }
+
+        // this.sphereBuffer.setAttributes( sphereData );
+        this.cylinderBuffer.setAttributes( cylinderData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "aspectRatio" ] ){
+
+            this.aspectRatio = params[ "aspectRatio" ];
+            what[ "radius" ] = true;
+            what[ "scale" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    },
+
+    clear: function(){
+
+        if( this.contactAtomSet ) this.contactAtomSet.dispose();
+        if( this.contactBondSet ) this.contactBondSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -19734,7 +20599,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0,
@@ -19809,7 +20675,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         transparent: scope.transparent,
                         side: scope.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     scope.disableImpostor
                 );
@@ -19835,7 +20702,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         transparent: this.transparent,
                         side: this.side,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     },
                     this.disableImpostor
 
@@ -19856,7 +20724,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         sort: scope.sort,
                         transparent: scope.transparent,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     }
                 );
 
@@ -19875,7 +20744,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         lineWidth: scope.lineWidth,
                         transparent: scope.transparent,
                         opacity: opacity,
-                        nearClip: scope.nearClip
+                        nearClip: scope.nearClip,
+                        flatShaded: scope.flatShaded
                     }
                 );
 
@@ -19926,7 +20796,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0, uniform: true
@@ -20019,16 +20890,18 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        if( this.transparent && parseInt( this.side ) === THREE.DoubleSide ){
+        if( this.transparent && this.side === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
+                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: THREE.FrontSide,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 }
             );
 
@@ -20036,10 +20909,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
+                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: THREE.BackSide,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 }
             );
 
@@ -20051,10 +20926,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
+                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
-                    side: parseInt( this.side ),
+                    side: this.side,
                     opacity: opacity,
-                    nearClip: this.nearClip
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
                 }
             );
 
@@ -20301,9 +21178,102 @@ NGL.Stage.prototype = {
 
     },
 
+    removeAllComponents: function( type ){
+
+        this.compList.slice().forEach( function( o, i ){
+
+            if( !type || o instanceof type ){
+
+                this.removeComponent( o );
+
+            }
+
+        }, this );
+
+    },
+
     centerView: function(){
 
         this.viewer.centerView( undefined, true );
+
+    },
+
+    exportImage: function( factor, antialias, transparent, trim, onProgress ){
+
+        var reprParamsList = [];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr.visible && repr.parent.visible ){
+
+                var r = repr.repr;
+
+                var op = {
+                    subdiv: r.subdiv,
+                    radialSegments: r.radialSegments,
+                    sphereDetail: r.sphereDetail,
+                    radiusSegments: r.radiusSegments
+                }
+
+                reprParamsList.push( {
+                    repr: repr,
+                    params: op
+                } );
+
+                var p = {};
+
+                if( op.subdiv !== undefined ){
+                    p.subdiv = Math.max( 12, op.subdiv );
+                }
+
+                if( op.radialSegments !== undefined ){
+                    p.radialSegments = Math.max( 20, op.radialSegments );
+                }
+
+                if( op.sphereDetail !== undefined ){
+                    p.sphereDetail = Math.max( 2, op.sphereDetail );
+                }
+
+                if( op.radiusSegments !== undefined ){
+                    p.radiusSegments = Math.max( 20, op.radiusSegments );
+                }
+
+                repr.setParameters( p );
+
+            }
+
+        }, NGL.StructureComponent );
+
+        this.viewer.screenshot( {
+
+            factor: factor,
+            type: "image/png",
+            quality: 1.0,
+            antialias: antialias,
+            transparent: transparent,
+            trim: trim,
+
+            onProgress: function( i, n, finished ){
+
+                if( typeof onProgress === "function" ){
+
+                    onProgress( i, n, finished );
+
+                }
+
+                if( finished ){
+
+                    reprParamsList.forEach( function( d ){
+
+                        d.repr.setParameters( d.params );
+
+                    } );
+
+                }
+
+            }
+
+        } );
 
     },
 
@@ -20500,7 +21470,7 @@ NGL.Preferences.prototype = {
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing"
+            "backbone", "rocket", "crossing", "contact"
         ];
 
         this.stage.eachRepresentation( function( repr ){
@@ -20531,7 +21501,7 @@ NGL.Preferences.prototype = {
 
         var impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing"
+            "backbone", "rocket", "crossing", "contact"
         ];
 
         this.stage.eachRepresentation( function( repr ){
@@ -21315,7 +22285,7 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     setParameters: function( params ){
 
         this.repr.setParameters( params );
-        this.signals.parametersChanged.dispatch();
+        this.signals.parametersChanged.dispatch( params );
 
         return this;
 
@@ -21450,15 +22420,17 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", { sele: "protein" } );
                 o.centerView();
 
-                var traj = o.addTrajectory( "__example__/md.xtc" );
+                var trajComp = o.addTrajectory( "__example__/md.xtc" );
 
-                var i = 0;
-                var foo = setInterval(function(){
+                trajComp.trajectory.signals.gotNumframes.add( function(){
 
-                    traj.setFrame( i++ % 51 );
-                    if( i >= 102 ) clearInterval( foo );
+                    var player = new NGL.TrajectoryPlayer(
+                        trajComp.trajectory, 1, 100
+                    );
+                    player.mode = "once";
+                    player.play();
 
-                }, 100);
+                } );
 
             } );
 
@@ -22166,6 +23138,71 @@ NGL.Examples = {
 
         },
 
+        "kdtree": function( stage ){
+
+            // stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
+            // stage.loadFile( "data://3l5q.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
+
+                var centerSele = "@10";
+                var centerSelection = new NGL.Selection( centerSele );
+
+                o.addRepresentation( "cartoon", {
+                    color: "chainindex"
+                } );
+                o.addRepresentation( "line" );
+                o.centerView( centerSele );
+
+                var kdtree = new NGL.Kdtree( o.structure );
+                var nearest = kdtree.nearest(
+                    o.structure.getAtoms( centerSelection, true ), Infinity, 4
+                )
+
+                // console.log( kdtree );
+                // console.log( nearest );
+
+                var names = [];
+                nearest.forEach( function( atomDist ){
+                    // names.push( atomDist.atom.qualifiedName( true ) );
+                    names.push( "@" + atomDist.atom.index );
+                } );
+
+                var contactSele = names.join( " OR " );
+                o.addRepresentation( "licorice", {
+                    sele: contactSele
+                } );
+
+                o.addRepresentation( "spacefill", {
+                    sele: centerSele, transparent: true, opacity: 0.5
+                } );
+
+            } );
+
+        },
+
+        "contact": function( stage ){
+
+            // stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
+            // stage.loadFile( "data://3l5q.pdb", function( o ){
+            // stage.loadFile( "data://1blu.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                o.addRepresentation( "cartoon", {
+                    color: "ss", flatShaded: true
+                } );
+                o.addRepresentation( "ribbon", {
+                    color: "ss", flatShaded: true
+                } );
+                o.addRepresentation( "contact", { contactType: "polar" } );
+                o.addRepresentation( "trace" );
+                o.centerView( "135" );
+
+            } );
+
+        },
+
     }
 
 };
@@ -22180,11 +23217,11 @@ NGL.Resources[ '../shader/CylinderImpostor.frag'] = "// Open-Source PyMOL is Cop
 
 // File:shader/HyperballStickImpostor.vert
 
-NGL.Resources[ '../shader/HyperballStickImpostor.vert'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA). \n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\nattribute vec3 mapping;\nattribute float radius;\nattribute float radius2;\nattribute vec3 position1;\nattribute vec3 position2;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform float shrink;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewProjectionMatrixInverse;\n\n\nvoid main()\n{\n\n    vec4 spaceposition;\n    vec3 position_atom1;\n    vec3 position_atom2;\n    vec4 vertex_position;\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    float radius1 = radius;\n\n    position_atom1 = position1;\n    position_atom2 = position2;\n\n    float distance = distance( position_atom1, position_atom2 );\n\n    spaceposition.z = mapping.z * distance;\n\n    if (radius1 > radius2) {\n        spaceposition.y = mapping.y * 1.5 * radius1;\n        spaceposition.x = mapping.x * 1.5 * radius1;\n    } else {\n        spaceposition.y = mapping.y * 1.5 * radius2;\n        spaceposition.x = mapping.x * 1.5 * radius2;\n    }\n    spaceposition.w = 1.0;\n\n    vec4 e3 = vec4( 1.0 );\n    vec3 e1, e1_temp, e2, e2_temp;\n\n    // Calculation of bond direction: e3\n    e3.xyz = normalize(position_atom1-position_atom2);\n\n    // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\n    //if (e3.z == 0.0) { e3.z = 0.0000000000001;}\n    if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\n    if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\n    if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\n\n    // Focus calculation\n    vec4 focus = vec4( 1.0 );\n    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x + \n        ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\n    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y + \n        ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\n    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z + \n        ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\n\n    // e1 calculation\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    // e2 calculation\n    e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\n    e2 = normalize(e2_temp);\n\n    //ROTATION:\n    // final form of change of basis matrix:\n    mat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\n    // Apply rotation and translation to the bond primitive\n    vertex_position.xyz = R * spaceposition.xyz;\n    vertex_position.w = 1.0;\n\n    // TRANSLATION:\n    vertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\n    vertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\n    vertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\n\n    // New position\n    gl_Position = modelViewProjectionMatrix * vertex_position;\n\n    vec4 i_near, i_far;\n\n    // Calculate near from position\n    vec4 near = gl_Position ;\n    near.z = 0.0 ;\n    near = modelViewProjectionMatrixInverse * near;\n    i_near = near;\n\n    // Calculate far from position\n    vec4 far = gl_Position ;\n    far.z = far.w ;\n    i_far = modelViewProjectionMatrixInverse * far;\n\n    prime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\n    prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\n\n    float Rsquare = (radius1*radius1/shrink) - (\n                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) + \n                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) + \n                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z) \n                    );\n\n    focus.w = Rsquare;\n\n    matrix_near = mat4( i_near, i_far, focus, e3 );\n}\n\n";
+NGL.Resources[ '../shader/HyperballStickImpostor.vert'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\nattribute vec3 mapping;\nattribute float radius;\nattribute float radius2;\nattribute vec3 position1;\nattribute vec3 position2;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform float shrink;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewProjectionMatrixInverse;\n\n\nvoid main()\n{\n\n    vec4 spaceposition;\n    vec3 position_atom1;\n    vec3 position_atom2;\n    vec4 vertex_position;\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    float radius1 = radius;\n\n    position_atom1 = position1;\n    position_atom2 = position2;\n\n    float distance = distance( position_atom1, position_atom2 );\n\n    spaceposition.z = mapping.z * distance;\n\n    if (radius1 > radius2) {\n        spaceposition.y = mapping.y * 1.5 * radius1;\n        spaceposition.x = mapping.x * 1.5 * radius1;\n    } else {\n        spaceposition.y = mapping.y * 1.5 * radius2;\n        spaceposition.x = mapping.x * 1.5 * radius2;\n    }\n    spaceposition.w = 1.0;\n\n    vec4 e3 = vec4( 1.0 );\n    vec3 e1, e1_temp, e2, e2_temp;\n\n    // Calculation of bond direction: e3\n    e3.xyz = normalize(position_atom1-position_atom2);\n\n    // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\n    if (e3.z == 0.0) { e3.z = 0.0000000000001;}\n    if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\n    if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\n    if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\n\n    // Focus calculation\n    vec4 focus = vec4( 1.0 );\n    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x +\n        ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\n    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y +\n        ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\n    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z +\n        ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\n\n    // e1 calculation\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    // e2 calculation\n    e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\n    e2 = normalize(e2_temp);\n\n    //ROTATION:\n    // final form of change of basis matrix:\n    mat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\n    // Apply rotation and translation to the bond primitive\n    vertex_position.xyz = R * spaceposition.xyz;\n    vertex_position.w = 1.0;\n\n    // TRANSLATION:\n    vertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\n    vertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\n    vertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\n\n    // New position\n    gl_Position = modelViewProjectionMatrix * vertex_position;\n\n    vec4 i_near, i_far;\n\n    // Calculate near from position\n    vec4 near = gl_Position;\n    near.z = 0.0 ;\n    near = modelViewProjectionMatrixInverse * near;\n    i_near = near;\n\n    // Calculate far from position\n    vec4 far = gl_Position;\n    far.z = far.w ;\n    i_far = modelViewProjectionMatrixInverse * far;\n\n    prime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\n    prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\n\n    float Rsquare = (radius1*radius1/shrink) - (\n                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) +\n                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) +\n                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z)\n                    );\n\n    focus.w = Rsquare;\n\n    matrix_near = mat4( i_near, i_far, focus, e3 );\n}\n\n";
 
 // File:shader/HyperballStickImpostor.frag
 
-NGL.Resources[ '../shader/HyperballStickImpostor.frag'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\n// varying vec3 mapping;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    #ifdef NEAR_CLIP\n        // custom clipping plane\n        // FIXME optimize, don't calculate values more than once\n        if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, objectId );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n    #endif\n\n    #include fog\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n\n\n\n\n\n";
+NGL.Resources[ '../shader/HyperballStickImpostor.frag'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\n// varying vec3 mapping;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    #ifdef NEAR_CLIP\n        // custom clipping plane\n        // FIXME optimize, don't calculate values more than once\n        if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, objectId );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n    #endif\n\n    #include fog\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n";
 
 // File:shader/Line.vert
 
@@ -22204,11 +23241,11 @@ NGL.Resources[ '../shader/LineSprite.frag'] = "\nvarying float dist;\nvarying hi
 
 // File:shader/Mesh.vert
 
-NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec3 vNormal;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n#endif\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n    #endif\n\n    vNormal = normalize( normalMatrix * normal );\n\n    cameraPos =  modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
+NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n        vNormal = normalize( normalMatrix * normal );\n    #endif\n\n    cameraPos =  modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
 
 // File:shader/Mesh.frag
 
-NGL.Resources[ '../shader/Mesh.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vNormal;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    vec3 transformedNormal = normalize( vNormal );\n    #ifdef DOUBLE_SIDED\n        transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n    #endif\n\n    #ifdef FLIP_SIDED\n        transformedNormal = -transformedNormal;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        gl_FragColor = vec4( vColor, opacity );\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
+NGL.Resources[ '../shader/Mesh.frag'] = "\n#extension GL_OES_standard_derivatives : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        gl_FragColor = vec4( vColor, opacity );\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
 
 // File:shader/ParticleSprite.vert
 
@@ -22228,11 +23265,11 @@ NGL.Resources[ '../shader/Quad.frag'] = "precision mediump float;\nuniform sampl
 
 // File:shader/Ribbon.vert
 
-NGL.Resources[ '../shader/Ribbon.vert'] = "\nattribute vec3 inputDir;\nattribute float inputSize;\n//attribute vec3 inputNormal;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 inputColor;\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        color = inputColor;\n        vNormal = normalize( normalMatrix * normal * -1.0 );\n    #endif\n\n    cameraPos = modelViewMatrix * vec4(\n        position + ( normalize( inputDir ) * inputSize ), 1.0\n    );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
+NGL.Resources[ '../shader/Ribbon.vert'] = "\nattribute vec3 inputDir;\nattribute float inputSize;\n//attribute vec3 inputNormal;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 inputColor;\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        color = inputColor;\n        vNormal = normalize( normalMatrix * normal );\n    #endif\n\n    cameraPos = modelViewMatrix * vec4(\n        position + ( normalize( inputDir ) * inputSize ), 1.0\n    );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
 
 // File:shader/Ribbon.frag
 
-NGL.Resources[ '../shader/Ribbon.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = normalize( vNormal );\n        #ifdef DOUBLE_SIDED\n            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( color, opacity );\n        // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.rgb *= vLightFront;\n        // gl_FragColor.rgb = normalx;\n        //gl_FragColor.rgb = color;\n    #endif\n\n    #include fog\n}\n";
+NGL.Resources[ '../shader/Ribbon.frag'] = "\n#extension GL_OES_standard_derivatives : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( color, opacity );\n        // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.rgb *= vLightFront;\n        // gl_FragColor.rgb = normalx;\n        //gl_FragColor.rgb = color;\n    #endif\n\n    #include fog\n}\n";
 
 // File:shader/SDFFont.vert
 

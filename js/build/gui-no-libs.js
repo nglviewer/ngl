@@ -98,9 +98,9 @@ var properties = [
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
-    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
+    'fontWeight', 'fontStyle', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
     'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
-    'wordWrap', 'spellcheck', 'lineHeight'
+    'wordWrap', 'spellcheck', 'lineHeight', 'whiteSpace', 'textOverflow'
 ];
 
 properties.forEach( function ( property ) {
@@ -800,8 +800,8 @@ UI.Number = function ( number ) {
     var distance = 0;
     var onMouseDownValue = 0;
 
-    var pointer = new THREE.Vector2();
-    var prevPointer = new THREE.Vector2();
+    var pointer = [ 0, 0 ];
+    var prevPointer = [ 0, 0 ];
 
     var onMouseDown = function ( event ) {
 
@@ -811,7 +811,7 @@ UI.Number = function ( number ) {
 
         onMouseDownValue = parseFloat( dom.value );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
         document.addEventListener( 'mousemove', onMouseMove, false );
         document.addEventListener( 'mouseup', onMouseUp, false );
@@ -822,9 +822,9 @@ UI.Number = function ( number ) {
 
         var currentValue = dom.value;
 
-        pointer.set( event.clientX, event.clientY );
+        pointer = [ event.clientX, event.clientY ];
 
-        distance += ( pointer.x - prevPointer.x ) - ( pointer.y - prevPointer.y );
+        distance += ( pointer[ 0 ] - prevPointer[ 0 ] ) - ( pointer[ 1 ] - prevPointer[ 1 ] );
 
         var modifier = 50;
         if( event.shiftKey ) modifier = 5;
@@ -836,7 +836,7 @@ UI.Number = function ( number ) {
 
         if ( currentValue !== dom.value ) dom.dispatchEvent( changeEvent );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
     };
 
@@ -957,8 +957,8 @@ UI.Integer = function ( number ) {
     var distance = 0;
     var onMouseDownValue = 0;
 
-    var pointer = new THREE.Vector2();
-    var prevPointer = new THREE.Vector2();
+    var pointer = [ 0, 0 ];
+    var prevPointer = [ 0, 0 ];
 
     var onMouseDown = function ( event ) {
 
@@ -968,7 +968,7 @@ UI.Integer = function ( number ) {
 
         onMouseDownValue = parseFloat( dom.value );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
         document.addEventListener( 'mousemove', onMouseMove, false );
         document.addEventListener( 'mouseup', onMouseUp, false );
@@ -979,9 +979,9 @@ UI.Integer = function ( number ) {
 
         var currentValue = dom.value;
 
-        pointer.set( event.clientX, event.clientY );
+        pointer = [ event.clientX, event.clientY ];
 
-        distance += ( pointer.x - prevPointer.x ) - ( pointer.y - prevPointer.y );
+        distance += ( pointer[ 0 ] - prevPointer[ 0 ] ) - ( pointer[ 1 ] - prevPointer[ 1 ] );
 
         var modifier = 50;
         if( event.shiftKey ) modifier = 5;
@@ -993,7 +993,7 @@ UI.Integer = function ( number ) {
 
         if ( currentValue !== dom.value ) dom.dispatchEvent( changeEvent );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
     };
 
@@ -1289,6 +1289,78 @@ UI.Html.prototype.setValue = function ( value ) {
 };
 
 
+// Ellipsis Text
+
+UI.EllipsisText = function ( text ) {
+
+    UI.Text.call( this, text );
+
+    this.setWhiteSpace( "nowrap" );
+    this.setOverflow( "hidden" );
+    this.setTextOverflow( "ellipsis" );
+
+    return this;
+
+};
+
+UI.EllipsisText.prototype = Object.create( UI.Text.prototype );
+
+UI.EllipsisText.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.dom.textContent = value;
+        this.setTitle( value );
+
+    }
+
+    return this;
+
+};
+
+
+// Ellipsis Multiline Text
+
+UI.EllipsisMultilineText = function ( text ) {
+
+    // http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'span' );
+    dom.className = 'EllipsisMultilineText';
+    dom.style.cursor = 'default';
+    dom.style.display = 'inline-block';
+    dom.style.verticalAlign = 'middle';
+
+    var content = document.createElement( 'p' );
+    dom.appendChild( content );
+
+    this.dom = dom;
+    this.content = content;
+
+    this.setValue( text );
+
+    return this;
+
+};
+
+UI.EllipsisMultilineText.prototype = Object.create( UI.Element.prototype );
+
+UI.EllipsisMultilineText.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.content.textContent = value;
+        this.setTitle( value );
+
+    }
+
+    return this;
+
+};
+
+
 // Overlay Panel
 
 UI.OverlayPanel = function(){
@@ -1433,6 +1505,7 @@ UI.DisposeIcon = function(){
     var scope = this;
 
     this.setTitle( "delete" );
+    this.setCursor( "pointer" )
 
     this.onClick( function(){
 
@@ -1729,6 +1802,7 @@ UI.PopupMenu = function( iconClass, heading ){
         .add(
             new UI.Icon( "times" )
                 .setFloat( "right" )
+                .setCursor( "pointer" )
                 .onClick( function(){
 
                     panel.setDisplay( "none" );
@@ -1742,6 +1816,7 @@ UI.PopupMenu = function( iconClass, heading ){
     panel.add( headingPanel );
 
     icon.setTitle( "menu" );
+    icon.setCursor( "pointer" )
     icon.onClick( function( e ){
 
         if( panel.getDisplay() === "block" ){
@@ -1849,7 +1924,10 @@ UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
     }
 
     this.button = new UI.Icon( iconClass1 )
-        .setWidth( "12px" ).setMarginRight( "6px" );
+        .setTitle( "expand/collapse" )
+        .setCursor( "pointer" )
+        .setWidth( "12px" )
+        .setMarginRight( "6px" );
     this.addStatic( this.button );
 
     var scope = this;
@@ -2039,6 +2117,7 @@ UI.ColorPopupMenu = function(){
     UI.Panel.call( this );
 
     this.iconText = new UI.Text( "" )
+        .setCursor( "pointer" )
         .setClass( "fa-stack-1x" )
         .setColor( "#111" );
 
@@ -2374,14 +2453,14 @@ UI.ComponentPanel = function( component ){
 
     // Name
 
-    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Actions
 
     var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
+        .setCursor( "pointer" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
@@ -2391,6 +2470,7 @@ UI.ComponentPanel = function( component ){
 
     var center = new UI.Icon( "bullseye" )
         .setTitle( "center" )
+        .setCursor( "pointer" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -2711,8 +2791,6 @@ NGL.MenubarFileWidget = function( stage ){
             .setTop( "80px" )
             .setDisplay( "block" );
 
-        return;
-
     }
 
     function onScreenshotOptionClick () {
@@ -2939,11 +3017,33 @@ NGL.MenubarHelpWidget = function( stage ){
 
     }
 
+    function onOverviewOptionClick () {
+
+        overviewWidget
+            .setOpacity( "0.8" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setDisplay( "block" );
+
+        return;
+
+    }
+
     // export image
 
     var preferencesWidget = new NGL.PreferencesWidget( stage )
         .setDisplay( "none" )
         .attach();
+
+    // overview
+
+    var overviewWidget = new NGL.OverviewWidget()
+        .setDisplay( "none" )
+        .attach();
+
+    if( NGL.GET( "overview" ) ){
+        onOverviewOptionClick();
+    }
 
     // configure menu contents
 
@@ -2951,6 +3051,7 @@ NGL.MenubarHelpWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
 
     var menuConfig = [
+        createOption( 'Overview', onOverviewOptionClick ),
         createOption( 'Documentation', onDocOptionClick ),
         createDivider(),
         createOption( 'Unittests', onUnittestsOptionClick ),
@@ -2962,6 +3063,106 @@ NGL.MenubarHelpWidget = function( stage ){
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
     return UI.MenubarHelper.createMenuContainer( 'Help', optionsPanel );
+
+};
+
+
+// Overview
+
+NGL.OverviewWidget = function(){
+
+    var container = new UI.OverlayPanel();
+
+    var headingPanel = new UI.Panel()
+        .setBorderBottom( "1px solid #555" )
+        .setHeight( "25px" );
+
+    var listingPanel = new UI.Panel()
+        .setMarginTop( "10px" )
+        .setMinHeight( "100px" )
+        .setMaxHeight( "500px" )
+        .setMaxWidth( "600px" )
+        .setOverflow( "auto" );
+
+    headingPanel.add(
+        new UI.Text( "NGL Viewer" ).setFontStyle( "italic" ),
+        new UI.Html( "&nbsp;&mdash;&nbsp;Overview" )
+    );
+    headingPanel.add(
+        new UI.Icon( "times" )
+            .setCursor( "pointer" )
+            .setMarginLeft( "20px" )
+            .setFloat( "right" )
+            .onClick( function(){
+
+                container.setDisplay( "none" );
+
+            } )
+    );
+
+    container.add( headingPanel );
+    container.add( listingPanel );
+
+    //
+
+    function addIcon( name, text ){
+
+        var panel = new UI.Panel();
+
+        var icon = new UI.Icon( name )
+            .setWidth( "20px" )
+            .setFloat( "left" );
+
+        var label = new UI.Text( text )
+            .setDisplay( "inline" )
+            .setMarginLeft( "5px" );
+
+        panel
+            .setMarginLeft( "20px" )
+            .add( icon, label );
+        listingPanel.add( panel );
+
+    }
+
+    listingPanel
+        .add( new UI.Panel().add( new UI.Html( "To load a new structure use the <i>File</i> menu in the top left via drag'n'drop." ) ) )
+        .add( new UI.Break() );
+
+    listingPanel
+        .add( new UI.Panel().add( new UI.Text( "A number of clickable icons provide common actions. Most icons can be clicked on, just try it or hover the mouse pointer over it to see a tooltip." ) ) )
+        .add( new UI.Break() );
+
+    addIcon( "eye", "Controls the visibility of a component." );
+    addIcon( "trash-o", "Deletes a cmopvponent. Note that a second click is required to confirm the action." );
+    addIcon( "bullseye", "Centers a component." );
+    addIcon( "bars", "Opens a menu with further options." );
+    addIcon( "square", "Opens a menu with coloring options." );
+    addIcon( "filter", "Indicates an atom-selection input fields." );
+
+    listingPanel
+        .add( new UI.Text( "Mouse controls" ) )
+        .add( new UI.Html(
+            "<ul>" +
+                "<li>Left button hold and move to rotate camera around center.</li>" +
+                "<li>Left button click to pick atom.</li>" +
+                "<li>Middle button hold and move to zoom camera in and out.</li>" +
+                "<li>Middle button click to center camera on atom.</li>" +
+                "<li>Right button hold and move to translate camera in the screen plane.</li>" +
+            "</ul>"
+        ) );
+
+    listingPanel
+        .add( new UI.Panel().add( new UI.Html(
+            "For more information please visit the <a href='../doc/index.html' target='_blank'>documentation pages</a>."
+        ) ) );
+
+    // addIcon( "file", "In front of atom-selection input fields." );
+
+    // addIcon( "bookmark", "In front of atom-selection input fields." );
+
+    // addIcon( "database", "In front of atom-selection input fields." );
+
+    return container;
 
 };
 
@@ -2987,6 +3188,7 @@ NGL.PreferencesWidget = function( stage ){
     headingPanel.add( new UI.Text( "Preferences" ) );
     headingPanel.add(
         new UI.Icon( "times" )
+            .setCursor( "pointer" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
@@ -3074,6 +3276,7 @@ NGL.ExportImageWidget = function( stage ){
     headingPanel.add( new UI.Text( "Image export" ) );
     headingPanel.add(
         new UI.Icon( "times" )
+            .setCursor( "pointer" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
@@ -3129,14 +3332,31 @@ NGL.ExportImageWidget = function( stage ){
             progress.setDisplay( "inline-block" );
 
             setTimeout( function(){
-                exportImage(
+
+                stage.exportImage(
+
                     parseInt( factorSelect.getValue() ),
-                    typeSelect.getValue(),
-                    parseFloat( qualitySelect.getValue() ),
                     antialiasCheckbox.getValue(),
                     transparentCheckbox.getValue(),
-                    trimCheckbox.getValue()
-                )
+                    trimCheckbox.getValue(),
+
+                    function( i, n, finished ){
+                        if( i === 1 ){
+                            progress.setMax( n );
+                        }
+                        if( i >= n ){
+                            progress.setIndeterminate();
+                        }else{
+                            progress.setValue( i );
+                        }
+                        if( finished ){
+                            progress.setDisplay( "none" );
+                            exportButton.setDisplay( "inline-block" );
+                        }
+                    }
+
+                );
+
             }, 50 );
 
         } );
@@ -3152,76 +3372,15 @@ NGL.ExportImageWidget = function( stage ){
 
     addEntry( "scale", factorSelect );
     // addEntry( "type", typeSelect ); // commented out to always use png
-    // addEntry( "quality", qualitySelect ); // not png
+    // addEntry( "quality", qualitySelect ); // not available for png
     addEntry( "antialias", antialiasCheckbox );
-    addEntry( "transparent", transparentCheckbox ); // not jpeg
+    addEntry( "transparent", transparentCheckbox ); // not available for jpeg
     addEntry( "trim", trimCheckbox );
 
     listingPanel.add(
         new UI.Break(),
         exportButton, progress
     );
-
-    function exportImage( factor, type, quality, antialias, transparent, trim ){
-
-        var paramsList = [];
-
-        stage.eachRepresentation( function( repr ){
-
-            paramsList.push( repr.getParameters() );
-
-            var p = repr.getParameters();
-
-            if( p.subdiv !== undefined ){
-                p.subdiv = Math.max( 25, p.subdiv );
-            }
-
-            if( p.radialSegments !== undefined ){
-                p.radialSegments = Math.max( 25, p.radialSegments );
-            }
-
-            // prevent automatic quality settings
-            p.quality = null;
-
-            repr.rebuild( p );
-
-        }, NGL.StructureComponent );
-
-        stage.viewer.screenshot( {
-
-            factor: factor,
-            type: type,
-            quality: quality,
-            antialias: antialias,
-            transparent: transparent,
-            trim: trim,
-            onProgress: function( i, n, finished ){
-                if( i === 1 ){
-                    progress.setMax( n );
-                }
-                if( i >= n ){
-                    progress.setIndeterminate();
-                }else{
-                    progress.setValue( i );
-                }
-                if( finished ){
-                    progress.setDisplay( "none" );
-                    exportButton.setDisplay( "inline-block" );
-
-                    var j = 0;
-
-                    stage.eachRepresentation( function( repr ){
-
-                        repr.rebuild( paramsList[ j ] );
-                        j += 1;
-
-                    }, NGL.StructureComponent );
-                }
-            }
-
-        } );
-
-    }
 
     return container;
 
@@ -3294,6 +3453,7 @@ NGL.SidebarWidget = function( stage ){
 
     var expandAll = new UI.Icon( "plus-square" )
         .setTitle( "expand all" )
+        .setCursor( "pointer" )
         .onClick( function(){
 
             widgetList.forEach( function( widget ){
@@ -3304,6 +3464,7 @@ NGL.SidebarWidget = function( stage ){
 
     var collapseAll = new UI.Icon( "minus-square" )
         .setTitle( "collapse all" )
+        .setCursor( "pointer" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -3315,10 +3476,19 @@ NGL.SidebarWidget = function( stage ){
 
     var centerAll = new UI.Icon( "bullseye" )
         .setTitle( "center all" )
+        .setCursor( "pointer" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
             stage.centerView();
+
+        } );
+
+    var disposeAll = new UI.DisposeIcon()
+        .setMarginLeft( "10px" )
+        .setDisposeFunction( function(){
+
+            stage.removeAllComponents()
 
         } );
 
@@ -3386,6 +3556,7 @@ NGL.SidebarWidget = function( stage ){
             expandAll,
             collapseAll,
             centerAll,
+            disposeAll,
             settingsMenu
         );
 
@@ -3404,8 +3575,7 @@ NGL.SidebarWidget = function( stage ){
 NGL.ComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" )
-        .setTitle( "expand/collapse" );
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     signals.requestGuiVisibility.add( function( value ){
 
@@ -3439,9 +3609,8 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Loading indicator
 
@@ -3473,8 +3642,7 @@ NGL.ComponentWidget = function( component, stage ){
 NGL.StructureComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" )
-        .setTitle( "expand/collapse" );
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
@@ -3684,8 +3852,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" )
-        .setTitle( "expand/collapse" );
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     var reprContainer = new UI.Panel();
 
@@ -3738,8 +3905,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 NGL.ScriptComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" )
-        .setTitle( "expand/collapse" );
+    var container = new UI.CollapsibleIconPanel( "file" );
 
     var panel = new UI.Panel().setMarginLeft( "20px" );
 
@@ -3784,9 +3950,8 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( NGL.unicodeHelper( component.name ) )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Status
 
@@ -3813,7 +3978,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     var signals = component.signals;
 
     var container = new UI.CollapsibleIconPanel( "bookmark" )
-        .setTitle( "expand/collapse" )
         .setMarginLeft( "20px" );
 
     signals.visibilityChanged.add( function( value ){
@@ -3836,10 +4000,16 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
+    // Name
+
+    var name = new UI.EllipsisText( component.repr.type )
+        .setWidth( "80px" );
+
     // Actions
 
     var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
+        .setCursor( "pointer" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
@@ -3877,7 +4047,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         })() );
 
     container
-        .addStatic( new UI.Text( component.repr.type ).setWidth( "80px" ) )
+        .addStatic( name )
         .addStatic( toggle )
         .addStatic( disposeIcon )
         .addStatic( colorWidget );
@@ -3952,9 +4122,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         if( input ){
 
-            signals.parametersChanged.add( function( value ){
+            signals.parametersChanged.add( function( params ){
 
-                input.setValue( repr[ name ] );
+                input.setValue( params[ name ] );
 
             } );
 
@@ -3989,7 +4159,6 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var traj = component.trajectory;
 
     var container = new UI.CollapsibleIconPanel( "database" )
-        .setTitle( "expand/collapse" )
         .setMarginLeft( "20px" );
 
     var reprContainer = new UI.Panel();
@@ -4050,9 +4219,8 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.Text( traj.name )
-        .setWidth( "108px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( traj.name )
+        .setWidth( "108px" );
 
     container.addStatic( name );
     container.addStatic( numframes );
@@ -4343,6 +4511,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     headingPanel.add( folderSelect );
     headingPanel.add(
         new UI.Icon( "times" )
+            .setCursor( "pointer" )
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){

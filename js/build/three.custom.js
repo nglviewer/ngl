@@ -34744,7 +34744,7 @@ THREE.TypedArrayUtils = {};
  *
  * Complexity: http://bigocheatsheet.com/ see Quicksort
  *
- * Example: 
+ * Example:
  * points: [x, y, z, x, y, z, x, y, z, ...]
  * eleSize: 3 //because of (x, y, z)
  * orderElement: 0 //order according to x
@@ -34771,7 +34771,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 		}
 
 	};
-	
+
 	var i, j, swap = new Float32Array( eleSize ), temp = new Float32Array( eleSize );
 
 	while ( true ) {
@@ -34781,13 +34781,13 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 			for ( j= left + 1; j <= right; j ++ ) {
 
 				for ( x = 0; x < eleSize; x ++ ) {
-			
+
 					swap[ x ] = arr[ j * eleSize + x ];
 
 				}
-				
+
 				i = j - 1;
-				
+
 				while ( i >= left && arr[ i * eleSize + orderElement ] > swap[orderElement ] ) {
 
 					for ( x = 0; x < eleSize; x ++ ) {
@@ -34807,7 +34807,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 				}
 
 			}
-			
+
 			if ( sp == -1 ) break;
 
 			right = stack[ sp -- ]; //?
@@ -34819,25 +34819,25 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			i = left + 1;
 			j = right;
-	
+
 			swapF( median, i );
 
 			if ( arr[ left * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
-		
+
 				swapF( left, right );
-				
+
 			}
 
 			if ( arr[ i * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
-		
+
 				swapF( i, right );
-		
+
 			}
 
 			if ( arr[ left * eleSize + orderElement ] > arr[ i * eleSize + orderElement ] ) {
-		
+
 				swapF( left, i );
-			
+
 			}
 
 			for ( x = 0; x < eleSize; x ++ ) {
@@ -34845,16 +34845,16 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 				temp[ x ] = arr[ i * eleSize + x ];
 
 			}
-			
+
 			while ( true ) {
-				
+
 				do i ++; while ( arr[ i * eleSize + orderElement ] < temp[ orderElement ] );
 				do j --; while ( arr[ j * eleSize + orderElement ] > temp[ orderElement ] );
-				
+
 				if ( j < i ) break;
-		
+
 				swapF( i, j );
-			
+
 			}
 
 			for ( x = 0; x < eleSize; x ++ ) {
@@ -34892,7 +34892,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  * k-d Tree for typed arrays (e.g. for Float32Array), in-place
  * provides fast nearest neighbour search
  * useful e.g. for a custom shader and/or BufferGeometry, saves tons of memory
- * has no insert and remove, only buildup and neares neighbour search
+ * has no insert and remove, only buildup and nearest neighbour search
  *
  * Based on https://github.com/ubilabs/kd-tree-javascript by Ubilabs
  *
@@ -34902,7 +34902,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  *
  * Requires typed array quicksort
  *
- * Example: 
+ * Example:
  * points: [x, y, z, x, y, z, x, y, z, ...]
  * metric: function(a, b){	return Math.pow(a[0] - b[0], 2) +  Math.pow(a[1] - b[1], 2) +  Math.pow(a[2] - b[2], 2); }  //Manhatten distance
  * eleSize: 3 //because of (x, y, z)
@@ -34914,18 +34914,18 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  * If you want to further minimize memory usage, remove Node.depth and replace in search algorithm with a traversal to root node (see comments at THREE.TypedArrayUtils.Kdtree.prototype.Node)
  */
 
- THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
+THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 	var self = this;
-	
+
 	var maxDepth = 0;
-	
+
 	var getPointSet = function ( points, pos ) {
 
 		return points.subarray( pos * eleSize, pos * eleSize + eleSize );
 
 	};
-		
+
 	function buildTree( points, depth, parent, pos ) {
 
 		var dim = depth % eleSize,
@@ -34934,7 +34934,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 			plength = points.length / eleSize;
 
 		if ( depth > maxDepth ) maxDepth = depth;
-		
+
 		if ( plength === 0 ) return null;
 		if ( plength === 1 ) {
 
@@ -34943,27 +34943,26 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 		}
 
 		THREE.TypedArrayUtils.quicksortIP( points, eleSize, dim );
-		
+
 		median = Math.floor( plength / 2 );
-		
-		node = new self.Node( getPointSet( points, median ) , depth, parent, median + pos );
+
+		node = new self.Node( getPointSet( points, median ), depth, parent, median + pos );
 		node.left = buildTree( points.subarray( 0, median * eleSize), depth + 1, node, pos );
 		node.right = buildTree( points.subarray( ( median + 1 ) * eleSize, points.length ), depth + 1, node, pos + median + 1 );
 
 		return node;
-	
+
 	}
 
 	this.root = buildTree( points, 0, null, 0 );
-		
+
 	this.getMaxDepth = function () { return maxDepth; };
-	
-	this.nearest = function ( point, maxNodes , maxDistance ) {
-	
-		 /* point: array of size eleSize 
-			maxNodes: max amount of nodes to return 
-			maxDistance: maximum distance to point result nodes should have
-			condition (not implemented): function to test node before it's added to the result list, e.g. test for view frustum
+
+	this.nearest = function ( point, maxNodes, maxDistance ) {
+
+		 /* point: array of elements with size eleSize
+			maxNodes: max amount of nodes to return
+			maxDistance: maximum distance of point to result nodes
 		*/
 
 		var i,
@@ -34980,7 +34979,7 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			var bestChild,
 				dimension = node.depth % eleSize,
-				ownDistance = metric(point, node.obj),
+				ownDistance = metric( point, node.obj ),
 				linearDistance = 0,
 				otherChild,
 				i,
@@ -35018,7 +35017,8 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			if ( node.right === null && node.left === null ) {
 
-				if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+				// if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+				if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance < maxDistance ) {
 
 					saveNode( node, ownDistance );
 
@@ -35054,7 +35054,8 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			nearestSearch( bestChild );
 
-			if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+			// if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
+			if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ) {
 
 				saveNode( node, ownDistance );
 
@@ -35062,7 +35063,8 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 			// if there's still room or the current distance is nearer than the best distance
 
-			if ( bestNodes.size() < maxNodes || Math.abs(linearDistance) < bestNodes.peek()[ 1 ] ) {
+			// if ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) {
+			if ( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) && Math.abs( linearDistance ) <= maxDistance ) {
 
 				if ( bestChild === node.left ) {
 
@@ -35084,34 +35086,43 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
 
 		}
 
-		if ( maxDistance ) {
+		// if ( maxDistance ) {
 
-			for ( i = 0; i < maxNodes; i += 1 ) {
+		// 	for ( i = 0; i < maxNodes; i += 1 ) {
 
-				bestNodes.push( [ null, maxDistance ] );
+		// 		bestNodes.push( [ null, maxDistance ] );
 
-			}
+		// 	}
 
-		}
+		// }
 
 		nearestSearch( self.root );
 
 		result = [];
 
-		for ( i = 0; i < maxNodes; i += 1 ) {
+		// for ( i = 0; i < maxNodes; i += 1 ) {
+		for ( i = 0; i < Math.min( bestNodes.size(), maxNodes ); i += 1 ) {
 
-			if ( bestNodes.content[ i ][ 0 ] ) {
+			/*if ( bestNodes.content[ i ][ 0 ] ) {
 
 				result.push( [ bestNodes.content[ i ][ 0 ], bestNodes.content[ i ][ 1 ] ] );
+
+			}*/
+
+			var inode = bestNodes.content[ i ];
+
+			if ( inode && inode[ 0 ] ) {
+
+				result.push( [ inode[ 0 ], inode[ 1 ] ] );
 
 			}
 
 		}
-		
+
 		return result;
-	
+
 	};
-	
+
 };
 
 /**
@@ -35138,7 +35149,7 @@ THREE.TypedArrayUtils.Kdtree.prototype.Node = function ( obj, depth, parent, pos
 	this.depth = depth;
 	this.pos = pos;
 
-}; 
+};
 
 /**
  * Binary heap implementation
@@ -35329,6 +35340,8 @@ THREE.TypedArrayUtils.Kdtree.BinaryHeap.prototype = {
 /**
  * @author Eberhard Graether / http://egraether.com/
  * @author Mark Lundin 	/ http://mark-lundin.com
+ * @author Simone Manini / http://daron1337.github.io
+ * @author Luca Antiga 	/ http://lantiga.github.io
  */
 
 THREE.TrackballControls = function ( object, domElement ) {
@@ -35356,6 +35369,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	this.staticMoving = false;
 	this.dynamicDampingFactor = 0.2;
+	this.cylindricalRotation = true;
 
 	this.minDistance = 0;
 	this.maxDistance = Infinity;
@@ -35377,6 +35391,12 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	_rotateStart = new THREE.Vector3(),
 	_rotateEnd = new THREE.Vector3(),
+
+	_movePrev = new THREE.Vector2(),
+	_moveCurr = new THREE.Vector2(),
+
+	_lastAxis = new THREE.Vector3(),
+	_lastAngle = 0,
 
 	_zoomStart = new THREE.Vector2(),
 	_zoomEnd = new THREE.Vector2(),
@@ -35452,6 +35472,22 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	}() );
 
+	var getMouseOnCircle = ( function () {
+
+		var vector = new THREE.Vector2();
+
+		return function ( pageX, pageY ) {
+
+			vector.set(
+				( ( pageX - _this.screen.width * 0.5 - _this.screen.left ) / ( _this.screen.width * 0.5 ) ),
+				( ( _this.screen.height * 0.5 + _this.screen.top - pageY ) / ( _this.screen.height * 0.5 ) / _this.screen.width * _this.screen.height )
+			);
+
+			return vector;
+		};
+
+	}() );
+
 	var getMouseProjectionOnBall = ( function () {
 
 		var vector = new THREE.Vector3();
@@ -35461,8 +35497,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 		return function ( pageX, pageY ) {
 
 			mouseOnBall.set(
-				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / (_this.screen.width*.5),
-				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / (_this.screen.height*.5),
+				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / ( _this.screen.width * 0.5 ),
+				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / ( _this.screen.height * 0.5 ),
 				0.0
 			);
 
@@ -35476,7 +35512,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 				} else {
 
-					mouseOnBall.z = .5 / length;
+					mouseOnBall.z = 0.5 / length;
 
 				}
 
@@ -35492,7 +35528,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 			_eye.copy( _this.object.position ).sub( _this.target );
 
-			vector.copy( _this.object.up ).setLength( mouseOnBall.y )
+			vector.copy( _this.object.up ).setLength( mouseOnBall.y );
 			vector.add( objectUp.copy( _this.object.up ).cross( _eye ).setLength( mouseOnBall.x ) );
 			vector.add( _eye.setLength( mouseOnBall.z ) );
 
@@ -35502,56 +35538,111 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	}() );
 
+
 	this.rotateCamera = (function(){
 
 		var axis = new THREE.Vector3(),
-			quaternion = new THREE.Quaternion();
-
+			quaternion = new THREE.Quaternion(),
+			eyeDirection = new THREE.Vector3(),
+			objectUpDirection = new THREE.Vector3(),
+			objectSidewaysDirection = new THREE.Vector3(),
+			moveDirection = new THREE.Vector3(),
+			angle;
 
 		return function () {
 
-			var angle = Math.acos( _rotateStart.dot( _rotateEnd ) / _rotateStart.length() / _rotateEnd.length() );
+			if ( _this.cylindricalRotation ) {
 
-			if ( angle ) {
+				moveDirection.set( _moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0 );
+				angle = moveDirection.length();
 
-				axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
+				if ( angle ) {
 
-				angle *= _this.rotateSpeed;
+					_eye.copy( _this.object.position ).sub( _this.target );
 
-				quaternion.setFromAxisAngle( axis, -angle );
+					eyeDirection.copy( _eye ).normalize();
+					objectUpDirection.copy( _this.object.up ).normalize();
+					objectSidewaysDirection.crossVectors( objectUpDirection, eyeDirection ).normalize();
 
-				_eye.applyQuaternion( quaternion );
-				_this.object.up.applyQuaternion( quaternion );
+					objectUpDirection.setLength( _moveCurr.y - _movePrev.y );
+					objectSidewaysDirection.setLength( _moveCurr.x - _movePrev.x );
 
-				_rotateEnd.applyQuaternion( quaternion );
+					moveDirection.copy( objectUpDirection.add( objectSidewaysDirection ) );
 
-				if ( _this.staticMoving ) {
+					axis.crossVectors( moveDirection, _eye ).normalize();
 
-					_rotateStart.copy( _rotateEnd );
+					angle *= _this.rotateSpeed;
+					quaternion.setFromAxisAngle( axis, angle );
 
-				} else {
+					_eye.applyQuaternion( quaternion );
+					_this.object.up.applyQuaternion( quaternion );
 
-					quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
-					_rotateStart.applyQuaternion( quaternion );
+					_lastAxis.copy( axis );
+					_lastAngle = angle;
+
+				}
+				else if ( !_this.staticMoving && _lastAngle ) {
+
+					_lastAngle *= Math.sqrt( 1.0 - _this.dynamicDampingFactor );
+					_eye.copy( _this.object.position ).sub( _this.target );
+					quaternion.setFromAxisAngle( _lastAxis, _lastAngle );
+					_eye.applyQuaternion( quaternion );
+					_this.object.up.applyQuaternion( quaternion );
+
+				}
+
+				_movePrev.copy( _moveCurr );
+
+			} else {
+
+				angle = Math.acos( _rotateStart.dot( _rotateEnd ) / _rotateStart.length() / _rotateEnd.length() );
+
+				if ( angle ) {
+
+					axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
+
+					angle *= _this.rotateSpeed;
+
+					quaternion.setFromAxisAngle( axis, -angle );
+
+					_eye.applyQuaternion( quaternion );
+					_this.object.up.applyQuaternion( quaternion );
+
+					_rotateEnd.applyQuaternion( quaternion );
+
+					if ( _this.staticMoving ) {
+
+						_rotateStart.copy( _rotateEnd );
+
+					} else {
+
+						quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
+						_rotateStart.applyQuaternion( quaternion );
+
+					}
 
 				}
 
 			}
-		}
+
+		};
 
 	}());
 
+
 	this.zoomCamera = function () {
+
+		var factor;
 
 		if ( _state === STATE.TOUCH_ZOOM_PAN ) {
 
-			var factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
+			factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
 			_touchZoomDistanceStart = _touchZoomDistanceEnd;
 			_eye.multiplyScalar( factor );
 
 		} else {
 
-			var factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
+			factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
 
 			if ( factor !== 1.0 && factor > 0.0 ) {
 
@@ -35604,7 +35695,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 				}
 
 			}
-		}
+		};
 
 	}());
 
@@ -35740,8 +35831,17 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
-			_rotateEnd.copy( _rotateStart );
+			if ( _this.cylindricalRotation ) {
+
+				_moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
+				_movePrev.copy(_moveCurr);
+
+			} else {
+
+				_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+				_rotateEnd.copy( _rotateStart );
+
+			}
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
@@ -35751,7 +35851,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 		} else if ( _state === STATE.PAN && !_this.noPan ) {
 
 			_panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-			_panEnd.copy(_panStart)
+			_panEnd.copy(_panStart);
 
 		}
 
@@ -35771,7 +35871,16 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+			if ( _this.cylindricalRotation ) {
+
+				_movePrev.copy(_moveCurr);
+				_moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
+
+			} else {
+
+				_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+
+			}
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
@@ -35809,13 +35918,19 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		var delta = 0;
 
-		if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
+		// if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
 
-			delta = event.wheelDelta / 40;
+		// 	delta = event.wheelDelta / 40;
 
-		} else if ( event.detail ) { // Firefox
+		// } else if ( event.detail ) { // Firefox
 
-			delta = - event.detail / 3;
+		// 	delta = - event.detail / 3;
+
+		// }
+
+		if( event.deltaY !== undefined ){
+
+			delta = - Math.sign( event.deltaY ) * 6;
 
 		}
 
@@ -35833,8 +35948,18 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 			case 1:
 				_state = STATE.TOUCH_ROTATE;
-				_rotateStart.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_rotateEnd.copy( _rotateStart );
+
+				if ( _this.cylindricalRotation ) {
+
+					_moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+					_movePrev.copy(_moveCurr);
+
+				} else {
+
+					_rotateStart.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+					_rotateEnd.copy( _rotateStart );
+
+				}
 				break;
 
 			case 2:
@@ -35868,7 +35993,16 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				if ( _this.cylindricalRotation ) {
+
+					_movePrev.copy(_moveCurr);
+					_moveCurr.copy( getMouseOnCircle(  event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+
+				} else {
+
+					_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+
+				}
 				break;
 
 			case 2:
@@ -35895,8 +36029,16 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_rotateStart.copy( _rotateEnd );
+				if ( _this.cylindricalRotation ) {
+
+					_movePrev.copy(_moveCurr);
+					_moveCurr.copy( getMouseOnCircle(  event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+
+				} else {
+
+					_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+					_rotateStart.copy( _rotateEnd );
+				}
 				break;
 
 			case 2:
@@ -35919,8 +36061,10 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	this.domElement.addEventListener( 'mousedown', mousedown, false );
 
-	this.domElement.addEventListener( 'mousewheel', mousewheel, false );
-	this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+	// this.domElement.addEventListener( 'mousewheel', mousewheel, false );
+	// this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+
+	this.domElement.addEventListener( 'wheel', mousewheel, false );
 
 	this.domElement.addEventListener( 'touchstart', touchstart, false );
 	this.domElement.addEventListener( 'touchend', touchend, false );
