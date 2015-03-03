@@ -15,7 +15,7 @@ if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob )
 
         value: function( callback, type, quality ){
 
-            var bin = atob( this.toDataURL( type, quality ).split( ',' )[ 1 ] ),
+            var bin = window.atob( this.toDataURL( type, quality ).split( ',' )[ 1 ] ),
                 len = bin.length,
                 len32 = len >> 2,
                 a8 = new Uint8Array( len ),
