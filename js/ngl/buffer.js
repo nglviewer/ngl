@@ -1598,6 +1598,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
