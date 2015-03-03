@@ -3285,6 +3285,48 @@ NGL.Residue.prototype = {
 
     },
 
+    getNextResidue: function(){
+
+        var chainResidues = this.chain.residues;
+        var idx = chainResidues.indexOf( this );
+
+        if( idx !== -1 && idx < chainResidues.length ){
+
+            var nextResidue = chainResidues[ idx + 1 ];
+
+            if( this.connectedTo( nextResidue ) ){
+
+                return nextResidue;
+
+            }
+
+        }
+
+        return undefined;
+
+    },
+
+    getPreviousResidue: function(){
+
+        var chainResidues = this.chain.residues;
+        var idx = chainResidues.indexOf( this );
+
+        if( idx !== -1 && idx > 0 ){
+
+            var prevResidue = chainResidues[ idx - 1 ];
+
+            if( prevResidue.connectedTo( this ) ){
+
+                return prevResidue;
+
+            }
+
+        }
+
+        return undefined;
+
+    },
+
     clone: function( c ){
 
         var r = new NGL.Residue( c );
