@@ -434,10 +434,10 @@ NGL.autoLoad = function(){
         if( protocol === "rcsb" ){
 
             // ext = "pdb";
-            // file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+            // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
             ext = "cif";
             compressed = "gz";
-            path = "http://www.rcsb.org/pdb/files/" + name + ".cif.gz";
+            path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
             protocol = "http";
 
         }
@@ -502,6 +502,8 @@ NGL.autoLoad = function(){
             fileLoader.load( file, init, onProgress, error );
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
+
+            loader.setCrossOrigin( true );
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
             loader.load( protocol + "://" + path, init, onProgress, error );
