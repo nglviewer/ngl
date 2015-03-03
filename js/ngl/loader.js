@@ -504,7 +504,7 @@ NGL.autoLoad = function(){
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
-            loader.load( path, init, onProgress, error );
+            loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
