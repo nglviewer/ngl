@@ -40,15 +40,10 @@ void main() {
         #endif
 
         vec3 transformedNormal = normalize( normal );
-        #ifdef DOUBLE_SIDED
-            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
-        #endif
-
-        #ifdef FLAT_SHADED
-            if( !gl_FrontFacing ){
-                transformedNormal = -transformedNormal;
-            }
-        #else
+        #ifndef FLAT_SHADED
+            #ifdef DOUBLE_SIDED
+                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
+            #endif
             #ifdef FLIP_SIDED
                 transformedNormal = -transformedNormal;
             #endif

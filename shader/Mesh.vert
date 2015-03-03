@@ -1,5 +1,4 @@
 
-varying vec3 vNormal;
 varying vec4 cameraPos;
 
 #ifdef PICKING
@@ -8,6 +7,7 @@ varying vec4 cameraPos;
 #else
     attribute vec3 color;
     varying vec3 vColor;
+    varying vec3 vNormal;
 #endif
 
 void main()
@@ -17,9 +17,8 @@ void main()
         vPickingColor = pickingColor;
     #else
         vColor = color;
+        vNormal = normalize( normalMatrix * normal );
     #endif
-
-    vNormal = normalize( normalMatrix * normal );
 
     cameraPos =  modelViewMatrix * vec4( position, 1.0 );
 

@@ -4,7 +4,6 @@
 uniform float opacity;
 uniform float nearClip;
 
-varying vec3 vNormal;
 varying vec4 cameraPos;
 
 #ifdef PICKING
@@ -12,6 +11,7 @@ varying vec4 cameraPos;
     varying vec3 vPickingColor;
 #else
     varying vec3 vColor;
+    varying vec3 vNormal;
 #endif
 
 #include light_params
@@ -42,15 +42,10 @@ void main()
         #endif
 
         vec3 transformedNormal = normalize( normal );
-        #ifdef DOUBLE_SIDED
-            transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
-        #endif
-
-        #ifdef FLAT_SHADED
-            if( !gl_FrontFacing ){
-                transformedNormal = -transformedNormal;
-            }
-        #else
+        #ifndef FLAT_SHADED
+            #ifdef DOUBLE_SIDED
+                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
+            #endif
             #ifdef FLIP_SIDED
                 transformedNormal = -transformedNormal;
             #endif

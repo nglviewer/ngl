@@ -1750,21 +1750,21 @@ NGL.RibbonBuffer.prototype = {
 
             if( normal ){
 
-                inputNormal[ k + 0 ] = normal[ v3 + 0 ];
-                inputNormal[ k + 1 ] = normal[ v3 + 1 ];
-                inputNormal[ k + 2 ] = normal[ v3 + 2 ];
+                inputNormal[ k + 0 ] = -normal[ v3 + 0 ];
+                inputNormal[ k + 1 ] = -normal[ v3 + 1 ];
+                inputNormal[ k + 2 ] = -normal[ v3 + 2 ];
 
-                inputNormal[ k + 3 ] = normal[ v3 + 0 ];
-                inputNormal[ k + 4 ] = normal[ v3 + 1 ];
-                inputNormal[ k + 5 ] = normal[ v3 + 2 ];
+                inputNormal[ k + 3 ] = -normal[ v3 + 0 ];
+                inputNormal[ k + 4 ] = -normal[ v3 + 1 ];
+                inputNormal[ k + 5 ] = -normal[ v3 + 2 ];
 
-                inputNormal[ k + 6 ] = normal[ v3 + 3 ];
-                inputNormal[ k + 7 ] = normal[ v3 + 4 ];
-                inputNormal[ k + 8 ] = normal[ v3 + 5 ];
+                inputNormal[ k + 6 ] = -normal[ v3 + 3 ];
+                inputNormal[ k + 7 ] = -normal[ v3 + 4 ];
+                inputNormal[ k + 8 ] = -normal[ v3 + 5 ];
 
-                inputNormal[ k + 9 ] = normal[ v3 + 3 ];
-                inputNormal[ k + 10 ] = normal[ v3 + 4 ];
-                inputNormal[ k + 11 ] = normal[ v3 + 5 ];
+                inputNormal[ k + 9 ] = -normal[ v3 + 3 ];
+                inputNormal[ k + 10 ] = -normal[ v3 + 4 ];
+                inputNormal[ k + 11 ] = -normal[ v3 + 5 ];
 
             }
 

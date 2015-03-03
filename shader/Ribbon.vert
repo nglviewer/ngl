@@ -20,7 +20,7 @@ void main(void){
         vPickingColor = pickingColor;
     #else
         color = inputColor;
-        vNormal = normalize( normalMatrix * normal * -1.0 );
+        vNormal = normalize( normalMatrix * normal );
     #endif
 
     cameraPos = modelViewMatrix * vec4(

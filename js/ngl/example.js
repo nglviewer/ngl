@@ -876,10 +876,13 @@ NGL.Examples = {
             stage.loadFile( "data://3pqr.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
-                    color: "ss"
+                    color: "ss", flatShaded: true
+                } );
+                o.addRepresentation( "ribbon", {
+                    color: "ss", flatShaded: true
                 } );
                 o.addRepresentation( "contact", { contactType: "polar" } );
-                o.addRepresentation( "line" );
+                o.addRepresentation( "trace" );
                 o.centerView( "135" );
 
             } );
