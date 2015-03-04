@@ -9,122 +9,221 @@
 	<body>
 		<h1>[name]</h1>
 
-		The following file formats are supported.
+		<p>
+			The following file formats are supported:
+
+			<!-- <ul>
+				<li>Structures</li>
+					<ul>
+						<li>mmCIF</li>
+						<li>PDB</li>
+						<li>GRO</li>
+					</ul>
+				<li>Trajectories</li>
+					<ul>
+						<li>XTC</li>
+						<li>netCDF</li>
+						<li>DCD</li>
+					</ul>
+				<li>Surfaces</li>
+					<ul>
+						<li>OBJ</li>
+						<li>PLY</li>
+					</ul>
+			</ul> -->
+		</p>
 
 
 		<h2>Structures</h2>
 
-		Loading flags (available from the *File* menu):
+		<p>
+			Loading flags (available from the *File* menu):
 
-		<ul>
-			<li>*asTrajectory*: load the topology from first model and add the coordinates from it and the remaining models as trajectory frames. Note that this assumes that all models share the same topology.</li>
-			<li>*firstModelOnly*: load only the first model.</li>
-			<li>*cAlphaOnly*: load only C-alpha atoms.</li>
-		</ul>
+			<ul>
+				<li>*asTrajectory*: load the topology from first model and add the coordinates from it and the remaining models as trajectory frames. Note that this assumes that all models share the same topology.</li>
+				<li>*firstModelOnly*: load only the first model.</li>
+				<li>*cAlphaOnly*: load only C-alpha atoms.</li>
+			</ul>
+		</p>
+
+		<p>
+			Atom data added to all structures:
+
+			<ul>
+				<li>*index*: running atom index that is unique within the structure</li>
+				<li>*modelindex*: running model index that is unique within the structure</li>
+				<li>*globalindex*: globally unique running atom index</li>
+			</ul>
+		</p>
 
 
 		<h3>mmCIF</h3>
 
-		Extension: <strong>.cif</strong>
+		<p>
+			Extension: <strong>.cif</strong>
+		</p>
 
-		<br/>
+		<p>
+			Specification: <a href="http://mmcif.wwpdb.org/">http://mmcif.wwpdb.org/</a>
+		</p>
 
-		Supported features:
+		<p>
+			Supported features:
 
-		<ul>
-			<li>Atom data:
-			<li>Secondary structure</li>
-		</ul>
+			<ul>
+				<li>Title: read from "_struct.title" item</li>
+				<li>Box coordinates: currently not read -- TODO</li>
+				<li>Secondary structure: read from "_struct_conf" and "_struct_sheet_range" items</li>
+				<li>Assemblies: read from "_pdbx_struct_oper_list" and "_pdbx_struct_assembly_gen" times</li>
+				<li>Atom data: read from the "_atom_site" items</li>
+					<ul>
+						<li>*resname*: read from "label_comp_id" field</li>
+						<li>*x*, *y*, *z*: read from "Cartn_x", "Cartn_y", "Cartn_z" fields</li>
+						<li>*resno*: read from "auth_seq_id" field</li>
+						<li>*serial*: read from "id" field</li>
+						<li>*atomname*: read from "label_atom_id" field</li>
+						<li>*chainname*: read from "label_asym_id" field</li>
+						<li>*element*: read from "type_symbol" field or deduced from *atomname* if not available</li>
+						<li>*vdw*: deduced from *element*</li>
+						<li>*covalent*: deduced from *element*</li>
+						<li>*bfactor*: read from "B_iso_or_equiv" field</li>
+						<li>*altloc*: read from "label_alt_id" field</li>
+						<li>*hetero*: determined from "group_PDB" field, which is "ATOM" or "HETATM"</li>
+					</ul>
+				<li>Connectivity: read from the "_struct_conn" item, which generally contains data on hetero atom connectivity. Entries with "_conn_type_id" equal to "hydrog" are currently ignored. Connectivity for non-hetero atoms is calculated during post-processing.</li>
+			</ul>
+		</p>
 
 
 		<h3>PDB</h3>
 
-		Extension: <strong>.pdb</strong>
+		<p>
+			Extension: <strong>.pdb</strong>
+		</p>
 
-		<br/>
+		<p>
+			Specification: <a href="http://www.wwpdb.org/documentation/file-format.php">http://www.wwpdb.org/documentation/file-format.php</a>
+		</p>
 
-		Supported features:
+		<p>
+			Supported features:
 
-		<ul>
-			<li>Secondary structure</li>
-		</ul>
+			<ul>
+				<li>Title: read from "TITLE" record</li>
+				<li>Box coordinates: read from "CRYST1" record</li>
+				<li>Secondary structure: read from "HELIX" and "SHEET" records</li>
+				<li>Assemblies: read from "REMARK 350" record</li>
+				<li>Atom data: read from the "ATOM" and "HETATM" records</li>
+					<ul>
+						<li>*resname*: read from "resName" field</li>
+						<li>*x*, *y*, *z*: read from "x", "y", "z" fields</li>
+						<li>*resno*: read from "resSeq" field</li>
+						<li>*serial*: read from "serial" field</li>
+						<li>*atomname*: read from "name" field</li>
+						<li>*chainname*: read from "chainID" field</li>
+						<li>*element*: read from "element" field or deduced from *atomname* if not available</li>
+						<li>*vdw*: deduced from *element*</li>
+						<li>*covalent*: deduced from *element*</li>
+						<li>*bfactor*: read from "tempFactor" field</li>
+						<li>*altloc*: read from "altLoc" field</li>
+						<li>*hetero*: determined from record type, which is "ATOM" or "HETATM"</li>
+					</ul>
+				<li>Connectivity: read from the "CONNECT" record, which generally contains data on hetero atom connectivity. Connectivity for non-hetero atoms is calculated during post-processing.</li>
+			</ul>
+		</p>
 
 
 		<h3>GRO</h3>
 
-		Extension: <strong>.gro</strong>
+		<p>
+			Extension: <strong>.gro</strong>
+		</p>
 
-		<br/>
+		<p>
+			Specification: <a href="http://manual.gromacs.org/current/online/gro.html">http://manual.gromacs.org/current/online/gro.html</a>
+		</p>
 
-		Supported features:
+		<p>
+			Supported features:
 
-		<ul>
-			<li>Atom data</li>
-				<ul>
-					<li>*resname*: read from ... field</li>
-					<li>*x*, *y*, *z*: read from ... field</li>
-					<li>*resno*: read from ... field</li>
-					<li>*serial*: read from ... field</li>
-					<li>*atomname*: read from ... field</li>
-					<li>*chainname*: not available, automatically assigned during post-processing</li>
-					<li>*element*: deduced from *atomname*</li>
-					<li>*vdw*: deduced from *element*</li>
-					<li>*covalent*: deduced from *element*</li>
-					<li>*altloc*: not available, left empty</li>
-				 	<li>*index*: running atom index that is unique within the structure</li>
-				 	<li>*modelindex*: running model index that is unique within the structure</li>
-				 	<li>*globalindex*: globally unique running atom index</li>
-			 	</ul>
-			<li>Box coordinates:</li>
-			<li>Secondary structure: not available in the format, automatically calculated during post-processing</li>
-		</ul>
+			<ul>
+				<li>Title: read from "title string" field</li>
+				<li>Box coordinates: read from "box vectors" field</li>
+				<li>Secondary structure: not available in the format, automatically calculated during post-processing</li>
+				<li>Atom data:</li>
+					<ul>
+						<li>*resname*: read from "residue name" field</li>
+						<li>*x*, *y*, *z*: read from "position" fields</li>
+						<li>*resno*: read from "residue number" field</li>
+						<li>*serial*: read from "atom number" field</li>
+						<li>*atomname*: read from "atom name" field</li>
+						<li>*chainname*: not available, automatically assigned during post-processing</li>
+						<li>*element*: deduced from *atomname*</li>
+						<li>*vdw*: deduced from *element*</li>
+						<li>*covalent*: deduced from *element*</li>
+						<li>*altloc*: not available, left empty</li>
+					</ul>
+				<li>Connectivity: not available in the format, automatically calculated during post-processing</li>
+			</ul>
+		</p>
 
-		TODO:
+		<p>
+			TODO:
 
-		<ul>
-			<li>Read velocity data from *GRO* files that includes it (and create a new *Representation* to display it).</li>
-		</ul>
+			<ul>
+				<li>Read velocity data from *GRO* files that includes it (and create a new *Representation* to display it).</li>
+			</ul>
+		</p>
 
 
 		<h2>Trajectories</h2>
 
-		Structure files in *mmCIF*, *PDB* or *GRO* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these files.
+		<p>Structure files in *mmCIF*, *PDB* or *GRO* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these files.</p>
 
 
 		<h3>XTC</h3>
 
-		Extension: <strong>.xtc</strong>
+		<p>
+			Extension: <strong>.xtc</strong>
+		</p>
 
 
 		<h3>netCDF</h3>
 
-		Extension: <strong>.netcdf</strong>
+		<p>
+			Extension: <strong>.netcdf</strong>
+		</p>
 
 
 		<h3>DCD</h3>
 
-		Extension: <strong>.dcd</strong>
+		<p>
+			Extension: <strong>.dcd</strong>
+		</p>
 
 
 		<h2>Surfaces</h2>
 
-
 		<h3>OBJ</h3>
 
-		Extension: <strong>.obj</strong>
+		<p>
+			Extension: <strong>.obj</strong>
+		</p>
 
-		<br/>
-
-		The *PyMOL* molecular visualization system can export surfaces in the *OBJ* format.
+		<p>
+			The *PyMOL* molecular visualization system can export surfaces in the *OBJ* format.
+		</p>
 
 
 		<h3>PLY</h3>
 
-		Extension: <strong>.ply</strong>
+		<p>
+			Extension: <strong>.ply</strong>
+		</p>
 
-		<br/>
-
-		The *EDTsurf* program outputs surfaces in the *PLY* format.
+		<p>
+			The *EDTsurf* program outputs surfaces in the *PLY* format.
+		</p>
 
 
 	</body>
