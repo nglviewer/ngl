@@ -689,6 +689,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var sphereData = {};
@@ -798,6 +800,8 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -910,6 +914,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -1052,6 +1058,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -1306,6 +1314,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var lineData = {};
@@ -1438,6 +1448,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -1647,10 +1659,14 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var baSet = this.backboneAtomSet;
         var bbSet = this.backboneBondSet;
+
+        if( baSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
@@ -1882,10 +1898,14 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var baSet = this.baseAtomSet;
         var bbSet = this.baseBondSet;
+
+        if( baSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
@@ -2087,6 +2107,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -2440,6 +2462,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var i = 0;
@@ -2627,6 +2651,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var i = 0;
@@ -2802,6 +2828,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var i = 0;
@@ -2958,6 +2986,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -3138,6 +3168,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -3326,6 +3358,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -3751,10 +3785,14 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var atomSet = this.contactAtomSet;
         var bondSet = this.contactBondSet;
+
+        if( atomSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
@@ -3942,7 +3980,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         // console.log( this.selection )
         // console.log( this.atomSet )
 
-        if( !this.atomSet.atoms.length ) return;
+        if( this.atomSet.atomCount === 0 ) return;
 
         var scope = this;
 
