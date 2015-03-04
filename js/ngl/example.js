@@ -122,6 +122,22 @@ NGL.Examples = {
 
         },
 
+        "gro_trajectory": function( stage ){
+
+            stage.loadFile( "data://md_1u19_trj.gro", function( o ){
+
+                o.addTrajectory();
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "line", {
+                    sele: "not hydrogen and sidechainAttached"
+                } );
+                o.centerView();
+
+            }, null, null, { asTrajectory: true } );
+
+        },
+
         "3pqr": function( stage ){
 
             stage.loadFile( "data://3pqr.pdb", function( o ){
@@ -869,12 +885,12 @@ NGL.Examples = {
 
         "contact": function( stage ){
 
-            // stage.loadFile( "data://3SN6.cif", function( o ){
+            stage.loadFile( "data://3SN6.cif", function( o ){
             // stage.loadFile( "data://4UJD.cif.gz", function( o ){
             // stage.loadFile( "data://3l5q.pdb", function( o ){
             // stage.loadFile( "data://1blu.pdb", function( o ){
             // stage.loadFile( "data://3pqr.pdb", function( o ){
-            stage.loadFile( "data://1crn.pdb", function( o ){
+            // stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
                     color: "ss", flatShaded: true
