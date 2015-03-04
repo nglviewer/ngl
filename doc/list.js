@@ -47,8 +47,11 @@ var list = {
             [ "SurfaceComponent", "api/component/SurfaceComponent" ]
         ],
         "Representation": [
-            [ "SpacefillRepresentation", "api/representation/SpacefillRepresentation" ],
-            [ "RibbonRepresentation", "api/representation/RibbonRepresentation" ]
+            [ "Representation", "api/representation/Representation" ],
+            [ "StructureRepresentation", "api/representation/StructureRepresentation" ],
+            [ "SurfaceRepresentation", "api/representation/SurfaceRepresentation" ],
+            // [ "SpacefillRepresentation", "api/representation/SpacefillRepresentation" ],
+            // [ "RibbonRepresentation", "api/representation/RibbonRepresentation" ]
         ],
         // "Algorithm": [
         //     [ "Alignment", "api/algorithm/Alignment" ],

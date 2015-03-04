@@ -7,36 +7,32 @@
 		<link type="text/css" rel="stylesheet" href="../../page.css" />
 	</head>
 	<body>
+
+		[page:Component] &rarr;
+
 		<h1>[name]</h1>
 
 		<div class="desc">A container for a [page:Structure structure].</div>
 
 
 		<h2>Example</h2>
-
-
 		<code>
 		var structure = new NGL.Structure();
-		var sele = "ALL";
+		var params = { sele: "ALL" };
 
 		var structureComponent = new NGL.StructureComponent(
-			stage, structure, sele
+			stage, structure, params
 		);
 		</code>
 
-		
+
 		<h2>Constructor</h2>
 
-
-		<h3>[name]( [page:Stage stage], [page:Structure structure], sele )</h3>
-
+		<h3>[name]( [page:Stage stage], [page:Structure structure], params )</h3>
 		<div></div>
 
-		
+
 		<h2>Properties</h2>
-
-		<h3>.name</h3>
-		<div></div>
 
 		<h3>.[page:Structure structure]</h3>
 		<div></div>
@@ -44,19 +40,10 @@
 
 		<h2>Signals</h2>
 
-		<h3>.visibilityChanged</h3>
+		<h3>trajectoryAdded</h3>
 		<div></div>
 
-		<h3>.representationAdded</h3>
-		<div></div>
-
-		<h3>.representationRemoved</h3>
-		<div></div>
-
-		<h3>.trajectoryAdded</h3>
-		<div></div>
-
-		<h3>.trajectoryRemoved</h3>
+		<h3>trajectoryRemoved</h3>
 		<div></div>
 
 
@@ -65,37 +52,10 @@
 		<h3>.changeSelection( sele )</h3>
 		<div></div>
 
-		<h3>.addRepresentation( type, sele ) [page:Representation]</h3>
-		<div>Various representation *type*s (spacefill, ball+stick, licorice, hyperball, line, backbone, tube, ribbon, trace) can be added and restricted by a selection string *sele*.</div>
-
-		<h3>.removeRepresentation( repr )</h3>
-		<div></div>
-
-		<h3>.updateRepresentations()</h3>
-		<div></div>
-
-		<h3>.addRepresentation( type, sele )</h3>
-		<div></div>
-
-		<h3>.addTrajectory( xtcPath, sele ) [page:Trajectory]</h3>
+		<h3>.addTrajectory( xtcPath, sele, i ) [page:Trajectory]</h3>
 		<div></div>
 
 		<h3>.removeTrajectory( traj )</h3>
-		<div></div>
-
-		<h3>.setVisibility( value )</h3>
-		<div></div>
-
-		<h3>.setName( value )</h3>
-		<div></div>
-
-		<h3>.centerView( sele )</h3>
-		<div></div>
-
-		<h3>.getCenter() THREE.Vector3</h3>
-		<div></div>
-
-		<h3>.dispose()</h3>
 		<div></div>
 
 
