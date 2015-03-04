@@ -346,6 +346,8 @@ NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
+    // http://www.wwpdb.org/documentation/file-format.php
+
     var __timeName = "NGL.PdbParser._parse " + this.name;
 
     console.time( __timeName );
@@ -744,6 +746,8 @@ NGL.GroParser.prototype.constructor = NGL.GroParser;
 
 NGL.GroParser.prototype._parse = function( str, callback ){
 
+    // http://manual.gromacs.org/current/online/gro.html
+
     var __timeName = "NGL.GroParser._parse " + this.name;
 
     console.time( __timeName );
@@ -775,10 +779,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         parseFloat( b[2] ) * 10
     ];
 
-    // var xpos = 20;
-    // var ypos = 28;
-    // var zpos = 36;
-
+    // determine number of decimal places
     var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf(".") - 1;
     var lpos = 5 + ndec;
     var xpos = 20;
@@ -931,6 +932,8 @@ NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
 NGL.CifParser.prototype.constructor = NGL.CifParser;
 
 NGL.CifParser.prototype._parse = function( str, callback ){
+
+    // http://mmcif.wwpdb.org/
 
     var __timeName = "NGL.CifParser._parse " + this.name;
 
@@ -1365,6 +1368,10 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     var s = structure;
     var cif = s.cif;
+
+    if( cif.struct && cif.struct.title ){
+        s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
+    }
 
     function _ensureArray( dict, field ){
 
