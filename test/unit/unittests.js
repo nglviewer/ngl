@@ -754,7 +754,7 @@ QUnit.asyncTest( "backbone", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -779,7 +779,7 @@ QUnit.asyncTest( "backbone [atomArray]", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -803,7 +803,7 @@ QUnit.asyncTest( ".CA", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -825,7 +825,7 @@ QUnit.asyncTest( "not backbone", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -847,7 +847,7 @@ QUnit.asyncTest( "not backbone or .CA", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -869,7 +869,7 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
     var selection1 = new NGL.Selection( "TYR" );
     var selection2 = new NGL.Selection( "not not TYR" );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -890,7 +890,7 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
     var selection1 = new NGL.Selection( "not ( 12 and .CA )" );
     var selection2 = new NGL.Selection( "not ( 12.CA )" );
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -912,7 +912,7 @@ QUnit.asyncTest( "/1 PDB", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1LVZ.pdb";
+    var path = "data://../../data/1LVZ.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -935,7 +935,7 @@ QUnit.asyncTest( "/1 CIF", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "http://../../data/1LVZ.cif";
+    var path = "data://../../data/1LVZ.cif";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -960,7 +960,7 @@ QUnit.module( "structure" );
 
 QUnit.asyncTest( "structure subset", function( assert ) {
 
-    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -978,7 +978,7 @@ QUnit.asyncTest( "structure subset", function( assert ) {
 
 QUnit.asyncTest( "structure subset not", function( assert ) {
 
-    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -996,7 +996,7 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
 
 QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
-    var path = "http://../../data/Bace1Trimer-inDPPC.gro";
+    var path = "data://../../data/Bace1Trimer-inDPPC.gro";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1014,7 +1014,7 @@ QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
 QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
-    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1037,7 +1037,7 @@ QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
 QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
-    var path = "http://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1060,7 +1060,7 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
 QUnit.asyncTest( "clone", function( assert ) {
 
-    var path = "http://../../data/1crn.pdb";
+    var path = "data://../../data/1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1086,7 +1086,7 @@ QUnit.asyncTest( "clone", function( assert ) {
 
 QUnit.asyncTest( "clone multimodel", function( assert ) {
 
-    var path = "http://../../data/1LVZ.pdb";
+    var path = "data://../../data/1LVZ.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
