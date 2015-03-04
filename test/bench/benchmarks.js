@@ -298,13 +298,10 @@ suite.add( 'pbc parse',
         async: true,
         defer: true,
         fn: function( deferred ){
-            groStructure.reset();
-            groStructure.parse( data[ "pbc" ], function(){
+            var groParser = new NGL.GroParser();
+            groParser.parse( data[ "pbc" ], function(){
                 deferred.resolve();
             } );
-        },
-        setup: function(){
-            var groStructure = new NGL.GroStructure();
         }
     }
 
@@ -331,21 +328,21 @@ suite.add( 'pbc parse',
 // );
 
 
-suite.add( 'pbc parse3',
+// suite.add( 'pbc parse3',
 
-    {
-        async: true,
-        defer: true,
-        fn: function( deferred ){
-            groStructure.reset();
-            groStructure.parse( data[ "pbc" ], function( d ){
-                deferred.resolve();
-                // console.log( d )
-            } );
-        },
-        setup: function(){
-            var groStructure = new NGL.GroStructure3();
-        }
-    }
+//     {
+//         async: true,
+//         defer: true,
+//         fn: function( deferred ){
+//             groStructure.reset();
+//             groStructure.parse( data[ "pbc" ], function( d ){
+//                 deferred.resolve();
+//                 // console.log( d )
+//             } );
+//         },
+//         setup: function(){
+//             var groStructure = new NGL.GroStructure3();
+//         }
+//     }
 
-);
+// );
