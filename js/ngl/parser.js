@@ -1504,6 +1504,8 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             // ensure data is in lists
             _ensureArray( sc, "id" );
 
+            var reDoubleQuote = /"/g;
+
             NGL.processArray(
 
                 sc.id,
@@ -1514,18 +1516,32 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                         if( sc.conn_type_id[ i ] === "hydrog" ) continue;
 
-                        var selection1 = new NGL.Selection(
+                        var sele1 = (
                             sc.ptnr1_auth_seq_id[ i ] + ":" +
                             sc.ptnr1_label_asym_id[ i ] + "." +
-                            sc.ptnr1_label_atom_id[ i ]
+                            sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
                         );
+                        var selection1 = new NGL.Selection( sele1 );
+                        if( selection1.selection[ "error" ] ){
+                            console.warn(
+                                "invalid selection for connection", sele1
+                            );
+                            continue;
+                        }
                         var atoms1 = s.getAtoms( selection1 );
 
-                        var selection2 = new NGL.Selection(
+                        var sele2 = (
                             sc.ptnr2_auth_seq_id[ i ] + ":" +
                             sc.ptnr2_label_asym_id[ i ] + "." +
-                            sc.ptnr2_label_atom_id[ i ]
+                            sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
                         );
+                        var selection2 = new NGL.Selection( sele2 );
+                        if( selection2.selection[ "error" ] ){
+                            console.warn(
+                                "invalid selection for connection", sele2
+                            );
+                            continue;
+                        }
                         var atoms2 = s.getAtoms( selection2 );
 
                         var a1, a2;
