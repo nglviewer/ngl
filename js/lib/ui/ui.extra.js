@@ -584,8 +584,9 @@ UI.PopupMenu = function( iconClass, heading ){
             offset: '0px 5px',
             constraints: [
                 {
-                    to: 'window',
-                    attachment: 'element'
+                    to: 'scrollParent',
+                    attachment: 'element',
+                    pin: [ 'top', 'bottom' ]
                 }
             ]
         } );
