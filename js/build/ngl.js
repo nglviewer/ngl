@@ -2157,8 +2157,8 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
     data.bondSet.structure = structure;
 
     var bondSet = new NGL.BondSet();
-    var vecOC = new THREE.Vector3();
-    var vecNC = new THREE.Vector3();
+    var v1 = new THREE.Vector3();
+    var v2 = new THREE.Vector3();
 
     var checkAngle = function( atom1, atom2, oName, cName ){
 
@@ -2174,10 +2174,10 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
 
         var atomC = atomO.residue.getAtomByName( cName );
 
-        vecOC.subVectors( atomC, atomO );
-        vecNC.subVectors( atomC, atomN );
+        v1.subVectors( atomC, atomO );
+        v2.subVectors( atomC, atomN );
 
-        return THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle;
+        return THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle;
 
     }
 
@@ -2193,9 +2193,33 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
             // ignore backbone to backbone contacts
             return;
 
-        }else if( a1.atomname === "O" || a2.atomname === "O" ){
+        }else if( a1.atomname === "N" || a2.atomname === "N" ){
 
-            if( checkAngle( a1, a2, "O", "C" ) ){
+            var atomN, atomX;
+
+            if( a1.atomname === "N" ){
+                atomN = a1;
+                atomX = a2;
+            }else{
+                atomN = a2;
+                atomX = a1;
+            }
+
+            var atomCA = atomN.residue.getAtomByName( "CA" );
+            if( !atomCA ) return;
+
+            var prevRes = atomN.residue.getPreviousResidue();
+            if( !prevRes ) return;
+
+            var atomC = prevRes.getAtomByName( "C" );
+            if( !atomC ) return;
+
+            v1.subVectors( atomN, atomC );
+            v2.subVectors( atomN, atomCA );
+            v1.add( v2 ).multiplyScalar( 0.5 );
+            v2.subVectors( atomX, atomN );
+
+            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
                 bondSet.addBond( a1, a2, true );
             }
 
@@ -2247,28 +2271,42 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
     data.bondSet.structure = structure;
 
     var bondSet = new NGL.BondSet();
-    var vecOC = new THREE.Vector3();
-    var vecNC = new THREE.Vector3();
+    var v1 = new THREE.Vector3();
+    var v2 = new THREE.Vector3();
 
     data.bondSet.eachBond( function( b ){
 
-        var atomO, atomN;
+        var a1 = b.atom1;
+        var a2 = b.atom2;
 
-        if( b.atom1.atomname === "O" ){
-            atomO = b.atom1;
-            atomN = b.atom2;
+        var atomN, atomO;
+
+        if( a1.atomname === "N" ){
+            atomN = a1;
+            atomO = a2;
         }else{
-            atomO = b.atom2;
-            atomN = b.atom1;
+            atomN = a2;
+            atomO = a1;
         }
 
-        var atomC = atomO.residue.getAtomByName( "C" );
+        var atomCA = atomN.residue.getAtomByName( "CA" );
+        if( !atomCA ) return;
 
-        vecOC.subVectors( atomC, atomO );
-        vecNC.subVectors( atomC, atomN );
+        var prevRes = atomN.residue.getPreviousResidue();
+        if( !prevRes ) return;
 
-        if( THREE.Math.radToDeg( vecOC.angleTo( vecNC ) ) < maxAngle ){
-            bondSet.addBond( atomO, atomN, true );
+        var atomC = prevRes.getAtomByName( "C" );
+        if( !atomC ) return;
+
+        v1.subVectors( atomN, atomC );
+        v2.subVectors( atomN, atomCA );
+        v1.add( v2 ).multiplyScalar( 0.5 );
+        v2.subVectors( atomO, atomN );
+
+        // console.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
+
+        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
+            bondSet.addBond( a1, a2, true );
         }
 
     } );
@@ -5566,6 +5604,48 @@ NGL.Residue.prototype = {
         return this.getBackboneAtomStart().connectedTo(
             rNext.getBackboneAtomEnd()
         );
+
+    },
+
+    getNextResidue: function(){
+
+        var chainResidues = this.chain.residues;
+        var idx = chainResidues.indexOf( this );
+
+        if( idx !== -1 && idx < chainResidues.length ){
+
+            var nextResidue = chainResidues[ idx + 1 ];
+
+            if( this.connectedTo( nextResidue ) ){
+
+                return nextResidue;
+
+            }
+
+        }
+
+        return undefined;
+
+    },
+
+    getPreviousResidue: function(){
+
+        var chainResidues = this.chain.residues;
+        var idx = chainResidues.indexOf( this );
+
+        if( idx !== -1 && idx > 0 ){
+
+            var prevResidue = chainResidues[ idx - 1 ];
+
+            if( prevResidue.connectedTo( this ) ){
+
+                return prevResidue;
+
+            }
+
+        }
+
+        return undefined;
 
     },
 
@@ -9705,6 +9785,8 @@ NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
+    // http://www.wwpdb.org/documentation/file-format.php
+
     var __timeName = "NGL.PdbParser._parse " + this.name;
 
     console.time( __timeName );
@@ -10103,6 +10185,8 @@ NGL.GroParser.prototype.constructor = NGL.GroParser;
 
 NGL.GroParser.prototype._parse = function( str, callback ){
 
+    // http://manual.gromacs.org/current/online/gro.html
+
     var __timeName = "NGL.GroParser._parse " + this.name;
 
     console.time( __timeName );
@@ -10134,10 +10218,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         parseFloat( b[2] ) * 10
     ];
 
-    // var xpos = 20;
-    // var ypos = 28;
-    // var zpos = 36;
-
+    // determine number of decimal places
     var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf(".") - 1;
     var lpos = 5 + ndec;
     var xpos = 20;
@@ -10291,6 +10372,8 @@ NGL.CifParser.prototype.constructor = NGL.CifParser;
 
 NGL.CifParser.prototype._parse = function( str, callback ){
 
+    // http://mmcif.wwpdb.org/
+
     var __timeName = "NGL.CifParser._parse " + this.name;
 
     console.time( __timeName );
@@ -10347,6 +10430,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var pendingString = false;
     var currentString = null;
+    var pendingValue = false;
     var pendingLoop = false;
     var loopPointers = [];
     var currentLoopIndex = null;
@@ -10386,6 +10470,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 pendingString = false;
                 pendingLoop = false;
+                pendingValue = false;
                 loopPointers.length = 0;
                 currentLoopIndex = null;
                 currentCategory = null;
@@ -10474,11 +10559,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     var name = ks[ 1 ];
 
                     if( !cif[ category ] ) cif[ category ] = {};
+
                     if( cif[ category ][ name ] ){
                         console.warn( category, name, "already exists" );
                     }else{
                         cif[ category ][ name ] = value;
                     }
+
+                    if( !value ) pendingValue = true;
 
                     currentCategory = category;
                     currentName = name;
@@ -10682,9 +10770,15 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         1, line.length - 2
                     );
 
+                }else if( pendingValue ){
+
+                    // console.log( "NEWLINE VALUE", line );
+
+                    cif[ currentCategory ][ currentName ] = line.trim();
+
                 }else{
 
-                    console.log( "???", line );
+                    console.log( "NGL.CifParser._parse: unknown state", line );
 
                 }
 
@@ -10724,6 +10818,10 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     var s = structure;
     var cif = s.cif;
+
+    if( cif.struct && cif.struct.title ){
+        s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
+    }
 
     function _ensureArray( dict, field ){
 
@@ -10856,6 +10954,8 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             // ensure data is in lists
             _ensureArray( sc, "id" );
 
+            var reDoubleQuote = /"/g;
+
             NGL.processArray(
 
                 sc.id,
@@ -10866,18 +10966,32 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                         if( sc.conn_type_id[ i ] === "hydrog" ) continue;
 
-                        var selection1 = new NGL.Selection(
+                        var sele1 = (
                             sc.ptnr1_auth_seq_id[ i ] + ":" +
                             sc.ptnr1_label_asym_id[ i ] + "." +
-                            sc.ptnr1_label_atom_id[ i ]
+                            sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
                         );
+                        var selection1 = new NGL.Selection( sele1 );
+                        if( selection1.selection[ "error" ] ){
+                            console.warn(
+                                "invalid selection for connection", sele1
+                            );
+                            continue;
+                        }
                         var atoms1 = s.getAtoms( selection1 );
 
-                        var selection2 = new NGL.Selection(
+                        var sele2 = (
                             sc.ptnr2_auth_seq_id[ i ] + ":" +
                             sc.ptnr2_label_asym_id[ i ] + "." +
-                            sc.ptnr2_label_atom_id[ i ]
+                            sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
                         );
+                        var selection2 = new NGL.Selection( sele2 );
+                        if( selection2.selection[ "error" ] ){
+                            console.warn(
+                                "invalid selection for connection", sele2
+                            );
+                            continue;
+                        }
                         var atoms2 = s.getAtoms( selection2 );
 
                         var a1, a2;
@@ -17398,6 +17512,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var sphereData = {};
@@ -17507,6 +17623,8 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -17619,6 +17737,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -17761,6 +17881,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -18015,6 +18137,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var lineData = {};
@@ -18147,6 +18271,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -18356,10 +18482,14 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var baSet = this.backboneAtomSet;
         var bbSet = this.backboneBondSet;
+
+        if( baSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
@@ -18591,10 +18721,14 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var baSet = this.baseAtomSet;
         var bbSet = this.baseBondSet;
+
+        if( baSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
@@ -18796,6 +18930,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -19149,6 +19285,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var i = 0;
@@ -19336,6 +19474,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var i = 0;
@@ -19511,6 +19651,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var i = 0;
@@ -19667,6 +19809,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -19847,6 +19991,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -20035,6 +20181,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
 
         what = what || {};
 
@@ -20460,10 +20608,14 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.atomSet.atomCount === 0 ) return;
+
         what = what || {};
 
         var atomSet = this.contactAtomSet;
         var bondSet = this.contactBondSet;
+
+        if( atomSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
@@ -20651,7 +20803,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         // console.log( this.selection )
         // console.log( this.atomSet )
 
-        if( !this.atomSet.atoms.length ) return;
+        if( this.atomSet.atomCount === 0 ) return;
 
         var scope = this;
 
@@ -22436,6 +22588,22 @@ NGL.Examples = {
 
         },
 
+        "gro_trajectory": function( stage ){
+
+            stage.loadFile( "data://md_1u19_trj.gro", function( o ){
+
+                o.addTrajectory();
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "line", {
+                    sele: "not hydrogen and sidechainAttached"
+                } );
+                o.centerView();
+
+            }, null, null, { asTrajectory: true } );
+
+        },
+
         "3pqr": function( stage ){
 
             stage.loadFile( "data://3pqr.pdb", function( o ){
@@ -23183,11 +23351,12 @@ NGL.Examples = {
 
         "contact": function( stage ){
 
-            // stage.loadFile( "data://3SN6.cif", function( o ){
+            stage.loadFile( "data://3SN6.cif", function( o ){
             // stage.loadFile( "data://4UJD.cif.gz", function( o ){
             // stage.loadFile( "data://3l5q.pdb", function( o ){
             // stage.loadFile( "data://1blu.pdb", function( o ){
-            stage.loadFile( "data://3pqr.pdb", function( o ){
+            // stage.loadFile( "data://3pqr.pdb", function( o ){
+            // stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
                     color: "ss", flatShaded: true
@@ -23195,9 +23364,10 @@ NGL.Examples = {
                 o.addRepresentation( "ribbon", {
                     color: "ss", flatShaded: true
                 } );
-                o.addRepresentation( "contact", { contactType: "polar" } );
+                o.addRepresentation( "contact", { contactType: "polarBackbone" } );
                 o.addRepresentation( "trace" );
-                o.centerView( "135" );
+                o.addRepresentation( "line" );
+                o.centerView();
 
             } );
 
