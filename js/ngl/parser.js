@@ -991,6 +991,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var pendingString = false;
     var currentString = null;
+    var pendingValue = false;
     var pendingLoop = false;
     var loopPointers = [];
     var currentLoopIndex = null;
@@ -1030,6 +1031,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 pendingString = false;
                 pendingLoop = false;
+                pendingValue = false;
                 loopPointers.length = 0;
                 currentLoopIndex = null;
                 currentCategory = null;
@@ -1118,11 +1120,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     var name = ks[ 1 ];
 
                     if( !cif[ category ] ) cif[ category ] = {};
+
                     if( cif[ category ][ name ] ){
                         console.warn( category, name, "already exists" );
                     }else{
                         cif[ category ][ name ] = value;
                     }
+
+                    if( !value ) pendingValue = true;
 
                     currentCategory = category;
                     currentName = name;
@@ -1326,9 +1331,15 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         1, line.length - 2
                     );
 
+                }else if( pendingValue ){
+
+                    // console.log( "NEWLINE VALUE", line );
+
+                    cif[ currentCategory ][ currentName ] = line.trim();
+
                 }else{
 
-                    console.log( "???", line );
+                    console.log( "NGL.CifParser._parse: unknown state", line );
 
                 }
 
