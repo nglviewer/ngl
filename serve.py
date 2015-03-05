@@ -317,6 +317,12 @@ def redirect_ngl():
     return redirect( url_for( 'html', filename='ngl.html' ) )
 
 
+@app.route( '/doc' )
+@requires_auth
+def redirect_doc():
+    return redirect( url_for( 'doc', filename='index.html' ) )
+
+
 @app.route( '/app/<name>' )
 @requires_auth
 def redirect_app( name ):
