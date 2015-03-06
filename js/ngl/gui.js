@@ -966,7 +966,7 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
-    var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
+    var settingsMenu = new UI.PopupMenu( "cogs", "Settings", "window" )
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
 

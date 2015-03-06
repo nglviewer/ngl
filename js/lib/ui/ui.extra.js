@@ -529,7 +529,9 @@ UI.VirtualList = function( items ){
 
 // Popup Menu (requires Tether)
 
-UI.PopupMenu = function( iconClass, heading ){
+UI.PopupMenu = function( iconClass, heading, constraintTo ){
+
+    constraintTo = constraintTo || 'scrollParent';
 
     UI.Panel.call( this );
 
@@ -563,6 +565,8 @@ UI.PopupMenu = function( iconClass, heading ){
 
     panel.add( headingPanel );
 
+    var tether;
+
     icon.setTitle( "menu" );
     icon.setCursor( "pointer" )
     icon.onClick( function( e ){
@@ -570,13 +574,14 @@ UI.PopupMenu = function( iconClass, heading ){
         if( panel.getDisplay() === "block" ){
 
             panel.setDisplay( "none" );
+            tether.destroy();
             return;
 
         }
 
         panel.setDisplay( "block" );
 
-        var tether = new Tether( {
+        tether = new Tether( {
             element: panel.dom,
             target: icon.dom,
             attachment: 'top right',
@@ -584,7 +589,7 @@ UI.PopupMenu = function( iconClass, heading ){
             offset: '0px 5px',
             constraints: [
                 {
-                    to: 'scrollParent',
+                    to: constraintTo,
                     attachment: 'element',
                     pin: [ 'top', 'bottom' ]
                 }
