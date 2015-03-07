@@ -1645,7 +1645,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             // ensure data is in lists
             _ensureArray( gen, "assembly_id" );
 
-            function getMatrixDict( expr ){
+            var getMatrixDict = function( expr ){
 
                 var matDict = {};
 

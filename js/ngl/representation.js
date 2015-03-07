@@ -187,7 +187,7 @@ NGL.Representation.prototype = {
 
             if( tp[ name ].uniform ){
 
-                function updateUniform( mesh ){
+                var updateUniform = function( mesh ){
 
                     var u = mesh.material.uniforms;
 
@@ -221,7 +221,7 @@ NGL.Representation.prototype = {
 
             if( tp[ name ].define ){
 
-                function updateDefine( mesh ){
+                var updateDefine = function( mesh ){
 
                     if( p[ name ] ){
 
@@ -256,7 +256,7 @@ NGL.Representation.prototype = {
                     tp[ name ].property === true ? name : tp[ name ].property
                 );
 
-                function updateProperty( mesh ){
+                var updateProperty = function( mesh ){
 
                     if( propertyName in mesh.material ){
 
@@ -4225,7 +4225,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
-                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: THREE.FrontSide,
                     opacity: opacity,
@@ -4238,7 +4237,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
-                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: THREE.BackSide,
                     opacity: opacity,
@@ -4255,7 +4253,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 position, color, index, normal, undefined,
                 {
                     wireframe: this.wireframe,
-                    flatShaded: this.flatShaded,
                     transparent: this.transparent,
                     side: this.side,
                     opacity: opacity,
