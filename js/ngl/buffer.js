@@ -2453,7 +2453,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     this.antialias = p.antialias !== undefined ? p.antialias : true;
 
-    var fontName = p.font !== undefined ? p.font : 'Arial';
+    var fontName = p.font !== undefined ? p.font : 'LatoBlack';
     this.font = NGL.getFont( fontName );
 
     this.tex = new THREE.Texture(

@@ -12,16 +12,16 @@
 NGL.Resources = {
 
     // fonts
-    '../fonts/Arial.fnt': null,
-    '../fonts/Arial.png': 'image',
-    '../fonts/DejaVu.fnt': null,
-    '../fonts/DejaVu.png': 'image',
+    // '../fonts/Arial.fnt': null,
+    // '../fonts/Arial.png': 'image',
+    // '../fonts/DejaVu.fnt': null,
+    // '../fonts/DejaVu.png': 'image',
     '../fonts/LatoBlack.fnt': null,
     '../fonts/LatoBlack.png': 'image',
 
     // sprites
-    '../img/circle.png': 'image',
-    '../img/spark1.png': 'image',
+    // '../img/circle.png': 'image',
+    // '../img/spark1.png': 'image',
     '../img/radial.png': 'image',
 
     // shaders
@@ -580,7 +580,7 @@ NGL.initResources = function( onLoad, baseUrl ){
 
     baseUrl = baseUrl || "";
 
-    var loadingManager = new THREE.LoadingManager( function(){
+    var onLoadFn = function(){
 
         console.log( "NGL initialized" );
 
@@ -590,13 +590,18 @@ NGL.initResources = function( onLoad, baseUrl ){
 
         }
 
-    });
+    };
+
+    var loadingManager = new THREE.LoadingManager( onLoadFn );
 
     var imageLoader = new THREE.ImageLoader( loadingManager );
 
     var xhrLoader = new THREE.XHRLoader( loadingManager );
 
-    Object.keys( NGL.Resources ).forEach( function( url ){
+    var resourceKeys = Object.keys( NGL.Resources );
+    var i = 0;
+
+    resourceKeys.forEach( function( url ){
 
         var v = NGL.Resources[ url ];
         var url2 = baseUrl + url;
@@ -611,6 +616,7 @@ NGL.initResources = function( onLoad, baseUrl ){
 
         }else if( v!==null ){
 
+            i += 1;
             return;
 
         }else{
@@ -624,6 +630,12 @@ NGL.initResources = function( onLoad, baseUrl ){
         }
 
     });
+
+    if( resourceKeys.length === i ){
+
+        onLoadFn();
+
+    }
 
 };
 

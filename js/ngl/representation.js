@@ -847,8 +847,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         },
         font: {
             type: "select", options: {
-                "Arial": "Arial",
-                "DejaVu": "DejaVu",
+                // "Arial": "Arial",
+                // "DejaVu": "DejaVu",
                 "LatoBlack": "LatoBlack"
             },
             rebuild: true
@@ -872,7 +872,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         this.labelType = p.labelType || "res";
         this.labelText = p.labelText || {};
-        this.font = p.font || 'Arial';
+        this.font = p.font || 'LatoBlack';
         this.antialias = p.antialias !== undefined ? p.antialias : true;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
