@@ -7,6 +7,56 @@
         <link type="text/css" rel="stylesheet" href="../../page.css" />
     </head>
     <body>
+
+        <script src="../../../js/build/ngl.embedded.min.js"></script>
+
+        <script>
+
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            document.addEventListener("DOMContentLoaded", function() {
+
+                var licorice, cartoon;
+                var input = document.getElementById( "input" );
+                var button = document.getElementById( "btn" );
+
+                NGL.init( function(){
+
+                    var stage = new NGL.Stage( "viewport" );
+
+                    stage.loadFile( "../../files/1crn.pdb", function( o ){
+
+                        licorice = o.addRepresentation( "licorice", {}, true );
+                        cartoon = o.addRepresentation( "cartoon", {}, true );
+                        o.centerView();
+
+                    } );
+
+                    input.addEventListener( "keypress", function( e ){
+
+                        if( e.keyCode === 13 ){
+
+                            e.preventDefault();
+                            licorice.setSelection( input.value );
+                            cartoon.setSelection( input.value );
+
+                        }
+
+                    } );
+
+                    button.addEventListener( "click", function( e ){
+
+                        licorice.setSelection( input.value );
+                        cartoon.setSelection( input.value );
+
+                    } );
+
+                } );
+
+            } );
+
+        </script>
+
         <h1>[name]</h1>
 
         Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory]. At the end of this page is an embedded NGL viewer for trying out the selection language.
@@ -22,6 +72,14 @@
 
 
         <h2>Language</h2>
+
+        <div style="float:right; margin-left:30px">
+            <div id="viewport" style="width:500px; height:350px;"></div>
+            <div>
+                <input id="input" style="width:400px;" type="text" />
+                <button id="btn">filter</button>
+            </div>
+        </div>
 
         <h3>Keywords</h3>
 
@@ -79,68 +137,6 @@
         Additionally, parentheses *()* can be used for grouping:
 
         <code>:A and ( 1 or 10 or 100 ) # select residues 1, 10 and 100 from chain A</code>
-
-        <h2>Try it</h2>
-
-        Type in a selection string and press enter to filter the displayed atoms.
-
-        <br/><br/>
-
-        <div>
-            <input id="input" type="text" />
-            <button id="btn">filter</button>
-        </div>
-
-        <div id="viewport" style="width:500px; height:500px;"></div>
-
-        <script src="../../../js/build/ngl.embedded.min.js"></script>
-
-        <script>
-
-            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
-            document.addEventListener("DOMContentLoaded", function() {
-
-                var licorice, cartoon;
-                var input = document.getElementById( "input" );
-                var button = document.getElementById( "btn" );
-
-                NGL.init( function(){
-
-                    var stage = new NGL.Stage( "viewport" );
-
-                    stage.loadFile( "../../files/1crn.pdb", function( o ){
-
-                        licorice = o.addRepresentation( "licorice", {}, true );
-                        cartoon = o.addRepresentation( "cartoon", {}, true );
-                        o.centerView();
-
-                    } );
-
-                    input.addEventListener( "keypress", function( e ){
-
-                        if( e.keyCode === 13 ){
-
-                            e.preventDefault();
-                            licorice.setSelection( input.value );
-                            cartoon.setSelection( input.value );
-
-                        }
-
-                    } );
-
-                    button.addEventListener( "click", function( e ){
-
-                        licorice.setSelection( input.value );
-                        cartoon.setSelection( input.value );
-
-                    } );
-
-                } );
-
-            } );
-
-        </script>
 
     </body>
 </html>
