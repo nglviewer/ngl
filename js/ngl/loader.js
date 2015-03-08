@@ -111,7 +111,6 @@ NGL.XHRLoader = function ( manager ) {
      * @author mrdoob / http://mrdoob.com/
      */
 
-    this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
@@ -124,7 +123,7 @@ NGL.XHRLoader.prototype = {
 
         var scope = this;
 
-        var cached = scope.cache.get( url );
+        var cached = THREE.Cache.get( url );
 
         if ( cached !== undefined ) {
 
@@ -148,7 +147,7 @@ NGL.XHRLoader.prototype = {
 
                 }
 
-                scope.cache.add( url, data );
+                THREE.Cache.add( url, data );
 
                 if ( onLoad ) onLoad( data );
 
@@ -208,7 +207,6 @@ NGL.XHRLoader.prototype = {
 
 NGL.FileLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
@@ -294,7 +292,6 @@ NGL.FileLoader.prototype = {
 
 NGL.StructureLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
