@@ -28,6 +28,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.background = p.background !== undefined ? p.background : false;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -77,6 +78,28 @@ NGL.Buffer.prototype = {
             this.geometry.drawcalls = this.geometry.computeOffsets();
 
         }
+
+    },
+
+    getRenderOrder: function(){
+
+        var renderOrder = 0;
+
+        if( this instanceof NGL.TextBuffer ){
+
+            renderOrder = 1;
+
+        }else if( this.transparent ){
+
+            if( this instanceof NGL.SurfaceBuffer ){
+                renderOrder = 3;
+            }else{
+                renderOrder = 2;
+            }
+
+        }
+
+        return renderOrder;
 
     },
 
@@ -152,7 +175,7 @@ NGL.Buffer.prototype = {
 
             material.side = this.side;
 
-            if( type === "background" ){
+            if( type === "background" || this.background ){
 
                 material.defines[ "NOLIGHT" ] = 1;
 
@@ -791,6 +814,18 @@ NGL.GeometryBuffer.prototype = {
 
     constructor: NGL.GeometryBuffer,
 
+    get transparent () {
+
+        return this.meshBuffer.transparent;
+
+    },
+
+    set transparent ( value ) {
+
+        this.meshBuffer.transparent = value;
+
+    },
+
     applyPositionTransform: function(){},
 
     setAttributes: function(){
@@ -937,6 +972,12 @@ NGL.GeometryBuffer.prototype = {
             for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
 
         }
+
+    },
+
+    getRenderOrder: function(){
+
+        return this.meshBuffer.getRenderOrder();
 
     },
 
@@ -1401,6 +1442,8 @@ NGL.LineBuffer.prototype = {
 
     },
 
+    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+
     getMesh: function( type, material ){
 
         material = material || this.getMaterial( type );
@@ -1467,6 +1510,18 @@ NGL.TraceBuffer.prototype = {
 
     constructor: NGL.TraceBuffer,
 
+    get transparent () {
+
+        return this.lineBuffer.transparent;
+
+    },
+
+    set transparent ( value ) {
+
+        this.lineBuffer.transparent = value;
+
+    },
+
     setAttributes: function( data ){
 
         var position, color;
@@ -1532,6 +1587,12 @@ NGL.TraceBuffer.prototype = {
         if( this.lineBuffer ){
             this.lineBuffer.setAttributes( lineData );
         }
+
+    },
+
+    getRenderOrder: function(){
+
+        return this.lineBuffer.getRenderOrder();
 
     },
 
@@ -1865,6 +1926,8 @@ NGL.RibbonBuffer.prototype = {
 
     },
 
+    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+
     getMesh: NGL.Buffer.prototype.getMesh,
 
     getMaterial: NGL.Buffer.prototype.getMaterial,
@@ -1931,6 +1994,18 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 NGL.TubeMeshBuffer.prototype = {
 
     constructor: NGL.TubeMeshBuffer,
+
+    get transparent () {
+
+        return this.meshBuffer.transparent;
+
+    },
+
+    set transparent ( value ) {
+
+        this.meshBuffer.transparent = value;
+
+    },
 
     setAttributes: function(){
 
@@ -2279,6 +2354,12 @@ NGL.TubeMeshBuffer.prototype = {
             }
 
         }
+
+    },
+
+    getRenderOrder: function(){
+
+        return this.meshBuffer.getRenderOrder();
 
     },
 
@@ -2733,6 +2814,8 @@ NGL.BufferVectorHelper.prototype = {
         }
 
     },
+
+    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
 
     getMesh: function( type, material ){
 

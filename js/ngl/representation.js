@@ -271,6 +271,17 @@ NGL.Representation.prototype = {
 
                     }
 
+                    // FIXME generalize?
+                    //  add .buffer and .renderOrder to parameters?
+                    if( name === "transparent" ){
+
+                        var buffer = mesh.userData[ "buffer" ];
+                        buffer.transparent = p[ name ];
+
+                        mesh.renderOrder = buffer.getRenderOrder();
+
+                    }
+
                     mesh.material.needsUpdate = true;
 
                 }
@@ -4153,7 +4164,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         this.bufferList.forEach( function( buffer ){
 
-            this.viewer.add( buffer, undefined, this.background );
+            this.viewer.add( buffer );
 
         }, this );
 
@@ -4224,6 +4235,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             var frontBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
                 {
+                    background: this.background,
                     wireframe: this.wireframe,
                     transparent: this.transparent,
                     side: THREE.FrontSide,
@@ -4236,6 +4248,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             var backBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
                 {
+                    background: this.background,
                     wireframe: this.wireframe,
                     transparent: this.transparent,
                     side: THREE.BackSide,
@@ -4245,13 +4258,14 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 }
             );
 
-            this.bufferList.push( frontBuffer, backBuffer );
+            this.bufferList.push( backBuffer, frontBuffer );
 
         }else{
 
             this.surfaceBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
                 {
+                    background: this.background,
                     wireframe: this.wireframe,
                     transparent: this.transparent,
                     side: this.side,

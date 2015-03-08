@@ -1086,18 +1086,6 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
-        this.transparentGroup = new THREE.Group();
-        this.transparentGroup.name = "transparentGroup";
-        this.rotationGroup.add( this.transparentGroup );
-
-        this.surfaceGroup = new THREE.Group();
-        this.surfaceGroup.name = "surfaceGroup";
-        this.rotationGroup.add( this.surfaceGroup );
-
-        this.textGroup = new THREE.Group();
-        this.textGroup.name = "textGroup";
-        this.rotationGroup.add( this.textGroup );
-
     },
 
     initLights: function(){
@@ -1154,7 +1142,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    add: function( buffer, instanceList, background ){
+    add: function( buffer, instanceList ){
 
         // NGL.time( "Viewer.add" );
 
@@ -1172,7 +1160,7 @@ NGL.Viewer.prototype = {
                 instanceList.forEach( function( instance ){
 
                     this.addBuffer(
-                        buffer, group, pickingGroup, background, instance
+                        buffer, group, pickingGroup, instance
                     );
 
                 }, this );
@@ -1180,21 +1168,13 @@ NGL.Viewer.prototype = {
             }else{
 
                 this.addBuffer(
-                    buffer, group, pickingGroup, background
+                    buffer, group, pickingGroup
                 );
 
             }
 
-            if( background ){
+            if( buffer.background ){
                 this.backgroundGroup.add( group );
-            }else if( buffer instanceof NGL.TextBuffer ){
-                this.textGroup.add( group );
-            }else if( buffer.transparent ){
-                if( buffer instanceof NGL.SurfaceBuffer ){
-                    this.surfaceGroup.add( group );
-                }else{
-                    this.transparentGroup.add( group );
-                }
             }else{
                 this.modelGroup.add( group );
             }
@@ -1220,20 +1200,20 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBuffer: function( buffer, group, pickingGroup, background, instance ){
+    addBuffer: function( buffer, group, pickingGroup, instance ){
 
         // NGL.time( "Viewer.addBuffer" );
 
-        var bg = background ? "background" : undefined;
+        var renderOrder = buffer.getRenderOrder();
 
         if( !buffer.material ){
-            buffer.material = buffer.getMaterial( bg );
+            buffer.material = buffer.getMaterial();
         }
 
-        var mesh = buffer.getMesh(
-            bg, buffer.material
-        );
+        var mesh = buffer.getMesh( undefined, buffer.material );
         mesh.frustumCulled = false;
+        mesh.renderOrder = renderOrder;
+        mesh.userData[ "buffer" ] = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
         }
@@ -1249,6 +1229,8 @@ NGL.Viewer.prototype = {
                 "picking", buffer.pickingMaterial
             );
             pickingMesh.frustumCulled = false;
+            pickingMesh.renderOrder = renderOrder;
+            pickingMesh.userData[ "buffer" ] = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );
                 pickingMesh.matrix.copy( mesh.matrix );
@@ -1682,9 +1664,6 @@ NGL.Viewer.prototype = {
             Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
         );
         this.modelGroup.fog = fog;
-        this.textGroup.fog = fog;
-        this.transparentGroup.fog = fog;
-        this.surfaceGroup.fog = fog;
 
         //
 
@@ -1728,15 +1707,6 @@ NGL.Viewer.prototype = {
             this.updateInfo();
 
             this.renderer.render( this.modelGroup, this.camera );
-            this.updateInfo();
-
-            this.renderer.render( this.textGroup, this.camera );
-            this.updateInfo();
-
-            this.renderer.render( this.transparentGroup, this.camera );
-            this.updateInfo();
-
-            this.renderer.render( this.surfaceGroup, this.camera );
             this.updateInfo();
 
         }
