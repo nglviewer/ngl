@@ -5,19 +5,28 @@
 
 
 NGL.Uint8ToString = function( u8a ){
+
     // from http://stackoverflow.com/a/12713326/1435042
+
     var CHUNK_SZ = 0x8000;
     var c = [];
+
     for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
+
         c.push( String.fromCharCode.apply(
+
             null, u8a.subarray( i, i + CHUNK_SZ )
+
         ) );
+
     }
+
     return c.join("");
+
 }
 
 
-NGL.decompress = function( data, file, callback ){
+NGL.decompress = function( data, file, asBinary ){
 
     var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).compressed;
@@ -73,31 +82,15 @@ NGL.decompress = function( data, file, callback ){
 
     }
 
-    if( typeof callback === "function" ){
+    if( !asBinary && decompressedData === undefined ){
 
-        if( decompressedData === undefined ){
-
-            NGL.Uint8ToString( binData, callback );
-
-        }else{
-
-            callback( decompressedData );
-
-        }
-
-    }else{
-
-        if( decompressedData === undefined ){
-
-            decompressedData = NGL.Uint8ToString( binData );
-
-        }
+        decompressedData = NGL.Uint8ToString( binData );
 
     }
 
     NGL.timeEnd( "NGL.decompress " + ext );
 
-    return decompressedData;
+    return asBinary ? binData : decompressedData;
 
 }
 
@@ -143,7 +136,7 @@ NGL.XHRLoader.prototype = {
 
                 if( scope.responseType === "arraybuffer" ){
 
-                    data = NGL.decompress( data, url );
+                    data = NGL.decompress( data, url, scope.asBinary );
 
                 }
 
@@ -187,6 +180,12 @@ NGL.XHRLoader.prototype = {
         request.send( null );
 
         scope.manager.itemStart( url );
+
+    },
+
+    setAsBinary: function ( value ) {
+
+        this.asBinary = value;
 
     },
 
@@ -236,7 +235,7 @@ NGL.FileLoader.prototype = {
 
             if( scope.responseType === "arraybuffer" ){
 
-                data = NGL.decompress( data, file );
+                data = NGL.decompress( data, file, scope.asBinary );
 
             }
 
@@ -278,6 +277,12 @@ NGL.FileLoader.prototype = {
         }
 
         scope.manager.itemStart( file );
+
+    },
+
+    setAsBinary: function ( value ) {
+
+        this.asBinary = value;
 
     },
 
