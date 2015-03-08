@@ -37,7 +37,7 @@ NGL.Script = function( functionBody, name, path ){
 
     }catch( e ){
 
-        console.error( "NGL.Script compilation failed", e );
+        NGL.error( "NGL.Script compilation failed", e );
         this.fn = null;
 
     }
@@ -86,13 +86,13 @@ NGL.Script.prototype = {
 
             }catch( e ){
 
-                console.error( "NGL.Script.fn", e );
+                NGL.error( "NGL.Script.fn", e );
 
             }
 
         }else{
 
-            console.log( "NGL.Script.call no function available" );
+            NGL.log( "NGL.Script.call no function available" );
 
         }
 
@@ -198,7 +198,7 @@ NGL.ScriptQueue.prototype = {
 
         this.promise = this.promise.then( callback, function( e ){
 
-            console.error( "NGL.ScriptQueue.then", e );
+            NGL.error( "NGL.ScriptQueue.then", e );
 
             if( typeof onError === "function" ) onError();
 

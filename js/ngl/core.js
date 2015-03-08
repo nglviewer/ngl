@@ -273,6 +273,14 @@ var NGL = {
 };
 
 
+// set default log handlers
+NGL.log = function() { console.log.apply( console, arguments ); }
+NGL.warn = function() { console.warn.apply( console, arguments ); }
+NGL.error = function() { console.error.apply( console, arguments ); }
+NGL.time = function() { console.time.apply( console, arguments ); }
+NGL.timeEnd = function() { console.timeEnd.apply( console, arguments ); }
+
+
 NGL.LeftMouseButton = 1;
 NGL.MiddleMouseButton = 2;
 NGL.RightMouseButton = 3;
@@ -363,7 +371,7 @@ NGL.createObject = function( prototype, properties ){
 NGL.download = function( data, downloadName ){
 
     if( !data ){
-        console.warn( "NGL.download: no data given" );
+        NGL.warn( "NGL.download: no data given" );
         return;
     }
 

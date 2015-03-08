@@ -22,7 +22,7 @@ NGL.decompress = function( data, file, callback ){
     var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).compressed;
 
-    console.time( "decompress " + ext );
+    NGL.time( "NGL.decompress " + ext );
 
     if( data instanceof ArrayBuffer ){
 
@@ -68,7 +68,7 @@ NGL.decompress = function( data, file, callback ){
 
     }else{
 
-        console.warn( "no decompression method available for '" + ext + "'" );
+        NGL.warn( "no decompression method available for '" + ext + "'" );
         decompressedData = data;
 
     }
@@ -95,7 +95,7 @@ NGL.decompress = function( data, file, callback ){
 
     }
 
-    console.timeEnd( "decompress " + ext );
+    NGL.timeEnd( "NGL.decompress " + ext );
 
     return decompressedData;
 
@@ -417,7 +417,7 @@ NGL.autoLoad = function(){
 
         var fileInfo = NGL.getFileInfo( file );
 
-        // console.log( fileInfo );
+        // NGL.log( fileInfo );
 
         var path = fileInfo.path;
         var name = fileInfo.name;
@@ -462,7 +462,7 @@ NGL.autoLoad = function(){
 
                 }catch( e ){
 
-                    console.error( e );
+                    NGL.error( e );
                     error( "initialization failed" );
 
                 }
@@ -483,7 +483,7 @@ NGL.autoLoad = function(){
 
             }else{
 
-                console.error( e );
+                NGL.error( e );
 
             }
 

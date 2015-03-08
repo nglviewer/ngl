@@ -173,7 +173,7 @@ NGL.Utils = {
 
                 for( i = 0; i < n; ++i ){
 
-                    //console.log( indices[ i ], stride, offset, indices[ i ] * stride + offset, array.length, array[ indices[ i ] * stride + offset ] );
+                    // NGL.log( indices[ i ], stride, offset, indices[ i ] * stride + offset, array.length, array[ indices[ i ] * stride + offset ] );
 
                     c = ( array[ indices[ i ] * stride + offset ] + max ) % max;
 
@@ -582,7 +582,7 @@ NGL.initResources = function( onLoad, baseUrl ){
 
     var onLoadFn = function(){
 
-        console.log( "NGL initialized" );
+        NGL.log( "NGL initialized" );
 
         if( onLoad !== undefined ){
 
@@ -975,16 +975,16 @@ NGL.Viewer.prototype = {
 
         NGL.extensionFragDepth = gl.getExtension( 'EXT_frag_depth' );
         if( !NGL.extensionFragDepth ){
-            console.info( "EXT_frag_depth not supported" );
+            NGL.info( "EXT_frag_depth not supported" );
         }
 
         if( !this.renderer.supportsStandardDerivatives() ){
-            console.warn( "OES_standard_derivatives not supported" );
+            NGL.warn( "OES_standard_derivatives not supported" );
         }
 
         if( !gl.getExtension( 'OES_element_index_uint' ) ){
             NGL.indexUint16 = true;
-            console.info( "OES_element_index_uint not supported" );
+            NGL.info( "OES_element_index_uint not supported" );
         }
 
         if( this.eid ){
@@ -1014,11 +1014,11 @@ NGL.Viewer.prototype = {
         // picking texture
 
         if( !this.renderer.supportsFloatTextures() ){
-            console.warn( "OES_texture_float not supported" );
+            NGL.warn( "OES_texture_float not supported" );
         }
 
         if( !gl.getExtension( "WEBGL_color_buffer_float" ) ){
-            console.warn( "WEBGL_color_buffer_float not supported" );
+            NGL.warn( "WEBGL_color_buffer_float not supported" );
         }
 
         this.pickingTexture = new THREE.WebGLRenderTarget(
@@ -1156,7 +1156,7 @@ NGL.Viewer.prototype = {
 
     add: function( buffer, instanceList, background ){
 
-        // console.time( "Viewer.add" );
+        // NGL.time( "Viewer.add" );
 
         var group, pickingGroup;
 
@@ -1216,13 +1216,13 @@ NGL.Viewer.prototype = {
         // a render somehow slows Chrome drastically down.
         // this.requestRender();
 
-        // console.timeEnd( "Viewer.add" );
+        // NGL.timeEnd( "Viewer.add" );
 
     },
 
     addBuffer: function( buffer, group, pickingGroup, background, instance ){
 
-        // console.time( "Viewer.addBuffer" );
+        // NGL.time( "Viewer.addBuffer" );
 
         var bg = background ? "background" : undefined;
 
@@ -1259,7 +1259,7 @@ NGL.Viewer.prototype = {
             }
             pickingGroup.add( pickingMesh );
 
-            // console.log( pickingMesh )
+            // NGL.log( pickingMesh )
 
         }
 
@@ -1269,7 +1269,7 @@ NGL.Viewer.prototype = {
             this.updateBoundingBox( buffer.geometry );
         }
 
-        // console.timeEnd( "Viewer.addBuffer" );
+        // NGL.timeEnd( "Viewer.addBuffer" );
 
     },
 
@@ -1599,9 +1599,9 @@ NGL.Viewer.prototype = {
 
                 var rgba = Array.apply( [], pixelBuffer );
 
-                console.log( pixelBuffer );
+                NGL.log( pixelBuffer );
 
-                console.log(
+                NGL.log(
                     "picked color",
                     [
                         ( rgba[0] ).toPrecision(2),
@@ -1610,10 +1610,10 @@ NGL.Viewer.prototype = {
                         ( rgba[3] ).toPrecision(2)
                     ]
                 );
-                console.log( "picked id", id );
-                console.log( "picked instance", instance );
-                console.log( "picked position", x, y );
-                console.log( "devicePixelRatio", window.devicePixelRatio );
+                NGL.log( "picked id", id );
+                NGL.log( "picked instance", instance );
+                NGL.log( "picked position", x, y );
+                NGL.log( "devicePixelRatio", window.devicePixelRatio );
 
             }
 
@@ -1629,7 +1629,7 @@ NGL.Viewer.prototype = {
     requestRender: function(){
 
         if( this._renderPending ){
-            // console.info( "there is still a 'render' call pending" );
+            // NGL.info( "there is still a 'render' call pending" );
             return;
         }
 
@@ -1640,10 +1640,10 @@ NGL.Viewer.prototype = {
 
     render: function( e, picking, tileing ){
 
-        // console.time( "Viewer.render" );
+        // NGL.time( "Viewer.render" );
 
         if( this._rendering ){
-            console.warn( "tried to call 'render' from within 'render'" );
+            NGL.warn( "tried to call 'render' from within 'render'" );
             return;
         }
 
@@ -1744,8 +1744,8 @@ NGL.Viewer.prototype = {
         this._rendering = false;
         this._renderPending = false;
 
-        // console.timeEnd( "Viewer.render" );
-        // console.log( this.info.memory, this.info.render );
+        // NGL.timeEnd( "Viewer.render" );
+        // NGL.log( this.info.memory, this.info.render );
 
     },
 
@@ -1873,7 +1873,7 @@ NGL.Viewer.prototype = {
 
         return function( scene, camera ){
 
-            // console.time( "sort" );
+            // NGL.time( "sort" );
 
             scene.traverseVisible( function ( o ){
 
@@ -1956,7 +1956,7 @@ NGL.Viewer.prototype = {
 
             } );
 
-            // console.timeEnd( "sort" );
+            // NGL.timeEnd( "sort" );
 
         }
 
@@ -1964,7 +1964,7 @@ NGL.Viewer.prototype = {
 
     clear: function(){
 
-        console.log( "scene cleared" );
+        NGL.log( "scene cleared" );
 
         this.scene.remove( this.rotationGroup );
 

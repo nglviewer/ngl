@@ -891,7 +891,7 @@ NGL.AtomSet.prototype = {
 
     atomColor: function( selection, type ){
 
-        // console.time( "atomColor" );
+        // NGL.time( "atomColor" );
 
         // TODO cache
         var c, color;
@@ -919,7 +919,7 @@ NGL.AtomSet.prototype = {
 
         if( selection ) color = new Float32Array( color );
 
-        // console.timeEnd( "atomColor" );
+        // NGL.timeEnd( "atomColor" );
 
         return color;
 
@@ -974,7 +974,7 @@ NGL.AtomSet.prototype = {
 
         return function( selection ){
 
-            // console.time( "NGL.AtomSet.atomCenter" );
+            // NGL.time( "NGL.AtomSet.atomCenter" );
 
             var a;
             var i = 0;
@@ -1010,7 +1010,7 @@ NGL.AtomSet.prototype = {
 
             }
 
-            // console.timeEnd( "NGL.AtomSet.atomCenter" );
+            // NGL.timeEnd( "NGL.AtomSet.atomCenter" );
 
             return box.center();
 
@@ -1422,7 +1422,7 @@ NGL.Superposition.prototype = {
 
     _superpose: function( coords1, coords2 ){
 
-        // console.time( "superpose" );
+        // NGL.time( "superpose" );
 
         this.mean1 = jsfeat.matmath.mean_rows( coords1 );
         this.mean2 = jsfeat.matmath.mean_rows( coords2 );
@@ -1444,14 +1444,14 @@ NGL.Superposition.prototype = {
 
         if( jsfeat.matmath.mat3x3_determinant( this.R ) < 0.0 ){
 
-            console.log( "R not a right handed system" );
+            NGL.log( "R not a right handed system" );
 
             jsfeat.matmath.multiply_3x3( this.tmp, this.c, this.VH );
             jsfeat.matmath.multiply_3x3( this.R, this.U, this.tmp );
 
         }
 
-        // console.timeEnd( "superpose" );
+        // NGL.timeEnd( "superpose" );
 
     },
 
@@ -1478,7 +1478,7 @@ NGL.Superposition.prototype = {
 
         }else{
 
-            console.warn( "prepCoords: input type unknown" );
+            NGL.warn( "prepCoords: input type unknown" );
 
         }
 
@@ -1530,7 +1530,7 @@ NGL.Superposition.prototype = {
 
         }else{
 
-            console.warn( "transform: input type unknown" );
+            NGL.warn( "transform: input type unknown" );
 
         }
 
@@ -1795,7 +1795,7 @@ NGL.Structure.prototype = {
 
     /*autoBond2: function( callback ){
 
-        console.time( "NGL.Structure.autoBond" );
+        NGL.time( "NGL.Structure.autoBond" );
 
         var bondSet = this.bondSet;
 
@@ -1803,7 +1803,7 @@ NGL.Structure.prototype = {
 
         // bonds within a residue
 
-        console.time( "NGL.Structure.autoBond within" );
+        NGL.time( "NGL.Structure.autoBond within" );
 
         var chainRes = [];
 
@@ -1854,7 +1854,7 @@ NGL.Structure.prototype = {
 
             function(){
 
-                console.timeEnd( "NGL.Structure.autoBond within" );
+                NGL.timeEnd( "NGL.Structure.autoBond within" );
 
                 callback();
 
@@ -1868,7 +1868,7 @@ NGL.Structure.prototype = {
 
     autoBond: function(){
 
-        console.time( "NGL.Structure.autoBond" );
+        NGL.time( "NGL.Structure.autoBond" );
 
         var bondSet = this.bondSet;
 
@@ -1876,7 +1876,7 @@ NGL.Structure.prototype = {
 
         // bonds within a residue
 
-        console.time( "NGL.Structure.autoBond within" );
+        NGL.time( "NGL.Structure.autoBond within" );
 
         this.eachResidue( function( r ){
 
@@ -1899,11 +1899,11 @@ NGL.Structure.prototype = {
 
         } );
 
-        console.timeEnd( "NGL.Structure.autoBond within" );
+        NGL.timeEnd( "NGL.Structure.autoBond within" );
 
         // bonds between residues
 
-        console.time( "NGL.Structure.autoBond between" );
+        NGL.time( "NGL.Structure.autoBond between" );
 
         this.eachResidueN( 2, function( r1, r2 ){
 
@@ -1932,9 +1932,9 @@ NGL.Structure.prototype = {
 
         } );
 
-        console.timeEnd( "NGL.Structure.autoBond between" );
+        NGL.timeEnd( "NGL.Structure.autoBond between" );
 
-        console.timeEnd( "NGL.Structure.autoBond" );
+        NGL.timeEnd( "NGL.Structure.autoBond" );
 
     },
 
@@ -1970,7 +1970,7 @@ NGL.Structure.prototype = {
                         ca2.copy( fiber.residues[ j + k ].getAtomByName( "CA" ) );
 
                         d = ca1.distanceTo( ca2 );
-                        // console.log( d )
+                        // NGL.log( d )
 
                         if( Math.abs( d - distances[ k - 2 ] ) > delta ){
                             return false;
@@ -2057,7 +2057,7 @@ NGL.Structure.prototype = {
 
                 d = c.distanceTo( c2 );
 
-                // console.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
+                // NGL.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
 
                 if( d < centerDist && d > 1.0 &&
                         pos.bending[ i ] < localAngle ){
@@ -2073,7 +2073,7 @@ NGL.Structure.prototype = {
 
         return function(){
 
-            console.time( "NGL.Structure.autoSS" );
+            NGL.time( "NGL.Structure.autoSS" );
 
             // assign secondary structure
 
@@ -2133,7 +2133,7 @@ NGL.Structure.prototype = {
 
             } );
 
-            console.timeEnd( "NGL.Structure.autoSS" );
+            NGL.timeEnd( "NGL.Structure.autoSS" );
 
         }
 
@@ -2148,7 +2148,7 @@ NGL.Structure.prototype = {
 
         return function(){
 
-            console.time( "NGL.Structure.autoChainName" );
+            NGL.time( "NGL.Structure.autoChainName" );
 
             var i, name;
 
@@ -2170,7 +2170,7 @@ NGL.Structure.prototype = {
 
                     if( i === n ){
 
-                        console.warn( "out of chain names" );
+                        NGL.warn( "out of chain names" );
 
                         i = 0;
 
@@ -2180,7 +2180,7 @@ NGL.Structure.prototype = {
 
             } );
 
-            console.timeEnd( "NGL.Structure.autoChainName" );
+            NGL.timeEnd( "NGL.Structure.autoChainName" );
 
         }
 
@@ -2276,7 +2276,7 @@ NGL.Structure.prototype = {
 
     clone: function(){
 
-        console.time( "NGL.Structure.clone" );
+        NGL.time( "NGL.Structure.clone" );
 
         var s = new NGL.Structure();
 
@@ -2342,9 +2342,9 @@ NGL.Structure.prototype = {
 
         } );
 
-        console.timeEnd( "NGL.Structure.clone" );
+        NGL.timeEnd( "NGL.Structure.clone" );
 
-        if( NGL.debug ) console.log( s );
+        if( NGL.debug ) NGL.log( s );
 
         return s;
 
@@ -2435,12 +2435,12 @@ NGL.Model.prototype = {
 
             this.chains.forEach( function( c ){
 
-                // console.log( c.chainname, selection.selection, selection.string )
+                // NGL.log( c.chainname, selection.selection, selection.string )
 
                 if( test( c ) ){
                     c.eachAtom( callback, selection );
                 }else{
-                    // console.log( "chain", c.chainname );
+                    // NGL.log( "chain", c.chainname );
                 }
 
             } );
@@ -2727,7 +2727,7 @@ NGL.Chain.prototype = {
 
     getFiber: function( i, j, padded ){
 
-        // console.log( i, j, this.residueCount );
+        // NGL.log( i, j, this.residueCount );
 
         var n = this.residueCount;
         var n1 = n - 1;
@@ -2764,7 +2764,7 @@ NGL.Chain.prototype = {
 
         }
 
-        // console.log( residues );
+        // NGL.log( residues );
 
         return new NGL.Fiber( residues, this.model.structure );
 
@@ -2783,7 +2783,7 @@ NGL.Chain.prototype = {
 
         this.eachResidueN( 2, function( r1, r2 ){
 
-            // console.log( r1.resno, r2.resno );
+            // NGL.log( r1.resno, r2.resno );
 
             if( r1.hasProteinBackbone() && r2.hasProteinBackbone() ){
 
@@ -2897,7 +2897,7 @@ NGL.Fiber = function( residues, structure ){
 
     }else{
 
-        console.error( "NGL.fiber: could not determine molecule type" );
+        NGL.error( "NGL.fiber: could not determine molecule type" );
 
     }
 
@@ -3415,7 +3415,7 @@ NGL.Atom.prototype = {
 
         var distSquared = x * x + y * y + z * z;
 
-        // console.log( distSquared );
+        // NGL.log( distSquared );
         if( this.residue.isCg() && distSquared < 28.0 ) return true;
 
         if( isNaN( distSquared ) ) return false;
@@ -4215,7 +4215,7 @@ NGL.ProxyAtom.prototype = {
 
         var distSquared = x * x + y * y + z * z;
 
-        // console.log( distSquared );
+        // NGL.log( distSquared );
         if( taa.residue[ ti ].isCg() && distSquared < 28.0 ) return true;
 
         if( isNaN( distSquared ) ) return false;
@@ -4264,7 +4264,7 @@ NGL.StructureSubset.prototype.constructor = NGL.StructureSubset;
 
 NGL.StructureSubset.prototype._build = function(){
 
-    console.time( "NGL.StructureSubset._build" );
+    NGL.time( "NGL.StructureSubset._build" );
 
     var structure = this.structure;
     var selection = this.selection;
@@ -4359,7 +4359,7 @@ NGL.StructureSubset.prototype._build = function(){
     if( structure.frames ) _s.frames = structure.frames;
     if( structure.boxes ) _s.boxes = structure.boxes;
 
-    console.timeEnd( "NGL.StructureSubset._build" );
+    NGL.timeEnd( "NGL.StructureSubset._build" );
 
 }
 
@@ -4400,7 +4400,7 @@ NGL.Selection.prototype = {
 
         }catch( e ){
 
-            // console.error( e.stack );
+            // NGL.error( e.stack );
             this.selection = { "error": e.message };
 
         }
@@ -4440,7 +4440,7 @@ NGL.Selection.prototype = {
         }
         var chunks = string.split( /\s+/ );
 
-        // console.log( string, chunks )
+        // NGL.log( string, chunks )
 
         var all = [ "*", "", "ALL" ];
 
@@ -4494,7 +4494,7 @@ NGL.Selection.prototype = {
 
             if( c === "(" ){
 
-                // console.log( "(" );
+                // NGL.log( "(" );
 
                 not = false;
                 createNewContext();
@@ -4502,7 +4502,7 @@ NGL.Selection.prototype = {
 
             }else if( c === ")" ){
 
-                // console.log( ")" );
+                // NGL.log( ")" );
 
                 getPrevContext();
                 if( selection.negate ){
@@ -4541,7 +4541,7 @@ NGL.Selection.prototype = {
 
             if( c.toUpperCase() === "AND" ){
 
-                // console.log( "AND" );
+                // NGL.log( "AND" );
 
                 if( selection.operator === "OR" ){
                     var lastRule = selection.rules.pop();
@@ -4554,7 +4554,7 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "OR" ){
 
-                // console.log( "OR" );
+                // NGL.log( "OR" );
 
                 if( selection.operator === "AND" ){
                     getPrevContext( "OR" );
@@ -4565,7 +4565,7 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "NOT" ){
 
-                // console.log( "NOT", j );
+                // NGL.log( "NOT", j );
 
                 not = 1;
                 createNewContext();
@@ -4574,7 +4574,7 @@ NGL.Selection.prototype = {
 
             }else{
 
-                // console.log( "chunk", c, j, selection );
+                // NGL.log( "chunk", c, j, selection );
 
             }
 
@@ -5193,7 +5193,7 @@ NGL.Alignment.prototype = {
         this.n = this.seq1.length;
         this.m = this.seq2.length;
 
-        //console.log(this.n, this.m);
+        // NGL.log(this.n, this.m);
 
         this.score = undefined;
         this.ali = '';
@@ -5234,7 +5234,7 @@ NGL.Alignment.prototype = {
 
         this.S[ 0 ][ 0 ] = 0;
 
-        // console.log(this.S, this.V, this.H);
+        // NGL.log(this.S, this.V, this.H);
 
     },
 
@@ -5274,7 +5274,7 @@ NGL.Alignment.prototype = {
 
         } else {
 
-            console.warn('NGL.Alignment: no subst matrix');
+            NGL.warn('NGL.Alignment: no subst matrix');
 
             return function( i, j ){
 
@@ -5291,7 +5291,7 @@ NGL.Alignment.prototype = {
 
     calc: function(){
 
-        console.time( "NGL.Alignment.calc" );
+        NGL.time( "NGL.Alignment.calc" );
 
         this.initMatrices();
 
@@ -5341,15 +5341,15 @@ NGL.Alignment.prototype = {
 
         }
 
-        console.timeEnd( "NGL.Alignment.calc" );
+        NGL.timeEnd( "NGL.Alignment.calc" );
 
-        // console.log(this.S, this.V, this.H);
+        // NGL.log(this.S, this.V, this.H);
 
     },
 
     trace: function(){
 
-        // console.time( "NGL.Alignment.trace" );
+        // NGL.time( "NGL.Alignment.trace" );
 
         this.ali1 = '';
         this.ali2 = '';
@@ -5371,8 +5371,8 @@ NGL.Alignment.prototype = {
             this.score = this.H[i][j];
         }
 
-        // console.log("NGL.Alignment: SCORE", this.score);
-        // console.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
+        // NGL.log("NGL.Alignment: SCORE", this.score);
+        // NGL.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
 
         while( i > 0 && j > 0 ){
 
@@ -5389,7 +5389,7 @@ NGL.Alignment.prototype = {
                 }else if( this.S[i][j]==this.H[i][j] ){
                     mat = "H";
                 }else{
-                    console.error('NGL.Alignment: S');
+                    NGL.error('NGL.Alignment: S');
                     --i;
                     --j;
                 }
@@ -5407,7 +5407,7 @@ NGL.Alignment.prototype = {
                     --i;
                     mat = "S";
                 }else{
-                    console.error('NGL.Alignment: V');
+                    NGL.error('NGL.Alignment: V');
                     --i;
                 }
 
@@ -5424,13 +5424,13 @@ NGL.Alignment.prototype = {
                     --j;
                     mat = "S";
                 }else{
-                    console.error('NGL.Alignment: H');
+                    NGL.error('NGL.Alignment: H');
                     --j;
                 }
 
             }else{
 
-                console.error('NGL.Alignment: no matrix');
+                NGL.error('NGL.Alignment: no matrix');
 
             }
 
@@ -5452,9 +5452,9 @@ NGL.Alignment.prototype = {
 
         }
 
-        // console.timeEnd( "NGL.Alignment.trace" );
+        // NGL.timeEnd( "NGL.Alignment.trace" );
 
-        // console.log([this.ali1, this.ali2]);
+        // NGL.log([this.ali1, this.ali2]);
 
     }
 
@@ -5484,18 +5484,18 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         var seq1 = _s1.getSequence();
         var seq2 = _s2.getSequence();
 
-        // console.log( seq1.join("") );
-        // console.log( seq2.join("") );
+        // NGL.log( seq1.join("") );
+        // NGL.log( seq2.join("") );
 
         var ali = new NGL.Alignment( seq1.join(""), seq2.join("") );
 
         ali.calc();
         ali.trace();
 
-        // console.log( "superpose alignment score", ali.score );
+        // NGL.log( "superpose alignment score", ali.score );
 
-        // console.log( ali.ali1 );
-        // console.log( ali.ali2 );
+        // NGL.log( ali.ali1 );
+        // NGL.log( ali.ali2 );
 
         var l, _i, _j, x, y;
         var i = 0;
@@ -5531,10 +5531,10 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
 
         }
 
-        // console.log( i, j );
+        // NGL.log( i, j );
 
-        // console.log( aliIdx1 );
-        // console.log( aliIdx2 );
+        // NGL.log( aliIdx1 );
+        // NGL.log( aliIdx2 );
 
         atoms1 = new NGL.AtomSet();
         atoms2 = new NGL.AtomSet();
@@ -5598,7 +5598,7 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
                 _atoms1.addAtom( a1 );
                 _atoms2.addAtom( a2 );
 
-                // console.log( a1.qualifiedName(), a2.qualifiedName() )
+                // NGL.log( a1.qualifiedName(), a2.qualifiedName() )
 
             }
 

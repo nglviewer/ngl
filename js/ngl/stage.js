@@ -135,7 +135,7 @@ NGL.Stage.prototype = {
 
             }else{
 
-                console.warn( "NGL.Stage.loadFile: object type unknown", object );
+                NGL.warn( "NGL.Stage.loadFile: object type unknown", object );
                 return;
 
             }
@@ -188,7 +188,7 @@ NGL.Stage.prototype = {
 
         if( !component ){
 
-            console.warn( "NGL.Stage.addComponent: no component given" );
+            NGL.warn( "NGL.Stage.addComponent: no component given" );
             return;
 
         }
@@ -719,7 +719,7 @@ NGL.Component.prototype = {
 
     getCenter: function(){
 
-        // console.warn( "not implemented" )
+        // NGL.warn( "not implemented" )
 
     },
 

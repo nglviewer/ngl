@@ -184,7 +184,7 @@ NGL.Trajectory.prototype = {
 
     getNumframes: function(){
 
-        console.error( "Trajectory.loadFrame not implemented" );
+        NGL.error( "Trajectory.loadFrame not implemented" );
 
     },
 
@@ -255,7 +255,7 @@ NGL.Trajectory.prototype = {
 
     loadFrame: function( i, callback ){
 
-        console.error( "Trajectory.loadFrame not implemented" );
+        NGL.error( "Trajectory.loadFrame not implemented" );
 
     },
 
@@ -294,7 +294,7 @@ NGL.Trajectory.prototype = {
 
     getCircularMean: function( indices, coords, box ){
 
-        // console.time( "NGL.Trajectory.getCircularMean" );
+        // NGL.time( "NGL.Trajectory.getCircularMean" );
 
         var mean = [
 
@@ -304,7 +304,7 @@ NGL.Trajectory.prototype = {
 
         ];
 
-        // console.timeEnd( "NGL.Trajectory.getCircularMean" );
+        // NGL.timeEnd( "NGL.Trajectory.getCircularMean" );
 
         return mean;
 
@@ -312,7 +312,7 @@ NGL.Trajectory.prototype = {
 
     centerPbc: function( coords, mean, box ){
 
-        // console.time( "NGL.Trajectory.centerPbc" );
+        // NGL.time( "NGL.Trajectory.centerPbc" );
 
         if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
             return;
@@ -336,13 +336,13 @@ NGL.Trajectory.prototype = {
 
         }
 
-        // console.timeEnd( "NGL.Trajectory.centerPbc" );
+        // NGL.timeEnd( "NGL.Trajectory.centerPbc" );
 
     },
 
     removePbc: function( x, box ){
 
-        // console.time( "NGL.Trajectory.removePbc" );
+        // NGL.time( "NGL.Trajectory.removePbc" );
 
         if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
             return;
@@ -381,7 +381,7 @@ NGL.Trajectory.prototype = {
 
         }
 
-        // console.timeEnd( "NGL.Trajectory.removePbc" );
+        // NGL.timeEnd( "NGL.Trajectory.removePbc" );
 
         return x;
 
@@ -389,7 +389,7 @@ NGL.Trajectory.prototype = {
 
     superpose: function( x ){
 
-        // console.time( "NGL.Trajectory.superpose" );
+        // NGL.time( "NGL.Trajectory.superpose" );
 
         var i, j;
         var n = this.indices.length * 3;
@@ -411,7 +411,7 @@ NGL.Trajectory.prototype = {
         var sp = new NGL.Superposition( coords1, coords2 );
         sp.transform( x );
 
-        // console.timeEnd( "NGL.Trajectory.superpose" );
+        // NGL.timeEnd( "NGL.Trajectory.superpose" );
 
     },
 
@@ -432,7 +432,7 @@ NGL.Trajectory.prototype = {
 
     getPath: function( index, callback ){
 
-        console.error( "Trajectory.getPath not implemented" );
+        NGL.error( "Trajectory.getPath not implemented" );
 
     },
 
@@ -506,7 +506,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         // TODO implement max frameCache size, re-use arrays
 
-        // console.time( "loadFrame" );
+        // NGL.time( "loadFrame" );
 
         var scope = this;
 
@@ -523,12 +523,12 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         request.addEventListener( 'load', function( event ){
 
-            // console.timeEnd( "loadFrame" );
+            // NGL.timeEnd( "loadFrame" );
 
             var arrayBuffer = this.response;
 
             if( !arrayBuffer ){
-                console.error( "empty arrayBuffer for '" + url + "'" );
+                NGL.error( "empty arrayBuffer for '" + url + "'" );
                 return;
             }
 
@@ -575,7 +575,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
         loader.load( url, function( n ){
 
             n = parseInt( n );
-            // console.log( "numframes", n );
+            // NGL.log( "numframes", n );
 
             scope.numframes = n;
             scope.signals.gotNumframes.dispatch( n );
@@ -591,7 +591,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
             return;
         }
 
-        console.time( "loadPath" );
+        NGL.time( "loadPath" );
 
         var scope = this;
 
@@ -609,12 +609,12 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         request.addEventListener( 'load', function( event ){
 
-            console.timeEnd( "loadPath" );
+            NGL.timeEnd( "loadPath" );
 
             var arrayBuffer = this.response;
 
             if( !arrayBuffer ){
-                console.error( "empty arrayBuffer for '" + url + "'" );
+                NGL.error( "empty arrayBuffer for '" + url + "'" );
                 return;
             }
 
@@ -622,7 +622,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             scope.pathCache[ index ] = path;
 
-            // console.log( path )
+            // NGL.log( path )
 
             callback( path );
 

@@ -624,7 +624,7 @@ NGL.Examples = {
 
         "timing": function( stage ){
 
-            console.time( "test" );
+            NGL.time( "test" );
 
             stage.loadFile( "data://3l5q.pdb", function( o ){
 
@@ -632,11 +632,11 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
                 o.centerView();
 
-                console.timeEnd( "test" );
+                NGL.timeEnd( "test" );
 
-                console.time( "render" );
+                NGL.time( "render" );
                 o.viewer.render();
-                console.timeEnd( "render" );
+                NGL.timeEnd( "render" );
 
             } );
 
@@ -678,7 +678,7 @@ NGL.Examples = {
 
         "largeGro": function( stage ){
 
-            console.time( "test" );
+            NGL.time( "test" );
 
             // stage.loadFile( "data://1crn.gro", function( o ){
 
@@ -694,7 +694,7 @@ NGL.Examples = {
 
                 o.viewer.render();
 
-                console.timeEnd( "test" );
+                NGL.timeEnd( "test" );
 
             } );
 
@@ -705,7 +705,7 @@ NGL.Examples = {
 
                 o.viewer.render();
 
-                console.timeEnd( "test" );
+                NGL.timeEnd( "test" );
 
             } );*/
 
@@ -861,8 +861,8 @@ NGL.Examples = {
                     o.structure.getAtoms( centerSelection, true ), Infinity, 4
                 )
 
-                // console.log( kdtree );
-                // console.log( nearest );
+                // NGL.log( kdtree );
+                // NGL.log( nearest );
 
                 var names = [];
                 nearest.forEach( function( atomDist ){

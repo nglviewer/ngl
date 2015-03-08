@@ -206,7 +206,7 @@ NGL.Buffer.prototype = {
             if( a.value ){
 
                 if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
-                    console.error( "attribute value has wrong length", name );
+                    NGL.error( "attribute value has wrong length", name );
                 }
 
                 buf = a.value;
@@ -2436,7 +2436,7 @@ NGL.getFont = function( name ){
 
         }else{
 
-            //console.log( i, line );
+            //NGL.log( i, line );
 
         }
 

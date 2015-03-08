@@ -26,7 +26,7 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
 
             setTimeout( function(){
 
-                // console.log( _i, _n, n );
+                // NGL.log( _i, _n, n );
 
                 var stop = fn( _i, _n, array );
 
@@ -56,7 +56,7 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
 
 NGL.buildStructure = function( structure, callback ){
 
-    console.time( "NGL.buildStructure" );
+    NGL.time( "NGL.buildStructure" );
 
     var m, c, r, a;
     var i, chainDict;
@@ -137,9 +137,9 @@ NGL.buildStructure = function( structure, callback ){
 
         function(){
 
-            console.timeEnd( "NGL.buildStructure" );
+            NGL.timeEnd( "NGL.buildStructure" );
 
-            if( NGL.debug ) console.log( structure );
+            if( NGL.debug ) NGL.log( structure );
 
             callback();
 
@@ -154,7 +154,7 @@ NGL.buildStructure = function( structure, callback ){
 
 NGL.createAtomArray = function( structure, callback ){
 
-    console.time( "NGL.createAtomArray" );
+    NGL.time( "NGL.createAtomArray" );
 
     var s = structure;
     var atoms = s.atoms;
@@ -201,7 +201,7 @@ NGL.createAtomArray = function( structure, callback ){
                     }else if( b.atom2.index === a.index ){
                         b.atom2 = a;
                     }else{
-                        console.warn(
+                        NGL.warn(
                             "NGL.createAtomArray: bond atom not found"
                         );
                     }
@@ -224,7 +224,7 @@ NGL.createAtomArray = function( structure, callback ){
 
         function(){
 
-            console.timeEnd( "NGL.createAtomArray" );
+            NGL.timeEnd( "NGL.createAtomArray" );
 
             callback();
 
@@ -319,14 +319,14 @@ NGL.StructureParser.prototype = {
 
     _parse: function( str, callback ){
 
-        console.warn( "NGL.StructureParser._parse not implemented" );
+        NGL.warn( "NGL.StructureParser._parse not implemented" );
         callback();
 
     },
 
     _postProcess: function( structure, callback ){
 
-        console.warn( "NGL.StructureParser._postProcess not implemented" );
+        NGL.warn( "NGL.StructureParser._postProcess not implemented" );
         callback();
 
     }
@@ -350,7 +350,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     var __timeName = "NGL.PdbParser._parse " + this.name;
 
-    console.time( __timeName );
+    NGL.time( __timeName );
 
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
@@ -470,7 +470,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var pos = [ 11, 16, 21, 26 ];
 
                 if( from === undefined ){
-                    // console.log( "missing CONNECT serial" );
+                    // NGL.log( "missing CONNECT serial" );
                     continue;
                 }
 
@@ -480,7 +480,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                     if( Number.isNaN( to ) ) continue;
                     to = serialDict[ to ];
                     if( to === undefined ){
-                        // console.log( "missing CONNECT serial" );
+                        // NGL.log( "missing CONNECT serial" );
                         continue;
                     }/*else if( to < from ){
                         // likely a duplicate in standard PDB format
@@ -619,14 +619,14 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var sGroup = line.substr( 55, 11 ).trim();
                 var z = parseInt( line.substr( 66, 4 ) );
 
-                // console.log( a, b, c, alpha, beta, gamma, sGroup, z )
+                // NGL.log( a, b, c, alpha, beta, gamma, sGroup, z )
 
                 if( a===1.0 && b===1.0 && c===1.0 &&
                     alpha===90.0 && beta===90.0 && gamma===90.0 &&
                     sGroup==="P 1" && z===1
                 ){
 
-                    // console.info(
+                    // NGL.info(
                     //     "unitcell is just a unit cube, " +
                     //     "likely meaningless, so ignore"
                     // );
@@ -655,7 +655,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
         function(){
 
-            console.timeEnd( __timeName );
+            NGL.timeEnd( __timeName );
 
             if( asTrajectory ){
                 s.frames = frames;
@@ -678,7 +678,7 @@ NGL.PdbParser.prototype._postProcess = function( structure, callback ){
 
     // assign secondary structures
 
-    console.time( "NGL.PdbParser parse ss" );
+    NGL.time( "NGL.PdbParser parse ss" );
 
     for( var j = 0; j < sheet.length; j++ ){
 
@@ -710,7 +710,7 @@ NGL.PdbParser.prototype._postProcess = function( structure, callback ){
 
     }
 
-    console.timeEnd( "NGL.PdbParser parse ss" );
+    NGL.timeEnd( "NGL.PdbParser parse ss" );
 
     if( sheet.length === 0 && helix.length === 0 ){
 
@@ -750,7 +750,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
     var __timeName = "NGL.GroParser._parse " + this.name;
 
-    console.time( __timeName );
+    NGL.time( __timeName );
 
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
@@ -806,7 +806,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
             if( i % modelLineCount === 0 ){
 
-                // console.log( "title", line )
+                // NGL.log( "title", line )
 
                 if( asTrajectory ){
 
@@ -818,7 +818,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
             }else if( i % modelLineCount === 1 ){
 
-                // console.log( "atomCount", line )
+                // NGL.log( "atomCount", line )
 
             }else if( i % modelLineCount === modelLineCount - 1 ){
 
@@ -899,7 +899,7 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
         function(){
 
-            console.timeEnd( __timeName );
+            NGL.timeEnd( __timeName );
 
             if( asTrajectory ){
                 s.frames = frames;
@@ -937,7 +937,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var __timeName = "NGL.CifParser._parse " + this.name;
 
-    console.time( __timeName );
+    NGL.time( __timeName );
 
     var s = this.structure;
     var firstModelOnly = this.firstModelOnly;
@@ -1027,7 +1027,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             if( ( !line && !pendingString ) || line[0]==="#" ){
 
-                // console.log( "NEW BLOCK" );
+                // NGL.log( "NEW BLOCK" );
 
                 pendingString = false;
                 pendingLoop = false;
@@ -1044,13 +1044,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 var data = line.substring( 5 );
 
-                // console.log( "DATA", data );
+                // NGL.log( "DATA", data );
 
             }else if( line[0]===";" ){
 
                 if( pendingString ){
 
-                    // console.log( "STRING END", currentString );
+                    // NGL.log( "STRING END", currentString );
 
                     if( pendingLoop ){
 
@@ -1071,7 +1071,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 }else{
 
-                    // console.log( "STRING START" );
+                    // NGL.log( "STRING START" );
 
                     pendingString = true;
                     currentString = line.substring( 1 );
@@ -1080,7 +1080,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
             }else if( line==="loop_" ){
 
-                // console.log( "LOOP START" );
+                // NGL.log( "LOOP START" );
 
                 pendingLoop = true;
                 loopPointers.length = 0;
@@ -1091,7 +1091,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 if( pendingLoop ){
 
-                    // console.log( "LOOP KEY", line );
+                    // NGL.log( "LOOP KEY", line );
 
                     var ks = line.split(".");
                     var category = ks[ 0 ].substring( 1 );
@@ -1099,7 +1099,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                     if( !cif[ category ] ) cif[ category ] = {};
                     if( cif[ category ][ name ] ){
-                        console.warn( category, name, "already exists" );
+                        NGL.warn( category, name, "already exists" );
                     }else{
                         cif[ category ][ name ] = [];
                         loopPointers.push( cif[ category ][ name ] );
@@ -1122,7 +1122,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     if( !cif[ category ] ) cif[ category ] = {};
 
                     if( cif[ category ][ name ] ){
-                        console.warn( category, name, "already exists" );
+                        NGL.warn( category, name, "already exists" );
                     }else{
                         cif[ category ][ name ] = value;
                     }
@@ -1138,13 +1138,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 if( pendingString ){
 
-                    // console.log( "STRING VALUE", line );
+                    // NGL.log( "STRING VALUE", line );
 
                     currentString += " " + line;
 
                 }else if( pendingLoop ){
 
-                    // console.log( "LOOP VALUE", line );
+                    // NGL.log( "LOOP VALUE", line );
 
                     if( currentCategory==="atom_site" ){
 
@@ -1312,7 +1312,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         if( currentLoopIndex === loopPointers.length ){
                             currentLoopIndex = 0;
                         }/*else if( currentLoopIndex > loopPointers.length ){
-                            console.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
+                            NGL.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
                         }*/
 
                         for( var j = 0; j < nn; ++j ){
@@ -1325,7 +1325,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 }else if( line[0]==="'" && line.substring( line.length-1 )==="'" ){
 
-                    // console.log( "NEWLINE STRING", line );
+                    // NGL.log( "NEWLINE STRING", line );
 
                     cif[ currentCategory ][ currentName ] = line.substring(
                         1, line.length - 2
@@ -1333,13 +1333,13 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 }else if( pendingValue ){
 
-                    // console.log( "NEWLINE VALUE", line );
+                    // NGL.log( "NEWLINE VALUE", line );
 
                     cif[ currentCategory ][ currentName ] = line.trim();
 
                 }else{
 
-                    console.log( "NGL.CifParser._parse: unknown state", line );
+                    NGL.log( "NGL.CifParser._parse: unknown state", line );
 
                 }
 
@@ -1358,7 +1358,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
         function(){
 
-            console.timeEnd( __timeName );
+            NGL.timeEnd( __timeName );
 
             if( asTrajectory ){
                 s.frames = frames;
@@ -1375,7 +1375,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
 NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
-    console.time( "NGL.CifParser._postProcess" );
+    NGL.time( "NGL.CifParser._postProcess" );
 
     var s = structure;
     var cif = s.cif;
@@ -1534,7 +1534,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                         );
                         var selection1 = new NGL.Selection( sele1 );
                         if( selection1.selection[ "error" ] ){
-                            console.warn(
+                            NGL.warn(
                                 "invalid selection for connection", sele1
                             );
                             continue;
@@ -1548,7 +1548,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                         );
                         var selection2 = new NGL.Selection( sele2 );
                         if( selection2.selection[ "error" ] ){
-                            console.warn(
+                            NGL.warn(
                                 "invalid selection for connection", sele2
                             );
                             continue;
@@ -1569,7 +1569,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                             }else{
 
-                                console.log( "atoms for connection not found" );
+                                NGL.log( "atoms for connection not found" );
 
                             }
 
@@ -1728,7 +1728,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
         } );
         s._doAutoChainName = _doAutoChainName;
 
-        console.timeEnd( "NGL.CifParser._postProcess" );
+        NGL.timeEnd( "NGL.CifParser._postProcess" );
 
         callback();
 

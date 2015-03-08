@@ -1377,7 +1377,7 @@ NGL.HelixCrossing.prototype = {
 
 NGL.Kdtree = function( atomSet ){
 
-    console.time( "NGL.Kdtree build" );
+    NGL.time( "NGL.Kdtree build" );
 
     var metric = function( a, b ){
 
@@ -1411,7 +1411,7 @@ NGL.Kdtree = function( atomSet ){
     this.atomSet = atomSet;
     this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4 );
 
-    console.timeEnd( "NGL.Kdtree build" );
+    NGL.timeEnd( "NGL.Kdtree build" );
 
 };
 
@@ -1423,7 +1423,7 @@ NGL.Kdtree.prototype = {
 
         return function( point, maxNodes, maxDistance ){
 
-            // console.time( "NGL.Kdtree nearest" );
+            // NGL.time( "NGL.Kdtree nearest" );
 
             if( point instanceof THREE.Vector3 ){
 
@@ -1455,7 +1455,7 @@ NGL.Kdtree.prototype = {
 
             }
 
-            // console.timeEnd( "NGL.Kdtree nearest" );
+            // NGL.timeEnd( "NGL.Kdtree nearest" );
 
             return atomList;
 
@@ -1483,7 +1483,7 @@ NGL.Contact.prototype = {
 
     within: function( maxDistance, minDistance ){
 
-        console.time( "NGL.Contact within" );
+        NGL.time( "NGL.Contact within" );
 
         var atomSet = new NGL.AtomSet();
         var bondSet = new NGL.BondSet();
@@ -1522,7 +1522,7 @@ NGL.Contact.prototype = {
 
         }
 
-        console.timeEnd( "NGL.Contact within" );
+        NGL.timeEnd( "NGL.Contact within" );
 
         return {
             atomSet: atomSet,
@@ -1720,7 +1720,7 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
         v1.add( v2 ).multiplyScalar( 0.5 );
         v2.subVectors( atomO, atomN );
 
-        // console.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
+        // NGL.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
 
         if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
             bondSet.addBond( a1, a2, true );

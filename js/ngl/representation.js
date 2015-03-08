@@ -6,7 +6,7 @@
 
 NGL.makeRepresentation = function( type, object, viewer, params ){
 
-    console.time( "NGL.makeRepresentation " + type );
+    NGL.time( "NGL.makeRepresentation " + type );
 
     var ReprClass;
 
@@ -16,7 +16,7 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
         if( !ReprClass ){
 
-            console.error(
+            NGL.error(
                 "NGL.makeRepresentation: representation type " + type + " unknown"
             );
             return;
@@ -33,7 +33,7 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
     }else{
 
-        console.error(
+        NGL.error(
             "NGL.makeRepresentation: object " + object + " unknown"
         );
         return;
@@ -42,7 +42,7 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
     var repr = new ReprClass( object, viewer, params );
 
-    console.timeEnd( "NGL.makeRepresentation " + type );
+    NGL.timeEnd( "NGL.makeRepresentation " + type );
 
     return repr;
 
@@ -121,7 +121,7 @@ NGL.Representation.prototype = {
 
     rebuild: function( params ){
 
-        console.time( "NGL.Representation.rebuild " + this.type );
+        NGL.time( "NGL.Representation.rebuild " + this.type );
 
         if( params ){
             this.init( params );
@@ -131,7 +131,7 @@ NGL.Representation.prototype = {
         this.create();
         if( !this.manualAttach ) this.attach();
 
-        console.timeEnd( "NGL.Representation.rebuild " + this.type );
+        NGL.timeEnd( "NGL.Representation.rebuild " + this.type );
 
     },
 
@@ -200,7 +200,7 @@ NGL.Representation.prototype = {
                         // happens when the buffers in a repr
                         // do not suppport the same parameters
 
-                        // console.info( name )
+                        // NGL.info( name )
 
                     }
 
@@ -267,7 +267,7 @@ NGL.Representation.prototype = {
                         // happens when the buffers in a repr
                         // do not suppport the same parameters
 
-                        // console.info( name )
+                        // NGL.info( name )
 
                     }
 
@@ -543,13 +543,13 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     attach: function(){
 
-        console.time( "StructureRepresentation.attach" );
+        NGL.time( "StructureRepresentation.attach" );
 
         var viewer = this.viewer;
         var structure = this.structure;
         var assembly = this.assembly;
 
-        // console.log( structure.biomolDict );
+        // NGL.log( structure.biomolDict );
 
         var instanceList = [];
 
@@ -594,7 +594,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.setVisibility( this.visible );
 
-        console.timeEnd( "StructureRepresentation.attach" );
+        NGL.timeEnd( "StructureRepresentation.attach" );
 
     },
 
@@ -2115,7 +2115,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         var i = 0;
         var n = this.fiberList.length;
 
-        // console.time( this.name, "update" );
+        // NGL.time( this.name, "update" );
 
         for( i = 0; i < n; ++i ){
 
@@ -2161,7 +2161,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         };
 
-        // console.timeEnd( this.name, "update" );
+        // NGL.timeEnd( this.name, "update" );
 
     },
 
@@ -2469,7 +2469,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         var i = 0;
         var n = this.fiberList.length;
 
-        // console.time( this.name, "update" );
+        // NGL.time( this.name, "update" );
 
         for( i = 0; i < n; ++i ){
 
@@ -2519,7 +2519,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         };
 
-        // console.timeEnd( this.name, "update" );
+        // NGL.timeEnd( this.name, "update" );
 
     },
 
@@ -3977,8 +3977,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        // console.log( this.selection )
-        // console.log( this.atomSet )
+        // NGL.log( this.selection )
+        // NGL.log( this.atomSet )
 
         if( this.atomSet.atomCount === 0 ) return;
 
@@ -4203,7 +4203,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         }else{
 
             // FIXME
-            console.log( "TODO non BufferGeometry surface" );
+            NGL.log( "TODO non BufferGeometry surface" );
 
             position = NGL.Utils.positionFromGeometry( geo );
             index = NGL.Utils.indexFromGeometry( geo );

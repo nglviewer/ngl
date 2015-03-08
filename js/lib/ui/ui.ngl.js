@@ -175,7 +175,7 @@ UI.SelectionInput = function( selection ){
 
     if( ! ( selection instanceof NGL.Selection ) ){
 
-        console.error( "UI.SelectionInput: not a selection", selection );
+        NGL.error( "UI.SelectionInput: not a selection", selection );
 
         return this;
 

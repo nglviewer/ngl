@@ -239,7 +239,7 @@ NGL.MenubarFileWidget = function( stage ){
 
                 }else{
 
-                    console.log( "unknown filetype: " + ext );
+                    NGL.log( "unknown filetype: " + ext );
 
                 }
 
@@ -896,7 +896,7 @@ NGL.SidebarWidget = function( stage ){
 
         }else{
 
-            console.warn( "NGL.SidebarWidget: component type unknown", component );
+            NGL.warn( "NGL.SidebarWidget: component type unknown", component );
             return;
 
         }
@@ -1205,7 +1205,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
                 if( trajExt.indexOf( ext ) !== -1 ){
 
-                    console.log( path );
+                    NGL.log( path );
 
                     component.addTrajectory( path.path );
 
@@ -1213,7 +1213,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
                 }else{
 
-                    console.log( "unknown trajectory type: " + ext );
+                    NGL.log( "unknown trajectory type: " + ext );
 
                 }
 
@@ -1915,7 +1915,7 @@ NGL.DirectoryListing.prototype = {
 
             var json = JSON.parse( responseText );
 
-            // console.log( json );
+            // NGL.log( json );
 
             scope.signals.listingLoaded.dispatch( path, json );
 
