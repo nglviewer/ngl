@@ -326,14 +326,13 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 
 NGL.ObjLoader = function( manager ){
 
-    // this.cache = new THREE.Cache();
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    THREE.PLYLoader.call( this, manager );
 
 };
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-NGL.StructureLoader.prototype.constructor = NGL.ObjLoader;
+NGL.ObjLoader.prototype.constructor = NGL.ObjLoader;
 
 NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
@@ -352,16 +351,15 @@ NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 };
 
 
-NGL.PlyLoader = function( manager ){
+NGL.PlyLoader = function(){
 
-    // this.cache = new THREE.Cache();
-    // this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    THREE.PLYLoader.call( this );
 
 };
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
-NGL.StructureLoader.prototype.constructor = NGL.PlyLoader;
+NGL.PlyLoader.prototype.constructor = NGL.PlyLoader;
 
 NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
 
@@ -382,14 +380,13 @@ NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
 
 NGL.ScriptLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    NGL.XHRLoader.call( this, manager );
 
 };
 
 NGL.ScriptLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
-NGL.StructureLoader.prototype.constructor = NGL.ScriptLoader;
+NGL.ScriptLoader.prototype.constructor = NGL.ScriptLoader;
 
 NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 
