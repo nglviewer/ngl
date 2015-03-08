@@ -11,7 +11,8 @@ var list = {
             [ "Molecular representations", "manual/usage/Molecular-representations" ],
             [ "User interface", "manual/usage/User-interface" ],
             // [ "Trajectory access", "manual/usage/Trajectory-access" ],
-            [ "Scripting", "manual/usage/Scripting" ]
+            [ "Scripting", "manual/usage/Scripting" ],
+            [ "Embedding", "manual/usage/Embedding" ]
         ],
         "Deployment": [
             [ "Browser", "manual/deployment/Browser" ],
