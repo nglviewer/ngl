@@ -3669,15 +3669,6 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        // aspectRatio: {
-        //     type: "number", precision: 1, max: 10.0, min: 1.0
-        // },
-        // sphereDetail: {
-        //     type: "integer", max: 3, min: 0, rebuild: "impostor"
-        // },
-        radiusSegments: {
-            type: "integer", max: 50, min: 5, rebuild: "impostor"
-        },
         contactType: {
             type: "select", rebuild: true,
             options: {
@@ -3703,22 +3694,17 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( params.quality === "low" ){
             this.sphereDetail = 0;
-            this.radiusSegments = 5;
         }else if( params.quality === "medium" ){
             this.sphereDetail = 1;
-            this.radiusSegments = 10;
         }else if( params.quality === "high" ){
             this.sphereDetail = 2;
-            this.radiusSegments = 20;
         }else{
             this.sphereDetail = params.sphereDetail || 1;
-            this.radiusSegments = params.radiusSegments || 10;
         }
 
         this.contactType = params.contactType || "polar";
         this.maxDistance = params.maxDistance || 3.5;
         this.maxAngle = params.maxAngle || 40;
-        // this.aspectRatio = params.aspectRatio || 1.0;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -3751,24 +3737,6 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( atomSet.atomCount === 0 ) return;
 
-        // var sphereScale = this.scale * this.aspectRatio;
-
-        // this.sphereBuffer = new NGL.SphereBuffer(
-        //     atomSet.atomPosition(),
-        //     atomSet.atomColor( null, this.color ),
-        //     atomSet.atomRadius( null, this.radius, sphereScale ),
-        //     atomSet.atomColor( null, "picking" ),
-        //     {
-        //         sphereDetail: this.sphereDetail,
-        //         transparent: this.transparent,
-        //         side: this.side,
-        //         opacity: opacity,
-        //         nearClip: this.nearClip,
-        //         flatShaded: this.flatShaded
-        //     },
-        //     this.disableImpostor
-        // );
-
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bondSet.bondPosition( null, 0 ),
             bondSet.bondPosition( null, 1 ),
@@ -3790,11 +3758,21 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.bufferList.push( /*this.sphereBuffer,*/ this.cylinderBuffer );
+        this.bufferList.push( this.cylinderBuffer );
 
     },
 
     update: function( what ){
+
+        if( what[ "position" ] ){
+
+            // FIXME
+            this.rebuild();
+            return;
+
+        }
+
+        //
 
         if( this.atomSet.atomCount === 0 ) return;
 
@@ -3810,8 +3788,6 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            // sphereData[ "position" ] = atomSet.atomPosition();
-
             var from = bondSet.bondPosition( null, 0 );
             var to = bondSet.bondPosition( null, 1 );
 
@@ -3825,8 +3801,6 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            // sphereData[ "color" ] = atomSet.atomColor( null, this.color );
-
             cylinderData[ "color" ] = bondSet.bondColor( null, 0, this.color );
             cylinderData[ "color2" ] = bondSet.bondColor( null, 1, this.color );
 
@@ -3834,42 +3808,13 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( what[ "radius" ] || what[ "scale" ] ){
 
-            // sphereData[ "radius" ] = atomSet.atomRadius(
-            //     null, this.radius, this.scale * this.aspectRatio
-            // );
-
             cylinderData[ "radius" ] = bondSet.bondRadius(
                 null, 0, this.radius, this.scale
             );
 
         }
 
-        // this.sphereBuffer.setAttributes( sphereData );
         this.cylinderBuffer.setAttributes( cylinderData );
-
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "aspectRatio" ] ){
-
-            this.aspectRatio = params[ "aspectRatio" ];
-            what[ "radius" ] = true;
-            what[ "scale" ] = true;
-            if( !NGL.extensionFragDepth || this.disableImpostor ){
-                rebuild = true;
-            }
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
 
     },
 

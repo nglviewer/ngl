@@ -586,11 +586,15 @@ NGL.Examples = {
                     sele: "90-120", color: "resname"
                 } );
                 var line = o.addRepresentation( "line", { sele: "120-150" } );
+                var contact = o.addRepresentation( "contact", {
+                    sele: "120-150", contactType: "polarBackbone"
+                } );
                 var backbone = o.addRepresentation( "backbone", { sele: "150-180" } );
                 var tube = o.addRepresentation( "tube", { sele: "180-210" } );
                 var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
                 var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
                 var trace = o.addRepresentation( "trace", { sele: "270-300" } );
+                var label = o.addRepresentation( "label", { sele: "270-300 and .O" } );
                 var rope = o.addRepresentation( "rope", {
                     sele: "300-330", color: "residueindex"
                 } );
