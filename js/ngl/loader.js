@@ -219,7 +219,7 @@ NGL.FileLoader.prototype = {
 
         var scope = this;
 
-        var cached = scope.cache.get( file );
+        var cached = THREE.Cache.get( file );
 
         if ( cached !== undefined ) {
 
@@ -232,8 +232,6 @@ NGL.FileLoader.prototype = {
 
         reader.onload = function( event ){
 
-            // scope.cache.add( file, this.response );
-
             var data = event.target.result;
 
             if( scope.responseType === "arraybuffer" ){
@@ -241,6 +239,8 @@ NGL.FileLoader.prototype = {
                 data = NGL.decompress( data, file );
 
             }
+
+            // THREE.Cache.add( file, data );
 
             onLoad( data );
             scope.manager.itemEnd( file );
