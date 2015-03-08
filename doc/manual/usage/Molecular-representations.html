@@ -43,9 +43,15 @@
 
                             if( !name ) return;
 
-                            reprDict[ name ] = o.addRepresentation(
-                                name, { visible: false }, true
-                            );
+                            if( name === "label" ){
+                                reprDict[ name ] = o.addRepresentation(
+                                    name, { visible: false, color: "element", sele: ".C" }, true
+                                );
+                            }else{
+                                reprDict[ name ] = o.addRepresentation(
+                                    name, { visible: false }, true
+                                );
+                            }
 
                             var btn = document.getElementById( name );
                             var repr = reprDict[ name ];

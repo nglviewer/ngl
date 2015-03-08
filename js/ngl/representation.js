@@ -879,7 +879,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
 
-        p.color = p.color || 0xFFFFFF;
+        p.color = p.color !== undefined ? p.color : 0xFFFFFF;
 
         this.labelType = p.labelType || "res";
         this.labelText = p.labelText || {};
