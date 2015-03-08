@@ -171,7 +171,9 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "gro", "cif", "obj", "ply", "ngz",
+        "pdb", "ent", "gro", "cif", "mmcif",
+        "obj", "ply",
+        "ngl", "ngz",
         "gz", "lzma", "bz2", "zip"
     ];
     var fileTypesImport = fileTypesOpen + [ "ngl" ];
