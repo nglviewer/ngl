@@ -308,7 +308,9 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 
         "gro": NGL.GroParser,
         "pdb": NGL.PdbParser,
+        "ent": NGL.PdbParser,
         "cif": NGL.CifParser,
+        "mmcif": NGL.CifParser,
 
     };
 
@@ -402,7 +404,9 @@ NGL.autoLoad = function(){
 
         "gro": NGL.StructureLoader,
         "pdb": NGL.StructureLoader,
+        "ent": NGL.StructureLoader,
         "cif": NGL.StructureLoader,
+        "mmcif": NGL.StructureLoader,
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
