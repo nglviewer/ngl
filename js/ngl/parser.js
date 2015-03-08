@@ -236,7 +236,7 @@ NGL.createAtomArray = function( structure, callback ){
 
     return structure;
 
-}
+};
 
 
 ////////////////////
@@ -331,7 +331,7 @@ NGL.StructureParser.prototype = {
 
     }
 
-}
+};
 
 
 NGL.PdbParser = function( name, path, params ){
@@ -1371,7 +1371,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     );
 
-}
+};
 
 NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
@@ -1733,6 +1733,132 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
         callback();
 
     } );
+
+};
+
+
+//////////////////
+// Volume parser
+
+NGL.MrcVolume = function( name, path, data, header ){
+
+    this.name = name;
+    this.path = path;
+
+    this.data = data || new Float32Array( 0 );
+    this.header = header || {};
+
+};
+
+
+NGL.MrcParser = function( name, path, params ){
+
+    params = params || {};
+
+    this.name = name;
+    this.path = path;
+
+    this.volume = new NGL.MrcVolume( this.name, this.path );
+
+};
+
+NGL.MrcParser.prototype = {
+
+    constructor: NGL.MrcParser,
+
+    parse: function( bin, callback ){
+
+        this._parse( bin, callback );
+
+        return this.volume;
+
+    },
+
+    _parse: function( bin, callback ){
+
+        // MRC
+        // http://ami.scripps.edu/software/mrctools/mrc_specification.php
+        // http://www2.mrc-lmb.cam.ac.uk/research/locally-developed-software/image-processing-software/#image
+        // http://bio3d.colorado.edu/imod/doc/mrc_format.txt
+
+        // CCP4 (MAP)
+        // http://www.ccp4.ac.uk/html/maplib.html
+
+        // MRC format does not use the skew transformation header records (words 25-37)
+        // CCP4 format does not use the ORIGIN header records (words 50-52)
+
+        var __timeName = "NGL.MrcParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var v = this.volume;
+        var header = {};
+
+        var intView = new Int32Array( bin, 0, 56 );
+        var floatView = new Float32Array( bin, 0, 56 );
+
+        header.NX = intView[ 0 ];
+        header.NY = intView[ 1 ];
+        header.NZ = intView[ 2 ];
+
+        // mode
+        //  0 image : signed 8-bit bytes range -128 to 127
+        //  1 image : 16-bit halfwords
+        //  2 image : 32-bit reals
+        //  3 transform : complex 16-bit integers
+        //  4 transform : complex 32-bit reals
+        //  6 image : unsigned 16-bit range 0 to 65535
+        // 16 image: unsigned char * 3 (for rgb data, non-standard)
+        header.MODE = intView[ 3 ];
+
+        header.NXSTART = intView[ 4 ];
+        header.NYSTART = intView[ 5 ];
+        header.NZSTART = intView[ 6 ];
+
+        header.MX = intView[ 7 ];
+        header.MY = intView[ 8 ];
+        header.MZ = intView[ 9 ];
+
+        // cell length
+        header.xlen = floatView[ 10 ];
+        header.ylen = floatView[ 11 ];
+        header.zlen = floatView[ 12 ];
+
+        // cell angle
+        header.alpha = floatView[ 13 ];
+        header.beta  = floatView[ 14 ];
+        header.gamma = floatView[ 15 ];
+
+        header.MAPC = intView[ 16 ];
+        header.MAPR = intView[ 17 ];
+        header.MAPS = intView[ 18 ];
+
+        header.DMIN  = intView[ 19 ];
+        header.DMAX  = intView[ 20 ];
+        header.DMEAN = intView[ 21 ];
+
+        // space group number 0 or 1 (default=0)
+        header.ISPG = intView[ 22 ];
+
+        // number of bytes used for symmetry data (0 or 80)
+        header.NSYMBT = intView[23];
+
+        // machine stamp
+        header.ARMS = floatView[54];
+
+        v.header = header;
+        v.data = new Float32Array(
+            bin, 256 * 4 + header.NSYMBT,
+            header.NX * header.NY * header.NZ
+        );
+
+        NGL.timeEnd( __timeName )
+
+        if( NGL.debug ) NGL.log( v );
+
+        callback();
+
+    }
 
 };
 

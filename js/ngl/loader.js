@@ -328,6 +328,40 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 };
 
 
+NGL.VolumeLoader = function( manager ){
+
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+    this.asBinary = true;
+    this.responseType = "arraybuffer";
+
+};
+
+NGL.VolumeLoader.prototype = Object.create( NGL.XHRLoader.prototype );
+
+NGL.VolumeLoader.prototype.constructor = NGL.VolumeLoader;
+
+NGL.VolumeLoader.prototype.init = function( bin, name, path, ext, callback, params ){
+
+    params = params || {};
+
+    var parsersClasses = {
+
+        "mrc": NGL.MrcParser,
+        "ccp4": NGL.MrcParser,
+        "map": NGL.MrcParser,
+
+    };
+
+    var parser = new parsersClasses[ ext ](
+        name, path, params
+    );
+
+    return parser.parse( bin, callback );
+
+};
+
+
 NGL.ObjLoader = function( manager ){
 
     THREE.PLYLoader.call( this, manager );
@@ -413,12 +447,18 @@ NGL.autoLoad = function(){
         "cif": NGL.StructureLoader,
         "mmcif": NGL.StructureLoader,
 
+        "mrc": NGL.VolumeLoader,
+        "ccp4": NGL.VolumeLoader,
+        "map": NGL.VolumeLoader,
+
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
 
         "ngl": NGL.ScriptLoader,
 
-    }
+    };
+
+    var binary = [ "mrc", "ccp4", "map" ];
 
     return function( file, onLoad, onProgress, onError, params ){
 
@@ -502,6 +542,7 @@ NGL.autoLoad = function(){
 
             var fileLoader = new NGL.FileLoader();
             if( compressed ) fileLoader.setResponseType( "arraybuffer" );
+            if( binary.indexOf( ext ) !== -1 ) fileLoader.setAsBinary( true );
             fileLoader.load( file, init, onProgress, error );
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
