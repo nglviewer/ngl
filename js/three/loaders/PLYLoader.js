@@ -3,27 +3,45 @@
  *
  * Description: A THREE loader for PLY ASCII files (known as the Polygon File Format or the Stanford Triangle Format).
  *
- * Currently only supports ASCII encoded files.
  *
  * Limitations: ASCII decoding assumes file is UTF-8.
  *
  * Usage:
  *	var loader = new THREE.PLYLoader();
- *	loader.addEventListener( 'load', function ( event ) {
+ *	loader.load('./models/ply/ascii/dolphins.ply', function (geometry) {
  *
- *		var geometry = event.content;
  *		scene.add( new THREE.Mesh( geometry ) );
  *
  *	} );
- *	loader.load( './models/ply/ascii/dolphins.ply' );
+ *
+ * If the PLY file uses non standard property names, they can be mapped while
+ * loading. For example, the following maps the properties
+ * “diffuse_(red|green|blue)” in the file to standard color names.
+ *
+ * loader.setPropertyNameMapping( {
+ *	diffuse_red: 'red',
+ *	diffuse_green: 'green',
+ *	diffuse_blue: 'blue'
+ * } );
+ *
  */
 
 
-THREE.PLYLoader = function () {};
+THREE.PLYLoader = function () {
+
+	this.propertyNameMapping = {};
+
+};
 
 THREE.PLYLoader.prototype = {
 
 	constructor: THREE.PLYLoader,
+
+	setPropertyNameMapping: function ( mapping ) {
+
+		this.propertyNameMapping = mapping;
+
+	},
 
 	load: function ( url, callback ) {
 
@@ -62,7 +80,7 @@ THREE.PLYLoader.prototype = {
 
 		var array_buffer = new Uint8Array(buf);
 		var str = '';
-		for(var i = 0; i < buf.byteLength; i++) {
+		for (var i = 0; i < buf.byteLength; i ++) {
 			str += String.fromCharCode(array_buffer[i]); // implicitly assumes little-endian
 		}
 
@@ -70,7 +88,7 @@ THREE.PLYLoader.prototype = {
 
 	},
 
-	isASCII: function( data ){
+	isASCII: function( data ) {
 
 		var header = this.parseHeader( this.bin2str( data ) );
 
@@ -96,41 +114,50 @@ THREE.PLYLoader.prototype = {
 
 	parseHeader: function ( data ) {
 
-		var patternHeader = /ply([\s\S]*)end_header\n/;
+		var patternHeader = /ply([\s\S]*)end_header\s/;
 		var headerText = "";
-		var result;
-		if ( ( result = patternHeader.exec( data ) ) != null ) {
+		var headerLength = 0;
+		var result = patternHeader.exec( data );
+		if ( result !== null ) {
 			headerText = result [ 1 ];
+			headerLength = result[ 0 ].length;
 		}
 
-		var header = new Object();
-		header.comments = [];
-		header.elements = [];
-		header.headerLength = result[0].length;
+		var header = {
+			comments: [],
+			elements: [],
+			headerLength: headerLength
+		};
 
 		var lines = headerText.split( '\n' );
 		var currentElement = undefined;
 		var lineType, lineValues;
 
-		function make_ply_element_property(propertValues) {
+		function make_ply_element_property( propertValues, propertyNameMapping ) {
 
-			var property = Object();
+			var property = {
+				type: propertValues[ 0 ]
+			};
 
-			property.type = propertValues[0]
+			if ( property.type === 'list' ) {
 
-			if ( property.type === "list" ) {
-
-				property.name = propertValues[3]
-				property.countType = propertValues[1]
-				property.itemType = propertValues[2]
+				property.name = propertValues[ 3 ];
+				property.countType = propertValues[ 1 ];
+				property.itemType = propertValues[ 2 ];
 
 			} else {
 
-				property.name = propertValues[1]
+				property.name = propertValues[ 1 ];
 
 			}
 
-			return property
+			if ( property.name in propertyNameMapping ) {
+
+				property.name = propertyNameMapping[ property.name ];
+
+			}
+
+			return property;
 
 		}
 
@@ -143,7 +170,7 @@ THREE.PLYLoader.prototype = {
 			lineType = lineValues.shift()
 			line = lineValues.join(" ")
 
-			switch( lineType ) {
+			switch ( lineType ) {
 
 			case "format":
 
@@ -175,7 +202,7 @@ THREE.PLYLoader.prototype = {
 
 			case "property":
 
-				currentElement.properties.push( make_ply_element_property( lineValues ) );
+				currentElement.properties.push( make_ply_element_property( lineValues, this.propertyNameMapping ) );
 
 				break;
 
@@ -200,7 +227,7 @@ THREE.PLYLoader.prototype = {
 
 	parseASCIINumber: function ( n, type ) {
 
-		switch( type ) {
+		switch ( type ) {
 
 		case 'char': case 'uchar': case 'short': case 'ushort': case 'int': case 'uint':
 		case 'int8': case 'uint8': case 'int16': case 'uint16': case 'int32': case 'uint32':
@@ -258,9 +285,9 @@ THREE.PLYLoader.prototype = {
 
 		var header = this.parseHeader( data );
 
-		var patternBody = /end_header\n([\s\S]*)$/;
+		var patternBody = /end_header\s([\s\S]*)$/;
 		var body = "";
-		if ( ( result = patternBody.exec( data ) ) != null ) {
+		if ( ( result = patternBody.exec( data ) ) !== null ) {
 			body = result [ 1 ];
 		}
 
@@ -277,7 +304,7 @@ THREE.PLYLoader.prototype = {
 
 			if ( currentElementCount >= header.elements[currentElement].count ) {
 
-				currentElement++;
+				currentElement ++;
 				currentElementCount = 0;
 
 			}
@@ -286,7 +313,7 @@ THREE.PLYLoader.prototype = {
 
 			this.handleElement( geometry, header.elements[currentElement].name, element );
 
-			currentElementCount++;
+			currentElementCount ++;
 
 		}
 
@@ -338,9 +365,22 @@ THREE.PLYLoader.prototype = {
 
 		} else if ( elementName === "face" ) {
 
-			geometry.faces.push(
-				new THREE.Face3( element.vertex_indices[0], element.vertex_indices[1], element.vertex_indices[2] )
-			);
+			var vertex_indices = element.vertex_indices;
+
+			if ( vertex_indices.length === 3 ) {
+
+				geometry.faces.push(
+					new THREE.Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 2 ] )
+				);
+
+			} else if ( vertex_indices.length === 4 ) {
+
+				geometry.faces.push(
+					new THREE.Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 3 ] ),
+					new THREE.Face3( vertex_indices[ 1 ], vertex_indices[ 2 ], vertex_indices[ 3 ] )
+				);
+
+			}
 
 		}
 
@@ -348,7 +388,7 @@ THREE.PLYLoader.prototype = {
 
 	binaryRead: function ( dataview, at, type, little_endian ) {
 
-		switch( type ) {
+		switch ( type ) {
 
 			// corespondences for non-specific length types here match rply:
 		case 'int8':		case 'char':	 return [ dataview.getInt8( at ), 1 ];
@@ -382,13 +422,13 @@ THREE.PLYLoader.prototype = {
 
 				var list = [];
 
-				result = this.binaryRead( dataview, at+read, properties[i].countType, little_endian );
+				result = this.binaryRead( dataview, at + read, properties[i].countType, little_endian );
 				var n = result[0];
 				read += result[1];
 
 				for ( var j = 0; j < n; j ++ ) {
 
-					result = this.binaryRead( dataview, at+read, properties[i].itemType, little_endian );
+					result = this.binaryRead( dataview, at + read, properties[i].itemType, little_endian );
 					list.push( result[0] );
 					read += result[1];
 
@@ -398,7 +438,7 @@ THREE.PLYLoader.prototype = {
 
 			} else {
 
-				result = this.binaryRead( dataview, at+read, properties[i].type, little_endian );
+				result = this.binaryRead( dataview, at + read, properties[i].type, little_endian );
 				element[ properties[i].name ] = result[0];
 				read += result[1];
 

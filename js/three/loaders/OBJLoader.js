@@ -22,7 +22,7 @@ THREE.OBJLoader.prototype = {
 
 			onLoad( scope.parse( text ) );
 
-		} );
+		}, onProgress, onError );
 
 	},
 
@@ -87,11 +87,12 @@ THREE.OBJLoader.prototype = {
 
 		}
 
-		function addFace( a, b, c, d,  ua, ub, uc, ud,  na, nb, nc, nd ) {
+		function addFace( a, b, c, d,  ua, ub, uc, ud, na, nb, nc, nd ) {
 
 			var ia = parseVertexIndex( a );
 			var ib = parseVertexIndex( b );
 			var ic = parseVertexIndex( c );
+			var id;
 
 			if ( d === undefined ) {
 
@@ -99,7 +100,7 @@ THREE.OBJLoader.prototype = {
 
 			} else {
 
-				var id = parseVertexIndex( d );
+				id = parseVertexIndex( d );
 
 				addVertex( ia, ib, id );
 				addVertex( ib, ic, id );
@@ -108,9 +109,9 @@ THREE.OBJLoader.prototype = {
 
 			if ( ua !== undefined ) {
 
-				var ia = parseUVIndex( ua );
-				var ib = parseUVIndex( ub );
-				var ic = parseUVIndex( uc );
+				ia = parseUVIndex( ua );
+				ib = parseUVIndex( ub );
+				ic = parseUVIndex( uc );
 
 				if ( d === undefined ) {
 
@@ -118,28 +119,20 @@ THREE.OBJLoader.prototype = {
 
 				} else {
 
-					var id = parseUVIndex( ud );
+					id = parseUVIndex( ud );
 
 					addUV( ia, ib, id );
 					addUV( ib, ic, id );
 
 				}
 
-			} else {
-
-				geometry.uvs.push( 0, 0,  0, 0,  0, 0 );
-
-				if ( d !== undefined ) {
-					geometry.uvs.push( 0, 0,  0, 0,  0, 0 );
-				}
-
 			}
 
 			if ( na !== undefined ) {
 
-				var ia = parseNormalIndex( na );
-				var ib = parseNormalIndex( nb );
-				var ic = parseNormalIndex( nc );
+				ia = parseNormalIndex( na );
+				ib = parseNormalIndex( nb );
+				ic = parseNormalIndex( nc );
 
 				if ( d === undefined ) {
 
@@ -147,19 +140,11 @@ THREE.OBJLoader.prototype = {
 
 				} else {
 
-					var id = parseNormalIndex( nd );
+					id = parseNormalIndex( nd );
 
 					addNormal( ia, ib, id );
 					addNormal( ib, ic, id );
 
-				}
-
-			} else {
-
-				geometry.normals.push( 0, 0, 0,  0, 0, 0,  0, 0, 0 );
-
-				if ( d !== undefined) {
-					geometry.normals.push( 0, 0, 0,  0, 0, 0,  0, 0, 0 );					
 				}
 
 			}
@@ -196,15 +181,15 @@ THREE.OBJLoader.prototype = {
 
 		// v float float float
 
-		var vertex_pattern = /v( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)/;
+		var vertex_pattern = /v( +[\d|\.|\+|\-|e|E]+)( +[\d|\.|\+|\-|e|E]+)( +[\d|\.|\+|\-|e|E]+)/;
 
 		// vn float float float
 
-		var normal_pattern = /vn( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)/;
+		var normal_pattern = /vn( +[\d|\.|\+|\-|e|E]+)( +[\d|\.|\+|\-|e|E]+)( +[\d|\.|\+|\-|e|E]+)/;
 
 		// vt float float
 
-		var uv_pattern = /vt( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)/;
+		var uv_pattern = /vt( +[\d|\.|\+|\-|e|E]+)( +[\d|\.|\+|\-|e|E]+)/;
 
 		// f vertex vertex vertex ...
 
@@ -218,7 +203,7 @@ THREE.OBJLoader.prototype = {
 
 		var face_pattern3 = /f( +(-?\d+)\/(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+)\/(-?\d+))?/;
 
-		// f vertex//normal vertex//normal vertex//normal ... 
+		// f vertex//normal vertex//normal vertex//normal ...
 
 		var face_pattern4 = /f( +(-?\d+)\/\/(-?\d+))( +(-?\d+)\/\/(-?\d+))( +(-?\d+)\/\/(-?\d+))( +(-?\d+)\/\/(-?\d+))?/
 
@@ -277,7 +262,7 @@ THREE.OBJLoader.prototype = {
 			} else if ( ( result = face_pattern2.exec( line ) ) !== null ) {
 
 				// ["f 1/1 2/2 3/3", " 1/1", "1", "1", " 2/2", "2", "2", " 3/3", "3", "3", undefined, undefined, undefined]
-				
+
 				addFace(
 					result[ 2 ], result[ 5 ], result[ 8 ], result[ 11 ],
 					result[ 3 ], result[ 6 ], result[ 9 ], result[ 12 ]
@@ -353,17 +338,25 @@ THREE.OBJLoader.prototype = {
 
 		for ( var i = 0, l = objects.length; i < l; i ++ ) {
 
-			var object = objects[ i ];
+			object = objects[ i ];
+			geometry = object.geometry;
 
-			var geometry = new THREE.BufferGeometry();
-			geometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( object.geometry.vertices ), 3 ) );
-			geometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( object.geometry.normals ), 3 ) );
-			geometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( object.geometry.uvs ), 2 ) );
+			var buffergeometry = new THREE.BufferGeometry();
 
-			var material = new THREE.MeshLambertMaterial();
+			buffergeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( geometry.vertices ), 3 ) );
+
+			if ( geometry.normals.length > 0 ) {
+				buffergeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( geometry.normals ), 3 ) );
+			}
+
+			if ( geometry.uvs.length > 0 ) {
+				buffergeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( geometry.uvs ), 2 ) );
+			}
+
+			material = new THREE.MeshLambertMaterial();
 			material.name = object.material.name;
 
-			var mesh = new THREE.Mesh( geometry, material );
+			var mesh = new THREE.Mesh( buffergeometry, material );
 			mesh.name = object.name;
 
 			container.add( mesh );
