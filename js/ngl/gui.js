@@ -1976,7 +1976,6 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     }
 
     var dirListing = new NGL.DirectoryListing();
-    dirListing.getListing( NGL.lastUsedDirectory );
 
     var signals = dirListing.signals;
     var container = new UI.OverlayPanel();
@@ -2079,6 +2078,8 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
         } )
 
     } );
+
+    dirListing.getListing( NGL.lastUsedDirectory );
 
     return container;
 
