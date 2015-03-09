@@ -396,6 +396,7 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     this.fiberList = [];
 
     this.selection = new NGL.Selection( params.sele );
+    this.atomSet = new NGL.AtomSet();
 
     this.setStructure( structure );
 
@@ -492,7 +493,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
     setStructure: function( structure ){
 
         this.structure = structure;
-        this.atomSet = new NGL.AtomSet( this.structure, this.selection );
+        this.atomSet.fromStructure( this.structure, this.selection );
 
         return this;
 

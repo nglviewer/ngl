@@ -871,7 +871,7 @@ NGL.Examples = {
                 var names = [];
                 nearest.forEach( function( atomDist ){
                     // names.push( atomDist.atom.qualifiedName( true ) );
-                    names.push( "@" + atomDist.atom.index );
+                    names.push( "@" + atomDist.atom.globalindex );
                 } );
 
                 var contactSele = names.join( " OR " );
@@ -906,6 +906,26 @@ NGL.Examples = {
                 o.addRepresentation( "trace" );
                 o.addRepresentation( "line" );
                 o.centerView();
+
+            } );
+
+        },
+
+        "subset": function( stage ){
+
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                var trace = o.addRepresentation( "trace", {}, true );
+                var cartoon = o.addRepresentation( "cartoon", {}, true );
+                var licorice = o.addRepresentation( "spacefill", {
+                    color: "element", sele: "TYR"
+                }, true );
+
+                o.centerView();
+
+                o.setSelection( "1-90" );
+                cartoon.setSelection( "4-50" );
+                licorice.setSelection( "PRO" );
 
             } );
 
