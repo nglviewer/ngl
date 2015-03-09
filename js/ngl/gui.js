@@ -514,11 +514,11 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // overview
 
-    var overviewWidget = new NGL.OverviewWidget()
+    var overviewWidget = new NGL.OverviewWidget( stage )
         .setDisplay( "none" )
         .attach();
 
-    if( NGL.GET( "overview" ) ){
+    if( stage.preferences.getKey( "overview" ) ){
         onOverviewOptionClick();
     }
 
@@ -546,7 +546,7 @@ NGL.MenubarHelpWidget = function( stage ){
 
 // Overview
 
-NGL.OverviewWidget = function(){
+NGL.OverviewWidget = function( stage ){
 
     var container = new UI.OverlayPanel();
 
@@ -632,6 +632,27 @@ NGL.OverviewWidget = function(){
         .add( new UI.Panel().add( new UI.Html(
             "For more information please visit the <a href='../doc/index.html' target='_blank'>documentation pages</a>."
         ) ) );
+
+    var overview = stage.preferences.getKey( "overview" );
+    var showOverviewCheckbox = new UI.Checkbox( overview )
+        .onClick( function(){
+            stage.preferences.setKey(
+                "overview",
+                showOverviewCheckbox.getValue()
+            );
+        } );
+
+    listingPanel
+        .add( new UI.HorizontalRule()
+                    .setBorderTop( "1px solid #555" )
+                    .setMarginTop( "15px" )
+        )
+        .add( new UI.Panel().add(
+                showOverviewCheckbox,
+                new UI.Text(
+                    "Show on startup. Always available from Menu > Help > Overview."
+                ).setMarginLeft( "5px" )
+        ) );
 
     // addIcon( "file", "In front of atom-selection input fields." );
 

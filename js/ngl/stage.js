@@ -472,6 +472,7 @@ NGL.Preferences = function( stage, id ){
         impostor: true,
         quality: "medium",
         theme: "dark",
+        overview: true
 
     };
 
