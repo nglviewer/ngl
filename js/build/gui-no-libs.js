@@ -1781,7 +1781,9 @@ UI.VirtualList = function( items ){
 
 // Popup Menu (requires Tether)
 
-UI.PopupMenu = function( iconClass, heading ){
+UI.PopupMenu = function( iconClass, heading, constraintTo ){
+
+    constraintTo = constraintTo || 'scrollParent';
 
     UI.Panel.call( this );
 
@@ -1815,6 +1817,8 @@ UI.PopupMenu = function( iconClass, heading ){
 
     panel.add( headingPanel );
 
+    var tether;
+
     icon.setTitle( "menu" );
     icon.setCursor( "pointer" )
     icon.onClick( function( e ){
@@ -1822,13 +1826,14 @@ UI.PopupMenu = function( iconClass, heading ){
         if( panel.getDisplay() === "block" ){
 
             panel.setDisplay( "none" );
+            tether.destroy();
             return;
 
         }
 
         panel.setDisplay( "block" );
 
-        var tether = new Tether( {
+        tether = new Tether( {
             element: panel.dom,
             target: icon.dom,
             attachment: 'top right',
@@ -1836,7 +1841,7 @@ UI.PopupMenu = function( iconClass, heading ){
             offset: '0px 5px',
             constraints: [
                 {
-                    to: 'scrollParent',
+                    to: constraintTo,
                     attachment: 'element',
                     pin: [ 'top', 'bottom' ]
                 }
@@ -2281,7 +2286,7 @@ UI.SelectionInput = function( selection ){
 
     if( ! ( selection instanceof NGL.Selection ) ){
 
-        console.error( "UI.SelectionInput: not a selection", selection );
+        NGL.error( "UI.SelectionInput: not a selection", selection );
 
         return this;
 
@@ -2698,7 +2703,10 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "gro", "cif", "obj", "ply", "ngz",
+        "pdb", "ent", "gro", "cif", "mmcif",
+        "mrc", "ccp4", "map",
+        "obj", "ply",
+        "ngl", "ngz",
         "gz", "lzma", "bz2", "zip"
     ];
     var fileTypesImport = fileTypesOpen + [ "ngl" ];
@@ -2766,7 +2774,7 @@ NGL.MenubarFileWidget = function( stage ){
 
                 }else{
 
-                    console.log( "unknown filetype: " + ext );
+                    NGL.log( "unknown filetype: " + ext );
 
                 }
 
@@ -3038,11 +3046,11 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // overview
 
-    var overviewWidget = new NGL.OverviewWidget()
+    var overviewWidget = new NGL.OverviewWidget( stage )
         .setDisplay( "none" )
         .attach();
 
-    if( NGL.GET( "overview" ) ){
+    if( stage.preferences.getKey( "overview" ) ){
         onOverviewOptionClick();
     }
 
@@ -3070,7 +3078,7 @@ NGL.MenubarHelpWidget = function( stage ){
 
 // Overview
 
-NGL.OverviewWidget = function(){
+NGL.OverviewWidget = function( stage ){
 
     var container = new UI.OverlayPanel();
 
@@ -3134,11 +3142,11 @@ NGL.OverviewWidget = function(){
         .add( new UI.Break() );
 
     addIcon( "eye", "Controls the visibility of a component." );
-    addIcon( "trash-o", "Deletes a cmopvponent. Note that a second click is required to confirm the action." );
+    addIcon( "trash-o", "Deletes a component. Note that a second click is required to confirm the action." );
     addIcon( "bullseye", "Centers a component." );
     addIcon( "bars", "Opens a menu with further options." );
     addIcon( "square", "Opens a menu with coloring options." );
-    addIcon( "filter", "Indicates an atom-selection input fields." );
+    addIcon( "filter", "Indicates atom-selection input fields." );
 
     listingPanel
         .add( new UI.Text( "Mouse controls" ) )
@@ -3156,6 +3164,27 @@ NGL.OverviewWidget = function(){
         .add( new UI.Panel().add( new UI.Html(
             "For more information please visit the <a href='../doc/index.html' target='_blank'>documentation pages</a>."
         ) ) );
+
+    var overview = stage.preferences.getKey( "overview" );
+    var showOverviewCheckbox = new UI.Checkbox( overview )
+        .onClick( function(){
+            stage.preferences.setKey(
+                "overview",
+                showOverviewCheckbox.getValue()
+            );
+        } );
+
+    listingPanel
+        .add( new UI.HorizontalRule()
+                    .setBorderTop( "1px solid #555" )
+                    .setMarginTop( "15px" )
+        )
+        .add( new UI.Panel().add(
+                showOverviewCheckbox,
+                new UI.Text(
+                    "Show on startup. Always available from Menu > Help > Overview."
+                ).setMarginLeft( "5px" )
+        ) );
 
     // addIcon( "file", "In front of atom-selection input fields." );
 
@@ -3423,7 +3452,7 @@ NGL.SidebarWidget = function( stage ){
 
         }else{
 
-            console.warn( "NGL.SidebarWidget: component type unknown", component );
+            NGL.warn( "NGL.SidebarWidget: component type unknown", component );
             return;
 
         }
@@ -3493,7 +3522,7 @@ NGL.SidebarWidget = function( stage ){
 
         } );
 
-    var settingsMenu = new UI.PopupMenu( "cogs", "Settings" )
+    var settingsMenu = new UI.PopupMenu( "cogs", "Settings", "window" )
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
 
@@ -3732,7 +3761,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
                 if( trajExt.indexOf( ext ) !== -1 ){
 
-                    console.log( path );
+                    NGL.log( path );
 
                     component.addTrajectory( path.path );
 
@@ -3740,7 +3769,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
                 }else{
 
-                    console.log( "unknown trajectory type: " + ext );
+                    NGL.log( "unknown trajectory type: " + ext );
 
                 }
 
@@ -4442,7 +4471,7 @@ NGL.DirectoryListing.prototype = {
 
             var json = JSON.parse( responseText );
 
-            // console.log( json );
+            // NGL.log( json );
 
             scope.signals.listingLoaded.dispatch( path, json );
 
@@ -4479,7 +4508,6 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
     }
 
     var dirListing = new NGL.DirectoryListing();
-    dirListing.getListing( NGL.lastUsedDirectory );
 
     var signals = dirListing.signals;
     var container = new UI.OverlayPanel();
@@ -4582,6 +4610,8 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
         } )
 
     } );
+
+    dirListing.getListing( NGL.lastUsedDirectory );
 
     return container;
 
