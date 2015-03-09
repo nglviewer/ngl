@@ -610,11 +610,11 @@ NGL.OverviewWidget = function( stage ){
         .add( new UI.Break() );
 
     addIcon( "eye", "Controls the visibility of a component." );
-    addIcon( "trash-o", "Deletes a cmopvponent. Note that a second click is required to confirm the action." );
+    addIcon( "trash-o", "Deletes a component. Note that a second click is required to confirm the action." );
     addIcon( "bullseye", "Centers a component." );
     addIcon( "bars", "Opens a menu with further options." );
     addIcon( "square", "Opens a menu with coloring options." );
-    addIcon( "filter", "Indicates an atom-selection input fields." );
+    addIcon( "filter", "Indicates atom-selection input fields." );
 
     listingPanel
         .add( new UI.Text( "Mouse controls" ) )
