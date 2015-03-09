@@ -1740,17 +1740,6 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 //////////////////
 // Volume parser
 
-NGL.MrcVolume = function( name, path, data, header ){
-
-    this.name = name;
-    this.path = path;
-
-    this.data = data || new Float32Array( 0 );
-    this.header = header || {};
-
-};
-
-
 NGL.MrcParser = function( name, path, params ){
 
     params = params || {};
@@ -1768,7 +1757,13 @@ NGL.MrcParser.prototype = {
 
     parse: function( bin, callback ){
 
-        this._parse( bin, callback );
+        var self = this;
+
+        this._parse( bin, function(){
+
+            callback( self.volume );
+
+        } );
 
         return this.volume;
 

@@ -374,17 +374,23 @@ NGL.ObjLoader.prototype.constructor = NGL.ObjLoader;
 
 NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
+    var object;
+
     if( typeof data === "string" ){
 
-        data = this.parse( data );
+        object = this.parse( data );
+
+    }else{
+
+        object = data;
 
     }
 
-    var obj = new NGL.Surface( data, name, path )
+    var surface = new NGL.ObjectSurface( name, path, object )
 
-    if( typeof callback === "function" ) callback( obj );
+    if( typeof callback === "function" ) callback( surface );
 
-    return obj;
+    return surface;
 
 };
 
@@ -399,21 +405,7 @@ NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
 NGL.PlyLoader.prototype.constructor = NGL.PlyLoader;
 
-NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
-
-    if( typeof data === "string" ){
-
-        data = this.parse( data );
-
-    }
-
-    var ply = new NGL.Surface( data, name, path );
-
-    if( typeof callback === "function" ) callback( ply );
-
-    return ply;
-
-};
+NGL.PlyLoader.prototype.init = NGL.ObjLoader.prototype.init;
 
 
 NGL.ScriptLoader = function( manager ){

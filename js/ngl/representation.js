@@ -437,7 +437,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     constructor: NGL.StructureRepresentation,
 
-    type: "",
+    type: "structure",
 
     parameters: Object.assign( {
 
@@ -4070,7 +4070,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     constructor: NGL.SurfaceRepresentation,
 
-    type: "",
+    type: "surface",
 
     parameters: Object.assign( {
 
@@ -4122,59 +4122,10 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var geo;
-
-        var object = this.surface.object;
-
-        if( object instanceof THREE.Geometry ){
-
-            geo = object;
-
-            // TODO check if needed
-            geo.computeFaceNormals( true );
-            geo.computeVertexNormals( true );
-
-        }else{
-
-            geo = object.children[0].geometry;
-
-        }
-
-        geo.computeBoundingSphere();
-
-        this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
-
-        var position, color, index, normal;
-
-        if( geo instanceof THREE.BufferGeometry ){
-
-            var an = geo.attributes.normal.array;
-
-            // assume there are no normals if the first is zero
-            if( an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0 ){
-                geo.computeVertexNormals();
-            }
-
-            position = geo.attributes.position.array;
-            index = null;
-            normal = geo.attributes.normal.array;
-
-        }else{
-
-            // FIXME
-            NGL.log( "TODO non BufferGeometry surface" );
-
-            position = NGL.Utils.positionFromGeometry( geo );
-            index = NGL.Utils.indexFromGeometry( geo );
-            normal = NGL.Utils.normalFromGeometry( geo );
-
-        }
-
-        var n = position.length / 3;
-        var tc = new THREE.Color( this.color );
-        color = NGL.Utils.uniformArray3(
-            n, tc.r, tc.g, tc.b
-        );
+        var position = this.surface.getPosition();
+        var color = this.surface.getColor( this.color );
+        var normal = this.surface.getNormal();
+        var index = this.surface.getIndex();
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
