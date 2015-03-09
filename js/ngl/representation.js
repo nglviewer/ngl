@@ -289,7 +289,9 @@ NGL.Representation.prototype = {
                 this.bufferList.forEach( function( buffer ){
 
                     buffer.group.children.forEach( updateProperty );
-                    if( buffer.pickingGroup ){
+                    // FIXME is there a cleaner way to ensure
+                    //  that picking materials are not set transparent?
+                    if( buffer.pickingGroup && name !== "transparent" ){
                         buffer.pickingGroup.children.forEach( updateProperty );
                     }
 
