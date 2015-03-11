@@ -1786,15 +1786,19 @@ NGL.MrcParser.prototype = {
 
         NGL.time( __timeName );
 
+        if( bin instanceof Uint8Array ){
+            bin = bin.buffer;
+        }
+
         var v = this.volume;
         var header = {};
 
         var intView = new Int32Array( bin, 0, 56 );
         var floatView = new Float32Array( bin, 0, 56 );
 
-        header.NX = intView[ 0 ];
-        header.NY = intView[ 1 ];
-        header.NZ = intView[ 2 ];
+        header.NX = intView[ 0 ];  // NC - columns (fastest changing)
+        header.NY = intView[ 1 ];  // NR - rows
+        header.NZ = intView[ 2 ];  // NS - sections (slowest changing)
 
         // mode
         //  0 image : signed 8-bit bytes range -128 to 127
@@ -1804,42 +1808,72 @@ NGL.MrcParser.prototype = {
         //  4 transform : complex 32-bit reals
         //  6 image : unsigned 16-bit range 0 to 65535
         // 16 image: unsigned char * 3 (for rgb data, non-standard)
+        //
+        // Note: Mode 2 is the normal mode used in the CCP4 programs.
+        //       Other modes than 2 and 0 may NOT WORK
         header.MODE = intView[ 3 ];
 
-        header.NXSTART = intView[ 4 ];
-        header.NYSTART = intView[ 5 ];
-        header.NZSTART = intView[ 6 ];
+        // start
+        header.NXSTART = intView[ 4 ];  // NCSTART - first column
+        header.NYSTART = intView[ 5 ];  // NRSTART - first row
+        header.NZSTART = intView[ 6 ];  // NSSTART - first section
 
-        header.MX = intView[ 7 ];
-        header.MY = intView[ 8 ];
-        header.MZ = intView[ 9 ];
+        // intervals
+        header.MX = intView[ 7 ];  // intervals along x
+        header.MY = intView[ 8 ];  // intervals along y
+        header.MZ = intView[ 9 ];  // intervals along z
 
-        // cell length
+        // cell length (Angstroms in CCP4)
         header.xlen = floatView[ 10 ];
         header.ylen = floatView[ 11 ];
         header.zlen = floatView[ 12 ];
 
-        // cell angle
+        // cell angle (Degrees)
         header.alpha = floatView[ 13 ];
         header.beta  = floatView[ 14 ];
         header.gamma = floatView[ 15 ];
 
-        header.MAPC = intView[ 16 ];
-        header.MAPR = intView[ 17 ];
-        header.MAPS = intView[ 18 ];
+        // axis correspondence (1,2,3 for X,Y,Z)
+        header.MAPC = intView[ 16 ];  // column
+        header.MAPR = intView[ 17 ];  // row
+        header.MAPS = intView[ 18 ];  // section
 
-        header.DMIN  = intView[ 19 ];
-        header.DMAX  = intView[ 20 ];
-        header.DMEAN = intView[ 21 ];
+        // density statistics
+        header.DMIN  = floatView[ 19 ];
+        header.DMAX  = floatView[ 20 ];
+        header.DMEAN = floatView[ 21 ];
 
         // space group number 0 or 1 (default=0)
         header.ISPG = intView[ 22 ];
 
         // number of bytes used for symmetry data (0 or 80)
-        header.NSYMBT = intView[23];
+        header.NSYMBT = intView[ 23 ];
 
-        // machine stamp
-        header.ARMS = floatView[54];
+        // Flag for skew transformation, =0 none, =1 if foll
+        header.LSKFLG = intView[ 24 ];
+
+        // 26-34  SKWMAT  Skew matrix S (in order S11, S12, S13, S21 etc) if
+        //                LSKFLG .ne. 0.
+        // 35-37  SKWTRN  Skew translation t if LSKFLG != 0.
+        //                Skew transformation is from standard orthogonal
+        //                coordinate frame (as used for atoms) to orthogonal
+        //                map frame, as Xo(map) = S * (Xo(atoms) - t)
+
+        // 38      future use       (some of these are used by the MSUBSX routines
+        //  .          "              in MAPBRICK, MAPCONT and FRODO)
+        //  .          "   (all set to zero by default)
+        //  .          "
+        // 52          "
+
+        // 53  MAP         Character string 'MAP ' to identify file type
+        // 54  MACHST      Machine stamp indicating the machine type
+        //             which wrote file
+
+        // Rms deviation of map from mean density
+        header.ARMS = floatView[ 54 ];
+
+        // 56      NLABL           Number of labels being used
+        // 57-256  LABEL(20,10)    10  80 character text labels (ie. A4 format)
 
         v.header = header;
         v.data = new Float32Array(
@@ -1856,4 +1890,5 @@ NGL.MrcParser.prototype = {
     }
 
 };
+
 
