@@ -91,6 +91,10 @@ input[type=range]:focus:after {
     user-select: none;
 }
 
+.OverlayPanel:focus {
+    z-index: 20;
+}
+
 .CollapsiblePanel .CollapsiblePanelButton {
     float: left;
     margin-right: 6px;

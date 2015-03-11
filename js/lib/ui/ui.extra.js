@@ -116,6 +116,7 @@ UI.OverlayPanel = function(){
     UI.Panel.call( this );
 
     this.dom.className = 'Panel OverlayPanel';
+    this.dom.tabIndex = 0;
 
     return this;
 
@@ -555,9 +556,9 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
                 .setCursor( "pointer" )
                 .onClick( function(){
 
-                    panel.setDisplay( "none" );
+                    this.setMenuDisplay( "none" );
 
-                } )
+                }.bind( this ) )
         )
         .add(
             new UI.Text( heading )
@@ -573,13 +574,13 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
 
         if( panel.getDisplay() === "block" ){
 
-            panel.setDisplay( "none" );
+            this.setMenuDisplay( "none" );
             tether.destroy();
             return;
 
         }
 
-        panel.setDisplay( "block" );
+        this.setMenuDisplay( "block" );
 
         tether = new Tether( {
             element: panel.dom,
@@ -598,7 +599,7 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
 
         tether.position();
 
-    } );
+    }.bind( this ) );
 
     this.add( icon );
 
@@ -637,6 +638,8 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     this.panel.setDisplay( value );
+
+    if( value !== "none" ) this.panel.dom.focus();
 
     return this;
 
