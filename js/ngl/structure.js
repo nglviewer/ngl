@@ -4618,6 +4618,151 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "SMALL" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "GLY" },
+                        { resname: "ALA" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NUCLEOPHILIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "SER" },
+                        { resname: "THR" },
+                        { resname: "CYS" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "HYDROPHOBIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "VAL" },
+                        { resname: "LEU" },
+                        { resname: "ILE" },
+                        { resname: "MET" },
+                        { resname: "PRO" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "AROMATIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "PHE" },
+                        { resname: "TYR" },
+                        { resname: "TRP" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "AMIDE" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASN" },
+                        { resname: "GLN" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "ACIDIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "BASIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "CHARGED" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { keyword: "GLU" },
+                        { keyword: "HIS" },
+                        { keyword: "LYS" },
+                        { keyword: "ARG" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "POLAR" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" },
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" },
+                        { resname: "ASN" },
+                        { resname: "GLN" },
+                        { resname: "SER" },
+                        { resname: "THR" },
+                        { resname: "TYR" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NONPOLAR" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ALA" },
+                        { resname: "CYS" },
+                        { resname: "GLY" },
+                        { resname: "ILE" },
+                        { resname: "LEU" },
+                        { resname: "MET" },
+                        { resname: "PHE" },
+                        { resname: "PRO" },
+                        { resname: "VAL" },
+                        { resname: "TRP" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "HELIX" ){
                 sele.keyword = "HELIX";
                 pushRule( sele );
