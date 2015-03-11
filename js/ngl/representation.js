@@ -25,7 +25,23 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
     }else if( object instanceof NGL.Surface ){
 
-        ReprClass = NGL.SurfaceRepresentation;
+        if( type === "surface" ){
+
+            ReprClass = NGL.SurfaceRepresentation;
+
+        }else if( type === "dot" ){
+
+            ReprClass = NGL.DotRepresentation;
+
+        }else{
+
+            NGL.error(
+                "NGL.makeRepresentation: representation type " + type + " unknown"
+            );
+            return;
+
+        }
+
 
     }else if( object instanceof NGL.Trajectory ){
 
@@ -330,11 +346,12 @@ NGL.Representation.prototype = {
 
     getParameters: function(){
 
+        // FIXME move specific parts to subclasses
         var params = {
 
             color: this.color,
             visible: this.visible,
-            sele: this.selection.string,
+            sele: this.selection ? this.selection.string : undefined,
             disableImpostor: this.disableImpostor,
             quality: this.quality
 
@@ -4177,6 +4194,121 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             this.bufferList.push( this.surfaceBuffer );
 
         }
+
+    }
+
+} );
+
+
+NGL.DotRepresentation = function( surface, viewer, params ){
+
+    NGL.Representation.call( this, surface, viewer, params );
+
+    this.surface = surface;
+
+    this.create();
+    this.attach();
+
+};
+
+NGL.DotRepresentation.prototype = NGL.createObject(
+
+    NGL.Representation.prototype, {
+
+    constructor: NGL.DotRepresentation,
+
+    type: "dot",
+
+    parameters: Object.assign( {
+
+        minValue: {
+            type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+        },
+        maxValue: {
+            type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+        },
+        size: {
+            type: "number", precision: 3, max: 10.0, min: 0.001, rebuild: true
+        },
+        sphereDetail: {
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        transparent: {
+            type: "boolean", rebuild: true
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0, uniform: true
+        }
+
+    }, NGL.Representation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        this.disableImpostor = p.disableImpostor || false;
+
+        if( p.quality === "low" ){
+            this.sphereDetail = 0;
+        }else if( p.quality === "medium" ){
+            this.sphereDetail = 1;
+        }else if( p.quality === "high" ){
+            this.sphereDetail = 2;
+        }else{
+            this.sphereDetail = p.sphereDetail || 1;
+        }
+
+        this.color = p.color || 0xDDDDDD;
+        this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
+        this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
+        this.size = p.size !== undefined ? p.size : 0.05;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.Representation.prototype.init.call( this, p );
+
+    },
+
+    attach: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.add( buffer );
+
+        }, this );
+
+        this.setVisibility( this.visible );
+
+    },
+
+    create: function(){
+
+        this.surface.filter( this.minValue, this.maxValue );
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        this.sphereBuffer = new NGL.SphereBuffer(
+            this.surface.getPosition( "dot" ),
+            this.surface.getColor( this.color ),
+            this.surface.getSize( this.size ),
+            undefined,
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
+            },
+            this.disableImpostor
+        );
+
+        this.bufferList.push( this.sphereBuffer );
 
     }
 
