@@ -1787,6 +1787,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var playerButton = new UI.ToggleIcon( true, "play", "pause" )
         .setMarginRight( "10px" )
         .setMarginLeft( "20px" )
+        .setCursor( "pointer" )
         .setWidth( "12px" )
         .setTitle( "play" )
         .onClick( function(){
