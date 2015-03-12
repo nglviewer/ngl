@@ -1948,6 +1948,9 @@ NGL.DirectoryListing.prototype = {
         var loader = new THREE.XHRLoader();
         var url = "../dir/" + path;
 
+        // force reload
+        THREE.Cache.remove( url );
+
         loader.load( url, function( responseText ){
 
             var json = JSON.parse( responseText );
