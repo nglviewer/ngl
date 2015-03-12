@@ -1032,7 +1032,7 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
         );
 
         var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, {}, this
+            this.stage, repr, params, this
         );
 
         return NGL.Component.prototype.addRepresentation.call( this, reprComp );
