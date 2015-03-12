@@ -68,7 +68,7 @@ NGL.Stage.prototype = {
 
         }else if( object instanceof NGL.SurfaceComponent ){
 
-            object.addRepresentation();
+            object.addRepresentation( "surface" );
             object.centerView();
 
         }else if( object instanceof NGL.ScriptComponent ){
@@ -508,10 +508,13 @@ NGL.Preferences.prototype = {
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact"
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
         ];
 
         this.stage.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
 
             if( types.indexOf( repr.getType() ) === -1 ){
                 return;
@@ -521,7 +524,7 @@ NGL.Preferences.prototype = {
             p.disableImpostor = !value;
             repr.rebuild( p );
 
-        }, NGL.StructureComponent );
+        } );
 
     },
 
@@ -539,10 +542,13 @@ NGL.Preferences.prototype = {
 
         var impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact"
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
         ];
 
         this.stage.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
 
             var p = repr.getParameters();
 
@@ -562,7 +568,7 @@ NGL.Preferences.prototype = {
             p.quality = value;
             repr.rebuild( p );
 
-        }, NGL.StructureComponent );
+        } );
 
     },
 
@@ -1016,12 +1022,17 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
+        var pref = this.stage.preferences;
+        params = params || {};
+        params.quality = params.quality || pref.getKey( "quality" );
+        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
+
         var repr = NGL.makeRepresentation(
             type, this.surface, this.viewer, params
         );
 
         var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, {}, this
+            this.stage, repr, params, this
         );
 
         return NGL.Component.prototype.addRepresentation.call( this, reprComp );

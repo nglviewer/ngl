@@ -1370,10 +1370,22 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     // Add representation
 
-    var repr = new UI.Button( "add" )
-        .onClick( function(){
+    var repr = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( (function(){
 
-            component.addRepresentation();
+            var reprOptions = {
+                "": "[ add ]",
+                "surface": "surface",
+                "dot": "dot"
+            };
+            return reprOptions;
+
+        })() )
+        .onChange( function(){
+
+            component.addRepresentation( repr.getValue() );
+            repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
 
         } );
