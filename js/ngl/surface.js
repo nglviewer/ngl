@@ -195,17 +195,7 @@ NGL.VolumeSurface = function( name, path, points, values ){
 
     NGL.Surface.call( this, name, path );
 
-    if( points && values ){
-
-        this.points = points;
-        this.values = values;
-
-        this.__points = this.points;
-        this.__values = this.values;
-
-        this.size = points.length / 3;
-
-    }
+    this.set( points, values );
 
 };
 
@@ -215,9 +205,25 @@ NGL.VolumeSurface.prototype = NGL.createObject(
 
     constructor: NGL.VolumeSurface,
 
+    set: function( points, values ){
+
+        if( points && values ){
+
+            this.points = points;
+            this.values = values;
+
+            this.__points = this.points;
+            this.__values = this.values;
+
+            this.size = points.length / 3;
+
+        }
+
+    },
+
     filter: function( minValue, maxValue ){
 
-        minValue = minValue !== undefined ? minValue : -Infinity;
+        minValue = ( minValue !== undefined && !isNaN( minValue ) ) ? minValue : -Infinity;
         maxValue = maxValue !== undefined ? maxValue : Infinity;
 
         var values = this.__values;
@@ -363,17 +369,23 @@ NGL.MrcVolume.prototype = NGL.createObject(
 
     constructor: NGL.MrcVolume,
 
-    getPosition: function( type ){
+    filter: function( minValue, maxValue ){
+
+        var h = this.header;
+
+        if( isNaN( minValue ) ){
+            minValue = h.DMEAN + 3.0 * h.ARMS;
+        }
+
+        NGL.VolumeSurface.prototype.filter.call(
+            this, minValue, maxValue
+        );
+
+    }
+
+} );
 
 
-
-    },
-
-    getColor: function(){
-
-
-
-    },
 
     getNormal: function(){
 

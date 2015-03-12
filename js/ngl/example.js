@@ -998,6 +998,25 @@ NGL.Examples = {
 
         },
 
+        "mrc": function( stage ){
+
+            stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
+
+                o.addRepresentation( "dot" );
+                stage.centerView();
+
+            } );
+
+
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+        },
+
     }
 
 };

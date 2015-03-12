@@ -4263,9 +4263,10 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         }
 
         this.color = p.color || 0xDDDDDD;
-        this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
+        // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
+        this.minValue = p.minValue !== undefined ? p.minValue : NaN;
         this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
-        this.size = p.size !== undefined ? p.size : 0.05;
+        this.size = p.size !== undefined ? p.size : 0.1;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;

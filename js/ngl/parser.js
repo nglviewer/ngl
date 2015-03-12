@@ -1876,10 +1876,15 @@ NGL.MrcParser.prototype = {
         // 57-256  LABEL(20,10)    10  80 character text labels (ie. A4 format)
 
         v.header = header;
+
+        // FIXME depends on mode
         v.data = new Float32Array(
             bin, 256 * 4 + header.NSYMBT,
             header.NX * header.NY * header.NZ
         );
+
+        this.makeMatrix();
+        this.makePoints();
 
         NGL.timeEnd( __timeName )
 
@@ -1887,8 +1892,110 @@ NGL.MrcParser.prototype = {
 
         callback();
 
+    },
+
+    makeMatrix: function(){
+
+        var h = this.volume.header;
+
+        var basisX = [
+            h.xlen,
+            0,
+            0
+        ];
+
+        var basisY = [
+            h.ylen * Math.cos( Math.PI / 180.0 * h.gamma ),
+            h.ylen * Math.sin( Math.PI / 180.0 * h.gamma ),
+            0
+        ];
+
+        var basisZ = [
+            h.zlen * Math.cos( Math.PI / 180.0 * h.beta ),
+            h.zlen * (
+                    Math.cos( Math.PI / 180.0 * h.alpha )
+                    - Math.cos( Math.PI / 180.0 * h.gamma )
+                    * Math.cos( Math.PI / 180.0 * h.beta )
+                ) / Math.sin( Math.PI / 180.0 * h.gamma ),
+            0
+        ];
+        basisZ[ 2 ] = Math.sqrt(
+            h.zlen * h.zlen * Math.sin( Math.PI / 180.0 * h.beta ) *
+            Math.sin( Math.PI / 180.0 * h.beta ) - basisZ[ 1 ] * basisZ[ 1 ]
+        );
+
+        var basis = [ 0, basisX, basisY, basisZ ];
+        var nxyz = [ 0, h.MX, h.MY, h.MZ ];
+        var mapcrs = [ 0, h.MAPC, h.MAPR, h.MAPS ];
+
+        var matrix = new THREE.Matrix4();
+
+        matrix.set(
+
+            basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+            basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+            basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+            0,
+
+            basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+            basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+            basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+            0,
+
+            basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+            basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+            basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+            0,
+
+            0, 0, 0, 1
+
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                h.NXSTART, h.NYSTART, h.NZSTART
+            )
+        );
+
+        this.volume.matrix = matrix;
+
+    },
+
+    makePoints: function(){
+
+        var v = this.volume;
+        var h = v.header;
+        var n = v.data.length;
+        var points = new Float32Array( n * 3 );
+
+        var nk = h.NZ;
+        var nj = h.NY;
+        var ni = h.NX;
+
+        var p = 0;
+
+        for (var k = 0; k < nk; k++){
+
+            for (var j = 0; j < nj; j++){
+
+                for (var i = 0; i < ni; i++){
+
+                    points[ p + 0 ] = i;
+                    points[ p + 1 ] = j;
+                    points[ p + 2 ] = k;
+
+                    p += 3;
+
+                }
+
+            }
+
+        }
+
+        v.matrix.applyToVector3Array( points );
+
+        this.volume.set( points, v.data );
+
     }
 
 };
-
-
