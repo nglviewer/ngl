@@ -411,7 +411,7 @@ NGL.ColorFactory.prototype = {
 
             case "chainindex":
 
-                if( a.residue.chain.chainname === undefined ){
+                if( a.residue.chain.chainname === "" ){
                     _c = this.chainnameScale(
                         this.chainNames.indexOf( a.chainname ) * 10
                     )._rgb;
