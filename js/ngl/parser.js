@@ -1878,13 +1878,14 @@ NGL.MrcParser.prototype = {
         v.header = header;
 
         // FIXME depends on mode
-        v.data = new Float32Array(
+        var data = new Float32Array(
             bin, 256 * 4 + header.NSYMBT,
             header.NX * header.NY * header.NZ
         );
 
+        v.setData( data, header.NX, header.NY, header.NZ );
+
         this.makeMatrix();
-        this.makePoints();
 
         NGL.timeEnd( __timeName )
 
@@ -1957,44 +1958,7 @@ NGL.MrcParser.prototype = {
             )
         );
 
-        this.volume.matrix = matrix;
-
-    },
-
-    makePoints: function(){
-
-        var v = this.volume;
-        var h = v.header;
-        var n = v.data.length;
-        var points = new Float32Array( n * 3 );
-
-        var nk = h.NZ;
-        var nj = h.NY;
-        var ni = h.NX;
-
-        var p = 0;
-
-        for (var k = 0; k < nk; k++){
-
-            for (var j = 0; j < nj; j++){
-
-                for (var i = 0; i < ni; i++){
-
-                    points[ p + 0 ] = i;
-                    points[ p + 1 ] = j;
-                    points[ p + 2 ] = k;
-
-                    p += 3;
-
-                }
-
-            }
-
-        }
-
-        v.matrix.applyToVector3Array( points );
-
-        this.volume.set( points, v.data );
+        this.volume.matrix.copy( matrix );
 
     }
 

@@ -931,82 +931,15 @@ NGL.Examples = {
 
         },
 
-        "dot": function( stage ){
-
-            function volumeData( size ){
-
-                // number of cubes along a side
-                var size2 = size * size;
-                var size3 = size2 * size;
-
-                var values = new Float32Array( size3 );
-                var points = new Float32Array( size3 * 3 );
-
-                var axisMin = -10;
-                var axisMax =  10;
-                var axisRange = axisMax - axisMin;
-
-                // Generate a list of 3D points and values at those points
-                for (var k = 0; k < size; k++){
-
-                    for (var j = 0; j < size; j++){
-
-                        for (var i = 0; i < size; i++){
-
-                            var p = i + size * j + size2 * k;
-                            var p3 = p * 3;
-
-                            // actual values
-                            var x = axisMin + axisRange * i / (size - 1);
-                            var y = axisMin + axisRange * j / (size - 1);
-                            var z = axisMin + axisRange * k / (size - 1);
-
-                            points[ p3 + 0 ] = x;
-                            points[ p3 + 1 ] = y;
-                            points[ p3 + 2 ] = z;
-
-                            values[ p ] = x*x + y*y - z*z - 25;
-
-                        }
-
-                    }
-
-                }
-
-                return {
-                    nx: size,
-                    ny: size,
-                    nz: size,
-                    points: points,
-                    values: values
-                };
-
-            }
-
-            var d = volumeData( 20 );
-
-            var surface = new NGL.VolumeSurface(
-                "volume", "", d.points, d.values
-            );
-            var component = new NGL.SurfaceComponent( stage, surface, {} );
-
-            stage.addComponent( component );
-
-            component.addRepresentation( "dot", {
-                minValue: 0, maxValue: 20, size: 1
-            } );
-
-        },
-
-        "mrc": function( stage ){
+        "ccp4": function( stage ){
 
             stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
 
-                o.addRepresentation( "dot" );
+                o.addRepresentation( "surface", { flatShaded: true } );
+                o.addRepresentation( "dot", { visible: true } );
                 stage.centerView();
 
             } );
-
 
             stage.loadFile( "data://3pqr.pdb", function( o ){
 

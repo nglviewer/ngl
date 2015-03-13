@@ -4091,6 +4091,10 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        isolevel: {
+            type: "number", precision: 2, max: 1000, min: -1000,
+            rebuild: true
+        },
         wireframe: {
             type: "boolean", rebuild: true
         },
@@ -4115,6 +4119,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         var p = params || {};
 
         this.color = p.color || 0xDDDDDD;
+        this.isolevel = p.isolevel !== undefined ? p.isolevel : NaN;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
@@ -4138,6 +4143,13 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
+
+        if( this.surface instanceof NGL.VolumeSurface ){
+
+            this.surface.generateSurface( this.isolevel );
+            this.flatShaded = true;
+
+        }
 
         var position = this.surface.getPosition();
         var color = this.surface.getColor( this.color );
@@ -4289,14 +4301,14 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        this.surface.filter( this.minValue, this.maxValue );
+        this.surface.filterData( this.minValue, this.maxValue );
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
         this.sphereBuffer = new NGL.SphereBuffer(
-            this.surface.getPosition( "dot" ),
-            this.surface.getColor( this.color ),
-            this.surface.getSize( this.size ),
+            this.surface.getDataPosition(),
+            this.surface.getDataColor( this.color ),
+            this.surface.getDataSize( this.size ),
             undefined,
             {
                 sphereDetail: this.sphereDetail,

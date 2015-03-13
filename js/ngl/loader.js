@@ -374,19 +374,19 @@ NGL.ObjLoader.prototype.constructor = NGL.ObjLoader;
 
 NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
-    var object;
+    var geometry;
 
     if( typeof data === "string" ){
 
-        object = this.parse( data );
+        geometry = this.parse( data );
 
     }else{
 
-        object = data;
+        geometry = data;
 
     }
 
-    var surface = new NGL.ObjectSurface( name, path, object )
+    var surface = new NGL.GeometrySurface( name, path, geometry )
 
     if( typeof callback === "function" ) callback( surface );
 
