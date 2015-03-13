@@ -532,8 +532,16 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
                 return;
             }
 
-            var box = new Float32Array( arrayBuffer, 0, 9 );
-            var coords = new Float32Array( arrayBuffer, 9 * 4 );
+            var numframes = new Int32Array( arrayBuffer, 0, 1 )[ 0 ];
+            var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+            var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
+            var coords = new Float32Array( arrayBuffer, 11 * 4 );
+
+            // NGL.log( time );
+
+            // update numframes as it changes when
+            // new remote data becomes available
+            scope.setNumframes( numframes );
 
             if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
                 var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
@@ -574,13 +582,22 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         loader.load( url, function( n ){
 
-            n = parseInt( n );
-            // NGL.log( "numframes", n );
-
-            scope.numframes = n;
-            scope.signals.gotNumframes.dispatch( n );
+            scope.setNumframes( parseInt( n ) );
 
         });
+
+    },
+
+    setNumframes: function( n ){
+
+        // NGL.log( "numframes", n );
+
+        if( n !== this.numframes ){
+
+            this.numframes = n;
+            this.signals.gotNumframes.dispatch( n );
+
+        }
 
     },
 
