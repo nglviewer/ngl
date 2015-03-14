@@ -950,6 +950,33 @@ NGL.Examples = {
 
         },
 
+        "map": function( stage ){
+
+            stage.loadFile( "data://emd_2682.map.gz", function( o ){
+
+                o.addRepresentation( "surface", {
+                    transparent: true,
+                    opacity: 0.5,
+                    flatShaded: true,
+                    side: THREE.FrontSide
+                } );
+                o.addRepresentation( "surface", {
+                    flatShaded: true,
+                    side: THREE.BackSide
+                } );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "data://4UJD.cif.gz", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+        },
+
     }
 
 };
