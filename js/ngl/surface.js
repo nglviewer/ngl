@@ -7,10 +7,12 @@
 ////////////
 // Surface
 
-NGL.Surface = function( name, path ){
+NGL.Surface = function( name, path, geometry ){
 
     this.name = name;
     this.path = path;
+
+    if( geometry ) this.fromGeometry( geometry );
 
 };
 
@@ -18,89 +20,9 @@ NGL.Surface.prototype = {
 
     constructor: NGL.Surface,
 
-    generateSurface: function(){
+    fromGeometry: function( geometry ){
 
-        // nothing to do
-
-    },
-
-    getPosition: function(){
-
-        NGL.error( "NGL.Surface.getPosition not implemented" );
-
-    },
-
-    getColor: function( color ){
-
-        NGL.error( "NGL.Surface.getColor not implemented" );
-
-    },
-
-    getNormal: function(){
-
-        NGL.error( "NGL.Surface.getNormal not implemented" );
-
-    },
-
-    getIndex: function(){
-
-        NGL.error( "NGL.Surface.getIndex not implemented" );
-
-    },
-
-    filterData: function( minValue, maxValue ){
-
-        NGL.error( "NGL.Surface.filterData not implemented" );
-
-    },
-
-    getDataPosition: function(){
-
-        NGL.error( "NGL.Surface.getDataPosition not implemented" );
-
-    },
-
-    getDataColor: function( color ){
-
-        NGL.error( "NGL.Surface.getDataColor not implemented" );
-
-    },
-
-    getDataSize: function( size ){
-
-        NGL.error( "NGL.Surface.getDataSize not implemented" );
-
-    },
-
-    dispose: function(){
-
-        // TODO ?
-
-    }
-
-};
-
-
-/////////////////////
-// Geometry surface
-
-NGL.GeometrySurface = function( name, path, geometry ){
-
-    NGL.Surface.call( this, name, path );
-
-    this.setGeometry( geometry );
-
-};
-
-NGL.GeometrySurface.prototype = NGL.createObject(
-
-    NGL.Surface.prototype, {
-
-    constructor: NGL.GeometrySurface,
-
-    setGeometry: function( geometry ){
-
-        NGL.time( "NGL.GeometrySurface.setGeometry" );
+        NGL.time( "NGL.GeometrySurface.fromGeometry" );
 
         var geo;
 
@@ -216,15 +138,16 @@ NGL.GeometrySurface.prototype = NGL.createObject(
 
     }
 
-} );
+};
 
 
-///////////////////
-// Volume surface
+///////////
+// Volume
 
-NGL.VolumeSurface = function( name, path, data, nx, ny, nz ){
+NGL.Volume = function( name, path, data, nx, ny, nz ){
 
-    NGL.Surface.call( this, name, path );
+    this.name = name;
+    this.path = path;
 
     this.matrix = new THREE.Matrix4();
 
@@ -232,11 +155,9 @@ NGL.VolumeSurface = function( name, path, data, nx, ny, nz ){
 
 };
 
-NGL.VolumeSurface.prototype = NGL.createObject(
+NGL.Volume.prototype = {
 
-    NGL.Surface.prototype, {
-
-    constructor: NGL.VolumeSurface,
+    constructor: NGL.Volume,
 
     setData: function( data, nx, ny, nz ){
 
@@ -262,6 +183,10 @@ NGL.VolumeSurface.prototype = NGL.createObject(
     },
 
     generateSurface: function( isolevel ){
+
+        if( isNaN( isolevel ) && this.header ){
+            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
+        }
 
         isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
 
@@ -327,6 +252,10 @@ NGL.VolumeSurface.prototype = NGL.createObject(
     },
 
     filterData: function( minValue, maxValue ){
+
+        if( isNaN( minValue ) && this.header ){
+            minValue = this.header.DMEAN + 2.0 * this.header.ARMS;
+        }
 
         minValue = ( minValue !== undefined && !isNaN( minValue ) ) ? minValue : -Infinity;
         maxValue = maxValue !== undefined ? maxValue : Infinity;
@@ -586,56 +515,7 @@ NGL.VolumeSurface.prototype = NGL.createObject(
 
     }
 
-} );
-
-
-NGL.MrcVolume = function( name, path, data, header ){
-
-    data = data || new Float32Array( 0 );
-    this.header = header || { NX: 0, NY: 0, NZ: 0 };
-    var h = this.header;
-
-    NGL.VolumeSurface.call(
-        this, name, path, data, h.NX, h.NY, h.NZ
-    );
-
 };
-
-NGL.MrcVolume.prototype = NGL.createObject(
-
-    NGL.VolumeSurface.prototype, {
-
-    constructor: NGL.MrcVolume,
-
-    filterData: function( minValue, maxValue ){
-
-        var h = this.header;
-
-        if( isNaN( minValue ) ){
-            minValue = h.DMEAN + 2.0 * h.ARMS;
-        }
-
-        NGL.VolumeSurface.prototype.filterData.call(
-            this, minValue, maxValue
-        );
-
-    },
-
-    generateSurface: function( isolevel ){
-
-        var h = this.header;
-
-        if( isNaN( isolevel ) ){
-            isolevel = h.DMEAN + 2.0 * h.ARMS;
-        }
-
-        NGL.VolumeSurface.prototype.generateSurface.call(
-            this, isolevel
-        );
-
-    },
-
-} );
 
 
 ///////////////////

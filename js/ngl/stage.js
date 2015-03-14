@@ -125,7 +125,7 @@ NGL.Stage.prototype = {
 
                 component = new NGL.StructureComponent( scope, object, params );
 
-            }else if( object instanceof NGL.Surface ){
+            }else if( object instanceof NGL.Surface || object instanceof NGL.Volume ){
 
                 component = new NGL.SurfaceComponent( scope, object, params );
 

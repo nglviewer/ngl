@@ -23,7 +23,7 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
         }
 
-    }else if( object instanceof NGL.Surface ){
+    }else if( object instanceof NGL.Surface || object instanceof NGL.Volume ){
 
         if( type === "surface" ){
 
@@ -4133,7 +4133,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.surface instanceof NGL.VolumeSurface ){
+        if( this.surface instanceof NGL.Volume ){
 
             this.surface.generateSurface( this.isolevel );
             this.flatShaded = true;

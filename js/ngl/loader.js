@@ -386,7 +386,7 @@ NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
     }
 
-    var surface = new NGL.GeometrySurface( name, path, geometry )
+    var surface = new NGL.Surface( name, path, geometry )
 
     if( typeof callback === "function" ) callback( surface );
 
