@@ -109,8 +109,34 @@ NGL.Buffer.prototype = {
 
         if( type === "wireframe" || this.wireframe ){
 
+            if( !this.wireframeGeometry ){
+
+                var index = this.geometry.attributes.index.array;
+                var n = index.length;
+                var wireframeIndex = new Uint32Array( n * 6 );
+
+                for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
+
+                    var a = index[ i + 0 ];
+                    var b = index[ i + 1 ];
+                    var c = index[ i + 2 ];
+
+                    wireframeIndex[ j + 0 ] = a;
+                    wireframeIndex[ j + 1 ] = b;
+                    wireframeIndex[ j + 2 ] = a;
+                    wireframeIndex[ j + 3 ] = c;
+                    wireframeIndex[ j + 4 ] = b;
+                    wireframeIndex[ j + 5 ] = c;
+
+                }
+
+                this.wireframeGeometry = this.geometry.clone();
+                this.wireframeGeometry.attributes.index.array = wireframeIndex;
+
+            }
+
             return new THREE.Line(
-                this.geometry, material, THREE.LinePieces
+                this.wireframeGeometry, material, THREE.LinePieces
             );
 
         }else{
@@ -146,7 +172,7 @@ NGL.Buffer.prototype = {
 
         }else if( type === "wireframe" || this.wireframe ){
 
-            material = new THREE.LineBasicMaterial({
+            material = new THREE.LineBasicMaterial( {
 
                 uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
@@ -154,7 +180,7 @@ NGL.Buffer.prototype = {
                 lights: false,
                 fog: true
 
-            });
+            } );
 
         }else{
 
@@ -251,24 +277,36 @@ NGL.Buffer.prototype = {
 
     },
 
-    /**
-     * Sets buffer attributes
-     * @param {Object} data - An object where the keys are the attribute names
-     *      and the values are the attribute data.
-     * @example
-     * var buffer = new NGL.Buffer();
-     * buffer.setAttributes({ attrName: attrData });
-     */
     setAttributes: function( data ){
 
+        /**
+         * Sets buffer attributes
+         * @param {Object} data - An object where the keys are the attribute names
+         *      and the values are the attribute data.
+         * @example
+         * var buffer = new NGL.Buffer();
+         * buffer.setAttributes({ attrName: attrData });
+         */
+
         var attributes = this.geometry.attributes;
+
+        if( this.wireframeGeometry ){
+
+            var wireframeAttributes = this.wireframeGeometry.attributes;
+
+        }
 
         Object.keys( data ).forEach( function( name ){
 
             attributes[ name ].set( data[ name ] );
-
             attributes[ name ].needsUpdate = true;
-            this.attributes[ name ].needsUpdate = true;
+
+            if( this.wireframeGeometry ){
+
+                wireframeAttributes[ name ].set( data[ name ] );
+                wireframeAttributes[ name ].needsUpdate = true;
+
+            }
 
         }, this );
 
