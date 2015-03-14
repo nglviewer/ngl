@@ -1556,6 +1556,16 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         })() );
 
+    if( component.parent instanceof NGL.SurfaceComponent ){
+
+        colorWidget.schemeSelector.setOptions( {
+            "": "",
+            "value": "value",
+            "color": "color",
+        } );
+
+    }
+
     container
         .addStatic( name )
         .addStatic( toggle )

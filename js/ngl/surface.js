@@ -250,9 +250,14 @@ NGL.VolumeSurface.prototype = NGL.createObject(
         delete this.__isolevel;
         delete this.__minValue;
         delete this.__maxValue;
+
         delete this.__dataPositionBuffer;
         delete this.__dataPosition;
         delete this.__dataBuffer;
+
+        delete this.__dataMin;
+        delete this.__dataMax;
+        delete this.__dataMean;
 
     },
 
@@ -439,22 +444,145 @@ NGL.VolumeSurface.prototype = NGL.createObject(
 
     getDataColor: function( color ){
 
-        var n = this.dataPosition.length / 3;
+        var spectralScale = chroma
+            .scale( 'Spectral' )
+            .mode('lch')
+            .domain( [ this.getDataMin(), this.getDataMax() ]);
 
-        var tc = new THREE.Color( color );
-        var col = NGL.Utils.uniformArray3(
-            n, tc.r, tc.g, tc.b
-        );
+        var n = this.data.length;
+        var data = this.data;
+        var array;
 
-        return col;
+        switch( color ){
+
+            case "value":
+
+                array = new Float32Array( n * 3 );
+                for( var i = 0; i < n; ++i ){
+                    var i3 = i * 3;
+                    var c = spectralScale( data[ i ] )._rgb
+                    array[ i3 + 0 ] = c[ 0 ] / 255;
+                    array[ i3 + 1 ] = c[ 1 ] / 255;
+                    array[ i3 + 2 ] = c[ 2 ] / 255;
+                }
+                break;
+
+            default:
+
+                var tc = new THREE.Color( color );
+                array = NGL.Utils.uniformArray3(
+                    n, tc.r, tc.g, tc.b
+                );
+                break;
+
+        }
+
+        return array;
 
     },
 
-    getDataSize: function( size ){
+    getDataSize: function( size, scale ){
 
-        var n = this.dataPosition.length / 3;
+        var n = this.data.length;
+        var array;
 
-        return NGL.Utils.uniformArray( n, size );
+        switch( size ){
+
+            case "value":
+
+                array = new Float32Array( this.data );
+                break;
+
+            case "value-min":
+
+                array = new Float32Array( this.data );
+                var min = this.getDataMin();
+                for( var i = 0; i < n; ++i ){
+                    array[ i ] -= min;
+                }
+                break;
+
+            case "deviation":
+
+                array = new Float32Array( this.data );
+                break;
+
+            default:
+
+                array = NGL.Utils.uniformArray( n, size );
+                break;
+
+        }
+
+        if( scale !== 1.0 ){
+
+            for( var i = 0; i < n; ++i ){
+                array[ i ] *= scale;
+            }
+
+        }
+
+        return array;
+
+    },
+
+    getDataMin: function(){
+
+        if( this.__dataMin === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var min = Infinity;
+
+            for( var i = 0; i < n; ++i ){
+                min = Math.min( min, data[ i ] );
+            }
+
+            this.__dataMin = min;
+
+        }
+
+        return this.__dataMin;
+
+    },
+
+    getDataMax: function(){
+
+        if( this.__dataMax === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var max = -Infinity;
+
+            for( var i = 0; i < n; ++i ){
+                max = Math.max( max, data[ i ] );
+            }
+
+            this.__dataMax = max;
+
+        }
+
+        return this.__dataMax;
+
+    },
+
+    getDataMean: function(){
+
+        if( this.__dataMean === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var sum = 0;
+
+            for( var i = 0; i < n; ++i ){
+                sum += data[ i ];
+            }
+
+            this.__dataMean = sum / n;
+
+        }
+
+        return this.__dataMean;
 
     }
 

@@ -4244,7 +4244,19 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         maxValue: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
+        sizeType: {
+            type: "select", options: {
+                "": "",
+                "value": "value",
+                "value-min": "value-min",
+                "deviation": "deviation",
+                "size": "size"
+            }
+        },
         size: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
         sphereDetail: {
@@ -4262,6 +4274,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         }
 
     }, NGL.Representation.prototype.parameters ),
+
+    defaultSize: 0.1,
 
     init: function( params ){
 
@@ -4284,6 +4298,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.minValue = p.minValue !== undefined ? p.minValue : NaN;
         this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
         this.size = p.size !== undefined ? p.size : 0.1;
+        this.scale = p.scale !== undefined ? p.scale : 1.0;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -4313,7 +4328,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.sphereBuffer = new NGL.SphereBuffer(
             this.surface.getDataPosition(),
             this.surface.getDataColor( this.color ),
-            this.surface.getDataSize( this.size ),
+            this.surface.getDataSize( this.size, this.scale ),
             undefined,
             {
                 sphereDetail: this.sphereDetail,
@@ -4342,9 +4357,11 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( what[ "size" ] || what[ "size" ] ){
+        if( what[ "size" ] || what[ "scale" ] ){
 
-            sphereData[ "radius" ] = this.surface.getDataSize( this.size );
+            sphereData[ "radius" ] = this.surface.getDataSize(
+                this.size, this.scale
+            );
 
         }
 
@@ -4356,9 +4373,32 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
+        if( params && params[ "sizeType" ] !== undefined ){
+
+            if( params[ "sizeType" ] === "size" ){
+                this.size = this.defaultSize;
+            }else{
+                this.size = params[ "sizeType" ];
+            }
+            what[ "size" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
         if( params && params[ "size" ] !== undefined ){
 
             what[ "size" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        if( params && params[ "scale" ] !== undefined ){
+
+            what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
