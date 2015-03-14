@@ -379,6 +379,12 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
 
     this.finalize();
 
+    if( normal === undefined ){
+
+        this.geometry.computeVertexNormals();
+
+    }
+
 };
 
 NGL.MeshBuffer.prototype = Object.create( NGL.Buffer.prototype );

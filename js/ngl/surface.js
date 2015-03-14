@@ -236,12 +236,7 @@ NGL.Volume.prototype = {
 
     getNormal: function(){
 
-        // FIXME
-        // return this.normal;
-
-        return NGL.Utils.uniformArray3(
-            this.size, 1, 1, 1
-        );
+        return this.normal;
 
     },
 

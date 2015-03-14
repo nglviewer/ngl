@@ -4136,7 +4136,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         if( this.surface instanceof NGL.Volume ){
 
             this.surface.generateSurface( this.isolevel );
-            this.flatShaded = true;
 
         }
 
