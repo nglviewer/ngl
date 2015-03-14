@@ -546,7 +546,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "radius" ] !== undefined ){
 
-            this.radius = params[ "radius" ];
             what[ "radius" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
@@ -556,7 +555,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "scale" ] !== undefined ){
 
-            this.scale = params[ "scale" ];
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
@@ -1145,7 +1143,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
@@ -1750,7 +1747,6 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
@@ -1989,7 +1985,6 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
@@ -2203,7 +2198,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -2561,14 +2555,12 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
 
         }
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -2741,7 +2733,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -2904,7 +2895,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -3451,7 +3441,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "radius" ] = true;
 
         }
@@ -4207,6 +4196,22 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var surfaceData = {};
+
+        if( what[ "color" ] ){
+
+            surfaceData[ "color" ] = this.surface.getColor( this.color );
+
+        }
+
+        this.surfaceBuffer.setAttributes( surfaceData );
+
     }
 
 } );
@@ -4240,16 +4245,16 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
         size: {
-            type: "number", precision: 3, max: 10.0, min: 0.001, rebuild: true
+            type: "number", precision: 3, max: 10.0, min: 0.001
         },
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
         transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, rebuild: true,
+            type: "select", options: NGL.SideTypes, property: true,
             int: true
         },
         opacity: {
@@ -4322,6 +4327,49 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         );
 
         this.bufferList.push( this.sphereBuffer );
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var sphereData = {};
+
+        if( what[ "color" ] ){
+
+            sphereData[ "color" ] = this.surface.getDataColor( this.color );
+
+        }
+
+        if( what[ "size" ] || what[ "size" ] ){
+
+            sphereData[ "radius" ] = this.surface.getDataSize( this.size );
+
+        }
+
+        this.sphereBuffer.setAttributes( sphereData );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        what = what || {};
+
+        if( params && params[ "size" ] !== undefined ){
+
+            what[ "size" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 

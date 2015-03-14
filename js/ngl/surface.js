@@ -247,11 +247,25 @@ NGL.VolumeSurface.prototype = NGL.createObject(
         this.data = data;
         this.__data = this.data;
 
+        delete this.__isolevel;
+        delete this.__minValue;
+        delete this.__maxValue;
+        delete this.__dataPositionBuffer;
+        delete this.__dataPosition;
+        delete this.__dataBuffer;
+
     },
 
     generateSurface: function( isolevel ){
 
         isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+
+        if( isolevel === this.__isolevel ){
+
+            // already generated
+            return;
+
+        }
 
         var sd = NGL.MarchingCubes(
 
@@ -266,6 +280,8 @@ NGL.VolumeSurface.prototype = NGL.createObject(
         this.size = this.position.length / 3;
 
         this.matrix.applyToVector3Array( this.position );
+
+        this.__isolevel = isolevel;
 
     },
 
