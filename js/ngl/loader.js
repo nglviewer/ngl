@@ -351,6 +351,8 @@ NGL.VolumeLoader.prototype.init = function( bin, name, path, ext, callback, para
         "ccp4": NGL.MrcParser,
         "map": NGL.MrcParser,
 
+        "cube": NGL.CubeParser,
+
     };
 
     var parser = new parsersClasses[ ext ](
@@ -442,6 +444,7 @@ NGL.autoLoad = function(){
         "mrc": NGL.VolumeLoader,
         "ccp4": NGL.VolumeLoader,
         "map": NGL.VolumeLoader,
+        "cube": NGL.VolumeLoader,
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,

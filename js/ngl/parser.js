@@ -1983,3 +1983,61 @@ NGL.MrcParser.prototype.makeMatrix = function(){
     this.volume.matrix.copy( matrix );
 
 };
+
+
+NGL.CubeParser = function( name, path, params ){
+
+    NGL.VolumeParser.call( this, name, path, params );
+
+};
+
+NGL.CubeParser.prototype = Object.create( NGL.VolumeParser.prototype );
+
+NGL.CubeParser.prototype.constructor = NGL.CubeParser;
+
+NGL.CubeParser.prototype._parse = function( str, callback ){
+
+    // http://paulbourke.net/dataformats/cube/
+
+    var __timeName = "NGL.CubeParser._parse " + this.name;
+
+    NGL.time( __timeName );
+
+    var v = this.volume;
+    var header = {};
+
+    var lines = str.split( "\n" );
+
+    // TODO parse header
+
+    var data = new Float32Array(
+        header.NX * header.NY * header.NZ
+    );
+
+    // TODO parse voxel data
+
+    v.header = header;
+
+    v.setData( data, header.NX, header.NY, header.NZ );
+
+    NGL.timeEnd( __timeName );
+
+    callback();
+
+};
+
+NGL.CubeParser.prototype.makeMatrix = function(){
+
+    var h = this.volume.header;
+
+    var matrix = new THREE.Matrix4();
+
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            h.NXSTART, h.NYSTART, h.NZSTART
+        )
+    );
+
+    this.volume.matrix.copy( matrix );
+
+};
