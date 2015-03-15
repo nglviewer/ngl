@@ -966,12 +966,12 @@ NGL.Examples = {
 
             } );
 
-            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
+            stage.loadFile( "data://4UJD.cif.gz", function( o ){
 
-            //     o.addRepresentation( "cartoon", { color: "chainindex" } );
-            //     stage.centerView();
+                o.addRepresentation( "cartoon", { color: "chainindex" } );
+                stage.centerView();
 
-            // } );
+            } );
 
         }
 

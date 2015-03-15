@@ -212,8 +212,10 @@ NGL.Volume.prototype = {
         // console.log( this.position.length, this.index.length );
         // v1 595086 296292 rhodopsin
         // v2 842049 280683
+        // v3  95049 245268
         // v1 11748744 5887308 ribosome
         // v2 17660736 5886912
+        // v3  2160663 5886912
 
         this.matrix.applyToVector3Array( this.position );
 
@@ -669,7 +671,7 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
 };
 
-NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
+NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
 
     // Based on alteredq / http://alteredqualia.com/
     // port of greggman's ThreeD version of marching cubes to Three.js
@@ -686,6 +688,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
     var size2 = nx * ny;
     var size3 = size2 * nz;
 
+    var n = nx * ny * nz;
+
     // deltas
 
     var yd = nx;
@@ -693,12 +697,20 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
 
     // temp buffers used in polygonize
 
-    var normalCache = new Float32Array( size3 * 3 );
+    if( !noNormals ){
+        var normalCache = new Float32Array( size3 * 3 );
+    }
 
-    var vlist = new Float32Array( 12 * 3 );
-    var nlist = new Float32Array( 12 * 3 );
+    var vertexIndex = new Int32Array( nx * ny * nz );
+
+    for( var i = 0; i < n; ++i ){
+        vertexIndex[ i ] = -1;
+    }
+
+    var ilist = new Int32Array( 12 );
 
     var count = 0;
+    var icount = 0;
 
     var positionArray = [];
     var normalArray   = [];
@@ -710,50 +722,111 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
 
     function VIntX( q, offset, x, y, z, valp1, valp2 ) {
 
-        var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
-        var nc = normalCache;
+        if( vertexIndex[ q ] < 0 ){
 
-        vlist[ offset ]     = x + mu;
-        vlist[ offset + 1 ] = y;
-        vlist[ offset + 2 ] = z;
+            var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
+            var nc = normalCache;
 
-        nlist[ offset ]     = lerp( nc[ q ],     nc[ q + 3 ], mu );
-        nlist[ offset + 1 ] = lerp( nc[ q + 1 ], nc[ q + 4 ], mu );
-        nlist[ offset + 2 ] = lerp( nc[ q + 2 ], nc[ q + 5 ], mu );
+            var c = count * 3;
+
+            positionArray[ c + 0 ] = x + mu;
+            positionArray[ c + 1 ] = y;
+            positionArray[ c + 2 ] = z;
+
+            if( !noNormals ){
+
+                var q3 = q * 3;
+
+                normalArray[ c ]     = -lerp( nc[ q3 ],     nc[ q3 + 3 ], mu );
+                normalArray[ c + 1 ] = -lerp( nc[ q3 + 1 ], nc[ q3 + 4 ], mu );
+                normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q3 + 5 ], mu );
+
+            }
+
+            vertexIndex[ q ] = count;
+            ilist[ offset ] = count;
+
+            count += 1;
+
+        }else{
+
+            ilist[ offset ] = vertexIndex[ q ];
+
+        }
 
     }
 
     function VIntY( q, offset, x, y, z, valp1, valp2 ) {
 
-        var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
-        var nc = normalCache;
+        if( vertexIndex[ q ] < 0 ){
 
-        vlist[ offset ]     = x;
-        vlist[ offset + 1 ] = y + mu;
-        vlist[ offset + 2 ] = z;
+            var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
+            var nc = normalCache;
 
-        var q2 = q + yd * 3;
+            var c = count * 3;
 
-        nlist[ offset ]     = lerp( nc[ q ],     nc[ q2 ],     mu );
-        nlist[ offset + 1 ] = lerp( nc[ q + 1 ], nc[ q2 + 1 ], mu );
-        nlist[ offset + 2 ] = lerp( nc[ q + 2 ], nc[ q2 + 2 ], mu );
+            positionArray[ c ]     = x;
+            positionArray[ c + 1 ] = y + mu;
+            positionArray[ c + 2 ] = z;
+
+            if( !noNormals ){
+
+                var q3 = q * 3;
+                var q6 = q3 + yd * 3;
+
+                normalArray[ c ]     = -lerp( nc[ q3 ],     nc[ q6 ],     mu );
+                normalArray[ c + 1 ] = -lerp( nc[ q3 + 1 ], nc[ q6 + 1 ], mu );
+                normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q6 + 2 ], mu );
+
+            }
+
+            vertexIndex[ q ] = count;
+            ilist[ offset ] = count;
+
+            count += 1;
+
+        }else{
+
+            ilist[ offset ] = vertexIndex[ q ];
+
+        }
 
     }
 
     function VIntZ( q, offset, x, y, z, valp1, valp2 ) {
 
-        var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
-        var nc = normalCache;
+        if( vertexIndex[ q ] < 0 ){
 
-        vlist[ offset ]     = x;
-        vlist[ offset + 1 ] = y;
-        vlist[ offset + 2 ] = z + mu;
+            var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
+            var nc = normalCache;
 
-        var q2 = q + zd * 3;
+            var c = count * 3;
 
-        nlist[ offset ]     = lerp( nc[ q ],     nc[ q2 ],     mu );
-        nlist[ offset + 1 ] = lerp( nc[ q + 1 ], nc[ q2 + 1 ], mu );
-        nlist[ offset + 2 ] = lerp( nc[ q + 2 ], nc[ q2 + 2 ], mu );
+            positionArray[ c ]     = x;
+            positionArray[ c + 1 ] = y;
+            positionArray[ c + 2 ] = z + mu;
+
+            if( !noNormals ){
+
+                var q3 = q * 3;
+                var q6 = q3 + zd * 3;
+
+                normalArray[ c ]     = -lerp( nc[ q3 ],     nc[ q6 ],     mu );
+                normalArray[ c + 1 ] = -lerp( nc[ q3 + 1 ], nc[ q6 + 1 ], mu );
+                normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q6 + 2 ], mu );
+
+            }
+
+            vertexIndex[ q ] = count;
+            ilist[ offset ] = count;
+
+            count += 1;
+
+        }else{
+
+            ilist[ offset ] = vertexIndex[ q ];
+
+        }
 
     }
 
@@ -814,33 +887,41 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
 
         if ( bits & 1 ) {
 
-            compNorm( q );
-            compNorm( q1 );
-            VIntX( q * 3, 0, fx, fy, fz, field0, field1 );
+            if( !noNormals ){
+                compNorm( q );
+                compNorm( q1 );
+            }
+            VIntX( q, 0, fx, fy, fz, field0, field1 );
 
         };
 
         if ( bits & 2 ) {
 
-            compNorm( q1 );
-            compNorm( q1y );
-            VIntY( q1 * 3, 3, fx2, fy, fz, field1, field3 );
+            if( !noNormals ){
+                compNorm( q1 );
+                compNorm( q1y );
+            }
+            VIntY( q1, 1, fx2, fy, fz, field1, field3 );
 
         };
 
         if ( bits & 4 ) {
 
-            compNorm( qy );
-            compNorm( q1y );
-            VIntX( qy * 3, 6, fx, fy2, fz, field2, field3 );
+            if( !noNormals ){
+                compNorm( qy );
+                compNorm( q1y );
+            }
+            VIntX( qy, 2, fx, fy2, fz, field2, field3 );
 
         };
 
         if ( bits & 8 ) {
 
-            compNorm( q );
-            compNorm( qy );
-            VIntY( q * 3, 9, fx, fy, fz, field0, field2 );
+            if( !noNormals ){
+                compNorm( q );
+                compNorm( qy );
+            }
+            VIntY( q, 3, fx, fy, fz, field0, field2 );
 
         };
 
@@ -848,33 +929,41 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
 
         if ( bits & 16 ) {
 
-            compNorm( qz );
-            compNorm( q1z );
-            VIntX( qz * 3, 12, fx, fy, fz2, field4, field5 );
+            if( !noNormals ){
+                compNorm( qz );
+                compNorm( q1z );
+            }
+            VIntX( qz, 4, fx, fy, fz2, field4, field5 );
 
         };
 
         if ( bits & 32 ) {
 
-            compNorm( q1z );
-            compNorm( q1yz );
-            VIntY( q1z * 3, 15, fx2, fy, fz2, field5, field7 );
+            if( !noNormals ){
+                compNorm( q1z );
+                compNorm( q1yz );
+            }
+            VIntY( q1z, 5, fx2, fy, fz2, field5, field7 );
 
         };
 
         if ( bits & 64 ) {
 
-            compNorm( qyz );
-            compNorm( q1yz );
-            VIntX( qyz * 3, 18, fx, fy2, fz2, field6, field7 );
+            if( !noNormals ){
+                compNorm( qyz );
+                compNorm( q1yz );
+            }
+            VIntX( qyz, 6, fx, fy2, fz2, field6, field7 );
 
         };
 
         if ( bits & 128 ) {
 
-            compNorm( qz );
-            compNorm( qyz );
-            VIntY( qz * 3, 21, fx, fy, fz2, field4, field6 );
+            if( !noNormals ){
+                compNorm( qz );
+                compNorm( qyz );
+            }
+            VIntY( qz, 7, fx, fy, fz2, field4, field6 );
 
         };
 
@@ -882,33 +971,41 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
 
         if ( bits & 256 ) {
 
-            compNorm( q );
-            compNorm( qz );
-            VIntZ( q * 3, 24, fx, fy, fz, field0, field4 );
+            if( !noNormals ){
+                compNorm( q );
+                compNorm( qz );
+            }
+            VIntZ( q, 8, fx, fy, fz, field0, field4 );
 
         };
 
         if ( bits & 512 ) {
 
-            compNorm( q1 );
-            compNorm( q1z );
-            VIntZ( q1 * 3, 27, fx2, fy,  fz, field1, field5 );
+            if( !noNormals ){
+                compNorm( q1 );
+                compNorm( q1z );
+            }
+            VIntZ( q1, 9, fx2, fy, fz, field1, field5 );
 
         };
 
         if ( bits & 1024 ) {
 
-            compNorm( q1y );
-            compNorm( q1yz );
-            VIntZ( q1y * 3, 30, fx2, fy2, fz, field3, field7 );
+            if( !noNormals ){
+                compNorm( q1y );
+                compNorm( q1yz );
+            }
+            VIntZ( q1y, 10, fx2, fy2, fz, field3, field7 );
 
         };
 
         if ( bits & 2048 ) {
 
-            compNorm( qy );
-            compNorm( qyz );
-            VIntZ( qy * 3, 33, fx,  fy2, fz, field2, field6 );
+            if( !noNormals ){
+                compNorm( qy );
+                compNorm( qyz );
+            }
+            VIntZ( qy, 11, fx, fy2, fz, field2, field6 );
 
         };
 
@@ -924,60 +1021,15 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
             o2 = o1 + 1;
             o3 = o1 + 2;
 
-            posnormtriv(
-                3 * triTable[ o1 ],
-                3 * triTable[ o2 ],
-                3 * triTable[ o3 ]
-            );
+            // FIXME normals flipping (see above) and vertex order reversal
+            indexArray[ icount ]     = ilist[ triTable[ o2 ] ];
+            indexArray[ icount + 1 ] = ilist[ triTable[ o1 ] ];
+            indexArray[ icount + 2 ] = ilist[ triTable[ o3 ] ];
 
+            icount += 3;
             i += 3;
 
         }
-
-    }
-
-    function posnormtriv( o1, o2, o3 ) {
-
-        var c = count * 3;
-
-        // positions
-
-        positionArray[ c ]     = vlist[ o1 ];
-        positionArray[ c + 1 ] = vlist[ o1 + 1 ];
-        positionArray[ c + 2 ] = vlist[ o1 + 2 ];
-
-        positionArray[ c + 3 ] = vlist[ o2 ];
-        positionArray[ c + 4 ] = vlist[ o2 + 1 ];
-        positionArray[ c + 5 ] = vlist[ o2 + 2 ];
-
-        positionArray[ c + 6 ] = vlist[ o3 ];
-        positionArray[ c + 7 ] = vlist[ o3 + 1 ];
-        positionArray[ c + 8 ] = vlist[ o3 + 2 ];
-
-        // normals
-
-        normalArray[ c ]     = -nlist[ o1 ];
-        normalArray[ c + 1 ] = -nlist[ o1 + 1 ];
-        normalArray[ c + 2 ] = -nlist[ o1 + 2 ];
-
-        normalArray[ c + 3 ] = -nlist[ o2 ];
-        normalArray[ c + 4 ] = -nlist[ o2 + 1 ];
-        normalArray[ c + 5 ] = -nlist[ o2 + 2 ];
-
-        normalArray[ c + 6 ] = -nlist[ o3 ];
-        normalArray[ c + 7 ] = -nlist[ o3 + 1 ];
-        normalArray[ c + 8 ] = -nlist[ o3 + 2 ];
-
-        // index
-
-        indexArray[ count ]     = count + 2;
-        indexArray[ count + 1 ] = count + 1;
-        indexArray[ count + 2 ] = count + 0;
-
-        // FIXME normals flipping and vertex order reversal
-        // TODO re-use positions
-
-        count += 3;
 
     }
 
@@ -1016,7 +1068,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel ){
 
     return {
         position: new Float32Array( positionArray ),
-        normal: new Float32Array( normalArray ),
+        normal: noNormals ? undefined : new Float32Array( normalArray ),
         index: new Uint32Array( indexArray )
     };
 
