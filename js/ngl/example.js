@@ -935,8 +935,8 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
 
-                o.addRepresentation( "surface", { flatShaded: true } );
-                o.addRepresentation( "dot", { visible: true } );
+                o.addRepresentation( "surface" );
+                o.addRepresentation( "dot", { visible: false } );
                 stage.centerView();
 
             } );
@@ -957,25 +957,23 @@ NGL.Examples = {
                 o.addRepresentation( "surface", {
                     transparent: true,
                     opacity: 0.5,
-                    flatShaded: true,
                     side: THREE.FrontSide
                 } );
                 o.addRepresentation( "surface", {
-                    flatShaded: true,
                     side: THREE.BackSide
                 } );
                 stage.centerView();
 
             } );
 
-            stage.loadFile( "data://4UJD.cif.gz", function( o ){
+            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
 
-                o.addRepresentation( "cartoon" );
-                stage.centerView();
+            //     o.addRepresentation( "cartoon", { color: "chainindex" } );
+            //     stage.centerView();
 
-            } );
+            // } );
 
-        },
+        }
 
     }
 
