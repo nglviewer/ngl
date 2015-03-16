@@ -4422,9 +4422,13 @@ NGL.representationTypes = {};
 
 for( var key in NGL ){
 
-    if( NGL[ key ].prototype instanceof NGL.StructureRepresentation ){
+    var val = NGL[ key ];
 
-        NGL.representationTypes[ NGL[ key ].prototype.type ] = NGL[ key ];
+    if( val.prototype instanceof NGL.StructureRepresentation &&
+        val.prototype.type
+    ){
+
+        NGL.representationTypes[ val.prototype.type ] = val;
 
     }
 
