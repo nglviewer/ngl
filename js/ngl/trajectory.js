@@ -81,39 +81,7 @@ NGL.Trajectory.prototype = {
         this.structure = structure;
         this.atomCount = structure.atomCount;
 
-        if( structure instanceof NGL.StructureSubset ){
-
-            this.atomIndices = [];
-
-            var indices = structure.structure.atomIndex( structure.selection );
-
-            var i, r;
-            var p = indices[ 0 ];
-            var q = indices[ 0 ];
-            var n = indices.length;
-
-            for( i = 1; i < n; ++i ){
-
-                r = indices[ i ];
-
-                if( q + 1 < r ){
-
-                    this.atomIndices.push( [ p, q + 1 ] );
-                    p = r;
-
-                }
-
-                q = r;
-
-            }
-
-            this.atomIndices.push( [ p, q + 1 ] );
-
-        }else{
-
-            this.atomIndices = [ [ 0, this.atomCount ] ];
-
-        }
+        this.makeAtomIndices();
 
         this.saveInitialStructure();
 
@@ -179,6 +147,12 @@ NGL.Trajectory.prototype = {
             coords2[ i + 2 ] = y[ j + 2 ];
 
         }
+
+    },
+
+    makeAtomIndices: function(){
+
+        NGL.error( "Trajectory.makeAtomIndices not implemented" );
 
     },
 
@@ -506,6 +480,47 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
     type: "remote",
 
+    makeAtomIndices: function(){
+
+        var structure = this.structure;
+        var atomIndices = [];
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            var indices = structure.structure.atomIndex( structure.selection );
+
+            var i, r;
+            var p = indices[ 0 ];
+            var q = indices[ 0 ];
+            var n = indices.length;
+
+            for( i = 1; i < n; ++i ){
+
+                r = indices[ i ];
+
+                if( q + 1 < r ){
+
+                    atomIndices.push( [ p, q + 1 ] );
+                    p = r;
+
+                }
+
+                q = r;
+
+            }
+
+            atomIndices.push( [ p, q + 1 ] );
+
+        }else{
+
+            atomIndices.push( [ 0, this.atomCount ] );
+
+        }
+
+        this.atomIndices = atomIndices;
+
+    },
+
     loadFrame: function( i, callback ){
 
         // TODO implement max frameCache size, re-use arrays
@@ -543,8 +558,8 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             // NGL.log( time );
 
-            // FIXME update numframes as it changes when
-            //       new remote data becomes available
+            // update numframes as it changes when
+            // new remote data becomes available
             scope.setNumframes( numframes );
 
             if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
@@ -675,6 +690,24 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     type: "structure",
 
+    makeAtomIndices: function(){
+
+        var structure = this.structure;
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            this.atomIndices = structure.structure.atomIndex(
+                structure.selection
+            );
+
+        }else{
+
+            this.atomIndices = null;
+
+        }
+
+    },
+
     setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
 
         if( i === undefined ) return this;
@@ -750,11 +783,9 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
         var structure = this.structure;
         var frame = this.structure.frames[ i ];
 
-        if( structure instanceof NGL.StructureSubset ){
+        if( this.atomIndices ){
 
-            // FIXME the structureSubset indices should be cached and
-            //       regenerated when structureSubset changes
-            var indices = structure.structure.atomIndex( structure.selection );
+            var indices = this.atomIndices;
             var m = indices.length;
 
             coords = new Float32Array( m * 3 );
