@@ -231,9 +231,145 @@ NGL.Trajectory.prototype = {
 
     },
 
+    interpolate: function(){
+
+        var spline = function( p0, p1, p2, p3, t, tension ) {
+
+            var v0 = ( p2 - p0 ) * tension;
+            var v1 = ( p3 - p1 ) * tension;
+            var t2 = t * t;
+            var t3 = t * t2;
+
+            return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+                   ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+                   v0 * t + p1;
+
+        }
+
+        var lerp = function( a, b, t ) {
+
+            return a + ( b - a ) * t;
+
+        }
+
+        return function( i, ip, ipp, ippp, t, type ){
+
+            var fc = this.frameCache;
+
+            var c = fc[ i ];
+            var cp = fc[ ip ];
+            var cpp = fc[ ipp ];
+            var cppp = fc[ ippp ];
+
+            var m = c.length;
+            var coords = new Float32Array( m );
+
+            if( type === "spline" ){
+
+                for( var j = 0; j < m; j += 3 ){
+
+                    coords[ j + 0 ] = spline(
+                        cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+                    );
+                    coords[ j + 1 ] = spline(
+                        cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+                    );
+                    coords[ j + 2 ] = spline(
+                        cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+                    );
+
+                }
+
+            }else{
+
+                for( var j = 0; j < m; j += 3 ){
+
+                    coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
+                    coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
+                    coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
+
+                }
+
+            }
+
+            this.structure.updatePosition( coords );
+            this.currentFrame = i;
+            this.signals.frameChanged.dispatch( i );
+
+        }
+
+    }(),
+
+    setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
+
+        if( i === undefined ) return this;
+
+        var fc = this.frameCache;
+
+        var iList = [];
+
+        if( !fc[ ippp ] ) iList.push( ippp );
+        if( !fc[ ipp ] ) iList.push( ipp );
+        if( !fc[ ip ] ) iList.push( ip );
+        if( !fc[ i ] ) iList.push( i );
+
+        if( iList.length ){
+
+            this.loadFrame( iList, function(){
+
+                this.interpolate( i, ip, ipp, ippp, t, type );
+
+            }.bind( this ) );
+
+        }else{
+
+            this.interpolate( i, ip, ipp, ippp, t, type );
+
+        }
+
+        return this;
+
+    },
+
     loadFrame: function( i, callback ){
 
-        NGL.error( "Trajectory.loadFrame not implemented" );
+        if( Array.isArray( i ) ){
+
+            var scope = this;
+
+            async.eachLimit(
+
+                i, 4,
+
+                function( j ){
+
+                    scope._loadFrame( j );
+
+                },
+
+                function( error ){
+
+                    if( typeof callback === "function" ){
+
+                        callback();
+
+                    }
+
+                }
+
+            );
+
+        }else{
+
+            this._loadFrame( i, callback );
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        NGL.error( "Trajectory._loadFrame not implemented" );
 
     },
 
@@ -562,11 +698,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
     },
 
-    loadFrame: function( i, callback ){
+    _loadFrame: function( i, callback ){
 
         // TODO implement max frameCache size, re-use arrays
 
-        // NGL.time( "loadFrame" );
+        // NGL.time( "NGL.RemoteTrajectory._loadFrame" );
 
         var scope = this;
 
@@ -583,7 +719,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         request.addEventListener( 'load', function( event ){
 
-            // NGL.timeEnd( "loadFrame" );
+            // NGL.timeEnd( "NGL.RemoteTrajectory._loadFrame" );
 
             var arrayBuffer = this.response;
 
@@ -714,76 +850,7 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     },
 
-    setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
-
-        if( i === undefined ) return this;
-
-        var fc = this.frameCache;
-
-        if( !fc[ ippp ] ) this.loadFrame( ippp );
-        if( !fc[ ipp ] ) this.loadFrame( ipp );
-        if( !fc[ ip ] ) this.loadFrame( ip );
-        if( !fc[ i ] ) this.loadFrame( i );
-
-        var c = fc[ i ];
-        var cp = fc[ ip ];
-        var cpp = fc[ ipp ];
-        var cppp = fc[ ippp ];
-
-        var m = c.length;
-        var coords = new Float32Array( m );
-
-        if( type === "spline" ){
-
-            function spline( p0, p1, p2, p3, t, tension ) {
-
-                var v0 = ( p2 - p0 ) * tension;
-                var v1 = ( p3 - p1 ) * tension;
-                var t2 = t * t;
-                var t3 = t * t2;
-                return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
-                       ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
-                       v0 * t + p1;
-
-            }
-
-            for( var j = 0; j < m; j += 3 ){
-
-                coords[ j + 0 ] = spline(
-                    cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-                );
-                coords[ j + 1 ] = spline(
-                    cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-                );
-                coords[ j + 2 ] = spline(
-                    cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-                );
-
-            }
-
-        }else{
-
-            function lerp( a, b, t ) { return a + ( b - a ) * t; }
-
-            for( var j = 0; j < m; j += 3 ){
-
-                coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
-                coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
-                coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
-
-            }
-
-        }
-
-        this.structure.updatePosition( coords );
-        this.currentFrame = i;
-        this.signals.frameChanged.dispatch( i );
-
-        return this;
-
-    },
-
-    loadFrame: function( i, callback ){
+    _loadFrame: function( i, callback ){
 
         var coords;
         var structure = this.structure;
@@ -939,7 +1006,7 @@ NGL.TrajectoryPlayer.prototype = {
 
             }
 
-            if( !this.interpolateType || !( this.traj instanceof NGL.StructureTrajectory ) ){
+            if( !this.interpolateType ){
 
                 this.traj.setFrame( i );
 
@@ -949,7 +1016,7 @@ NGL.TrajectoryPlayer.prototype = {
 
         if( !this._stopFlag ){
 
-            if( this.interpolateType && ( this.traj instanceof NGL.StructureTrajectory ) ){
+            if( this.interpolateType ){
 
                 this._interpolate(
                     i,

@@ -1808,7 +1808,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     var interpolateStep = new UI.Integer( 5 )
         .setWidth( "30px" )
-        .setRange( 1, 10 )
+        .setRange( 1, 50 )
         .onChange( function(){
             player.interpolateStep = interpolateStep.getValue();
         } );
