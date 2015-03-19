@@ -245,7 +245,11 @@ NGL.Trajectory.prototype = {
 
         }else{
 
-            this.loadFrame( i, callback );
+            this.loadFrame( i, function(){
+
+                this.updateStructure( i, callback );
+
+            }.bind( this ) );
 
         }
 
@@ -539,8 +543,8 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             // NGL.log( time );
 
-            // update numframes as it changes when
-            // new remote data becomes available
+            // FIXME update numframes as it changes when
+            //       new remote data becomes available
             scope.setNumframes( numframes );
 
             if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
@@ -559,13 +563,15 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
                 scope.superpose( coords );
             }
 
-            // if( !scope.frameCache[ i ] ){
-                scope.frameCache[ i ] = coords;
-                scope.boxCache[ i ] = box;
-                scope.frameCacheSize += 1;
-            // }
+            scope.frameCache[ i ] = coords;
+            scope.boxCache[ i ] = box;
+            scope.frameCacheSize += 1;
 
-            scope.updateStructure( i, callback );
+            if( typeof callback === "function" ){
+
+                callback();
+
+            }
 
         }, false );
 
@@ -675,10 +681,10 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
         var fc = this.frameCache;
 
-        if( !fc[ ippp ] ) this.loadFrame( ippp, null, true );
-        if( !fc[ ipp ] ) this.loadFrame( ipp, null, true );
-        if( !fc[ ip ] ) this.loadFrame( ip, null, true );
-        if( !fc[ i ] ) this.loadFrame( i, null, true );
+        if( !fc[ ippp ] ) this.loadFrame( ippp );
+        if( !fc[ ipp ] ) this.loadFrame( ipp );
+        if( !fc[ ip ] ) this.loadFrame( ip );
+        if( !fc[ i ] ) this.loadFrame( i );
 
         var c = fc[ i ];
         var cp = fc[ ip ];
@@ -738,7 +744,7 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     },
 
-    loadFrame: function( i, callback, flag ){
+    loadFrame: function( i, callback ){
 
         var coords;
         var structure = this.structure;
@@ -792,14 +798,15 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
             this.superpose( coords );
         }
 
-        // if( !this.frameCache[ i ] ){
-            this.frameCache[ i ] = coords;
-            this.boxCache[ i ] = box;
-            this.frameCacheSize += 1;
-        // }
+        this.frameCache[ i ] = coords;
+        this.boxCache[ i ] = box;
+        this.frameCacheSize += 1;
 
-        // TODO move to setFrame
-        if( !flag ) this.updateStructure( i, callback );
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
 
     },
 
@@ -834,67 +841,6 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
     }
 
 } );
-
-
-/*NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
-
-    if( !trajPath ) trajPath = structure.path;
-
-    NGL.Trajectory.call( this, trajPath, structure, selectionString );
-
-}
-
-NGL.BinaryTrajectory.prototype = NGL.createObject(
-
-    NGL.Trajectory.prototype, {
-
-    constructor: NGL.BinaryTrajectory,
-
-    type: "binary",
-
-    loadFrame: function( i, callback ){
-
-        var coords = new Float32Array( this.structure.frames[ i ] );
-        var box = this.structure.boxes[ i ];
-
-        if( box ){
-
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                );
-                this.centerPbc( coords, mean, box2 );
-            }
-
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
-            }
-
-        }
-
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
-        }
-
-        if( !this.frameCache[ i ] ){
-            this.frameCache[ i ] = coords;
-            this.boxCache[ i ] = box;
-            this.frameCacheSize += 1;
-        }
-
-        this.updateStructure( i, callback );
-
-    },
-
-    getNumframes: function(){
-
-        this.numframes = this.structure.frames.length;
-        this.signals.gotNumframes.dispatch( this.numframes );
-
-    }
-
-} );*/
 
 
 ///////////
