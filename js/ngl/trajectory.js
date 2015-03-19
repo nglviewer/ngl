@@ -393,6 +393,47 @@ NGL.Trajectory.prototype = {
 
     },
 
+    process: function( i, box, coords, numframes ){
+
+        this.setNumframes( numframes );
+
+        if( box ){
+
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
+
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
+
+        }
+
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
+        }
+
+        this.frameCache[ i ] = coords;
+        this.boxCache[ i ] = box;
+        this.frameCacheSize += 1;
+
+    },
+
+    setNumframes: function( n ){
+
+        if( n !== this.numframes ){
+
+            this.numframes = n;
+            this.signals.gotNumframes.dispatch( n );
+
+        }
+
+    },
+
     dispose: function(){
 
         this.frameCache = [];  // aid GC
@@ -558,29 +599,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             // NGL.log( time );
 
-            // update numframes as it changes when
-            // new remote data becomes available
-            scope.setNumframes( numframes );
-
-            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = scope.getCircularMean(
-                    scope.backboneIndices, coords, box2
-                );
-                scope.centerPbc( coords, mean, box2 );
-            }
-
-            if( scope.params.removePbc ){
-                scope.removePbc( coords, box );
-            }
-
-            if( scope.indices.length > 0 && scope.params.superpose ){
-                scope.superpose( coords );
-            }
-
-            scope.frameCache[ i ] = coords;
-            scope.boxCache[ i ] = box;
-            scope.frameCacheSize += 1;
+            scope.process( i, box, coords, numframes );
 
             if( typeof callback === "function" ){
 
@@ -606,19 +625,6 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
             scope.setNumframes( parseInt( n ) );
 
         });
-
-    },
-
-    setNumframes: function( n ){
-
-        // NGL.log( "numframes", n );
-
-        if( n !== this.numframes ){
-
-            this.numframes = n;
-            this.signals.gotNumframes.dispatch( n );
-
-        }
 
     },
 
@@ -808,30 +814,9 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
         }
 
         var box = this.structure.boxes[ i ];
+        var numframes = this.structure.frames.length;
 
-        if( box ){
-
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                );
-                this.centerPbc( coords, mean, box2 );
-            }
-
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
-            }
-
-        }
-
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
-        }
-
-        this.frameCache[ i ] = coords;
-        this.boxCache[ i ] = box;
-        this.frameCacheSize += 1;
+        this.process( i, box, coords, numframes );
 
         if( typeof callback === "function" ){
 
