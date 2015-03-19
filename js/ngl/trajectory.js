@@ -669,6 +669,69 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     type: "structure",
 
+    setFrameInterpolated: function( i, ip, ipp, ippp, t, callback ){
+
+        if( i === undefined ) return this;
+
+        var fc = this.frameCache;
+
+        if( !fc[ ippp ] ) this.loadFrame( ippp, null, true );
+        if( !fc[ ipp ] ) this.loadFrame( ipp, null, true );
+        if( !fc[ ip ] ) this.loadFrame( ip, null, true );
+        if( !fc[ i ] ) this.loadFrame( i, null, true );
+
+        var c = fc[ i ];
+        var cp = fc[ ip ];
+        var cpp = fc[ ipp ];
+        var cppp = fc[ ippp ];
+
+        var m = c.length;
+        var coords = new Float32Array( m );
+
+        // function lerp( a, b, t ) { return a + ( b - a ) * t; }
+
+        // for( var j = 0; j < m; j += 3 ){
+
+        //     coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
+        //     coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
+        //     coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
+
+        // }
+
+        function spline( p0, p1, p2, p3, t, tension ) {
+
+            var v0 = ( p2 - p0 ) * tension;
+            var v1 = ( p3 - p1 ) * tension;
+            var t2 = t * t;
+            var t3 = t * t2;
+            return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+                   ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+                   v0 * t + p1;
+
+        }
+
+        for( var j = 0; j < m; j += 3 ){
+
+            coords[ j + 0 ] = spline(
+                cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 0.5
+            );
+            coords[ j + 1 ] = spline(
+                cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 0.5
+            );
+            coords[ j + 2 ] = spline(
+                cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 0.5
+            );
+
+        }
+
+        this.structure.updatePosition( coords );
+        this.currentFrame = i;
+        this.signals.frameChanged.dispatch( i );
+
+        return this;
+
+    },
+
     loadFrame: function( i, callback, flag ){
 
         var coords;
@@ -906,14 +969,59 @@ NGL.TrajectoryPlayer.prototype = {
 
             }
 
-            this.traj.setFrame( i );
+            if( ! ( this.traj instanceof NGL.StructureTrajectory ) ){
+
+                this.traj.setFrame( i );
+
+            }
 
         }
 
         if( !this._stopFlag ){
-            setTimeout( this._animate.bind( this ), this.timeout );
+
+            if( this.traj instanceof NGL.StructureTrajectory ){
+
+                this._interpolate(
+                    i,
+                    Math.max( 0, i - this.step ),
+                    Math.max( 0, i - 2 * this.step ),
+                    Math.max( 0, i - 3 * this.step ),
+                    1 / 6,
+                    0
+                );
+
+            }else{
+
+                setTimeout( this._animate.bind( this ), this.timeout );
+
+            }
+
         }else{
+
             this._running = false;
+
+        }
+
+    },
+
+    _interpolate: function( i, ip, ipp, ippp, d, t ){
+
+        t += d;
+
+        if( t <= 1 ){
+
+            this.traj.setFrameInterpolated( i, ip, ipp, ippp, t );
+
+            setTimeout( function(){
+
+                this._interpolate( i, ip, ipp, ippp, d, t );
+
+            }.bind( this ), Math.max( 16, Math.round( this.timeout * d ) ) );
+
+        }else{
+
+            setTimeout( this._animate.bind( this ), 0 );
+
         }
 
     },
