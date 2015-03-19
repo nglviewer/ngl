@@ -669,7 +669,7 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     type: "structure",
 
-    setFrameInterpolated: function( i, ip, ipp, ippp, t, callback ){
+    setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
 
         if( i === undefined ) return this;
 
@@ -688,39 +688,45 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
         var m = c.length;
         var coords = new Float32Array( m );
 
-        // function lerp( a, b, t ) { return a + ( b - a ) * t; }
+        if( type === "spline" ){
 
-        // for( var j = 0; j < m; j += 3 ){
+            function spline( p0, p1, p2, p3, t, tension ) {
 
-        //     coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
-        //     coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
-        //     coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
+                var v0 = ( p2 - p0 ) * tension;
+                var v1 = ( p3 - p1 ) * tension;
+                var t2 = t * t;
+                var t3 = t * t2;
+                return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+                       ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+                       v0 * t + p1;
 
-        // }
+            }
 
-        function spline( p0, p1, p2, p3, t, tension ) {
+            for( var j = 0; j < m; j += 3 ){
 
-            var v0 = ( p2 - p0 ) * tension;
-            var v1 = ( p3 - p1 ) * tension;
-            var t2 = t * t;
-            var t3 = t * t2;
-            return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
-                   ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
-                   v0 * t + p1;
+                coords[ j + 0 ] = spline(
+                    cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+                );
+                coords[ j + 1 ] = spline(
+                    cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+                );
+                coords[ j + 2 ] = spline(
+                    cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+                );
 
-        }
+            }
 
-        for( var j = 0; j < m; j += 3 ){
+        }else{
 
-            coords[ j + 0 ] = spline(
-                cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 0.5
-            );
-            coords[ j + 1 ] = spline(
-                cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 0.5
-            );
-            coords[ j + 2 ] = spline(
-                cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 0.5
-            );
+            function lerp( a, b, t ) { return a + ( b - a ) * t; }
+
+            for( var j = 0; j < m; j += 3 ){
+
+                coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
+                coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
+                coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
+
+            }
 
         }
 
@@ -919,6 +925,8 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     this.start = start || 0;
     this.end = end || traj.numframes - 1;
     this.end = Math.min( this.end, traj.numframes - 1 );
+    this.interpolateType = "";
+    this.interpolateStep = 5;
 
     this.mode = "loop"; // loop, once
     this.direction = "forward"; // forward, backward
@@ -969,7 +977,7 @@ NGL.TrajectoryPlayer.prototype = {
 
             }
 
-            if( ! ( this.traj instanceof NGL.StructureTrajectory ) ){
+            if( !this.interpolateType || !( this.traj instanceof NGL.StructureTrajectory ) ){
 
                 this.traj.setFrame( i );
 
@@ -979,14 +987,14 @@ NGL.TrajectoryPlayer.prototype = {
 
         if( !this._stopFlag ){
 
-            if( this.traj instanceof NGL.StructureTrajectory ){
+            if( this.interpolateType && ( this.traj instanceof NGL.StructureTrajectory ) ){
 
                 this._interpolate(
                     i,
                     Math.max( 0, i - this.step ),
                     Math.max( 0, i - 2 * this.step ),
                     Math.max( 0, i - 3 * this.step ),
-                    1 / 6,
+                    1 / this.interpolateStep,
                     0
                 );
 
@@ -1010,13 +1018,17 @@ NGL.TrajectoryPlayer.prototype = {
 
         if( t <= 1 ){
 
-            this.traj.setFrameInterpolated( i, ip, ipp, ippp, t );
+            this.traj.setFrameInterpolated(
+                i, ip, ipp, ippp, t, this.interpolateType
+            );
+
+            var deltaTime = Math.max( 16, Math.round( this.timeout * d ) );
 
             setTimeout( function(){
 
                 this._interpolate( i, ip, ipp, ippp, d, t );
 
-            }.bind( this ), Math.max( 16, Math.round( this.timeout * d ) ) );
+            }.bind( this ), deltaTime );
 
         }else{
 

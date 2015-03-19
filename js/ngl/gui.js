@@ -1793,6 +1793,26 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
         } );
 
+    var interpolateType = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "": "none",
+            "linear": "linear",
+            "spline": "spline",
+        } )
+        .onChange( function(){
+
+            player.interpolateType = interpolateType.getValue();
+
+        } );
+
+    var interpolateStep = new UI.Integer( 5 )
+        .setWidth( "30px" )
+        .setRange( 1, 10 )
+        .onChange( function(){
+            player.interpolateStep = interpolateStep.getValue();
+        } );
+
     // player
 
     var timeout = new UI.Integer( 50 )
@@ -1901,12 +1921,14 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     var menu = new UI.PopupMenu( "bars", "Trajectory" )
         .setMarginLeft( "10px" )
-        .setEntryLabelWidth( "110px" )
+        .setEntryLabelWidth( "130px" )
         .addEntry( "Path", repr )
         .addEntry( "Center", setCenterPbc )
         .addEntry( "Remove PBC", setRemovePbc )
         .addEntry( "Superpose", setSuperpose )
-        .addEntry( "Step", step )
+        .addEntry( "Step size", step )
+        .addEntry( "Interpolation type", interpolateType )
+        .addEntry( "Interpolation steps", interpolateStep )
         .addEntry( "Timeout", timeout )
         // .addEntry( "Download", download )
         .addEntry(

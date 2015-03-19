@@ -619,7 +619,9 @@ UI.PopupMenu.prototype = Object.create( UI.Panel.prototype );
 UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
     this.panel
-        .add( new UI.Text( label ).setWidth( this.entryLabelWidth ) )
+        .add( new UI.Text( label )
+                // .setWhiteSpace( "nowrap" )
+                .setWidth( this.entryLabelWidth ) )
         .add( entry || new UI.Panel() )
         .add( new UI.Break() );
 
