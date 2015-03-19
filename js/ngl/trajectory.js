@@ -559,11 +559,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
                 scope.superpose( coords );
             }
 
-            if( !scope.frameCache[ i ] ){
+            // if( !scope.frameCache[ i ] ){
                 scope.frameCache[ i ] = coords;
                 scope.boxCache[ i ] = box;
                 scope.frameCacheSize += 1;
-            }
+            // }
 
             scope.updateStructure( i, callback );
 
@@ -669,9 +669,38 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     type: "structure",
 
-    loadFrame: function( i, callback ){
+    loadFrame: function( i, callback, flag ){
 
-        var coords = new Float32Array( this.structure.frames[ i ] );
+        var coords;
+        var structure = this.structure;
+        var frame = this.structure.frames[ i ];
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            // FIXME the structureSubset indices should be cached and
+            //       regenerated when structureSubset changes
+            var indices = structure.structure.atomIndex( structure.selection );
+            var m = indices.length;
+
+            coords = new Float32Array( m * 3 );
+
+            for( var j = 0; j < m; ++j ){
+
+                var j3 = j * 3;
+                var idx3 = indices[ j ] * 3;
+
+                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
+                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
+                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
+
+            }
+
+        }else{
+
+            coords = new Float32Array( frame );
+
+        }
+
         var box = this.structure.boxes[ i ];
 
         if( box ){
@@ -694,13 +723,14 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
             this.superpose( coords );
         }
 
-        if( !this.frameCache[ i ] ){
+        // if( !this.frameCache[ i ] ){
             this.frameCache[ i ] = coords;
             this.boxCache[ i ] = box;
             this.frameCacheSize += 1;
-        }
+        // }
 
-        this.updateStructure( i, callback );
+        // TODO move to setFrame
+        if( !flag ) this.updateStructure( i, callback );
 
     },
 
