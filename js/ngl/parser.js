@@ -2096,6 +2096,7 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
                 };
 
             }
+
         };
 
     };
