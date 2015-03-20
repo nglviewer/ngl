@@ -2062,12 +2062,62 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
     var lines = str.split( "\n" );
 
     // TODO parse header
+    header.AtNo = parseFloat(lines[2].trim().split( reWhitespace )[0]);
+    header.NX = parseFloat(lines[2].trim().split( reWhitespace )[1]);
+    header.NY = parseFloat(lines[2].trim().split( reWhitespace )[2]);
+    header.NZ = parseFloat(lines[2].trim().split( reWhitespace )[3]);
+    header.NVX = parseFloat(lines[3].trim().split( reWhitespace )[0]);
+    header.NVY = parseFloat(lines[4].trim().split( reWhitespace )[0]);
+    header.NVZ = parseFloat(lines[5].trim().split( reWhitespace )[0]);
+    header.AVX = parseFloat(lines[3].trim().split( reWhitespace )[1]);
+    header.AVY = parseFloat(lines[4].trim().split( reWhitespace )[2]);
+    header.AVZ = parseFloat(lines[5].trim().split( reWhitespace )[3]);
+    header.MPX = ( ( header.NVX * header.NX) / 2 ) - header.NX;
+    header.MPY = ( ( header.NVY * header.NY) / 2 ) - header.NY;
+    header.MPZ = ( ( header.NVZ * header.NZ) / 2 ) - header.NZ;
+   
 
     var data = new Float32Array(
         header.NX * header.NY * header.NZ
     );
 
     // TODO parse voxel data
+    
+    
+    function _getData( _i, _n ){
+
+        for( var i = _i; i < _n; ++i ){
+
+            line = lines[i].trim();
+
+            for( var j = 0; j < 6; ++j ){
+
+                data[i+j] = parseFloat( line[i].split( reWhitespace )[j] );
+
+            };
+
+        };
+
+    };
+
+    _getData( header.AtNo + 5, ( header.VNX * header.VNY * header.VNZ ) / 6 );
+
+    var position = {};
+    
+    function _getPosition( ) {
+        for( var i = 0; i < ( header.VNX * header.VNY * header.VNZ ); ++i ){
+            
+            var positionz = i % header.NZ;
+            var helpz = i / header.NZ;
+            var positiony = helpz % header.NY;
+            var helpy = helpz / header.NY;
+            var positionx = helpy % header.NX;
+            
+            position.x[i] = positionx * header.NX - header.MPX;
+        };
+    };
+    
+    _getPosition();
 
     v.header = header;
 
