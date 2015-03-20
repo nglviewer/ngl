@@ -185,6 +185,10 @@ NGL.XHRLoader.prototype = {
 
     setAsBinary: function ( value ) {
 
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
         this.asBinary = value;
 
     },
@@ -331,9 +335,6 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 NGL.VolumeLoader = function( manager ){
 
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-    this.asBinary = true;
-    this.responseType = "arraybuffer";
 
 };
 
@@ -545,16 +546,19 @@ NGL.autoLoad = function(){
             loader.setCrossOrigin( true );
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../data/" + path, init, onProgress, error );
 
         }else{ // default: protocol === "file"
 
             if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../file/" + path, init, onProgress, error );
 
         }
