@@ -990,7 +990,7 @@ NGL.Examples = {
             stage.loadFile( "data://acrolein1gs.cube.gz", function( o ){
 
                 o.addRepresentation( "surface" );
-                o.addRepresentation( "dot", { visible: false } );
+                o.addRepresentation( "dot", { visible: true } );
                 stage.centerView();
 
             } );

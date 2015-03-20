@@ -634,7 +634,6 @@ NGL.autoLoad = function(){
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
             loader.setCrossOrigin( true );
-
             if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( protocol + "://" + path, init, onProgress, error );
