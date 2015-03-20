@@ -14,6 +14,7 @@ UI.ColorPopupMenu = function(){
     this.iconText = new UI.Text( "" )
         .setCursor( "pointer" )
         .setClass( "fa-stack-1x" )
+        .setFontFamily( "Arial, sans-serif" )
         .setColor( "#111" );
 
     this.iconSquare = new UI.Icon( "square", "stack-1x" )

@@ -81,39 +81,7 @@ NGL.Trajectory.prototype = {
         this.structure = structure;
         this.atomCount = structure.atomCount;
 
-        if( structure instanceof NGL.StructureSubset ){
-
-            this.atomIndices = [];
-
-            var indices = structure.structure.atomIndex( structure.selection );
-
-            var i, r;
-            var p = indices[ 0 ];
-            var q = indices[ 0 ];
-            var n = indices.length;
-
-            for( i = 1; i < n; ++i ){
-
-                r = indices[ i ];
-
-                if( q + 1 < r ){
-
-                    this.atomIndices.push( [ p, q + 1 ] );
-                    p = r;
-
-                }
-
-                q = r;
-
-            }
-
-            this.atomIndices.push( [ p, q + 1 ] );
-
-        }else{
-
-            this.atomIndices = [ [ 0, this.atomCount ] ];
-
-        }
+        this.makeAtomIndices();
 
         this.saveInitialStructure();
 
@@ -182,6 +150,12 @@ NGL.Trajectory.prototype = {
 
     },
 
+    makeAtomIndices: function(){
+
+        NGL.error( "Trajectory.makeAtomIndices not implemented" );
+
+    },
+
     getNumframes: function(){
 
         NGL.error( "Trajectory.loadFrame not implemented" );
@@ -245,7 +219,111 @@ NGL.Trajectory.prototype = {
 
         }else{
 
-            this.loadFrame( i, callback );
+            this.loadFrame( i, function(){
+
+                this.updateStructure( i, callback );
+
+            }.bind( this ) );
+
+        }
+
+        return this;
+
+    },
+
+    interpolate: function(){
+
+        var spline = function( p0, p1, p2, p3, t, tension ) {
+
+            var v0 = ( p2 - p0 ) * tension;
+            var v1 = ( p3 - p1 ) * tension;
+            var t2 = t * t;
+            var t3 = t * t2;
+
+            return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+                   ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+                   v0 * t + p1;
+
+        }
+
+        var lerp = function( a, b, t ) {
+
+            return a + ( b - a ) * t;
+
+        }
+
+        return function( i, ip, ipp, ippp, t, type ){
+
+            var fc = this.frameCache;
+
+            var c = fc[ i ];
+            var cp = fc[ ip ];
+            var cpp = fc[ ipp ];
+            var cppp = fc[ ippp ];
+
+            var m = c.length;
+            var coords = new Float32Array( m );
+
+            if( type === "spline" ){
+
+                for( var j = 0; j < m; j += 3 ){
+
+                    coords[ j + 0 ] = spline(
+                        cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+                    );
+                    coords[ j + 1 ] = spline(
+                        cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+                    );
+                    coords[ j + 2 ] = spline(
+                        cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+                    );
+
+                }
+
+            }else{
+
+                for( var j = 0; j < m; j += 3 ){
+
+                    coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
+                    coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
+                    coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
+
+                }
+
+            }
+
+            this.structure.updatePosition( coords );
+            this.currentFrame = i;
+            this.signals.frameChanged.dispatch( i );
+
+        }
+
+    }(),
+
+    setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
+
+        if( i === undefined ) return this;
+
+        var fc = this.frameCache;
+
+        var iList = [];
+
+        if( !fc[ ippp ] ) iList.push( ippp );
+        if( !fc[ ipp ] ) iList.push( ipp );
+        if( !fc[ ip ] ) iList.push( ip );
+        if( !fc[ i ] ) iList.push( i );
+
+        if( iList.length ){
+
+            this.loadFrame( iList, function(){
+
+                this.interpolate( i, ip, ipp, ippp, t, type );
+
+            }.bind( this ) );
+
+        }else{
+
+            this.interpolate( i, ip, ipp, ippp, t, type );
 
         }
 
@@ -255,7 +333,43 @@ NGL.Trajectory.prototype = {
 
     loadFrame: function( i, callback ){
 
-        NGL.error( "Trajectory.loadFrame not implemented" );
+        if( Array.isArray( i ) ){
+
+            var scope = this;
+
+            async.eachLimit(
+
+                i, 4,
+
+                function( j ){
+
+                    scope._loadFrame( j );
+
+                },
+
+                function( error ){
+
+                    if( typeof callback === "function" ){
+
+                        callback();
+
+                    }
+
+                }
+
+            );
+
+        }else{
+
+            this._loadFrame( i, callback );
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        NGL.error( "Trajectory._loadFrame not implemented" );
 
     },
 
@@ -415,6 +529,47 @@ NGL.Trajectory.prototype = {
 
     },
 
+    process: function( i, box, coords, numframes ){
+
+        this.setNumframes( numframes );
+
+        if( box ){
+
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
+
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
+
+        }
+
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
+        }
+
+        this.frameCache[ i ] = coords;
+        this.boxCache[ i ] = box;
+        this.frameCacheSize += 1;
+
+    },
+
+    setNumframes: function( n ){
+
+        if( n !== this.numframes ){
+
+            this.numframes = n;
+            this.signals.gotNumframes.dispatch( n );
+
+        }
+
+    },
+
     dispose: function(){
 
         this.frameCache = [];  // aid GC
@@ -502,11 +657,52 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
     type: "remote",
 
-    loadFrame: function( i, callback ){
+    makeAtomIndices: function(){
+
+        var structure = this.structure;
+        var atomIndices = [];
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            var indices = structure.structure.atomIndex( structure.selection );
+
+            var i, r;
+            var p = indices[ 0 ];
+            var q = indices[ 0 ];
+            var n = indices.length;
+
+            for( i = 1; i < n; ++i ){
+
+                r = indices[ i ];
+
+                if( q + 1 < r ){
+
+                    atomIndices.push( [ p, q + 1 ] );
+                    p = r;
+
+                }
+
+                q = r;
+
+            }
+
+            atomIndices.push( [ p, q + 1 ] );
+
+        }else{
+
+            atomIndices.push( [ 0, this.atomCount ] );
+
+        }
+
+        this.atomIndices = atomIndices;
+
+    },
+
+    _loadFrame: function( i, callback ){
 
         // TODO implement max frameCache size, re-use arrays
 
-        // NGL.time( "loadFrame" );
+        // NGL.time( "NGL.RemoteTrajectory._loadFrame" );
 
         var scope = this;
 
@@ -523,7 +719,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         request.addEventListener( 'load', function( event ){
 
-            // NGL.timeEnd( "loadFrame" );
+            // NGL.timeEnd( "NGL.RemoteTrajectory._loadFrame" );
 
             var arrayBuffer = this.response;
 
@@ -539,33 +735,13 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             // NGL.log( time );
 
-            // update numframes as it changes when
-            // new remote data becomes available
-            scope.setNumframes( numframes );
+            scope.process( i, box, coords, numframes );
 
-            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = scope.getCircularMean(
-                    scope.backboneIndices, coords, box2
-                );
-                scope.centerPbc( coords, mean, box2 );
+            if( typeof callback === "function" ){
+
+                callback();
+
             }
-
-            if( scope.params.removePbc ){
-                scope.removePbc( coords, box );
-            }
-
-            if( scope.indices.length > 0 && scope.params.superpose ){
-                scope.superpose( coords );
-            }
-
-            if( !scope.frameCache[ i ] ){
-                scope.frameCache[ i ] = coords;
-                scope.boxCache[ i ] = box;
-                scope.frameCacheSize += 1;
-            }
-
-            scope.updateStructure( i, callback );
 
         }, false );
 
@@ -585,19 +761,6 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
             scope.setNumframes( parseInt( n ) );
 
         });
-
-    },
-
-    setNumframes: function( n ){
-
-        // NGL.log( "numframes", n );
-
-        if( n !== this.numframes ){
-
-            this.numframes = n;
-            this.signals.gotNumframes.dispatch( n );
-
-        }
 
     },
 
@@ -669,38 +832,64 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     type: "structure",
 
-    loadFrame: function( i, callback ){
+    makeAtomIndices: function(){
 
-        var coords = new Float32Array( this.structure.frames[ i ] );
+        var structure = this.structure;
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            this.atomIndices = structure.structure.atomIndex(
+                structure.selection
+            );
+
+        }else{
+
+            this.atomIndices = null;
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        var coords;
+        var structure = this.structure;
+        var frame = this.structure.frames[ i ];
+
+        if( this.atomIndices ){
+
+            var indices = this.atomIndices;
+            var m = indices.length;
+
+            coords = new Float32Array( m * 3 );
+
+            for( var j = 0; j < m; ++j ){
+
+                var j3 = j * 3;
+                var idx3 = indices[ j ] * 3;
+
+                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
+                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
+                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
+
+            }
+
+        }else{
+
+            coords = new Float32Array( frame );
+
+        }
+
         var box = this.structure.boxes[ i ];
+        var numframes = this.structure.frames.length;
 
-        if( box ){
+        this.process( i, box, coords, numframes );
 
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                );
-                this.centerPbc( coords, mean, box2 );
-            }
+        if( typeof callback === "function" ){
 
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
-            }
+            callback();
 
         }
-
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
-        }
-
-        if( !this.frameCache[ i ] ){
-            this.frameCache[ i ] = coords;
-            this.boxCache[ i ] = box;
-            this.frameCacheSize += 1;
-        }
-
-        this.updateStructure( i, callback );
 
     },
 
@@ -737,67 +926,6 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 } );
 
 
-/*NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
-
-    if( !trajPath ) trajPath = structure.path;
-
-    NGL.Trajectory.call( this, trajPath, structure, selectionString );
-
-}
-
-NGL.BinaryTrajectory.prototype = NGL.createObject(
-
-    NGL.Trajectory.prototype, {
-
-    constructor: NGL.BinaryTrajectory,
-
-    type: "binary",
-
-    loadFrame: function( i, callback ){
-
-        var coords = new Float32Array( this.structure.frames[ i ] );
-        var box = this.structure.boxes[ i ];
-
-        if( box ){
-
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                );
-                this.centerPbc( coords, mean, box2 );
-            }
-
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
-            }
-
-        }
-
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
-        }
-
-        if( !this.frameCache[ i ] ){
-            this.frameCache[ i ] = coords;
-            this.boxCache[ i ] = box;
-            this.frameCacheSize += 1;
-        }
-
-        this.updateStructure( i, callback );
-
-    },
-
-    getNumframes: function(){
-
-        this.numframes = this.structure.frames.length;
-        this.signals.gotNumframes.dispatch( this.numframes );
-
-    }
-
-} );*/
-
-
 ///////////
 // Player
 
@@ -826,6 +954,8 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     this.start = start || 0;
     this.end = end || traj.numframes - 1;
     this.end = Math.min( this.end, traj.numframes - 1 );
+    this.interpolateType = "";
+    this.interpolateStep = 5;
 
     this.mode = "loop"; // loop, once
     this.direction = "forward"; // forward, backward
@@ -876,14 +1006,63 @@ NGL.TrajectoryPlayer.prototype = {
 
             }
 
-            this.traj.setFrame( i );
+            if( !this.interpolateType ){
+
+                this.traj.setFrame( i );
+
+            }
 
         }
 
         if( !this._stopFlag ){
-            setTimeout( this._animate.bind( this ), this.timeout );
+
+            if( this.interpolateType ){
+
+                this._interpolate(
+                    i,
+                    Math.max( 0, i - this.step ),
+                    Math.max( 0, i - 2 * this.step ),
+                    Math.max( 0, i - 3 * this.step ),
+                    1 / this.interpolateStep,
+                    0
+                );
+
+            }else{
+
+                setTimeout( this._animate.bind( this ), this.timeout );
+
+            }
+
         }else{
+
             this._running = false;
+
+        }
+
+    },
+
+    _interpolate: function( i, ip, ipp, ippp, d, t ){
+
+        t += d;
+
+        if( t <= 1 ){
+
+            this.traj.setFrameInterpolated(
+                i, ip, ipp, ippp, t, this.interpolateType
+            );
+
+            var deltaTime = Math.max( 16, Math.round( this.timeout * d ) );
+
+            setTimeout( function(){
+
+                this._interpolate( i, ip, ipp, ippp, d, t );
+
+            }.bind( this ), deltaTime );
+
+        }else{
+
+            setTimeout( this._animate.bind( this ), 0 );
+
         }
 
     },

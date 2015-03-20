@@ -1822,6 +1822,26 @@ NGL.MrcParser.prototype._parse = function( bin, callback ){
     var intView = new Int32Array( bin, 0, 56 );
     var floatView = new Float32Array( bin, 0, 56 );
 
+    var dv = new DataView( bin );
+
+    // 53  MAP         Character string 'MAP ' to identify file type
+    header.MAP = String.fromCharCode(
+        dv.getUint8( 52 * 4 ), dv.getUint8( 52 * 4 + 1 ),
+        dv.getUint8( 52 * 4 + 2 ), dv.getUint8( 52 * 4 + 3 )
+    );
+
+    // 54  MACHST      Machine stamp indicating machine type which wrote file
+    //                 17 and 17 for big-endian or 68 and 65 for little-endian
+    header.MACHST = [ dv.getUint8( 53 * 4 ), dv.getUint8( 53 * 4 + 1 ) ];
+
+    // swap byte order when big endian
+    if( header.MACHST[ 0 ] === 17 && header.MACHST[ 1 ] === 17 ){
+        var n = bin.byteLength;
+        for( var i = 0; i < n; i+=4 ){
+            dv.setFloat32( i, dv.getFloat32( i ), true );
+        }
+    }
+
     header.NX = intView[ 0 ];  // NC - columns (fastest changing)
     header.NY = intView[ 1 ];  // NR - rows
     header.NZ = intView[ 2 ];  // NS - sections (slowest changing)
@@ -1892,8 +1912,10 @@ NGL.MrcParser.prototype._parse = function( bin, callback ){
     // 52          "
 
     // 53  MAP         Character string 'MAP ' to identify file type
-    // 54  MACHST      Machine stamp indicating the machine type
-    //             which wrote file
+    // => see top of this parser
+
+    // 54  MACHST      Machine stamp indicating machine type which wrote file
+    // => see top of this parser
 
     // Rms deviation of map from mean density
     header.ARMS = floatView[ 54 ];
@@ -1902,6 +1924,8 @@ NGL.MrcParser.prototype._parse = function( bin, callback ){
     // 57-256  LABEL(20,10)    10  80 character text labels (ie. A4 format)
 
     v.header = header;
+
+    // NGL.log( header )
 
     // FIXME depends on mode
     var data = new Float32Array(

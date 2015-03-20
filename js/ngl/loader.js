@@ -134,7 +134,7 @@ NGL.XHRLoader.prototype = {
 
                 var data = this.response;
 
-                if( scope.responseType === "arraybuffer" ){
+                if( scope.compressed ){
 
                     data = NGL.decompress( data, url, scope.asBinary );
 
@@ -193,9 +193,19 @@ NGL.XHRLoader.prototype = {
 
     },
 
+    setCompressed: function( value ){
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.compressed = value;
+
+    },
+
     setResponseType: function ( value ) {
 
-        this.responseType = value;
+        this.responseType = value.toLowerCase();
 
     },
 
@@ -237,7 +247,7 @@ NGL.FileLoader.prototype = {
 
             var data = event.target.result;
 
-            if( scope.responseType === "arraybuffer" ){
+            if( scope.compressed ){
 
                 data = NGL.decompress( data, file, scope.asBinary );
 
@@ -270,7 +280,7 @@ NGL.FileLoader.prototype = {
 
         }
 
-        if( this.responseType === "arraybuffer" ){
+        if( this.asBinary ){
 
             reader.readAsArrayBuffer( file );
 
@@ -287,6 +297,16 @@ NGL.FileLoader.prototype = {
     setAsBinary: function ( value ) {
 
         this.asBinary = value;
+
+    },
+
+    setCompressed: function( value ){
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.compressed = value;
 
     },
 
@@ -537,27 +557,26 @@ NGL.autoLoad = function(){
         if( file instanceof File ){
 
             var fileLoader = new NGL.FileLoader();
-            if( compressed ) fileLoader.setResponseType( "arraybuffer" );
+            if( compressed ) fileLoader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) fileLoader.setAsBinary( true );
             fileLoader.load( file, init, onProgress, error );
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
             loader.setCrossOrigin( true );
-
-            if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
-            if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../data/" + path, init, onProgress, error );
 
         }else{ // default: protocol === "file"
 
-            if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../file/" + path, init, onProgress, error );
 
