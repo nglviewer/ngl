@@ -1851,6 +1851,30 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     frameRow.add( playerButton );
     frameRow.add( frameRange );
 
+    var playDirection = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "forward": "forward",
+            "backward": "backward",
+        } )
+        .onChange( function(){
+
+            player.direction = playDirection.getValue();
+
+        } );
+
+    var playMode = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "loop": "loop",
+            "once": "once",
+        } )
+        .onChange( function(){
+
+            player.mode = playMode.getValue();
+
+        } );
+
     // Selection
 
     container.add(
@@ -1929,7 +1953,9 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
         .addEntry( "Step size", step )
         .addEntry( "Interpolation type", interpolateType )
         .addEntry( "Interpolation steps", interpolateStep )
-        .addEntry( "Timeout", timeout )
+        .addEntry( "Play timeout", timeout )
+        .addEntry( "Play direction", playDirection )
+        .addEntry( "Play mode", playMode )
         // .addEntry( "Download", download )
         .addEntry(
             "File", new UI.Text( traj.trajPath )
