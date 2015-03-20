@@ -973,8 +973,27 @@ NGL.Examples = {
 
             } );
 
-        }
+        },
 
+        "cube": function( stage ){
+
+            stage.loadFile( "data://acrolein1gs.cube.gz", function( o ){
+
+                o.addRepresentation( "surface" );
+                o.addRepresentation( "dot", { visible: false } );
+                stage.centerView();
+
+            } );
+
+//            stage.loadFile( "data://3pqr.pdb", function( o ){
+//
+//                o.addRepresentation( "cartoon" );
+//                stage.centerView();
+//
+//            } );
+            
+        }
+        
     }
 
 };
