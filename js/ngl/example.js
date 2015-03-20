@@ -957,10 +957,7 @@ NGL.Examples = {
                 o.addRepresentation( "surface", {
                     transparent: true,
                     opacity: 0.5,
-                    side: THREE.FrontSide
-                } );
-                o.addRepresentation( "surface", {
-                    side: THREE.BackSide
+                    opaqueBack: true
                 } );
                 stage.centerView();
 

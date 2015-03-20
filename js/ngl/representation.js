@@ -4093,6 +4093,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         transparent: {
             type: "boolean", rebuild: true
         },
+        opaqueBack: {
+            type: "boolean", define: "OPAQUE_BACK"
+        },
         side: {
             type: "select", options: NGL.SideTypes, rebuild: true,
             int: true
@@ -4112,6 +4115,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
@@ -4154,6 +4158,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
                     side: THREE.FrontSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
@@ -4167,6 +4172,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
                     side: THREE.BackSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
@@ -4184,6 +4190,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,

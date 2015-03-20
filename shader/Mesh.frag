@@ -1,5 +1,7 @@
 
-#extension GL_OES_standard_derivatives : enable
+#ifdef FLAT_SHADED
+    #extension GL_OES_standard_derivatives : enable
+#endif
 
 uniform float opacity;
 uniform float nearClip;
@@ -57,7 +59,23 @@ void main()
             #include light
         #endif
 
-        gl_FragColor = vec4( vColor, opacity );
+        #ifdef OPAQUE_BACK
+            #ifdef FLIP_SIDED
+                if( float( gl_FrontFacing ) == 1.0 ){
+                    gl_FragColor = vec4( vColor, 1.0 );
+                }else{
+                    gl_FragColor = vec4( vColor, opacity );
+                }
+            #else
+                if( float( gl_FrontFacing ) == 1.0 ){
+                    gl_FragColor = vec4( vColor, opacity );
+                }else{
+                    gl_FragColor = vec4( vColor, 1.0 );
+                }
+            #endif
+        #else
+            gl_FragColor = vec4( vColor, opacity );
+        #endif
 
         #ifndef NOLIGHT
             gl_FragColor.rgb *= vLightFront;
