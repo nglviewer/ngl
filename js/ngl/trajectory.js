@@ -1024,14 +1024,24 @@ NGL.TrajectoryPlayer.prototype = {
 
             if( !this.traj.inProgress && this.interpolateType ){
 
-                // FIXME assumes forward direction
+                var ip, ipp, ippp;
+
+                if( this.direction === "forward" ){
+
+                    ip = Math.max( this.start, i - this.step );
+                    ipp = Math.max( this.start, i - 2 * this.step );
+                    ippp = Math.max( this.start, i - 3 * this.step );
+
+                }else{
+
+                    ip = Math.min( this.end, i + this.step );
+                    ipp = Math.min( this.end, i + 2 * this.step );
+                    ippp = Math.min( this.end, i + 3 * this.step );
+
+                }
+
                 this._interpolate(
-                    i,
-                    Math.max( 0, i - this.step ),
-                    Math.max( 0, i - 2 * this.step ),
-                    Math.max( 0, i - 3 * this.step ),
-                    1 / this.interpolateStep,
-                    0
+                    i, ip, ipp, ippp, 1 / this.interpolateStep, 0
                 );
 
             }else{
