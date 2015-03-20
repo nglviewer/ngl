@@ -252,7 +252,7 @@ NGL.Trajectory.prototype = {
 
         }
 
-        return function( i, ip, ipp, ippp, t, type ){
+        return function( i, ip, ipp, ippp, t, type, callback ){
 
             var fc = this.frameCache;
 
@@ -296,6 +296,12 @@ NGL.Trajectory.prototype = {
             this.currentFrame = i;
             this.signals.frameChanged.dispatch( i );
 
+            if( typeof callback === "function" ){
+
+                callback();
+
+            }
+
         }
 
     }(),
@@ -317,13 +323,13 @@ NGL.Trajectory.prototype = {
 
             this.loadFrame( iList, function(){
 
-                this.interpolate( i, ip, ipp, ippp, t, type );
+                this.interpolate( i, ip, ipp, ippp, t, type, callback );
 
             }.bind( this ) );
 
         }else{
 
-            this.interpolate( i, ip, ipp, ippp, t, type );
+            this.interpolate( i, ip, ipp, ippp, t, type, callback );
 
         }
 
@@ -341,9 +347,9 @@ NGL.Trajectory.prototype = {
 
                 i, 4,
 
-                function( j ){
+                function( j, wcallback ){
 
-                    scope._loadFrame( j );
+                    scope._loadFrame( j, wcallback );
 
                 },
 
@@ -1016,8 +1022,9 @@ NGL.TrajectoryPlayer.prototype = {
 
         if( !this._stopFlag ){
 
-            if( this.interpolateType ){
+            if( !this.traj.inProgress && this.interpolateType ){
 
+                // FIXME assumes forward direction
                 this._interpolate(
                     i,
                     Math.max( 0, i - this.step ),
@@ -1047,17 +1054,23 @@ NGL.TrajectoryPlayer.prototype = {
 
         if( t <= 1 ){
 
+            var deltaTime = Math.round( this.timeout * d );
+
             this.traj.setFrameInterpolated(
-                i, ip, ipp, ippp, t, this.interpolateType
+
+                i, ip, ipp, ippp, t, this.interpolateType,
+
+                function(){
+
+                    setTimeout( function(){
+
+                        this._interpolate( i, ip, ipp, ippp, d, t );
+
+                    }.bind( this ), deltaTime );
+
+                }.bind( this )
+
             );
-
-            var deltaTime = Math.max( 16, Math.round( this.timeout * d ) );
-
-            setTimeout( function(){
-
-                this._interpolate( i, ip, ipp, ippp, d, t );
-
-            }.bind( this ), deltaTime );
 
         }else{
 
