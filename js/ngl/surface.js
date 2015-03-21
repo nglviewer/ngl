@@ -168,6 +168,10 @@ NGL.Volume.prototype = {
         this.data = data;
         this.__data = this.data;
 
+        this.mc = new NGL.MarchingCubes2(
+            this.__data, this.nx, this.ny, this.nz
+        );
+
         delete this.__isolevel;
         delete this.__minValue;
         delete this.__maxValue;
@@ -197,11 +201,7 @@ NGL.Volume.prototype = {
 
         }
 
-        var sd = NGL.MarchingCubes2(
-
-            this.__data, this.nx, this.ny, this.nz, isolevel
-
-        );
+        var sd = this.mc.triangulate( isolevel );
 
         this.position = sd.position;
         this.normal = sd.normal;
@@ -671,7 +671,7 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
 };
 
-NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
+NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
     // Based on alteredq / http://alteredqualia.com/
     // port of greggman's ThreeD version of marching cubes to Three.js
@@ -679,42 +679,66 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
     //
     // Adapted for NGL by Alexander Rose
 
-    NGL.time( "NGL.MarchingCubes2" );
-
     var edgeTable = NGL.MarchingCubes.edgeTable;
     var triTable = NGL.MarchingCubes.triTable2;
 
-    var size = nx;
-    var size2 = nx * ny;
-    var size3 = size2 * nz;
+    var isolevel = 0;
+    var noNormals = false;
 
     var n = nx * ny * nz;
 
     // deltas
-
     var yd = nx;
     var zd = nx * ny;
 
-    // temp buffers used in polygonize
-
-    if( !noNormals ){
-        var normalCache = new Float32Array( size3 * 3 );
-    }
-
-    var vertexIndex = new Int32Array( nx * ny * nz );
-
-    for( var i = 0; i < n; ++i ){
-        vertexIndex[ i ] = -1;
-    }
+    var normalCache, vertexIndex;
+    var count, icount;
 
     var ilist = new Int32Array( 12 );
 
-    var count = 0;
-    var icount = 0;
-
     var positionArray = [];
-    var normalArray   = [];
-    var indexArray = []
+    var normalArray = [];
+    var indexArray = [];
+
+    //
+
+    this.triangulate = function( _isolevel, _noNormals ){
+
+        NGL.time( "NGL.MarchingCubes2.triangulate" );
+
+        isolevel = _isolevel;
+        noNormals = _noNormals;
+
+        if( !noNormals && !normalCache ){
+            normalCache = new Float32Array( n * 3 );
+        }
+
+        if( !vertexIndex ){
+            vertexIndex = new Int32Array( n );
+        }
+
+        for( var i = 0; i < n; ++i ){
+            vertexIndex[ i ] = -1;
+        }
+
+        count = 0;
+        icount = 0;
+
+        triangulate();
+
+        positionArray.length = count * 3;
+        if( !noNormals ) normalArray.length = count * 3;
+        indexArray.length = icount;
+
+        NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
+
+        return {
+            position: new Float32Array( positionArray ),
+            normal: noNormals ? undefined : new Float32Array( normalArray ),
+            index: new Uint32Array( indexArray )
+        };
+
+    }
 
     // polygonization
 
@@ -1043,11 +1067,11 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
 
         for ( z = 1; z < nz1; ++z ) {
 
-            z_offset = size2 * z;
+            z_offset = zd * z;
 
             for ( y = 1; y < ny1; ++y ) {
 
-                y_offset = z_offset + size * y;
+                y_offset = z_offset + yd * y;
 
                 for ( x = 1; x < nx1; ++x ) {
 
@@ -1061,16 +1085,6 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
         }
 
     }
-
-    triangulate();
-
-    NGL.timeEnd( "NGL.MarchingCubes2" );
-
-    return {
-        position: new Float32Array( positionArray ),
-        normal: noNormals ? undefined : new Float32Array( normalArray ),
-        index: new Uint32Array( indexArray )
-    };
 
 };
 
