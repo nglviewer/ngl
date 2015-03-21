@@ -4084,6 +4084,10 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 2, max: 1000, min: -1000,
             rebuild: true
         },
+        smooth: {
+            type: "integer", precision: 1, max: 10, min: 0,
+            rebuild: true
+        },
         wireframe: {
             type: "boolean", rebuild: true
         },
@@ -4112,6 +4116,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         this.color = p.color || 0xDDDDDD;
         this.isolevel = p.isolevel !== undefined ? p.isolevel : NaN;
+        this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
@@ -4139,7 +4144,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.surface instanceof NGL.Volume ){
 
-            this.surface.generateSurface( this.isolevel );
+            this.surface.generateSurface( this.isolevel, this.smooth );
 
         }
 
