@@ -1075,7 +1075,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
         var q, x, y, z, fx, fy, fz, y_offset, z_offset
 
-        var xBeg, yBeg, zBeg, xEnd, yEnd, zEnd;
+        var beg, xEnd, yEnd, zEnd;
 
         if( noNormals ){
 
@@ -1900,8 +1900,9 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
             bg.computeVertexNormals();
             var norms = bg.attributes.normal.array;
+            var nv3 = nv * 3;
 
-            for( var i3 = 0, nv3 = nv * 3; i3 < nv3; i3 += 3 ){
+            for( i3 = 0; i3 < nv3; i3 += 3 ){
 
                 // if(verts[i].inout) ssign=1;
                 // else ssign=-1;
