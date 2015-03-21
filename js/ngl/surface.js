@@ -1061,19 +1061,35 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
         var q, x, y, z, fx, fy, fz, y_offset, z_offset
 
-        var nx1 = nx - 2;
-        var ny1 = ny - 2;
-        var nz1 = nz - 2;
+        var xBeg, yBeg, zBeg, xEnd, yEnd, zEnd;
 
-        for ( z = 1; z < nz1; ++z ) {
+        if( noNormals ){
+
+            beg = 0;
+
+            xEnd = nx - 1;
+            yEnd = ny - 1;
+            zEnd = nz - 1;
+
+        }else{
+
+            beg = 1;
+
+            xEnd = nx - 2;
+            yEnd = ny - 2;
+            zEnd = nz - 2;
+
+        }
+
+        for ( z = beg; z < zEnd; ++z ) {
 
             z_offset = zd * z;
 
-            for ( y = 1; y < ny1; ++y ) {
+            for ( y = beg; y < yEnd; ++y ) {
 
                 y_offset = z_offset + yd * y;
 
-                for ( x = 1; x < nx1; ++x ) {
+                for ( x = beg; x < xEnd; ++x ) {
 
                     q = y_offset + x;
                     polygonize( x, y, z, q );
