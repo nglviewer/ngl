@@ -2058,7 +2058,6 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
     var v = this.volume;
     var header = {};
-
     var lines = str.split( "\n" );
     var reWhitespace = /\s+/;
     var bor_to_ang = 0.529177210859;
@@ -2099,7 +2098,6 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
             }
 
         };
-
     };
 
     _getData( header.AtNo + 6 );
