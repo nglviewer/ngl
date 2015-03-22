@@ -3839,6 +3839,165 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.MolecularSurfaceRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.MolecularSurfaceRepresentation,
+
+    type: "surface",
+
+    parameters: Object.assign( {
+
+        smooth: {
+            type: "integer", precision: 1, max: 10, min: 0,
+            rebuild: true
+        },
+        wireframe: {
+            type: "boolean", rebuild: true
+        },
+        background: {
+            type: "boolean", rebuild: true
+        },
+        transparent: {
+            type: "boolean", rebuild: true
+        },
+        opaqueBack: {
+            type: "boolean", define: "OPAQUE_BACK"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0, uniform: true
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        p.color = p.color || 0xDDDDDD;
+
+        this.smooth = p.smooth !== undefined ? p.smooth : 1;
+        this.background = p.background || false;
+        this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
+
+        var structureSubset = new NGL.StructureSubset(
+            this.structure, this.selection.string
+        );
+
+        var ms = new NGL.MolecularSurface( structureSubset );
+
+        this.surface = ms.vdw();
+        this.surface.generateSurface( 1, this.smooth );
+
+        var position = this.surface.getPosition();
+        var color = this.surface.getColor( this.color );
+        var normal = this.surface.getNormal();
+        var index = this.surface.getIndex();
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        if( this.transparent && this.side === THREE.DoubleSide ){
+
+            var frontBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: THREE.FrontSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            var backBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: THREE.BackSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            this.bufferList.push( backBuffer, frontBuffer );
+
+        }else{
+
+            this.surfaceBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: this.side,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            this.bufferList.push( this.surfaceBuffer );
+
+        }
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var surfaceData = {};
+
+        if( what[ "color" ] ){
+
+            surfaceData[ "color" ] = this.surface.getColor( this.color );
+
+        }
+
+        this.surfaceBuffer.setAttributes( surfaceData );
+
+    },
+
+    clear: function(){
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
+
+    }
+
+} );
+
+
 //////////////////////////////
 // Trajectory representation
 

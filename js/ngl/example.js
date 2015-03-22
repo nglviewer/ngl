@@ -970,6 +970,18 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "molsurf": function( stage ){
+
+            stage.loadFile( "data://1crn.pdb", function( o ){
+
+                o.addRepresentation( "licorice", {} );
+                o.addRepresentation( "surface" );
+                stage.centerView();
+
+            } );
+
         }
 
     }
