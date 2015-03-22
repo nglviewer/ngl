@@ -2058,78 +2058,45 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
     var v = this.volume;
     var header = {};
-
-    // console.log(str)
-
     var lines = str.split( "\n" );
-
     var reWhitespace = /\s+/;
 
-    // TODO parse header
-    header.AtNo = parseFloat(lines[2].trim().split( reWhitespace )[0]);
-    header.NX = parseFloat(lines[2].trim().split( reWhitespace )[1]);
-    header.NY = parseFloat(lines[2].trim().split( reWhitespace )[2]);
-    header.NZ = parseFloat(lines[2].trim().split( reWhitespace )[3]);
-    header.NVX = parseFloat(lines[3].trim().split( reWhitespace )[0]);
-    header.NVY = parseFloat(lines[4].trim().split( reWhitespace )[0]);
-    header.NVZ = parseFloat(lines[5].trim().split( reWhitespace )[0]);
-    header.AVX = parseFloat(lines[3].trim().split( reWhitespace )[1]);
-    header.AVY = parseFloat(lines[4].trim().split( reWhitespace )[2]);
-    header.AVZ = parseFloat(lines[5].trim().split( reWhitespace )[3]);
-    header.MPX = ( ( header.NVX * header.NX) / 2 ) - header.NX;
-    header.MPY = ( ( header.NVY * header.NY) / 2 ) - header.NY;
-    header.MPZ = ( ( header.NVZ * header.NZ) / 2 ) - header.NZ;
+    function headerhelper( k, l ) {
+        return parseFloat(lines[k].trim().split( reWhitespace )[l]);
+    }
 
-    console.log( header )
+    header.AtNo = Math.abs(headerhelper(2,0)); //Number of atoms
+    header.PosOriX = headerhelper(2,1); //Position of origin of volumetric data
+    header.PosOriY = headerhelper(2,2);
+    header.PosOriZ = headerhelper(2,3);
+    header.NVX = headerhelper(3,0); //Number of voxels
+    header.NVY = headerhelper(4,0);
+    header.NVZ = headerhelper(5,0);
+    header.AVX = headerhelper(3,1); //Axis vector
+    header.AVY = headerhelper(4,2);
+    header.AVZ = headerhelper(5,3);
+    header.PosCorX = ( ( header.NVX * header.AVX) / 2 ) - header.PosOriX; //Position correction vector
+    header.PosCorY = ( ( header.NVY * header.AVY) / 2 ) - header.PosOriY;
+    header.PosCorZ = ( ( header.NVZ * header.AVZ) / 2 ) - header.PosOriZ;
 
-    var n = header.NVX * header.NVY * header.NVZ;
+    var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
+    var count = 0;
 
-    var data = new Float32Array( n );
-
-
-    // TODO parse voxel data
-
-
-    function _getData( _i, _n ){
-
-        for( var i = _i; i < _n; ++i ){
-
+    function _getData( _i ){
+        for( var i = _i; i < lines.length; ++i ){
             line = lines[i].trim().split( reWhitespace );
-            for( var j = 0; j < 6; ++j ){
-                data[(i*6)+j] = parseFloat( line[j] );
+            for( var j = 0; j < line.length; ++j ){
+                data[count] = parseFloat( line[j] );
+                ++count;
             };
-
-        };
-
-    };
-
-    _getData( header.AtNo + 5, n / 6 );
-
-    var position = {};
-
-    function _getPosition( ) {
-        for( var i = 0; i < n; ++i ){
-
-            var positionz = i % header.NZ;
-            var helpz = i / header.NZ;
-            var positiony = helpz % header.NY;
-            var helpy = helpz / header.NY;
-            var positionx = helpy % header.NX;
-
-            position.x[i] = positionx * header.NX - header.MPX;
-            position.y[i] = positiony * header.NY - header.MPY;
-            position.z[i] = positionz * header.NZ - header.MPZ;
         };
     };
 
-    // _getPosition();
-
-
-
+    _getData( header.AtNo + 5 );
 
     v.header = header;
 
-    v.setData( data, header.NVX, header.NVY, header.NVZ );
+    v.setData( data, header.NVZ, header.NVY, header.NVX );
 
     NGL.timeEnd( __timeName );
 
@@ -2143,11 +2110,17 @@ NGL.CubeParser.prototype.makeMatrix = function(){
 
     var matrix = new THREE.Matrix4();
 
-    //matrix.multiply(
-    //    new THREE.Matrix4().makeTranslation(
-    //        h.NXSTART, h.NYSTART, h.NZSTART
-    //    )
-    //);
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            h.PosCorZ, h.PosCorY, h.PosCorX
+        )
+    );
+
+    matrix.multiply(
+        new THREE.Matrix4().makeScale(
+            h.AVZ, h.AVY, h.AVX
+        )
+    );
 
     this.volume.matrix.copy( matrix );
 
