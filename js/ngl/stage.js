@@ -609,7 +609,17 @@ NGL.Preferences.prototype = {
 
         }catch( e ){
 
-            NGL.error( "localStorage not accessible/available" );
+            // Webkit === 22 / Firefox === 1014
+
+            if( e.code === 22 || e.code === 1014 ){
+
+                NGL.error( "localStorage full" );
+
+            }else{
+
+                NGL.error( "localStorage not accessible/available" );
+
+            }
 
         }
 
