@@ -4,40 +4,35 @@
  */
 (function(window, document, undefined) {
 
-    var type = (window.SVGAngle || document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ? "SVG" : "VML"),
-        picker, slide, hueOffset = 15, svgNS = 'http://www.w3.org/2000/svg';
+    var picker, slide, svgNS = 'http://www.w3.org/2000/svg';
 
     // This HTML snippet is inserted into the innerHTML property of the passed color picker element
     // when the no-hassle call to ColorPicker() is used, i.e. ColorPicker(function(hex, hsv, rgb) { ... });
 
     var colorpickerHTMLSnippet = [
-
         '<div class="picker-wrapper">',
-                '<div class="picker"></div>',
-                '<div class="picker-indicator"></div>',
+            '<div class="picker"></div>',
+            '<div class="picker-indicator"></div>',
         '</div>',
         '<div class="slide-wrapper">',
-                '<div class="slide"></div>',
-                '<div class="slide-indicator"></div>',
+            '<div class="slide"></div>',
+            '<div class="slide-indicator"></div>',
         '</div>'
-
     ].join('');
+
+    function restrictToBounds(value, minimum, maximum) {
+        return Math.max(Math.min(value, maximum), minimum)
+    }
 
     /**
      * Return mouse position relative to the element el.
      */
-    function mousePosition(evt) {
-        // IE:
-        if (window.event && window.event.contentOverflow !== undefined) {
-            return { x: window.event.offsetX, y: window.event.offsetY };
-        }
-        // Webkit:
-        if (evt.offsetX !== undefined && evt.offsetY !== undefined) {
-            return { x: evt.offsetX, y: evt.offsetY };
-        }
-        // Firefox:
-        var wrapper = evt.target.parentNode.parentNode;
-        return { x: evt.layerX - wrapper.offsetLeft, y: evt.layerY - wrapper.offsetTop };
+    function mousePosition(evt, element) {
+        var rect = element.getBoundingClientRect();
+        return {
+            x: restrictToBounds(evt.clientX - rect.left, 0, element.clientWidth),
+            y: restrictToBounds(evt.clientY - rect.top, 0, element.clientHeight)
+        };
     }
 
     /**
@@ -47,7 +42,7 @@
         el = document.createElementNS(svgNS, el);
         for (var key in attrs)
             el.setAttribute(key, attrs[key]);
-        if (Object.prototype.toString.call(children) != '[object Array]') children = [children];
+        if (!Array.isArray(children)) children = [children];
         var i = 0, len = (children[0] && children.length) || 0;
         for (; i < len; i++)
             el.appendChild(children[i]);
@@ -55,77 +50,53 @@
     }
 
     /**
-     * Create slide and picker markup depending on the supported technology.
+     * Create slide and picker markup
      */
-    if (type == 'SVG') {
-
-        slide = $('svg', { xmlns: 'http://www.w3.org/2000/svg', version: '1.1', width: '100%', height: '100%' },
-                  [
-                      $('defs', {},
+    var svgAttributes = { xmlns: svgNS, version: '1.1', width: '100%', height: '100%' };
+    slide = $('svg', svgAttributes,
+                [
+                    $('defs', {},
                         $('linearGradient', { id: 'gradient-hsv', x1: '0%', y1: '100%', x2: '0%', y2: '0%'},
-                          [
-                              $('stop', { offset: '0%', 'stop-color': '#FF0000', 'stop-opacity': '1' }),
-                              $('stop', { offset: '13%', 'stop-color': '#FF00FF', 'stop-opacity': '1' }),
-                              $('stop', { offset: '25%', 'stop-color': '#8000FF', 'stop-opacity': '1' }),
-                              $('stop', { offset: '38%', 'stop-color': '#0040FF', 'stop-opacity': '1' }),
-                              $('stop', { offset: '50%', 'stop-color': '#00FFFF', 'stop-opacity': '1' }),
-                              $('stop', { offset: '63%', 'stop-color': '#00FF40', 'stop-opacity': '1' }),
-                              $('stop', { offset: '75%', 'stop-color': '#0BED00', 'stop-opacity': '1' }),
-                              $('stop', { offset: '88%', 'stop-color': '#FFFF00', 'stop-opacity': '1' }),
-                              $('stop', { offset: '100%', 'stop-color': '#FF0000', 'stop-opacity': '1' })
-                          ]
-                         )
-                       ),
-                      $('rect', { x: '0', y: '0', width: '100%', height: '100%', fill: 'url(#gradient-hsv)'})
-                  ]
-                 );
+                            [
+                                $('stop', { offset: '0%', 'stop-color': '#FF0000', 'stop-opacity': '1' }),
+                                $('stop', { offset: '13%', 'stop-color': '#FF00FF', 'stop-opacity': '1' }),
+                                $('stop', { offset: '25%', 'stop-color': '#8000FF', 'stop-opacity': '1' }),
+                                $('stop', { offset: '38%', 'stop-color': '#0040FF', 'stop-opacity': '1' }),
+                                $('stop', { offset: '50%', 'stop-color': '#00FFFF', 'stop-opacity': '1' }),
+                                $('stop', { offset: '63%', 'stop-color': '#00FF40', 'stop-opacity': '1' }),
+                                $('stop', { offset: '75%', 'stop-color': '#0BED00', 'stop-opacity': '1' }),
+                                $('stop', { offset: '88%', 'stop-color': '#FFFF00', 'stop-opacity': '1' }),
+                                $('stop', { offset: '100%', 'stop-color': '#FF0000', 'stop-opacity': '1' })
+                            ]
+                        )
+                    ),
+                    $('rect', { x: '0', y: '0', width: '100%', height: '100%', fill: 'url(#gradient-hsv)'})
+                ]
+            );
 
-        picker = $('svg', { xmlns: 'http://www.w3.org/2000/svg', version: '1.1', width: '100%', height: '100%' },
-                   [
-                       $('defs', {},
-                         [
-                             $('linearGradient', { id: 'gradient-black', x1: '0%', y1: '100%', x2: '0%', y2: '0%'},
-                               [
-                                   $('stop', { offset: '0%', 'stop-color': '#000000', 'stop-opacity': '1' }),
-                                   $('stop', { offset: '100%', 'stop-color': '#CC9A81', 'stop-opacity': '0' })
-                               ]
-                              ),
-                             $('linearGradient', { id: 'gradient-white', x1: '0%', y1: '100%', x2: '100%', y2: '100%'},
-                               [
-                                   $('stop', { offset: '0%', 'stop-color': '#FFFFFF', 'stop-opacity': '1' }),
-                                   $('stop', { offset: '100%', 'stop-color': '#CC9A81', 'stop-opacity': '0' })
-                               ]
-                              )
-                         ]
-                        ),
-                       $('rect', { x: '0', y: '0', width: '100%', height: '100%', fill: 'url(#gradient-white)'}),
-                       $('rect', { x: '0', y: '0', width: '100%', height: '100%', fill: 'url(#gradient-black)'})
-                   ]
-                  );
+    picker = $('svg', svgAttributes,
+                [
+                    $('defs', {},
+                        [
+                            $('linearGradient', { id: 'gradient-black', x1: '0%', y1: '100%', x2: '0%', y2: '0%'},
+                                [
+                                    $('stop', { offset: '0%', 'stop-color': '#000000', 'stop-opacity': '1' }),
+                                    $('stop', { offset: '100%', 'stop-color': '#CC9A81', 'stop-opacity': '0' })
+                                ]
+                            ),
+                            $('linearGradient', { id: 'gradient-white', x1: '0%', y1: '100%', x2: '100%', y2: '100%'},
+                                [
+                                    $('stop', { offset: '0%', 'stop-color': '#FFFFFF', 'stop-opacity': '1' }),
+                                    $('stop', { offset: '100%', 'stop-color': '#CC9A81', 'stop-opacity': '0' })
+                                ]
+                            )
+                        ]
+                    ),
+                    $('rect', { x: '0', y: '0', width: '100%', height: '100%', fill: 'url(#gradient-white)'}),
+                    $('rect', { x: '0', y: '0', width: '100%', height: '100%', fill: 'url(#gradient-black)'})
+                ]
+            );
 
-    } else if (type == 'VML') {
-        slide = [
-            '<DIV style="position: relative; width: 100%; height: 100%">',
-            '<v:rect style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" stroked="f" filled="t">',
-            '<v:fill type="gradient" method="none" angle="0" color="red" color2="red" colors="8519f fuchsia;.25 #8000ff;24903f #0040ff;.5 aqua;41287f #00ff40;.75 #0bed00;57671f yellow"></v:fill>',
-            '</v:rect>',
-            '</DIV>'
-        ].join('');
-
-        picker = [
-            '<DIV style="position: relative; width: 100%; height: 100%">',
-            '<v:rect style="position: absolute; left: -1px; top: -1px; width: 101%; height: 101%" stroked="f" filled="t">',
-            '<v:fill type="gradient" method="none" angle="270" color="#FFFFFF" opacity="100%" color2="#CC9A81" o:opacity2="0%"></v:fill>',
-            '</v:rect>',
-            '<v:rect style="position: absolute; left: 0px; top: 0px; width: 100%; height: 101%" stroked="f" filled="t">',
-            '<v:fill type="gradient" method="none" angle="0" color="#000000" opacity="100%" color2="#CC9A81" o:opacity2="0%"></v:fill>',
-            '</v:rect>',
-            '</DIV>'
-        ].join('');
-
-        if (!document.namespaces['v'])
-            document.namespaces.add('v', 'urn:schemas-microsoft-com:vml', '#default#VML');
-    }
 
     /**
      * Convert HSV representation to RGB HEX string.
@@ -156,7 +127,6 @@
      * Credits to http://www.raphaeljs.com
      */
     function rgb2hsv(rgb) {
-
         var r = rgb.r;
         var g = rgb.g;
         var b = rgb.b;
@@ -185,15 +155,14 @@
      */
     function slideListener(ctx, slideElement, pickerElement) {
         return function(evt) {
-            evt = evt || window.event;
-            var mouse = mousePosition(evt);
-            ctx.h = mouse.y / slideElement.offsetHeight * 360 + hueOffset;
+            var mouse = mousePosition(evt, slideElement);
+            ctx.h = mouse.y / slideElement.offsetHeight * 360;
             var pickerColor = hsv2rgb({ h: ctx.h, s: 1, v: 1 });
             var c = hsv2rgb({ h: ctx.h, s: ctx.s, v: ctx.v });
             pickerElement.style.backgroundColor = pickerColor.hex;
-            ctx.callback && ctx.callback(c.hex, { h: ctx.h - hueOffset, s: ctx.s, v: ctx.v }, { r: c.r, g: c.g, b: c.b }, undefined, mouse);
-        }
-    };
+            ctx.callback && ctx.callback(c.hex, { h: ctx.h, s: ctx.s, v: ctx.v }, { r: c.r, g: c.g, b: c.b }, undefined, mouse);
+        };
+    }
 
     /**
      * Return click event handler for the picker.
@@ -201,17 +170,16 @@
      */
     function pickerListener(ctx, pickerElement) {
         return function(evt) {
-            evt = evt || window.event;
-            var mouse = mousePosition(evt),
+            var mouse = mousePosition(evt, pickerElement),
                 width = pickerElement.offsetWidth,
                 height = pickerElement.offsetHeight;
 
             ctx.s = mouse.x / width;
             ctx.v = (height - mouse.y) / height;
             var c = hsv2rgb(ctx);
-            ctx.callback && ctx.callback(c.hex, { h: ctx.h - hueOffset, s: ctx.s, v: ctx.v }, { r: c.r, g: c.g, b: c.b }, mouse);
-        }
-    };
+            ctx.callback && ctx.callback(c.hex, { h: ctx.h, s: ctx.s, v: ctx.v }, { r: c.r, g: c.g, b: c.b }, mouse);
+        };
+    }
 
     var uniqID = 0;
 
@@ -237,101 +205,86 @@
 
             this.slideElement = element.getElementsByClassName('slide')[0];
             this.pickerElement = element.getElementsByClassName('picker')[0];
-            var slideIndicator = element.getElementsByClassName('slide-indicator')[0];
-            var pickerIndicator = element.getElementsByClassName('picker-indicator')[0];
+            this.slideIndicator = element.getElementsByClassName('slide-indicator')[0];
+            this.pickerIndicator = element.getElementsByClassName('picker-indicator')[0];
 
-            ColorPicker.fixIndicators(slideIndicator, pickerIndicator);
-
+            ColorPicker.positionIndicators(
+                this.slideIndicator,
+                this.pickerIndicator,
+                {x: 0, y: 0},
+                {x: 0, y: 0}
+            );
             this.callback = function(hex, hsv, rgb, pickerCoordinate, slideCoordinate) {
-
-                ColorPicker.positionIndicators(slideIndicator, pickerIndicator, slideCoordinate, pickerCoordinate);
-
+                ColorPicker.positionIndicators(this.slideIndicator, this.pickerIndicator, slideCoordinate, pickerCoordinate);
                 pickerElement(hex, hsv, rgb);
             };
 
         } else {
-
             this.callback = callback;
             this.pickerElement = pickerElement;
             this.slideElement = slideElement;
         }
-
-        if (type == 'SVG') {
-
-            // Generate uniq IDs for linearGradients so that we don't have the same IDs within one document.
-            // Then reference those gradients in the associated rectangles.
-
-            var slideClone = slide.cloneNode(true);
-            var pickerClone = picker.cloneNode(true);
-
-            var hsvGradient = slideClone.getElementById('gradient-hsv');
-
-            var hsvRect = slideClone.getElementsByTagName('rect')[0];
-
-            hsvGradient.id = 'gradient-hsv-' + uniqID;
-            hsvRect.setAttribute('fill', 'url(#' + hsvGradient.id + ')');
-
-            var blackAndWhiteGradients = [pickerClone.getElementById('gradient-black'), pickerClone.getElementById('gradient-white')];
-            var whiteAndBlackRects = pickerClone.getElementsByTagName('rect');
-
-            blackAndWhiteGradients[0].id = 'gradient-black-' + uniqID;
-            blackAndWhiteGradients[1].id = 'gradient-white-' + uniqID;
-
-            whiteAndBlackRects[0].setAttribute('fill', 'url(#' + blackAndWhiteGradients[1].id + ')');
-            whiteAndBlackRects[1].setAttribute('fill', 'url(#' + blackAndWhiteGradients[0].id + ')');
-
-            this.slideElement.appendChild(slideClone);
-            this.pickerElement.appendChild(pickerClone);
-
-            uniqID++;
-
-        } else {
-
-            this.slideElement.innerHTML = slide;
-            this.pickerElement.innerHTML = picker;
+        this.slide_listener = slideListener(this, this.slideElement, this.pickerElement);
+        this.picker_listener = pickerListener(this, this.pickerElement);
+        if (!callback) {
+            this.fixIndicators(this.slideIndicator, this.pickerIndicator);
         }
 
-        addEventListener(this.slideElement, 'click', slideListener(this, this.slideElement, this.pickerElement));
-        addEventListener(this.pickerElement, 'click', pickerListener(this, this.pickerElement));
+        // Generate uniq IDs for linearGradients so that we don't have the same IDs within one document.
+        // Then reference those gradients in the associated rectangles.
 
-        enableDragging(this, this.slideElement, slideListener(this, this.slideElement, this.pickerElement));
-        enableDragging(this, this.pickerElement, pickerListener(this, this.pickerElement));
-    };
+        var slideClone = slide.cloneNode(true);
+        var pickerClone = picker.cloneNode(true);
 
-    function addEventListener(element, event, listener) {
+        var hsvGradient = slideClone.getElementById('gradient-hsv');
 
-        if (element.attachEvent) {
+        var hsvRect = slideClone.getElementsByTagName('rect')[0];
 
-            element.attachEvent('on' + event, listener);
+        hsvGradient.id = 'gradient-hsv-' + uniqID;
+        hsvRect.setAttribute('fill', 'url(#' + hsvGradient.id + ')');
 
-        } else if (element.addEventListener) {
+        var blackAndWhiteGradients = [pickerClone.getElementById('gradient-black'), pickerClone.getElementById('gradient-white')];
+        var whiteAndBlackRects = pickerClone.getElementsByTagName('rect');
 
-            element.addEventListener(event, listener, false);
-        }
+        blackAndWhiteGradients[0].id = 'gradient-black-' + uniqID;
+        blackAndWhiteGradients[1].id = 'gradient-white-' + uniqID;
+
+        whiteAndBlackRects[0].setAttribute('fill', 'url(#' + blackAndWhiteGradients[1].id + ')');
+        whiteAndBlackRects[1].setAttribute('fill', 'url(#' + blackAndWhiteGradients[0].id + ')');
+
+        this.slideElement.appendChild(slideClone);
+        this.pickerElement.appendChild(pickerClone);
+
+        uniqID++;
+
+        enableDragging(this.slideElement, this.slide_listener);
+        enableDragging(this.pickerElement, this.picker_listener);
     }
 
    /**
     * Enable drag&drop color selection.
-    * @param {object} ctx ColorPicker instance.
     * @param {DOMElement} element HSV slide element or HSV picker element.
     * @param {Function} listener Function that will be called whenever mouse is dragged over the element with event object as argument.
     */
-    function enableDragging(ctx, element, listener) {
-
+    function enableDragging(element, listener) {
         var mousedown = false;
-
-        addEventListener(element, 'mousedown', function(evt) { mousedown = true;  });
-        addEventListener(element, 'mouseup',   function(evt) { mousedown = false;  });
-        addEventListener(element, 'mouseout',  function(evt) { mousedown = false;  });
-        addEventListener(element, 'mousemove', function(evt) {
-
-            if (mousedown) {
-
-                listener(evt);
-            }
-        });
+        function mouseDown(evt) {
+            mousedown = true;
+            evt.preventDefault();
+            // listen to mouse move/up on document only after mouse down on element
+            document.addEventListener('mouseup', mouseUp, true);
+            document.addEventListener('mousemove', mouseMove, false);
+        }
+        function mouseMove(evt) {if (mousedown) listener(evt);}
+        function mouseUp(evt) {
+            mouseMove(evt);
+            mousedown = false;
+            // stop listening to mouse move/up on document after mouse up
+            document.removeEventListener('mouseup', mouseUp, false);
+            document.removeEventListener('mousemove', mouseMove, false);
+        }
+        element.addEventListener('mousedown', mouseDown, false);
     }
-
 
     ColorPicker.hsv2rgb = function(hsv) {
         var rgbHex = hsv2rgb(hsv);
@@ -364,34 +317,32 @@
      * @param {object} rgb Object of the form: { r: <red>, g: <green>, b: <blue> }.
      * @param {string} hex String of the form: #RRGGBB.
      */
-     function setColor(ctx, hsv, rgb, hex) {
-         ctx.h = hsv.h % 360;
-         ctx.s = hsv.s;
-         ctx.v = hsv.v;
+    function setColor(ctx, hsv, rgb, hex) {
+        ctx.h = hsv.h % 360;
+        ctx.s = hsv.s;
+        ctx.v = hsv.v;
 
-         var c = hsv2rgb(ctx);
+        var c = hsv2rgb(ctx);
 
-         var mouseSlide = {
-             y: (ctx.h * ctx.slideElement.offsetHeight) / 360,
-             x: 0    // not important
-         };
+        var mouseSlide = {
+            y: (ctx.h * ctx.slideElement.offsetHeight) / 360,
+            x: 0    // not important
+        };
 
-         var pickerHeight = ctx.pickerElement.offsetHeight;
+        var pickerHeight = ctx.pickerElement.offsetHeight;
+        var mousePicker = {
+            x: ctx.s * ctx.pickerElement.offsetWidth,
+            y: pickerHeight - ctx.v * pickerHeight
+        };
+        ctx.pickerElement.style.backgroundColor = hsv2rgb({ h: ctx.h, s: 1, v: 1 }).hex;
+        ctx.callback && ctx.callback(hex || c.hex, { h: ctx.h, s: ctx.s, v: ctx.v }, rgb || { r: c.r, g: c.g, b: c.b }, mousePicker, mouseSlide);
 
-         var mousePicker = {
-             x: ctx.s * ctx.pickerElement.offsetWidth,
-             y: pickerHeight - ctx.v * pickerHeight
-         };
-
-         ctx.pickerElement.style.backgroundColor = hsv2rgb({ h: ctx.h, s: 1, v: 1 }).hex;
-         ctx.callback && ctx.callback(hex || c.hex, { h: ctx.h, s: ctx.s, v: ctx.v }, rgb || { r: c.r, g: c.g, b: c.b }, mousePicker, mouseSlide);
-
-         return ctx;
-    };
+        return ctx;
+    }
 
     /**
-     * Sets color of the picker in hsv format.
-     * @param {object} hsv Object of the form: { h: <hue>, s: <saturation>, v: <value> }.
+     * Sets color of the picker in rgb format.
+     * @param {object} rgb Object of the form: { r: <red>, g: <green>, b: <blue> }.
      */
     ColorPicker.prototype.setHsv = function(hsv) {
         return setColor(this, hsv);
@@ -421,7 +372,6 @@
      * @param {object} mousePicker Coordinates of the mouse cursor in the picker area.
      */
     ColorPicker.positionIndicators = function(slideIndicator, pickerIndicator, mouseSlide, mousePicker) {
-
         if (mouseSlide) {
             slideIndicator.style.top = (mouseSlide.y - slideIndicator.offsetHeight/2) + 'px';
         }
@@ -432,12 +382,11 @@
     };
 
     /**
-     * Helper to fix indicators - this is recommended (and needed) for dragable color selection (see enabledDragging()).
+     * Helper to enable dragging on indicators.
      */
-    ColorPicker.fixIndicators = function(slideIndicator, pickerIndicator) {
-
-        pickerIndicator.style.pointerEvents = 'none';
-        slideIndicator.style.pointerEvents = 'none';
+    ColorPicker.prototype.fixIndicators = function(slideIndicator, pickerIndicator) {
+        enableDragging(slideIndicator, this.slide_listener);
+        enableDragging(pickerIndicator, this.picker_listener);
     };
 
     window.ColorPicker = ColorPicker;

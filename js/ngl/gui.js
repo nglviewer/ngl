@@ -1575,7 +1575,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     // Selection
 
     if( component.parent instanceof NGL.StructureComponent ||
-            component.parent instanceof NGL.TrajectoryComponent ){
+        component.parent instanceof NGL.TrajectoryComponent
+    ){
 
         container.add(
             new UI.SelectionPanel( component.repr.selection )

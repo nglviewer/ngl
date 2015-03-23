@@ -750,6 +750,7 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
 
 // Color picker (requires FlexiColorPicker)
 // https://github.com/DavidDurman/FlexiColorPicker
+// https://github.com/zvin/FlexiColorPicker
 
 UI.ColorPicker = function(){
 
@@ -805,13 +806,6 @@ UI.ColorPicker = function(){
         this.slideWrapper
     );
 
-    ColorPicker.fixIndicators(
-
-        this.sliderIndicator.dom,
-        this.pickerIndicator.dom
-
-    );
-
     this.colorPicker = ColorPicker(
 
         this.slider.dom,
@@ -837,6 +831,15 @@ UI.ColorPicker = function(){
         }
 
     );
+
+    this.colorPicker.fixIndicators(
+
+        this.sliderIndicator.dom,
+        this.pickerIndicator.dom
+
+    );
+
+    this.setValue( "#888888" );
 
     return this;
 
