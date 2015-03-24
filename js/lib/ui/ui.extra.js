@@ -813,6 +813,16 @@ UI.ColorPicker = function(){
 
         function( hex, hsv, rgb, pickerCoordinate, sliderCoordinate ){
 
+            if( !pickerCoordinate && sliderCoordinate && hsv.s < 0.05 ){
+
+                hsv.s = 0.5;
+                hsv.v = 0.7;
+                scope.colorPicker.setHsv( hsv );
+
+                return;
+
+            }
+
             ColorPicker.positionIndicators(
                 scope.sliderIndicator.dom, scope.pickerIndicator.dom,
                 sliderCoordinate, pickerCoordinate
@@ -838,8 +848,6 @@ UI.ColorPicker = function(){
         this.pickerIndicator.dom
 
     );
-
-    this.setValue( "#888888" );
 
     return this;
 
