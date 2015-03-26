@@ -132,17 +132,25 @@ NGL.XHRLoader.prototype = {
 
             if ( request.status === 200 || request.status === 304 ) {
 
-                var data = this.response;
+                try{
 
-                if( scope.compressed ){
+                    var data = this.response;
 
-                    data = NGL.decompress( data, url, scope.asBinary );
+                    if( scope.compressed ){
+
+                        data = NGL.decompress( data, url, scope.asBinary );
+
+                    }
+
+                    THREE.Cache.add( url, data );
+
+                    if ( onLoad ) onLoad( data );
+
+                }catch( e ){
+
+                    if ( onError ) onError( "decompression failed" );
 
                 }
-
-                THREE.Cache.add( url, data );
-
-                if ( onLoad ) onLoad( data );
 
             } else {
 
@@ -241,17 +249,26 @@ NGL.FileLoader.prototype = {
 
         reader.onload = function( event ){
 
-            var data = event.target.result;
+            try{
 
-            if( scope.compressed ){
+                var data = event.target.result;
 
-                data = NGL.decompress( data, file, scope.asBinary );
+                if( scope.compressed ){
+
+                    data = NGL.decompress( data, file, scope.asBinary );
+
+                }
+
+                // THREE.Cache.add( file, data );
+
+                onLoad( data );
+
+            }catch( e ){
+
+                if ( onError ) onError( "decompression failed" );
 
             }
 
-            // THREE.Cache.add( file, data );
-
-            onLoad( data );
             scope.manager.itemEnd( file );
 
         }
