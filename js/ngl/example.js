@@ -974,9 +974,10 @@ NGL.Examples = {
 
         "molsurf": function( stage ){
 
-            stage.loadFile( "data://1crn.pdb", function( o ){
+            stage.loadFile( "data://3dqb.pdb", function( o ){
 
                 o.addRepresentation( "licorice", {} );
+                o.addRepresentation( "spacefill" );
                 o.addRepresentation( "surface" );
                 stage.centerView();
 

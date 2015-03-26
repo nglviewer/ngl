@@ -1928,7 +1928,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
-NGL.MolecularSurface = function( structure, probeRadius, btype ){
+NGL.MolecularSurface = function( structure, probeRadius ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -1946,81 +1946,96 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
     // adapted to NGL by Alexander Rose
 
     probeRadius = probeRadius || 1.4;
-    btype = btype || false;
 
     var atoms = structure.atoms;
     var bbox = structure.getBoundingBox();
 
-    // 2 is .5A grid; if this is made user configurable and
-    // also have to adjust offset used to find non-shown atoms
-    var scaleFactor = 2;
+    var scaleFactor;
+    var margin;
+    var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
+    var matrix;
+    var depty, widxz;
+    var cutRadius;
+    var vpBits, vpDistance, vpAtomID;
 
-     // need margin to avoid boundary/round off effects
-    var margin = ( 1 / scaleFactor ) * 5.5;
+    function init( btype ){
 
-    var pmin = new THREE.Vector3().copy( bbox.min );
-    var pmax = new THREE.Vector3().copy( bbox.max );
+        // 2 is .5A grid; if this is made user configurable and
+        // also have to adjust offset used to find non-shown atoms
+        scaleFactor = 2;
 
-    if( !btype ){
+         // need margin to avoid boundary/round off effects
+        margin = ( 1 / scaleFactor ) * 5.5;
 
-        pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
-        pmax.addScalar( margin );
+        pmin = new THREE.Vector3().copy( bbox.min );
+        pmax = new THREE.Vector3().copy( bbox.max );
 
-    }else{
+        if( !btype ){
 
-        pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
-        pmax.addScalar( probeRadius + margin );
+            pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
+            pmax.addScalar( margin );
+
+        }else{
+
+            pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
+            pmax.addScalar( probeRadius + margin );
+
+        }
+
+        ptran = new THREE.Vector3().copy( pmin ).negate();
+
+        pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+        pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+        pbox = new THREE.Vector3()
+            .subVectors( pmax, pmin )
+            .multiplyScalar( scaleFactor )
+            .ceil()
+            .addScalar( 1 );
+
+        pLength = pbox.x;
+        pWidth = pbox.y;
+        pHeight = pbox.z;
+
+        // pHeight, pWidth, pLength
+        matrix = new THREE.Matrix4();
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -1/scaleFactor, 1/scaleFactor, 1/scaleFactor
+            )
+        );
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -scaleFactor*ptran.z,
+                -scaleFactor*ptran.y,
+                -scaleFactor*ptran.x
+            )
+        );
+
+        // boundingatom caches
+        depty = {};
+        widxz = {};
+        boundingatom( btype );
+
+        // console.log( depty );
+        // console.log( widxz );
+
+        cutRadius = probeRadius * scaleFactor;
+
+        vpBits = new Uint8Array( pLength * pWidth * pHeight );
+        // float32 doesn't play nicely with native floats
+        vpDistance = new Float64Array( pLength * pWidth * pHeight );
+        vpAtomID = new Int32Array( pLength * pWidth * pHeight );
 
     }
 
-    var ptran = new THREE.Vector3().copy( pmin ).negate();
-
-    pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-    pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
-
-    var pbox = new THREE.Vector3()
-        .subVectors( pmax, pmin )
-        .multiplyScalar( scaleFactor )
-        .ceil()
-        .addScalar( 1 );
-
-    var plength = pbox.x;
-    var pwidth = pbox.y;
-    var pheight = pbox.z;
-
-    // pheight, pwidth, plength
-    var matrix = new THREE.Matrix4();
-    matrix.multiply(
-        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
-    );
-    matrix.multiply(
-        new THREE.Matrix4().makeScale( -0.5, 0.5, 0.5 )
-    );
-    matrix.multiply(
-        new THREE.Matrix4().makeTranslation(
-            -2*ptran.z, -2*ptran.y, -2*ptran.x
-        )
-    );
-
-    // boundingatom caches
-    var depty = {};
-    var widxz = {};
-    boundingatom();
-
-    // console.log( depty );
-    // console.log( widxz );
-
-    var cutRadius = probeRadius * scaleFactor;
-
-    // constants for vpbits bitmasks
+    // constants for vpBits bitmasks
     var INOUT = 1;
     var ISDONE = 2;
     var ISBOUND = 4;
-
-    var vpBits = new Uint8Array( plength * pwidth * pheight );
-    // float32 doesn't play nicely with native floats
-    var vpDistance = new Float64Array( plength * pwidth * pheight );
-    var vpAtomID = new Int32Array( plength * pwidth * pheight );
 
     var nb = [
         new Int32Array([  1,  0,  0 ]), new Int32Array([ -1,  0,  0 ]),
@@ -2040,27 +2055,101 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     //
 
-    this.vdw = function(){
+    this.vws = function(){
 
-        NGL.time( "NGL.MolecularSurface.vdw" );
+        NGL.time( "NGL.MolecularSurface.vws" );
+
+        init( false );
 
         fillvoxels();
         buildboundary();
         marchingcubeinit( 1 );
 
         var v = new NGL.Volume(
-            "vdw", "", vpBits, pheight, pwidth, plength
+            "vws", "", vpBits, pHeight, pWidth, pLength
         );
 
         v.matrix.copy( matrix );
 
-        NGL.timeEnd( "NGL.MolecularSurface.vdw" );
+        NGL.timeEnd( "NGL.MolecularSurface.vws" );
 
         return v;
 
-    }
+    };
 
-    function boundingatom(){
+    this.sas = function(){
+
+        NGL.time( "NGL.MolecularSurface.sas" );
+
+        init( true );
+
+        fillvoxels();
+        buildboundary();
+        marchingcubeinit( 3 );
+
+        var v = new NGL.Volume(
+            "sas", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.sas" );
+
+        return v;
+
+    };
+
+    this.ms = function(){
+
+        NGL.time( "NGL.MolecularSurface.ms" );
+
+        init( true );
+
+        fillvoxels();
+        buildboundary();
+        fastdistancemap();
+        // boundingatom( false );
+        // fillvoxelswaals();
+        marchingcubeinit( 4 );
+
+        var v = new NGL.Volume(
+            "ms", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.ms" );
+
+        return v;
+
+    };
+
+    this.ses = function(){
+
+        NGL.time( "NGL.MolecularSurface.ses" );
+
+        init( true );
+
+        fillvoxels();
+        buildboundary();
+        fastdistancemap();
+        boundingatom( false );
+        fillvoxelswaals();
+        marchingcubeinit( 2 );
+
+        var v = new NGL.Volume(
+            "ses", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.ses" );
+
+        return v;
+
+    };
+
+    function boundingatom( btype ){
 
         var j, k;
         var txz, tdept, sradius, tradius, widxz_r;
@@ -2115,6 +2204,7 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk, n;
+
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
         cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
@@ -2123,7 +2213,7 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
         var depty_at = depty[ at ];
         var nind = 0;
         var cnt = 0;
-        var pWH = pwidth * pheight;
+        var pWH = pWidth * pHeight;
 
         for( i = 0, n = widxz[ at ]; i < n; ++i ){
         for( j = 0; j < n; ++j ) {
@@ -2147,12 +2237,12 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
                             sk = cz + mk;
 
                             if( si < 0 || sj < 0 || sk < 0 ||
-                                si >= plength || sj >= pwidth || sk >= pheight
+                                si >= pLength || sj >= pWidth || sk >= pHeight
                             ){
                                 continue;
                             }
 
-                            var index = si * pWH + sj * pheight + sk;
+                            var index = si * pWH + sj * pHeight + sk;
 
                             if( !( vpBits[ index ] & INOUT ) ){
 
@@ -2162,21 +2252,14 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
                             }else{
 
                                 var atom2 = atoms[ vpAtomID[ index ] ];
-                                ox = Math.floor(
-                                    0.5 + scaleFactor * ( atom2.x + ptran.x )
-                                );
-                                oy = Math.floor(
-                                    0.5 + scaleFactor * ( atom2.y + ptran.y )
-                                );
-                                oz = Math.floor(
-                                    0.5 + scaleFactor * ( atom2.z + ptran.z )
-                                );
+                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
 
-                                if( mi * mi + mj * mj + mk * mk < ox *
-                                        ox + oy * oy + oz * oz ){
-
+                                if( mi * mi + mj * mj + mk * mk <
+                                    ox * ox + oy * oy + oz * oz
+                                ){
                                     vpAtomID[ index ] = atom.index;
-
                                 }
 
                             }
@@ -2218,16 +2301,106 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     }
 
+    function fillAtomWaals( atom ){
+
+        var cx, cy, cz, ox, oy, oz, nind = 0;
+        var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
+
+        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+
+        var at = atom.vdw;
+        var pWH = pWidth * pHeight;
+
+        for( i = 0, n = widxz[at]; i < n; ++i ){
+        for( j = 0; j < n; ++j ){
+
+            if( depty[ at ][ nind ] != -1 ){
+
+                for( ii = -1; ii < 2; ++ii ){
+                for( jj = -1; jj < 2; ++jj ){
+                for( kk = -1; kk < 2; ++kk ){
+
+                    if( ii !== 0 && jj !== 0 && kk !== 0 ){
+
+                        mi = ii * i;
+                        mk = kk * j;
+
+                        for( k = 0; k <= depty[ at ][ nind ]; ++k ){
+
+                            mj = k * jj;
+                            si = cx + mi;
+                            sj = cy + mj;
+                            sk = cz + mk;
+
+                            if( si < 0 || sj < 0 || sk < 0 ||
+                                si >= pLength || sj >= pWidth || sk >= pHeight
+                            ){
+                                continue;
+                            }
+
+                            var index = si * pWH + sj * pHeight + sk;
+
+                            if ( !( vpBits[ index ] & ISDONE ) ){
+
+                                vpBits[ index ] |= ISDONE;
+                                vpAtomID[ index ] = atom.index;
+
+                            } else {
+
+                                var atom2 = atoms[ vpAtomID[ index ] ];
+                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+
+                                if( mi * mi + mj * mj + mk * mk <
+                                    ox * ox + oy * oy + oz * oz
+                                ){
+                                    vpAtomID[ index ] = atom.index;
+                                }
+
+                            }
+
+                        }// k
+
+                    }// if
+
+                }// kk
+                }// jj
+                }// ii
+
+            }// if
+
+            nind++;
+
+        }// j
+        }// i
+
+    }
+
+    function fillvoxelswaals() {
+
+        var i, il;
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            vpBits[ i ] &= ~ISDONE;  // not isdone
+        }
+
+        structure.eachAtom( fillAtomWaals );
+
+    }
+
     function buildboundary(){
 
         var i, j, k;
-        var pWH = pwidth * pheight;
+        var pWH = pWidth * pHeight;
 
-        for( i = 0; i < plength; ++i ){
-        for( j = 0; j < pheight; ++j ){
-        for( k = 0; k < pwidth; ++k ){
+        for( i = 0; i < pLength; ++i ){
+        for( j = 0; j < pHeight; ++j ){
+        for( k = 0; k < pWidth; ++k ){
 
-            var index = i * pWH + k * pheight + j;
+            var index = i * pWH + k * pHeight + j;
 
             if( vpBits[ index ] & INOUT ){
 
@@ -2240,10 +2413,10 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
                     var tj = j + nb[ ii ][ 2 ];
                     var tk = k + nb[ ii ][ 1 ];
 
-                    if( ti > -1 && ti < plength &&
-                        tk > -1 && tk < pwidth &&
-                        tj > -1 && tj < pheight &&
-                        !( vpBits[ ti * pWH + tk * pheight + tj ] & INOUT )
+                    if( ti > -1 && ti < pLength &&
+                        tk > -1 && tk < pWidth &&
+                        tj > -1 && tj < pHeight &&
+                        !( vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT )
                     ){
 
                         vpBits[index] |= ISBOUND;
@@ -2265,6 +2438,345 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     }
 
+    // a little class for 3d array, should really generalize this and
+    // use throughout...
+    var PointGrid = function( length, width, height ){
+
+        // the standard says this is zero initialized
+        var data = new Int32Array( length * width * height * 3 );
+
+        // set position x,y,z to pt, which has ix,iy,and iz
+        this.set = function( x, y, z, pt ){
+            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
+            data[ index ] = pt.ix;
+            data[ index + 1] = pt.iy;
+            data[ index + 2] = pt.iz;
+        };
+
+        // return point at x,y,z
+        this.get = function( x, y, z ){
+            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
+            return {
+                ix : data[ index ],
+                iy : data[ index + 1],
+                iz : data[ index + 2]
+            };
+        };
+
+    };
+
+    function fastdistancemap(){
+
+        var eliminate = 0;
+        var certificate;
+        var i, j, k, n;
+
+        var boundPoint = new PointGrid( pLength, pWidth, pHeight );
+        var pWH = pWidth * pHeight;
+        var cutRSq = cutRadius * cutRadius;
+
+        var inarray = [];
+        var outarray = [];
+
+        var index;
+
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
+
+                    index = i * pWH + j * pHeight + k;
+                    vpBits[ index ] &= ~ISDONE;  // isdone = false
+
+                    if( vpBits[ index ] & INOUT ){
+
+                        if( vpBits[ index ] & ISBOUND ){
+
+                            var triple = {
+                                ix : i,
+                                iy : j,
+                                iz : k
+                            };
+
+                            boundPoint.set( i, j, k, triple );
+                            inarray.push( triple );
+                            vpDistance[ index ] = 0;
+                            vpBits[ index ] |= ISDONE;
+                            vpBits[ index ] &= ~ISBOUND;
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        do {
+
+            outarray = fastoneshell( inarray, boundPoint );
+            inarray = [];
+
+            for( i = 0, n = outarray.length; i < n; ++i ){
+
+                index = pWH * outarray[ i ].ix + pHeight *
+                            outarray[ i ].iy + outarray[ i ].iz;
+                vpBits[index] &= ~ISBOUND;
+
+                if( vpDistance[ index ] <= 1.0404 * cutRSq ){
+
+                    inarray.push({
+                        ix : outarray[ i ].ix,
+                        iy : outarray[ i ].iy,
+                        iz : outarray[ i ].iz
+                    });
+
+                }
+
+            }
+
+        }while( inarray.length !== 0 );
+
+        inarray = [];
+        outarray = [];
+        boundPoint = null;
+
+        var cutsf = Math.max( 0, scaleFactor - 0.5 );
+        // FIXME why does this seem to work?
+        // TODO check for other probeRadius and scaleFactor values
+        var cutoff = probeRadius * probeRadius;  //1.4 * 1.4// cutRSq - 0.50 / ( 0.1 + cutsf );
+
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
+
+                    index = i * pWH + j * pHeight + k;
+                    vpBits[ index ] &= ~ISBOUND;
+
+                    // ses solid
+
+                    if( vpBits[ index ] & INOUT ) {
+
+                        if( !( vpBits[ index ] & ISDONE ) ||
+                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoff )
+                        ){
+                            vpBits[ index ] |= ISBOUND;
+                        }
+                    }
+
+                }
+            }
+        }
+
+    }
+
+    function fastoneshell( inarray, boundPoint ){
+
+        // *allocout,voxel2
+        // ***boundPoint, int*
+        // outnum, int *elimi)
+        var tx, ty, tz;
+        var dx, dy, dz;
+        var i, j, n;
+        var square;
+        var bp, index;
+        var outarray = [];
+
+        if( inarray.length === 0 ){
+            return outarray;
+        }
+
+        var tnv = {
+            ix : -1,
+            iy : -1,
+            iz : -1
+        };
+
+        var pWH = pWidth*pHeight;
+
+        for( i = 0, n = inarray.length; i < n; ++i ){
+
+            tx = inarray[ i ].ix;
+            ty = inarray[ i ].iy;
+            tz = inarray[ i ].iz;
+            bp = boundPoint.get( tx, ty, tz );
+
+            for( j = 0; j < 6; ++j ){
+
+                tnv.ix = tx + nb[ j ][ 0 ];
+                tnv.iy = ty + nb[ j ][ 1 ];
+                tnv.iz = tz + nb[ j ][ 2 ];
+
+                if( tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                    tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1
+                ){
+
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if( ( vpBits[ index ] & INOUT ) && !( vpBits[ index ] & ISDONE ) ){
+
+                        boundPoint.set( tnv.ix, tnv.iy, tz + nb[ j ][ 2 ], bp );
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[ index ] = square;
+                        vpBits[ index ] |= ISDONE;
+                        vpBits[ index ] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+
+                    }else if( ( vpBits[ index ] & INOUT ) && ( vpBits[ index ] & ISDONE ) ){
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+
+                        if( square < vpDistance[ index ] ){
+
+                            boundPoint.set( tnv.ix, tnv.iy, tnv.iz, bp );
+                            vpDistance[ index ] = square;
+
+                            if( !( vpBits[ index ] & ISBOUND ) ){
+
+                                vpBits[ index ] |= ISBOUND;
+
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        // console.log("part1", positout);
+
+        for (i = 0, n = inarray.length; i < n; i++) {
+            tx = inarray[i].ix;
+            ty = inarray[i].iy;
+            tz = inarray[i].iz;
+            bp = boundPoint.get(tx, ty, tz);
+
+            for (j = 6; j < 18; j++) {
+                tnv.ix = tx + nb[j][0];
+                tnv.iy = ty + nb[j][1];
+                tnv.iz = tz + nb[j][2];
+
+                if(tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[index] = square;
+                        vpBits[index] |= ISDONE;
+                        vpBits[index] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+                    } else if ((vpBits[index] & INOUT) && (vpBits[index] & ISDONE)) {
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        if (square < vpDistance[index]) {
+                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+                            vpDistance[index] = square;
+                            if (!(vpBits[index] & ISBOUND)) {
+                                vpBits[index] |= ISBOUND;
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // console.log("part2", positout);
+
+        for (i = 0, n = inarray.length; i < n; i++) {
+            tx = inarray[i].ix;
+            ty = inarray[i].iy;
+            tz = inarray[i].iz;
+            bp = boundPoint.get(tx, ty, tz);
+
+            for (j = 18; j < 26; j++) {
+                tnv.ix = tx + nb[j][0];
+                tnv.iy = ty + nb[j][1];
+                tnv.iz = tz + nb[j][2];
+
+                if (tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[index] = square;
+                        vpBits[index] |= ISDONE;
+                        vpBits[index] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        if (square < vpDistance[index]) {
+                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+
+                            vpDistance[index] = square;
+                            if (!(vpBits[index] & ISBOUND)) {
+                                vpBits[index] |= ISBOUND;
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // console.log("part3", positout);
+        return outarray;
+
+    }
+
     function marchingcubeinit( stype ){
 
         for( var i = 0, lim = vpBits.length; i < lim; ++i ){
@@ -2273,7 +2785,7 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
                 vpBits[ i ] &= ~ISBOUND;
 
-            }else if( stype == 4 ){  // ses
+            }else if( stype == 4 ){  // ses without vdw => ms
 
                 vpBits[ i ] &= ~ISDONE;
                 if( vpBits[ i ] & ISBOUND ){
@@ -2281,7 +2793,7 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
                 }
                 vpBits[ i ] &= ~ISBOUND;
 
-            }else if( stype == 2 ){  // after vdw
+            }else if( stype == 2 ){  // ses with vdw => ses
 
                 if( ( vpBits[ i ] & ISBOUND ) && ( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] &= ~ISBOUND;

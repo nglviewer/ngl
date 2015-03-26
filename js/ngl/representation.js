@@ -3855,6 +3855,15 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        surfaceType: {
+            type: "select", rebuild: true,
+            options: {
+                "vws": "vws",
+                "sas": "sas",
+                "ms": "ms",
+                "ses": "ses"
+            }
+        },
         smooth: {
             type: "integer", precision: 1, max: 10, min: 0,
             rebuild: true
@@ -3887,11 +3896,12 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         p.color = p.color || 0xDDDDDD;
 
-        this.smooth = p.smooth !== undefined ? p.smooth : 1;
+        this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
+        this.smooth = p.smooth !== undefined ? p.smooth : 2;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
@@ -3907,9 +3917,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             this.structure, this.selection.string
         );
 
-        var ms = new NGL.MolecularSurface( structureSubset );
+        var molsurf = new NGL.MolecularSurface( structureSubset );
 
-        this.surface = ms.vdw();
+        this.surface = molsurf[ this.surfaceType ]();
         this.surface.generateSurface( 1, this.smooth );
 
         var position = this.surface.getPosition();
@@ -4279,7 +4289,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
