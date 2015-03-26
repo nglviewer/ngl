@@ -98,9 +98,10 @@ var properties = [
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
-    'fontWeight', 'fontStyle', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
-    'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
-    'wordWrap', 'spellcheck', 'lineHeight', 'whiteSpace', 'textOverflow'
+    'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
+    'verticalAlign', 'clear', 'float', 'zIndex', 'minHeight', 'maxHeight',
+    'minWidth', 'maxWidth', 'wordBreak', 'wordWrap', 'spellcheck',
+    'lineHeight', 'whiteSpace', 'textOverflow'
 ];
 
 properties.forEach( function ( property ) {
@@ -1368,6 +1369,7 @@ UI.OverlayPanel = function(){
     UI.Panel.call( this );
 
     this.dom.className = 'Panel OverlayPanel';
+    this.dom.tabIndex = 0;
 
     return this;
 
@@ -1807,9 +1809,9 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
                 .setCursor( "pointer" )
                 .onClick( function(){
 
-                    panel.setDisplay( "none" );
+                    this.setMenuDisplay( "none" );
 
-                } )
+                }.bind( this ) )
         )
         .add(
             new UI.Text( heading )
@@ -1825,13 +1827,13 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
 
         if( panel.getDisplay() === "block" ){
 
-            panel.setDisplay( "none" );
+            this.setMenuDisplay( "none" );
             tether.destroy();
             return;
 
         }
 
-        panel.setDisplay( "block" );
+        this.setMenuDisplay( "block" );
 
         tether = new Tether( {
             element: panel.dom,
@@ -1850,7 +1852,7 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
 
         tether.position();
 
-    } );
+    }.bind( this ) );
 
     this.add( icon );
 
@@ -1870,7 +1872,9 @@ UI.PopupMenu.prototype = Object.create( UI.Panel.prototype );
 UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
     this.panel
-        .add( new UI.Text( label ).setWidth( this.entryLabelWidth ) )
+        .add( new UI.Text( label )
+                // .setWhiteSpace( "nowrap" )
+                .setWidth( this.entryLabelWidth ) )
         .add( entry || new UI.Panel() )
         .add( new UI.Break() );
 
@@ -1889,6 +1893,8 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     this.panel.setDisplay( value );
+
+    if( value !== "none" ) this.panel.dom.focus();
 
     return this;
 
@@ -1997,6 +2003,7 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
 
 // Color picker (requires FlexiColorPicker)
 // https://github.com/DavidDurman/FlexiColorPicker
+// https://github.com/zvin/FlexiColorPicker
 
 UI.ColorPicker = function(){
 
@@ -2052,19 +2059,22 @@ UI.ColorPicker = function(){
         this.slideWrapper
     );
 
-    ColorPicker.fixIndicators(
-
-        this.sliderIndicator.dom,
-        this.pickerIndicator.dom
-
-    );
-
     this.colorPicker = ColorPicker(
 
         this.slider.dom,
         this.picker.dom,
 
         function( hex, hsv, rgb, pickerCoordinate, sliderCoordinate ){
+
+            if( !pickerCoordinate && sliderCoordinate && hsv.s < 0.05 ){
+
+                hsv.s = 0.5;
+                hsv.v = 0.7;
+                scope.colorPicker.setHsv( hsv );
+
+                return;
+
+            }
 
             ColorPicker.positionIndicators(
                 scope.sliderIndicator.dom, scope.pickerIndicator.dom,
@@ -2082,6 +2092,13 @@ UI.ColorPicker = function(){
             }
 
         }
+
+    );
+
+    this.colorPicker.fixIndicators(
+
+        this.sliderIndicator.dom,
+        this.pickerIndicator.dom
 
     );
 
@@ -2125,6 +2142,7 @@ UI.ColorPopupMenu = function(){
     this.iconText = new UI.Text( "" )
         .setCursor( "pointer" )
         .setClass( "fa-stack-1x" )
+        .setFontFamily( "Arial, sans-serif" )
         .setColor( "#111" );
 
     this.iconSquare = new UI.Icon( "square", "stack-1x" )
@@ -2166,7 +2184,6 @@ UI.ColorPopupMenu = function(){
 
     this.colorPicker = new UI.ColorPicker()
         .setDisplay( "inline-block" )
-        .setValue( "#20bc3f" )
         .onChange( function( e ){
 
             scope.setScheme( "color" );
@@ -2704,7 +2721,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
         "pdb", "ent", "gro", "cif", "mmcif",
-        "mrc", "ccp4", "map",
+        "mrc", "ccp4", "map", "cube",
         "obj", "ply",
         "ngl", "ngz",
         "gz", "lzma", "bz2", "zip"
@@ -3902,10 +3919,22 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     // Add representation
 
-    var repr = new UI.Button( "add" )
-        .onClick( function(){
+    var repr = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( (function(){
 
-            component.addRepresentation();
+            var reprOptions = {
+                "": "[ add ]",
+                "surface": "surface",
+                "dot": "dot"
+            };
+            return reprOptions;
+
+        })() )
+        .onChange( function(){
+
+            component.addRepresentation( repr.getValue() );
+            repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
 
         } );
@@ -4076,6 +4105,16 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         })() );
 
+    if( component.parent instanceof NGL.SurfaceComponent ){
+
+        colorWidget.schemeSelector.setOptions( {
+            "": "",
+            "value": "value",
+            "color": "color",
+        } );
+
+    }
+
     container
         .addStatic( name )
         .addStatic( toggle )
@@ -4085,7 +4124,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     // Selection
 
     if( component.parent instanceof NGL.StructureComponent ||
-            component.parent instanceof NGL.TrajectoryComponent ){
+        component.parent instanceof NGL.TrajectoryComponent
+    ){
 
         container.add(
             new UI.SelectionPanel( component.repr.selection )
@@ -4303,6 +4343,26 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
         } );
 
+    var interpolateType = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "": "none",
+            "linear": "linear",
+            "spline": "spline",
+        } )
+        .onChange( function(){
+
+            player.interpolateType = interpolateType.getValue();
+
+        } );
+
+    var interpolateStep = new UI.Integer( 5 )
+        .setWidth( "30px" )
+        .setRange( 1, 50 )
+        .onChange( function(){
+            player.interpolateStep = interpolateStep.getValue();
+        } );
+
     // player
 
     var timeout = new UI.Integer( 50 )
@@ -4319,6 +4379,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var playerButton = new UI.ToggleIcon( true, "play", "pause" )
         .setMarginRight( "10px" )
         .setMarginLeft( "20px" )
+        .setCursor( "pointer" )
         .setWidth( "12px" )
         .setTitle( "play" )
         .onClick( function(){
@@ -4339,6 +4400,30 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     frameRow.add( playerButton );
     frameRow.add( frameRange );
+
+    var playDirection = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "forward": "forward",
+            "backward": "backward",
+        } )
+        .onChange( function(){
+
+            player.direction = playDirection.getValue();
+
+        } );
+
+    var playMode = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "loop": "loop",
+            "once": "once",
+        } )
+        .onChange( function(){
+
+            player.mode = playMode.getValue();
+
+        } );
 
     // Selection
 
@@ -4410,13 +4495,17 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     var menu = new UI.PopupMenu( "bars", "Trajectory" )
         .setMarginLeft( "10px" )
-        .setEntryLabelWidth( "110px" )
+        .setEntryLabelWidth( "130px" )
         .addEntry( "Path", repr )
         .addEntry( "Center", setCenterPbc )
         .addEntry( "Remove PBC", setRemovePbc )
         .addEntry( "Superpose", setSuperpose )
-        .addEntry( "Step", step )
-        .addEntry( "Timeout", timeout )
+        .addEntry( "Step size", step )
+        .addEntry( "Interpolation type", interpolateType )
+        .addEntry( "Interpolation steps", interpolateStep )
+        .addEntry( "Play timeout", timeout )
+        .addEntry( "Play direction", playDirection )
+        .addEntry( "Play mode", playMode )
         // .addEntry( "Download", download )
         .addEntry(
             "File", new UI.Text( traj.trajPath )
@@ -4466,6 +4555,9 @@ NGL.DirectoryListing.prototype = {
 
         var loader = new THREE.XHRLoader();
         var url = "../dir/" + path;
+
+        // force reload
+        THREE.Cache.remove( url );
 
         loader.load( url, function( responseText ){
 
