@@ -2098,6 +2098,7 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
             }
 
         };
+
     };
 
     _getData( header.AtNo + 6 );
