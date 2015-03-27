@@ -2031,39 +2031,47 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
     var header = {};
     var lines = str.split( "\n" );
     var reWhitespace = /\s+/;
+    var bor_to_ang = 0.529177210859;
 
     function headerhelper( k, l ) {
-        return parseFloat(lines[k].trim().split( reWhitespace )[l]);
+        return parseFloat( lines[ k ].trim().split( reWhitespace )[ l ] );
     }
 
-    header.AtNo = Math.abs(headerhelper(2,0)); //Number of atoms
-    header.PosOriX = headerhelper(2,1); //Position of origin of volumetric data
-    header.PosOriY = headerhelper(2,2);
-    header.PosOriZ = headerhelper(2,3);
-    header.NVX = headerhelper(3,0); //Number of voxels
-    header.NVY = headerhelper(4,0);
-    header.NVZ = headerhelper(5,0);
-    header.AVX = headerhelper(3,1); //Axis vector
-    header.AVY = headerhelper(4,2);
-    header.AVZ = headerhelper(5,3);
-    header.PosCorX = ( ( header.NVX * header.AVX) / 2 ) - header.PosOriX; //Position correction vector
-    header.PosCorY = ( ( header.NVY * header.AVY) / 2 ) - header.PosOriY;
-    header.PosCorZ = ( ( header.NVZ * header.AVZ) / 2 ) - header.PosOriZ;
+    header.AtNo = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
+    header.PosOriX = headerhelper( 2, 1 ) * bor_to_ang; //Position of origin of volumetric data
+    header.PosOriY = headerhelper( 2, 2 ) * bor_to_ang;
+    header.PosOriZ = headerhelper( 2, 3 ) * bor_to_ang;
+    header.NVX = headerhelper( 3, 0 ); //Number of voxels
+    header.NVY = headerhelper( 4, 0 );
+    header.NVZ = headerhelper( 5, 0 );
+    header.AVX = headerhelper( 3, 1 ) * bor_to_ang; //Axis vector
+    header.AVY = headerhelper( 4, 2 ) * bor_to_ang;
+    header.AVZ = headerhelper( 5, 3 ) * bor_to_ang;
 
     var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
     var count = 0;
 
     function _getData( _i ){
+
         for( var i = _i; i < lines.length; ++i ){
-            line = lines[i].trim().split( reWhitespace );
-            for( var j = 0; j < line.length; ++j ){
-                data[count] = parseFloat( line[j] );
-                ++count;
-            };
+
+            var line = lines[ i ].trim();
+            if( line !== "" ){
+
+                line = line.split( reWhitespace );
+                for( var j = 0, lj = line.length; j < lj; ++j ){
+                    if ( line.length !==1 ) {
+                        data[ count ] = parseFloat( line[ j ] );
+                        ++count;
+                    };
+                };
+
+            }
         };
+
     };
 
-    _getData( header.AtNo + 5 );
+    _getData( header.AtNo + 6 );
 
     v.header = header;
 
@@ -2082,14 +2090,18 @@ NGL.CubeParser.prototype.makeMatrix = function(){
     var matrix = new THREE.Matrix4();
 
     matrix.multiply(
+        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    );
+
+    matrix.multiply(
         new THREE.Matrix4().makeTranslation(
-            h.PosCorZ, h.PosCorY, h.PosCorX
+            h.PosOriZ, h.PosOriY, h.PosOriX
         )
     );
 
     matrix.multiply(
         new THREE.Matrix4().makeScale(
-            h.AVZ, h.AVY, h.AVX
+            -h.AVZ, h.AVY, h.AVX
         )
     );
 
