@@ -25,6 +25,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.pickable = false;
 
     this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
@@ -210,6 +211,12 @@ NGL.Buffer.prototype = {
             if( this.flatShaded ){
 
                 material.defines[ "FLAT_SHADED" ] = 1;
+
+            }
+
+            if( this.opaqueBack ){
+
+                material.defines[ "OPAQUE_BACK" ] = 1;
 
             }
 

@@ -129,6 +129,41 @@ if ( !Object.assign ) {
 }
 
 
+( function() {
+
+    // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+    // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+
+    // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+
+    // MIT license
+
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+
+}() );
+
+
 ////////////////
 // Workarounds
 
@@ -277,6 +312,7 @@ var NGL = {
 
 // set default log handlers
 NGL.log = function() { console.log.apply( console, arguments ); }
+NGL.info = function() { console.info.apply( console, arguments ); }
 NGL.warn = function() { console.warn.apply( console, arguments ); }
 NGL.error = function() { console.error.apply( console, arguments ); }
 NGL.time = function() { console.time.apply( console, arguments ); }
@@ -2741,7 +2777,7 @@ NGL.ColorFactory.prototype = {
 
             case "chainindex":
 
-                if( a.residue.chain.chainname === undefined ){
+                if( a.residue.chain.chainname === "" ){
                     _c = this.chainnameScale(
                         this.chainNames.indexOf( a.chainname ) * 10
                     )._rgb;
@@ -6948,6 +6984,151 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "SMALL" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "GLY" },
+                        { resname: "ALA" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NUCLEOPHILIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "SER" },
+                        { resname: "THR" },
+                        { resname: "CYS" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "HYDROPHOBIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "VAL" },
+                        { resname: "LEU" },
+                        { resname: "ILE" },
+                        { resname: "MET" },
+                        { resname: "PRO" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "AROMATIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "PHE" },
+                        { resname: "TYR" },
+                        { resname: "TRP" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "AMIDE" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASN" },
+                        { resname: "GLN" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "ACIDIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "BASIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "CHARGED" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { keyword: "GLU" },
+                        { keyword: "HIS" },
+                        { keyword: "LYS" },
+                        { keyword: "ARG" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "POLAR" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" },
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" },
+                        { resname: "ASN" },
+                        { resname: "GLN" },
+                        { resname: "SER" },
+                        { resname: "THR" },
+                        { resname: "TYR" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NONPOLAR" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ALA" },
+                        { resname: "CYS" },
+                        { resname: "GLY" },
+                        { resname: "ILE" },
+                        { resname: "LEU" },
+                        { resname: "MET" },
+                        { resname: "PHE" },
+                        { resname: "PRO" },
+                        { resname: "VAL" },
+                        { resname: "TRP" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "HELIX" ){
                 sele.keyword = "HELIX";
                 pushRule( sele );
@@ -8033,39 +8214,7 @@ NGL.Trajectory.prototype = {
         this.structure = structure;
         this.atomCount = structure.atomCount;
 
-        if( structure instanceof NGL.StructureSubset ){
-
-            this.atomIndices = [];
-
-            var indices = structure.structure.atomIndex( structure.selection );
-
-            var i, r;
-            var p = indices[ 0 ];
-            var q = indices[ 0 ];
-            var n = indices.length;
-
-            for( i = 1; i < n; ++i ){
-
-                r = indices[ i ];
-
-                if( q + 1 < r ){
-
-                    this.atomIndices.push( [ p, q + 1 ] );
-                    p = r;
-
-                }
-
-                q = r;
-
-            }
-
-            this.atomIndices.push( [ p, q + 1 ] );
-
-        }else{
-
-            this.atomIndices = [ [ 0, this.atomCount ] ];
-
-        }
+        this.makeAtomIndices();
 
         this.saveInitialStructure();
 
@@ -8134,6 +8283,12 @@ NGL.Trajectory.prototype = {
 
     },
 
+    makeAtomIndices: function(){
+
+        NGL.error( "Trajectory.makeAtomIndices not implemented" );
+
+    },
+
     getNumframes: function(){
 
         NGL.error( "Trajectory.loadFrame not implemented" );
@@ -8197,7 +8352,117 @@ NGL.Trajectory.prototype = {
 
         }else{
 
-            this.loadFrame( i, callback );
+            this.loadFrame( i, function(){
+
+                this.updateStructure( i, callback );
+
+            }.bind( this ) );
+
+        }
+
+        return this;
+
+    },
+
+    interpolate: function(){
+
+        var spline = function( p0, p1, p2, p3, t, tension ) {
+
+            var v0 = ( p2 - p0 ) * tension;
+            var v1 = ( p3 - p1 ) * tension;
+            var t2 = t * t;
+            var t3 = t * t2;
+
+            return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+                   ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+                   v0 * t + p1;
+
+        }
+
+        var lerp = function( a, b, t ) {
+
+            return a + ( b - a ) * t;
+
+        }
+
+        return function( i, ip, ipp, ippp, t, type, callback ){
+
+            var fc = this.frameCache;
+
+            var c = fc[ i ];
+            var cp = fc[ ip ];
+            var cpp = fc[ ipp ];
+            var cppp = fc[ ippp ];
+
+            var m = c.length;
+            var coords = new Float32Array( m );
+
+            if( type === "spline" ){
+
+                for( var j = 0; j < m; j += 3 ){
+
+                    coords[ j + 0 ] = spline(
+                        cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+                    );
+                    coords[ j + 1 ] = spline(
+                        cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+                    );
+                    coords[ j + 2 ] = spline(
+                        cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+                    );
+
+                }
+
+            }else{
+
+                for( var j = 0; j < m; j += 3 ){
+
+                    coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
+                    coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
+                    coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
+
+                }
+
+            }
+
+            this.structure.updatePosition( coords );
+            this.currentFrame = i;
+            this.signals.frameChanged.dispatch( i );
+
+            if( typeof callback === "function" ){
+
+                callback();
+
+            }
+
+        }
+
+    }(),
+
+    setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
+
+        if( i === undefined ) return this;
+
+        var fc = this.frameCache;
+
+        var iList = [];
+
+        if( !fc[ ippp ] ) iList.push( ippp );
+        if( !fc[ ipp ] ) iList.push( ipp );
+        if( !fc[ ip ] ) iList.push( ip );
+        if( !fc[ i ] ) iList.push( i );
+
+        if( iList.length ){
+
+            this.loadFrame( iList, function(){
+
+                this.interpolate( i, ip, ipp, ippp, t, type, callback );
+
+            }.bind( this ) );
+
+        }else{
+
+            this.interpolate( i, ip, ipp, ippp, t, type, callback );
 
         }
 
@@ -8207,7 +8472,43 @@ NGL.Trajectory.prototype = {
 
     loadFrame: function( i, callback ){
 
-        NGL.error( "Trajectory.loadFrame not implemented" );
+        if( Array.isArray( i ) ){
+
+            var scope = this;
+
+            async.eachLimit(
+
+                i, 4,
+
+                function( j, wcallback ){
+
+                    scope._loadFrame( j, wcallback );
+
+                },
+
+                function( error ){
+
+                    if( typeof callback === "function" ){
+
+                        callback();
+
+                    }
+
+                }
+
+            );
+
+        }else{
+
+            this._loadFrame( i, callback );
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        NGL.error( "Trajectory._loadFrame not implemented" );
 
     },
 
@@ -8367,6 +8668,47 @@ NGL.Trajectory.prototype = {
 
     },
 
+    process: function( i, box, coords, numframes ){
+
+        this.setNumframes( numframes );
+
+        if( box ){
+
+            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
+                var mean = this.getCircularMean(
+                    this.backboneIndices, coords, box2
+                );
+                this.centerPbc( coords, mean, box2 );
+            }
+
+            if( this.params.removePbc ){
+                this.removePbc( coords, box );
+            }
+
+        }
+
+        if( this.indices.length > 0 && this.params.superpose ){
+            this.superpose( coords );
+        }
+
+        this.frameCache[ i ] = coords;
+        this.boxCache[ i ] = box;
+        this.frameCacheSize += 1;
+
+    },
+
+    setNumframes: function( n ){
+
+        if( n !== this.numframes ){
+
+            this.numframes = n;
+            this.signals.gotNumframes.dispatch( n );
+
+        }
+
+    },
+
     dispose: function(){
 
         this.frameCache = [];  // aid GC
@@ -8454,11 +8796,52 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
     type: "remote",
 
-    loadFrame: function( i, callback ){
+    makeAtomIndices: function(){
+
+        var structure = this.structure;
+        var atomIndices = [];
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            var indices = structure.structure.atomIndex( structure.selection );
+
+            var i, r;
+            var p = indices[ 0 ];
+            var q = indices[ 0 ];
+            var n = indices.length;
+
+            for( i = 1; i < n; ++i ){
+
+                r = indices[ i ];
+
+                if( q + 1 < r ){
+
+                    atomIndices.push( [ p, q + 1 ] );
+                    p = r;
+
+                }
+
+                q = r;
+
+            }
+
+            atomIndices.push( [ p, q + 1 ] );
+
+        }else{
+
+            atomIndices.push( [ 0, this.atomCount ] );
+
+        }
+
+        this.atomIndices = atomIndices;
+
+    },
+
+    _loadFrame: function( i, callback ){
 
         // TODO implement max frameCache size, re-use arrays
 
-        // NGL.time( "loadFrame" );
+        // NGL.time( "NGL.RemoteTrajectory._loadFrame" );
 
         var scope = this;
 
@@ -8475,7 +8858,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         request.addEventListener( 'load', function( event ){
 
-            // NGL.timeEnd( "loadFrame" );
+            // NGL.timeEnd( "NGL.RemoteTrajectory._loadFrame" );
 
             var arrayBuffer = this.response;
 
@@ -8484,32 +8867,20 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
                 return;
             }
 
-            var box = new Float32Array( arrayBuffer, 0, 9 );
-            var coords = new Float32Array( arrayBuffer, 9 * 4 );
+            var numframes = new Int32Array( arrayBuffer, 0, 1 )[ 0 ];
+            var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+            var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
+            var coords = new Float32Array( arrayBuffer, 11 * 4 );
 
-            if( scope.backboneIndices.length > 0 && scope.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = scope.getCircularMean(
-                    scope.backboneIndices, coords, box2
-                );
-                scope.centerPbc( coords, mean, box2 );
+            // NGL.log( time );
+
+            scope.process( i, box, coords, numframes );
+
+            if( typeof callback === "function" ){
+
+                callback();
+
             }
-
-            if( scope.params.removePbc ){
-                scope.removePbc( coords, box );
-            }
-
-            if( scope.indices.length > 0 && scope.params.superpose ){
-                scope.superpose( coords );
-            }
-
-            if( !scope.frameCache[ i ] ){
-                scope.frameCache[ i ] = coords;
-                scope.boxCache[ i ] = box;
-                scope.frameCacheSize += 1;
-            }
-
-            scope.updateStructure( i, callback );
 
         }, false );
 
@@ -8526,11 +8897,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         loader.load( url, function( n ){
 
-            n = parseInt( n );
-            // NGL.log( "numframes", n );
-
-            scope.numframes = n;
-            scope.signals.gotNumframes.dispatch( n );
+            scope.setNumframes( parseInt( n ) );
 
         });
 
@@ -8604,38 +8971,64 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     type: "structure",
 
-    loadFrame: function( i, callback ){
+    makeAtomIndices: function(){
 
-        var coords = new Float32Array( this.structure.frames[ i ] );
+        var structure = this.structure;
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            this.atomIndices = structure.structure.atomIndex(
+                structure.selection
+            );
+
+        }else{
+
+            this.atomIndices = null;
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        var coords;
+        var structure = this.structure;
+        var frame = this.structure.frames[ i ];
+
+        if( this.atomIndices ){
+
+            var indices = this.atomIndices;
+            var m = indices.length;
+
+            coords = new Float32Array( m * 3 );
+
+            for( var j = 0; j < m; ++j ){
+
+                var j3 = j * 3;
+                var idx3 = indices[ j ] * 3;
+
+                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
+                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
+                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
+
+            }
+
+        }else{
+
+            coords = new Float32Array( frame );
+
+        }
+
         var box = this.structure.boxes[ i ];
+        var numframes = this.structure.frames.length;
 
-        if( box ){
+        this.process( i, box, coords, numframes );
 
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                );
-                this.centerPbc( coords, mean, box2 );
-            }
+        if( typeof callback === "function" ){
 
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
-            }
+            callback();
 
         }
-
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
-        }
-
-        if( !this.frameCache[ i ] ){
-            this.frameCache[ i ] = coords;
-            this.boxCache[ i ] = box;
-            this.frameCacheSize += 1;
-        }
-
-        this.updateStructure( i, callback );
 
     },
 
@@ -8672,67 +9065,6 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 } );
 
 
-/*NGL.BinaryTrajectory = function( trajPath, structure, selectionString ){
-
-    if( !trajPath ) trajPath = structure.path;
-
-    NGL.Trajectory.call( this, trajPath, structure, selectionString );
-
-}
-
-NGL.BinaryTrajectory.prototype = NGL.createObject(
-
-    NGL.Trajectory.prototype, {
-
-    constructor: NGL.BinaryTrajectory,
-
-    type: "binary",
-
-    loadFrame: function( i, callback ){
-
-        var coords = new Float32Array( this.structure.frames[ i ] );
-        var box = this.structure.boxes[ i ];
-
-        if( box ){
-
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                );
-                this.centerPbc( coords, mean, box2 );
-            }
-
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
-            }
-
-        }
-
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
-        }
-
-        if( !this.frameCache[ i ] ){
-            this.frameCache[ i ] = coords;
-            this.boxCache[ i ] = box;
-            this.frameCacheSize += 1;
-        }
-
-        this.updateStructure( i, callback );
-
-    },
-
-    getNumframes: function(){
-
-        this.numframes = this.structure.frames.length;
-        this.signals.gotNumframes.dispatch( this.numframes );
-
-    }
-
-} );*/
-
-
 ///////////
 // Player
 
@@ -8761,6 +9093,8 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     this.start = start || 0;
     this.end = end || traj.numframes - 1;
     this.end = Math.min( this.end, traj.numframes - 1 );
+    this.interpolateType = "";
+    this.interpolateStep = 5;
 
     this.mode = "loop"; // loop, once
     this.direction = "forward"; // forward, backward
@@ -8811,14 +9145,80 @@ NGL.TrajectoryPlayer.prototype = {
 
             }
 
-            this.traj.setFrame( i );
+            if( !this.interpolateType ){
+
+                this.traj.setFrame( i );
+
+            }
 
         }
 
         if( !this._stopFlag ){
-            setTimeout( this._animate.bind( this ), this.timeout );
+
+            if( !this.traj.inProgress && this.interpolateType ){
+
+                var ip, ipp, ippp;
+
+                if( this.direction === "forward" ){
+
+                    ip = Math.max( this.start, i - this.step );
+                    ipp = Math.max( this.start, i - 2 * this.step );
+                    ippp = Math.max( this.start, i - 3 * this.step );
+
+                }else{
+
+                    ip = Math.min( this.end, i + this.step );
+                    ipp = Math.min( this.end, i + 2 * this.step );
+                    ippp = Math.min( this.end, i + 3 * this.step );
+
+                }
+
+                this._interpolate(
+                    i, ip, ipp, ippp, 1 / this.interpolateStep, 0
+                );
+
+            }else{
+
+                setTimeout( this._animate.bind( this ), this.timeout );
+
+            }
+
         }else{
+
             this._running = false;
+
+        }
+
+    },
+
+    _interpolate: function( i, ip, ipp, ippp, d, t ){
+
+        t += d;
+
+        if( t <= 1 ){
+
+            var deltaTime = Math.round( this.timeout * d );
+
+            this.traj.setFrameInterpolated(
+
+                i, ip, ipp, ippp, t, this.interpolateType,
+
+                function(){
+
+                    setTimeout( function(){
+
+                        this._interpolate( i, ip, ipp, ippp, d, t );
+
+                    }.bind( this ), deltaTime );
+
+                }.bind( this )
+
+            );
+
+        }else{
+
+            setTimeout( this._animate.bind( this ), 0 );
+
         }
 
     },
@@ -8898,20 +9298,2301 @@ NGL.TrajectoryPlayer.prototype = {
 ////////////
 // Surface
 
-NGL.Surface = function( object, name, path ){
+NGL.Surface = function( name, path, geometry ){
 
     this.name = name;
     this.path = path;
 
-    this.object = object;
+    if( geometry ) this.fromGeometry( geometry );
 
-}
+};
 
 NGL.Surface.prototype = {
 
-	constructor: NGL.Surface,
+    constructor: NGL.Surface,
 
-}
+    fromGeometry: function( geometry ){
+
+        NGL.time( "NGL.GeometrySurface.fromGeometry" );
+
+        var geo;
+
+        if( geometry instanceof THREE.Geometry ){
+
+            geo = geometry;
+
+            // TODO check if needed
+            geo.computeFaceNormals( true );
+            geo.computeVertexNormals( true );
+
+        }else if( geometry instanceof THREE.BufferGeometry ){
+
+            geo = geometry;
+
+        }else{
+
+            geo = geometry.children[0].geometry;
+
+        }
+
+        geo.computeBoundingSphere();
+
+        this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
+
+        var position, color, index, normal;
+
+        if( geo instanceof THREE.BufferGeometry ){
+
+            var attr = geo.attributes
+            var an = attr.normal ? attr.normal.array : false;
+
+            // assume there are no normals if the first is zero
+            if( !an || ( an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0 ) ){
+                geo.computeVertexNormals();
+            }
+
+            position = attr.position.array;
+            index = attr.index ? attr.index.array : null;
+            normal = attr.normal.array;
+
+        }else{
+
+            // FIXME
+            NGL.log( "TODO non BufferGeometry surface" );
+
+            position = NGL.Utils.positionFromGeometry( geo );
+            index = NGL.Utils.indexFromGeometry( geo );
+            normal = NGL.Utils.normalFromGeometry( geo );
+
+        }
+
+        this.position = position;
+        this.index = index;
+        this.normal = normal;
+
+        this.size = position.length / 3;
+
+        NGL.timeEnd( "NGL.GeometrySurface.setGeometry" );
+
+    },
+
+    getPosition: function(){
+
+        return this.position;
+
+    },
+
+    getColor: function( color ){
+
+        var tc = new THREE.Color( color );
+        var col = NGL.Utils.uniformArray3(
+            this.size, tc.r, tc.g, tc.b
+        );
+
+        return col;
+
+    },
+
+    getNormal: function(){
+
+        return this.normal;
+
+    },
+
+    getIndex: function(){
+
+        return this.index;
+
+    },
+
+    filterData: function( minValue, maxValue ){
+
+        // nothing to do
+
+    },
+
+    getDataPosition: function(){
+
+        return this.getPosition.apply( this, arguments );
+
+    },
+
+    getDataColor: function(){
+
+        return this.getColor.apply( this, arguments );
+
+    },
+
+    getDataSize: function( size ){
+
+        return NGL.Utils.uniformArray( this.size, size );
+
+    }
+
+};
+
+
+///////////
+// Volume
+
+NGL.Volume = function( name, path, data, nx, ny, nz ){
+
+    this.name = name;
+    this.path = path;
+
+    this.matrix = new THREE.Matrix4();
+
+    this.setData( data, nx, ny, nz );
+
+};
+
+NGL.Volume.prototype = {
+
+    constructor: NGL.Volume,
+
+    setData: function( data, nx, ny, nz ){
+
+        this.nx = nx;
+        this.ny = ny;
+        this.nz = nz;
+
+        this.data = data;
+        this.__data = this.data;
+
+        this.mc = new NGL.MarchingCubes2(
+            this.__data, this.nx, this.ny, this.nz
+        );
+
+        delete this.__isolevel;
+        delete this.__smooth;
+        delete this.__minValue;
+        delete this.__maxValue;
+
+        delete this.__dataPositionBuffer;
+        delete this.__dataPosition;
+        delete this.__dataBuffer;
+
+        delete this.__dataMin;
+        delete this.__dataMax;
+        delete this.__dataMean;
+
+    },
+
+    generateSurface: function( isolevel, smooth ){
+
+        if( isNaN( isolevel ) && this.header ){
+            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
+        }
+
+        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        smooth = smooth || 0;
+
+        if( isolevel === this.__isolevel && smooth === this.__smooth ){
+
+            // already generated
+            return;
+
+        }
+
+        var sd;
+
+        if( smooth ){
+
+            sd = this.mc.triangulate( isolevel, true );
+            NGL.laplacianSmooth( sd.position, sd.index, smooth, true );
+
+        }else{
+
+            sd = this.mc.triangulate( isolevel );
+
+        }
+
+        this.position = sd.position;
+        this.normal = sd.normal;
+        this.index = sd.index;
+
+        this.size = this.position.length / 3;
+
+        // console.log( this.position.length, this.index.length );
+        // v1 595086 296292 rhodopsin
+        // v2 842049 280683
+        // v3  95049 245268
+        // v1 11748744 5887308 ribosome
+        // v2 17660736 5886912
+        // v3  2160663 5886912
+
+        this.matrix.applyToVector3Array( this.position );
+
+        if( this.normal ){
+
+            var me = this.matrix.elements;
+            var r0 = new THREE.Vector3( me[0], me[1], me[2] );
+            var r1 = new THREE.Vector3( me[4], me[5], me[6] );
+            var r2 = new THREE.Vector3( me[8], me[9], me[10] );
+            var cp = new THREE.Vector3();
+            //        [ r0 ]       [ r1 x r2 ]
+            // M3x3 = [ r1 ]   N = [ r2 x r0 ]
+            //        [ r2 ]       [ r0 x r1 ]
+            var normalMatrix = new THREE.Matrix3();
+            var ne = normalMatrix.elements;
+            cp.crossVectors( r1, r2 );
+            ne[ 0 ] = cp.x;
+            ne[ 1 ] = cp.y;
+            ne[ 2 ] = cp.z;
+            cp.crossVectors( r2, r0 );
+            ne[ 3 ] = cp.x;
+            ne[ 4 ] = cp.y;
+            ne[ 5 ] = cp.z;
+            cp.crossVectors( r0, r1 );
+            ne[ 6 ] = cp.x;
+            ne[ 7 ] = cp.y;
+            ne[ 8 ] = cp.z;
+            normalMatrix.applyToVector3Array( this.normal );
+
+        }
+
+        this.__isolevel = isolevel;
+        this.__smooth = smooth;
+
+    },
+
+    getPosition: function(){
+
+        return this.position;
+
+    },
+
+    getColor: function( color ){
+
+        // re-use array
+
+        var tc = new THREE.Color( color );
+        var col = NGL.Utils.uniformArray3(
+            this.size, tc.r, tc.g, tc.b
+        );
+
+        return col;
+
+    },
+
+    getNormal: function(){
+
+        return this.normal;
+
+    },
+
+    getIndex: function(){
+
+        return this.index;
+
+    },
+
+    filterData: function( minValue, maxValue ){
+
+        if( isNaN( minValue ) && this.header ){
+            minValue = this.header.DMEAN + 2.0 * this.header.ARMS;
+        }
+
+        minValue = ( minValue !== undefined && !isNaN( minValue ) ) ? minValue : -Infinity;
+        maxValue = maxValue !== undefined ? maxValue : Infinity;
+
+        if( !this.dataPosition ){
+
+            this.makeDataPosition();
+
+        }
+
+        var dataPosition = this.__dataPosition;
+        var data = this.__data;
+
+        if( minValue === this.__minValue && maxValue == this.__maxValue ){
+
+            // already filtered
+            return;
+
+        }else if( minValue === -Infinity && maxValue === Infinity ){
+
+            this.dataPosition = dataPosition;
+            this.data = data;
+
+        }else{
+
+            var n = data.length;
+
+            if( !this.__dataBuffer ){
+
+                // ArrayBuffer for re-use as Float32Array backend
+
+                this.__dataPositionBuffer = new ArrayBuffer( n * 3 * 4 );
+                this.__dataBuffer = new ArrayBuffer( n * 4 );
+
+            }
+
+            var filteredDataPosition = new Float32Array( this.__dataPositionBuffer );
+            var filteredData = new Float32Array( this.__dataBuffer );
+
+            var j = 0;
+
+            for( var i = 0; i < n; ++i ){
+
+                var i3 = i * 3;
+                var v = data[ i ];
+
+                if( v >= minValue && v <= maxValue ){
+
+                    var j3 = j * 3;
+
+                    filteredDataPosition[ j3 + 0 ] = dataPosition[ i3 + 0 ];
+                    filteredDataPosition[ j3 + 1 ] = dataPosition[ i3 + 1 ];
+                    filteredDataPosition[ j3 + 2 ] = dataPosition[ i3 + 2 ];
+
+                    filteredData[ j ] = v;
+
+                    j += 1;
+
+                }
+
+            }
+
+            // set views
+
+            this.dataPosition = new Float32Array( this.__dataPositionBuffer, 0, j * 3 );
+            this.data = new Float32Array( this.__dataBuffer, 0, j );
+
+        }
+
+        this.__minValue = minValue;
+        this.__maxValue = maxValue;
+
+    },
+
+    makeDataPosition: function(){
+
+        var nz = this.nz;
+        var ny = this.ny;
+        var nx = this.nx;
+
+        var position = new Float32Array( nx * ny * nz * 3 );
+
+        var p = 0;
+
+        for( var z = 0; z < nz; ++z ){
+
+            for( var y = 0; y < ny; ++y ){
+
+                for( var x = 0; x < nx; ++x ){
+
+                    position[ p + 0 ] = x;
+                    position[ p + 1 ] = y;
+                    position[ p + 2 ] = z;
+
+                    p += 3;
+
+                }
+
+            }
+
+        }
+
+        this.matrix.applyToVector3Array( position );
+
+        this.dataPosition = position;
+        this.__dataPosition = position;
+
+    },
+
+    getDataPosition: function(){
+
+        return this.dataPosition;
+
+    },
+
+    getDataColor: function( color ){
+
+        var spectralScale = chroma
+            .scale( 'Spectral' )
+            .mode('lch')
+            .domain( [ this.getDataMin(), this.getDataMax() ]);
+
+        var n = this.dataPosition.length / 3;
+        var data = this.data;
+        var array;
+
+        switch( color ){
+
+            case "value":
+
+                array = new Float32Array( n * 3 );
+                for( var i = 0; i < n; ++i ){
+                    var i3 = i * 3;
+                    var c = spectralScale( data[ i ] )._rgb
+                    array[ i3 + 0 ] = c[ 0 ] / 255;
+                    array[ i3 + 1 ] = c[ 1 ] / 255;
+                    array[ i3 + 2 ] = c[ 2 ] / 255;
+                }
+                break;
+
+            default:
+
+                var tc = new THREE.Color( color );
+                array = NGL.Utils.uniformArray3(
+                    n, tc.r, tc.g, tc.b
+                );
+                break;
+
+        }
+
+        return array;
+
+    },
+
+    getDataSize: function( size, scale ){
+
+        var n = this.dataPosition.length / 3;
+        var array;
+
+        switch( size ){
+
+            case "value":
+
+                array = new Float32Array( this.data );
+                break;
+
+            case "value-min":
+
+                array = new Float32Array( this.data );
+                var min = this.getDataMin();
+                for( var i = 0; i < n; ++i ){
+                    array[ i ] -= min;
+                }
+                break;
+
+            case "deviation":
+
+                array = new Float32Array( this.data );
+                break;
+
+            default:
+
+                array = NGL.Utils.uniformArray( n, size );
+                break;
+
+        }
+
+        if( scale !== 1.0 ){
+
+            for( var i = 0; i < n; ++i ){
+                array[ i ] *= scale;
+            }
+
+        }
+
+        return array;
+
+    },
+
+    getDataMin: function(){
+
+        if( this.__dataMin === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var min = Infinity;
+
+            for( var i = 0; i < n; ++i ){
+                min = Math.min( min, data[ i ] );
+            }
+
+            this.__dataMin = min;
+
+        }
+
+        return this.__dataMin;
+
+    },
+
+    getDataMax: function(){
+
+        if( this.__dataMax === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var max = -Infinity;
+
+            for( var i = 0; i < n; ++i ){
+                max = Math.max( max, data[ i ] );
+            }
+
+            this.__dataMax = max;
+
+        }
+
+        return this.__dataMax;
+
+    },
+
+    getDataMean: function(){
+
+        if( this.__dataMean === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var sum = 0;
+
+            for( var i = 0; i < n; ++i ){
+                sum += data[ i ];
+            }
+
+            this.__dataMean = sum / n;
+
+        }
+
+        return this.__dataMean;
+
+    }
+
+};
+
+
+///////////////////
+// Marching cubes
+
+NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
+
+    // The MIT License (MIT) Copyright (c) 2012-2013 Mikola Lysenko
+    // http://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/
+    //
+    // Based on Paul Bourke's classic implementation:
+    // http://paulbourke.net/geometry/polygonise/
+    // JS port by Mikola Lysenko
+    //
+    // Adapted for NGL by Alexander Rose
+
+    NGL.time( "NGL.MarchingCubes" );
+
+    var dims = new Int32Array( [ nx, ny, nz ] );
+
+    var edgeTable = NGL.MarchingCubes.edgeTable;
+    var triTable = NGL.MarchingCubes.triTable;
+    var cubeVerts = NGL.MarchingCubes.cubeVerts;
+    var edgeIndex = NGL.MarchingCubes.edgeIndex;
+
+    var vertices = [];
+    var faces = [];
+    var vc3 = 0;  // vertexCount * 3
+    var fc3 = 0;  // faceCount * 3
+
+    var n = 0;
+    var grid = new Float32Array( 8 );
+    var edges = new Int32Array( 12 );
+    var x = new Int32Array( 3 );
+
+    // March over the volume
+
+    for( x[2]=0; x[2] < dims[2]-1; ++x[2], n+=dims[0] ){
+
+        for( x[1]=0; x[1] < dims[1]-1; ++x[1], ++n){
+
+            for( x[0]=0; x[0] < dims[0]-1; ++x[0], ++n) {
+
+                // For each cell, compute cube mask
+
+                var cubeIndex = 0;
+
+                for( var i=0; i<8; ++i ){
+
+                    var v = cubeVerts[ i ]
+                    var k = n + v[0] + dims[0] * ( v[1] + dims[1] * v[2] );
+                    var s = data[ k ] - isolevel;
+
+                    grid[ i ] = s;
+                    cubeIndex |= ( s > 0 ) ? 1 << i : 0;
+
+                }
+
+                // Compute vertices
+
+                var edgeMask = edgeTable[ cubeIndex ];
+
+                if( edgeMask === 0 ) {
+                    continue;
+                }
+
+                for( var i=0; i<12; ++i ){
+
+                    if( ( edgeMask & ( 1 << i ) ) === 0 ){
+                        continue;
+                    }
+
+                    edges[ i ] = vc3 / 3;
+
+                    var e = edgeIndex[ i ];
+                    var p0 = cubeVerts[ e[ 0 ] ];
+                    var p1 = cubeVerts[ e[ 1 ] ];
+                    var a = grid[ e[ 0 ] ];
+                    var b = grid[ e[ 1 ] ];
+                    var d = a - b;
+                    var t = 0;
+
+                    if( Math.abs( d ) > 1e-6 ){
+                        t = a / d;
+                    }
+
+                    vertices[ vc3 + 0 ] = ( x[0] + p0[0] ) + t * ( p1[0] - p0[0] );
+                    vertices[ vc3 + 1 ] = ( x[1] + p0[1] ) + t * ( p1[1] - p0[1] );
+                    vertices[ vc3 + 2 ] = ( x[2] + p0[2] ) + t * ( p1[2] - p0[2] );
+
+                    vc3 += 3;
+
+                }
+
+                // Add faces
+
+                var f = triTable[ cubeIndex ];
+
+                for( var i=0; i<f.length; i += 3 ){
+
+                    faces[ fc3 + 0 ] = edges[ f[ i + 0 ] ];
+                    faces[ fc3 + 1 ] = edges[ f[ i + 1 ] ];
+                    faces[ fc3 + 2 ] = edges[ f[ i + 2 ] ];
+
+                    fc3 += 3;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    NGL.timeEnd( "NGL.MarchingCubes" );
+
+    return {
+        position: new Float32Array( vertices ),
+        normal: undefined,
+        index: new Uint32Array( faces )
+    };
+
+};
+
+NGL.MarchingCubes2 = function( field, nx, ny, nz ){
+
+    // Based on alteredq / http://alteredqualia.com/
+    // port of greggman's ThreeD version of marching cubes to Three.js
+    // http://webglsamples.googlecode.com/hg/blob/blob.html
+    //
+    // Adapted for NGL by Alexander Rose
+
+    var edgeTable = NGL.MarchingCubes.edgeTable;
+    var triTable = NGL.MarchingCubes.triTable2;
+
+    var isolevel = 0;
+    var noNormals = false;
+
+    var n = nx * ny * nz;
+
+    // deltas
+    var yd = nx;
+    var zd = nx * ny;
+
+    var normalCache, vertexIndex;
+    var count, icount;
+
+    var ilist = new Int32Array( 12 );
+
+    var positionArray = [];
+    var normalArray = [];
+    var indexArray = [];
+
+    //
+
+    this.triangulate = function( _isolevel, _noNormals ){
+
+        NGL.time( "NGL.MarchingCubes2.triangulate" );
+
+        isolevel = _isolevel;
+        noNormals = _noNormals;
+
+        if( !noNormals && !normalCache ){
+            normalCache = new Float32Array( n * 3 );
+        }
+
+        if( !vertexIndex ){
+            vertexIndex = new Int32Array( n );
+        }
+
+        for( var i = 0; i < n; ++i ){
+            vertexIndex[ i ] = -1;
+        }
+
+        count = 0;
+        icount = 0;
+
+        triangulate();
+
+        positionArray.length = count * 3;
+        if( !noNormals ) normalArray.length = count * 3;
+        indexArray.length = icount;
+
+        NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
+
+        return {
+            position: new Float32Array( positionArray ),
+            normal: noNormals ? undefined : new Float32Array( normalArray ),
+            index: new Uint32Array( indexArray )
+        };
+
+    }
+
+    // polygonization
+
+    function lerp( a, b, t ) { return a + ( b - a ) * t; }
+
+    function VIntX( q, offset, x, y, z, valp1, valp2 ) {
+
+        if( vertexIndex[ q ] < 0 ){
+
+            var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
+            var nc = normalCache;
+
+            var c = count * 3;
+
+            positionArray[ c + 0 ] = x + mu;
+            positionArray[ c + 1 ] = y;
+            positionArray[ c + 2 ] = z;
+
+            if( !noNormals ){
+
+                var q3 = q * 3;
+
+                normalArray[ c ]     = -lerp( nc[ q3 ],     nc[ q3 + 3 ], mu );
+                normalArray[ c + 1 ] = -lerp( nc[ q3 + 1 ], nc[ q3 + 4 ], mu );
+                normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q3 + 5 ], mu );
+
+            }
+
+            vertexIndex[ q ] = count;
+            ilist[ offset ] = count;
+
+            count += 1;
+
+        }else{
+
+            ilist[ offset ] = vertexIndex[ q ];
+
+        }
+
+    }
+
+    function VIntY( q, offset, x, y, z, valp1, valp2 ) {
+
+        if( vertexIndex[ q ] < 0 ){
+
+            var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
+            var nc = normalCache;
+
+            var c = count * 3;
+
+            positionArray[ c ]     = x;
+            positionArray[ c + 1 ] = y + mu;
+            positionArray[ c + 2 ] = z;
+
+            if( !noNormals ){
+
+                var q3 = q * 3;
+                var q6 = q3 + yd * 3;
+
+                normalArray[ c ]     = -lerp( nc[ q3 ],     nc[ q6 ],     mu );
+                normalArray[ c + 1 ] = -lerp( nc[ q3 + 1 ], nc[ q6 + 1 ], mu );
+                normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q6 + 2 ], mu );
+
+            }
+
+            vertexIndex[ q ] = count;
+            ilist[ offset ] = count;
+
+            count += 1;
+
+        }else{
+
+            ilist[ offset ] = vertexIndex[ q ];
+
+        }
+
+    }
+
+    function VIntZ( q, offset, x, y, z, valp1, valp2 ) {
+
+        if( vertexIndex[ q ] < 0 ){
+
+            var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
+            var nc = normalCache;
+
+            var c = count * 3;
+
+            positionArray[ c ]     = x;
+            positionArray[ c + 1 ] = y;
+            positionArray[ c + 2 ] = z + mu;
+
+            if( !noNormals ){
+
+                var q3 = q * 3;
+                var q6 = q3 + zd * 3;
+
+                normalArray[ c ]     = -lerp( nc[ q3 ],     nc[ q6 ],     mu );
+                normalArray[ c + 1 ] = -lerp( nc[ q3 + 1 ], nc[ q6 + 1 ], mu );
+                normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q6 + 2 ], mu );
+
+            }
+
+            vertexIndex[ q ] = count;
+            ilist[ offset ] = count;
+
+            count += 1;
+
+        }else{
+
+            ilist[ offset ] = vertexIndex[ q ];
+
+        }
+
+    }
+
+    function compNorm( q ) {
+
+        var q3 = q * 3;
+
+        if ( normalCache[ q3 ] === 0.0 ) {
+
+            normalCache[ q3     ] = field[ q - 1  ] - field[ q + 1 ];
+            normalCache[ q3 + 1 ] = field[ q - yd ] - field[ q + yd ];
+            normalCache[ q3 + 2 ] = field[ q - zd ] - field[ q + zd ];
+
+        }
+
+    }
+
+    function polygonize( fx, fy, fz, q ) {
+
+        // cache indices
+        var q1 = q + 1,
+            qy = q + yd,
+            qz = q + zd,
+            q1y = q1 + yd,
+            q1z = q1 + zd,
+            qyz = q + yd + zd,
+            q1yz = q1 + yd + zd;
+
+        var cubeindex = 0,
+            field0 = field[ q ],
+            field1 = field[ q1 ],
+            field2 = field[ qy ],
+            field3 = field[ q1y ],
+            field4 = field[ qz ],
+            field5 = field[ q1z ],
+            field6 = field[ qyz ],
+            field7 = field[ q1yz ];
+
+        if ( field0 < isolevel ) cubeindex |= 1;
+        if ( field1 < isolevel ) cubeindex |= 2;
+        if ( field2 < isolevel ) cubeindex |= 8;
+        if ( field3 < isolevel ) cubeindex |= 4;
+        if ( field4 < isolevel ) cubeindex |= 16;
+        if ( field5 < isolevel ) cubeindex |= 32;
+        if ( field6 < isolevel ) cubeindex |= 128;
+        if ( field7 < isolevel ) cubeindex |= 64;
+
+        // if cube is entirely in/out of the surface - bail, nothing to draw
+
+        var bits = edgeTable[ cubeindex ];
+        if ( bits === 0 ) return 0;
+
+        var fx2 = fx + 1,
+            fy2 = fy + 1,
+            fz2 = fz + 1;
+
+        // top of the cube
+
+        if ( bits & 1 ) {
+
+            if( !noNormals ){
+                compNorm( q );
+                compNorm( q1 );
+            }
+            VIntX( q, 0, fx, fy, fz, field0, field1 );
+
+        };
+
+        if ( bits & 2 ) {
+
+            if( !noNormals ){
+                compNorm( q1 );
+                compNorm( q1y );
+            }
+            VIntY( q1, 1, fx2, fy, fz, field1, field3 );
+
+        };
+
+        if ( bits & 4 ) {
+
+            if( !noNormals ){
+                compNorm( qy );
+                compNorm( q1y );
+            }
+            VIntX( qy, 2, fx, fy2, fz, field2, field3 );
+
+        };
+
+        if ( bits & 8 ) {
+
+            if( !noNormals ){
+                compNorm( q );
+                compNorm( qy );
+            }
+            VIntY( q, 3, fx, fy, fz, field0, field2 );
+
+        };
+
+        // bottom of the cube
+
+        if ( bits & 16 ) {
+
+            if( !noNormals ){
+                compNorm( qz );
+                compNorm( q1z );
+            }
+            VIntX( qz, 4, fx, fy, fz2, field4, field5 );
+
+        };
+
+        if ( bits & 32 ) {
+
+            if( !noNormals ){
+                compNorm( q1z );
+                compNorm( q1yz );
+            }
+            VIntY( q1z, 5, fx2, fy, fz2, field5, field7 );
+
+        };
+
+        if ( bits & 64 ) {
+
+            if( !noNormals ){
+                compNorm( qyz );
+                compNorm( q1yz );
+            }
+            VIntX( qyz, 6, fx, fy2, fz2, field6, field7 );
+
+        };
+
+        if ( bits & 128 ) {
+
+            if( !noNormals ){
+                compNorm( qz );
+                compNorm( qyz );
+            }
+            VIntY( qz, 7, fx, fy, fz2, field4, field6 );
+
+        };
+
+        // vertical lines of the cube
+
+        if ( bits & 256 ) {
+
+            if( !noNormals ){
+                compNorm( q );
+                compNorm( qz );
+            }
+            VIntZ( q, 8, fx, fy, fz, field0, field4 );
+
+        };
+
+        if ( bits & 512 ) {
+
+            if( !noNormals ){
+                compNorm( q1 );
+                compNorm( q1z );
+            }
+            VIntZ( q1, 9, fx2, fy, fz, field1, field5 );
+
+        };
+
+        if ( bits & 1024 ) {
+
+            if( !noNormals ){
+                compNorm( q1y );
+                compNorm( q1yz );
+            }
+            VIntZ( q1y, 10, fx2, fy2, fz, field3, field7 );
+
+        };
+
+        if ( bits & 2048 ) {
+
+            if( !noNormals ){
+                compNorm( qy );
+                compNorm( qyz );
+            }
+            VIntZ( qy, 11, fx, fy2, fz, field2, field6 );
+
+        };
+
+        cubeindex <<= 4;  // re-purpose cubeindex into an offset into triTable
+
+        var o1, o2, o3, i = 0;
+
+        // here is where triangles are created
+
+        while ( triTable[ cubeindex + i ] != -1 ) {
+
+            o1 = cubeindex + i;
+            o2 = o1 + 1;
+            o3 = o1 + 2;
+
+            // FIXME normals flipping (see above) and vertex order reversal
+            indexArray[ icount ]     = ilist[ triTable[ o2 ] ];
+            indexArray[ icount + 1 ] = ilist[ triTable[ o1 ] ];
+            indexArray[ icount + 2 ] = ilist[ triTable[ o3 ] ];
+
+            icount += 3;
+            i += 3;
+
+        }
+
+    }
+
+    function triangulate() {
+
+        var q, x, y, z, fx, fy, fz, y_offset, z_offset
+
+        var beg, xEnd, yEnd, zEnd;
+
+        if( noNormals ){
+
+            beg = 0;
+
+            xEnd = nx - 1;
+            yEnd = ny - 1;
+            zEnd = nz - 1;
+
+        }else{
+
+            beg = 1;
+
+            xEnd = nx - 2;
+            yEnd = ny - 2;
+            zEnd = nz - 2;
+
+        }
+
+        for ( z = beg; z < zEnd; ++z ) {
+
+            z_offset = zd * z;
+
+            for ( y = beg; y < yEnd; ++y ) {
+
+                y_offset = z_offset + yd * y;
+
+                for ( x = beg; x < xEnd; ++x ) {
+
+                    q = y_offset + x;
+                    polygonize( x, y, z, q );
+
+                }
+
+            }
+
+        }
+
+    }
+
+};
+
+NGL.MarchingCubes.edgeTable = new Uint32Array( [
+    0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
+    0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
+    0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
+    0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
+    0x230, 0x339, 0x33 , 0x13a, 0x636, 0x73f, 0x435, 0x53c,
+    0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
+    0x3a0, 0x2a9, 0x1a3, 0xaa , 0x7a6, 0x6af, 0x5a5, 0x4ac,
+    0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
+    0x460, 0x569, 0x663, 0x76a, 0x66 , 0x16f, 0x265, 0x36c,
+    0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
+    0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff , 0x3f5, 0x2fc,
+    0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
+    0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55 , 0x15c,
+    0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
+    0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc ,
+    0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0,
+    0x8c0, 0x9c9, 0xac3, 0xbca, 0xcc6, 0xdcf, 0xec5, 0xfcc,
+    0xcc , 0x1c5, 0x2cf, 0x3c6, 0x4ca, 0x5c3, 0x6c9, 0x7c0,
+    0x950, 0x859, 0xb53, 0xa5a, 0xd56, 0xc5f, 0xf55, 0xe5c,
+    0x15c, 0x55 , 0x35f, 0x256, 0x55a, 0x453, 0x759, 0x650,
+    0xaf0, 0xbf9, 0x8f3, 0x9fa, 0xef6, 0xfff, 0xcf5, 0xdfc,
+    0x2fc, 0x3f5, 0xff , 0x1f6, 0x6fa, 0x7f3, 0x4f9, 0x5f0,
+    0xb60, 0xa69, 0x963, 0x86a, 0xf66, 0xe6f, 0xd65, 0xc6c,
+    0x36c, 0x265, 0x16f, 0x66 , 0x76a, 0x663, 0x569, 0x460,
+    0xca0, 0xda9, 0xea3, 0xfaa, 0x8a6, 0x9af, 0xaa5, 0xbac,
+    0x4ac, 0x5a5, 0x6af, 0x7a6, 0xaa , 0x1a3, 0x2a9, 0x3a0,
+    0xd30, 0xc39, 0xf33, 0xe3a, 0x936, 0x83f, 0xb35, 0xa3c,
+    0x53c, 0x435, 0x73f, 0x636, 0x13a, 0x33 , 0x339, 0x230,
+    0xe90, 0xf99, 0xc93, 0xd9a, 0xa96, 0xb9f, 0x895, 0x99c,
+    0x69c, 0x795, 0x49f, 0x596, 0x29a, 0x393, 0x99 , 0x190,
+    0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
+    0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0
+] );
+
+NGL.MarchingCubes.triTable = [
+    [],
+    [0, 8, 3],
+    [0, 1, 9],
+    [1, 8, 3, 9, 8, 1],
+    [1, 2, 10],
+    [0, 8, 3, 1, 2, 10],
+    [9, 2, 10, 0, 2, 9],
+    [2, 8, 3, 2, 10, 8, 10, 9, 8],
+    [3, 11, 2],
+    [0, 11, 2, 8, 11, 0],
+    [1, 9, 0, 2, 3, 11],
+    [1, 11, 2, 1, 9, 11, 9, 8, 11],
+    [3, 10, 1, 11, 10, 3],
+    [0, 10, 1, 0, 8, 10, 8, 11, 10],
+    [3, 9, 0, 3, 11, 9, 11, 10, 9],
+    [9, 8, 10, 10, 8, 11],
+    [4, 7, 8],
+    [4, 3, 0, 7, 3, 4],
+    [0, 1, 9, 8, 4, 7],
+    [4, 1, 9, 4, 7, 1, 7, 3, 1],
+    [1, 2, 10, 8, 4, 7],
+    [3, 4, 7, 3, 0, 4, 1, 2, 10],
+    [9, 2, 10, 9, 0, 2, 8, 4, 7],
+    [2, 10, 9, 2, 9, 7, 2, 7, 3, 7, 9, 4],
+    [8, 4, 7, 3, 11, 2],
+    [11, 4, 7, 11, 2, 4, 2, 0, 4],
+    [9, 0, 1, 8, 4, 7, 2, 3, 11],
+    [4, 7, 11, 9, 4, 11, 9, 11, 2, 9, 2, 1],
+    [3, 10, 1, 3, 11, 10, 7, 8, 4],
+    [1, 11, 10, 1, 4, 11, 1, 0, 4, 7, 11, 4],
+    [4, 7, 8, 9, 0, 11, 9, 11, 10, 11, 0, 3],
+    [4, 7, 11, 4, 11, 9, 9, 11, 10],
+    [9, 5, 4],
+    [9, 5, 4, 0, 8, 3],
+    [0, 5, 4, 1, 5, 0],
+    [8, 5, 4, 8, 3, 5, 3, 1, 5],
+    [1, 2, 10, 9, 5, 4],
+    [3, 0, 8, 1, 2, 10, 4, 9, 5],
+    [5, 2, 10, 5, 4, 2, 4, 0, 2],
+    [2, 10, 5, 3, 2, 5, 3, 5, 4, 3, 4, 8],
+    [9, 5, 4, 2, 3, 11],
+    [0, 11, 2, 0, 8, 11, 4, 9, 5],
+    [0, 5, 4, 0, 1, 5, 2, 3, 11],
+    [2, 1, 5, 2, 5, 8, 2, 8, 11, 4, 8, 5],
+    [10, 3, 11, 10, 1, 3, 9, 5, 4],
+    [4, 9, 5, 0, 8, 1, 8, 10, 1, 8, 11, 10],
+    [5, 4, 0, 5, 0, 11, 5, 11, 10, 11, 0, 3],
+    [5, 4, 8, 5, 8, 10, 10, 8, 11],
+    [9, 7, 8, 5, 7, 9],
+    [9, 3, 0, 9, 5, 3, 5, 7, 3],
+    [0, 7, 8, 0, 1, 7, 1, 5, 7],
+    [1, 5, 3, 3, 5, 7],
+    [9, 7, 8, 9, 5, 7, 10, 1, 2],
+    [10, 1, 2, 9, 5, 0, 5, 3, 0, 5, 7, 3],
+    [8, 0, 2, 8, 2, 5, 8, 5, 7, 10, 5, 2],
+    [2, 10, 5, 2, 5, 3, 3, 5, 7],
+    [7, 9, 5, 7, 8, 9, 3, 11, 2],
+    [9, 5, 7, 9, 7, 2, 9, 2, 0, 2, 7, 11],
+    [2, 3, 11, 0, 1, 8, 1, 7, 8, 1, 5, 7],
+    [11, 2, 1, 11, 1, 7, 7, 1, 5],
+    [9, 5, 8, 8, 5, 7, 10, 1, 3, 10, 3, 11],
+    [5, 7, 0, 5, 0, 9, 7, 11, 0, 1, 0, 10, 11, 10, 0],
+    [11, 10, 0, 11, 0, 3, 10, 5, 0, 8, 0, 7, 5, 7, 0],
+    [11, 10, 5, 7, 11, 5],
+    [10, 6, 5],
+    [0, 8, 3, 5, 10, 6],
+    [9, 0, 1, 5, 10, 6],
+    [1, 8, 3, 1, 9, 8, 5, 10, 6],
+    [1, 6, 5, 2, 6, 1],
+    [1, 6, 5, 1, 2, 6, 3, 0, 8],
+    [9, 6, 5, 9, 0, 6, 0, 2, 6],
+    [5, 9, 8, 5, 8, 2, 5, 2, 6, 3, 2, 8],
+    [2, 3, 11, 10, 6, 5],
+    [11, 0, 8, 11, 2, 0, 10, 6, 5],
+    [0, 1, 9, 2, 3, 11, 5, 10, 6],
+    [5, 10, 6, 1, 9, 2, 9, 11, 2, 9, 8, 11],
+    [6, 3, 11, 6, 5, 3, 5, 1, 3],
+    [0, 8, 11, 0, 11, 5, 0, 5, 1, 5, 11, 6],
+    [3, 11, 6, 0, 3, 6, 0, 6, 5, 0, 5, 9],
+    [6, 5, 9, 6, 9, 11, 11, 9, 8],
+    [5, 10, 6, 4, 7, 8],
+    [4, 3, 0, 4, 7, 3, 6, 5, 10],
+    [1, 9, 0, 5, 10, 6, 8, 4, 7],
+    [10, 6, 5, 1, 9, 7, 1, 7, 3, 7, 9, 4],
+    [6, 1, 2, 6, 5, 1, 4, 7, 8],
+    [1, 2, 5, 5, 2, 6, 3, 0, 4, 3, 4, 7],
+    [8, 4, 7, 9, 0, 5, 0, 6, 5, 0, 2, 6],
+    [7, 3, 9, 7, 9, 4, 3, 2, 9, 5, 9, 6, 2, 6, 9],
+    [3, 11, 2, 7, 8, 4, 10, 6, 5],
+    [5, 10, 6, 4, 7, 2, 4, 2, 0, 2, 7, 11],
+    [0, 1, 9, 4, 7, 8, 2, 3, 11, 5, 10, 6],
+    [9, 2, 1, 9, 11, 2, 9, 4, 11, 7, 11, 4, 5, 10, 6],
+    [8, 4, 7, 3, 11, 5, 3, 5, 1, 5, 11, 6],
+    [5, 1, 11, 5, 11, 6, 1, 0, 11, 7, 11, 4, 0, 4, 11],
+    [0, 5, 9, 0, 6, 5, 0, 3, 6, 11, 6, 3, 8, 4, 7],
+    [6, 5, 9, 6, 9, 11, 4, 7, 9, 7, 11, 9],
+    [10, 4, 9, 6, 4, 10],
+    [4, 10, 6, 4, 9, 10, 0, 8, 3],
+    [10, 0, 1, 10, 6, 0, 6, 4, 0],
+    [8, 3, 1, 8, 1, 6, 8, 6, 4, 6, 1, 10],
+    [1, 4, 9, 1, 2, 4, 2, 6, 4],
+    [3, 0, 8, 1, 2, 9, 2, 4, 9, 2, 6, 4],
+    [0, 2, 4, 4, 2, 6],
+    [8, 3, 2, 8, 2, 4, 4, 2, 6],
+    [10, 4, 9, 10, 6, 4, 11, 2, 3],
+    [0, 8, 2, 2, 8, 11, 4, 9, 10, 4, 10, 6],
+    [3, 11, 2, 0, 1, 6, 0, 6, 4, 6, 1, 10],
+    [6, 4, 1, 6, 1, 10, 4, 8, 1, 2, 1, 11, 8, 11, 1],
+    [9, 6, 4, 9, 3, 6, 9, 1, 3, 11, 6, 3],
+    [8, 11, 1, 8, 1, 0, 11, 6, 1, 9, 1, 4, 6, 4, 1],
+    [3, 11, 6, 3, 6, 0, 0, 6, 4],
+    [6, 4, 8, 11, 6, 8],
+    [7, 10, 6, 7, 8, 10, 8, 9, 10],
+    [0, 7, 3, 0, 10, 7, 0, 9, 10, 6, 7, 10],
+    [10, 6, 7, 1, 10, 7, 1, 7, 8, 1, 8, 0],
+    [10, 6, 7, 10, 7, 1, 1, 7, 3],
+    [1, 2, 6, 1, 6, 8, 1, 8, 9, 8, 6, 7],
+    [2, 6, 9, 2, 9, 1, 6, 7, 9, 0, 9, 3, 7, 3, 9],
+    [7, 8, 0, 7, 0, 6, 6, 0, 2],
+    [7, 3, 2, 6, 7, 2],
+    [2, 3, 11, 10, 6, 8, 10, 8, 9, 8, 6, 7],
+    [2, 0, 7, 2, 7, 11, 0, 9, 7, 6, 7, 10, 9, 10, 7],
+    [1, 8, 0, 1, 7, 8, 1, 10, 7, 6, 7, 10, 2, 3, 11],
+    [11, 2, 1, 11, 1, 7, 10, 6, 1, 6, 7, 1],
+    [8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6],
+    [0, 9, 1, 11, 6, 7],
+    [7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0],
+    [7, 11, 6],
+    [7, 6, 11],
+    [3, 0, 8, 11, 7, 6],
+    [0, 1, 9, 11, 7, 6],
+    [8, 1, 9, 8, 3, 1, 11, 7, 6],
+    [10, 1, 2, 6, 11, 7],
+    [1, 2, 10, 3, 0, 8, 6, 11, 7],
+    [2, 9, 0, 2, 10, 9, 6, 11, 7],
+    [6, 11, 7, 2, 10, 3, 10, 8, 3, 10, 9, 8],
+    [7, 2, 3, 6, 2, 7],
+    [7, 0, 8, 7, 6, 0, 6, 2, 0],
+    [2, 7, 6, 2, 3, 7, 0, 1, 9],
+    [1, 6, 2, 1, 8, 6, 1, 9, 8, 8, 7, 6],
+    [10, 7, 6, 10, 1, 7, 1, 3, 7],
+    [10, 7, 6, 1, 7, 10, 1, 8, 7, 1, 0, 8],
+    [0, 3, 7, 0, 7, 10, 0, 10, 9, 6, 10, 7],
+    [7, 6, 10, 7, 10, 8, 8, 10, 9],
+    [6, 8, 4, 11, 8, 6],
+    [3, 6, 11, 3, 0, 6, 0, 4, 6],
+    [8, 6, 11, 8, 4, 6, 9, 0, 1],
+    [9, 4, 6, 9, 6, 3, 9, 3, 1, 11, 3, 6],
+    [6, 8, 4, 6, 11, 8, 2, 10, 1],
+    [1, 2, 10, 3, 0, 11, 0, 6, 11, 0, 4, 6],
+    [4, 11, 8, 4, 6, 11, 0, 2, 9, 2, 10, 9],
+    [10, 9, 3, 10, 3, 2, 9, 4, 3, 11, 3, 6, 4, 6, 3],
+    [8, 2, 3, 8, 4, 2, 4, 6, 2],
+    [0, 4, 2, 4, 6, 2],
+    [1, 9, 0, 2, 3, 4, 2, 4, 6, 4, 3, 8],
+    [1, 9, 4, 1, 4, 2, 2, 4, 6],
+    [8, 1, 3, 8, 6, 1, 8, 4, 6, 6, 10, 1],
+    [10, 1, 0, 10, 0, 6, 6, 0, 4],
+    [4, 6, 3, 4, 3, 8, 6, 10, 3, 0, 3, 9, 10, 9, 3],
+    [10, 9, 4, 6, 10, 4],
+    [4, 9, 5, 7, 6, 11],
+    [0, 8, 3, 4, 9, 5, 11, 7, 6],
+    [5, 0, 1, 5, 4, 0, 7, 6, 11],
+    [11, 7, 6, 8, 3, 4, 3, 5, 4, 3, 1, 5],
+    [9, 5, 4, 10, 1, 2, 7, 6, 11],
+    [6, 11, 7, 1, 2, 10, 0, 8, 3, 4, 9, 5],
+    [7, 6, 11, 5, 4, 10, 4, 2, 10, 4, 0, 2],
+    [3, 4, 8, 3, 5, 4, 3, 2, 5, 10, 5, 2, 11, 7, 6],
+    [7, 2, 3, 7, 6, 2, 5, 4, 9],
+    [9, 5, 4, 0, 8, 6, 0, 6, 2, 6, 8, 7],
+    [3, 6, 2, 3, 7, 6, 1, 5, 0, 5, 4, 0],
+    [6, 2, 8, 6, 8, 7, 2, 1, 8, 4, 8, 5, 1, 5, 8],
+    [9, 5, 4, 10, 1, 6, 1, 7, 6, 1, 3, 7],
+    [1, 6, 10, 1, 7, 6, 1, 0, 7, 8, 7, 0, 9, 5, 4],
+    [4, 0, 10, 4, 10, 5, 0, 3, 10, 6, 10, 7, 3, 7, 10],
+    [7, 6, 10, 7, 10, 8, 5, 4, 10, 4, 8, 10],
+    [6, 9, 5, 6, 11, 9, 11, 8, 9],
+    [3, 6, 11, 0, 6, 3, 0, 5, 6, 0, 9, 5],
+    [0, 11, 8, 0, 5, 11, 0, 1, 5, 5, 6, 11],
+    [6, 11, 3, 6, 3, 5, 5, 3, 1],
+    [1, 2, 10, 9, 5, 11, 9, 11, 8, 11, 5, 6],
+    [0, 11, 3, 0, 6, 11, 0, 9, 6, 5, 6, 9, 1, 2, 10],
+    [11, 8, 5, 11, 5, 6, 8, 0, 5, 10, 5, 2, 0, 2, 5],
+    [6, 11, 3, 6, 3, 5, 2, 10, 3, 10, 5, 3],
+    [5, 8, 9, 5, 2, 8, 5, 6, 2, 3, 8, 2],
+    [9, 5, 6, 9, 6, 0, 0, 6, 2],
+    [1, 5, 8, 1, 8, 0, 5, 6, 8, 3, 8, 2, 6, 2, 8],
+    [1, 5, 6, 2, 1, 6],
+    [1, 3, 6, 1, 6, 10, 3, 8, 6, 5, 6, 9, 8, 9, 6],
+    [10, 1, 0, 10, 0, 6, 9, 5, 0, 5, 6, 0],
+    [0, 3, 8, 5, 6, 10],
+    [10, 5, 6],
+    [11, 5, 10, 7, 5, 11],
+    [11, 5, 10, 11, 7, 5, 8, 3, 0],
+    [5, 11, 7, 5, 10, 11, 1, 9, 0],
+    [10, 7, 5, 10, 11, 7, 9, 8, 1, 8, 3, 1],
+    [11, 1, 2, 11, 7, 1, 7, 5, 1],
+    [0, 8, 3, 1, 2, 7, 1, 7, 5, 7, 2, 11],
+    [9, 7, 5, 9, 2, 7, 9, 0, 2, 2, 11, 7],
+    [7, 5, 2, 7, 2, 11, 5, 9, 2, 3, 2, 8, 9, 8, 2],
+    [2, 5, 10, 2, 3, 5, 3, 7, 5],
+    [8, 2, 0, 8, 5, 2, 8, 7, 5, 10, 2, 5],
+    [9, 0, 1, 5, 10, 3, 5, 3, 7, 3, 10, 2],
+    [9, 8, 2, 9, 2, 1, 8, 7, 2, 10, 2, 5, 7, 5, 2],
+    [1, 3, 5, 3, 7, 5],
+    [0, 8, 7, 0, 7, 1, 1, 7, 5],
+    [9, 0, 3, 9, 3, 5, 5, 3, 7],
+    [9, 8, 7, 5, 9, 7],
+    [5, 8, 4, 5, 10, 8, 10, 11, 8],
+    [5, 0, 4, 5, 11, 0, 5, 10, 11, 11, 3, 0],
+    [0, 1, 9, 8, 4, 10, 8, 10, 11, 10, 4, 5],
+    [10, 11, 4, 10, 4, 5, 11, 3, 4, 9, 4, 1, 3, 1, 4],
+    [2, 5, 1, 2, 8, 5, 2, 11, 8, 4, 5, 8],
+    [0, 4, 11, 0, 11, 3, 4, 5, 11, 2, 11, 1, 5, 1, 11],
+    [0, 2, 5, 0, 5, 9, 2, 11, 5, 4, 5, 8, 11, 8, 5],
+    [9, 4, 5, 2, 11, 3],
+    [2, 5, 10, 3, 5, 2, 3, 4, 5, 3, 8, 4],
+    [5, 10, 2, 5, 2, 4, 4, 2, 0],
+    [3, 10, 2, 3, 5, 10, 3, 8, 5, 4, 5, 8, 0, 1, 9],
+    [5, 10, 2, 5, 2, 4, 1, 9, 2, 9, 4, 2],
+    [8, 4, 5, 8, 5, 3, 3, 5, 1],
+    [0, 4, 5, 1, 0, 5],
+    [8, 4, 5, 8, 5, 3, 9, 0, 5, 0, 3, 5],
+    [9, 4, 5],
+    [4, 11, 7, 4, 9, 11, 9, 10, 11],
+    [0, 8, 3, 4, 9, 7, 9, 11, 7, 9, 10, 11],
+    [1, 10, 11, 1, 11, 4, 1, 4, 0, 7, 4, 11],
+    [3, 1, 4, 3, 4, 8, 1, 10, 4, 7, 4, 11, 10, 11, 4],
+    [4, 11, 7, 9, 11, 4, 9, 2, 11, 9, 1, 2],
+    [9, 7, 4, 9, 11, 7, 9, 1, 11, 2, 11, 1, 0, 8, 3],
+    [11, 7, 4, 11, 4, 2, 2, 4, 0],
+    [11, 7, 4, 11, 4, 2, 8, 3, 4, 3, 2, 4],
+    [2, 9, 10, 2, 7, 9, 2, 3, 7, 7, 4, 9],
+    [9, 10, 7, 9, 7, 4, 10, 2, 7, 8, 7, 0, 2, 0, 7],
+    [3, 7, 10, 3, 10, 2, 7, 4, 10, 1, 10, 0, 4, 0, 10],
+    [1, 10, 2, 8, 7, 4],
+    [4, 9, 1, 4, 1, 7, 7, 1, 3],
+    [4, 9, 1, 4, 1, 7, 0, 8, 1, 8, 7, 1],
+    [4, 0, 3, 7, 4, 3],
+    [4, 8, 7],
+    [9, 10, 8, 10, 11, 8],
+    [3, 0, 9, 3, 9, 11, 11, 9, 10],
+    [0, 1, 10, 0, 10, 8, 8, 10, 11],
+    [3, 1, 10, 11, 3, 10],
+    [1, 2, 11, 1, 11, 9, 9, 11, 8],
+    [3, 0, 9, 3, 9, 11, 1, 2, 9, 2, 11, 9],
+    [0, 2, 11, 8, 0, 11],
+    [3, 2, 11],
+    [2, 3, 8, 2, 8, 10, 10, 8, 9],
+    [9, 10, 2, 0, 9, 2],
+    [2, 3, 8, 2, 8, 10, 0, 1, 8, 1, 10, 8],
+    [1, 10, 2],
+    [1, 3, 8, 9, 1, 8],
+    [0, 9, 1],
+    [0, 3, 8],
+    []
+];
+
+NGL.MarchingCubes.triTable2 = new Int32Array( [
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 8, 3, 9, 8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 3, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    9, 2, 10, 0, 2, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    2, 8, 3, 2, 10, 8, 10, 9, 8, -1, -1, -1, -1, -1, -1, -1,
+    3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 11, 2, 8, 11, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 9, 0, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 11, 2, 1, 9, 11, 9, 8, 11, -1, -1, -1, -1, -1, -1, -1,
+    3, 10, 1, 11, 10, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 10, 1, 0, 8, 10, 8, 11, 10, -1, -1, -1, -1, -1, -1, -1,
+    3, 9, 0, 3, 11, 9, 11, 10, 9, -1, -1, -1, -1, -1, -1, -1,
+    9, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 3, 0, 7, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 1, 9, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 1, 9, 4, 7, 1, 7, 3, 1, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 10, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    3, 4, 7, 3, 0, 4, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1,
+    9, 2, 10, 9, 0, 2, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1,
+    2, 10, 9, 2, 9, 7, 2, 7, 3, 7, 9, 4, -1, -1, -1, -1,
+    8, 4, 7, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    11, 4, 7, 11, 2, 4, 2, 0, 4, -1, -1, -1, -1, -1, -1, -1,
+    9, 0, 1, 8, 4, 7, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1,
+    4, 7, 11, 9, 4, 11, 9, 11, 2, 9, 2, 1, -1, -1, -1, -1,
+    3, 10, 1, 3, 11, 10, 7, 8, 4, -1, -1, -1, -1, -1, -1, -1,
+    1, 11, 10, 1, 4, 11, 1, 0, 4, 7, 11, 4, -1, -1, -1, -1,
+    4, 7, 8, 9, 0, 11, 9, 11, 10, 11, 0, 3, -1, -1, -1, -1,
+    4, 7, 11, 4, 11, 9, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1,
+    9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    9, 5, 4, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 5, 4, 1, 5, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    8, 5, 4, 8, 3, 5, 3, 1, 5, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 10, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    3, 0, 8, 1, 2, 10, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1,
+    5, 2, 10, 5, 4, 2, 4, 0, 2, -1, -1, -1, -1, -1, -1, -1,
+    2, 10, 5, 3, 2, 5, 3, 5, 4, 3, 4, 8, -1, -1, -1, -1,
+    9, 5, 4, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 11, 2, 0, 8, 11, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1,
+    0, 5, 4, 0, 1, 5, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1,
+    2, 1, 5, 2, 5, 8, 2, 8, 11, 4, 8, 5, -1, -1, -1, -1,
+    10, 3, 11, 10, 1, 3, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1,
+    4, 9, 5, 0, 8, 1, 8, 10, 1, 8, 11, 10, -1, -1, -1, -1,
+    5, 4, 0, 5, 0, 11, 5, 11, 10, 11, 0, 3, -1, -1, -1, -1,
+    5, 4, 8, 5, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1,
+    9, 7, 8, 5, 7, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    9, 3, 0, 9, 5, 3, 5, 7, 3, -1, -1, -1, -1, -1, -1, -1,
+    0, 7, 8, 0, 1, 7, 1, 5, 7, -1, -1, -1, -1, -1, -1, -1,
+    1, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    9, 7, 8, 9, 5, 7, 10, 1, 2, -1, -1, -1, -1, -1, -1, -1,
+    10, 1, 2, 9, 5, 0, 5, 3, 0, 5, 7, 3, -1, -1, -1, -1,
+    8, 0, 2, 8, 2, 5, 8, 5, 7, 10, 5, 2, -1, -1, -1, -1,
+    2, 10, 5, 2, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1,
+    7, 9, 5, 7, 8, 9, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1,
+    9, 5, 7, 9, 7, 2, 9, 2, 0, 2, 7, 11, -1, -1, -1, -1,
+    2, 3, 11, 0, 1, 8, 1, 7, 8, 1, 5, 7, -1, -1, -1, -1,
+    11, 2, 1, 11, 1, 7, 7, 1, 5, -1, -1, -1, -1, -1, -1, -1,
+    9, 5, 8, 8, 5, 7, 10, 1, 3, 10, 3, 11, -1, -1, -1, -1,
+    5, 7, 0, 5, 0, 9, 7, 11, 0, 1, 0, 10, 11, 10, 0, -1,
+    11, 10, 0, 11, 0, 3, 10, 5, 0, 8, 0, 7, 5, 7, 0, -1,
+    11, 10, 5, 7, 11, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 3, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    9, 0, 1, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 8, 3, 1, 9, 8, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1,
+    1, 6, 5, 2, 6, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 6, 5, 1, 2, 6, 3, 0, 8, -1, -1, -1, -1, -1, -1, -1,
+    9, 6, 5, 9, 0, 6, 0, 2, 6, -1, -1, -1, -1, -1, -1, -1,
+    5, 9, 8, 5, 8, 2, 5, 2, 6, 3, 2, 8, -1, -1, -1, -1,
+    2, 3, 11, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    11, 0, 8, 11, 2, 0, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1,
+    0, 1, 9, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1,
+    5, 10, 6, 1, 9, 2, 9, 11, 2, 9, 8, 11, -1, -1, -1, -1,
+    6, 3, 11, 6, 5, 3, 5, 1, 3, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 11, 0, 11, 5, 0, 5, 1, 5, 11, 6, -1, -1, -1, -1,
+    3, 11, 6, 0, 3, 6, 0, 6, 5, 0, 5, 9, -1, -1, -1, -1,
+    6, 5, 9, 6, 9, 11, 11, 9, 8, -1, -1, -1, -1, -1, -1, -1,
+    5, 10, 6, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 3, 0, 4, 7, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1,
+    1, 9, 0, 5, 10, 6, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1,
+    10, 6, 5, 1, 9, 7, 1, 7, 3, 7, 9, 4, -1, -1, -1, -1,
+    6, 1, 2, 6, 5, 1, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 5, 5, 2, 6, 3, 0, 4, 3, 4, 7, -1, -1, -1, -1,
+    8, 4, 7, 9, 0, 5, 0, 6, 5, 0, 2, 6, -1, -1, -1, -1,
+    7, 3, 9, 7, 9, 4, 3, 2, 9, 5, 9, 6, 2, 6, 9, -1,
+    3, 11, 2, 7, 8, 4, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1,
+    5, 10, 6, 4, 7, 2, 4, 2, 0, 2, 7, 11, -1, -1, -1, -1,
+    0, 1, 9, 4, 7, 8, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1,
+    9, 2, 1, 9, 11, 2, 9, 4, 11, 7, 11, 4, 5, 10, 6, -1,
+    8, 4, 7, 3, 11, 5, 3, 5, 1, 5, 11, 6, -1, -1, -1, -1,
+    5, 1, 11, 5, 11, 6, 1, 0, 11, 7, 11, 4, 0, 4, 11, -1,
+    0, 5, 9, 0, 6, 5, 0, 3, 6, 11, 6, 3, 8, 4, 7, -1,
+    6, 5, 9, 6, 9, 11, 4, 7, 9, 7, 11, 9, -1, -1, -1, -1,
+    10, 4, 9, 6, 4, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 10, 6, 4, 9, 10, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1,
+    10, 0, 1, 10, 6, 0, 6, 4, 0, -1, -1, -1, -1, -1, -1, -1,
+    8, 3, 1, 8, 1, 6, 8, 6, 4, 6, 1, 10, -1, -1, -1, -1,
+    1, 4, 9, 1, 2, 4, 2, 6, 4, -1, -1, -1, -1, -1, -1, -1,
+    3, 0, 8, 1, 2, 9, 2, 4, 9, 2, 6, 4, -1, -1, -1, -1,
+    0, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    8, 3, 2, 8, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1,
+    10, 4, 9, 10, 6, 4, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 2, 2, 8, 11, 4, 9, 10, 4, 10, 6, -1, -1, -1, -1,
+    3, 11, 2, 0, 1, 6, 0, 6, 4, 6, 1, 10, -1, -1, -1, -1,
+    6, 4, 1, 6, 1, 10, 4, 8, 1, 2, 1, 11, 8, 11, 1, -1,
+    9, 6, 4, 9, 3, 6, 9, 1, 3, 11, 6, 3, -1, -1, -1, -1,
+    8, 11, 1, 8, 1, 0, 11, 6, 1, 9, 1, 4, 6, 4, 1, -1,
+    3, 11, 6, 3, 6, 0, 0, 6, 4, -1, -1, -1, -1, -1, -1, -1,
+    6, 4, 8, 11, 6, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    7, 10, 6, 7, 8, 10, 8, 9, 10, -1, -1, -1, -1, -1, -1, -1,
+    0, 7, 3, 0, 10, 7, 0, 9, 10, 6, 7, 10, -1, -1, -1, -1,
+    10, 6, 7, 1, 10, 7, 1, 7, 8, 1, 8, 0, -1, -1, -1, -1,
+    10, 6, 7, 10, 7, 1, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 6, 1, 6, 8, 1, 8, 9, 8, 6, 7, -1, -1, -1, -1,
+    2, 6, 9, 2, 9, 1, 6, 7, 9, 0, 9, 3, 7, 3, 9, -1,
+    7, 8, 0, 7, 0, 6, 6, 0, 2, -1, -1, -1, -1, -1, -1, -1,
+    7, 3, 2, 6, 7, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    2, 3, 11, 10, 6, 8, 10, 8, 9, 8, 6, 7, -1, -1, -1, -1,
+    2, 0, 7, 2, 7, 11, 0, 9, 7, 6, 7, 10, 9, 10, 7, -1,
+    1, 8, 0, 1, 7, 8, 1, 10, 7, 6, 7, 10, 2, 3, 11, -1,
+    11, 2, 1, 11, 1, 7, 10, 6, 1, 6, 7, 1, -1, -1, -1, -1,
+    8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6, -1,
+    0, 9, 1, 11, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1,
+    7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    3, 0, 8, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 1, 9, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    8, 1, 9, 8, 3, 1, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1,
+    10, 1, 2, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 10, 3, 0, 8, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1,
+    2, 9, 0, 2, 10, 9, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1,
+    6, 11, 7, 2, 10, 3, 10, 8, 3, 10, 9, 8, -1, -1, -1, -1,
+    7, 2, 3, 6, 2, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    7, 0, 8, 7, 6, 0, 6, 2, 0, -1, -1, -1, -1, -1, -1, -1,
+    2, 7, 6, 2, 3, 7, 0, 1, 9, -1, -1, -1, -1, -1, -1, -1,
+    1, 6, 2, 1, 8, 6, 1, 9, 8, 8, 7, 6, -1, -1, -1, -1,
+    10, 7, 6, 10, 1, 7, 1, 3, 7, -1, -1, -1, -1, -1, -1, -1,
+    10, 7, 6, 1, 7, 10, 1, 8, 7, 1, 0, 8, -1, -1, -1, -1,
+    0, 3, 7, 0, 7, 10, 0, 10, 9, 6, 10, 7, -1, -1, -1, -1,
+    7, 6, 10, 7, 10, 8, 8, 10, 9, -1, -1, -1, -1, -1, -1, -1,
+    6, 8, 4, 11, 8, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    3, 6, 11, 3, 0, 6, 0, 4, 6, -1, -1, -1, -1, -1, -1, -1,
+    8, 6, 11, 8, 4, 6, 9, 0, 1, -1, -1, -1, -1, -1, -1, -1,
+    9, 4, 6, 9, 6, 3, 9, 3, 1, 11, 3, 6, -1, -1, -1, -1,
+    6, 8, 4, 6, 11, 8, 2, 10, 1, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 10, 3, 0, 11, 0, 6, 11, 0, 4, 6, -1, -1, -1, -1,
+    4, 11, 8, 4, 6, 11, 0, 2, 9, 2, 10, 9, -1, -1, -1, -1,
+    10, 9, 3, 10, 3, 2, 9, 4, 3, 11, 3, 6, 4, 6, 3, -1,
+    8, 2, 3, 8, 4, 2, 4, 6, 2, -1, -1, -1, -1, -1, -1, -1,
+    0, 4, 2, 4, 6, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 9, 0, 2, 3, 4, 2, 4, 6, 4, 3, 8, -1, -1, -1, -1,
+    1, 9, 4, 1, 4, 2, 2, 4, 6, -1, -1, -1, -1, -1, -1, -1,
+    8, 1, 3, 8, 6, 1, 8, 4, 6, 6, 10, 1, -1, -1, -1, -1,
+    10, 1, 0, 10, 0, 6, 6, 0, 4, -1, -1, -1, -1, -1, -1, -1,
+    4, 6, 3, 4, 3, 8, 6, 10, 3, 0, 3, 9, 10, 9, 3, -1,
+    10, 9, 4, 6, 10, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 9, 5, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 3, 4, 9, 5, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1,
+    5, 0, 1, 5, 4, 0, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1,
+    11, 7, 6, 8, 3, 4, 3, 5, 4, 3, 1, 5, -1, -1, -1, -1,
+    9, 5, 4, 10, 1, 2, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1,
+    6, 11, 7, 1, 2, 10, 0, 8, 3, 4, 9, 5, -1, -1, -1, -1,
+    7, 6, 11, 5, 4, 10, 4, 2, 10, 4, 0, 2, -1, -1, -1, -1,
+    3, 4, 8, 3, 5, 4, 3, 2, 5, 10, 5, 2, 11, 7, 6, -1,
+    7, 2, 3, 7, 6, 2, 5, 4, 9, -1, -1, -1, -1, -1, -1, -1,
+    9, 5, 4, 0, 8, 6, 0, 6, 2, 6, 8, 7, -1, -1, -1, -1,
+    3, 6, 2, 3, 7, 6, 1, 5, 0, 5, 4, 0, -1, -1, -1, -1,
+    6, 2, 8, 6, 8, 7, 2, 1, 8, 4, 8, 5, 1, 5, 8, -1,
+    9, 5, 4, 10, 1, 6, 1, 7, 6, 1, 3, 7, -1, -1, -1, -1,
+    1, 6, 10, 1, 7, 6, 1, 0, 7, 8, 7, 0, 9, 5, 4, -1,
+    4, 0, 10, 4, 10, 5, 0, 3, 10, 6, 10, 7, 3, 7, 10, -1,
+    7, 6, 10, 7, 10, 8, 5, 4, 10, 4, 8, 10, -1, -1, -1, -1,
+    6, 9, 5, 6, 11, 9, 11, 8, 9, -1, -1, -1, -1, -1, -1, -1,
+    3, 6, 11, 0, 6, 3, 0, 5, 6, 0, 9, 5, -1, -1, -1, -1,
+    0, 11, 8, 0, 5, 11, 0, 1, 5, 5, 6, 11, -1, -1, -1, -1,
+    6, 11, 3, 6, 3, 5, 5, 3, 1, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 10, 9, 5, 11, 9, 11, 8, 11, 5, 6, -1, -1, -1, -1,
+    0, 11, 3, 0, 6, 11, 0, 9, 6, 5, 6, 9, 1, 2, 10, -1,
+    11, 8, 5, 11, 5, 6, 8, 0, 5, 10, 5, 2, 0, 2, 5, -1,
+    6, 11, 3, 6, 3, 5, 2, 10, 3, 10, 5, 3, -1, -1, -1, -1,
+    5, 8, 9, 5, 2, 8, 5, 6, 2, 3, 8, 2, -1, -1, -1, -1,
+    9, 5, 6, 9, 6, 0, 0, 6, 2, -1, -1, -1, -1, -1, -1, -1,
+    1, 5, 8, 1, 8, 0, 5, 6, 8, 3, 8, 2, 6, 2, 8, -1,
+    1, 5, 6, 2, 1, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 3, 6, 1, 6, 10, 3, 8, 6, 5, 6, 9, 8, 9, 6, -1,
+    10, 1, 0, 10, 0, 6, 9, 5, 0, 5, 6, 0, -1, -1, -1, -1,
+    0, 3, 8, 5, 6, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    10, 5, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    11, 5, 10, 7, 5, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    11, 5, 10, 11, 7, 5, 8, 3, 0, -1, -1, -1, -1, -1, -1, -1,
+    5, 11, 7, 5, 10, 11, 1, 9, 0, -1, -1, -1, -1, -1, -1, -1,
+    10, 7, 5, 10, 11, 7, 9, 8, 1, 8, 3, 1, -1, -1, -1, -1,
+    11, 1, 2, 11, 7, 1, 7, 5, 1, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 3, 1, 2, 7, 1, 7, 5, 7, 2, 11, -1, -1, -1, -1,
+    9, 7, 5, 9, 2, 7, 9, 0, 2, 2, 11, 7, -1, -1, -1, -1,
+    7, 5, 2, 7, 2, 11, 5, 9, 2, 3, 2, 8, 9, 8, 2, -1,
+    2, 5, 10, 2, 3, 5, 3, 7, 5, -1, -1, -1, -1, -1, -1, -1,
+    8, 2, 0, 8, 5, 2, 8, 7, 5, 10, 2, 5, -1, -1, -1, -1,
+    9, 0, 1, 5, 10, 3, 5, 3, 7, 3, 10, 2, -1, -1, -1, -1,
+    9, 8, 2, 9, 2, 1, 8, 7, 2, 10, 2, 5, 7, 5, 2, -1,
+    1, 3, 5, 3, 7, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 7, 0, 7, 1, 1, 7, 5, -1, -1, -1, -1, -1, -1, -1,
+    9, 0, 3, 9, 3, 5, 5, 3, 7, -1, -1, -1, -1, -1, -1, -1,
+    9, 8, 7, 5, 9, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    5, 8, 4, 5, 10, 8, 10, 11, 8, -1, -1, -1, -1, -1, -1, -1,
+    5, 0, 4, 5, 11, 0, 5, 10, 11, 11, 3, 0, -1, -1, -1, -1,
+    0, 1, 9, 8, 4, 10, 8, 10, 11, 10, 4, 5, -1, -1, -1, -1,
+    10, 11, 4, 10, 4, 5, 11, 3, 4, 9, 4, 1, 3, 1, 4, -1,
+    2, 5, 1, 2, 8, 5, 2, 11, 8, 4, 5, 8, -1, -1, -1, -1,
+    0, 4, 11, 0, 11, 3, 4, 5, 11, 2, 11, 1, 5, 1, 11, -1,
+    0, 2, 5, 0, 5, 9, 2, 11, 5, 4, 5, 8, 11, 8, 5, -1,
+    9, 4, 5, 2, 11, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    2, 5, 10, 3, 5, 2, 3, 4, 5, 3, 8, 4, -1, -1, -1, -1,
+    5, 10, 2, 5, 2, 4, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1,
+    3, 10, 2, 3, 5, 10, 3, 8, 5, 4, 5, 8, 0, 1, 9, -1,
+    5, 10, 2, 5, 2, 4, 1, 9, 2, 9, 4, 2, -1, -1, -1, -1,
+    8, 4, 5, 8, 5, 3, 3, 5, 1, -1, -1, -1, -1, -1, -1, -1,
+    0, 4, 5, 1, 0, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    8, 4, 5, 8, 5, 3, 9, 0, 5, 0, 3, 5, -1, -1, -1, -1,
+    9, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 11, 7, 4, 9, 11, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1,
+    0, 8, 3, 4, 9, 7, 9, 11, 7, 9, 10, 11, -1, -1, -1, -1,
+    1, 10, 11, 1, 11, 4, 1, 4, 0, 7, 4, 11, -1, -1, -1, -1,
+    3, 1, 4, 3, 4, 8, 1, 10, 4, 7, 4, 11, 10, 11, 4, -1,
+    4, 11, 7, 9, 11, 4, 9, 2, 11, 9, 1, 2, -1, -1, -1, -1,
+    9, 7, 4, 9, 11, 7, 9, 1, 11, 2, 11, 1, 0, 8, 3, -1,
+    11, 7, 4, 11, 4, 2, 2, 4, 0, -1, -1, -1, -1, -1, -1, -1,
+    11, 7, 4, 11, 4, 2, 8, 3, 4, 3, 2, 4, -1, -1, -1, -1,
+    2, 9, 10, 2, 7, 9, 2, 3, 7, 7, 4, 9, -1, -1, -1, -1,
+    9, 10, 7, 9, 7, 4, 10, 2, 7, 8, 7, 0, 2, 0, 7, -1,
+    3, 7, 10, 3, 10, 2, 7, 4, 10, 1, 10, 0, 4, 0, 10, -1,
+    1, 10, 2, 8, 7, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 9, 1, 4, 1, 7, 7, 1, 3, -1, -1, -1, -1, -1, -1, -1,
+    4, 9, 1, 4, 1, 7, 0, 8, 1, 8, 7, 1, -1, -1, -1, -1,
+    4, 0, 3, 7, 4, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    4, 8, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    9, 10, 8, 10, 11, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    3, 0, 9, 3, 9, 11, 11, 9, 10, -1, -1, -1, -1, -1, -1, -1,
+    0, 1, 10, 0, 10, 8, 8, 10, 11, -1, -1, -1, -1, -1, -1, -1,
+    3, 1, 10, 11, 3, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 2, 11, 1, 11, 9, 9, 11, 8, -1, -1, -1, -1, -1, -1, -1,
+    3, 0, 9, 3, 9, 11, 1, 2, 9, 2, 11, 9, -1, -1, -1, -1,
+    0, 2, 11, 8, 0, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    3, 2, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    2, 3, 8, 2, 8, 10, 10, 8, 9, -1, -1, -1, -1, -1, -1, -1,
+    9, 10, 2, 0, 9, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    2, 3, 8, 2, 8, 10, 0, 1, 8, 1, 10, 8, -1, -1, -1, -1,
+    1, 10, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    1, 3, 8, 9, 1, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+] );
+
+NGL.MarchingCubes.cubeVerts = [
+    [0,0,0],
+    [1,0,0],
+    [1,1,0],
+    [0,1,0],
+    [0,0,1],
+    [1,0,1],
+    [1,1,1],
+    [0,1,1]
+];
+
+NGL.MarchingCubes.edgeIndex = [
+    [0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
+    [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]
+];
+
+
+//////////////
+// Smoothing
+
+NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
+
+    // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
+    // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
+    //
+    // Permission to use, copy, modify, and distribute this program for
+    // any purpose, with or without fee, is hereby granted, provided that
+    // the notices on the head, the reference information, and this
+    // copyright notice appear in all copies or substantial portions of
+    // the Software. It is provided "as is" without express or implied
+    // warranty.
+    //
+    // ported to JavaScript and adapted to NGL by Alexander Rose
+
+    NGL.time( "NGL.laplacianSmooth" );
+
+    numiter = numiter || 1;
+    inflate = inflate || true;
+
+    var nv = verts.length / 3;
+    var nf = faces.length / 3;
+
+    if( inflate ){
+
+        var bg = new THREE.BufferGeometry();
+        bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
+        bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
+
+    }
+
+    var tps = new Float32Array( nv * 3 );
+
+    var ndeg = 20;
+    var vertdeg = new Array( ndeg );
+
+    for( var i = 0; i < ndeg; ++i ){
+        vertdeg[ i ] = new Uint32Array( nv );
+    }
+
+    for( var i = 0; i < nv; ++i ){
+        vertdeg[ 0 ][ i ] = 0;
+    }
+
+    var j, jl;
+    var flagvert;
+
+    // for each face
+
+    for( var i = 0; i < nf; ++i ){
+
+        var ao = i * 3;
+        var bo = i * 3 + 1;
+        var co = i * 3 + 2;
+
+        // vertex a
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ao] ]; j < jl; ++j ){
+            if( faces[ bo ] == vertdeg[ j + 1 ][ faces[ ao ]] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ ao ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ ao ] ] ][ faces[ ao ] ] = faces[ bo ];
+        }
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ ao ] ]; j < jl; ++j ){
+            if( faces[ co] == vertdeg[ j + 1 ][ faces[ ao ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ ao ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ ao ] ] ][ faces[ ao ] ] = faces[ co ];
+        }
+
+        // vertex b
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ bo ] ]; j < jl; ++j ){
+            if( faces[ ao ] == vertdeg[ j + 1 ][ faces[ bo ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ bo ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ bo ] ] ][ faces[ bo ] ] = faces[ ao ];
+        }
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ bo ] ]; j < jl; ++j ){
+            if( faces[ co ] == vertdeg[ j + 1 ][ faces[ bo ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ bo ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ bo ] ] ][ faces[ bo ] ] = faces[ co ];
+        }
+
+        // vertex c
+
+        flagvert = true;
+        for( j = 0; j < vertdeg[ 0 ][ faces[ co ] ]; ++j ){
+            if( faces[ ao ] == vertdeg[ j + 1 ][ faces[ co ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ co ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ co ] ] ][ faces[ co ] ] = faces[ ao ];
+        }
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ co ] ]; j < jl; ++j ){
+            if( faces[ bo ] == vertdeg[ j + 1 ][ faces[ co ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ co ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ co ] ] ][ faces[ co ] ] = faces[ bo ];
+        }
+
+    }
+
+    var wt = 1.0;
+    var wt2 = 0.5;
+    var i3, vi3, vi, vdi, wt_vi, wt2_vi;
+    var ssign = -1;
+    var scaleFactor = 1;
+    var outwt = 0.75 / ( scaleFactor + 3.5 );  // area-preserving
+
+    // smoothing iterations
+
+    for( var k = 0; k < numiter; ++k ){
+
+        // for each vertex
+
+        for( var i = 0; i < nv; ++i ){
+
+            i3 = i * 3;
+            vdi = vertdeg[ 0 ][ i ];
+
+            if( vdi < 3 ){
+
+                tps[ i3     ] = verts[ i3     ];
+                tps[ i3 + 1 ] = verts[ i3 + 1 ];
+                tps[ i3 + 2 ] = verts[ i3 + 2 ];
+
+            }else if( vdi === 3 || vdi === 4 ){
+
+                tps[ i3     ] = 0;
+                tps[ i3 + 1 ] = 0;
+                tps[ i3 + 2 ] = 0;
+
+                for( j = 0; j < vdi; ++j ){
+                    vi3 = vertdeg[ j + 1 ][ i ] * 3;
+                    tps[ i3     ] += verts[ vi3     ];
+                    tps[ i3 + 1 ] += verts[ vi3 + 1 ];
+                    tps[ i3 + 2 ] += verts[ vi3 + 2 ];
+                }
+
+                tps[ i3     ] += wt2 * verts[ i3 ];
+                tps[ i3 + 1 ] += wt2 * verts[ i3 + 1 ];
+                tps[ i3 + 2 ] += wt2 * verts[ i3 + 2 ];
+
+                wt2_vi = wt2 + vdi;
+                tps[ i3     ] /= wt2_vi;
+                tps[ i3 + 1 ] /= wt2_vi;
+                tps[ i3 + 2 ] /= wt2_vi;
+
+            }else{
+
+                tps[ i3     ] = 0;
+                tps[ i3 + 1 ] = 0;
+                tps[ i3 + 2 ] = 0;
+
+                for( j = 0; j < vdi; ++j ){
+                    vi3 = vertdeg[ j + 1 ][ i ] * 3;
+                    tps[ i3     ] += verts[ vi3     ];
+                    tps[ i3 + 1 ] += verts[ vi3 + 1 ];
+                    tps[ i3 + 2 ] += verts[ vi3 + 2 ];
+                }
+
+                tps[ i3     ] += wt * verts[ i3 ];
+                tps[ i3 + 1 ] += wt * verts[ i3 + 1 ];
+                tps[ i3 + 2 ] += wt * verts[ i3 + 2 ];
+
+                wt_vi = wt + vdi;
+                tps[ i3     ] /= wt_vi;
+                tps[ i3 + 1 ] /= wt_vi;
+                tps[ i3 + 2 ] /= wt_vi;
+
+            }
+
+        }
+
+        verts.set( tps );  // copy smoothed positions
+
+        if( inflate ){
+
+            bg.computeVertexNormals();
+            var norms = bg.attributes.normal.array;
+            var nv3 = nv * 3;
+
+            for( i3 = 0; i3 < nv3; i3 += 3 ){
+
+                // if(verts[i].inout) ssign=1;
+                // else ssign=-1;
+
+                verts[ i3     ] += ssign * outwt * norms[ i3     ];
+                verts[ i3 + 1 ] += ssign * outwt * norms[ i3 + 1 ];
+                verts[ i3 + 2 ] += ssign * outwt * norms[ i3 + 2 ];
+
+            }
+
+        }
+
+    }
+
+    NGL.timeEnd( "NGL.laplacianSmooth" );
+
+};
+
+
+//////////////////////
+// Molecular surface
+
+NGL.MolecularSurface = function( structure, probeRadius, btype ){
+
+    // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
+    // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
+    //
+    // Permission to use, copy, modify, and distribute this program for
+    // any purpose, with or without fee, is hereby granted, provided that
+    // the notices on the head, the reference information, and this
+    // copyright notice appear in all copies or substantial portions of
+    // the Software. It is provided "as is" without express or implied
+    // warranty.
+    //
+    // ported to JavaScript by biochem_fan (http://webglmol.sourceforge.jp/)
+    // refactored by dkoes (https://github.com/dkoes)
+    //
+    // adapted to NGL by Alexander Rose
+
+    probeRadius = probeRadius || 1.4;
+    btype = btype || false;
+
+    var atoms = structure.atoms;
+    var bbox = structure.getBoundingBox();
+
+    // 2 is .5A grid; if this is made user configurable and
+    // also have to adjust offset used to find non-shown atoms
+    var scaleFactor = 2;
+
+     // need margin to avoid boundary/round off effects
+    var margin = ( 1 / scaleFactor ) * 5.5;
+
+    var pmin = new THREE.Vector3().copy( bbox.min );
+    var pmax = new THREE.Vector3().copy( bbox.max );
+
+    if( !btype ){
+
+        pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
+        pmax.addScalar( margin );
+
+    }else{
+
+        pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
+        pmax.addScalar( probeRadius + margin );
+
+    }
+
+    var ptran = new THREE.Vector3().copy( pmin ).negate();
+
+    pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+    pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+    var pbox = new THREE.Vector3()
+        .subVectors( pmax, pmin )
+        .multiplyScalar( scaleFactor )
+        .ceil()
+        .addScalar( 1 );
+
+    var plength = pbox.x;
+    var pwidth = pbox.y;
+    var pheight = pbox.z;
+
+    // pheight, pwidth, plength
+    var matrix = new THREE.Matrix4();
+    matrix.multiply(
+        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    );
+    matrix.multiply(
+        new THREE.Matrix4().makeScale( -0.5, 0.5, 0.5 )
+    );
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            -2*ptran.z, -2*ptran.y, -2*ptran.x
+        )
+    );
+
+    // boundingatom caches
+    var depty = {};
+    var widxz = {};
+    boundingatom();
+
+    // console.log( depty );
+    // console.log( widxz );
+
+    var cutRadius = probeRadius * scaleFactor;
+
+    // constants for vpbits bitmasks
+    var INOUT = 1;
+    var ISDONE = 2;
+    var ISBOUND = 4;
+
+    var vpBits = new Uint8Array( plength * pwidth * pheight );
+    // float32 doesn't play nicely with native floats
+    var vpDistance = new Float64Array( plength * pwidth * pheight );
+    var vpAtomID = new Int32Array( plength * pwidth * pheight );
+
+    var nb = [
+        new Int32Array([  1,  0,  0 ]), new Int32Array([ -1,  0,  0 ]),
+        new Int32Array([  0,  1,  0 ]), new Int32Array([  0, -1,  0 ]),
+        new Int32Array([  0,  0,  1 ]), new Int32Array([  0,  0, -1 ]),
+        new Int32Array([  1,  1,  0 ]), new Int32Array([  1, -1,  0 ]),
+        new Int32Array([ -1,  1,  0 ]), new Int32Array([ -1, -1,  0 ]),
+        new Int32Array([  1,  0,  1 ]), new Int32Array([  1,  0, -1 ]),
+        new Int32Array([ -1,  0,  1 ]), new Int32Array([ -1,  0, -1 ]),
+        new Int32Array([  0,  1,  1 ]), new Int32Array([  0,  1, -1 ]),
+        new Int32Array([  0, -1,  1 ]), new Int32Array([  0, -1, -1 ]),
+        new Int32Array([  1,  1,  1 ]), new Int32Array([  1,  1, -1 ]),
+        new Int32Array([  1, -1,  1 ]), new Int32Array([ -1,  1,  1 ]),
+        new Int32Array([  1, -1, -1 ]), new Int32Array([ -1, -1,  1 ]),
+        new Int32Array([ -1,  1, -1 ]), new Int32Array([ -1, -1, -1 ])
+    ];
+
+    //
+
+    this.vdw = function(){
+
+        NGL.time( "NGL.MolecularSurface.vdw" );
+
+        fillvoxels();
+        buildboundary();
+        marchingcubeinit( 1 );
+
+        var v = new NGL.Volume(
+            "vdw", "", vpBits, pheight, pwidth, plength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.vdw" );
+
+        return v;
+
+    }
+
+    function boundingatom(){
+
+        var j, k;
+        var txz, tdept, sradius, tradius, widxz_r;
+        var indx;
+
+        for( var element in NGL.VdwRadii ){
+
+            var r = NGL.VdwRadii[ element ];
+
+            if( depty[ r ] ) continue;
+
+            if( !btype ){
+                tradius = r * scaleFactor + 0.5;
+            }else{
+                tradius = ( r + probeRadius ) * scaleFactor + 0.5;
+            }
+
+            sradius = tradius * tradius;
+            widxz[ r ] = Math.floor( tradius ) + 1;
+            widxz_r = widxz[ r ];
+            depty[ r ] = new Int32Array( widxz_r * widxz_r );
+            indx = 0;
+
+            for( j = 0; j < widxz_r; ++j ){
+
+                for( k = 0; k < widxz_r; ++k ){
+
+                    txz = j * j + k * k;
+
+                    if( txz > sradius ){
+
+                        depty[ r ][ indx ] = -1;
+
+                    }else{
+
+                        tdept = Math.sqrt( sradius - txz );
+                        depty[ r ][ indx ] = Math.floor( tdept );
+
+                    }
+
+                    ++indx;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    function fillatom( atom ){
+
+        var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
+        var ii, jj, kk, n;
+        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+
+        var at = atom.vdw;
+        var depty_at = depty[ at ];
+        var nind = 0;
+        var cnt = 0;
+        var pWH = pwidth * pheight;
+
+        for( i = 0, n = widxz[ at ]; i < n; ++i ){
+        for( j = 0; j < n; ++j ) {
+
+            if( depty_at[ nind ] != -1 ){
+
+                for( ii = -1; ii < 2; ++ii ){
+                for( jj = -1; jj < 2; ++jj ){
+                for( kk = -1; kk < 2; ++kk ){
+
+                    if( ii !== 0 && jj !== 0 && kk !== 0 ){
+
+                        mi = ii * i;
+                        mk = kk * j;
+
+                        for( k = 0; k <= depty_at[ nind ]; ++k ){
+
+                            mj = k * jj;
+                            si = cx + mi;
+                            sj = cy + mj;
+                            sk = cz + mk;
+
+                            if( si < 0 || sj < 0 || sk < 0 ||
+                                si >= plength || sj >= pwidth || sk >= pheight
+                            ){
+                                continue;
+                            }
+
+                            var index = si * pWH + sj * pheight + sk;
+
+                            if( !( vpBits[ index ] & INOUT ) ){
+
+                                vpBits[ index ] |= INOUT;
+                                vpAtomID[ index ] = atom.index;
+
+                            }else{
+
+                                var atom2 = atoms[ vpAtomID[ index ] ];
+                                ox = Math.floor(
+                                    0.5 + scaleFactor * ( atom2.x + ptran.x )
+                                );
+                                oy = Math.floor(
+                                    0.5 + scaleFactor * ( atom2.y + ptran.y )
+                                );
+                                oz = Math.floor(
+                                    0.5 + scaleFactor * ( atom2.z + ptran.z )
+                                );
+
+                                if( mi * mi + mj * mj + mk * mk < ox *
+                                        ox + oy * oy + oz * oz ){
+
+                                    vpAtomID[ index ] = atom.index;
+
+                                }
+
+                            }
+
+                        }// k
+
+                    }// if
+
+                }// kk
+                }// jj
+                }// ii
+
+            }// if
+
+            nind++;
+
+        }// j
+        }// i
+
+    }
+
+    function fillvoxels(){
+
+        var i, il;
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            vpBits[ i ] = 0;
+            vpDistance[ i ] = -1.0;
+            vpAtomID[ i ] = -1;
+        }
+
+        structure.eachAtom( fillatom );
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            if( vpBits[ i ] & INOUT ){
+                vpBits[ i ] |= ISDONE;
+            }
+        }
+
+    }
+
+    function buildboundary(){
+
+        var i, j, k;
+        var pWH = pwidth * pheight;
+
+        for( i = 0; i < plength; ++i ){
+        for( j = 0; j < pheight; ++j ){
+        for( k = 0; k < pwidth; ++k ){
+
+            var index = i * pWH + k * pheight + j;
+
+            if( vpBits[ index ] & INOUT ){
+
+                var flagbound = false;
+                var ii = 0;
+
+                while( ii < 26 ){
+
+                    var ti = i + nb[ ii ][ 0 ];
+                    var tj = j + nb[ ii ][ 2 ];
+                    var tk = k + nb[ ii ][ 1 ];
+
+                    if( ti > -1 && ti < plength &&
+                        tk > -1 && tk < pwidth &&
+                        tj > -1 && tj < pheight &&
+                        !( vpBits[ ti * pWH + tk * pheight + tj ] & INOUT )
+                    ){
+
+                        vpBits[index] |= ISBOUND;
+                        break;
+
+                    }else{
+
+                        ii++;
+
+                    }
+
+                }
+
+            }
+
+        } // k
+        } // j
+        } // i
+
+    }
+
+    function marchingcubeinit( stype ){
+
+        for( var i = 0, lim = vpBits.length; i < lim; ++i ){
+
+            if( stype == 1 ) {  // vdw
+
+                vpBits[ i ] &= ~ISBOUND;
+
+            }else if( stype == 4 ){  // ses
+
+                vpBits[ i ] &= ~ISDONE;
+                if( vpBits[ i ] & ISBOUND ){
+                    vpBits[ i ] |= ISDONE;
+                }
+                vpBits[ i ] &= ~ISBOUND;
+
+            }else if( stype == 2 ){  // after vdw
+
+                if( ( vpBits[ i ] & ISBOUND ) && ( vpBits[ i ] & ISDONE ) ){
+                    vpBits[ i ] &= ~ISBOUND;
+                }else if( ( vpBits[ i ] & ISBOUND ) && !( vpBits[ i ] & ISDONE ) ){
+                    vpBits[ i ] |= ISDONE;
+                }
+
+            }else if( stype == 3 ){  // sas
+
+                vpBits[ i ] &= ~ISBOUND;
+
+            }
+
+            vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+
+        }
+
+    };
+
+};
 
 // File:js/ngl/script.js
 
@@ -11187,128 +13868,331 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 //////////////////
 // Volume parser
 
-NGL.MrcVolume = function( name, path, data, header ){
-
-    this.name = name;
-    this.path = path;
-
-    this.data = data || new Float32Array( 0 );
-    this.header = header || {};
-
-};
-
-
-NGL.MrcParser = function( name, path, params ){
+NGL.VolumeParser = function( name, path, params ){
 
     params = params || {};
 
     this.name = name;
     this.path = path;
 
-    this.volume = new NGL.MrcVolume( this.name, this.path );
+    this.volume = new NGL.Volume( this.name, this.path );
 
 };
 
-NGL.MrcParser.prototype = {
+NGL.VolumeParser.prototype = {
 
-    constructor: NGL.MrcParser,
+    constructor: NGL.VolumeParser,
 
-    parse: function( bin, callback ){
+    parse: function( data, callback ){
 
-        this._parse( bin, callback );
+        var self = this;
+
+        this._parse( data, function(){
+
+            self.makeMatrix();
+
+            if( NGL.debug ) NGL.log( self.volume );
+
+            callback( self.volume );
+
+        } );
 
         return this.volume;
 
     },
 
-    _parse: function( bin, callback ){
+    _parse: function( data, callback ){
 
-        // MRC
-        // http://ami.scripps.edu/software/mrctools/mrc_specification.php
-        // http://www2.mrc-lmb.cam.ac.uk/research/locally-developed-software/image-processing-software/#image
-        // http://bio3d.colorado.edu/imod/doc/mrc_format.txt
-
-        // CCP4 (MAP)
-        // http://www.ccp4.ac.uk/html/maplib.html
-
-        // MRC format does not use the skew transformation header records (words 25-37)
-        // CCP4 format does not use the ORIGIN header records (words 50-52)
-
-        var __timeName = "NGL.MrcParser._parse " + this.name;
-
-        NGL.time( __timeName );
-
-        var v = this.volume;
-        var header = {};
-
-        var intView = new Int32Array( bin, 0, 56 );
-        var floatView = new Float32Array( bin, 0, 56 );
-
-        header.NX = intView[ 0 ];
-        header.NY = intView[ 1 ];
-        header.NZ = intView[ 2 ];
-
-        // mode
-        //  0 image : signed 8-bit bytes range -128 to 127
-        //  1 image : 16-bit halfwords
-        //  2 image : 32-bit reals
-        //  3 transform : complex 16-bit integers
-        //  4 transform : complex 32-bit reals
-        //  6 image : unsigned 16-bit range 0 to 65535
-        // 16 image: unsigned char * 3 (for rgb data, non-standard)
-        header.MODE = intView[ 3 ];
-
-        header.NXSTART = intView[ 4 ];
-        header.NYSTART = intView[ 5 ];
-        header.NZSTART = intView[ 6 ];
-
-        header.MX = intView[ 7 ];
-        header.MY = intView[ 8 ];
-        header.MZ = intView[ 9 ];
-
-        // cell length
-        header.xlen = floatView[ 10 ];
-        header.ylen = floatView[ 11 ];
-        header.zlen = floatView[ 12 ];
-
-        // cell angle
-        header.alpha = floatView[ 13 ];
-        header.beta  = floatView[ 14 ];
-        header.gamma = floatView[ 15 ];
-
-        header.MAPC = intView[ 16 ];
-        header.MAPR = intView[ 17 ];
-        header.MAPS = intView[ 18 ];
-
-        header.DMIN  = intView[ 19 ];
-        header.DMAX  = intView[ 20 ];
-        header.DMEAN = intView[ 21 ];
-
-        // space group number 0 or 1 (default=0)
-        header.ISPG = intView[ 22 ];
-
-        // number of bytes used for symmetry data (0 or 80)
-        header.NSYMBT = intView[23];
-
-        // machine stamp
-        header.ARMS = floatView[54];
-
-        v.header = header;
-        v.data = new Float32Array(
-            bin, 256 * 4 + header.NSYMBT,
-            header.NX * header.NY * header.NZ
-        );
-
-        NGL.timeEnd( __timeName )
-
-        if( NGL.debug ) NGL.log( v );
-
+        NGL.warn( "NGL.VolumeParser._parse not implemented" );
         callback();
 
-    }
+    },
+
+    makeMatrix: function(){}
 
 };
 
+
+NGL.MrcParser = function( name, path, params ){
+
+    NGL.VolumeParser.call( this, name, path, params );
+
+};
+
+NGL.MrcParser.prototype = Object.create( NGL.VolumeParser.prototype );
+
+NGL.MrcParser.prototype.constructor = NGL.MrcParser;
+
+NGL.MrcParser.prototype._parse = function( bin, callback ){
+
+    // MRC
+    // http://ami.scripps.edu/software/mrctools/mrc_specification.php
+    // http://www2.mrc-lmb.cam.ac.uk/research/locally-developed-software/image-processing-software/#image
+    // http://bio3d.colorado.edu/imod/doc/mrc_format.txt
+
+    // CCP4 (MAP)
+    // http://www.ccp4.ac.uk/html/maplib.html
+
+    // MRC format does not use the skew transformation header records (words 25-37)
+    // CCP4 format does not use the ORIGIN header records (words 50-52)
+
+    var __timeName = "NGL.MrcParser._parse " + this.name;
+
+    NGL.time( __timeName );
+
+    if( bin instanceof Uint8Array ){
+        bin = bin.buffer;
+    }
+
+    var v = this.volume;
+    var header = {};
+
+    var intView = new Int32Array( bin, 0, 56 );
+    var floatView = new Float32Array( bin, 0, 56 );
+
+    var dv = new DataView( bin );
+
+    // 53  MAP         Character string 'MAP ' to identify file type
+    header.MAP = String.fromCharCode(
+        dv.getUint8( 52 * 4 ), dv.getUint8( 52 * 4 + 1 ),
+        dv.getUint8( 52 * 4 + 2 ), dv.getUint8( 52 * 4 + 3 )
+    );
+
+    // 54  MACHST      Machine stamp indicating machine type which wrote file
+    //                 17 and 17 for big-endian or 68 and 65 for little-endian
+    header.MACHST = [ dv.getUint8( 53 * 4 ), dv.getUint8( 53 * 4 + 1 ) ];
+
+    // swap byte order when big endian
+    if( header.MACHST[ 0 ] === 17 && header.MACHST[ 1 ] === 17 ){
+        var n = bin.byteLength;
+        for( var i = 0; i < n; i+=4 ){
+            dv.setFloat32( i, dv.getFloat32( i ), true );
+        }
+    }
+
+    header.NX = intView[ 0 ];  // NC - columns (fastest changing)
+    header.NY = intView[ 1 ];  // NR - rows
+    header.NZ = intView[ 2 ];  // NS - sections (slowest changing)
+
+    // mode
+    //  0 image : signed 8-bit bytes range -128 to 127
+    //  1 image : 16-bit halfwords
+    //  2 image : 32-bit reals
+    //  3 transform : complex 16-bit integers
+    //  4 transform : complex 32-bit reals
+    //  6 image : unsigned 16-bit range 0 to 65535
+    // 16 image: unsigned char * 3 (for rgb data, non-standard)
+    //
+    // Note: Mode 2 is the normal mode used in the CCP4 programs.
+    //       Other modes than 2 and 0 may NOT WORK
+    header.MODE = intView[ 3 ];
+
+    // start
+    header.NXSTART = intView[ 4 ];  // NCSTART - first column
+    header.NYSTART = intView[ 5 ];  // NRSTART - first row
+    header.NZSTART = intView[ 6 ];  // NSSTART - first section
+
+    // intervals
+    header.MX = intView[ 7 ];  // intervals along x
+    header.MY = intView[ 8 ];  // intervals along y
+    header.MZ = intView[ 9 ];  // intervals along z
+
+    // cell length (Angstroms in CCP4)
+    header.xlen = floatView[ 10 ];
+    header.ylen = floatView[ 11 ];
+    header.zlen = floatView[ 12 ];
+
+    // cell angle (Degrees)
+    header.alpha = floatView[ 13 ];
+    header.beta  = floatView[ 14 ];
+    header.gamma = floatView[ 15 ];
+
+    // axis correspondence (1,2,3 for X,Y,Z)
+    header.MAPC = intView[ 16 ];  // column
+    header.MAPR = intView[ 17 ];  // row
+    header.MAPS = intView[ 18 ];  // section
+
+    // density statistics
+    header.DMIN  = floatView[ 19 ];
+    header.DMAX  = floatView[ 20 ];
+    header.DMEAN = floatView[ 21 ];
+
+    // space group number 0 or 1 (default=0)
+    header.ISPG = intView[ 22 ];
+
+    // number of bytes used for symmetry data (0 or 80)
+    header.NSYMBT = intView[ 23 ];
+
+    // Flag for skew transformation, =0 none, =1 if foll
+    header.LSKFLG = intView[ 24 ];
+
+    // 26-34  SKWMAT  Skew matrix S (in order S11, S12, S13, S21 etc) if
+    //                LSKFLG .ne. 0.
+    // 35-37  SKWTRN  Skew translation t if LSKFLG != 0.
+    //                Skew transformation is from standard orthogonal
+    //                coordinate frame (as used for atoms) to orthogonal
+    //                map frame, as Xo(map) = S * (Xo(atoms) - t)
+
+    // 38      future use       (some of these are used by the MSUBSX routines
+    //  .          "              in MAPBRICK, MAPCONT and FRODO)
+    //  .          "   (all set to zero by default)
+    //  .          "
+    // 52          "
+
+    // 53  MAP         Character string 'MAP ' to identify file type
+    // => see top of this parser
+
+    // 54  MACHST      Machine stamp indicating machine type which wrote file
+    // => see top of this parser
+
+    // Rms deviation of map from mean density
+    header.ARMS = floatView[ 54 ];
+
+    // 56      NLABL           Number of labels being used
+    // 57-256  LABEL(20,10)    10  80 character text labels (ie. A4 format)
+
+    v.header = header;
+
+    // NGL.log( header )
+
+    // FIXME depends on mode
+    var data = new Float32Array(
+        bin, 256 * 4 + header.NSYMBT,
+        header.NX * header.NY * header.NZ
+    );
+
+    v.setData( data, header.NX, header.NY, header.NZ );
+
+    NGL.timeEnd( __timeName );
+
+    callback();
+
+};
+
+NGL.MrcParser.prototype.makeMatrix = function(){
+
+    var h = this.volume.header;
+
+    var basisX = [
+        h.xlen,
+        0,
+        0
+    ];
+
+    var basisY = [
+        h.ylen * Math.cos( Math.PI / 180.0 * h.gamma ),
+        h.ylen * Math.sin( Math.PI / 180.0 * h.gamma ),
+        0
+    ];
+
+    var basisZ = [
+        h.zlen * Math.cos( Math.PI / 180.0 * h.beta ),
+        h.zlen * (
+                Math.cos( Math.PI / 180.0 * h.alpha )
+                - Math.cos( Math.PI / 180.0 * h.gamma )
+                * Math.cos( Math.PI / 180.0 * h.beta )
+            ) / Math.sin( Math.PI / 180.0 * h.gamma ),
+        0
+    ];
+    basisZ[ 2 ] = Math.sqrt(
+        h.zlen * h.zlen * Math.sin( Math.PI / 180.0 * h.beta ) *
+        Math.sin( Math.PI / 180.0 * h.beta ) - basisZ[ 1 ] * basisZ[ 1 ]
+    );
+
+    var basis = [ 0, basisX, basisY, basisZ ];
+    var nxyz = [ 0, h.MX, h.MY, h.MZ ];
+    var mapcrs = [ 0, h.MAPC, h.MAPR, h.MAPS ];
+
+    var matrix = new THREE.Matrix4();
+
+    matrix.set(
+
+        basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+        basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+        basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+        0,
+
+        basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+        basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+        basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+        0,
+
+        basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+        basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+        basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+        0,
+
+        0, 0, 0, 1
+
+    );
+
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            h.NXSTART, h.NYSTART, h.NZSTART
+        )
+    );
+
+    this.volume.matrix.copy( matrix );
+
+};
+
+
+NGL.CubeParser = function( name, path, params ){
+
+    NGL.VolumeParser.call( this, name, path, params );
+
+};
+
+NGL.CubeParser.prototype = Object.create( NGL.VolumeParser.prototype );
+
+NGL.CubeParser.prototype.constructor = NGL.CubeParser;
+
+NGL.CubeParser.prototype._parse = function( str, callback ){
+
+    // http://paulbourke.net/dataformats/cube/
+
+    var __timeName = "NGL.CubeParser._parse " + this.name;
+
+    NGL.time( __timeName );
+
+    var v = this.volume;
+    var header = {};
+
+    var lines = str.split( "\n" );
+
+    // TODO parse header
+
+    var data = new Float32Array(
+        header.NX * header.NY * header.NZ
+    );
+
+    // TODO parse voxel data
+
+    v.header = header;
+
+    v.setData( data, header.NX, header.NY, header.NZ );
+
+    NGL.timeEnd( __timeName );
+
+    callback();
+
+};
+
+NGL.CubeParser.prototype.makeMatrix = function(){
+
+    var h = this.volume.header;
+
+    var matrix = new THREE.Matrix4();
+
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            h.NXSTART, h.NYSTART, h.NZSTART
+        )
+    );
+
+    this.volume.matrix.copy( matrix );
+
+};
 
 // File:js/ngl/loader.js
 
@@ -11448,7 +14332,7 @@ NGL.XHRLoader.prototype = {
 
                 var data = this.response;
 
-                if( scope.responseType === "arraybuffer" ){
+                if( scope.compressed ){
 
                     data = NGL.decompress( data, url, scope.asBinary );
 
@@ -11503,9 +14387,19 @@ NGL.XHRLoader.prototype = {
 
     },
 
+    setCompressed: function( value ){
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.compressed = value;
+
+    },
+
     setResponseType: function ( value ) {
 
-        this.responseType = value;
+        this.responseType = value.toLowerCase();
 
     },
 
@@ -11547,7 +14441,7 @@ NGL.FileLoader.prototype = {
 
             var data = event.target.result;
 
-            if( scope.responseType === "arraybuffer" ){
+            if( scope.compressed ){
 
                 data = NGL.decompress( data, file, scope.asBinary );
 
@@ -11580,7 +14474,7 @@ NGL.FileLoader.prototype = {
 
         }
 
-        if( this.responseType === "arraybuffer" ){
+        if( this.asBinary ){
 
             reader.readAsArrayBuffer( file );
 
@@ -11597,6 +14491,16 @@ NGL.FileLoader.prototype = {
     setAsBinary: function ( value ) {
 
         this.asBinary = value;
+
+    },
+
+    setCompressed: function( value ){
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.compressed = value;
 
     },
 
@@ -11646,8 +14550,8 @@ NGL.VolumeLoader = function( manager ){
 
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
-    this.asBinary = true;
-    this.responseType = "arraybuffer";
+    this.setAsBinary( true );
+    this.setResponseType( "arraybuffer" );
 
 };
 
@@ -11664,6 +14568,8 @@ NGL.VolumeLoader.prototype.init = function( bin, name, path, ext, callback, para
         "mrc": NGL.MrcParser,
         "ccp4": NGL.MrcParser,
         "map": NGL.MrcParser,
+
+        "cube": NGL.CubeParser,
 
     };
 
@@ -11688,17 +14594,23 @@ NGL.ObjLoader.prototype.constructor = NGL.ObjLoader;
 
 NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
 
+    var geometry;
+
     if( typeof data === "string" ){
 
-        data = this.parse( data );
+        geometry = this.parse( data );
+
+    }else{
+
+        geometry = data;
 
     }
 
-    var obj = new NGL.Surface( data, name, path )
+    var surface = new NGL.Surface( name, path, geometry )
 
-    if( typeof callback === "function" ) callback( obj );
+    if( typeof callback === "function" ) callback( surface );
 
-    return obj;
+    return surface;
 
 };
 
@@ -11713,21 +14625,7 @@ NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
 NGL.PlyLoader.prototype.constructor = NGL.PlyLoader;
 
-NGL.PlyLoader.prototype.init = function( data, name, path, ext, callback ){
-
-    if( typeof data === "string" ){
-
-        data = this.parse( data );
-
-    }
-
-    var ply = new NGL.Surface( data, name, path );
-
-    if( typeof callback === "function" ) callback( ply );
-
-    return ply;
-
-};
+NGL.PlyLoader.prototype.init = NGL.ObjLoader.prototype.init;
 
 
 NGL.ScriptLoader = function( manager ){
@@ -11764,6 +14662,7 @@ NGL.autoLoad = function(){
         "mrc": NGL.VolumeLoader,
         "ccp4": NGL.VolumeLoader,
         "map": NGL.VolumeLoader,
+        "cube": NGL.VolumeLoader,
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
@@ -11855,7 +14754,7 @@ NGL.autoLoad = function(){
         if( file instanceof File ){
 
             var fileLoader = new NGL.FileLoader();
-            if( compressed ) fileLoader.setResponseType( "arraybuffer" );
+            if( compressed ) fileLoader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) fileLoader.setAsBinary( true );
             fileLoader.load( file, init, onProgress, error );
 
@@ -11863,17 +14762,17 @@ NGL.autoLoad = function(){
 
             loader.setCrossOrigin( true );
 
-            if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( compressed ) loader.setCompressed( true );
             loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
-            if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( compressed ) loader.setCompressed( true );
             loader.load( "../data/" + path, init, onProgress, error );
 
         }else{ // default: protocol === "file"
 
-            if( compressed ) loader.setResponseType( "arraybuffer" );
+            if( compressed ) loader.setCompressed( true );
             loader.load( "../file/" + path, init, onProgress, error );
 
         }
@@ -14247,6 +17146,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.pickable = false;
 
     this.transparent = p.transparent !== undefined ? p.transparent : false;
+    this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
@@ -14331,8 +17231,34 @@ NGL.Buffer.prototype = {
 
         if( type === "wireframe" || this.wireframe ){
 
+            if( !this.wireframeGeometry ){
+
+                var index = this.geometry.attributes.index.array;
+                var n = index.length;
+                var wireframeIndex = new Uint32Array( n * 6 );
+
+                for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
+
+                    var a = index[ i + 0 ];
+                    var b = index[ i + 1 ];
+                    var c = index[ i + 2 ];
+
+                    wireframeIndex[ j + 0 ] = a;
+                    wireframeIndex[ j + 1 ] = b;
+                    wireframeIndex[ j + 2 ] = a;
+                    wireframeIndex[ j + 3 ] = c;
+                    wireframeIndex[ j + 4 ] = b;
+                    wireframeIndex[ j + 5 ] = c;
+
+                }
+
+                this.wireframeGeometry = this.geometry.clone();
+                this.wireframeGeometry.attributes.index.array = wireframeIndex;
+
+            }
+
             return new THREE.Line(
-                this.geometry, material, THREE.LinePieces
+                this.wireframeGeometry, material, THREE.LinePieces
             );
 
         }else{
@@ -14368,7 +17294,7 @@ NGL.Buffer.prototype = {
 
         }else if( type === "wireframe" || this.wireframe ){
 
-            material = new THREE.LineBasicMaterial({
+            material = new THREE.LineBasicMaterial( {
 
                 uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
@@ -14376,7 +17302,7 @@ NGL.Buffer.prototype = {
                 lights: false,
                 fog: true
 
-            });
+            } );
 
         }else{
 
@@ -14406,6 +17332,12 @@ NGL.Buffer.prototype = {
             if( this.flatShaded ){
 
                 material.defines[ "FLAT_SHADED" ] = 1;
+
+            }
+
+            if( this.opaqueBack ){
+
+                material.defines[ "OPAQUE_BACK" ] = 1;
 
             }
 
@@ -14473,24 +17405,36 @@ NGL.Buffer.prototype = {
 
     },
 
-    /**
-     * Sets buffer attributes
-     * @param {Object} data - An object where the keys are the attribute names
-     *      and the values are the attribute data.
-     * @example
-     * var buffer = new NGL.Buffer();
-     * buffer.setAttributes({ attrName: attrData });
-     */
     setAttributes: function( data ){
 
+        /**
+         * Sets buffer attributes
+         * @param {Object} data - An object where the keys are the attribute names
+         *      and the values are the attribute data.
+         * @example
+         * var buffer = new NGL.Buffer();
+         * buffer.setAttributes({ attrName: attrData });
+         */
+
         var attributes = this.geometry.attributes;
+
+        if( this.wireframeGeometry ){
+
+            var wireframeAttributes = this.wireframeGeometry.attributes;
+
+        }
 
         Object.keys( data ).forEach( function( name ){
 
             attributes[ name ].set( data[ name ] );
-
             attributes[ name ].needsUpdate = true;
-            this.attributes[ name ].needsUpdate = true;
+
+            if( this.wireframeGeometry ){
+
+                wireframeAttributes[ name ].set( data[ name ] );
+                wireframeAttributes[ name ].needsUpdate = true;
+
+            }
 
         }, this );
 
@@ -14562,6 +17506,12 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
     });
 
     this.finalize();
+
+    if( normal === undefined ){
+
+        this.geometry.computeVertexNormals();
+
+    }
 
 };
 
@@ -17089,9 +20039,25 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
         }
 
-    }else if( object instanceof NGL.Surface ){
+    }else if( object instanceof NGL.Surface || object instanceof NGL.Volume ){
 
-        ReprClass = NGL.SurfaceRepresentation;
+        if( type === "surface" ){
+
+            ReprClass = NGL.SurfaceRepresentation;
+
+        }else if( type === "dot" ){
+
+            ReprClass = NGL.DotRepresentation;
+
+        }else{
+
+            NGL.error(
+                "NGL.makeRepresentation: representation type " + type + " unknown"
+            );
+            return;
+
+        }
+
 
     }else if( object instanceof NGL.Trajectory ){
 
@@ -17396,11 +20362,12 @@ NGL.Representation.prototype = {
 
     getParameters: function(){
 
+        // FIXME move specific parts to subclasses
         var params = {
 
             color: this.color,
             visible: this.visible,
-            sele: this.selection.string,
+            sele: this.selection ? this.selection.string : undefined,
             disableImpostor: this.disableImpostor,
             quality: this.quality
 
@@ -17503,7 +20470,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     constructor: NGL.StructureRepresentation,
 
-    type: "",
+    type: "structure",
 
     parameters: Object.assign( {
 
@@ -17595,7 +20562,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "radius" ] !== undefined ){
 
-            this.radius = params[ "radius" ];
             what[ "radius" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
@@ -17605,7 +20571,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "scale" ] !== undefined ){
 
-            this.scale = params[ "scale" ];
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
@@ -18194,7 +21159,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
@@ -18799,7 +21763,6 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
@@ -19038,7 +22001,6 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
             what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
@@ -19252,7 +22214,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -19610,14 +22571,12 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "aspectRatio" ] ){
 
-            this.aspectRatio = params[ "aspectRatio" ];
             what[ "radius" ] = true;
 
         }
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -19790,7 +22749,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -19953,7 +22911,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "position" ] = true;
 
         }
@@ -20500,7 +23457,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "tension" ] ){
 
-            this.tension = params[ "tension" ];
             what[ "radius" ] = true;
 
         }
@@ -20899,6 +23855,165 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.MolecularSurfaceRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.MolecularSurfaceRepresentation,
+
+    type: "surface",
+
+    parameters: Object.assign( {
+
+        smooth: {
+            type: "integer", precision: 1, max: 10, min: 0,
+            rebuild: true
+        },
+        wireframe: {
+            type: "boolean", rebuild: true
+        },
+        background: {
+            type: "boolean", rebuild: true
+        },
+        transparent: {
+            type: "boolean", rebuild: true
+        },
+        opaqueBack: {
+            type: "boolean", define: "OPAQUE_BACK"
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0, uniform: true
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        p.color = p.color || 0xDDDDDD;
+
+        this.smooth = p.smooth !== undefined ? p.smooth : 1;
+        this.background = p.background || false;
+        this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.StructureRepresentation.prototype.init.call( this, params );
+
+    },
+
+    create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
+
+        var structureSubset = new NGL.StructureSubset(
+            this.structure, this.selection.string
+        );
+
+        var ms = new NGL.MolecularSurface( structureSubset );
+
+        this.surface = ms.vdw();
+        this.surface.generateSurface( 1, this.smooth );
+
+        var position = this.surface.getPosition();
+        var color = this.surface.getColor( this.color );
+        var normal = this.surface.getNormal();
+        var index = this.surface.getIndex();
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        if( this.transparent && this.side === THREE.DoubleSide ){
+
+            var frontBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: THREE.FrontSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            var backBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: THREE.BackSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            this.bufferList.push( backBuffer, frontBuffer );
+
+        }else{
+
+            this.surfaceBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: this.side,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            this.bufferList.push( this.surfaceBuffer );
+
+        }
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var surfaceData = {};
+
+        if( what[ "color" ] ){
+
+            surfaceData[ "color" ] = this.surface.getColor( this.color );
+
+        }
+
+        this.surfaceBuffer.setAttributes( surfaceData );
+
+    },
+
+    clear: function(){
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
+
+    }
+
+} );
+
+
 //////////////////////////////
 // Trajectory representation
 
@@ -21136,10 +24251,18 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     constructor: NGL.SurfaceRepresentation,
 
-    type: "",
+    type: "surface",
 
     parameters: Object.assign( {
 
+        isolevel: {
+            type: "number", precision: 2, max: 1000, min: -1000,
+            rebuild: true
+        },
+        smooth: {
+            type: "integer", precision: 1, max: 10, min: 0,
+            rebuild: true
+        },
         wireframe: {
             type: "boolean", rebuild: true
         },
@@ -21148,6 +24271,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         },
         transparent: {
             type: "boolean", rebuild: true
+        },
+        opaqueBack: {
+            type: "boolean", define: "OPAQUE_BACK"
         },
         side: {
             type: "select", options: NGL.SideTypes, rebuild: true,
@@ -21164,8 +24290,201 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         var p = params || {};
 
         this.color = p.color || 0xDDDDDD;
+        this.isolevel = p.isolevel !== undefined ? p.isolevel : NaN;
+        this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
+        this.transparent = p.transparent !== undefined ? p.transparent : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+
+        NGL.Representation.prototype.init.call( this, p );
+
+    },
+
+    attach: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.add( buffer );
+
+        }, this );
+
+        this.setVisibility( this.visible );
+
+    },
+
+    create: function(){
+
+        if( this.surface instanceof NGL.Volume ){
+
+            this.surface.generateSurface( this.isolevel, this.smooth );
+
+        }
+
+        var position = this.surface.getPosition();
+        var color = this.surface.getColor( this.color );
+        var normal = this.surface.getNormal();
+        var index = this.surface.getIndex();
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        if( this.transparent && this.side === THREE.DoubleSide ){
+
+            var frontBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: THREE.FrontSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            var backBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: THREE.BackSide,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            this.bufferList.push( backBuffer, frontBuffer );
+
+        }else{
+
+            this.surfaceBuffer = new NGL.SurfaceBuffer(
+                position, color, index, normal, undefined,
+                {
+                    background: this.background,
+                    wireframe: this.wireframe,
+                    transparent: this.transparent,
+                    opaqueBack: this.opaqueBack,
+                    side: this.side,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                }
+            );
+
+            this.bufferList.push( this.surfaceBuffer );
+
+        }
+
+    },
+
+    update: function( what ){
+
+        what = what || {};
+
+        var surfaceData = {};
+
+        if( what[ "color" ] ){
+
+            surfaceData[ "color" ] = this.surface.getColor( this.color );
+
+        }
+
+        this.surfaceBuffer.setAttributes( surfaceData );
+
+    }
+
+} );
+
+
+NGL.DotRepresentation = function( surface, viewer, params ){
+
+    NGL.Representation.call( this, surface, viewer, params );
+
+    this.surface = surface;
+
+    this.create();
+    this.attach();
+
+};
+
+NGL.DotRepresentation.prototype = NGL.createObject(
+
+    NGL.Representation.prototype, {
+
+    constructor: NGL.DotRepresentation,
+
+    type: "dot",
+
+    parameters: Object.assign( {
+
+        minValue: {
+            type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+        },
+        maxValue: {
+            type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+        },
+        sizeType: {
+            type: "select", options: {
+                "": "",
+                "value": "value",
+                "value-min": "value-min",
+                "deviation": "deviation",
+                "size": "size"
+            }
+        },
+        size: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        scale: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        sphereDetail: {
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        transparent: {
+            type: "boolean", property: true
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, property: true,
+            int: true
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0, uniform: true
+        }
+
+    }, NGL.Representation.prototype.parameters ),
+
+    defaultSize: 0.1,
+
+    init: function( params ){
+
+        var p = params || {};
+
+        this.disableImpostor = p.disableImpostor || false;
+
+        if( p.quality === "low" ){
+            this.sphereDetail = 0;
+        }else if( p.quality === "medium" ){
+            this.sphereDetail = 1;
+        }else if( p.quality === "high" ){
+            this.sphereDetail = 2;
+        }else{
+            this.sphereDetail = p.sphereDetail || 1;
+        }
+
+        this.color = p.color || 0xDDDDDD;
+        // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
+        this.minValue = p.minValue !== undefined ? p.minValue : NaN;
+        this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
+        this.size = p.size !== undefined ? p.size : 0.1;
+        this.scale = p.scale !== undefined ? p.scale : 1.0;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -21188,110 +24507,95 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var geo;
-
-        var object = this.surface.object;
-
-        if( object instanceof THREE.Geometry ){
-
-            geo = object;
-
-            // TODO check if needed
-            geo.computeFaceNormals( true );
-            geo.computeVertexNormals( true );
-
-        }else{
-
-            geo = object.children[0].geometry;
-
-        }
-
-        geo.computeBoundingSphere();
-
-        this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
-
-        var position, color, index, normal;
-
-        if( geo instanceof THREE.BufferGeometry ){
-
-            var an = geo.attributes.normal.array;
-
-            // assume there are no normals if the first is zero
-            if( an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0 ){
-                geo.computeVertexNormals();
-            }
-
-            position = geo.attributes.position.array;
-            index = null;
-            normal = geo.attributes.normal.array;
-
-        }else{
-
-            // FIXME
-            NGL.log( "TODO non BufferGeometry surface" );
-
-            position = NGL.Utils.positionFromGeometry( geo );
-            index = NGL.Utils.indexFromGeometry( geo );
-            normal = NGL.Utils.normalFromGeometry( geo );
-
-        }
-
-        var n = position.length / 3;
-        var tc = new THREE.Color( this.color );
-        color = NGL.Utils.uniformArray3(
-            n, tc.r, tc.g, tc.b
-        );
+        this.surface.filterData( this.minValue, this.maxValue );
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        if( this.transparent && this.side === THREE.DoubleSide ){
+        this.sphereBuffer = new NGL.SphereBuffer(
+            this.surface.getDataPosition(),
+            this.surface.getDataColor( this.color ),
+            this.surface.getDataSize( this.size, this.scale ),
+            undefined,
+            {
+                sphereDetail: this.sphereDetail,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
+            },
+            this.disableImpostor
+        );
 
-            var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    transparent: this.transparent,
-                    side: THREE.FrontSide,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
-                }
-            );
+        this.bufferList.push( this.sphereBuffer );
 
-            var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    transparent: this.transparent,
-                    side: THREE.BackSide,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
-                }
-            );
+    },
 
-            this.bufferList.push( backBuffer, frontBuffer );
+    update: function( what ){
 
-        }else{
+        what = what || {};
 
-            this.surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    transparent: this.transparent,
-                    side: this.side,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
-                }
-            );
+        var sphereData = {};
 
-            this.bufferList.push( this.surfaceBuffer );
+        if( what[ "color" ] ){
+
+            sphereData[ "color" ] = this.surface.getDataColor( this.color );
 
         }
+
+        if( what[ "size" ] || what[ "scale" ] ){
+
+            sphereData[ "radius" ] = this.surface.getDataSize(
+                this.size, this.scale
+            );
+
+        }
+
+        this.sphereBuffer.setAttributes( sphereData );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        what = what || {};
+
+        if( params && params[ "sizeType" ] !== undefined ){
+
+            if( params[ "sizeType" ] === "size" ){
+                this.size = this.defaultSize;
+            }else{
+                this.size = params[ "sizeType" ];
+            }
+            what[ "size" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        if( params && params[ "size" ] !== undefined ){
+
+            what[ "size" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        if( params && params[ "scale" ] !== undefined ){
+
+            what[ "scale" ] = true;
+            if( !NGL.extensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+
+        }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 
@@ -21305,9 +24609,13 @@ NGL.representationTypes = {};
 
 for( var key in NGL ){
 
-    if( NGL[ key ].prototype instanceof NGL.StructureRepresentation ){
+    var val = NGL[ key ];
 
-        NGL.representationTypes[ NGL[ key ].prototype.type ] = NGL[ key ];
+    if( val.prototype instanceof NGL.StructureRepresentation &&
+        val.prototype.type
+    ){
+
+        NGL.representationTypes[ val.prototype.type ] = val;
 
     }
 
@@ -21385,7 +24693,7 @@ NGL.Stage.prototype = {
 
         }else if( object instanceof NGL.SurfaceComponent ){
 
-            object.addRepresentation();
+            object.addRepresentation( "surface" );
             object.centerView();
 
         }else if( object instanceof NGL.ScriptComponent ){
@@ -21442,7 +24750,7 @@ NGL.Stage.prototype = {
 
                 component = new NGL.StructureComponent( scope, object, params );
 
-            }else if( object instanceof NGL.Surface ){
+            }else if( object instanceof NGL.Surface || object instanceof NGL.Volume ){
 
                 component = new NGL.SurfaceComponent( scope, object, params );
 
@@ -21793,19 +25101,28 @@ NGL.Preferences = function( stage, id ){
 
     };
 
-    if ( window.localStorage[ this.id ] === undefined ) {
 
-        window.localStorage[ this.id ] = JSON.stringify( this.storage );
+    try{
 
-    } else {
+        if ( window.localStorage[ this.id ] === undefined ) {
 
-        var data = JSON.parse( window.localStorage[ this.id ] );
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
 
-        for ( var key in data ) {
+        } else {
 
-            this.storage[ key ] = data[ key ];
+            var data = JSON.parse( window.localStorage[ this.id ] );
+
+            for ( var key in data ) {
+
+                this.storage[ key ] = data[ key ];
+
+            }
 
         }
+
+    }catch( e ){
+
+        NGL.error( "localStorage not accessible/available" );
 
     }
 
@@ -21825,10 +25142,13 @@ NGL.Preferences.prototype = {
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact"
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
         ];
 
         this.stage.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
 
             if( types.indexOf( repr.getType() ) === -1 ){
                 return;
@@ -21838,7 +25158,7 @@ NGL.Preferences.prototype = {
             p.disableImpostor = !value;
             repr.rebuild( p );
 
-        }, NGL.StructureComponent );
+        } );
 
     },
 
@@ -21856,10 +25176,13 @@ NGL.Preferences.prototype = {
 
         var impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact"
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
         ];
 
         this.stage.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
 
             var p = repr.getParameters();
 
@@ -21879,7 +25202,7 @@ NGL.Preferences.prototype = {
             p.quality = value;
             repr.rebuild( p );
 
-        }, NGL.StructureComponent );
+        } );
 
     },
 
@@ -21905,13 +25228,39 @@ NGL.Preferences.prototype = {
 
         this.storage[ key ] = value;
 
-        window.localStorage[ this.id ] = JSON.stringify( this.storage );
+        try{
+
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+
+        }catch( e ){
+
+            // Webkit === 22 / Firefox === 1014
+
+            if( e.code === 22 || e.code === 1014 ){
+
+                NGL.error( "localStorage full" );
+
+            }else{
+
+                NGL.error( "localStorage not accessible/available" );
+
+            }
+
+        }
 
     },
 
     clear: function(){
 
-        delete window.localStorage[ this.id ];
+        try{
+
+            delete window.localStorage[ this.id ];
+
+        }catch( e ){
+
+            NGL.error( "localStorage not accessible/available" );
+
+        }
 
     }
 
@@ -22333,12 +25682,17 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
+        var pref = this.stage.preferences;
+        params = params || {};
+        params.quality = params.quality || pref.getKey( "quality" );
+        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
+
         var repr = NGL.makeRepresentation(
             type, this.surface, this.viewer, params
         );
 
         var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, {}, this
+            this.stage, repr, params, this
         );
 
         return NGL.Component.prototype.addRepresentation.call( this, reprComp );
@@ -23341,7 +26695,7 @@ NGL.Examples = {
 
             stage.loadFile( "data://1crn.ply", function( o ){
 
-                o.addRepresentation( undefined, {
+                o.addRepresentation( "surface", {
                     transparent: true, opacity: 0.3, side: THREE.DoubleSide
                 } );
 
@@ -23422,7 +26776,7 @@ NGL.Examples = {
 
             stage.loadFile( "data://1crn.ply", function( o ){
 
-                o.addRepresentation( undefined, {
+                o.addRepresentation( "surface", {
                     transparent: true, opacity: 0.3, side: THREE.FrontSide
                 } );
 
@@ -23600,6 +26954,59 @@ NGL.Examples = {
 
         },
 
+        "ccp4": function( stage ){
+
+            stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
+
+                o.addRepresentation( "surface" );
+                o.addRepresentation( "dot", { visible: false } );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                stage.centerView();
+
+            } );
+
+        },
+
+        "map": function( stage ){
+
+            stage.loadFile( "data://emd_2682.map.gz", function( o ){
+
+                o.addRepresentation( "surface", {
+                    transparent: true,
+                    opacity: 0.5,
+                    opaqueBack: true
+                } );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "data://4UJD.cif.gz", function( o ){
+
+                o.addRepresentation( "cartoon", { color: "chainindex" } );
+                stage.centerView();
+
+            } );
+
+        },
+
+        "molsurf": function( stage ){
+
+            stage.loadFile( "data://1crn.pdb", function( o ){
+
+                o.addRepresentation( "licorice", {} );
+                o.addRepresentation( "surface" );
+                stage.centerView();
+
+            } );
+
+        }
+
     }
 
 };
@@ -23642,7 +27049,7 @@ NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec4 cameraPos;\n\n#ifdef PIC
 
 // File:shader/Mesh.frag
 
-NGL.Resources[ '../shader/Mesh.frag'] = "\n#extension GL_OES_standard_derivatives : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        gl_FragColor = vec4( vColor, opacity );\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
+NGL.Resources[ '../shader/Mesh.frag'] = "\n#ifdef FLAT_SHADED\n    #extension GL_OES_standard_derivatives : enable\n#endif\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        #ifdef OPAQUE_BACK\n            #ifdef FLIP_SIDED\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }else{\n                    gl_FragColor = vec4( vColor, opacity );\n                }\n            #else\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, opacity );\n                }else{\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }\n            #endif\n        #else\n            gl_FragColor = vec4( vColor, opacity );\n        #endif\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
 
 // File:shader/ParticleSprite.vert
 

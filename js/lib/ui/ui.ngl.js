@@ -56,7 +56,6 @@ UI.ColorPopupMenu = function(){
 
     this.colorPicker = new UI.ColorPicker()
         .setDisplay( "inline-block" )
-        .setValue( "#20bc3f" )
         .onChange( function( e ){
 
             scope.setScheme( "color" );

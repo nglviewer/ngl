@@ -126,68 +126,97 @@ if ( !Object.assign ) {
 
 }
 
+if( typeof importScripts !== 'function' ){
 
-( function() {
+    ( function() {
 
-    // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-    // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+        // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+        // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 
-    // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+        // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
 
-    // MIT license
+        // MIT license
 
-    var lastTime = 0;
-    var vendors = ['ms', 'moz', 'webkit', 'o'];
-    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
-                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
-    }
+        var lastTime = 0;
+        var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
 
-    if (!window.requestAnimationFrame)
-        window.requestAnimationFrame = function(callback, element) {
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
-              timeToCall);
-            lastTime = currTime + timeToCall;
-            return id;
-        };
+        for( var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x ){
 
-    if (!window.cancelAnimationFrame)
-        window.cancelAnimationFrame = function(id) {
-            clearTimeout(id);
-        };
+            window.requestAnimationFrame = (
+                window[ vendors[ x ] + 'RequestAnimationFrame' ]
+            );
 
-}() );
+            window.cancelAnimationFrame = (
+                window[ vendors[ x ] + 'CancelAnimationFrame' ] ||
+                window[ vendors[ x ] + 'CancelRequestAnimationFrame' ]
+            );
+
+        }
+
+        if( !window.requestAnimationFrame ){
+
+            window.requestAnimationFrame = function( callback, element ){
+
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
+
+                var id = window.setTimeout( function(){
+
+                    callback( currTime + timeToCall );
+
+                }, timeToCall );
+
+                lastTime = currTime + timeToCall;
+
+                return id;
+
+            };
+
+        }
+
+        if( !window.cancelAnimationFrame ){
+
+            window.cancelAnimationFrame = function( id ){
+                clearTimeout( id );
+            };
+
+        }
+
+    }() );
+
+}
 
 
 ////////////////
 // Workarounds
 
-HTMLElement.prototype.getBoundingClientRect = function(){
+if( typeof importScripts !== 'function' ){
 
-    // workaround for ie11 behavior with disconnected dom nodes
+    HTMLElement.prototype.getBoundingClientRect = function(){
 
-    var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+        // workaround for ie11 behavior with disconnected dom nodes
 
-    return function(){
-        try{
-            return _getBoundingClientRect.apply( this, arguments );
-        }catch( e ){
-            return {
-                top: 0,
-                left: 0,
-                width: this.width,
-                height: this.height
-            };
-        }
-    };
+        var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
-}();
+        return function(){
+            try{
+                return _getBoundingClientRect.apply( this, arguments );
+            }catch( e ){
+                return {
+                    top: 0,
+                    left: 0,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        };
+
+    }();
+
+}
 
 
-if( WebGLRenderingContext ){
+if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
     // wrap webgl debug function used by three.js and
     // ignore calls to them when the debug flag is not set

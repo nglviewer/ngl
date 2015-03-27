@@ -957,10 +957,7 @@ NGL.Examples = {
                 o.addRepresentation( "surface", {
                     transparent: true,
                     opacity: 0.5,
-                    side: THREE.FrontSide
-                } );
-                o.addRepresentation( "surface", {
-                    side: THREE.BackSide
+                    opaqueBack: true
                 } );
                 stage.centerView();
 
@@ -969,6 +966,19 @@ NGL.Examples = {
             stage.loadFile( "data://4UJD.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
+                stage.centerView();
+
+            } );
+
+        },
+
+        "molsurf": function( stage ){
+
+            stage.loadFile( "data://3dqb.pdb", function( o ){
+
+                o.addRepresentation( "licorice", {} );
+                o.addRepresentation( "spacefill" );
+                o.addRepresentation( "surface" );
                 stage.centerView();
 
             } );

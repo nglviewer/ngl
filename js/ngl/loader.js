@@ -8,7 +8,7 @@ NGL.Uint8ToString = function( u8a ){
 
     // from http://stackoverflow.com/a/12713326/1435042
 
-    var CHUNK_SZ = 0x8000;
+    var CHUNK_SZ = 0x1000;
     var c = [];
 
     for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
@@ -26,7 +26,7 @@ NGL.Uint8ToString = function( u8a ){
 }
 
 
-NGL.decompress = function( data, file, asBinary ){
+NGL.decompress = function( data, file, asBinary, callback ){
 
     var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).compressed;
@@ -90,7 +90,41 @@ NGL.decompress = function( data, file, asBinary ){
 
     NGL.timeEnd( "NGL.decompress " + ext );
 
-    return asBinary ? binData : decompressedData;
+    var returnData = asBinary ? binData : decompressedData;
+
+    if( typeof callback === "function" ){
+
+        callback( returnData );
+
+    }
+
+    return returnData;
+
+}
+
+
+NGL.decompressWorker = function( data, file, asBinary, callback ){
+
+    if( NGL.worker && typeof Worker !== "undefined" ){
+
+        var worker = new Worker( "../js/worker/decompress.js" );
+
+        worker.onmessage = function( e ){
+
+            callback( e.data );
+            worker.terminate();
+
+        };
+
+        worker.postMessage( {
+            data: data, file: file, asBinary: asBinary
+        } );
+
+    }else{
+
+        NGL.decompress( data, file, asBinary, callback );
+
+    }
 
 }
 
@@ -132,17 +166,34 @@ NGL.XHRLoader.prototype = {
 
             if ( request.status === 200 || request.status === 304 ) {
 
-                var data = this.response;
+                try{
 
-                if( scope.compressed ){
+                    var data = this.response;
 
-                    data = NGL.decompress( data, url, scope.asBinary );
+                    var loaded = function( d ){
+
+                        THREE.Cache.add( url, d );
+                        if ( onLoad ) onLoad( d );
+
+                    }
+
+                    if( scope.compressed ){
+
+                        data = NGL.decompressWorker(
+                            data, url, scope.asBinary, loaded
+                        );
+
+                    }else{
+
+                        loaded( data );
+
+                    }
+
+                }catch( e ){
+
+                    if ( onError ) onError( "decompression failed" );
 
                 }
-
-                THREE.Cache.add( url, data );
-
-                if ( onLoad ) onLoad( data );
 
             } else {
 
@@ -245,17 +296,35 @@ NGL.FileLoader.prototype = {
 
         reader.onload = function( event ){
 
-            var data = event.target.result;
+            try{
 
-            if( scope.compressed ){
+                var data = event.target.result;
 
-                data = NGL.decompress( data, file, scope.asBinary );
+                var loaded = function( d ){
+
+                    // THREE.Cache.add( file, d );
+                    onLoad( d );
+
+                }
+
+                if( scope.compressed ){
+
+                    NGL.decompressWorker(
+                        data, file, scope.asBinary, loaded
+                    );
+
+                }else{
+
+                    loaded( data );
+
+                }
+
+            }catch( e ){
+
+                if ( onError ) onError( e, "decompression failed" );
 
             }
 
-            // THREE.Cache.add( file, data );
-
-            onLoad( data );
             scope.manager.itemEnd( file );
 
         }
@@ -280,7 +349,7 @@ NGL.FileLoader.prototype = {
 
         }
 
-        if( this.asBinary ){
+        if( this.asBinary || this.compressed ){
 
             reader.readAsArrayBuffer( file );
 
@@ -347,7 +416,8 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
         name, path, params
     );
 
-    return parser.parse( str, callback );
+    // return parser.parse( str, callback );
+    return parser.parseWorker( str, callback );
 
 };
 

@@ -476,19 +476,28 @@ NGL.Preferences = function( stage, id ){
 
     };
 
-    if ( window.localStorage[ this.id ] === undefined ) {
 
-        window.localStorage[ this.id ] = JSON.stringify( this.storage );
+    try{
 
-    } else {
+        if ( window.localStorage[ this.id ] === undefined ) {
 
-        var data = JSON.parse( window.localStorage[ this.id ] );
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
 
-        for ( var key in data ) {
+        } else {
 
-            this.storage[ key ] = data[ key ];
+            var data = JSON.parse( window.localStorage[ this.id ] );
+
+            for ( var key in data ) {
+
+                this.storage[ key ] = data[ key ];
+
+            }
 
         }
+
+    }catch( e ){
+
+        NGL.error( "localStorage not accessible/available" );
 
     }
 
@@ -594,13 +603,39 @@ NGL.Preferences.prototype = {
 
         this.storage[ key ] = value;
 
-        window.localStorage[ this.id ] = JSON.stringify( this.storage );
+        try{
+
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+
+        }catch( e ){
+
+            // Webkit === 22 / Firefox === 1014
+
+            if( e.code === 22 || e.code === 1014 ){
+
+                NGL.error( "localStorage full" );
+
+            }else{
+
+                NGL.error( "localStorage not accessible/available" );
+
+            }
+
+        }
 
     },
 
     clear: function(){
 
-        delete window.localStorage[ this.id ];
+        try{
+
+            delete window.localStorage[ this.id ];
+
+        }catch( e ){
+
+            NGL.error( "localStorage not accessible/available" );
+
+        }
 
     }
 

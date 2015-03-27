@@ -168,7 +168,12 @@ NGL.Volume.prototype = {
         this.data = data;
         this.__data = this.data;
 
+        this.mc = new NGL.MarchingCubes2(
+            this.__data, this.nx, this.ny, this.nz
+        );
+
         delete this.__isolevel;
+        delete this.__smooth;
         delete this.__minValue;
         delete this.__maxValue;
 
@@ -182,26 +187,34 @@ NGL.Volume.prototype = {
 
     },
 
-    generateSurface: function( isolevel ){
+    generateSurface: function( isolevel, smooth ){
 
         if( isNaN( isolevel ) && this.header ){
             isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
         }
 
         isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        smooth = smooth || 0;
 
-        if( isolevel === this.__isolevel ){
+        if( isolevel === this.__isolevel && smooth === this.__smooth ){
 
             // already generated
             return;
 
         }
 
-        var sd = NGL.MarchingCubes2(
+        var sd;
 
-            this.__data, this.nx, this.ny, this.nz, isolevel
+        if( smooth ){
 
-        );
+            sd = this.mc.triangulate( isolevel, true );
+            NGL.laplacianSmooth( sd.position, sd.index, smooth, true );
+
+        }else{
+
+            sd = this.mc.triangulate( isolevel );
+
+        }
 
         this.position = sd.position;
         this.normal = sd.normal;
@@ -248,6 +261,7 @@ NGL.Volume.prototype = {
         }
 
         this.__isolevel = isolevel;
+        this.__smooth = smooth;
 
     },
 
@@ -671,7 +685,7 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
 };
 
-NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
+NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
     // Based on alteredq / http://alteredqualia.com/
     // port of greggman's ThreeD version of marching cubes to Three.js
@@ -679,42 +693,66 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
     //
     // Adapted for NGL by Alexander Rose
 
-    NGL.time( "NGL.MarchingCubes2" );
-
     var edgeTable = NGL.MarchingCubes.edgeTable;
     var triTable = NGL.MarchingCubes.triTable2;
 
-    var size = nx;
-    var size2 = nx * ny;
-    var size3 = size2 * nz;
+    var isolevel = 0;
+    var noNormals = false;
 
     var n = nx * ny * nz;
 
     // deltas
-
     var yd = nx;
     var zd = nx * ny;
 
-    // temp buffers used in polygonize
-
-    if( !noNormals ){
-        var normalCache = new Float32Array( size3 * 3 );
-    }
-
-    var vertexIndex = new Int32Array( nx * ny * nz );
-
-    for( var i = 0; i < n; ++i ){
-        vertexIndex[ i ] = -1;
-    }
+    var normalCache, vertexIndex;
+    var count, icount;
 
     var ilist = new Int32Array( 12 );
 
-    var count = 0;
-    var icount = 0;
-
     var positionArray = [];
-    var normalArray   = [];
-    var indexArray = []
+    var normalArray = [];
+    var indexArray = [];
+
+    //
+
+    this.triangulate = function( _isolevel, _noNormals ){
+
+        NGL.time( "NGL.MarchingCubes2.triangulate" );
+
+        isolevel = _isolevel;
+        noNormals = _noNormals;
+
+        if( !noNormals && !normalCache ){
+            normalCache = new Float32Array( n * 3 );
+        }
+
+        if( !vertexIndex ){
+            vertexIndex = new Int32Array( n );
+        }
+
+        for( var i = 0; i < n; ++i ){
+            vertexIndex[ i ] = -1;
+        }
+
+        count = 0;
+        icount = 0;
+
+        triangulate();
+
+        positionArray.length = count * 3;
+        if( !noNormals ) normalArray.length = count * 3;
+        indexArray.length = icount;
+
+        NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
+
+        return {
+            position: new Float32Array( positionArray ),
+            normal: noNormals ? undefined : new Float32Array( normalArray ),
+            index: new Uint32Array( indexArray )
+        };
+
+    }
 
     // polygonization
 
@@ -1037,19 +1075,35 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
 
         var q, x, y, z, fx, fy, fz, y_offset, z_offset
 
-        var nx1 = nx - 2;
-        var ny1 = ny - 2;
-        var nz1 = nz - 2;
+        var beg, xEnd, yEnd, zEnd;
 
-        for ( z = 1; z < nz1; ++z ) {
+        if( noNormals ){
 
-            z_offset = size2 * z;
+            beg = 0;
 
-            for ( y = 1; y < ny1; ++y ) {
+            xEnd = nx - 1;
+            yEnd = ny - 1;
+            zEnd = nz - 1;
 
-                y_offset = z_offset + size * y;
+        }else{
 
-                for ( x = 1; x < nx1; ++x ) {
+            beg = 1;
+
+            xEnd = nx - 2;
+            yEnd = ny - 2;
+            zEnd = nz - 2;
+
+        }
+
+        for ( z = beg; z < zEnd; ++z ) {
+
+            z_offset = zd * z;
+
+            for ( y = beg; y < yEnd; ++y ) {
+
+                y_offset = z_offset + yd * y;
+
+                for ( x = beg; x < xEnd; ++x ) {
 
                     q = y_offset + x;
                     polygonize( x, y, z, q );
@@ -1061,16 +1115,6 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, isolevel, noNormals ){
         }
 
     }
-
-    triangulate();
-
-    NGL.timeEnd( "NGL.MarchingCubes2" );
-
-    return {
-        position: new Float32Array( positionArray ),
-        normal: noNormals ? undefined : new Float32Array( normalArray ),
-        index: new Uint32Array( indexArray )
-    };
 
 };
 
@@ -1642,3 +1686,1131 @@ NGL.MarchingCubes.edgeIndex = [
     [0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
     [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]
 ];
+
+
+//////////////
+// Smoothing
+
+NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
+
+    // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
+    // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
+    //
+    // Permission to use, copy, modify, and distribute this program for
+    // any purpose, with or without fee, is hereby granted, provided that
+    // the notices on the head, the reference information, and this
+    // copyright notice appear in all copies or substantial portions of
+    // the Software. It is provided "as is" without express or implied
+    // warranty.
+    //
+    // ported to JavaScript and adapted to NGL by Alexander Rose
+
+    NGL.time( "NGL.laplacianSmooth" );
+
+    numiter = numiter || 1;
+    inflate = inflate || true;
+
+    var nv = verts.length / 3;
+    var nf = faces.length / 3;
+
+    if( inflate ){
+
+        var bg = new THREE.BufferGeometry();
+        bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
+        bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
+
+    }
+
+    var tps = new Float32Array( nv * 3 );
+
+    var ndeg = 20;
+    var vertdeg = new Array( ndeg );
+
+    for( var i = 0; i < ndeg; ++i ){
+        vertdeg[ i ] = new Uint32Array( nv );
+    }
+
+    for( var i = 0; i < nv; ++i ){
+        vertdeg[ 0 ][ i ] = 0;
+    }
+
+    var j, jl;
+    var flagvert;
+
+    // for each face
+
+    for( var i = 0; i < nf; ++i ){
+
+        var ao = i * 3;
+        var bo = i * 3 + 1;
+        var co = i * 3 + 2;
+
+        // vertex a
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ao] ]; j < jl; ++j ){
+            if( faces[ bo ] == vertdeg[ j + 1 ][ faces[ ao ]] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ ao ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ ao ] ] ][ faces[ ao ] ] = faces[ bo ];
+        }
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ ao ] ]; j < jl; ++j ){
+            if( faces[ co] == vertdeg[ j + 1 ][ faces[ ao ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ ao ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ ao ] ] ][ faces[ ao ] ] = faces[ co ];
+        }
+
+        // vertex b
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ bo ] ]; j < jl; ++j ){
+            if( faces[ ao ] == vertdeg[ j + 1 ][ faces[ bo ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ bo ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ bo ] ] ][ faces[ bo ] ] = faces[ ao ];
+        }
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ bo ] ]; j < jl; ++j ){
+            if( faces[ co ] == vertdeg[ j + 1 ][ faces[ bo ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ bo ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ bo ] ] ][ faces[ bo ] ] = faces[ co ];
+        }
+
+        // vertex c
+
+        flagvert = true;
+        for( j = 0; j < vertdeg[ 0 ][ faces[ co ] ]; ++j ){
+            if( faces[ ao ] == vertdeg[ j + 1 ][ faces[ co ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ co ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ co ] ] ][ faces[ co ] ] = faces[ ao ];
+        }
+
+        flagvert = true;
+        for( j = 0, jl = vertdeg[ 0 ][ faces[ co ] ]; j < jl; ++j ){
+            if( faces[ bo ] == vertdeg[ j + 1 ][ faces[ co ] ] ){
+                flagvert = false;
+                break;
+            }
+        }
+        if( flagvert ){
+            vertdeg[ 0 ][ faces[ co ] ]++;
+            vertdeg[ vertdeg[ 0 ][ faces[ co ] ] ][ faces[ co ] ] = faces[ bo ];
+        }
+
+    }
+
+    var wt = 1.0;
+    var wt2 = 0.5;
+    var i3, vi3, vi, vdi, wt_vi, wt2_vi;
+    var ssign = -1;
+    var scaleFactor = 1;
+    var outwt = 0.75 / ( scaleFactor + 3.5 );  // area-preserving
+
+    // smoothing iterations
+
+    for( var k = 0; k < numiter; ++k ){
+
+        // for each vertex
+
+        for( var i = 0; i < nv; ++i ){
+
+            i3 = i * 3;
+            vdi = vertdeg[ 0 ][ i ];
+
+            if( vdi < 3 ){
+
+                tps[ i3     ] = verts[ i3     ];
+                tps[ i3 + 1 ] = verts[ i3 + 1 ];
+                tps[ i3 + 2 ] = verts[ i3 + 2 ];
+
+            }else if( vdi === 3 || vdi === 4 ){
+
+                tps[ i3     ] = 0;
+                tps[ i3 + 1 ] = 0;
+                tps[ i3 + 2 ] = 0;
+
+                for( j = 0; j < vdi; ++j ){
+                    vi3 = vertdeg[ j + 1 ][ i ] * 3;
+                    tps[ i3     ] += verts[ vi3     ];
+                    tps[ i3 + 1 ] += verts[ vi3 + 1 ];
+                    tps[ i3 + 2 ] += verts[ vi3 + 2 ];
+                }
+
+                tps[ i3     ] += wt2 * verts[ i3 ];
+                tps[ i3 + 1 ] += wt2 * verts[ i3 + 1 ];
+                tps[ i3 + 2 ] += wt2 * verts[ i3 + 2 ];
+
+                wt2_vi = wt2 + vdi;
+                tps[ i3     ] /= wt2_vi;
+                tps[ i3 + 1 ] /= wt2_vi;
+                tps[ i3 + 2 ] /= wt2_vi;
+
+            }else{
+
+                tps[ i3     ] = 0;
+                tps[ i3 + 1 ] = 0;
+                tps[ i3 + 2 ] = 0;
+
+                for( j = 0; j < vdi; ++j ){
+                    vi3 = vertdeg[ j + 1 ][ i ] * 3;
+                    tps[ i3     ] += verts[ vi3     ];
+                    tps[ i3 + 1 ] += verts[ vi3 + 1 ];
+                    tps[ i3 + 2 ] += verts[ vi3 + 2 ];
+                }
+
+                tps[ i3     ] += wt * verts[ i3 ];
+                tps[ i3 + 1 ] += wt * verts[ i3 + 1 ];
+                tps[ i3 + 2 ] += wt * verts[ i3 + 2 ];
+
+                wt_vi = wt + vdi;
+                tps[ i3     ] /= wt_vi;
+                tps[ i3 + 1 ] /= wt_vi;
+                tps[ i3 + 2 ] /= wt_vi;
+
+            }
+
+        }
+
+        verts.set( tps );  // copy smoothed positions
+
+        if( inflate ){
+
+            bg.computeVertexNormals();
+            var norms = bg.attributes.normal.array;
+            var nv3 = nv * 3;
+
+            for( i3 = 0; i3 < nv3; i3 += 3 ){
+
+                // if(verts[i].inout) ssign=1;
+                // else ssign=-1;
+
+                verts[ i3     ] += ssign * outwt * norms[ i3     ];
+                verts[ i3 + 1 ] += ssign * outwt * norms[ i3 + 1 ];
+                verts[ i3 + 2 ] += ssign * outwt * norms[ i3 + 2 ];
+
+            }
+
+        }
+
+    }
+
+    NGL.timeEnd( "NGL.laplacianSmooth" );
+
+};
+
+
+//////////////////////
+// Molecular surface
+
+NGL.MolecularSurface = function( structure, probeRadius ){
+
+    // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
+    // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
+    //
+    // Permission to use, copy, modify, and distribute this program for
+    // any purpose, with or without fee, is hereby granted, provided that
+    // the notices on the head, the reference information, and this
+    // copyright notice appear in all copies or substantial portions of
+    // the Software. It is provided "as is" without express or implied
+    // warranty.
+    //
+    // ported to JavaScript by biochem_fan (http://webglmol.sourceforge.jp/)
+    // refactored by dkoes (https://github.com/dkoes)
+    //
+    // adapted to NGL by Alexander Rose
+
+    probeRadius = probeRadius || 1.4;
+
+    var atoms = structure.atoms;
+    var bbox = structure.getBoundingBox();
+
+    var scaleFactor;
+    var margin;
+    var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
+    var matrix;
+    var depty, widxz;
+    var cutRadius;
+    var vpBits, vpDistance, vpAtomID;
+
+    function init( btype ){
+
+        // 2 is .5A grid; if this is made user configurable and
+        // also have to adjust offset used to find non-shown atoms
+        scaleFactor = 2;
+
+         // need margin to avoid boundary/round off effects
+        margin = ( 1 / scaleFactor ) * 5.5;
+
+        pmin = new THREE.Vector3().copy( bbox.min );
+        pmax = new THREE.Vector3().copy( bbox.max );
+
+        if( !btype ){
+
+            pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
+            pmax.addScalar( margin );
+
+        }else{
+
+            pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
+            pmax.addScalar( probeRadius + margin );
+
+        }
+
+        ptran = new THREE.Vector3().copy( pmin ).negate();
+
+        pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+        pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+        pbox = new THREE.Vector3()
+            .subVectors( pmax, pmin )
+            .multiplyScalar( scaleFactor )
+            .ceil()
+            .addScalar( 1 );
+
+        pLength = pbox.x;
+        pWidth = pbox.y;
+        pHeight = pbox.z;
+
+        // pHeight, pWidth, pLength
+        matrix = new THREE.Matrix4();
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -1/scaleFactor, 1/scaleFactor, 1/scaleFactor
+            )
+        );
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -scaleFactor*ptran.z,
+                -scaleFactor*ptran.y,
+                -scaleFactor*ptran.x
+            )
+        );
+
+        // boundingatom caches
+        depty = {};
+        widxz = {};
+        boundingatom( btype );
+
+        // console.log( depty );
+        // console.log( widxz );
+
+        cutRadius = probeRadius * scaleFactor;
+
+        vpBits = new Uint8Array( pLength * pWidth * pHeight );
+        // float32 doesn't play nicely with native floats
+        vpDistance = new Float64Array( pLength * pWidth * pHeight );
+        vpAtomID = new Int32Array( pLength * pWidth * pHeight );
+
+    }
+
+    // constants for vpBits bitmasks
+    var INOUT = 1;
+    var ISDONE = 2;
+    var ISBOUND = 4;
+
+    var nb = [
+        new Int32Array([  1,  0,  0 ]), new Int32Array([ -1,  0,  0 ]),
+        new Int32Array([  0,  1,  0 ]), new Int32Array([  0, -1,  0 ]),
+        new Int32Array([  0,  0,  1 ]), new Int32Array([  0,  0, -1 ]),
+        new Int32Array([  1,  1,  0 ]), new Int32Array([  1, -1,  0 ]),
+        new Int32Array([ -1,  1,  0 ]), new Int32Array([ -1, -1,  0 ]),
+        new Int32Array([  1,  0,  1 ]), new Int32Array([  1,  0, -1 ]),
+        new Int32Array([ -1,  0,  1 ]), new Int32Array([ -1,  0, -1 ]),
+        new Int32Array([  0,  1,  1 ]), new Int32Array([  0,  1, -1 ]),
+        new Int32Array([  0, -1,  1 ]), new Int32Array([  0, -1, -1 ]),
+        new Int32Array([  1,  1,  1 ]), new Int32Array([  1,  1, -1 ]),
+        new Int32Array([  1, -1,  1 ]), new Int32Array([ -1,  1,  1 ]),
+        new Int32Array([  1, -1, -1 ]), new Int32Array([ -1, -1,  1 ]),
+        new Int32Array([ -1,  1, -1 ]), new Int32Array([ -1, -1, -1 ])
+    ];
+
+    //
+
+    this.vws = function(){
+
+        NGL.time( "NGL.MolecularSurface.vws" );
+
+        init( false );
+
+        fillvoxels();
+        buildboundary();
+        marchingcubeinit( 1 );
+
+        var v = new NGL.Volume(
+            "vws", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.vws" );
+
+        return v;
+
+    };
+
+    this.sas = function(){
+
+        NGL.time( "NGL.MolecularSurface.sas" );
+
+        init( true );
+
+        fillvoxels();
+        buildboundary();
+        marchingcubeinit( 3 );
+
+        var v = new NGL.Volume(
+            "sas", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.sas" );
+
+        return v;
+
+    };
+
+    this.ms = function(){
+
+        NGL.time( "NGL.MolecularSurface.ms" );
+
+        init( true );
+
+        fillvoxels();
+        buildboundary();
+        fastdistancemap();
+        // boundingatom( false );
+        // fillvoxelswaals();
+        marchingcubeinit( 4 );
+
+        var v = new NGL.Volume(
+            "ms", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.ms" );
+
+        return v;
+
+    };
+
+    this.ses = function(){
+
+        NGL.time( "NGL.MolecularSurface.ses" );
+
+        init( true );
+
+        fillvoxels();
+        buildboundary();
+        fastdistancemap();
+        boundingatom( false );
+        fillvoxelswaals();
+        marchingcubeinit( 2 );
+
+        var v = new NGL.Volume(
+            "ses", "", vpBits, pHeight, pWidth, pLength
+        );
+
+        v.matrix.copy( matrix );
+
+        NGL.timeEnd( "NGL.MolecularSurface.ses" );
+
+        return v;
+
+    };
+
+    function boundingatom( btype ){
+
+        var j, k;
+        var txz, tdept, sradius, tradius, widxz_r;
+        var indx;
+
+        for( var element in NGL.VdwRadii ){
+
+            var r = NGL.VdwRadii[ element ];
+
+            if( depty[ r ] ) continue;
+
+            if( !btype ){
+                tradius = r * scaleFactor + 0.5;
+            }else{
+                tradius = ( r + probeRadius ) * scaleFactor + 0.5;
+            }
+
+            sradius = tradius * tradius;
+            widxz[ r ] = Math.floor( tradius ) + 1;
+            widxz_r = widxz[ r ];
+            depty[ r ] = new Int32Array( widxz_r * widxz_r );
+            indx = 0;
+
+            for( j = 0; j < widxz_r; ++j ){
+
+                for( k = 0; k < widxz_r; ++k ){
+
+                    txz = j * j + k * k;
+
+                    if( txz > sradius ){
+
+                        depty[ r ][ indx ] = -1;
+
+                    }else{
+
+                        tdept = Math.sqrt( sradius - txz );
+                        depty[ r ][ indx ] = Math.floor( tdept );
+
+                    }
+
+                    ++indx;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    function fillatom( atom ){
+
+        var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
+        var ii, jj, kk, n;
+
+        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+
+        var at = atom.vdw;
+        var depty_at = depty[ at ];
+        var nind = 0;
+        var cnt = 0;
+        var pWH = pWidth * pHeight;
+
+        for( i = 0, n = widxz[ at ]; i < n; ++i ){
+        for( j = 0; j < n; ++j ) {
+
+            if( depty_at[ nind ] != -1 ){
+
+                for( ii = -1; ii < 2; ++ii ){
+                for( jj = -1; jj < 2; ++jj ){
+                for( kk = -1; kk < 2; ++kk ){
+
+                    if( ii !== 0 && jj !== 0 && kk !== 0 ){
+
+                        mi = ii * i;
+                        mk = kk * j;
+
+                        for( k = 0; k <= depty_at[ nind ]; ++k ){
+
+                            mj = k * jj;
+                            si = cx + mi;
+                            sj = cy + mj;
+                            sk = cz + mk;
+
+                            if( si < 0 || sj < 0 || sk < 0 ||
+                                si >= pLength || sj >= pWidth || sk >= pHeight
+                            ){
+                                continue;
+                            }
+
+                            var index = si * pWH + sj * pHeight + sk;
+
+                            if( !( vpBits[ index ] & INOUT ) ){
+
+                                vpBits[ index ] |= INOUT;
+                                vpAtomID[ index ] = atom.index;
+
+                            }else{
+
+                                var atom2 = atoms[ vpAtomID[ index ] ];
+                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+
+                                if( mi * mi + mj * mj + mk * mk <
+                                    ox * ox + oy * oy + oz * oz
+                                ){
+                                    vpAtomID[ index ] = atom.index;
+                                }
+
+                            }
+
+                        }// k
+
+                    }// if
+
+                }// kk
+                }// jj
+                }// ii
+
+            }// if
+
+            nind++;
+
+        }// j
+        }// i
+
+    }
+
+    function fillvoxels(){
+
+        var i, il;
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            vpBits[ i ] = 0;
+            vpDistance[ i ] = -1.0;
+            vpAtomID[ i ] = -1;
+        }
+
+        structure.eachAtom( fillatom );
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            if( vpBits[ i ] & INOUT ){
+                vpBits[ i ] |= ISDONE;
+            }
+        }
+
+    }
+
+    function fillAtomWaals( atom ){
+
+        var cx, cy, cz, ox, oy, oz, nind = 0;
+        var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
+
+        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+
+        var at = atom.vdw;
+        var pWH = pWidth * pHeight;
+
+        for( i = 0, n = widxz[at]; i < n; ++i ){
+        for( j = 0; j < n; ++j ){
+
+            if( depty[ at ][ nind ] != -1 ){
+
+                for( ii = -1; ii < 2; ++ii ){
+                for( jj = -1; jj < 2; ++jj ){
+                for( kk = -1; kk < 2; ++kk ){
+
+                    if( ii !== 0 && jj !== 0 && kk !== 0 ){
+
+                        mi = ii * i;
+                        mk = kk * j;
+
+                        for( k = 0; k <= depty[ at ][ nind ]; ++k ){
+
+                            mj = k * jj;
+                            si = cx + mi;
+                            sj = cy + mj;
+                            sk = cz + mk;
+
+                            if( si < 0 || sj < 0 || sk < 0 ||
+                                si >= pLength || sj >= pWidth || sk >= pHeight
+                            ){
+                                continue;
+                            }
+
+                            var index = si * pWH + sj * pHeight + sk;
+
+                            if ( !( vpBits[ index ] & ISDONE ) ){
+
+                                vpBits[ index ] |= ISDONE;
+                                vpAtomID[ index ] = atom.index;
+
+                            } else {
+
+                                var atom2 = atoms[ vpAtomID[ index ] ];
+                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+
+                                if( mi * mi + mj * mj + mk * mk <
+                                    ox * ox + oy * oy + oz * oz
+                                ){
+                                    vpAtomID[ index ] = atom.index;
+                                }
+
+                            }
+
+                        }// k
+
+                    }// if
+
+                }// kk
+                }// jj
+                }// ii
+
+            }// if
+
+            nind++;
+
+        }// j
+        }// i
+
+    }
+
+    function fillvoxelswaals() {
+
+        var i, il;
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            vpBits[ i ] &= ~ISDONE;  // not isdone
+        }
+
+        structure.eachAtom( fillAtomWaals );
+
+    }
+
+    function buildboundary(){
+
+        var i, j, k;
+        var pWH = pWidth * pHeight;
+
+        for( i = 0; i < pLength; ++i ){
+        for( j = 0; j < pHeight; ++j ){
+        for( k = 0; k < pWidth; ++k ){
+
+            var index = i * pWH + k * pHeight + j;
+
+            if( vpBits[ index ] & INOUT ){
+
+                var flagbound = false;
+                var ii = 0;
+
+                while( ii < 26 ){
+
+                    var ti = i + nb[ ii ][ 0 ];
+                    var tj = j + nb[ ii ][ 2 ];
+                    var tk = k + nb[ ii ][ 1 ];
+
+                    if( ti > -1 && ti < pLength &&
+                        tk > -1 && tk < pWidth &&
+                        tj > -1 && tj < pHeight &&
+                        !( vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT )
+                    ){
+
+                        vpBits[index] |= ISBOUND;
+                        break;
+
+                    }else{
+
+                        ii++;
+
+                    }
+
+                }
+
+            }
+
+        } // k
+        } // j
+        } // i
+
+    }
+
+    // a little class for 3d array, should really generalize this and
+    // use throughout...
+    var PointGrid = function( length, width, height ){
+
+        // the standard says this is zero initialized
+        var data = new Int32Array( length * width * height * 3 );
+
+        // set position x,y,z to pt, which has ix,iy,and iz
+        this.set = function( x, y, z, pt ){
+            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
+            data[ index ] = pt.ix;
+            data[ index + 1] = pt.iy;
+            data[ index + 2] = pt.iz;
+        };
+
+        // return point at x,y,z
+        this.get = function( x, y, z ){
+            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
+            return {
+                ix : data[ index ],
+                iy : data[ index + 1],
+                iz : data[ index + 2]
+            };
+        };
+
+    };
+
+    function fastdistancemap(){
+
+        var eliminate = 0;
+        var certificate;
+        var i, j, k, n;
+
+        var boundPoint = new PointGrid( pLength, pWidth, pHeight );
+        var pWH = pWidth * pHeight;
+        var cutRSq = cutRadius * cutRadius;
+
+        var inarray = [];
+        var outarray = [];
+
+        var index;
+
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
+
+                    index = i * pWH + j * pHeight + k;
+                    vpBits[ index ] &= ~ISDONE;  // isdone = false
+
+                    if( vpBits[ index ] & INOUT ){
+
+                        if( vpBits[ index ] & ISBOUND ){
+
+                            var triple = {
+                                ix : i,
+                                iy : j,
+                                iz : k
+                            };
+
+                            boundPoint.set( i, j, k, triple );
+                            inarray.push( triple );
+                            vpDistance[ index ] = 0;
+                            vpBits[ index ] |= ISDONE;
+                            vpBits[ index ] &= ~ISBOUND;
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        do {
+
+            outarray = fastoneshell( inarray, boundPoint );
+            inarray = [];
+
+            for( i = 0, n = outarray.length; i < n; ++i ){
+
+                index = pWH * outarray[ i ].ix + pHeight *
+                            outarray[ i ].iy + outarray[ i ].iz;
+                vpBits[index] &= ~ISBOUND;
+
+                if( vpDistance[ index ] <= 1.0404 * cutRSq ){
+
+                    inarray.push({
+                        ix : outarray[ i ].ix,
+                        iy : outarray[ i ].iy,
+                        iz : outarray[ i ].iz
+                    });
+
+                }
+
+            }
+
+        }while( inarray.length !== 0 );
+
+        inarray = [];
+        outarray = [];
+        boundPoint = null;
+
+        var cutsf = Math.max( 0, scaleFactor - 0.5 );
+        // FIXME why does this seem to work?
+        // TODO check for other probeRadius and scaleFactor values
+        var cutoff = probeRadius * probeRadius;  //1.4 * 1.4// cutRSq - 0.50 / ( 0.1 + cutsf );
+
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
+
+                    index = i * pWH + j * pHeight + k;
+                    vpBits[ index ] &= ~ISBOUND;
+
+                    // ses solid
+
+                    if( vpBits[ index ] & INOUT ) {
+
+                        if( !( vpBits[ index ] & ISDONE ) ||
+                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoff )
+                        ){
+                            vpBits[ index ] |= ISBOUND;
+                        }
+                    }
+
+                }
+            }
+        }
+
+    }
+
+    function fastoneshell( inarray, boundPoint ){
+
+        // *allocout,voxel2
+        // ***boundPoint, int*
+        // outnum, int *elimi)
+        var tx, ty, tz;
+        var dx, dy, dz;
+        var i, j, n;
+        var square;
+        var bp, index;
+        var outarray = [];
+
+        if( inarray.length === 0 ){
+            return outarray;
+        }
+
+        var tnv = {
+            ix : -1,
+            iy : -1,
+            iz : -1
+        };
+
+        var pWH = pWidth*pHeight;
+
+        for( i = 0, n = inarray.length; i < n; ++i ){
+
+            tx = inarray[ i ].ix;
+            ty = inarray[ i ].iy;
+            tz = inarray[ i ].iz;
+            bp = boundPoint.get( tx, ty, tz );
+
+            for( j = 0; j < 6; ++j ){
+
+                tnv.ix = tx + nb[ j ][ 0 ];
+                tnv.iy = ty + nb[ j ][ 1 ];
+                tnv.iz = tz + nb[ j ][ 2 ];
+
+                if( tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                    tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1
+                ){
+
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if( ( vpBits[ index ] & INOUT ) && !( vpBits[ index ] & ISDONE ) ){
+
+                        boundPoint.set( tnv.ix, tnv.iy, tz + nb[ j ][ 2 ], bp );
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[ index ] = square;
+                        vpBits[ index ] |= ISDONE;
+                        vpBits[ index ] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+
+                    }else if( ( vpBits[ index ] & INOUT ) && ( vpBits[ index ] & ISDONE ) ){
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+
+                        if( square < vpDistance[ index ] ){
+
+                            boundPoint.set( tnv.ix, tnv.iy, tnv.iz, bp );
+                            vpDistance[ index ] = square;
+
+                            if( !( vpBits[ index ] & ISBOUND ) ){
+
+                                vpBits[ index ] |= ISBOUND;
+
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        // console.log("part1", positout);
+
+        for (i = 0, n = inarray.length; i < n; i++) {
+            tx = inarray[i].ix;
+            ty = inarray[i].iy;
+            tz = inarray[i].iz;
+            bp = boundPoint.get(tx, ty, tz);
+
+            for (j = 6; j < 18; j++) {
+                tnv.ix = tx + nb[j][0];
+                tnv.iy = ty + nb[j][1];
+                tnv.iz = tz + nb[j][2];
+
+                if(tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[index] = square;
+                        vpBits[index] |= ISDONE;
+                        vpBits[index] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+                    } else if ((vpBits[index] & INOUT) && (vpBits[index] & ISDONE)) {
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        if (square < vpDistance[index]) {
+                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+                            vpDistance[index] = square;
+                            if (!(vpBits[index] & ISBOUND)) {
+                                vpBits[index] |= ISBOUND;
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // console.log("part2", positout);
+
+        for (i = 0, n = inarray.length; i < n; i++) {
+            tx = inarray[i].ix;
+            ty = inarray[i].iy;
+            tz = inarray[i].iz;
+            bp = boundPoint.get(tx, ty, tz);
+
+            for (j = 18; j < 26; j++) {
+                tnv.ix = tx + nb[j][0];
+                tnv.iy = ty + nb[j][1];
+                tnv.iz = tz + nb[j][2];
+
+                if (tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[index] = square;
+                        vpBits[index] |= ISDONE;
+                        vpBits[index] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        if (square < vpDistance[index]) {
+                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+
+                            vpDistance[index] = square;
+                            if (!(vpBits[index] & ISBOUND)) {
+                                vpBits[index] |= ISBOUND;
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // console.log("part3", positout);
+        return outarray;
+
+    }
+
+    function marchingcubeinit( stype ){
+
+        for( var i = 0, lim = vpBits.length; i < lim; ++i ){
+
+            if( stype == 1 ) {  // vdw
+
+                vpBits[ i ] &= ~ISBOUND;
+
+            }else if( stype == 4 ){  // ses without vdw => ms
+
+                vpBits[ i ] &= ~ISDONE;
+                if( vpBits[ i ] & ISBOUND ){
+                    vpBits[ i ] |= ISDONE;
+                }
+                vpBits[ i ] &= ~ISBOUND;
+
+            }else if( stype == 2 ){  // ses with vdw => ses
+
+                if( ( vpBits[ i ] & ISBOUND ) && ( vpBits[ i ] & ISDONE ) ){
+                    vpBits[ i ] &= ~ISBOUND;
+                }else if( ( vpBits[ i ] & ISBOUND ) && !( vpBits[ i ] & ISDONE ) ){
+                    vpBits[ i ] |= ISDONE;
+                }
+
+            }else if( stype == 3 ){  // sas
+
+                vpBits[ i ] &= ~ISBOUND;
+
+            }
+
+            vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+
+        }
+
+    };
+
+};

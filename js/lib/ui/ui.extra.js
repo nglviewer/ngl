@@ -750,6 +750,7 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
 
 // Color picker (requires FlexiColorPicker)
 // https://github.com/DavidDurman/FlexiColorPicker
+// https://github.com/zvin/FlexiColorPicker
 
 UI.ColorPicker = function(){
 
@@ -805,19 +806,22 @@ UI.ColorPicker = function(){
         this.slideWrapper
     );
 
-    ColorPicker.fixIndicators(
-
-        this.sliderIndicator.dom,
-        this.pickerIndicator.dom
-
-    );
-
     this.colorPicker = ColorPicker(
 
         this.slider.dom,
         this.picker.dom,
 
         function( hex, hsv, rgb, pickerCoordinate, sliderCoordinate ){
+
+            if( !pickerCoordinate && sliderCoordinate && hsv.s < 0.05 ){
+
+                hsv.s = 0.5;
+                hsv.v = 0.7;
+                scope.colorPicker.setHsv( hsv );
+
+                return;
+
+            }
 
             ColorPicker.positionIndicators(
                 scope.sliderIndicator.dom, scope.pickerIndicator.dom,
@@ -835,6 +839,13 @@ UI.ColorPicker = function(){
             }
 
         }
+
+    );
+
+    this.colorPicker.fixIndicators(
+
+        this.sliderIndicator.dom,
+        this.pickerIndicator.dom
 
     );
 
