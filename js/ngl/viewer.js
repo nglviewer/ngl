@@ -556,6 +556,7 @@ NGL.debug = false;
 NGL.init = function( onload, baseUrl ){
 
     NGL.debug = NGL.GET( "debug" );
+    NGL.worker = NGL.GET( "worker" );
 
     this.textures = [];
 

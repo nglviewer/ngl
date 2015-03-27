@@ -8,7 +8,7 @@ NGL.Uint8ToString = function( u8a ){
 
     // from http://stackoverflow.com/a/12713326/1435042
 
-    var CHUNK_SZ = 0x8000;
+    var CHUNK_SZ = 0x1000;
     var c = [];
 
     for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
@@ -26,7 +26,7 @@ NGL.Uint8ToString = function( u8a ){
 }
 
 
-NGL.decompress = function( data, file, asBinary ){
+NGL.decompress = function( data, file, asBinary, callback ){
 
     var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).compressed;
@@ -90,7 +90,41 @@ NGL.decompress = function( data, file, asBinary ){
 
     NGL.timeEnd( "NGL.decompress " + ext );
 
-    return asBinary ? binData : decompressedData;
+    var returnData = asBinary ? binData : decompressedData;
+
+    if( typeof callback === "function" ){
+
+        callback( returnData );
+
+    }
+
+    return returnData;
+
+}
+
+
+NGL.decompressWorker = function( data, file, asBinary, callback ){
+
+    if( NGL.worker && typeof Worker !== "undefined" ){
+
+        var worker = new Worker( "../js/worker/decompress.js" );
+
+        worker.onmessage = function( e ){
+
+            callback( e.data );
+            worker.terminate();
+
+        };
+
+        worker.postMessage( {
+            data: data, file: file, asBinary: asBinary
+        } );
+
+    }else{
+
+        NGL.decompress( data, file, asBinary, callback );
+
+    }
 
 }
 
@@ -136,15 +170,24 @@ NGL.XHRLoader.prototype = {
 
                     var data = this.response;
 
-                    if( scope.compressed ){
+                    var loaded = function( d ){
 
-                        data = NGL.decompress( data, url, scope.asBinary );
+                        THREE.Cache.add( url, d );
+                        if ( onLoad ) onLoad( d );
 
                     }
 
-                    THREE.Cache.add( url, data );
+                    if( scope.compressed ){
 
-                    if ( onLoad ) onLoad( data );
+                        data = NGL.decompressWorker(
+                            data, url, scope.asBinary, loaded
+                        );
+
+                    }else{
+
+                        loaded( data );
+
+                    }
 
                 }catch( e ){
 
@@ -192,6 +235,10 @@ NGL.XHRLoader.prototype = {
     },
 
     setAsBinary: function ( value ) {
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
 
         this.asBinary = value;
 
@@ -253,19 +300,28 @@ NGL.FileLoader.prototype = {
 
                 var data = event.target.result;
 
-                if( scope.compressed ){
+                var loaded = function( d ){
 
-                    data = NGL.decompress( data, file, scope.asBinary );
+                    // THREE.Cache.add( file, d );
+                    onLoad( d );
 
                 }
 
-                // THREE.Cache.add( file, data );
+                if( scope.compressed ){
 
-                onLoad( data );
+                    NGL.decompressWorker(
+                        data, file, scope.asBinary, loaded
+                    );
+
+                }else{
+
+                    loaded( data );
+
+                }
 
             }catch( e ){
 
-                if ( onError ) onError( "decompression failed" );
+                if ( onError ) onError( e, "decompression failed" );
 
             }
 
@@ -293,7 +349,7 @@ NGL.FileLoader.prototype = {
 
         }
 
-        if( this.asBinary ){
+        if( this.asBinary || this.compressed ){
 
             reader.readAsArrayBuffer( file );
 
@@ -368,9 +424,6 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 NGL.VolumeLoader = function( manager ){
 
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-    this.setAsBinary( true );
-    this.setResponseType( "arraybuffer" );
 
 };
 
@@ -582,16 +635,19 @@ NGL.autoLoad = function(){
             loader.setCrossOrigin( true );
 
             if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
             if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../data/" + path, init, onProgress, error );
 
         }else{ // default: protocol === "file"
 
             if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../file/" + path, init, onProgress, error );
 
         }
