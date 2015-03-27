@@ -416,7 +416,8 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
         name, path, params
     );
 
-    return parser.parse( str, callback );
+    // return parser.parse( str, callback );
+    return parser.parseWorker( str, callback );
 
 };
 

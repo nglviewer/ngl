@@ -1,8 +1,8 @@
 
 NGL = {};
 THREE = {
-	OBJLoader: { prototype: null },
-	PLYLoader: { prototype: null }
+    OBJLoader: { prototype: null },
+    PLYLoader: { prototype: null }
 };
 
 importScripts(
@@ -16,7 +16,7 @@ importScripts(
 
 onmessage = function( e ){
 
-	var d = e.data;
+    var d = e.data;
 
     self.postMessage(
         NGL.decompress( d.data, d.file, d.asBinary )

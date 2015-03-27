@@ -317,6 +317,33 @@ NGL.StructureParser.prototype = {
 
     },
 
+    parseWorker: function( str, callback ){
+
+        if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var worker = new Worker( "../js/worker/parse.js" );
+
+            worker.onmessage = function( e ){
+
+                callback( e.data );
+                worker.terminate();
+
+            };
+
+            worker.postMessage( {
+                data: str, type: this.type
+            } );
+
+        }else{
+
+            this.parse( str, callback );
+
+        }
+
+        return this.structure;
+
+    },
+
     _parse: function( str, callback ){
 
         NGL.warn( "NGL.StructureParser._parse not implemented" );
@@ -343,6 +370,8 @@ NGL.PdbParser = function( name, path, params ){
 NGL.PdbParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.PdbParser.prototype.constructor = NGL.PdbParser;
+
+NGL.PdbParser.prototype.type = "pdb";
 
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
