@@ -12,7 +12,9 @@ importScripts(
 );
 
 var parser = {
-    pdb: NGL.PdbParser
+    pdb: NGL.PdbParser,
+    cif: NGL.CifParser,
+    gro: NGL.GroParser
 };
 
 onmessage = function( e ){
@@ -26,7 +28,7 @@ onmessage = function( e ){
     p.parse( d.data, function( structure ){
 
         self.postMessage(
-            structure
+            structure.toJSON()
         );
 
     } );

@@ -321,12 +321,24 @@ NGL.StructureParser.prototype = {
 
         if( NGL.worker && typeof Worker !== "undefined" ){
 
+            var s = this.structure;
             var worker = new Worker( "../js/worker/parse.js" );
 
             worker.onmessage = function( e ){
 
-                callback( e.data );
-                worker.terminate();
+                // console.log( e.data );
+
+                e.data.name = s.name;
+                e.data.path = s.path;
+
+                s.fromJSON( e.data );
+
+                s.postProcess( function(){
+
+                    callback( s );
+                    worker.terminate();
+
+                } );
 
             };
 
@@ -773,6 +785,8 @@ NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.GroParser.prototype.constructor = NGL.GroParser;
 
+NGL.GroParser.prototype.type = "gro";
+
 NGL.GroParser.prototype._parse = function( str, callback ){
 
     // http://manual.gromacs.org/current/online/gro.html
@@ -959,6 +973,8 @@ NGL.CifParser = function( name, path, params ){
 NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.CifParser.prototype.constructor = NGL.CifParser;
+
+NGL.CifParser.prototype.type = "cif";
 
 NGL.CifParser.prototype._parse = function( str, callback ){
 
