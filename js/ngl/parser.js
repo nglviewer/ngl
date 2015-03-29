@@ -631,7 +631,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 a.y = y;
                 a.z = z;
                 a.element = element;
-                a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
+                a.hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                 a.chainname = chainname;
                 a.resno = resno;
                 a.serial = serial;
@@ -1341,7 +1341,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
-                        var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
+                        var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
                         var chainname = ls[ label_asym_id ];
                         // var resno = parseInt( ls[ label_seq_id ] );
                         var resno = parseInt( ls[ auth_seq_id ] );

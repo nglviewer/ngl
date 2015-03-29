@@ -3396,7 +3396,7 @@ NGL.Residue.prototype = {
 
         if( this._hetero === undefined ){
 
-            this._hetero = this.atoms.length && this.atoms[0].hetero;
+            this._hetero = this.atoms.length && this.atoms[0].hetero === 1;
 
         }
 
@@ -4652,8 +4652,8 @@ NGL.ProxyAtom.prototype = {
 
         if( taa.hetero[ ti ] && aaa.hetero[ ai ] ) return false;
 
-        var ta = this.altloc;
-        var aa = atom.altloc;
+        var ta = taa.altloc[ ti ];
+        var aa = aaa.altloc[ ai ];
 
         if( !( ta === '' || aa === '' || ( ta === aa ) ) ) return false;
 
@@ -5520,7 +5520,7 @@ NGL.Selection.prototype = {
 
             if( s.keyword!==undefined ){
 
-                if( s.keyword==="HETERO" && a.hetero===true ) return true;
+                if( s.keyword==="HETERO" && a.hetero===1 ) return true;
                 if( s.keyword==="PROTEIN" && (
                         a.residue.isProtein() || a.residue.isCg()
                     )
