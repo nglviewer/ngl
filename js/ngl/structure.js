@@ -780,7 +780,7 @@ NGL.AtomSet.prototype = {
 
         var a;
         var i = 0;
-        var n = this.atomCount;
+        var n = this.atoms.length;
 
         if( selection ){
 
@@ -978,7 +978,7 @@ NGL.AtomSet.prototype = {
 
             var a;
             var i = 0;
-            var n = this.atomCount;
+            var n = this.atoms.length;
 
             box.makeEmpty();
 
@@ -2506,7 +2506,8 @@ NGL.Structure.prototype = {
 
         this.center = new THREE.Vector3().fromArray( input.center );
         this.boundingBox = new THREE.Box3(
-            input.boundingBox[ 0 ], input.boundingBox[ 1 ]
+            new THREE.Vector3().fromArray( input.boundingBox[ 0 ] ),
+            new THREE.Vector3().fromArray( input.boundingBox[ 1 ] )
         );
 
         if( input.atomArray ){

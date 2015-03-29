@@ -639,7 +639,7 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
                 // o.addRepresentation( "trace", { color: "chainindex" } );
                 // o.addRepresentation( "point", { color: "chainindex" } );
-                o.centerView();
+                o.centerView( undefined, true );
 
                 NGL.timeEnd( "test" );
 
