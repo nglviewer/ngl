@@ -1149,9 +1149,9 @@ NGL.Viewer.prototype = {
 
         var group, pickingGroup;
 
-        group = new THREE.Group();
+        group = buffer.group;
         if( buffer.pickable ){
-            pickingGroup = new THREE.Group();
+            pickingGroup = buffer.pickingGroup;
         }
 
         if( buffer.size > 0 ){
@@ -1186,16 +1186,9 @@ NGL.Viewer.prototype = {
 
         }
 
-        buffer.group = group;
-        if( buffer.pickable ){
-            buffer.pickingGroup = pickingGroup;
-        }
-
         this.rotationGroup.updateMatrixWorld();
 
-        // When adding a lot of buffers at once, requesting
-        // a render somehow slows Chrome drastically down.
-        // this.requestRender();
+        this.requestRender();
 
         // NGL.timeEnd( "Viewer.add" );
 

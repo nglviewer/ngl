@@ -603,11 +603,17 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.bufferList.forEach( function( buffer ){
 
-            if( instanceList.length >= 1 ){
-                viewer.add( buffer, instanceList );
-            }else{
-                viewer.add( buffer );
-            }
+            // async to appease Chrome
+
+            setTimeout( function(){
+
+                if( instanceList.length >= 1 ){
+                    viewer.add( buffer, instanceList );
+                }else{
+                    viewer.add( buffer );
+                }
+
+            }, 0 );
 
         } );
 

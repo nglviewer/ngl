@@ -39,6 +39,8 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         "color": { type: "c", value: color },
     });
 
+    this.group = new THREE.Group();
+
     if( pickingColor ){
 
         this.addAttributes({
@@ -46,6 +48,8 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         });
 
         this.pickable = true;
+
+        this.pickingGroup = new THREE.Group();
 
     }
 
@@ -865,6 +869,18 @@ NGL.GeometryBuffer.prototype = {
 
     constructor: NGL.GeometryBuffer,
 
+    get group () {
+
+        return this.meshBuffer.group;
+
+    },
+
+    get pickingGroup () {
+
+        return this.meshBuffer.pickingGroup;
+
+    },
+
     get transparent () {
 
         return this.meshBuffer.transparent;
@@ -1390,6 +1406,8 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
         }
     ]);
 
+    this.group = new THREE.Group();
+
 };
 
 NGL.LineBuffer.prototype = {
@@ -1560,6 +1578,18 @@ NGL.TraceBuffer = function( position, color, params ){
 NGL.TraceBuffer.prototype = {
 
     constructor: NGL.TraceBuffer,
+
+    get group () {
+
+        return this.lineBuffer.group;
+
+    },
+
+    get pickingGroup () {
+
+        return this.lineBuffer.pickingGroup;
+
+    },
 
     get transparent () {
 
@@ -1776,6 +1806,12 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
         size: size,
         pickingColor: pickingColor
     });
+
+    this.group = new THREE.Group();
+
+    if( pickingColor ){
+        this.pickingGroup = new THREE.Group();
+    }
 
     NGL.Buffer.prototype.finalize.call( this );
 
@@ -2045,6 +2081,18 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 NGL.TubeMeshBuffer.prototype = {
 
     constructor: NGL.TubeMeshBuffer,
+
+    get group () {
+
+        return this.meshBuffer.group;
+
+    },
+
+    get pickingGroup () {
+
+        return this.meshBuffer.pickingGroup;
+
+    },
 
     get transparent () {
 
