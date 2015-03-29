@@ -3780,9 +3780,6 @@ NGL.Atom.prototype = {
 
     connectedTo: function( atom ){
 
-        if( this.hetero && atom.hetero &&
-            this.residue.chain.model.structure.hasConnect ) return false;
-
         if( !( this.altloc === '' || atom.altloc === '' ||
                 ( this.altloc === atom.altloc ) ) ) return false;
 
@@ -4649,9 +4646,6 @@ NGL.ProxyAtom.prototype = {
         var aaa = atom.atomArray;
         var ti = this.index;
         var ai = atom.index;
-
-        if( taa.hetero[ ti ] && aaa.hetero[ ai ] ) return false;
-
         var ta = taa.altloc[ ti ];
         var aa = aaa.altloc[ ai ];
 
