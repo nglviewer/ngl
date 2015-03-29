@@ -64,7 +64,7 @@ NGL.Stage.prototype = {
             }
 
             // add frames as trajectory
-            if( object.structure.frames ) object.addTrajectory();
+            if( object.structure.frames.length ) object.addTrajectory();
 
         }else if( object instanceof NGL.SurfaceComponent ){
 

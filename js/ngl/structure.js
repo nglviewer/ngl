@@ -1302,11 +1302,14 @@ NGL.BondSet.prototype = {
 
         }else{
 
-            this.bonds.forEach( function( b ){
+            var bonds = this.bonds;
+            var n = bonds.length;
 
-                callback( b );
+            for( var i = 0; i < n; ++i ){
 
-            } );
+                callback( bonds[ i ] );
+
+            }
 
         }
 
@@ -1320,14 +1323,59 @@ NGL.BondSet.prototype = {
 
     toJSON: function(){
 
-        var output = {};
+        var output = {
 
+            metadata: {
+                version: 0.1,
+                type: 'BondSet',
+                generator: 'BondSetExporter'
+            },
+
+            bondCount: this.bondCount
+
+        };
+
+        var bonds = this.bonds;
+        var n = bonds.length;
+        var bondArray = new Uint32Array( 3 * n );
+        var j, b;
+
+        for( var i = 0; i < n; ++i ){
+
+            j = i * 3;
+            b = bonds[ i ];
+
+            bondArray[ j     ] = b.atom1.index;
+            bondArray[ j + 1 ] = b.atom2.index;
+            bondArray[ j + 2 ] = b.bondOrder;
+
+        }
+
+        output.bondArray = bondArray;
 
         return output;
 
     },
 
-    fromJSON: function(){
+    fromJSON: function( input, atoms ){
+
+        this.bondCount = input.bondCount;
+
+        var bonds = this.bonds;
+        var bondArray = input.bondArray;
+        var n = bondArray.length;
+
+        for( var i = 0; i < n; i += 3 ){
+
+            bonds.push(
+                new NGL.Bond(
+                    atoms[ bondArray[ i ] ],
+                    atoms[ bondArray[ i + 1 ] ],
+                    bondArray[ i + 2 ]
+                )
+            );
+
+        }
 
         return this;
 
@@ -1356,7 +1404,7 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
         this.atom2 = atomA;
     }
 
-    this.bondOrder = 1;
+    this.bondOrder = bondOrder || 1;
 
 };
 
@@ -1561,9 +1609,18 @@ NGL.Structure = function( name, path ){
 
     this.name = name;
     this.path = path;
+    this.title = "";
+    this.id = "";
 
     this.atoms = [];
     this.models = [];
+
+    this.biomolDict = {};
+    this.helices = [];
+    this.sheets = [];
+
+    this.frames = [];
+    this.boxes = [];
 
     this.reset();
 
@@ -1574,8 +1631,6 @@ NGL.Structure.prototype = {
     constructor: NGL.Structure,
 
     atomArray: undefined,
-    frames: undefined,
-    boxes: undefined,
 
     reset: function(){
 
@@ -1587,6 +1642,16 @@ NGL.Structure.prototype = {
         this.atoms.length = 0;
         this.models.length = 0;
         this.bondSet = new NGL.BondSet();
+
+        this.biomolDict = {};
+        this.helices.length = 0;
+        this.sheets.length = 0;
+
+        this.frames.length = 0;
+        this.boxes.length = 0;
+
+        this.center = new THREE.Vector3();
+        this.boundingBox = new THREE.Box3();
 
     },
 
@@ -2303,8 +2368,8 @@ NGL.Structure.prototype = {
 
         if( this.biomolDict ) s.biomolDict = this.biomolDict;
 
-        s.center = this.center.clone();
-        s.boundingBox = this.boundingBox.clone();
+        // s.center = this.center.clone();
+        // s.boundingBox = this.boundingBox.clone();
 
         // clone atomArray
 
@@ -2330,19 +2395,9 @@ NGL.Structure.prototype = {
 
         // clone trajectory
 
-        if( this.frames ){
-
-            // FIXME clone
-            s.frames = this.frames;
-
-        }
-
-        if( this.boxes ){
-
-            // TODO clone?
-            s.boxes = this.boxes;
-
-        }
+        // FIXME clone?
+        s.frames = this.frames;
+        s.boxes = this.boxes;
 
         // clone bonds
 
@@ -2367,6 +2422,8 @@ NGL.Structure.prototype = {
 
     toJSON: function(){
 
+        NGL.time( "NGL.Structure.toJSON" );
+
         var output = {
 
             metadata: {
@@ -2377,11 +2434,15 @@ NGL.Structure.prototype = {
 
             name: this.name,
             path: this.path,
-
             title: this.title,
             id: this.id,
 
             biomolDict: this.biomolDict,
+            helices: this.helices,
+            sheets: this.sheets,
+
+            frames: this.frames,
+            boxes: this.boxes,
 
             center: this.center.toArray(),
             boundingBox: [
@@ -2389,43 +2450,37 @@ NGL.Structure.prototype = {
                 this.boundingBox.max.toArray()
             ],
 
+            atoms: [],
+            // models: [],
+
         };
 
         if( this.atomArray ){
 
             output.atomArray = this.atomArray.toJSON();
 
+        }else{
+
+            var atoms = this.atoms;
+            var n = atoms.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                output.atoms.push( atoms[ i ].toJSON() );
+
+            };
+
         }
 
-        output.models = [];
+        // this.eachModel( function( m ){
 
-        this.eachModel( function( m ){
-
-            output.models.push( m.toJSON() );
-
-        } );
-
-        // output.atoms = [];
-
-        // this.eachAtom( function( a ){
-
-        //     output.atoms.push( a.toJSON() );
+        //     output.models.push( m.toJSON() );
 
         // } );
 
-        if( this.frames ){
-
-            output.frames = this.frames;
-
-        }
-
-        if( this.boxes ){
-
-            output.boxes = this.boxes;
-
-        }
-
         output.bondSet = this.bondSet.toJSON();
+
+        NGL.timeEnd( "NGL.Structure.toJSON" );
 
         return output;
 
@@ -2433,55 +2488,106 @@ NGL.Structure.prototype = {
 
     fromJSON: function( input ){
 
+        NGL.time( "NGL.Structure.fromJSON" );
+
         this.reset();
 
         this.name = input.name;
         this.path = input.path;
-
         this.title = input.title;
         this.id = input.id;
 
-        // this.biomolDict = input.biomolDict;
+        this.biomolDict = input.biomolDict;
+        this.helices = input.helices;
+        this.sheets = input.sheets;
+
+        this.frames = input.frames;
+        this.boxes = input.boxes;
 
         this.center = new THREE.Vector3().fromArray( input.center );
         this.boundingBox = new THREE.Box3(
             input.boundingBox[ 0 ], input.boundingBox[ 1 ]
         );
 
-
         if( input.atomArray ){
 
             this.atomArray = new NGL.AtomArray( input.atomArray );
 
-        }
+            var atomArray = this.atomArray;
+            var atoms = this.atoms;
+            var n = atomArray.usedLength;
 
-        input.models.forEach( function( m ){
+            for( var i = 0; i < n; ++i ){
 
-            this.addModel( new NGL.Model( this ).fromJSON( m ) );
+                atoms.push( new NGL.ProxyAtom( atomArray, i ) );
 
-        }.bind( this ) );
+            }
 
-        this.eachAtom( function( a ){
+        }else{
 
-            this.atoms.push( a );
+            var inputAtoms = input.atoms;
+            var atoms = this.atoms;
+            var n = input.atoms.length;
 
-        }.bind( this ) );
+            for( var i = 0; i < n; ++i ){
 
-        if( input.frames ){
+                atoms.push( new NGL.Atom().fromJSON( inputAtoms[ i ] ) );
 
-            this.frames = input.frames;
-
-        }
-
-        if( input.boxes ){
-
-            this.boxes = input.boxes;
+            }
 
         }
 
-        this.bondSet.fromJSON( input.bondSet );
+        // input.models.forEach( function( m ){
+
+        //     this.addModel( new NGL.Model( this ).fromJSON( m ) );
+
+        // }.bind( this ) );
+
+        this.bondSet.fromJSON( input.bondSet, this.atoms );
+
+        NGL.timeEnd( "NGL.Structure.fromJSON" );
 
         return this;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [];
+
+        if( this.atomArray ){
+
+            transferable.concat( this.atomArray.getTransferable() );
+
+        }
+
+        if( this.frames ){
+
+            var frames = this.frames;
+            var n = this.frames.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                transferable.push( frames[ i ].buffer );
+
+            }
+
+        }
+
+        if( this.boxes ){
+
+            var boxes = this.boxes;
+            var n = this.boxes.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                transferable.push( boxes[ i ].buffer );
+
+            }
+
+        }
+
+        return transferable;
 
     },
 
@@ -3318,7 +3424,7 @@ NGL.Residue.prototype = {
 
     getResname1: function(){
 
-        return NGL.AA1[ this.resname.toUpperCase() ] || '';
+        return NGL.AA1[ this.resname.toUpperCase() ] || '?';
 
     },
 
@@ -3879,6 +3985,7 @@ NGL.AtomArray.prototype = {
     init: function( size ){
 
         this.length = size;
+        this.usedLength = 0;
 
         if( this.useBuffer ){
 
@@ -3914,7 +4021,7 @@ NGL.AtomArray.prototype = {
 
     },
 
-    getBufferList: function(){
+    getTransferable: function(){
 
         if( this.useBuffer ){
 
@@ -3951,16 +4058,29 @@ NGL.AtomArray.prototype = {
 
         var size = this.length;
 
-        // align the offset to multiple of 4
+        // align the offset to multiple of 4 when necessary
         // (offset + 3) & ~0x3 == (offset + 3) / 4 * 4;
+
+        // Int32
 
         this.atomnoOffset = 0;
         this.atomnoSize = 4 * size;
 
-        this.resnameOffset = this.atomnoSize;
-        this.resnameSize =  5 * size;
+        this.resnoOffset = this.atomnoOffset + this.atomnoSize;
+        this.resnoSize = 4 * size;
 
-        this.xOffset = ( this.resnameOffset + this.resnameSize + 3 ) & ~0x3;
+        this.serialOffset = this.resnoOffset + this.resnoSize;
+        this.serialSize = 4 * size;
+
+        this.modelindexOffset = this.serialOffset + this.serialSize;
+        this.modelindexSize = 4 * size;
+
+        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
+        this.globalindexSize = 4 * size;
+
+        // Float32
+
+        this.xOffset = this.globalindexOffset + this.globalindexSize;
         this.xSize = 4 * size;
 
         this.yOffset = this.xOffset + this.xSize;
@@ -3969,46 +4089,39 @@ NGL.AtomArray.prototype = {
         this.zOffset = this.yOffset + this.ySize;
         this.zSize = 4 * size;
 
-        this.elementOffset = this.zOffset + this.zSize;
-        this.elementSize = 3 * size;
-
-        this.chainnameOffset = this.elementOffset + this.elementSize;
-        this.chainnameSize = 4 * size;
-
-        this.resnoOffset = ( this.chainnameOffset + this.chainnameSize + 3 ) & ~0x3;
-        this.resnoSize = 4 * size;
-
-        this.serialOffset = this.resnoOffset + this.resnoSize;
-        this.serialSize = 4 * size;
-
-        this.ssOffset = this.serialOffset + this.serialSize;
-        this.ssSize = size;
-
-        this.vdwOffset = ( this.ssOffset + this.ssSize + 3 ) & ~0x3;
+        this.vdwOffset = this.zOffset + this.zSize;
         this.vdwSize = 4 * size;
 
         this.covalentOffset = this.vdwOffset + this.vdwSize;
         this.covalentSize = 4 * size;
 
-        this.heteroOffset = this.covalentOffset + this.covalentSize;
-        this.heteroSize = size;
-
-        this.bfactorOffset = ( this.heteroOffset + this.heteroSize + 3 ) & ~0x3;
+        this.bfactorOffset = this.covalentOffset + this.covalentSize;
         this.bfactorSize = 4 * size;
 
-        this.altlocOffset = this.bfactorOffset + this.bfactorSize;
-        this.altlocSize = size;
+        // Uint8
 
-        this.atomnameOffset = this.altlocOffset + this.altlocSize;
+        this.atomnameOffset = this.bfactorOffset + this.bfactorSize;
         this.atomnameSize = 4 * size;
 
-        this.modelindexOffset = this.atomnameOffset + this.atomnameSize;
-        this.modelindexSize = 4 * size;
+        this.chainnameOffset = this.atomnameOffset + this.atomnameSize;
+        this.chainnameSize = 4 * size;
 
-        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
-        this.globalindexSize = 4 * size;
+        this.elementOffset = this.chainnameOffset + this.chainnameSize;
+        this.elementSize = 3 * size;
 
-        this.byteLength = this.globalindexOffset + this.globalindexSize;
+        this.resnameOffset = this.elementOffset + this.elementSize;
+        this.resnameSize =  5 * size;
+
+        this.ssOffset = this.resnameOffset + this.resnameSize;
+        this.ssSize = size;
+
+        this.heteroOffset = this.ssOffset + this.ssSize;
+        this.heteroSize = size;
+
+        this.altlocOffset = this.heteroOffset + this.heteroSize;
+        this.altlocSize = size;
+
+        this.byteLength = this.altlocOffset + this.altlocSize;
 
     },
 
@@ -4051,98 +4164,6 @@ NGL.AtomArray.prototype = {
 
         for( var i = 0; i < size; ++i ){
             this.bonds[ i ] = [];
-        }
-
-    },
-
-    toJSON: function(){
-
-        if( this.useBuffer ){
-
-            return {
-                length: this.length,
-
-                buffer: this.buffer,
-
-                bonds: this.bonds,
-                residue: this.residue
-            };
-
-        }else{
-
-            return {
-                length: this.length,
-
-                atomno: this.atomno,
-                resname: this.resname,
-                x: this.x,
-                y: this.y,
-                z: this.z,
-                element: this.element,
-                chainname: this.chainname,
-                resno: this.resno,
-                serial: this.serial,
-                ss: this.ss,
-                vdw: this.vdw,
-                covalent: this.covalent,
-                hetero: this.hetero,
-                bfactor: this.bfactor,
-                altloc: this.altloc,
-                atomname: this.atomname,
-                modelindex: this.modelindex,
-                globalindex: this.globalindex,
-
-                bonds: this.bonds,
-                residue: this.residue
-            };
-
-        }
-
-    },
-
-    fromJSON: function( input ){
-
-        this.length = input.length;
-
-        if( this.useBuffer ){
-
-            this.makeOffsetAndSize();
-            this.buffer = input.buffer;
-            this.makeTypedArrays();
-
-        }else{
-
-            this.atomno = input.atomno;
-            this.resname = input.resname;
-            this.x = input.x;
-            this.y = input.y;
-            this.z = input.z;
-            this.element = input.element;
-            this.chainname = input.chainname;
-            this.resno = input.resno;
-            this.serial = input.serial;
-            this.ss = input.ss;
-            this.vdw = input.vdw;
-            this.covalent = input.covalent;
-            this.hetero = input.hetero;
-            this.bfactor = input.bfactor;
-            this.altloc = input.altloc;
-            this.atomname = input.atomname;
-            this.modelindex = input.modelindex;
-            this.globalindex = input.globalindex;
-
-        }
-
-        if( input.bonds ){
-            this.bonds = input.bonds;
-        }else{
-            this.makeBonds();
-        }
-
-        if( input.residue ){
-            this.residue = input.residue;
-        }else{
-            this.makeResidue();
         }
 
     },
@@ -4283,6 +4304,8 @@ NGL.AtomArray.prototype = {
 
     clone: function(){
 
+        // FIXME take useBuffer into account
+
         var aa = new NGL.AtomArray( this.length );
 
         aa.atomno.set( this.atomno );
@@ -4304,7 +4327,104 @@ NGL.AtomArray.prototype = {
         aa.modelindex.set( this.modelindex );
         aa.globalindex.set( this.globalindex );
 
+        aa.usedLength = this.usedLength;
+
         return aa;
+
+    },
+
+    toJSON: function(){
+
+        if( this.useBuffer ){
+
+            return {
+                length: this.length,
+                usedLength: this.usedLength,
+
+                buffer: this.buffer,
+
+                // bonds: this.bonds,
+                // residue: this.residue
+            };
+
+        }else{
+
+            return {
+                length: this.length,
+                usedLength: this.usedLength,
+
+                atomno: this.atomno,
+                resname: this.resname,
+                x: this.x,
+                y: this.y,
+                z: this.z,
+                element: this.element,
+                chainname: this.chainname,
+                resno: this.resno,
+                serial: this.serial,
+                ss: this.ss,
+                vdw: this.vdw,
+                covalent: this.covalent,
+                hetero: this.hetero,
+                bfactor: this.bfactor,
+                altloc: this.altloc,
+                atomname: this.atomname,
+                modelindex: this.modelindex,
+                globalindex: this.globalindex,
+
+                // bonds: this.bonds,
+                // residue: this.residue
+            };
+
+        }
+
+    },
+
+    fromJSON: function( input ){
+
+        this.length = input.length;
+        this.usedLength = input.usedLength;
+
+        if( this.useBuffer ){
+
+            this.makeOffsetAndSize();
+            this.buffer = input.buffer;
+            this.makeTypedArrays();
+
+        }else{
+
+            this.atomno = input.atomno;
+            this.resname = input.resname;
+            this.x = input.x;
+            this.y = input.y;
+            this.z = input.z;
+            this.element = input.element;
+            this.chainname = input.chainname;
+            this.resno = input.resno;
+            this.serial = input.serial;
+            this.ss = input.ss;
+            this.vdw = input.vdw;
+            this.covalent = input.covalent;
+            this.hetero = input.hetero;
+            this.bfactor = input.bfactor;
+            this.altloc = input.altloc;
+            this.atomname = input.atomname;
+            this.modelindex = input.modelindex;
+            this.globalindex = input.globalindex;
+
+        }
+
+        if( input.bonds ){
+            this.bonds = input.bonds;
+        }else{
+            this.makeBonds();
+        }
+
+        if( input.residue ){
+            this.residue = input.residue;
+        }else{
+            this.makeResidue();
+        }
 
     },
 
@@ -4339,6 +4459,7 @@ NGL.AtomArray.prototype = {
         delete this.residue;
 
         this.length = 0;
+        this.usedLength = 0;
 
     }
 
