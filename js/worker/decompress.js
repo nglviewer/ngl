@@ -18,8 +18,13 @@ onmessage = function( e ){
 
     var d = e.data;
 
-    self.postMessage(
-        NGL.decompress( d.data, d.file, d.asBinary )
-    );
+    var value = NGL.decompress( d.data, d.file, d.asBinary );
+    var transferable = [];
+
+    if( d.asBinary ){
+        transferable.push( value.buffer );
+    }
+
+    self.postMessage( value, transferable );
 
 }

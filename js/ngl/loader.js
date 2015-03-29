@@ -72,6 +72,7 @@ NGL.decompress = function( data, file, asBinary, callback ){
 
     }else if( ext === "bz2" ){
 
+        // FIXME need to get binData
         var bitstream = bzip2.array( data );
         decompressedData = bzip2.simple( bitstream )
 
@@ -107,18 +108,22 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
     if( NGL.worker && typeof Worker !== "undefined" ){
 
+        NGL.time( "NGL.decompressWorker" );
+
         var worker = new Worker( "../js/worker/decompress.js" );
 
         worker.onmessage = function( e ){
 
-            callback( e.data );
+            NGL.timeEnd( "NGL.decompressWorker" );
             worker.terminate();
+            callback( e.data );
 
         };
 
-        worker.postMessage( {
-            data: data, file: file, asBinary: asBinary
-        } );
+        worker.postMessage(
+            { data: data, file: file, asBinary: asBinary },
+            [ data.buffer ? data.buffer : data ]
+        );
 
     }else{
 
