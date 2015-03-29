@@ -19,17 +19,22 @@ var parser = {
 
 onmessage = function( e ){
 
-    // console.log( e.data );
+    NGL.time( "WORKER parse" );
 
     var d = e.data;
+    var p = new parser[ d.type ]( d.name, d.path, d.params );
 
-    var p = new parser[ d.type ];
+    p.parse( d.str, function(){
 
-    p.parse( d.data, function( structure ){
+        NGL.timeEnd( "WORKER parse" );
 
-        self.postMessage(
-            structure.toJSON()
-        );
+        var s = p.structure;
+
+        // FIXME put into a more efficient format and transfer?
+        s.helices = [];
+        s.sheets = [];
+
+        self.postMessage( s.toJSON(), s.getTransferable() );
 
     } );
 

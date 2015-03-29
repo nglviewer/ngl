@@ -6,7 +6,16 @@
 
 NGL.processArray = function( array, fn, callback, chunkSize ){
 
-    chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+    if( typeof importScripts === 'function' ){
+
+        // no chunking required when inside a web worker
+        chunkSize = array.length;
+
+    }else{
+
+        chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+
+    }
 
     var n = array.length;
 
@@ -188,6 +197,8 @@ NGL.createAtomArray = function( structure, callback ){
             atomArray.covalent[ i ] = ai.covalent;
             atomArray.modelindex[ i ] = ai.modelindex;
 
+            atomArray.usedLength += 1;
+
             // set proxy atoms in already existing bonds
 
             if( ai.bonds.length ){
@@ -239,10 +250,109 @@ NGL.createAtomArray = function( structure, callback ){
 };
 
 
+NGL.assignSecondaryStructure = function( structure, callback ){
+
+    NGL.time( "NGL.assignSecondaryStructure" );
+
+    async.series( [
+
+        // assign helix
+        function( wcallback ){
+
+            var helices = structure.helices || [];
+
+            NGL.processArray(
+
+                helices,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var helix = helices[ i ];
+
+                        // [ begChain, begResno, endChain, endResno, type ]
+
+                        var selection = new NGL.Selection(
+                            helix[ 1 ] + "-" + helix[ 3 ] + ":" + helix[ 0 ]
+                        );
+
+                        var helixType = helix[ 4 ];
+
+                        structure.eachResidue( function( r ){
+
+                            r.ss = helixType;
+
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        },
+
+        // assign strand
+        function( wcallback ){
+
+            var sheets = structure.sheets || [];
+
+            NGL.processArray(
+
+                sheets,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var sheet = sheets[ i ];
+
+                        // [ begChain, begResno, endChain, endResno ]
+
+                        var selection = new NGL.Selection(
+                            sheet[ 1 ] + "-" + sheet[ 3 ] + ":" + sheet[ 0 ]
+                        );
+
+                        structure.eachResidue( function( r ){
+
+                            r.ss = "s";
+
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        }
+
+    ], function(){
+
+        NGL.timeEnd( "NGL.assignSecondaryStructure" );
+
+        callback();
+
+    } );
+
+    return structure;
+
+};
+
+
 ////////////////////
 // StructureParser
 
-NGL.useAtomArrayThreshold = 100000;
+NGL.useAtomArrayThreshold = 1000;
 
 NGL.StructureParser = function( name, path, params ){
 
@@ -297,11 +407,31 @@ NGL.StructureParser.prototype = {
 
             function( wcallback ){
 
+                NGL.assignSecondaryStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
                 self._postProcess( self.structure, wcallback );
 
             },
 
             function( wcallback ){
+
+                var s = self.structure;
+
+                // check for secondary structure
+                if( s.helices.length === 0 && s.sheets.length === 0 ){
+                    s._doAutoSS = true;
+                }
+
+                // check for chain names
+                var _doAutoChainName = true;
+                s.eachChain( function( c ){
+                    if( c.chainname ) _doAutoChainName = false;
+                } );
+                s._doAutoChainName = _doAutoChainName;
 
                 self.structure.postProcess( wcallback );
 
@@ -321,29 +451,50 @@ NGL.StructureParser.prototype = {
 
         if( NGL.worker && typeof Worker !== "undefined" ){
 
+            var __timeName = "NGL.PdbParser.parseWorker " + this.name;
+
+            NGL.time( __timeName );
+
             var s = this.structure;
+            var scope = this;
             var worker = new Worker( "../js/worker/parse.js" );
 
             worker.onmessage = function( e ){
 
-                // console.log( e.data );
+                NGL.timeEnd( __timeName );
 
-                e.data.name = s.name;
-                e.data.path = s.path;
+                worker.terminate();
+
+                if( NGL.debug ) console.log( e.data );
 
                 s.fromJSON( e.data );
 
-                s.postProcess( function(){
+                async.series( [
+
+                    function( wcallback ){
+
+                        NGL.buildStructure( s, wcallback );
+
+                    },
+
+                ], function(){
 
                     callback( s );
-                    worker.terminate();
 
                 } );
 
             };
 
             worker.postMessage( {
-                data: str, type: this.type
+                str: str,
+                type: this.type,
+                name: this.name,
+                path: this.path,
+                params: {
+                    firstModelOnly: this.firstModelOnly,
+                    asTrajectory: this.asTrajectory,
+                    cAlphaOnly: this.cAlphaOnly
+                }
             } );
 
         }else{
@@ -365,7 +516,7 @@ NGL.StructureParser.prototype = {
 
     _postProcess: function( structure, callback ){
 
-        NGL.warn( "NGL.StructureParser._postProcess not implemented" );
+        // NGL.warn( "NGL.StructureParser._postProcess not implemented" );
         callback();
 
     }
@@ -398,21 +549,20 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
     var cAlphaOnly = this.cAlphaOnly;
 
-    var frames = [];
-    var boxes = [];
+    var frames = s.frames;
+    var boxes = s.boxes;
     var doFrames = false;
     var currentFrame, currentCoord;
 
-    s.title = '';
-    s.id = '';
-    s.sheet = [];
-    s.helix = [];
-
-    s.biomolDict = {};
-    var biomolDict = s.biomolDict;
+    var id = s.id;
+    var title = s.title;
 
     var atoms = s.atoms;
     var bondSet = s.bondSet;
+    var helices = s.helices;
+    var sheets = s.sheets;
+    var biomolDict = s.biomolDict;
+    var currentBiomol;
 
     var lines = str.split( "\n" );
 
@@ -426,14 +576,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     var serialDict = {};
 
-    var id = s.id;
-    var title = s.title;
-    var sheet = s.sheet;
-    var helix = s.helix;
-
     s.hasConnect = false;
-
-    var currentBiomol;
 
     var idx = 0;
     var modelIdx = 0;
@@ -544,7 +687,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var endResi = parseInt( line.substr( 33, 4 ) );
                 var helixType = parseInt( line.substr( 39, 1 ) );
                 helixType = helixTypes[ helixType ] || helixTypes[""];
-                helix.push([ startChain, startResi, endChain, endResi, helixType ]);
+                helices.push([ startChain, startResi, endChain, endResi, helixType ]);
 
             }else if( recordName === 'SHEET ' ){
 
@@ -552,7 +695,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var startResi = parseInt( line.substr( 22, 4 ) );
                 var endChain = line[ 32 ];
                 var endResi = parseInt( line.substr( 33, 4 ) );
-                sheet.push([ startChain, startResi, endChain, endResi ]);
+                sheets.push([ startChain, startResi, endChain, endResi ]);
 
             }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
@@ -697,77 +840,11 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
         function(){
 
             NGL.timeEnd( __timeName );
-
-            if( asTrajectory ){
-                s.frames = frames;
-                s.boxes = boxes;
-            }
-
             callback();
 
         }
 
     );
-
-};
-
-NGL.PdbParser.prototype._postProcess = function( structure, callback ){
-
-    var s = structure
-    var helix = s.helix;
-    var sheet = s.sheet;
-
-    // assign secondary structures
-
-    NGL.time( "NGL.PdbParser parse ss" );
-
-    for( var j = 0; j < sheet.length; j++ ){
-
-        var selection = new NGL.Selection(
-            sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
-        );
-
-        s.eachResidue( function( r ){
-
-            r.ss = "s";
-
-        }, selection );
-
-    }
-
-    for( var j = 0; j < helix.length; j++ ){
-
-        var selection = new NGL.Selection(
-            helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
-        );
-
-        var helixType = helix[j][4];
-
-        s.eachResidue( function( r ){
-
-            r.ss = helixType;
-
-        }, selection );
-
-    }
-
-    NGL.timeEnd( "NGL.PdbParser parse ss" );
-
-    if( sheet.length === 0 && helix.length === 0 ){
-
-        s._doAutoSS = true;
-
-    }
-
-    // check for chain names
-
-    var _doAutoChainName = true;
-    s.eachChain( function( c ){
-        if( c.chainname ) _doAutoChainName = false;
-    } );
-    s._doAutoChainName = _doAutoChainName;
-
-    callback();
 
 };
 
@@ -800,8 +877,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
     var cAlphaOnly = this.cAlphaOnly;
 
-    var frames = [];
-    var boxes = [];
+    var frames = s.frames;
+    var boxes = s.boxes;
     var doFrames = false;
     var currentFrame, currentCoord;
 
@@ -814,7 +891,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var vdwRadii = NGL.VdwRadii;
 
     s.title = lines[ 0 ].trim();
-    s.size = parseInt( lines[ 1 ] );
+
+    var size = parseInt( lines[ 1 ] );
     var b = lines[ lines.length-1 ].trim().split( /\s+/ );
     s.box = [
         parseFloat( b[0] ) * 10,
@@ -823,11 +901,11 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     ];
 
     // determine number of decimal places
-    var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf(".") - 1;
+    var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf( "." ) - 1;
     var lpos = 5 + ndec;
     var xpos = 20;
     var ypos = 20 + lpos;
-    var zpos = 20 + 2 * ( lpos );
+    var zpos = 20 + 2 * lpos;
 
     //
 
@@ -943,23 +1021,11 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         function(){
 
             NGL.timeEnd( __timeName );
-
-            if( asTrajectory ){
-                s.frames = frames;
-                s.boxes = boxes;
-            }
-
             callback();
 
         }
 
     );
-
-};
-
-NGL.GroParser.prototype._postProcess = function( structure, callback ){
-
-    callback();
 
 };
 
@@ -989,19 +1055,12 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
     var cAlphaOnly = this.cAlphaOnly;
 
-    var frames = [];
-    var boxes = [];
+    var frames = s.frames;
+    var boxes = s.boxes;
     var doFrames = false;
     var currentFrame, currentCoord;
 
-    s.title = '';
-    s.id = '';
-    s.sheet = [];
-    s.helix = [];
-
-    s.biomolDict = {};
-    var biomolDict = s.biomolDict;
-
+    var title = s.title;
     var atoms = s.atoms;
     var bondSet = s.bondSet;
 
@@ -1015,15 +1074,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
-    var serialDict = {};
-
-    var title = s.title;
-    var sheet = s.sheet;
-    var helix = s.helix;
-
     s.hasConnect = false;
-
-    var currentBiomol;
 
     //
 
@@ -1032,7 +1083,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var reDoubleQuote = /"/g;
 
     var cif = {};
-    s.cif = cif;
+    this.cif = cif;
 
     var pendingString = false;
     var currentString = null;
@@ -1322,6 +1373,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                             atomArray.covalent[ idx ] = covRadii[ element ];
                             atomArray.modelindex[ idx ] = modelIdx;
 
+                            atomArray.usedLength += 1;
+
                         }else{
 
                             a = new NGL.Atom();
@@ -1395,40 +1448,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     }
 
-    NGL.processArray(
-
-        lines,
-
-        _chunked,
-
-        function(){
-
-            NGL.timeEnd( __timeName );
-
-            if( asTrajectory ){
-                s.frames = frames;
-                s.boxes = boxes;
-            }
-
-            callback();
-
-        }
-
-    );
-
-};
-
-NGL.CifParser.prototype._postProcess = function( structure, callback ){
-
-    NGL.time( "NGL.CifParser._postProcess" );
-
-    var s = structure;
-    var cif = s.cif;
-
-    if( cif.struct && cif.struct.title ){
-        s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
-    }
-
     function _ensureArray( dict, field ){
 
         if( !Array.isArray( dict[ field ] ) ){
@@ -1441,10 +1460,34 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     async.series( [
 
-        // assign helix
+        // parse lines
         function( wcallback ){
 
-            var helixTypes = NGL.HelixTypes;
+            NGL.processArray(
+
+                lines,
+
+                _chunked,
+
+                function(){
+
+                    if( cif.struct && cif.struct.title ){
+
+                        s.title = cif.struct.title.trim()
+                                    .replace( /^['"]+|['"]+$/g, "" );
+
+                    }
+
+                    wcallback();
+
+                }
+
+            );
+
+        },
+
+        // get helices
+        function( wcallback ){
 
             var sc = cif.struct_conf;
 
@@ -1454,6 +1497,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            var helices = s.helices;
+            var helixTypes = NGL.HelixTypes;
 
             // ensure data is in lists
             _ensureArray( sc, "id" );
@@ -1470,19 +1516,15 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                         if( !Number.isNaN( helixType ) ){
 
-                            var selection = new NGL.Selection(
-                                sc.beg_auth_seq_id[ i ] + "-" +
-                                sc.end_auth_seq_id[ i ] + ":" +
-                                sc.beg_label_asym_id[ i ]
-                            );
+                            helices.push( [
 
-                            helixType = helixTypes[ helixType ] || helixTypes[""];
+                                sc.beg_label_asym_id[ i ],
+                                sc.beg_auth_seq_id[ i ],
+                                sc.end_label_asym_id[ i ],
+                                sc.end_auth_seq_id[ i ],
+                                helixTypes[ helixType ] || helixTypes[""]
 
-                            s.eachResidue( function( r ){
-
-                                r.ss = helixType;
-
-                            }, selection );
+                            ] );
 
                         }
 
@@ -1498,7 +1540,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
         },
 
-        // assign strand
+        // get sheets
         function( wcallback ){
 
             var ssr = cif.struct_sheet_range;
@@ -1509,6 +1551,8 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            var sheets = s.sheets;
 
             // ensure data is in lists
             _ensureArray( ssr, "id" );
@@ -1521,17 +1565,14 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                     for( var i = _i; i < _n; ++i ){
 
-                        var selection = new NGL.Selection(
-                            ssr.beg_auth_seq_id[ i ] + "-" +
-                            ssr.end_auth_seq_id[ i ] + ":" +
-                            ssr.beg_label_asym_id[ i ]
-                        );
+                        sheets.push( [
 
-                        s.eachResidue( function( r ){
+                            ssr.beg_label_asym_id[ i ],
+                            ssr.beg_auth_seq_id[ i ],
+                            ssr.end_label_asym_id[ i ],
+                            ssr.end_auth_seq_id[ i ]
 
-                            r.ss = "s";
-
-                        }, selection );
+                        ] );
 
                     }
 
@@ -1544,6 +1585,162 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             );
 
         },
+
+        // biomol processing
+        function( wcallback ){
+
+            var operDict = {};
+            var biomolDict = s.biomolDict;
+
+            if( cif.pdbx_struct_oper_list ){
+
+                var op = cif.pdbx_struct_oper_list;
+
+                // ensure data is in lists
+                _ensureArray( op, "id" );
+
+                op.id.forEach( function( id, i ){
+
+                    var m = new THREE.Matrix4();
+                    var elms = m.elements;
+
+                    elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                    elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                    elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                    elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                    elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                    elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                    elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                    elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                    elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                    elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                    elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                    elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                    m.transpose();
+
+                    operDict[ id ] = m;
+
+                } );
+
+            }
+
+            if( cif.pdbx_struct_assembly_gen ){
+
+                var gen = cif.pdbx_struct_assembly_gen;
+
+                // ensure data is in lists
+                _ensureArray( gen, "assembly_id" );
+
+                var getMatrixDict = function( expr ){
+
+                    var matDict = {};
+
+                    var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+
+                    l.forEach( function( e ){
+
+                        if( e.indexOf( "-" ) !== -1 ){
+
+                            var es = e.split( "-" );
+
+                            var j = parseInt( es[ 0 ] );
+                            var m = parseInt( es[ 1 ] );
+
+                            for( ; j <= m; ++j ){
+
+                                matDict[ j ] = operDict[ j ];
+
+                            }
+
+                        }else{
+
+                            matDict[ e ] = operDict[ e ];
+
+                        }
+
+                    } );
+
+                    return matDict;
+
+                }
+
+                gen.assembly_id.forEach( function( id, i ){
+
+                    var md = {};
+                    var oe = gen.oper_expression[ i ];
+
+                    if( oe.indexOf( ")(" ) !== -1 ){
+
+                        oe = oe.split( ")(" );
+
+                        var md1 = getMatrixDict( oe[ 0 ] );
+                        var md2 = getMatrixDict( oe[ 1 ] );
+
+                        Object.keys( md1 ).forEach( function( k1 ){
+
+                            Object.keys( md2 ).forEach( function( k2 ){
+
+                                var mat = new THREE.Matrix4();
+
+                                mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
+                                md[ k1 + "x" + k2 ] = mat;
+
+                            } );
+
+                        } );
+
+                    }else{
+
+                        md = getMatrixDict( oe );
+
+                    }
+
+                    biomolDict[ id ] = {
+
+                        matrixDict: md,
+                        chainList: gen.asym_id_list[ i ].split( "," )
+
+                    };
+
+                } );
+
+            }
+
+            wcallback();
+
+        }
+
+    ], function(){
+
+        NGL.timeEnd( __timeName );
+        callback();
+
+    } );
+
+};
+
+NGL.CifParser.prototype._postProcess = function( structure, callback ){
+
+    NGL.time( "NGL.CifParser._postProcess" );
+
+    var s = structure;
+    var cif = this.cif;
+
+    function _ensureArray( dict, field ){
+
+        if( !Array.isArray( dict[ field ] ) ){
+            Object.keys( dict ).forEach( function( key ){
+                dict[ key ] = [ dict[ key ] ];
+            } );
+        }
+
+    }
+
+    async.series( [
 
         // add connections
         function( wcallback ){
@@ -1634,147 +1831,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     ], function(){
 
-        if( !cif.struct_conf && !cif.struct_sheet_range ){
-
-            s._doAutoSS = true;
-
-        }
-
-        // biomol processing
-
-        var operDict = {};
-
-        s.biomolDict = {};
-        var biomolDict = s.biomolDict;
-
-        if( cif.pdbx_struct_oper_list ){
-
-            var op = cif.pdbx_struct_oper_list;
-
-            // ensure data is in lists
-            _ensureArray( op, "id" );
-
-            op.id.forEach( function( id, i ){
-
-                var m = new THREE.Matrix4();
-                var elms = m.elements;
-
-                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
-
-                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
-
-                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
-
-                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
-
-                m.transpose();
-
-                operDict[ id ] = m;
-
-            } );
-
-        }
-
-        if( cif.pdbx_struct_assembly_gen ){
-
-            var gen = cif.pdbx_struct_assembly_gen;
-
-            // ensure data is in lists
-            _ensureArray( gen, "assembly_id" );
-
-            var getMatrixDict = function( expr ){
-
-                var matDict = {};
-
-                var l = expr.replace( /[\(\)']/g, "" ).split( "," );
-
-                l.forEach( function( e ){
-
-                    if( e.indexOf( "-" ) !== -1 ){
-
-                        var es = e.split( "-" );
-
-                        var j = parseInt( es[ 0 ] );
-                        var m = parseInt( es[ 1 ] );
-
-                        for( ; j <= m; ++j ){
-
-                            matDict[ j ] = operDict[ j ];
-
-                        }
-
-                    }else{
-
-                        matDict[ e ] = operDict[ e ];
-
-                    }
-
-                } );
-
-                return matDict;
-
-            }
-
-            gen.assembly_id.forEach( function( id, i ){
-
-                var md = {};
-                var oe = gen.oper_expression[ i ];
-
-                if( oe.indexOf( ")(" ) !== -1 ){
-
-                    oe = oe.split( ")(" );
-
-                    var md1 = getMatrixDict( oe[ 0 ] );
-                    var md2 = getMatrixDict( oe[ 1 ] );
-
-                    Object.keys( md1 ).forEach( function( k1 ){
-
-                        Object.keys( md2 ).forEach( function( k2 ){
-
-                            var mat = new THREE.Matrix4();
-
-                            mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
-                            md[ k1 + "x" + k2 ] = mat;
-
-                        } );
-
-                    } );
-
-                }else{
-
-                    md = getMatrixDict( oe );
-
-                }
-
-                biomolDict[ id ] = {
-
-                    matrixDict: md,
-                    chainList: gen.asym_id_list[ i ].split( "," )
-
-                };
-
-            } );
-
-        }
-
-        // check for chain names
-
-        var _doAutoChainName = true;
-        s.eachChain( function( c ){
-            if( c.chainname ) _doAutoChainName = false;
-        } );
-        s._doAutoChainName = _doAutoChainName;
-
         NGL.timeEnd( "NGL.CifParser._postProcess" );
-
         callback();
 
     } );
