@@ -40,6 +40,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     });
 
     this.group = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
 
     if( pickingColor ){
 
@@ -48,8 +49,6 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         });
 
         this.pickable = true;
-
-        this.pickingGroup = new THREE.Group();
 
     }
 
@@ -1808,10 +1807,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     });
 
     this.group = new THREE.Group();
-
-    if( pickingColor ){
-        this.pickingGroup = new THREE.Group();
-    }
+    this.pickingGroup = new THREE.Group();
 
     NGL.Buffer.prototype.finalize.call( this );
 
