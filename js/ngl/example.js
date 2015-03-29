@@ -984,7 +984,7 @@ NGL.Examples = {
                 o.addRepresentation( "licorice", {} );
                 o.addRepresentation( "spacefill" );
                 o.addRepresentation( "surface" );
-                stage.centerView();
+                o.centerView();
 
             } );
 

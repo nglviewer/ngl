@@ -2159,7 +2159,7 @@ NGL.MolecularSurface = function( structure, probeRadius ){
 
             var r = NGL.VdwRadii[ element ];
 
-            if( depty[ r ] ) continue;
+            if( depty[ element ] ) continue;
 
             if( !btype ){
                 tradius = r * scaleFactor + 0.5;
@@ -2168,9 +2168,9 @@ NGL.MolecularSurface = function( structure, probeRadius ){
             }
 
             sradius = tradius * tradius;
-            widxz[ r ] = Math.floor( tradius ) + 1;
-            widxz_r = widxz[ r ];
-            depty[ r ] = new Int32Array( widxz_r * widxz_r );
+            widxz[ element ] = Math.floor( tradius ) + 1;
+            widxz_r = widxz[ element ];
+            depty[ element ] = new Int32Array( widxz_r * widxz_r );
             indx = 0;
 
             for( j = 0; j < widxz_r; ++j ){
@@ -2181,12 +2181,12 @@ NGL.MolecularSurface = function( structure, probeRadius ){
 
                     if( txz > sradius ){
 
-                        depty[ r ][ indx ] = -1;
+                        depty[ element ][ indx ] = -1;
 
                     }else{
 
                         tdept = Math.sqrt( sradius - txz );
-                        depty[ r ][ indx ] = Math.floor( tdept );
+                        depty[ element ][ indx ] = Math.floor( tdept );
 
                     }
 
@@ -2209,7 +2209,7 @@ NGL.MolecularSurface = function( structure, probeRadius ){
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
         cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
 
-        var at = atom.vdw;
+        var at = atom.element;
         var depty_at = depty[ at ];
         var nind = 0;
         var cnt = 0;
@@ -2310,7 +2310,7 @@ NGL.MolecularSurface = function( structure, probeRadius ){
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
         cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
 
-        var at = atom.vdw;
+        var at = atom.element;
         var pWH = pWidth * pHeight;
 
         for( i = 0, n = widxz[at]; i < n; ++i ){
