@@ -857,9 +857,13 @@ UI.ColorPicker.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPicker.prototype.setValue = function( value ){
 
-    this._settingValue = true;
-    this.colorPicker.setHex( value );
-    this._settingValue = false;
+    if( value !== this.hex ){
+
+        this._settingValue = true;
+        this.colorPicker.setHex( value );
+        this._settingValue = false;
+
+    }
 
     return this;
 
