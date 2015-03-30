@@ -2131,20 +2131,54 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
     var v = this.volume;
     var header = {};
-
     var lines = str.split( "\n" );
+    var reWhitespace = /\s+/;
+    var bohrToAngstromFactor = 0.529177210859;
 
-    // TODO parse header
+    function headerhelper( k, l ) {
+        return parseFloat( lines[ k ].trim().split( reWhitespace )[ l ] );
+    }
 
-    var data = new Float32Array(
-        header.NX * header.NY * header.NZ
-    );
+    header.atomCount = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
+    header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor; //Position of origin of volumetric data
+    header.originY = headerhelper( 2, 2 ) * bohrToAngstromFactor;
+    header.originZ = headerhelper( 2, 3 ) * bohrToAngstromFactor;
+    header.NVX = headerhelper( 3, 0 ); //Number of voxels
+    header.NVY = headerhelper( 4, 0 );
+    header.NVZ = headerhelper( 5, 0 );
+    header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor; //Axis vector
+    header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor;
+    header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor;
 
-    // TODO parse voxel data
+    var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
+    var count = 0;
+
+    function _getData( _i ){
+
+        for( var i = _i; i < lines.length; ++i ){
+
+            var line = lines[ i ].trim();
+            if( line !== "" ){
+
+                line = line.split( reWhitespace );
+                for( var j = 0, lj = line.length; j < lj; ++j ){
+                    if ( line.length !==1 ) {
+                        data[ count ] = parseFloat( line[ j ] );
+                        ++count;
+                    };
+                };
+
+            }
+
+        };
+
+    };
+
+    _getData( header.atomCount + 6 );
 
     v.header = header;
 
-    v.setData( data, header.NX, header.NY, header.NZ );
+    v.setData( data, header.NVZ, header.NVY, header.NVX );
 
     NGL.timeEnd( __timeName );
 
@@ -2159,8 +2193,18 @@ NGL.CubeParser.prototype.makeMatrix = function(){
     var matrix = new THREE.Matrix4();
 
     matrix.multiply(
+        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    );
+
+    matrix.multiply(
         new THREE.Matrix4().makeTranslation(
-            h.NXSTART, h.NYSTART, h.NZSTART
+            h.originZ, h.originY, h.originX
+        )
+    );
+
+    matrix.multiply(
+        new THREE.Matrix4().makeScale(
+            -h.AVZ, h.AVY, h.AVX
         )
     );
 

@@ -988,6 +988,25 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "cube": function( stage ){
+
+            stage.loadFile( "data://acrolein1gs.cube.gz", function( o ){
+
+                o.addRepresentation( "surface", { isolevel: 0.1, wireframe: true } );
+                o.addRepresentation( "dot", { visible: false } );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "data://acrolein.pdb", function( o ){
+
+                o.addRepresentation( "licorice" );
+                stage.centerView();
+
+            } );
+
         }
 
     }
