@@ -2133,22 +2133,22 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
     var header = {};
     var lines = str.split( "\n" );
     var reWhitespace = /\s+/;
-    var bor_to_ang = 0.529177210859;
+    var bohrToAngstromFactor = 0.529177210859;
 
     function headerhelper( k, l ) {
         return parseFloat( lines[ k ].trim().split( reWhitespace )[ l ] );
     }
 
     header.atomCount = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
-    header.PosOriX = headerhelper( 2, 1 ) * bor_to_ang; //Position of origin of volumetric data
-    header.PosOriY = headerhelper( 2, 2 ) * bor_to_ang;
-    header.PosOriZ = headerhelper( 2, 3 ) * bor_to_ang;
+    header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor; //Position of origin of volumetric data
+    header.originY = headerhelper( 2, 2 ) * bohrToAngstromFactor;
+    header.originZ = headerhelper( 2, 3 ) * bohrToAngstromFactor;
     header.NVX = headerhelper( 3, 0 ); //Number of voxels
     header.NVY = headerhelper( 4, 0 );
     header.NVZ = headerhelper( 5, 0 );
-    header.AVX = headerhelper( 3, 1 ) * bor_to_ang; //Axis vector
-    header.AVY = headerhelper( 4, 2 ) * bor_to_ang;
-    header.AVZ = headerhelper( 5, 3 ) * bor_to_ang;
+    header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor; //Axis vector
+    header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor;
+    header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor;
 
     var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
     var count = 0;
@@ -2198,7 +2198,7 @@ NGL.CubeParser.prototype.makeMatrix = function(){
 
     matrix.multiply(
         new THREE.Matrix4().makeTranslation(
-            h.PosOriZ, h.PosOriY, h.PosOriX
+            h.originZ, h.originY, h.originX
         )
     );
 
