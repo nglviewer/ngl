@@ -72,7 +72,6 @@ NGL.decompress = function( data, file, asBinary, callback ){
 
     }else if( ext === "bz2" ){
 
-        // FIXME need to get binData
         var bitstream = bzip2.array( data );
         decompressedData = bzip2.simple( bitstream )
 
@@ -108,22 +107,18 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
     if( NGL.worker && typeof Worker !== "undefined" ){
 
-        NGL.time( "NGL.decompressWorker" );
-
         var worker = new Worker( "../js/worker/decompress.js" );
 
         worker.onmessage = function( e ){
 
-            NGL.timeEnd( "NGL.decompressWorker" );
-            worker.terminate();
             callback( e.data );
+            worker.terminate();
 
         };
 
-        worker.postMessage(
-            { data: data, file: file, asBinary: asBinary },
-            [ data.buffer ? data.buffer : data ]
-        );
+        worker.postMessage( {
+            data: data, file: file, asBinary: asBinary
+        } );
 
     }else{
 
@@ -639,7 +634,6 @@ NGL.autoLoad = function(){
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
             loader.setCrossOrigin( true );
-
             if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( protocol + "://" + path, init, onProgress, error );

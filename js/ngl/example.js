@@ -630,16 +630,11 @@ NGL.Examples = {
 
             NGL.time( "test" );
 
-            // stage.loadFile( "data://3l5q.pdb", function( o ){
-            stage.loadFile( "data://4UJD.cif.gz", function( o ){
-            // stage.loadFile( "data://3j3y.cif.gz", function( o ){
+            stage.loadFile( "data://3l5q.pdb", function( o ){
 
-                // o.addRepresentation( "line", { color: "chainindex" } );
-                // o.addRepresentation( "spacefill", { color: "chainindex" } );
+                o.addRepresentation( "line", { color: "chainindex" } );
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
-                // o.addRepresentation( "trace", { color: "chainindex" } );
-                // o.addRepresentation( "point", { color: "chainindex" } );
-                o.centerView( undefined, true );
+                o.centerView();
 
                 NGL.timeEnd( "test" );
 
@@ -984,7 +979,26 @@ NGL.Examples = {
                 o.addRepresentation( "licorice", {} );
                 o.addRepresentation( "spacefill" );
                 o.addRepresentation( "surface" );
-                o.centerView();
+                stage.centerView();
+
+            } );
+
+        },
+
+        "cube": function( stage ){
+
+            stage.loadFile( "data://acrolein1gs.cube.gz", function( o ){
+
+                o.addRepresentation( "surface", { isolevel: 0.1, wireframe: true } );
+                o.addRepresentation( "dot", { visible: false } );
+                stage.centerView();
+
+            } );
+
+            stage.loadFile( "data://acrolein.pdb", function( o ){
+
+                o.addRepresentation( "licorice" );
+                stage.centerView();
 
             } );
 
