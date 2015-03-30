@@ -426,6 +426,7 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
+        biomolOptions[ "" ] = "";
         this.parameters.assembly = {
             type: "select",
             options: biomolOptions,
@@ -501,7 +502,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-        this.assembly = p.assembly || "1";
+        this.assembly = p.assembly || "";
 
         this.setSelection( p.sele, true );
 
@@ -577,6 +578,10 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var viewer = this.viewer;
         var structure = this.structure;
         var assembly = this.assembly;
+
+        if( assembly === "" ){
+            assembly = structure.defaultAssembly;
+        }
 
         // NGL.log( structure.biomolDict );
 

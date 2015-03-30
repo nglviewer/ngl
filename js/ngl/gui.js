@@ -1211,6 +1211,29 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         } );
 
+    // Assembly
+
+    var assembly = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( (function(){
+
+            var biomolDict = component.structure.biomolDict;
+            var assemblyOptions = { "__AU": "AU" };
+            Object.keys( biomolDict ).forEach( function( k ){
+                assemblyOptions[ k ] = k;
+            } );
+            return assemblyOptions;
+
+        })() )
+        .onChange( function(){
+
+            component.structure.defaultAssembly = assembly.getValue();
+            component.rebuildRepresentations();
+            stage.centerView();
+            componentPanel.setMenuDisplay( "none" );
+
+        } );
+
     // Import trajectory
 
     var traj = new UI.Button( "import" ).onClick( function(){
@@ -1326,6 +1349,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setMargin( "0px" )
         .addMenuEntry( "PDB file", pdb )
         .addMenuEntry( "Representation", repr )
+        .addMenuEntry( "Assembly", assembly )
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
