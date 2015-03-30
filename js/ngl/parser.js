@@ -2139,7 +2139,7 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
         return parseFloat( lines[ k ].trim().split( reWhitespace )[ l ] );
     }
 
-    header.AtNo = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
+    header.atomCount = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
     header.PosOriX = headerhelper( 2, 1 ) * bor_to_ang; //Position of origin of volumetric data
     header.PosOriY = headerhelper( 2, 2 ) * bor_to_ang;
     header.PosOriZ = headerhelper( 2, 3 ) * bor_to_ang;
@@ -2174,7 +2174,7 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
     };
 
-    _getData( header.AtNo + 6 );
+    _getData( header.atomCount + 6 );
 
     v.header = header;
 
