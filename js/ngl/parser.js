@@ -697,6 +697,36 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var endResi = parseInt( line.substr( 33, 4 ) );
                 sheets.push([ startChain, startResi, endChain, endResi ]);
 
+            }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '290' ){
+
+                if( line.substr( 11, 41 ) === "CRYSTALLOGRAPHIC SYMMETRY TRANSFORMATIONS" ){
+
+                    biomolDict[ "REL" ] = {
+                        matrixDict: {},
+                        chainList: []
+                    };
+                    currentBiomol = biomolDict[ "REL" ];
+
+                }else if( line.substr( 13, 5 ) === "SMTRY" ){
+
+                    var ls = line.split( /\s+/ );
+
+                    var row = parseInt( line[ 18 ] ) - 1;
+                    var mat = ls[ 3 ].trim();
+
+                    if( row === 0 ){
+                        currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                    }
+
+                    var elms = currentBiomol.matrixDict[ mat ].elements;
+
+                    elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
+                    elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
+                    elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
+                    elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
+
+                }
+
             }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
                 if( line.substr( 11, 12 ) === "BIOMOLECULE:" ){
