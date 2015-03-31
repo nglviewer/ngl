@@ -180,21 +180,21 @@ NGL.Trajectory.prototype = {
         var tp = this.params;
         var resetCache = false;
 
-        if( p.centerPbc !== tp.centerPbc ){
+        if( p.centerPbc !== undefined && p.centerPbc !== tp.centerPbc ){
 
             tp.centerPbc = p.centerPbc;
             resetCache = true;
 
         }
 
-        if( p.removePbc !== tp.removePbc ){
+        if( p.removePbc !== undefined && p.removePbc !== tp.removePbc ){
 
             tp.removePbc = p.removePbc;
             resetCache = true;
 
         }
 
-        if( p.superpose !== tp.superpose ){
+        if( p.superpose !== undefined && p.superpose !== tp.superpose ){
 
             tp.superpose = p.superpose;
             resetCache = true;
