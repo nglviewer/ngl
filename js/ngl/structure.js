@@ -4648,10 +4648,10 @@ NGL.ProxyAtom.prototype = {
         var aaa = atom.atomArray;
         var ti = this.index;
         var ai = atom.index;
-        var ta = taa.altloc[ ti ];
-        var aa = aaa.altloc[ ai ];
+        var ta = taa.altloc[ ti ];  // use Uint8 value to compare
+        var aa = aaa.altloc[ ai ];  // no need to convert to char
 
-        if( !( ta === '' || aa === '' || ( ta === aa ) ) ) return false;
+        if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
 
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
