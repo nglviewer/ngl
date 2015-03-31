@@ -7,6 +7,36 @@
 //////////////
 // Polyfills
 
+( function( global ) {
+
+    'use strict';
+
+    // Console-polyfill. MIT license.
+    // https://github.com/paulmillr/console-polyfill
+    // Make it safe to do console.log() always.
+
+    global.console = global.console || {};
+    var con = global.console;
+    var prop, method;
+    var empty = {};
+    var dummy = function(){};
+    var properties = 'memory'.split( ',' );
+    var methods = (
+        'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+        'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+        'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
+    ).split(',');
+
+    while( prop = properties.pop() ) if( !con[ prop] ) con[ prop ] = empty;
+    while( method = methods.pop() ) if( !con[ method] ) con[ method ] = dummy;
+
+    // Using `this` for web workers while maintaining compatibility with browser
+    // targeted script loaders such as Browserify or Webpack where the only way to
+    // get to the global object is via `window`.
+
+} )( typeof window === 'undefined' ? this : window );
+
+
 if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob ){
 
     // http://code.google.com/p/chromium/issues/detail?id=67587#57
@@ -47,7 +77,7 @@ if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob )
 }
 
 
-if ( !Number.isInteger ) {
+if( !Number.isInteger ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
 
@@ -58,7 +88,7 @@ if ( !Number.isInteger ) {
 }
 
 
-if ( !Number.isNaN ) {
+if( !Number.isNaN ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
 
@@ -69,7 +99,7 @@ if ( !Number.isNaN ) {
 }
 
 
-if ( !Object.assign ) {
+if( !Object.assign ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 
@@ -307,7 +337,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 ///////////////
 // Extensions
 
-Object.values = function ( obj ){
+Object.values = function( obj ){
 
     var valueList = [];
 
@@ -321,7 +351,7 @@ Object.values = function ( obj ){
 
     return valueList;
 
-}
+};
 
 
 ////////
