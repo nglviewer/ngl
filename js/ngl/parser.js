@@ -731,7 +731,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 if( line.substr( 11, 12 ) === "BIOMOLECULE:" ){
 
-                    var name = line.substr( 23 ).trim();
+                    var name = "B" + line.substr( 23 ).trim();
 
                     biomolDict[ name ] = {
                         matrixDict: {},
@@ -1729,7 +1729,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                     }
 
-                    biomolDict[ id ] = {
+                    biomolDict[ "B" + id ] = {
 
                         matrixDict: md,
                         chainList: gen.asym_id_list[ i ].split( "," )

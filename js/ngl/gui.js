@@ -1225,6 +1225,9 @@ NGL.StructureComponentWidget = function( component, stage ){
             return assemblyOptions;
 
         })() )
+        .setValue(
+            component.structure.defaultAssembly
+        )
         .onChange( function(){
 
             component.structure.defaultAssembly = assembly.getValue();

@@ -1616,7 +1616,7 @@ NGL.Structure = function( name, path ){
     this.models = [];
 
     this.biomolDict = {};
-    this.defaultAssembly = "1";
+    this.defaultAssembly = "B1";
     this.helices = [];
     this.sheets = [];
 
