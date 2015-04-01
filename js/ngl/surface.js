@@ -1928,7 +1928,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
-NGL.MolecularSurface = function( structure, probeRadius ){
+NGL.MolecularSurface = function( structure ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -1945,12 +1945,10 @@ NGL.MolecularSurface = function( structure, probeRadius ){
     //
     // adapted to NGL by Alexander Rose
 
-    probeRadius = probeRadius || 1.4;
-
     var atoms = structure.atoms;
     var bbox = structure.getBoundingBox();
 
-    var scaleFactor;
+    var probeRadius, scaleFactor, cutoff;
     var margin;
     var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
     var matrix;
@@ -1958,13 +1956,17 @@ NGL.MolecularSurface = function( structure, probeRadius ){
     var cutRadius;
     var vpBits, vpDistance, vpAtomID;
 
-    function init( btype ){
+    function init( btype, _probeRadius, _scaleFactor, _cutoff ){
 
         // 2 is .5A grid; if this is made user configurable and
         // also have to adjust offset used to find non-shown atoms
-        scaleFactor = 2;
+        // FIXME scaleFactor = 0.5;
 
-         // need margin to avoid boundary/round off effects
+        probeRadius = _probeRadius || 1.4;
+        scaleFactor = _scaleFactor || 2.0;
+        cutoff = _cutoff || 2.0;
+
+        // need margin to avoid boundary/round off effects
         margin = ( 1 / scaleFactor ) * 5.5;
 
         pmin = new THREE.Vector3().copy( bbox.min );
@@ -2055,95 +2057,37 @@ NGL.MolecularSurface = function( structure, probeRadius ){
 
     //
 
-    this.vws = function(){
+    this.getSurface = function( type, probeRadius, scaleFactor ){
 
-        NGL.time( "NGL.MolecularSurface.vws" );
+        NGL.time( "NGL.MolecularSurface.getSurface" );
 
-        init( false );
+        init( type !== "vws", probeRadius, scaleFactor );
 
         fillvoxels();
         buildboundary();
-        marchingcubeinit( 1 );
+
+        if( type === "ms" || type === "ses" ){
+
+            fastdistancemap();
+
+        }
+
+        if( type === "ses" ){
+
+            boundingatom( false );
+            fillvoxelswaals();
+
+        }
+
+        marchingcubeinit( type );
 
         var v = new NGL.Volume(
-            "vws", "", vpBits, pHeight, pWidth, pLength
+            type, "", vpBits, pHeight, pWidth, pLength
         );
 
         v.matrix.copy( matrix );
 
-        NGL.timeEnd( "NGL.MolecularSurface.vws" );
-
-        return v;
-
-    };
-
-    this.sas = function(){
-
-        NGL.time( "NGL.MolecularSurface.sas" );
-
-        init( true );
-
-        fillvoxels();
-        buildboundary();
-        marchingcubeinit( 3 );
-
-        var v = new NGL.Volume(
-            "sas", "", vpBits, pHeight, pWidth, pLength
-        );
-
-        v.matrix.copy( matrix );
-
-        NGL.timeEnd( "NGL.MolecularSurface.sas" );
-
-        return v;
-
-    };
-
-    this.ms = function(){
-
-        NGL.time( "NGL.MolecularSurface.ms" );
-
-        init( true );
-
-        fillvoxels();
-        buildboundary();
-        fastdistancemap();
-        // boundingatom( false );
-        // fillvoxelswaals();
-        marchingcubeinit( 4 );
-
-        var v = new NGL.Volume(
-            "ms", "", vpBits, pHeight, pWidth, pLength
-        );
-
-        v.matrix.copy( matrix );
-
-        NGL.timeEnd( "NGL.MolecularSurface.ms" );
-
-        return v;
-
-    };
-
-    this.ses = function(){
-
-        NGL.time( "NGL.MolecularSurface.ses" );
-
-        init( true );
-
-        fillvoxels();
-        buildboundary();
-        fastdistancemap();
-        boundingatom( false );
-        fillvoxelswaals();
-        marchingcubeinit( 2 );
-
-        var v = new NGL.Volume(
-            "ses", "", vpBits, pHeight, pWidth, pLength
-        );
-
-        v.matrix.copy( matrix );
-
-        NGL.timeEnd( "NGL.MolecularSurface.ses" );
+        NGL.timeEnd( "NGL.MolecularSurface.getSurface" );
 
         return v;
 
@@ -2619,6 +2563,7 @@ NGL.MolecularSurface = function( structure, probeRadius ){
                         dy = tnv.iy - bp.iy;
                         dz = tnv.iz - bp.iz;
                         square = dx * dx + dy * dy + dz * dz;
+
                         vpDistance[ index ] = square;
                         vpBits[ index ] |= ISDONE;
                         vpBits[ index ] |= ISBOUND;
@@ -2779,35 +2724,51 @@ NGL.MolecularSurface = function( structure, probeRadius ){
 
     function marchingcubeinit( stype ){
 
-        for( var i = 0, lim = vpBits.length; i < lim; ++i ){
+        var n = vpBits.length;
 
-            if( stype == 1 ) {  // vdw
+        if( stype === "vws" ) {
+
+            for( var i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
-            }else if( stype == 4 ){  // ses without vdw => ms
+            }
+
+        }else if( stype === "ms" ){  // ses without vdw => ms
+
+            for( var i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISDONE;
                 if( vpBits[ i ] & ISBOUND ){
                     vpBits[ i ] |= ISDONE;
                 }
                 vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
-            }else if( stype == 2 ){  // ses with vdw => ses
+            }
+
+        }else if( stype === "ses" ){
+
+            for( var i = 0; i < n; ++i ){
 
                 if( ( vpBits[ i ] & ISBOUND ) && ( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] &= ~ISBOUND;
                 }else if( ( vpBits[ i ] & ISBOUND ) && !( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] |= ISDONE;
                 }
-
-            }else if( stype == 3 ){  // sas
-
-                vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
             }
 
-            vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+        }else if( stype === "sas" ){
+
+            for( var i = 0; i < n; ++i ){
+
+                vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+
+            }
 
         }
 

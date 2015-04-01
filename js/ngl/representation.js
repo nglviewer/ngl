@@ -3864,7 +3864,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     type: "surface",
 
-    parameters: Object.assign( {
+    parameters: Object.assign(
+
+        NGL.StructureRepresentation.prototype.parameters, {
 
         surfaceType: {
             type: "select", rebuild: true,
@@ -3875,8 +3877,16 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 "ses": "ses"
             }
         },
+        probeRadius: {
+            type: "number", precision: 1, max: 20, min: 0,
+            rebuild: true
+        },
         smooth: {
             type: "integer", precision: 1, max: 10, min: 0,
+            rebuild: true
+        },
+        scaleFactor: {
+            type: "number", precision: 1, max: 5, min: 0,
             rebuild: true
         },
         wireframe: {
@@ -3899,7 +3909,13 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1, min: 0, uniform: true
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, {
+
+        radiusType: null,
+        radius: null,
+        scale: null
+
+    } ),
 
     init: function( params ){
 
@@ -3908,7 +3924,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         p.color = p.color || 0xDDDDDD;
 
         this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
+        this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
         this.smooth = p.smooth !== undefined ? p.smooth : 2;
+        this.scaleFactor = p.scaleFactor !== undefined ? p.scaleFactor : 2.0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
@@ -3924,13 +3942,19 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var structureSubset = new NGL.StructureSubset(
-            this.structure, this.selection.string
-        );
+        if( this.selection.string ){
+            var structureSubset = new NGL.StructureSubset(
+                this.structure, this.selection.string
+            );
+        }else{
+            var structureSubset = this.structure;
+        }
 
         var molsurf = new NGL.MolecularSurface( structureSubset );
 
-        this.surface = molsurf[ this.surfaceType ]();
+        this.surface = molsurf.getSurface(
+            this.surfaceType, this.probeRadius, this.scaleFactor
+        );
         this.surface.generateSurface( 1, this.smooth );
 
         var position = this.surface.getPosition();
@@ -4006,7 +4030,23 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
-        this.surfaceBuffer.setAttributes( surfaceData );
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.setAttributes( surfaceData );
+
+        } );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        what = what || {};
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     },
 
@@ -4401,7 +4441,11 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
-        this.surfaceBuffer.setAttributes( surfaceData );
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.setAttributes( surfaceData );
+
+        } );
 
     }
 
