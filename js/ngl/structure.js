@@ -4705,7 +4705,7 @@ NGL.ProxyAtom.prototype = {
 
 NGL.StructureSubset = function( structure, sele ){
 
-    NGL.Structure.call( this, structure.name + " [subset]" );
+    NGL.Structure.call( this, structure.name + " [subset]", structure.path );
 
     this.structure = structure;
     this.selection = new NGL.Selection( sele );
@@ -4809,11 +4809,19 @@ NGL.StructureSubset.prototype._build = function(){
 
     }, selection );
 
+    _s.title = structure.title;
+    _s.id = structure.id;
+
     _s.center = _s.atomCenter();
     _s.boundingBox = _s.getBoundingBox();
 
-    if( structure.frames ) _s.frames = structure.frames;
-    if( structure.boxes ) _s.boxes = structure.boxes;
+    _s.frames = structure.frames;
+    _s.boxes = structure.boxes;
+    _s.helices = structure.helices;
+    _s.sheets = structure.sheets;
+
+    _s.biomolDict = structure.biomolDict;
+    _s.defaultAssembly = structure.defaultAssembly;
 
     NGL.timeEnd( "NGL.StructureSubset._build" );
 
