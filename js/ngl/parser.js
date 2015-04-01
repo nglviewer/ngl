@@ -1616,7 +1616,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
         },
 
-        // biomol processing
+        // biomol & ncs processing
         function( wcallback ){
 
             var operDict = {};
@@ -1735,6 +1735,52 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                         chainList: gen.asym_id_list[ i ].split( "," )
 
                     };
+
+                } );
+
+            }
+
+            // non-crystallographic symmetry operations
+            if( cif.struct_ncs_oper ){
+
+                var op = cif.struct_ncs_oper;
+
+                // ensure data is in lists
+                _ensureArray( op, "id" );
+
+                var md = {};
+
+                biomolDict[ "NCS" ] = {
+
+                    matrixDict: md,
+                    chainList: "*"
+
+                };
+
+                op.id.forEach( function( id, i ){
+
+                    var m = new THREE.Matrix4();
+                    var elms = m.elements;
+
+                    elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                    elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                    elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                    elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                    elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                    elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                    elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                    elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                    elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                    elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                    elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                    elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                    m.transpose();
+
+                    md[ id ] = m;
 
                 } );
 
