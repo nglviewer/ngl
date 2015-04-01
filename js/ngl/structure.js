@@ -4705,7 +4705,7 @@ NGL.ProxyAtom.prototype = {
 
 NGL.StructureSubset = function( structure, sele ){
 
-    NGL.Structure.call( this, structure.name + " [subset]", structure.path );
+    NGL.Structure.call( this, structure.name, structure.path );
 
     this.structure = structure;
     this.selection = new NGL.Selection( sele );
@@ -4749,6 +4749,8 @@ NGL.StructureSubset.prototype._build = function(){
                 _r.ss = r.ss;
 
                 r.eachAtom( function( a ){
+
+                    // TODO by reference? index? bonds? residue?
 
                     _a = _r.addAtom();
                     _a.atomno = a.atomno;

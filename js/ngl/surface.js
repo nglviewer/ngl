@@ -1928,7 +1928,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
-NGL.MolecularSurface = function( structure ){
+NGL.MolecularSurface = function( atomSet ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -1945,8 +1945,8 @@ NGL.MolecularSurface = function( structure ){
     //
     // adapted to NGL by Alexander Rose
 
-    var atoms = structure.atoms;
-    var bbox = structure.getBoundingBox();
+    var atoms = atomSet.atoms;
+    var bbox = atomSet.getBoundingBox();
 
     var probeRadius, scaleFactor, cutoff;
     var margin;
@@ -2144,10 +2144,12 @@ NGL.MolecularSurface = function( structure ){
 
     }
 
-    function fillatom( atom ){
+    function fillatom( atomIndex ){
 
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk, n;
+
+        var atom = atoms[ atomIndex ];
 
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
@@ -2191,7 +2193,7 @@ NGL.MolecularSurface = function( structure ){
                             if( !( vpBits[ index ] & INOUT ) ){
 
                                 vpBits[ index ] |= INOUT;
-                                vpAtomID[ index ] = atom.index;
+                                vpAtomID[ index ] = atomIndex;
 
                             }else{
 
@@ -2203,7 +2205,7 @@ NGL.MolecularSurface = function( structure ){
                                 if( mi * mi + mj * mj + mk * mk <
                                     ox * ox + oy * oy + oz * oz
                                 ){
-                                    vpAtomID[ index ] = atom.index;
+                                    vpAtomID[ index ] = atomIndex;
                                 }
 
                             }
@@ -2235,7 +2237,9 @@ NGL.MolecularSurface = function( structure ){
             vpAtomID[ i ] = -1;
         }
 
-        structure.eachAtom( fillatom );
+        for( i = 0, il = atoms.length; i < il; ++i ){
+            fillatom( i );
+        }
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
             if( vpBits[ i ] & INOUT ){
@@ -2245,10 +2249,12 @@ NGL.MolecularSurface = function( structure ){
 
     }
 
-    function fillAtomWaals( atom ){
+    function fillAtomWaals( atomIndex ){
 
         var cx, cy, cz, ox, oy, oz, nind = 0;
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
+
+        var atom = atoms[ atomIndex ];
 
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
@@ -2331,7 +2337,9 @@ NGL.MolecularSurface = function( structure ){
             vpBits[ i ] &= ~ISDONE;  // not isdone
         }
 
-        structure.eachAtom( fillAtomWaals );
+        for( i = 0, il = atoms.length; i < il; ++i ){
+            fillAtomWaals( i );
+        }
 
     }
 

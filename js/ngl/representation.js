@@ -3942,19 +3942,26 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        if( this.selection.string ){
-            var structureSubset = new NGL.StructureSubset(
-                this.structure, this.selection.string
+        if( !this.molsurf ||
+            this.__sele !== this.selection.string ||
+            this.__surfaceType !== this.surfaceType ||
+            this.__probeRadius !== this.probeRadius ||
+            this.__scaleFactor !== this.scaleFactor
+        ){
+
+            this.molsurf = new NGL.MolecularSurface( this.atomSet );
+
+            this.surface = this.molsurf.getSurface(
+                this.surfaceType, this.probeRadius, this.scaleFactor
             );
-        }else{
-            var structureSubset = this.structure;
+
+            this.__sele = this.selection.string;
+            this.__surfaceType = this.surfaceType;
+            this.__probeRadius = this.probeRadius;
+            this.__scaleFactor = this.scaleFactor;
+
         }
 
-        var molsurf = new NGL.MolecularSurface( structureSubset );
-
-        this.surface = molsurf.getSurface(
-            this.surfaceType, this.probeRadius, this.scaleFactor
-        );
         this.surface.generateSurface( 1, this.smooth );
 
         var position = this.surface.getPosition();
