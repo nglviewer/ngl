@@ -576,6 +576,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
     var serialDict = {};
 
+    var scale = new THREE.Matrix4();
+    var origx = new THREE.Matrix4();
+
     s.hasConnect = false;
 
     var idx = 0;
@@ -810,6 +813,56 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 }
 
                 modelIdx += 1;
+
+            }else if( line.substr( 0, 5 ) === 'MTRIX' ){
+
+                var ls = line.split( /\s+/ );
+                var mat = ls[ 1 ].trim();
+
+                if( line[ 5 ] === "1" && mat === "1" ){
+
+                    biomolDict[ "NCS" ] = {
+                        matrixDict: {},
+                        chainList: []
+                    };
+                    currentBiomol = biomolDict[ "NCS" ];
+
+                }
+
+                var row = parseInt( line[ 5 ] ) - 1;
+
+                if( row === 0 ){
+                    currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                }
+
+                var elms = currentBiomol.matrixDict[ mat ].elements;
+
+                elms[ 4 * 0 + row ] = parseFloat( ls[ 2 ] );
+                elms[ 4 * 1 + row ] = parseFloat( ls[ 3 ] );
+                elms[ 4 * 2 + row ] = parseFloat( ls[ 4 ] );
+                elms[ 4 * 3 + row ] = parseFloat( ls[ 5 ] );
+
+            }else if( line.substr( 0, 5 ) === 'ORIGX' ){
+
+                var ls = line.split( /\s+/ );
+                var row = parseInt( line[ 5 ] ) - 1;
+                var elms = origx.elements;
+
+                elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
+                elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
+                elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
+                elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
+
+            }else if( line.substr( 0, 5 ) === 'SCALE' ){
+
+                var ls = line.split( /\s+/ );
+                var row = parseInt( line[ 5 ] ) - 1;
+                var elms = scale.elements;
+
+                elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
+                elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
+                elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
+                elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
 
             }else if( recordName === 'CRYST1' ){
 
@@ -1104,6 +1157,9 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
+
+    var scale = new THREE.Matrix4();
+    var origx = new THREE.Matrix4();
 
     s.hasConnect = false;
 
@@ -1787,6 +1843,99 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                     md[ id ] = m;
 
                 } );
+
+            }
+
+            // cell
+            if( cif.cell ){
+
+                var cell = cif.cell;
+                var symmetry = cif.symmetry || {};
+
+                var a = parseFloat( cell.length_a );
+                var b = parseFloat( cell.length_b );
+                var c = parseFloat( cell.length_c );
+
+                var alpha = parseFloat( cell.angle_alpha );
+                var beta = parseFloat( cell.angle_beta );
+                var gamma = parseFloat( cell.angle_gamma );
+
+                var sGroup = symmetry[ "space_group_name_H-M" ];
+                var z = parseInt( cell.Z_PDB );
+
+                // NGL.log( a, b, c, alpha, beta, gamma, sGroup, z )
+
+                if( a===1.0 && b===1.0 && c===1.0 &&
+                    alpha===90.0 && beta===90.0 && gamma===90.0 &&
+                    sGroup==="P 1" && z===1
+                ){
+
+                    // NGL.info(
+                    //     "unitcell is just a unit cube, " +
+                    //     "likely meaningless, so ignore"
+                    // );
+
+                }else{
+
+                    var box = new Float32Array( 9 );
+                    box[ 0 ] = a;
+                    box[ 4 ] = b;
+                    box[ 8 ] = c;
+                    boxes.push( box );
+
+                }
+
+            }
+
+            // origx
+            if( cif.database_PDB_matrix ){
+
+                var mat = cif.database_PDB_matrix;
+                var elms = origx.elements;
+
+                elms[  0 ] = parseFloat( mat[ "origx[1][1]" ] );
+                elms[  1 ] = parseFloat( mat[ "origx[1][2]" ] );
+                elms[  2 ] = parseFloat( mat[ "origx[1][3]" ] );
+
+                elms[  4 ] = parseFloat( mat[ "origx[2][1]" ] );
+                elms[  5 ] = parseFloat( mat[ "origx[2][2]" ] );
+                elms[  6 ] = parseFloat( mat[ "origx[2][3]" ] );
+
+                elms[  8 ] = parseFloat( mat[ "origx[3][1]" ] );
+                elms[  9 ] = parseFloat( mat[ "origx[3][2]" ] );
+                elms[ 10 ] = parseFloat( mat[ "origx[3][3]" ] );
+
+                elms[  3 ] = parseFloat( mat[ "origx_vector[1]" ] );
+                elms[  7 ] = parseFloat( mat[ "origx_vector[2]" ] );
+                elms[ 11 ] = parseFloat( mat[ "origx_vector[3]" ] );
+
+                origx.transpose();
+
+            }
+
+            // scale
+            if( cif.atom_sites ){
+
+                var mat = cif.atom_sites;
+                var elms = scale.elements;
+
+                elms[  0 ] = parseFloat( mat[ "fract_transf_matrix[1][1]" ] );
+                elms[  1 ] = parseFloat( mat[ "fract_transf_matrix[1][2]" ] );
+                elms[  2 ] = parseFloat( mat[ "fract_transf_matrix[1][3]" ] );
+
+                elms[  4 ] = parseFloat( mat[ "fract_transf_matrix[2][1]" ] );
+                elms[  5 ] = parseFloat( mat[ "fract_transf_matrix[2][2]" ] );
+                elms[  6 ] = parseFloat( mat[ "fract_transf_matrix[2][3]" ] );
+
+                elms[  8 ] = parseFloat( mat[ "fract_transf_matrix[3][1]" ] );
+                elms[  9 ] = parseFloat( mat[ "fract_transf_matrix[3][2]" ] );
+                elms[ 10 ] = parseFloat( mat[ "fract_transf_matrix[3][3]" ] );
+
+                elms[  3 ] = parseFloat( mat[ "fract_transf_vector[1]" ] );
+                elms[  7 ] = parseFloat( mat[ "fract_transf_vector[2]" ] );
+                elms[ 11 ] = parseFloat( mat[ "fract_transf_vector[3]" ] );
+
+                scale.transpose();
 
             }
 
