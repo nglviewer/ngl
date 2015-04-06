@@ -1647,6 +1647,7 @@ NGL.Structure.prototype = {
         this.biomolDict = {};
         this.helices.length = 0;
         this.sheets.length = 0;
+        this.unitcell = new NGL.Unitcell();
 
         this.frames.length = 0;
         this.boxes.length = 0;
@@ -2441,6 +2442,7 @@ NGL.Structure.prototype = {
             biomolDict: this.biomolDict,
             helices: this.helices,
             sheets: this.sheets,
+            unitcell: this.unitcell.toJSON(),
 
             frames: this.frames,
             boxes: this.boxes,
@@ -2501,6 +2503,7 @@ NGL.Structure.prototype = {
         this.biomolDict = input.biomolDict;
         this.helices = input.helices;
         this.sheets = input.sheets;
+        this.unitcell = new NGL.Unitcell().fromJSON( input.unitcell );
 
         this.frames = input.frames;
         this.boxes = input.boxes;
@@ -3845,6 +3848,28 @@ NGL.Atom.prototype = {
 
     },
 
+    positionToVector3: function( v ){
+
+        if( v === undefined ) v = new THREE.Vector3();
+
+        v.x = this.x;
+        v.y = this.y;
+        v.z = this.z;
+
+        return v;
+
+    },
+
+    positionFromVector3: function( v ){
+
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
+
+        return this;
+
+    },
+
     copy: function( atom ){
 
         this.index = atom.index;
@@ -4675,6 +4700,10 @@ NGL.ProxyAtom.prototype = {
     positionFromArray: NGL.Atom.prototype.positionFromArray,
 
     positionToArray: NGL.Atom.prototype.positionToArray,
+
+    positionFromVector3: NGL.Atom.prototype.positionFromVector3,
+
+    positionToVector3: NGL.Atom.prototype.positionToVector3,
 
     copy: NGL.Atom.prototype.copy,
 

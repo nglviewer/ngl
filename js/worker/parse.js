@@ -7,6 +7,7 @@ importScripts(
     '../lib/signals.min.js',
     '../three/three.min.js',
     '../ngl/core.js',
+    '../ngl/symmetry.js',
     '../ngl/viewer.js',
     '../ngl/geometry.js',
     '../ngl/structure.js',

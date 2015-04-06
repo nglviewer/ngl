@@ -349,6 +349,60 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 };
 
 
+NGL.buildUnitcellAssembly = function( structure, callback ){
+
+    var uc = structure.unitcell;
+    var biomolDict = structure.biomolDict;
+
+    var centerFrac = structure.atomCenter().applyMatrix4( uc.cartToFrac );
+    var symopDict = NGL.getSymmetryOperations( uc.spacegroup );
+
+    var positionFrac = new THREE.Vector3();
+    var centerFracSymop = new THREE.Vector3();
+    var positionFracSymop = new THREE.Vector3();
+
+    if( centerFrac.x > 1 ) positionFrac.x -= 1;
+    if( centerFrac.x < 0 ) positionFrac.x += 1;
+    if( centerFrac.y > 1 ) positionFrac.y -= 1;
+    if( centerFrac.y < 0 ) positionFrac.y += 1;
+    if( centerFrac.z > 1 ) positionFrac.z -= 1;
+    if( centerFrac.z < 0 ) positionFrac.z += 1;
+
+    Object.keys( symopDict ).forEach( function( name ){
+
+        var m = symopDict[ name ];
+
+        centerFracSymop.copy( centerFrac ).applyMatrix4( m );
+        positionFracSymop.setFromMatrixPosition( m );
+        positionFracSymop.sub( positionFrac );
+
+        if( centerFracSymop.x > 1 ) positionFracSymop.x -= 1;
+        if( centerFracSymop.x < 0 ) positionFracSymop.x += 1;
+        if( centerFracSymop.y > 1 ) positionFracSymop.y -= 1;
+        if( centerFracSymop.y < 0 ) positionFracSymop.y += 1;
+        if( centerFracSymop.z > 1 ) positionFracSymop.z -= 1;
+        if( centerFracSymop.z < 0 ) positionFracSymop.z += 1;
+
+        m.setPosition( positionFracSymop );
+        m.multiplyMatrices( uc.fracToCart, m );
+        m.multiply( uc.cartToFrac );
+
+        symopDict[ name ] = m;
+
+    } );
+
+    biomolDict[ "UNITCELL" ] = {
+        matrixDict: symopDict,
+        chainList: "*"
+    };
+
+    callback();
+
+    return structure;
+
+}
+
+
 ////////////////////
 // StructureParser
 
@@ -408,6 +462,12 @@ NGL.StructureParser.prototype = {
             function( wcallback ){
 
                 NGL.assignSecondaryStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                NGL.buildUnitcellAssembly( self.structure, wcallback );
 
             },
 
@@ -575,9 +635,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var serial, elem, chainname, resno, resname, atomname, element;
 
     var serialDict = {};
-
-    var scale = new THREE.Matrix4();
-    var origx = new THREE.Matrix4();
+    var unitcellDict = {};
 
     s.hasConnect = false;
 
@@ -844,9 +902,13 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             }else if( line.substr( 0, 5 ) === 'ORIGX' ){
 
+                if( !unitcellDict.origx ){
+                    unitcellDict.origx = new THREE.Matrix4();
+                }
+
                 var ls = line.split( /\s+/ );
                 var row = parseInt( line[ 5 ] ) - 1;
-                var elms = origx.elements;
+                var elms = unitcellDict.origx.elements;
 
                 elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
                 elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
@@ -855,9 +917,13 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
             }else if( line.substr( 0, 5 ) === 'SCALE' ){
 
+                if( !unitcellDict.scale ){
+                    unitcellDict.scale = new THREE.Matrix4();
+                }
+
                 var ls = line.split( /\s+/ );
                 var row = parseInt( line[ 5 ] ) - 1;
-                var elms = scale.elements;
+                var elms = unitcellDict.scale.elements;
 
                 elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
                 elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
@@ -887,25 +953,21 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var sGroup = line.substr( 55, 11 ).trim();
                 var z = parseInt( line.substr( 66, 4 ) );
 
-                // NGL.log( a, b, c, alpha, beta, gamma, sGroup, z )
+                var box = new Float32Array( 9 );
+                box[ 0 ] = a;
+                box[ 4 ] = b;
+                box[ 8 ] = c;
+                boxes.push( box );
 
-                if( a===1.0 && b===1.0 && c===1.0 &&
-                    alpha===90.0 && beta===90.0 && gamma===90.0 &&
-                    sGroup==="P 1" && z===1
-                ){
+                if( modelIdx === 0 ){
 
-                    // NGL.info(
-                    //     "unitcell is just a unit cube, " +
-                    //     "likely meaningless, so ignore"
-                    // );
-
-                }else{
-
-                    var box = new Float32Array( 9 );
-                    box[ 0 ] = a;
-                    box[ 4 ] = b;
-                    box[ 8 ] = c;
-                    boxes.push( box );
+                    unitcellDict.a = a;
+                    unitcellDict.b = b;
+                    unitcellDict.c = c;
+                    unitcellDict.alpha = alpha;
+                    unitcellDict.beta = beta;
+                    unitcellDict.gamma = gamma;
+                    unitcellDict.spacegroup = sGroup;
 
                 }
 
@@ -922,6 +984,17 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
         _chunked,
 
         function(){
+
+            s.unitcell = new NGL.Unitcell(
+                unitcellDict.a,
+                unitcellDict.b,
+                unitcellDict.c,
+                unitcellDict.alpha,
+                unitcellDict.beta,
+                unitcellDict.gamma,
+                unitcellDict.spacegroup,
+                unitcellDict.scale
+            );
 
             NGL.timeEnd( __timeName );
             callback();
@@ -1157,9 +1230,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
-
-    var scale = new THREE.Matrix4();
-    var origx = new THREE.Matrix4();
 
     s.hasConnect = false;
 
@@ -1847,6 +1917,9 @@ NGL.CifParser.prototype._parse = function( str, callback ){
             }
 
             // cell
+
+            var unitcellDict = {};
+
             if( cif.cell ){
 
                 var cell = cif.cell;
@@ -1860,34 +1933,29 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 var beta = parseFloat( cell.angle_beta );
                 var gamma = parseFloat( cell.angle_gamma );
 
-                var sGroup = symmetry[ "space_group_name_H-M" ];
+                var sGroup = symmetry[ "space_group_name_H-M" ].replace( /'/g, '' );;
                 var z = parseInt( cell.Z_PDB );
 
-                // NGL.log( a, b, c, alpha, beta, gamma, sGroup, z )
+                var box = new Float32Array( 9 );
+                box[ 0 ] = a;
+                box[ 4 ] = b;
+                box[ 8 ] = c;
+                boxes.push( box );
 
-                if( a===1.0 && b===1.0 && c===1.0 &&
-                    alpha===90.0 && beta===90.0 && gamma===90.0 &&
-                    sGroup==="P 1" && z===1
-                ){
-
-                    // NGL.info(
-                    //     "unitcell is just a unit cube, " +
-                    //     "likely meaningless, so ignore"
-                    // );
-
-                }else{
-
-                    var box = new Float32Array( 9 );
-                    box[ 0 ] = a;
-                    box[ 4 ] = b;
-                    box[ 8 ] = c;
-                    boxes.push( box );
-
-                }
+                unitcellDict.a = a;
+                unitcellDict.b = b;
+                unitcellDict.c = c;
+                unitcellDict.alpha = alpha;
+                unitcellDict.beta = beta;
+                unitcellDict.gamma = gamma;
+                unitcellDict.spacegroup = sGroup;
 
             }
 
             // origx
+
+            var origx = new THREE.Matrix4();
+
             if( cif.database_PDB_matrix ){
 
                 var mat = cif.database_PDB_matrix;
@@ -1911,9 +1979,14 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 origx.transpose();
 
+                unitcellDict.origx = origx;
+
             }
 
             // scale
+
+            var scale = new THREE.Matrix4();
+
             if( cif.atom_sites ){
 
                 var mat = cif.atom_sites;
@@ -1937,7 +2010,20 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                 scale.transpose();
 
+                unitcellDict.scale = scale;
+
             }
+
+            s.unitcell = new NGL.Unitcell(
+                unitcellDict.a,
+                unitcellDict.b,
+                unitcellDict.c,
+                unitcellDict.alpha,
+                unitcellDict.beta,
+                unitcellDict.gamma,
+                unitcellDict.spacegroup,
+                unitcellDict.scale
+            );
 
             wcallback();
 

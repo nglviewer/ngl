@@ -1007,6 +1007,46 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "unitcell": function( stage ){
+
+            // stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
+
+            //     o.addRepresentation( "surface", { wireframe: true } );
+            //     o.addRepresentation( "dot", { visible: false } );
+            //     stage.centerView();
+
+            // } );
+
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                // var uc = o.structure.unitcell;
+                // var cellPosition = new Float32Array( 3 * 8 );
+                // var v = new THREE.Vector3();
+                // v.set( 0, 0, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 0 );
+                // v.set( 1, 0, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 3 );
+                // v.set( 0, 1, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 6 );
+                // v.set( 0, 0, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 9 );
+                // v.set( 1, 1, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 12 );
+                // v.set( 1, 0, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 15 );
+                // v.set( 0, 1, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 18 );
+                // v.set( 1, 1, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 21 );
+                // var cellColor = NGL.Utils.uniformArray3( 8, 1, 0, 0 );
+                // var cellRadius = NGL.Utils.uniformArray( 8, 2 );
+                // var sphereBuffer = new NGL.SphereBuffer(
+                //     cellPosition, cellColor, cellRadius
+                // );
+                // o.addBufferRepresentation( sphereBuffer );
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "ribbon", {
+                    assembly: "UNITCELL", color: 0x00DD11, scale: 0.9
+                } );
+                stage.centerView();
+
+            } );
+
         }
 
     }
