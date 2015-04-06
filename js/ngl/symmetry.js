@@ -145,7 +145,7 @@ NGL.getSymmetryOperations = function( spacegroup ){
             0, 0, 0, 0,
             0, 0, 0, 0,
             0, 0, 0, 0,
-            0, 0, 0, 0
+            0, 0, 0, 1
         );
         var me = matrix.elements;
 
