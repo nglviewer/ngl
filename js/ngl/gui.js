@@ -1601,8 +1601,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Selection
 
-    if( component.parent instanceof NGL.StructureComponent ||
-        component.parent instanceof NGL.TrajectoryComponent
+    if( ( component.parent instanceof NGL.StructureComponent ||
+            component.parent instanceof NGL.TrajectoryComponent ) &&
+        component.repr.selection instanceof NGL.Selection
     ){
 
         container.add(

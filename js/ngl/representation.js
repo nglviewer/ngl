@@ -10,7 +10,11 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
     var ReprClass;
 
-    if( object instanceof NGL.Structure ){
+    if( type === "buffer" ){
+
+        ReprClass = NGL.BufferRepresentation;
+
+    }else if( object instanceof NGL.Structure ){
 
         ReprClass = NGL.representationTypes[ type ];
 
@@ -405,6 +409,67 @@ NGL.Representation.prototype = {
     }
 
 };
+
+
+NGL.BufferRepresentation = function( buffer, viewer, params ){
+
+    NGL.Representation.call( this, buffer, viewer, params );
+
+    this.buffer = buffer;
+
+    this.create();
+    this.attach();
+
+};
+
+NGL.BufferRepresentation.prototype = NGL.createObject(
+
+    NGL.Representation.prototype, {
+
+    constructor: NGL.BufferRepresentation,
+
+    type: "buffer",
+
+    create: function(){
+
+        this.bufferList.push( this.buffer );
+
+    },
+
+    attach: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.add( buffer );
+
+        }, this );
+
+        this.setVisibility( this.visible );
+
+    },
+
+    clear: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.remove( buffer );
+
+        }, this );
+
+        this.bufferList.length = 0;
+
+        this.viewer.requestRender();
+
+    },
+
+    dispose: function(){
+
+        this.clear();
+        this.buffer.dispose();
+
+    }
+
+} );
 
 
 /////////////////////////////

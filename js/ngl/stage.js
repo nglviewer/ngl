@@ -900,6 +900,29 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
+    addBufferRepresentation: function( buffer, params, returnRepr ){
+
+        // FIXME get rid of code duplication
+
+        var pref = this.stage.preferences;
+        params = params || {};
+        params.quality = params.quality || pref.getKey( "quality" );
+        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
+
+        var repr = NGL.makeRepresentation(
+            "buffer", buffer, this.viewer, params
+        );
+
+        var reprComp = new NGL.RepresentationComponent(
+            this.stage, repr, params, this
+        );
+
+        NGL.Component.prototype.addRepresentation.call( this, reprComp );
+
+        return returnRepr ? reprComp : this;
+
+    },
+
     addTrajectory: function( trajPath, sele, i ){
 
         var params = { "i": i };

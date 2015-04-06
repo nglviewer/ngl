@@ -82,6 +82,8 @@ UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPopupMenu.prototype.setScheme = function( value ){
 
+    value = value || "";
+
     this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
     this.schemeSelector.setValue( value );
 
