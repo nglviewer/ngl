@@ -1232,7 +1232,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
             component.structure.setDefaultAssembly( assembly.getValue() );
             component.rebuildRepresentations();
-            stage.centerView();
+            // component.centerView();
             componentPanel.setMenuDisplay( "none" );
 
         } );
