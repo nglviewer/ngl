@@ -393,7 +393,7 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 
     biomolDict[ "UNITCELL" ] = {
         matrixDict: symopDict,
-        chainList: "*"
+        chainList: undefined
     };
 
     callback();
@@ -881,7 +881,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                     biomolDict[ "NCS" ] = {
                         matrixDict: {},
-                        chainList: []
+                        chainList: undefined
                     };
                     currentBiomol = biomolDict[ "NCS" ];
 
@@ -1883,7 +1883,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 biomolDict[ "NCS" ] = {
 
                     matrixDict: md,
-                    chainList: "*"
+                    chainList: undefined
 
                 };
 

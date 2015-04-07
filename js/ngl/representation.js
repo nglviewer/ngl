@@ -479,7 +479,9 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
     this.fiberList = [];
 
-    this.selection = new NGL.Selection( params.sele );
+    this.selection = new NGL.Selection(
+        params.sele, this.getAssemblySele( params.assembly, structure )
+    );
     this.atomSet = new NGL.AtomSet();
 
     this.setStructure( structure );
@@ -569,7 +571,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.assembly = p.assembly || "";
 
-        this.setSelection( p.sele, true );
+        this.setSelection( p.sele, this.getAssemblySele( p.assembly ), true );
+        this.atomSet.applySelection();
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -577,16 +580,35 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     setStructure: function( structure ){
 
-        this.structure = structure;
+        this.structure = structure || this.structure;
         this.atomSet.fromStructure( this.structure, this.selection );
 
         return this;
 
     },
 
-    setSelection: function( string, silent ){
+    getAssemblySele: function( assemblyName, structure ){
 
-        this.selection.setString( string, silent );
+        structure = structure || this.structure;
+        assemblyName = assemblyName || structure.defaultAssembly;
+
+        var assembly = structure.biomolDict[ assemblyName ];
+        var extraString = "";
+        if( assembly && assembly.chainList &&
+            assembly.chainList.length < structure.chainCount
+        ){
+            extraString = ":" + assembly.chainList.join( " OR :" );
+        }
+
+        // console.log( "getAssemblySele", extraString );
+
+        return extraString;
+
+    },
+
+    setSelection: function( string, extraString, silent ){
+
+        this.selection.setString( string, extraString, silent );
 
         return this;
 
@@ -625,6 +647,13 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
+
+        }
+
+        if( params && params[ "assembly" ] !== undefined ){
+
+            this.setSelection( undefined, this.getAssemblySele( params[ "assembly" ] ), true );
+            this.atomSet.applySelection();
 
         }
 
@@ -4008,7 +4037,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         if( this.atomSet.atomCount === 0 ) return;
 
         if( !this.molsurf ||
-            this.__sele !== this.selection.string ||
+            this.__sele !== this.selection.combinedString ||
             this.__surfaceType !== this.surfaceType ||
             this.__probeRadius !== this.probeRadius ||
             this.__scaleFactor !== this.scaleFactor
@@ -4020,7 +4049,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 this.surfaceType, this.probeRadius, this.scaleFactor
             );
 
-            this.__sele = this.selection.string;
+            this.__sele = this.selection.combinedString;
             this.__surfaceType = this.surfaceType;
             this.__probeRadius = this.probeRadius;
             this.__scaleFactor = this.scaleFactor;
@@ -4114,7 +4143,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        NGL.Representation.prototype.setParameters.call(
+        NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
 
