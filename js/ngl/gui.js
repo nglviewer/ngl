@@ -1230,7 +1230,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         )
         .onChange( function(){
 
-            component.structure.defaultAssembly = assembly.getValue();
+            component.structure.setDefaultAssembly( assembly.getValue() );
             component.rebuildRepresentations();
             stage.centerView();
             componentPanel.setMenuDisplay( "none" );

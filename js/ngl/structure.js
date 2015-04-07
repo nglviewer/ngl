@@ -1657,6 +1657,12 @@ NGL.Structure.prototype = {
 
     },
 
+    setDefaultAssembly: function( value ){
+
+        this.defaultAssembly = value;
+
+    },
+
     postProcess: function( callback ){
 
         var self = this;
@@ -4732,12 +4738,12 @@ NGL.ProxyAtom.prototype = {
 }
 
 
-NGL.StructureSubset = function( structure, sele ){
+NGL.StructureSubset = function( structure, selection ){
 
     NGL.Structure.call( this, structure.name, structure.path );
 
     this.structure = structure;
-    this.selection = new NGL.Selection( sele );
+    this.selection = selection;
 
     this._build();
 
@@ -4746,6 +4752,13 @@ NGL.StructureSubset = function( structure, sele ){
 NGL.StructureSubset.prototype = Object.create( NGL.Structure.prototype );
 
 NGL.StructureSubset.prototype.constructor = NGL.StructureSubset;
+
+NGL.StructureSubset.prototype.setDefaultAssembly = function( value ){
+
+    this.defaultAssembly = value;
+    this.structure.setDefaultAssembly( value );
+
+};
 
 NGL.StructureSubset.prototype._build = function(){
 
@@ -4856,7 +4869,7 @@ NGL.StructureSubset.prototype._build = function(){
 
     NGL.timeEnd( "NGL.StructureSubset._build" );
 
-}
+};
 
 
 //////////////
@@ -6117,8 +6130,8 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         var _s2 = s2;
 
         if( sele1 && sele2 ){
-            _s1 = new NGL.StructureSubset( s1, sele1 );
-            _s2 = new NGL.StructureSubset( s2, sele2 );
+            _s1 = new NGL.StructureSubset( s1, new NGL.Selection( sele1 ) );
+            _s2 = new NGL.StructureSubset( s2, new NGL.Selection( sele2 ) );
         }
 
         var seq1 = _s1.getSequence();

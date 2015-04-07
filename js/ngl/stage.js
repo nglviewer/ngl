@@ -836,7 +836,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
         if( this.selection.string ){
 
             this.structure = new NGL.StructureSubset(
-                this.__structure, this.selection.string
+                this.__structure, this.selection
             );
 
         }else{

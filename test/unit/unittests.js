@@ -964,7 +964,9 @@ QUnit.asyncTest( "structure subset", function( assert ) {
 
     NGL.autoLoad( path, function( structure ){
 
-        var subset = new NGL.StructureSubset( structure, "10-30" );
+        var subset = new NGL.StructureSubset(
+            structure, new NGL.Selection( "10-30" )
+        );
 
         assert.equal( structure.atomCount, 774, "Passed!" );
         assert.equal( subset.atomCount, 211, "Passed!" );
@@ -982,7 +984,9 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
 
     NGL.autoLoad( path, function( structure ){
 
-        var subset = new NGL.StructureSubset( structure, "not 10-30" );
+        var subset = new NGL.StructureSubset(
+            structure, new NGL.Selection( "not 10-30" )
+        );
 
         assert.equal( structure.atomCount, 774, "Passed!" );
         assert.equal( subset.atomCount, 563, "Passed!" );
@@ -1000,7 +1004,9 @@ QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
     NGL.autoLoad( path, function( structure ){
 
-        var subset = new NGL.StructureSubset( structure, ":A" );
+        var subset = new NGL.StructureSubset(
+            structure, new NGL.Selection( ":A" )
+        );
 
         assert.equal( structure.atomCount, 52661, "Passed!" );
         assert.equal( subset.atomCount, 258, "Passed!" );
@@ -1186,7 +1192,9 @@ QUnit.module( "parsing" );
 
     NGL.autoLoad( path, function( structure ){
 
-        var subset = new NGL.StructureSubset( structure, "10-30" );
+        var subset = new NGL.StructureSubset(
+            structure, new NGL.Selection( "10-30" )
+        );
 
         assert.equal( structure.atomCount, 774, "Passed!" );
         assert.equal( subset.atomCount, 211, "Passed!" );

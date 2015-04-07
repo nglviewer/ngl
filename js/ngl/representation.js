@@ -3802,7 +3802,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var structureSubset = new NGL.StructureSubset(
-            this.structure, this.selection.string
+            this.structure, this.selection
         );
 
         var contactsFnDict = {
