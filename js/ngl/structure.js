@@ -4875,7 +4875,7 @@ NGL.StructureSubset.prototype._build = function(){
 //////////////
 // Selection
 
-NGL.Selection = function( string ){
+NGL.Selection = function( string, extraString ){
 
     var SIGNALS = signals;
 
@@ -4885,7 +4885,7 @@ NGL.Selection = function( string ){
 
     };
 
-    this.setString( string );
+    this.setString( string, extraString );
 
 };
 
@@ -4894,17 +4894,54 @@ NGL.Selection.prototype = {
 
     constructor: NGL.Selection,
 
-    setString: function( string, silent ){
+    setString: function( string, extraString, silent ){
 
-        string = string || "";
+        if( string === undefined ){
+            string = this.string || "";
+        }
 
-        if( string === this.string ){
+        if( extraString === undefined ){
+            extraString = this.extraString || "";
+        }
+
+        if( string === this.string && extraString === this.extraString ){
             return;
         }
 
+        //
+
+        var combinedString;
+
+        if( !string && !extraString ){
+
+            combinedString = "";
+
+        }else if( !string ){
+
+            combinedString = extraString;
+
+        }else if( !extraString ){
+
+            combinedString = string;
+
+        }else{
+
+            combinedString = (
+                "( " + string + " ) and " +
+                "( " + extraString + " )"
+            );
+
+        }
+
+        if( combinedString === this.combinedString ){
+            return;
+        }
+
+        //
+
         try{
 
-            this.parse( string );
+            this.parse( combinedString );
 
         }catch( e ){
 
@@ -4914,6 +4951,8 @@ NGL.Selection.prototype = {
         }
 
         this.string = string;
+        this.extraString = extraString;
+        this.combinedString = combinedString;
 
         this.test = this.makeAtomTest();
         this.residueTest = this.makeResidueTest();
@@ -4921,7 +4960,7 @@ NGL.Selection.prototype = {
         this.modelTest = this.makeModelTest();
 
         if( !silent ){
-            this.signals.stringChanged.dispatch( string );
+            this.signals.stringChanged.dispatch( this.string );
         }
 
     },
