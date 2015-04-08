@@ -704,35 +704,11 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         // TODO try to keep the API sync by queuing commands (similar also in stage)
         // TODO add async/worker-based .calculate method before .create
 
-        async.each(
+        // async.eachSeries(
 
-            this.bufferList,
+        //     this.bufferList,
 
-            function( buffer, wcallback ){
-
-                if( instanceList.length >= 1 ){
-                    viewer.add( buffer, instanceList );
-                }else{
-                    viewer.add( buffer );
-                }
-
-                wcallback();
-
-            },
-
-            function( err ){
-
-                console.log( "attach: viewer.add done" )
-
-            }
-
-        );
-
-        // this.bufferList.forEach( function( buffer ){
-
-        //     // async to appease Chrome
-
-        //     setTimeout( function(){
+        //     function( buffer, wcallback ){
 
         //         if( instanceList.length >= 1 ){
         //             viewer.add( buffer, instanceList );
@@ -740,9 +716,33 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         //             viewer.add( buffer );
         //         }
 
-        //     }, 0 );
+        //         wcallback();
 
-        // } );
+        //     },
+
+        //     function( err ){
+
+        //         console.log( "attach: viewer.add done" )
+
+        //     }
+
+        // );
+
+        this.bufferList.forEach( function( buffer ){
+
+            // async to appease Chrome
+
+            setTimeout( function(){
+
+                if( instanceList.length >= 1 ){
+                    viewer.add( buffer, instanceList );
+                }else{
+                    viewer.add( buffer );
+                }
+
+            }, 0 );
+
+        } );
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
