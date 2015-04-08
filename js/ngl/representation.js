@@ -571,7 +571,12 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.assembly = p.assembly || "";
 
-        this.setSelection( p.sele, this.getAssemblySele( p.assembly ) );
+        // TODO find a nicer way ...
+        var combinedString = this.selection.combinedString;
+        this.setSelection( p.sele, this.getAssemblySele( p.assembly ), true );
+        if( combinedString !== this.selection.combinedString ){
+            this.atomSet.applySelection();
+        }
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -698,13 +703,15 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        // async to appease Chrome
         // TODO use a signal to message completion
         // TODO set a flag for working/finished
         // TODO try to keep the API sync by queuing commands (similar also in stage)
         // TODO add async/worker-based .calculate method before .create
 
-        // async.eachSeries(
+        // async to appease Chrome
+        //   except that using async.js doesn't appease Chrome ...
+
+        // async.each(
 
         //     this.bufferList,
 
@@ -743,6 +750,16 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             }, 0 );
 
         } );
+
+        // this.bufferList.forEach( function( buffer ){
+
+        //     if( instanceList.length > 1 ){
+        //         viewer.add( buffer, instanceList );
+        //     }else{
+        //         viewer.add( buffer );
+        //     }
+
+        // } );
 
         this.debugBufferList.forEach( function( debugBuffer ){
 

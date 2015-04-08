@@ -739,9 +739,9 @@ NGL.AtomSet.prototype = {
 
     applySelection: function(){
 
-        NGL.time( "NGL.AtomSet.applySelection" );
-
         // atoms
+
+        NGL.time( "NGL.AtomSet.applySelection#atoms" );
 
         this.atoms.length = 0;
         var atoms = this.atoms;
@@ -757,23 +757,46 @@ NGL.AtomSet.prototype = {
 
         this._atomPosition = undefined;
 
+        NGL.timeEnd( "NGL.AtomSet.applySelection#atoms" );
+
         // bonds
+
+        NGL.time( "NGL.AtomSet.applySelection#bonds" );
 
         this.bonds.length = 0;
         var bonds = this.bonds;
 
-        this.structure.bondSet.eachBond( function( b ){
+        this.eachAtom( function( a ){
 
-            bonds.push( b );
+            var ab = a.bonds;
+            var n = ab.length;
 
-        }, this.selection );
+            for( var i = 0; i < n; ++i ){
+
+                var b = ab[ i ];
+
+                if( b.atom1 === a ){
+
+                    bonds.push( b );
+
+                }
+
+            }
+
+        } );
+
+        // this.structure.bondSet.eachBond( function( b ){
+
+        //     bonds.push( b );
+
+        // }, this.selection );
 
         this.bondCount = this.bonds.length;
 
         this._bondPositionFrom = undefined;
         this._bondPositionTo = undefined;
 
-        NGL.timeEnd( "NGL.AtomSet.applySelection" );
+        NGL.timeEnd( "NGL.AtomSet.applySelection#bonds" );
 
     },
 
@@ -1042,11 +1065,14 @@ NGL.AtomSet.prototype = {
 
         }else{
 
-            this.bonds.forEach( function( b ){
+            var bonds = this.bonds;
+            var n = bonds.length;
 
-                callback( b );
+            for( var i = 0; i < n; ++i ){
 
-            } );
+                callback( bonds[ i ] );
+
+            }
 
         }
 
@@ -1105,6 +1131,8 @@ NGL.AtomSet.prototype = {
     },*/
 
     bondPosition: function( selection, fromTo ){
+
+        NGL.time( "NGL.AtomSet.bondPosition" );
 
         var j, position, b;
 
@@ -1193,11 +1221,15 @@ NGL.AtomSet.prototype = {
 
         }
 
+        NGL.timeEnd( "NGL.AtomSet.bondPosition" );
+
         return position;
 
     },
 
     bondColor: function( selection, fromTo, type ){
+
+        NGL.time( "NGL.AtomSet.bondColor" );
 
         var i = 0;
         var color = [];
@@ -1205,17 +1237,42 @@ NGL.AtomSet.prototype = {
         var c;
         var colorFactory = new NGL.ColorFactory( type, this.structure );
 
-        this.eachBond( function( b ){
+        if( selection ){
 
-            c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
+            this.eachBond( function( b ){
 
-            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-            color[ i + 2 ] = ( c & 255 ) / 255;
+                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
 
-            i += 3;
+                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+                color[ i + 2 ] = ( c & 255 ) / 255;
 
-        }, selection );
+                i += 3;
+
+            }, selection );
+
+        }else{
+
+            var bonds = this.bonds;
+            var n = bonds.length;
+
+            for( var j = 0; j < n; ++j ){
+
+                var b = bonds[ j ];
+
+                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
+
+                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+                color[ i + 2 ] = ( c & 255 ) / 255;
+
+                i += 3;
+
+            }
+
+        }
+
+        NGL.timeEnd( "NGL.AtomSet.bondColor" );
 
         return new Float32Array( color );
 
@@ -1223,19 +1280,42 @@ NGL.AtomSet.prototype = {
 
     bondRadius: function( selection, fromTo, type, scale ){
 
+        NGL.time( "NGL.AtomSet.bondRadius" );
+
         var i = 0;
         var radius = [];
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        this.eachBond( function( b ){
+        if( selection ){
 
-            radius[ i ] = radiusFactory.atomRadius(
-                fromTo ? b.atom1 : b.atom2
-            );
+            this.eachBond( function( b ){
 
-            i += 1;
+                radius[ i ] = radiusFactory.atomRadius(
+                    fromTo ? b.atom1 : b.atom2
+                );
 
-        }, selection );
+                i += 1;
+
+            }, selection );
+
+        }else{
+
+            var bonds = this.bonds;
+            var n = bonds.length;
+
+            for( i = 0; i < n; ++i ){
+
+                var b = bonds[ i ];
+
+                radius[ i ] = radiusFactory.atomRadius(
+                    fromTo ? b.atom1 : b.atom2
+                );
+
+            }
+
+        }
+
+        NGL.timeEnd( "NGL.AtomSet.bondRadius" );
 
         return new Float32Array( radius );
 
@@ -1290,11 +1370,16 @@ NGL.BondSet.prototype = {
 
     eachBond: function( callback, selection ){
 
+        var bonds = this.bonds;
+        var n = bonds.length;
+
         if( selection && selection.test ){
 
             var test = selection.test;
 
-            this.bonds.forEach( function( b ){
+            for( var i = 0; i < n; ++i ){
+
+                var b = bonds[ i ];
 
                 if( test( b.atom1 ) && test( b.atom2 ) ){
 
@@ -1302,12 +1387,19 @@ NGL.BondSet.prototype = {
 
                 }
 
-            } );
+            }
+
+            // this.bonds.forEach( function( b ){
+
+            //     if( test( b.atom1 ) && test( b.atom2 ) ){
+
+            //         callback( b );
+
+            //     }
+
+            // } );
 
         }else{
-
-            var bonds = this.bonds;
-            var n = bonds.length;
 
             for( var i = 0; i < n; ++i ){
 
@@ -1754,6 +1846,8 @@ NGL.Structure.prototype = {
     eachAtom: function( callback, selection ){
 
         if( selection && selection.modelOnlyTest ){
+
+            // NGL.log( "structure.eachAtom#model", selection.selection )
 
             var test = selection.modelOnlyTest;
 
@@ -2532,12 +2626,13 @@ NGL.Structure.prototype = {
             new THREE.Vector3().fromArray( input.boundingBox[ 1 ] )
         );
 
+        var atoms = this.atoms;
+
         if( input.atomArray ){
 
             this.atomArray = new NGL.AtomArray( input.atomArray );
 
             var atomArray = this.atomArray;
-            var atoms = this.atoms;
             var n = atomArray.usedLength;
 
             for( var i = 0; i < n; ++i ){
@@ -2549,12 +2644,13 @@ NGL.Structure.prototype = {
         }else{
 
             var inputAtoms = input.atoms;
-            var atoms = this.atoms;
             var n = input.atoms.length;
 
             for( var i = 0; i < n; ++i ){
 
-                atoms.push( new NGL.Atom().fromJSON( inputAtoms[ i ] ) );
+                var a = new NGL.Atom().fromJSON( inputAtoms[ i ] );
+                a.index = i;
+                atoms.push( a );
 
             }
 
@@ -2567,6 +2663,13 @@ NGL.Structure.prototype = {
         // }.bind( this ) );
 
         this.bondSet.fromJSON( input.bondSet, this.atoms );
+
+        this.bondSet.eachBond( function( b ){
+
+            atoms[ b.atom1.index ].bonds.push( b );
+            atoms[ b.atom2.index ].bonds.push( b );
+
+        } );
 
         NGL.timeEnd( "NGL.Structure.fromJSON" );
 
@@ -2699,13 +2802,13 @@ NGL.Model.prototype = {
 
             this.chains.forEach( function( c ){
 
-                // NGL.log( c.chainname, selection.selection, selection.string )
+                // NGL.log( "model.eachAtom#chain", c.chainname, selection.selection )
 
                 if( test( c ) ){
                     c.eachAtom( callback, selection );
-                }else{
-                    // NGL.log( "chain", c.chainname );
-                }
+                }/*else{
+                    NGL.log( "chain", c.chainname );
+                }*/
 
             } );
 
@@ -2936,6 +3039,8 @@ NGL.Chain.prototype = {
 
         if( selection && selection.residueOnlyTest ){
 
+            // NGL.log( "chain.eachAtom#residue", selection.selection )
+
             var test = selection.residueOnlyTest;
 
             for( i = 0; i < n; ++i ){
@@ -2964,21 +3069,33 @@ NGL.Chain.prototype = {
 
             // }
 
-        }else{
+        }else if( selection && (
+                selection.atomOnlyTest ||
+                ( this.chainname === "" && selection.test )
+            )
+        ){
 
             for( i = 0; i < n; ++i ){
 
                 r = this.residues[ i ];
                 r.eachAtom( callback, selection );
 
-                // r = this.residues[ i ];
-                // o = r.atomCount;
+            }
 
-                // for( j = 0; j < o; ++j ){
+        }else{
 
-                //     callback( r.atoms[ j ] );
+            // console.log( "moin" )
 
-                // }
+            for( i = 0; i < n; ++i ){
+
+                r = this.residues[ i ];
+                o = r.atomCount;
+
+                for( j = 0; j < o; ++j ){
+
+                    callback( r.atoms[ j ] );
+
+                }
 
             }
 
@@ -3533,6 +3650,8 @@ NGL.Residue.prototype = {
                 ( this.chain.chainname === "" && selection.test )
             )
         ){
+
+            // NGL.log( "residue.eachAtom#atom", selection.selection )
 
             var test;
             if( this.chain.chainname === "" ){
@@ -5801,6 +5920,7 @@ NGL.Selection.prototype = {
 
                 if( s.model!==undefined ) return true;
                 if( s.globalindex!==undefined ) return true;
+                if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
