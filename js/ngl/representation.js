@@ -571,8 +571,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.assembly = p.assembly || "";
 
-        this.setSelection( p.sele, this.getAssemblySele( p.assembly ), true );
-        this.atomSet.applySelection();
+        this.setSelection( p.sele, this.getAssemblySele( p.assembly ) );
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -652,8 +651,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "assembly" ] !== undefined ){
 
-            this.setSelection( undefined, this.getAssemblySele( params[ "assembly" ] ), true );
-            this.atomSet.applySelection();
+            this.setSelection( undefined, this.getAssemblySele( params[ "assembly" ] ) );
 
         }
 
@@ -700,11 +698,17 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        this.bufferList.forEach( function( buffer ){
+        // async to appease Chrome
+        // TODO use a signal to message completion
+        // TODO set a flag for working/finished
+        // TODO try to keep the API sync by queuing commands (similar also in stage)
+        // TODO add async/worker-based .calculate method before .create
 
-            // async to appease Chrome
+        async.each(
 
-            setTimeout( function(){
+            this.bufferList,
+
+            function( buffer, wcallback ){
 
                 if( instanceList.length >= 1 ){
                     viewer.add( buffer, instanceList );
@@ -712,9 +716,33 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                     viewer.add( buffer );
                 }
 
-            }, 0 );
+                wcallback();
 
-        } );
+            },
+
+            function( err ){
+
+                console.log( "attach: viewer.add done" )
+
+            }
+
+        );
+
+        // this.bufferList.forEach( function( buffer ){
+
+        //     // async to appease Chrome
+
+        //     setTimeout( function(){
+
+        //         if( instanceList.length >= 1 ){
+        //             viewer.add( buffer, instanceList );
+        //         }else{
+        //             viewer.add( buffer );
+        //         }
+
+        //     }, 0 );
+
+        // } );
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
@@ -1728,7 +1756,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 a1 = r1.getAtomByName( f.traceAtomname );
                 a2 = r2.getAtomByName( f.traceAtomname );
 
-                if( test( a1 ) && test( a2 ) ){
+                if( !test || ( test( a1 ) && test( a2 ) ) ){
 
                     baSet.addAtom( a1 );
                     bbSet.addBond( a1, a2, true );
@@ -1737,7 +1765,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
             } );
 
-            if( test( a1 ) && test( a2 ) ){
+            if( !test || ( test( a1 ) && test( a2 ) ) ){
 
                 baSet.addAtom( a2 );
 
@@ -1971,7 +1999,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                     a2 = r.getAtomByName( "N3" );
                 }
 
-                if( test( a1 ) ){
+                if( !test || test( a1 ) ){
 
                     baSet.addAtom( a1 );
                     baSet.addAtom( a2 );

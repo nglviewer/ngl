@@ -739,6 +739,8 @@ NGL.AtomSet.prototype = {
 
     applySelection: function(){
 
+        NGL.time( "NGL.AtomSet.applySelection" );
+
         // atoms
 
         this.atoms.length = 0;
@@ -770,6 +772,8 @@ NGL.AtomSet.prototype = {
 
         this._bondPositionFrom = undefined;
         this._bondPositionTo = undefined;
+
+        NGL.timeEnd( "NGL.AtomSet.applySelection" );
 
     },
 
@@ -1022,7 +1026,7 @@ NGL.AtomSet.prototype = {
 
         selection = selection || this.selection;
 
-        if( selection ){
+        if( selection && selection.test ){
 
             var test = selection.test;
 
@@ -1286,7 +1290,7 @@ NGL.BondSet.prototype = {
 
     eachBond: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.test ){
 
             var test = selection.test;
 
@@ -1749,9 +1753,9 @@ NGL.Structure.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -1762,7 +1766,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachAtom( callback );
+
+                m.eachAtom( callback, selection );
+
             } );
 
         }
@@ -1771,9 +1777,9 @@ NGL.Structure.prototype = {
 
     eachResidue: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -1784,7 +1790,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachResidue( callback );
+
+                m.eachResidue( callback, selection );
+
             } );
 
         }
@@ -1801,9 +1809,9 @@ NGL.Structure.prototype = {
 
     eachFiber: function( callback, selection, padded ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -1814,7 +1822,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachFiber( callback, undefined, padded );
+
+                m.eachFiber( callback, selection, padded );
+
             } );
 
         }
@@ -1823,9 +1833,9 @@ NGL.Structure.prototype = {
 
     eachChain: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -1836,7 +1846,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachChain( callback );
+
+                m.eachChain( callback, selection );
+
             } );
 
         }
@@ -1845,9 +1857,9 @@ NGL.Structure.prototype = {
 
     eachModel: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -2681,9 +2693,9 @@ NGL.Model.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             this.chains.forEach( function( c ){
 
@@ -2700,7 +2712,9 @@ NGL.Model.prototype = {
         }else{
 
             this.chains.forEach( function( c ){
-                c.eachAtom( callback );
+
+                c.eachAtom( callback, selection );
+
             } );
 
         }
@@ -2712,26 +2726,27 @@ NGL.Model.prototype = {
         var i, j, o, c, r;
         var n = this.chainCount;
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
                 c = this.chains[ i ];
+                if( test( c ) ) c.eachResidue( callback, selection );
 
-                if( !test( c ) ) continue;
+                // if( !test( c ) ) continue;
 
-                o = c.residueCount;
+                // o = c.residueCount;
 
-                var residueTest = selection.residueTest;
+                // var residueTest = selection.residueTest;
 
-                for( j = 0; j < o; ++j ){
+                // for( j = 0; j < o; ++j ){
 
-                    r = c.residues[ j ];
-                    if( residueTest( r ) ) callback( r );
+                //     r = c.residues[ j ];
+                //     if( residueTest( r ) ) callback( r );
 
-                }
+                // }
 
             }
 
@@ -2740,13 +2755,15 @@ NGL.Model.prototype = {
             for( i = 0; i < n; ++i ){
 
                 c = this.chains[ i ];
-                o = c.residueCount;
+                c.eachResidue( callback, selection );
 
-                for( j = 0; j < o; ++j ){
+                // o = c.residueCount;
 
-                    callback( c.residues[ j ] );
+                // for( j = 0; j < o; ++j ){
 
-                }
+                //     callback( c.residues[ j ] );
+
+                // }
 
             }
 
@@ -2764,9 +2781,9 @@ NGL.Model.prototype = {
 
     eachFiber: function( callback, selection, padded ){
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             this.chains.forEach( function( c ){
 
@@ -2777,7 +2794,9 @@ NGL.Model.prototype = {
         }else{
 
             this.chains.forEach( function( c ){
-                c.eachFiber( callback, undefined, padded );
+
+                c.eachFiber( callback, selection, padded );
+
             } );
 
         }
@@ -2789,9 +2808,9 @@ NGL.Model.prototype = {
         var i, c;
         var n = this.chainCount;
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
@@ -2915,41 +2934,51 @@ NGL.Chain.prototype = {
         var i, j, o, r, a;
         var n = this.residueCount;
 
-        if( selection ){
+        if( selection && selection.residueOnlyTest ){
 
-            var test = selection.residueTest;
+            var test = selection.residueOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
                 r = this.residues[ i ];
-
-                if( !test( r ) ) continue;
-
-                o = r.atomCount;
-
-                var atomTest = selection.test;
-
-                for( j = 0; j < o; ++j ){
-
-                    a = r.atoms[ j ];
-                    if( atomTest( a ) ) callback( a );
-
-                }
+                if( test( r ) ) r.eachAtom( callback, selection );
 
             }
+
+            // for( i = 0; i < n; ++i ){
+
+            //     r = this.residues[ i ];
+
+            //     if( !test( r ) ) continue;
+
+            //     o = r.atomCount;
+
+            //     var atomTest = selection.atomOnlyTest;
+
+            //     for( j = 0; j < o; ++j ){
+
+            //         a = r.atoms[ j ];
+            //         if( atomTest( a ) ) callback( a );
+
+            //     }
+
+            // }
 
         }else{
 
             for( i = 0; i < n; ++i ){
 
                 r = this.residues[ i ];
-                o = r.atomCount;
+                r.eachAtom( callback, selection );
 
-                for( j = 0; j < o; ++j ){
+                // r = this.residues[ i ];
+                // o = r.atomCount;
 
-                    callback( r.atoms[ j ] );
+                // for( j = 0; j < o; ++j ){
 
-                }
+                //     callback( r.atoms[ j ] );
+
+                // }
 
             }
 
@@ -2962,9 +2991,9 @@ NGL.Chain.prototype = {
         var i, r;
         var n = this.residueCount;
 
-        if( selection ){
+        if( selection && selection.residueOnlyTest ){
 
-            var test = selection.residueTest;
+            var test = selection.residueOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
@@ -3499,9 +3528,18 @@ NGL.Residue.prototype = {
         var i, a;
         var n = this.atomCount;
 
-        if( selection ){
+        if( selection && (
+                selection.atomOnlyTest ||
+                ( this.chain.chainname === "" && selection.test )
+            )
+        ){
 
-            var test = selection.test;
+            var test;
+            if( this.chain.chainname === "" ){
+                test = selection.test;
+            }else{
+                test = selection.atomOnlyTest;
+            }
 
             for( i = 0; i < n; ++i ){
 
@@ -4959,6 +4997,11 @@ NGL.Selection.prototype = {
         this.chainTest = this.makeChainTest();
         this.modelTest = this.makeModelTest();
 
+        this.atomOnlyTest = this.makeAtomTest( true );
+        this.residueOnlyTest = this.makeResidueTest( true );
+        this.chainOnlyTest = this.makeChainTest( true )
+        this.modelOnlyTest = this.makeModelTest( true );
+
         if( !silent ){
             this.signals.stringChanged.dispatch( this.string );
         }
@@ -5485,19 +5528,20 @@ NGL.Selection.prototype = {
     _makeTest: function( fn, selection ){
 
         if( selection === undefined ) selection = this.selection;
-        if( selection.error ) return function(){ return true; }
+        if( selection === null ) return false;
+        if( selection.error ) return false;
 
         var n = selection.rules.length;
-        if( n === 0 ) return function(){ return true; }
+        if( n === 0 ) return false;
 
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
 
-        var i, s, and, ret, na;
+        var s, and, ret, na;
 
         var subTests = [];
 
-        for( i=0; i<n; ++i ){
+        for( var i = 0; i < n; ++i ){
 
             s = selection.rules[ i ];
 
@@ -5514,13 +5558,21 @@ NGL.Selection.prototype = {
             and = selection.operator === "AND";
             na = false;
 
-            for( i=0; i<n; ++i ){
+            for( var i = 0; i < n; ++i ){
 
                 s = selection.rules[ i ];
 
                 if( s.hasOwnProperty( "operator" ) ){
 
-                    ret = subTests[ i ]( entity );
+                    if( subTests[ i ] ){
+
+                        ret = subTests[ i ]( entity );
+
+                    }else{
+
+                        ret = -1;
+
+                    }
 
                     if( ret === -1 ){
 
@@ -5582,7 +5634,50 @@ NGL.Selection.prototype = {
 
     },
 
-    makeAtomTest: function(){
+    _filter: function( fn, selection ){
+
+        if( selection === undefined ) selection = this.selection;
+        if( selection.error ) return selection;
+
+        var n = selection.rules.length;
+        if( n === 0 ) return selection;
+
+        var filtered = {
+            operator: selection.operator,
+            rules: []
+        };
+        if( selection.hasOwnProperty( "negate" ) ){
+            filtered.negate = selection.negate;
+        }
+
+        for( var i = 0; i < n; ++i ){
+
+            var s = selection.rules[ i ];
+
+            if( s.hasOwnProperty( "operator" ) ){
+
+                var fs = this._filter( fn, s );
+                if( fs !== null ) filtered.rules.push( fs );
+
+            }else if( !fn( s ) ){
+
+                filtered.rules.push( s );
+
+            }
+
+        }
+
+        // console.log( filtered );
+
+        if( filtered.rules.length > 0 ){
+            return filtered;
+        }else{
+            return null;
+        }
+
+    },
+
+    makeAtomTest: function( atomOnly ){
 
         var backboneProtein = [
             "CA", "C", "N", "O",
@@ -5600,6 +5695,29 @@ NGL.Selection.prototype = {
         var helixTypes = [
             "h", "g", "i"
         ];
+
+        var selection;
+
+        if( atomOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.chainname!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( a, s ){
 
@@ -5667,11 +5785,35 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     },
 
-    makeResidueTest: function(){
+    makeResidueTest: function( residueOnly ){
+
+        var selection;
+
+        if( residueOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( r, s ){
 
@@ -5697,7 +5839,7 @@ NGL.Selection.prototype = {
             if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
 
             // support autoChainNames which work only on atoms
-            if( s.chainname!=="" && r.chain.chainname==="" ) return -1;
+            if( s.chainname!==undefined && r.chain.chainname==="" ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -5715,11 +5857,37 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     },
 
-    makeChainTest: function(){
+    makeChainTest: function( chainOnly ){
+
+        var selection;
+
+        if( chainOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+                if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( c, s ){
 
@@ -5729,7 +5897,7 @@ NGL.Selection.prototype = {
             if( s.chainname===undefined && s.model===undefined ) return -1;
 
             // support autoChainNames which work only on atoms
-            if( s.chainname!=="" && c.chainname==="" ) return -1;
+            if( s.chainname!==undefined && c.chainname==="" ) return -1;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
             if( s.model!==undefined && s.model!==c.model.index ) return false;
@@ -5738,11 +5906,37 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     },
 
-    makeModelTest: function(){
+    makeModelTest: function( modelOnly ){
+
+        var selection;
+
+        if( modelOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.chainname!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+                if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( m, s ){
 
@@ -5755,7 +5949,7 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     }
 
