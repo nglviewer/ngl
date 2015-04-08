@@ -1933,7 +1933,12 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                 var beta = parseFloat( cell.angle_beta );
                 var gamma = parseFloat( cell.angle_gamma );
 
-                var sGroup = symmetry[ "space_group_name_H-M" ].replace( /'/g, '' );;
+                var sGroup = symmetry[ "space_group_name_H-M" ];
+                if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+                    ( sGroup[0] === "'" || sGroup[0] === '"' )
+                ){
+                    sGroup = sGroup.substring( 1, sGroup.length-1 );
+                }
                 var z = parseInt( cell.Z_PDB );
 
                 var box = new Float32Array( 9 );
