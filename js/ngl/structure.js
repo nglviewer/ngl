@@ -5806,9 +5806,18 @@ NGL.Selection.prototype = {
         // console.log( filtered );
 
         if( filtered.rules.length > 0 ){
+
+            if( filtered.operator === "OR" && filtered.rules.length < n ){
+                // can't discard rules when operator is "OR"
+                filtered.rules = selection.rules.slice();
+            }
+
             return filtered;
+
         }else{
+
             return null;
+
         }
 
     },

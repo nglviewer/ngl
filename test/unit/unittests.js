@@ -43,6 +43,25 @@ QUnit.test( "chain resno range", function( assert ) {
 });
 
 
+QUnit.test( "HOH or .OH", function( assert ) {
+
+    var sele = "HOH or .OH";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            { "resname": "HOH" },
+            { "atomname": "OH" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
 QUnit.test( "modelindex", function( assert ) {
 
     var sele = "/1";
@@ -811,6 +830,27 @@ QUnit.asyncTest( ".CA", function( assert ) {
 
         assert.equal( atomSet.atomCount, 46, "Passed!" );
         assert.equal( atomSet.atoms[ 30 ].atomname, "CA", "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "ARG or .N", function( assert ) {
+
+    var sele = "ARG or .N";
+
+    var selection = new NGL.Selection( sele );
+
+    var path = "data://../../data/1crn.pdb";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atomCount, 22 + 46 - 2, "Passed!" );
 
         QUnit.start()
 
