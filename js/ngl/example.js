@@ -144,8 +144,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { sele: "1-320", wireframe: false } );
                 o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
-                o.addRepresentation( "rope", { sele: "*" }, true )
-                    .setParameters( { subdiv: 2 } );
+                o.addRepresentation( "rope", { sele: "*", subdiv: 2 } );
                 o.addRepresentation( "licorice", { sele: ".C or .CA or .O" } );
 
                 // o.addRepresentation( "tube", {
