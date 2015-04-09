@@ -126,6 +126,16 @@ NGL.Representation.prototype = {
 
     },
 
+    prepare: function( callback ){
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    },
+
     create: function(){
 
         // this.bufferList.length = 0;
@@ -147,11 +157,15 @@ NGL.Representation.prototype = {
             this.init( params );
         }
 
-        this.clear();
-        this.create();
-        if( !this.manualAttach ) this.attach();
+        this.prepare( function(){
 
-        NGL.timeEnd( "NGL.Representation.rebuild " + this.type );
+            this.clear();
+            this.create();
+            if( !this.manualAttach ) this.attach();
+
+            NGL.timeEnd( "NGL.Representation.rebuild " + this.type );
+
+        }.bind( this ) );
 
     },
 
@@ -4431,8 +4445,12 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
     this.surface = surface;
 
-    this.create();
-    this.attach();
+    this.prepare( function(){
+
+        this.create();
+        this.attach();
+
+    }.bind( this ) );
 
 };
 
