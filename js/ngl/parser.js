@@ -368,31 +368,79 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
     if( centerFrac.z > 1 ) positionFrac.z -= 1;
     if( centerFrac.z < 0 ) positionFrac.z += 1;
 
-    Object.keys( symopDict ).forEach( function( name ){
+    function getOpDict( shift, suffix ){
 
-        var m = symopDict[ name ];
+        suffix = suffix || "";
+        var opDict = {};
 
-        centerFracSymop.copy( centerFrac ).applyMatrix4( m );
-        positionFracSymop.setFromMatrixPosition( m );
-        positionFracSymop.sub( positionFrac );
+        Object.keys( symopDict ).forEach( function( name ){
 
-        if( centerFracSymop.x > 1 ) positionFracSymop.x -= 1;
-        if( centerFracSymop.x < 0 ) positionFracSymop.x += 1;
-        if( centerFracSymop.y > 1 ) positionFracSymop.y -= 1;
-        if( centerFracSymop.y < 0 ) positionFracSymop.y += 1;
-        if( centerFracSymop.z > 1 ) positionFracSymop.z -= 1;
-        if( centerFracSymop.z < 0 ) positionFracSymop.z += 1;
+            var m = symopDict[ name ].clone();
 
-        m.setPosition( positionFracSymop );
-        m.multiplyMatrices( uc.fracToCart, m );
-        m.multiply( uc.cartToFrac );
+            centerFracSymop.copy( centerFrac ).applyMatrix4( m );
+            positionFracSymop.setFromMatrixPosition( m );
+            positionFracSymop.sub( positionFrac );
 
-        symopDict[ name ] = m;
+            if( centerFracSymop.x > 1 ) positionFracSymop.x -= 1;
+            if( centerFracSymop.x < 0 ) positionFracSymop.x += 1;
+            if( centerFracSymop.y > 1 ) positionFracSymop.y -= 1;
+            if( centerFracSymop.y < 0 ) positionFracSymop.y += 1;
+            if( centerFracSymop.z > 1 ) positionFracSymop.z -= 1;
+            if( centerFracSymop.z < 0 ) positionFracSymop.z += 1;
 
-    } );
+            if( shift ) positionFracSymop.add( shift );
+
+            m.setPosition( positionFracSymop );
+            m.multiplyMatrices( uc.fracToCart, m );
+            m.multiply( uc.cartToFrac );
+
+            opDict[ name + suffix ] = m;
+
+        } );
+
+        return opDict;
+
+    }
 
     biomolDict[ "UNITCELL" ] = {
-        matrixDict: symopDict,
+        matrixDict: getOpDict(),
+        chainList: undefined
+    };
+
+    biomolDict[ "SUPERCELL" ] = {
+        matrixDict: Object.assign( {},
+            getOpDict(),
+            getOpDict( new THREE.Vector3(  1,  1,  1 ), "_666" ),
+            getOpDict( new THREE.Vector3( -1, -1, -1 ), "_444" ),
+
+            getOpDict( new THREE.Vector3(  1,  0,  0 ), "_655" ),
+            getOpDict( new THREE.Vector3(  1,  1,  0 ), "_665" ),
+            getOpDict( new THREE.Vector3(  1,  0,  1 ), "_656" ),
+            getOpDict( new THREE.Vector3(  0,  1,  0 ), "_565" ),
+            getOpDict( new THREE.Vector3(  0,  1,  1 ), "_566" ),
+            getOpDict( new THREE.Vector3(  0,  0,  1 ), "_556" ),
+
+            getOpDict( new THREE.Vector3( -1,  0,  0 ), "_455" ),
+            getOpDict( new THREE.Vector3( -1, -1,  0 ), "_445" ),
+            getOpDict( new THREE.Vector3( -1,  0, -1 ), "_454" ),
+            getOpDict( new THREE.Vector3(  0, -1,  0 ), "_545" ),
+            getOpDict( new THREE.Vector3(  0, -1, -1 ), "_544" ),
+            getOpDict( new THREE.Vector3(  0,  0, -1 ), "_554" ),
+
+            getOpDict( new THREE.Vector3(  1, -1, -1 ), "_644" ),
+            getOpDict( new THREE.Vector3(  1,  1, -1 ), "_664" ),
+            getOpDict( new THREE.Vector3(  1, -1,  1 ), "_646" ),
+            getOpDict( new THREE.Vector3( -1,  1,  1 ), "_466" ),
+            getOpDict( new THREE.Vector3( -1, -1,  1 ), "_446" ),
+            getOpDict( new THREE.Vector3( -1,  1, -1 ), "_464" ),
+
+            getOpDict( new THREE.Vector3(  0,  1, -1 ), "_564" ),
+            getOpDict( new THREE.Vector3(  0, -1,  1 ), "_546" ),
+            getOpDict( new THREE.Vector3(  1,  0, -1 ), "_654" ),
+            getOpDict( new THREE.Vector3( -1,  0,  1 ), "_456" ),
+            getOpDict( new THREE.Vector3(  1, -1,  0 ), "_645" ),
+            getOpDict( new THREE.Vector3( -1,  1,  0 ), "_465" )
+        ),
         chainList: undefined
     };
 
