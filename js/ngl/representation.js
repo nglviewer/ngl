@@ -4184,6 +4184,15 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         var surfaceData = {};
 
+        if( what[ "position" ] ){
+
+            // FIXME
+            this.molsurf = undefined;
+            this.rebuild();
+            return;
+
+        }
+
         if( what[ "color" ] ){
 
             surfaceData[ "color" ] = this.surface.getColor( this.color );
