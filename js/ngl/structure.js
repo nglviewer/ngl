@@ -766,30 +766,47 @@ NGL.AtomSet.prototype = {
         this.bonds.length = 0;
         var bonds = this.bonds;
 
-        this.eachAtom( function( a ){
+        if( this.selection ){
 
-            var ab = a.bonds;
-            var n = ab.length;
+            var idxDict = {};
 
-            for( var i = 0; i < n; ++i ){
+            this.eachAtom( function( a ){
 
-                var b = ab[ i ];
+                var ab = a.bonds;
+                var n = ab.length;
 
-                if( b.atom1 === a ){
+                idxDict[ a.index ] = true;
 
-                    bonds.push( b );
+                for( var i = 0; i < n; ++i ){
+
+                    var b = ab[ i ];
+
+                    if( idxDict[ b.atom1.index ] && idxDict[ b.atom2.index ] ){
+
+                        bonds.push( b );
+
+                    }
 
                 }
 
-            }
+            } );
 
-        } );
+        }else{
 
-        // this.structure.bondSet.eachBond( function( b ){
+            this.eachAtom( function( a ){
 
-        //     bonds.push( b );
+                var ab = a.bonds;
+                var n = ab.length;
 
-        // }, this.selection );
+                for( var i = 0; i < n; ++i ){
+
+                    bonds.push( ab[ i ] );
+
+                }
+
+            } );
+
+        }
 
         this.bondCount = this.bonds.length;
 
