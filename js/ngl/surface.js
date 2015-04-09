@@ -161,16 +161,14 @@ NGL.Volume.prototype = {
 
     setData: function( data, nx, ny, nz ){
 
-        this.nx = nx;
-        this.ny = ny;
-        this.nz = nz;
+        this.nx = nx || 1;
+        this.ny = ny || 1;
+        this.nz = nz || 1;
 
-        this.data = data;
+        this.data = data || new Float32Array( 1 );
         this.__data = this.data;
 
-        this.mc = new NGL.MarchingCubes2(
-            this.__data, this.nx, this.ny, this.nz
-        );
+        delete this.mc;
 
         delete this.__isolevel;
         delete this.__smooth;
@@ -185,9 +183,11 @@ NGL.Volume.prototype = {
         delete this.__dataMax;
         delete this.__dataMean;
 
+        if( this.worker ) this.worker.terminate();
+
     },
 
-    generateSurface: function( isolevel, smooth ){
+    generateSurface: function( isolevel, smooth, callback ){
 
         if( isNaN( isolevel ) && this.header ){
             isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
@@ -199,7 +199,24 @@ NGL.Volume.prototype = {
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
 
             // already generated
+
+            if( typeof callback === "function" ){
+
+                callback();
+
+            }
+
             return;
+
+        }
+
+        //
+
+        if( this.mc === undefined ){
+
+            this.mc = new NGL.MarchingCubes2(
+                this.__data, this.nx, this.ny, this.nz
+            );
 
         }
 
@@ -262,6 +279,79 @@ NGL.Volume.prototype = {
 
         this.__isolevel = isolevel;
         this.__smooth = smooth;
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    },
+
+    generateSurfaceWorker: function( isolevel, smooth, callback ){
+
+        if( isNaN( isolevel ) && this.header ){
+            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
+        }
+
+        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        smooth = smooth || 0;
+
+        //
+
+        if( isolevel === this.__isolevel && smooth === this.__smooth ){
+
+            // already generated
+            callback();
+
+        }else if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.Volume.generateSurfaceWorker " + this.name;
+
+            NGL.time( __timeName );
+
+            var scope = this;
+            var vol = undefined;
+
+            if( this.worker === undefined ){
+
+                vol = this.toJSON();
+                this.worker = new Worker( "../js/worker/surf.js" );
+
+            }
+
+            this.worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+
+                // if( NGL.debug ) console.log( e.data );
+
+                scope.position = e.data.position;
+                scope.normal = e.data.normal;
+                scope.index = e.data.index;
+
+                scope.size = scope.position.length / 3;
+
+                scope.__isolevel = isolevel;
+                scope.__smooth = smooth;
+
+                callback();
+
+            };
+
+            this.worker.postMessage( {
+                vol: vol,
+                params: {
+                    isolevel: isolevel,
+                    smooth: smooth
+                }
+            } );
+
+        }else{
+
+            this.generateSurface( isolevel, smooth, callback );
+
+        }
 
     },
 
@@ -557,6 +647,110 @@ NGL.Volume.prototype = {
         }
 
         return this.__dataMean;
+
+    },
+
+    clone: function(){
+
+        var vol = new NGL.Volume(
+
+            this.name,
+            this.path,
+
+            this.data,
+
+            this.nx,
+            this.ny,
+            this.nz
+
+        );
+
+        vol.matrix.copy( this.matrix );
+
+        if( this.header ){
+
+            vol.header = Object.assign( {}, this.header );
+
+        }
+
+        return vol;
+
+    },
+
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'Volume',
+                generator: 'VolumeExporter'
+            },
+
+            name: this.name,
+            path: this.path,
+
+            data: this.data,
+
+            nx: this.nx,
+            ny: this.ny,
+            nz: this.nz,
+
+            matrix: this.matrix.toArray()
+
+        }
+
+        if( this.header ){
+
+            output.header = Object.assign( {}, this.header );
+
+        }
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.name = input.name;
+        this.path = input.path;
+
+        this.setData(
+
+            input.data,
+            input.nx,
+            input.ny,
+            input.nz
+
+        );
+
+        this.matrix.fromArray( input.matrix );
+
+        if( input.header ){
+
+            this.header = Object.assign( {}, input.header );
+
+        }
+
+        return this;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [
+
+            this.data.buffer
+
+        ];
+
+        return transferable;
+
+    },
+
+    dispose: function(){
+
+        if( this.worker ) this.worker.terminate();
 
     }
 

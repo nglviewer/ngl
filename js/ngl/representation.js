@@ -4524,13 +4524,31 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    prepare: function( callback ){
 
         if( this.surface instanceof NGL.Volume ){
 
-            this.surface.generateSurface( this.isolevel, this.smooth );
+            this.surface.generateSurfaceWorker( this.isolevel, this.smooth, function(){
+
+                callback();
+
+            } );
+
+        }else{
+
+            callback();
 
         }
+
+    },
+
+    create: function(){
+
+        // if( this.surface instanceof NGL.Volume ){
+
+        //     this.surface.generateSurface( this.isolevel, this.smooth );
+
+        // }
 
         var position = this.surface.getPosition();
         var color = this.surface.getColor( this.color );
