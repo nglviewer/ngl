@@ -163,6 +163,12 @@ NGL.MenubarWidget = function( stage ){
     container.add( new NGL.MenubarExamplesWidget( stage ) );
     container.add( new NGL.MenubarHelpWidget( stage ) );
 
+    container.add(
+        new UI.Panel().setClass( "menu" ).setFloat( "right" ).add(
+            new UI.Text( "NGL Viewer " + NGL.REVISION ).setClass( "title" )
+        )
+    );
+
     return container;
 
 };
