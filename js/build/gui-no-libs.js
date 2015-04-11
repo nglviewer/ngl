@@ -2110,9 +2110,13 @@ UI.ColorPicker.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPicker.prototype.setValue = function( value ){
 
-    this._settingValue = true;
-    this.colorPicker.setHex( value );
-    this._settingValue = false;
+    if( value !== this.hex ){
+
+        this._settingValue = true;
+        this.colorPicker.setHex( value );
+        this._settingValue = false;
+
+    }
 
     return this;
 
@@ -2209,6 +2213,8 @@ UI.ColorPopupMenu = function(){
 UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPopupMenu.prototype.setScheme = function( value ){
+
+    value = value || "";
 
     this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
     this.schemeSelector.setValue( value );
@@ -2711,6 +2717,12 @@ NGL.MenubarWidget = function( stage ){
     container.add( new NGL.MenubarViewWidget( stage ) );
     container.add( new NGL.MenubarExamplesWidget( stage ) );
     container.add( new NGL.MenubarHelpWidget( stage ) );
+
+    container.add(
+        new UI.Panel().setClass( "menu" ).setFloat( "right" ).add(
+            new UI.Text( "NGL Viewer " + NGL.REVISION ).setClass( "title" )
+        )
+    );
 
     return container;
 
@@ -3760,6 +3772,32 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         } );
 
+    // Assembly
+
+    var assembly = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( (function(){
+
+            var biomolDict = component.structure.biomolDict;
+            var assemblyOptions = { "__AU": "AU" };
+            Object.keys( biomolDict ).forEach( function( k ){
+                assemblyOptions[ k ] = k;
+            } );
+            return assemblyOptions;
+
+        })() )
+        .setValue(
+            component.structure.defaultAssembly
+        )
+        .onChange( function(){
+
+            component.structure.setDefaultAssembly( assembly.getValue() );
+            component.rebuildRepresentations();
+            // component.centerView();
+            componentPanel.setMenuDisplay( "none" );
+
+        } );
+
     // Import trajectory
 
     var traj = new UI.Button( "import" ).onClick( function(){
@@ -3875,6 +3913,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setMargin( "0px" )
         .addMenuEntry( "PDB file", pdb )
         .addMenuEntry( "Representation", repr )
+        .addMenuEntry( "Assembly", assembly )
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
@@ -4123,8 +4162,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Selection
 
-    if( component.parent instanceof NGL.StructureComponent ||
-        component.parent instanceof NGL.TrajectoryComponent
+    if( ( component.parent instanceof NGL.StructureComponent ||
+            component.parent instanceof NGL.TrajectoryComponent ) &&
+        component.repr.selection instanceof NGL.Selection
     ){
 
         container.add(

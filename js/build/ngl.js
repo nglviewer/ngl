@@ -9,6 +9,36 @@
 //////////////
 // Polyfills
 
+( function( global ) {
+
+    'use strict';
+
+    // Console-polyfill. MIT license.
+    // https://github.com/paulmillr/console-polyfill
+    // Make it safe to do console.log() always.
+
+    global.console = global.console || {};
+    var con = global.console;
+    var prop, method;
+    var empty = {};
+    var dummy = function(){};
+    var properties = 'memory'.split( ',' );
+    var methods = (
+        'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+        'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+        'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
+    ).split(',');
+
+    while( prop = properties.pop() ) if( !con[ prop] ) con[ prop ] = empty;
+    while( method = methods.pop() ) if( !con[ method] ) con[ method ] = dummy;
+
+    // Using `this` for web workers while maintaining compatibility with browser
+    // targeted script loaders such as Browserify or Webpack where the only way to
+    // get to the global object is via `window`.
+
+} )( typeof window === 'undefined' ? this : window );
+
+
 if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob ){
 
     // http://code.google.com/p/chromium/issues/detail?id=67587#57
@@ -49,7 +79,7 @@ if( typeof importScripts !== 'function' && !HTMLCanvasElement.prototype.toBlob )
 }
 
 
-if ( !Number.isInteger ) {
+if( !Number.isInteger ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
 
@@ -60,7 +90,7 @@ if ( !Number.isInteger ) {
 }
 
 
-if ( !Number.isNaN ) {
+if( !Number.isNaN ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
 
@@ -71,7 +101,7 @@ if ( !Number.isNaN ) {
 }
 
 
-if ( !Object.assign ) {
+if( !Object.assign ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 
@@ -128,68 +158,97 @@ if ( !Object.assign ) {
 
 }
 
+if( typeof importScripts !== 'function' ){
 
-( function() {
+    ( function() {
 
-    // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-    // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+        // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+        // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 
-    // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+        // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
 
-    // MIT license
+        // MIT license
 
-    var lastTime = 0;
-    var vendors = ['ms', 'moz', 'webkit', 'o'];
-    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
-                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
-    }
+        var lastTime = 0;
+        var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
 
-    if (!window.requestAnimationFrame)
-        window.requestAnimationFrame = function(callback, element) {
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
-              timeToCall);
-            lastTime = currTime + timeToCall;
-            return id;
-        };
+        for( var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x ){
 
-    if (!window.cancelAnimationFrame)
-        window.cancelAnimationFrame = function(id) {
-            clearTimeout(id);
-        };
+            window.requestAnimationFrame = (
+                window[ vendors[ x ] + 'RequestAnimationFrame' ]
+            );
 
-}() );
+            window.cancelAnimationFrame = (
+                window[ vendors[ x ] + 'CancelAnimationFrame' ] ||
+                window[ vendors[ x ] + 'CancelRequestAnimationFrame' ]
+            );
+
+        }
+
+        if( !window.requestAnimationFrame ){
+
+            window.requestAnimationFrame = function( callback, element ){
+
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
+
+                var id = window.setTimeout( function(){
+
+                    callback( currTime + timeToCall );
+
+                }, timeToCall );
+
+                lastTime = currTime + timeToCall;
+
+                return id;
+
+            };
+
+        }
+
+        if( !window.cancelAnimationFrame ){
+
+            window.cancelAnimationFrame = function( id ){
+                clearTimeout( id );
+            };
+
+        }
+
+    }() );
+
+}
 
 
 ////////////////
 // Workarounds
 
-HTMLElement.prototype.getBoundingClientRect = function(){
+if( typeof importScripts !== 'function' ){
 
-    // workaround for ie11 behavior with disconnected dom nodes
+    HTMLElement.prototype.getBoundingClientRect = function(){
 
-    var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+        // workaround for ie11 behavior with disconnected dom nodes
 
-    return function(){
-        try{
-            return _getBoundingClientRect.apply( this, arguments );
-        }catch( e ){
-            return {
-                top: 0,
-                left: 0,
-                width: this.width,
-                height: this.height
-            };
-        }
-    };
+        var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
-}();
+        return function(){
+            try{
+                return _getBoundingClientRect.apply( this, arguments );
+            }catch( e ){
+                return {
+                    top: 0,
+                    left: 0,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        };
+
+    }();
+
+}
 
 
-if( WebGLRenderingContext ){
+if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
     // wrap webgl debug function used by three.js and
     // ignore calls to them when the debug flag is not set
@@ -280,7 +339,7 @@ if( WebGLRenderingContext ){
 ///////////////
 // Extensions
 
-Object.values = function ( obj ){
+Object.values = function( obj ){
 
     var valueList = [];
 
@@ -294,7 +353,7 @@ Object.values = function ( obj ){
 
     return valueList;
 
-}
+};
 
 
 ////////
@@ -302,7 +361,7 @@ Object.values = function ( obj ){
 
 var NGL = {
 
-    REVISION: '1dev',
+    REVISION: '0.5dev',
     EPS: 0.0000001,
     disableImpostor: false,
     indexUint16: false
@@ -621,6 +680,5417 @@ NGL.ObjectMetadata.prototype = {
 
     },
 
+};
+
+// File:js/ngl/symmetry.js
+
+/**
+ * @file Symmetry
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+NGL.Unitcell = function( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
+
+    this.a = a || 1;
+    this.b = b || 1;
+    this.c = c || 1;
+
+    this.alpha = alpha || 90;
+    this.beta = beta || 90;
+    this.gamma = gamma || 90;
+
+    this.spacegroup = spacegroup || "P 1";
+
+    //
+
+    var alphaRad = THREE.Math.degToRad( this.alpha );
+    var betaRad = THREE.Math.degToRad( this.beta );
+    var gammaRad = THREE.Math.degToRad( this.gamma );
+    var cosAlpha = Math.cos( alphaRad );
+    var cosBeta = Math.cos( betaRad );
+    var cosGamma = Math.cos( gammaRad );
+    var sinAlpha = Math.sin( alphaRad );
+    var sinBeta = Math.sin( betaRad );
+    var sinGamma = Math.sin( gammaRad );
+
+    this.volume = (
+        this.a * this.b * this.c *
+        Math.sqrt(
+            1 - cosAlpha * cosAlpha - cosBeta * cosBeta - cosGamma * cosGamma +
+            2.0 * cosAlpha * cosBeta * cosGamma
+        )
+    );
+
+    //
+
+    this.cartToFrac = cartToFrac;
+
+    if( this.cartToFrac === undefined ){
+
+        var cStar = ( this.a * this.b * sinGamma ) / this.volume;
+        var cosAlphaStar = (
+            ( cosBeta * cosGamma - cosAlpha ) /
+            ( sinBeta * sinGamma )
+        );
+
+        this.cartToFrac = new THREE.Matrix4().set(
+            this.a, 0, 0, 0,
+            this.b * cosGamma, this.b * sinGamma, 0, 0,
+            this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
+            0, 0, 0, 1
+        );
+
+    }
+
+    this.fracToCart = new THREE.Matrix4().getInverse(
+        this.cartToFrac
+    );
+
+};
+
+NGL.Unitcell.prototype = {
+
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'Unitcell',
+                generator: 'UnitcellExporter'
+            },
+
+            a: this.a,
+            b: this.b,
+            c: this.c,
+
+            alpha: this.alpha,
+            beta: this.beta,
+            gamma: this.gamma,
+
+            spacegroup: this.spacegroup,
+            volume: this.volume,
+
+            cartToFrac: this.cartToFrac.toArray(),
+            fracToCart: this.fracToCart.toArray(),
+
+        }
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.a = input.a;
+        this.b = input.b;
+        this.c = input.c;
+
+        this.alpha = input.alpha;
+        this.beta = input.beta;
+        this.gamma = input.gamma;
+
+        this.spacegroup = input.spacegroup;
+        this.volume = input.volume;
+
+        this.cartToFrac.fromArray( input.cartToFrac );
+        this.fracToCart.fromArray( input.fracToCart );
+
+        return this;
+
+    }
+
+};
+
+
+NGL.getSymmetryOperations = function( spacegroup ){
+
+    var symopList = NGL.SymOp[ spacegroup ];
+
+    var matrixDict = {};
+
+    if( symopList === undefined ){
+
+        console.warn(
+            "NGL.getSymmetryOperations: spacegroup '" +
+            spacegroup + "' not found in symop library"
+        );
+        return matrixDict;
+
+    }
+
+    var reInteger = /^[1-9]$/;
+
+    symopList.forEach( function( symop ){
+
+        var ls = symop.split( "," );
+
+        var row = 0;
+        var matrix = new THREE.Matrix4().set(
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 1
+        );
+        var me = matrix.elements;
+
+        matrixDict[ symop ] = matrix;
+
+        // console.log( "symop", ls )
+
+        ls.forEach( function( elm ){
+
+            // console.log( "row", row );
+
+            var negate = false;
+            var denominator = false;
+
+            for( var i = 0, n = elm.length; i < n; ++i ){
+
+                var c = elm[ i ];
+
+                if( c === "-" ){
+
+                    negate = true;
+
+                }else if( c === "+" ){
+
+                    negate = false;
+
+                }else if( c === "/" ){
+
+                    denominator = true;
+
+                }else if( c === "X" ){
+
+                    me[ 0 + row ] = negate ? -1 : 1;
+
+                }else if( c === "Y" ){
+
+                    me[ 4 + row ] = negate ? -1 : 1;
+
+                }else if( c === "Z" ){
+
+                    me[ 8 + row ] = negate ? -1 : 1;
+
+                }else if( reInteger.test( c ) ){
+
+                    var integer = parseInt( c );
+
+                    if( denominator ){
+
+                        me[ 12 + row ] /= integer;
+
+                    }else{
+
+                        me[ 12 + row ] = integer;
+
+                    }
+
+                }else{
+
+                    NGL.warn(
+                        "NGL.getSymmetryOperations: unknown token " +
+                        "'" + c + "'"
+                    );
+
+                }
+
+                // console.log( "token", c )
+
+            }
+
+            row += 1;
+
+        } );
+
+        // console.log( "matrix", me )
+
+    } );
+
+    return matrixDict;
+
+};
+
+// from CCP4 symop.lib
+NGL.SymOp = {
+    "P 1": [
+        "X,Y,Z"
+    ],
+    "P -1": [
+        "X,Y,Z",
+        "-X,-Y,-Z"
+    ],
+    "P 1 2 1": [
+        "X,Y,Z",
+        "-X,Y,-Z"
+    ],
+    "P 1 21 1": [
+        "X,Y,Z",
+        "-X,Y+1/2,-Z"
+    ],
+    "C 1 2 1": [
+        "X,Y,Z",
+        "-X,Y,-Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2+Y,-Z"
+    ],
+    "P 1 m 1": [
+        "X,Y,Z",
+        "X,-Y,Z"
+    ],
+    "P 1 c 1": [
+        "X,Y,Z",
+        "X,-Y,1/2+Z"
+    ],
+    "C 1 m 1": [
+        "X,Y,Z",
+        "X,-Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2+X,1/2-Y,Z"
+    ],
+    "C 1 c 1": [
+        "X,Y,Z",
+        "X,-Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2+X,1/2-Y,1/2+Z"
+    ],
+    "P 1 2/m 1": [
+        "X,Y,Z",
+        "X,-Y,Z",
+        "-X,Y,-Z",
+        "-X,-Y,-Z"
+    ],
+    "P 1 21/m 1": [
+        "X,Y,Z",
+        "-X,1/2+Y,-Z",
+        "-X,-Y,-Z",
+        "X,1/2-Y,Z"
+    ],
+    "C 1 2/m 1": [
+        "X,Y,Z",
+        "X,-Y,Z",
+        "-X,Y,-Z",
+        "-X,-Y,-Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2-X,1/2-Y,-Z"
+    ],
+    "P 1 2/c 1": [
+        "X,Y,Z",
+        "-X,Y,1/2-Z",
+        "-X,-Y,-Z",
+        "X,-Y,1/2+Z"
+    ],
+    "P 1 21/c 1": [
+        "X,Y,Z",
+        "-X,-Y,-Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2+Z"
+    ],
+    "C 1 2/c 1": [
+        "X,Y,Z",
+        "-X,Y,1/2-Z",
+        "-X,-Y,-Z",
+        "X,-Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2-Y,1/2+Z"
+    ],
+    "P 2 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z"
+    ],
+    "P 2 2 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,-Z"
+    ],
+    "P 21 21 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z"
+    ],
+    "P 21 21 21": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z"
+    ],
+    "C 2 2 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,-Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z"
+    ],
+    "C 2 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z"
+    ],
+    "F 2 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z"
+    ],
+    "I 2 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,-Z",
+        "-X,Y,-Z",
+        "X+1/2,Y+1/2,Z+1/2",
+        "-X+1/2,-Y+1/2,Z+1/2",
+        "X+1/2,-Y+1/2,-Z+1/2",
+        "-X+1/2,Y+1/2,-Z+1/2"
+    ],
+    "I 21 21 21": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,Y,-Z",
+        "X,-Y,1/2-Z"
+    ],
+    "P m m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,Z",
+        "-X,Y,Z"
+    ],
+    "P m c 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,Z"
+    ],
+    "P c c 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z"
+    ],
+    "P m a 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,-Y,Z",
+        "1/2-X,Y,Z"
+    ],
+    "P c a 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "1/2+X,-Y,Z",
+        "1/2-X,Y,1/2+Z"
+    ],
+    "P n c 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z"
+    ],
+    "P m n 21": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2+X,-Y,1/2+Z",
+        "-X,Y,Z"
+    ],
+    "P b a 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "P n a 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "P n n 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "C m m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "C m c 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "C c c 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "A m m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z"
+    ],
+    "A b m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,1/2-Y,Z",
+        "-X,1/2+Y,Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z"
+    ],
+    "A m a 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,-Y,Z",
+        "1/2-X,Y,Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "A b a 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z"
+    ],
+    "F m m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "F d d 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/4+X,1/4-Y,1/4+Z",
+        "1/4-X,1/4+Y,1/4+Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "1/4+X,3/4-Y,3/4+Z",
+        "1/4-X,3/4+Y,3/4+Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "3/4+X,1/4-Y,3/4+Z",
+        "3/4-X,1/4+Y,3/4+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "3/4+X,3/4-Y,1/4+Z",
+        "3/4-X,3/4+Y,1/4+Z"
+    ],
+    "I m m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "I b a 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z"
+    ],
+    "I m a 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,-Y,Z",
+        "1/2-X,Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z"
+    ],
+    "P 2/m 2/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z"
+    ],
+    "P 2/n 2/n 2/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "P 2/c 2/c 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z"
+    ],
+    "P 2/b 2/a 2/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "P 21/m 2/m 2/a": [
+        "X,Y,Z",
+        "1/2-X,-Y,Z",
+        "-X,Y,-Z",
+        "1/2+X,-Y,-Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,-Z",
+        "X,-Y,Z",
+        "1/2-X,Y,Z"
+    ],
+    "P 2/n 21/n 2/a": [
+        "X,Y,Z",
+        "1/2-X,-Y,Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z"
+    ],
+    "P 2/m 2/n 21/a": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "-X,Y,Z"
+    ],
+    "P 21/c 2/c 2/a": [
+        "X,Y,Z",
+        "1/2-X,-Y,Z",
+        "-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,-Z",
+        "X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z"
+    ],
+    "P 21/b 21/a 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "P 21/c 21/c 2/n": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z"
+    ],
+    "P 2/b 21/c 21/m": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,Z"
+    ],
+    "P 21/n 21/n 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "P 21/m 21/m 2/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-X,Y+1/2,-Z",
+        "X+1/2,1/2-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "X+1/2,Y+1/2,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z"
+    ],
+    "P 21/b 2/c 21/n": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-X,Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,-Y,-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "X,-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "P 21/b 21/c 21/a": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "P 21/n 21/m 21/a": [
+        "X,Y,Z",
+        "-X+1/2,-Y,Z+1/2",
+        "-X,Y+1/2,-Z",
+        "X+1/2,-Y+1/2,-Z+1/2",
+        "-X,-Y,-Z",
+        "X+1/2,Y,-Z+1/2",
+        "X,-Y+1/2,Z",
+        "-X+1/2,Y+1/2,Z+1/2"
+    ],
+    "C 2/m 2/c 21/m": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,1/2-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "C 2/m 2/c 21/a": [
+        "X,Y,Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "C 2/m 2/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "C 2/c 2/c 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "C 2/m 2/m 2/a": [
+        "X,Y,Z",
+        "-X,1/2-Y,Z",
+        "-X,1/2+Y,-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,1/2+Y,-Z",
+        "X,1/2-Y,Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,-Y,Z",
+        "1/2-X,Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,Y,-Z",
+        "1/2+X,-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "C 2/c 2/c 2/a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "-X,Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,1/2-Y,1/2-Z",
+        "1/2+X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "-X,-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "X,-Y,-Z",
+        "1/2-X,-Y,1/2-Z",
+        "X,1/2+Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z"
+    ],
+    "F 2/m 2/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2-X,-Y,1/2-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z"
+    ],
+    "F 2/d 2/d 2/d": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "1/4-X,1/4-Y,1/4-Z",
+        "1/4+X,1/4+Y,1/4-Z",
+        "1/4+X,1/4-Y,1/4+Z",
+        "1/4-X,1/4+Y,1/4+Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "1/4-X,3/4-Y,3/4-Z",
+        "1/4+X,3/4+Y,3/4-Z",
+        "1/4+X,3/4-Y,3/4+Z",
+        "1/4-X,3/4+Y,3/4+Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "3/4-X,1/4-Y,3/4-Z",
+        "3/4+X,1/4+Y,3/4-Z",
+        "3/4+X,1/4-Y,3/4+Z",
+        "3/4-X,1/4+Y,3/4+Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "3/4-X,3/4-Y,1/4-Z",
+        "3/4+X,3/4+Y,1/4-Z",
+        "3/4+X,3/4-Y,1/4+Z",
+        "3/4-X,3/4+Y,1/4+Z"
+    ],
+    "I 2/m 2/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "I 2/b 2/a 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z"
+    ],
+    "I 21/b 21/c 21/a": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,-Z",
+        "1/2+X,-Y,Z",
+        "-X,Y,1/2+Z"
+    ],
+    "I 21/m 21/m 21/a": [
+        "X,Y,Z",
+        "-X,1/2-Y,Z",
+        "-X,1/2+Y,-Z",
+        "X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X,1/2+Y,-Z",
+        "X,1/2-Y,Z",
+        "-X,Y,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z"
+    ],
+    "P 4": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z"
+    ],
+    "P 41": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-Y,X,1/4+Z",
+        "Y,-X,3/4+Z"
+    ],
+    "P 42": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z"
+    ],
+    "P 43": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-Y,X,3/4+Z",
+        "Y,-X,1/4+Z"
+    ],
+    "I 4": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z"
+    ],
+    "I 41": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z"
+    ],
+    "P -4": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z"
+    ],
+    "I -4": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z"
+    ],
+    "P 4/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z"
+    ],
+    "P 42/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,1/2-Z",
+        "-Y,X,1/2-Z"
+    ],
+    "P 4/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,Z",
+        "1/2+Y,1/2-X,Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z"
+    ],
+    "P 42/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z"
+    ],
+    "I 4/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z"
+    ],
+    "I 41/a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "-X,1/2-Y,1/4-Z",
+        "1/2+X,Y,3/4-Z",
+        "Y,-X,-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z",
+        "1/2-X,-Y,3/4-Z",
+        "X,1/2+Y,1/4-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "-Y,X,-Z"
+    ],
+    "P 4 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z"
+    ],
+    "P 4 21 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,Z",
+        "1/2+Y,1/2-X,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z"
+    ],
+    "P 41 2 2": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-Y,X,1/4+Z",
+        "Y,-X,3/4+Z",
+        "-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "Y,X,3/4-Z",
+        "-Y,-X,1/4-Z"
+    ],
+    "P 41 21 2": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/4+Z",
+        "1/2+Y,1/2-X,3/4+Z",
+        "1/2-X,1/2+Y,1/4-Z",
+        "1/2+X,1/2-Y,3/4-Z",
+        "Y,X,-Z",
+        "-Y,-X,1/2-Z"
+    ],
+    "P 42 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z"
+    ],
+    "P 42 21 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z"
+    ],
+    "P 43 2 2": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-Y,X,3/4+Z",
+        "Y,-X,1/4+Z",
+        "-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "Y,X,1/4-Z",
+        "-Y,-X,3/4-Z"
+    ],
+    "P 43 21 2": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "1/2-Y,1/2+X,3/4+Z",
+        "1/2+Y,1/2-X,1/4+Z",
+        "1/2-X,1/2+Y,3/4-Z",
+        "1/2+X,1/2-Y,1/4-Z",
+        "Y,X,-Z",
+        "-Y,-X,1/2-Z"
+    ],
+    "I 4 2 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z"
+    ],
+    "I 41 2 2": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "1/2-X,Y,3/4-Z",
+        "X,1/2-Y,1/4-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "-Y,-X,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z",
+        "-X,1/2+Y,1/4-Z",
+        "1/2+X,-Y,3/4-Z",
+        "Y,X,-Z",
+        "1/2-Y,1/2-X,1/2-Z"
+    ],
+    "P 4 m m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 4 b m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "P 42 c m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 42 n m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 4 c c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z"
+    ],
+    "P 4 n c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P 42 m c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z"
+    ],
+    "P 42 b c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "I 4 m m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "I 4 c m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "I 41 m d": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "X,-Y,Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "-Y,1/2-X,1/4+Z",
+        "1/2+Y,X,3/4+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "-X,Y,Z",
+        "1/2-Y,-X,3/4+Z",
+        "Y,1/2+X,1/4+Z"
+    ],
+    "I 41 c d": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "X,-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z",
+        "-Y,1/2-X,3/4+Z",
+        "1/2+Y,X,1/4+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z",
+        "1/2+X,1/2-Y,Z",
+        "-X,Y,1/2+Z",
+        "1/2-Y,-X,1/4+Z",
+        "Y,1/2+X,3/4+Z"
+    ],
+    "P -4 2 m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P -4 2 c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z"
+    ],
+    "P -4 21 m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "P -4 21 c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P -4 m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z"
+    ],
+    "P -4 c 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z"
+    ],
+    "P -4 b 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z"
+    ],
+    "P -4 n 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z"
+    ],
+    "I -4 m 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z"
+    ],
+    "I -4 c 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z"
+    ],
+    "I -4 2 m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "I -4 2 d": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "1/2-X,Y,3/4-Z",
+        "1/2+X,-Y,3/4-Z",
+        "1/2-Y,-X,3/4+Z",
+        "1/2+Y,X,3/4+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "-X,1/2+Y,1/4-Z",
+        "X,1/2-Y,1/4-Z",
+        "-Y,1/2-X,1/4+Z",
+        "Y,1/2+X,1/4+Z"
+    ],
+    "P 4/m 2/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 4/m 2/c 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z"
+    ],
+    "P 4/n 2/b 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+Y,1/2-X,-Z",
+        "1/2-Y,1/2+X,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "P 4/n 2/n 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P 4/m 21/b 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "P 4/m 21/n 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P 4/n 21/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,Z",
+        "1/2+Y,1/2-X,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "P 4/n 2/c 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,Z",
+        "1/2+Y,1/2-X,Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P 42/m 2/m 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,1/2-Z",
+        "-Y,X,1/2-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z"
+    ],
+    "P 42/m 2/c 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,1/2-Z",
+        "-Y,X,1/2-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 42/n 2/b 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z"
+    ],
+    "P 42/n 2/n 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 42/m 21/b 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,1/2+Z",
+        "Y,-X,1/2+Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,1/2-Z",
+        "-Y,X,1/2-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P 42/m 21/n 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,X+1/2,Z+1/2",
+        "Y+1/2,1/2-X,Z+1/2",
+        "1/2-X,Y+1/2,1/2-Z",
+        "X+1/2,1/2-Y,1/2-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y+1/2,1/2-X,1/2-Z",
+        "1/2-Y,X+1/2,1/2-Z",
+        "X+1/2,1/2-Y,Z+1/2",
+        "1/2-X,Y+1/2,Z+1/2",
+        "-Y,-X,Z",
+        "Y,X,Z"
+    ],
+    "P 42/n 21/m 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "P 42/n 21/c 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "I 4/m 2/m 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z"
+    ],
+    "I 4/m 2/c 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-Y,X,Z",
+        "Y,-X,Z",
+        "-X,Y,1/2-Z",
+        "X,-Y,1/2-Z",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,-Y,1/2+Z",
+        "-X,Y,1/2+Z",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z"
+    ],
+    "I 41/a 2/m 2/d": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "1/2-X,Y,3/4-Z",
+        "X,1/2-Y,1/4-Z",
+        "1/2+Y,1/2+X,1/2-Z",
+        "-Y,-X,-Z",
+        "-X,1/2-Y,1/4-Z",
+        "1/2+X,Y,3/4-Z",
+        "Y,-X,-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "-X,Y,Z",
+        "1/2-Y,-X,3/4+Z",
+        "Y,1/2+X,1/4+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z",
+        "-X,1/2+Y,1/4-Z",
+        "1/2+X,-Y,3/4-Z",
+        "Y,X,-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2-X,-Y,3/4-Z",
+        "X,1/2+Y,1/4-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "-Y,X,-Z",
+        "X,-Y,Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "-Y,1/2-X,1/4+Z",
+        "1/2+Y,X,3/4+Z"
+    ],
+    "I 41/a 2/c 2/d": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "-Y,1/2+X,1/4+Z",
+        "1/2+Y,-X,3/4+Z",
+        "1/2-X,Y,1/4-Z",
+        "X,1/2-Y,3/4-Z",
+        "1/2+Y,1/2+X,-Z",
+        "-Y,-X,1/2-Z",
+        "-X,1/2-Y,1/4-Z",
+        "1/2+X,Y,3/4-Z",
+        "Y,-X,-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2-Y,Z",
+        "-X,Y,1/2+Z",
+        "1/2-Y,-X,1/4+Z",
+        "Y,1/2+X,3/4+Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-Y,X,3/4+Z",
+        "Y,1/2-X,1/4+Z",
+        "-X,1/2+Y,3/4-Z",
+        "1/2+X,-Y,1/4-Z",
+        "Y,X,1/2-Z",
+        "1/2-Y,1/2-X,-Z",
+        "1/2-X,-Y,3/4-Z",
+        "X,1/2+Y,1/4-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "-Y,X,-Z",
+        "X,-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z",
+        "-Y,1/2-X,3/4+Z",
+        "1/2+Y,X,1/4+Z"
+    ],
+    "P 3": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z"
+    ],
+    "P 31": [
+        "X,Y,Z",
+        "-Y,X-Y,Z+1/3",
+        "Y-X,-X,Z+2/3"
+    ],
+    "P 32": [
+        "X,Y,Z",
+        "-Y,X-Y,Z+2/3",
+        "Y-X,-X,Z+1/3"
+    ],
+    "H 3": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "X+2/3,Y+1/3,Z+1/3",
+        "-Y+2/3,X-Y+1/3,Z+1/3",
+        "Y-X+2/3,-X+1/3,Z+1/3",
+        "X+1/3,Y+2/3,Z+2/3",
+        "-Y+1/3,X-Y+2/3,Z+2/3",
+        "Y-X+1/3,-X+2/3,Z+2/3"
+    ],
+    "R 3": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X"
+    ],
+    "P -3": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z"
+    ],
+    "H -3": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "2/3+X,1/3+Y,1/3+Z",
+        "2/3-Y,1/3+X-Y,1/3+Z",
+        "2/3+Y-X,1/3-X,1/3+Z",
+        "2/3-X,1/3-Y,1/3-Z",
+        "2/3+Y,1/3+Y-X,1/3-Z",
+        "2/3+X-Y,1/3+X,1/3-Z",
+        "1/3+X,2/3+Y,2/3+Z",
+        "1/3-Y,2/3+X-Y,2/3+Z",
+        "1/3+Y-X,2/3-X,2/3+Z",
+        "1/3-X,2/3-Y,2/3-Z",
+        "1/3+Y,2/3+Y-X,2/3-Z",
+        "1/3+X-Y,2/3+X,2/3-Z"
+    ],
+    "R -3": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X",
+        "-X,-Y,-Z",
+        "-Z,-X,-Y",
+        "-Y,-Z,-X"
+    ],
+    "P 3 1 2": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z"
+    ],
+    "P 3 2 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z"
+    ],
+    "P 31 1 2": [
+        "X,Y,Z",
+        "-Y,X-Y,1/3+Z",
+        "Y-X,-X,2/3+Z",
+        "-Y,-X,2/3-Z",
+        "Y-X,Y,1/3-Z",
+        "X,X-Y,-Z"
+    ],
+    "P 31 2 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z+1/3",
+        "Y-X,-X,Z+2/3",
+        "Y,X,-Z",
+        "X-Y,-Y,2/3-Z",
+        "-X,Y-X,1/3-Z"
+    ],
+    "P 32 1 2": [
+        "X,Y,Z",
+        "-Y,X-Y,2/3+Z",
+        "Y-X,-X,1/3+Z",
+        "-Y,-X,1/3-Z",
+        "Y-X,Y,2/3-Z",
+        "X,X-Y,-Z"
+    ],
+    "P 32 2 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z+2/3",
+        "Y-X,-X,Z+1/3",
+        "Y,X,-Z",
+        "X-Y,-Y,1/3-Z",
+        "-X,Y-X,2/3-Z"
+    ],
+    "H 3 2": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "2/3+X,1/3+Y,1/3+Z",
+        "2/3-Y,1/3+X-Y,1/3+Z",
+        "2/3+Y-X,1/3-X,1/3+Z",
+        "2/3+Y,1/3+X,1/3-Z",
+        "2/3+X-Y,1/3-Y,1/3-Z",
+        "2/3-X,1/3+Y-X,1/3-Z",
+        "1/3+X,2/3+Y,2/3+Z",
+        "1/3-Y,2/3+X-Y,2/3+Z",
+        "1/3+Y-X,2/3-X,2/3+Z",
+        "1/3+Y,2/3+X,2/3-Z",
+        "1/3+X-Y,2/3-Y,2/3-Z",
+        "1/3-X,2/3+Y-X,2/3-Z"
+    ],
+    "R 3 2": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X",
+        "-Y,-X,-Z",
+        "-X,-Z,-Y",
+        "-Z,-Y,-X"
+    ],
+    "P 3 m 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z"
+    ],
+    "P 3 1 m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P 3 c 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z"
+    ],
+    "P 3 1 c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "H 3 m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "2/3+X,1/3+Y,1/3+Z",
+        "2/3-Y,1/3+X-Y,1/3+Z",
+        "2/3+Y-X,1/3-X,1/3+Z",
+        "2/3-Y,1/3-X,1/3+Z",
+        "2/3+Y-X,1/3+Y,1/3+Z",
+        "2/3+X,1/3+X-Y,1/3+Z",
+        "1/3+X,2/3+Y,2/3+Z",
+        "1/3-Y,2/3+X-Y,2/3+Z",
+        "1/3+Y-X,2/3-X,2/3+Z",
+        "1/3-Y,2/3-X,2/3+Z",
+        "1/3+Y-X,2/3+Y,2/3+Z",
+        "1/3+X,2/3+X-Y,2/3+Z"
+    ],
+    "R 3 m": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X",
+        "Y,X,Z",
+        "X,Z,Y",
+        "Z,Y,X"
+    ],
+    "H 3 c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "2/3+X,1/3+Y,1/3+Z",
+        "2/3-Y,1/3+X-Y,1/3+Z",
+        "2/3+Y-X,1/3-X,1/3+Z",
+        "2/3-Y,1/3-X,5/6+Z",
+        "2/3+Y-X,1/3+Y,5/6+Z",
+        "2/3+X,1/3+X-Y,5/6+Z",
+        "1/3+X,2/3+Y,2/3+Z",
+        "1/3-Y,2/3+X-Y,2/3+Z",
+        "1/3+Y-X,2/3-X,2/3+Z",
+        "1/3-Y,2/3-X,1/6+Z",
+        "1/3+Y-X,2/3+Y,1/6+Z",
+        "1/3+X,2/3+X-Y,1/6+Z"
+    ],
+    "R 3 c": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X",
+        "Y+1/2,X+1/2,Z+1/2",
+        "X+1/2,Z+1/2,Y+1/2",
+        "Z+1/2,Y+1/2,X+1/2"
+    ],
+    "P -3 1 2/m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P -3 1 2/c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-Y,-X,1/2-Z",
+        "Y-X,Y,1/2-Z",
+        "X,X-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "P -3 2/m 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z"
+    ],
+    "P -3 2/c 1": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,1/2-Z",
+        "X-Y,-Y,1/2-Z",
+        "-X,Y-X,1/2-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z"
+    ],
+    "H -3 2/m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "2/3+X,1/3+Y,1/3+Z",
+        "2/3-Y,1/3+X-Y,1/3+Z",
+        "2/3+Y-X,1/3-X,1/3+Z",
+        "2/3+Y,1/3+X,1/3-Z",
+        "2/3+X-Y,1/3-Y,1/3-Z",
+        "2/3-X,1/3+Y-X,1/3-Z",
+        "2/3-X,1/3-Y,1/3-Z",
+        "2/3+Y,1/3+Y-X,1/3-Z",
+        "2/3+X-Y,1/3+X,1/3-Z",
+        "2/3-Y,1/3-X,1/3+Z",
+        "2/3+Y-X,1/3+Y,1/3+Z",
+        "2/3+X,1/3+X-Y,1/3+Z",
+        "1/3+X,2/3+Y,2/3+Z",
+        "1/3-Y,2/3+X-Y,2/3+Z",
+        "1/3+Y-X,2/3-X,2/3+Z",
+        "1/3+Y,2/3+X,2/3-Z",
+        "1/3+X-Y,2/3-Y,2/3-Z",
+        "1/3-X,2/3+Y-X,2/3-Z",
+        "1/3-X,2/3-Y,2/3-Z",
+        "1/3+Y,2/3+Y-X,2/3-Z",
+        "1/3+X-Y,2/3+X,2/3-Z",
+        "1/3-Y,2/3-X,2/3+Z",
+        "1/3+Y-X,2/3+Y,2/3+Z",
+        "1/3+X,2/3+X-Y,2/3+Z"
+    ],
+    "R -3 2/m": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X",
+        "-Y,-X,-Z",
+        "-X,-Z,-Y",
+        "-Z,-Y,-X",
+        "-X,-Y,-Z",
+        "-Z,-X,-Y",
+        "-Y,-Z,-X",
+        "Y,X,Z",
+        "X,Z,Y",
+        "Z,Y,X"
+    ],
+    "H -3 2/c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "Y,X,1/2-Z",
+        "X-Y,-Y,1/2-Z",
+        "-X,Y-X,1/2-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "2/3+X,1/3+Y,1/3+Z",
+        "2/3-Y,1/3+X-Y,1/3+Z",
+        "2/3+Y-X,1/3-X,1/3+Z",
+        "2/3+Y,1/3+X,5/6-Z",
+        "2/3+X-Y,1/3-Y,5/6-Z",
+        "2/3-X,1/3+Y-X,5/6-Z",
+        "2/3-X,1/3-Y,1/3-Z",
+        "2/3+Y,1/3+Y-X,1/3-Z",
+        "2/3+X-Y,1/3+X,1/3-Z",
+        "2/3-Y,1/3-X,5/6+Z",
+        "2/3+Y-X,1/3+Y,5/6+Z",
+        "2/3+X,1/3+X-Y,5/6+Z",
+        "1/3+X,2/3+Y,2/3+Z",
+        "1/3-Y,2/3+X-Y,2/3+Z",
+        "1/3+Y-X,2/3-X,2/3+Z",
+        "1/3+Y,2/3+X,1/6-Z",
+        "1/3+X-Y,2/3-Y,1/6-Z",
+        "1/3-X,2/3+Y-X,1/6-Z",
+        "1/3-X,2/3-Y,2/3-Z",
+        "1/3+Y,2/3+Y-X,2/3-Z",
+        "1/3+X-Y,2/3+X,2/3-Z",
+        "1/3-Y,2/3-X,1/6+Z",
+        "1/3+Y-X,2/3+Y,1/6+Z",
+        "1/3+X,2/3+X-Y,1/6+Z"
+    ],
+    "R -3 2/c": [
+        "X,Y,Z",
+        "Z,X,Y",
+        "Y,Z,X",
+        "-Y+1/2,-X+1/2,-Z+1/2",
+        "-X+1/2,-Z+1/2,-Y+1/2",
+        "-Z+1/2,-Y+1/2,-X+1/2",
+        "-X,-Y,-Z",
+        "-Z,-X,-Y",
+        "-Y,-Z,-X",
+        "Y+1/2,X+1/2,Z+1/2",
+        "X+1/2,Z+1/2,Y+1/2",
+        "Z+1/2,Y+1/2,X+1/2"
+    ],
+    "P 6": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z"
+    ],
+    "P 61": [
+        "X,Y,Z",
+        "-Y,X-Y,Z+1/3",
+        "Y-X,-X,Z+2/3",
+        "-X,-Y,Z+1/2",
+        "Y,Y-X,Z+5/6",
+        "X-Y,X,Z+1/6"
+    ],
+    "P 65": [
+        "X,Y,Z",
+        "-Y,X-Y,Z+2/3",
+        "Y-X,-X,Z+1/3",
+        "-X,-Y,Z+1/2",
+        "Y,Y-X,Z+1/6",
+        "X-Y,X,Z+5/6"
+    ],
+    "P 62": [
+        "X,Y,Z",
+        "-Y,X-Y,2/3+Z",
+        "Y-X,-X,1/3+Z",
+        "-X,-Y,Z",
+        "Y,Y-X,2/3+Z",
+        "X-Y,X,1/3+Z"
+    ],
+    "P 64": [
+        "X,Y,Z",
+        "-Y,X-Y,1/3+Z",
+        "Y-X,-X,2/3+Z",
+        "-X,-Y,Z",
+        "Y,Y-X,1/3+Z",
+        "X-Y,X,2/3+Z"
+    ],
+    "P 63": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z"
+    ],
+    "P -6": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "X,Y,-Z",
+        "-Y,X-Y,-Z",
+        "Y-X,-X,-Z"
+    ],
+    "P 6/m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "X,Y,-Z",
+        "-Y,X-Y,-Z",
+        "Y-X,-X,-Z"
+    ],
+    "P 63/m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "X,Y,1/2-Z",
+        "-Y,X-Y,1/2-Z",
+        "Y-X,-X,1/2-Z"
+    ],
+    "P 6 2 2": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z"
+    ],
+    "P 61 2 2": [
+        "X,Y,Z",
+        "-Y,X-Y,1/3+Z",
+        "Y-X,-X,2/3+Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,5/6+Z",
+        "X-Y,X,1/6+Z",
+        "Y,X,1/3-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,2/3-Z",
+        "-Y,-X,5/6-Z",
+        "Y-X,Y,1/2-Z",
+        "X,X-Y,1/6-Z"
+    ],
+    "P 65 2 2": [
+        "X,Y,Z",
+        "-Y,X-Y,2/3+Z",
+        "Y-X,-X,1/3+Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/6+Z",
+        "X-Y,X,5/6+Z",
+        "Y,X,2/3-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,1/3-Z",
+        "-Y,-X,1/6-Z",
+        "Y-X,Y,1/2-Z",
+        "X,X-Y,5/6-Z"
+    ],
+    "P 62 2 2": [
+        "X,Y,Z",
+        "-Y,X-Y,2/3+Z",
+        "Y-X,-X,1/3+Z",
+        "-X,-Y,Z",
+        "Y,Y-X,2/3+Z",
+        "X-Y,X,1/3+Z",
+        "Y,X,2/3-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,1/3-Z",
+        "-Y,-X,2/3-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,1/3-Z"
+    ],
+    "P 64 2 2": [
+        "X,Y,Z",
+        "-Y,X-Y,1/3+Z",
+        "Y-X,-X,2/3+Z",
+        "-X,-Y,Z",
+        "Y,Y-X,1/3+Z",
+        "X-Y,X,2/3+Z",
+        "Y,X,1/3-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,2/3-Z",
+        "-Y,-X,1/3-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,2/3-Z"
+    ],
+    "P 63 2 2": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "-Y,-X,1/2-Z",
+        "Y-X,Y,1/2-Z",
+        "X,X-Y,1/2-Z"
+    ],
+    "P 6 m m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P 6 c c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "P 63 c m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P 63 m c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "P -6 m 2": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "X,Y,-Z",
+        "-Y,X-Y,-Z",
+        "Y-X,-X,-Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z"
+    ],
+    "P -6 c 2": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "X,Y,1/2-Z",
+        "-Y,X-Y,1/2-Z",
+        "Y-X,-X,1/2-Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z"
+    ],
+    "P -6 2 m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "X,Y,-Z",
+        "-Y,X-Y,-Z",
+        "Y-X,-X,-Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P -6 2 c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "X,Y,1/2-Z",
+        "-Y,X-Y,1/2-Z",
+        "Y-X,-X,1/2-Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "P 6/m 2/m 2/m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "X,Y,-Z",
+        "Y-X,-X,-Z",
+        "-Y,X-Y,-Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P 6/m 2/c 2/c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,Z",
+        "Y,Y-X,Z",
+        "X-Y,X,Z",
+        "Y,X,1/2-Z",
+        "X-Y,-Y,1/2-Z",
+        "-X,Y-X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "Y-X,Y,1/2-Z",
+        "X,X-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "X,Y,-Z",
+        "Y-X,-X,-Z",
+        "-Y,X-Y,-Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "P 63/m 2/c 2/m": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z",
+        "Y,X,1/2-Z",
+        "X-Y,-Y,1/2-Z",
+        "-X,Y-X,1/2-Z",
+        "-Y,-X,-Z",
+        "Y-X,Y,-Z",
+        "X,X-Y,-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "X,Y,1/2-Z",
+        "Y-X,-X,1/2-Z",
+        "-Y,X-Y,1/2-Z",
+        "-Y,-X,1/2+Z",
+        "Y-X,Y,1/2+Z",
+        "X,X-Y,1/2+Z",
+        "Y,X,Z",
+        "X-Y,-Y,Z",
+        "-X,Y-X,Z"
+    ],
+    "P 63/m 2/m 2/c": [
+        "X,Y,Z",
+        "-Y,X-Y,Z",
+        "Y-X,-X,Z",
+        "-X,-Y,1/2+Z",
+        "Y,Y-X,1/2+Z",
+        "X-Y,X,1/2+Z",
+        "Y,X,-Z",
+        "X-Y,-Y,-Z",
+        "-X,Y-X,-Z",
+        "-Y,-X,1/2-Z",
+        "Y-X,Y,1/2-Z",
+        "X,X-Y,1/2-Z",
+        "-X,-Y,-Z",
+        "Y,Y-X,-Z",
+        "X-Y,X,-Z",
+        "X,Y,1/2-Z",
+        "Y-X,-X,1/2-Z",
+        "-Y,X-Y,1/2-Z",
+        "-Y,-X,Z",
+        "Y-X,Y,Z",
+        "X,X-Y,Z",
+        "Y,X,1/2+Z",
+        "X-Y,-Y,1/2+Z",
+        "-X,Y-X,1/2+Z"
+    ],
+    "P 2 3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X"
+    ],
+    "F 2 3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X"
+    ],
+    "I 2 3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,1/2-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2-X",
+        "1/2-Y,1/2-Z,1/2+X"
+    ],
+    "P 21 3": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X"
+    ],
+    "I 21 3": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "Z,-X,1/2-Y",
+        "-Z,1/2-X,Y",
+        "1/2-Z,X,-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,-X",
+        "Y,-Z,1/2-X",
+        "-Y,1/2-Z,X"
+    ],
+    "P 2/m -3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X"
+    ],
+    "P 2/n -3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2+X,1/2-Y",
+        "1/2+Z,1/2-X,1/2+Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2+X",
+        "1/2+Y,1/2+Z,1/2-X"
+    ],
+    "F 2/m -3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z",
+        "-Z,1/2-X,1/2-Y",
+        "-Z,1/2+X,1/2+Y",
+        "Z,1/2+X,1/2-Y",
+        "Z,1/2-X,1/2+Y",
+        "-Y,1/2-Z,1/2-X",
+        "Y,1/2-Z,1/2+X",
+        "-Y,1/2+Z,1/2+X",
+        "Y,1/2+Z,1/2-X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/2-X,-Y,1/2-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z",
+        "1/2-Z,-X,1/2-Y",
+        "1/2-Z,X,1/2+Y",
+        "1/2+Z,X,1/2-Y",
+        "1/2+Z,-X,1/2+Y",
+        "1/2-Y,-Z,1/2-X",
+        "1/2+Y,-Z,1/2+X",
+        "1/2-Y,Z,1/2+X",
+        "1/2+Y,Z,1/2-X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Z,1/2-X,-Y",
+        "1/2-Z,1/2+X,Y",
+        "1/2+Z,1/2+X,-Y",
+        "1/2+Z,1/2-X,Y",
+        "1/2-Y,1/2-Z,-X",
+        "1/2+Y,1/2-Z,X",
+        "1/2-Y,1/2+Z,X",
+        "1/2+Y,1/2+Z,-X"
+    ],
+    "F 2/d -3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/4-X,1/4-Y,1/4-Z",
+        "1/4+X,1/4+Y,1/4-Z",
+        "1/4+X,1/4-Y,1/4+Z",
+        "1/4-X,1/4+Y,1/4+Z",
+        "1/4-Z,1/4-X,1/4-Y",
+        "1/4-Z,1/4+X,1/4+Y",
+        "1/4+Z,1/4+X,1/4-Y",
+        "1/4+Z,1/4-X,1/4+Y",
+        "1/4-Y,1/4-Z,1/4-X",
+        "1/4+Y,1/4-Z,1/4+X",
+        "1/4-Y,1/4+Z,1/4+X",
+        "1/4+Y,1/4+Z,1/4-X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "1/4-X,3/4-Y,3/4-Z",
+        "1/4+X,3/4+Y,3/4-Z",
+        "1/4+X,3/4-Y,3/4+Z",
+        "1/4-X,3/4+Y,3/4+Z",
+        "1/4-Z,3/4-X,3/4-Y",
+        "1/4-Z,3/4+X,3/4+Y",
+        "1/4+Z,3/4+X,3/4-Y",
+        "1/4+Z,3/4-X,3/4+Y",
+        "1/4-Y,3/4-Z,3/4-X",
+        "1/4+Y,3/4-Z,3/4+X",
+        "1/4-Y,3/4+Z,3/4+X",
+        "1/4+Y,3/4+Z,3/4-X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "3/4-X,1/4-Y,3/4-Z",
+        "3/4+X,1/4+Y,3/4-Z",
+        "3/4+X,1/4-Y,3/4+Z",
+        "3/4-X,1/4+Y,3/4+Z",
+        "3/4-Z,1/4-X,3/4-Y",
+        "3/4-Z,1/4+X,3/4+Y",
+        "3/4+Z,1/4+X,3/4-Y",
+        "3/4+Z,1/4-X,3/4+Y",
+        "3/4-Y,1/4-Z,3/4-X",
+        "3/4+Y,1/4-Z,3/4+X",
+        "3/4-Y,1/4+Z,3/4+X",
+        "3/4+Y,1/4+Z,3/4-X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "3/4-X,3/4-Y,1/4-Z",
+        "3/4+X,3/4+Y,1/4-Z",
+        "3/4+X,3/4-Y,Z+1/4",
+        "3/4-X,3/4+Y,Z+1/4",
+        "3/4-Z,3/4-X,1/4-Y",
+        "3/4-Z,3/4+X,1/4+Y",
+        "3/4+Z,3/4+X,1/4-Y",
+        "3/4+Z,3/4-X,1/4+Y",
+        "3/4-Y,3/4-Z,1/4-X",
+        "3/4+Y,3/4-Z,1/4+X",
+        "3/4-Y,3/4+Z,1/4+X",
+        "3/4+Y,3/4+Z,1/4-X"
+    ],
+    "I 2/m -3": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,1/2-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2-X",
+        "1/2-Y,1/2-Z,1/2+X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2+X,1/2-Y",
+        "1/2+Z,1/2-X,1/2+Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2+X",
+        "1/2+Y,1/2+Z,1/2-X"
+    ],
+    "P 21/a -3": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z",
+        "-Z,-X,-Y",
+        "1/2-Z,1/2+X,Y",
+        "1/2+Z,X,1/2-Y",
+        "Z,1/2-X,1/2+Y",
+        "-Y,-Z,-X",
+        "Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,X",
+        "1/2+Y,Z,1/2-X"
+    ],
+    "I 21/a -3": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z",
+        "-Z,-X,-Y",
+        "1/2-Z,1/2+X,Y",
+        "1/2+Z,X,1/2-Y",
+        "Z,1/2-X,1/2+Y",
+        "-Y,-Z,-X",
+        "Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,X",
+        "1/2+Y,Z,1/2-X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,+Y,-Z",
+        "X,-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "Z,-X,1/2-Y",
+        "-Z,1/2-X,Y",
+        "1/2-Z,X,-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,-X",
+        "Y,-Z,1/2-X",
+        "-Y,1/2-Z,X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,-Z",
+        "1/2+X,-Y,Z",
+        "-X,Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "-Z,X,1/2+Y",
+        "Z,1/2+X,-Y",
+        "1/2+Z,-X,Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,-Z,X",
+        "-Y,Z,1/2+X",
+        "Y,1/2+Z,-X"
+    ],
+    "P 4 3 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X"
+    ],
+    "P 42 3 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+X,1/2+Z,1/2-Y",
+        "1/2-X,1/2+Z,1/2+Y",
+        "1/2-X,1/2-Z,1/2-Y",
+        "1/2+X,1/2-Z,1/2+Y",
+        "1/2+Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2+X",
+        "1/2-Z,1/2-Y,1/2-X"
+    ],
+    "F 4 3 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "Y,1/2+X,1/2-Z",
+        "-Y,1/2-X,1/2-Z",
+        "Y,1/2-X,1/2+Z",
+        "-Y,1/2+X,1/2+Z",
+        "X,1/2+Z,1/2-Y",
+        "-X,1/2+Z,1/2+Y",
+        "-X,1/2-Z,1/2-Y",
+        "X,1/2-Z,1/2+Y",
+        "Z,1/2+Y,1/2-X",
+        "Z,1/2-Y,1/2+X",
+        "-Z,1/2+Y,1/2+X",
+        "-Z,1/2-Y,1/2-X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/2+Y,X,1/2-Z",
+        "1/2-Y,-X,1/2-Z",
+        "1/2+Y,-X,1/2+Z",
+        "1/2-Y,X,1/2+Z",
+        "1/2+X,Z,1/2-Y",
+        "1/2-X,Z,1/2+Y",
+        "1/2-X,-Z,1/2-Y",
+        "1/2+X,-Z,1/2+Y",
+        "1/2+Z,Y,1/2-X",
+        "1/2+Z,-Y,1/2+X",
+        "1/2-Z,Y,1/2+X",
+        "1/2-Z,-Y,1/2-X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z",
+        "1/2+Y,1/2-X,Z",
+        "1/2-Y,1/2+X,Z",
+        "1/2+X,1/2+Z,-Y",
+        "1/2-X,1/2+Z,Y",
+        "1/2-X,1/2-Z,-Y",
+        "1/2+X,1/2-Z,Y",
+        "1/2+Z,1/2+Y,-X",
+        "1/2+Z,1/2-Y,X",
+        "1/2-Z,1/2+Y,X",
+        "1/2-Z,1/2-Y,-X"
+    ],
+    "F 41 3 2": [
+        "X,Y,Z",
+        "-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,-Y,1/2-Z",
+        "Z,X,Y",
+        "1/2+Z,-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,-Y",
+        "Y,Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "3/4+Y,1/4+X,3/4-Z",
+        "1/4-Y,1/4-X,1/4-Z",
+        "1/4+Y,3/4-X,3/4+Z",
+        "3/4-Y,3/4+X,1/4+Z",
+        "3/4+X,1/4+Z,3/4-Y",
+        "3/4-X,3/4+Z,1/4+Y",
+        "1/4-X,1/4-Z,1/4-Y",
+        "1/4+X,3/4-Z,3/4+Y",
+        "3/4+Z,1/4+Y,3/4-X",
+        "1/4+Z,3/4-Y,3/4+X",
+        "3/4-Z,3/4+Y,1/4+X",
+        "1/4-Z,1/4-Y,1/4-X",
+        "X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,-Y",
+        "-Z,-X,Y",
+        "1/2-Z,X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "-Y,-Z,X",
+        "3/4+Y,3/4+X,1/4-Z",
+        "1/4-Y,3/4-X,3/4-Z",
+        "1/4+Y,1/4-X,1/4+Z",
+        "3/4-Y,1/4+X,3/4+Z",
+        "3/4+X,3/4+Z,1/4-Y",
+        "3/4-X,1/4+Z,3/4+Y",
+        "1/4-X,3/4-Z,3/4-Y",
+        "1/4+X,1/4-Z,1/4+Y",
+        "3/4+Z,3/4+Y,1/4-X",
+        "1/4+Z,1/4-Y,1/4+X",
+        "3/4-Z,1/4+Y,3/4+X",
+        "1/4-Z,3/4-Y,3/4-X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,1/2-Y,Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,-Y,-Z",
+        "1/2+Z,X,1/2+Y",
+        "Z,-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "-Z,1/2+X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/4+Y,1/4+X,1/4-Z",
+        "3/4-Y,1/4-X,3/4-Z",
+        "3/4+Y,3/4-X,1/4+Z",
+        "1/4-Y,3/4+X,3/4+Z",
+        "1/4+X,1/4+Z,1/4-Y",
+        "1/4-X,3/4+Z,3/4+Y",
+        "3/4-X,1/4-Z,3/4-Y",
+        "3/4+X,3/4-Z,1/4+Y",
+        "1/4+Z,1/4+Y,1/4-X",
+        "3/4+Z,3/4-Y,1/4+X",
+        "1/4-Z,3/4+Y,3/4+X",
+        "3/4-Z,1/4-Y,3/4-X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,Y,-Z",
+        "X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,Y",
+        "Z,1/2-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "-Y,Z,-X",
+        "Y,1/2-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/4+Y,3/4+X,3/4-Z",
+        "3/4-Y,3/4-X,1/4-Z",
+        "3/4+Y,1/4-X,3/4+Z",
+        "1/4-Y,1/4+X,1/4+Z",
+        "1/4+X,3/4+Z,3/4-Y",
+        "1/4-X,1/4+Z,1/4+Y",
+        "3/4-X,3/4-Z,1/4-Y",
+        "3/4+X,1/4-Z,3/4+Y",
+        "1/4+Z,3/4+Y,3/4-X",
+        "3/4+Z,1/4-Y,3/4+X",
+        "1/4-Z,1/4+Y,1/4+X",
+        "3/4-Z,3/4-Y,1/4-X"
+    ],
+    "I 4 3 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,1/2-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2-X",
+        "1/2-Y,1/2-Z,1/2+X",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+X,1/2+Z,1/2-Y",
+        "1/2-X,1/2+Z,1/2+Y",
+        "1/2-X,1/2-Z,1/2-Y",
+        "1/2+X,1/2-Z,1/2+Y",
+        "1/2+Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2+X",
+        "1/2-Z,1/2-Y,1/2-X"
+    ],
+    "P 43 3 2": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/4+Y,3/4+X,3/4-Z",
+        "1/4-Y,1/4-X,1/4-Z",
+        "3/4+Y,3/4-X,1/4+Z",
+        "3/4-Y,1/4+X,3/4+Z",
+        "1/4+X,3/4+Z,3/4-Y",
+        "3/4-X,1/4+Z,3/4+Y",
+        "1/4-X,1/4-Z,1/4-Y",
+        "3/4+X,3/4-Z,1/4+Y",
+        "1/4+Z,3/4+Y,3/4-X",
+        "3/4+Z,3/4-Y,1/4+X",
+        "3/4-Z,1/4+Y,3/4+X",
+        "1/4-Z,1/4-Y,1/4-X"
+    ],
+    "P 41 3 2": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "3/4+Y,1/4+X,1/4-Z",
+        "3/4-Y,3/4-X,3/4-Z",
+        "1/4+Y,1/4-X,3/4+Z",
+        "1/4-Y,3/4+X,1/4+Z",
+        "3/4+X,1/4+Z,1/4-Y",
+        "1/4-X,3/4+Z,1/4+Y",
+        "3/4-X,3/4-Z,3/4-Y",
+        "1/4+X,1/4-Z,3/4+Y",
+        "3/4+Z,1/4+Y,1/4-X",
+        "1/4+Z,1/4-Y,3/4+X",
+        "1/4-Z,3/4+Y,1/4+X",
+        "3/4-Z,3/4-Y,3/4-X"
+    ],
+    "I 41 3 2": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "3/4+Y,1/4+X,1/4-Z",
+        "3/4-Y,3/4-X,3/4-Z",
+        "1/4+Y,1/4-X,3/4+Z",
+        "1/4-Y,3/4+X,1/4+Z",
+        "3/4+X,1/4+Z,1/4-Y",
+        "1/4-X,3/4+Z,1/4+Y",
+        "3/4-X,3/4-Z,3/4-Y",
+        "1/4+X,1/4-Z,3/4+Y",
+        "3/4+Z,1/4+Y,1/4-X",
+        "1/4+Z,1/4-Y,3/4+X",
+        "1/4-Z,3/4+Y,1/4+X",
+        "3/4-Z,3/4-Y,3/4-X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "Z,-X,1/2-Y",
+        "-Z,1/2-X,Y",
+        "1/2-Z,X,-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,-X",
+        "Y,-Z,1/2-X",
+        "-Y,1/2-Z,X",
+        "1/4+Y,3/4+X,3/4-Z",
+        "1/4-Y,1/4-X,1/4-Z",
+        "3/4+Y,3/4-X,1/4+Z",
+        "3/4-Y,1/4+X,3/4+Z",
+        "1/4+X,3/4+Z,3/4-Y",
+        "3/4-X,1/4+Z,3/4+Y",
+        "1/4-X,1/4-Z,1/4-Y",
+        "3/4+X,3/4-Z,1/4+Y",
+        "1/4+Z,3/4+Y,3/4-X",
+        "3/4+Z,3/4-Y,1/4+X",
+        "3/4-Z,1/4+Y,3/4+X",
+        "1/4-Z,1/4-Y,1/4-X"
+    ],
+    "P -4 3 m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,Z",
+        "-Y,-X,Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "Z,Y,X",
+        "Z,-Y,-X",
+        "-Z,Y,-X",
+        "-Z,-Y,X"
+    ],
+    "F -4 3 m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,Z",
+        "-Y,-X,Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "Z,Y,X",
+        "Z,-Y,-X",
+        "-Z,Y,-X",
+        "-Z,-Y,X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "Y,1/2+X,1/2+Z",
+        "-Y,1/2-X,1/2+Z",
+        "Y,1/2-X,1/2-Z",
+        "-Y,1/2+X,1/2-Z",
+        "X,1/2+Z,1/2+Y",
+        "-X,1/2+Z,1/2-Y",
+        "-X,1/2-Z,1/2+Y",
+        "X,1/2-Z,1/2-Y",
+        "Z,1/2+Y,1/2+X",
+        "Z,1/2-Y,1/2-X",
+        "-Z,1/2+Y,1/2-X",
+        "-Z,1/2-Y,1/2+X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/2+Y,X,1/2+Z",
+        "1/2-Y,-X,1/2+Z",
+        "1/2+Y,-X,1/2-Z",
+        "1/2-Y,X,1/2-Z",
+        "1/2+X,Z,1/2+Y",
+        "1/2-X,Z,1/2-Y",
+        "1/2-X,-Z,1/2+Y",
+        "1/2+X,-Z,1/2-Y",
+        "1/2+Z,Y,1/2+X",
+        "1/2+Z,-Y,1/2-X",
+        "1/2-Z,Y,1/2-X",
+        "1/2-Z,-Y,1/2+X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/2+Y,1/2+X,Z",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2-X,-Z",
+        "1/2-Y,1/2+X,-Z",
+        "1/2+X,1/2+Z,Y",
+        "1/2-X,1/2+Z,-Y",
+        "1/2-X,1/2-Z,Y",
+        "1/2+X,1/2-Z,-Y",
+        "1/2+Z,1/2+Y,X",
+        "1/2+Z,1/2-Y,-X",
+        "1/2-Z,1/2+Y,-X",
+        "1/2-Z,1/2-Y,X"
+    ],
+    "I -4 3 m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,Z",
+        "-Y,-X,Z",
+        "Y,-X,-Z",
+        "-Y,X,-Z",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "Z,Y,X",
+        "Z,-Y,-X",
+        "-Z,Y,-X",
+        "-Z,-Y,X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,1/2-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2-X",
+        "1/2-Y,1/2-Z,1/2+X",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+Z,1/2+Y,1/2+X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2-Z,1/2-Y,1/2+X"
+    ],
+    "P -4 3 n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+Z,1/2+Y,1/2+X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2-Z,1/2-Y,1/2+X"
+    ],
+    "F -4 3 c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+Z,1/2+Y,1/2+X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2-Z,1/2-Y,1/2+X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "1/2+Y,X,Z",
+        "1/2-Y,-X,Z",
+        "1/2+Y,-X,-Z",
+        "1/2-Y,X,-Z",
+        "1/2+X,Z,Y",
+        "1/2-X,Z,-Y",
+        "1/2-X,-Z,Y",
+        "1/2+X,-Z,-Y",
+        "1/2+Z,Y,X",
+        "1/2+Z,-Y,-X",
+        "1/2-Z,Y,-X",
+        "1/2-Z,-Y,X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "Y,1/2+X,Z",
+        "-Y,1/2-X,Z",
+        "Y,1/2-X,-Z",
+        "-Y,1/2+X,-Z",
+        "X,1/2+Z,Y",
+        "-X,1/2+Z,-Y",
+        "-X,1/2-Z,Y",
+        "X,1/2-Z,-Y",
+        "Z,1/2+Y,X",
+        "Z,1/2-Y,-X",
+        "-Z,1/2+Y,-X",
+        "-Z,1/2-Y,X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "Y,X,1/2+Z",
+        "-Y,-X,1/2+Z",
+        "Y,-X,1/2-Z",
+        "-Y,X,1/2-Z",
+        "X,Z,1/2+Y",
+        "-X,Z,1/2-Y",
+        "-X,-Z,1/2+Y",
+        "X,-Z,1/2-Y",
+        "Z,Y,1/2+X",
+        "Z,-Y,1/2-X",
+        "-Z,Y,1/2-X",
+        "-Z,-Y,1/2+X"
+    ],
+    "I -4 3 d": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/4+Y,1/4+X,1/4+Z",
+        "1/4-Y,3/4-X,3/4+Z",
+        "3/4+Y,1/4-X,3/4-Z",
+        "3/4-Y,3/4+X,1/4-Z",
+        "1/4+X,1/4+Z,1/4+Y",
+        "3/4-X,3/4+Z,1/4-Y",
+        "1/4-X,3/4-Z,3/4+Y",
+        "3/4+X,1/4-Z,3/4-Y",
+        "1/4+Z,1/4+Y,1/4+X",
+        "3/4+Z,1/4-Y,3/4-X",
+        "3/4-Z,3/4+Y,1/4-X",
+        "1/4-Z,3/4-Y,3/4+X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "Z,-X,1/2-Y",
+        "-Z,1/2-X,Y",
+        "1/2-Z,X,-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,-X",
+        "Y,-Z,1/2-X",
+        "-Y,1/2-Z,X",
+        "3/4+Y,3/4+X,3/4+Z",
+        "3/4-Y,1/4-X,1/4+Z",
+        "1/4+Y,3/4-X,1/4-Z",
+        "1/4-Y,1/4+X,3/4-Z",
+        "3/4+X,3/4+Z,3/4+Y",
+        "1/4-X,1/4+Z,3/4-Y",
+        "3/4-X,1/4-Z,1/4+Y",
+        "1/4+X,3/4-Z,1/4-Y",
+        "3/4+Z,3/4+Y,3/4+X",
+        "1/4+Z,3/4-Y,1/4-X",
+        "1/4-Z,1/4+Y,3/4-X",
+        "3/4-Z,1/4-Y,1/4+X"
+    ],
+    "P 4/m -3 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-Z,-Y,X",
+        "-Z,Y,-X",
+        "Z,-Y,-X",
+        "Z,Y,X"
+    ],
+    "P 4/n -3 2/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2+X,1/2-Y",
+        "1/2+Z,1/2-X,1/2+Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2+X",
+        "1/2+Y,1/2+Z,1/2-X",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2+Z,1/2+Y,1/2+X"
+    ],
+    "P 42/m -3 2/n": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+X,1/2+Z,1/2-Y",
+        "1/2-X,1/2+Z,1/2+Y",
+        "1/2-X,1/2-Z,1/2-Y",
+        "1/2+X,1/2-Z,1/2+Y",
+        "1/2+Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2+X",
+        "1/2-Z,1/2-Y,1/2-X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2+Z,1/2+Y,1/2+X"
+    ],
+    "P 42/n -3 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+X,1/2+Z,1/2-Y",
+        "1/2-X,1/2+Z,1/2+Y",
+        "1/2-X,1/2-Z,1/2-Y",
+        "1/2+X,1/2-Z,1/2+Y",
+        "1/2+Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2+X",
+        "1/2-Z,1/2-Y,1/2-X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2+X,1/2-Y",
+        "1/2+Z,1/2-X,1/2+Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2+X",
+        "1/2+Y,1/2+Z,1/2-X",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-Z,-Y,X",
+        "-Z,Y,-X",
+        "Z,-Y,-X",
+        "Z,Y,X"
+    ],
+    "F 4/m -3 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-Z,-Y,X",
+        "-Z,Y,-X",
+        "Z,-Y,-X",
+        "Z,Y,X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "Y,1/2+X,1/2-Z",
+        "-Y,1/2-X,1/2-Z",
+        "Y,1/2-X,1/2+Z",
+        "-Y,1/2+X,1/2+Z",
+        "X,1/2+Z,1/2-Y",
+        "-X,1/2+Z,1/2+Y",
+        "-X,1/2-Z,1/2-Y",
+        "X,1/2-Z,1/2+Y",
+        "Z,1/2+Y,1/2-X",
+        "Z,1/2-Y,1/2+X",
+        "-Z,1/2+Y,1/2+X",
+        "-Z,1/2-Y,1/2-X",
+        "-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z",
+        "-Z,1/2-X,1/2-Y",
+        "-Z,1/2+X,1/2+Y",
+        "Z,1/2+X,1/2-Y",
+        "Z,1/2-X,1/2+Y",
+        "-Y,1/2-Z,1/2-X",
+        "Y,1/2-Z,1/2+X",
+        "-Y,1/2+Z,1/2+X",
+        "Y,1/2+Z,1/2-X",
+        "-Y,1/2-X,1/2+Z",
+        "Y,1/2+X,1/2+Z",
+        "-Y,1/2+X,1/2-Z",
+        "Y,1/2-X,1/2-Z",
+        "-X,1/2-Z,1/2+Y",
+        "X,1/2-Z,1/2-Y",
+        "X,1/2+Z,1/2+Y",
+        "-X,1/2+Z,1/2-Y",
+        "-Z,1/2-Y,1/2+X",
+        "-Z,1/2+Y,1/2-X",
+        "Z,1/2-Y,1/2-X",
+        "Z,1/2+Y,1/2+X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/2+Y,X,1/2-Z",
+        "1/2-Y,-X,1/2-Z",
+        "1/2+Y,-X,1/2+Z",
+        "1/2-Y,X,1/2+Z",
+        "1/2+X,Z,1/2-Y",
+        "1/2-X,Z,1/2+Y",
+        "1/2-X,-Z,1/2-Y",
+        "1/2+X,-Z,1/2+Y",
+        "1/2+Z,Y,1/2-X",
+        "1/2+Z,-Y,1/2+X",
+        "1/2-Z,Y,1/2+X",
+        "1/2-Z,-Y,1/2-X",
+        "1/2-X,-Y,1/2-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z",
+        "1/2-Z,-X,1/2-Y",
+        "1/2-Z,X,1/2+Y",
+        "1/2+Z,X,1/2-Y",
+        "1/2+Z,-X,1/2+Y",
+        "1/2-Y,-Z,1/2-X",
+        "1/2+Y,-Z,1/2+X",
+        "1/2-Y,Z,1/2+X",
+        "1/2+Y,Z,1/2-X",
+        "1/2-Y,-X,1/2+Z",
+        "1/2+Y,X,1/2+Z",
+        "1/2-Y,X,1/2-Z",
+        "1/2+Y,-X,1/2-Z",
+        "1/2-X,-Z,1/2+Y",
+        "1/2+X,-Z,1/2-Y",
+        "1/2+X,Z,1/2+Y",
+        "1/2-X,Z,1/2-Y",
+        "1/2-Z,-Y,1/2+X",
+        "1/2-Z,Y,1/2-X",
+        "1/2+Z,-Y,1/2-X",
+        "1/2+Z,Y,1/2+X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/2+Y,1/2+X,-Z",
+        "1/2-Y,1/2-X,-Z",
+        "1/2+Y,1/2-X,Z",
+        "1/2-Y,1/2+X,Z",
+        "1/2+X,1/2+Z,-Y",
+        "1/2-X,1/2+Z,Y",
+        "1/2-X,1/2-Z,-Y",
+        "1/2+X,1/2-Z,Y",
+        "1/2+Z,1/2+Y,-X",
+        "1/2+Z,1/2-Y,X",
+        "1/2-Z,1/2+Y,X",
+        "1/2-Z,1/2-Y,-X",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Z,1/2-X,-Y",
+        "1/2-Z,1/2+X,Y",
+        "1/2+Z,1/2+X,-Y",
+        "1/2+Z,1/2-X,Y",
+        "1/2-Y,1/2-Z,-X",
+        "1/2+Y,1/2-Z,X",
+        "1/2-Y,1/2+Z,X",
+        "1/2+Y,1/2+Z,-X",
+        "1/2-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,Z",
+        "1/2-Y,1/2+X,-Z",
+        "1/2+Y,1/2-X,-Z",
+        "1/2-X,1/2-Z,Y",
+        "1/2+X,1/2-Z,-Y",
+        "1/2+X,1/2+Z,Y",
+        "1/2-X,1/2+Z,-Y",
+        "1/2-Z,1/2-Y,X",
+        "1/2-Z,1/2+Y,-X",
+        "1/2+Z,1/2-Y,-X",
+        "1/2+Z,1/2+Y,X"
+    ],
+    "F 4/m -3 2/c": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+X,1/2+Z,1/2-Y",
+        "1/2-X,1/2+Z,1/2+Y",
+        "1/2-X,1/2-Z,1/2-Y",
+        "1/2+X,1/2-Z,1/2+Y",
+        "1/2+Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2+X",
+        "1/2-Z,1/2-Y,1/2-X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2+Z,1/2+Y,1/2+X",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2-Z",
+        "Z,1/2+X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,1/2-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "1/2+Y,X,-Z",
+        "1/2-Y,-X,-Z",
+        "1/2+Y,-X,Z",
+        "1/2-Y,X,Z",
+        "1/2+X,Z,-Y",
+        "1/2-X,Z,Y",
+        "1/2-X,-Z,-Y",
+        "1/2+X,-Z,Y",
+        "1/2+Z,Y,-X",
+        "1/2+Z,-Y,X",
+        "1/2-Z,Y,X",
+        "1/2-Z,-Y,-X",
+        "-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "-X,1/2+Y,1/2+Z",
+        "-Z,1/2-X,1/2-Y",
+        "-Z,1/2+X,1/2+Y",
+        "Z,1/2+X,1/2-Y",
+        "Z,1/2-X,1/2+Y",
+        "-Y,1/2-Z,1/2-X",
+        "Y,1/2-Z,1/2+X",
+        "-Y,1/2+Z,1/2+X",
+        "Y,1/2+Z,1/2-X",
+        "1/2-Y,-X,Z",
+        "1/2+Y,X,Z",
+        "1/2-Y,X,-Z",
+        "1/2+Y,-X,-Z",
+        "1/2-X,-Z,Y",
+        "1/2+X,-Z,-Y",
+        "1/2+X,Z,Y",
+        "1/2-X,Z,-Y",
+        "1/2-Z,-Y,X",
+        "1/2-Z,Y,-X",
+        "1/2+Z,-Y,-X",
+        "1/2+Z,Y,X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2+Z,X,1/2+Y",
+        "1/2+Z,-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "1/2-Z,X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "Y,1/2+X,-Z",
+        "-Y,1/2-X,-Z",
+        "Y,1/2-X,Z",
+        "-Y,1/2+X,Z",
+        "X,1/2+Z,-Y",
+        "-X,1/2+Z,Y",
+        "-X,1/2-Z,-Y",
+        "X,1/2-Z,Y",
+        "Z,1/2+Y,-X",
+        "Z,1/2-Y,X",
+        "-Z,1/2+Y,X",
+        "-Z,1/2-Y,-X",
+        "1/2-X,-Y,1/2-Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2+X,-Y,1/2+Z",
+        "1/2-X,Y,1/2+Z",
+        "1/2-Z,-X,1/2-Y",
+        "1/2-Z,X,1/2+Y",
+        "1/2+Z,X,1/2-Y",
+        "1/2+Z,-X,1/2+Y",
+        "1/2-Y,-Z,1/2-X",
+        "1/2+Y,-Z,1/2+X",
+        "1/2-Y,Z,1/2+X",
+        "1/2+Y,Z,1/2-X",
+        "-Y,1/2-X,Z",
+        "Y,1/2+X,Z",
+        "-Y,1/2+X,-Z",
+        "Y,1/2-X,-Z",
+        "-X,1/2-Z,Y",
+        "X,1/2-Z,-Y",
+        "X,1/2+Z,Y",
+        "-X,1/2+Z,-Y",
+        "-Z,1/2-Y,X",
+        "-Z,1/2+Y,-X",
+        "Z,1/2-Y,-X",
+        "Z,1/2+Y,X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,-Z",
+        "1/2+Z,1/2+X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "1/2-Z,1/2+X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "Y,X,1/2-Z",
+        "-Y,-X,1/2-Z",
+        "Y,-X,1/2+Z",
+        "-Y,X,1/2+Z",
+        "X,Z,1/2-Y",
+        "-X,Z,1/2+Y",
+        "-X,-Z,1/2-Y",
+        "X,-Z,1/2+Y",
+        "Z,Y,1/2-X",
+        "Z,-Y,1/2+X",
+        "-Z,Y,1/2+X",
+        "-Z,-Y,1/2-X",
+        "1/2-X,1/2-Y,-Z",
+        "1/2+X,1/2+Y,-Z",
+        "1/2+X,1/2-Y,Z",
+        "1/2-X,1/2+Y,Z",
+        "1/2-Z,1/2-X,-Y",
+        "1/2-Z,1/2+X,Y",
+        "1/2+Z,1/2+X,-Y",
+        "1/2+Z,1/2-X,Y",
+        "1/2-Y,1/2-Z,-X",
+        "1/2+Y,1/2-Z,X",
+        "1/2-Y,1/2+Z,X",
+        "1/2+Y,1/2+Z,-X",
+        "-Y,-X,1/2+Z",
+        "Y,X,1/2+Z",
+        "-Y,X,1/2-Z",
+        "Y,-X,1/2-Z",
+        "-X,-Z,1/2+Y",
+        "X,-Z,1/2-Y",
+        "X,Z,1/2+Y",
+        "-X,Z,1/2-Y",
+        "-Z,-Y,1/2+X",
+        "-Z,Y,1/2-X",
+        "Z,-Y,1/2-X",
+        "Z,Y,1/2+X"
+    ],
+    "F 41/d -3 2/m": [
+        "X,Y,Z",
+        "-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,-Y,1/2-Z",
+        "Z,X,Y",
+        "1/2+Z,-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,-Y",
+        "Y,Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "3/4+Y,1/4+X,3/4-Z",
+        "1/4-Y,1/4-X,1/4-Z",
+        "1/4+Y,3/4-X,3/4+Z",
+        "3/4-Y,3/4+X,1/4+Z",
+        "3/4+X,1/4+Z,3/4-Y",
+        "3/4-X,3/4+Z,1/4+Y",
+        "1/4-X,1/4-Z,1/4-Y",
+        "1/4+X,3/4-Z,3/4+Y",
+        "3/4+Z,1/4+Y,3/4-X",
+        "1/4+Z,3/4-Y,3/4+X",
+        "3/4-Z,3/4+Y,1/4+X",
+        "1/4-Z,1/4-Y,1/4-X",
+        "1/4-X,1/4-Y,1/4-Z",
+        "1/4+X,3/4+Y,3/4-Z",
+        "3/4+X,3/4-Y,1/4+Z",
+        "3/4-X,1/4+Y,3/4+Z",
+        "1/4-Z,1/4-X,1/4-Y",
+        "3/4-Z,1/4+X,3/4+Y",
+        "1/4+Z,3/4+X,3/4-Y",
+        "3/4+Z,3/4-X,1/4+Y",
+        "1/4-Y,1/4-Z,1/4-X",
+        "3/4+Y,3/4-Z,1/4+X",
+        "3/4-Y,1/4+Z,3/4+X",
+        "1/4+Y,3/4+Z,3/4-X",
+        "1/2-Y,-X,1/2+Z",
+        "Y,X,Z",
+        "-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,-Z",
+        "1/2-X,-Z,1/2+Y",
+        "1/2+X,1/2-Z,-Y",
+        "X,Z,Y",
+        "-X,1/2+Z,1/2-Y",
+        "1/2-Z,-Y,1/2+X",
+        "-Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,-X",
+        "Z,Y,X",
+        "X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,-Y",
+        "-Z,-X,Y",
+        "1/2-Z,X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "-Y,-Z,X",
+        "3/4+Y,3/4+X,1/4-Z",
+        "1/4-Y,3/4-X,3/4-Z",
+        "1/4+Y,1/4-X,1/4+Z",
+        "3/4-Y,1/4+X,3/4+Z",
+        "3/4+X,3/4+Z,1/4-Y",
+        "3/4-X,1/4+Z,3/4+Y",
+        "1/4-X,3/4-Z,3/4-Y",
+        "1/4+X,1/4-Z,1/4+Y",
+        "3/4+Z,3/4+Y,1/4-X",
+        "1/4+Z,1/4-Y,1/4+X",
+        "3/4-Z,1/4+Y,3/4+X",
+        "1/4-Z,3/4-Y,3/4-X",
+        "1/4-X,3/4-Y,3/4-Z",
+        "1/4+X,1/4+Y,1/4-Z",
+        "3/4+X,1/4-Y,3/4+Z",
+        "3/4-X,3/4+Y,1/4+Z",
+        "1/4-Z,3/4-X,3/4-Y",
+        "3/4-Z,3/4+X,1/4+Y",
+        "1/4+Z,1/4+X,1/4-Y",
+        "3/4+Z,1/4-X,3/4+Y",
+        "1/4-Y,3/4-Z,3/4-X",
+        "3/4+Y,1/4-Z,3/4+X",
+        "3/4-Y,3/4+Z,1/4+X",
+        "1/4+Y,1/4+Z,1/4-X",
+        "1/2-Y,1/2-X,Z",
+        "Y,1/2+X,1/2+Z",
+        "-Y,X,-Z",
+        "1/2+Y,-X,1/2-Z",
+        "1/2-X,1/2-Z,Y",
+        "1/2+X,-Z,1/2-Y",
+        "X,1/2+Z,1/2+Y",
+        "-X,Z,-Y",
+        "1/2-Z,1/2-Y,X",
+        "-Z,Y,-X",
+        "1/2+Z,-Y,1/2-X",
+        "Z,1/2+Y,1/2+X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,1/2-Y,Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,-Y,-Z",
+        "1/2+Z,X,1/2+Y",
+        "Z,-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "-Z,1/2+X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/4+Y,1/4+X,1/4-Z",
+        "3/4-Y,1/4-X,3/4-Z",
+        "3/4+Y,3/4-X,1/4+Z",
+        "1/4-Y,3/4+X,3/4+Z",
+        "1/4+X,1/4+Z,1/4-Y",
+        "1/4-X,3/4+Z,3/4+Y",
+        "3/4-X,1/4-Z,3/4-Y",
+        "3/4+X,3/4-Z,1/4+Y",
+        "1/4+Z,1/4+Y,1/4-X",
+        "3/4+Z,3/4-Y,1/4+X",
+        "1/4-Z,3/4+Y,3/4+X",
+        "3/4-Z,1/4-Y,3/4-X",
+        "3/4-X,1/4-Y,3/4-Z",
+        "3/4+X,3/4+Y,1/4-Z",
+        "1/4+X,3/4-Y,3/4+Z",
+        "1/4-X,1/4+Y,1/4+Z",
+        "3/4-Z,1/4-X,3/4-Y",
+        "1/4-Z,1/4+X,1/4+Y",
+        "3/4+Z,3/4+X,1/4-Y",
+        "1/4+Z,3/4-X,3/4+Y",
+        "3/4-Y,1/4-Z,3/4-X",
+        "1/4+Y,3/4-Z,3/4+X",
+        "1/4-Y,1/4+Z,1/4+X",
+        "3/4+Y,3/4+Z,1/4-X",
+        "-Y,-X,Z",
+        "1/2+Y,X,1/2+Z",
+        "1/2-Y,1/2+X,-Z",
+        "Y,1/2-X,1/2-Z",
+        "-X,-Z,Y",
+        "X,1/2-Z,1/2-Y",
+        "1/2+X,Z,1/2+Y",
+        "1/2-X,1/2+Z,-Y",
+        "-Z,-Y,X",
+        "1/2-Z,1/2+Y,-X",
+        "Z,1/2-Y,1/2-X",
+        "1/2+Z,Y,1/2+X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,Y,-Z",
+        "X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,Y",
+        "Z,1/2-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "-Y,Z,-X",
+        "Y,1/2-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/4+Y,3/4+X,3/4-Z",
+        "3/4-Y,3/4-X,1/4-Z",
+        "3/4+Y,1/4-X,3/4+Z",
+        "1/4-Y,1/4+X,1/4+Z",
+        "1/4+X,3/4+Z,3/4-Y",
+        "1/4-X,1/4+Z,1/4+Y",
+        "3/4-X,3/4-Z,1/4-Y",
+        "3/4+X,1/4-Z,3/4+Y",
+        "1/4+Z,3/4+Y,3/4-X",
+        "3/4+Z,1/4-Y,3/4+X",
+        "1/4-Z,1/4+Y,1/4+X",
+        "3/4-Z,3/4-Y,1/4-X",
+        "3/4-X,3/4-Y,1/4-Z",
+        "3/4+X,1/4+Y,3/4-Z",
+        "1/4+X,1/4-Y,1/4+Z",
+        "1/4-X,3/4+Y,3/4+Z",
+        "3/4-Z,3/4-X,1/4-Y",
+        "1/4-Z,3/4+X,3/4+Y",
+        "3/4+Z,1/4+X,3/4-Y",
+        "1/4+Z,1/4-X,1/4+Y",
+        "3/4-Y,3/4-Z,1/4-X",
+        "1/4+Y,1/4-Z,1/4+X",
+        "1/4-Y,3/4+Z,3/4+X",
+        "3/4+Y,1/4+Z,3/4-X",
+        "-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,Z",
+        "1/2-Y,X,1/2-Z",
+        "Y,-X,-Z",
+        "-X,1/2-Z,1/2+Y",
+        "X,-Z,-Y",
+        "1/2+X,1/2+Z,Y",
+        "1/2-X,Z,1/2-Y",
+        "-Z,1/2-Y,1/2+X",
+        "1/2-Z,Y,1/2-X",
+        "Z,-Y,-X",
+        "1/2+Z,1/2+Y,X"
+    ],
+    "F 41/d -3 2/c": [
+        "X,Y,Z",
+        "-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,-Z",
+        "1/2+X,-Y,1/2-Z",
+        "Z,X,Y",
+        "1/2+Z,-X,1/2-Y",
+        "-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,-Y",
+        "Y,Z,X",
+        "1/2-Y,1/2+Z,-X",
+        "1/2+Y,-Z,1/2-X",
+        "-Y,1/2-Z,1/2+X",
+        "3/4+Y,1/4+X,3/4-Z",
+        "1/4-Y,1/4-X,1/4-Z",
+        "1/4+Y,3/4-X,3/4+Z",
+        "3/4-Y,3/4+X,1/4+Z",
+        "3/4+X,1/4+Z,3/4-Y",
+        "3/4-X,3/4+Z,1/4+Y",
+        "1/4-X,1/4-Z,1/4-Y",
+        "1/4+X,3/4-Z,3/4+Y",
+        "3/4+Z,1/4+Y,3/4-X",
+        "1/4+Z,3/4-Y,3/4+X",
+        "3/4-Z,3/4+Y,1/4+X",
+        "1/4-Z,1/4-Y,1/4-X",
+        "3/4-X,3/4-Y,3/4-Z",
+        "3/4+X,1/4+Y,1/4-Z",
+        "1/4+X,1/4-Y,3/4+Z",
+        "1/4-X,3/4+Y,1/4+Z",
+        "3/4-Z,3/4-X,3/4-Y",
+        "1/4-Z,3/4+X,1/4+Y",
+        "3/4+Z,1/4+X,1/4-Y",
+        "1/4+Z,1/4-X,3/4+Y",
+        "3/4-Y,3/4-Z,3/4-X",
+        "1/4+Y,1/4-Z,3/4+X",
+        "1/4-Y,3/4+Z,1/4+X",
+        "3/4+Y,1/4+Z,1/4-X",
+        "-Y,1/2-X,Z",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,X,-Z",
+        "Y,-X,1/2-Z",
+        "-X,1/2-Z,Y",
+        "X,-Z,1/2-Y",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,Z,-Y",
+        "-Z,1/2-Y,X",
+        "1/2-Z,Y,-X",
+        "Z,-Y,1/2-X",
+        "1/2+Z,1/2+Y,1/2+X",
+        "X,1/2+Y,1/2+Z",
+        "-X,-Y,Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,-Y",
+        "-Z,-X,Y",
+        "1/2-Z,X,1/2-Y",
+        "Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "-Y,-Z,X",
+        "3/4+Y,3/4+X,1/4-Z",
+        "1/4-Y,3/4-X,3/4-Z",
+        "1/4+Y,1/4-X,1/4+Z",
+        "3/4-Y,1/4+X,3/4+Z",
+        "3/4+X,3/4+Z,1/4-Y",
+        "3/4-X,1/4+Z,3/4+Y",
+        "1/4-X,3/4-Z,3/4-Y",
+        "1/4+X,1/4-Z,1/4+Y",
+        "3/4+Z,3/4+Y,1/4-X",
+        "1/4+Z,1/4-Y,1/4+X",
+        "3/4-Z,1/4+Y,3/4+X",
+        "1/4-Z,3/4-Y,3/4-X",
+        "3/4-X,1/4-Y,1/4-Z",
+        "3/4+X,3/4+Y,3/4-Z",
+        "1/4+X,3/4-Y,1/4+Z",
+        "1/4-X,1/4+Y,3/4+Z",
+        "3/4-Z,1/4-X,1/4-Y",
+        "1/4-Z,1/4+X,3/4+Y",
+        "3/4+Z,3/4+X,3/4-Y",
+        "1/4+Z,3/4-X,1/4+Y",
+        "3/4-Y,1/4-Z,1/4-X",
+        "1/4+Y,3/4-Z,1/4+X",
+        "1/4-Y,1/4+Z,3/4+X",
+        "3/4+Y,3/4+Z,3/4-X",
+        "-Y,-X,1/2+Z",
+        "1/2+Y,X,Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "Y,1/2-X,-Z",
+        "-X,-Z,1/2+Y",
+        "X,1/2-Z,-Y",
+        "1/2+X,Z,Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "-Z,-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "Z,1/2-Y,-X",
+        "1/2+Z,Y,X",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,1/2-Y,Z",
+        "-X,1/2+Y,1/2-Z",
+        "X,-Y,-Z",
+        "1/2+Z,X,1/2+Y",
+        "Z,-X,-Y",
+        "1/2-Z,1/2-X,Y",
+        "-Z,1/2+X,1/2-Y",
+        "1/2+Y,Z,1/2+X",
+        "-Y,1/2+Z,1/2-X",
+        "Y,-Z,-X",
+        "1/2-Y,1/2-Z,X",
+        "1/4+Y,1/4+X,1/4-Z",
+        "3/4-Y,1/4-X,3/4-Z",
+        "3/4+Y,3/4-X,1/4+Z",
+        "1/4-Y,3/4+X,3/4+Z",
+        "1/4+X,1/4+Z,1/4-Y",
+        "1/4-X,3/4+Z,3/4+Y",
+        "3/4-X,1/4-Z,3/4-Y",
+        "3/4+X,3/4-Z,1/4+Y",
+        "1/4+Z,1/4+Y,1/4-X",
+        "3/4+Z,3/4-Y,1/4+X",
+        "1/4-Z,3/4+Y,3/4+X",
+        "3/4-Z,1/4-Y,3/4-X",
+        "1/4-X,3/4-Y,1/4-Z",
+        "1/4+X,1/4+Y,3/4-Z",
+        "3/4+X,1/4-Y,1/4+Z",
+        "3/4-X,3/4+Y,3/4+Z",
+        "1/4-Z,3/4-X,1/4-Y",
+        "3/4-Z,3/4+X,3/4+Y",
+        "1/4+Z,1/4+X,3/4-Y",
+        "3/4+Z,1/4-X,1/4+Y",
+        "1/4-Y,3/4-Z,1/4-X",
+        "3/4+Y,1/4-Z,1/4+X",
+        "3/4-Y,3/4+Z,3/4+X",
+        "1/4+Y,1/4+Z,3/4-X",
+        "1/2-Y,1/2-X,1/2+Z",
+        "Y,1/2+X,Z",
+        "-Y,X,1/2-Z",
+        "1/2+Y,-X,-Z",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,-Z,-Y",
+        "X,1/2+Z,Y",
+        "-X,Z,1/2-Y",
+        "1/2-Z,1/2-Y,1/2+X",
+        "-Z,Y,1/2-X",
+        "1/2+Z,-Y,-X",
+        "Z,1/2+Y,X",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,Y,-Z",
+        "X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,Y",
+        "Z,1/2-X,1/2-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,X,-Y",
+        "1/2+Y,1/2+Z,X",
+        "-Y,Z,-X",
+        "Y,1/2-Z,1/2-X",
+        "1/2-Y,-Z,1/2+X",
+        "1/4+Y,3/4+X,3/4-Z",
+        "3/4-Y,3/4-X,1/4-Z",
+        "3/4+Y,1/4-X,3/4+Z",
+        "1/4-Y,1/4+X,1/4+Z",
+        "1/4+X,3/4+Z,3/4-Y",
+        "1/4-X,1/4+Z,1/4+Y",
+        "3/4-X,3/4-Z,1/4-Y",
+        "3/4+X,1/4-Z,3/4+Y",
+        "1/4+Z,3/4+Y,3/4-X",
+        "3/4+Z,1/4-Y,3/4+X",
+        "1/4-Z,1/4+Y,1/4+X",
+        "3/4-Z,3/4-Y,1/4-X",
+        "1/4-X,1/4-Y,3/4-Z",
+        "1/4+X,3/4+Y,1/4-Z",
+        "3/4+X,3/4-Y,3/4+Z",
+        "3/4-X,1/4+Y,1/4+Z",
+        "1/4-Z,1/4-X,3/4-Y",
+        "3/4-Z,1/4+X,1/4+Y",
+        "1/4+Z,3/4+X,1/4-Y",
+        "3/4+Z,3/4-X,3/4+Y",
+        "1/4-Y,1/4-Z,3/4-X",
+        "3/4+Y,3/4-Z,3/4+X",
+        "3/4-Y,1/4+Z,1/4+X",
+        "1/4+Y,3/4+Z,1/4-X",
+        "1/2-Y,-X,Z",
+        "Y,X,1/2+Z",
+        "-Y,1/2+X,-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-X,-Z,Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "X,Z,1/2+Y",
+        "-X,1/2+Z,-Y",
+        "1/2-Z,-Y,X",
+        "-Z,1/2+Y,-X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "Z,Y,1/2+X"
+    ],
+    "I 4/m -3 2/m": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "-X,Y,-Z",
+        "X,-Y,-Z",
+        "Z,X,Y",
+        "Z,-X,-Y",
+        "-Z,-X,Y",
+        "-Z,X,-Y",
+        "Y,Z,X",
+        "-Y,Z,-X",
+        "Y,-Z,-X",
+        "-Y,-Z,X",
+        "Y,X,-Z",
+        "-Y,-X,-Z",
+        "Y,-X,Z",
+        "-Y,X,Z",
+        "X,Z,-Y",
+        "-X,Z,Y",
+        "-X,-Z,-Y",
+        "X,-Z,Y",
+        "Z,Y,-X",
+        "Z,-Y,X",
+        "-Z,Y,X",
+        "-Z,-Y,-X",
+        "-X,-Y,-Z",
+        "X,Y,-Z",
+        "X,-Y,Z",
+        "-X,Y,Z",
+        "-Z,-X,-Y",
+        "-Z,X,Y",
+        "Z,X,-Y",
+        "Z,-X,Y",
+        "-Y,-Z,-X",
+        "Y,-Z,X",
+        "-Y,Z,X",
+        "Y,Z,-X",
+        "-Y,-X,Z",
+        "Y,X,Z",
+        "-Y,X,-Z",
+        "Y,-X,-Z",
+        "-X,-Z,Y",
+        "X,-Z,-Y",
+        "X,Z,Y",
+        "-X,Z,-Y",
+        "-Z,-Y,X",
+        "-Z,Y,-X",
+        "Z,-Y,-X",
+        "Z,Y,X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2-X,1/2+Y",
+        "1/2-Z,1/2+X,1/2-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2-X",
+        "1/2-Y,1/2-Z,1/2+X",
+        "1/2+Y,1/2+X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z",
+        "1/2+Y,1/2-X,1/2+Z",
+        "1/2-Y,1/2+X,1/2+Z",
+        "1/2+X,1/2+Z,1/2-Y",
+        "1/2-X,1/2+Z,1/2+Y",
+        "1/2-X,1/2-Z,1/2-Y",
+        "1/2+X,1/2-Z,1/2+Y",
+        "1/2+Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2+X",
+        "1/2-Z,1/2-Y,1/2-X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "1/2-Z,1/2+X,1/2+Y",
+        "1/2+Z,1/2+X,1/2-Y",
+        "1/2+Z,1/2-X,1/2+Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,1/2+X",
+        "1/2+Y,1/2+Z,1/2-X",
+        "1/2-Y,1/2-X,1/2+Z",
+        "1/2+Y,1/2+X,1/2+Z",
+        "1/2-Y,1/2+X,1/2-Z",
+        "1/2+Y,1/2-X,1/2-Z",
+        "1/2-X,1/2-Z,1/2+Y",
+        "1/2+X,1/2-Z,1/2-Y",
+        "1/2+X,1/2+Z,1/2+Y",
+        "1/2-X,1/2+Z,1/2-Y",
+        "1/2-Z,1/2-Y,1/2+X",
+        "1/2-Z,1/2+Y,1/2-X",
+        "1/2+Z,1/2-Y,1/2-X",
+        "1/2+Z,1/2+Y,1/2+X"
+    ],
+    "I 41/a -3 2/d": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2-Y,-Z",
+        "Z,X,Y",
+        "1/2+Z,1/2-X,-Y",
+        "1/2-Z,-X,1/2+Y",
+        "-Z,1/2+X,1/2-Y",
+        "Y,Z,X",
+        "-Y,1/2+Z,1/2-X",
+        "1/2+Y,1/2-Z,-X",
+        "1/2-Y,-Z,1/2+X",
+        "3/4+Y,1/4+X,1/4-Z",
+        "3/4-Y,3/4-X,3/4-Z",
+        "1/4+Y,1/4-X,3/4+Z",
+        "1/4-Y,3/4+X,1/4+Z",
+        "3/4+X,1/4+Z,1/4-Y",
+        "1/4-X,3/4+Z,1/4+Y",
+        "3/4-X,3/4-Z,3/4-Y",
+        "1/4+X,1/4-Z,3/4+Y",
+        "3/4+Z,1/4+Y,1/4-X",
+        "1/4+Z,1/4-Y,3/4+X",
+        "1/4-Z,3/4+Y,1/4+X",
+        "3/4-Z,3/4-Y,3/4-X",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2-Z",
+        "X,1/2-Y,1/2+Z",
+        "1/2-X,1/2+Y,Z",
+        "-Z,-X,-Y",
+        "1/2-Z,1/2+X,Y",
+        "1/2+Z,X,1/2-Y",
+        "Z,1/2-X,1/2+Y",
+        "-Y,-Z,-X",
+        "Y,1/2-Z,1/2+X",
+        "1/2-Y,1/2+Z,X",
+        "1/2+Y,Z,1/2-X",
+        "1/4-Y,3/4-X,3/4+Z",
+        "1/4+Y,1/4+X,1/4+Z",
+        "3/4-Y,3/4+X,1/4-Z",
+        "3/4+Y,1/4-X,3/4-Z",
+        "1/4-X,3/4-Z,3/4+Y",
+        "3/4+X,1/4-Z,3/4-Y",
+        "1/4+X,1/4+Z,1/4+Y",
+        "3/4-X,3/4+Z,1/4-Y",
+        "1/4-Z,3/4-Y,3/4+X",
+        "3/4-Z,3/4+Y,1/4-X",
+        "3/4+Z,1/4-Y,3/4-X",
+        "1/4+Z,1/4+Y,1/4+X",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,1/2-Y,Z",
+        "1/2-X,Y,-Z",
+        "X,-Y,1/2-Z",
+        "1/2+Z,1/2+X,1/2+Y",
+        "Z,-X,1/2-Y",
+        "-Z,1/2-X,Y",
+        "1/2-Z,X,-Y",
+        "1/2+Y,1/2+Z,1/2+X",
+        "1/2-Y,Z,-X",
+        "Y,-Z,1/2-X",
+        "-Y,1/2-Z,X",
+        "1/4+Y,3/4+X,3/4-Z",
+        "1/4-Y,1/4-X,1/4-Z",
+        "3/4+Y,3/4-X,1/4+Z",
+        "3/4-Y,1/4+X,3/4+Z",
+        "1/4+X,3/4+Z,3/4-Y",
+        "3/4-X,1/4+Z,3/4+Y",
+        "1/4-X,1/4-Z,1/4-Y",
+        "3/4+X,3/4-Z,1/4+Y",
+        "1/4+Z,3/4+Y,3/4-X",
+        "3/4+Z,3/4-Y,1/4+X",
+        "3/4-Z,1/4+Y,3/4+X",
+        "1/4-Z,1/4-Y,1/4-X",
+        "1/2-X,1/2-Y,1/2-Z",
+        "X,1/2+Y,-Z",
+        "1/2+X,-Y,Z",
+        "-X,Y,1/2+Z",
+        "1/2-Z,1/2-X,1/2-Y",
+        "-Z,X,1/2+Y",
+        "Z,1/2+X,-Y",
+        "1/2+Z,-X,Y",
+        "1/2-Y,1/2-Z,1/2-X",
+        "1/2+Y,-Z,X",
+        "-Y,Z,1/2+X",
+        "Y,1/2+Z,-X",
+        "3/4-Y,1/4-X,1/4+Z",
+        "3/4+Y,3/4+X,3/4+Z",
+        "1/4-Y,1/4+X,3/4-Z",
+        "1/4+Y,3/4-X,1/4-Z",
+        "3/4-X,1/4-Z,1/4+Y",
+        "1/4+X,3/4-Z,1/4-Y",
+        "3/4+X,3/4+Z,3/4+Y",
+        "1/4-X,1/4+Z,3/4-Y",
+        "3/4-Z,1/4-Y,1/4+X",
+        "1/4-Z,1/4+Y,3/4-X",
+        "1/4+Z,3/4-Y,1/4-X",
+        "3/4+Z,3/4+Y,3/4+X"
+    ],
+    "P 1 1 2": [
+        "X,Y,Z",
+        "-X,-Y,Z"
+    ],
+    "P 1 1 21": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z"
+    ],
+    "B 1 1 2": [
+        "X,Y,Z",
+        "-X,-Y,Z",
+        "1/2+X,+Y,1/2+Z",
+        "1/2-X,-Y,1/2+Z"
+    ],
+    "A 1 2 1": [
+        "X,Y,Z",
+        "-X,Y,-Z",
+        "X,1/2+Y,1/2+Z",
+        "-X,1/2+Y,1/2-Z"
+    ],
+    "C 1 21 1": [
+        "X,Y,Z",
+        "-X,1/2+Y,-Z",
+        "1/2+X,1/2+Y,Z",
+        "1/2-X,Y,-Z"
+    ],
+    "I 1 2 1": [
+        "X,Y,Z",
+        "-X,Y,-Z",
+        "X+1/2,Y+1/2,Z+1/2",
+        "-X+1/2,Y+1/2,-Z+1/2"
+    ],
+    "I 1 21 1": [
+        "X,Y,Z",
+        "-X,1/2+Y,-Z",
+        "X+1/2,Y+1/2,Z+1/2",
+        "-X+1/2,Y,1/2-Z"
+    ],
+    "P 1 1 m": [
+        "X,Y,Z",
+        "X,Y,-Z"
+    ],
+    "P 1 1 b": [
+        "X,Y,Z",
+        "X,1/2+Y,-Z"
+    ],
+    "B 1 1 m": [
+        "X,Y,Z",
+        "X,Y,-Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2+X,Y,1/2-Z"
+    ],
+    "B 1 1 b": [
+        "X,Y,Z",
+        "X,1/2+Y,-Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2+X,1/2+Y,1/2-Z"
+    ],
+    "P 1 1 2/m": [
+        "X,Y,Z",
+        "X,Y,-Z",
+        "-X,-Y,Z",
+        "-X,-Y,-Z"
+    ],
+    "P 1 1 21/m": [
+        "X,Y,Z",
+        "-X,-Y,1/2+Z",
+        "-X,-Y,-Z",
+        "X,Y,1/2-Z"
+    ],
+    "B 1 1 2/m": [
+        "X,Y,Z",
+        "X,Y,-Z",
+        "-X,-Y,Z",
+        "-X,-Y,-Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2+X,Y,1/2-Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2-X,-Y,1/2-Z"
+    ],
+    "P 1 1 2/b": [
+        "X,Y,Z",
+        "-X,1/2-Y,Z",
+        "-X,-Y,-Z",
+        "X,1/2+Y,-Z"
+    ],
+    "P 1 1 21/b": [
+        "X,Y,Z",
+        "-X,-Y,-Z",
+        "-X,1/2-Y,1/2+Z",
+        "X,1/2+Y,1/2-Z"
+    ],
+    "B 1 1 2/b": [
+        "X,Y,Z",
+        "-X,1/2-Y,Z",
+        "-X,-Y,-Z",
+        "X,1/2+Y,-Z",
+        "1/2+X,Y,1/2+Z",
+        "1/2-X,1/2-Y,1/2+Z",
+        "1/2-X,-Y,1/2-Z",
+        "1/2+X,1/2+Y,1/2-Z"
+    ],
+    "P 21 2 2": [
+        "X,Y,Z",
+        "-X,Y,-Z",
+        "1/2+X,-Y,-Z",
+        "1/2-X,-Y,Z"
+    ],
+    "P 2 21 2": [
+        "X,Y,Z",
+        "X,1/2-Y,-Z",
+        "-X,1/2+Y,-Z",
+        "-X,-Y,Z"
+    ],
+    "P 21 21 2 (a)": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "X+1/2,-Y,-Z",
+        "-X,Y+1/2,-Z"
+    ],
+    "P 21 2 21": [
+        "X,Y,Z",
+        "-X,Y,-Z",
+        "1/2+X,-Y,1/2-Z",
+        "1/2-X,-Y,1/2+Z"
+    ],
+    "P 2 21 21": [
+        "X,Y,Z",
+        "X,-Y,-Z",
+        "-X,1/2+Y,1/2-Z",
+        "-X,1/2-Y,1/2+Z"
+    ],
+    "C 2 2 21a)": [
+        "X,Y,Z",
+        "1/2-X,-Y,1/2+Z",
+        "1/2+X,1/2-Y,-Z",
+        "-X,1/2+Y,1/2-Z",
+        "1/2+X,1/2+Y,Z",
+        "-X,1/2-Y,1/2+Z",
+        "X,-Y,-Z",
+        "1/2-X,Y,1/2-Z"
+    ],
+    "C 2 2 2a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "X+1/2,-Y,-Z",
+        "-X,Y+1/2,-Z",
+        "1/2+ X,1/2+Y,Z",
+        "-X,-Y,Z",
+        "X,1/2-Y,-Z",
+        "1/2-X,Y,-Z"
+    ],
+    "F 2 2 2a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "X+1/2,-Y,-Z",
+        "-X,Y+1/2,-Z",
+        "X,Y+1/2,Z+1/2",
+        "1/2-X,-Y,Z+1/2",
+        "X+1/2,-Y+1/2,-Z+1/2",
+        "-X,Y,-Z+1/2",
+        "X+1/2,Y,Z+1/2",
+        "-X,1/2-Y,Z+1/2",
+        "X,-Y,-Z+1/2",
+        "-X+1/2,Y+1/2,-Z+1/2",
+        "X+1/2,Y+1/2,Z",
+        "-X,-Y,Z",
+        "X,-Y+1/2,-Z",
+        "-X+1/2,Y,-Z"
+    ],
+    "I 2 2 2a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "X+1/2,-Y,-Z",
+        "-X,Y+1/2,-Z",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,1/2+Z",
+        "1/2-X,Y,1/2-Z",
+        "X,1/2-Y,1/2-Z"
+    ],
+    "P 21/m 21/m 2/n a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "-X,1/2+Y,-Z",
+        "1/2+X,-Y,-Z",
+        "-X,-Y,-Z",
+        "X+1/2,Y+1/2,-Z",
+        "X,1/2-Y,Z",
+        "1/2-X,Y,Z"
+    ],
+    "P 42 21 2a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "-Y,X+1/2,1/2+Z",
+        "Y+1/2,-X,1/2+Z",
+        "-X,Y+1/2,-Z",
+        "X+1/2,-Y,-Z",
+        "Y,X,1/2-Z",
+        "1/2-Y,1/2-X,1/2-Z"
+    ],
+    "I 2 3a": [
+        "X,Y,Z",
+        "1/2-X,1/2-Y,Z",
+        "X+1/2,-Y,-Z",
+        "-X,Y+1/2,-Z",
+        "Y,Z,X",
+        "1/2-Y,1/2-Z,X",
+        "Y+1/2,-Z,-X",
+        "-Y,Z+1/2,-X",
+        "Z,X,Y",
+        "1/2-Z,1/2-X,Y",
+        "Z+1/2,-X,-Y",
+        "-Z,X+1/2,-Y",
+        "1/2+X,1/2+Y,1/2+Z",
+        "-X,-Y,1/2+Z",
+        "X,1/2-Y,1/2-Z",
+        "1/2-X,Y,1/2-Z",
+        "1/2+Y,1/2+Z,1/2+X",
+        "-Y,-Z,1/2+X",
+        "Y,1/2-Z,1/2-X",
+        "1/2-Y,Z,1/2-X",
+        "1/2+Z,1/2+X,1/2+Y",
+        "-Z,-X,1/2+Y",
+        "Z,1/2-X,1/2-Y",
+        "1/2-Z,X,1/2-Y"
+    ]
 };
 
 // File:js/ngl/geometry.js
@@ -3107,6 +8577,8 @@ NGL.AtomSet.prototype = {
 
         // atoms
 
+        NGL.time( "NGL.AtomSet.applySelection#atoms" );
+
         this.atoms.length = 0;
         var atoms = this.atoms;
 
@@ -3121,21 +8593,63 @@ NGL.AtomSet.prototype = {
 
         this._atomPosition = undefined;
 
+        NGL.timeEnd( "NGL.AtomSet.applySelection#atoms" );
+
         // bonds
+
+        NGL.time( "NGL.AtomSet.applySelection#bonds" );
 
         this.bonds.length = 0;
         var bonds = this.bonds;
 
-        this.structure.bondSet.eachBond( function( b ){
+        if( this.selection ){
 
-            bonds.push( b );
+            var idxDict = {};
 
-        }, this.selection );
+            this.eachAtom( function( a ){
+
+                var ab = a.bonds;
+                var n = ab.length;
+
+                idxDict[ a.index ] = true;
+
+                for( var i = 0; i < n; ++i ){
+
+                    var b = ab[ i ];
+
+                    if( idxDict[ b.atom1.index ] && idxDict[ b.atom2.index ] ){
+
+                        bonds.push( b );
+
+                    }
+
+                }
+
+            } );
+
+        }else{
+
+            this.eachAtom( function( a ){
+
+                var ab = a.bonds;
+                var n = ab.length;
+
+                for( var i = 0; i < n; ++i ){
+
+                    bonds.push( ab[ i ] );
+
+                }
+
+            } );
+
+        }
 
         this.bondCount = this.bonds.length;
 
         this._bondPositionFrom = undefined;
         this._bondPositionTo = undefined;
+
+        NGL.timeEnd( "NGL.AtomSet.applySelection#bonds" );
 
     },
 
@@ -3146,7 +8660,7 @@ NGL.AtomSet.prototype = {
 
         var a;
         var i = 0;
-        var n = this.atomCount;
+        var n = this.atoms.length;
 
         if( selection ){
 
@@ -3344,7 +8858,7 @@ NGL.AtomSet.prototype = {
 
             var a;
             var i = 0;
-            var n = this.atomCount;
+            var n = this.atoms.length;
 
             box.makeEmpty();
 
@@ -3388,7 +8902,7 @@ NGL.AtomSet.prototype = {
 
         selection = selection || this.selection;
 
-        if( selection ){
+        if( selection && selection.test ){
 
             var test = selection.test;
 
@@ -3404,11 +8918,14 @@ NGL.AtomSet.prototype = {
 
         }else{
 
-            this.bonds.forEach( function( b ){
+            var bonds = this.bonds;
+            var n = bonds.length;
 
-                callback( b );
+            for( var i = 0; i < n; ++i ){
 
-            } );
+                callback( bonds[ i ] );
+
+            }
 
         }
 
@@ -3467,6 +8984,8 @@ NGL.AtomSet.prototype = {
     },*/
 
     bondPosition: function( selection, fromTo ){
+
+        NGL.time( "NGL.AtomSet.bondPosition" );
 
         var j, position, b;
 
@@ -3555,11 +9074,15 @@ NGL.AtomSet.prototype = {
 
         }
 
+        NGL.timeEnd( "NGL.AtomSet.bondPosition" );
+
         return position;
 
     },
 
     bondColor: function( selection, fromTo, type ){
+
+        NGL.time( "NGL.AtomSet.bondColor" );
 
         var i = 0;
         var color = [];
@@ -3567,17 +9090,42 @@ NGL.AtomSet.prototype = {
         var c;
         var colorFactory = new NGL.ColorFactory( type, this.structure );
 
-        this.eachBond( function( b ){
+        if( selection ){
 
-            c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
+            this.eachBond( function( b ){
 
-            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-            color[ i + 2 ] = ( c & 255 ) / 255;
+                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
 
-            i += 3;
+                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+                color[ i + 2 ] = ( c & 255 ) / 255;
 
-        }, selection );
+                i += 3;
+
+            }, selection );
+
+        }else{
+
+            var bonds = this.bonds;
+            var n = bonds.length;
+
+            for( var j = 0; j < n; ++j ){
+
+                var b = bonds[ j ];
+
+                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
+
+                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
+                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
+                color[ i + 2 ] = ( c & 255 ) / 255;
+
+                i += 3;
+
+            }
+
+        }
+
+        NGL.timeEnd( "NGL.AtomSet.bondColor" );
 
         return new Float32Array( color );
 
@@ -3585,19 +9133,42 @@ NGL.AtomSet.prototype = {
 
     bondRadius: function( selection, fromTo, type, scale ){
 
+        NGL.time( "NGL.AtomSet.bondRadius" );
+
         var i = 0;
         var radius = [];
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        this.eachBond( function( b ){
+        if( selection ){
 
-            radius[ i ] = radiusFactory.atomRadius(
-                fromTo ? b.atom1 : b.atom2
-            );
+            this.eachBond( function( b ){
 
-            i += 1;
+                radius[ i ] = radiusFactory.atomRadius(
+                    fromTo ? b.atom1 : b.atom2
+                );
 
-        }, selection );
+                i += 1;
+
+            }, selection );
+
+        }else{
+
+            var bonds = this.bonds;
+            var n = bonds.length;
+
+            for( i = 0; i < n; ++i ){
+
+                var b = bonds[ i ];
+
+                radius[ i ] = radiusFactory.atomRadius(
+                    fromTo ? b.atom1 : b.atom2
+                );
+
+            }
+
+        }
+
+        NGL.timeEnd( "NGL.AtomSet.bondRadius" );
 
         return new Float32Array( radius );
 
@@ -3652,11 +9223,16 @@ NGL.BondSet.prototype = {
 
     eachBond: function( callback, selection ){
 
-        if( selection ){
+        var bonds = this.bonds;
+        var n = bonds.length;
+
+        if( selection && selection.test ){
 
             var test = selection.test;
 
-            this.bonds.forEach( function( b ){
+            for( var i = 0; i < n; ++i ){
+
+                var b = bonds[ i ];
 
                 if( test( b.atom1 ) && test( b.atom2 ) ){
 
@@ -3664,15 +9240,25 @@ NGL.BondSet.prototype = {
 
                 }
 
-            } );
+            }
+
+            // this.bonds.forEach( function( b ){
+
+            //     if( test( b.atom1 ) && test( b.atom2 ) ){
+
+            //         callback( b );
+
+            //     }
+
+            // } );
 
         }else{
 
-            this.bonds.forEach( function( b ){
+            for( var i = 0; i < n; ++i ){
 
-                callback( b );
+                callback( bonds[ i ] );
 
-            } );
+            }
 
         }
 
@@ -3683,6 +9269,66 @@ NGL.BondSet.prototype = {
     bondColor: NGL.AtomSet.prototype.bondColor,
 
     bondRadius: NGL.AtomSet.prototype.bondRadius,
+
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'BondSet',
+                generator: 'BondSetExporter'
+            },
+
+            bondCount: this.bondCount
+
+        };
+
+        var bonds = this.bonds;
+        var n = bonds.length;
+        var bondArray = new Uint32Array( 3 * n );
+        var j, b;
+
+        for( var i = 0; i < n; ++i ){
+
+            j = i * 3;
+            b = bonds[ i ];
+
+            bondArray[ j     ] = b.atom1.index;
+            bondArray[ j + 1 ] = b.atom2.index;
+            bondArray[ j + 2 ] = b.bondOrder;
+
+        }
+
+        output.bondArray = bondArray;
+
+        return output;
+
+    },
+
+    fromJSON: function( input, atoms ){
+
+        this.bondCount = input.bondCount;
+
+        var bonds = this.bonds;
+        var bondArray = input.bondArray;
+        var n = bondArray.length;
+
+        for( var i = 0; i < n; i += 3 ){
+
+            bonds.push(
+                new NGL.Bond(
+                    atoms[ bondArray[ i ] ],
+                    atoms[ bondArray[ i + 1 ] ],
+                    bondArray[ i + 2 ]
+                )
+            );
+
+        }
+
+        return this;
+
+    },
 
     dispose: function(){
 
@@ -3707,7 +9353,7 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
         this.atom2 = atomA;
     }
 
-    this.bondOrder = 1;
+    this.bondOrder = bondOrder || 1;
 
 };
 
@@ -3912,9 +9558,19 @@ NGL.Structure = function( name, path ){
 
     this.name = name;
     this.path = path;
+    this.title = "";
+    this.id = "";
 
     this.atoms = [];
     this.models = [];
+
+    this.biomolDict = {};
+    this.defaultAssembly = "BU1";
+    this.helices = [];
+    this.sheets = [];
+
+    this.frames = [];
+    this.boxes = [];
 
     this.reset();
 
@@ -3925,8 +9581,6 @@ NGL.Structure.prototype = {
     constructor: NGL.Structure,
 
     atomArray: undefined,
-    frames: undefined,
-    boxes: undefined,
 
     reset: function(){
 
@@ -3938,6 +9592,23 @@ NGL.Structure.prototype = {
         this.atoms.length = 0;
         this.models.length = 0;
         this.bondSet = new NGL.BondSet();
+
+        this.biomolDict = {};
+        this.helices.length = 0;
+        this.sheets.length = 0;
+        this.unitcell = new NGL.Unitcell();
+
+        this.frames.length = 0;
+        this.boxes.length = 0;
+
+        this.center = new THREE.Vector3();
+        this.boundingBox = new THREE.Box3();
+
+    },
+
+    setDefaultAssembly: function( value ){
+
+        this.defaultAssembly = value;
 
     },
 
@@ -4027,9 +9698,11 @@ NGL.Structure.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            // NGL.log( "structure.eachAtom#model", selection.selection )
+
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -4040,7 +9713,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachAtom( callback );
+
+                m.eachAtom( callback, selection );
+
             } );
 
         }
@@ -4049,9 +9724,9 @@ NGL.Structure.prototype = {
 
     eachResidue: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -4062,7 +9737,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachResidue( callback );
+
+                m.eachResidue( callback, selection );
+
             } );
 
         }
@@ -4079,9 +9756,9 @@ NGL.Structure.prototype = {
 
     eachFiber: function( callback, selection, padded ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -4092,7 +9769,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachFiber( callback, undefined, padded );
+
+                m.eachFiber( callback, selection, padded );
+
             } );
 
         }
@@ -4101,9 +9780,9 @@ NGL.Structure.prototype = {
 
     eachChain: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -4114,7 +9793,9 @@ NGL.Structure.prototype = {
         }else{
 
             this.models.forEach( function( m ){
-                m.eachChain( callback );
+
+                m.eachChain( callback, selection );
+
             } );
 
         }
@@ -4123,9 +9804,9 @@ NGL.Structure.prototype = {
 
     eachModel: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelTest;
+            var test = selection.modelOnlyTest;
 
             this.models.forEach( function( m ){
 
@@ -4654,8 +10335,8 @@ NGL.Structure.prototype = {
 
         if( this.biomolDict ) s.biomolDict = this.biomolDict;
 
-        s.center = this.center.clone();
-        s.boundingBox = this.boundingBox.clone();
+        // s.center = this.center.clone();
+        // s.boundingBox = this.boundingBox.clone();
 
         // clone atomArray
 
@@ -4681,19 +10362,9 @@ NGL.Structure.prototype = {
 
         // clone trajectory
 
-        if( this.frames ){
-
-            // FIXME clone
-            s.frames = this.frames;
-
-        }
-
-        if( this.boxes ){
-
-            // TODO clone?
-            s.boxes = this.boxes;
-
-        }
+        // FIXME clone?
+        s.frames = this.frames;
+        s.boxes = this.boxes;
 
         // clone bonds
 
@@ -4713,6 +10384,189 @@ NGL.Structure.prototype = {
         if( NGL.debug ) NGL.log( s );
 
         return s;
+
+    },
+
+    toJSON: function(){
+
+        NGL.time( "NGL.Structure.toJSON" );
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'Structure',
+                generator: 'StructureExporter'
+            },
+
+            name: this.name,
+            path: this.path,
+            title: this.title,
+            id: this.id,
+
+            biomolDict: this.biomolDict,
+            helices: this.helices,
+            sheets: this.sheets,
+            unitcell: this.unitcell.toJSON(),
+
+            frames: this.frames,
+            boxes: this.boxes,
+
+            center: this.center.toArray(),
+            boundingBox: [
+                this.boundingBox.min.toArray(),
+                this.boundingBox.max.toArray()
+            ],
+
+            atoms: [],
+            // models: [],
+
+        };
+
+        if( this.atomArray ){
+
+            output.atomArray = this.atomArray.toJSON();
+
+        }else{
+
+            var atoms = this.atoms;
+            var n = atoms.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                output.atoms.push( atoms[ i ].toJSON() );
+
+            };
+
+        }
+
+        // this.eachModel( function( m ){
+
+        //     output.models.push( m.toJSON() );
+
+        // } );
+
+        output.bondSet = this.bondSet.toJSON();
+
+        NGL.timeEnd( "NGL.Structure.toJSON" );
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        NGL.time( "NGL.Structure.fromJSON" );
+
+        this.reset();
+
+        this.name = input.name;
+        this.path = input.path;
+        this.title = input.title;
+        this.id = input.id;
+
+        this.biomolDict = input.biomolDict;
+        this.helices = input.helices;
+        this.sheets = input.sheets;
+        this.unitcell = new NGL.Unitcell().fromJSON( input.unitcell );
+
+        this.frames = input.frames;
+        this.boxes = input.boxes;
+
+        this.center = new THREE.Vector3().fromArray( input.center );
+        this.boundingBox = new THREE.Box3(
+            new THREE.Vector3().fromArray( input.boundingBox[ 0 ] ),
+            new THREE.Vector3().fromArray( input.boundingBox[ 1 ] )
+        );
+
+        var atoms = this.atoms;
+
+        if( input.atomArray ){
+
+            this.atomArray = new NGL.AtomArray( input.atomArray );
+
+            var atomArray = this.atomArray;
+            var n = atomArray.usedLength;
+
+            for( var i = 0; i < n; ++i ){
+
+                atoms.push( new NGL.ProxyAtom( atomArray, i ) );
+
+            }
+
+        }else{
+
+            var inputAtoms = input.atoms;
+            var n = input.atoms.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                var a = new NGL.Atom().fromJSON( inputAtoms[ i ] );
+                a.index = i;
+                atoms.push( a );
+
+            }
+
+        }
+
+        // input.models.forEach( function( m ){
+
+        //     this.addModel( new NGL.Model( this ).fromJSON( m ) );
+
+        // }.bind( this ) );
+
+        this.bondSet.fromJSON( input.bondSet, this.atoms );
+
+        this.bondSet.eachBond( function( b ){
+
+            atoms[ b.atom1.index ].bonds.push( b );
+            atoms[ b.atom2.index ].bonds.push( b );
+
+        } );
+
+        NGL.timeEnd( "NGL.Structure.fromJSON" );
+
+        return this;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [];
+
+        if( this.atomArray ){
+
+            transferable.concat( this.atomArray.getTransferable() );
+
+        }
+
+        if( this.frames ){
+
+            var frames = this.frames;
+            var n = this.frames.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                transferable.push( frames[ i ].buffer );
+
+            }
+
+        }
+
+        if( this.boxes ){
+
+            var boxes = this.boxes;
+            var n = this.boxes.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                transferable.push( boxes[ i ].buffer );
+
+            }
+
+        }
+
+        return transferable;
 
     },
 
@@ -4795,26 +10649,28 @@ NGL.Model.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             this.chains.forEach( function( c ){
 
-                // NGL.log( c.chainname, selection.selection, selection.string )
+                // NGL.log( "model.eachAtom#chain", c.chainname, selection.selection )
 
                 if( test( c ) ){
                     c.eachAtom( callback, selection );
-                }else{
-                    // NGL.log( "chain", c.chainname );
-                }
+                }/*else{
+                    NGL.log( "chain", c.chainname );
+                }*/
 
             } );
 
         }else{
 
             this.chains.forEach( function( c ){
-                c.eachAtom( callback );
+
+                c.eachAtom( callback, selection );
+
             } );
 
         }
@@ -4826,26 +10682,27 @@ NGL.Model.prototype = {
         var i, j, o, c, r;
         var n = this.chainCount;
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
                 c = this.chains[ i ];
+                if( test( c ) ) c.eachResidue( callback, selection );
 
-                if( !test( c ) ) continue;
+                // if( !test( c ) ) continue;
 
-                o = c.residueCount;
+                // o = c.residueCount;
 
-                var residueTest = selection.residueTest;
+                // var residueTest = selection.residueTest;
 
-                for( j = 0; j < o; ++j ){
+                // for( j = 0; j < o; ++j ){
 
-                    r = c.residues[ j ];
-                    if( residueTest( r ) ) callback( r );
+                //     r = c.residues[ j ];
+                //     if( residueTest( r ) ) callback( r );
 
-                }
+                // }
 
             }
 
@@ -4854,13 +10711,15 @@ NGL.Model.prototype = {
             for( i = 0; i < n; ++i ){
 
                 c = this.chains[ i ];
-                o = c.residueCount;
+                c.eachResidue( callback, selection );
 
-                for( j = 0; j < o; ++j ){
+                // o = c.residueCount;
 
-                    callback( c.residues[ j ] );
+                // for( j = 0; j < o; ++j ){
 
-                }
+                //     callback( c.residues[ j ] );
+
+                // }
 
             }
 
@@ -4878,9 +10737,9 @@ NGL.Model.prototype = {
 
     eachFiber: function( callback, selection, padded ){
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             this.chains.forEach( function( c ){
 
@@ -4891,7 +10750,9 @@ NGL.Model.prototype = {
         }else{
 
             this.chains.forEach( function( c ){
-                c.eachFiber( callback, undefined, padded );
+
+                c.eachFiber( callback, selection, padded );
+
             } );
 
         }
@@ -4903,9 +10764,9 @@ NGL.Model.prototype = {
         var i, c;
         var n = this.chainCount;
 
-        if( selection ){
+        if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainTest;
+            var test = selection.chainOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
@@ -4930,6 +10791,8 @@ NGL.Model.prototype = {
 
         var m = new NGL.Model( s );
 
+        m.modelno = this.modelno;
+
         this.eachChain( function( c ){
 
             m.addChain( c.clone( m ) );
@@ -4937,6 +10800,40 @@ NGL.Model.prototype = {
         } );
 
         return m;
+
+    },
+
+    toJSON: function(){
+
+        var output = {
+
+            modelno: this.modelno,
+
+        };
+
+        output.chains = [];
+
+        this.eachChain( function( c ){
+
+            output.chains.push( c.toJSON() );
+
+        } );
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.modelno = input.modelno;
+
+        input.chains.forEach( function( c ){
+
+            this.addChain( new NGL.Chain( this ).fromJSON( c ) );
+
+        }.bind( this ) );
+
+        return this;
 
     }
 
@@ -4993,30 +10890,54 @@ NGL.Chain.prototype = {
         var i, j, o, r, a;
         var n = this.residueCount;
 
-        if( selection ){
+        if( selection && selection.residueOnlyTest ){
 
-            var test = selection.residueTest;
+            // NGL.log( "chain.eachAtom#residue", selection.selection )
+
+            var test = selection.residueOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
                 r = this.residues[ i ];
+                if( test( r ) ) r.eachAtom( callback, selection );
 
-                if( !test( r ) ) continue;
+            }
 
-                o = r.atomCount;
+            // for( i = 0; i < n; ++i ){
 
-                var atomTest = selection.test;
+            //     r = this.residues[ i ];
 
-                for( j = 0; j < o; ++j ){
+            //     if( !test( r ) ) continue;
 
-                    a = r.atoms[ j ];
-                    if( atomTest( a ) ) callback( a );
+            //     o = r.atomCount;
 
-                }
+            //     var atomTest = selection.atomOnlyTest;
+
+            //     for( j = 0; j < o; ++j ){
+
+            //         a = r.atoms[ j ];
+            //         if( atomTest( a ) ) callback( a );
+
+            //     }
+
+            // }
+
+        }else if( selection && (
+                selection.atomOnlyTest ||
+                ( this.chainname === "" && selection.test )
+            )
+        ){
+
+            for( i = 0; i < n; ++i ){
+
+                r = this.residues[ i ];
+                r.eachAtom( callback, selection );
 
             }
 
         }else{
+
+            // console.log( "moin" )
 
             for( i = 0; i < n; ++i ){
 
@@ -5040,9 +10961,9 @@ NGL.Chain.prototype = {
         var i, r;
         var n = this.residueCount;
 
-        if( selection ){
+        if( selection && selection.residueOnlyTest ){
 
-            var test = selection.residueTest;
+            var test = selection.residueOnlyTest;
 
             for( i = 0; i < n; ++i ){
 
@@ -5209,6 +11130,8 @@ NGL.Chain.prototype = {
 
         var c = new NGL.Chain( m );
 
+        c.chainname = this.chainname;
+
         this.eachResidue( function( r ){
 
             c.addResidue( r.clone( c ) );
@@ -5216,6 +11139,40 @@ NGL.Chain.prototype = {
         } );
 
         return c;
+
+    },
+
+    toJSON: function(){
+
+        var output = {
+
+            chainname: this.chainname,
+
+        };
+
+        output.residues = [];
+
+        this.eachResidue( function( r ){
+
+            output.residues.push( r.toJSON() );
+
+        } );
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.chainname = input.chainname;
+
+        input.residues.forEach( function( r ){
+
+            this.addResidue( new NGL.Residue( this ).fromJSON( r ) );
+
+        }.bind( this ) );
+
+        return this;
 
     }
 
@@ -5332,12 +11289,12 @@ NGL.Residue.prototype = {
     constructor: NGL.Residue,
 
     index: undefined,
-    resno: undefined,
-    resname: undefined,
-
     chain: undefined,
     atoms: undefined,
     atomCount: undefined,
+
+    resno: undefined,
+    resname: undefined,
 
     _ss: undefined,
     get ss () {
@@ -5449,7 +11406,7 @@ NGL.Residue.prototype = {
 
         if( this._hetero === undefined ){
 
-            this._hetero = this.atoms.length && this.atoms[0].hetero;
+            this._hetero = this.atoms.length && this.atoms[0].hetero === 1;
 
         }
 
@@ -5477,7 +11434,7 @@ NGL.Residue.prototype = {
 
     getResname1: function(){
 
-        return NGL.AA1[ this.resname.toUpperCase() ] || '';
+        return NGL.AA1[ this.resname.toUpperCase() ] || '?';
 
     },
 
@@ -5541,9 +11498,20 @@ NGL.Residue.prototype = {
         var i, a;
         var n = this.atomCount;
 
-        if( selection ){
+        if( selection && (
+                selection.atomOnlyTest ||
+                ( this.chain.chainname === "" && selection.test )
+            )
+        ){
 
-            var test = selection.test;
+            // NGL.log( "residue.eachAtom#atom", selection.selection )
+
+            var test;
+            if( this.chain.chainname === "" ){
+                test = selection.test;
+            }else{
+                test = selection.atomOnlyTest;
+            }
 
             for( i = 0; i < n; ++i ){
 
@@ -5708,6 +11676,70 @@ NGL.Residue.prototype = {
 
         return r;
 
+    },
+
+    toJSON: function(){
+
+        var output = {
+
+            resno: this.resno,
+            resname: this.resname,
+            _ss: this._ss,
+
+        };
+
+        output.atoms = [];
+
+        if( this.chain.model.structure.atomArray ){
+
+            this.eachAtom( function( a ){
+
+                output.atoms.push( a.index );
+
+            } );
+
+        }else{
+
+            this.eachAtom( function( a ){
+
+                output.atoms.push( a.toJSON() );
+
+            } );
+
+        }
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.resno = input.resno;
+        this.resname = input.resname;
+        this._ss = input._ss;
+
+        if( this.chain.model.structure.atomArray ){
+
+            var atomArray = this.chain.model.structure.atomArray;
+
+            input.atoms.forEach( function( i ){
+
+                this.addAtom( new NGL.ProxyAtom( atomArray, i ) );
+
+            }.bind( this ) );
+
+        }else{
+
+            input.atoms.forEach( function( a ){
+
+                this.addAtom( new NGL.Atom( this ).fromJSON( a ) );
+
+            }.bind( this ) );
+
+        }
+
+        return this;
+
     }
 
 };
@@ -5768,9 +11800,6 @@ NGL.Atom.prototype = {
     },
 
     connectedTo: function( atom ){
-
-        if( this.hetero && atom.hetero &&
-            this.residue.chain.model.structure.hasConnect ) return false;
 
         if( !( this.altloc === '' || atom.altloc === '' ||
                 ( this.altloc === atom.altloc ) ) ) return false;
@@ -5835,6 +11864,28 @@ NGL.Atom.prototype = {
 
     },
 
+    positionToVector3: function( v ){
+
+        if( v === undefined ) v = new THREE.Vector3();
+
+        v.x = this.x;
+        v.y = this.y;
+        v.z = this.z;
+
+        return v;
+
+    },
+
+    positionFromVector3: function( v ){
+
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
+
+        return this;
+
+    },
+
     copy: function( atom ){
 
         this.index = atom.index;
@@ -5868,7 +11919,7 @@ NGL.Atom.prototype = {
 
         var a = new NGL.Atom( r );
 
-        a.index = this.index;
+        // a.index = this.index;
         a.atomno = this.atomno;
         a.resname = this.resname;
         a.x = this.x;
@@ -5890,6 +11941,62 @@ NGL.Atom.prototype = {
 
         return a;
 
+    },
+
+    toJSON: function(){
+
+        var output = {
+
+            // index: this.index,
+            atomno: this.atomno,
+            resname: this.resname,
+            x: this.x,
+            y: this.y,
+            z: this.z,
+            element: this.element,
+            chainname: this.chainname,
+            resno: this.resno,
+            serial: this.serial,
+            ss: this.ss,
+            vdw: this.vdw,
+            covalent: this.covalent,
+            hetero: this.hetero,
+            bfactor: this.bfactor,
+            // bonds: this.bonds,  // exported in structure.toJSON()
+            altloc: this.altloc,
+            atomname: this.atomname,
+            modelindex: this.modelindex,
+
+        };
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        // this.index = input.index;
+        this.atomno = input.atomno;
+        this.resname = input.resname;
+        this.x = input.x;
+        this.y = input.y;
+        this.z = input.z;
+        this.element = input.element;
+        this.chainname = input.chainname;
+        this.resno = input.resno;
+        this.serial = input.serial;
+        this.ss = input.ss;
+        this.vdw = input.vdw;
+        this.covalent = input.covalent;
+        this.hetero = input.hetero;
+        this.bfactor = input.bfactor;
+        // a.bonds = input.bonds;  // imported in structure.fromJSON()
+        this.altloc = input.altloc;
+        this.atomname = input.atomname;
+        this.modelindex = input.modelindex;
+
+        return this;
+
     }
 
 }
@@ -5905,7 +12012,7 @@ NGL.AtomArray = function( sizeOrObject ){
 
     }else{
 
-        this.fromObject( sizeOrObject );
+        this.fromJSON( sizeOrObject );
 
     }
 
@@ -5918,6 +12025,7 @@ NGL.AtomArray.prototype = {
     init: function( size ){
 
         this.length = size;
+        this.usedLength = 0;
 
         if( this.useBuffer ){
 
@@ -5953,7 +12061,7 @@ NGL.AtomArray.prototype = {
 
     },
 
-    getBufferList: function(){
+    getTransferable: function(){
 
         if( this.useBuffer ){
 
@@ -5990,16 +12098,29 @@ NGL.AtomArray.prototype = {
 
         var size = this.length;
 
-        // align the offset to multiple of 4
+        // align the offset to multiple of 4 when necessary
         // (offset + 3) & ~0x3 == (offset + 3) / 4 * 4;
+
+        // Int32
 
         this.atomnoOffset = 0;
         this.atomnoSize = 4 * size;
 
-        this.resnameOffset = this.atomnoSize;
-        this.resnameSize =  5 * size;
+        this.resnoOffset = this.atomnoOffset + this.atomnoSize;
+        this.resnoSize = 4 * size;
 
-        this.xOffset = ( this.resnameOffset + this.resnameSize + 3 ) & ~0x3;
+        this.serialOffset = this.resnoOffset + this.resnoSize;
+        this.serialSize = 4 * size;
+
+        this.modelindexOffset = this.serialOffset + this.serialSize;
+        this.modelindexSize = 4 * size;
+
+        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
+        this.globalindexSize = 4 * size;
+
+        // Float32
+
+        this.xOffset = this.globalindexOffset + this.globalindexSize;
         this.xSize = 4 * size;
 
         this.yOffset = this.xOffset + this.xSize;
@@ -6008,46 +12129,39 @@ NGL.AtomArray.prototype = {
         this.zOffset = this.yOffset + this.ySize;
         this.zSize = 4 * size;
 
-        this.elementOffset = this.zOffset + this.zSize;
-        this.elementSize = 3 * size;
-
-        this.chainnameOffset = this.elementOffset + this.elementSize;
-        this.chainnameSize = 4 * size;
-
-        this.resnoOffset = ( this.chainnameOffset + this.chainnameSize + 3 ) & ~0x3;
-        this.resnoSize = 4 * size;
-
-        this.serialOffset = this.resnoOffset + this.resnoSize;
-        this.serialSize = 4 * size;
-
-        this.ssOffset = this.serialOffset + this.serialSize;
-        this.ssSize = size;
-
-        this.vdwOffset = ( this.ssOffset + this.ssSize + 3 ) & ~0x3;
+        this.vdwOffset = this.zOffset + this.zSize;
         this.vdwSize = 4 * size;
 
         this.covalentOffset = this.vdwOffset + this.vdwSize;
         this.covalentSize = 4 * size;
 
-        this.heteroOffset = this.covalentOffset + this.covalentSize;
-        this.heteroSize = size;
-
-        this.bfactorOffset = ( this.heteroOffset + this.heteroSize + 3 ) & ~0x3;
+        this.bfactorOffset = this.covalentOffset + this.covalentSize;
         this.bfactorSize = 4 * size;
 
-        this.altlocOffset = this.bfactorOffset + this.bfactorSize;
-        this.altlocSize = size;
+        // Uint8
 
-        this.atomnameOffset = this.altlocOffset + this.altlocSize;
+        this.atomnameOffset = this.bfactorOffset + this.bfactorSize;
         this.atomnameSize = 4 * size;
 
-        this.modelindexOffset = this.atomnameOffset + this.atomnameSize;
-        this.modelindexSize = 4 * size;
+        this.chainnameOffset = this.atomnameOffset + this.atomnameSize;
+        this.chainnameSize = 4 * size;
 
-        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
-        this.globalindexSize = 4 * size;
+        this.elementOffset = this.chainnameOffset + this.chainnameSize;
+        this.elementSize = 3 * size;
 
-        this.byteLength = this.globalindexOffset + this.globalindexSize;
+        this.resnameOffset = this.elementOffset + this.elementSize;
+        this.resnameSize =  5 * size;
+
+        this.ssOffset = this.resnameOffset + this.resnameSize;
+        this.ssSize = size;
+
+        this.heteroOffset = this.ssOffset + this.ssSize;
+        this.heteroSize = size;
+
+        this.altlocOffset = this.heteroOffset + this.heteroSize;
+        this.altlocSize = size;
+
+        this.byteLength = this.altlocOffset + this.altlocSize;
 
     },
 
@@ -6090,98 +12204,6 @@ NGL.AtomArray.prototype = {
 
         for( var i = 0; i < size; ++i ){
             this.bonds[ i ] = [];
-        }
-
-    },
-
-    toObject: function(){
-
-        if( this.useBuffer ){
-
-            return {
-                length: this.length,
-
-                buffer: this.buffer,
-
-                bonds: this.bonds,
-                residue: this.residue
-            };
-
-        }else{
-
-            return {
-                length: this.length,
-
-                atomno: this.atomno,
-                resname: this.resname,
-                x: this.x,
-                y: this.y,
-                z: this.z,
-                element: this.element,
-                chainname: this.chainname,
-                resno: this.resno,
-                serial: this.serial,
-                ss: this.ss,
-                vdw: this.vdw,
-                covalent: this.covalent,
-                hetero: this.hetero,
-                bfactor: this.bfactor,
-                altloc: this.altloc,
-                atomname: this.atomname,
-                modelindex: this.modelindex,
-                globalindex: this.globalindex,
-
-                bonds: this.bonds,
-                residue: this.residue
-            };
-
-        }
-
-    },
-
-    fromObject: function( obj ){
-
-        this.length = obj.length;
-
-        if( this.useBuffer ){
-
-            this.makeOffsetAndSize();
-            this.buffer = obj.buffer;
-            this.makeTypedArrays();
-
-        }else{
-
-            this.atomno = obj.atomno;
-            this.resname = obj.resname;
-            this.x = obj.x;
-            this.y = obj.y;
-            this.z = obj.z;
-            this.element = obj.element;
-            this.chainname = obj.chainname;
-            this.resno = obj.resno;
-            this.serial = obj.serial;
-            this.ss = obj.ss;
-            this.vdw = obj.vdw;
-            this.covalent = obj.covalent;
-            this.hetero = obj.hetero;
-            this.bfactor = obj.bfactor;
-            this.altloc = obj.altloc;
-            this.atomname = obj.atomname;
-            this.modelindex = obj.modelindex;
-            this.globalindex = obj.globalindex;
-
-        }
-
-        if( obj.bonds ){
-            this.bonds = obj.bonds;
-        }else{
-            this.makeBonds();
-        }
-
-        if( obj.residue ){
-            this.residue = obj.residue;
-        }else{
-            this.makeResidue();
         }
 
     },
@@ -6322,6 +12344,8 @@ NGL.AtomArray.prototype = {
 
     clone: function(){
 
+        // FIXME take useBuffer into account
+
         var aa = new NGL.AtomArray( this.length );
 
         aa.atomno.set( this.atomno );
@@ -6343,7 +12367,104 @@ NGL.AtomArray.prototype = {
         aa.modelindex.set( this.modelindex );
         aa.globalindex.set( this.globalindex );
 
+        aa.usedLength = this.usedLength;
+
         return aa;
+
+    },
+
+    toJSON: function(){
+
+        if( this.useBuffer ){
+
+            return {
+                length: this.length,
+                usedLength: this.usedLength,
+
+                buffer: this.buffer,
+
+                // bonds: this.bonds,
+                // residue: this.residue
+            };
+
+        }else{
+
+            return {
+                length: this.length,
+                usedLength: this.usedLength,
+
+                atomno: this.atomno,
+                resname: this.resname,
+                x: this.x,
+                y: this.y,
+                z: this.z,
+                element: this.element,
+                chainname: this.chainname,
+                resno: this.resno,
+                serial: this.serial,
+                ss: this.ss,
+                vdw: this.vdw,
+                covalent: this.covalent,
+                hetero: this.hetero,
+                bfactor: this.bfactor,
+                altloc: this.altloc,
+                atomname: this.atomname,
+                modelindex: this.modelindex,
+                globalindex: this.globalindex,
+
+                // bonds: this.bonds,
+                // residue: this.residue
+            };
+
+        }
+
+    },
+
+    fromJSON: function( input ){
+
+        this.length = input.length;
+        this.usedLength = input.usedLength;
+
+        if( this.useBuffer ){
+
+            this.makeOffsetAndSize();
+            this.buffer = input.buffer;
+            this.makeTypedArrays();
+
+        }else{
+
+            this.atomno = input.atomno;
+            this.resname = input.resname;
+            this.x = input.x;
+            this.y = input.y;
+            this.z = input.z;
+            this.element = input.element;
+            this.chainname = input.chainname;
+            this.resno = input.resno;
+            this.serial = input.serial;
+            this.ss = input.ss;
+            this.vdw = input.vdw;
+            this.covalent = input.covalent;
+            this.hetero = input.hetero;
+            this.bfactor = input.bfactor;
+            this.altloc = input.altloc;
+            this.atomname = input.atomname;
+            this.modelindex = input.modelindex;
+            this.globalindex = input.globalindex;
+
+        }
+
+        if( input.bonds ){
+            this.bonds = input.bonds;
+        }else{
+            this.makeBonds();
+        }
+
+        if( input.residue ){
+            this.residue = input.residue;
+        }else{
+            this.makeResidue();
+        }
 
     },
 
@@ -6378,6 +12499,7 @@ NGL.AtomArray.prototype = {
         delete this.residue;
 
         this.length = 0;
+        this.usedLength = 0;
 
     }
 
@@ -6567,13 +12689,10 @@ NGL.ProxyAtom.prototype = {
         var aaa = atom.atomArray;
         var ti = this.index;
         var ai = atom.index;
+        var ta = taa.altloc[ ti ];  // use Uint8 value to compare
+        var aa = aaa.altloc[ ai ];  // no need to convert to char
 
-        if( taa.hetero[ ti ] && aaa.hetero[ ai ] ) return false;
-
-        var ta = this.altloc;
-        var aa = atom.altloc;
-
-        if( !( ta === '' || aa === '' || ( ta === aa ) ) ) return false;
+        if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
 
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
@@ -6598,6 +12717,10 @@ NGL.ProxyAtom.prototype = {
 
     positionToArray: NGL.Atom.prototype.positionToArray,
 
+    positionFromVector3: NGL.Atom.prototype.positionFromVector3,
+
+    positionToVector3: NGL.Atom.prototype.positionToVector3,
+
     copy: NGL.Atom.prototype.copy,
 
     clone: function( r ){
@@ -6608,17 +12731,29 @@ NGL.ProxyAtom.prototype = {
 
         return a;
 
+    },
+
+    toJSON: function(){
+
+        return {};
+
+    },
+
+    fromJSON: function( input ){
+
+        return this;
+
     }
 
 }
 
 
-NGL.StructureSubset = function( structure, sele ){
+NGL.StructureSubset = function( structure, selection ){
 
-    NGL.Structure.call( this, structure.name + " [subset]" );
+    NGL.Structure.call( this, structure.name, structure.path );
 
     this.structure = structure;
-    this.selection = new NGL.Selection( sele );
+    this.selection = selection;
 
     this._build();
 
@@ -6627,6 +12762,13 @@ NGL.StructureSubset = function( structure, sele ){
 NGL.StructureSubset.prototype = Object.create( NGL.Structure.prototype );
 
 NGL.StructureSubset.prototype.constructor = NGL.StructureSubset;
+
+NGL.StructureSubset.prototype.setDefaultAssembly = function( value ){
+
+    this.defaultAssembly = value;
+    this.structure.setDefaultAssembly( value );
+
+};
 
 NGL.StructureSubset.prototype._build = function(){
 
@@ -6659,6 +12801,8 @@ NGL.StructureSubset.prototype._build = function(){
                 _r.ss = r.ss;
 
                 r.eachAtom( function( a ){
+
+                    // TODO by reference? index? bonds? residue?
 
                     _a = _r.addAtom();
                     _a.atomno = a.atomno;
@@ -6719,21 +12863,29 @@ NGL.StructureSubset.prototype._build = function(){
 
     }, selection );
 
+    _s.title = structure.title;
+    _s.id = structure.id;
+
     _s.center = _s.atomCenter();
     _s.boundingBox = _s.getBoundingBox();
 
-    if( structure.frames ) _s.frames = structure.frames;
-    if( structure.boxes ) _s.boxes = structure.boxes;
+    _s.frames = structure.frames;
+    _s.boxes = structure.boxes;
+    _s.helices = structure.helices;
+    _s.sheets = structure.sheets;
+
+    _s.biomolDict = structure.biomolDict;
+    _s.defaultAssembly = structure.defaultAssembly;
 
     NGL.timeEnd( "NGL.StructureSubset._build" );
 
-}
+};
 
 
 //////////////
 // Selection
 
-NGL.Selection = function( string ){
+NGL.Selection = function( string, extraString ){
 
     var SIGNALS = signals;
 
@@ -6743,7 +12895,7 @@ NGL.Selection = function( string ){
 
     };
 
-    this.setString( string );
+    this.setString( string, extraString );
 
 };
 
@@ -6752,17 +12904,54 @@ NGL.Selection.prototype = {
 
     constructor: NGL.Selection,
 
-    setString: function( string, silent ){
+    setString: function( string, extraString, silent ){
 
-        string = string || "";
+        if( string === undefined ){
+            string = this.string || "";
+        }
 
-        if( string === this.string ){
+        if( extraString === undefined ){
+            extraString = this.extraString || "";
+        }
+
+        if( string === this.string && extraString === this.extraString ){
             return;
         }
 
+        //
+
+        var combinedString;
+
+        if( !string && !extraString ){
+
+            combinedString = "";
+
+        }else if( !string ){
+
+            combinedString = extraString;
+
+        }else if( !extraString ){
+
+            combinedString = string;
+
+        }else{
+
+            combinedString = (
+                "( " + string + " ) and " +
+                "( " + extraString + " )"
+            );
+
+        }
+
+        if( combinedString === this.combinedString ){
+            return;
+        }
+
+        //
+
         try{
 
-            this.parse( string );
+            this.parse( combinedString );
 
         }catch( e ){
 
@@ -6772,14 +12961,21 @@ NGL.Selection.prototype = {
         }
 
         this.string = string;
+        this.extraString = extraString;
+        this.combinedString = combinedString;
 
         this.test = this.makeAtomTest();
         this.residueTest = this.makeResidueTest();
         this.chainTest = this.makeChainTest();
         this.modelTest = this.makeModelTest();
 
+        this.atomOnlyTest = this.makeAtomTest( true );
+        this.residueOnlyTest = this.makeResidueTest( true );
+        this.chainOnlyTest = this.makeChainTest( true )
+        this.modelOnlyTest = this.makeModelTest( true );
+
         if( !silent ){
-            this.signals.stringChanged.dispatch( string );
+            this.signals.stringChanged.dispatch( this.string );
         }
 
     },
@@ -7304,19 +13500,20 @@ NGL.Selection.prototype = {
     _makeTest: function( fn, selection ){
 
         if( selection === undefined ) selection = this.selection;
-        if( selection.error ) return function(){ return true; }
+        if( selection === null ) return false;
+        if( selection.error ) return false;
 
         var n = selection.rules.length;
-        if( n === 0 ) return function(){ return true; }
+        if( n === 0 ) return false;
 
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
 
-        var i, s, and, ret, na;
+        var s, and, ret, na;
 
         var subTests = [];
 
-        for( i=0; i<n; ++i ){
+        for( var i = 0; i < n; ++i ){
 
             s = selection.rules[ i ];
 
@@ -7333,13 +13530,21 @@ NGL.Selection.prototype = {
             and = selection.operator === "AND";
             na = false;
 
-            for( i=0; i<n; ++i ){
+            for( var i = 0; i < n; ++i ){
 
                 s = selection.rules[ i ];
 
                 if( s.hasOwnProperty( "operator" ) ){
 
-                    ret = subTests[ i ]( entity );
+                    if( subTests[ i ] ){
+
+                        ret = subTests[ i ]( entity );
+
+                    }else{
+
+                        ret = -1;
+
+                    }
 
                     if( ret === -1 ){
 
@@ -7401,7 +13606,59 @@ NGL.Selection.prototype = {
 
     },
 
-    makeAtomTest: function(){
+    _filter: function( fn, selection ){
+
+        if( selection === undefined ) selection = this.selection;
+        if( selection.error ) return selection;
+
+        var n = selection.rules.length;
+        if( n === 0 ) return selection;
+
+        var filtered = {
+            operator: selection.operator,
+            rules: []
+        };
+        if( selection.hasOwnProperty( "negate" ) ){
+            filtered.negate = selection.negate;
+        }
+
+        for( var i = 0; i < n; ++i ){
+
+            var s = selection.rules[ i ];
+
+            if( s.hasOwnProperty( "operator" ) ){
+
+                var fs = this._filter( fn, s );
+                if( fs !== null ) filtered.rules.push( fs );
+
+            }else if( !fn( s ) ){
+
+                filtered.rules.push( s );
+
+            }
+
+        }
+
+        // console.log( filtered );
+
+        if( filtered.rules.length > 0 ){
+
+            if( filtered.operator === "OR" && filtered.rules.length < n ){
+                // can't discard rules when operator is "OR"
+                filtered.rules = selection.rules.slice();
+            }
+
+            return filtered;
+
+        }else{
+
+            return null;
+
+        }
+
+    },
+
+    makeAtomTest: function( atomOnly ){
 
         var backboneProtein = [
             "CA", "C", "N", "O",
@@ -7420,13 +13677,36 @@ NGL.Selection.prototype = {
             "h", "g", "i"
         ];
 
+        var selection;
+
+        if( atomOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.chainname!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
+
         var fn = function( a, s ){
 
             // returning -1 means the rule is not applicable
 
             if( s.keyword!==undefined ){
 
-                if( s.keyword==="HETERO" && a.hetero===true ) return true;
+                if( s.keyword==="HETERO" && a.hetero===1 ) return true;
                 if( s.keyword==="PROTEIN" && (
                         a.residue.isProtein() || a.residue.isCg()
                     )
@@ -7486,11 +13766,36 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     },
 
-    makeResidueTest: function(){
+    makeResidueTest: function( residueOnly ){
+
+        var selection;
+
+        if( residueOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.globalindex!==undefined ) return true;
+                if( s.chainname!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( r, s ){
 
@@ -7516,7 +13821,7 @@ NGL.Selection.prototype = {
             if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
 
             // support autoChainNames which work only on atoms
-            if( s.chainname!=="" && r.chain.chainname==="" ) return -1;
+            if( s.chainname!==undefined && r.chain.chainname==="" ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -7534,11 +13839,37 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     },
 
-    makeChainTest: function(){
+    makeChainTest: function( chainOnly ){
+
+        var selection;
+
+        if( chainOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+                if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( c, s ){
 
@@ -7548,7 +13879,7 @@ NGL.Selection.prototype = {
             if( s.chainname===undefined && s.model===undefined ) return -1;
 
             // support autoChainNames which work only on atoms
-            if( s.chainname!=="" && c.chainname==="" ) return -1;
+            if( s.chainname!==undefined && c.chainname==="" ) return -1;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
             if( s.model!==undefined && s.model!==c.model.index ) return false;
@@ -7557,11 +13888,37 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     },
 
-    makeModelTest: function(){
+    makeModelTest: function( modelOnly ){
+
+        var selection;
+
+        if( modelOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.chainname!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+                if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
 
         var fn = function( m, s ){
 
@@ -7574,7 +13931,7 @@ NGL.Selection.prototype = {
 
         }
 
-        return this._makeTest( fn );
+        return this._makeTest( fn, selection );
 
     }
 
@@ -7988,8 +14345,8 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         var _s2 = s2;
 
         if( sele1 && sele2 ){
-            _s1 = new NGL.StructureSubset( s1, sele1 );
-            _s2 = new NGL.StructureSubset( s2, sele2 );
+            _s1 = new NGL.StructureSubset( s1, new NGL.Selection( sele1 ) );
+            _s2 = new NGL.StructureSubset( s2, new NGL.Selection( sele2 ) );
         }
 
         var seq1 = _s1.getSequence();
@@ -8313,21 +14670,21 @@ NGL.Trajectory.prototype = {
         var tp = this.params;
         var resetCache = false;
 
-        if( p.centerPbc !== tp.centerPbc ){
+        if( p.centerPbc !== undefined && p.centerPbc !== tp.centerPbc ){
 
             tp.centerPbc = p.centerPbc;
             resetCache = true;
 
         }
 
-        if( p.removePbc !== tp.removePbc ){
+        if( p.removePbc !== undefined && p.removePbc !== tp.removePbc ){
 
             tp.removePbc = p.removePbc;
             resetCache = true;
 
         }
 
-        if( p.superpose !== tp.superpose ){
+        if( p.superpose !== undefined && p.superpose !== tp.superpose ){
 
             tp.superpose = p.superpose;
             resetCache = true;
@@ -9452,16 +15809,14 @@ NGL.Volume.prototype = {
 
     setData: function( data, nx, ny, nz ){
 
-        this.nx = nx;
-        this.ny = ny;
-        this.nz = nz;
+        this.nx = nx || 1;
+        this.ny = ny || 1;
+        this.nz = nz || 1;
 
-        this.data = data;
+        this.data = data || new Float32Array( 1 );
         this.__data = this.data;
 
-        this.mc = new NGL.MarchingCubes2(
-            this.__data, this.nx, this.ny, this.nz
-        );
+        delete this.mc;
 
         delete this.__isolevel;
         delete this.__smooth;
@@ -9476,9 +15831,11 @@ NGL.Volume.prototype = {
         delete this.__dataMax;
         delete this.__dataMean;
 
+        if( this.worker ) this.worker.terminate();
+
     },
 
-    generateSurface: function( isolevel, smooth ){
+    generateSurface: function( isolevel, smooth, callback ){
 
         if( isNaN( isolevel ) && this.header ){
             isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
@@ -9490,7 +15847,24 @@ NGL.Volume.prototype = {
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
 
             // already generated
+
+            if( typeof callback === "function" ){
+
+                callback();
+
+            }
+
             return;
+
+        }
+
+        //
+
+        if( this.mc === undefined ){
+
+            this.mc = new NGL.MarchingCubes2(
+                this.__data, this.nx, this.ny, this.nz
+            );
 
         }
 
@@ -9553,6 +15927,79 @@ NGL.Volume.prototype = {
 
         this.__isolevel = isolevel;
         this.__smooth = smooth;
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    },
+
+    generateSurfaceWorker: function( isolevel, smooth, callback ){
+
+        if( isNaN( isolevel ) && this.header ){
+            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
+        }
+
+        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        smooth = smooth || 0;
+
+        //
+
+        if( isolevel === this.__isolevel && smooth === this.__smooth ){
+
+            // already generated
+            callback();
+
+        }else if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.Volume.generateSurfaceWorker " + this.name;
+
+            NGL.time( __timeName );
+
+            var scope = this;
+            var vol = undefined;
+
+            if( this.worker === undefined ){
+
+                vol = this.toJSON();
+                this.worker = new Worker( "../js/worker/surf.js" );
+
+            }
+
+            this.worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+
+                // if( NGL.debug ) console.log( e.data );
+
+                scope.position = e.data.position;
+                scope.normal = e.data.normal;
+                scope.index = e.data.index;
+
+                scope.size = scope.position.length / 3;
+
+                scope.__isolevel = isolevel;
+                scope.__smooth = smooth;
+
+                callback();
+
+            };
+
+            this.worker.postMessage( {
+                vol: vol,
+                params: {
+                    isolevel: isolevel,
+                    smooth: smooth
+                }
+            } );
+
+        }else{
+
+            this.generateSurface( isolevel, smooth, callback );
+
+        }
 
     },
 
@@ -9848,6 +16295,110 @@ NGL.Volume.prototype = {
         }
 
         return this.__dataMean;
+
+    },
+
+    clone: function(){
+
+        var vol = new NGL.Volume(
+
+            this.name,
+            this.path,
+
+            this.data,
+
+            this.nx,
+            this.ny,
+            this.nz
+
+        );
+
+        vol.matrix.copy( this.matrix );
+
+        if( this.header ){
+
+            vol.header = Object.assign( {}, this.header );
+
+        }
+
+        return vol;
+
+    },
+
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'Volume',
+                generator: 'VolumeExporter'
+            },
+
+            name: this.name,
+            path: this.path,
+
+            data: this.data,
+
+            nx: this.nx,
+            ny: this.ny,
+            nz: this.nz,
+
+            matrix: this.matrix.toArray()
+
+        }
+
+        if( this.header ){
+
+            output.header = Object.assign( {}, this.header );
+
+        }
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.name = input.name;
+        this.path = input.path;
+
+        this.setData(
+
+            input.data,
+            input.nx,
+            input.ny,
+            input.nz
+
+        );
+
+        this.matrix.fromArray( input.matrix );
+
+        if( input.header ){
+
+            this.header = Object.assign( {}, input.header );
+
+        }
+
+        return this;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [
+
+            this.data.buffer
+
+        ];
+
+        return transferable;
+
+    },
+
+    dispose: function(){
+
+        if( this.worker ) this.worker.terminate();
 
     }
 
@@ -11219,7 +17770,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
-NGL.MolecularSurface = function( structure, probeRadius, btype ){
+NGL.MolecularSurface = function( atomSet ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -11236,82 +17787,99 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
     //
     // adapted to NGL by Alexander Rose
 
-    probeRadius = probeRadius || 1.4;
-    btype = btype || false;
+    var atoms = atomSet.atoms;
+    var bbox = atomSet.getBoundingBox();
 
-    var atoms = structure.atoms;
-    var bbox = structure.getBoundingBox();
+    var probeRadius, scaleFactor, cutoff;
+    var margin;
+    var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
+    var matrix;
+    var depty, widxz;
+    var cutRadius;
+    var vpBits, vpDistance, vpAtomID;
 
-    // 2 is .5A grid; if this is made user configurable and
-    // also have to adjust offset used to find non-shown atoms
-    var scaleFactor = 2;
+    function init( btype, _probeRadius, _scaleFactor, _cutoff ){
 
-     // need margin to avoid boundary/round off effects
-    var margin = ( 1 / scaleFactor ) * 5.5;
+        // 2 is .5A grid; if this is made user configurable and
+        // also have to adjust offset used to find non-shown atoms
+        // FIXME scaleFactor = 0.5;
 
-    var pmin = new THREE.Vector3().copy( bbox.min );
-    var pmax = new THREE.Vector3().copy( bbox.max );
+        probeRadius = _probeRadius || 1.4;
+        scaleFactor = _scaleFactor || 2.0;
+        cutoff = _cutoff || 2.0;
 
-    if( !btype ){
+        // need margin to avoid boundary/round off effects
+        margin = ( 1 / scaleFactor ) * 5.5;
 
-        pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
-        pmax.addScalar( margin );
+        pmin = new THREE.Vector3().copy( bbox.min );
+        pmax = new THREE.Vector3().copy( bbox.max );
 
-    }else{
+        if( !btype ){
 
-        pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
-        pmax.addScalar( probeRadius + margin );
+            pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
+            pmax.addScalar( margin );
+
+        }else{
+
+            pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
+            pmax.addScalar( probeRadius + margin );
+
+        }
+
+        ptran = new THREE.Vector3().copy( pmin ).negate();
+
+        pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+        pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+        pbox = new THREE.Vector3()
+            .subVectors( pmax, pmin )
+            .multiplyScalar( scaleFactor )
+            .ceil()
+            .addScalar( 1 );
+
+        pLength = pbox.x;
+        pWidth = pbox.y;
+        pHeight = pbox.z;
+
+        // pHeight, pWidth, pLength
+        matrix = new THREE.Matrix4();
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -1/scaleFactor, 1/scaleFactor, 1/scaleFactor
+            )
+        );
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -scaleFactor*ptran.z,
+                -scaleFactor*ptran.y,
+                -scaleFactor*ptran.x
+            )
+        );
+
+        // boundingatom caches
+        depty = {};
+        widxz = {};
+        boundingatom( btype );
+
+        // console.log( depty );
+        // console.log( widxz );
+
+        cutRadius = probeRadius * scaleFactor;
+
+        vpBits = new Uint8Array( pLength * pWidth * pHeight );
+        // float32 doesn't play nicely with native floats
+        vpDistance = new Float64Array( pLength * pWidth * pHeight );
+        vpAtomID = new Int32Array( pLength * pWidth * pHeight );
 
     }
 
-    var ptran = new THREE.Vector3().copy( pmin ).negate();
-
-    pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-    pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
-
-    var pbox = new THREE.Vector3()
-        .subVectors( pmax, pmin )
-        .multiplyScalar( scaleFactor )
-        .ceil()
-        .addScalar( 1 );
-
-    var plength = pbox.x;
-    var pwidth = pbox.y;
-    var pheight = pbox.z;
-
-    // pheight, pwidth, plength
-    var matrix = new THREE.Matrix4();
-    matrix.multiply(
-        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
-    );
-    matrix.multiply(
-        new THREE.Matrix4().makeScale( -0.5, 0.5, 0.5 )
-    );
-    matrix.multiply(
-        new THREE.Matrix4().makeTranslation(
-            -2*ptran.z, -2*ptran.y, -2*ptran.x
-        )
-    );
-
-    // boundingatom caches
-    var depty = {};
-    var widxz = {};
-    boundingatom();
-
-    // console.log( depty );
-    // console.log( widxz );
-
-    var cutRadius = probeRadius * scaleFactor;
-
-    // constants for vpbits bitmasks
+    // constants for vpBits bitmasks
     var INOUT = 1;
     var ISDONE = 2;
     var ISBOUND = 4;
-
-    var vpBits = new Uint8Array( plength * pwidth * pheight );
-    // float32 doesn't play nicely with native floats
-    var vpDistance = new Float64Array( plength * pwidth * pheight );
-    var vpAtomID = new Int32Array( plength * pwidth * pheight );
 
     var nb = [
         new Int32Array([  1,  0,  0 ]), new Int32Array([ -1,  0,  0 ]),
@@ -11331,27 +17899,43 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     //
 
-    this.vdw = function(){
+    this.getSurface = function( type, probeRadius, scaleFactor ){
 
-        NGL.time( "NGL.MolecularSurface.vdw" );
+        NGL.time( "NGL.MolecularSurface.getSurface" );
+
+        init( type !== "vws", probeRadius, scaleFactor );
 
         fillvoxels();
         buildboundary();
-        marchingcubeinit( 1 );
+
+        if( type === "ms" || type === "ses" ){
+
+            fastdistancemap();
+
+        }
+
+        if( type === "ses" ){
+
+            boundingatom( false );
+            fillvoxelswaals();
+
+        }
+
+        marchingcubeinit( type );
 
         var v = new NGL.Volume(
-            "vdw", "", vpBits, pheight, pwidth, plength
+            type, "", vpBits, pHeight, pWidth, pLength
         );
 
         v.matrix.copy( matrix );
 
-        NGL.timeEnd( "NGL.MolecularSurface.vdw" );
+        NGL.timeEnd( "NGL.MolecularSurface.getSurface" );
 
         return v;
 
-    }
+    };
 
-    function boundingatom(){
+    function boundingatom( btype ){
 
         var j, k;
         var txz, tdept, sradius, tradius, widxz_r;
@@ -11361,7 +17945,7 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
             var r = NGL.VdwRadii[ element ];
 
-            if( depty[ r ] ) continue;
+            if( depty[ element ] ) continue;
 
             if( !btype ){
                 tradius = r * scaleFactor + 0.5;
@@ -11370,9 +17954,9 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
             }
 
             sradius = tradius * tradius;
-            widxz[ r ] = Math.floor( tradius ) + 1;
-            widxz_r = widxz[ r ];
-            depty[ r ] = new Int32Array( widxz_r * widxz_r );
+            widxz[ element ] = Math.floor( tradius ) + 1;
+            widxz_r = widxz[ element ];
+            depty[ element ] = new Int32Array( widxz_r * widxz_r );
             indx = 0;
 
             for( j = 0; j < widxz_r; ++j ){
@@ -11383,12 +17967,12 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
                     if( txz > sradius ){
 
-                        depty[ r ][ indx ] = -1;
+                        depty[ element ][ indx ] = -1;
 
                     }else{
 
                         tdept = Math.sqrt( sradius - txz );
-                        depty[ r ][ indx ] = Math.floor( tdept );
+                        depty[ element ][ indx ] = Math.floor( tdept );
 
                     }
 
@@ -11402,19 +17986,22 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     }
 
-    function fillatom( atom ){
+    function fillatom( atomIndex ){
 
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk, n;
+
+        var atom = atoms[ atomIndex ];
+
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
         cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
 
-        var at = atom.vdw;
+        var at = atom.element;
         var depty_at = depty[ at ];
         var nind = 0;
         var cnt = 0;
-        var pWH = pwidth * pheight;
+        var pWH = pWidth * pHeight;
 
         for( i = 0, n = widxz[ at ]; i < n; ++i ){
         for( j = 0; j < n; ++j ) {
@@ -11438,36 +18025,29 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
                             sk = cz + mk;
 
                             if( si < 0 || sj < 0 || sk < 0 ||
-                                si >= plength || sj >= pwidth || sk >= pheight
+                                si >= pLength || sj >= pWidth || sk >= pHeight
                             ){
                                 continue;
                             }
 
-                            var index = si * pWH + sj * pheight + sk;
+                            var index = si * pWH + sj * pHeight + sk;
 
                             if( !( vpBits[ index ] & INOUT ) ){
 
                                 vpBits[ index ] |= INOUT;
-                                vpAtomID[ index ] = atom.index;
+                                vpAtomID[ index ] = atomIndex;
 
                             }else{
 
                                 var atom2 = atoms[ vpAtomID[ index ] ];
-                                ox = Math.floor(
-                                    0.5 + scaleFactor * ( atom2.x + ptran.x )
-                                );
-                                oy = Math.floor(
-                                    0.5 + scaleFactor * ( atom2.y + ptran.y )
-                                );
-                                oz = Math.floor(
-                                    0.5 + scaleFactor * ( atom2.z + ptran.z )
-                                );
+                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
 
-                                if( mi * mi + mj * mj + mk * mk < ox *
-                                        ox + oy * oy + oz * oz ){
-
-                                    vpAtomID[ index ] = atom.index;
-
+                                if( mi * mi + mj * mj + mk * mk <
+                                    ox * ox + oy * oy + oz * oz
+                                ){
+                                    vpAtomID[ index ] = atomIndex;
                                 }
 
                             }
@@ -11499,7 +18079,9 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
             vpAtomID[ i ] = -1;
         }
 
-        structure.eachAtom( fillatom );
+        for( i = 0, il = atoms.length; i < il; ++i ){
+            fillatom( i );
+        }
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
             if( vpBits[ i ] & INOUT ){
@@ -11509,16 +18091,110 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     }
 
+    function fillAtomWaals( atomIndex ){
+
+        var cx, cy, cz, ox, oy, oz, nind = 0;
+        var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
+
+        var atom = atoms[ atomIndex ];
+
+        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+
+        var at = atom.element;
+        var pWH = pWidth * pHeight;
+
+        for( i = 0, n = widxz[at]; i < n; ++i ){
+        for( j = 0; j < n; ++j ){
+
+            if( depty[ at ][ nind ] != -1 ){
+
+                for( ii = -1; ii < 2; ++ii ){
+                for( jj = -1; jj < 2; ++jj ){
+                for( kk = -1; kk < 2; ++kk ){
+
+                    if( ii !== 0 && jj !== 0 && kk !== 0 ){
+
+                        mi = ii * i;
+                        mk = kk * j;
+
+                        for( k = 0; k <= depty[ at ][ nind ]; ++k ){
+
+                            mj = k * jj;
+                            si = cx + mi;
+                            sj = cy + mj;
+                            sk = cz + mk;
+
+                            if( si < 0 || sj < 0 || sk < 0 ||
+                                si >= pLength || sj >= pWidth || sk >= pHeight
+                            ){
+                                continue;
+                            }
+
+                            var index = si * pWH + sj * pHeight + sk;
+
+                            if ( !( vpBits[ index ] & ISDONE ) ){
+
+                                vpBits[ index ] |= ISDONE;
+                                vpAtomID[ index ] = atom.index;
+
+                            } else {
+
+                                var atom2 = atoms[ vpAtomID[ index ] ];
+                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+
+                                if( mi * mi + mj * mj + mk * mk <
+                                    ox * ox + oy * oy + oz * oz
+                                ){
+                                    vpAtomID[ index ] = atom.index;
+                                }
+
+                            }
+
+                        }// k
+
+                    }// if
+
+                }// kk
+                }// jj
+                }// ii
+
+            }// if
+
+            nind++;
+
+        }// j
+        }// i
+
+    }
+
+    function fillvoxelswaals() {
+
+        var i, il;
+
+        for( i = 0, il = vpBits.length; i < il; ++i ){
+            vpBits[ i ] &= ~ISDONE;  // not isdone
+        }
+
+        for( i = 0, il = atoms.length; i < il; ++i ){
+            fillAtomWaals( i );
+        }
+
+    }
+
     function buildboundary(){
 
         var i, j, k;
-        var pWH = pwidth * pheight;
+        var pWH = pWidth * pHeight;
 
-        for( i = 0; i < plength; ++i ){
-        for( j = 0; j < pheight; ++j ){
-        for( k = 0; k < pwidth; ++k ){
+        for( i = 0; i < pLength; ++i ){
+        for( j = 0; j < pHeight; ++j ){
+        for( k = 0; k < pWidth; ++k ){
 
-            var index = i * pWH + k * pheight + j;
+            var index = i * pWH + k * pHeight + j;
 
             if( vpBits[ index ] & INOUT ){
 
@@ -11531,10 +18207,10 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
                     var tj = j + nb[ ii ][ 2 ];
                     var tk = k + nb[ ii ][ 1 ];
 
-                    if( ti > -1 && ti < plength &&
-                        tk > -1 && tk < pwidth &&
-                        tj > -1 && tj < pheight &&
-                        !( vpBits[ ti * pWH + tk * pheight + tj ] & INOUT )
+                    if( ti > -1 && ti < pLength &&
+                        tk > -1 && tk < pWidth &&
+                        tj > -1 && tj < pHeight &&
+                        !( vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT )
                     ){
 
                         vpBits[index] |= ISBOUND;
@@ -11556,37 +18232,393 @@ NGL.MolecularSurface = function( structure, probeRadius, btype ){
 
     }
 
+    // a little class for 3d array, should really generalize this and
+    // use throughout...
+    var PointGrid = function( length, width, height ){
+
+        // the standard says this is zero initialized
+        var data = new Int32Array( length * width * height * 3 );
+
+        // set position x,y,z to pt, which has ix,iy,and iz
+        this.set = function( x, y, z, pt ){
+            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
+            data[ index ] = pt.ix;
+            data[ index + 1] = pt.iy;
+            data[ index + 2] = pt.iz;
+        };
+
+        // return point at x,y,z
+        this.get = function( x, y, z ){
+            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
+            return {
+                ix : data[ index ],
+                iy : data[ index + 1],
+                iz : data[ index + 2]
+            };
+        };
+
+    };
+
+    function fastdistancemap(){
+
+        var eliminate = 0;
+        var certificate;
+        var i, j, k, n;
+
+        var boundPoint = new PointGrid( pLength, pWidth, pHeight );
+        var pWH = pWidth * pHeight;
+        var cutRSq = cutRadius * cutRadius;
+
+        var inarray = [];
+        var outarray = [];
+
+        var index;
+
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
+
+                    index = i * pWH + j * pHeight + k;
+                    vpBits[ index ] &= ~ISDONE;  // isdone = false
+
+                    if( vpBits[ index ] & INOUT ){
+
+                        if( vpBits[ index ] & ISBOUND ){
+
+                            var triple = {
+                                ix : i,
+                                iy : j,
+                                iz : k
+                            };
+
+                            boundPoint.set( i, j, k, triple );
+                            inarray.push( triple );
+                            vpDistance[ index ] = 0;
+                            vpBits[ index ] |= ISDONE;
+                            vpBits[ index ] &= ~ISBOUND;
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        do {
+
+            outarray = fastoneshell( inarray, boundPoint );
+            inarray = [];
+
+            for( i = 0, n = outarray.length; i < n; ++i ){
+
+                index = pWH * outarray[ i ].ix + pHeight *
+                            outarray[ i ].iy + outarray[ i ].iz;
+                vpBits[index] &= ~ISBOUND;
+
+                if( vpDistance[ index ] <= 1.0404 * cutRSq ){
+
+                    inarray.push({
+                        ix : outarray[ i ].ix,
+                        iy : outarray[ i ].iy,
+                        iz : outarray[ i ].iz
+                    });
+
+                }
+
+            }
+
+        }while( inarray.length !== 0 );
+
+        inarray = [];
+        outarray = [];
+        boundPoint = null;
+
+        var cutsf = Math.max( 0, scaleFactor - 0.5 );
+        // FIXME why does this seem to work?
+        // TODO check for other probeRadius and scaleFactor values
+        var cutoff = probeRadius * probeRadius;  //1.4 * 1.4// cutRSq - 0.50 / ( 0.1 + cutsf );
+
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
+
+                    index = i * pWH + j * pHeight + k;
+                    vpBits[ index ] &= ~ISBOUND;
+
+                    // ses solid
+
+                    if( vpBits[ index ] & INOUT ) {
+
+                        if( !( vpBits[ index ] & ISDONE ) ||
+                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoff )
+                        ){
+                            vpBits[ index ] |= ISBOUND;
+                        }
+                    }
+
+                }
+            }
+        }
+
+    }
+
+    function fastoneshell( inarray, boundPoint ){
+
+        // *allocout,voxel2
+        // ***boundPoint, int*
+        // outnum, int *elimi)
+        var tx, ty, tz;
+        var dx, dy, dz;
+        var i, j, n;
+        var square;
+        var bp, index;
+        var outarray = [];
+
+        if( inarray.length === 0 ){
+            return outarray;
+        }
+
+        var tnv = {
+            ix : -1,
+            iy : -1,
+            iz : -1
+        };
+
+        var pWH = pWidth*pHeight;
+
+        for( i = 0, n = inarray.length; i < n; ++i ){
+
+            tx = inarray[ i ].ix;
+            ty = inarray[ i ].iy;
+            tz = inarray[ i ].iz;
+            bp = boundPoint.get( tx, ty, tz );
+
+            for( j = 0; j < 6; ++j ){
+
+                tnv.ix = tx + nb[ j ][ 0 ];
+                tnv.iy = ty + nb[ j ][ 1 ];
+                tnv.iz = tz + nb[ j ][ 2 ];
+
+                if( tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                    tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1
+                ){
+
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if( ( vpBits[ index ] & INOUT ) && !( vpBits[ index ] & ISDONE ) ){
+
+                        boundPoint.set( tnv.ix, tnv.iy, tz + nb[ j ][ 2 ], bp );
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+
+                        vpDistance[ index ] = square;
+                        vpBits[ index ] |= ISDONE;
+                        vpBits[ index ] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+
+                    }else if( ( vpBits[ index ] & INOUT ) && ( vpBits[ index ] & ISDONE ) ){
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+
+                        if( square < vpDistance[ index ] ){
+
+                            boundPoint.set( tnv.ix, tnv.iy, tnv.iz, bp );
+                            vpDistance[ index ] = square;
+
+                            if( !( vpBits[ index ] & ISBOUND ) ){
+
+                                vpBits[ index ] |= ISBOUND;
+
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        // console.log("part1", positout);
+
+        for (i = 0, n = inarray.length; i < n; i++) {
+            tx = inarray[i].ix;
+            ty = inarray[i].iy;
+            tz = inarray[i].iz;
+            bp = boundPoint.get(tx, ty, tz);
+
+            for (j = 6; j < 18; j++) {
+                tnv.ix = tx + nb[j][0];
+                tnv.iy = ty + nb[j][1];
+                tnv.iz = tz + nb[j][2];
+
+                if(tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[index] = square;
+                        vpBits[index] |= ISDONE;
+                        vpBits[index] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+                    } else if ((vpBits[index] & INOUT) && (vpBits[index] & ISDONE)) {
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        if (square < vpDistance[index]) {
+                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+                            vpDistance[index] = square;
+                            if (!(vpBits[index] & ISBOUND)) {
+                                vpBits[index] |= ISBOUND;
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // console.log("part2", positout);
+
+        for (i = 0, n = inarray.length; i < n; i++) {
+            tx = inarray[i].ix;
+            ty = inarray[i].iy;
+            tz = inarray[i].iz;
+            bp = boundPoint.get(tx, ty, tz);
+
+            for (j = 18; j < 26; j++) {
+                tnv.ix = tx + nb[j][0];
+                tnv.iy = ty + nb[j][1];
+                tnv.iz = tz + nb[j][2];
+
+                if (tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
+                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
+                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+
+                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
+
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        vpDistance[index] = square;
+                        vpBits[index] |= ISDONE;
+                        vpBits[index] |= ISBOUND;
+
+                        outarray.push({
+                            ix : tnv.ix,
+                            iy : tnv.iy,
+                            iz : tnv.iz
+                        });
+                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
+                        dx = tnv.ix - bp.ix;
+                        dy = tnv.iy - bp.iy;
+                        dz = tnv.iz - bp.iz;
+                        square = dx * dx + dy * dy + dz * dz;
+                        if (square < vpDistance[index]) {
+                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+
+                            vpDistance[index] = square;
+                            if (!(vpBits[index] & ISBOUND)) {
+                                vpBits[index] |= ISBOUND;
+                                outarray.push({
+                                    ix : tnv.ix,
+                                    iy : tnv.iy,
+                                    iz : tnv.iz
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // console.log("part3", positout);
+        return outarray;
+
+    }
+
     function marchingcubeinit( stype ){
 
-        for( var i = 0, lim = vpBits.length; i < lim; ++i ){
+        var n = vpBits.length;
 
-            if( stype == 1 ) {  // vdw
+        if( stype === "vws" ) {
+
+            for( var i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
-            }else if( stype == 4 ){  // ses
+            }
+
+        }else if( stype === "ms" ){  // ses without vdw => ms
+
+            for( var i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISDONE;
                 if( vpBits[ i ] & ISBOUND ){
                     vpBits[ i ] |= ISDONE;
                 }
                 vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
-            }else if( stype == 2 ){  // after vdw
+            }
+
+        }else if( stype === "ses" ){
+
+            for( var i = 0; i < n; ++i ){
 
                 if( ( vpBits[ i ] & ISBOUND ) && ( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] &= ~ISBOUND;
                 }else if( ( vpBits[ i ] & ISBOUND ) && !( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] |= ISDONE;
                 }
-
-            }else if( stype == 3 ){  // sas
-
-                vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
             }
 
-            vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+        }else if( stype === "sas" ){
+
+            for( var i = 0; i < n; ++i ){
+
+                vpBits[ i ] &= ~ISBOUND;
+                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+
+            }
 
         }
 
@@ -12134,7 +19166,16 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
 NGL.processArray = function( array, fn, callback, chunkSize ){
 
-    chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+    if( typeof importScripts === 'function' ){
+
+        // no chunking required when inside a web worker
+        chunkSize = array.length;
+
+    }else{
+
+        chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+
+    }
 
     var n = array.length;
 
@@ -12316,6 +19357,8 @@ NGL.createAtomArray = function( structure, callback ){
             atomArray.covalent[ i ] = ai.covalent;
             atomArray.modelindex[ i ] = ai.modelindex;
 
+            atomArray.usedLength += 1;
+
             // set proxy atoms in already existing bonds
 
             if( ai.bonds.length ){
@@ -12367,10 +19410,211 @@ NGL.createAtomArray = function( structure, callback ){
 };
 
 
+NGL.assignSecondaryStructure = function( structure, callback ){
+
+    NGL.time( "NGL.assignSecondaryStructure" );
+
+    async.series( [
+
+        // assign helix
+        function( wcallback ){
+
+            var helices = structure.helices || [];
+
+            NGL.processArray(
+
+                helices,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var helix = helices[ i ];
+
+                        // [ begChain, begResno, endChain, endResno, type ]
+
+                        var selection = new NGL.Selection(
+                            helix[ 1 ] + "-" + helix[ 3 ] + ":" + helix[ 0 ]
+                        );
+
+                        var helixType = helix[ 4 ];
+
+                        structure.eachResidue( function( r ){
+
+                            r.ss = helixType;
+
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        },
+
+        // assign strand
+        function( wcallback ){
+
+            var sheets = structure.sheets || [];
+
+            NGL.processArray(
+
+                sheets,
+
+                function( _i, _n ){
+
+                    for( var i = _i; i < _n; ++i ){
+
+                        var sheet = sheets[ i ];
+
+                        // [ begChain, begResno, endChain, endResno ]
+
+                        var selection = new NGL.Selection(
+                            sheet[ 1 ] + "-" + sheet[ 3 ] + ":" + sheet[ 0 ]
+                        );
+
+                        structure.eachResidue( function( r ){
+
+                            r.ss = "s";
+
+                        }, selection );
+
+                    }
+
+                },
+
+                wcallback,
+
+                1000
+
+            );
+
+        }
+
+    ], function(){
+
+        NGL.timeEnd( "NGL.assignSecondaryStructure" );
+
+        callback();
+
+    } );
+
+    return structure;
+
+};
+
+
+NGL.buildUnitcellAssembly = function( structure, callback ){
+
+    var uc = structure.unitcell;
+    var biomolDict = structure.biomolDict;
+
+    var centerFrac = structure.atomCenter().applyMatrix4( uc.cartToFrac );
+    var symopDict = NGL.getSymmetryOperations( uc.spacegroup );
+
+    var positionFrac = new THREE.Vector3();
+    var centerFracSymop = new THREE.Vector3();
+    var positionFracSymop = new THREE.Vector3();
+
+    if( centerFrac.x > 1 ) positionFrac.x -= 1;
+    if( centerFrac.x < 0 ) positionFrac.x += 1;
+    if( centerFrac.y > 1 ) positionFrac.y -= 1;
+    if( centerFrac.y < 0 ) positionFrac.y += 1;
+    if( centerFrac.z > 1 ) positionFrac.z -= 1;
+    if( centerFrac.z < 0 ) positionFrac.z += 1;
+
+    function getOpDict( shift, suffix ){
+
+        suffix = suffix || "";
+        var opDict = {};
+
+        Object.keys( symopDict ).forEach( function( name ){
+
+            var m = symopDict[ name ].clone();
+
+            centerFracSymop.copy( centerFrac ).applyMatrix4( m );
+            positionFracSymop.setFromMatrixPosition( m );
+            positionFracSymop.sub( positionFrac );
+
+            if( centerFracSymop.x > 1 ) positionFracSymop.x -= 1;
+            if( centerFracSymop.x < 0 ) positionFracSymop.x += 1;
+            if( centerFracSymop.y > 1 ) positionFracSymop.y -= 1;
+            if( centerFracSymop.y < 0 ) positionFracSymop.y += 1;
+            if( centerFracSymop.z > 1 ) positionFracSymop.z -= 1;
+            if( centerFracSymop.z < 0 ) positionFracSymop.z += 1;
+
+            if( shift ) positionFracSymop.add( shift );
+
+            m.setPosition( positionFracSymop );
+            m.multiplyMatrices( uc.fracToCart, m );
+            m.multiply( uc.cartToFrac );
+
+            opDict[ name + suffix ] = m;
+
+        } );
+
+        return opDict;
+
+    }
+
+    biomolDict[ "UNITCELL" ] = {
+        matrixDict: getOpDict(),
+        chainList: undefined
+    };
+
+    biomolDict[ "SUPERCELL" ] = {
+        matrixDict: Object.assign( {},
+            getOpDict(),
+            getOpDict( new THREE.Vector3(  1,  1,  1 ), "_666" ),
+            getOpDict( new THREE.Vector3( -1, -1, -1 ), "_444" ),
+
+            getOpDict( new THREE.Vector3(  1,  0,  0 ), "_655" ),
+            getOpDict( new THREE.Vector3(  1,  1,  0 ), "_665" ),
+            getOpDict( new THREE.Vector3(  1,  0,  1 ), "_656" ),
+            getOpDict( new THREE.Vector3(  0,  1,  0 ), "_565" ),
+            getOpDict( new THREE.Vector3(  0,  1,  1 ), "_566" ),
+            getOpDict( new THREE.Vector3(  0,  0,  1 ), "_556" ),
+
+            getOpDict( new THREE.Vector3( -1,  0,  0 ), "_455" ),
+            getOpDict( new THREE.Vector3( -1, -1,  0 ), "_445" ),
+            getOpDict( new THREE.Vector3( -1,  0, -1 ), "_454" ),
+            getOpDict( new THREE.Vector3(  0, -1,  0 ), "_545" ),
+            getOpDict( new THREE.Vector3(  0, -1, -1 ), "_544" ),
+            getOpDict( new THREE.Vector3(  0,  0, -1 ), "_554" ),
+
+            getOpDict( new THREE.Vector3(  1, -1, -1 ), "_644" ),
+            getOpDict( new THREE.Vector3(  1,  1, -1 ), "_664" ),
+            getOpDict( new THREE.Vector3(  1, -1,  1 ), "_646" ),
+            getOpDict( new THREE.Vector3( -1,  1,  1 ), "_466" ),
+            getOpDict( new THREE.Vector3( -1, -1,  1 ), "_446" ),
+            getOpDict( new THREE.Vector3( -1,  1, -1 ), "_464" ),
+
+            getOpDict( new THREE.Vector3(  0,  1, -1 ), "_564" ),
+            getOpDict( new THREE.Vector3(  0, -1,  1 ), "_546" ),
+            getOpDict( new THREE.Vector3(  1,  0, -1 ), "_654" ),
+            getOpDict( new THREE.Vector3( -1,  0,  1 ), "_456" ),
+            getOpDict( new THREE.Vector3(  1, -1,  0 ), "_645" ),
+            getOpDict( new THREE.Vector3( -1,  1,  0 ), "_465" )
+        ),
+        chainList: undefined
+    };
+
+    callback();
+
+    return structure;
+
+}
+
+
 ////////////////////
 // StructureParser
 
-NGL.useAtomArrayThreshold = 100000;
+NGL.useAtomArrayThreshold = 1000;
 
 NGL.StructureParser = function( name, path, params ){
 
@@ -12425,11 +19669,37 @@ NGL.StructureParser.prototype = {
 
             function( wcallback ){
 
+                NGL.assignSecondaryStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                NGL.buildUnitcellAssembly( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
                 self._postProcess( self.structure, wcallback );
 
             },
 
             function( wcallback ){
+
+                var s = self.structure;
+
+                // check for secondary structure
+                if( s.helices.length === 0 && s.sheets.length === 0 ){
+                    s._doAutoSS = true;
+                }
+
+                // check for chain names
+                var _doAutoChainName = true;
+                s.eachChain( function( c ){
+                    if( c.chainname ) _doAutoChainName = false;
+                } );
+                s._doAutoChainName = _doAutoChainName;
 
                 self.structure.postProcess( wcallback );
 
@@ -12445,6 +19715,66 @@ NGL.StructureParser.prototype = {
 
     },
 
+    parseWorker: function( str, callback ){
+
+        if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.PdbParser.parseWorker " + this.name;
+
+            NGL.time( __timeName );
+
+            var s = this.structure;
+            var scope = this;
+            var worker = new Worker( "../js/worker/parse.js" );
+
+            worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+
+                worker.terminate();
+
+                if( NGL.debug ) console.log( e.data );
+
+                s.fromJSON( e.data );
+
+                async.series( [
+
+                    function( wcallback ){
+
+                        NGL.buildStructure( s, wcallback );
+
+                    },
+
+                ], function(){
+
+                    callback( s );
+
+                } );
+
+            };
+
+            worker.postMessage( {
+                str: str,
+                type: this.type,
+                name: this.name,
+                path: this.path,
+                params: {
+                    firstModelOnly: this.firstModelOnly,
+                    asTrajectory: this.asTrajectory,
+                    cAlphaOnly: this.cAlphaOnly
+                }
+            } );
+
+        }else{
+
+            this.parse( str, callback );
+
+        }
+
+        return this.structure;
+
+    },
+
     _parse: function( str, callback ){
 
         NGL.warn( "NGL.StructureParser._parse not implemented" );
@@ -12454,7 +19784,7 @@ NGL.StructureParser.prototype = {
 
     _postProcess: function( structure, callback ){
 
-        NGL.warn( "NGL.StructureParser._postProcess not implemented" );
+        // NGL.warn( "NGL.StructureParser._postProcess not implemented" );
         callback();
 
     }
@@ -12472,6 +19802,8 @@ NGL.PdbParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
+NGL.PdbParser.prototype.type = "pdb";
+
 NGL.PdbParser.prototype._parse = function( str, callback ){
 
     // http://www.wwpdb.org/documentation/file-format.php
@@ -12485,21 +19817,20 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
     var cAlphaOnly = this.cAlphaOnly;
 
-    var frames = [];
-    var boxes = [];
+    var frames = s.frames;
+    var boxes = s.boxes;
     var doFrames = false;
     var currentFrame, currentCoord;
 
-    s.title = '';
-    s.id = '';
-    s.sheet = [];
-    s.helix = [];
-
-    s.biomolDict = {};
-    var biomolDict = s.biomolDict;
+    var id = s.id;
+    var title = s.title;
 
     var atoms = s.atoms;
     var bondSet = s.bondSet;
+    var helices = s.helices;
+    var sheets = s.sheets;
+    var biomolDict = s.biomolDict;
+    var currentBiomol;
 
     var lines = str.split( "\n" );
 
@@ -12512,15 +19843,9 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var serial, elem, chainname, resno, resname, atomname, element;
 
     var serialDict = {};
-
-    var id = s.id;
-    var title = s.title;
-    var sheet = s.sheet;
-    var helix = s.helix;
+    var unitcellDict = {};
 
     s.hasConnect = false;
-
-    var currentBiomol;
 
     var idx = 0;
     var modelIdx = 0;
@@ -12575,7 +19900,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 a.y = y;
                 a.z = z;
                 a.element = element;
-                a.hetero = ( line[ 0 ] === 'H' ) ? true : false;
+                a.hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                 a.chainname = chainname;
                 a.resno = resno;
                 a.serial = serial;
@@ -12631,7 +19956,7 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var endResi = parseInt( line.substr( 33, 4 ) );
                 var helixType = parseInt( line.substr( 39, 1 ) );
                 helixType = helixTypes[ helixType ] || helixTypes[""];
-                helix.push([ startChain, startResi, endChain, endResi, helixType ]);
+                helices.push([ startChain, startResi, endChain, endResi, helixType ]);
 
             }else if( recordName === 'SHEET ' ){
 
@@ -12639,13 +19964,44 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var startResi = parseInt( line.substr( 22, 4 ) );
                 var endChain = line[ 32 ];
                 var endResi = parseInt( line.substr( 33, 4 ) );
-                sheet.push([ startChain, startResi, endChain, endResi ]);
+                sheets.push([ startChain, startResi, endChain, endResi ]);
+
+            // }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '290' ){
+
+            //     if( line.substr( 11, 41 ) === "CRYSTALLOGRAPHIC SYMMETRY TRANSFORMATIONS" ){
+
+            //         biomolDict[ "REL" ] = {
+            //             matrixDict: {},
+            //             chainList: []
+            //         };
+            //         currentBiomol = biomolDict[ "REL" ];
+
+            //     }else if( line.substr( 13, 5 ) === "SMTRY" ){
+
+            //         var ls = line.split( /\s+/ );
+
+            //         var row = parseInt( line[ 18 ] ) - 1;
+            //         var mat = ls[ 3 ].trim();
+
+            //         if( row === 0 ){
+            //             currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+            //         }
+
+            //         var elms = currentBiomol.matrixDict[ mat ].elements;
+
+            //         elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
+            //         elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
+            //         elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
+            //         elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
+
+            //     }
 
             }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
                 if( line.substr( 11, 12 ) === "BIOMOLECULE:" ){
 
                     var name = line.substr( 23 ).trim();
+                    if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
 
                     biomolDict[ name ] = {
                         matrixDict: {},
@@ -12724,6 +20080,64 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 modelIdx += 1;
 
+            }else if( line.substr( 0, 5 ) === 'MTRIX' ){
+
+                var ls = line.split( /\s+/ );
+                var mat = ls[ 1 ].trim();
+
+                if( line[ 5 ] === "1" && mat === "1" ){
+
+                    biomolDict[ "NCS" ] = {
+                        matrixDict: {},
+                        chainList: undefined
+                    };
+                    currentBiomol = biomolDict[ "NCS" ];
+
+                }
+
+                var row = parseInt( line[ 5 ] ) - 1;
+
+                if( row === 0 ){
+                    currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                }
+
+                var elms = currentBiomol.matrixDict[ mat ].elements;
+
+                elms[ 4 * 0 + row ] = parseFloat( ls[ 2 ] );
+                elms[ 4 * 1 + row ] = parseFloat( ls[ 3 ] );
+                elms[ 4 * 2 + row ] = parseFloat( ls[ 4 ] );
+                elms[ 4 * 3 + row ] = parseFloat( ls[ 5 ] );
+
+            }else if( line.substr( 0, 5 ) === 'ORIGX' ){
+
+                if( !unitcellDict.origx ){
+                    unitcellDict.origx = new THREE.Matrix4();
+                }
+
+                var ls = line.split( /\s+/ );
+                var row = parseInt( line[ 5 ] ) - 1;
+                var elms = unitcellDict.origx.elements;
+
+                elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
+                elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
+                elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
+                elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
+
+            }else if( line.substr( 0, 5 ) === 'SCALE' ){
+
+                if( !unitcellDict.scale ){
+                    unitcellDict.scale = new THREE.Matrix4();
+                }
+
+                var ls = line.split( /\s+/ );
+                var row = parseInt( line[ 5 ] ) - 1;
+                var elms = unitcellDict.scale.elements;
+
+                elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
+                elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
+                elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
+                elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
+
             }else if( recordName === 'CRYST1' ){
 
                 // CRYST1   55.989   55.989   55.989  90.00  90.00  90.00 P 1           1
@@ -12747,25 +20161,21 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
                 var sGroup = line.substr( 55, 11 ).trim();
                 var z = parseInt( line.substr( 66, 4 ) );
 
-                // NGL.log( a, b, c, alpha, beta, gamma, sGroup, z )
+                var box = new Float32Array( 9 );
+                box[ 0 ] = a;
+                box[ 4 ] = b;
+                box[ 8 ] = c;
+                boxes.push( box );
 
-                if( a===1.0 && b===1.0 && c===1.0 &&
-                    alpha===90.0 && beta===90.0 && gamma===90.0 &&
-                    sGroup==="P 1" && z===1
-                ){
+                if( modelIdx === 0 ){
 
-                    // NGL.info(
-                    //     "unitcell is just a unit cube, " +
-                    //     "likely meaningless, so ignore"
-                    // );
-
-                }else{
-
-                    var box = new Float32Array( 9 );
-                    box[ 0 ] = a;
-                    box[ 4 ] = b;
-                    box[ 8 ] = c;
-                    boxes.push( box );
+                    unitcellDict.a = a;
+                    unitcellDict.b = b;
+                    unitcellDict.c = c;
+                    unitcellDict.alpha = alpha;
+                    unitcellDict.beta = beta;
+                    unitcellDict.gamma = gamma;
+                    unitcellDict.spacegroup = sGroup;
 
                 }
 
@@ -12783,78 +20193,23 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
         function(){
 
+            s.unitcell = new NGL.Unitcell(
+                unitcellDict.a,
+                unitcellDict.b,
+                unitcellDict.c,
+                unitcellDict.alpha,
+                unitcellDict.beta,
+                unitcellDict.gamma,
+                unitcellDict.spacegroup,
+                unitcellDict.scale
+            );
+
             NGL.timeEnd( __timeName );
-
-            if( asTrajectory ){
-                s.frames = frames;
-                s.boxes = boxes;
-            }
-
             callback();
 
         }
 
     );
-
-};
-
-NGL.PdbParser.prototype._postProcess = function( structure, callback ){
-
-    var s = structure
-    var helix = s.helix;
-    var sheet = s.sheet;
-
-    // assign secondary structures
-
-    NGL.time( "NGL.PdbParser parse ss" );
-
-    for( var j = 0; j < sheet.length; j++ ){
-
-        var selection = new NGL.Selection(
-            sheet[j][1] + "-" + sheet[j][3] + ":" + sheet[j][0]
-        );
-
-        s.eachResidue( function( r ){
-
-            r.ss = "s";
-
-        }, selection );
-
-    }
-
-    for( var j = 0; j < helix.length; j++ ){
-
-        var selection = new NGL.Selection(
-            helix[j][1] + "-" + helix[j][3] + ":" + helix[j][0]
-        );
-
-        var helixType = helix[j][4];
-
-        s.eachResidue( function( r ){
-
-            r.ss = helixType;
-
-        }, selection );
-
-    }
-
-    NGL.timeEnd( "NGL.PdbParser parse ss" );
-
-    if( sheet.length === 0 && helix.length === 0 ){
-
-        s._doAutoSS = true;
-
-    }
-
-    // check for chain names
-
-    var _doAutoChainName = true;
-    s.eachChain( function( c ){
-        if( c.chainname ) _doAutoChainName = false;
-    } );
-    s._doAutoChainName = _doAutoChainName;
-
-    callback();
 
 };
 
@@ -12872,6 +20227,8 @@ NGL.GroParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.GroParser.prototype.constructor = NGL.GroParser;
 
+NGL.GroParser.prototype.type = "gro";
+
 NGL.GroParser.prototype._parse = function( str, callback ){
 
     // http://manual.gromacs.org/current/online/gro.html
@@ -12885,8 +20242,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
     var cAlphaOnly = this.cAlphaOnly;
 
-    var frames = [];
-    var boxes = [];
+    var frames = s.frames;
+    var boxes = s.boxes;
     var doFrames = false;
     var currentFrame, currentCoord;
 
@@ -12899,7 +20256,8 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var vdwRadii = NGL.VdwRadii;
 
     s.title = lines[ 0 ].trim();
-    s.size = parseInt( lines[ 1 ] );
+
+    var size = parseInt( lines[ 1 ] );
     var b = lines[ lines.length-1 ].trim().split( /\s+/ );
     s.box = [
         parseFloat( b[0] ) * 10,
@@ -12908,11 +20266,11 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     ];
 
     // determine number of decimal places
-    var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf(".") - 1;
+    var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf( "." ) - 1;
     var lpos = 5 + ndec;
     var xpos = 20;
     var ypos = 20 + lpos;
-    var zpos = 20 + 2 * ( lpos );
+    var zpos = 20 + 2 * lpos;
 
     //
 
@@ -13028,23 +20386,11 @@ NGL.GroParser.prototype._parse = function( str, callback ){
         function(){
 
             NGL.timeEnd( __timeName );
-
-            if( asTrajectory ){
-                s.frames = frames;
-                s.boxes = boxes;
-            }
-
             callback();
 
         }
 
     );
-
-};
-
-NGL.GroParser.prototype._postProcess = function( structure, callback ){
-
-    callback();
 
 };
 
@@ -13059,6 +20405,8 @@ NGL.CifParser.prototype = Object.create( NGL.StructureParser.prototype );
 
 NGL.CifParser.prototype.constructor = NGL.CifParser;
 
+NGL.CifParser.prototype.type = "cif";
+
 NGL.CifParser.prototype._parse = function( str, callback ){
 
     // http://mmcif.wwpdb.org/
@@ -13072,19 +20420,12 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var asTrajectory = this.asTrajectory;
     var cAlphaOnly = this.cAlphaOnly;
 
-    var frames = [];
-    var boxes = [];
+    var frames = s.frames;
+    var boxes = s.boxes;
     var doFrames = false;
     var currentFrame, currentCoord;
 
-    s.title = '';
-    s.id = '';
-    s.sheet = [];
-    s.helix = [];
-
-    s.biomolDict = {};
-    var biomolDict = s.biomolDict;
-
+    var title = s.title;
     var atoms = s.atoms;
     var bondSet = s.bondSet;
 
@@ -13098,15 +20439,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var line, recordName;
     var altloc, serial, elem, chainname, resno, resname, atomname, element;
 
-    var serialDict = {};
-
-    var title = s.title;
-    var sheet = s.sheet;
-    var helix = s.helix;
-
     s.hasConnect = false;
-
-    var currentBiomol;
 
     //
 
@@ -13115,7 +20448,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var reDoubleQuote = /"/g;
 
     var cif = {};
-    s.cif = cif;
+    this.cif = cif;
 
     var pendingString = false;
     var currentString = null;
@@ -13373,7 +20706,7 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
                         var serial = parseInt( ls[ id ] );
                         var element = ls[ type_symbol ];
-                        var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? true : false;
+                        var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
                         var chainname = ls[ label_asym_id ];
                         // var resno = parseInt( ls[ label_seq_id ] );
                         var resno = parseInt( ls[ auth_seq_id ] );
@@ -13404,6 +20737,8 @@ NGL.CifParser.prototype._parse = function( str, callback ){
                             atomArray.vdw[ idx ] = vdwRadii[ element ];
                             atomArray.covalent[ idx ] = covRadii[ element ];
                             atomArray.modelindex[ idx ] = modelIdx;
+
+                            atomArray.usedLength += 1;
 
                         }else{
 
@@ -13478,40 +20813,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
 
     }
 
-    NGL.processArray(
-
-        lines,
-
-        _chunked,
-
-        function(){
-
-            NGL.timeEnd( __timeName );
-
-            if( asTrajectory ){
-                s.frames = frames;
-                s.boxes = boxes;
-            }
-
-            callback();
-
-        }
-
-    );
-
-};
-
-NGL.CifParser.prototype._postProcess = function( structure, callback ){
-
-    NGL.time( "NGL.CifParser._postProcess" );
-
-    var s = structure;
-    var cif = s.cif;
-
-    if( cif.struct && cif.struct.title ){
-        s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
-    }
-
     function _ensureArray( dict, field ){
 
         if( !Array.isArray( dict[ field ] ) ){
@@ -13524,10 +20825,34 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     async.series( [
 
-        // assign helix
+        // parse lines
         function( wcallback ){
 
-            var helixTypes = NGL.HelixTypes;
+            NGL.processArray(
+
+                lines,
+
+                _chunked,
+
+                function(){
+
+                    if( cif.struct && cif.struct.title ){
+
+                        s.title = cif.struct.title.trim()
+                                    .replace( /^['"]+|['"]+$/g, "" );
+
+                    }
+
+                    wcallback();
+
+                }
+
+            );
+
+        },
+
+        // get helices
+        function( wcallback ){
 
             var sc = cif.struct_conf;
 
@@ -13537,6 +20862,9 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            var helices = s.helices;
+            var helixTypes = NGL.HelixTypes;
 
             // ensure data is in lists
             _ensureArray( sc, "id" );
@@ -13553,19 +20881,15 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                         if( !Number.isNaN( helixType ) ){
 
-                            var selection = new NGL.Selection(
-                                sc.beg_auth_seq_id[ i ] + "-" +
-                                sc.end_auth_seq_id[ i ] + ":" +
-                                sc.beg_label_asym_id[ i ]
-                            );
+                            helices.push( [
 
-                            helixType = helixTypes[ helixType ] || helixTypes[""];
+                                sc.beg_label_asym_id[ i ],
+                                sc.beg_auth_seq_id[ i ],
+                                sc.end_label_asym_id[ i ],
+                                sc.end_auth_seq_id[ i ],
+                                helixTypes[ helixType ] || helixTypes[""]
 
-                            s.eachResidue( function( r ){
-
-                                r.ss = helixType;
-
-                            }, selection );
+                            ] );
 
                         }
 
@@ -13581,7 +20905,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
         },
 
-        // assign strand
+        // get sheets
         function( wcallback ){
 
             var ssr = cif.struct_sheet_range;
@@ -13592,6 +20916,8 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
                 return;
 
             }
+
+            var sheets = s.sheets;
 
             // ensure data is in lists
             _ensureArray( ssr, "id" );
@@ -13604,17 +20930,14 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
                     for( var i = _i; i < _n; ++i ){
 
-                        var selection = new NGL.Selection(
-                            ssr.beg_auth_seq_id[ i ] + "-" +
-                            ssr.end_auth_seq_id[ i ] + ":" +
-                            ssr.beg_label_asym_id[ i ]
-                        );
+                        sheets.push( [
 
-                        s.eachResidue( function( r ){
+                            ssr.beg_label_asym_id[ i ],
+                            ssr.beg_auth_seq_id[ i ],
+                            ssr.end_label_asym_id[ i ],
+                            ssr.end_auth_seq_id[ i ]
 
-                            r.ss = "s";
-
-                        }, selection );
+                        ] );
 
                     }
 
@@ -13627,6 +20950,325 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
             );
 
         },
+
+        // biomol & ncs processing
+        function( wcallback ){
+
+            var operDict = {};
+            var biomolDict = s.biomolDict;
+
+            if( cif.pdbx_struct_oper_list ){
+
+                var op = cif.pdbx_struct_oper_list;
+
+                // ensure data is in lists
+                _ensureArray( op, "id" );
+
+                op.id.forEach( function( id, i ){
+
+                    var m = new THREE.Matrix4();
+                    var elms = m.elements;
+
+                    elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                    elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                    elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                    elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                    elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                    elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                    elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                    elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                    elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                    elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                    elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                    elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                    m.transpose();
+
+                    operDict[ id ] = m;
+
+                } );
+
+            }
+
+            if( cif.pdbx_struct_assembly_gen ){
+
+                var gen = cif.pdbx_struct_assembly_gen;
+
+                // ensure data is in lists
+                _ensureArray( gen, "assembly_id" );
+
+                var getMatrixDict = function( expr ){
+
+                    var matDict = {};
+
+                    var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+
+                    l.forEach( function( e ){
+
+                        if( e.indexOf( "-" ) !== -1 ){
+
+                            var es = e.split( "-" );
+
+                            var j = parseInt( es[ 0 ] );
+                            var m = parseInt( es[ 1 ] );
+
+                            for( ; j <= m; ++j ){
+
+                                matDict[ j ] = operDict[ j ];
+
+                            }
+
+                        }else{
+
+                            matDict[ e ] = operDict[ e ];
+
+                        }
+
+                    } );
+
+                    return matDict;
+
+                }
+
+                gen.assembly_id.forEach( function( id, i ){
+
+                    var md = {};
+                    var oe = gen.oper_expression[ i ];
+
+                    if( oe.indexOf( ")(" ) !== -1 ){
+
+                        oe = oe.split( ")(" );
+
+                        var md1 = getMatrixDict( oe[ 0 ] );
+                        var md2 = getMatrixDict( oe[ 1 ] );
+
+                        Object.keys( md1 ).forEach( function( k1 ){
+
+                            Object.keys( md2 ).forEach( function( k2 ){
+
+                                var mat = new THREE.Matrix4();
+
+                                mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
+                                md[ k1 + "x" + k2 ] = mat;
+
+                            } );
+
+                        } );
+
+                    }else{
+
+                        md = getMatrixDict( oe );
+
+                    }
+
+                    var name = id;
+                    if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
+
+                    biomolDict[ name ] = {
+
+                        matrixDict: md,
+                        chainList: gen.asym_id_list[ i ].split( "," )
+
+                    };
+
+                } );
+
+            }
+
+            // non-crystallographic symmetry operations
+            if( cif.struct_ncs_oper ){
+
+                var op = cif.struct_ncs_oper;
+
+                // ensure data is in lists
+                _ensureArray( op, "id" );
+
+                var md = {};
+
+                biomolDict[ "NCS" ] = {
+
+                    matrixDict: md,
+                    chainList: undefined
+
+                };
+
+                op.id.forEach( function( id, i ){
+
+                    var m = new THREE.Matrix4();
+                    var elms = m.elements;
+
+                    elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                    elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                    elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                    elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                    elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                    elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                    elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                    elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                    elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                    elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                    elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                    elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                    m.transpose();
+
+                    md[ id ] = m;
+
+                } );
+
+            }
+
+            // cell
+
+            var unitcellDict = {};
+
+            if( cif.cell ){
+
+                var cell = cif.cell;
+                var symmetry = cif.symmetry || {};
+
+                var a = parseFloat( cell.length_a );
+                var b = parseFloat( cell.length_b );
+                var c = parseFloat( cell.length_c );
+
+                var alpha = parseFloat( cell.angle_alpha );
+                var beta = parseFloat( cell.angle_beta );
+                var gamma = parseFloat( cell.angle_gamma );
+
+                var sGroup = symmetry[ "space_group_name_H-M" ];
+                if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+                    ( sGroup[0] === "'" || sGroup[0] === '"' )
+                ){
+                    sGroup = sGroup.substring( 1, sGroup.length-1 );
+                }
+                var z = parseInt( cell.Z_PDB );
+
+                var box = new Float32Array( 9 );
+                box[ 0 ] = a;
+                box[ 4 ] = b;
+                box[ 8 ] = c;
+                boxes.push( box );
+
+                unitcellDict.a = a;
+                unitcellDict.b = b;
+                unitcellDict.c = c;
+                unitcellDict.alpha = alpha;
+                unitcellDict.beta = beta;
+                unitcellDict.gamma = gamma;
+                unitcellDict.spacegroup = sGroup;
+
+            }
+
+            // origx
+
+            var origx = new THREE.Matrix4();
+
+            if( cif.database_PDB_matrix ){
+
+                var mat = cif.database_PDB_matrix;
+                var elms = origx.elements;
+
+                elms[  0 ] = parseFloat( mat[ "origx[1][1]" ] );
+                elms[  1 ] = parseFloat( mat[ "origx[1][2]" ] );
+                elms[  2 ] = parseFloat( mat[ "origx[1][3]" ] );
+
+                elms[  4 ] = parseFloat( mat[ "origx[2][1]" ] );
+                elms[  5 ] = parseFloat( mat[ "origx[2][2]" ] );
+                elms[  6 ] = parseFloat( mat[ "origx[2][3]" ] );
+
+                elms[  8 ] = parseFloat( mat[ "origx[3][1]" ] );
+                elms[  9 ] = parseFloat( mat[ "origx[3][2]" ] );
+                elms[ 10 ] = parseFloat( mat[ "origx[3][3]" ] );
+
+                elms[  3 ] = parseFloat( mat[ "origx_vector[1]" ] );
+                elms[  7 ] = parseFloat( mat[ "origx_vector[2]" ] );
+                elms[ 11 ] = parseFloat( mat[ "origx_vector[3]" ] );
+
+                origx.transpose();
+
+                unitcellDict.origx = origx;
+
+            }
+
+            // scale
+
+            var scale = new THREE.Matrix4();
+
+            if( cif.atom_sites ){
+
+                var mat = cif.atom_sites;
+                var elms = scale.elements;
+
+                elms[  0 ] = parseFloat( mat[ "fract_transf_matrix[1][1]" ] );
+                elms[  1 ] = parseFloat( mat[ "fract_transf_matrix[1][2]" ] );
+                elms[  2 ] = parseFloat( mat[ "fract_transf_matrix[1][3]" ] );
+
+                elms[  4 ] = parseFloat( mat[ "fract_transf_matrix[2][1]" ] );
+                elms[  5 ] = parseFloat( mat[ "fract_transf_matrix[2][2]" ] );
+                elms[  6 ] = parseFloat( mat[ "fract_transf_matrix[2][3]" ] );
+
+                elms[  8 ] = parseFloat( mat[ "fract_transf_matrix[3][1]" ] );
+                elms[  9 ] = parseFloat( mat[ "fract_transf_matrix[3][2]" ] );
+                elms[ 10 ] = parseFloat( mat[ "fract_transf_matrix[3][3]" ] );
+
+                elms[  3 ] = parseFloat( mat[ "fract_transf_vector[1]" ] );
+                elms[  7 ] = parseFloat( mat[ "fract_transf_vector[2]" ] );
+                elms[ 11 ] = parseFloat( mat[ "fract_transf_vector[3]" ] );
+
+                scale.transpose();
+
+                unitcellDict.scale = scale;
+
+            }
+
+            s.unitcell = new NGL.Unitcell(
+                unitcellDict.a,
+                unitcellDict.b,
+                unitcellDict.c,
+                unitcellDict.alpha,
+                unitcellDict.beta,
+                unitcellDict.gamma,
+                unitcellDict.spacegroup,
+                unitcellDict.scale
+            );
+
+            wcallback();
+
+        }
+
+    ], function(){
+
+        NGL.timeEnd( __timeName );
+        callback();
+
+    } );
+
+};
+
+NGL.CifParser.prototype._postProcess = function( structure, callback ){
+
+    NGL.time( "NGL.CifParser._postProcess" );
+
+    var s = structure;
+    var cif = this.cif;
+
+    function _ensureArray( dict, field ){
+
+        if( !Array.isArray( dict[ field ] ) ){
+            Object.keys( dict ).forEach( function( key ){
+                dict[ key ] = [ dict[ key ] ];
+            } );
+        }
+
+    }
+
+    async.series( [
 
         // add connections
         function( wcallback ){
@@ -13717,147 +21359,7 @@ NGL.CifParser.prototype._postProcess = function( structure, callback ){
 
     ], function(){
 
-        if( !cif.struct_conf && !cif.struct_sheet_range ){
-
-            s._doAutoSS = true;
-
-        }
-
-        // biomol processing
-
-        var operDict = {};
-
-        s.biomolDict = {};
-        var biomolDict = s.biomolDict;
-
-        if( cif.pdbx_struct_oper_list ){
-
-            var op = cif.pdbx_struct_oper_list;
-
-            // ensure data is in lists
-            _ensureArray( op, "id" );
-
-            op.id.forEach( function( id, i ){
-
-                var m = new THREE.Matrix4();
-                var elms = m.elements;
-
-                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
-
-                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
-
-                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
-
-                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
-
-                m.transpose();
-
-                operDict[ id ] = m;
-
-            } );
-
-        }
-
-        if( cif.pdbx_struct_assembly_gen ){
-
-            var gen = cif.pdbx_struct_assembly_gen;
-
-            // ensure data is in lists
-            _ensureArray( gen, "assembly_id" );
-
-            var getMatrixDict = function( expr ){
-
-                var matDict = {};
-
-                var l = expr.replace( /[\(\)']/g, "" ).split( "," );
-
-                l.forEach( function( e ){
-
-                    if( e.indexOf( "-" ) !== -1 ){
-
-                        var es = e.split( "-" );
-
-                        var j = parseInt( es[ 0 ] );
-                        var m = parseInt( es[ 1 ] );
-
-                        for( ; j <= m; ++j ){
-
-                            matDict[ j ] = operDict[ j ];
-
-                        }
-
-                    }else{
-
-                        matDict[ e ] = operDict[ e ];
-
-                    }
-
-                } );
-
-                return matDict;
-
-            }
-
-            gen.assembly_id.forEach( function( id, i ){
-
-                var md = {};
-                var oe = gen.oper_expression[ i ];
-
-                if( oe.indexOf( ")(" ) !== -1 ){
-
-                    oe = oe.split( ")(" );
-
-                    var md1 = getMatrixDict( oe[ 0 ] );
-                    var md2 = getMatrixDict( oe[ 1 ] );
-
-                    Object.keys( md1 ).forEach( function( k1 ){
-
-                        Object.keys( md2 ).forEach( function( k2 ){
-
-                            var mat = new THREE.Matrix4();
-
-                            mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
-                            md[ k1 + "x" + k2 ] = mat;
-
-                        } );
-
-                    } );
-
-                }else{
-
-                    md = getMatrixDict( oe );
-
-                }
-
-                biomolDict[ id ] = {
-
-                    matrixDict: md,
-                    chainList: gen.asym_id_list[ i ].split( "," )
-
-                };
-
-            } );
-
-        }
-
-        // check for chain names
-
-        var _doAutoChainName = true;
-        s.eachChain( function( c ){
-            if( c.chainname ) _doAutoChainName = false;
-        } );
-        s._doAutoChainName = _doAutoChainName;
-
         NGL.timeEnd( "NGL.CifParser._postProcess" );
-
         callback();
 
     } );
@@ -14157,20 +21659,54 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
     var v = this.volume;
     var header = {};
-
     var lines = str.split( "\n" );
+    var reWhitespace = /\s+/;
+    var bohrToAngstromFactor = 0.529177210859;
 
-    // TODO parse header
+    function headerhelper( k, l ) {
+        return parseFloat( lines[ k ].trim().split( reWhitespace )[ l ] );
+    }
 
-    var data = new Float32Array(
-        header.NX * header.NY * header.NZ
-    );
+    header.atomCount = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
+    header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor; //Position of origin of volumetric data
+    header.originY = headerhelper( 2, 2 ) * bohrToAngstromFactor;
+    header.originZ = headerhelper( 2, 3 ) * bohrToAngstromFactor;
+    header.NVX = headerhelper( 3, 0 ); //Number of voxels
+    header.NVY = headerhelper( 4, 0 );
+    header.NVZ = headerhelper( 5, 0 );
+    header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor; //Axis vector
+    header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor;
+    header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor;
 
-    // TODO parse voxel data
+    var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
+    var count = 0;
+
+    function _getData( _i ){
+
+        for( var i = _i; i < lines.length; ++i ){
+
+            var line = lines[ i ].trim();
+            if( line !== "" ){
+
+                line = line.split( reWhitespace );
+                for( var j = 0, lj = line.length; j < lj; ++j ){
+                    if ( line.length !==1 ) {
+                        data[ count ] = parseFloat( line[ j ] );
+                        ++count;
+                    };
+                };
+
+            }
+
+        };
+
+    };
+
+    _getData( header.atomCount + 6 );
 
     v.header = header;
 
-    v.setData( data, header.NX, header.NY, header.NZ );
+    v.setData( data, header.NVZ, header.NVY, header.NVX );
 
     NGL.timeEnd( __timeName );
 
@@ -14185,8 +21721,18 @@ NGL.CubeParser.prototype.makeMatrix = function(){
     var matrix = new THREE.Matrix4();
 
     matrix.multiply(
+        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    );
+
+    matrix.multiply(
         new THREE.Matrix4().makeTranslation(
-            h.NXSTART, h.NYSTART, h.NZSTART
+            h.originZ, h.originY, h.originX
+        )
+    );
+
+    matrix.multiply(
+        new THREE.Matrix4().makeScale(
+            -h.AVZ, h.AVY, h.AVX
         )
     );
 
@@ -14206,7 +21752,7 @@ NGL.Uint8ToString = function( u8a ){
 
     // from http://stackoverflow.com/a/12713326/1435042
 
-    var CHUNK_SZ = 0x8000;
+    var CHUNK_SZ = 0x1000;
     var c = [];
 
     for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
@@ -14224,7 +21770,7 @@ NGL.Uint8ToString = function( u8a ){
 }
 
 
-NGL.decompress = function( data, file, asBinary ){
+NGL.decompress = function( data, file, asBinary, callback ){
 
     var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).compressed;
@@ -14270,6 +21816,7 @@ NGL.decompress = function( data, file, asBinary ){
 
     }else if( ext === "bz2" ){
 
+        // FIXME need to get binData
         var bitstream = bzip2.array( data );
         decompressedData = bzip2.simple( bitstream )
 
@@ -14288,7 +21835,45 @@ NGL.decompress = function( data, file, asBinary ){
 
     NGL.timeEnd( "NGL.decompress " + ext );
 
-    return asBinary ? binData : decompressedData;
+    var returnData = asBinary ? binData : decompressedData;
+
+    if( typeof callback === "function" ){
+
+        callback( returnData );
+
+    }
+
+    return returnData;
+
+}
+
+
+NGL.decompressWorker = function( data, file, asBinary, callback ){
+
+    if( NGL.worker && typeof Worker !== "undefined" ){
+
+        NGL.time( "NGL.decompressWorker" );
+
+        var worker = new Worker( "../js/worker/decompress.js" );
+
+        worker.onmessage = function( e ){
+
+            NGL.timeEnd( "NGL.decompressWorker" );
+            worker.terminate();
+            callback( e.data );
+
+        };
+
+        worker.postMessage(
+            { data: data, file: file, asBinary: asBinary },
+            [ data.buffer ? data.buffer : data ]
+        );
+
+    }else{
+
+        NGL.decompress( data, file, asBinary, callback );
+
+    }
 
 }
 
@@ -14330,17 +21915,34 @@ NGL.XHRLoader.prototype = {
 
             if ( request.status === 200 || request.status === 304 ) {
 
-                var data = this.response;
+                try{
 
-                if( scope.compressed ){
+                    var data = this.response;
 
-                    data = NGL.decompress( data, url, scope.asBinary );
+                    var loaded = function( d ){
+
+                        THREE.Cache.add( url, d );
+                        if ( onLoad ) onLoad( d );
+
+                    }
+
+                    if( scope.compressed ){
+
+                        data = NGL.decompressWorker(
+                            data, url, scope.asBinary, loaded
+                        );
+
+                    }else{
+
+                        loaded( data );
+
+                    }
+
+                }catch( e ){
+
+                    if ( onError ) onError( "decompression failed" );
 
                 }
-
-                THREE.Cache.add( url, data );
-
-                if ( onLoad ) onLoad( data );
 
             } else {
 
@@ -14382,6 +21984,10 @@ NGL.XHRLoader.prototype = {
     },
 
     setAsBinary: function ( value ) {
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
 
         this.asBinary = value;
 
@@ -14439,17 +22045,35 @@ NGL.FileLoader.prototype = {
 
         reader.onload = function( event ){
 
-            var data = event.target.result;
+            try{
 
-            if( scope.compressed ){
+                var data = event.target.result;
 
-                data = NGL.decompress( data, file, scope.asBinary );
+                var loaded = function( d ){
+
+                    // THREE.Cache.add( file, d );
+                    onLoad( d );
+
+                }
+
+                if( scope.compressed ){
+
+                    NGL.decompressWorker(
+                        data, file, scope.asBinary, loaded
+                    );
+
+                }else{
+
+                    loaded( data );
+
+                }
+
+            }catch( e ){
+
+                if ( onError ) onError( e, "decompression failed" );
 
             }
 
-            // THREE.Cache.add( file, data );
-
-            onLoad( data );
             scope.manager.itemEnd( file );
 
         }
@@ -14474,7 +22098,7 @@ NGL.FileLoader.prototype = {
 
         }
 
-        if( this.asBinary ){
+        if( this.asBinary || this.compressed ){
 
             reader.readAsArrayBuffer( file );
 
@@ -14541,7 +22165,8 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
         name, path, params
     );
 
-    return parser.parse( str, callback );
+    // return parser.parse( str, callback );
+    return parser.parseWorker( str, callback );
 
 };
 
@@ -14549,9 +22174,6 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 NGL.VolumeLoader = function( manager ){
 
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-    this.setAsBinary( true );
-    this.setResponseType( "arraybuffer" );
 
 };
 
@@ -14763,16 +22385,19 @@ NGL.autoLoad = function(){
             loader.setCrossOrigin( true );
 
             if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( protocol + "://" + path, init, onProgress, error );
 
         }else if( protocol === "data" ){
 
             if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../data/" + path, init, onProgress, error );
 
         }else{ // default: protocol === "file"
 
             if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
             loader.load( "../file/" + path, init, onProgress, error );
 
         }
@@ -15343,6 +22968,7 @@ NGL.debug = false;
 NGL.init = function( onload, baseUrl ){
 
     NGL.debug = NGL.GET( "debug" );
+    NGL.worker = NGL.GET( "worker" );
 
     this.textures = [];
 
@@ -15935,9 +23561,9 @@ NGL.Viewer.prototype = {
 
         var group, pickingGroup;
 
-        group = new THREE.Group();
+        group = buffer.group;
         if( buffer.pickable ){
-            pickingGroup = new THREE.Group();
+            pickingGroup = buffer.pickingGroup;
         }
 
         if( buffer.size > 0 ){
@@ -15972,16 +23598,9 @@ NGL.Viewer.prototype = {
 
         }
 
-        buffer.group = group;
-        if( buffer.pickable ){
-            buffer.pickingGroup = pickingGroup;
-        }
-
         this.rotationGroup.updateMatrixWorld();
 
-        // When adding a lot of buffers at once, requesting
-        // a render somehow slows Chrome drastically down.
-        // this.requestRender();
+        this.requestRender();
 
         // NGL.timeEnd( "Viewer.add" );
 
@@ -17160,6 +24779,9 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         "color": { type: "c", value: color },
     });
 
+    this.group = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
+
     if( pickingColor ){
 
         this.addAttributes({
@@ -17986,6 +25608,18 @@ NGL.GeometryBuffer.prototype = {
 
     constructor: NGL.GeometryBuffer,
 
+    get group () {
+
+        return this.meshBuffer.group;
+
+    },
+
+    get pickingGroup () {
+
+        return this.meshBuffer.pickingGroup;
+
+    },
+
     get transparent () {
 
         return this.meshBuffer.transparent;
@@ -18511,6 +26145,8 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
         }
     ]);
 
+    this.group = new THREE.Group();
+
 };
 
 NGL.LineBuffer.prototype = {
@@ -18681,6 +26317,18 @@ NGL.TraceBuffer = function( position, color, params ){
 NGL.TraceBuffer.prototype = {
 
     constructor: NGL.TraceBuffer,
+
+    get group () {
+
+        return this.lineBuffer.group;
+
+    },
+
+    get pickingGroup () {
+
+        return this.lineBuffer.pickingGroup;
+
+    },
 
     get transparent () {
 
@@ -18897,6 +26545,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
         size: size,
         pickingColor: pickingColor
     });
+
+    this.group = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
 
     NGL.Buffer.prototype.finalize.call( this );
 
@@ -19166,6 +26817,18 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 NGL.TubeMeshBuffer.prototype = {
 
     constructor: NGL.TubeMeshBuffer,
+
+    get group () {
+
+        return this.meshBuffer.group;
+
+    },
+
+    get pickingGroup () {
+
+        return this.meshBuffer.pickingGroup;
+
+    },
 
     get transparent () {
 
@@ -20026,7 +27689,11 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
     var ReprClass;
 
-    if( object instanceof NGL.Structure ){
+    if( type === "buffer" ){
+
+        ReprClass = NGL.BufferRepresentation;
+
+    }else if( object instanceof NGL.Structure ){
 
         ReprClass = NGL.representationTypes[ type ];
 
@@ -20138,6 +27805,16 @@ NGL.Representation.prototype = {
 
     },
 
+    prepare: function( callback ){
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    },
+
     create: function(){
 
         // this.bufferList.length = 0;
@@ -20159,11 +27836,15 @@ NGL.Representation.prototype = {
             this.init( params );
         }
 
-        this.clear();
-        this.create();
-        if( !this.manualAttach ) this.attach();
+        this.prepare( function(){
 
-        NGL.timeEnd( "NGL.Representation.rebuild " + this.type );
+            this.clear();
+            this.create();
+            if( !this.manualAttach ) this.attach();
+
+            NGL.timeEnd( "NGL.Representation.rebuild " + this.type );
+
+        }.bind( this ) );
 
     },
 
@@ -20423,6 +28104,67 @@ NGL.Representation.prototype = {
 };
 
 
+NGL.BufferRepresentation = function( buffer, viewer, params ){
+
+    NGL.Representation.call( this, buffer, viewer, params );
+
+    this.buffer = buffer;
+
+    this.create();
+    this.attach();
+
+};
+
+NGL.BufferRepresentation.prototype = NGL.createObject(
+
+    NGL.Representation.prototype, {
+
+    constructor: NGL.BufferRepresentation,
+
+    type: "buffer",
+
+    create: function(){
+
+        this.bufferList.push( this.buffer );
+
+    },
+
+    attach: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.add( buffer );
+
+        }, this );
+
+        this.setVisibility( this.visible );
+
+    },
+
+    clear: function(){
+
+        this.bufferList.forEach( function( buffer ){
+
+            this.viewer.remove( buffer );
+
+        }, this );
+
+        this.bufferList.length = 0;
+
+        this.viewer.requestRender();
+
+    },
+
+    dispose: function(){
+
+        this.clear();
+        this.buffer.dispose();
+
+    }
+
+} );
+
+
 /////////////////////////////
 // Structure representation
 
@@ -20430,7 +28172,9 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
     this.fiberList = [];
 
-    this.selection = new NGL.Selection( params.sele );
+    this.selection = new NGL.Selection(
+        params.sele, this.getAssemblySele( params.assembly, structure )
+    );
     this.atomSet = new NGL.AtomSet();
 
     this.setStructure( structure );
@@ -20442,6 +28186,7 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
+        biomolOptions[ "" ] = "";
         this.parameters.assembly = {
             type: "select",
             options: biomolOptions,
@@ -20517,9 +28262,14 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-        this.assembly = p.assembly || "1";
+        this.assembly = p.assembly || "";
 
-        this.setSelection( p.sele, true );
+        // TODO find a nicer way ...
+        var combinedString = this.selection.combinedString;
+        this.setSelection( p.sele, this.getAssemblySele( p.assembly ), true );
+        if( combinedString !== this.selection.combinedString ){
+            this.atomSet.applySelection();
+        }
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -20527,16 +28277,35 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     setStructure: function( structure ){
 
-        this.structure = structure;
+        this.structure = structure || this.structure;
         this.atomSet.fromStructure( this.structure, this.selection );
 
         return this;
 
     },
 
-    setSelection: function( string, silent ){
+    getAssemblySele: function( assemblyName, structure ){
 
-        this.selection.setString( string, silent );
+        structure = structure || this.structure;
+        assemblyName = assemblyName || structure.defaultAssembly;
+
+        var assembly = structure.biomolDict[ assemblyName ];
+        var extraString = "";
+        if( assembly && assembly.chainList &&
+            assembly.chainList.length < structure.chainCount
+        ){
+            extraString = ":" + assembly.chainList.join( " OR :" );
+        }
+
+        // console.log( "getAssemblySele", extraString );
+
+        return extraString;
+
+    },
+
+    setSelection: function( string, extraString, silent ){
+
+        this.selection.setString( string, extraString, silent );
 
         return this;
 
@@ -20578,6 +28347,12 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "assembly" ] !== undefined ){
+
+            this.setSelection( undefined, this.getAssemblySele( params[ "assembly" ] ) );
+
+        }
+
         NGL.Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -20593,6 +28368,10 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var viewer = this.viewer;
         var structure = this.structure;
         var assembly = this.assembly;
+
+        if( assembly === "" ){
+            assembly = structure.defaultAssembly;
+        }
 
         // NGL.log( structure.biomolDict );
 
@@ -20617,15 +28396,63 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
+        // TODO use a signal to message completion
+        // TODO set a flag for working/finished
+        // TODO try to keep the API sync by queuing commands (similar also in stage)
+        // TODO add async/worker-based .calculate method before .create
+
+        // async to appease Chrome
+        //   except that using async.js doesn't appease Chrome ...
+
+        // async.each(
+
+        //     this.bufferList,
+
+        //     function( buffer, wcallback ){
+
+        //         if( instanceList.length >= 1 ){
+        //             viewer.add( buffer, instanceList );
+        //         }else{
+        //             viewer.add( buffer );
+        //         }
+
+        //         wcallback();
+
+        //     },
+
+        //     function( err ){
+
+        //         console.log( "attach: viewer.add done" )
+
+        //     }
+
+        // );
+
         this.bufferList.forEach( function( buffer ){
 
-            if( instanceList.length >= 1 ){
-                viewer.add( buffer, instanceList );
-            }else{
-                viewer.add( buffer );
-            }
+            // async to appease Chrome
+
+            setTimeout( function(){
+
+                if( instanceList.length >= 1 ){
+                    viewer.add( buffer, instanceList );
+                }else{
+                    viewer.add( buffer );
+                }
+
+            }, 0 );
 
         } );
+
+        // this.bufferList.forEach( function( buffer ){
+
+        //     if( instanceList.length > 1 ){
+        //         viewer.add( buffer, instanceList );
+        //     }else{
+        //         viewer.add( buffer );
+        //     }
+
+        // } );
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
@@ -21639,7 +29466,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 a1 = r1.getAtomByName( f.traceAtomname );
                 a2 = r2.getAtomByName( f.traceAtomname );
 
-                if( test( a1 ) && test( a2 ) ){
+                if( !test || ( test( a1 ) && test( a2 ) ) ){
 
                     baSet.addAtom( a1 );
                     bbSet.addBond( a1, a2, true );
@@ -21648,7 +29475,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
             } );
 
-            if( test( a1 ) && test( a2 ) ){
+            if( !test || ( test( a1 ) && test( a2 ) ) ){
 
                 baSet.addAtom( a2 );
 
@@ -21882,7 +29709,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                     a2 = r.getAtomByName( "N3" );
                 }
 
-                if( test( a1 ) ){
+                if( !test || test( a1 ) ){
 
                     baSet.addAtom( a1 );
                     baSet.addAtom( a2 );
@@ -23742,7 +31569,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         var opacity = this.transparent ? this.opacity : 1.0;
 
         var structureSubset = new NGL.StructureSubset(
-            this.structure, this.selection.string
+            this.structure, this.selection
         );
 
         var contactsFnDict = {
@@ -23869,10 +31696,29 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     type: "surface",
 
-    parameters: Object.assign( {
+    parameters: Object.assign(
 
+        NGL.StructureRepresentation.prototype.parameters, {
+
+        surfaceType: {
+            type: "select", rebuild: true,
+            options: {
+                "vws": "vws",
+                "sas": "sas",
+                "ms": "ms",
+                "ses": "ses"
+            }
+        },
+        probeRadius: {
+            type: "number", precision: 1, max: 20, min: 0,
+            rebuild: true
+        },
         smooth: {
             type: "integer", precision: 1, max: 10, min: 0,
+            rebuild: true
+        },
+        scaleFactor: {
+            type: "number", precision: 1, max: 5, min: 0,
             rebuild: true
         },
         wireframe: {
@@ -23895,7 +31741,13 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1, min: 0, uniform: true
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, {
+
+        radiusType: null,
+        radius: null,
+        scale: null
+
+    } ),
 
     init: function( params ){
 
@@ -23903,11 +31755,14 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         p.color = p.color || 0xDDDDDD;
 
-        this.smooth = p.smooth !== undefined ? p.smooth : 1;
+        this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
+        this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
+        this.smooth = p.smooth !== undefined ? p.smooth : 2;
+        this.scaleFactor = p.scaleFactor !== undefined ? p.scaleFactor : 2.0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
@@ -23919,13 +31774,26 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var structureSubset = new NGL.StructureSubset(
-            this.structure, this.selection.string
-        );
+        if( !this.molsurf ||
+            this.__sele !== this.selection.combinedString ||
+            this.__surfaceType !== this.surfaceType ||
+            this.__probeRadius !== this.probeRadius ||
+            this.__scaleFactor !== this.scaleFactor
+        ){
 
-        var ms = new NGL.MolecularSurface( structureSubset );
+            this.molsurf = new NGL.MolecularSurface( this.atomSet );
 
-        this.surface = ms.vdw();
+            this.surface = this.molsurf.getSurface(
+                this.surfaceType, this.probeRadius, this.scaleFactor
+            );
+
+            this.__sele = this.selection.combinedString;
+            this.__surfaceType = this.surfaceType;
+            this.__probeRadius = this.probeRadius;
+            this.__scaleFactor = this.scaleFactor;
+
+        }
+
         this.surface.generateSurface( 1, this.smooth );
 
         var position = this.surface.getPosition();
@@ -23995,13 +31863,38 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         var surfaceData = {};
 
+        if( what[ "position" ] ){
+
+            // FIXME
+            this.molsurf = undefined;
+            this.rebuild();
+            return;
+
+        }
+
         if( what[ "color" ] ){
 
             surfaceData[ "color" ] = this.surface.getColor( this.color );
 
         }
 
-        this.surfaceBuffer.setAttributes( surfaceData );
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.setAttributes( surfaceData );
+
+        } );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        what = what || {};
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     },
 
@@ -24240,8 +32133,12 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
     this.surface = surface;
 
-    this.create();
-    this.attach();
+    this.prepare( function(){
+
+        this.create();
+        this.attach();
+
+    }.bind( this ) );
 
 };
 
@@ -24295,7 +32192,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
@@ -24315,13 +32212,31 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    prepare: function( callback ){
 
         if( this.surface instanceof NGL.Volume ){
 
-            this.surface.generateSurface( this.isolevel, this.smooth );
+            this.surface.generateSurfaceWorker( this.isolevel, this.smooth, function(){
+
+                callback();
+
+            } );
+
+        }else{
+
+            callback();
 
         }
+
+    },
+
+    create: function(){
+
+        // if( this.surface instanceof NGL.Volume ){
+
+        //     this.surface.generateSurface( this.isolevel, this.smooth );
+
+        // }
 
         var position = this.surface.getPosition();
         var color = this.surface.getColor( this.color );
@@ -24396,7 +32311,11 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
-        this.surfaceBuffer.setAttributes( surfaceData );
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.setAttributes( surfaceData );
+
+        } );
 
     }
 
@@ -24689,7 +32608,7 @@ NGL.Stage.prototype = {
             }
 
             // add frames as trajectory
-            if( object.structure.frames ) object.addTrajectory();
+            if( object.structure.frames.length ) object.addTrajectory();
 
         }else if( object instanceof NGL.SurfaceComponent ){
 
@@ -25461,7 +33380,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
         if( this.selection.string ){
 
             this.structure = new NGL.StructureSubset(
-                this.__structure, this.selection.string
+                this.__structure, this.selection
             );
 
         }else{
@@ -25513,6 +33432,29 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         var repr = NGL.makeRepresentation(
             type, this.structure, this.viewer, params
+        );
+
+        var reprComp = new NGL.RepresentationComponent(
+            this.stage, repr, params, this
+        );
+
+        NGL.Component.prototype.addRepresentation.call( this, reprComp );
+
+        return returnRepr ? reprComp : this;
+
+    },
+
+    addBufferRepresentation: function( buffer, params, returnRepr ){
+
+        // FIXME get rid of code duplication
+
+        var pref = this.stage.preferences;
+        params = params || {};
+        params.quality = params.quality || pref.getKey( "quality" );
+        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
+
+        var repr = NGL.makeRepresentation(
+            "buffer", buffer, this.viewer, params
         );
 
         var reprComp = new NGL.RepresentationComponent(
@@ -26167,8 +34109,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { sele: "1-320", wireframe: false } );
                 o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
-                o.addRepresentation( "rope", { sele: "*" }, true )
-                    .setParameters( { subdiv: 2 } );
+                o.addRepresentation( "rope", { sele: "*", subdiv: 2 } );
                 o.addRepresentation( "licorice", { sele: ".C or .CA or .O" } );
 
                 // o.addRepresentation( "tube", {
@@ -26379,7 +34320,7 @@ NGL.Examples = {
                 // o.addRepresentation( "spacefill", { sele: ":B" } );
                 // o.addRepresentation( "ball+stick", { sele: ":B" } );
 
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26404,7 +34345,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26412,7 +34353,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26420,7 +34361,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26428,7 +34369,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { quality: "low" } );
                 o.addRepresentation( "base" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26439,28 +34380,28 @@ NGL.Examples = {
             stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "line" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "line" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "line" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "line" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26471,28 +34412,28 @@ NGL.Examples = {
             stage.loadFile( "data://4UPY.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UPX.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UQ5.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UPW.pdb", function( o ){
 
                 o.addRepresentation( "trace" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26653,11 +34594,16 @@ NGL.Examples = {
 
             NGL.time( "test" );
 
-            stage.loadFile( "data://3l5q.pdb", function( o ){
+            // stage.loadFile( "data://3l5q.pdb", function( o ){
+            stage.loadFile( "data://4UJD.cif.gz", function( o ){
+            // stage.loadFile( "data://3j3y.cif.gz", function( o ){
 
-                o.addRepresentation( "line", { color: "chainindex" } );
+                // o.addRepresentation( "line", { color: "chainindex" } );
+                // o.addRepresentation( "spacefill", { color: "chainindex" } );
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
-                o.centerView();
+                // o.addRepresentation( "trace", { color: "chainindex" } );
+                // o.addRepresentation( "point", { color: "chainindex" } );
+                o.centerView( undefined, true );
 
                 NGL.timeEnd( "test" );
 
@@ -26676,7 +34622,7 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
                 o.addRepresentation( "licorice" );
                 // o.addRepresentation( "hyperball" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26689,7 +34635,7 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "ball+stick" );
                 stage.viewer.setClip( 42, 100 );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26710,14 +34656,14 @@ NGL.Examples = {
             // stage.loadFile( "data://1crn.gro", function( o ){
 
             //     o.addRepresentation( "ribbon", { color: "residueindex" } );
-            //     stage.centerView();
+            //     o.centerView();
 
             // } );
 
             stage.loadFile( "data://water.gro", function( o ){
 
                 o.addRepresentation( "line", { color: "residueindex" } );
-                stage.centerView();
+                o.centerView();
 
                 o.viewer.render();
 
@@ -26728,7 +34674,7 @@ NGL.Examples = {
             /*stage.loadFile( "data://3l5q.gro", function( o ){
 
                 o.addRepresentation( "trace", { color: "residueindex", subdiv: 3 } );
-                stage.centerView();
+                o.centerView();
 
                 o.viewer.render();
 
@@ -26770,7 +34716,7 @@ NGL.Examples = {
                 o.addRepresentation( "label", {
                     sele: ".CA", color: "element"
                 } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26791,7 +34737,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", { radius: "ss" } );
                 // o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26810,7 +34756,7 @@ NGL.Examples = {
                 o.addRepresentation( "point", {
                     sele: "*", sizeAttenuation: true, pointSize: 12, sort: true
                 } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26821,14 +34767,14 @@ NGL.Examples = {
             stage.loadFile( "data://1CRN.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://1CRN.cif.zip", function( o ){
 
                 o.addRepresentation( "licorice" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26837,14 +34783,14 @@ NGL.Examples = {
                 o.addRepresentation( "rocket", {
                     transparent: true, opacity: 0.5
                 } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://1CRN.cif.bz2", function( o ){
 
                 o.addRepresentation( "rope", { scale: 0.3 } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26960,14 +34906,14 @@ NGL.Examples = {
 
                 o.addRepresentation( "surface" );
                 o.addRepresentation( "dot", { visible: false } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://3pqr.pdb", function( o ){
 
                 o.addRepresentation( "cartoon" );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26982,14 +34928,14 @@ NGL.Examples = {
                     opacity: 0.5,
                     opaqueBack: true
                 } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
             stage.loadFile( "data://4UJD.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
-                stage.centerView();
+                o.centerView();
 
             } );
 
@@ -26997,11 +34943,88 @@ NGL.Examples = {
 
         "molsurf": function( stage ){
 
-            stage.loadFile( "data://1crn.pdb", function( o ){
+            stage.loadFile( "data://3dqb.pdb", function( o ){
 
                 o.addRepresentation( "licorice", {} );
+                o.addRepresentation( "spacefill" );
                 o.addRepresentation( "surface" );
-                stage.centerView();
+                o.centerView();
+
+            } );
+
+        },
+
+        "cube": function( stage ){
+
+            stage.loadFile( "data://acrolein1gs.cube.gz", function( o ){
+
+                o.addRepresentation( "surface", { isolevel: 0.1, wireframe: true } );
+                o.addRepresentation( "dot", { visible: false } );
+                o.centerView();
+
+            } );
+
+            stage.loadFile( "data://acrolein.pdb", function( o ){
+
+                o.addRepresentation( "licorice" );
+                o.centerView();
+
+            } );
+
+        },
+
+        "unitcell": function( stage ){
+
+            // stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
+
+            //     o.addRepresentation( "surface", { wireframe: true } );
+            //     o.addRepresentation( "dot", { visible: false } );
+            //     o.centerView();
+
+            // } );
+
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                // var uc = o.structure.unitcell;
+                // var cellPosition = new Float32Array( 3 * 8 );
+                // var v = new THREE.Vector3();
+                // v.set( 0, 0, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 0 );
+                // v.set( 1, 0, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 3 );
+                // v.set( 0, 1, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 6 );
+                // v.set( 0, 0, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 9 );
+                // v.set( 1, 1, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 12 );
+                // v.set( 1, 0, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 15 );
+                // v.set( 0, 1, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 18 );
+                // v.set( 1, 1, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 21 );
+                // var cellColor = NGL.Utils.uniformArray3( 8, 1, 0, 0 );
+                // var cellRadius = NGL.Utils.uniformArray( 8, 2 );
+                // var sphereBuffer = new NGL.SphereBuffer(
+                //     cellPosition, cellColor, cellRadius
+                // );
+                // o.addBufferRepresentation( sphereBuffer );
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "ribbon", {
+                    assembly: "UNITCELL", color: 0x00DD11, scale: 0.9
+                } );
+                o.centerView();
+
+            } );
+
+        },
+
+        "biomol": function( stage ){
+
+            stage.loadFile( "data://1U19.cif", function( o ){
+
+                o.addRepresentation( "licorice" );
+                o.addRepresentation( "cartoon", {
+                    assembly: "BU1", color: 0xFF1111
+                } );
+                o.addRepresentation( "cartoon", {
+                    assembly: "BU2", color: 0x11FF11
+                } );
+                o.centerView();
 
             } );
 
