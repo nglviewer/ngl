@@ -86,20 +86,47 @@
 
         <div>Each loaded structure can be displayed using a variety of representations that can be combined to create complex molecular views. Multiple representation types are supported, including space-filling spheres for atoms (spacefill), cylinders and spheres for bonds and atoms (ball+stick), simple lines for bonds (line), secondary structure abstraction (cartoon), backbone atom trace (backbone). The appearance of the representations can be fine-tuned by parameters, for example, to change the quality. Most representations have a color and a radius parameter that can use data from the underlying structure. For instance, a representation can be colored uniformly or according to the element, residue or secondary structure type of the atoms from which the representation is derived. The size of representation objects, for example sphere and cylinder radii in a ball+stick representation, can be set similarly.</div>
 
+        <div>The parameters can be set from the representation menu in the [page:User-interface user interface] or via the API of the [page:RepresentationComponent representation component] class.</div>
+
+
+        <h2>Common parameters</h2>
+
+        <ul>
+            <li>*assembly*: List of various assemblies, either automatically created or given in the structure file. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB* or *mmCIF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). The default value is the first biological assembly or if that is not available the asymmetric unit.</li>
+            <li>*flatShaded*: A boolean value, when set to true non-ray-casted representations are flatly shaded such that individual triangles are discernible.</li>
+            <li>*nearClip*: A boolean value, by default true, but when set to false the representation is not clipped by the global near clipping plane.</li>
+            <li>*opacity*: A number between 1.0 and 0.0, where 1.0 means no transparency and 0.0 full transparency. Note that the *transparent* parameter must be set to true for it to work properly.</li>
+            <li>*radius*: A number providing a fixed radius used for rendering the representation.</li>
+            <li>*radiusType*: A list of possible sources of the radius used for rendering the representation. The radius can be based on the *vdW radius*, the *covalent radius* or the *B-factor* value of the corresponding atom. Additionally the radius can be based on the *secondary structure*. Alternatively, when set to *size*, the value from the *radius* parameter is used for all atoms.</li>
+            <li>*scale*: A number that scales the value defined by the *radius* or the *radiusType* parameter.</li>
+            <li>*side*: A list of values determining which side of the representation geometry is rendered. Either only the front is drawn (*front*), or only the back (*back*) or both sides (*double*).</li>
+            <li>*transparent*: A boolean value, either set to true, allowing transparency, or to false. Needs to be set to true for the *opacity* parameter to work properly.</li>
+        </ul>
+
 
         <h2>spacefill</h2>
 
-        *spacefill*: spheres display atoms
+        Atoms are displayed as a set of space-filling spheres.
+
+        <ul>
+            <li>*sphereDetail*: An integer between 0 and 3, where 0 means low and 3 very high geometric detail. Only has an effect when ray-casting of geometric primitives is unavailable or switched of via the *impostor* preference.</li>
+        </ul>
 
 
         <h2>ball+stick</h2>
 
-        *ball+stick*: spheres and cylinders display atoms and bonds
+        Atoms are displayed as spheres (balls) and bonds as cylinders (sticks).
+
+        <ul>
+            <li>*aspectRatio*: A number between 1.0 and 10.0, defining how much bigger the sphere radius is compared to the cylinder radius.</li>
+            <li>*radiusSegments*: An integer between 3 and 25, defining the number of segments used to create a cylinder. Only has an effect when ray-casting of geometric primitives is unavailable or switched of via the *impostor* preference.</li>
+            <li>*sphereDetail*: See *spacefill* representation</li>
+        </ul>
 
 
         <h2>licorice</h2>
 
-        *licorice*: a variant of the ball+stick representation where balls and sticks have the same radius
+        A variant of the *ball+stick* representation where balls and sticks have the same radius, that is the *aspectRatio* parameter is fixed to 1.0.
 
 
         <h2>line</h2>
@@ -139,6 +166,10 @@
 
         <h2>point</h2>
 
+        <p>
+            *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+        </p>
+
         *point*: ...
 
 
@@ -164,10 +195,18 @@
 
         <h2>contact</h2>
 
+        <p>
+            *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+        </p>
+
         *contact*: ...
 
 
         <h2>crossing</h2>
+
+        <p>
+            *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+        </p>
 
         *crossing*: ...
 
@@ -176,6 +215,14 @@
 
         *helixorient*: ...
 
+
+        <h2>surface</h2>
+
+        <p>
+            *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+        </p>
+
+        Displays the molecular surface and its variants.
 
 
     </body>
