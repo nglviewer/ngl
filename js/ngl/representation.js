@@ -4845,18 +4845,37 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 /////////////////////////
 // Representation types
 
-NGL.representationTypes = {};
+( function(){
 
-for( var key in NGL ){
+    NGL.representationTypes = {};
+    var reprList = [];
 
-    var val = NGL[ key ];
+    // find structure representations
 
-    if( val.prototype instanceof NGL.StructureRepresentation &&
-        val.prototype.type
-    ){
+    for( var key in NGL ){
 
-        NGL.representationTypes[ val.prototype.type ] = val;
+        var val = NGL[ key ];
+
+        if( val.prototype instanceof NGL.StructureRepresentation &&
+            val.prototype.type
+        ){
+
+            reprList.push( val );
+
+        }
 
     }
 
-}
+    // sort by representation type (i.e. name)
+
+    reprList.sort( function( a, b ){
+
+            return a.prototype.type.localeCompare( b.prototype.type );
+
+    } ).forEach( function( repr ){
+
+        NGL.representationTypes[ repr.prototype.type ] = repr;
+
+    } );
+
+} )();
