@@ -10,31 +10,40 @@
 		<h1>[name]</h1>
 
 		<p>
-			The following file formats are supported:
+			The following file formats are supported. Files can be compressed with gzip. Format detection is based on the file extension.
 
-			<!-- <ul>
+			<ul>
 				<li>Structures</li>
 					<ul>
-						<li>mmCIF</li>
-						<li>PDB</li>
-						<li>GRO</li>
+						<li><a href="#mmcif">mmCIF</a></li>
+						<li><a href="#pdb">PDB</a></li>
+						<li><a href="#gro">GRO</a></li>
 					</ul>
-				<li>Trajectories</li>
+				<li>Trajectories (remote)</li>
 					<ul>
-						<li>XTC</li>
-						<li>netCDF</li>
-						<li>DCD</li>
+						<li><a href="#xtc">XTC/TRR</a></li>
+						<li><a href="#netcdf">netCDF</a></li>
+						<li><a href="#dcd">DCD</a></li>
+					</ul>
+				<li>Densities</li>
+					<ul>
+						<li><a href="#mrc">MRC/MAP/CCP4</a> (beta)</li>
+						<li><a href="#cube">CUBE</a> (beta)</li>
 					</ul>
 				<li>Surfaces</li>
 					<ul>
-						<li>OBJ</li>
-						<li>PLY</li>
+						<li><a href="#obj">OBJ</a></li>
+						<li><a href="#ply">PLY</a></li>
 					</ul>
-			</ul> -->
+			</ul>
 		</p>
 
 
 		<h2>Structures</h2>
+
+		<p>
+			Structure data is saved into [page:Structure] instances.
+		</p>
 
 		<p>
 			Loading flags (available from the *File* menu):
@@ -57,10 +66,10 @@
 		</p>
 
 
-		<h3>mmCIF</h3>
+		<h3 id="mmcif">mmCIF</h3>
 
 		<p>
-			Extension: <strong>.cif</strong>
+			Extension: <strong>.cif</strong>, <strong>.mmcif</strong>
 		</p>
 
 		<p>
@@ -72,9 +81,15 @@
 
 			<ul>
 				<li>Title: read from "_struct.title" item</li>
-				<li>Box coordinates: currently not read -- TODO</li>
+				<li>Box coordinates: read from "_cell" item</li>
+				<li>Space group: read from "_symmetry.space_group_name_H-M" item</li>
 				<li>Secondary structure: read from "_struct_conf" and "_struct_sheet_range" items</li>
-				<li>Assemblies: read from "_pdbx_struct_oper_list" and "_pdbx_struct_assembly_gen" times</li>
+				<li>Assemblies</li>
+					<ul>
+						<li>Biological assemblies: read from "_pdbx_struct_oper_list" and "_pdbx_struct_assembly_gen" items</li>
+						<li>Non-crystallographic symmetry: read from "_struct_ncs_oper" item</li>
+						<li>Crystallographic symmetry: determined from space group</li>
+					</ul>
 				<li>Atom data: read from the "_atom_site" items</li>
 					<ul>
 						<li>*resname*: read from "label_comp_id" field</li>
@@ -95,10 +110,10 @@
 		</p>
 
 
-		<h3>PDB</h3>
+		<h3 id="pdb">PDB</h3>
 
 		<p>
-			Extension: <strong>.pdb</strong>
+			Extension: <strong>.pdb</strong>, <strong>.ent</strong>
 		</p>
 
 		<p>
@@ -111,8 +126,14 @@
 			<ul>
 				<li>Title: read from "TITLE" record</li>
 				<li>Box coordinates: read from "CRYST1" record</li>
+				<li>Space group: read from "CRYST1" record</li>
 				<li>Secondary structure: read from "HELIX" and "SHEET" records</li>
-				<li>Assemblies: read from "REMARK 350" record</li>
+				<li>Assemblies</li>
+					<ul>
+						<li>Biological assemblies: read from "REMARK 350" record</li>
+						<li>Non-crystallographic symmetry: read from "MTRIX" record</li>
+						<li>Crystallographic symmetry: determined from space group</li>
+					</ul>
 				<li>Atom data: read from the "ATOM" and "HETATM" records</li>
 					<ul>
 						<li>*resname*: read from "resName" field</li>
@@ -133,7 +154,7 @@
 		</p>
 
 
-		<h3>GRO</h3>
+		<h3 id="gro">GRO</h3>
 
 		<p>
 			Extension: <strong>.gro</strong>
@@ -181,30 +202,96 @@
 		<p>Structure files in *mmCIF*, *PDB* or *GRO* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these files.</p>
 
 
-		<h3>XTC</h3>
+		<h3 id="xtc">XTC/TRR</h3>
 
 		<p>
-			Extension: <strong>.xtc</strong>
+			Extension: <strong>.xtc</strong>, <strong>.trr</strong>
 		</p>
 
 
-		<h3>netCDF</h3>
+		<h3 id="netcdf">netCDF</h3>
 
 		<p>
 			Extension: <strong>.netcdf</strong>
 		</p>
 
 
-		<h3>DCD</h3>
+		<h3 id="dcd">DCD</h3>
 
 		<p>
 			Extension: <strong>.dcd</strong>
 		</p>
 
 
+		<h2>Densities</h2>
+
+		<p>
+			Density data is saved into [page:Volume] instances.
+		</p>
+
+		<h3 id="mrc">MRC/MAP/CCP4</h3>
+
+		<p>
+			Extension: <strong>.mrc</strong>, <strong>.map</strong>, <strong>.ccp4</strong>
+		</p>
+
+		<p>
+			*CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+		</p>
+
+		<p>
+			Specification: <a href="http://www.ccp4.ac.uk/html/maplib.html">http://www.ccp4.ac.uk/html/maplib.html</a>, <a href="http://ami.scripps.edu/software/mrctools/mrc_specification.php">http://ami.scripps.edu/software/mrctools/mrc_specification.php</a>
+		</p>
+
+		<p>
+			Supported features:
+
+			<ul>
+				<li>Header data</li>
+				<li>Density data</li>
+			</ul>
+		</p>
+
+
+		<h3 id="cube">CUBE</h3>
+
+		<p>
+			Extension: <strong>.cube</strong>
+		</p>
+
+		<p>
+			*CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+		</p>
+
+		<p>
+			Specification: <a href="http://paulbourke.net/dataformats/cube/">http://paulbourke.net/dataformats/cube/</a>
+		</p>
+
+		<p>
+			Supported features:
+
+			<ul>
+				<li>Header data</li>
+				<li>Density data</li>
+			</ul>
+		</p>
+
+		<p>
+			TODO:
+
+			<ul>
+				<li>Read structure embedded in the header.</li>
+			</ul>
+		</p>
+
+
 		<h2>Surfaces</h2>
 
-		<h3>OBJ</h3>
+		<p>
+			The surface geometry is saved into [page:Surface] instances.
+		</p>
+
+		<h3 id="obj">OBJ</h3>
 
 		<p>
 			Extension: <strong>.obj</strong>
@@ -215,7 +302,7 @@
 		</p>
 
 
-		<h3>PLY</h3>
+		<h3 id="ply">PLY</h3>
 
 		<p>
 			Extension: <strong>.ply</strong>
