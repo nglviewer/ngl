@@ -27600,6 +27600,8 @@ NGL.BufferVectorHelper = function( position, vector, color, scale ){
         vector: vector
     });
 
+    this.group = new THREE.Group();
+
 };
 
 NGL.BufferVectorHelper.prototype = {
