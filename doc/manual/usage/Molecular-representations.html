@@ -25,7 +25,7 @@
                     if( !name ) return;
 
                     var button = document.createElement( "button" );
-                    button.id = name;
+                    button.id = "btn_" + name;
                     button.textContent = name;
                     buttons.appendChild( button );
 
@@ -54,7 +54,7 @@
                                 );
                             }
 
-                            var btn = document.getElementById( name );
+                            var btn = document.getElementById( "btn_" + name );
                             var repr = reprDict[ name ];
 
                             btn.addEventListener( "click", function(){
@@ -65,7 +65,7 @@
                         } );
 
                         reprDict[ "cartoon" ].setVisibility( true );
-                        document.getElementById( "cartoon" )
+                        document.getElementById( "btn_cartoon" )
                             .style.backgroundColor = "#2194CE";
                         o.centerView();
 
@@ -84,9 +84,36 @@
             <div id="buttons" style="width:400px;"></div>
         </div>
 
-        <div>Each loaded structure can be displayed using a variety of representations that can be combined to create complex molecular views. Multiple representation types are supported, including space-filling spheres for atoms (spacefill), cylinders and spheres for bonds and atoms (ball+stick), simple lines for bonds (line), secondary structure abstraction (cartoon), backbone atom trace (backbone). The appearance of the representations can be fine-tuned by parameters, for example, to change the quality. Most representations have a color and a radius parameter that can use data from the underlying structure. For instance, a representation can be colored uniformly or according to the element, residue or secondary structure type of the atoms from which the representation is derived. The size of representation objects, for example sphere and cylinder radii in a ball+stick representation, can be set similarly.</div>
+        <p>Each loaded structure can be displayed using a variety of representations that can be combined to create complex molecular views. Multiple representation types are supported, including space-filling spheres for atoms (spacefill), cylinders and spheres for bonds and atoms (ball+stick), simple lines for bonds (line), secondary structure abstraction (cartoon), backbone atom trace (backbone). The appearance of the representations can be fine-tuned by parameters, for example, to change the quality. Most representations have a color and a radius parameter that can use data from the underlying structure. For instance, a representation can be colored uniformly or according to the element, residue or secondary structure type of the atoms from which the representation is derived. The size of representation objects, for example sphere and cylinder radii in a ball+stick representation, can be set similarly.</p>
 
-        <div>The parameters can be set from the representation menu in the [page:User-interface user interface] or via the API of the [page:RepresentationComponent representation component] class.</div>
+        <p>The parameters can be set from the representation menu in the [page:User-interface user interface] or via the API of the [page:RepresentationComponent representation component] class.</p>
+
+
+        <h2>Index</h2>
+
+        <p>
+            <ul style="columns:8 6em; -webkit-columns:8 6em; -moz-columns:8 6em;">
+                <li><a href="#backbone">backbone</a></li>
+                <li><a href="#ball+stick">ball+stick</a></li>
+                <li><a href="#base">base</a></li>
+                <li><a href="#cartoon">cartoon</a></li>
+                <li><a href="#contact">contact</a></li>
+                <li><a href="#crossing">crossing</a></li>
+                <li><a href="#helixorient">helixorient</a></li>
+                <li><a href="#hyperball">hyperball</a></li>
+                <li><a href="#label">label</a></li>
+                <li><a href="#licorice">licorice</a></li>
+                <li><a href="#line">line</a></li>
+                <li><a href="#point">point</a></li>
+                <li><a href="#ribbon">ribbon</a></li>
+                <li><a href="#rocket">rocket</a></li>
+                <li><a href="#rope">rope</a></li>
+                <li><a href="#spacefill">spacefill</a></li>
+                <li><a href="#surface">surface</a></li>
+                <li><a href="#trace">trace</a></li>
+                <li><a href="#tube">tube</a></li>
+            </ul>
+        </p>
 
 
         <h2>Common parameters</h2>
@@ -104,16 +131,18 @@
         </ul>
 
 
-        <h2>spacefill</h2>
+        <h2 id="backbone">backbone</h2>
 
-        Atoms are displayed as a set of space-filling spheres.
+        Cylinders connect successive residues of unbroken chains by their main backbone atoms, which are <strong>.CA</strong> atoms in case of proteins and <strong>C4'</strong>/<strong>C3'</strong> atoms for RNA/DNA, respectively. The main backbone atoms are displayed as spheres.
 
         <ul>
-            <li>*sphereDetail*: An integer between 0 and 3, where 0 means low and 3 very high geometric detail. Only has an effect when ray-casting of geometric primitives is unavailable or switched of via the *impostor* preference.</li>
+            <li>*aspectRatio*: &hellip;</li>
+            <li>*radiusSegments*:&hellip;</li>
+            <li>*sphereDetail*: &hellip;</li>
         </ul>
 
 
-        <h2>ball+stick</h2>
+        <h2 id="ball+stick">ball+stick</h2>
 
         Atoms are displayed as spheres (balls) and bonds as cylinders (sticks).
 
@@ -124,105 +153,168 @@
         </ul>
 
 
-        <h2>licorice</h2>
+        <h2 id="base">base</h2>
 
-        A variant of the *ball+stick* representation where balls and sticks have the same radius, that is the *aspectRatio* parameter is fixed to 1.0.
+        Simplified display of RNA/DNA nucleotides, best used in conjunction with a <a href="#cartoon">cartoon</a> representation. Here, a stick is drawn connecting the sugar backbone with a nitrogen in the base (<strong>.N1</strong> in case of adenine or guanine, <strong>.N3</strong> in case of thymine or cytosine).
 
-
-        <h2>line</h2>
-
-        *line*: a one pixel wide line displays bonds (very fast)
-
-
-        <h2>hyperball</h2>
-
-        *hyperball*: a derivate of the ball+stick representation (pioneered by <a href="http://sourceforge.net/projects/hyperballs/">HyperBalls</a>) with a smooth transition from the balls to the sticks
+        <ul>
+            <li>*aspectRatio*: &hellip;</li>
+            <li>*radiusSegments*: &hellip;</li>
+            <li>*sphereDetail*: &hellip;</li>
+        </ul>
 
 
-        <h2>backbone</h2>
+        <h2 id="cartoon">cartoon</h2>
 
-        *backbone*: cylinders connecting the main backbone atoms
+        The main backbone atoms (see <a href="#backbone">backbone</a>) of successive residues in unbroken chains are connected by a smooth trace. The trace is expanded perpendicular to its tangent with an elliptical cross-section. The major axis points from <strong>.CA</strong> in the direction of the <strong>.O</strong> in case of proteins and from the <strong>C1'</strong>/<strong>C3'</strong> to <strong>C2'</strong>/<strong>O4'</strong> for RNA/DNA, respectively.
 
-
-        <h2>tube</h2>
-
-        *tube*: a tube along the main backbone trace
-
-
-        <h2>ribbon</h2>
-
-        *ribbon*: a one pixel thick ribbon along the main backbone trace (very fast)
-
-
-        <h2>trace</h2>
-
-        *trace*: a one pixel wide line along the main backbone trace (very fast)
+        <ul>
+            <li>*aspectRatio*: &hellip;</li>
+            <li>*subdiv*: &hellip;</li>
+            <li>*radialSegments*: &hellip;</li>
+            <li>*tension*: &hellip;</li>
+            <li>*capped*: &hellip;</li>
+            <li>*wireframe*: &hellip;</li>
+            <li>*arrows*: &hellip; (in development)</li>
+        </ul>
 
 
-        <h2>cartoon</h2>
-
-        *cartoon*: ...
-
-
-        <h2>point</h2>
+        <h2 id="contact">contact</h2>
 
         <p>
             *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
         </p>
 
-        *point*: ...
+        <p>
+            Works currently only for proteins. The angle criterion has currently little meaning.
+        </p>
+
+        Displays cylinders between supposedly contacting atoms.
+
+        <ul>
+            <li>*contactType*</li>
+                <ul>
+                    <li>*polar*: &hellip;</li>
+                    <li>*polar backbone*: &hellip;.</li>
+                </ul>
+            <li>*maxDistance*: &hellip;</li>
+            <li>*maxAngle*: &hellip;</li>
+        </ul>
 
 
-        <h2>label</h2>
-
-        *label*: ...
-
-
-        <h2>base</h2>
-
-        *base*: ...
-
-
-        <h2>rope</h2>
-
-        *representationTypes*: ...
-
-
-        <h2>rocket</h2>
-
-        *rocket*: ...
-
-
-        <h2>contact</h2>
+        <h2 id="crossing">crossing</h2>
 
         <p>
             *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
         </p>
 
-        *contact*: ...
+        &hellip;
 
 
-        <h2>crossing</h2>
+        <h2 id="helixorient">helixorient</h2>
+
+        Displays a various helix-related values.
+
+        &hellip;
+
+
+        <h2 id="hyperball">hyperball</h2>
+
+        A derivate of the <a href="#ball+stick">ball+stick</a> representation (pioneered by <a href="http://sourceforge.net/projects/hyperballs/">HyperBalls project</a>) in which atoms are smoothly connected by an elliptic hyperboloid.
+
+
+        <h2 id="label">label</h2>
+
+        Displays a label near the corresponding atom.
+
+        <ul>
+            <li>*labelType*: atom name, residue name, residue name + no or residue no</li>
+            <li>*font*: &hellip;</li>
+            <li>*antialias*: &hellip;</li>
+        </ul>
+
+
+        <h2 id="licorice">licorice</h2>
+
+        A variant of the <a href="#ball+stick">ball+stick</a> representation where balls and sticks have the same radius, that is the *aspectRatio* parameter is fixed to 1.0.
+
+
+        <h2 id="line">line</h2>
+
+        Bonds are displayed by a flat, unshaded line.
+
+
+        <h2 id="point">point</h2>
 
         <p>
             *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
         </p>
 
-        *crossing*: ...
+        Atoms are displayed by textured points.
 
 
-        <h2>helixorient</h2>
+        <h2 id="ribbon">ribbon</h2>
 
-        *helixorient*: ...
+        A thin ribbon is displayed along the main backbone trace.
 
 
-        <h2>surface</h2>
+        <h2 id="rocket">rocket</h2>
+
+        &hellip;
+
+
+        <h2 id="rope">rope</h2>
+
+        A rope-like protein fold abstraction well suited for coarse-grained structures. In this representation a tube follows the center points of local axes as defined by <a href="#helixorient">helixorient</a>. The result is similar to what is shown by the <a href="http://sbcb.bioch.ox.ac.uk/Bendix/">Bendix tool</a>.
+
+        <ul>
+            <li>*subdiv*: &hellip;</li>
+            <li>*radialSegments*: &hellip;</li>
+            <li>*tension*: &hellip;</li>
+            <li>*capped*: &hellip;</li>
+            <li>*wireframe*: &hellip;</li>
+            <li>*smooth*: &hellip;</li>
+        </ul>
+
+
+        <h2 id="spacefill">spacefill</h2>
+
+        Atoms are displayed as a set of space-filling spheres.
+
+        <ul>
+            <li>*sphereDetail*: An integer between 0 and 3, where 0 means low and 3 very high geometric detail. Only has an effect when ray-casting of geometric primitives is unavailable or switched of via the *impostor* preference.</li>
+        </ul>
+
+
+        <h2 id="surface">surface</h2>
 
         <p>
             *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
         </p>
 
         Displays the molecular surface and its variants.
+
+        <ul>
+            <li>*surfaceType*</li>
+                <ul>
+                    <li>*vws*: van der Waals surface &hellip;</li>
+                    <li>*sas*: solvent accessible surface &hellip;</li>
+                    <li>*ms*: molecular surface &hellip;</li>
+                    <li>*ses*: solvent excluded surface &hellip;</li>
+                </ul>
+            <li>*probeRadius*: &hellip;</li>
+            <li>*scaleFactor*: &hellip; (just for debugging)</li>
+        </ul>
+
+
+        <h2 id="trace">trace</h2>
+
+        A flat, unshaded line is displayed along the main backbone trace.
+
+
+        <h2 id="tube">tube</h2>
+
+        Essentially like <a href="#cartoon">cartoon</a> but with the *aspectRatio* fixed at a value of 1.0.
 
 
     </body>
