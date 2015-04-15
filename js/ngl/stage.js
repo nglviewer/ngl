@@ -1392,7 +1392,9 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     setParameters: function( params ){
 
         this.repr.setParameters( params );
-        this.signals.parametersChanged.dispatch( params );
+        this.signals.parametersChanged.dispatch(
+            this.repr.getParameters()
+        );
 
         return this;
 
