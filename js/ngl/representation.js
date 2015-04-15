@@ -4473,6 +4473,11 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        isolevelType: {
+            type: "select", rebuild: true, options: {
+                "value": "value", "sigma": "sigma"
+            }
+        },
         isolevel: {
             type: "number", precision: 2, max: 1000, min: -1000,
             rebuild: true
@@ -4508,7 +4513,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         var p = params || {};
 
         this.color = p.color || 0xDDDDDD;
-        this.isolevel = p.isolevel !== undefined ? p.isolevel : NaN;
+        this.isolevelType  = p.isolevelType !== undefined ? p.isolevelType : "sigma";
+        this.isolevel = p.isolevel !== undefined ? p.isolevel : 2.0;
         this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
@@ -4537,11 +4543,26 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.surface instanceof NGL.Volume ){
 
-            this.surface.generateSurfaceWorker( this.isolevel, this.smooth, function(){
+            var isolevel;
 
-                callback();
+            if( this.isolevelType === "sigma" ){
 
-            } );
+                isolevel = this.surface.getIsolevelForSigma( this.isolevel );
+
+            }else{
+
+                isolevel = this.isolevel;
+
+            }
+
+            this.surface.generateSurfaceWorker(
+                isolevel, this.smooth,
+                function(){
+
+                    callback();
+
+                }
+            );
 
         }else{
 
@@ -4637,6 +4658,42 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             buffer.setAttributes( surfaceData );
 
         } );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        if( params && params[ "isolevelType" ] !== undefined &&
+            this.surface instanceof NGL.Volume
+        ){
+
+            if( this.isolevelType === "value" &&
+                params[ "isolevelType" ] === "sigma"
+            ){
+
+                this.isolevel = this.surface.getSigmaForIsolevel(
+                    this.isolevel
+                );
+
+            }else if( this.isolevelType === "sigma" &&
+                params[ "isolevelType" ] === "value"
+            ){
+
+                this.isolevel = this.surface.getIsolevelForSigma(
+                    this.isolevel
+                );
+
+            }
+
+            this.isolevelType = params[ "isolevelType" ];
+
+        }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 

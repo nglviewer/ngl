@@ -182,6 +182,7 @@ NGL.Volume.prototype = {
         delete this.__dataMin;
         delete this.__dataMax;
         delete this.__dataMean;
+        delete this.__dataRms;
 
         if( this.worker ) this.worker.terminate();
 
@@ -189,11 +190,7 @@ NGL.Volume.prototype = {
 
     generateSurface: function( isolevel, smooth, callback ){
 
-        if( isNaN( isolevel ) && this.header ){
-            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
-        }
-
-        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
@@ -290,11 +287,7 @@ NGL.Volume.prototype = {
 
     generateSurfaceWorker: function( isolevel, smooth, callback ){
 
-        if( isNaN( isolevel ) && this.header ){
-            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
-        }
-
-        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         //
@@ -352,6 +345,22 @@ NGL.Volume.prototype = {
             this.generateSurface( isolevel, smooth, callback );
 
         }
+
+    },
+
+    getIsolevelForSigma: function( sigma ){
+
+        sigma = sigma !== undefined ? sigma : 2;
+
+        return this.getDataMean() + sigma * this.getDataRms();
+
+    },
+
+    getSigmaForIsolevel: function( isolevel ){
+
+        isolevel = isolevel !== undefined ? isolevel : 0;
+
+        return ( isolevel - this.getDataMean() ) / this.getDataRms();
 
     },
 
@@ -647,6 +656,28 @@ NGL.Volume.prototype = {
         }
 
         return this.__dataMean;
+
+    },
+
+    getDataRms: function(){
+
+        if( this.__dataRms === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var sumSq = 0;
+            var di, i;
+
+            for( i = 0; i < n; ++i ){
+                di = data[ i ];
+                sumSq += di * di;
+            }
+
+            this.__dataRms = Math.sqrt( sumSq / n );
+
+        }
+
+        return this.__dataRms;
 
     },
 
