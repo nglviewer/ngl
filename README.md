@@ -24,13 +24,17 @@ Features
 Acknowledgments
 ===============
 
-This project would not be possible without recourse to many fine open-source projects. Specifically [three.js](http://threejs.org/) project provides a great foundation. See [here](http://proteinformatics.charite.de/ngl/doc/index.html#User_manual/Development/Acknowledgment) for a detailed list of acknowledgments.
+This project would not be possible without recourse to many fine open-source projects. Especially the [three.js](http://threejs.org/) project provides a great foundation. See [here](http://proteinformatics.charite.de/ngl/doc/index.html#User_manual/Development/Acknowledgment) for a detailed list of acknowledgments.
 
 
 Changelog
 =========
 
-* pending initial release
+Version 0.5
+-----------
+
+The first release.
+
 
 
 License
