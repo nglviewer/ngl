@@ -359,7 +359,7 @@ Object.values = function( obj ){
 
 var NGL = {
 
-    REVISION: '0.5dev',
+    REVISION: '0.5',
     EPS: 0.0000001,
     disableImpostor: false,
     indexUint16: false
