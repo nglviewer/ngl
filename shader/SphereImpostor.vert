@@ -15,6 +15,7 @@ varying float sphereRadius;
 #endif
 
 uniform mat4 projectionMatrixInverse;
+uniform float nearClip;
 
 const mat4 D = mat4(
     1.0, 0.0, 0.0, 0.0,
@@ -73,12 +74,12 @@ mat4 transpose( in mat4 inMatrix ) {
 //  Stephane Ploix (EDF)
 //
 // </verbatim>
-// 
+//
 // Contributions by Alexander Rose
 // - ported to WebGL
 // - adapted to work with quads
 void ComputePointSizeAndPositionInClipCoordSphere(){
-    
+
     vec2 xbc;
     vec2 ybc;
 
@@ -133,7 +134,11 @@ void main(void){
     // if( gl_Position.z-sphereRadius<=1.0 ){
     //     gl_Position.z = -10.0;
     // }
-    
+
+    // move out of viewing frustum for custom clipping
+    // if( dot( cameraSpherePos, vec4( 0.0, 0.0, 1.0, nearClip-1.0*radius ) ) > 0.0 )
+    //    gl_Position.w = -10.0;
+
 }
 
 

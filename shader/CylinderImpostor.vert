@@ -31,15 +31,16 @@ attribute vec3 position1;
 attribute vec3 position2;
 attribute float radius;
 
-varying float vRadius;  
+// varying float vRadius;
 
-varying vec3 point;
+// varying vec3 point;
 varying vec3 axis;
-varying vec3 base;
-varying vec3 end;
+varying vec4 base_radius;
+varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
-varying float b;
+// varying float b;
+varying vec4 w;
 
 #ifdef PICKING
     attribute vec3 pickingColor;
@@ -68,7 +69,8 @@ void main()
         vColor2 = color2;
     #endif
 
-    vRadius = radius;
+    // vRadius = radius;
+    base_radius.w = radius;
 
     vec3 center = position;
     vec3 dir = normalize( position2 - position1 );
@@ -80,7 +82,8 @@ void main()
 
     vec3 ldir;
 
-    b = dot( cam_dir, dir );
+    float b = dot( cam_dir, dir );
+    end_b.w = b;
     if( b < 0.0 ) // direction vector looks away, so flip
         ldir = -ext * dir;
     else // direction vector already looks in my direction
@@ -99,16 +102,18 @@ void main()
     V = normalize( normalMatrix * left );
 
     vec4 base4 = modelViewMatrix * vec4( center - ldir + leftShift, 1.0 );
-    base = base4.xyz / base4.w;
+    // base = base4.xyz / base4.w;
+    base_radius.xyz = base4.xyz / base4.w;
 
     vec4 top_position = modelViewMatrix * vec4( center + ldir + leftShift, 1.0 );
     vec4 end4 = top_position;
-    end = end4.xyz / end4.w;
+    // end = end4.xyz / end4.w;
+    end_b.xyz = end4.xyz / end4.w;
 
-    vec4 w = modelViewMatrix * vec4( 
+    w = modelViewMatrix * vec4(
         center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
     );
-    point = w.xyz / w.w;
+    // point = w.xyz / w.w;
 
     gl_Position = projectionMatrix * w;
 

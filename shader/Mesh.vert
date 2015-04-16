@@ -1,8 +1,5 @@
 
-// attribute vec3 position;
-// attribute vec3 normal;
-
-varying vec3 vNormal;
+varying vec4 cameraPos;
 
 #ifdef PICKING
     attribute vec3 pickingColor;
@@ -10,19 +7,21 @@ varying vec3 vNormal;
 #else
     attribute vec3 color;
     varying vec3 vColor;
+    varying vec3 vNormal;
 #endif
 
 void main()
 {
 
-	#ifdef PICKING
+    #ifdef PICKING
         vPickingColor = pickingColor;
     #else
         vColor = color;
+        vNormal = normalize( normalMatrix * normal );
     #endif
 
-	vNormal = normalize( normalMatrix * normal );
+    cameraPos =  modelViewMatrix * vec4( position, 1.0 );
 
-	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-   
+    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );
+
 }

@@ -4,12 +4,278 @@
  */
 
 
+NGL.Uint8ToString = function( u8a ){
+
+    // from http://stackoverflow.com/a/12713326/1435042
+
+    var CHUNK_SZ = 0x1000;
+    var c = [];
+
+    for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
+
+        c.push( String.fromCharCode.apply(
+
+            null, u8a.subarray( i, i + CHUNK_SZ )
+
+        ) );
+
+    }
+
+    return c.join("");
+
+}
+
+
+NGL.decompress = function( data, file, asBinary, callback ){
+
+    var binData, decompressedData;
+    var ext = NGL.getFileInfo( file ).compressed;
+
+    NGL.time( "NGL.decompress " + ext );
+
+    if( data instanceof ArrayBuffer ){
+
+        data = new Uint8Array( data );
+
+    }
+
+    if( ext === "gz" ){
+
+        binData = pako.ungzip( data );
+
+    }else if( ext === "zip" ){
+
+        var zip = new JSZip( data );
+        var name = Object.keys( zip.files )[ 0 ];
+        binData = zip.files[ name ].asUint8Array();
+
+    }else if( ext === "lzma" ){
+
+        var inStream = {
+            data: data,
+            offset: 0,
+            readByte: function(){
+                return this.data[ this.offset++ ];
+            }
+        };
+
+        var outStream = {
+            data: [ /* Uncompressed data will be putted here */ ],
+            offset: 0,
+            writeByte: function( value ){
+                this.data[ this.offset++ ] = value;
+            }
+        };
+
+        LZMA.decompressFile( inStream, outStream );
+        binData = new Uint8Array( outStream.data );
+
+    }else if( ext === "bz2" ){
+
+        // FIXME need to get binData
+        var bitstream = bzip2.array( data );
+        decompressedData = bzip2.simple( bitstream )
+
+    }else{
+
+        NGL.warn( "no decompression method available for '" + ext + "'" );
+        decompressedData = data;
+
+    }
+
+    if( !asBinary && decompressedData === undefined ){
+
+        decompressedData = NGL.Uint8ToString( binData );
+
+    }
+
+    NGL.timeEnd( "NGL.decompress " + ext );
+
+    var returnData = asBinary ? binData : decompressedData;
+
+    if( typeof callback === "function" ){
+
+        callback( returnData );
+
+    }
+
+    return returnData;
+
+}
+
+
+NGL.decompressWorker = function( data, file, asBinary, callback ){
+
+    if( NGL.worker && typeof Worker !== "undefined" ){
+
+        NGL.time( "NGL.decompressWorker" );
+
+        var worker = new Worker( "../js/worker/decompress.js" );
+
+        worker.onmessage = function( e ){
+
+            NGL.timeEnd( "NGL.decompressWorker" );
+            worker.terminate();
+            callback( e.data );
+
+        };
+
+        worker.postMessage(
+            { data: data, file: file, asBinary: asBinary },
+            [ data.buffer ? data.buffer : data ]
+        );
+
+    }else{
+
+        NGL.decompress( data, file, asBinary, callback );
+
+    }
+
+}
+
+
 ///////////
 // Loader
 
+NGL.XHRLoader = function ( manager ) {
+
+    /**
+     * @author mrdoob / http://mrdoob.com/
+     */
+
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+NGL.XHRLoader.prototype = {
+
+    constructor: NGL.XHRLoader,
+
+    load: function ( url, onLoad, onProgress, onError ) {
+
+        var scope = this;
+
+        var cached = THREE.Cache.get( url );
+
+        if ( cached !== undefined ) {
+
+            if ( onLoad ) onLoad( cached );
+            return;
+
+        }
+
+        var request = new XMLHttpRequest();
+        request.open( 'GET', url, true );
+
+        request.addEventListener( 'load', function ( event ) {
+
+            if ( request.status === 200 || request.status === 304 ) {
+
+                try{
+
+                    var data = this.response;
+
+                    var loaded = function( d ){
+
+                        THREE.Cache.add( url, d );
+                        if ( onLoad ) onLoad( d );
+
+                    }
+
+                    if( scope.compressed ){
+
+                        data = NGL.decompressWorker(
+                            data, url, scope.asBinary, loaded
+                        );
+
+                    }else{
+
+                        loaded( data );
+
+                    }
+
+                }catch( e ){
+
+                    if ( onError ) onError( "decompression failed" );
+
+                }
+
+            } else {
+
+                if ( onError ) onError( request.status );
+
+            }
+
+            scope.manager.itemEnd( url );
+
+        }, false );
+
+        if ( onProgress !== undefined ) {
+
+            request.addEventListener( 'progress', function ( event ) {
+
+                onProgress( event );
+
+            }, false );
+
+        }
+
+        if ( onError !== undefined ) {
+
+            request.addEventListener( 'error', function ( event ) {
+
+                onError( event );
+
+            }, false );
+
+        }
+
+        if ( this.crossOrigin !== undefined ) request.crossOrigin = this.crossOrigin;
+        if ( this.responseType !== undefined ) request.responseType = this.responseType;
+
+        request.send( null );
+
+        scope.manager.itemStart( url );
+
+    },
+
+    setAsBinary: function ( value ) {
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.asBinary = value;
+
+    },
+
+    setCompressed: function( value ){
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.compressed = value;
+
+    },
+
+    setResponseType: function ( value ) {
+
+        this.responseType = value.toLowerCase();
+
+    },
+
+    setCrossOrigin: function ( value ) {
+
+        this.crossOrigin = value;
+
+    }
+
+};
+
+
 NGL.FileLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
@@ -18,11 +284,11 @@ NGL.FileLoader.prototype = {
 
     constructor: NGL.FileLoader,
 
-    load: function ( file, onLoad ) {
+    load: function ( file, onLoad, onProgress, onError ) {
 
         var scope = this;
 
-        var cached = scope.cache.get( file );
+        var cached = THREE.Cache.get( file );
 
         if ( cached !== undefined ) {
 
@@ -35,125 +301,222 @@ NGL.FileLoader.prototype = {
 
         reader.onload = function( event ){
 
-            scope.cache.add( file, this.response );
+            try{
 
-            onLoad( event.target.result );
+                var data = event.target.result;
+
+                var loaded = function( d ){
+
+                    // THREE.Cache.add( file, d );
+                    onLoad( d );
+
+                }
+
+                if( scope.compressed ){
+
+                    NGL.decompressWorker(
+                        data, file, scope.asBinary, loaded
+                    );
+
+                }else{
+
+                    loaded( data );
+
+                }
+
+            }catch( e ){
+
+                if ( onError ) onError( e, "decompression failed" );
+
+            }
+
             scope.manager.itemEnd( file );
 
         }
 
-        // TODO binary?
-        reader.readAsText( file );
+        if ( onProgress !== undefined ) {
+
+            reader.onprogress = function ( event ) {
+
+                onProgress( event );
+
+            }
+
+        }
+
+        if ( onError !== undefined ) {
+
+            reader.onerror = function ( event ) {
+
+                onError( event );
+
+            }
+
+        }
+
+        if( this.asBinary || this.compressed ){
+
+            reader.readAsArrayBuffer( file );
+
+        }else{
+
+            reader.readAsText( file );
+
+        }
 
         scope.manager.itemStart( file );
+
+    },
+
+    setAsBinary: function ( value ) {
+
+        this.asBinary = value;
+
+    },
+
+    setCompressed: function( value ){
+
+        if( value ){
+            this.setResponseType( "arraybuffer" );
+        }
+
+        this.compressed = value;
+
+    },
+
+    setResponseType: function ( value ) {
+
+        this.responseType = value.toLowerCase();
 
     }
 
 };
 
 
-NGL.PdbLoader = function( manager ){
+NGL.StructureLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
 
-NGL.PdbLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
-NGL.PdbLoader.prototype.init = function( str, name, path, callback ){
+NGL.StructureLoader.prototype.constructor = NGL.StructureLoader;
 
-    var pdb = new NGL.PdbStructure( name, path );
+NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, params ){
 
-    pdb.parse( str, callback );
+    params = params || {};
 
-    return pdb
+    var parsersClasses = {
+
+        "gro": NGL.GroParser,
+        "pdb": NGL.PdbParser,
+        "ent": NGL.PdbParser,
+        "cif": NGL.CifParser,
+        "mmcif": NGL.CifParser,
+
+    };
+
+    var parser = new parsersClasses[ ext ](
+        name, path, params
+    );
+
+    // return parser.parse( str, callback );
+    return parser.parseWorker( str, callback );
 
 };
 
 
-NGL.GroLoader = function( manager ){
+NGL.VolumeLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
     this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 };
 
-NGL.GroLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+NGL.VolumeLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
-NGL.GroLoader.prototype.init = function( str, name, path, callback ){
+NGL.VolumeLoader.prototype.constructor = NGL.VolumeLoader;
 
-    var gro = new NGL.GroStructure( name, path );
+NGL.VolumeLoader.prototype.init = function( bin, name, path, ext, callback, params ){
 
-    gro.parse( str, callback );
+    params = params || {};
 
-    return gro
+    var parsersClasses = {
+
+        "mrc": NGL.MrcParser,
+        "ccp4": NGL.MrcParser,
+        "map": NGL.MrcParser,
+
+        "cube": NGL.CubeParser,
+
+    };
+
+    var parser = new parsersClasses[ ext ](
+        name, path, params
+    );
+
+    return parser.parse( bin, callback );
 
 };
 
 
 NGL.ObjLoader = function( manager ){
 
-    // this.cache = new THREE.Cache();
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    THREE.PLYLoader.call( this, manager );
 
 };
 
 NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 
-NGL.ObjLoader.prototype.init = function( data, name, path, callback ){
+NGL.ObjLoader.prototype.constructor = NGL.ObjLoader;
+
+NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
+
+    var geometry;
 
     if( typeof data === "string" ){
 
-        data = this.parse( data );
+        geometry = this.parse( data );
+
+    }else{
+
+        geometry = data;
 
     }
 
-    var obj = new NGL.Surface( data, name, path )
+    var surface = new NGL.Surface( name, path, geometry )
 
-    if( typeof callback === "function" ) callback( obj );
+    if( typeof callback === "function" ) callback( surface );
 
-    return obj;
+    return surface;
 
 };
 
 
-NGL.PlyLoader = function( manager ){
+NGL.PlyLoader = function(){
 
-    // this.cache = new THREE.Cache();
-    // this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    THREE.PLYLoader.call( this );
 
 };
 
 NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
 
-NGL.PlyLoader.prototype.init = function( data, name, path, callback ){
+NGL.PlyLoader.prototype.constructor = NGL.PlyLoader;
 
-    if( typeof data === "string" ){
-
-        data = this.parse( data );
-
-    }
-
-    var ply = new NGL.Surface( data, name, path );
-
-    if( typeof callback === "function" ) callback( ply );
-
-    return ply;
-
-};
+NGL.PlyLoader.prototype.init = NGL.ObjLoader.prototype.init;
 
 
 NGL.ScriptLoader = function( manager ){
 
-    this.cache = new THREE.Cache();
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    NGL.XHRLoader.call( this, manager );
 
 };
 
-NGL.ScriptLoader.prototype = Object.create( THREE.XHRLoader.prototype );
+NGL.ScriptLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
-NGL.ScriptLoader.prototype.init = function( data, name, path, callback ){
+NGL.ScriptLoader.prototype.constructor = NGL.ScriptLoader;
+
+NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 
     var script = new NGL.Script( data, name, path );
 
@@ -168,68 +531,130 @@ NGL.autoLoad = function(){
 
     var loaders = {
 
-        "gro": NGL.GroLoader,
-        "pdb": NGL.PdbLoader,
+        "gro": NGL.StructureLoader,
+        "pdb": NGL.StructureLoader,
+        "ent": NGL.StructureLoader,
+        "cif": NGL.StructureLoader,
+        "mmcif": NGL.StructureLoader,
+
+        "mrc": NGL.VolumeLoader,
+        "ccp4": NGL.VolumeLoader,
+        "map": NGL.VolumeLoader,
+        "cube": NGL.VolumeLoader,
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
 
         "ngl": NGL.ScriptLoader,
 
-    }
+    };
 
-    return function( file, onLoad ){
+    var binary = [ "mrc", "ccp4", "map" ];
 
-        var object, rcsb;
+    return function( file, onLoad, onProgress, onError, params ){
 
-        var path = ( file instanceof File ) ? file.name : file;
-        var name = path.replace( /^.*[\\\/]/, '' );
-        var ext = path.split('.').pop().toLowerCase();
+        var object, rcsb, loader;
 
-        // FIXME can lead to false positives
-        // maybe use a fake protocoll like rcsb://
-        if( name.length === 4 && name == path && name.toLowerCase() === ext ){
+        var fileInfo = NGL.getFileInfo( file );
 
-            ext = "pdb";
-            file = "http://www.rcsb.org/pdb/files/" + name + ".pdb";
+        // NGL.log( fileInfo );
 
-            rcsb = true;
+        var path = fileInfo.path;
+        var name = fileInfo.name;
+        var ext = fileInfo.ext;
+        var compressed = fileInfo.compressed;
+        var protocol = fileInfo.protocol;
+
+        if( protocol === "rcsb" ){
+
+            // ext = "pdb";
+            // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
+            ext = "cif";
+            compressed = "gz";
+            path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
+            protocol = "http";
 
         }
 
-        var loader = new loaders[ ext ];
+        if( ext in loaders ){
 
-        if( !loader ){
+            loader = new loaders[ ext ];
 
-            console.error( "NGL.autoLoading: ext '" + ext + "' unknown" );
+        }else{
+
+            error( "NGL.autoLoading: ext '" + ext + "' unknown" );
+
             return null;
 
         }
 
         function init( data ){
 
-            object = loader.init( data, name, path, function( _object ){
+            if( data ){
 
-                if( typeof onLoad === "function" ) onLoad( _object );
+                try{
 
-            } );
+                    object = loader.init( data, name, file, ext, function( _object ){
+
+                        if( typeof onLoad === "function" ) onLoad( _object );
+
+                    }, params );
+
+                }catch( e ){
+
+                    NGL.error( e );
+                    error( "initialization failed" );
+
+                }
+
+            }else{
+
+                error( "empty response" );
+
+            }
+
+        }
+
+        function error( e ){
+
+            if( typeof onError === "function" ){
+
+                onError( e );
+
+            }else{
+
+                NGL.error( e );
+
+            }
 
         }
 
         if( file instanceof File ){
 
-            name = file.name;
-
             var fileLoader = new NGL.FileLoader();
-            fileLoader.load( file, init )
+            if( compressed ) fileLoader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) fileLoader.setAsBinary( true );
+            fileLoader.load( file, init, onProgress, error );
 
-        }else if( rcsb ){
+        }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
-            loader.load( file, init );
+            loader.setCrossOrigin( true );
 
-        }else{
+            if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
+            loader.load( protocol + "://" + path, init, onProgress, error );
 
-            loader.load( "../data/" + file, init );
+        }else if( protocol === "data" ){
+
+            if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
+            loader.load( "../data/" + path, init, onProgress, error );
+
+        }else{ // default: protocol === "file"
+
+            if( compressed ) loader.setCompressed( true );
+            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
+            loader.load( "../file/" + path, init, onProgress, error );
 
         }
 

@@ -15,10 +15,8 @@ For license texts see at the end of this document.
 
 	The MIT License, Copyright &copy; 2010-2014 three.js authors
 
-	js/three.js
 	js/three/*
 	js/lib/ui/ui.js
-	js/threex.renderstats.js
 
 	css/dark.css
 	css/light.css
@@ -28,6 +26,13 @@ For license texts see at the end of this document.
 	doc/list.js
 	doc/index.html
 	doc/prettify/threejs.css
+
+	img/circle.png
+	img/spark1.png
+
+	// modified by Alexander S. Rose
+
+	build/build.py
 
 
 ////////////
@@ -92,6 +97,16 @@ For license texts see at the end of this document.
 	test/unit/qunit-assert-close.js
 
 
+///////////////
+// Blanket.js
+
+	http://blanketjs.org/
+	https://github.com/alex-seville/blanket
+	MIT License, Copyright 2013, Alex Seville
+
+	test/unit/blanket.min.js
+
+
 /////////////////
 // Benchmark.js
 
@@ -129,6 +144,7 @@ For license texts see at the end of this document.
 // FlexiColorPicker
 
 	https://github.com/DavidDurman/FlexiColorPicker
+	https://github.com/zvin/FlexiColorPicker
 	MIT License, Copyright (c) 2011 - 2012 David Durman
 
 	js/lib/colorpicker.js
@@ -152,6 +168,42 @@ For license texts see at the end of this document.
 	js/lib/tether.min.js
 
 
+/////////////
+// bzip2.js
+
+	https://github.com/antimatter15/bzip2.js
+	MIT License, Copyright (c) 2011 antimatter15 (antimatter15@gmail.com)
+
+	js/lib/bzip2.js
+
+
+//////////
+// JSZip
+
+	http://stuk.github.io/jszip/
+	MIT License, Copyright (c) 2009-2014 Stuart Knightley, David Duponchel, Franz Buchinger, António Afonso
+
+	js/lib/jszip.min.js
+
+
+////////////
+// js-lzma
+
+	https://code.google.com/p/js-lzma/
+	MIT License, Copyright (c) 2011 Juan Mellado
+
+	js/lib/lzma.js
+
+
+////////////////
+// pako.min.js
+
+	https://github.com/nodeca/pako
+	MIT License, Copyright (c) 2014 by Vitaly Puzrin
+
+	js/lib/pako.min.js
+
+
 //////////////////
 // promisejs.org
 
@@ -159,6 +211,15 @@ For license texts see at the end of this document.
 	MIT License, Copyright (c) 2013 Forbes Lindesay
 
 	js/lib/promise-6.0.0.min.js
+
+
+/////////////
+// async.js
+
+	https://github.com/caolan/async
+	MIT license, Copyright 2010-2014, Caolan McMahon
+
+	js/lib/async.js
 
 
 /////////////////////

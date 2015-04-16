@@ -5,6 +5,9 @@
 // #extension GL_ARB_conservative_depth : enable
 // layout(depth_less) out float gl_FragDepthEXT;
 
+uniform float opacity;
+uniform float nearClip;
+
 uniform mat4 projectionMatrix;
 
 varying vec3 point;
@@ -12,12 +15,11 @@ varying vec4 cameraSpherePos;
 varying float sphereRadius;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
 #else
     varying vec3 vColor;
 #endif
-
-const float opacity = 1.0;
 
 #include light_params
 
@@ -63,6 +65,7 @@ bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
     float det = (B * B) - (4.0 * C);
     if(det < 0.0){
         discard;
+        return false;
     }else{
         float sqrtDet = sqrt(det);
         float posT = (-B + sqrtDet)/2.0;
@@ -80,14 +83,23 @@ bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 
         return true;
     }
+
+    return false; // ensure that each control flow has a return
+
 }
 
 
 void main(void)
 {
 
-    bool flag = Impostor(cameraPos, cameraNormal);
+    bool flag = Impostor( cameraPos, cameraNormal );
 
+    #ifdef NEAR_CLIP
+        if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            discard;
+    #endif
+
+    // FIXME not compatible with custom clipping plane
     //Set the depth based on the new cameraPos.
     gl_FragDepthEXT = calcDepth( cameraPos );
     if( !flag ){
@@ -107,8 +119,8 @@ void main(void)
         discard;
 
     #ifdef PICKING
-        gl_FragColor.xyz = vPickingColor;
-        //gl_FragColor.xyz = vec3( 1.0, 0.0, 0.0 );
+        gl_FragColor = vec4( vPickingColor, objectId );
+        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
     #else
         vec3 transformedNormal = cameraNormal;
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
@@ -116,11 +128,11 @@ void main(void)
         #include light
 
         gl_FragColor = vec4( vColor, opacity );
-        gl_FragColor.xyz *= vLightFront;
+        gl_FragColor.rgb *= vLightFront;
 
         // gl_FragColor.a = 0.5;
-        // gl_FragColor.xyz = transformedNormal;
-        // gl_FragColor.xyz = point;
+        // gl_FragColor.rgb = transformedNormal;
+        // gl_FragColor.rgb = point;
     #endif
 
     #include fog

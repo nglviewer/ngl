@@ -16,11 +16,20 @@ Based on setup.py from MDAnalysis:
 
 
 from distutils.core import setup, Extension
-import numpy.distutils.misc_util
 
-include_dirs = [
-    numpy.distutils.misc_util.get_numpy_include_dirs()
-]
+# does not work on my mac (ASR)
+# import numpy.distutils.misc_util
+# include_dirs = [
+#     numpy.distutils.misc_util.get_numpy_include_dirs()
+# ]
+
+import numpy
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
+include_dirs = [ numpy_include ]
+
 
 # Needed for large-file seeking under 32bit systems (for xtc/trr indexing and access).
 largefile_macros = [

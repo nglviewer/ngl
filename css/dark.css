@@ -174,3 +174,8 @@ input.Number {
     #toolbar button {
         margin-right: 6px;
     }
+
+
+.EllipsisMultilineText:after {
+    background: linear-gradient(to right, rgba(0, 0, 0, 0), #111 50%, #111);
+}

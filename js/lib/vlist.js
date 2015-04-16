@@ -24,7 +24,6 @@
 
 // TODO modified by Alexander S. Rose
 
-'use strict';
 
 /**
  * Creates a virtually-rendered scrollable list.

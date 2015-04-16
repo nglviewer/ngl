@@ -49,16 +49,42 @@ def get_trajectory( file_name ):
 class TrajectoryCache( object ):
     def __init__( self ):
         self.cache = {}
+        self.mtime = {}
+        self.parts = {}
+
+    def add( self, path, pathList ):
+        self.cache[ path ] = TrajectoryCollection( pathList )
+        # initial mtimes
+        mtime = {}
+        for partPath in pathList:
+            mtime[ partPath ] = os.path.getmtime( partPath )
+        self.mtime[ path ] = mtime
+        # initial pathList
+        self.parts[ path ] = pathList
 
     def get( self, path ):
+        stem = os.path.basename( path )
+        if stem.startswith( "@" ):
+            pathList = frozenset(
+                get_xtc_parts( stem, os.path.dirname( path ) )
+            )
+        else:
+            pathList = frozenset( [ path ] )
         if path not in self.cache:
-            stem = os.path.basename( path )
-            if stem.startswith( "@" ):
-                self.cache[ path ] = TrajectoryCollection(
-                    get_xtc_parts( stem, os.path.dirname( path ) )
-                )
-            else:
-                self.cache[ path ] = get_trajectory( str( path ) )
+            self.add( path, pathList )
+        elif pathList != self.parts[ path ]:
+            print "pathList changed, rebuilding"
+            del self.cache[ path ]
+            self.add( path, pathList )
+        else:
+            updateRequired = False
+            mtime = self.mtime[ path ]
+            for partPath in pathList:
+                if mtime[ partPath ] < os.path.getmtime( partPath ):
+                    updateRequired = True
+            if updateRequired:
+                print "file modified, updating"
+                self.cache[ path ].update()
         return self.cache[ path ]
 
 
@@ -74,17 +100,31 @@ class Trajectory( object ):
         pass
 
     def get_frame( self, index, atom_indices=None ):
-        box, coords = self._get_frame( int( index ) )
+        box, coords, time = self._get_frame( int( index ) )
         if atom_indices:
             coords = np.concatenate([
                 coords[ i:j ].ravel() for i, j in atom_indices
             ])
         box = box.flatten()
         return (
+            array.array( "i", [ self.numframes ] ).tostring() +
+            array.array( "f", [ time ] ).tostring() +
             array.array( "f", box ).tostring() +
             array.array( "f", coords ).tostring()
         )
 
+    def get_path( self, atom_index, frame_indices=None ):
+        if( frame_indices ):
+            size = len( frame_indices )
+            frames = map( int, frame_indices )
+        else:
+            size = self.numframes
+            frames = range( size )
+        path = np.zeros( ( size, 3 ), dtype=np.float32 )
+        for i in frames:
+            box, coords = self._get_frame( i )
+            path[ i ] = coords[ atom_index ]
+        return array.array( "f", path.flatten() ).tostring()
     def __del__( self ):
         pass
 
@@ -171,11 +211,15 @@ class XdrTrajectory( Trajectory ):
         # print status, step, ftime, prec
         self.x *= 10  # convert to angstrom
         self.box *= 10  # convert to angstrom
-        return self.box, self.x
+        self.time = ftime
+        return self.box, self.x, self.time
 
     def __del__( self ):
-        if( self.xdr_fp ):
-            libxdrfile2.xdrfile_close( self.xdr_fp )
+        if self.xdr_fp is None:
+            return
+        libxdrfile2.xdrfile_close( self.xdr_fp )
+        # make sure the fp cannot be closed again
+        self.xdr_fp = None
 
 
 class XtcTrajectory( XdrTrajectory ):
@@ -215,6 +259,7 @@ class TrrTrajectory( XdrTrajectory ):
 
 class NetcdfTrajectory( Trajectory ):
     def __init__( self, file_name ):
+        # http://ambermd.org/netcdf/nctraj.pdf
         self.file_name = file_name
         self.netcdf = netcdf.Dataset( self.file_name )
         self.numatoms = len( self.netcdf.dimensions['atom'] )
@@ -222,6 +267,7 @@ class NetcdfTrajectory( Trajectory ):
 
         self.x = None
         self.box = np.zeros( ( 3, 3 ), dtype=np.float32 )
+        self.time = 0.0
 
     def _get_frame( self, index ):
         if 'cell_lengths' in self.netcdf.variables:
@@ -231,7 +277,9 @@ class NetcdfTrajectory( Trajectory ):
             self.box[ 2, 2 ] = cell_lengths[ index ][ 2 ]
         # self.netcdf.variables['cell_angles'][ index ]
         self.x = self.netcdf.variables[ 'coordinates' ][ index ]
-        return self.box, self.x
+        if 'time' in self.netcdf.variables:
+            self.time = self.netcdf.variables[ 'time' ][ index ]
+        return self.box, self.x, self.time
 
     def __del__( self ):
         if self.netcdf:
@@ -247,6 +295,7 @@ class DcdTrajectory( Trajectory ):
 
         self.x = None
         self.box = np.zeros( ( 3, 3 ), dtype=np.float32 )
+        self.time = 0.0
 
     def _get_frame( self, index ):
         self.x = self.dcd[ index ]
@@ -254,7 +303,7 @@ class DcdTrajectory( Trajectory ):
         self.box[ 0, 0 ] = self.dcd._unitcell[ 0 ]
         self.box[ 1, 1 ] = self.dcd._unitcell[ 2 ]
         self.box[ 2, 2 ] = self.dcd._unitcell[ 5 ]
-        return self.box, self.x
+        return self.box, self.x, self.time
 
     def __del__( self ):
         if self.dcd:

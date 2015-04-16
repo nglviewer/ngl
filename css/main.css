@@ -65,8 +65,19 @@ textarea {
 
 textarea, input { outline: none; } /* osx */
 
-.Icon {
-    cursor: default;
+input[type=range]:focus:after {
+    position: absolute;
+    transform: translate(-100%,-50% );
+    content: attr(value);
+    font-size: 12px;
+}
+
+.deleteInfo:after {
+    position: absolute;
+    transform: translate(-50%,-250% );
+    content: "click again to delete";
+    font-size: 10px;
+    display: block;
 }
 
 .Panel {
@@ -78,6 +89,10 @@ textarea, input { outline: none; } /* osx */
     /* No support for these yet */
     -o-user-select: none;
     user-select: none;
+}
+
+.OverlayPanel:focus {
+    z-index: 20;
 }
 
 .CollapsiblePanel .CollapsiblePanelButton {
@@ -165,7 +180,7 @@ textarea, input { outline: none; } /* osx */
 
 
 /* FlexiColorPicker */
-.picker-wrapper, 
+.picker-wrapper,
 .slide-wrapper {
     position: relative;
     float: left;
@@ -213,4 +228,43 @@ textarea, input { outline: none; } /* osx */
     -webkit-border-radius: 4px;
     border-radius: 4px;
     background-color: white;
+}
+
+/* http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/ */
+
+.EllipsisMultilineText {
+    overflow: hidden;
+    max-height: 2.6em;
+    line-height: 1.3em;
+}
+
+.EllipsisMultilineText:before {
+    content:"";
+    float: left;
+    width: 5px;
+    max-height: 2.6em;
+}
+
+.EllipsisMultilineText > *:first-child {
+    float: right;
+    width: 100%;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: -5px;
+    word-wrap: break-word;
+}
+
+.EllipsisMultilineText:after {
+    content: "\02026";
+
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+
+    float: right; position: relative;
+    top: 1.3em; left: 100%;
+    width: 3em; margin-left: -3em;
+    padding-right: 5px;
+
+    text-align: right;
 }

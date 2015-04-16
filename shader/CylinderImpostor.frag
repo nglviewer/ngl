@@ -27,28 +27,31 @@
 
 #extension GL_EXT_frag_depth : enable
 
+uniform float opacity;
+uniform float nearClip;
+
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
-varying float vRadius;
+// varying float vRadius;
 
-varying vec3 point;
+// varying vec3 point;
 varying vec3 axis;
-varying vec3 base;
-varying vec3 end;
+varying vec4 base_radius;
+varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
-varying float b;
+// varying float b;
+varying vec4 w;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
     varying vec3 vColor;
     varying vec3 vColor2;
 #endif
-
-const float opacity = 1.0;
 
 #include light_params
 
@@ -71,6 +74,20 @@ const float opacity = 1.0;
 
 void main()
 {
+
+    vec3 point = w.xyz / w.w;
+    vec4 point4 = w;
+
+    #ifdef NEAR_CLIP
+        if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            discard;
+    #endif
+
+    // unpacking
+    vec3 base = base_radius.xyz;
+    float vRadius = base_radius.w;
+    vec3 end = end_b.xyz;
+    float b = end_b.w;
 
     vec3 end_cyl = end;
     vec3 surface_point = point;
@@ -193,15 +210,15 @@ void main()
         // TODO compare without sqrt
         if( distance( new_point, end_cyl) < distance( new_point, base ) ){
             if( b < 0.0 ){
-                gl_FragColor = vec4( vPickingColor, 1.0 );
+                gl_FragColor = vec4( vPickingColor, objectId );
             }else{
-                gl_FragColor = vec4( vPickingColor2, 1.0 );
+                gl_FragColor = vec4( vPickingColor2, objectId );
             }
         }else{
             if( b > 0.0 ){
-                gl_FragColor = vec4( vPickingColor, 1.0 );
+                gl_FragColor = vec4( vPickingColor, objectId );
             }else{
-                gl_FragColor = vec4( vPickingColor2, 1.0 );
+                gl_FragColor = vec4( vPickingColor2, objectId );
             }
         }
     #else
@@ -219,8 +236,8 @@ void main()
                 gl_FragColor = vec4( vColor2, opacity );
             }
         }
-        gl_FragColor.xyz *= vLightFront;
-        //gl_FragColor.xyz = transformedNormal;
+        gl_FragColor.rgb *= vLightFront;
+        //gl_FragColor.rgb = transformedNormal;
     #endif
 
     #include fog

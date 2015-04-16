@@ -12,7 +12,9 @@ UI.ColorPopupMenu = function(){
     UI.Panel.call( this );
 
     this.iconText = new UI.Text( "" )
+        .setCursor( "pointer" )
         .setClass( "fa-stack-1x" )
+        .setFontFamily( "Arial, sans-serif" )
         .setColor( "#111" );
 
     this.iconSquare = new UI.Icon( "square", "stack-1x" )
@@ -26,25 +28,13 @@ UI.ColorPopupMenu = function(){
         .add( this.iconSquare )
         .add( this.iconText )
 
-    var changeEvent = document.createEvent('Event');
-    changeEvent.initEvent('change', true, true);
+    var changeEvent = document.createEvent( 'Event' );
+    changeEvent.initEvent( 'change', true, true );
 
     this.schemeSelector = new UI.Select()
         .setColor( '#444' )
         .setWidth( "" )
-        .setOptions({
-            "": "",
-            "element": "by element",
-            "resname": "by residue name",
-            "ss": "by secondary structure",
-            "atomindex": "by atom index",
-            "residueindex": "by residue index",
-            "chainindex": "by chain index",
-            "modelindex": "by model index",
-            "picking": "by picking id",
-            "random": "random",
-            "color": "color"
-        })
+        .setOptions( NGL.ColorFactory.types )
         .onChange( function(){
 
             scope.setScheme( scope.schemeSelector.getValue() );
@@ -58,6 +48,7 @@ UI.ColorPopupMenu = function(){
     this.colorInput = new UI.Input()
         .onChange( function(){
 
+            scope.setScheme( "color" );
             scope.setColor( scope.colorInput.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -65,8 +56,9 @@ UI.ColorPopupMenu = function(){
 
     this.colorPicker = new UI.ColorPicker()
         .setDisplay( "inline-block" )
-        .onChange( function( e, hex, hsv, rgb ){
+        .onChange( function( e ){
 
+            scope.setScheme( "color" );
             scope.setColor( scope.colorPicker.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -90,12 +82,14 @@ UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPopupMenu.prototype.setScheme = function( value ){
 
-    if( value !== "color" ){
-        this.setColor( "#888" );
-    }
+    value = value || "";
 
     this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
     this.schemeSelector.setValue( value );
+
+    if( value !== "color" ){
+        this.setColor( "#888888" );
+    }
 
     return this;
 
@@ -113,7 +107,8 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 
     return function( value ){
 
-        this.setScheme( "color" );
+        c.set( value );
+        value = "#" + c.getHexString();
 
         this.colorInput
             .setBackgroundColor( value )
@@ -123,11 +118,19 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 
         this.iconSquare.setColor( value );
 
-        c.setStyle( value );
-        if( ( c.r + c.g + c.b ) > 1.5 ){
-            this.iconText.setColor( "#000" );
+        // perceived brightness (http://alienryderflex.com/hsp.html)
+        var brightness = Math.sqrt(
+              c.r*255 * c.r*255 * 0.241 +
+              c.g*255 * c.g*255 * 0.691 +
+              c.b*255 * c.b*255 * 0.068
+        );
+
+        if( brightness > 130 ){
+            this.iconText.setColor( "#000000" );
+            this.colorInput.setColor( "#000000" );
         }else{
-            this.iconText.setColor( "#FFF" );
+            this.iconText.setColor( "#FFFFFF" );
+            this.colorInput.setColor( "#FFFFFF" );
         }
 
         return this;
@@ -145,14 +148,21 @@ UI.ColorPopupMenu.prototype.getColor = function(){
 UI.ColorPopupMenu.prototype.setValue = function( value ){
 
     if( parseInt( value ) === value ){
-        this.setColor(
-            "#" + ( new THREE.Color( value ).getHexString() )
-        );
+        this.setColor( value );
+        this.setScheme( "color" );
     }else{
         this.setScheme( value );
     }
 
     return this;
+
+};
+
+UI.ColorPopupMenu.prototype.dispose = function(){
+
+    this.menu.dispose();
+
+    UI.Panel.prototype.dispose.call( this );
 
 };
 
@@ -165,9 +175,9 @@ UI.SelectionInput = function( selection ){
 
 	this.setSpellcheck( false );
 
-    if( ! selection instanceof NGL.Selection ){
+    if( ! ( selection instanceof NGL.Selection ) ){
 
-        console.error( "UI.SelectionInput: not a selection", selection );
+        NGL.error( "UI.SelectionInput: not a selection", selection );
 
         return this;
 
@@ -322,7 +332,7 @@ UI.ComponentPanel = function( component ){
 
     signals.nameChanged.add( function( value ){
 
-        name.setValue( value );
+        name.setValue( NGL.unicodeHelper( value ) );
 
     } );
 
@@ -332,25 +342,32 @@ UI.ComponentPanel = function( component ){
 
     } );
 
+    signals.disposed.add( function(){
+
+        menu.dispose();
+
+    } );
+
     // Name
 
-    var name = new UI.Text( component.name )
-        .setWidth( "100px" )
-        .setWordWrap( "break-word" );
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+        .setWidth( "100px" );
 
     // Actions
 
     var toggle = new UI.ToggleIcon( component.visible, "eye", "eye-slash" )
         .setTitle( "hide/show" )
+        .setCursor( "pointer" )
         .setMarginLeft( "25px" )
         .onClick( function(){
 
-            component.setVisibility( !toggle.getValue() );
+            component.setVisibility( !component.visible );
 
         } );
 
     var center = new UI.Icon( "bullseye" )
         .setTitle( "center" )
+        .setCursor( "pointer" )
         .setMarginLeft( "10px" )
         .onClick( function(){
 
@@ -358,24 +375,11 @@ UI.ComponentPanel = function( component ){
 
         } );
 
-    var dispose = new UI.Icon( "trash-o" )
-        .setTitle( "delete" )
+    var dispose = new UI.DisposeIcon()
         .setMarginLeft( "10px" )
-        .onClick( function(){
+        .setDisposeFunction( function(){
 
-            if( dispose.getColor() === "rgb(178, 34, 34)" ){
-
-                stage.removeComponent( component );
-
-            }else{
-
-                dispose.setColor( "rgb(178, 34, 34)" );
-
-                setTimeout( function(){
-                    dispose.setColor( "#888" );
-                }, 1000);
-
-            }
+            stage.removeComponent( component );
 
         } );
 

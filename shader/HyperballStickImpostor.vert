@@ -1,7 +1,7 @@
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
-// Departement des Sciences de la Simulation et de l'Information (CEA). 
+// Departement des Sciences de la Simulation et de l'Information (CEA).
 
 // License: CeCILL-C license (http://www.cecill.info/)
 
@@ -84,18 +84,18 @@ void main()
     e3.xyz = normalize(position_atom1-position_atom2);
 
     // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon
-    //if (e3.z == 0.0) { e3.z = 0.0000000000001;}
+    if (e3.z == 0.0) { e3.z = 0.0000000000001;}
     if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}
     if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}
     if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}
 
     // Focus calculation
     vec4 focus = vec4( 1.0 );
-    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x + 
+    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x +
         ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));
-    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y + 
+    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y +
         ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));
-    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z + 
+    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z +
         ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));
 
     // e1 calculation
@@ -127,13 +127,13 @@ void main()
     vec4 i_near, i_far;
 
     // Calculate near from position
-    vec4 near = gl_Position ;
+    vec4 near = gl_Position;
     near.z = 0.0 ;
     near = modelViewProjectionMatrixInverse * near;
     i_near = near;
 
     // Calculate far from position
-    vec4 far = gl_Position ;
+    vec4 far = gl_Position;
     far.z = far.w ;
     i_far = modelViewProjectionMatrixInverse * far;
 
@@ -141,9 +141,9 @@ void main()
     prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );
 
     float Rsquare = (radius1*radius1/shrink) - (
-                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) + 
-                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) + 
-                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z) 
+                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) +
+                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) +
+                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z)
                     );
 
     focus.w = Rsquare;

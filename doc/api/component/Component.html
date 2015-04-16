@@ -9,30 +9,26 @@
 	<body>
 		<h1>[name]</h1>
 
-		<div class="desc">A container that contain a data object and can be added to a [page:Stage]. For [page:Structure] objects there is [page:StructureComponent] and for [page:Surface] objects [page:SurfaceComponent].</div>
+		<div>
+			&rarr; [page:StructureComponent] <br/>
+			&rarr; [page:SurfaceComponent] <br/>
+			&rarr; [page:RepresentationComponent]
+		</div>
+
+		<div class="desc">Base class for components.</div>
 
 
-		<h2>Example</h2>
-
-
-		<code>
-		var structure = new NGL.Structure();
-		var sele = "ALL";
-
-		var structureComponent = new NGL.StructureComponent(
-			stage, structure, sele
-		);
-		</code>
-
-		
 		<h2>Constructor</h2>
 
-		<h3>[name]( [page:Stage stage] )</h3>
+		<h3>[name]( [page:Stage stage], params )</h3>
 
 		<div></div>
 
-		
+
 		<h2>Properties</h2>
+
+		<h3>.type</h3>
+		<div></div>
 
 		<h3>.name</h3>
 		<div></div>
@@ -40,22 +36,46 @@
 
 		<h2>Signals</h2>
 
-		<h3>.visibilityChanged</h3>
+		<h3>visibilityChanged</h3>
+		<div></div>
+
+		<h3>representationAdded</h3>
+		<div></div>
+
+		<h3>representationRemoved</h3>
+		<div></div>
+
+		<h3>requestGuiVisibility</h3>
+		<div></div>
+
+		<h3>statusChanged</h3>
+		<div></div>
+
+		<h3>disposed</h3>
 		<div></div>
 
 
 		<h2>Methods</h2>
 
+		<h3>.addRepresentation( repr )</h3>
+		<div></div>
+
+		<h3>.removeRepresentation( repr )</h3>
+		<div></div>
+
+		<h3>.updateRepresentation( what )</h3>
+		<div></div>
+
 		<h3>.setVisibility( value )</h3>
 		<div></div>
 
-		<h3>.setName( value )</h3>
+		<h3>.setStatus( value )</h3>
 		<div></div>
 
-		<h3>.centerView( sele )</h3>
+		<h3>.centerView()</h3>
 		<div></div>
 
-		<h3>.getCenter() THREE.Vector3</h3>
+		<h3>.requestGuiVisibility( value )</h3>
 		<div></div>
 
 		<h3>.dispose()</h3>

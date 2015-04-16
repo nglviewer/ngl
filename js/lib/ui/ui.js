@@ -21,7 +21,7 @@ UI.Element.prototype = {
     setId: function ( id ) {
 
         this.dom.id = id;
-        
+
         return this;
 
     },
@@ -29,7 +29,7 @@ UI.Element.prototype = {
     setTitle: function ( title ) {
 
         this.dom.title = title;
-        
+
         return this;
 
     },
@@ -81,7 +81,7 @@ UI.Element.prototype = {
     },
 
     dispose: function(){
-        
+
         this.dom.parentNode.removeChild( this.dom );
 
     }
@@ -90,20 +90,21 @@ UI.Element.prototype = {
 
 // properties
 
-var properties = [ 
+var properties = [
     'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border',
     'borderLeft', 'borderTop', 'borderRight', 'borderBottom', 'borderColor',
     'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
-    'fontWeight', 'textTransform', 'cursor', 'verticalAlign', 'clear', 'float',
-    'zIndex', 'minHeight', 'maxHeight', 'minWidth', 'maxWidth', 'wordBreak',
-    'wordWrap', 'spellcheck', 'lineHeight'
+    'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
+    'verticalAlign', 'clear', 'float', 'zIndex', 'minHeight', 'maxHeight',
+    'minWidth', 'maxWidth', 'wordBreak', 'wordWrap', 'spellcheck',
+    'lineHeight', 'whiteSpace', 'textOverflow'
 ];
 
 properties.forEach( function ( property ) {
 
-    var methodSuffix = property.substr( 0, 1 ).toUpperCase() + 
+    var methodSuffix = property.substr( 0, 1 ).toUpperCase() +
                         property.substr( 1, property.length );
 
     UI.Element.prototype[ 'set' + methodSuffix ] = function () {
@@ -798,8 +799,8 @@ UI.Number = function ( number ) {
     var distance = 0;
     var onMouseDownValue = 0;
 
-    var pointer = new THREE.Vector2();
-    var prevPointer = new THREE.Vector2();
+    var pointer = [ 0, 0 ];
+    var prevPointer = [ 0, 0 ];
 
     var onMouseDown = function ( event ) {
 
@@ -809,7 +810,7 @@ UI.Number = function ( number ) {
 
         onMouseDownValue = parseFloat( dom.value );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
         document.addEventListener( 'mousemove', onMouseMove, false );
         document.addEventListener( 'mouseup', onMouseUp, false );
@@ -820,9 +821,9 @@ UI.Number = function ( number ) {
 
         var currentValue = dom.value;
 
-        pointer.set( event.clientX, event.clientY );
+        pointer = [ event.clientX, event.clientY ];
 
-        distance += ( pointer.x - prevPointer.x ) - ( pointer.y - prevPointer.y );
+        distance += ( pointer[ 0 ] - prevPointer[ 0 ] ) - ( pointer[ 1 ] - prevPointer[ 1 ] );
 
         var modifier = 50;
         if( event.shiftKey ) modifier = 5;
@@ -834,7 +835,7 @@ UI.Number = function ( number ) {
 
         if ( currentValue !== dom.value ) dom.dispatchEvent( changeEvent );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
     };
 
@@ -955,8 +956,8 @@ UI.Integer = function ( number ) {
     var distance = 0;
     var onMouseDownValue = 0;
 
-    var pointer = new THREE.Vector2();
-    var prevPointer = new THREE.Vector2();
+    var pointer = [ 0, 0 ];
+    var prevPointer = [ 0, 0 ];
 
     var onMouseDown = function ( event ) {
 
@@ -966,7 +967,7 @@ UI.Integer = function ( number ) {
 
         onMouseDownValue = parseFloat( dom.value );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
         document.addEventListener( 'mousemove', onMouseMove, false );
         document.addEventListener( 'mouseup', onMouseUp, false );
@@ -977,9 +978,9 @@ UI.Integer = function ( number ) {
 
         var currentValue = dom.value;
 
-        pointer.set( event.clientX, event.clientY );
+        pointer = [ event.clientX, event.clientY ];
 
-        distance += ( pointer.x - prevPointer.x ) - ( pointer.y - prevPointer.y );
+        distance += ( pointer[ 0 ] - prevPointer[ 0 ] ) - ( pointer[ 1 ] - prevPointer[ 1 ] );
 
         var modifier = 50;
         if( event.shiftKey ) modifier = 5;
@@ -991,7 +992,7 @@ UI.Integer = function ( number ) {
 
         if ( currentValue !== dom.value ) dom.dispatchEvent( changeEvent );
 
-        prevPointer.set( event.clientX, event.clientY );
+        prevPointer = [ event.clientX, event.clientY ];
 
     };
 
@@ -1162,7 +1163,7 @@ UI.MenubarHelper = {
         return container;
 
     },
-    
+
     createOption: function ( name, callbackHandler, icon ) {
 
         var option = new UI.Panel();
@@ -1178,7 +1179,7 @@ UI.MenubarHelper = {
             option.setTextContent( name );
 
         }
-        
+
         option.onClick( callbackHandler );
 
         return option;
@@ -1213,6 +1214,26 @@ UI.MenubarHelper = {
 
         panel.add( text );
         panel.add( input );
+
+        return panel;
+
+    },
+
+    createCheckbox: function ( name, value, callbackHandler ) {
+
+        var panel = new UI.Panel()
+            .setClass( 'option' );
+
+        var text = new UI.Text()
+            .setWidth( '70px' )
+            .setValue( name );
+
+        var checkbox = new UI.Checkbox()
+            .setValue( value )
+            .onClick( callbackHandler );
+
+        panel.add( checkbox );
+        panel.add( text );
 
         return panel;
 

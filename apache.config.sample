@@ -1,27 +1,7 @@
 <VirtualHost *:80>
     ServerName localhost
 
-    WSGIDaemonProcess ngl user=arose group=arose threads=5
-    WSGIScriptAlias /ngl /var/www/ngl/ngl.wsgi
-
-    <Directory /var/www/ngl>
-        WSGIProcessGroup ngl
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIScriptReloading On
-        WSGIPassAuthorization On
-        Order deny,allow
-        Allow from all
-    </Directory>
-</VirtualHost>
-
-
-<VirtualHost *:443>
-    ServerName localhost
-
-    SSLEngine On
-    SSLCertificateFile /etc/apache2/ssl/apache.pem
-
-    WSGIDaemonProcess ngl user=arose group=arose threads=5
+    WSGIDaemonProcess ngl user=www-data group=www-data threads=5
     WSGIScriptAlias /ngl /var/www/ngl/ngl.wsgi
 
     <Directory /var/www/ngl>

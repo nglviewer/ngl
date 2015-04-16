@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+
+		[page:Component] &rarr;
+
+		<h1>[name]</h1>
+
+		<div class="desc">A container for a [page:Representation representation] instance.</div>
+
+
+		<h2>Example</h2>
+		<code>
+		var structure = new NGL.Structure();
+		var repr = NGL.makeRepresentation( "cartoon", structure, viewer, {} )
+
+		var reprComp = make new NGL.RepresentationComponent(
+			stage, repr, {}, parentComp
+		);
+		</code>
+
+
+		<h2>Constructor</h2>
+
+		<h3>[name]( [page:Stage stage], [page:Representation repr], params, parent )</h3>
+		<div></div>
+
+
+		<h2>Properties</h2>
+
+		<h3>.[page:Representation repr]</h3>
+		<div></div>
+
+
+		<h2>Methods</h2>
+
+		<h3>.setParameters( params )</h3>
+		<div></div>
+
+		<h3>.setSelection( string )</h3>
+		<div></div>
+
+
+	</body>
+</html>

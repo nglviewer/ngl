@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <title>NGL - embedded</title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+    </head>
+
+    <body>
+
+        <script src="../js/build/ngl.embedded.min.js"></script>
+
+        <script>
+
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            document.addEventListener("DOMContentLoaded", function() {
+
+                NGL.init( function(){
+
+                    var stage = new NGL.Stage( "viewport" );
+
+                    stage.loadFile( "__example__/1crn.pdb", function( o ){
+
+                        o.addRepresentation( "cartoon" );
+                        o.addRepresentation( "licorice" );
+                        o.centerView();
+
+                    } );
+
+                } );
+
+            } );
+
+        </script>
+
+        <script src="../js/tracking.js"></script>
+
+        <div id="viewport" style="width:500px; height:500px;"></div>
+
+    </body>
+
+</html>

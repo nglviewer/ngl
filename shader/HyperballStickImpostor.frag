@@ -1,7 +1,7 @@
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
-// Departement des Sciences de la Simulation et de l'Information (CEA). 
+// Departement des Sciences de la Simulation et de l'Information (CEA).
 
 // License: CeCILL-C license (http://www.cecill.info/)
 
@@ -24,11 +24,16 @@ varying mat4 matrix_near;
 varying vec4 prime1;
 varying vec4 prime2;
 
+uniform float opacity;
+uniform float nearClip;
+
 uniform float shrink;
+uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 
 #ifdef PICKING
+    uniform float objectId;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
@@ -68,7 +73,7 @@ vec3 isect_surf(Ray r, mat4 matrix_coef){
     gl_FragColor.a = 1.0;
     if (delta<0.0){
         discard;
-        gl_FragColor.a = 0.5;
+        // gl_FragColor.a = 0.5;
     }
     float t1 =(-b-sqrt(delta))/a;
 
@@ -177,6 +182,13 @@ void main()
     vec3 M;
     M = isect_surf(ray, mat);
 
+    #ifdef NEAR_CLIP
+        // custom clipping plane
+        // FIXME optimize, don't calculate values more than once
+        if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+            discard;
+    #endif
+
     // Recalculate the depth in function of the new pixel position
     gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
 
@@ -196,7 +208,7 @@ void main()
 
     vec3 transformedNormal = normal;
     vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-    
+
     #include light
 
     // Mix the color bond in function of the two atom colors
@@ -211,7 +223,7 @@ void main()
         }else{
             diffusecolor = vPickingColor2;
         }
-        gl_FragColor = vec4( diffusecolor, 1.0 );
+        gl_FragColor = vec4( diffusecolor, objectId );
     #else
         // lerp function not in GLSL. Find something else ...
         vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );
@@ -220,14 +232,14 @@ void main()
         }else{
             diffusecolor = vColor2;
         }
-        gl_FragColor = vec4( diffusecolor, 1.0 );
-        gl_FragColor.xyz *= vLightFront;
+        gl_FragColor = vec4( diffusecolor, opacity );
+        gl_FragColor.rgb *= vLightFront;
     #endif
 
     #include fog
 
     // ############## Fog effect #####################################################
-    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = É and   gl_FragColor.a = 1.0;
+    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;
     // and uncomment the next lines.
     // Color of the fog: white
     //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;
@@ -242,8 +254,3 @@ void main()
     // ##################################################################################
 
 }
-
-
-
-
-

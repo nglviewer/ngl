@@ -181,6 +181,12 @@ def css( filename ):
     return send_from_directory( os.path.join( APP_PATH, "css/" ), filename )
 
 
+@app.route( '/img/<path:filename>' )
+@requires_auth
+def img( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "img/" ), filename )
+
+
 @app.route( '/html/<path:filename>' )
 @requires_auth
 @crossdomain( origin='*' )
@@ -200,9 +206,15 @@ def test( filename ):
     return send_from_directory( os.path.join( APP_PATH, "test/" ), filename )
 
 
-@app.route( '/data/<root>/<path:filename>' )
+@app.route( '/data/<path:filename>' )
 @requires_auth
-def data( root, filename ):
+def data( filename ):
+    return send_from_directory( os.path.join( APP_PATH, "data/" ), filename )
+
+
+@app.route( '/file/<root>/<path:filename>' )
+@requires_auth
+def file( root, filename ):
     directory = get_directory( root )
     if directory:
         return send_from_directory( directory, filename )
@@ -214,6 +226,9 @@ def data( root, filename ):
 @requires_auth
 def dir( root="", path="" ):
 
+    root = root.encode( "utf-8" )
+    path = path.encode( "utf-8" )
+
     # auth = request.authorization
     # if not auth or not check_auth( auth.username, auth.password ):
     #     return authenticate()
@@ -222,6 +237,7 @@ def dir( root="", path="" ):
 
     if root == "":
         for fname in DATA_DIRS.keys():
+            fname = unicode( fname )
             if fname.startswith( '_' ):
                 continue
             dir_content.append({
@@ -232,7 +248,7 @@ def dir( root="", path="" ):
             })
         return json.dumps( dir_content )
 
-    directory = get_directory( root )
+    directory = get_directory( root ).encode( "utf-8" )
     if not directory:
         return json.dumps( dir_content )
 
@@ -252,9 +268,9 @@ def dir( root="", path="" ):
         })
 
     for fname in sorted( os.listdir( dir_path ) ):
+        fname = fname.decode( "utf-8" ).encode( "utf-8" )
         if( not fname.startswith('.') and
-                not (fname.startswith('#') and fname.endswith('#')) ):
-            fname = fname.decode( "utf-8" )
+                not ( fname.startswith('#') and fname.endswith('#') ) ):
             fpath = os.path.join( dir_path, fname )
             if os.path.isfile( fpath ):
                 dir_content.append({
@@ -270,6 +286,7 @@ def dir( root="", path="" ):
                 })
 
     for fname in trajectory.get_split_xtc( dir_path ):
+        fname = fname.decode( "utf-8" ).encode( "utf-8" )
         dir_content.append({
             'name': fname,
             'path': os.path.join( root, path, fname ),
@@ -300,6 +317,12 @@ def redirect_ngl():
     return redirect( url_for( 'html', filename='ngl.html' ) )
 
 
+@app.route( '/doc' )
+@requires_auth
+def redirect_doc():
+    return redirect( url_for( 'doc', filename='index.html' ) )
+
+
 @app.route( '/app/<name>' )
 @requires_auth
 def redirect_app( name ):
@@ -314,7 +337,7 @@ TRAJ_CACHE = trajectory.TrajectoryCache()
 
 @app.route( '/traj/frame/<int:frame>/<root>/<path:filename>', methods=['POST'] )
 @requires_auth
-def traj_serve( frame, root, filename ):
+def traj_frame( frame, root, filename ):
     directory = get_directory( root )
     if directory:
         path = os.path.join( directory, filename )
@@ -340,7 +363,25 @@ def traj_numframes( root, filename ):
     directory = get_directory( root )
     if directory:
         path = os.path.join( directory, filename )
-        return str( TRAJ_CACHE.get( path ).numframes )
+    else:
+        return
+    return str( TRAJ_CACHE.get( path ).numframes )
+
+
+@app.route( '/traj/path/<int:index>/<root>/<path:filename>', methods=['POST'] )
+@requires_auth
+def traj_path( index, root, filename ):
+    directory = get_directory( root )
+    if directory:
+        path = os.path.join( directory, filename )
+    else:
+        return
+    frame_indices = request.form.get( "frameIndices" )
+    if frame_indices:
+        frame_indices = None
+    return TRAJ_CACHE.get( path ).get_path(
+        index, frame_indices=frame_indices
+    )
 
 
 ############################

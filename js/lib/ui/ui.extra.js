@@ -3,6 +3,112 @@
  */
 
 
+// Html
+
+UI.Html = function ( html ) {
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'span' );
+    dom.className = 'Html';
+    dom.style.cursor = 'default';
+    dom.style.display = 'inline-block';
+    dom.style.verticalAlign = 'middle';
+
+    this.dom = dom;
+    this.setValue( html );
+
+    return this;
+
+};
+
+UI.Html.prototype = Object.create( UI.Element.prototype );
+
+UI.Html.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.dom.innerHTML = value;
+
+    }
+
+    return this;
+
+};
+
+
+// Ellipsis Text
+
+UI.EllipsisText = function ( text ) {
+
+    UI.Text.call( this, text );
+
+    this.setWhiteSpace( "nowrap" );
+    this.setOverflow( "hidden" );
+    this.setTextOverflow( "ellipsis" );
+
+    return this;
+
+};
+
+UI.EllipsisText.prototype = Object.create( UI.Text.prototype );
+
+UI.EllipsisText.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.dom.textContent = value;
+        this.setTitle( value );
+
+    }
+
+    return this;
+
+};
+
+
+// Ellipsis Multiline Text
+
+UI.EllipsisMultilineText = function ( text ) {
+
+    // http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'span' );
+    dom.className = 'EllipsisMultilineText';
+    dom.style.cursor = 'default';
+    dom.style.display = 'inline-block';
+    dom.style.verticalAlign = 'middle';
+
+    var content = document.createElement( 'p' );
+    dom.appendChild( content );
+
+    this.dom = dom;
+    this.content = content;
+
+    this.setValue( text );
+
+    return this;
+
+};
+
+UI.EllipsisMultilineText.prototype = Object.create( UI.Element.prototype );
+
+UI.EllipsisMultilineText.prototype.setValue = function ( value ) {
+
+    if ( value !== undefined ) {
+
+        this.content.textContent = value;
+        this.setTitle( value );
+
+    }
+
+    return this;
+
+};
+
+
 // Overlay Panel
 
 UI.OverlayPanel = function(){
@@ -10,6 +116,7 @@ UI.OverlayPanel = function(){
     UI.Panel.call( this );
 
     this.dom.className = 'Panel OverlayPanel';
+    this.dom.tabIndex = 0;
 
     return this;
 
@@ -137,6 +244,61 @@ UI.ToggleIcon.prototype.getValue = function(){
 }
 
 
+// Dispose Icon
+
+UI.DisposeIcon = function(){
+
+    UI.Icon.call( this, "trash-o" );
+
+    var flag = false;
+    var scope = this;
+
+    this.setTitle( "delete" );
+    this.setCursor( "pointer" )
+
+    this.onClick( function(){
+
+        if( flag === true ){
+
+            if( typeof scope.disposeFunction === "function" ){
+
+                scope.disposeFunction();
+
+            }
+
+        }else{
+
+            scope.setColor( "rgb(178, 34, 34)" );
+            scope.dom.classList.add( "deleteInfo" );
+            flag = true;
+
+            setTimeout( function(){
+
+                scope.setColor( "#888" );
+                scope.dom.classList.remove( "deleteInfo" );
+                flag = false;
+
+            }, 1500);
+
+        }
+
+    } )
+
+    return this;
+
+};
+
+UI.DisposeIcon.prototype = Object.create( UI.Icon.prototype );
+
+UI.DisposeIcon.prototype.setDisposeFunction = function( fn ){
+
+    this.disposeFunction = fn;
+
+    return this;
+
+}
+
+
 // Progress
 
 UI.Progress = function( max, value ) {
@@ -205,6 +367,12 @@ UI.Range = function( min, max, value, step ) {
 
     this.dom = dom;
     this.dom.textContent = value;
+
+    this.onInput( function(){
+
+        this.dom.setAttribute( "value", this.getValue() );
+
+    } );
 
     return this;
 
@@ -362,7 +530,9 @@ UI.VirtualList = function( items ){
 
 // Popup Menu (requires Tether)
 
-UI.PopupMenu = function( iconClass, heading ){
+UI.PopupMenu = function( iconClass, heading, constraintTo ){
+
+    constraintTo = constraintTo || 'scrollParent';
 
     UI.Panel.call( this );
 
@@ -383,11 +553,12 @@ UI.PopupMenu = function( iconClass, heading ){
         .add(
             new UI.Icon( "times" )
                 .setFloat( "right" )
+                .setCursor( "pointer" )
                 .onClick( function(){
 
-                    panel.setDisplay( "none" );
+                    this.setMenuDisplay( "none" );
 
-                } )
+                }.bind( this ) )
         )
         .add(
             new UI.Text( heading )
@@ -395,19 +566,23 @@ UI.PopupMenu = function( iconClass, heading ){
 
     panel.add( headingPanel );
 
+    var tether;
+
     icon.setTitle( "menu" );
+    icon.setCursor( "pointer" )
     icon.onClick( function( e ){
 
         if( panel.getDisplay() === "block" ){
 
-            panel.setDisplay( "none" );
+            this.setMenuDisplay( "none" );
+            tether.destroy();
             return;
 
         }
 
-        panel.setDisplay( "block" );
+        this.setMenuDisplay( "block" );
 
-        var tether = new Tether( {
+        tether = new Tether( {
             element: panel.dom,
             target: icon.dom,
             attachment: 'top right',
@@ -415,15 +590,16 @@ UI.PopupMenu = function( iconClass, heading ){
             offset: '0px 5px',
             constraints: [
                 {
-                    to: 'window',
-                    attachment: 'element'
+                    to: constraintTo,
+                    attachment: 'element',
+                    pin: [ 'top', 'bottom' ]
                 }
             ]
         } );
 
         tether.position();
 
-    } );
+    }.bind( this ) );
 
     this.add( icon );
 
@@ -443,7 +619,9 @@ UI.PopupMenu.prototype = Object.create( UI.Panel.prototype );
 UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
     this.panel
-        .add( new UI.Text( label ).setWidth( this.entryLabelWidth ) )
+        .add( new UI.Text( label )
+                // .setWhiteSpace( "nowrap" )
+                .setWidth( this.entryLabelWidth ) )
         .add( entry || new UI.Panel() )
         .add( new UI.Break() );
 
@@ -462,6 +640,16 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     this.panel.setDisplay( value );
+
+    if( value !== "none" ) this.panel.dom.focus();
+
+    return this;
+
+}
+
+UI.PopupMenu.prototype.setIconTitle = function( value ){
+
+    this.icon.setTitle( value );
 
     return this;
 
@@ -495,7 +683,10 @@ UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
     }
 
     this.button = new UI.Icon( iconClass1 )
-        .setWidth( "12px" ).setMarginRight( "6px" );
+        .setTitle( "expand/collapse" )
+        .setCursor( "pointer" )
+        .setWidth( "12px" )
+        .setMarginRight( "6px" );
     this.addStatic( this.button );
 
     var scope = this;
@@ -559,6 +750,7 @@ UI.CollapsibleIconPanel.prototype.setCollapsed = function( setCollapsed ) {
 
 // Color picker (requires FlexiColorPicker)
 // https://github.com/DavidDurman/FlexiColorPicker
+// https://github.com/zvin/FlexiColorPicker
 
 UI.ColorPicker = function(){
 
@@ -604,8 +796,8 @@ UI.ColorPicker = function(){
 
     // event
 
-    var changeEvent = document.createEvent('Event');
-    changeEvent.initEvent('change', true, true);
+    var changeEvent = document.createEvent( 'Event' );
+    changeEvent.initEvent( 'change', true, true );
 
     // finalize
 
@@ -614,19 +806,22 @@ UI.ColorPicker = function(){
         this.slideWrapper
     );
 
-    ColorPicker.fixIndicators(
-
-        this.sliderIndicator.dom,
-        this.pickerIndicator.dom
-
-    );
-
     this.colorPicker = ColorPicker(
 
         this.slider.dom,
         this.picker.dom,
 
         function( hex, hsv, rgb, pickerCoordinate, sliderCoordinate ){
+
+            if( !pickerCoordinate && sliderCoordinate && hsv.s < 0.05 ){
+
+                hsv.s = 0.5;
+                hsv.v = 0.7;
+                scope.colorPicker.setHsv( hsv );
+
+                return;
+
+            }
 
             ColorPicker.positionIndicators(
                 scope.sliderIndicator.dom, scope.pickerIndicator.dom,
@@ -639,11 +834,18 @@ UI.ColorPicker = function(){
 
             if( !scope._settingValue ){
 
-                scope.dom.dispatchEvent( changeEvent, hex, hsv, rgb );
+                scope.dom.dispatchEvent( changeEvent );
 
             }
 
         }
+
+    );
+
+    this.colorPicker.fixIndicators(
+
+        this.sliderIndicator.dom,
+        this.pickerIndicator.dom
 
     );
 
@@ -655,9 +857,13 @@ UI.ColorPicker.prototype = Object.create( UI.Panel.prototype );
 
 UI.ColorPicker.prototype.setValue = function( value ){
 
-    this._settingValue = true;
-    this.colorPicker.setHex( value );
-    this._settingValue = false;
+    if( value !== this.hex ){
+
+        this._settingValue = true;
+        this.colorPicker.setHex( value );
+        this._settingValue = false;
+
+    }
 
     return this;
 

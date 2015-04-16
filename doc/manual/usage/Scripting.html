@@ -17,13 +17,15 @@
 		<div>Load the structure of PDB entry *1CRN* from <a href="http://www.rcsb.org/">RCSB</a>, add a cartoon representation and center the view on the structure.</div>
 
 		<code>
-		stage.loadFile( "1CRN", function( o ){
+		stage.loadFile( "rcsb://1CRN", function( o ){
 
 			o.addRepresentation( "cartoon" );
 			o.centerView();
 
 		} );
 		</code>
+
+		Here, *o* is a *StructureComponent* instance.
 
 
 		<h2>Variables</h2>

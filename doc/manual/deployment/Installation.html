@@ -36,6 +36,15 @@
 
 		<code class="lang-sh">sudo pip install netCDF4</code>
 
+		In case you get "ValueError: did not find HDF5 headers" try:
+
+		<code class="lang-sh">
+		sudo su
+		find / -name "libhdf5*.so*"
+		# use what the above 'find' suggests to set 'HDF5_DIR'
+		export HDF5_DIR=/usr/lib/i386-linux-gnu/hdf5/serial/
+		pip install netCDF4
+		</code>
 
 		<h3>Internal libraries</h3>
 
@@ -55,7 +64,7 @@
 
 		<h3>Website</h3>
 
-		<p>The website can be configured through some JavaScript files that should be set-up.</p>
+		<p>The website can be configured through some JavaScript files that should be set-up. Note that if you used the above *install.sh* script, the following files are already copied/renamed for you.</p>
 
 		Copy/rename the sample tracking.js file and add any tracking code you need.
 
