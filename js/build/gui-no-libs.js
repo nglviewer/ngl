@@ -4242,7 +4242,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
                 var po = {};
                 po[ name ] = input.getValue();
-                repr.setParameters( po );
+                component.setParameters( po );
                 repr.viewer.render();
 
             } );

@@ -361,7 +361,7 @@ Object.values = function( obj ){
 
 var NGL = {
 
-    REVISION: '0.5dev',
+    REVISION: '0.5',
     EPS: 0.0000001,
     disableImpostor: false,
     indexUint16: false
@@ -15830,6 +15830,7 @@ NGL.Volume.prototype = {
         delete this.__dataMin;
         delete this.__dataMax;
         delete this.__dataMean;
+        delete this.__dataRms;
 
         if( this.worker ) this.worker.terminate();
 
@@ -15837,11 +15838,7 @@ NGL.Volume.prototype = {
 
     generateSurface: function( isolevel, smooth, callback ){
 
-        if( isNaN( isolevel ) && this.header ){
-            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
-        }
-
-        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
@@ -15938,11 +15935,7 @@ NGL.Volume.prototype = {
 
     generateSurfaceWorker: function( isolevel, smooth, callback ){
 
-        if( isNaN( isolevel ) && this.header ){
-            isolevel = this.header.DMEAN + 2.0 * this.header.ARMS;
-        }
-
-        isolevel = isNaN( isolevel ) ? 0.0 : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         //
@@ -16000,6 +15993,22 @@ NGL.Volume.prototype = {
             this.generateSurface( isolevel, smooth, callback );
 
         }
+
+    },
+
+    getIsolevelForSigma: function( sigma ){
+
+        sigma = sigma !== undefined ? sigma : 2;
+
+        return this.getDataMean() + sigma * this.getDataRms();
+
+    },
+
+    getSigmaForIsolevel: function( isolevel ){
+
+        isolevel = isolevel !== undefined ? isolevel : 0;
+
+        return ( isolevel - this.getDataMean() ) / this.getDataRms();
 
     },
 
@@ -16295,6 +16304,28 @@ NGL.Volume.prototype = {
         }
 
         return this.__dataMean;
+
+    },
+
+    getDataRms: function(){
+
+        if( this.__dataRms === undefined ){
+
+            var data = this.__data;
+            var n = data.length;
+            var sumSq = 0;
+            var di, i;
+
+            for( i = 0; i < n; ++i ){
+                di = data[ i ];
+                sumSq += di * di;
+            }
+
+            this.__dataRms = Math.sqrt( sumSq / n );
+
+        }
+
+        return this.__dataRms;
 
     },
 
@@ -32154,6 +32185,11 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        isolevelType: {
+            type: "select", rebuild: true, options: {
+                "value": "value", "sigma": "sigma"
+            }
+        },
         isolevel: {
             type: "number", precision: 2, max: 1000, min: -1000,
             rebuild: true
@@ -32189,7 +32225,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         var p = params || {};
 
         this.color = p.color || 0xDDDDDD;
-        this.isolevel = p.isolevel !== undefined ? p.isolevel : NaN;
+        this.isolevelType  = p.isolevelType !== undefined ? p.isolevelType : "sigma";
+        this.isolevel = p.isolevel !== undefined ? p.isolevel : 2.0;
         this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
@@ -32218,11 +32255,26 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.surface instanceof NGL.Volume ){
 
-            this.surface.generateSurfaceWorker( this.isolevel, this.smooth, function(){
+            var isolevel;
 
-                callback();
+            if( this.isolevelType === "sigma" ){
 
-            } );
+                isolevel = this.surface.getIsolevelForSigma( this.isolevel );
+
+            }else{
+
+                isolevel = this.isolevel;
+
+            }
+
+            this.surface.generateSurfaceWorker(
+                isolevel, this.smooth,
+                function(){
+
+                    callback();
+
+                }
+            );
 
         }else{
 
@@ -32318,6 +32370,42 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             buffer.setAttributes( surfaceData );
 
         } );
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        if( params && params[ "isolevelType" ] !== undefined &&
+            this.surface instanceof NGL.Volume
+        ){
+
+            if( this.isolevelType === "value" &&
+                params[ "isolevelType" ] === "sigma"
+            ){
+
+                this.isolevel = this.surface.getSigmaForIsolevel(
+                    this.isolevel
+                );
+
+            }else if( this.isolevelType === "sigma" &&
+                params[ "isolevelType" ] === "value"
+            ){
+
+                this.isolevel = this.surface.getIsolevelForSigma(
+                    this.isolevel
+                );
+
+            }
+
+            this.isolevelType = params[ "isolevelType" ];
+
+        }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 
@@ -32526,21 +32614,40 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 /////////////////////////
 // Representation types
 
-NGL.representationTypes = {};
+( function(){
 
-for( var key in NGL ){
+    NGL.representationTypes = {};
+    var reprList = [];
 
-    var val = NGL[ key ];
+    // find structure representations
 
-    if( val.prototype instanceof NGL.StructureRepresentation &&
-        val.prototype.type
-    ){
+    for( var key in NGL ){
 
-        NGL.representationTypes[ val.prototype.type ] = val;
+        var val = NGL[ key ];
+
+        if( val.prototype instanceof NGL.StructureRepresentation &&
+            val.prototype.type
+        ){
+
+            reprList.push( val );
+
+        }
 
     }
 
-}
+    // sort by representation type (i.e. name)
+
+    reprList.sort( function( a, b ){
+
+            return a.prototype.type.localeCompare( b.prototype.type );
+
+    } ).forEach( function( repr ){
+
+        NGL.representationTypes[ repr.prototype.type ] = repr;
+
+    } );
+
+} )();
 
 // File:js/ngl/stage.js
 
@@ -33938,7 +34045,9 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     setParameters: function( params ){
 
         this.repr.setParameters( params );
-        this.signals.parametersChanged.dispatch( params );
+        this.signals.parametersChanged.dispatch(
+            this.repr.getParameters()
+        );
 
         return this;
 
@@ -34906,8 +35015,7 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
 
-                o.addRepresentation( "surface" );
-                o.addRepresentation( "dot", { visible: false } );
+                o.addRepresentation( "surface", { wireframe: true } );
                 o.centerView();
 
             } );
