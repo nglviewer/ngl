@@ -1,3 +1,4 @@
+
 * {
 	vertical-align: middle;
 }
@@ -27,6 +28,8 @@
 ::-webkit-scrollbar-thumb:window-inactive {
     background:rgba(140,140,140,0.5);
 }
+
+/* elmement */
 
 body {
 	font-family: Arial, sans-serif;
@@ -65,12 +68,22 @@ textarea {
 
 textarea, input { outline: none; } /* osx */
 
+input.Number {
+    font-size: 12px;                            /** TODO: Use of !imporant is not ideal **/
+    background-color: transparent!important;    /* For now this is a quick fix a rendering issue due to inherited background */
+    border: 1px solid transparent;
+    padding: 2px;
+    cursor: col-resize;
+}
+
 input[type=range]:focus:after {
     position: absolute;
     transform: translate(-100%,-50% );
     content: attr(value);
     font-size: 12px;
 }
+
+/* class */
 
 .deleteInfo:after {
     position: absolute;
@@ -91,9 +104,28 @@ input[type=range]:focus:after {
     user-select: none;
 }
 
+.OverlayPanel {
+    z-index: 10;
+    position: absolute;
+    padding: 10px;
+    overflow: auto;
+}
+
 .OverlayPanel:focus {
     z-index: 20;
 }
+
+.FancySelect {
+    padding: 0;
+    cursor: default;
+    overflow: auto;
+    outline: none;
+}
+
+    .FancySelect .option {
+        padding: 4px;
+        white-space: nowrap;
+    }
 
 .CollapsiblePanel .CollapsiblePanelButton {
     float: left;
@@ -268,3 +300,109 @@ input[type=range]:focus:after {
 
     text-align: right;
 }
+
+/* id */
+
+#viewport {
+    position: absolute;
+    top: 32px;
+    left: 0px;
+    right: 300px;
+    bottom: 32px;
+}
+
+#menubar {
+    position: absolute;
+    width: 100%;
+    height: 32px;
+    padding: 0px;
+    margin: 0px;
+    z-index: 100;
+    top: 0px;
+    left: 0px;
+}
+
+    #menubar .menu {
+        float: left;
+        cursor: pointer;
+        position: relative;
+    }
+
+        #menubar .menu .title {
+            margin: 0px;
+            padding: 8px;
+        }
+
+        #menubar .menu .options {
+            display: none;
+            padding: 5px 0px;
+            width: 140px;
+            position: absolute;
+            top: 32px;
+        }
+
+        #menubar .menu:hover .options {
+            display: block;
+            max-height: 600px;
+            overflow: auto;
+        }
+
+            #menubar .menu .options .option {
+                background-color: transparent;
+                padding: 5px 10px;
+                margin: 0px !important;
+            }
+
+#sidebar {
+    position: absolute;
+    right: 0px;
+    top: 32px;
+    bottom: 0px;
+    width: 300px;
+    overflow: hidden;
+}
+
+    #sidebar .Panel {
+        margin-bottom: 10px;
+    }
+
+    #sidebar .Panel.collapsed {
+        margin-bottom: 0px;
+    }
+
+    #sidebar .CollapsibleContent {
+        margin-top: 10px;
+    }
+
+    #sidebar > .Panel {
+        padding: 10px;
+    }
+
+    #sidebar > .Content > .Panel {
+        padding: 10px;
+    }
+
+    #sidebar .Content {
+        top: 40px;
+        bottom: 0px;
+        position: absolute;
+        overflow: auto;
+        right: 0px;
+        width: 300px;
+    }
+
+#toolbar {
+    position: absolute;
+    left: 0px;
+    right: 300px;
+    bottom: 0px;
+    height: 32px;
+}
+
+    #toolbar .Panel {
+        padding: 6px;
+    }
+
+    #toolbar button {
+        margin-right: 6px;
+    }

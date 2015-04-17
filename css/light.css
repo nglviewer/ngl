@@ -1,87 +1,47 @@
 ﻿
+/* element */
+
+input.Number {
+    color: #0080f0;
+}
+
+/* class */
+
 .OverlayPanel {
     background-color: #FFF;
-    z-index: 10;
-    position: absolute;
     color: #888;
-    padding: 10px;
     border: 1px solid #555;
-    overflow: auto;
 }
 
 .FancySelect {
     background: #fff;
     border: 1px solid #ccc;
-    padding: 0;
-    cursor: default;
-    overflow: auto;
-    outline: none;
 }
 
     .FancySelect .option {
-        padding: 4px;
         color: #666;
-        white-space: nowrap;
     }
 
     .FancySelect .option.active {
         background-color: #f8f8f8;
     }
 
-input.Number {
-    color: #0080f0;
-    font-size: 12px;                            /** TODO: Use of !imporant is not ideal **/
-    background-color: transparent!important;    /* For now this is a quick fix a rendering issue due to inherited background */
-    border: 1px solid transparent;
-    padding: 2px;
-    cursor: col-resize;
+.EllipsisMultilineText:after {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), #eee 50%, #eee);
 }
 
-#viewport {
-    position: absolute;
-    top: 32px;
-    left: 0px;
-    right: 300px;
-    bottom: 32px;
-}
+/* id */
 
 #menubar {
-    position: absolute;
-    width: 100%;
-    height: 32px;
-    background: #eee;
-    padding: 0px;
-    margin: 0px;
-    z-index: 100;
-    top: 0px;
-    left: 0px;
+    background-color: #eee;
 }
-
-    #menubar .menu {
-        float: left;
-        cursor: pointer;
-        position: relative;
-    }
 
         #menubar .menu .title {
             color: #888;
-            margin: 0px;
-            padding: 8px;
         }
 
         #menubar .menu .options {
-            display: none;
-            padding: 5px 0px;
-            background: #eee;
-            width: 140px;
-            position: absolute;
-            top: 32px;
-        }
-
-        #menubar .menu:hover .options {
-            display: block;
-            max-height: 600px;
-            overflow: auto;
+            background-color: #eee;
         }
 
             #menubar .menu .options hr {
@@ -90,9 +50,6 @@ input.Number {
 
             #menubar .menu .options .option {
                 color: #666;
-                background-color: transparent;
-                padding: 5px 10px;
-                margin: 0px !important;
             }
 
                 #menubar .menu .options .option:hover {
@@ -100,15 +57,8 @@ input.Number {
                     background-color: #08f;
                 }
 
-
 #sidebar {
-    position: absolute;
-    right: 0px;
-    top: 32px;
-    bottom: 0px;
-    width: 300px;
-    background: #eee;
-    overflow: auto;
+    background-color: #eee;
 }
 
     #sidebar input,
@@ -117,66 +67,21 @@ input.Number {
         /* background: #ccc; */
     }
 
-    #sidebar .Panel {
-        margin-bottom: 10px;
-    }
-
-    #sidebar .Panel.collapsed {
-        margin-bottom: 0px;
-    }
-
-    #sidebar .CollapsibleContent {
-        margin-top: 10px;
-    }
-
     #sidebar > .Panel {
         color: #888;
-        padding: 10px;
         border-top: 1px solid #ccc;
     }
 
     #sidebar > .Content > .Panel {
         color: #888;
-        padding: 10px;
         border-top: 1px solid #ccc;
     }
 
-    #sidebar #outliner {
-        width: 100%;
-        height: 140px;
-        color: #444;
-        font-size: 12px;
-    }
-
-    #sidebar .Content {
-        top: 40px;
-        bottom: 0px;
-        position: absolute;
-        overflow: auto;
-        right: 0px;
-        width: 300px;
-    }
-
 #toolbar {
-    position: absolute;
-    left: 0px;
-    right: 300px;
-    bottom: 0px;
-    height: 32px;
-    background: #eee;
+    background-color: #eee;
     color: #333;
 }
 
     #toolbar .Panel {
-        padding: 4px;
         color: #888;
     }
-
-    #toolbar button {
-        margin-right: 6px;
-    }
-
-
-.EllipsisMultilineText:after {
-    background: linear-gradient(to right, rgba(255, 255, 255, 0), #eee 50%, #eee);
-}
