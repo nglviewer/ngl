@@ -109,6 +109,7 @@ input[type=range]:focus:after {
     position: absolute;
     padding: 10px;
     overflow: auto;
+    border: 1px solid;
 }
 
 .OverlayPanel:focus {
@@ -376,10 +377,12 @@ input[type=range]:focus:after {
 
     #sidebar > .Panel {
         padding: 10px;
+        border-top: 1px solid;
     }
 
     #sidebar > .Content > .Panel {
         padding: 10px;
+        border-top: 1px solid;
     }
 
     #sidebar .Content {
