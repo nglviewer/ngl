@@ -8,7 +8,7 @@
 body {
 	margin: 30px 20px;
 	color: #555;
-	font-family: 'inconsolata';
+	font-family: Arial, sans-serif;
 	font-size: 15px;
 	line-height: 18px;
 	overflow: auto;
@@ -58,6 +58,7 @@ pre, code {
 }
 code {
 	display: block;
+	font-family: 'inconsolata', monospace;
 	width: -webkit-calc( 100% - 40px );
 	width: -moz-calc( 100% - 40px );
 	width: calc( 100% - 40px );
