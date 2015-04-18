@@ -34,14 +34,13 @@ Version 0.6dev
 --------------
 
 * DOC: pull request instruction for developers
-
+* Higher color contrast for GUI and documentation pages
 
 
 Version 0.5
 -----------
 
 The first release.
-
 
 
 License

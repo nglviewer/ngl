@@ -1,181 +1,62 @@
-﻿
-.OverlayPanel {
-    background-color: #000;
-    z-index: 10;
-    position: absolute;
-    color: #888;
-    padding: 10px;
-    border: 1px solid #555;
-    overflow: auto;
+
+/* text color */
+
+* {
+    color: #B8B8B8;
 }
 
-.FancySelect {
-    background: #222;
-    border: 1px solid #3C3C3C;
-    padding: 0;
-    cursor: default;
-    overflow: auto;
-    outline: none;
+input,
+textarea,
+button,
+select,
+option {
+    color: #111111;
 }
 
-    .FancySelect .option {
-        padding: 4px;
-        white-space: nowrap;
-    }
+input[type=range]:focus:after {
+    color: #B8B8B8;
+}
 
-    .FancySelect .option.active {
-        background-color: #153C5E;
-    }
+a{
+    color: #719eff;
+}
 
 input.Number {
-    color: #2A75B7;
-    font-size: 12px;                            /** TODO: Use of !imporant is not ideal **/
-    background-color: transparent!important;    /* For now this is a quick fix a rendering issue due to inherited background */
-    border: 1px solid transparent;
-    padding: 2px;
-    cursor: col-resize;
+    color: #A1B56C;
 }
 
-#viewport {
-    position: absolute;
-    top: 32px;
-    left: 0px;
-    right: 300px;
-    bottom: 32px;
+
+/* background color */
+
+.OverlayPanel,
+#menubar,
+#menubar .menu .options,
+#sidebar,
+#toolbar
+{
+    background-color: #1C1F26;
 }
 
-#menubar {
-    position: absolute;
-    width: 100%;
-    height: 32px;
-    background-color: #111;
-    padding: 0px;
-    margin: 0px;
-    z-index: 100;
-    top: 0px;
-    left: 0px;
+
+/* border color */
+
+.OverlayPanel,
+#menubar .menu .options hr,
+#sidebar > .Panel,
+#sidebar > .Content > .Panel {
+    border-color: #444444;
 }
 
-    #menubar .menu {
-        float: left;
-        cursor: pointer;
-        position: relative;
-    }
 
-        #menubar .menu .title {
-            color: #888;
-            margin: 0px;
-            padding: 8px;
-        }
+/* special */
 
-        #menubar .menu .options {
-            display: none;
-            padding: 5px 0px;
-            background-color: #111;
-            width: 140px;
-            border-top: solid 1px #1D1D1D;
-            position: absolute;
-            top: 32px;
-        }
-
-        #menubar .menu:hover .options {
-            display: block;
-            max-height: 600px;
-            overflow: auto;
-        }
-
-            #menubar .menu .options hr {
-                border-color: #444;
-            }
-
-            #menubar .menu .options .option {
-                color: #666;
-                background-color: transparent;
-                padding: 5px 10px;
-                margin: 0px !important;
-            }
-
-                #menubar .menu .options .option:hover {
-                    color: #fff;
-                    background-color: #08f;
-                }
-
-#sidebar {
-    position: absolute;
-    right: 0px;
-    top: 32px;
-    bottom: 0px;
-    width: 300px;
-    background-color: #111;
-    overflow: hidden;
+#menubar .menu .options .option:hover,
+.option:hover > .Icon,
+.option:hover > .Text {
+    color: #181818;
+    background-color: #7CAFC2;
 }
-
-    #sidebar input,
-    #sidebar textarea,
-    #sidebar select {
-        /*background: #ccc;*/
-    }
-
-    #sidebar .Panel {
-        margin-bottom: 10px;
-    }
-
-    #sidebar .Panel.collapsed {
-        margin-bottom: 0px;
-    }
-
-    #sidebar .CollapsibleContent {
-        margin-top: 10px;
-    }
-
-    #sidebar > .Panel {
-        color: #888;
-        padding: 10px;
-        border-top: 1px solid #333;
-    }
-
-    #sidebar > .Content > .Panel {
-        color: #888;
-        padding: 10px;
-        border-top: 1px solid #333;
-    }
-
-    #sidebar #outliner {
-        width: 100%;
-        height: 140px;
-        color: #868686;
-        font-size: 12px;
-    }
-
-    #sidebar .Content {
-        top: 40px;
-        bottom: 0px;
-        position: absolute;
-        overflow: auto;
-        right: 0px;
-        width: 300px;
-    }
-
-#toolbar {
-    position: absolute;
-    left: 0px;
-    right: 300px;
-    bottom: 0px;
-    height: 32px;
-    background-color: #111;
-    color: #333;
-}
-
-    #toolbar .Panel {
-        padding: 6px;
-        color: #888;
-    }
-
-    #toolbar button {
-        margin-right: 6px;
-    }
-
 
 .EllipsisMultilineText:after {
-    background: linear-gradient(to right, rgba(0, 0, 0, 0), #111 50%, #111);
+    background: linear-gradient(to right, rgba(0, 0, 0, 0), #1C1F26 50%, #1C1F26);
 }

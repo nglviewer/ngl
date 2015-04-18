@@ -259,7 +259,7 @@ NGL.MenubarFileWidget = function( stage ){
         );
 
         dirWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .attach();
@@ -269,7 +269,7 @@ NGL.MenubarFileWidget = function( stage ){
     function onExportImageOptionClick () {
 
         exportImageWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
@@ -491,7 +491,7 @@ NGL.MenubarHelpWidget = function( stage ){
     function onPreferencesOptionClick () {
 
         preferencesWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
@@ -503,7 +503,7 @@ NGL.MenubarHelpWidget = function( stage ){
     function onOverviewOptionClick () {
 
         overviewWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
@@ -1278,7 +1278,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         );
 
         dirWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .attach();
