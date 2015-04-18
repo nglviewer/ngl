@@ -22,7 +22,7 @@ a{
 }
 
 input.Number {
-    color: #069506;
+    color: #79952e;
 }
 
 
@@ -34,7 +34,7 @@ input.Number {
 #sidebar,
 #toolbar
 {
-    background-color: #eeeeee;
+    background-color: #e1e4eb;
 }
 
 
@@ -50,11 +50,13 @@ input.Number {
 
 /* special */
 
-#menubar .menu .options .option:hover {
-    color: #FFFFFF;
-    background-color: #0088FF;
+#menubar .menu .options .option:hover,
+.option:hover > .Icon,
+.option:hover > .Text {
+    color: #D8D8D8;
+    background-color: #345a69;
 }
 
 .EllipsisMultilineText:after {
-    background: linear-gradient(to right, rgba(255, 255, 255, 0), #eeeeee 50%, #eeeeee);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), #e1e4eb 50%, #e1e4eb);
 }

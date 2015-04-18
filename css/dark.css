@@ -2,7 +2,7 @@
 /* text color */
 
 * {
-    color: #B8B8B2;
+    color: #B8B8B8;
 }
 
 input,
@@ -14,15 +14,15 @@ option {
 }
 
 input[type=range]:focus:after {
-    color: #B8B8B2;
+    color: #B8B8B8;
 }
 
 a{
-    color: #4a7ce5;
+    color: #719eff;
 }
 
 input.Number {
-    color: #48d548;
+    color: #A1B56C;
 }
 
 
@@ -34,7 +34,7 @@ input.Number {
 #sidebar,
 #toolbar
 {
-    background-color: #191919;
+    background-color: #1C1F26;
 }
 
 
@@ -50,11 +50,13 @@ input.Number {
 
 /* special */
 
-#menubar .menu .options .option:hover {
-    color: #FFFFFF;
-    background-color: #0088FF;
+#menubar .menu .options .option:hover,
+.option:hover > .Icon,
+.option:hover > .Text {
+    color: #181818;
+    background-color: #7CAFC2;
 }
 
 .EllipsisMultilineText:after {
-    background: linear-gradient(to right, rgba(0, 0, 0, 0), #191919 50%, #191919);
+    background: linear-gradient(to right, rgba(0, 0, 0, 0), #1C1F26 50%, #1C1F26);
 }
