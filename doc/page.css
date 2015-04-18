@@ -16,7 +16,7 @@ body {
 }
 
 a {
-	color: #1184CE;
+	color: #1956d8;
 }
 
 h1 {
@@ -28,9 +28,9 @@ h1 {
 }
 
 h2 {
-	color: #4B0;
+	color: #888;
 	font-size: 18px;
-	font-weight: normal;
+	font-weight: bold;
 
 	margin-top: 40px;
 }
@@ -64,7 +64,7 @@ code {
 	width: calc( 100% - 40px );
 	padding: 20px;
 	white-space: pre-wrap;
-	background-color: #f9f9f9;
+	background-color: #fff7ed;
 	overflow: auto;
 }
 
