@@ -33,7 +33,7 @@ Changelog
 Version 0.6dev
 --------------
 
-In development.
+* DOC: pull request instruction for developers
 
 
 
