@@ -33,7 +33,7 @@ Changelog
 Version 0.6dev
 --------------
 
-In development.
+* Higher color contrast for GUI and documentation pages
 
 
 
