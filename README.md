@@ -33,6 +33,7 @@ Changelog
 Version 0.6dev
 --------------
 
+* FIX: #7
 * DOC: pull request instruction for developers
 * Higher color contrast for GUI and documentation pages
 
