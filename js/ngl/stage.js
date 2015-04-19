@@ -797,6 +797,10 @@ NGL.StructureComponent = function( stage, structure, params ){
     this.trajList = [];
     this.initSelection( params.sele );
 
+    if( params.assembly !== undefined ){
+        this.structure.setDefaultAssembly( params.assembly );
+    }
+
 };
 
 NGL.StructureComponent.prototype = NGL.createObject(
