@@ -715,7 +715,9 @@ NGL.Helixorient.prototype = {
 
             radius[ i ] = (
                 Math.sqrt( diff24Length * diff13Length ) /
-                ( 2.0 * ( 1.0 - tmp ) )
+                // clamp, to avoid instabilities for when
+                // angle between diff13 and diff24 is near 0
+                Math.max( 2.0, 2.0 * ( 1.0 - tmp ) )
             );
 
             rise[ i ] = Math.abs( r23.dot( _axis ) );

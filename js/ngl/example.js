@@ -1062,6 +1062,21 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "helixorient_issue-7": function( stage ){
+
+            stage.loadFile( "data://4YVS.cif", function( o ){
+
+                o.addRepresentation( "helixorient" );
+                o.addRepresentation( "rope", {
+                    transparent: true, opacity: 0.4, side: THREE.FrontSide, smooth: 0
+                } );
+                o.addRepresentation( "licorice", { sele: "backbone" } );
+                o.centerView();
+
+            }, { assembly: "AU", sele: "86-100:H" } );
+
         }
 
     }
