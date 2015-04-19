@@ -248,7 +248,7 @@ if( typeof importScripts !== 'function' ){
 
 if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
-    // wrap webgl debug function used by three.js and
+    // wrap WebGL debug function used by three.js and
     // ignore calls to them when the debug flag is not set
 
     WebGLRenderingContext.prototype.getShaderParameter = function(){
@@ -461,6 +461,23 @@ NGL.createObject = function( prototype, properties ){
     return object;
 
 };
+
+
+NGL.deepCopy = function( src ){
+
+    if( typeof src !== "object" ){
+        return src;
+    }
+
+    var dst = Array.isArray( src ) ? [] : {};
+
+    for( var key in src ){
+        dst[ key ] = NGL.deepCopy( src[ key ] );
+    }
+
+    return dst;
+
+}
 
 
 NGL.download = function( data, downloadName ){
