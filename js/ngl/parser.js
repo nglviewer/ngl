@@ -1114,10 +1114,16 @@ NGL.GroParser.prototype._parse = function( str, callback ){
 
     //
 
-    var atomname, resname, element;
+    var atomname, resname, element, resno, serial;
 
     var atomCount = parseInt( lines[ 1 ] );
     var modelLineCount = atomCount + 3;
+
+    var atomArray;
+    if( lines.length > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lines.length );
+        s.atomArray = atomArray;
+    }
 
     var idx = 0;
     var modelIdx = 0;
@@ -1187,26 +1193,54 @@ NGL.GroParser.prototype._parse = function( str, callback ){
                 }
 
                 resname = line.substr( 5, 5 ).trim();
-
                 element = guessElem( atomname );
+                resno = parseInt( line.substr( 0, 5 ) );
+                serial = parseInt( line.substr( 15, 5 ) );
 
-                var a = new NGL.Atom();
-                a.index = idx;
+                var a;
 
-                a.resname = resname;
-                a.x = x;
-                a.y = y;
-                a.z = z;
-                a.element = element;
-                a.chainname = '';
-                a.resno = parseInt( line.substr( 0, 5 ) );
-                a.serial = parseInt( line.substr( 15, 5 ) );
-                a.atomname = atomname;
-                a.ss = 'c';
-                a.altloc = '';
-                a.vdw = vdwRadii[ element ];
-                a.covalent = covRadii[ element ];
-                a.modelindex = modelIdx;
+                if( atomArray ){
+
+                    a = new NGL.ProxyAtom( atomArray, idx );
+
+                    atomArray.setResname( idx, resname );
+                    atomArray.x[ idx ] = x;
+                    atomArray.y[ idx ] = y;
+                    atomArray.z[ idx ] = z;
+                    atomArray.setElement( idx, element );
+                    atomArray.setChainname( idx, '' );
+                    atomArray.resno[ idx ] = resno;
+                    atomArray.serial[ idx ] = serial;
+                    atomArray.setAtomname( idx, atomname );
+                    atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                    atomArray.setAltloc( idx, '' );
+                    atomArray.vdw[ idx ] = vdwRadii[ element ];
+                    atomArray.covalent[ idx ] = covRadii[ element ];
+                    atomArray.modelindex[ idx ] = modelIdx;
+
+                    atomArray.usedLength += 1;
+
+                }else{
+
+                    a = new NGL.Atom();
+                    a.index = idx;
+
+                    a.resname = resname;
+                    a.x = x;
+                    a.y = y;
+                    a.z = z;
+                    a.element = element;
+                    a.chainname = '';
+                    a.resno = resno;
+                    a.serial = serial;
+                    a.atomname = atomname;
+                    a.ss = 'c';
+                    a.altloc = '';
+                    a.vdw = vdwRadii[ element ];
+                    a.covalent = covRadii[ element ];
+                    a.modelindex = modelIdx;
+
+                }
 
                 idx += 1;
                 atoms.push( a );
