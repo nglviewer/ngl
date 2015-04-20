@@ -531,7 +531,7 @@ NGL.Preferences.prototype = {
 
             var p = repr.getParameters();
             p.disableImpostor = !value;
-            repr.rebuild( p );
+            repr.build( p );
 
         } );
 
@@ -575,7 +575,7 @@ NGL.Preferences.prototype = {
             }
 
             p.quality = value;
-            repr.rebuild( p );
+            repr.build( p );
 
         } );
 
@@ -867,7 +867,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
                 repr.setStructure( this.structure );
             }
 
-            repr.rebuild( repr.getParameters() );
+            repr.build( repr.getParameters() );
 
         }, this );
 
@@ -1369,9 +1369,9 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     },
 
-    rebuild: function( params ){
+    build: function( params ){
 
-        this.repr.rebuild( params );
+        this.repr.build( params );
 
         return this;
 

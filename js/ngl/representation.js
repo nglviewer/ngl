@@ -76,6 +76,8 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
+    this.queue = async.queue( this.make.bind( this ), 1 );
+
     this.bufferList = [];
     this.debugBufferList = [];
 
@@ -128,11 +130,7 @@ NGL.Representation.prototype = {
 
     prepare: function( callback ){
 
-        if( typeof callback === "function" ){
-
-            callback();
-
-        }
+        callback();
 
     },
 
@@ -145,13 +143,29 @@ NGL.Representation.prototype = {
 
     update: function(){
 
-        this.rebuild();
+        this.build();
 
     },
 
-    rebuild: function( params ){
+    build: function( params ){
 
-        NGL.time( "NGL.Representation.rebuild " + this.type );
+        // don't let tasks accumulate
+        if( this.queue.length() > 0 ){
+            this.queue.kill();
+        }
+
+        if( !params ){
+            params = this.getParameters();
+            delete params.quality;
+        }
+
+        this.queue.push( params );
+
+    },
+
+    make: function( params, callback ){
+
+        NGL.time( "NGL.Representation.make " + this.type );
 
         if( params ){
             this.init( params );
@@ -161,17 +175,32 @@ NGL.Representation.prototype = {
 
             this.clear();
             this.create();
-            if( !this.manualAttach ) this.attach();
 
-            NGL.timeEnd( "NGL.Representation.rebuild " + this.type );
+            if( !this.manualAttach && !this.disposed ){
+
+                NGL.time( "NGL.Representation.attach " + this.type );
+
+                this.attach( function(){
+
+                    NGL.timeEnd( "NGL.Representation.attach " + this.type );
+
+                    callback();
+
+                }.bind( this ) );
+
+            }
+
+            NGL.timeEnd( "NGL.Representation.make " + this.type );
 
         }.bind( this ) );
 
     },
 
-    attach: function(){
+    attach: function( callback ){
 
         this.setVisibility( this.visible );
+
+        callback();
 
     },
 
@@ -348,7 +377,7 @@ NGL.Representation.prototype = {
 
         if( rebuild ){
 
-            this.rebuild();
+            this.build();
 
         }else if( what && Object.keys( what ).length ){
 
@@ -418,6 +447,8 @@ NGL.Representation.prototype = {
 
     dispose: function(){
 
+        this.disposed = true;
+        this.queue.kill();
         this.clear();
 
     }
@@ -431,8 +462,7 @@ NGL.BufferRepresentation = function( buffer, viewer, params ){
 
     this.buffer = buffer;
 
-    this.create();
-    this.attach();
+    this.build();
 
 };
 
@@ -450,7 +480,7 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
 
     },
 
-    attach: function(){
+    attach: function( callback ){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -460,26 +490,7 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
 
         this.setVisibility( this.visible );
 
-    },
-
-    clear: function(){
-
-        this.bufferList.forEach( function( buffer ){
-
-            this.viewer.remove( buffer );
-
-        }, this );
-
-        this.bufferList.length = 0;
-
-        this.viewer.requestRender();
-
-    },
-
-    dispose: function(){
-
-        this.clear();
-        this.buffer.dispose();
+        callback();
 
     }
 
@@ -521,12 +532,11 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     // have already updated the atomSet
     this.selection.signals.stringChanged.add( function( string ){
 
-        this.rebuild();
+        this.build();
 
     }, this );
 
-    this.create();
-    if( !this.manualAttach ) this.attach();
+    this.build();
 
 };
 
@@ -682,9 +692,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
-    attach: function(){
-
-        NGL.time( "StructureRepresentation.attach" );
+    attach: function( callback ){
 
         var viewer = this.viewer;
         var structure = this.structure;
@@ -717,39 +725,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         }
 
-        // TODO use a signal to message completion
-        // TODO set a flag for working/finished
-        // TODO try to keep the API sync by queuing commands (similar also in stage)
-        // TODO add async/worker-based .calculate method before .create
-
-        // async to appease Chrome
-        //   except that using async.js doesn't appease Chrome ...
-
-        // async.each(
-
-        //     this.bufferList,
-
-        //     function( buffer, wcallback ){
-
-        //         if( instanceList.length >= 1 ){
-        //             viewer.add( buffer, instanceList );
-        //         }else{
-        //             viewer.add( buffer );
-        //         }
-
-        //         wcallback();
-
-        //     },
-
-        //     function( err ){
-
-        //         console.log( "attach: viewer.add done" )
-
-        //     }
-
-        // );
-
-        this.bufferList.forEach( function( buffer ){
+        this.bufferList.forEach( function( buffer, i, list ){
 
             // async to appease Chrome
 
@@ -761,19 +737,13 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                     viewer.add( buffer );
                 }
 
-            }, 0 );
+                if( i === list.length - 1 ){
+                    callback();
+                }
 
-        } );
+            }.bind( this ), 0 );
 
-        // this.bufferList.forEach( function( buffer ){
-
-        //     if( instanceList.length > 1 ){
-        //         viewer.add( buffer, instanceList );
-        //     }else{
-        //         viewer.add( buffer );
-        //     }
-
-        // } );
+        }.bind( this ) );
 
         this.debugBufferList.forEach( function( debugBuffer ){
 
@@ -786,8 +756,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         } );
 
         this.setVisibility( this.visible );
-
-        NGL.timeEnd( "StructureRepresentation.attach" );
 
     },
 
@@ -3364,7 +3332,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            this.rebuild();
+            this.build();
             return;
 
         }
@@ -3806,7 +3774,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        this.rebuild();
+        this.build();
 
     },
 
@@ -3940,7 +3908,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         if( what[ "position" ] ){
 
             // FIXME
-            this.rebuild();
+            this.build();
             return;
 
         }
@@ -4188,7 +4156,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
             // FIXME
             this.molsurf = undefined;
-            this.rebuild();
+            this.build();
             return;
 
         }
@@ -4317,7 +4285,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
     },
 
-    attach: function(){
+    attach: function( callback ){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -4326,6 +4294,16 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         }, this );
 
         this.setVisibility( this.visible );
+
+        callback();
+
+    },
+
+    prepare: function( callback ){
+
+        // TODO
+
+        callback();
 
     },
 
@@ -4454,12 +4432,7 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
     this.surface = surface;
 
-    this.prepare( function(){
-
-        this.create();
-        this.attach();
-
-    }.bind( this ) );
+    this.build();
 
 };
 
@@ -4527,7 +4500,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     },
 
-    attach: function(){
+    attach: function( callback ){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -4536,6 +4509,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         }, this );
 
         this.setVisibility( this.visible );
+
+        callback();
 
     },
 
@@ -4556,12 +4531,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             }
 
             this.surface.generateSurfaceWorker(
-                isolevel, this.smooth,
-                function(){
-
-                    callback();
-
-                }
+                isolevel, this.smooth, callback
             );
 
         }else{
@@ -4573,12 +4543,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     },
 
     create: function(){
-
-        // if( this.surface instanceof NGL.Volume ){
-
-        //     this.surface.generateSurface( this.isolevel, this.smooth );
-
-        // }
 
         var position = this.surface.getPosition();
         var color = this.surface.getColor( this.color );
@@ -4706,8 +4670,7 @@ NGL.DotRepresentation = function( surface, viewer, params ){
 
     this.surface = surface;
 
-    this.create();
-    this.attach();
+    this.build();
 
 };
 
@@ -4790,7 +4753,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     },
 
-    attach: function(){
+    attach: function( callback ){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -4799,6 +4762,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         }, this );
 
         this.setVisibility( this.visible );
+
+        callback();
 
     },
 
