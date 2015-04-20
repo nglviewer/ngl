@@ -1874,13 +1874,24 @@ NGL.Structure.prototype = {
 
             } );
 
-        }else{
+        }else if( selection ){
 
             this.models.forEach( function( m ){
 
                 m.eachAtom( callback, selection );
 
             } );
+
+        }else{
+
+            var atoms = this.atoms;
+            var n = this.atomCount;
+
+            for( var i = 0; i < n; ++i ){
+
+                callback( atoms[ i ] );
+
+            }
 
         }
 
@@ -2399,17 +2410,24 @@ NGL.Structure.prototype = {
 
     updatePosition: function( position ){
 
-        var i = 0;
+        // uses the atoms array directly as its
+        // 1) faster, and
+        // 2) ensures that atoms are traversed in order
 
-        this.eachAtom( function( a ){
+        var i, i3, a;
+        var atoms = this.atoms;
+        var n = this.atomCount;
 
-            a.x = position[ i + 0 ];
-            a.y = position[ i + 1 ];
-            a.z = position[ i + 2 ];
+        for( i = 0; i < n; ++i ){
 
-            i += 3;
+            a = atoms[ i ];
+            i3 = i * 3;
 
-        } );
+            a.x = position[ i3     ];
+            a.y = position[ i3 + 1 ];
+            a.z = position[ i3 + 2 ];
+
+        }
 
     },
 
