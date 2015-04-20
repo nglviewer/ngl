@@ -680,12 +680,19 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var helixTypes = NGL.HelixTypes;
 
     var line, recordName;
-    var serial, elem, chainname, resno, resname, atomname, element;
+    var serial, elem, chainname, resno, resname, atomname, element,
+        hetero, bfactor, altloc;
 
     var serialDict = {};
     var unitcellDict = {};
 
     s.hasConnect = false;
+
+    var atomArray;
+    if( lines.length > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lines.length );
+        s.atomArray = atomArray;
+    }
 
     var idx = 0;
     var modelIdx = 0;
@@ -726,31 +733,63 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
 
                 serial = parseInt( line.substr( 6, 5 ) );
                 element = line.substr( 76, 2 ).trim();
+                hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                 chainname = line[ 21 ].trim();
                 resno = parseInt( line.substr( 22, 5 ) );
                 resname = line.substr( 17, 4 ).trim();
+                bfactor = parseFloat( line.substr( 60, 8 ) );
+                altloc = line[ 16 ].trim();
 
                 if( !element ) element = guessElem( atomname );
 
-                var a = new NGL.Atom();
-                a.index = idx;
+                var a;
 
-                a.resname = resname;
-                a.x = x;
-                a.y = y;
-                a.z = z;
-                a.element = element;
-                a.hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                a.chainname = chainname;
-                a.resno = resno;
-                a.serial = serial;
-                a.atomname = atomname;
-                a.ss = 'c';
-                a.bfactor = parseFloat( line.substr( 60, 8 ) );
-                a.altloc = line[ 16 ].trim();
-                a.vdw = vdwRadii[ element ];
-                a.covalent = covRadii[ element ];
-                a.modelindex = modelIdx;
+                if( atomArray ){
+
+                    a = new NGL.ProxyAtom( atomArray, idx );
+
+                    atomArray.setResname( idx, resname );
+                    atomArray.x[ idx ] = x;
+                    atomArray.y[ idx ] = y;
+                    atomArray.z[ idx ] = z;
+                    atomArray.setElement( idx, element );
+                    atomArray.hetero[ idx ] = hetero;
+                    atomArray.setChainname( idx, chainname );
+                    atomArray.resno[ idx ] = resno;
+                    atomArray.serial[ idx ] = serial;
+                    atomArray.setAtomname( idx, atomname );
+                    atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                    atomArray.bfactor[ idx ] = bfactor;
+                    atomArray.altloc[ idx ] = altloc.charCodeAt( 0 );
+                    atomArray.vdw[ idx ] = vdwRadii[ element ];
+                    atomArray.covalent[ idx ] = covRadii[ element ];
+                    atomArray.modelindex[ idx ] = modelIdx;
+
+                    atomArray.usedLength += 1;
+
+                }else{
+
+                    a = new NGL.Atom();
+                    a.index = idx;
+
+                    a.resname = resname;
+                    a.x = x;
+                    a.y = y;
+                    a.z = z;
+                    a.element = element;
+                    a.hetero = hetero;
+                    a.chainname = chainname;
+                    a.resno = resno;
+                    a.serial = serial;
+                    a.atomname = atomname;
+                    a.ss = 'c';
+                    a.bfactor = bfactor;
+                    a.altloc = altloc;
+                    a.vdw = vdwRadii[ element ];
+                    a.covalent = covRadii[ element ];
+                    a.modelindex = modelIdx;
+
+                }
 
                 serialDict[ serial ] = a;
 
