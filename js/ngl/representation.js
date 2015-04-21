@@ -4059,36 +4059,30 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     },
 
+    prepare: function( callback ){
+
+        if( !this.molsurf || this.__sele !== this.selection.combinedString ){
+
+            this.molsurf = new NGL.MolecularSurface( this.atomSet );
+
+        }
+
+        this.molsurf.generateSurfaceWorker(
+            this.surfaceType, this.probeRadius,
+            this.scaleFactor, this.smooth,
+            callback
+        );
+
+    },
+
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        if( !this.molsurf ||
-            this.__sele !== this.selection.combinedString ||
-            this.__surfaceType !== this.surfaceType ||
-            this.__probeRadius !== this.probeRadius ||
-            this.__scaleFactor !== this.scaleFactor
-        ){
-
-            this.molsurf = new NGL.MolecularSurface( this.atomSet );
-
-            this.surface = this.molsurf.getSurface(
-                this.surfaceType, this.probeRadius, this.scaleFactor
-            );
-
-            this.__sele = this.selection.combinedString;
-            this.__surfaceType = this.surfaceType;
-            this.__probeRadius = this.probeRadius;
-            this.__scaleFactor = this.scaleFactor;
-
-        }
-
-        this.surface.generateSurface( 1, this.smooth );
-
-        var position = this.surface.getPosition();
-        var color = this.surface.getColor( this.color );
-        var normal = this.surface.getNormal();
-        var index = this.surface.getIndex();
+        var position = this.molsurf.getPosition();
+        var color = this.molsurf.getColor( this.color );
+        var normal = this.molsurf.getNormal();
+        var index = this.molsurf.getIndex();
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -4126,7 +4120,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         }else{
 
-            this.surfaceBuffer = new NGL.SurfaceBuffer(
+            var surfaceBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
                 {
                     background: this.background,
@@ -4140,7 +4134,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 }
             );
 
-            this.bufferList.push( this.surfaceBuffer );
+            this.bufferList.push( surfaceBuffer );
 
         }
 

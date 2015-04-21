@@ -2144,6 +2144,150 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
 NGL.MolecularSurface = function( atomSet ){
 
+    this.atomSet = atomSet;
+
+};
+
+NGL.MolecularSurface.prototype = {
+
+    generateSurface: function( type, probeRadius, scaleFactor, smooth ){
+
+        if( type === this.__type && probeRadius === this.__probeRadius &&
+            scaleFactor === this.__scaleFactor && smooth === this.__smooth
+        ){
+
+            // already generated
+            return;
+
+        }
+
+        var edtsurf = new NGL.EDTSurface( this.atomSet );
+        var vol = edtsurf.getVolume(
+            type, probeRadius, scaleFactor
+        );
+        vol.generateSurface( 1, smooth );
+
+        this.position = vol.getPosition();
+        this.normal = vol.getNormal();
+        this.index = vol.getIndex();
+
+        this.size = this.position.length / 3;
+
+        this.__type = type;
+        this.__probeRadius = probeRadius;
+        this.__scaleFactor = scaleFactor;
+        this.__smooth = smooth;
+
+    },
+
+    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, callback ){
+
+        if( type === this.__type && probeRadius === this.__probeRadius &&
+            scaleFactor === this.__scaleFactor && smooth === this.__smooth
+        ){
+
+            // already generated
+            callback();
+
+        }else if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + this.name;
+
+            NGL.time( __timeName );
+
+            var scope = this;
+            var atomSet = undefined;
+
+            if( this.worker === undefined ){
+
+                atomSet = this.atomSet.toJSON();
+                this.worker = new Worker( "../js/worker/molsurf.js" );
+
+            }
+
+            this.worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+
+                // if( NGL.debug ) console.log( e.data );
+
+                scope.position = e.data.position;
+                scope.normal = e.data.normal;
+                scope.index = e.data.index;
+
+                scope.size = scope.position.length / 3;
+
+                scope.__type = type;
+                scope.__probeRadius = probeRadius;
+                scope.__scaleFactor = scaleFactor;
+                scope.__smooth = smooth;
+
+                callback();
+
+            };
+
+            this.worker.postMessage( {
+                atomSet: atomSet,
+                params: {
+                    type: type,
+                    probeRadius: probeRadius,
+                    scaleFactor: scaleFactor,
+                    smooth: smooth
+                }
+            } );
+
+        }else{
+
+            this.generateSurface( type, probeRadius, scaleFactor, smooth );
+
+            callback();
+
+        }
+
+    },
+
+    getPosition: function(){
+
+        return this.position;
+
+    },
+
+    getColor: function( color ){
+
+        // re-use array
+
+        var tc = new THREE.Color( color );
+        var col = NGL.Utils.uniformArray3(
+            this.size, tc.r, tc.g, tc.b
+        );
+
+        return col;
+
+    },
+
+    getNormal: function(){
+
+        return this.normal;
+
+    },
+
+    getIndex: function(){
+
+        return this.index;
+
+    },
+
+    dispose: function(){
+
+        if( this.worker ) this.worker.terminate();
+
+    }
+
+};
+
+
+NGL.EDTSurface = function( atomSet ){
+
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
     //
@@ -2271,9 +2415,9 @@ NGL.MolecularSurface = function( atomSet ){
 
     //
 
-    this.getSurface = function( type, probeRadius, scaleFactor ){
+    this.getVolume = function( type, probeRadius, scaleFactor ){
 
-        NGL.time( "NGL.MolecularSurface.getSurface" );
+        NGL.time( "NGL.EDTSurface.getVolume" );
 
         init( type !== "vws", probeRadius, scaleFactor );
 
@@ -2295,15 +2439,15 @@ NGL.MolecularSurface = function( atomSet ){
 
         marchingcubeinit( type );
 
-        var v = new NGL.Volume(
+        var vol = new NGL.Volume(
             type, "", vpBits, pHeight, pWidth, pLength
         );
 
-        v.matrix.copy( matrix );
+        vol.matrix.copy( matrix );
 
-        NGL.timeEnd( "NGL.MolecularSurface.getSurface" );
+        NGL.timeEnd( "NGL.EDTSurface.getVolume" );
 
-        return v;
+        return vol;
 
     };
 
