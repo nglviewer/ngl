@@ -4585,7 +4585,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }else{
 
-            this.surfaceBuffer = new NGL.SurfaceBuffer(
+            var surfaceBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, undefined,
                 {
                     background: this.background,
@@ -4599,7 +4599,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 }
             );
 
-            this.bufferList.push( this.surfaceBuffer );
+            this.bufferList.push( surfaceBuffer );
 
         }
 

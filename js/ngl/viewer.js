@@ -1272,6 +1272,8 @@ NGL.Viewer.prototype = {
 
         if( this.boundingBoxMesh ){
             this.modelGroup.remove( this.boundingBoxMesh );
+            this.boundingBoxMesh.material.dispose();
+            this.boundingBoxMesh.geometry.dispose();
         }
 
         if( geometry ){

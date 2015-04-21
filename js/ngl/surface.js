@@ -1940,6 +1940,8 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
     if( inflate ){
 
+        // Buffer geometry is only used to calculate normals
+
         var bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
         bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
@@ -2142,6 +2144,12 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
             }
 
         }
+
+    }
+
+    if( inflate ){
+
+        bg.dispose();
 
     }
 
