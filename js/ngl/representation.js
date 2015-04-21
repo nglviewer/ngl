@@ -109,7 +109,7 @@ NGL.Representation.prototype = {
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
         this.flatShaded = p.flatShaded || false;
 
-        this.visible = p.visible === undefined ? true : p.visible;
+        this.visible = p.visible !== undefined ? p.visible : true;
         this.quality = p.quality;
 
     },
@@ -585,7 +585,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
 
-        this.color = p.color === undefined ? "element" : p.color;
+        this.color = p.color !== undefined ? p.color : "element";
         this.radius = p.radius || "vdw";
         this.scale = p.scale || 1.0;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
@@ -4042,7 +4042,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
 
-        p.color = p.color || 0xDDDDDD;
+        p.color = p.color !== undefined ? p.color : 0xDDDDDD;
 
         this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
         this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
@@ -4162,7 +4162,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            surfaceData[ "color" ] = this.surface.getColor( this.color );
+            surfaceData[ "color" ] = this.molsurf.getColor( this.color );
 
         }
 
