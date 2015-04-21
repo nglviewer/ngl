@@ -1338,6 +1338,57 @@ NGL.AtomSet.prototype = {
 
     },
 
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'AtomSet',
+                generator: 'AtomSetExporter'
+            },
+
+            atomCount: this.atomCount
+
+        };
+
+        var atoms = this.atoms;
+        var n = atoms.length;
+        var atomArray = new NGL.AtomArray( n );
+        var pa = new NGL.ProxyAtom( atomArray );
+
+        for( var i = 0; i < n; ++i ){
+
+            pa.copy( atoms[ i ], i );
+
+        }
+
+        output.atomArray = atomArray.toJSON();
+
+        return output;
+
+    },
+
+    fromJSON: function( input, atoms ){
+
+        this.atomCount = input.atomCount;
+
+        var atoms = this.atoms;
+        var atomArray = new NGL.AtomArray( input.atomArray );
+        var n = atomArray.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            atoms.push(
+                new NGL.ProxyAtom( atomArray, i )
+            );
+
+        }
+
+        return this;
+
+    },
+
     dispose: function(){
 
         this.atoms.length = 0;
@@ -4089,7 +4140,7 @@ NGL.Atom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
-        // a.globalindex = this.globalindex;  // ???
+        // this.globalindex = atom.globalindex;
 
         this.residue = atom.residue;
 
@@ -4903,7 +4954,37 @@ NGL.ProxyAtom.prototype = {
 
     positionToVector3: NGL.Atom.prototype.positionToVector3,
 
-    copy: NGL.Atom.prototype.copy,
+    // copy: NGL.Atom.prototype.copy,
+
+    copy: function( atom, index ){
+
+        this.index = index;
+
+        this.atomno = atom.atomno;
+        this.resname = atom.resname;
+        this.x = atom.x;
+        this.y = atom.y;
+        this.z = atom.z;
+        this.element = atom.element;
+        this.chainname = atom.chainname;
+        this.resno = atom.resno;
+        this.serial = atom.serial;
+        this.ss = atom.ss;
+        this.vdw = atom.vdw;
+        this.covalent = atom.covalent;
+        this.hetero = atom.hetero;
+        this.bfactor = atom.bfactor;
+        this.bonds = atom.bonds;
+        this.altloc = atom.altloc;
+        this.atomname = atom.atomname;
+        this.modelindex = atom.modelindex;
+        // this.globalindex = atom.globalindex;
+
+        this.residue = atom.residue;
+
+        return this;
+
+    },
 
     clone: function( r ){
 
