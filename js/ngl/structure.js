@@ -1369,7 +1369,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    fromJSON: function( input, atoms ){
+    fromJSON: function( input ){
 
         this.atomCount = input.atomCount;
 
