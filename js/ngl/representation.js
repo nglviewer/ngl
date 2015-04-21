@@ -4061,9 +4061,14 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     prepare: function( callback ){
 
-        if( !this.molsurf || this.__sele !== this.selection.combinedString ){
+        if( !this.molsurf || this.__forceNewMolsurf ||
+            this.__sele !== this.selection.combinedString
+        ){
+
+            if( this.molsurf ) this.molsurf.dispose();
 
             this.molsurf = new NGL.MolecularSurface( this.atomSet );
+            this.__forceNewMolsurf = false;
             this.__sele = this.selection.combinedString;
 
         }
@@ -4149,8 +4154,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            // FIXME
-            this.molsurf = undefined;
+            this.__forceNewMolsurf = true;
             this.build();
             return;
 
@@ -4185,6 +4189,14 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     clear: function(){
 
         NGL.StructureRepresentation.prototype.clear.call( this );
+
+    },
+
+    dispose: function(){
+
+        if( this.molsurf ) this.molsurf.dispose();
+
+        NGL.StructureRepresentation.prototype.dispose.call( this );
 
     }
 
