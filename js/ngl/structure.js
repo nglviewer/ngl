@@ -2583,13 +2583,14 @@ NGL.Structure.prototype = {
 
         this.eachModel( function( m ){
 
-            s.addModel( m.clone( s ) );
+            var sm = m.clone( s );
+            s.addModel( sm );
 
-        } );
+            sm.eachAtom( function( a ){
 
-        s.eachAtom( function( a ){
+                s.atoms.push( a );
 
-            s.atoms.push( a );
+            } );
 
         } );
 
