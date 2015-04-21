@@ -2357,7 +2357,29 @@ NGL.EDTSurface = function( atomSet ){
         pWidth = pbox.y;
         pHeight = pbox.z;
 
-        // pHeight, pWidth, pLength
+        var maxSize = Math.pow( 10, 6 ) * 256;
+        var tmpSize = pHeight * pWidth * pLength * 3;
+
+        if( maxSize <= tmpSize ){
+
+            scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
+
+            pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+            pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+            pbox = new THREE.Vector3()
+                .subVectors( pmax, pmin )
+                .multiplyScalar( scaleFactor )
+                .ceil()
+                .addScalar( 1 );
+
+            pLength = pbox.x;
+            pWidth = pbox.y;
+            pHeight = pbox.z;
+
+        }
+
+        // coordinate transformation matrix
         matrix = new THREE.Matrix4();
         matrix.multiply(
             new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
