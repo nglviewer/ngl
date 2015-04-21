@@ -530,7 +530,9 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
     // must come after atomSet to ensure selection change signals
     // have already updated the atomSet
-    this.selection.signals.stringChanged.add( this.build.bind( this ) );
+    this.selection.signals.stringChanged.add( function(){
+        this.build();
+    }.bind( this ) );
 
     this.build();
 
