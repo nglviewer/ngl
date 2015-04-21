@@ -4064,6 +4064,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         if( !this.molsurf || this.__sele !== this.selection.combinedString ){
 
             this.molsurf = new NGL.MolecularSurface( this.atomSet );
+            this.__sele = this.selection.combinedString;
 
         }
 
