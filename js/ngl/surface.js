@@ -188,7 +188,7 @@ NGL.Volume.prototype = {
 
     },
 
-    generateSurface: function( isolevel, smooth, callback ){
+    generateSurface: function( isolevel, smooth ){
 
         isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -196,13 +196,6 @@ NGL.Volume.prototype = {
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
 
             // already generated
-
-            if( typeof callback === "function" ){
-
-                callback();
-
-            }
-
             return;
 
         }
@@ -236,14 +229,6 @@ NGL.Volume.prototype = {
 
         this.size = this.position.length / 3;
 
-        // console.log( this.position.length, this.index.length );
-        // v1 595086 296292 rhodopsin
-        // v2 842049 280683
-        // v3  95049 245268
-        // v1 11748744 5887308 ribosome
-        // v2 17660736 5886912
-        // v3  2160663 5886912
-
         this.matrix.applyToVector3Array( this.position );
 
         if( this.normal ){
@@ -276,12 +261,6 @@ NGL.Volume.prototype = {
 
         this.__isolevel = isolevel;
         this.__smooth = smooth;
-
-        if( typeof callback === "function" ){
-
-            callback();
-
-        }
 
     },
 
@@ -342,7 +321,9 @@ NGL.Volume.prototype = {
 
         }else{
 
-            this.generateSurface( isolevel, smooth, callback );
+            this.generateSurface( isolevel, smooth );
+
+            callback();
 
         }
 
