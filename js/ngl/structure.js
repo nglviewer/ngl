@@ -3439,6 +3439,42 @@ NGL.Fiber.prototype = {
 };
 
 
+NGL.Atomnames = {
+
+    Protein: {
+        trace: "CA",
+        direction1: "C",
+        direction2: [ "O", "OC1", "O1" ],
+        backboneStart: "C",
+        backboneEnd: "N",
+    },
+    Nucleic: {
+        backboneStart: [ "O3'", "O3*" ],
+        backboneEnd: "P",
+    },
+    RNA: {
+        trace: [ "C4'", "C4*" ],
+        direction1: [ "C1'", "C1*" ],
+        direction2: [ "C3'", "C3*" ],
+    },
+    DNA: {
+        trace: [ "C3'", "C3*" ],
+        direction1: [ "C2'", "C2*" ],
+        direction2: [ "O4'", "O4*" ],
+    },
+    Cg: {
+        trace: [],
+        backboneStart: [ "CA", "BB" ],
+        backboneEnd: [ "CA", "BB" ],
+    }
+
+};
+
+// equality needed
+NGL.Atomnames.Cg.direction1 = NGL.Atomnames.Cg.trace;
+NGL.Atomnames.Cg.direction2 = NGL.Atomnames.Cg.trace;
+
+
 NGL.Residue = function( chain ){
 
     this.chain = chain;
@@ -3539,7 +3575,8 @@ NGL.Residue.prototype = {
 
             if( this._nucleic === undefined ){
 
-                this._nucleic = ( this.getAtomByName([ "C3'", "C3*" ]) !== undefined
+                this._nucleic = (
+                        this.getAtomByName([ "C3'", "C3*" ]) !== undefined
                         || bases.indexOf( this.resname ) !== -1
                     ) &&
                     this.getAtomByName([ "O3'", "O3*" ]) !== undefined;
@@ -3554,17 +3591,40 @@ NGL.Residue.prototype = {
 
     hasNucleicBackbone: function(){
 
-        if( this._nucleicBackbone === undefined ){
+        var bases = [ "A", "C", "T", "G", "U" ];
 
-            this._nucleicBackbone = this.isNucleic() &&
-                this.getAtomByName([ "P" ]) !== undefined &&
-                this.getAtomByName([ "C3'", "C3*" ]) !== undefined;
+        return function(){
+
+            if( this._nucleicBackbone === undefined ){
+
+                var directionAtomname1;
+                var directionAtomname2;
+
+                if( bases.indexOf( this.resname ) !== -1 ){
+
+                    directionAtomname1 = [ "C1'", "C1*" ];
+                    directionAtomname2 = [ "C3'", "C3*" ];
+
+                }else{
+
+                    directionAtomname1 = [ "C2'", "C2*" ];
+                    directionAtomname2 = [ "O4'", "O4*" ];
+
+                }
+
+                this._nucleicBackbone = this.isNucleic() &&
+                    this.getAtomByName([ "P" ]) !== undefined &&
+                    this.getAtomByName( directionAtomname1 ) !== undefined &&
+                    this.getAtomByName( directionAtomname2 ) !== undefined &&
+                    this.getAtomByName([ "C3'", "C3*" ]) !== undefined;
+
+            }
+
+            return this._nucleicBackbone;
 
         }
 
-        return this._nucleicBackbone;
-
-    },
+    }(),
 
     isHetero: function(){
 
@@ -3765,7 +3825,6 @@ NGL.Residue.prototype = {
         }else if( this.hasNucleicBackbone() ){
 
             return this.getAtomByName( 'P' );
-            // return this.getAtomByName([ "C3'", "C3*" ]);
 
         }else if( this.isCg() ){
 
