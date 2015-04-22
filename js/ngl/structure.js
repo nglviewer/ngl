@@ -334,7 +334,7 @@ NGL.ColorFactory = function( type, structure ){
         .mode('lch')
         .domain( [ 0, 26 ]);
 
-}
+};
 
 NGL.ColorFactory.types = {
 
@@ -350,7 +350,45 @@ NGL.ColorFactory.types = {
     "random": "random",
     "color": "color"
 
-}
+};
+
+NGL.ColorFactory.userFunctions = {};
+
+NGL.ColorFactory.selectionColoring = function( pairList, name ){
+
+    var colorList = [];
+    var selectionList = [];
+
+    pairList.forEach( function( pair ){
+
+        colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
+        selectionList.push( new NGL.Selection( pair[ 1 ] ) );
+
+    } );
+
+    var n = pairList.length;
+
+    var fn = function( atom ){
+
+        for( var i = 0; i < n; ++i ){
+
+            if( selectionList[ i ].test( atom ) ){
+
+                return colorList[ i ];
+
+            }
+
+        }
+
+        return 0xFFFFFF;
+
+    };
+
+    NGL.ColorFactory.userFunctions[ "_" + name ] = fn;
+
+    return name;
+
+};
 
 NGL.ColorFactory.prototype = {
 
@@ -373,6 +411,12 @@ NGL.ColorFactory.prototype = {
         var modelindexScale = this.modelindexScale;
 
         var c, _c;
+
+        if( NGL.ColorFactory.userFunctions[ "_" + type ] ){
+
+            return NGL.ColorFactory.userFunctions[ "_" + type ]( a );
+
+        }
 
         switch( type ){
 
@@ -486,7 +530,7 @@ NGL.RadiusFactory = function( type, scale ){
 
     this.max = 10;
 
-}
+};
 
 NGL.RadiusFactory.types = {
 
@@ -497,7 +541,7 @@ NGL.RadiusFactory.types = {
     "bfactor": "by bfactor",
     "size": "size"
 
-}
+};
 
 NGL.RadiusFactory.prototype = {
 
@@ -572,7 +616,7 @@ NGL.LabelFactory = function( type, text ){
     this.type = type;
     this.text = text || {};
 
-}
+};
 
 NGL.LabelFactory.types = {
 
