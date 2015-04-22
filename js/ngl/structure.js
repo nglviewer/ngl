@@ -231,15 +231,9 @@ NGL.guessElement = function(){
 
         }
 
-        if( n===3 ){
+        if( n>=3 ){
 
             if( elm1.indexOf( at[0] )!==-1 ) return at[0];
-
-        }
-
-        if( n===4 ){
-
-            if( at[0]==="H" ) return "H";
 
         }
 
