@@ -31,10 +31,16 @@ UI.ColorPopupMenu = function(){
     var changeEvent = document.createEvent( 'Event' );
     changeEvent.initEvent( 'change', true, true );
 
+    NGL.ColorFactory.signals.typesChanged.add( function(){
+
+        this.schemeSelector.setOptions( NGL.ColorFactory.getTypes() );
+
+    } );
+
     this.schemeSelector = new UI.Select()
         .setColor( '#444' )
         .setWidth( "" )
-        .setOptions( NGL.ColorFactory.types )
+        .setOptions( NGL.ColorFactory.getTypes() )
         .onChange( function(){
 
             scope.setScheme( scope.schemeSelector.getValue() );

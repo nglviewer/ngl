@@ -352,9 +352,49 @@ NGL.ColorFactory.types = {
 
 };
 
-NGL.ColorFactory.userFunctions = {};
+NGL.ColorFactory.getTypes = function(){
 
-NGL.ColorFactory.selectionColoring = function( pairList, name ){
+    var types = {};
+
+    Object.keys( NGL.ColorFactory.types ).forEach( function( k ){
+        types[ k ] = NGL.ColorFactory.types[ k ];
+    } );
+
+    Object.keys( NGL.ColorFactory.userSchemes ).forEach( function( k ){
+        types[ k ] = k.split( "|" )[ 1 ];
+    } );
+
+    return types;
+
+};
+
+NGL.ColorFactory.signals = {
+
+    typesChanged: new signals.Signal(),
+
+};
+
+NGL.ColorFactory.userSchemes = {};
+
+NGL.ColorFactory.addScheme = function( fn, name ){
+
+    var id = " " + THREE.Math.generateUUID() + "|" + name;
+
+    NGL.ColorFactory.userSchemes[ id ] = fn;
+    NGL.ColorFactory.signals.typesChanged.dispatch();
+
+    return id;
+
+};
+
+NGL.ColorFactory.removeScheme = function( id ){
+
+    delete NGL.ColorFactory.userSchemes[ id ];
+    NGL.ColorFactory.signals.typesChanged.dispatch();
+
+};
+
+NGL.ColorFactory.addSelectionScheme = function( pairList, name ){
 
     var colorList = [];
     var selectionList = [];
@@ -384,9 +424,7 @@ NGL.ColorFactory.selectionColoring = function( pairList, name ){
 
     };
 
-    NGL.ColorFactory.userFunctions[ "_" + name ] = fn;
-
-    return name;
+    return NGL.ColorFactory.addScheme( fn, name );
 
 };
 
@@ -412,9 +450,9 @@ NGL.ColorFactory.prototype = {
 
         var c, _c;
 
-        if( NGL.ColorFactory.userFunctions[ "_" + type ] ){
+        if( NGL.ColorFactory.userSchemes[ type ] ){
 
-            return NGL.ColorFactory.userFunctions[ "_" + type ]( a );
+            return NGL.ColorFactory.userSchemes[ type ]( a );
 
         }
 
