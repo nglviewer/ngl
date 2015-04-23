@@ -645,18 +645,24 @@ NGL.Preferences.prototype = {
 //////////////
 // Component
 
+NGL.nextComponentId = 0;
+
 NGL.Component = function( stage, params ){
 
-    params = params || {};
+    Object.defineProperty( this, 'id', { value: NGL.nextComponentId++ } );
 
-    if( params.name !== undefined ){
-        this.name = params.name;
-    }
-    this.id = params.id;
-    this.tags = params.tags || [];
-    this.visible = params.visible !== undefined ? params.visible : true;
+    var p = params || {};
 
-    this.signals = NGL.makeObjectSignals( this );
+    this.name = p.name;
+    this.uuid = THREE.Math.generateUUID();
+    this.visible = p.visible !== undefined ? p.visible : true;
+
+    // construct instance signals
+    var signalNames = Object.keys( this.signals );
+    this.signals = {};
+    signalNames.forEach( function( name ){
+        this.signals[ name ] = new signals.Signal();
+    }, this );
 
     this.stage = stage;
     this.viewer = stage.viewer;
@@ -679,6 +685,7 @@ NGL.Component.prototype = {
         requestGuiVisibility: null,
 
         statusChanged: null,
+        nameChanged: null,
         disposed: null,
 
     },
@@ -759,6 +766,15 @@ NGL.Component.prototype = {
 
     },
 
+    setName: function( value ){
+
+        this.name = value;
+        this.signals.nameChanged.dispatch( value );
+
+        return this;
+
+    },
+
     getCenter: function(){
 
         // NGL.warn( "not implemented" )
@@ -781,24 +797,22 @@ NGL.Component.prototype = {
 
 };
 
-NGL.ObjectMetadata.prototype.apply( NGL.Component.prototype );
-
 
 NGL.StructureComponent = function( stage, structure, params ){
 
-    params = params || {};
+    var p = params || {};
+    p.name = p.name !== undefined ? p.name : structure.name;
+
+    NGL.Component.call( this, stage, p );
 
     this.__structure = structure;
     this.structure = structure;
-    this.name = structure.name;  // may get overwritten by params.name
-
-    NGL.Component.call( this, stage, params );
 
     this.trajList = [];
-    this.initSelection( params.sele );
+    this.initSelection( p.sele );
 
-    if( params.assembly !== undefined ){
-        this.structure.setDefaultAssembly( params.assembly );
+    if( p.assembly !== undefined ){
+        this.structure.setDefaultAssembly( p.assembly );
     }
 
 };
@@ -813,8 +827,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     signals: Object.assign( {
 
-        "trajectoryAdded": null,
-        "trajectoryRemoved": null
+        trajectoryAdded: null,
+        trajectoryRemoved: null
 
     }, NGL.Component.prototype.signals ),
 
@@ -1067,10 +1081,12 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
 NGL.SurfaceComponent = function( stage, surface, params ){
 
-    this.surface = surface;
-    this.name = surface.name;
+    var p = params || {};
+    p.name = p.name !== undefined ? p.name : surface.name;
 
-    NGL.Component.call( this, stage, params );
+    NGL.Component.call( this, stage, p );
+
+    this.surface = surface;
 
 };
 
@@ -1112,15 +1128,14 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
 NGL.TrajectoryComponent = function( stage, trajectory, params, parent ){
 
-    params = params || {}
+    var p = params || {};
+    p.name = p.name !== undefined ? p.name : trajectory.name;
+
+    NGL.Component.call( this, stage, p );
 
     this.trajectory = trajectory;
-    this.name = trajectory.name;
     this.parent = parent;
-
     this.status = "loaded";
-
-    NGL.Component.call( this, stage, params );
 
     // signals
 
@@ -1144,9 +1159,9 @@ NGL.TrajectoryComponent = function( stage, trajectory, params, parent ){
 
     //
 
-    if( params.i !== undefined ){
+    if( p.i !== undefined ){
 
-        this.setFrame( params.i );
+        this.setFrame( p.i );
 
     }
 
@@ -1162,10 +1177,10 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
 
     signals: Object.assign( {
 
-        "frameChanged": null,
-        "playerChanged": null,
-        "gotNumframes": null,
-        "parametersChanged": null
+        frameChanged: null,
+        playerChanged: null,
+        gotNumframes: null,
+        parametersChanged: null
 
     }, NGL.Component.prototype.signals ),
 
@@ -1217,12 +1232,13 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
 
 NGL.ScriptComponent = function( stage, script, params ){
 
+    var p = params || {};
+    p.name = p.name !== undefined ? p.name : script.name;
+
+    NGL.Component.call( this, stage, p );
+
     this.script = script;
-    this.name = script.name;
-
     this.status = "loaded";
-
-    NGL.Component.call( this, stage, params );
 
     this.script.signals.nameChanged.add( function( value ){
 
@@ -1275,10 +1291,12 @@ NGL.ScriptComponent.prototype = NGL.createObject(
 
 NGL.RepresentationComponent = function( stage, repr, params, parent ){
 
-    this.name = repr.type;
-    this.parent = parent;
+    var p = params || {};
+    p.name = p.name !== undefined ? p.name : repr.type;
 
-    NGL.Component.call( this, stage, params );
+    NGL.Component.call( this, stage, p );
+
+    this.parent = parent;
 
     this.setRepresentation( repr );
 
@@ -1294,9 +1312,8 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     signals: Object.assign( {
 
-        "visibilityChanged": null,
-        "colorChanged": null,
-        "parametersChanged": null,
+        colorChanged: null,
+        parametersChanged: null,
 
     }, NGL.Component.prototype.signals ),
 

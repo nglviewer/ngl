@@ -80,8 +80,13 @@ NGL.Script.prototype = {
 
             try{
 
+                var fnList = [];
+                Object.keys( helper ).forEach( function( name ){
+                    fnList.push( helper[ name ] );
+                } );
+
                 this.fn.apply(
-                    null, args.concat( Object.values( helper ) )
+                    null, args.concat( fnList )
                 );
 
             }catch( e ){
