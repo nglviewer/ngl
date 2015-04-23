@@ -39,6 +39,7 @@ var list = {
             [ "Viewer", "api/core/Viewer" ]
         ],
         "Object": [
+            [ "ColorFactory", "api/object/ColorFactory" ],
             [ "Selection", "api/object/Selection" ],
             [ "Structure", "api/object/Structure" ],
             [ "Surface", "api/object/Surface" ],

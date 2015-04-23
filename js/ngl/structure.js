@@ -376,9 +376,9 @@ NGL.ColorFactory.signals = {
 
 NGL.ColorFactory.userSchemes = {};
 
-NGL.ColorFactory.addScheme = function( fn, name ){
+NGL.ColorFactory.addScheme = function( fn, label ){
 
-    var id = " " + THREE.Math.generateUUID() + "|" + name;
+    var id = " " + THREE.Math.generateUUID() + "|" + label;
 
     NGL.ColorFactory.userSchemes[ id ] = fn;
     NGL.ColorFactory.signals.typesChanged.dispatch();
@@ -394,7 +394,7 @@ NGL.ColorFactory.removeScheme = function( id ){
 
 };
 
-NGL.ColorFactory.addSelectionScheme = function( pairList, name ){
+NGL.ColorFactory.addSelectionScheme = function( pairList, label ){
 
     var colorList = [];
     var selectionList = [];
@@ -424,7 +424,7 @@ NGL.ColorFactory.addSelectionScheme = function( pairList, name ){
 
     };
 
-    return NGL.ColorFactory.addScheme( fn, name );
+    return NGL.ColorFactory.addScheme( fn, label );
 
 };
 
