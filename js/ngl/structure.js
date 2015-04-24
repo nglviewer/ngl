@@ -5879,16 +5879,13 @@ NGL.Selection.prototype = {
 
         }
 
-        // console.log( filtered );
-
         if( filtered.rules.length > 0 ){
 
-            if( filtered.operator === "OR" && filtered.rules.length < n ){
-                // can't discard rules when operator is "OR"
-                filtered.rules = selection.rules.slice();
-            }
-
-            return filtered;
+            // TODO maybe the filtered rules could be returned
+            // in some case, but the way how tests are applied
+            // e.g. when traversing a structure would also need
+            // to change
+            return selection;
 
         }else{
 
