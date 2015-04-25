@@ -13,12 +13,9 @@ NGL.Spline = function( fiber, arrows ){
 
     this.fiber = fiber;
     this.size = fiber.residueCount - 2;
-    this.traceAtomname = fiber.traceAtomname;
-    this.directionAtomname1 = fiber.directionAtomname1;
-    this.directionAtomname2 = fiber.directionAtomname2;
 
-    this.isNucleic = this.fiber.residues[ 0 ].isNucleic();
-    this.tension = this.isNucleic ? 0.5 : 0.9;
+    this.type = this.fiber.getType();
+    this.tension = this.type === NGL.NucleicType ? 0.5 : 0.9;
 
 };
 
@@ -44,7 +41,6 @@ NGL.Spline.prototype = {
 
         var n = this.size;
         var n1 = n - 1;
-        var traceAtomname = this.traceAtomname;
 
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
@@ -58,7 +54,7 @@ NGL.Spline.prototype = {
 
             mh = Math.ceil( m / 2 );
 
-            a2 = r2.getAtomByName( traceAtomname );
+            a2 = r2.getTraceAtom();
 
             c2 = colorFactory.atomColor( a2 );
             pc2 = a2.globalindex + 1;
@@ -77,7 +73,7 @@ NGL.Spline.prototype = {
 
             }
 
-            a3 = r3.getAtomByName( traceAtomname );
+            a3 = r3.getTraceAtom();
 
             c3 = colorFactory.atomColor( a3 );
             pc3 = a3.globalindex + 1;
@@ -146,7 +142,6 @@ NGL.Spline.prototype = {
 
         var n = this.size;
         var n1 = n - 1;
-        var traceAtomname = this.traceAtomname;
         var arrows = this.arrows;
 
         var size = new Float32Array( n1 * m + 1 );
@@ -158,8 +153,8 @@ NGL.Spline.prototype = {
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            a2 = r2.getAtomByName( traceAtomname );
-            a3 = r3.getAtomByName( traceAtomname );
+            a2 = r2.getTraceAtom();
+            a3 = r3.getTraceAtom();
 
             s2 = radiusFactory.atomRadius( a2 );
             s3 = radiusFactory.atomRadius( a3 );
@@ -217,10 +212,6 @@ NGL.Spline.prototype = {
 
         if( isNaN( tension ) ) tension = this.tension;
 
-        if( !atomname ){
-            atomname = this.traceAtomname;
-        }
-
         var interpolate = this.interpolate;
 
         var n = this.size;
@@ -236,10 +227,21 @@ NGL.Spline.prototype = {
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            a1 = r1.getAtomByName( atomname );
-            a2 = r2.getAtomByName( atomname );
-            a3 = r3.getAtomByName( atomname );
-            a4 = r4.getAtomByName( atomname );
+            if( atomname ){
+
+                a1 = r1.getAtomByName( atomname );
+                a2 = r2.getAtomByName( atomname );
+                a3 = r3.getAtomByName( atomname );
+                a4 = r4.getAtomByName( atomname );
+
+            }else{
+
+                a1 = r1.getTraceAtom();
+                a2 = r2.getTraceAtom();
+                a3 = r3.getTraceAtom();
+                a4 = r4.getTraceAtom();
+
+            }
 
             for( j = 0; j < m; ++j ){
 
@@ -266,10 +268,6 @@ NGL.Spline.prototype = {
 
         if( isNaN( tension ) ) tension = this.tension;
 
-        if( !atomname ){
-            atomname = this.traceAtomname;
-        }
-
         var interpolate = this.interpolate;
 
         var p1 = new THREE.Vector3();
@@ -289,10 +287,21 @@ NGL.Spline.prototype = {
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            a1 = r1.getAtomByName( atomname );
-            a2 = r2.getAtomByName( atomname );
-            a3 = r3.getAtomByName( atomname );
-            a4 = r4.getAtomByName( atomname );
+            if( atomname ){
+
+                a1 = r1.getAtomByName( atomname );
+                a2 = r2.getAtomByName( atomname );
+                a3 = r3.getAtomByName( atomname );
+                a4 = r4.getAtomByName( atomname );
+
+            }else{
+
+                a1 = r1.getTraceAtom();
+                a2 = r2.getTraceAtom();
+                a3 = r3.getTraceAtom();
+                a4 = r4.getTraceAtom();
+
+            }
 
             for( j = 0; j < m; ++j ){
 
@@ -334,10 +343,7 @@ NGL.Spline.prototype = {
     getNormals: function( m, tension, tan ){
 
         var interpolate = this.interpolate;
-        var traceAtomname = this.traceAtomname;
-        var directionAtomname1 = this.directionAtomname1;
-        var directionAtomname2 = this.directionAtomname2;
-        var isNucleic = this.isNucleic;
+        var type = this.type;
 
         var n = this.size;
         var n1 = n - 1;
@@ -355,7 +361,7 @@ NGL.Spline.prototype = {
 
         var vDir = new THREE.Vector3();
         var vTan = new THREE.Vector3();
-        var vNorm = new THREE.Vector3();
+        var vNorm = new THREE.Vector3().set( 0, 0, 1 );
         var vBin = new THREE.Vector3();
         var vBinPrev = new THREE.Vector3();
 
@@ -378,67 +384,69 @@ NGL.Spline.prototype = {
 
         this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
 
-            if( first ){
+            if( type !== NGL.CgType ){
 
-                first = false;
+                if( first ){
 
-                vNorm.set( 0, 0, 1 );
+                    first = false;
 
-                d1a1.copy( r1.getAtomByName( directionAtomname1 ) );
-                d1a2.copy( r2.getAtomByName( directionAtomname1 ) );
-                d1a3.copy( r3.getAtomByName( directionAtomname1 ) );
+                    d1a1.copy( r1.getDirectionAtom1() );
+                    d1a2.copy( r2.getDirectionAtom1() );
+                    d1a3.copy( r3.getDirectionAtom1() );
 
-                d2a1.copy( r1.getAtomByName( directionAtomname2 ) );
-                d2a2.copy( r2.getAtomByName( directionAtomname2 ) );
-                d2a3.copy( r3.getAtomByName( directionAtomname2 ) );
+                    d2a1.copy( r1.getDirectionAtom2() );
+                    d2a2.copy( r2.getDirectionAtom2() );
+                    d2a3.copy( r3.getDirectionAtom2() );
 
-                vSub1.subVectors( d2a1, d1a1 );
-                vSub2.subVectors( d2a2, d1a2 );
-                if( vSub1.dot( vSub2 ) < 0 ){
-                    vSub2.multiplyScalar( -1 );
-                    d2a2.addVectors( d1a2, vSub2 );
+                    vSub1.subVectors( d2a1, d1a1 );
+                    vSub2.subVectors( d2a2, d1a2 );
+                    if( vSub1.dot( vSub2 ) < 0 ){
+                        vSub2.multiplyScalar( -1 );
+                        d2a2.addVectors( d1a2, vSub2 );
+                    }
+
+                    vSub3.subVectors( d2a3, d1a3 );
+                    if( vSub2.dot( vSub3 ) < 0 ){
+                        vSub3.multiplyScalar( -1 );
+                        d2a3.addVectors( d1a3, vSub3 );
+                    }
+
+                }else{
+
+                    d1a1.copy( d1a2 );
+                    d1a2.copy( d1a3 );
+                    d1a3.copy( d1a4 );
+
+                    d2a1.copy( d2a2 );
+                    d2a2.copy( d2a3 );
+                    d2a3.copy( d2a4 );
+
+                    vSub3.copy( vSub4 );
+
                 }
 
-                vSub3.subVectors( d2a3, d1a3 );
-                if( vSub2.dot( vSub3 ) < 0 ){
-                    vSub3.multiplyScalar( -1 );
-                    d2a3.addVectors( d1a3, vSub3 );
+                d1a4.copy( r4.getDirectionAtom1() );
+                d2a4.copy( r4.getDirectionAtom2() );
+
+                vSub4.subVectors( d2a4, d1a4 );
+                if( vSub3.dot( vSub4 ) < 0 ){
+                    vSub4.multiplyScalar( -1 );
+                    d2a4.addVectors( d1a4, vSub4 );
                 }
 
-            }else{
-
-                d1a1.copy( d1a2 );
-                d1a2.copy( d1a3 );
-                d1a3.copy( d1a4 );
-
-                d2a1.copy( d2a2 );
-                d2a2.copy( d2a3 );
-                d2a3.copy( d2a4 );
-
-                vSub3.copy( vSub4 );
-
-            }
-
-            d1a4.copy( r4.getAtomByName( directionAtomname1 ) );
-            d2a4.copy( r4.getAtomByName( directionAtomname2 ) );
-
-            vSub4.subVectors( d2a4, d1a4 );
-            if( vSub3.dot( vSub4 ) < 0 ){
-                vSub4.multiplyScalar( -1 );
-                d2a4.addVectors( d1a4, vSub4 );
             }
 
             for( j = 0; j < m; ++j ){
 
                 l = k + j * 3;
 
-                if( traceAtomname === directionAtomname1 ){
+                if( type === NGL.CgType ){
 
                     vDir.copy( vNorm );
 
                 }else{
 
-                    if( !isNucleic ){
+                    if( type === NGL.ProteinType ){
                         // shift half a residue
                         l += m2 * 3;
                     }
@@ -470,7 +478,7 @@ NGL.Spline.prototype = {
 
         } );
 
-        if( traceAtomname !== directionAtomname1 && !isNucleic ){
+        if( type === NGL.ProteinType ){
 
             vBin.fromArray( bin, m2 * 3 );
             vNorm.fromArray( norm, m2 * 3 );
@@ -503,7 +511,6 @@ NGL.Spline.prototype = {
 NGL.Helixorient = function( fiber ){
 
     this.fiber = fiber;
-    this.traceAtomname = fiber.traceAtomname;
 
     this.size = fiber.residueCount;
 
@@ -524,7 +531,7 @@ NGL.Helixorient.prototype = {
         for( i = 0; i < n; ++i ){
 
             fr = this.fiber.residues[ i ];
-            fa = fr.getAtomByName( this.traceAtomname );
+            fa = fr.getTraceAtom();
 
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );
@@ -585,7 +592,6 @@ NGL.Helixorient.prototype = {
     getColor: function( type ){
 
         var n = this.size;
-        var traceAtomname = this.traceAtomname;
 
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
@@ -597,7 +603,7 @@ NGL.Helixorient.prototype = {
 
         this.fiber.eachResidue( function( r ){
 
-            a = r.getAtomByName( traceAtomname );
+            a = r.getTraceAtom();
 
             c = colorFactory.atomColor( a );
             colorFactory.atomColorToArray( a, col, i );
@@ -621,7 +627,6 @@ NGL.Helixorient.prototype = {
     getSize: function( type, scale ){
 
         var n = this.size;
-        var traceAtomname = this.traceAtomname;
 
         var size = new Float32Array( n );
 
@@ -632,7 +637,7 @@ NGL.Helixorient.prototype = {
 
         this.fiber.eachResidue( function( r ){
 
-            a = r.getAtomByName( traceAtomname );
+            a = r.getTraceAtom();
 
             size[ i ] = radiusFactory.atomRadius( a );
 
@@ -647,8 +652,6 @@ NGL.Helixorient.prototype = {
     },
 
     getPosition: function(){
-
-        var traceAtomname = this.traceAtomname;
 
         var i = 0;
         var n = this.size;
@@ -686,10 +689,10 @@ NGL.Helixorient.prototype = {
 
             j = 3 * i;
 
-            a1 = r1.getAtomByName( traceAtomname );
-            a2 = r2.getAtomByName( traceAtomname );
-            a3 = r3.getAtomByName( traceAtomname );
-            a4 = r4.getAtomByName( traceAtomname );
+            a1 = r1.getTraceAtom();
+            a2 = r2.getTraceAtom();
+            a3 = r3.getTraceAtom();
+            a4 = r4.getTraceAtom();
 
             // ported from GROMACS src/tools/gmx_helixorient.c
 
@@ -753,7 +756,7 @@ NGL.Helixorient.prototype = {
         v1.fromArray( center, 3 );
         v2.fromArray( center, 6 );
         _axis.subVectors( v1, v2 ).normalize();
-        _center.copy( res[ 0 ].getAtomByName( traceAtomname ) );
+        _center.copy( res[ 0 ].getTraceAtom() );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         v1.toArray( center, 0 );
 
@@ -766,7 +769,7 @@ NGL.Helixorient.prototype = {
         v1.fromArray( center, 3 * n - 6 );
         v2.fromArray( center, 3 * n - 9 );
         _axis.subVectors( v1, v2 ).normalize();
-        _center.copy( res[ n - 1 ].getAtomByName( traceAtomname ) );
+        _center.copy( res[ n - 1 ].getTraceAtom() );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         v1.toArray( center, 3 * n - 3 );
 
@@ -774,7 +777,7 @@ NGL.Helixorient.prototype = {
         for( i = n - 3; i < n; ++i ){
 
             v1.fromArray( center, 3 * i );
-            _center.copy( res[ i ].getAtomByName( traceAtomname ) );
+            _center.copy( res[ i ].getTraceAtom() );
 
             _resdir.subVectors( _center, v1 );
             _resdir.toArray( resdir, 3 * i );
@@ -1145,7 +1148,6 @@ NGL.Helix.prototype = {
 NGL.Helixbundle = function( fiber ){
 
     this.fiber = fiber;
-    this.traceAtomname = fiber.traceAtomname;
 
     this.helixorient = new NGL.Helixorient( fiber );
     this.position = this.helixorient.getPosition();
@@ -1185,7 +1187,6 @@ NGL.Helixbundle.prototype = {
         var j = 0;
         var k = 0;
         var n = this.size;
-        var traceAtomname = this.traceAtomname;
 
         var res = this.fiber.residues;
 
@@ -1242,7 +1243,7 @@ NGL.Helixbundle.prototype = {
 
                 }
 
-                a = r.getAtomByName( traceAtomname );
+                a = r.getTraceAtom();
 
                 // ignore first and last axis
                 tmpAxis = pos.axis.subarray( j * 3 + 3, i * 3 );
@@ -1627,7 +1628,7 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
             var atomCA = atomN.residue.getAtomByName( "CA" );
             if( !atomCA ) return;
 
-            var prevRes = atomN.residue.getPreviousResidue();
+            var prevRes = atomN.residue.getPreviousConnectedResidue();
             if( !prevRes ) return;
 
             var atomC = prevRes.getAtomByName( "C" );
