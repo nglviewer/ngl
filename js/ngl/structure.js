@@ -3927,6 +3927,22 @@ NGL.Residue.prototype = {
 
     },
 
+    qualifiedName: function( noResname ){
+
+        var name = "";
+
+        if( this.resname && !noResname ) name += "[" + this.resname + "]";
+        if( this.resno ) name += this.resno;
+        if( this.chain ) name += ":" + this.chain.chainname;
+
+        if( this.chain && this.chain.model ){
+            name += "/" + this.chain.model.index;
+        }
+
+        return name;
+
+    },
+
     clone: function( c ){
 
         var r = new NGL.Residue( c );
