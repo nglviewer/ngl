@@ -3229,7 +3229,7 @@ NGL.Chain.prototype = {
         var test = selection ? selection.test : undefined;
 
         var a1, a2;
-        var bbType1, bbType1
+        var bbType1, bbType2
 
         this.eachResidueN( 2, function( r1, r2 ){
 
