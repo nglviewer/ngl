@@ -5397,6 +5397,18 @@ NGL.Selection.prototype = {
                 continue;
             }
 
+            if( c.toUpperCase() === "RNA" ){
+                sele.keyword = "RNA";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "DNA" ){
+                sele.keyword = "DNA";
+                pushRule( sele );
+                continue;
+            }
+
             if( c.toUpperCase() === "POLYMER" ){
                 sele.keyword = "POLYMER";
                 pushRule( sele );
@@ -5941,6 +5953,8 @@ NGL.Selection.prototype = {
                     )
                 ) return true;
                 if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
+                if( s.keyword==="RNA" && a.residue.isRna() ) return true;
+                if( s.keyword==="DNA" && a.residue.isDna() ) return true;
                 if( s.keyword==="POLYMER" && (
                         a.residue.isProtein() ||
                         a.residue.isNucleic() ||
@@ -6037,6 +6051,8 @@ NGL.Selection.prototype = {
                         r.isProtein() || r.isCg() )
                 ) return true;
                 if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
+                if( s.keyword==="RNA" && r.isRna() ) return true;
+                if( s.keyword==="DNA" && r.isDna() ) return true;
                 if( s.keyword==="POLYMER" && (
                         r.isProtein() || r.isNucleic() || r.isCg() )
                 ) return true;
