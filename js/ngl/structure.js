@@ -282,7 +282,11 @@ NGL.AA1 = {
     'ASP': 'D',
     'GLU': 'E',
     'THR': 'T',
-    'UNK': ''
+
+    'ASH': 'D',
+    'GLH': 'E',
+
+    'UNK': '',
 };
 
 
