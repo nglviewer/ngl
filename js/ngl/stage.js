@@ -355,6 +355,34 @@ NGL.Stage.prototype = {
 
         }, componentType );
 
+    },
+
+    getComponentsByName: function( name, componentType ){
+
+        var compList = [];
+
+        this.eachComponent( function( comp ){
+
+            if( comp.name === name ) compList.push( comp );
+
+        }, componentType );
+
+        return compList;
+
+    },
+
+    getRepresentationsByName: function( name, componentType ){
+
+        var reprList = [];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr.name === name ) reprList.push( repr );
+
+        }, componentType );
+
+        return reprList;
+
     }
 
 }
