@@ -40,7 +40,7 @@ var list = {
         ],
         "Object": [
             [ "Chain", "api/object/Chain" ],
-			[ "ColorFactory", "api/object/ColorFactory" ],
+            [ "ColorFactory", "api/object/ColorFactory" ],
             [ "Fiber", "api/object/Fiber" ],
             [ "Selection", "api/object/Selection" ],
             [ "Structure", "api/object/Structure" ],
