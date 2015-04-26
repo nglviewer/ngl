@@ -231,15 +231,9 @@ NGL.guessElement = function(){
 
         }
 
-        if( n===3 ){
+        if( n>=3 ){
 
             if( elm1.indexOf( at[0] )!==-1 ) return at[0];
-
-        }
-
-        if( n===4 ){
-
-            if( at[0]==="H" ) return "H";
 
         }
 
@@ -345,7 +339,7 @@ NGL.ColorFactory = function( type, structure ){
         .mode('lch')
         .domain( [ 0, 26 ]);
 
-}
+};
 
 NGL.ColorFactory.types = {
 
@@ -361,7 +355,83 @@ NGL.ColorFactory.types = {
     "random": "random",
     "color": "color"
 
-}
+};
+
+NGL.ColorFactory.getTypes = function(){
+
+    var types = {};
+
+    Object.keys( NGL.ColorFactory.types ).forEach( function( k ){
+        types[ k ] = NGL.ColorFactory.types[ k ];
+    } );
+
+    Object.keys( NGL.ColorFactory.userSchemes ).forEach( function( k ){
+        types[ k ] = k.split( "|" )[ 1 ];
+    } );
+
+    return types;
+
+};
+
+NGL.ColorFactory.signals = {
+
+    typesChanged: new signals.Signal(),
+
+};
+
+NGL.ColorFactory.userSchemes = {};
+
+NGL.ColorFactory.addScheme = function( fn, label ){
+
+    var id = " " + THREE.Math.generateUUID() + "|" + label;
+
+    NGL.ColorFactory.userSchemes[ id ] = fn;
+    NGL.ColorFactory.signals.typesChanged.dispatch();
+
+    return id;
+
+};
+
+NGL.ColorFactory.removeScheme = function( id ){
+
+    delete NGL.ColorFactory.userSchemes[ id ];
+    NGL.ColorFactory.signals.typesChanged.dispatch();
+
+};
+
+NGL.ColorFactory.addSelectionScheme = function( pairList, label ){
+
+    var colorList = [];
+    var selectionList = [];
+
+    pairList.forEach( function( pair ){
+
+        colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
+        selectionList.push( new NGL.Selection( pair[ 1 ] ) );
+
+    } );
+
+    var n = pairList.length;
+
+    var fn = function( atom ){
+
+        for( var i = 0; i < n; ++i ){
+
+            if( selectionList[ i ].test( atom ) ){
+
+                return colorList[ i ];
+
+            }
+
+        }
+
+        return 0xFFFFFF;
+
+    };
+
+    return NGL.ColorFactory.addScheme( fn, label );
+
+};
 
 NGL.ColorFactory.prototype = {
 
@@ -384,6 +454,12 @@ NGL.ColorFactory.prototype = {
         var modelindexScale = this.modelindexScale;
 
         var c, _c;
+
+        if( NGL.ColorFactory.userSchemes[ type ] ){
+
+            return NGL.ColorFactory.userSchemes[ type ]( a );
+
+        }
 
         switch( type ){
 
@@ -497,7 +573,7 @@ NGL.RadiusFactory = function( type, scale ){
 
     this.max = 10;
 
-}
+};
 
 NGL.RadiusFactory.types = {
 
@@ -508,7 +584,7 @@ NGL.RadiusFactory.types = {
     "bfactor": "by bfactor",
     "size": "size"
 
-}
+};
 
 NGL.RadiusFactory.prototype = {
 
@@ -583,7 +659,7 @@ NGL.LabelFactory = function( type, text ){
     this.type = type;
     this.text = text || {};
 
-}
+};
 
 NGL.LabelFactory.types = {
 
@@ -5933,16 +6009,13 @@ NGL.Selection.prototype = {
 
         }
 
-        // console.log( filtered );
-
         if( filtered.rules.length > 0 ){
 
-            if( filtered.operator === "OR" && filtered.rules.length < n ){
-                // can't discard rules when operator is "OR"
-                filtered.rules = selection.rules.slice();
-            }
-
-            return filtered;
+            // TODO maybe the filtered rules could be returned
+            // in some case, but the way how tests are applied
+            // e.g. when traversing a structure would also need
+            // to change
+            return selection;
 
         }else{
 

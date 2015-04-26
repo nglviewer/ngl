@@ -1077,6 +1077,25 @@ NGL.Examples = {
 
             }, { assembly: "AU", sele: "86-100:H" } );
 
+        },
+
+        "selectionColoring": function( stage ){
+
+            var schemeId = NGL.ColorFactory.addSelectionScheme( [
+                [ "red", "64-74 or 134-154 or 222-254 or 310-310 or 322-326" ],
+                [ "green", "311-322" ],
+                [ "yellow", "40-63 or 75-95 or 112-133 or 155-173 or 202-221 or 255-277 or 289-309" ],
+                [ "blue", "1-39 or 96-112 or 174-201 or 278-288" ],
+                [ "white", "*" ]
+            ], "TMDET 3dqb" );
+
+            stage.loadFile( "data://3dqb.pdb", function( o ){
+
+                o.addRepresentation( "cartoon", { color: schemeId } );
+                o.centerView();
+
+            } );
+
         }
 
     }
