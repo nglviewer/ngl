@@ -35,7 +35,7 @@ UI.ColorPopupMenu = function(){
 
         this.schemeSelector.setOptions( NGL.ColorFactory.getTypes() );
 
-    } );
+    }, this );
 
     this.schemeSelector = new UI.Select()
         .setColor( '#444' )

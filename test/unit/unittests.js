@@ -1058,6 +1058,27 @@ QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 });
 
 
+QUnit.asyncTest( "structure subset atomset chain", function( assert ) {
+
+    var path = "data://../../data/3SN6.cif";
+
+    NGL.autoLoad( path, function( structure ){
+
+        var selection = new NGL.Selection( "30-341:D or 384-394:A" );
+        var subset = new NGL.StructureSubset( structure, selection );
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( structure.atomCount, 10274, "Passed!" );
+        assert.equal( subset.atomCount, 2292, "Passed!" );
+        assert.equal( subset.atomCount, atomSet.atomCount, "Passed!" );
+
+        QUnit.start()
+
+    } );
+
+});
+
+
 QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
     var path = "data://../../data/BaceCgProteinAtomistic.pdb";

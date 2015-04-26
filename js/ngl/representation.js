@@ -1784,8 +1784,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
             f.eachResidueN( 2, function( r1, r2 ){
 
-                a1 = r1.getAtomByName( f.traceAtomname );
-                a2 = r2.getAtomByName( f.traceAtomname );
+                a1 = r1.getTraceAtom();
+                a2 = r2.getTraceAtom();
 
                 if( !test || ( test( a1 ) && test( a2 ) ) ){
 
@@ -2022,7 +2022,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
             f.eachResidue( function( r ){
 
-                a1 = r.getAtomByName( f.traceAtomname );
+                a1 = r.getTraceAtom();
 
                 if( bases.indexOf( r.resname ) !== -1 ){
                     a2 = r.getAtomByName( "N1" );

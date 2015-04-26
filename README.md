@@ -33,6 +33,8 @@ Changelog
 Version 0.6dev
 --------------
 
+* CODE: clearer atomnames handling for fiber creation
+* FIX: residues at the end of fibers may not require all backbone atoms
 * User-defined color schemes (API)
 * FIX: #7
 * DOC: pull request instruction for developers
