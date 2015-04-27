@@ -5645,10 +5645,10 @@ NGL.Selection.prototype = {
                     operator: "OR",
                     rules: [
                         { resname: "ASP" },
-                        { keyword: "GLU" },
-                        { keyword: "HIS" },
-                        { keyword: "LYS" },
-                        { keyword: "ARG" }
+                        { resname: "GLU" },
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" }
                     ]
                 };
                 pushRule( sele );
