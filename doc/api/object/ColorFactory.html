@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="../../list.js"></script>
+		<script src="../../page.js"></script>
+		<link type="text/css" rel="stylesheet" href="../../page.css" />
+	</head>
+	<body>
+		<h1>[name]</h1>
+
+		<div class="desc">A class for handling atom-based coloring.</div>
+
+
+		<h2>Static signals</h2>
+
+		<h3>typesChanged</h3>
+		<div></div>
+
+
+		<h2>Static methods</h2>
+
+		<h3>.addScheme( fn, label )</h3>
+		<div>Returns an *id* that can be used as input for the *color* parameter of [page:StructureRepresentation structure representations] and to delete the scheme. The *fn*( atom ) function must return a hexadecimal RGB value. The *label* is for cosmetic use (i.e. in the GUI). To refer to the scheme internally always use the *id*.</div>
+
+		<h3>.addSelectionScheme( pairList, label )</h3>
+		<div>Returns an *id* like <strong>.addScheme</strong>. Creates a coloring scheme based on *color*, *selection* pairs in *pairList*, where *selection* is a [page:Selection-language selection string] and *color* is either a color name, a hexadecimal RGB value or a CSS color string.</div>
+
+		<code>// color residues 1 to 100 in red, 101-200 in blue and the remaining in white
+		var myScheme = NGL.ColorFactory.addSelectionScheme( [
+			[ "red": "1-100" ],
+			[ "blue": "101-200" ],
+			[ "white": "*" ]
+		] );
+		repr.setParameters( { color: myScheme } );
+		</code>
+
+		<h3>.removeScheme( id )</h3>
+		<div>Deletes the scheme associated with *id*.</div>
+
+
+		<h2>Constructor</h2>
+
+		<h3>[name]( type, [page:Structure structure] )</h3>
+		<div></div>
+
+
+		<h2>Methods</h2>
+
+		<h3>.atomColor( atom )</h3>
+		<div>Returns a hexadecimal RGB color value.</div>
+
+		<h3>.atomColorToArray( atom, array, offset )</h3>
+		<div></div>
+
+
+	</body>
+</html>
