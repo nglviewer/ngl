@@ -3,6 +3,7 @@ NGL = {};
 THREE = {};
 
 importScripts(
+    '../lib/signals.min.js',
     '../three/three.min.js',
     '../ngl/core.js',
     '../ngl/structure.js',
