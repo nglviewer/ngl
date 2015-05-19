@@ -76,6 +76,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
+    this.signals = NGL.makeObjectSignals( this );
     this.queue = async.queue( this.make.bind( this ), 1 );
 
     this.bufferList = [];
@@ -90,6 +91,13 @@ NGL.Representation.prototype = {
     constructor: NGL.Representation,
 
     type: "",
+
+    signals: {
+
+        taskAdded: null,
+        taskFinished: null
+
+    },
 
     parameters: {
 
@@ -167,6 +175,8 @@ NGL.Representation.prototype = {
 
         NGL.time( "NGL.Representation.make " + this.type );
 
+        this.signals.taskAdded.dispatch();
+
         if( params ){
             this.init( params );
         }
@@ -183,6 +193,8 @@ NGL.Representation.prototype = {
                 this.attach( function(){
 
                     NGL.timeEnd( "NGL.Representation.attach " + this.type );
+
+                    this.signals.taskFinished.dispatch();
 
                     callback();
 

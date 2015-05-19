@@ -18,6 +18,8 @@ NGL.Stage = function( eid ){
         componentAdded: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
 
+        taskCountChanged: new SIGNALS.Signal(),
+
         atomPicked: new SIGNALS.Signal(),
 
         requestTheme: new SIGNALS.Signal(),
@@ -25,6 +27,8 @@ NGL.Stage = function( eid ){
         windowResize: new SIGNALS.Signal()
 
     };
+
+    this.taskCount = 0;
 
     this.compList = [];
 
@@ -354,6 +358,26 @@ NGL.Stage.prototype = {
             } );
 
         }, componentType );
+
+    },
+
+    incrementTaskCount: function(){
+
+        this.taskCount += 1;
+        this.signals.taskCountChanged.dispatch( this.taskCount );
+
+    },
+
+    decrementTaskCount: function(){
+
+        this.taskCount -= 1;
+        this.signals.taskCountChanged.dispatch( this.taskCount );
+
+        if( this.taskCount < 0 ){
+
+            NGL.warn( "NGL.Stage.taskCount below zero", this.taskCount );
+
+        }
 
     }
 
@@ -1314,6 +1338,18 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
         this.repr = repr;
         this.name = repr.type;
+
+        this.repr.signals.taskAdded.add( function(){
+
+            this.stage.incrementTaskCount();
+
+        }.bind( this ) );
+
+        this.repr.signals.taskFinished.add( function(){
+
+            this.stage.decrementTaskCount();
+
+        }.bind( this ) );
 
         this.updateVisibility();
 

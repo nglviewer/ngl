@@ -2191,7 +2191,7 @@ NGL.MolecularSurface.prototype = {
 
         }else if( NGL.worker && typeof Worker !== "undefined" ){
 
-            var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + this.name;
+            var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + type;
 
             NGL.time( __timeName );
 
