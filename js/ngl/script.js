@@ -226,89 +226,67 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
-
     function then(){
 
         queue.then.apply( queue, arguments );
 
     }
 
-    // TODO
-    // get, color, radius, center
-    // alias, to create some sort of variables?
+    //
 
-    function structure( name ){
+    function components( name ){
 
-        var component;
-
-        stage.eachComponent( function( o ){
-
-            if( name === o.name || name === o.id ){
-
-                component = o;
-
-            }
-
-        }, NGL.StructureComponent );
-
-        return component;
+        return stage.getComponentsByName( name );
 
     }
 
+    function representations( name ){
 
-    function color( what, value ){
-
-        stage.eachRepresentation( function( repr, comp ){
-
-            if( NGL.ObjectMetadata.test( what, repr, comp ) ){
-
-                repr.setColor( value );
-
-            }
-
-        }, NGL.StructureComponent );
+        return stage.getRepresentationsByName( name );
 
     }
 
+    function structures( name ){
 
-    function visibility( what, value ){
-
-        stage.eachComponent( function( comp ){
-
-            if( !what || ( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ) ){
-                comp.setVisibility( value );
-            }
-
-            if( what && what[ "repr" ] ){
-                comp.eachRepresentation( function( repr ){
-
-                    if( NGL.ObjectMetadata.test( what, repr, comp ) ){
-                        repr.setVisibility( value );
-                    }
-
-                } );
-            }
-
-        }, NGL.StructureComponent );
+        return stage.getComponentsByName( name, NGL.StructureComponent );
 
     }
 
+    //
 
-    function hide( what ){
+    function color( value, list ){
 
-        visibility( what, false );
+        list.forEach( function( o ){
+
+            o.setColor( value );
+
+        } );
 
     }
 
+    function visibility( value, list ){
 
-    function show( what, only ){
+        list.forEach( function( o ){
+
+            o.setVisibility( value );
+
+        } );
+
+    }
+
+    function hide( list ){
+
+        visibility( false, list );
+
+    }
+
+    function show( list, only ){
 
         if( only ) hide();
 
-        visibility( what, true );
+        visibility( true, list );
 
     }
-
 
     function superpose( comp1, comp2, align, sele1, sele2, xsele1, xsele2 ){
 
@@ -330,7 +308,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
-
     function uiHtml( html, newline ){
 
         var elm = new UI.Html( U( html ) );
@@ -342,7 +319,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         return elm;
 
     }
-
 
     function uiBreak( n ){
 
@@ -356,7 +332,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
-
     function uiButton( label, callback ){
 
         var btn = new UI.Button( U( label ) ).onClick( function(){
@@ -369,6 +344,25 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
+    function uiSelect( options, callback ){
+
+        if( Array.isArray( options ) ){
+            var newOptions = {};
+            options.forEach( function( name ){
+                newOptions[ name ] = name;
+            } );
+            options = newOptions;
+        }
+
+        var select = new UI.Select()
+            .setOptions( options )
+            .onChange( callback );
+
+        panel.add( select );
+
+        return select;
+
+    }
 
     function uiToggleButton( labelA, labelB, callbackA, callbackB ){
 
@@ -398,33 +392,79 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
+    function uiVisibilitySelect( list ){
 
-    function uiVisibilityButton( label, what ){
+        function getVisible(){
 
-        if( !label ) label = what ? "": "all";
-        label = U( label );
+            var nameList = [];
+
+            list.forEach( function( o ){
+
+                if( o.visible ) nameList.push( o.name );
+
+            } );
+
+            return nameList;
+
+        }
+
+        var options = { "": "[show]" };
+
+        list.forEach( function( o ){
+
+            options[ o.name ] = o.name;
+
+            o.signals.visibilityChanged.add( function(){
+
+                var nameList = getVisible();
+
+                if( nameList.length === list.length ){
+                    select.setValue( "" );
+                }else if( o.visible ){
+                    select.setValue( o.name );
+                }else{
+                    select.setValue( nameList[ 0 ] );
+                }
+
+            } );
+
+        } );
+
+        var select = new UI.Select()
+            .setOptions( options )
+            .onChange( function(){
+
+                var name = select.getValue();
+
+                if( name === "" ){
+                    show( list );
+                }else{
+                    hide( list );
+                    show( stage.getAnythingByName( name ) );
+                }
+
+            } );
+
+        panel.add( select );
+
+        return select;
+
+    }
+
+    function uiVisibilityButton( label, list ){
+
+        label = U( label ? label : "all" );
+        list = list || [];
 
         function isVisible(){
 
             var visible = false;
 
-            stage.eachComponent( function( comp ){
+            list.forEach( function( o ){
 
-                if( ( !what || ( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ) ) && comp.visible ){
-                    visible = true;
-                }
+                if( o.visible ) visible = true;
 
-                if( what && what[ "repr" ] ){
-                    comp.eachRepresentation( function( repr ){
-
-                        if( NGL.ObjectMetadata.test( what, repr, comp ) && repr.visible ){
-                            visible = true;
-                        }
-
-                    } );
-                }
-
-            }, NGL.StructureComponent );
+            } );
 
             return visible;
 
@@ -436,47 +476,27 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         }
 
-        stage.eachComponent( function( comp ){
+        list.forEach( function( o ){
 
-            if( !what || ( what && !what[ "repr" ] && NGL.ObjectMetadata.test( what, null, comp ) ) ){
+            o.signals.visibilityChanged.add( function(){
 
-                comp.signals.visibilityChanged.add( function( value ){
-
-                    btn.setLabel( getLabel() );
-
-                } );
-
-            }
-
-            comp.eachRepresentation( function( repr ){
-
-                if( NGL.ObjectMetadata.test( what, repr, comp ) ){
-
-                    repr.signals.visibilityChanged.add( function( value ){
-
-                        btn.setLabel( getLabel() );
-
-                    } );
-
-                }
+                btn.setLabel( getLabel() );
 
             } );
 
-        }, NGL.StructureComponent );
+        } );
 
-        var btn = new UI.Button( getLabel() )
-            .onClick( function(){
+        var btn = new UI.Button( getLabel() ).onClick( function(){
 
-                visibility( what, !isVisible() );
+            visibility( !isVisible(), list );
 
-            } )
+        } );
 
         panel.add( btn );
 
         return btn;
 
     }
-
 
     function uiPlayButton( label, trajComp, step, timeout, start, end ){
 
@@ -512,8 +532,11 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'load': load,
         'then': then,
 
-        'structure': structure,
+        'components': components,
+        'representations': representations,
+        'structures': structures,
 
+        'color': color,
         'visibility': visibility,
         'hide': hide,
         'show': show,
@@ -522,8 +545,10 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'uiText': uiText,
         'uiHtml': uiHtml,
         'uiBreak': uiBreak,
+        'uiSelect': uiSelect,
         'uiButton': uiButton,
         'uiToggleButton': uiToggleButton,
+        'uiVisibilitySelect': uiVisibilitySelect,
         'uiVisibilityButton': uiVisibilityButton,
         'uiPlayButton': uiPlayButton,
 

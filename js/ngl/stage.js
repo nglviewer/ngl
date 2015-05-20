@@ -345,11 +345,11 @@ NGL.Stage.prototype = {
 
     eachRepresentation: function( callback, componentType ){
 
-        this.eachComponent( function( o ){
+        this.eachComponent( function( comp ){
 
-            o.reprList.forEach( function( repr ){
+            comp.reprList.forEach( function( repr ){
 
-                callback( repr, o );
+                callback( repr, comp );
 
             } );
 
@@ -363,7 +363,9 @@ NGL.Stage.prototype = {
 
         this.eachComponent( function( comp ){
 
-            if( comp.name === name ) compList.push( comp );
+            if( name === undefined || comp.name === name ){
+                compList.push( comp );
+            }
 
         }, componentType );
 
@@ -373,15 +375,40 @@ NGL.Stage.prototype = {
 
     getRepresentationsByName: function( name, componentType ){
 
+        var compName, reprName;
+
+        if( typeof name !== "object" ){
+            compName = undefined;
+            reprName = name;
+        }else{
+            compName = name.comp;
+            reprName = name.repr;
+        }
+
         var reprList = [];
 
-        this.eachRepresentation( function( repr ){
+        this.eachRepresentation( function( repr, comp ){
 
-            if( repr.name === name ) reprList.push( repr );
+            if( compName !== undefined && comp.name !== compName ){
+                return;
+            }
+
+            if( reprName === undefined || repr.name === reprName ){
+                reprList.push( repr );
+            }
 
         }, componentType );
 
         return reprList;
+
+    },
+
+    getAnythingByName: function( name ){
+
+        var compList = this.getComponentsByName( name );
+        var reprList = this.getRepresentationsByName( name );
+
+        return compList.concat( reprList );
 
     }
 
@@ -1096,6 +1123,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         this.trajList.forEach( function( traj ){
 
+            // FIXME ???
             traj.setVisibility( value );
 
         } );
