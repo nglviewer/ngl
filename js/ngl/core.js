@@ -348,12 +348,12 @@ var NGL = {
 
 
 // set default log handlers
-NGL.log = function() { console.log.apply( console, arguments ); }
-NGL.info = function() { console.info.apply( console, arguments ); }
-NGL.warn = function() { console.warn.apply( console, arguments ); }
-NGL.error = function() { console.error.apply( console, arguments ); }
-NGL.time = function() { console.time.apply( console, arguments ); }
-NGL.timeEnd = function() { console.timeEnd.apply( console, arguments ); }
+NGL.log = Function.prototype.bind.call( console.log, console );
+NGL.info = Function.prototype.bind.call( console.info, console );
+NGL.warn = Function.prototype.bind.call( console.warn, console );
+NGL.error = Function.prototype.bind.call( console.error, console );
+NGL.time = Function.prototype.bind.call( console.time, console );
+NGL.timeEnd = Function.prototype.bind.call( console.timeEnd, console );
 
 
 NGL.LeftMouseButton = 1;
