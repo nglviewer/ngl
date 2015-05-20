@@ -576,6 +576,12 @@ NGL.autoLoad = function(){
 
         }
 
+        var p = params || {};
+
+        if( p.name !== undefined ) name = p.name;
+        if( p.ext !== undefined ) ext = p.ext;
+        if( p.compressed !== undefined ) compressed = p.compressed;
+
         if( ext in loaders ){
 
             loader = new loaders[ ext ];
