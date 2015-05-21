@@ -3583,7 +3583,16 @@ NGL.Residue.atomnames = function(){;
         direction2: null,
         backboneStart: [ "CA", "BB" ],
         backboneEnd: [ "CA", "BB" ],
-    }
+    };
+
+    // workaround for missing CA only type
+    atomnames[ NGL.UnknownType ] = {
+        trace: "CA",
+        direction1: null,
+        direction2: null,
+        backboneStart: "CA",
+        backboneEnd: "CA",
+    };
 
     return atomnames;
 
