@@ -18,8 +18,6 @@ NGL.Stage = function( eid ){
         componentAdded: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
 
-        taskCountChanged: new SIGNALS.Signal(),
-
         atomPicked: new SIGNALS.Signal(),
 
         requestTheme: new SIGNALS.Signal(),
@@ -28,7 +26,7 @@ NGL.Stage = function( eid ){
 
     };
 
-    this.taskCount = 0;
+    this.tasks = new NGL.Counter();
 
     this.compList = [];
 
@@ -361,23 +359,9 @@ NGL.Stage.prototype = {
 
     },
 
-    incrementTaskCount: function(){
+    dispose: function(){
 
-        this.taskCount += 1;
-        this.signals.taskCountChanged.dispatch( this.taskCount );
-
-    },
-
-    decrementTaskCount: function(){
-
-        this.taskCount -= 1;
-        this.signals.taskCountChanged.dispatch( this.taskCount );
-
-        if( this.taskCount < 0 ){
-
-            NGL.warn( "NGL.Stage.taskCount below zero", this.taskCount );
-
-        }
+        this.tasks.dispose();
 
     }
 
@@ -1339,15 +1323,9 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
         this.repr = repr;
         this.name = repr.type;
 
-        this.repr.signals.taskAdded.add( function(){
+        this.repr.tasks.signals.countChanged.add( function( delta, count ){
 
-            this.stage.incrementTaskCount();
-
-        }.bind( this ) );
-
-        this.repr.signals.taskFinished.add( function(){
-
-            this.stage.decrementTaskCount();
+            this.stage.tasks.change( delta );
 
         }.bind( this ) );
 

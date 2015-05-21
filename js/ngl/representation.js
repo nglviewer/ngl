@@ -78,6 +78,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.signals = NGL.makeObjectSignals( this );
     this.queue = async.queue( this.make.bind( this ), 1 );
+    this.tasks = new NGL.Counter();
 
     this.bufferList = [];
     this.debugBufferList = [];
@@ -92,12 +93,7 @@ NGL.Representation.prototype = {
 
     type: "",
 
-    signals: {
-
-        taskAdded: null,
-        taskFinished: null
-
-    },
+    signals: {},
 
     parameters: {
 
@@ -175,7 +171,7 @@ NGL.Representation.prototype = {
 
         NGL.time( "NGL.Representation.make " + this.type );
 
-        this.signals.taskAdded.dispatch();
+        this.tasks.increment();
 
         if( params ){
             this.init( params );
@@ -194,7 +190,7 @@ NGL.Representation.prototype = {
 
                     NGL.timeEnd( "NGL.Representation.attach " + this.type );
 
-                    this.signals.taskFinished.dispatch();
+                    this.tasks.decrement();
 
                     callback();
 
@@ -461,6 +457,7 @@ NGL.Representation.prototype = {
 
         this.disposed = true;
         this.queue.kill();
+        this.tasks.dispose();
         this.clear();
 
     }

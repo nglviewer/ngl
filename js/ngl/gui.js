@@ -1010,15 +1010,23 @@ NGL.SidebarWidget = function( stage ){
                 .setMarginLeft( "45px" )
         );
 
-    signals.taskCountChanged.add( function( value ){
+    stage.tasks.signals.countChanged.add( function( delta, count ){
 
-        if( value > 0 ){
+        if( count > 0 ){
 
             actions.add( busy );
 
         }else{
 
-            actions.remove( busy );
+            try{
+
+                actions.remove( busy );
+
+            }catch( e ){
+
+                // already removed
+
+            }
 
         }
 
