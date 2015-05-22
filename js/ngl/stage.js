@@ -53,13 +53,13 @@ NGL.Stage.prototype = {
             if( object.structure.atomCount > 100000 ){
 
                 object.addRepresentation( "line" );
-                object.centerView( undefined, true );
+                object.centerView( true );
 
             }else{
 
                 object.addRepresentation( "cartoon", { sele: "*" } );
                 object.addRepresentation( "licorice", { sele: "hetero" } );
-                object.centerView( undefined, true );
+                object.centerView( true );
 
             }
 
@@ -231,7 +231,7 @@ NGL.Stage.prototype = {
 
     centerView: function(){
 
-        this.viewer.centerView( undefined, true );
+        this.viewer.centerView( true );
 
     },
 
@@ -447,7 +447,7 @@ NGL.PickingControls = function( viewer, stage ){
 
             }
 
-            viewer.centerView( v3 );
+            viewer.centerView( false, v3 );
 
         }
 
@@ -987,7 +987,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    centerView: function( sele, zoom ){
+    centerView: function( zoom, sele ){
 
         var center;
 
@@ -1012,7 +1012,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         }
 
-        this.viewer.centerView( center, zoom );
+        this.viewer.centerView( zoom, center );
 
         return this;
 
@@ -1101,9 +1101,15 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     },
 
-    centerView: function(){
+    centerView: function( zoom ){
 
-        this.viewer.centerView();
+        var center = this.surface.center;
+
+        if( zoom ){
+            zoom = this.surface.boundingBox.size().length();
+        }
+
+        this.viewer.centerView( zoom, center );
 
     },
 

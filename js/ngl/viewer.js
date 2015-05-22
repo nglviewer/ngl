@@ -1944,7 +1944,7 @@ NGL.Viewer.prototype = {
 
         var t = new THREE.Vector3();
 
-        return function( center, zoom ){
+        return function( zoom, center ){
 
             center = center || this.boundingBox.center();
 

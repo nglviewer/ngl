@@ -2304,7 +2304,7 @@ NGL.VolumeParser.prototype = {
 
         this._parse( data, function(){
 
-            self.makeMatrix();
+            self.volume.setMatrix( self.getMatrix() );
 
             if( NGL.debug ) NGL.log( self.volume );
 
@@ -2323,7 +2323,11 @@ NGL.VolumeParser.prototype = {
 
     },
 
-    makeMatrix: function(){}
+    getMatrix: function(){
+
+        return new THREE.Matrix4();
+
+    }
 
 };
 
@@ -2484,7 +2488,7 @@ NGL.MrcParser.prototype._parse = function( bin, callback ){
 
 };
 
-NGL.MrcParser.prototype.makeMatrix = function(){
+NGL.MrcParser.prototype.getMatrix = function(){
 
     var h = this.volume.header;
 
@@ -2547,7 +2551,7 @@ NGL.MrcParser.prototype.makeMatrix = function(){
         )
     );
 
-    this.volume.matrix.copy( matrix );
+    return matrix;
 
 };
 
@@ -2627,7 +2631,7 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
 };
 
-NGL.CubeParser.prototype.makeMatrix = function(){
+NGL.CubeParser.prototype.getMatrix = function(){
 
     var h = this.volume.header;
 
@@ -2649,6 +2653,6 @@ NGL.CubeParser.prototype.makeMatrix = function(){
         )
     );
 
-    this.volume.matrix.copy( matrix );
+    return matrix;
 
 };

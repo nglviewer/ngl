@@ -12,6 +12,9 @@ NGL.Surface = function( name, path, geometry ){
     this.name = name;
     this.path = path;
 
+    this.center = new THREE.Vector3();
+    this.boundingBox = new THREE.Box3();
+
     if( geometry ) this.fromGeometry( geometry );
 
 };
@@ -44,9 +47,12 @@ NGL.Surface.prototype = {
 
         }
 
+        // TODO check if needed
         geo.computeBoundingSphere();
+        geo.computeBoundingBox();
 
-        this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
+        this.center.copy( geo.boundingSphere.center );
+        this.boundingBox.copy( geo.boundingBox );
 
         var position, color, index, normal;
 
@@ -150,6 +156,8 @@ NGL.Volume = function( name, path, data, nx, ny, nz ){
     this.path = path;
 
     this.matrix = new THREE.Matrix4();
+    this.center = new THREE.Vector3();
+    this.boundingBox = new THREE.Box3();
 
     this.setData( data, nx, ny, nz );
 
@@ -185,6 +193,33 @@ NGL.Volume.prototype = {
         delete this.__dataRms;
 
         if( this.worker ) this.worker.terminate();
+
+    },
+
+    setMatrix: function( matrix ){
+
+        this.matrix.copy( matrix );
+
+        var bb = this.boundingBox;
+        var v = this.center;  // temporary re-purposing
+
+        var x = this.nx - 1;
+        var y = this.ny - 1;
+        var z = this.nz - 1;
+
+        bb.makeEmpty();
+
+        bb.expandByPoint( v.set( x, y, z ) );
+        bb.expandByPoint( v.set( x, y, 0 ) );
+        bb.expandByPoint( v.set( x, 0, z ) );
+        bb.expandByPoint( v.set( x, 0, 0 ) );
+        bb.expandByPoint( v.set( 0, y, z ) );
+        bb.expandByPoint( v.set( 0, 0, z ) );
+        bb.expandByPoint( v.set( 0, y, 0 ) );
+        bb.expandByPoint( v.set( 0, 0, 0 ) );
+
+        bb.applyMatrix4( this.matrix );
+        bb.center( this.center );
 
     },
 
