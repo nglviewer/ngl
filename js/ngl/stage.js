@@ -233,6 +233,24 @@ NGL.Stage.prototype = {
 
     centerView: function(){
 
+        if( this.tasks.count > 0 ){
+
+            var centerFn = function( delta, count ){
+
+                if( count === 0 ){
+
+                    this.tasks.signals.countChanged.remove( centerFn, this );
+
+                }
+
+                this.viewer.centerView( true );
+
+            }
+
+            this.tasks.signals.countChanged.add( centerFn, this );
+
+        }
+
         this.viewer.centerView( true );
 
     },
@@ -1328,6 +1346,8 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
         this.repr = repr;
         this.name = repr.type;
+
+        this.stage.tasks.change( this.repr.tasks.count );
 
         this.repr.tasks.signals.countChanged.add( function( delta, count ){
 

@@ -962,14 +962,14 @@ NGL.Examples = {
                     opacity: 0.5,
                     opaqueBack: true
                 } );
-                o.centerView();
+                stage.centerView();
 
             } );
 
             stage.loadFile( "data://4UJD.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
-                o.centerView();
+                stage.centerView();
 
             } );
 
@@ -984,7 +984,7 @@ NGL.Examples = {
                 o.addRepresentation( "licorice", {} );
                 o.addRepresentation( "spacefill" );
                 o.addRepresentation( "surface" );
-                o.centerView();
+                stage.centerView();
 
             } );
 

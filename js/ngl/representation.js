@@ -156,12 +156,15 @@ NGL.Representation.prototype = {
         // don't let tasks accumulate
         if( this.queue.length() > 0 ){
             this.queue.kill();
+            this.tasks.clear();
         }
 
         if( !params ){
             params = this.getParameters();
             delete params.quality;
         }
+
+        this.tasks.increment();
 
         this.queue.push( params );
 
@@ -170,8 +173,6 @@ NGL.Representation.prototype = {
     make: function( params, callback ){
 
         NGL.time( "NGL.Representation.make " + this.type );
-
-        this.tasks.increment();
 
         if( params ){
             this.init( params );
@@ -190,7 +191,9 @@ NGL.Representation.prototype = {
 
                     NGL.timeEnd( "NGL.Representation.attach " + this.type );
 
-                    this.tasks.decrement();
+                    // check count, as this could be a
+                    // dangling task of a cleared queue
+                    if( this.tasks.count > 0 ) this.tasks.decrement();
 
                     callback();
 
