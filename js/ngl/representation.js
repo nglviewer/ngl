@@ -76,7 +76,9 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
+    this.signals = NGL.makeObjectSignals( this );
     this.queue = async.queue( this.make.bind( this ), 1 );
+    this.tasks = new NGL.Counter();
 
     this.bufferList = [];
     this.debugBufferList = [];
@@ -90,6 +92,8 @@ NGL.Representation.prototype = {
     constructor: NGL.Representation,
 
     type: "",
+
+    signals: {},
 
     parameters: {
 
@@ -167,6 +171,8 @@ NGL.Representation.prototype = {
 
         NGL.time( "NGL.Representation.make " + this.type );
 
+        this.tasks.increment();
+
         if( params ){
             this.init( params );
         }
@@ -183,6 +189,8 @@ NGL.Representation.prototype = {
                 this.attach( function(){
 
                     NGL.timeEnd( "NGL.Representation.attach " + this.type );
+
+                    this.tasks.decrement();
 
                     callback();
 
@@ -449,6 +457,7 @@ NGL.Representation.prototype = {
 
         this.disposed = true;
         this.queue.kill();
+        this.tasks.dispose();
         this.clear();
 
     }
@@ -1752,8 +1761,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
             f.eachResidueN( 2, function( r1, r2 ){
 
-                a1 = r1.getAtomByName( f.traceAtomname );
-                a2 = r2.getAtomByName( f.traceAtomname );
+                a1 = r1.getTraceAtom();
+                a2 = r2.getTraceAtom();
 
                 if( !test || ( test( a1 ) && test( a2 ) ) ){
 
@@ -1990,7 +1999,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
             f.eachResidue( function( r ){
 
-                a1 = r.getAtomByName( f.traceAtomname );
+                a1 = r.getTraceAtom();
 
                 if( bases.indexOf( r.resname ) !== -1 ){
                     a2 = r.getAtomByName( "N1" );

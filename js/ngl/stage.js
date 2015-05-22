@@ -26,6 +26,8 @@ NGL.Stage = function( eid ){
 
     };
 
+    this.tasks = new NGL.Counter();
+
     this.compList = [];
 
     this.preferences =  new NGL.Preferences( this );
@@ -354,6 +356,12 @@ NGL.Stage.prototype = {
             } );
 
         }, componentType );
+
+    },
+
+    dispose: function(){
+
+        this.tasks.dispose();
 
     }
 
@@ -1320,6 +1328,12 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
         this.repr = repr;
         this.name = repr.type;
+
+        this.repr.tasks.signals.countChanged.add( function( delta, count ){
+
+            this.stage.tasks.change( delta );
+
+        }.bind( this ) );
 
         this.updateVisibility();
 

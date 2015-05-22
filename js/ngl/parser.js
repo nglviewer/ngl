@@ -573,7 +573,7 @@ NGL.StructureParser.prototype = {
 
                 worker.terminate();
 
-                if( NGL.debug ) console.log( e.data );
+                if( NGL.debug ) NGL.log( e.data );
 
                 s.fromJSON( e.data );
 

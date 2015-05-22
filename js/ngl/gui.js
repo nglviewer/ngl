@@ -1000,6 +1000,38 @@ NGL.SidebarWidget = function( stage ){
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
 
+    // Busy indicator
+
+    var busy = new UI.Panel()
+        .setDisplay( "inline" )
+        .add(
+             new UI.Icon( "spinner" )
+                .addClass( "spin" )
+                .setMarginLeft( "45px" )
+        );
+
+    stage.tasks.signals.countChanged.add( function( delta, count ){
+
+        if( count > 0 ){
+
+            actions.add( busy );
+
+        }else{
+
+            try{
+
+                actions.remove( busy );
+
+            }catch( e ){
+
+                // already removed
+
+            }
+
+        }
+
+    } );
+
     // clipping
 
     var clipNear = new UI.Range(

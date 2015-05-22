@@ -590,6 +590,64 @@ NGL.getFileInfo = function( file ){
 };
 
 
+// Counter
+
+NGL.Counter = function(){
+
+    var SIGNALS = signals;
+
+    this.count = 0;
+
+    this.signals = {
+
+        countChanged: new SIGNALS.Signal(),
+
+    }
+
+};
+
+NGL.Counter.prototype = {
+
+    clear: function(){
+
+        this.change( -this.count );
+
+    },
+
+    change: function( delta ){
+
+        this.count += delta;
+        this.signals.countChanged.dispatch( delta, this.count );
+
+        if( this.count < 0 ){
+
+            NGL.warn( "NGL.Counter.count below zero", this.count );
+
+        }
+
+    },
+
+    increment: function(){
+
+        this.change( 1 );
+
+    },
+
+    decrement: function(){
+
+        this.change( -1 );
+
+    },
+
+    dispose: function(){
+
+        this.clear();
+
+    }
+
+};
+
+
 ///////////
 // Object
 
