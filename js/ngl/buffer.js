@@ -361,6 +361,7 @@ NGL.Buffer.prototype = {
         }
 
         this.geometry.dispose();
+        if( this.wireframeGeometry ) this.wireframeGeometry.dispose();
 
     }
 

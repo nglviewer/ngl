@@ -23,25 +23,23 @@ onmessage = function( e ){
 
     }
 
-    vol.generateSurface( p.isolevel, p.smooth, function(){
+    vol.generateSurface( p.isolevel, p.smooth );
 
-        NGL.timeEnd( "WORKER surf" );
+    NGL.timeEnd( "WORKER surf" );
 
-        var meshData = {
-            position: vol.position,
-            index: vol.index,
-            normal: vol.normal
-        };
+    var meshData = {
+        position: vol.position,
+        index: vol.index,
+        normal: vol.normal
+    };
 
-        var transferable = [
-            vol.position.buffer,
-            vol.index.buffer
-        ];
+    var transferable = [
+        vol.position.buffer,
+        vol.index.buffer
+    ];
 
-        if( vol.normal ) transferable.push( vol.normal.buffer );
+    if( vol.normal ) transferable.push( vol.normal.buffer );
 
-        self.postMessage( meshData, transferable );
-
-    } );
+    self.postMessage( meshData, transferable );
 
 }

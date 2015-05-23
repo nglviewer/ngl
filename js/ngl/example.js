@@ -142,20 +142,36 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.pdb", function( o ){
 
-                o.addRepresentation( "cartoon", { sele: "1-320", wireframe: false } );
-                o.addRepresentation( "tube", { sele: "*", scale: 0.4 } );
-                o.addRepresentation( "rope", { sele: "*", subdiv: 2 } );
-                o.addRepresentation( "licorice", { sele: ".C or .CA or .O" } );
+                o.addRepresentation( "cartoon", {
+                    color: "residueindex", aspectRatio: 4, scale: 0.5
+                } );
+                o.addRepresentation( "rope", {
+                    color: "residueindex", visible: false
+                } );
+                o.addRepresentation( "ball+stick", {
+                    sele: "296 or RET", scale: 3, aspectRatio: 1.5
+                } );
+                o.addRepresentation( "surface", {
+                    sele: "RET", transparent: true, opacity: 0.4
+                } );
+                o.addRepresentation( "licorice", {
+                    sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
+                    scale: 3, aspectRatio: 1.5
+                } );
+                o.addRepresentation( "contact", {
+                    sele: "135 or 223 or 347",
+                    scale: 0.7
+                } );
+                o.addRepresentation( "label", {
+                    sele: "( 135 or 223 or 347 or 296 ) and .CB",
+                    scale: 1.7
+                } );
+                o.addRepresentation( "label", {
+                    sele: "RET and .C19",
+                    scale: 1.7, labelType: "resname"
+                } );
 
-                // o.addRepresentation( "tube", {
-                //     sele: "*", color: "atomindex", radius: "bfactor", scale: 0.01,
-                //     subdiv: 50, radialSegments: 50, visible: true
-                // } );
-                // o.addRepresentation( "ball+stick", { sele: "135:A or 347:B or 223:A" } );
-                // o.addRepresentation( "licorice", { sele: "hetero" } );
-                // o.addRepresentation( "rope", { smooth: 2 } );
-
-                o.centerView( "320" );
+                o.centerView();
 
             } );
 
@@ -962,14 +978,14 @@ NGL.Examples = {
                     opacity: 0.5,
                     opaqueBack: true
                 } );
-                o.centerView();
+                stage.centerView();
 
             } );
 
             stage.loadFile( "data://4UJD.cif.gz", function( o ){
 
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
-                o.centerView();
+                stage.centerView();
 
             } );
 
@@ -978,11 +994,13 @@ NGL.Examples = {
         "molsurf": function( stage ){
 
             stage.loadFile( "data://3dqb.pdb", function( o ){
+            // stage.loadFile( "data://3sn6.pdb", function( o ){
+            // stage.loadFile( "data://3l5q.pdb", function( o ){
 
                 o.addRepresentation( "licorice", {} );
                 o.addRepresentation( "spacefill" );
                 o.addRepresentation( "surface" );
-                o.centerView();
+                stage.centerView();
 
             } );
 

@@ -12,6 +12,9 @@ NGL.Surface = function( name, path, geometry ){
     this.name = name;
     this.path = path;
 
+    this.center = new THREE.Vector3();
+    this.boundingBox = new THREE.Box3();
+
     if( geometry ) this.fromGeometry( geometry );
 
 };
@@ -44,9 +47,12 @@ NGL.Surface.prototype = {
 
         }
 
+        // TODO check if needed
         geo.computeBoundingSphere();
+        geo.computeBoundingBox();
 
-        this.center = new THREE.Vector3().copy( geo.boundingSphere.center );
+        this.center.copy( geo.boundingSphere.center );
+        this.boundingBox.copy( geo.boundingBox );
 
         var position, color, index, normal;
 
@@ -150,6 +156,8 @@ NGL.Volume = function( name, path, data, nx, ny, nz ){
     this.path = path;
 
     this.matrix = new THREE.Matrix4();
+    this.center = new THREE.Vector3();
+    this.boundingBox = new THREE.Box3();
 
     this.setData( data, nx, ny, nz );
 
@@ -188,7 +196,34 @@ NGL.Volume.prototype = {
 
     },
 
-    generateSurface: function( isolevel, smooth, callback ){
+    setMatrix: function( matrix ){
+
+        this.matrix.copy( matrix );
+
+        var bb = this.boundingBox;
+        var v = this.center;  // temporary re-purposing
+
+        var x = this.nx - 1;
+        var y = this.ny - 1;
+        var z = this.nz - 1;
+
+        bb.makeEmpty();
+
+        bb.expandByPoint( v.set( x, y, z ) );
+        bb.expandByPoint( v.set( x, y, 0 ) );
+        bb.expandByPoint( v.set( x, 0, z ) );
+        bb.expandByPoint( v.set( x, 0, 0 ) );
+        bb.expandByPoint( v.set( 0, y, z ) );
+        bb.expandByPoint( v.set( 0, 0, z ) );
+        bb.expandByPoint( v.set( 0, y, 0 ) );
+        bb.expandByPoint( v.set( 0, 0, 0 ) );
+
+        bb.applyMatrix4( this.matrix );
+        bb.center( this.center );
+
+    },
+
+    generateSurface: function( isolevel, smooth ){
 
         isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -196,13 +231,6 @@ NGL.Volume.prototype = {
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
 
             // already generated
-
-            if( typeof callback === "function" ){
-
-                callback();
-
-            }
-
             return;
 
         }
@@ -236,14 +264,6 @@ NGL.Volume.prototype = {
 
         this.size = this.position.length / 3;
 
-        // console.log( this.position.length, this.index.length );
-        // v1 595086 296292 rhodopsin
-        // v2 842049 280683
-        // v3  95049 245268
-        // v1 11748744 5887308 ribosome
-        // v2 17660736 5886912
-        // v3  2160663 5886912
-
         this.matrix.applyToVector3Array( this.position );
 
         if( this.normal ){
@@ -276,12 +296,6 @@ NGL.Volume.prototype = {
 
         this.__isolevel = isolevel;
         this.__smooth = smooth;
-
-        if( typeof callback === "function" ){
-
-            callback();
-
-        }
 
     },
 
@@ -342,7 +356,9 @@ NGL.Volume.prototype = {
 
         }else{
 
-            this.generateSurface( isolevel, smooth, callback );
+            this.generateSurface( isolevel, smooth );
+
+            callback();
 
         }
 
@@ -1940,6 +1956,8 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
     if( inflate ){
 
+        // Buffer geometry is only used to calculate normals
+
         var bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
         bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
@@ -2145,6 +2163,12 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
     }
 
+    if( inflate ){
+
+        bg.dispose();
+
+    }
+
     NGL.timeEnd( "NGL.laplacianSmooth" );
 
 };
@@ -2154,6 +2178,150 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 // Molecular surface
 
 NGL.MolecularSurface = function( atomSet ){
+
+    this.atomSet = atomSet;
+
+};
+
+NGL.MolecularSurface.prototype = {
+
+    generateSurface: function( type, probeRadius, scaleFactor, smooth ){
+
+        if( type === this.__type && probeRadius === this.__probeRadius &&
+            scaleFactor === this.__scaleFactor && smooth === this.__smooth
+        ){
+
+            // already generated
+            return;
+
+        }
+
+        var edtsurf = new NGL.EDTSurface( this.atomSet );
+        var vol = edtsurf.getVolume(
+            type, probeRadius, scaleFactor
+        );
+        vol.generateSurface( 1, smooth );
+
+        this.position = vol.getPosition();
+        this.normal = vol.getNormal();
+        this.index = vol.getIndex();
+
+        this.size = this.position.length / 3;
+
+        this.__type = type;
+        this.__probeRadius = probeRadius;
+        this.__scaleFactor = scaleFactor;
+        this.__smooth = smooth;
+
+    },
+
+    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, callback ){
+
+        if( type === this.__type && probeRadius === this.__probeRadius &&
+            scaleFactor === this.__scaleFactor && smooth === this.__smooth
+        ){
+
+            // already generated
+            callback();
+
+        }else if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + type;
+
+            NGL.time( __timeName );
+
+            var scope = this;
+            var atomSet = undefined;
+
+            if( this.worker === undefined ){
+
+                atomSet = this.atomSet.toJSON();
+                this.worker = new Worker( "../js/worker/molsurf.js" );
+
+            }
+
+            this.worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+
+                // if( NGL.debug ) console.log( e.data );
+
+                scope.position = e.data.position;
+                scope.normal = e.data.normal;
+                scope.index = e.data.index;
+
+                scope.size = scope.position.length / 3;
+
+                scope.__type = type;
+                scope.__probeRadius = probeRadius;
+                scope.__scaleFactor = scaleFactor;
+                scope.__smooth = smooth;
+
+                callback();
+
+            };
+
+            this.worker.postMessage( {
+                atomSet: atomSet,
+                params: {
+                    type: type,
+                    probeRadius: probeRadius,
+                    scaleFactor: scaleFactor,
+                    smooth: smooth
+                }
+            } );
+
+        }else{
+
+            this.generateSurface( type, probeRadius, scaleFactor, smooth );
+
+            callback();
+
+        }
+
+    },
+
+    getPosition: function(){
+
+        return this.position;
+
+    },
+
+    getColor: function( color ){
+
+        // re-use array
+
+        var tc = new THREE.Color( color );
+        var col = NGL.Utils.uniformArray3(
+            this.size, tc.r, tc.g, tc.b
+        );
+
+        return col;
+
+    },
+
+    getNormal: function(){
+
+        return this.normal;
+
+    },
+
+    getIndex: function(){
+
+        return this.index;
+
+    },
+
+    dispose: function(){
+
+        if( this.worker ) this.worker.terminate();
+
+    }
+
+};
+
+
+NGL.EDTSurface = function( atomSet ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -2224,7 +2392,29 @@ NGL.MolecularSurface = function( atomSet ){
         pWidth = pbox.y;
         pHeight = pbox.z;
 
-        // pHeight, pWidth, pLength
+        var maxSize = Math.pow( 10, 6 ) * 256;
+        var tmpSize = pHeight * pWidth * pLength * 3;
+
+        if( maxSize <= tmpSize ){
+
+            scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
+
+            pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+            pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+            pbox = new THREE.Vector3()
+                .subVectors( pmax, pmin )
+                .multiplyScalar( scaleFactor )
+                .ceil()
+                .addScalar( 1 );
+
+            pLength = pbox.x;
+            pWidth = pbox.y;
+            pHeight = pbox.z;
+
+        }
+
+        // coordinate transformation matrix
         matrix = new THREE.Matrix4();
         matrix.multiply(
             new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
@@ -2282,9 +2472,9 @@ NGL.MolecularSurface = function( atomSet ){
 
     //
 
-    this.getSurface = function( type, probeRadius, scaleFactor ){
+    this.getVolume = function( type, probeRadius, scaleFactor ){
 
-        NGL.time( "NGL.MolecularSurface.getSurface" );
+        NGL.time( "NGL.EDTSurface.getVolume" );
 
         init( type !== "vws", probeRadius, scaleFactor );
 
@@ -2306,15 +2496,15 @@ NGL.MolecularSurface = function( atomSet ){
 
         marchingcubeinit( type );
 
-        var v = new NGL.Volume(
+        var vol = new NGL.Volume(
             type, "", vpBits, pHeight, pWidth, pLength
         );
 
-        v.matrix.copy( matrix );
+        vol.matrix.copy( matrix );
 
-        NGL.timeEnd( "NGL.MolecularSurface.getSurface" );
+        NGL.timeEnd( "NGL.EDTSurface.getVolume" );
 
-        return v;
+        return vol;
 
     };
 

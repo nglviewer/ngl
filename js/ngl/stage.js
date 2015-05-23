@@ -26,6 +26,8 @@ NGL.Stage = function( eid ){
 
     };
 
+    this.tasks = new NGL.Counter();
+
     this.compList = [];
 
     this.preferences =  new NGL.Preferences( this );
@@ -53,13 +55,13 @@ NGL.Stage.prototype = {
             if( object.structure.atomCount > 100000 ){
 
                 object.addRepresentation( "line" );
-                object.centerView( undefined, true );
+                object.centerView( true );
 
             }else{
 
                 object.addRepresentation( "cartoon", { sele: "*" } );
                 object.addRepresentation( "licorice", { sele: "hetero" } );
-                object.centerView( undefined, true );
+                object.centerView( true );
 
             }
 
@@ -231,7 +233,25 @@ NGL.Stage.prototype = {
 
     centerView: function(){
 
-        this.viewer.centerView( undefined, true );
+        if( this.tasks.count > 0 ){
+
+            var centerFn = function( delta, count ){
+
+                if( count === 0 ){
+
+                    this.tasks.signals.countChanged.remove( centerFn, this );
+
+                }
+
+                this.viewer.centerView( true );
+
+            }
+
+            this.tasks.signals.countChanged.add( centerFn, this );
+
+        }
+
+        this.viewer.centerView( true );
 
     },
 
@@ -410,6 +430,12 @@ NGL.Stage.prototype = {
 
         return compList.concat( reprList );
 
+    },
+    
+    dispose: function(){
+
+        this.tasks.dispose();
+
     }
 
 }
@@ -502,7 +528,7 @@ NGL.PickingControls = function( viewer, stage ){
 
             }
 
-            viewer.centerView( v3 );
+            viewer.centerView( false, v3 );
 
         }
 
@@ -586,7 +612,7 @@ NGL.Preferences.prototype = {
 
             var p = repr.getParameters();
             p.disableImpostor = !value;
-            repr.rebuild( p );
+            repr.build( p );
 
         } );
 
@@ -630,7 +656,7 @@ NGL.Preferences.prototype = {
             }
 
             p.quality = value;
-            repr.rebuild( p );
+            repr.build( p );
 
         } );
 
@@ -936,7 +962,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
                 repr.setStructure( this.structure );
             }
 
-            repr.rebuild( repr.getParameters() );
+            repr.build( repr.getParameters() );
 
         }, this );
 
@@ -1056,7 +1082,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    centerView: function( sele, zoom ){
+    centerView: function( zoom, sele ){
 
         var center;
 
@@ -1081,7 +1107,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         }
 
-        this.viewer.centerView( center, zoom );
+        this.viewer.centerView( zoom, center );
 
         return this;
 
@@ -1173,9 +1199,15 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     },
 
-    centerView: function(){
+    centerView: function( zoom ){
 
-        this.viewer.centerView();
+        var center = this.surface.center;
+
+        if( zoom ){
+            zoom = this.surface.boundingBox.size().length();
+        }
+
+        this.viewer.centerView( zoom, center );
 
     },
 
@@ -1388,6 +1420,8 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
         this.repr = repr;
         this.name = repr.type;
 
+        this.stage.tasks.listen( this.repr.tasks )
+
         this.updateVisibility();
 
     },
@@ -1442,9 +1476,9 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     },
 
-    rebuild: function( params ){
+    build: function( params ){
 
-        this.repr.rebuild( params );
+        this.repr.build( params );
 
         return this;
 

@@ -1419,6 +1419,57 @@ NGL.AtomSet.prototype = {
 
     },
 
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'AtomSet',
+                generator: 'AtomSetExporter'
+            },
+
+            atomCount: this.atomCount
+
+        };
+
+        var atoms = this.atoms;
+        var n = atoms.length;
+        var atomArray = new NGL.AtomArray( n );
+        var pa = new NGL.ProxyAtom( atomArray );
+
+        for( var i = 0; i < n; ++i ){
+
+            pa.copy( atoms[ i ], i );
+
+        }
+
+        output.atomArray = atomArray.toJSON();
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.atomCount = input.atomCount;
+
+        var atoms = this.atoms;
+        var atomArray = new NGL.AtomArray( input.atomArray );
+        var n = atomArray.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            atoms.push(
+                new NGL.ProxyAtom( atomArray, i )
+            );
+
+        }
+
+        return this;
+
+    },
+
     dispose: function(){
 
         this.atoms.length = 0;
@@ -1955,13 +2006,24 @@ NGL.Structure.prototype = {
 
             } );
 
-        }else{
+        }else if( selection ){
 
             this.models.forEach( function( m ){
 
                 m.eachAtom( callback, selection );
 
             } );
+
+        }else{
+
+            var atoms = this.atoms;
+            var n = this.atomCount;
+
+            for( var i = 0; i < n; ++i ){
+
+                callback( atoms[ i ] );
+
+            }
 
         }
 
@@ -2469,17 +2531,24 @@ NGL.Structure.prototype = {
 
     updatePosition: function( position ){
 
-        var i = 0;
+        // uses the atoms array directly as its
+        // 1) faster, and
+        // 2) ensures that atoms are traversed in order
 
-        this.eachAtom( function( a ){
+        var i, i3, a;
+        var atoms = this.atoms;
+        var n = this.atomCount;
 
-            a.x = position[ i + 0 ];
-            a.y = position[ i + 1 ];
-            a.z = position[ i + 2 ];
+        for( i = 0; i < n; ++i ){
 
-            i += 3;
+            a = atoms[ i ];
+            i3 = i * 3;
 
-        } );
+            a.x = position[ i3     ];
+            a.y = position[ i3 + 1 ];
+            a.z = position[ i3 + 2 ];
+
+        }
 
     },
 
@@ -2584,13 +2653,14 @@ NGL.Structure.prototype = {
 
         this.eachModel( function( m ){
 
-            s.addModel( m.clone( s ) );
+            var sm = m.clone( s );
+            s.addModel( sm );
 
-        } );
+            sm.eachAtom( function( a ){
 
-        s.eachAtom( function( a ){
+                s.atoms.push( a );
 
-            s.atoms.push( a );
+            } );
 
         } );
 
@@ -3513,7 +3583,16 @@ NGL.Residue.atomnames = function(){;
         direction2: null,
         backboneStart: [ "CA", "BB" ],
         backboneEnd: [ "CA", "BB" ],
-    }
+    };
+
+    // workaround for missing CA only type
+    atomnames[ NGL.UnknownType ] = {
+        trace: "CA",
+        direction1: null,
+        direction2: null,
+        backboneStart: "CA",
+        backboneEnd: "CA",
+    };
 
     return atomnames;
 
@@ -4265,7 +4344,7 @@ NGL.Atom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
-        // a.globalindex = this.globalindex;  // ???
+        // this.globalindex = atom.globalindex;
 
         this.residue = atom.residue;
 
@@ -5079,7 +5158,37 @@ NGL.ProxyAtom.prototype = {
 
     positionToVector3: NGL.Atom.prototype.positionToVector3,
 
-    copy: NGL.Atom.prototype.copy,
+    // copy: NGL.Atom.prototype.copy,
+
+    copy: function( atom, index ){
+
+        this.index = index;
+
+        this.atomno = atom.atomno;
+        this.resname = atom.resname;
+        this.x = atom.x;
+        this.y = atom.y;
+        this.z = atom.z;
+        this.element = atom.element;
+        this.chainname = atom.chainname;
+        this.resno = atom.resno;
+        this.serial = atom.serial;
+        this.ss = atom.ss;
+        this.vdw = atom.vdw;
+        this.covalent = atom.covalent;
+        this.hetero = atom.hetero;
+        this.bfactor = atom.bfactor;
+        this.bonds = atom.bonds;
+        this.altloc = atom.altloc;
+        this.atomname = atom.atomname;
+        this.modelindex = atom.modelindex;
+        // this.globalindex = atom.globalindex;
+
+        this.residue = atom.residue;
+
+        return this;
+
+    },
 
     clone: function( r ){
 
@@ -5645,10 +5754,10 @@ NGL.Selection.prototype = {
                     operator: "OR",
                     rules: [
                         { resname: "ASP" },
-                        { keyword: "GLU" },
-                        { keyword: "HIS" },
-                        { keyword: "LYS" },
-                        { keyword: "ARG" }
+                        { resname: "GLU" },
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" }
                     ]
                 };
                 pushRule( sele );

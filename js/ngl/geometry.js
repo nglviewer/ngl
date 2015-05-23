@@ -1712,7 +1712,7 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
         var atomCA = atomN.residue.getAtomByName( "CA" );
         if( !atomCA ) return;
 
-        var prevRes = atomN.residue.getPreviousResidue();
+        var prevRes = atomN.residue.getPreviousConnectedResidue();
         if( !prevRes ) return;
 
         var atomC = prevRes.getAtomByName( "C" );

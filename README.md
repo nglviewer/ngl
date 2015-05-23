@@ -39,6 +39,7 @@ Version 0.6dev
 * FIX: #7
 * DOC: pull request instruction for developers
 * Higher color contrast for GUI and documentation pages
+* Basic support for async creation of representations (so far used for molecular surfaces and volume triangulation)
 
 
 Version 0.5
