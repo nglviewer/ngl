@@ -639,6 +639,20 @@ NGL.Counter.prototype = {
 
     },
 
+    listen: function( counter ){
+
+        // incorporate changes of another counter
+
+        this.change( counter.count );
+
+        counter.signals.countChanged.add( function( delta, count ){
+
+            this.change( delta );
+
+        }.bind( this ) );
+
+    },
+
     dispose: function(){
 
         this.clear();

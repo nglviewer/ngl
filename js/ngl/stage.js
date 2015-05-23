@@ -1347,13 +1347,7 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
         this.repr = repr;
         this.name = repr.type;
 
-        this.stage.tasks.change( this.repr.tasks.count );
-
-        this.repr.tasks.signals.countChanged.add( function( delta, count ){
-
-            this.stage.tasks.change( delta );
-
-        }.bind( this ) );
+        this.stage.tasks.listen( this.repr.tasks )
 
         this.updateVisibility();
 
