@@ -1265,3 +1265,54 @@ QUnit.module( "parsing" );
     } );
 
 });*/
+
+
+function str2bin( str ){
+    var uint = new Uint8Array( str.length );
+    for( var i = 0, j = str.length; i < j; ++i ){
+        uint[ i ] = str.charCodeAt( i );
+    }
+    return uint;
+}
+
+
+QUnit.test( "Uint8ToLines NO newline at end", function( assert ) {
+
+    var str = "moin\nfoo\nbar\ntest123";
+    var bin = str2bin( str );
+
+    var lines = NGL.Uint8ToLines( bin );
+    // console.log( lines )
+
+    assert.equal( 4, lines.length, "Passed!" );
+    assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
+
+});
+
+
+QUnit.test( "Uint8ToLines newline at end", function( assert ) {
+
+    var str = "moin\nfoo\nbar\ntest123\n";
+    var bin = str2bin( str );
+
+    var lines = NGL.Uint8ToLines( bin );
+    // console.log( lines )
+
+    assert.equal( 4, lines.length, "Passed!" );
+    assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
+
+});
+
+
+QUnit.test( "Uint8ToLines multiple chunks", function( assert ) {
+
+    var str = "moin\nfoo\nbar\ntest123\n";
+    var bin = str2bin( str );
+
+    var lines = NGL.Uint8ToLines( bin, 4 );
+    // console.log( lines )
+
+    assert.equal( 4, lines.length, "Passed!" );
+    assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
+
+});

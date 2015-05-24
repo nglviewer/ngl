@@ -4,28 +4,6 @@
  */
 
 
-NGL.Uint8ToString = function( u8a ){
-
-    // from http://stackoverflow.com/a/12713326/1435042
-
-    var CHUNK_SZ = 0x1000;
-    var c = [];
-
-    for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
-
-        c.push( String.fromCharCode.apply(
-
-            null, u8a.subarray( i, i + CHUNK_SZ )
-
-        ) );
-
-    }
-
-    return c.join("");
-
-}
-
-
 NGL.decompress = function( data, file, asBinary, callback ){
 
     var binData, decompressedData;
@@ -101,7 +79,7 @@ NGL.decompress = function( data, file, asBinary, callback ){
 
     return returnData;
 
-}
+};
 
 
 NGL.decompressWorker = function( data, file, asBinary, callback ){
@@ -131,7 +109,7 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
     }
 
-}
+};
 
 
 ///////////

@@ -570,6 +570,84 @@ NGL.getFileInfo = function( file ){
 };
 
 
+// String/arraybuffer conversion
+
+NGL.Uint8ToString = function( u8a ){
+
+    // from http://stackoverflow.com/a/12713326/1435042
+
+    var CHUNK_SZ = 0x1000;
+    var c = [];
+
+    for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
+
+        c.push( String.fromCharCode.apply(
+
+            null, u8a.subarray( i, i + CHUNK_SZ )
+
+        ) );
+
+    }
+
+    return c.join("");
+
+};
+
+
+NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
+
+    NGL.time( "NGL.Uint8ToLines" );
+
+    chunkSize = chunkSize !== undefined ? chunkSize : 1024 * 1024 * 10;
+    newline = newline !== undefined ? newline : "\n";
+
+    var partialLine = "";
+    var lines = [];
+
+    for( var i = 0; i < u8a.length; i += chunkSize ){
+
+        var str = NGL.Uint8ToString( u8a.subarray( i, i + chunkSize ) );
+
+        var idx = str.lastIndexOf( newline );
+
+        // console.log( i, str, idx, str.length, str.length - newline.length );
+
+        if( idx === -1 ){
+
+            partialLine += str;
+
+        }else{
+
+            var str2 = partialLine + str.substr( 0, idx );
+            lines = lines.concat( str2.split( newline ) );
+
+            if( idx === str.length - newline.length ){
+
+                partialLine = "";
+
+            }else{
+
+                partialLine = str.substr( idx + newline.length );
+
+            }
+
+        }
+
+    }
+
+    if( partialLine !== "" ){
+
+        lines.push( partialLine );
+
+    }
+
+    NGL.timeEnd( "NGL.Uint8ToLines" );
+
+    return lines;
+
+};
+
+
 // Counter
 
 NGL.Counter = function(){
