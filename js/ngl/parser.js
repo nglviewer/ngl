@@ -604,7 +604,9 @@ NGL.StructureParser.prototype = {
 
             };
 
-            // TODO: transferable
+            var transferable = [];
+
+            if( data instanceof Uint8Array ) transferable.push( data.buffer );
 
             worker.postMessage( {
                 data: data,
@@ -616,7 +618,7 @@ NGL.StructureParser.prototype = {
                     asTrajectory: this.asTrajectory,
                     cAlphaOnly: this.cAlphaOnly
                 }
-            } );
+            }, transferable );
 
         }else{
 

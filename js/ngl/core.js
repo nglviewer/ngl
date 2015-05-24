@@ -607,10 +607,7 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
     for( var i = 0; i < u8a.length; i += chunkSize ){
 
         var str = NGL.Uint8ToString( u8a.subarray( i, i + chunkSize ) );
-
         var idx = str.lastIndexOf( newline );
-
-        // console.log( i, str, idx, str.length, str.length - newline.length );
 
         if( idx === -1 ){
 
