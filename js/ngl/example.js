@@ -254,7 +254,7 @@ NGL.Examples = {
                     o2.addRepresentation( "licorice", { sele: s } );
 
                     o1.superpose( o2, false, s );
-                    o1.centerView( ":A" );
+                    o1.centerView( true, ":A" );
 
                 }, { sele: ":A" } );
 
@@ -562,7 +562,7 @@ NGL.Examples = {
                     sele: ":A", visible: true, scale: 0.3, aspectRatio: 6.0
                 } );
 
-                o.centerView( ":A" );
+                o.centerView( true, ":A" );
 
             } );
 
@@ -582,7 +582,7 @@ NGL.Examples = {
                     sele: "nucleic", color: "element", visible: false
                 } );
 
-                o.centerView( "nucleic" );
+                o.centerView( true, "nucleic" );
 
             } );
 
@@ -654,7 +654,7 @@ NGL.Examples = {
                 o.addRepresentation( "cartoon", { color: "chainindex" } );
                 // o.addRepresentation( "trace", { color: "chainindex" } );
                 // o.addRepresentation( "point", { color: "chainindex" } );
-                o.centerView( undefined, true );
+                stage.centerView();
 
                 NGL.timeEnd( "test" );
 
@@ -878,7 +878,7 @@ NGL.Examples = {
                     color: "chainindex"
                 } );
                 o.addRepresentation( "line" );
-                o.centerView( centerSele );
+                o.centerView( true, centerSele );
 
                 var kdtree = new NGL.Kdtree( o.structure );
                 var nearest = kdtree.nearest(

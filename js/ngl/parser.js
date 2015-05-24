@@ -475,15 +475,26 @@ NGL.StructureParser.prototype = {
 
     constructor: NGL.StructureParser,
 
-    parse: function( str, callback ){
+    parse: function( data, callback ){
 
         var self = this;
+        var lines;
+
+        if( data instanceof Uint8Array ){
+
+            lines = NGL.Uint8ToLines( data );
+
+        }else{
+
+            lines = data.split( "\n" );
+
+        }
 
         async.series( [
 
             function( wcallback ){
 
-                self._parse( str, wcallback );
+                self._parse( lines, wcallback );
 
             },
 
@@ -555,7 +566,7 @@ NGL.StructureParser.prototype = {
 
     },
 
-    parseWorker: function( str, callback ){
+    parseWorker: function( data, callback ){
 
         if( NGL.worker && typeof Worker !== "undefined" ){
 
@@ -593,8 +604,10 @@ NGL.StructureParser.prototype = {
 
             };
 
+            // TODO: transferable
+
             worker.postMessage( {
-                str: str,
+                data: data,
                 type: this.type,
                 name: this.name,
                 path: this.path,
@@ -607,7 +620,7 @@ NGL.StructureParser.prototype = {
 
         }else{
 
-            this.parse( str, callback );
+            this.parse( data, callback );
 
         }
 
@@ -615,7 +628,7 @@ NGL.StructureParser.prototype = {
 
     },
 
-    _parse: function( str, callback ){
+    _parse: function( lines, callback ){
 
         NGL.warn( "NGL.StructureParser._parse not implemented" );
         callback();
@@ -644,7 +657,7 @@ NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
 NGL.PdbParser.prototype.type = "pdb";
 
-NGL.PdbParser.prototype._parse = function( str, callback ){
+NGL.PdbParser.prototype._parse = function( lines, callback ){
 
     // http://www.wwpdb.org/documentation/file-format.php
 
@@ -671,8 +684,6 @@ NGL.PdbParser.prototype._parse = function( str, callback ){
     var sheets = s.sheets;
     var biomolDict = s.biomolDict;
     var currentBiomol;
-
-    var lines = str.split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -1108,7 +1119,7 @@ NGL.GroParser.prototype.constructor = NGL.GroParser;
 
 NGL.GroParser.prototype.type = "gro";
 
-NGL.GroParser.prototype._parse = function( str, callback ){
+NGL.GroParser.prototype._parse = function( lines, callback ){
 
     // http://manual.gromacs.org/current/online/gro.html
 
@@ -1127,8 +1138,6 @@ NGL.GroParser.prototype._parse = function( str, callback ){
     var currentFrame, currentCoord;
 
     var atoms = s.atoms;
-
-    var lines = str.split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -1320,7 +1329,7 @@ NGL.CifParser.prototype.constructor = NGL.CifParser;
 
 NGL.CifParser.prototype.type = "cif";
 
-NGL.CifParser.prototype._parse = function( str, callback ){
+NGL.CifParser.prototype._parse = function( lines, callback ){
 
     // http://mmcif.wwpdb.org/
 
@@ -1341,8 +1350,6 @@ NGL.CifParser.prototype._parse = function( str, callback ){
     var title = s.title;
     var atoms = s.atoms;
     var bondSet = s.bondSet;
-
-    var lines = str.split( "\n" );
 
     var guessElem = NGL.guessElement;
     var covRadii = NGL.CovalentRadii;
@@ -2566,7 +2573,25 @@ NGL.CubeParser.prototype = Object.create( NGL.VolumeParser.prototype );
 
 NGL.CubeParser.prototype.constructor = NGL.CubeParser;
 
-NGL.CubeParser.prototype._parse = function( str, callback ){
+NGL.CubeParser.prototype.parse = function( data, callback ){
+
+    var lines;
+
+    if( data instanceof Uint8Array ){
+
+        lines = NGL.Uint8ToLines( data );
+
+    }else{
+
+        lines = data.split( "\n" );
+
+    }
+
+    return NGL.VolumeParser.prototype.parse.call( this, lines, callback );
+
+};
+
+NGL.CubeParser.prototype._parse = function( lines, callback ){
 
     // http://paulbourke.net/dataformats/cube/
 
@@ -2576,7 +2601,6 @@ NGL.CubeParser.prototype._parse = function( str, callback ){
 
     var v = this.volume;
     var header = {};
-    var lines = str.split( "\n" );
     var reWhitespace = /\s+/;
     var bohrToAngstromFactor = 0.529177210859;
 

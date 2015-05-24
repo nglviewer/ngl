@@ -381,7 +381,7 @@ NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
 NGL.StructureLoader.prototype.constructor = NGL.StructureLoader;
 
-NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, params ){
+NGL.StructureLoader.prototype.init = function( data, name, path, ext, callback, params ){
 
     params = params || {};
 
@@ -395,12 +395,14 @@ NGL.StructureLoader.prototype.init = function( str, name, path, ext, callback, p
 
     };
 
+    if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
+
     var parser = new parsersClasses[ ext ](
         name, path, params
     );
 
-    // return parser.parse( str, callback );
-    return parser.parseWorker( str, callback );
+    // return parser.parse( data, callback );
+    return parser.parseWorker( data, callback );
 
 };
 
@@ -415,7 +417,7 @@ NGL.VolumeLoader.prototype = Object.create( NGL.XHRLoader.prototype );
 
 NGL.VolumeLoader.prototype.constructor = NGL.VolumeLoader;
 
-NGL.VolumeLoader.prototype.init = function( bin, name, path, ext, callback, params ){
+NGL.VolumeLoader.prototype.init = function( data, name, path, ext, callback, params ){
 
     params = params || {};
 
@@ -429,11 +431,13 @@ NGL.VolumeLoader.prototype.init = function( bin, name, path, ext, callback, para
 
     };
 
+    if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
+
     var parser = new parsersClasses[ ext ](
         name, path, params
     );
 
-    return parser.parse( bin, callback );
+    return parser.parse( data, callback );
 
 };
 
@@ -527,7 +531,11 @@ NGL.autoLoad = function(){
 
     };
 
-    var binary = [ "mrc", "ccp4", "map" ];
+    var binary = [
+        "mrc", "ccp4", "map",
+        "cif", "mmcif", "gro", "pdb", "ent",
+        "cube"
+    ];
 
     return function( file, onLoad, onProgress, onError, params ){
 

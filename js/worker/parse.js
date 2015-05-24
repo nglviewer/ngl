@@ -27,7 +27,7 @@ onmessage = function( e ){
     var d = e.data;
     var p = new parser[ d.type ]( d.name, d.path, d.params );
 
-    p.parse( d.str, function(){
+    p.parse( d.data, function(){
 
         NGL.timeEnd( "WORKER parse" );
 
