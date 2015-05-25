@@ -48,6 +48,10 @@
                                 reprDict[ name ] = o.addRepresentation(
                                     name, { visible: false, color: "element", sele: ".C" }, true
                                 );
+                            }else if( name === "cartoon" ){
+                                reprDict[ name ] = o.addRepresentation(
+                                    name, { visible: true }, true
+                                );
                             }else{
                                 reprDict[ name ] = o.addRepresentation(
                                     name, { visible: false }, true
@@ -64,7 +68,6 @@
 
                         } );
 
-                        reprDict[ "cartoon" ].setVisibility( true );
                         document.getElementById( "btn_cartoon" )
                             .style.backgroundColor = "#7CAFC2";
                         o.centerView();
