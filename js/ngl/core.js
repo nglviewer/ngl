@@ -570,6 +570,72 @@ NGL.getFileInfo = function( file ){
 };
 
 
+NGL.fromJSON = function( input ){
+
+    return new NGL[ input.metadata.type ]().fromJSON( input );
+
+};
+
+
+NGL.processArray = function( array, fn, callback, chunkSize ){
+
+    if( typeof importScripts === 'function' ){
+
+        // no chunking required when inside a web worker
+        chunkSize = array.length;
+
+    }else{
+
+        chunkSize = chunkSize !== undefined ? chunkSize : 10000;
+
+    }
+
+    var n = array.length;
+
+    var _i = 0;
+    var _step = chunkSize;
+    var _n = Math.min( _step, n );
+
+    async.until(
+
+        function(){
+
+            return _i >= n;
+
+        },
+
+        function( wcallback ){
+
+            setTimeout( function(){
+
+                // NGL.log( _i, _n, n );
+
+                var stop = fn( _i, _n, array );
+
+                if( stop ){
+
+                    _i = n;
+
+                }else{
+
+                    _i += _step;
+                    _n = Math.min( _n + _step, n );
+
+                }
+
+                wcallback();
+
+            }, 10 );
+
+        },
+
+        callback
+
+    );
+
+};
+
+
 // String/arraybuffer conversion
 
 NGL.Uint8ToString = function( u8a ){

@@ -11,6 +11,7 @@ importScripts(
     '../ngl/viewer.js',
     '../ngl/geometry.js',
     '../ngl/structure.js',
+    '../ngl/streamer.js',
     '../ngl/parser.js'
 );
 
@@ -26,8 +27,9 @@ onmessage = function( e ){
 
     var d = e.data;
     var p = new parser[ d.type ]( d.name, d.path, d.params );
+    var streamer = NGL.fromJSON( d.streamer );
 
-    p.parse( d.data, function(){
+    p.parse( streamer, function(){
 
         NGL.timeEnd( "WORKER parse" );
 

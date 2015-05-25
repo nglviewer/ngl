@@ -397,6 +397,8 @@ NGL.StructureLoader.prototype.init = function( data, name, path, ext, callback, 
 
     if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
 
+    data = new NGL.BinaryStreamer( data );
+
     var parser = new parsersClasses[ ext ](
         name, path, params
     );

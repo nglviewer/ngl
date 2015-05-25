@@ -4,65 +4,6 @@
  */
 
 
-NGL.processArray = function( array, fn, callback, chunkSize ){
-
-    if( typeof importScripts === 'function' ){
-
-        // no chunking required when inside a web worker
-        chunkSize = array.length;
-
-    }else{
-
-        chunkSize = chunkSize !== undefined ? chunkSize : 10000;
-
-    }
-
-    var n = array.length;
-
-    var _i = 0;
-    var _step = chunkSize;
-    var _n = Math.min( _step, n );
-
-    async.until(
-
-        function(){
-
-            return _i >= n;
-
-        },
-
-        function( wcallback ){
-
-            setTimeout( function(){
-
-                // NGL.log( _i, _n, n );
-
-                var stop = fn( _i, _n, array );
-
-                if( stop ){
-
-                    _i = n;
-
-                }else{
-
-                    _i += _step;
-                    _n = Math.min( _n + _step, n );
-
-                }
-
-                wcallback();
-
-            }, 10 );
-
-        },
-
-        callback
-
-    );
-
-};
-
-
 NGL.buildStructure = function( structure, callback ){
 
     NGL.time( "NGL.buildStructure" );
@@ -475,32 +416,32 @@ NGL.StructureParser.prototype = {
 
     constructor: NGL.StructureParser,
 
-    parse: function( data, callback ){
+    parse: function( streamer, callback ){
 
         var self = this;
         var lines;
 
-        if( data instanceof Uint8Array ){
-
-            lines = NGL.Uint8ToLines( data );
-
-        }else{
-
-            lines = data.split( "\n" );
-
-        }
+        console.log( streamer )
 
         async.series( [
 
             function( wcallback ){
 
-                self._parse( lines, wcallback );
+                streamer.read( function( data ){ wcallback(); } );
 
             },
 
             function( wcallback ){
 
-                if( !self.structure.atomArray && self.structure.atoms.length > NGL.useAtomArrayThreshold ){
+                self._parse( streamer, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                if( !self.structure.atomArray &&
+                    self.structure.atoms.length > NGL.useAtomArrayThreshold
+                ){
 
                     NGL.createAtomArray( self.structure, wcallback );
 
@@ -566,7 +507,7 @@ NGL.StructureParser.prototype = {
 
     },
 
-    parseWorker: function( data, callback ){
+    parseWorker: function( streamer, callback ){
 
         if( NGL.worker && typeof Worker !== "undefined" ){
 
@@ -604,12 +545,10 @@ NGL.StructureParser.prototype = {
 
             };
 
-            var transferable = [];
-
-            if( data instanceof Uint8Array ) transferable.push( data.buffer );
+            var transferable = streamer.getTransferable();
 
             worker.postMessage( {
-                data: data,
+                streamer: streamer.toJSON(),
                 type: this.type,
                 name: this.name,
                 path: this.path,
@@ -622,7 +561,7 @@ NGL.StructureParser.prototype = {
 
         }else{
 
-            this.parse( data, callback );
+            this.parse( streamer, callback );
 
         }
 
@@ -659,7 +598,7 @@ NGL.PdbParser.prototype.constructor = NGL.PdbParser;
 
 NGL.PdbParser.prototype.type = "pdb";
 
-NGL.PdbParser.prototype._parse = function( lines, callback ){
+NGL.PdbParser.prototype._parse = function( streamer, callback ){
 
     // http://www.wwpdb.org/documentation/file-format.php
 
@@ -702,15 +641,16 @@ NGL.PdbParser.prototype._parse = function( lines, callback ){
     s.hasConnect = false;
 
     var atomArray;
-    if( lines.length > NGL.useAtomArrayThreshold ){
-        atomArray = new NGL.AtomArray( lines.length );
+    var lineCount = streamer.lineCount();
+    if( lineCount > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lineCount );
         s.atomArray = atomArray;
     }
 
     var idx = 0;
     var modelIdx = 0;
 
-    function _chunked( _i, _n ){
+    function _chunked( _i, _n, lines ){
 
         for( var i = _i; i < _n; ++i ){
 
@@ -1077,9 +1017,7 @@ NGL.PdbParser.prototype._parse = function( lines, callback ){
 
     }
 
-    NGL.processArray(
-
-        lines,
+    streamer.eachChunkOfLinesAsync(
 
         _chunked,
 
@@ -1121,7 +1059,7 @@ NGL.GroParser.prototype.constructor = NGL.GroParser;
 
 NGL.GroParser.prototype.type = "gro";
 
-NGL.GroParser.prototype._parse = function( lines, callback ){
+NGL.GroParser.prototype._parse = function( streamer, callback ){
 
     // http://manual.gromacs.org/current/online/gro.html
 
@@ -1145,18 +1083,21 @@ NGL.GroParser.prototype._parse = function( lines, callback ){
     var covRadii = NGL.CovalentRadii;
     var vdwRadii = NGL.VdwRadii;
 
-    s.title = lines[ 0 ].trim();
+    var firstLines = streamer.peekLines( 3 );
+    console.log( firstLines );
 
-    var size = parseInt( lines[ 1 ] );
-    var b = lines[ lines.length-1 ].trim().split( /\s+/ );
-    s.box = [
-        parseFloat( b[0] ) * 10,
-        parseFloat( b[1] ) * 10,
-        parseFloat( b[2] ) * 10
-    ];
+    s.title = firstLines[ 0 ].trim();
+
+    // FIXME
+    // var b = lines[ lines.length-1 ].trim().split( /\s+/ );
+    // s.box = [
+    //     parseFloat( b[0] ) * 10,
+    //     parseFloat( b[1] ) * 10,
+    //     parseFloat( b[2] ) * 10
+    // ];
 
     // determine number of decimal places
-    var ndec = lines[ 2 ].length - lines[ 2 ].lastIndexOf( "." ) - 1;
+    var ndec = firstLines[ 2 ].length - firstLines[ 2 ].lastIndexOf( "." ) - 1;
     var lpos = 5 + ndec;
     var xpos = 20;
     var ypos = 20 + lpos;
@@ -1166,19 +1107,20 @@ NGL.GroParser.prototype._parse = function( lines, callback ){
 
     var atomname, resname, element, resno, serial;
 
-    var atomCount = parseInt( lines[ 1 ] );
+    var atomCount = parseInt( firstLines[ 1 ] );
     var modelLineCount = atomCount + 3;
 
     var atomArray;
-    if( lines.length > NGL.useAtomArrayThreshold ){
-        atomArray = new NGL.AtomArray( lines.length );
+    var lineCount = streamer.lineCount();
+    if( lineCount > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lineCount );
         s.atomArray = atomArray;
     }
 
     var idx = 0;
     var modelIdx = 0;
 
-    function _chunked( _i, _n ){
+    function _chunked( _i, _n, lines ){
 
         for( var i = _i; i < _n; ++i ){
 
@@ -1301,9 +1243,7 @@ NGL.GroParser.prototype._parse = function( lines, callback ){
 
     }
 
-    NGL.processArray(
-
-        lines,
+    streamer.eachChunkOfLinesAsync(
 
         _chunked,
 
@@ -1331,7 +1271,7 @@ NGL.CifParser.prototype.constructor = NGL.CifParser;
 
 NGL.CifParser.prototype.type = "cif";
 
-NGL.CifParser.prototype._parse = function( lines, callback ){
+NGL.CifParser.prototype._parse = function( streamer, callback ){
 
     // http://mmcif.wwpdb.org/
 
@@ -1393,8 +1333,9 @@ NGL.CifParser.prototype._parse = function( lines, callback ){
     //
 
     var atomArray;
-    if( lines.length > NGL.useAtomArrayThreshold ){
-        atomArray = new NGL.AtomArray( lines.length );
+    var lineCount = streamer.lineCount();
+    if( lineCount > NGL.useAtomArrayThreshold ){
+        atomArray = new NGL.AtomArray( lineCount );
         s.atomArray = atomArray;
     }
 
@@ -1402,7 +1343,7 @@ NGL.CifParser.prototype._parse = function( lines, callback ){
     var modelIdx = 0;
     var modelNum;
 
-    function _chunked( _i, _n ){
+    function _chunked( _i, _n, lines ){
 
         for( var i = _i; i < _n; ++i ){
 
@@ -1750,9 +1691,7 @@ NGL.CifParser.prototype._parse = function( lines, callback ){
         // parse lines
         function( wcallback ){
 
-            NGL.processArray(
-
-                lines,
+            streamer.eachChunkOfLinesAsync(
 
                 _chunked,
 
