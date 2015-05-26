@@ -2610,7 +2610,7 @@ NGL.CubeParser.prototype.getMatrix = function(){
 
     matrix.multiply(
         new THREE.Matrix4().makeTranslation(
-            h.originZ, h.originY, h.originX
+            -h.originZ, h.originY, h.originX
         )
     );
 
