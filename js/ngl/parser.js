@@ -2514,25 +2514,19 @@ NGL.CubeParser.prototype = Object.create( NGL.VolumeParser.prototype );
 
 NGL.CubeParser.prototype.constructor = NGL.CubeParser;
 
-NGL.CubeParser.prototype.parse = function( data, callback ){
+NGL.CubeParser.prototype.parse = function( streamer, callback ){
 
-    var lines;
+    streamer.read( function( data ){
 
-    if( data instanceof Uint8Array ){
+        NGL.VolumeParser.prototype.parse.call( this, streamer, callback );
 
-        lines = NGL.Uint8ToLines( data );
+    }.bind( this ) );
 
-    }else{
-
-        lines = data.split( "\n" );
-
-    }
-
-    return NGL.VolumeParser.prototype.parse.call( this, lines, callback );
+    this.volume;
 
 };
 
-NGL.CubeParser.prototype._parse = function( lines, callback ){
+NGL.CubeParser.prototype._parse = function( streamer, callback ){
 
     // http://paulbourke.net/dataformats/cube/
 
@@ -2541,6 +2535,7 @@ NGL.CubeParser.prototype._parse = function( lines, callback ){
     NGL.time( __timeName );
 
     var v = this.volume;
+    var lines = streamer.peekLines(6)
     var header = {};
     var reWhitespace = /\s+/;
     var bohrToAngstromFactor = 0.529177210859;
@@ -2562,13 +2557,16 @@ NGL.CubeParser.prototype._parse = function( lines, callback ){
 
     var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
     var count = 0;
+    var linecount = 0;
 
-    function _getData( _i ){
+    function _chunked( _i, _n, lines ){
 
-        for( var i = _i; i < lines.length; ++i ){
+        for( var i = _i; i < _n; ++i ){
 
+            ++linecount;
             var line = lines[ i ].trim();
-            if( line !== "" ){
+
+            if( line !== "" && linecount >= header.atomCount + 6 ){
 
                 line = line.split( reWhitespace );
                 for( var j = 0, lj = line.length; j < lj; ++j ){
@@ -2584,22 +2582,26 @@ NGL.CubeParser.prototype._parse = function( lines, callback ){
 
     };
 
-    _getData( header.atomCount + 6 );
+    streamer.eachChunkOfLinesAsync(
 
-    v.header = header;
+        _chunked,
 
-    v.setData( data, header.NVZ, header.NVY, header.NVX );
+        function(){
 
-    NGL.timeEnd( __timeName );
+            v.header = header;
+            v.setData( data, header.NVZ, header.NVY, header.NVX );
+            NGL.timeEnd( __timeName );
+            callback();
 
-    callback();
+        }
+
+    );
 
 };
 
 NGL.CubeParser.prototype.getMatrix = function(){
 
     var h = this.volume.header;
-
     var matrix = new THREE.Matrix4();
 
     matrix.multiply(
@@ -2608,7 +2610,7 @@ NGL.CubeParser.prototype.getMatrix = function(){
 
     matrix.multiply(
         new THREE.Matrix4().makeTranslation(
-            h.originZ, h.originY, h.originX
+            -h.originZ, h.originY, h.originX
         )
     );
 

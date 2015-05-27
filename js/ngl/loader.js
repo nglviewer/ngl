@@ -435,6 +435,8 @@ NGL.VolumeLoader.prototype.init = function( data, name, path, ext, callback, par
 
     if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
 
+    if( ext === "cube" ) data = new NGL.BinaryStreamer( data );
+
     var parser = new parsersClasses[ ext ](
         name, path, params
     );
