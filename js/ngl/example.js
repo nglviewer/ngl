@@ -1027,15 +1027,14 @@ NGL.Examples = {
 
         "bigcube": function( stage ){
 
-            stage.loadFile( "data://1U19.cube.gz", function( o ){
+            stage.loadFile( "data://rho-inactive_md-hydration.cube.gz", function( o ){
 
-                o.addRepresentation( "surface", { isolevel: 2.4 } );
-                o.addRepresentation( "dot", { visible: false } );
-                o.centerView();
+                o.addRepresentation( "surface", { isolevel: 2.7 } );
+                // o.centerView();
 
             } );
 
-            stage.loadFile( "data://1U19.gro", function( o ){
+            stage.loadFile( "data://rho-inactive_md-system.gro", function( o ){
 
                 o.addRepresentation( "cartoon" );
                 o.addRepresentation( "licorice", { sele: "hetero" } );
