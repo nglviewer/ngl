@@ -416,6 +416,8 @@ NGL.StructureParser.prototype = {
 
     constructor: NGL.StructureParser,
 
+    type: "",
+
     parse: function( streamer, callback ){
 
         var self = this;
@@ -511,7 +513,7 @@ NGL.StructureParser.prototype = {
 
         if( NGL.worker && typeof Worker !== "undefined" ){
 
-            var __timeName = "NGL.PdbParser.parseWorker " + this.name;
+            var __timeName = "NGL.StructureParser.parseWorker " + this.name;
 
             NGL.time( __timeName );
 
@@ -2246,6 +2248,8 @@ NGL.VolumeParser.prototype = {
 
     constructor: NGL.VolumeParser,
 
+    type: "",
+
     parse: function( data, callback ){
 
         var self = this;
@@ -2259,6 +2263,52 @@ NGL.VolumeParser.prototype = {
             callback( self.volume );
 
         } );
+
+        return this.volume;
+
+    },
+
+    parseWorker: function( streamer, callback ){
+
+        if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.VolumeParser.parseWorker " + this.name;
+
+            NGL.time( __timeName );
+
+            var v = this.volume;
+            var scope = this;
+            var worker = new Worker( "../js/worker/parse.js" );
+
+            worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+
+                worker.terminate();
+
+                if( NGL.debug ) NGL.log( e.data );
+
+                v.fromJSON( e.data );
+
+                callback( v );
+
+            };
+
+            var transferable = streamer.getTransferable();
+
+            worker.postMessage( {
+                streamer: streamer.toJSON(),
+                type: this.type,
+                name: this.name,
+                path: this.path,
+                params: {}
+            }, transferable );
+
+        }else{
+
+            this.parse( streamer, callback );
+
+        }
 
         return this.volume;
 
@@ -2289,6 +2339,8 @@ NGL.MrcParser = function( name, path, params ){
 NGL.MrcParser.prototype = Object.create( NGL.VolumeParser.prototype );
 
 NGL.MrcParser.prototype.constructor = NGL.MrcParser;
+
+NGL.MrcParser.prototype.type = "mrc";
 
 NGL.MrcParser.prototype._parse = function( bin, callback ){
 
@@ -2513,6 +2565,8 @@ NGL.CubeParser = function( name, path, params ){
 NGL.CubeParser.prototype = Object.create( NGL.VolumeParser.prototype );
 
 NGL.CubeParser.prototype.constructor = NGL.CubeParser;
+
+NGL.CubeParser.prototype.type = "cube";
 
 NGL.CubeParser.prototype.parse = function( streamer, callback ){
 

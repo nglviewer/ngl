@@ -10,6 +10,7 @@ importScripts(
     '../ngl/symmetry.js',
     '../ngl/viewer.js',
     '../ngl/geometry.js',
+    '../ngl/surface.js',
     '../ngl/structure.js',
     '../ngl/streamer.js',
     '../ngl/parser.js'
@@ -18,7 +19,8 @@ importScripts(
 var parser = {
     pdb: NGL.PdbParser,
     cif: NGL.CifParser,
-    gro: NGL.GroParser
+    gro: NGL.GroParser,
+    cube: NGL.CubeParser
 };
 
 onmessage = function( e ){
@@ -33,13 +35,23 @@ onmessage = function( e ){
 
         NGL.timeEnd( "WORKER parse" );
 
-        var s = p.structure;
+        if( d.type === "cube" ){
 
-        // FIXME put into a more efficient format and transfer?
-        s.helices = [];
-        s.sheets = [];
+            var v = p.volume;
 
-        self.postMessage( s.toJSON(), s.getTransferable() );
+            self.postMessage( v.toJSON(), v.getTransferable() );
+
+        }else{
+
+            var s = p.structure;
+
+            // FIXME put into a more efficient format and transfer?
+            s.helices = [];
+            s.sheets = [];
+
+            self.postMessage( s.toJSON(), s.getTransferable() );
+
+        }
 
     } );
 
