@@ -392,6 +392,132 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 }
 
 
+///////////
+// Parser
+
+NGL.Parser = function( streamer, params ){
+
+    var p = params || {};
+
+    this.streamer = streamer;
+
+    this.name = p.name;
+    this.origin = streamer.origin;
+
+};
+
+NGL.Parser.prototype = {
+
+    constructor: NGL.Parser,
+
+    type: "",
+
+    parse: function( callback ){
+
+        this.streamer.read( function(){
+
+            this._parse( callback );
+
+        }.bind( this ) );
+
+    },
+
+    parseWorker: function( callback ){
+
+        if( NGL.worker && typeof Worker !== "undefined" ){
+
+            var __timeName = "NGL.Parser.parseWorker " + this.name;
+            NGL.time( __timeName );
+
+            var worker = new Worker( "../js/worker/parse.js" );
+
+            worker.onmessage = function( e ){
+
+                NGL.timeEnd( __timeName );
+                if( NGL.debug ) NGL.log( e.data );
+
+                worker.terminate();
+
+                this.fromJSON( e.data );
+                this._afterWorker( callback );
+
+            }.bind( this );
+
+            worker.postMessage( this.toJSON(), this.getTransferable() );
+
+        }else{
+
+            this.parse( callback );
+
+        }
+
+    },
+
+    _parse: function( callback ){
+
+        NGL.warn( "NGL.Parser._parse not implemented" );
+        callback();
+
+    },
+
+    _afterWorker: function( callback ){
+
+        callback();
+
+    },
+
+    _postProcess: function( callback ){
+
+        callback();
+
+    },
+
+    toJSON: function(){
+
+        var type = this.type.substr( 0, 1 ).toUpperCase() +
+                    this.type.substr( 1 );
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: type + 'Parser',
+                generator: type + 'ParserExporter'
+            },
+
+            streamer: this.streamer.toJSON(),
+            name: this.name,
+            origin: this.origin,
+
+        }
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.streamer = NGL.fromJSON( input.streamer );
+        this.name = input.name;
+        this.origin = input.origin;
+
+        return this;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [];
+
+        transferable = transferable.concat( this.streamer.getTransferable() );
+
+        return transferable;
+
+    }
+
+};
+
+
 ////////////////////
 // StructureParser
 
@@ -416,7 +542,7 @@ NGL.StructureParser.prototype = {
 
     constructor: NGL.StructureParser,
 
-    type: "",
+    type: "structure",
 
     parse: function( streamer, callback ){
 
