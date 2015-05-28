@@ -16,42 +16,20 @@ importScripts(
     '../ngl/parser.js'
 );
 
-var parser = {
-    pdb: NGL.PdbParser,
-    cif: NGL.CifParser,
-    gro: NGL.GroParser,
-    cube: NGL.CubeParser
-};
-
 onmessage = function( e ){
 
     NGL.time( "WORKER parse" );
 
-    var d = e.data;
-    var p = new parser[ d.type ]( d.name, d.path, d.params );
-    var streamer = NGL.fromJSON( d.streamer );
+    var parser = NGL.fromJSON( e.data );
 
-    p.parse( streamer, function(){
+    parser.parse( function(){
 
         NGL.timeEnd( "WORKER parse" );
 
-        if( d.type === "cube" ){
+        // no need to return the streamer data
+        parser.streamer.dispose();
 
-            var v = p.volume;
-
-            self.postMessage( v.toJSON(), v.getTransferable() );
-
-        }else{
-
-            var s = p.structure;
-
-            // FIXME put into a more efficient format and transfer?
-            s.helices = [];
-            s.sheets = [];
-
-            self.postMessage( s.toJSON(), s.getTransferable() );
-
-        }
+        self.postMessage( parser.toJSON(), parser.getTransferable() );
 
     } );
 

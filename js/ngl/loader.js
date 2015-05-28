@@ -397,14 +397,17 @@ NGL.StructureLoader.prototype.init = function( data, name, path, ext, callback, 
 
     if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
 
-    data = new NGL.BinaryStreamer( data );
+    var streamer = new NGL.BinaryStreamer( data );
+
+    params.name = name;
+    params.path = path;
 
     var parser = new parsersClasses[ ext ](
-        name, path, params
+        streamer, params
     );
 
     // return parser.parse( data, callback );
-    return parser.parseWorker( data, callback );
+    return parser.parseWorker( callback );
 
 };
 
@@ -435,21 +438,16 @@ NGL.VolumeLoader.prototype.init = function( data, name, path, ext, callback, par
 
     if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
 
+    var streamer = new NGL.BinaryStreamer( data );
+
+    params.name = name;
+    params.path = path;
+
     var parser = new parsersClasses[ ext ](
-        name, path, params
+        streamer, params
     );
 
-    if( ext === "cube" ){
-
-        data = new NGL.BinaryStreamer( data );
-
-        return parser.parseWorker( data, callback );
-
-    }else{
-
-        return parser.parse( data, callback );
-
-    }
+    return parser.parseWorker( callback );
 
 };
 

@@ -56,7 +56,7 @@ NGL.Streamer.prototype = {
 
                         this.data = decompressedData;
                         this.onload( this.data );
-                        callback( this.data );
+                        callback();
 
                     }.bind( this )
 
@@ -70,7 +70,7 @@ NGL.Streamer.prototype = {
 
                 this.data = data;
                 this.onload( this.data );
-                callback( this.data );
+                callback();
 
             }
 
@@ -346,6 +346,16 @@ NGL.Streamer.prototype = {
 
     },
 
+    dispose: function(){
+
+        delete this.src;
+
+        if( this.__srcName ){
+            delete this[ this.__srcName ];
+        }
+
+    }
+
 };
 
 
@@ -523,7 +533,9 @@ NGL.BinaryStreamer.prototype = NGL.createObject(
 
         var transferable = NGL.Streamer.prototype.getTransferable.call( this );
 
-        transferable.push( this.bin.buffer );
+        if( this.bin instanceof Uint8Array ){
+            transferable.push( this.bin.buffer );
+        }
 
         return transferable;
 
