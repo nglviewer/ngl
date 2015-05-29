@@ -50,12 +50,15 @@ NGL.Streamer.prototype = {
 
                 NGL.decompressWorker(
 
+                    // TODO find better way to specify compression
                     data, "foo." + this.compressed, true,
 
                     function( decompressedData ){
 
                         this.data = decompressedData;
-                        this.onload( this.data );
+                        if( typeof this.onload === "function" ){
+                            this.onload( this.data );
+                        }
                         callback();
 
                     }.bind( this )
@@ -69,7 +72,9 @@ NGL.Streamer.prototype = {
                 }
 
                 this.data = data;
-                this.onload( this.data );
+                if( typeof this.onload === "function" ){
+                    this.onload( this.data );
+                }
                 callback();
 
             }
@@ -392,7 +397,11 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
             } else {
 
-                this.onerror( xhr.status );
+                if( typeof this.onerror === "function" ){
+
+                    this.onerror( xhr.status );
+
+                }
 
             }
 
@@ -400,19 +409,27 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         //
 
-        xhr.addEventListener( 'progress', function ( event ) {
+        if( typeof this.onprogress === "function" ){
 
-            this.onprogress( event );
+            xhr.addEventListener( 'progress', function ( event ) {
 
-        }.bind( this ), false );
+                this.onprogress( event );
+
+            }.bind( this ), false );
+
+        }
 
         //
 
-        xhr.addEventListener( 'error', function ( event ) {
+        if( typeof this.onerror === "function" ){
 
-            this.onerror( event );
+            xhr.addEventListener( 'error', function ( event ) {
 
-        }.bind( this ), false );
+                this.onerror( event );
+
+            }.bind( this ), false );
+
+        }
 
         //
 
@@ -425,7 +442,11 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         }catch( e ){
 
-            this.onerror( e.message );
+            if( typeof this.onerror === "function" ){
+
+                this.onerror( e.message );
+
+            }
 
         }
 
@@ -464,19 +485,27 @@ NGL.FileStreamer.prototype = NGL.createObject(
 
         //
 
-        reader.onprogress = function ( event ) {
+        if( typeof this.onprogress === "function" ){
 
-            this.onprogress( event );
+            reader.onprogress = function ( event ) {
 
-        }.bind( this );
+                this.onprogress( event );
+
+            }.bind( this );
+
+        }
 
         //
 
-        reader.onerror = function ( event ) {
+        if( typeof this.onerror === "function" ){
 
-            this.onerror( event );
+            reader.onerror = function ( event ) {
 
-        }.bind( this );
+                this.onerror( event );
+
+            }.bind( this );
+
+        }
 
         //
 
