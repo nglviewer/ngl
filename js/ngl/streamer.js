@@ -384,8 +384,17 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
     _read: function( callback ){
 
+        var url = this.src;
+
+        if( typeof importScripts === 'function' ){
+
+            // adjust relative path when inside a web worker
+            if( url.substr( 0, 3 ) === "../" ) url = "../" + url;
+
+        }
+
         var xhr = new XMLHttpRequest();
-        xhr.open( "GET", this.src, true );
+        xhr.open( "GET", url, true );
 
         //
 

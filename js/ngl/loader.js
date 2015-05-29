@@ -7,283 +7,6 @@
 ///////////
 // Loader
 
-NGL.XHRLoader = function ( manager ) {
-
-    /**
-     * @author mrdoob / http://mrdoob.com/
-     */
-
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-};
-
-NGL.XHRLoader.prototype = {
-
-    constructor: NGL.XHRLoader,
-
-    load: function ( url, onLoad, onProgress, onError ) {
-
-        var scope = this;
-
-        var cached = THREE.Cache.get( url );
-
-        if ( cached !== undefined ) {
-
-            if ( onLoad ) onLoad( cached );
-            return;
-
-        }
-
-        var request = new XMLHttpRequest();
-        request.open( 'GET', url, true );
-
-        request.addEventListener( 'load', function ( event ) {
-
-            if ( request.status === 200 || request.status === 304 ) {
-
-                try{
-
-                    var data = this.response;
-
-                    var loaded = function( d ){
-
-                        THREE.Cache.add( url, d );
-                        if ( onLoad ) onLoad( d );
-
-                    }
-
-                    if( scope.compressed ){
-
-                        data = NGL.decompressWorker(
-                            data, url, scope.asBinary, loaded
-                        );
-
-                    }else{
-
-                        loaded( data );
-
-                    }
-
-                }catch( e ){
-
-                    if ( onError ) onError( "decompression failed" );
-
-                }
-
-            } else {
-
-                if ( onError ) onError( request.status );
-
-            }
-
-            scope.manager.itemEnd( url );
-
-        }, false );
-
-        if ( onProgress !== undefined ) {
-
-            request.addEventListener( 'progress', function ( event ) {
-
-                onProgress( event );
-
-            }, false );
-
-        }
-
-        if ( onError !== undefined ) {
-
-            request.addEventListener( 'error', function ( event ) {
-
-                onError( event );
-
-            }, false );
-
-        }
-
-        if ( this.crossOrigin !== undefined ) request.crossOrigin = this.crossOrigin;
-        if ( this.responseType !== undefined ) request.responseType = this.responseType;
-
-        request.send( null );
-
-        scope.manager.itemStart( url );
-
-    },
-
-    setAsBinary: function ( value ) {
-
-        if( value ){
-            this.setResponseType( "arraybuffer" );
-        }
-
-        this.asBinary = value;
-
-    },
-
-    setCompressed: function( value ){
-
-        if( value ){
-            this.setResponseType( "arraybuffer" );
-        }
-
-        this.compressed = value;
-
-    },
-
-    setResponseType: function ( value ) {
-
-        this.responseType = value.toLowerCase();
-
-    },
-
-    setCrossOrigin: function ( value ) {
-
-        this.crossOrigin = value;
-
-    }
-
-};
-
-
-NGL.FileLoader = function( manager ){
-
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-};
-
-NGL.FileLoader.prototype = {
-
-    constructor: NGL.FileLoader,
-
-    load: function ( file, onLoad, onProgress, onError ) {
-
-        var scope = this;
-
-        var cached = THREE.Cache.get( file );
-
-        if ( cached !== undefined ) {
-
-            onLoad( cached );
-            return;
-
-        }
-
-        var reader = new FileReader();
-
-        reader.onload = function( event ){
-
-            try{
-
-                var data = event.target.result;
-
-                var loaded = function( d ){
-
-                    // THREE.Cache.add( file, d );
-                    onLoad( d );
-
-                }
-
-                if( scope.compressed ){
-
-                    NGL.decompressWorker(
-                        data, file, scope.asBinary, loaded
-                    );
-
-                }else{
-
-                    loaded( data );
-
-                }
-
-            }catch( e ){
-
-                if ( onError ) onError( e, "decompression failed" );
-
-            }
-
-            scope.manager.itemEnd( file );
-
-        }
-
-        if ( onProgress !== undefined ) {
-
-            reader.onprogress = function ( event ) {
-
-                onProgress( event );
-
-            }
-
-        }
-
-        if ( onError !== undefined ) {
-
-            reader.onerror = function ( event ) {
-
-                onError( event );
-
-            }
-
-        }
-
-        if( this.asBinary || this.compressed ){
-
-            reader.readAsArrayBuffer( file );
-
-        }else{
-
-            reader.readAsText( file );
-
-        }
-
-        scope.manager.itemStart( file );
-
-    },
-
-    setAsBinary: function ( value ) {
-
-        this.asBinary = value;
-
-    },
-
-    setCompressed: function( value ){
-
-        if( value ){
-            this.setResponseType( "arraybuffer" );
-        }
-
-        this.compressed = value;
-
-    },
-
-    setResponseType: function ( value ) {
-
-        this.responseType = value.toLowerCase();
-
-    }
-
-};
-
-
-NGL.ScriptLoader = function( manager ){
-
-    NGL.XHRLoader.call( this, manager );
-
-};
-
-NGL.ScriptLoader.prototype = Object.create( NGL.XHRLoader.prototype );
-
-NGL.ScriptLoader.prototype.constructor = NGL.ScriptLoader;
-
-NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
-
-    var script = new NGL.Script( data, name, path );
-
-    if( typeof callback === "function" ) callback( script );
-
-    return script;
-
-};
-
-
 NGL.Loader = function(){
 
 };
@@ -292,6 +15,31 @@ NGL.Loader.prototype = {
 
     constructor: NGL.Loader,
 
+    init: function( data, name, path, ext, callback, params ){
+
+    },
+
+    load: function ( src, onLoad, onProgress, onError, params ) {
+
+        var streamer;
+
+        if( src instanceof File ){
+
+            streamer = new NGL.FileStreamer( src, params );
+
+        }else{
+
+            streamer = new NGL.NetworkStreamer( src, params );
+
+        }
+
+        streamer.onerror = onError;
+        streamer.onprogress = onProgress;
+
+        onLoad( streamer );
+
+    }
+
 };
 
 
@@ -299,7 +47,9 @@ NGL.ParserLoader = function(){
 
 };
 
-NGL.ParserLoader.prototype = {
+NGL.ParserLoader.prototype = NGL.createObject(
+
+    NGL.Loader.prototype, {
 
     constructor: NGL.ParserLoader,
 
@@ -337,30 +87,56 @@ NGL.ParserLoader.prototype = {
 
         return parser.parseWorker( callback );
 
+    }
+
+} );
+
+
+NGL.ScriptLoader = function(){
+
+};
+
+NGL.ScriptLoader.prototype = NGL.createObject(
+
+    NGL.Loader.prototype, {
+
+    constructor: NGL.ScriptLoader,
+
+    init: function( data, name, path, ext, callback, params ){
+
+        params = params || {};
+
+        var script = new NGL.Script( data, name, path );
+
+        if( typeof callback === "function" ) callback( script );
+
+        return script;
+
     },
 
     load: function ( src, onLoad, onProgress, onError, params ) {
 
-        var streamer;
+        function _onLoad( streamer ){
 
-        if( src instanceof File ){
+            streamer.read( function(){
 
-            streamer = new NGL.FileStreamer( src, params );
+                var text = NGL.Uint8ToString( streamer.data );
 
-        }else{
+                onLoad( text );
 
-            streamer = new NGL.NetworkStreamer( src, params );
+            } );
 
         }
 
-        streamer.onerror = onError;
-        streamer.onprogress = onProgress;
+        NGL.Loader.prototype.load.call(
 
-        onLoad( streamer );
+            this, src, _onLoad, onProgress, onError, params
+
+        );
 
     }
 
-};
+} );
 
 
 NGL.autoLoad = function(){
@@ -384,13 +160,6 @@ NGL.autoLoad = function(){
         "ngl": NGL.ScriptLoader,
 
     };
-
-    var binary = [
-        "mrc", "ccp4", "map",
-        "cif", "mmcif", "gro", "pdb", "ent",
-        "cube",
-        "ply", "obj"
-    ];
 
     return function( file, onLoad, onProgress, onError, params ){
 
@@ -476,49 +245,27 @@ NGL.autoLoad = function(){
 
         }
 
-        if( loader instanceof NGL.ParserLoader ){
+        var src;
 
-            var src;
-            if( file instanceof File ){
-                src = file;
-            }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
-                src = protocol + "://" + path;
-            }else if( protocol === "data" ){
-                src = "../../data/" + path;
-            }else{
-                src = "../../file/" + path;
-            }
+        if( file instanceof File ){
 
-            loader.load( src, init, onProgress, error, { compressed: compressed } );
-
-        }else if( file instanceof File ){
-
-            var fileLoader = new NGL.FileLoader();
-            if( compressed ) fileLoader.setCompressed( true );
-            if( binary.indexOf( ext ) !== -1 ) fileLoader.setAsBinary( true );
-            fileLoader.load( file, init, onProgress, error, p );
+            src = file;
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
-            loader.setCrossOrigin( true );
-
-            if( compressed ) loader.setCompressed( true );
-            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
-            loader.load( protocol + "://" + path, init, onProgress, error, p );
+            src = protocol + "://" + path;
 
         }else if( protocol === "data" ){
 
-            if( compressed ) loader.setCompressed( true );
-            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
-            loader.load( "../data/" + path, init, onProgress, error, p );
+            src = "../data/" + path;
 
-        }else{ // default: protocol === "file"
+        }else{
 
-            if( compressed ) loader.setCompressed( true );
-            if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
-            loader.load( "../file/" + path, init, onProgress, error, p );
+            src = "../file/" + path;
 
         }
+
+        loader.load( src, init, onProgress, error, { compressed: compressed } );
 
         return object;
 
