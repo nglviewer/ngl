@@ -711,6 +711,116 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 };
 
 
+// Decompress
+
+NGL.decompress = function( data, file, asBinary, callback ){
+
+    var binData, decompressedData;
+    var ext = NGL.getFileInfo( file ).compressed;
+
+    NGL.time( "NGL.decompress " + ext );
+
+    if( data instanceof ArrayBuffer ){
+
+        data = new Uint8Array( data );
+
+    }
+
+    if( ext === "gz" ){
+
+        binData = pako.ungzip( data );
+
+    }else if( ext === "zip" ){
+
+        var zip = new JSZip( data );
+        var name = Object.keys( zip.files )[ 0 ];
+        binData = zip.files[ name ].asUint8Array();
+
+    }else if( ext === "lzma" ){
+
+        var inStream = {
+            data: data,
+            offset: 0,
+            readByte: function(){
+                return this.data[ this.offset++ ];
+            }
+        };
+
+        var outStream = {
+            data: [ /* Uncompressed data will be putted here */ ],
+            offset: 0,
+            writeByte: function( value ){
+                this.data[ this.offset++ ] = value;
+            }
+        };
+
+        LZMA.decompressFile( inStream, outStream );
+        binData = new Uint8Array( outStream.data );
+
+    }else if( ext === "bz2" ){
+
+        // FIXME need to get binData
+        var bitstream = bzip2.array( data );
+        decompressedData = bzip2.simple( bitstream )
+
+    }else{
+
+        NGL.warn( "no decompression method available for '" + ext + "'" );
+        decompressedData = data;
+
+    }
+
+    if( !asBinary && decompressedData === undefined ){
+
+        decompressedData = NGL.Uint8ToString( binData );
+
+    }
+
+    NGL.timeEnd( "NGL.decompress " + ext );
+
+    var returnData = asBinary ? binData : decompressedData;
+
+    if( typeof callback === "function" ){
+
+        callback( returnData );
+
+    }
+
+    return returnData;
+
+};
+
+
+NGL.decompressWorker = function( data, file, asBinary, callback ){
+
+    if( NGL.worker && typeof Worker !== "undefined" ){
+
+        NGL.time( "NGL.decompressWorker" );
+
+        var worker = new Worker( "../js/worker/decompress.js" );
+
+        worker.onmessage = function( e ){
+
+            NGL.timeEnd( "NGL.decompressWorker" );
+            worker.terminate();
+            callback( e.data );
+
+        };
+
+        worker.postMessage(
+            { data: data, file: file, asBinary: asBinary },
+            [ data.buffer ? data.buffer : data ]
+        );
+
+    }else{
+
+        NGL.decompress( data, file, asBinary, callback );
+
+    }
+
+};
+
+
 // Counter
 
 NGL.Counter = function(){

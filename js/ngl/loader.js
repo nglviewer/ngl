@@ -4,114 +4,6 @@
  */
 
 
-NGL.decompress = function( data, file, asBinary, callback ){
-
-    var binData, decompressedData;
-    var ext = NGL.getFileInfo( file ).compressed;
-
-    NGL.time( "NGL.decompress " + ext );
-
-    if( data instanceof ArrayBuffer ){
-
-        data = new Uint8Array( data );
-
-    }
-
-    if( ext === "gz" ){
-
-        binData = pako.ungzip( data );
-
-    }else if( ext === "zip" ){
-
-        var zip = new JSZip( data );
-        var name = Object.keys( zip.files )[ 0 ];
-        binData = zip.files[ name ].asUint8Array();
-
-    }else if( ext === "lzma" ){
-
-        var inStream = {
-            data: data,
-            offset: 0,
-            readByte: function(){
-                return this.data[ this.offset++ ];
-            }
-        };
-
-        var outStream = {
-            data: [ /* Uncompressed data will be putted here */ ],
-            offset: 0,
-            writeByte: function( value ){
-                this.data[ this.offset++ ] = value;
-            }
-        };
-
-        LZMA.decompressFile( inStream, outStream );
-        binData = new Uint8Array( outStream.data );
-
-    }else if( ext === "bz2" ){
-
-        // FIXME need to get binData
-        var bitstream = bzip2.array( data );
-        decompressedData = bzip2.simple( bitstream )
-
-    }else{
-
-        NGL.warn( "no decompression method available for '" + ext + "'" );
-        decompressedData = data;
-
-    }
-
-    if( !asBinary && decompressedData === undefined ){
-
-        decompressedData = NGL.Uint8ToString( binData );
-
-    }
-
-    NGL.timeEnd( "NGL.decompress " + ext );
-
-    var returnData = asBinary ? binData : decompressedData;
-
-    if( typeof callback === "function" ){
-
-        callback( returnData );
-
-    }
-
-    return returnData;
-
-};
-
-
-NGL.decompressWorker = function( data, file, asBinary, callback ){
-
-    if( NGL.worker && typeof Worker !== "undefined" ){
-
-        NGL.time( "NGL.decompressWorker" );
-
-        var worker = new Worker( "../js/worker/decompress.js" );
-
-        worker.onmessage = function( e ){
-
-            NGL.timeEnd( "NGL.decompressWorker" );
-            worker.terminate();
-            callback( e.data );
-
-        };
-
-        worker.postMessage(
-            { data: data, file: file, asBinary: asBinary },
-            [ data.buffer ? data.buffer : data ]
-        );
-
-    }else{
-
-        NGL.decompress( data, file, asBinary, callback );
-
-    }
-
-};
-
-
 ///////////
 // Loader
 
@@ -371,87 +263,6 @@ NGL.FileLoader.prototype = {
 };
 
 
-NGL.StructureLoader = function( manager ){
-
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-};
-
-NGL.StructureLoader.prototype = Object.create( NGL.XHRLoader.prototype );
-
-NGL.StructureLoader.prototype.constructor = NGL.StructureLoader;
-
-NGL.StructureLoader.prototype.init = function( data, name, path, ext, callback, params ){
-
-    params = params || {};
-
-    var parsersClasses = {
-
-        "gro": NGL.GroParser,
-        "pdb": NGL.PdbParser,
-        "ent": NGL.PdbParser,
-        "cif": NGL.CifParser,
-        "mmcif": NGL.CifParser,
-
-    };
-
-    if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
-
-    var streamer = new NGL.BinaryStreamer( data );
-
-    params.name = name;
-    params.path = path;
-
-    var parser = new parsersClasses[ ext ](
-        streamer, params
-    );
-
-    // return parser.parse( data, callback );
-    return parser.parseWorker( callback );
-
-};
-
-
-NGL.VolumeLoader = function( manager ){
-
-    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-
-};
-
-NGL.VolumeLoader.prototype = Object.create( NGL.XHRLoader.prototype );
-
-NGL.VolumeLoader.prototype.constructor = NGL.VolumeLoader;
-
-NGL.VolumeLoader.prototype.init = function( data, name, path, ext, callback, params ){
-
-    params = params || {};
-
-    var parsersClasses = {
-
-        "mrc": NGL.MrcParser,
-        "ccp4": NGL.MrcParser,
-        "map": NGL.MrcParser,
-
-        "cube": NGL.CubeParser,
-
-    };
-
-    if( data instanceof ArrayBuffer ) data = new Uint8Array( data );
-
-    var streamer = new NGL.BinaryStreamer( data );
-
-    params.name = name;
-    params.path = path;
-
-    var parser = new parsersClasses[ ext ](
-        streamer, params
-    );
-
-    return parser.parseWorker( callback );
-
-};
-
-
 NGL.ObjLoader = function( manager ){
 
     THREE.PLYLoader.call( this, manager );
@@ -519,20 +330,85 @@ NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
 };
 
 
+NGL.ParserLoader = function(){
+
+};
+
+NGL.ParserLoader.prototype = {
+
+    constructor: NGL.ParserLoader,
+
+    init: function( data, name, path, ext, callback, params ){
+
+        params = params || {};
+
+        var parsersClasses = {
+
+            "gro": NGL.GroParser,
+            "pdb": NGL.PdbParser,
+            "ent": NGL.PdbParser,
+            "cif": NGL.CifParser,
+            "mmcif": NGL.CifParser,
+
+            "mrc": NGL.MrcParser,
+            "ccp4": NGL.MrcParser,
+            "map": NGL.MrcParser,
+
+            "cube": NGL.CubeParser,
+
+        };
+
+        var streamer = data;
+
+        params.name = name;
+        params.path = path;
+
+        var parser = new parsersClasses[ ext ](
+            streamer, params
+        );
+
+        return parser.parseWorker( callback );
+
+    },
+
+    load: function ( src, onLoad, onProgress, onError, params ) {
+
+        var streamer;
+
+        if( src instanceof File ){
+
+            streamer = new NGL.FileStreamer( src, params );
+
+        }else{
+
+            streamer = new NGL.NetworkStreamer( src, params );
+
+        }
+
+        streamer.onerror = onError;
+        streamer.onprogress = onProgress;
+
+        onLoad( streamer );
+
+    }
+
+};
+
+
 NGL.autoLoad = function(){
 
     var loaders = {
 
-        "gro": NGL.StructureLoader,
-        "pdb": NGL.StructureLoader,
-        "ent": NGL.StructureLoader,
-        "cif": NGL.StructureLoader,
-        "mmcif": NGL.StructureLoader,
+        "gro": NGL.ParserLoader,
+        "pdb": NGL.ParserLoader,
+        "ent": NGL.ParserLoader,
+        "cif": NGL.ParserLoader,
+        "mmcif": NGL.ParserLoader,
 
-        "mrc": NGL.VolumeLoader,
-        "ccp4": NGL.VolumeLoader,
-        "map": NGL.VolumeLoader,
-        "cube": NGL.VolumeLoader,
+        "mrc": NGL.ParserLoader,
+        "ccp4": NGL.ParserLoader,
+        "map": NGL.ParserLoader,
+        "cube": NGL.ParserLoader,
 
         "obj": NGL.ObjLoader,
         "ply": NGL.PlyLoader,
@@ -631,12 +507,27 @@ NGL.autoLoad = function(){
 
         }
 
-        if( file instanceof File ){
+        if( loader instanceof NGL.ParserLoader ){
+
+            var src;
+            if( file instanceof File ){
+                src = file;
+            }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
+                src = protocol + "://" + path;
+            }else if( protocol === "data" ){
+                src = "../../data/" + path;
+            }else{
+                src = "../../file/" + path;
+            }
+
+            loader.load( src, init, onProgress, error, { compressed: compressed } );
+
+        }else if( file instanceof File ){
 
             var fileLoader = new NGL.FileLoader();
             if( compressed ) fileLoader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) fileLoader.setAsBinary( true );
-            fileLoader.load( file, init, onProgress, error );
+            fileLoader.load( file, init, onProgress, error, p );
 
         }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
@@ -644,19 +535,19 @@ NGL.autoLoad = function(){
 
             if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
-            loader.load( protocol + "://" + path, init, onProgress, error );
+            loader.load( protocol + "://" + path, init, onProgress, error, p );
 
         }else if( protocol === "data" ){
 
             if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
-            loader.load( "../data/" + path, init, onProgress, error );
+            loader.load( "../data/" + path, init, onProgress, error, p );
 
         }else{ // default: protocol === "file"
 
             if( compressed ) loader.setCompressed( true );
             if( binary.indexOf( ext ) !== -1 ) loader.setAsBinary( true );
-            loader.load( "../file/" + path, init, onProgress, error );
+            loader.load( "../file/" + path, init, onProgress, error, p );
 
         }
 

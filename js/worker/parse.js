@@ -5,6 +5,7 @@ THREE = {};
 importScripts(
     '../lib/async.min.js',
     '../lib/signals.min.js',
+    '../lib/pako.min.js',
     '../three/three.min.js',
     '../ngl/core.js',
     '../ngl/symmetry.js',

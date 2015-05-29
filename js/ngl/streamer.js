@@ -311,6 +311,7 @@ NGL.Streamer.prototype = {
             },
 
             src: this.src,
+            compressed: this.compressed,
             chunkSize: this.chunkSize,
             newline: this.newline,
 
@@ -327,6 +328,7 @@ NGL.Streamer.prototype = {
     fromJSON: function( input ){
 
         this.src = input.src;
+        this.compressed = input.compressed;
         this.chunkSize = input.chunkSize;
         this.newline = input.newline;
 
@@ -378,7 +380,6 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
     _read: function( callback ){
 
         var xhr = new XMLHttpRequest();
-
         xhr.open( "GET", this.src, true );
 
         //
@@ -387,11 +388,11 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
             if ( xhr.status === 200 || xhr.status === 304 ) {
 
-                callback( event.response );
+                callback( xhr.response );
 
             } else {
 
-                this.onError( xhr.status );
+                this.onerror( xhr.status );
 
             }
 
@@ -420,7 +421,7 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         try {
 
-            xhr.send();
+            xhr.send( null );
 
         }catch( e ){
 
