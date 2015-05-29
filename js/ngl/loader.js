@@ -263,52 +263,6 @@ NGL.FileLoader.prototype = {
 };
 
 
-NGL.ObjLoader = function( manager ){
-
-    THREE.PLYLoader.call( this, manager );
-
-};
-
-NGL.ObjLoader.prototype = Object.create( THREE.OBJLoader.prototype );
-
-NGL.ObjLoader.prototype.constructor = NGL.ObjLoader;
-
-NGL.ObjLoader.prototype.init = function( data, name, path, ext, callback ){
-
-    var geometry;
-
-    if( typeof data === "string" ){
-
-        geometry = this.parse( data );
-
-    }else{
-
-        geometry = data;
-
-    }
-
-    var surface = new NGL.Surface( name, path, geometry )
-
-    if( typeof callback === "function" ) callback( surface );
-
-    return surface;
-
-};
-
-
-NGL.PlyLoader = function(){
-
-    THREE.PLYLoader.call( this );
-
-};
-
-NGL.PlyLoader.prototype = Object.create( THREE.PLYLoader.prototype );
-
-NGL.PlyLoader.prototype.constructor = NGL.PlyLoader;
-
-NGL.PlyLoader.prototype.init = NGL.ObjLoader.prototype.init;
-
-
 NGL.ScriptLoader = function( manager ){
 
     NGL.XHRLoader.call( this, manager );
@@ -326,6 +280,17 @@ NGL.ScriptLoader.prototype.init = function( data, name, path, ext, callback ){
     if( typeof callback === "function" ) callback( script );
 
     return script;
+
+};
+
+
+NGL.Loader = function(){
+
+};
+
+NGL.Loader.prototype = {
+
+    constructor: NGL.Loader,
 
 };
 
@@ -355,6 +320,9 @@ NGL.ParserLoader.prototype = {
             "map": NGL.MrcParser,
 
             "cube": NGL.CubeParser,
+
+            "ply": NGL.PlyParser,
+            "obj": NGL.ObjParser
 
         };
 
@@ -410,8 +378,8 @@ NGL.autoLoad = function(){
         "map": NGL.ParserLoader,
         "cube": NGL.ParserLoader,
 
-        "obj": NGL.ObjLoader,
-        "ply": NGL.PlyLoader,
+        "obj": NGL.ParserLoader,
+        "ply": NGL.ParserLoader,
 
         "ngl": NGL.ScriptLoader,
 
@@ -420,7 +388,8 @@ NGL.autoLoad = function(){
     var binary = [
         "mrc", "ccp4", "map",
         "cif", "mmcif", "gro", "pdb", "ent",
-        "cube"
+        "cube",
+        "ply", "obj"
     ];
 
     return function( file, onLoad, onProgress, onError, params ){

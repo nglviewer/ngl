@@ -7,6 +7,8 @@ importScripts(
     '../lib/signals.min.js',
     '../lib/pako.min.js',
     '../three/three.min.js',
+    '../three/loaders/PLYLoader.js',
+    '../three/loaders/OBJLoader.js',
     '../ngl/core.js',
     '../ngl/symmetry.js',
     '../ngl/viewer.js',

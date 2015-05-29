@@ -2757,3 +2757,83 @@ NGL.CubeParser.prototype = NGL.createObject(
     }
 
 } );
+
+
+///////////////////
+// Surface parser
+
+NGL.SurfaceParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.loader = undefined;
+    this.surface = new NGL.Surface( this.name, this.path );
+
+};
+
+NGL.SurfaceParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.SurfaceParser,
+
+    type: "surface",
+
+    __objName: "surface",
+
+    _parse: function( callback ){
+
+        var text = NGL.Uint8ToString( this.streamer.data );
+        var geometry = this.loader.parse( text );
+
+        this.surface.fromGeometry( geometry );
+
+        callback();
+
+    }
+
+} );
+
+
+NGL.PlyParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.SurfaceParser.call( this, streamer, p );
+
+    this.loader = new THREE.PLYLoader();
+
+};
+
+NGL.PlyParser.prototype = NGL.createObject(
+
+    NGL.SurfaceParser.prototype, {
+
+    constructor: NGL.PlyParser,
+
+    type: "ply"
+
+} );
+
+
+NGL.ObjParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.SurfaceParser.call( this, streamer, p );
+
+    this.loader = new THREE.OBJLoader();
+
+};
+
+NGL.ObjParser.prototype = NGL.createObject(
+
+    NGL.SurfaceParser.prototype, {
+
+    constructor: NGL.ObjParser,
+
+    type: "obj"
+
+} );
