@@ -111,8 +111,9 @@ NGL.Stage.prototype = {
 
     loadFile: function( path, onLoad, params, onError, loadParams ){
 
-        var component;
         var scope = this;
+
+        var component;
 
         function load( object ){
 
@@ -123,26 +124,7 @@ NGL.Stage.prototype = {
 
             }
 
-            if( object instanceof NGL.Structure ){
-
-                component = new NGL.StructureComponent( scope, object, params );
-
-            }else if( object instanceof NGL.Surface || object instanceof NGL.Volume ){
-
-                component = new NGL.SurfaceComponent( scope, object, params );
-
-            }else if( object instanceof NGL.Script ){
-
-                component = new NGL.ScriptComponent( scope, object, params );
-
-            }else{
-
-                NGL.warn( "NGL.Stage.loadFile: object type unknown", object );
-                return;
-
-            }
-
-            scope.addComponent( component );
+            component = scope.addComponentFromObject( object, params );
 
             if( typeof onLoad === "function" ){
 
@@ -198,6 +180,16 @@ NGL.Stage.prototype = {
         this.compList.push( component );
 
         this.signals.componentAdded.dispatch( component );
+
+    },
+
+    addComponentFromObject: function( object, params ){
+
+        var component = NGL.makeComponent( this, object, params );
+
+        this.addComponent( component );
+
+        return component;
 
     },
 
@@ -431,7 +423,7 @@ NGL.Stage.prototype = {
         return compList.concat( reprList );
 
     },
-    
+
     dispose: function(){
 
         this.tasks.dispose();
@@ -726,7 +718,35 @@ NGL.Preferences.prototype = {
 //////////////
 // Component
 
+NGL.makeComponent = function( stage, object, params ){
+
+    var component;
+
+    if( object instanceof NGL.Structure ){
+
+        component = new NGL.StructureComponent( stage, object, params );
+
+    }else if( object instanceof NGL.Surface || object instanceof NGL.Volume ){
+
+        component = new NGL.SurfaceComponent( stage, object, params );
+
+    }else if( object instanceof NGL.Script ){
+
+        component = new NGL.ScriptComponent( stage, object, params );
+
+    }else{
+
+        NGL.warn( "NGL.Stage.loadFile: object type unknown", object );
+
+    }
+
+    return component;
+
+};
+
+
 NGL.nextComponentId = 0;
+
 
 NGL.Component = function( stage, params ){
 

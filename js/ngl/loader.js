@@ -7,7 +7,39 @@
 ///////////
 // Loader
 
-NGL.Loader = function(){
+NGL.Loader = function( src, params ){
+
+    var p = params || {};
+
+    if( typeof p.onLoad === "function" ) this.onload = p.onLoad;
+    if( typeof p.onProgress === "function" ) this.onprogress = p.onProgress;
+    if( typeof p.onError === "function" ) this.onerror = p.onError;
+
+    this.compressed = p.compressed || false;
+    this.name = p.name || "";
+    this.ext = p.ext || "";
+    this.path = p.path || "";
+
+    //
+
+    var streamerParams = {
+
+        compressed: this.compressed
+
+    };
+
+    if( src instanceof File ){
+
+        this.streamer = new NGL.FileStreamer( src, streamerParams );
+
+    }else{
+
+        this.streamer = new NGL.NetworkStreamer( src, streamerParams );
+
+    }
+
+    this.streamer.onerror = this.onError;
+    this.streamer.onprogress = this.onProgress;
 
 };
 
@@ -15,35 +47,39 @@ NGL.Loader.prototype = {
 
     constructor: NGL.Loader,
 
-    init: function( data, name, path, ext, callback, params ){
+    onload: function(){},
+
+    onprogress: function(){},
+
+    onerror: function( e ){
+
+        NGL.error( e );
 
     },
 
-    load: function ( src, onLoad, onProgress, onError, params ) {
+    load: function(){
 
-        var streamer;
+        try{
 
-        if( src instanceof File ){
+            this._load();
 
-            streamer = new NGL.FileStreamer( src, params );
+        }catch( e ){
 
-        }else{
-
-            streamer = new NGL.NetworkStreamer( src, params );
+            NGL.error( e );
+            this.onerror( "loading failed" );
 
         }
 
-        streamer.onerror = onError;
-        streamer.onprogress = onProgress;
+    },
 
-        onLoad( streamer );
-
-    }
+    _load: function(){}
 
 };
 
 
-NGL.ParserLoader = function(){
+NGL.ParserLoader = function( src, params ){
+
+    NGL.Loader.call( this, src, params );
 
 };
 
@@ -53,9 +89,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
     constructor: NGL.ParserLoader,
 
-    init: function( data, name, path, ext, callback, params ){
-
-        params = params || {};
+    _load: function(){
 
         var parsersClasses = {
 
@@ -76,23 +110,25 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
         };
 
-        var streamer = data;
+        var params = {
+            name: this.name,
+            path: this.path
+        };
 
-        params.name = name;
-        params.path = path;
-
-        var parser = new parsersClasses[ ext ](
-            streamer, params
+        var parser = new parsersClasses[ this.ext ](
+            this.streamer, params
         );
 
-        return parser.parseWorker( callback );
+        parser.parseWorker( this.onload );
 
     }
 
 } );
 
 
-NGL.ScriptLoader = function(){
+NGL.ScriptLoader = function( src, params ){
+
+    NGL.Loader.call( this, src, params );
 
 };
 
@@ -102,37 +138,17 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
     constructor: NGL.ScriptLoader,
 
-    init: function( data, name, path, ext, callback, params ){
+    _load: function(){
 
-        params = params || {};
+        this.streamer.read( function(){
 
-        var script = new NGL.Script( data, name, path );
+            var text = NGL.Uint8ToString( this.streamer.data );
 
-        if( typeof callback === "function" ) callback( script );
+            var script = new NGL.Script( text, this.name, this.path );
 
-        return script;
+            this.onload( script );
 
-    },
-
-    load: function ( src, onLoad, onProgress, onError, params ) {
-
-        function _onLoad( streamer ){
-
-            streamer.read( function(){
-
-                var text = NGL.Uint8ToString( streamer.data );
-
-                onLoad( text );
-
-            } );
-
-        }
-
-        NGL.Loader.prototype.load.call(
-
-            this, src, _onLoad, onProgress, onError, params
-
-        );
+        }.bind( this ) );
 
     }
 
@@ -192,59 +208,6 @@ NGL.autoLoad = function(){
         if( p.ext !== undefined ) ext = p.ext;
         if( p.compressed !== undefined ) compressed = p.compressed;
 
-        if( ext in loaders ){
-
-            loader = new loaders[ ext ];
-
-        }else{
-
-            error( "NGL.autoLoading: ext '" + ext + "' unknown" );
-
-            return null;
-
-        }
-
-        function init( data ){
-
-            if( data ){
-
-                try{
-
-                    object = loader.init( data, name, file, ext, function( _object ){
-
-                        if( typeof onLoad === "function" ) onLoad( _object );
-
-                    }, params );
-
-                }catch( e ){
-
-                    NGL.error( e );
-                    error( "initialization failed" );
-
-                }
-
-            }else{
-
-                error( "empty response" );
-
-            }
-
-        }
-
-        function error( e ){
-
-            if( typeof onError === "function" ){
-
-                onError( e );
-
-            }else{
-
-                NGL.error( e );
-
-            }
-
-        }
-
         var src;
 
         if( file instanceof File ){
@@ -265,9 +228,40 @@ NGL.autoLoad = function(){
 
         }
 
-        loader.load( src, init, onProgress, error, { compressed: compressed } );
+        if( ext in loaders ){
 
-        return object;
+            loader = new loaders[ ext ]( src, {
+
+                onLoad: onLoad,
+                onProgress: onProgress,
+                onError: onError,
+
+                compressed: compressed,
+                name: name,
+                ext: ext,
+                path: path
+
+            } );
+
+        }else{
+
+            var e = "NGL.autoLoading: ext '" + ext + "' unknown";
+
+            if( typeof onError === "function" ){
+
+                onError( e );
+
+            }else{
+
+                NGL.error( e );
+
+            }
+
+            return null;
+
+        }
+
+        loader.load();
 
     }
 
