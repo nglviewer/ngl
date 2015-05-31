@@ -135,48 +135,55 @@ NGL.ScriptQueue.prototype = {
 
     constructor: NGL.ScriptQueue,
 
-    load: function( file, params, callback, loadParams ){
+    load: function( file, params ){
 
         var status = {};
 
         // TODO check for pdbid or http...
         var path = this.dir + file;
 
-        this.stage.loadFile(
+        var _onLoad;
+        var p = params || {};
 
-            path,
+        // allow loadFile( path, onLoad ) method signature
+        if( typeof params === "function" ){
 
-            function( component ){
+            _onLoad = params;
+            p = {};
 
-                component.requestGuiVisibility( false );
+        }else{
 
-                if( typeof callback === "function" ){
-                    callback( component );
-                }
+            _onLoad = p.onLoad;
 
-                if( status.resolve ){
-                    status.resolve();
-                }else{
-                    status.success = true;
-                }
+        }
 
-            },
+        p.onLoad = function( component ){
 
-            params,
+            component.requestGuiVisibility( false );
 
-            function( e ){
+            if( typeof _onLoad === "function" ){
+                _onLoad( component );
+            }
 
-                if( status.reject ){
-                    status.reject( e );
-                }else{
-                    status.error = e || "error";
-                }
+            if( status.resolve ){
+                status.resolve();
+            }else{
+                status.success = true;
+            }
 
-            },
+        };
 
-            loadParams
+        p.onError = function( e ){
 
-        );
+            if( status.reject ){
+                status.reject( e );
+            }else{
+                status.error = e || "error";
+            }
+
+        };
+
+        this.stage.loadFile( path, p );
 
         var handle = function( resolve, reject ){
 

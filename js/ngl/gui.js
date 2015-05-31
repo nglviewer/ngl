@@ -198,14 +198,11 @@ NGL.MenubarFileWidget = function( stage ){
 
         for( var i=0; i<n; ++i ){
 
-            stage.loadFile(
-                fileList[ i ], undefined, undefined, undefined,
-                {
-                    asTrajectory: asTrajectory,
-                    firstModelOnly: firstModelOnly,
-                    cAlphaOnly: cAlphaOnly
-                }
-            );
+            stage.loadFile( fileList[ i ], {
+                asTrajectory: asTrajectory,
+                firstModelOnly: firstModelOnly,
+                cAlphaOnly: cAlphaOnly
+            } );
 
         }
 
@@ -237,14 +234,11 @@ NGL.MenubarFileWidget = function( stage ){
 
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
 
-                    stage.loadFile(
-                        path.path, undefined, undefined, undefined,
-                        {
-                            asTrajectory: asTrajectory,
-                            firstModelOnly: firstModelOnly,
-                            cAlphaOnly: cAlphaOnly
-                        }
-                    );
+                    stage.loadFile( path.path, {
+                        asTrajectory: asTrajectory,
+                        firstModelOnly: firstModelOnly,
+                        cAlphaOnly: cAlphaOnly
+                    } );
 
                 }else{
 
@@ -293,15 +287,11 @@ NGL.MenubarFileWidget = function( stage ){
 
         if( e.keyCode === 13 ){
 
-            stage.loadFile(
-                "rcsb://" + e.target.value,
-                undefined, undefined, undefined,
-                {
-                    asTrajectory: asTrajectory,
-                    firstModelOnly: firstModelOnly,
-                    cAlphaOnly: cAlphaOnly
-                }
-            );
+            stage.loadFile( "rcsb://" + e.target.value, {
+                asTrajectory: asTrajectory,
+                firstModelOnly: firstModelOnly,
+                cAlphaOnly: cAlphaOnly
+            } );
             e.target.value = "";
 
         }

@@ -2,7 +2,7 @@
 panel.setName( "Noro virus" );
 
 
-load( "1IHM.pdb", {}, function( o ){
+load( "1IHM.pdb", function( o ){
 
     o.addRepresentation( "rope", {
         subdiv: 3, radialSegments: 6, color: "chainindex",
@@ -17,17 +17,20 @@ load( "1IHM.pdb", {}, function( o ){
 } );
 
 
-load( "2L1F.pdb", {}, function( o ){
+load( "2L1F.pdb", {
+    onLoad: function( o ){
 
-    o.addRepresentation( "cartoon", {
-        color: "ss", aspectRatio: 2.5, scale: 2.0
-    } );
+        o.addRepresentation( "cartoon", {
+            color: "ss", aspectRatio: 2.5, scale: 2.0
+        } );
 
-    o.addRepresentation( "base", {
-        color: "resname", radius: 0.7
-    } );
+        o.addRepresentation( "base", {
+            color: "resname", radius: 0.7
+        } );
 
-}, { firstModelOnly: true } );
+    },
+    firstModelOnly: true
+} );
 
 
 function pdbLink( id ){
@@ -67,7 +70,7 @@ then( function(){
 
     uiBreak( 2 );
 
-    uiSelect( [ "moin", "foo", "bar" ], function(){ console.log("foo")} );
+    uiSelect( [ "moin", "foo", "bar" ], function(){ console.log( "hello" )} );
 
     uiBreak( 2 );
 

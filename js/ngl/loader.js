@@ -20,6 +20,8 @@ NGL.Loader = function( src, params ){
     this.ext = p.ext || "";
     this.path = p.path || "";
 
+    this.params = params;
+
     //
 
     var streamerParams = {
@@ -110,13 +112,8 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
         };
 
-        var params = {
-            name: this.name,
-            path: this.path
-        };
-
         var parser = new parsersClasses[ this.ext ](
-            this.streamer, params
+            this.streamer, this.params
         );
 
         parser.parseWorker( this.onload );
@@ -144,7 +141,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
             var text = NGL.Uint8ToString( this.streamer.data );
 
-            var script = new NGL.Script( text, this.name, this.path );
+            var script = new NGL.Script( text, this.name, this.streamer.src );
 
             this.onload( script );
 
@@ -177,12 +174,9 @@ NGL.autoLoad = function(){
 
     };
 
-    return function( file, onLoad, onProgress, onError, params ){
-
-        var object, rcsb, loader;
+    return function( file, params ){
 
         var fileInfo = NGL.getFileInfo( file );
-
         // NGL.log( fileInfo );
 
         var path = fileInfo.path;
@@ -202,11 +196,36 @@ NGL.autoLoad = function(){
 
         }
 
+        //
+
+        var _onLoad;
         var p = params || {};
 
-        if( p.name !== undefined ) name = p.name;
-        if( p.ext !== undefined ) ext = p.ext;
-        if( p.compressed !== undefined ) compressed = p.compressed;
+        // allow loadFile( path, onLoad ) method signature
+        if( typeof params === "function" ){
+
+            _onLoad = params;
+            p = {};
+
+        }else{
+
+            _onLoad = p.onLoad;
+
+        }
+
+        p.name = p.name !== undefined ? p.name : name;
+        p.ext = p.ext !== undefined ? p.ext : ext;
+        p.compressed = p.compressed !== undefined ? p.compressed : compressed;
+        p.path = p.path !== undefined ? p.path : path;
+
+        p.onLoad = function( object ){
+
+            // relay params
+            if( typeof _onLoad === "function" ) _onLoad( object, p );
+
+        };
+
+        //
 
         var src;
 
@@ -228,28 +247,21 @@ NGL.autoLoad = function(){
 
         }
 
-        if( ext in loaders ){
+        //
 
-            loader = new loaders[ ext ]( src, {
+        if( p.ext in loaders ){
 
-                onLoad: onLoad,
-                onProgress: onProgress,
-                onError: onError,
+            var loader = new loaders[ p.ext ]( src, p );
 
-                compressed: compressed,
-                name: name,
-                ext: ext,
-                path: path
-
-            } );
+            loader.load();
 
         }else{
 
-            var e = "NGL.autoLoading: ext '" + ext + "' unknown";
+            var e = "NGL.autoLoading: ext '" + p.ext + "' unknown";
 
-            if( typeof onError === "function" ){
+            if( typeof p.onError === "function" ){
 
-                onError( e );
+                p.onError( e );
 
             }else{
 
@@ -260,8 +272,6 @@ NGL.autoLoad = function(){
             return null;
 
         }
-
-        loader.load();
 
     }
 

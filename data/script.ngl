@@ -1,18 +1,15 @@
 
-var pdb = [];
+load( "1LVZ.pdb", {
+    onLoad: function( o ){
+
+        o.addRepresentation( "cartoon" );
+        o.centerView();
+    },
+    firstModelOnly: true
+} );
 
 
-load( "1LVZ.pdb", {}, function( o ){
-
-    o.addRepresentation( "cartoon" );
-    o.centerView();
-
-}, { firstModelOnly: true } );
-
-
-load( "1u19.pdb", {}, function( o ){
-
-    pdb[ "1u19" ] = o;
+load( "1u19.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.centerView();
@@ -22,9 +19,7 @@ load( "1u19.pdb", {}, function( o ){
 } );
 
 
-load( "3dqb.pdb", {}, function( o ){
-
-    pdb[ "3dqb" ] = o;
+load( "3dqb.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.centerView();
@@ -36,15 +31,13 @@ load( "3dqb.pdb", {}, function( o ){
 
 then( function(){
 
-    pdb[ "1u19" ].superpose( pdb[ "3dqb" ], true );
-    pdb[ "3dqb" ].centerView();
+    structures( "1U19" )[ 0 ].superpose( structures( "3DQB" )[ 0 ], true );
+    structures( "3DQB" )[ 0 ].centerView();
 
 } );
 
 
-load( "1blu.pdb", {}, function( o ){
-
-    pdb[ "1blu" ] = o;
+load( "1blu.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.addRepresentation( "licorice", {
@@ -62,21 +55,24 @@ load( "1blu.pdb", {}, function( o ){
 
 then( function(){
 
-    var retinal = pdb[ "1u19" ].addRepresentation( "licorice", {
-        sele: "RET or 296", visible: true
+    structures( "1U19" )[ 0 ].addRepresentation( "licorice", {
+        sele: "RET or 296", visible: false
     } );
 
-    var btnShow = new UI.Button( "show retinal" ).onClick( function(){
-        retinal.setVisibility( true );
-        pdb[ "1u19" ].centerView( "RET and :A", true );
-    } );
+    uiText( "moin", 1 );
 
-    var btnHide = new UI.Button( "hide retinal" ).onClick( function(){
-        retinal.setVisibility( false );
-    } );
-
-    panel.add( new UI.Text( "moin" ), new UI.Break() );
-    panel.add( btnShow, btnHide );
+    uiToggleButton(
+        "hide retinal",
+        "show retinal",
+        function(){
+            hide( representations( { comp: "1U19", repr: "licorice" } ) );
+        },
+        function(){
+            show( structures( "1U19" ) );
+            show( representations( { comp: "1U19", repr: "licorice" } ) );
+            structures( "1U19" )[ 0 ].centerView( true, "RET and :A" );
+        }
+    );
 
     stage.centerView();
 

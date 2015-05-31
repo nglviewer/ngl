@@ -101,6 +101,7 @@ NGL.Stage.prototype = {
 
             for( var i=0; i<n; ++i ){
 
+                // TODO loading params (e.g. set in GUI)
                 this.loadFile( fileList[ i ] );
 
             }
@@ -109,53 +110,67 @@ NGL.Stage.prototype = {
 
     },
 
-    loadFile: function( path, onLoad, params, onError, loadParams ){
+    loadFile: function( path, params ){
 
-        var scope = this;
+        var _onLoad;
+        var p = params || {};
+
+        // allow loadFile( path, onLoad ) method signature
+        if( typeof params === "function" ){
+
+            _onLoad = params;
+            p = {};
+
+        }else{
+
+            _onLoad = p.onLoad;
+
+        }
 
         var component;
 
-        function load( object ){
+        p.onLoad = function( object, _params ){
 
             // check for placeholder component
             if( component ){
 
-                scope.removeComponent( component );
+                this.removeComponent( component );
 
             }
 
-            component = scope.addComponentFromObject( object, params );
+            component = this.addComponentFromObject( object, _params );
 
-            if( typeof onLoad === "function" ){
+            if( typeof _onLoad === "function" ){
 
-                onLoad( component );
+                _onLoad( component );
 
             }else{
 
-                scope.defaultFileRepresentation( component );
+                this.defaultFileRepresentation( component );
 
             }
 
-        }
+        }.bind( this );
 
         var _e;
+        var _onError = p.onError;
 
-        function error( e ){
+        p.onError = function( e ){
 
             _e = e;
 
             if( component ) component.setStatus( e );
 
-            if( typeof onError === "function" ) onError( e );
+            if( typeof _onError === "function" ) _onError( e );
 
-        }
+        };
 
-        NGL.autoLoad( path, load, undefined, error, loadParams );
+        NGL.autoLoad( path, p );
 
         // ensure that component isn't ready yet
         if( !component ){
 
-            component = new NGL.Component( this, params );
+            component = new NGL.Component( this, p );
             var path2 = ( path instanceof File ) ? path.name : path;
             component.name = path2.replace( /^.*[\\\/]/, '' );
 
@@ -736,7 +751,7 @@ NGL.makeComponent = function( stage, object, params ){
 
     }else{
 
-        NGL.warn( "NGL.Stage.loadFile: object type unknown", object );
+        NGL.warn( "NGL.makeComponent: object type unknown", object );
 
     }
 
