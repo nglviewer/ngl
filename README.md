@@ -41,6 +41,8 @@ Version 0.6dev
 * Higher color contrast for GUI and documentation pages
 * Basic support for async creation of representations (so far used for molecular surfaces and volume triangulation)
 * WIP: scripting API
+* CODE: chunked data loading and parsing via streamer class
+* MIGRATION: Stage.loadFile signature changed
 
 
 Version 0.5
