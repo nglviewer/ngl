@@ -1453,7 +1453,7 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
         }
 
         this.repr = repr;
-        this.name = repr.type;
+        // this.name = repr.type;
 
         this.stage.tasks.listen( this.repr.tasks )
 

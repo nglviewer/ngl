@@ -272,7 +272,7 @@ NGL.Streamer.prototype = {
 
             partialLine = d.partialLine;
 
-            callback( d.lines );
+            callback( d.lines, chunkNo, chunkCount );
 
         }.bind( this ) );
 

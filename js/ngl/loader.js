@@ -108,7 +108,11 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "cube": NGL.CubeParser,
 
             "ply": NGL.PlyParser,
-            "obj": NGL.ObjParser
+            "obj": NGL.ObjParser,
+
+            "txt": NGL.TextParser,
+            "csv": NGL.CsvParser,
+            "json": NGL.JsonParser
 
         };
 
@@ -169,6 +173,10 @@ NGL.autoLoad = function(){
 
         "obj": NGL.ParserLoader,
         "ply": NGL.ParserLoader,
+
+        "txt": NGL.ParserLoader,
+        "csv": NGL.ParserLoader,
+        "json": NGL.ParserLoader,
 
         "ngl": NGL.ScriptLoader,
 

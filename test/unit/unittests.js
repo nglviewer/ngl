@@ -1316,3 +1316,52 @@ QUnit.test( "Uint8ToLines multiple chunks", function( assert ) {
     assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
 
 });
+
+
+QUnit.asyncTest( "text parser", function( assert ) {
+
+    var path = "data://../../data/sample.txt";
+    var sampleText = "Moin world!";
+
+    NGL.autoLoad( path, function( text ){
+
+        assert.equal( sampleText, text.data, "Passed!" );
+
+        QUnit.start();
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "csv parser", function( assert ) {
+
+    var path = "data://../../data/sample.csv";
+    var sampleText = "Moin world!";
+
+    NGL.autoLoad( path, function( csv ){
+
+        assert.equal( "col1row1Value", csv.data[ 0 ][ 0 ], "Passed!" );
+        assert.equal( "col2row3Value", csv.data[ 2 ][ 1 ], "Passed!" );
+
+        QUnit.start();
+
+    } );
+
+});
+
+
+QUnit.asyncTest( "json parser", function( assert ) {
+
+    var path = "data://../../data/sample.json";
+    var sampleText = "Moin world!";
+
+    NGL.autoLoad( path, function( json ){
+
+        assert.equal( 42, json.data.foo, "Passed!" );
+
+        QUnit.start();
+
+    } );
+
+});

@@ -535,7 +535,15 @@ NGL.Parser.prototype = {
 
         }
 
-        output[ this.__objName ] = this[ this.__objName ].toJSON();
+        if( typeof this[ this.__objName ].toJSON === "function" ){
+
+            output[ this.__objName ] = this[ this.__objName ].toJSON();
+
+        }else{
+
+            output[ this.__objName ] = this[ this.__objName ];
+
+        }
 
         return output;
 
@@ -547,7 +555,15 @@ NGL.Parser.prototype = {
         this.name = input.name;
         this.path = input.path;
 
-        this[ this.__objName ].fromJSON( input[ this.__objName ] );
+        if( typeof this[ this.__objName ].toJSON === "function" ){
+
+            this[ this.__objName ].fromJSON( input[ this.__objName ] );
+
+        }else{
+
+            this[ this.__objName ] = input[ this.__objName ];
+
+        }
 
         return this;
 
@@ -560,9 +576,14 @@ NGL.Parser.prototype = {
         transferable = transferable.concat(
             this.streamer.getTransferable()
         );
-        transferable = transferable.concat(
-            this[ this.__objName ].getTransferable()
-        );
+
+        if( typeof this[ this.__objName ].toJSON === "function" ){
+
+            transferable = transferable.concat(
+                this[ this.__objName ].getTransferable()
+            );
+
+        }
 
         return transferable;
 
@@ -2835,5 +2856,152 @@ NGL.ObjParser.prototype = NGL.createObject(
     constructor: NGL.ObjParser,
 
     type: "obj"
+
+} );
+
+
+////////////////
+// Text parser
+
+NGL.TextParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.text = {
+
+        name: this.name,
+        path: this.path,
+        data: ""
+
+    };
+
+};
+
+NGL.TextParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.TextParser,
+
+    type: "text",
+
+    __objName: "text",
+
+    _parse: function( callback ){
+
+        this.text.data = NGL.Uint8ToString( this.streamer.data );
+
+        callback();
+
+    }
+
+} );
+
+
+///////////////
+// Csv parser
+
+NGL.CsvParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.table = {
+
+        name: this.name,
+        path: this.path,
+        colNames: [],
+        data: []
+
+    };
+
+};
+
+NGL.CsvParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.CsvParser,
+
+    type: "csv",
+
+    __objName: "table",
+
+    _parse: function( callback ){
+
+        var data = this.table.data;
+        var reDelimiter = /\s*,\s*/;
+
+        this.streamer.eachChunkOfLines( function( chunk, chunkNo, chunkCount ){
+
+            var n = chunk.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                var line = chunk[ i ].trim();
+                var values = line.split( reDelimiter );
+
+                if( chunkNo === 0 && i === 0 ){
+
+                    this.table.colNames = values;
+
+                }else if( line ){
+
+                    data.push( values );
+
+                }
+
+            }
+
+        }.bind( this ) );
+
+        callback();
+
+    }
+
+} );
+
+
+////////////////
+// Json parser
+
+NGL.JsonParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.json = {
+
+        name: this.name,
+        path: this.path,
+        data: {}
+
+    };
+
+};
+
+NGL.JsonParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.JsonParser,
+
+    type: "json",
+
+    __objName: "json",
+
+    _parse: function( callback ){
+
+        var text = NGL.Uint8ToString( this.streamer.data );
+
+        this.json.data = JSON.parse( text );
+
+        callback();
+
+    }
 
 } );
