@@ -22,21 +22,19 @@ NGL.Examples = {
 
         "trajectory": function( stage ){
 
-            var params = {
-                sele: "protein or na or cl",
-                // sele: "349-352",
-            };
+            stage.loadFile( "data://md.gro", {
+                onLoad: function( o ){
 
-            stage.loadFile( "data://md.gro", function( o ){
+                    o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
+                    o.addRepresentation( "cartoon", { sele: "protein" } );
+                    // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
+                    o.centerView();
 
-                o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
-                o.addRepresentation( "cartoon", { sele: "protein" } );
-                // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
-                o.centerView();
+                    o.addTrajectory( "__example__/md.xtc" );
 
-                o.addTrajectory( "__example__/md.xtc" );
-
-            }, params );
+                },
+                sele: "protein or na or cl"
+            } );
 
             stage.loadFile( "data://md.gro", function( o ){
 
@@ -124,17 +122,20 @@ NGL.Examples = {
 
         "gro_trajectory": function( stage ){
 
-            stage.loadFile( "data://md_1u19_trj.gro", function( o ){
+            stage.loadFile( "data://md_1u19_trj.gro", {
+                onLoad: function( o ){
 
-                o.addTrajectory();
+                    o.addTrajectory();
 
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "line", {
-                    sele: "not hydrogen and sidechainAttached"
-                } );
-                o.centerView();
+                    o.addRepresentation( "cartoon" );
+                    o.addRepresentation( "line", {
+                        sele: "not hydrogen and sidechainAttached"
+                    } );
+                    o.centerView();
 
-            }, null, null, { asTrajectory: true } );
+                },
+                asTrajectory: true
+            } );
 
         },
 
@@ -195,27 +196,33 @@ NGL.Examples = {
 
         "multi_model": function( stage ){
 
-            stage.loadFile( "data://1LVZ.pdb", function( o ){
+            stage.loadFile( "data://1LVZ.pdb", {
+                onLoad: function( o ){
 
-                o.addRepresentation( "cartoon", { sele: "*" } );
-                // o.addRepresentation( "licorice", { sele: "*" } );
-                o.centerView();
+                    o.addRepresentation( "cartoon", { sele: "*" } );
+                    // o.addRepresentation( "licorice", { sele: "*" } );
+                    o.centerView();
 
-                o.addTrajectory();
+                    // o.addTrajectory();
 
-            }, null, null, { asTrajectory: true } );
-            // }, null, null, { firstModelOnly: true } );
+                },
+                firstModelOnly: true
+                // asTrajectory: true
+            } );
 
             // stage.loadFile( "data://md_ascii_trj.gro", function( o ){
-            stage.loadFile( "data://md_1u19_trj.gro", function( o ){
+            stage.loadFile( "data://md_1u19_trj.gro", {
+                onLoad: function( o ){
 
-                o.addRepresentation( "cartoon", { sele: "*" } );
-                // o.addRepresentation( "licorice", { sele: "*" } );
-                o.centerView();
+                    o.addRepresentation( "cartoon", { sele: "*" } );
+                    // o.addRepresentation( "licorice", { sele: "*" } );
+                    o.centerView();
 
-                o.addTrajectory();
+                    o.addTrajectory();
 
-            }, null, null, { asTrajectory: true } );
+                },
+                asTrajectory: true
+            } );
 
         },
 
@@ -241,24 +248,27 @@ NGL.Examples = {
 
         "superpose": function( stage ){
 
-            stage.loadFile( "data://1u19.pdb", function( o1 ){
+            stage.loadFile( "data://1u19.pdb", {
+                onLoad: function( o1 ){
 
-                var s = "1-320:A";
+                    var s = "1-320:A";
 
-                o1.addRepresentation( "cartoon", { sele: s } );
-                o1.addRepresentation( "ball+stick", { sele: s } );
+                    o1.addRepresentation( "cartoon", { sele: s } );
+                    o1.addRepresentation( "ball+stick", { sele: s } );
 
-                stage.loadFile( "data://3dqb.pdb", function( o2 ){
+                    stage.loadFile( "data://3dqb.pdb", function( o2 ){
 
-                    o2.addRepresentation( "cartoon", { sele: s } );
-                    o2.addRepresentation( "licorice", { sele: s } );
+                        o2.addRepresentation( "cartoon", { sele: s } );
+                        o2.addRepresentation( "licorice", { sele: s } );
 
-                    o1.superpose( o2, false, s );
-                    o1.centerView( true, ":A" );
+                        o1.superpose( o2, false, s );
+                        o1.centerView( true, ":A" );
 
-                }, { sele: ":A" } );
+                    }, { sele: ":A" } );
 
-            }, { sele: ":A" } );
+                },
+                sele: ":A"
+            } );
 
         },
 
@@ -522,16 +532,19 @@ NGL.Examples = {
         "autoChainName": function( stage ){
 
             var params = {
-                sele: ":A or :B or DPPC"
+
             };
 
-            stage.loadFile( "data://Bace1Trimer-inDPPC.gro", function( o ){
+            stage.loadFile( "data://Bace1Trimer-inDPPC.gro", {
+                onLoad: function( o ){
 
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice", { sele: "DPPC" } );
-                o.centerView();
+                    o.addRepresentation( "cartoon" );
+                    o.addRepresentation( "licorice", { sele: "DPPC" } );
+                    o.centerView();
 
-            }, params );
+                },
+                sele: ":A or :B or DPPC"
+            } );
 
         },
 
@@ -590,54 +603,57 @@ NGL.Examples = {
 
         "trajReprUpdate": function( stage ){
 
-            stage.loadFile( "data://md_1u19.gro", function( o ){
+            stage.loadFile( "data://md_1u19.gro", {
+                onLoad: function( o ){
 
-                var spacefill = o.addRepresentation( "spacefill", {
-                    sele: "1-30", color: 0x00CCFF, radius: 2.0, scale: 1.0
-                } );
-                var ballStick = o.addRepresentation( "ball+stick", { sele: "30-60" } );
-                var licorice = o.addRepresentation( "licorice", { sele: "60-90" } );
-                var hyperball = o.addRepresentation( "hyperball", {
-                    sele: "90-120", color: "resname"
-                } );
-                var line = o.addRepresentation( "line", { sele: "120-150" } );
-                var contact = o.addRepresentation( "contact", {
-                    sele: "120-150", contactType: "polarBackbone"
-                } );
-                var backbone = o.addRepresentation( "backbone", { sele: "150-180" } );
-                var tube = o.addRepresentation( "tube", { sele: "180-210" } );
-                var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
-                var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
-                var trace = o.addRepresentation( "trace", { sele: "270-300" } );
-                var label = o.addRepresentation( "label", { sele: "270-300 and .O" } );
-                var rope = o.addRepresentation( "rope", {
-                    sele: "300-330", color: "residueindex"
-                } );
+                    var spacefill = o.addRepresentation( "spacefill", {
+                        sele: "1-30", color: 0x00CCFF, radius: 2.0, scale: 1.0
+                    } );
+                    var ballStick = o.addRepresentation( "ball+stick", { sele: "30-60" } );
+                    var licorice = o.addRepresentation( "licorice", { sele: "60-90" } );
+                    var hyperball = o.addRepresentation( "hyperball", {
+                        sele: "90-120", color: "resname"
+                    } );
+                    var line = o.addRepresentation( "line", { sele: "120-150" } );
+                    var contact = o.addRepresentation( "contact", {
+                        sele: "120-150", contactType: "polarBackbone"
+                    } );
+                    var backbone = o.addRepresentation( "backbone", { sele: "150-180" } );
+                    var tube = o.addRepresentation( "tube", { sele: "180-210" } );
+                    var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
+                    var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
+                    var trace = o.addRepresentation( "trace", { sele: "270-300" } );
+                    var label = o.addRepresentation( "label", { sele: "270-300 and .O" } );
+                    var rope = o.addRepresentation( "rope", {
+                        sele: "300-330", color: "residueindex"
+                    } );
 
-                o.centerView();
+                    o.centerView();
 
-                o.addTrajectory( "__example__/@md_1u19.xtc" );
+                    o.addTrajectory( "__example__/@md_1u19.xtc" );
 
-                (function(){
-                    var i = 100;
-                    var j = 1;
+                    (function(){
+                        var i = 100;
+                        var j = 1;
 
-                    setInterval( function(){
+                        setInterval( function(){
 
-                        spacefill.setScale( i / 100 );
-                        stage.viewer.render();
+                            spacefill.setScale( i / 100 );
+                            stage.viewer.render();
 
-                        if( i === 100 ){
-                            j = -1;
-                        }else if( i === 10 ){
-                            j = 1;
-                        }
-                        i += j;
+                            if( i === 100 ){
+                                j = -1;
+                            }else if( i === 10 ){
+                                j = 1;
+                            }
+                            i += j;
 
-                    }, 10 );
-                })//();
+                        }, 10 );
+                    })//();
 
-            }, { sele: "not hydrogen" } );
+                },
+                sele: "not hydrogen"
+            } );
 
         },
 
@@ -849,18 +865,21 @@ NGL.Examples = {
 
         "hiv": function( stage ){
 
-            stage.loadFile( "data://3j3y.cif.gz", function( o ){
+            stage.loadFile( "data://3j3y.cif.gz", {
+                onLoad: function( o ){
 
-                o.addRepresentation( "point", {
-                    color: "chainindex", pointSize: 7, sizeAttenuation: true,
-                    sort: false
-                } );
-                // o.addRepresentation( "ribbon", {
-                //     color: "chainindex"
-                // } );
-                o.centerView();
+                    o.addRepresentation( "point", {
+                        color: "chainindex", pointSize: 7, sizeAttenuation: true,
+                        sort: false
+                    } );
+                    // o.addRepresentation( "ribbon", {
+                    //     color: "chainindex"
+                    // } );
+                    o.centerView();
 
-            }, null, null, { cAlphaOnly: true } );
+                },
+                cAlphaOnly: true
+            } );
 
         },
 
@@ -1103,16 +1122,20 @@ NGL.Examples = {
 
         "helixorient_issue-7": function( stage ){
 
-            stage.loadFile( "data://4YVS.cif", function( o ){
+            stage.loadFile( "data://4YVS.cif", {
+                onLoad: function( o ){
 
-                o.addRepresentation( "helixorient" );
-                o.addRepresentation( "rope", {
-                    transparent: true, opacity: 0.4, side: THREE.FrontSide, smooth: 0
-                } );
-                o.addRepresentation( "licorice", { sele: "backbone" } );
-                o.centerView();
+                    o.addRepresentation( "helixorient" );
+                    o.addRepresentation( "rope", {
+                        transparent: true, opacity: 0.4, side: THREE.FrontSide, smooth: 0
+                    } );
+                    o.addRepresentation( "licorice", { sele: "backbone" } );
+                    o.centerView();
 
-            }, { assembly: "AU", sele: "86-100:H" } );
+                },
+                assembly: "AU",
+                sele: "86-100:H"
+            } );
 
         },
 
