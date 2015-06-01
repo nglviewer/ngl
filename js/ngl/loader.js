@@ -145,7 +145,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
             var text = NGL.Uint8ToString( this.streamer.data );
 
-            var script = new NGL.Script( text, this.name, this.streamer.src );
+            var script = new NGL.Script( text, this.name, this.path );
 
             this.onload( script );
 
