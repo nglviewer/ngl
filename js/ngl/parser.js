@@ -2388,6 +2388,116 @@ NGL.CifParser.prototype = NGL.createObject(
 } );
 
 
+NGL.SdfParser = function( streamer, params ){
+
+    NGL.StructureParser.call( this, streamer, params );
+
+};
+
+NGL.SdfParser.prototype = NGL.createObject(
+
+    NGL.StructureParser.prototype, {
+
+    constructor: NGL.SdfParser,
+
+    type: "sdf",
+
+    _parse: function( callback ){
+
+        // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
+        // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
+
+        var headerLines = this.streamer.peekLines( 4 );
+
+        var atomCount = parseInt( headerLines[ 3 ].substr( 0, 3 ) );
+        var bondCount = parseInt( headerLines[ 3 ].substr( 3, 3 ) );
+
+        var atomStart = 4;
+        var atomEnd = atomStart + atomCount;
+        var bondStart = atomEnd;
+        var bondEnd = bondStart + bondCount;
+
+        var s = this.structure;
+
+        s.id = headerLines[ 0 ].trim();
+        s.title = headerLines[ 1 ].trim();
+
+        var atoms = s.atoms;
+        var bondSet = s.bondSet;
+
+        var covRadii = NGL.CovalentRadii;
+        var vdwRadii = NGL.VdwRadii;
+
+        var idx = 0;
+        var lineNo = 0;
+
+        function _parseChunkOfLines( _i, _n, lines ){
+
+            for( var i = _i; i < _n; ++i ){
+
+                var line = lines[ i ];
+
+                if( lineNo >= atomStart && lineNo < atomEnd ){
+
+                    var element = line.substr( 31, 3 ).trim();
+
+                    var a = new NGL.Atom();
+                    a.index = idx;
+
+                    a.resname = "HET";
+                    a.x = parseFloat( line.substr( 0, 10 ) );
+                    a.y = parseFloat( line.substr( 10, 10 ) );
+                    a.z = parseFloat( line.substr( 20, 10 ) );
+                    a.element = element;
+                    a.hetero = 1
+                    a.chainname = '';
+                    a.resno = 1;
+                    a.serial = idx;
+                    a.atomname = element;
+                    a.ss = 'c';
+                    a.altloc = '';
+                    a.vdw = vdwRadii[ element ];
+                    a.covalent = covRadii[ element ];
+                    a.modelindex = 1; // TODO multi-model sdf file
+
+                    idx += 1;
+                    atoms.push( a );
+
+                }
+
+                if( lineNo >= bondStart && lineNo < bondEnd ){
+
+                    var from = parseInt( line.substr( 0, 3 ) ) - 1;
+                    var to = parseInt( line.substr( 3, 3 ) ) - 1;
+                    var order = parseInt( line.substr( 6, 3 ) );
+
+                    bondSet.addBond( atoms[ from ], atoms[ to ], false, order );
+
+                }
+
+                ++lineNo;
+
+            };
+
+        };
+
+        this.streamer.eachChunkOfLinesAsync(
+
+            _parseChunkOfLines,
+
+            function(){
+
+                callback();
+
+            }
+
+        );
+
+    }
+
+} );
+
+
 //////////////////
 // Volume parser
 

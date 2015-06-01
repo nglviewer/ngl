@@ -1493,9 +1493,9 @@ NGL.BondSet.prototype = {
 
     constructor: NGL.BondSet,
 
-    addBond: function( atom1, atom2, notToAtoms ){
+    addBond: function( atom1, atom2, notToAtoms, bondOrder ){
 
-        var b = new NGL.Bond( atom1, atom2 );
+        var b = new NGL.Bond( atom1, atom2, bondOrder );
 
         if( !notToAtoms ){
             atom1.bonds.push( b );
@@ -1507,11 +1507,11 @@ NGL.BondSet.prototype = {
 
     },
 
-    addBondIfConnected: function( atom1, atom2, notToAtoms ){
+    addBondIfConnected: function( atom1, atom2, notToAtoms, bondOrder ){
 
         if( atom1.connectedTo( atom2 ) ){
 
-            this.addBond( atom1, atom2, notToAtoms );
+            this.addBond( atom1, atom2, notToAtoms, bondOrder );
 
         }
 

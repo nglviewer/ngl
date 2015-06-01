@@ -100,6 +100,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "ent": NGL.PdbParser,
             "cif": NGL.CifParser,
             "mmcif": NGL.CifParser,
+            "sdf": NGL.SdfParser,
 
             "mrc": NGL.MrcParser,
             "ccp4": NGL.MrcParser,
@@ -165,6 +166,7 @@ NGL.autoLoad = function(){
         "ent": NGL.ParserLoader,
         "cif": NGL.ParserLoader,
         "mmcif": NGL.ParserLoader,
+        "sdf": NGL.ParserLoader,
 
         "mrc": NGL.ParserLoader,
         "ccp4": NGL.ParserLoader,
