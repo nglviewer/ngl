@@ -3389,9 +3389,7 @@ NGL.Chain.prototype = {
 
             }else{
 
-                if( bbType1 !== NGL.UnknownType &&
-                    bbType2 === NGL.UnknownType
-                ){
+                if( bbType1 !== NGL.UnknownType ){
 
                     callback( scope.getFiber( i, j, padded ) );
 

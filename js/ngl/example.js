@@ -1133,6 +1133,20 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "backboneTypeChange": function( stage ){
+
+            // test case for inter-chain backboneType changes
+
+            stage.loadFile( "data://4V60_A.pdb", function( o ){
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "licorice" );
+                o.centerView();
+
+            } );
+
         }
 
     }
