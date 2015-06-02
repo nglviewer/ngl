@@ -4708,7 +4708,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         maxValue: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
-        sizeType: {
+        radiusType: {
             type: "select", options: {
                 "": "",
                 "value": "value",
@@ -4717,7 +4717,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 "size": "size"
             }
         },
-        size: {
+        radius: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
         scale: {
@@ -4761,7 +4761,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
         this.minValue = p.minValue !== undefined ? p.minValue : NaN;
         this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
-        this.size = p.size !== undefined ? p.size : 0.1;
+        this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
@@ -4794,7 +4794,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.sphereBuffer = new NGL.SphereBuffer(
             this.surface.getDataPosition(),
             this.surface.getDataColor( this.color ),
-            this.surface.getDataSize( this.size, this.scale ),
+            this.surface.getDataSize( this.radius, this.scale ),
             undefined,
             {
                 sphereDetail: this.sphereDetail,
@@ -4839,23 +4839,23 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        if( params && params[ "sizeType" ] !== undefined ){
+        if( params && params[ "radiusType" ] !== undefined ){
 
-            if( params[ "sizeType" ] === "size" ){
-                this.size = this.defaultSize;
+            if( params[ "radiusType" ] === "radius" ){
+                this.radius = this.defaultSize;
             }else{
-                this.size = params[ "sizeType" ];
+                this.radius = params[ "radiusType" ];
             }
-            what[ "size" ] = true;
+            what[ "radius" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
 
         }
 
-        if( params && params[ "size" ] !== undefined ){
+        if( params && params[ "radius" ] !== undefined ){
 
-            what[ "size" ] = true;
+            what[ "radius" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
