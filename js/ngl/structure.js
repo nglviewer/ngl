@@ -1626,10 +1626,16 @@ NGL.BondSet.prototype = {
 
     },
 
-    dispose: function(){
+    clear: function(){
 
         this.bonds.length = 0;
         this.bondCount = 0;
+
+    },
+
+    dispose: function(){
+
+        this.clear();
 
     }
 
