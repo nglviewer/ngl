@@ -4708,6 +4708,13 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         maxValue: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
+        dotType: {
+            type: "select", rebuild: true, options: {
+                "": "",
+                "sphere": "sphere",
+                "point": "point"
+            }
+        },
         radiusType: {
             type: "select", options: {
                 "": "",
@@ -4718,7 +4725,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             }
         },
         radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
+            type: "number", precision: 3, max: 10.0, min: 0.001, property: "size"
         },
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
@@ -4761,6 +4768,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
         this.minValue = p.minValue !== undefined ? p.minValue : NaN;
         this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
+        this.dotType = p.dotType !== undefined ? p.dotType : "point";
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
@@ -4791,23 +4799,42 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        this.sphereBuffer = new NGL.SphereBuffer(
-            this.surface.getDataPosition(),
-            this.surface.getDataColor( this.color ),
-            this.surface.getDataSize( this.radius, this.scale ),
-            undefined,
-            {
-                sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded
-            },
-            this.disableImpostor
-        );
+        if( this.dotType === "sphere" ){
 
-        this.bufferList.push( this.sphereBuffer );
+            this.dotBuffer = new NGL.SphereBuffer(
+                this.surface.getDataPosition(),
+                this.surface.getDataColor( this.color ),
+                this.surface.getDataSize( this.radius, this.scale ),
+                undefined,
+                {
+                    sphereDetail: this.sphereDetail,
+                    transparent: this.transparent,
+                    side: this.side,
+                    opacity: opacity,
+                    nearClip: this.nearClip,
+                    flatShaded: this.flatShaded
+                },
+                this.disableImpostor
+            );
+
+        }else{
+
+            this.dotBuffer = new NGL.PointBuffer(
+                this.surface.getDataPosition(),
+                this.surface.getDataColor( this.color ),
+                {
+                    pointSize: this.radius,
+                    sizeAttenuation: true,  // this.sizeAttenuation,
+                    sort: false,  // this.sort,
+                    transparent: true,  // this.transparent,
+                    opacity: opacity,
+                    nearClip: this.nearClip
+                }
+            );
+
+        }
+
+        this.bufferList.push( this.dotBuffer );
 
     },
 
@@ -4815,23 +4842,23 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        var sphereData = {};
+        var dotData = {};
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.surface.getDataColor( this.color );
+            dotData[ "color" ] = this.surface.getDataColor( this.color );
 
         }
 
-        if( what[ "size" ] || what[ "scale" ] ){
+        if( this.dotType === "sphere" && ( what[ "radius" ] || what[ "scale" ] ) ){
 
-            sphereData[ "radius" ] = this.surface.getDataSize(
-                this.size, this.scale
+            dotData[ "radius" ] = this.surface.getDataSize(
+                this.radius, this.scale
             );
 
         }
 
-        this.sphereBuffer.setAttributes( sphereData );
+        this.dotBuffer.setAttributes( dotData );
 
     },
 
@@ -4847,7 +4874,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 this.radius = params[ "radiusType" ];
             }
             what[ "radius" ] = true;
-            if( !NGL.extensionFragDepth || this.disableImpostor ){
+            if( this.dotType === "sphere" &&
+                ( !NGL.extensionFragDepth || this.disableImpostor )
+            ){
                 rebuild = true;
             }
 
@@ -4856,7 +4885,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         if( params && params[ "radius" ] !== undefined ){
 
             what[ "radius" ] = true;
-            if( !NGL.extensionFragDepth || this.disableImpostor ){
+            if( this.dotType === "sphere" &&
+                ( !NGL.extensionFragDepth || this.disableImpostor )
+            ){
                 rebuild = true;
             }
 
@@ -4865,7 +4896,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         if( params && params[ "scale" ] !== undefined ){
 
             what[ "scale" ] = true;
-            if( !NGL.extensionFragDepth || this.disableImpostor ){
+            if( this.dotType === "sphere" &&
+                ( !NGL.extensionFragDepth || this.disableImpostor )
+            ){
                 rebuild = true;
             }
 
