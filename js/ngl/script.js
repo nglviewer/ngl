@@ -371,6 +371,34 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
+    function uiOpenButton( label, callback, extensionList ){
+
+        var btn = new UI.Button( U( label ) ).onClick( function(){
+
+            NGL.open( callback, extensionList );
+
+        } );
+
+        panel.add( btn );
+
+        return btn;
+
+    }
+
+    function uiDownloadButton( label, callback, downloadName ){
+
+        var btn = new UI.Button( U( label ) ).onClick( function(){
+
+            NGL.download( callback(), downloadName );
+
+        } );
+
+        panel.add( btn );
+
+        return btn;
+
+    }
+
     function uiToggleButton( labelA, labelB, callbackA, callbackB ){
 
         var flag = true;
@@ -554,6 +582,8 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'uiBreak': uiBreak,
         'uiSelect': uiSelect,
         'uiButton': uiButton,
+        'uiOpenButton': uiOpenButton,
+        'uiDownloadButton': uiDownloadButton,
         'uiToggleButton': uiToggleButton,
         'uiVisibilitySelect': uiVisibilitySelect,
         'uiVisibilityButton': uiVisibilityButton,

@@ -489,6 +489,27 @@ NGL.download = function( data, downloadName ){
 };
 
 
+NGL.open = function( callback, extensionList ){
+
+    extensionList = extensionList || [ "*" ];
+
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.multiple = true;
+    fileInput.style.display = "hidden";
+    document.body.appendChild( fileInput );
+    fileInput.accept = "." + extensionList.join( ",." );
+    fileInput.addEventListener( 'change', function( e ){
+
+        callback( e.target.files );
+
+    }, false );
+
+    fileInput.click();
+
+};
+
+
 NGL.unicodeHelper = function(){
 
     var replace_map = {
