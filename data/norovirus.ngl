@@ -2,7 +2,7 @@
 panel.setName( "Noro virus" );
 
 
-load( "1IHM.pdb", function( o ){
+load( "data://1IHM.pdb", function( o ){
 
     o.addRepresentation( "rope", {
         subdiv: 3, radialSegments: 6, color: "chainindex",
@@ -17,7 +17,7 @@ load( "1IHM.pdb", function( o ){
 } );
 
 
-load( "2L1F.pdb", {
+load( "data://2L1F.pdb", {
     onLoad: function( o ){
 
         o.addRepresentation( "cartoon", {

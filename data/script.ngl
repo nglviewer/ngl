@@ -1,5 +1,5 @@
 
-load( "1LVZ.pdb", {
+load( "data://1LVZ.pdb", {
     onLoad: function( o ){
 
         o.addRepresentation( "cartoon" );
@@ -9,7 +9,7 @@ load( "1LVZ.pdb", {
 } );
 
 
-load( "1u19.pdb", function( o ){
+load( "data://1u19.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.centerView();
@@ -19,7 +19,7 @@ load( "1u19.pdb", function( o ){
 } );
 
 
-load( "3dqb.pdb", function( o ){
+load( "data://3dqb.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.centerView();
@@ -37,7 +37,7 @@ then( function(){
 } );
 
 
-load( "1blu.pdb", function( o ){
+load( "data://1blu.pdb", function( o ){
 
     o.addRepresentation( "cartoon" );
     o.addRepresentation( "licorice", {

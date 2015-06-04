@@ -1180,7 +1180,7 @@ NGL.Examples = {
 
             stage.loadFile( "data://adrenalin.sdf", function( o ){
 
-                o.addRepresentation( "ball+stick" );
+                o.addRepresentation( "hyperball" );
                 o.centerView();
 
             } );
