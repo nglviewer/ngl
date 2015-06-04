@@ -266,78 +266,84 @@ NGL.Stage.prototype = {
 
         var reprParamsList = [];
 
-        this.eachRepresentation( function( repr ){
+        // this.eachRepresentation( function( repr ){
 
-            if( repr.visible && repr.parent.visible ){
+        //     if( repr.visible && repr.parent.visible ){
 
-                var r = repr.repr;
+        //         var r = repr.repr;
 
-                var op = {
-                    subdiv: r.subdiv,
-                    radialSegments: r.radialSegments,
-                    sphereDetail: r.sphereDetail,
-                    radiusSegments: r.radiusSegments
+        //         var op = {
+        //             subdiv: r.subdiv,
+        //             radialSegments: r.radialSegments,
+        //             sphereDetail: r.sphereDetail,
+        //             radiusSegments: r.radiusSegments
+        //         }
+
+        //         reprParamsList.push( {
+        //             repr: repr,
+        //             params: op
+        //         } );
+
+        //         var p = {};
+
+        //         if( op.subdiv !== undefined ){
+        //             p.subdiv = Math.max( 12, op.subdiv );
+        //         }
+
+        //         if( op.radialSegments !== undefined ){
+        //             p.radialSegments = Math.max( 20, op.radialSegments );
+        //         }
+
+        //         if( op.sphereDetail !== undefined ){
+        //             p.sphereDetail = Math.max( 2, op.sphereDetail );
+        //         }
+
+        //         if( op.radiusSegments !== undefined ){
+        //             p.radiusSegments = Math.max( 20, op.radiusSegments );
+        //         }
+
+        //         repr.setParameters( p );
+
+        //     }
+
+        // }, NGL.StructureComponent );
+
+        function makeScreenshot(){
+
+            this.viewer.screenshot( {
+
+                factor: factor,
+                type: "image/png",
+                quality: 1.0,
+                antialias: antialias,
+                transparent: transparent,
+                trim: trim,
+
+                onProgress: function( i, n, finished ){
+
+                    if( typeof onProgress === "function" ){
+
+                        onProgress( i, n, finished );
+
+                    }
+
+                    if( finished ){
+
+                        reprParamsList.forEach( function( d ){
+
+                            d.repr.setParameters( d.params );
+
+                        } );
+
+                    }
+
                 }
 
-                reprParamsList.push( {
-                    repr: repr,
-                    params: op
-                } );
+            } );
 
-                var p = {};
+        }
 
-                if( op.subdiv !== undefined ){
-                    p.subdiv = Math.max( 12, op.subdiv );
-                }
-
-                if( op.radialSegments !== undefined ){
-                    p.radialSegments = Math.max( 20, op.radialSegments );
-                }
-
-                if( op.sphereDetail !== undefined ){
-                    p.sphereDetail = Math.max( 2, op.sphereDetail );
-                }
-
-                if( op.radiusSegments !== undefined ){
-                    p.radiusSegments = Math.max( 20, op.radiusSegments );
-                }
-
-                repr.setParameters( p );
-
-            }
-
-        }, NGL.StructureComponent );
-
-        this.viewer.screenshot( {
-
-            factor: factor,
-            type: "image/png",
-            quality: 1.0,
-            antialias: antialias,
-            transparent: transparent,
-            trim: trim,
-
-            onProgress: function( i, n, finished ){
-
-                if( typeof onProgress === "function" ){
-
-                    onProgress( i, n, finished );
-
-                }
-
-                if( finished ){
-
-                    reprParamsList.forEach( function( d ){
-
-                        d.repr.setParameters( d.params );
-
-                    } );
-
-                }
-
-            }
-
-        } );
+        this.tasks.onZeroOnce( makeScreenshot, this );
 
     },
 

@@ -905,6 +905,28 @@ NGL.Counter.prototype = {
 
     },
 
+    onZeroOnce: function( callback, context ){
+
+        if( this.count === 0 ){
+
+            callback.call( context, 0, 0 );
+
+        }else{
+
+            var fn = function(){
+
+                this.signals.countChanged.remove( fn, this );
+
+                callback.apply( context, arguments );
+
+            }
+
+            this.signals.countChanged.add( fn, this );
+
+        }
+
+    },
+
     dispose: function(){
 
         this.clear();
