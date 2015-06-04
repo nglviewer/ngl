@@ -738,7 +738,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
             // async to appease Chrome
 
-            setTimeout( function(){
+            requestAnimationFrame( function(){
 
                 if( instanceList.length >= 1 ){
                     viewer.add( buffer, instanceList );
@@ -750,7 +750,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                     callback();
                 }
 
-            }.bind( this ), 0 );
+            }.bind( this ) );
 
         }.bind( this ) );
 
