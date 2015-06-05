@@ -600,59 +600,60 @@ NGL.fromJSON = function( input ){
 
 NGL.processArray = function( array, fn, callback, chunkSize ){
 
+    var n = array.length;
+
     if( typeof importScripts === 'function' ){
 
         // no chunking required when inside a web worker
-        chunkSize = array.length;
+        fn( 0, n, array );
+        callback();
 
     }else{
 
         chunkSize = chunkSize !== undefined ? chunkSize : 10000;
 
+        var _i = 0;
+        var _step = chunkSize;
+        var _n = Math.min( _step, n );
+
+        async.until(
+
+            function(){
+
+                return _i >= n;
+
+            },
+
+            function( wcallback ){
+
+                requestAnimationFrame( function(){
+
+                    // NGL.log( _i, _n, n );
+
+                    var stop = fn( _i, _n, array );
+
+                    if( stop ){
+
+                        _i = n;
+
+                    }else{
+
+                        _i += _step;
+                        _n = Math.min( _n + _step, n );
+
+                    }
+
+                    wcallback();
+
+                } );
+
+            },
+
+            callback
+
+        );
+
     }
-
-    var n = array.length;
-
-    var _i = 0;
-    var _step = chunkSize;
-    var _n = Math.min( _step, n );
-
-    async.until(
-
-        function(){
-
-            return _i >= n;
-
-        },
-
-        function( wcallback ){
-
-            requestAnimationFrame( function(){
-
-                // NGL.log( _i, _n, n );
-
-                var stop = fn( _i, _n, array );
-
-                if( stop ){
-
-                    _i = n;
-
-                }else{
-
-                    _i += _step;
-                    _n = Math.min( _n + _step, n );
-
-                }
-
-                wcallback();
-
-            } );
-
-        },
-
-        callback
-
-    );
 
 };
 
