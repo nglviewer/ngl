@@ -627,7 +627,7 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
 
         function( wcallback ){
 
-            setTimeout( function(){
+            requestAnimationFrame( function(){
 
                 // NGL.log( _i, _n, n );
 
@@ -646,7 +646,7 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
 
                 wcallback();
 
-            }, 10 );
+            } );
 
         },
 
