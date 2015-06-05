@@ -2428,6 +2428,13 @@ NGL.SdfParser.prototype = NGL.createObject(
         var covRadii = NGL.CovalentRadii;
         var vdwRadii = NGL.VdwRadii;
 
+        var atomArray;
+        var lineCount = this.streamer.lineCount();
+        if( lineCount > NGL.useAtomArrayThreshold ){
+            atomArray = new NGL.AtomArray( lineCount );
+            s.atomArray = atomArray;
+        }
+
         var idx = 0;
         var lineNo = 0;
 
@@ -2439,26 +2446,56 @@ NGL.SdfParser.prototype = NGL.createObject(
 
                 if( lineNo >= atomStart && lineNo < atomEnd ){
 
+                    var x = parseFloat( line.substr( 0, 10 ) );
+                    var y = parseFloat( line.substr( 10, 10 ) );
+                    var z = parseFloat( line.substr( 20, 10 ) );
                     var element = line.substr( 31, 3 ).trim();
 
-                    var a = new NGL.Atom();
-                    a.index = idx;
+                    var a;
 
-                    a.resname = "HET";
-                    a.x = parseFloat( line.substr( 0, 10 ) );
-                    a.y = parseFloat( line.substr( 10, 10 ) );
-                    a.z = parseFloat( line.substr( 20, 10 ) );
-                    a.element = element;
-                    a.hetero = 1
-                    a.chainname = '';
-                    a.resno = 1;
-                    a.serial = idx;
-                    a.atomname = element;
-                    a.ss = 'c';
-                    a.altloc = '';
-                    a.vdw = vdwRadii[ element ];
-                    a.covalent = covRadii[ element ];
-                    a.modelindex = 1; // TODO multi-model sdf file
+                    if( atomArray ){
+
+                        a = new NGL.ProxyAtom( atomArray, idx );
+
+                        atomArray.setResname( idx, "HET" );
+                        atomArray.x[ idx ] = x;
+                        atomArray.y[ idx ] = y;
+                        atomArray.z[ idx ] = z;
+                        atomArray.setElement( idx, element );
+                        atomArray.setChainname( idx, '' );
+                        atomArray.resno[ idx ] = 1;
+                        atomArray.serial[ idx ] = idx;
+                        atomArray.setAtomname( idx, element );
+                        atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                        atomArray.setAltloc( idx, '' );
+                        atomArray.vdw[ idx ] = vdwRadii[ element ];
+                        atomArray.covalent[ idx ] = covRadii[ element ];
+                        atomArray.modelindex[ idx ] = 1;  // TODO multi-model sdf file
+
+                        atomArray.usedLength += 1;
+
+                    }else{
+
+                        a = new NGL.Atom();
+                        a.index = idx;
+
+                        a.resname = "HET";
+                        a.x = x;
+                        a.y = y;
+                        a.z = z;
+                        a.element = element;
+                        a.hetero = 1
+                        a.chainname = '';
+                        a.resno = 1;
+                        a.serial = idx;
+                        a.atomname = element;
+                        a.ss = 'c';
+                        a.altloc = '';
+                        a.vdw = vdwRadii[ element ];
+                        a.covalent = covRadii[ element ];
+                        a.modelindex = 1;  // TODO multi-model sdf file
+
+                    }
 
                     idx += 1;
                     atoms.push( a );
