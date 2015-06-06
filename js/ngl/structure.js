@@ -1230,7 +1230,7 @@ NGL.AtomSet.prototype = {
 
     bondPosition: function( selection, fromTo ){
 
-        NGL.time( "NGL.AtomSet.bondPosition" );
+        // NGL.time( "NGL.AtomSet.bondPosition" );
 
         var j, position, b;
 
@@ -1319,7 +1319,7 @@ NGL.AtomSet.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.AtomSet.bondPosition" );
+        // NGL.timeEnd( "NGL.AtomSet.bondPosition" );
 
         return position;
 
@@ -1327,7 +1327,7 @@ NGL.AtomSet.prototype = {
 
     bondColor: function( selection, fromTo, type ){
 
-        NGL.time( "NGL.AtomSet.bondColor" );
+        // NGL.time( "NGL.AtomSet.bondColor" );
 
         var i = 0;
         var color = [];
@@ -1370,7 +1370,7 @@ NGL.AtomSet.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.AtomSet.bondColor" );
+        // NGL.timeEnd( "NGL.AtomSet.bondColor" );
 
         return new Float32Array( color );
 
@@ -1378,7 +1378,7 @@ NGL.AtomSet.prototype = {
 
     bondRadius: function( selection, fromTo, type, scale ){
 
-        NGL.time( "NGL.AtomSet.bondRadius" );
+        // NGL.time( "NGL.AtomSet.bondRadius" );
 
         var i = 0;
         var radius = [];
@@ -1413,7 +1413,7 @@ NGL.AtomSet.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.AtomSet.bondRadius" );
+        // NGL.timeEnd( "NGL.AtomSet.bondRadius" );
 
         return new Float32Array( radius );
 

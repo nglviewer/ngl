@@ -2218,11 +2218,22 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
+        this.__fiberList = [];
+        this.__bufferList = [];
+
     },
 
-    create: function(){
+    prepare: function( callback ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        this.__fiberList.length = 0;
+        this.__bufferList.length = 0;
+
+        if( this.atomSet.atomCount === 0 ){
+
+            callback();
+            return;
+
+        }
 
         var scope = this;
 
@@ -2232,46 +2243,81 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
             if( fiber.residueCount < 4 ) return;
 
-            var spline = new NGL.Spline( fiber );
-            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-            var subSize = spline.getSubdividedSize(
-                scope.subdiv, scope.radius, scope.scale
-            );
-
-            var rx = 1.0;
-            var ry = 1.0;
-
-            scope.bufferList.push(
-
-                new NGL.TubeMeshBuffer(
-                    subPos.position,
-                    subOri.normal,
-                    subOri.binormal,
-                    subOri.tangent,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
-                    {
-                        radialSegments: scope.radialSegments,
-                        rx: rx,
-                        ry: ry,
-                        capped: scope.capped,
-                        wireframe: scope.wireframe,
-                        flatShaded: scope.flatShaded,
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip
-                    }
-                )
-
-            );
-
-            scope.fiberList.push( fiber );
+            scope.__fiberList.push( fiber );
 
         }, this.selection, true );
+
+        //
+
+        NGL.processArray(
+
+            this.__fiberList,
+
+            function( _i, _n, fiberList ){
+
+                for( var i = _i; i < _n; ++i ){
+
+                    var fiber = fiberList[ i ];
+
+                    var spline = new NGL.Spline( fiber );
+                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
+                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subSize = spline.getSubdividedSize(
+                        scope.subdiv, scope.radius, scope.scale
+                    );
+
+                    var rx = 1.0;
+                    var ry = 1.0;
+
+                    scope.__bufferList.push(
+
+                        new NGL.TubeMeshBuffer(
+                            subPos.position,
+                            subOri.normal,
+                            subOri.binormal,
+                            subOri.tangent,
+                            subCol.color,
+                            subSize.size,
+                            subCol.pickingColor,
+                            {
+                                radialSegments: scope.radialSegments,
+                                rx: rx,
+                                ry: ry,
+                                capped: scope.capped,
+                                wireframe: scope.wireframe,
+                                flatShaded: scope.flatShaded,
+                                transparent: scope.transparent,
+                                side: scope.side,
+                                opacity: opacity,
+                                nearClip: scope.nearClip
+                            }
+                        )
+
+                    );
+
+                }
+
+            },
+
+            callback,
+
+            50
+
+        );
+
+    },
+
+    create: function(){
+
+        var n = this.__fiberList.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            this.fiberList.push( this.__fiberList[ i ] );
+            this.bufferList.push( this.__bufferList[ i ] );
+
+        }
 
     },
 
@@ -2424,207 +2470,110 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
+        this.__fiberList = [];
+        this.__bufferList = [];
+
     },
 
-    create: function(){
+    prepare: function( callback ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        this.__fiberList.length = 0;
+        this.__bufferList.length = 0;
+
+        if( this.atomSet.atomCount === 0 ){
+
+            callback();
+            return;
+
+        }
 
         var scope = this;
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
-        /*
-            var l = {
-
-                position: [],
-                normal: [],
-                binormal: [],
-                tangent: [],
-                color: [],
-                size: [],
-                pickingColor: []
-
-            };
-
-            var n = 0;
-            var length = 0;
-        */
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
 
-            var spline = new NGL.Spline( fiber, scope.arrows );
-            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-            var subSize = spline.getSubdividedSize(
-                scope.subdiv, scope.radius, scope.scale
-            );
+            scope.__fiberList.push( fiber );
 
-            var rx = 1.0 * scope.aspectRatio;
-            var ry = 1.0;
+        }, this.selection, true );
 
-            if( fiber.isCg() ){
-                ry = rx;
-            }
+        //
 
-            scope.bufferList.push(
+        NGL.processArray(
 
-                new NGL.TubeMeshBuffer(
-                    subPos.position,
-                    subOri.normal,
-                    subOri.binormal,
-                    subOri.tangent,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
-                    {
-                        radialSegments: scope.radialSegments,
-                        rx: rx,
-                        ry: ry,
-                        capped: scope.capped,
-                        wireframe: scope.wireframe,
-                        flatShaded: scope.flatShaded,
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip
+            this.__fiberList,
+
+            function( _i, _n, fiberList ){
+
+                for( var i = _i; i < _n; ++i ){
+
+                    var fiber = fiberList[ i ];
+
+                    var spline = new NGL.Spline( fiber, scope.arrows );
+                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
+                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subSize = spline.getSubdividedSize(
+                        scope.subdiv, scope.radius, scope.scale
+                    );
+
+                    var rx = 1.0 * scope.aspectRatio;
+                    var ry = 1.0;
+
+                    if( fiber.isCg() ){
+                        ry = rx;
                     }
-                )
 
-            );
+                    scope.__bufferList.push(
 
-            /*
-                if( NGL.debug ){
-
-                    scope.debugBufferList.push(
-
-                        new NGL.BufferVectorHelper(
+                        new NGL.TubeMeshBuffer(
                             subPos.position,
                             subOri.normal,
-                            "skyblue",
-                            1.5
-                        )
-
-                    );
-
-                    scope.debugBufferList.push(
-
-                        new NGL.BufferVectorHelper(
-                            subPos.position,
                             subOri.binormal,
-                            "lightgreen",
-                            1.5
-                        )
-
-                    );
-
-                    scope.debugBufferList.push(
-
-                        new NGL.BufferVectorHelper(
-                            subPos.position,
                             subOri.tangent,
-                            "orange",
-                            1.5
+                            subCol.color,
+                            subSize.size,
+                            subCol.pickingColor,
+                            {
+                                radialSegments: scope.radialSegments,
+                                rx: rx,
+                                ry: ry,
+                                capped: scope.capped,
+                                wireframe: scope.wireframe,
+                                flatShaded: scope.flatShaded,
+                                transparent: scope.transparent,
+                                side: scope.side,
+                                opacity: opacity,
+                                nearClip: scope.nearClip
+                            }
                         )
 
                     );
 
                 }
-            */
 
-            /*
-                l.position.push( subPos.position );
-                l.normal.push( subOri.normal );
-                l.binormal.push( subOri.binormal );
-                l.tangent.push( subOri.tangent );
-                l.color.push( subCol.color );
-                l.size.push( subSize.size );
-                l.pickingColor.push( subCol.pickingColor );
+            },
 
-                n += 1;
-                length += subSize.size.length;
-            */
+            callback,
 
-            scope.fiberList.push( fiber );
+            50
 
-        }, this.selection, true );
+        );
 
-        /*
-            var rx = 1.0 * this.aspectRatio;
-            var ry = 1.0;
+    },
 
-            if( this.fiberList[ 0 ].isCg() ){
-                ry = rx;
-            }
+    create: function(){
 
-            var position = new Float32Array( 3 * length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                position.set( l.position[ i ], offset );
-                offset += l.position[ i ].length;
-            }
+        var n = this.__fiberList.length;
 
-            var normal = new Float32Array( 3 * length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                normal.set( l.normal[ i ], offset );
-                offset += l.normal[ i ].length;
-            }
+        for( var i = 0; i < n; ++i ){
 
-            var binormal = new Float32Array( 3 * length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                binormal.set( l.binormal[ i ], offset );
-                offset += l.binormal[ i ].length;
-            }
+            this.fiberList.push( this.__fiberList[ i ] );
+            this.bufferList.push( this.__bufferList[ i ] );
 
-            var tangent = new Float32Array( 3 * length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                tangent.set( l.tangent[ i ], offset );
-                offset += l.tangent[ i ].length;
-            }
-
-            var color = new Float32Array( 3 * length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                color.set( l.color[ i ], offset );
-                offset += l.color[ i ].length;
-            }
-
-            var size = new Float32Array( length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                size.set( l.size[ i ], offset );
-                offset += l.size[ i ].length;
-            }
-
-            var pickingColor = new Float32Array( 3 * length );
-            for( var i = 0, offset = 0; i < n; ++i ){
-                pickingColor.set( l.pickingColor[ i ], offset );
-                offset += l.pickingColor[ i ].length;
-            }
-
-            this.bufferList.push(
-
-                new NGL.TubeMeshBuffer(
-                    position,
-                    normal,
-                    binormal,
-                    tangent,
-                    color,
-                    size,
-                    this.radialSegments,
-                    pickingColor,
-                    rx,
-                    ry,
-                    this.capped,
-                    this.wireframe,
-                    this.transparent,
-                    this.side,
-                    opacity,
-                    this.nearClip
-                )
-
-            );
-        */
+        }
 
     },
 
@@ -2767,11 +2716,22 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
+        this.__fiberList = [];
+        this.__bufferList = [];
+
     },
 
-    create: function(){
+    prepare: function( callback ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        this.__fiberList.length = 0;
+        this.__bufferList.length = 0;
+
+        if( this.atomSet.atomCount === 0 ){
+
+            callback();
+            return;
+
+        }
 
         var scope = this;
 
@@ -2781,37 +2741,72 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             if( fiber.residueCount < 4 ) return;
 
-            var spline = new NGL.Spline( fiber );
-            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-            var subSize = spline.getSubdividedSize(
-                scope.subdiv, scope.radius, scope.scale
-            );
-
-            scope.bufferList.push(
-
-                new NGL.RibbonBuffer(
-                    subPos.position,
-                    subOri.binormal,
-                    subOri.normal,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
-                    {
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
-                    }
-                )
-
-            );
-
-            scope.fiberList.push( fiber );
+            scope.__fiberList.push( fiber );
 
         }, this.selection, true );
+
+        //
+
+        NGL.processArray(
+
+            this.__fiberList,
+
+            function( _i, _n, fiberList ){
+
+                for( var i = _i; i < _n; ++i ){
+
+                    var fiber = fiberList[ i ];
+
+                    var spline = new NGL.Spline( fiber );
+                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
+                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subSize = spline.getSubdividedSize(
+                        scope.subdiv, scope.radius, scope.scale
+                    );
+
+                    scope.__bufferList.push(
+
+                        new NGL.RibbonBuffer(
+                            subPos.position,
+                            subOri.binormal,
+                            subOri.normal,
+                            subCol.color,
+                            subSize.size,
+                            subCol.pickingColor,
+                            {
+                                transparent: scope.transparent,
+                                side: scope.side,
+                                opacity: opacity,
+                                nearClip: scope.nearClip,
+                                flatShaded: scope.flatShaded
+                            }
+                        )
+
+                    );
+
+                }
+
+            },
+
+            callback,
+
+            50
+
+        );
+
+    },
+
+    create: function(){
+
+        var n = this.__fiberList.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            this.fiberList.push( this.__fiberList[ i ] );
+            this.bufferList.push( this.__bufferList[ i ] );
+
+        }
 
     },
 
@@ -2952,42 +2947,88 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
+        this.__fiberList = [];
+        this.__bufferList = [];
+
     },
 
-    create: function(){
+    prepare: function( callback ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        this.__fiberList.length = 0;
+        this.__bufferList.length = 0;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
+        if( this.atomSet.atomCount === 0 ){
+
+            callback();
+            return;
+
+        }
 
         var scope = this;
+
+        var opacity = this.transparent ? this.opacity : 1.0;
 
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
 
-            var spline = new NGL.Spline( fiber );
-            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-
-            scope.bufferList.push(
-
-                new NGL.TraceBuffer(
-                    subPos.position,
-                    subCol.color,
-                    {
-                        lineWidth: scope.lineWidth,
-                        transparent: scope.transparent,
-                        opacity: opacity,
-                        nearClip: scope.nearClip
-                    }
-                )
-
-            );
-
-            scope.fiberList.push( fiber );
+            scope.__fiberList.push( fiber );
 
         }, this.selection, true );
+
+        //
+
+        NGL.processArray(
+
+            this.__fiberList,
+
+            function( _i, _n, fiberList ){
+
+                for( var i = _i; i < _n; ++i ){
+
+                    var fiber = fiberList[ i ];
+
+                    var spline = new NGL.Spline( fiber );
+                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+
+                    scope.__bufferList.push(
+
+                        new NGL.TraceBuffer(
+                            subPos.position,
+                            subCol.color,
+                            {
+                                lineWidth: scope.lineWidth,
+                                transparent: scope.transparent,
+                                opacity: opacity,
+                                nearClip: scope.nearClip
+                            }
+                        )
+
+                    );
+
+                }
+
+            },
+
+            callback,
+
+            50
+
+        );
+
+    },
+
+    create: function(){
+
+        var n = this.__fiberList.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            this.fiberList.push( this.__fiberList[ i ] );
+            this.bufferList.push( this.__bufferList[ i ] );
+
+        }
 
     },
 
@@ -3462,11 +3503,22 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
+        this.__fiberList = [];
+        this.__bufferList = [];
+
     },
 
-    create: function(){
+    prepare: function( callback ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        this.__fiberList.length = 0;
+        this.__bufferList.length = 0;
+
+        if( this.atomSet.atomCount === 0 ){
+
+            callback();
+            return;
+
+        }
 
         var scope = this;
 
@@ -3476,48 +3528,83 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
 
-            var helixorient = new NGL.Helixorient( fiber );
+            scope.__fiberList.push( fiber );
 
-            var spline = new NGL.Spline( helixorient.getFiber( scope.smooth, true ) );
-            var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-            var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-            var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
-            var subSize = spline.getSubdividedSize(
-                scope.subdiv, scope.radius, scope.scale
-            );
+        }, this.selection, true );
 
-            var rx = 1.0;
-            var ry = 1.0;
+        //
 
-            scope.bufferList.push(
+        NGL.processArray(
 
-                new NGL.TubeMeshBuffer(
-                    subPos.position,
-                    subOri.normal,
-                    subOri.binormal,
-                    subOri.tangent,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
-                    {
-                        radialSegments: scope.radialSegments,
-                        rx: rx,
-                        ry: ry,
-                        capped: scope.capped,
-                        wireframe: scope.wireframe,
-                        flatShaded: scope.flatShaded,
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip
-                    }
-                )
+            this.__fiberList,
 
-            );
+            function( _i, _n, fiberList ){
 
-            scope.fiberList.push( fiber );
+                for( var i = _i; i < _n; ++i ){
 
-        }, this.selection );
+                    var fiber = fiberList[ i ];
+
+                    var helixorient = new NGL.Helixorient( fiber );
+
+                    var spline = new NGL.Spline( helixorient.getFiber( scope.smooth, true ) );
+                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
+                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
+                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subSize = spline.getSubdividedSize(
+                        scope.subdiv, scope.radius, scope.scale
+                    );
+
+                    var rx = 1.0;
+                    var ry = 1.0;
+
+                    scope.__bufferList.push(
+
+                        new NGL.TubeMeshBuffer(
+                            subPos.position,
+                            subOri.normal,
+                            subOri.binormal,
+                            subOri.tangent,
+                            subCol.color,
+                            subSize.size,
+                            subCol.pickingColor,
+                            {
+                                radialSegments: scope.radialSegments,
+                                rx: rx,
+                                ry: ry,
+                                capped: scope.capped,
+                                wireframe: scope.wireframe,
+                                flatShaded: scope.flatShaded,
+                                transparent: scope.transparent,
+                                side: scope.side,
+                                opacity: opacity,
+                                nearClip: scope.nearClip
+                            }
+                        )
+
+                    );
+
+                }
+
+            },
+
+            callback,
+
+            50
+
+        );
+
+    },
+
+    create: function(){
+
+        var n = this.__fiberList.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            this.fiberList.push( this.__fiberList[ i ] );
+            this.bufferList.push( this.__bufferList[ i ] );
+
+        }
 
     },
 
