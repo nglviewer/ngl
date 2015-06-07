@@ -18,141 +18,151 @@ THREE.TypedArrayUtils = {};
  * orderElement: 0 //order according to x
  */
 
-THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
+THREE.TypedArrayUtils.quicksortIP = function(){
 
-	var stack = [];
-	var sp = -1;
-	var left = 0;
-	var right = arr.length / eleSize - 1;
-	var tmp = 0.0, x = 0, y = 0;
+	var swap = new Float32Array( 4 );
+	var temp = new Float32Array( 4 );
 
-	var swapF = function ( a, b ) {
+	return function ( arr, eleSize, orderElement, begin, end ) {
 
-		a *= eleSize; b *= eleSize;
+		begin = begin || 0;
+		end = ( end || ( arr.length / eleSize ) ) - 1;
 
-		for ( y = 0; y < eleSize; y ++ ) {
+		var stack = [];
+		var sp = -1;
+		var left = begin;
+		var right = end;
+		var tmp = 0.0, x = 0, y = 0;
 
-			tmp = arr[ a + y ];
-			arr[ a + y ]=arr[ b + y ];
-			arr[ b + y ]=tmp;
+		var swapF = function ( a, b ) {
 
-		}
+			a *= eleSize; b *= eleSize;
 
-	};
+			for ( y = 0; y < eleSize; y ++ ) {
 
-	var i, j, swap = new Float32Array( eleSize ), temp = new Float32Array( eleSize );
+				tmp = arr[ a + y ];
+				arr[ a + y ] = arr[ b + y ];
+				arr[ b + y ] = tmp;
 
-	while ( true ) {
+			}
 
-		if ( right - left <= 25 ) {
+		};
 
-			for ( j= left + 1; j <= right; j ++ ) {
+		var i, j;
 
-				for ( x = 0; x < eleSize; x ++ ) {
+		while ( true ) {
 
-					swap[ x ] = arr[ j * eleSize + x ];
+			if ( right - left <= 25 ) {
 
-				}
-
-				i = j - 1;
-
-				while ( i >= left && arr[ i * eleSize + orderElement ] > swap[orderElement ] ) {
+				for ( j= left + 1; j <= right; j ++ ) {
 
 					for ( x = 0; x < eleSize; x ++ ) {
 
-						arr[ ( i + 1 ) * eleSize + x ] = arr[ i * eleSize + x ];
+						swap[ x ] = arr[ j * eleSize + x ];
 
 					}
 
-					i --;
+					i = j - 1;
+
+					while ( i >= left && arr[ i * eleSize + orderElement ] > swap[orderElement ] ) {
+
+						for ( x = 0; x < eleSize; x ++ ) {
+
+							arr[ ( i + 1 ) * eleSize + x ] = arr[ i * eleSize + x ];
+
+						}
+
+						i --;
+
+					}
+
+					for ( x = 0; x < eleSize; x ++ ) {
+
+						arr[ ( i + 1 ) * eleSize + x ] = swap[ x ];
+
+					}
+
+				}
+
+				if ( sp == -1 ) break;
+
+				right = stack[ sp -- ]; //?
+				left = stack[ sp -- ];
+
+			} else {
+
+				var median = ( left + right ) >> 1;
+
+				i = left + 1;
+				j = right;
+
+				swapF( median, i );
+
+				if ( arr[ left * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
+
+					swapF( left, right );
+
+				}
+
+				if ( arr[ i * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
+
+					swapF( i, right );
+
+				}
+
+				if ( arr[ left * eleSize + orderElement ] > arr[ i * eleSize + orderElement ] ) {
+
+					swapF( left, i );
 
 				}
 
 				for ( x = 0; x < eleSize; x ++ ) {
 
-					arr[ ( i + 1 ) * eleSize + x ] = swap[ x ];
+					temp[ x ] = arr[ i * eleSize + x ];
+
+				}
+
+				while ( true ) {
+
+					do i ++; while ( arr[ i * eleSize + orderElement ] < temp[ orderElement ] );
+					do j --; while ( arr[ j * eleSize + orderElement ] > temp[ orderElement ] );
+
+					if ( j < i ) break;
+
+					swapF( i, j );
+
+				}
+
+				for ( x = 0; x < eleSize; x ++ ) {
+
+					arr[ ( left + 1 ) * eleSize + x ] = arr[ j * eleSize + x ];
+					arr[ j * eleSize + x ] = temp[ x ];
+
+				}
+
+				if ( right - i + 1 >= j - left ) {
+
+					stack[ ++ sp ] = i;
+					stack[ ++ sp ] = right;
+					right = j - 1;
+
+				} else {
+
+					stack[ ++ sp ] = left;
+					stack[ ++ sp ] = j - 1;
+					left = i;
 
 				}
 
 			}
 
-			if ( sp == -1 ) break;
-
-			right = stack[ sp -- ]; //?
-			left = stack[ sp -- ];
-
-		} else {
-
-			var median = ( left + right ) >> 1;
-
-			i = left + 1;
-			j = right;
-
-			swapF( median, i );
-
-			if ( arr[ left * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
-
-				swapF( left, right );
-
-			}
-
-			if ( arr[ i * eleSize + orderElement ] > arr[ right * eleSize + orderElement ] ) {
-
-				swapF( i, right );
-
-			}
-
-			if ( arr[ left * eleSize + orderElement ] > arr[ i * eleSize + orderElement ] ) {
-
-				swapF( left, i );
-
-			}
-
-			for ( x = 0; x < eleSize; x ++ ) {
-
-				temp[ x ] = arr[ i * eleSize + x ];
-
-			}
-
-			while ( true ) {
-
-				do i ++; while ( arr[ i * eleSize + orderElement ] < temp[ orderElement ] );
-				do j --; while ( arr[ j * eleSize + orderElement ] > temp[ orderElement ] );
-
-				if ( j < i ) break;
-
-				swapF( i, j );
-
-			}
-
-			for ( x = 0; x < eleSize; x ++ ) {
-
-				arr[ ( left + 1 ) * eleSize + x ] = arr[ j * eleSize + x ];
-				arr[ j * eleSize + x ] = temp[ x ];
-
-			}
-
-			if ( right - i + 1 >= j - left ) {
-
-				stack[ ++ sp ] = i;
-				stack[ ++ sp ] = right;
-				right = j - 1;
-
-			} else {
-
-				stack[ ++ sp ] = left;
-				stack[ ++ sp ] = j - 1;
-				left = i;
-
-			}
-
 		}
+
+		return arr;
 
 	}
 
-	return arr;
-
-};
+}();
 
 
 
@@ -182,53 +192,61 @@ THREE.TypedArrayUtils.quicksortIP = function ( arr, eleSize, orderElement ) {
  * If you want to further minimize memory usage, remove Node.depth and replace in search algorithm with a traversal to root node (see comments at THREE.TypedArrayUtils.Kdtree.prototype.Node)
  */
 
-THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
+THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize, dimSize ) {
 
 	var self = this;
 
 	var maxDepth = 0;
 
-	var getPointSet = function ( points, pos ) {
-
-		return points.subarray( pos * eleSize, pos * eleSize + eleSize );
-
-	};
-
-	function buildTree( points, depth, parent, pos ) {
+	function buildTree( depth, parent, arrBegin, arrEnd ) {
 
 		var dim = depth % eleSize,
 			median,
 			node,
-			plength = points.length / eleSize;
+			plength = ( arrEnd - arrBegin );
 
-		if ( depth > maxDepth ) maxDepth = depth;
+		if( depth > maxDepth ) maxDepth = depth;
 
-		if ( plength === 0 ) return null;
-		if ( plength === 1 ) {
+		if( plength === 0 ) return null;
+		if( plength === 1 ) new self.Node( ( 0 + arrBegin ) * eleSize, parent );
 
-			return new self.Node( getPointSet( points, 0 ), depth, parent, pos );
-
+		if( dim < dimSize ){
+			THREE.TypedArrayUtils.quicksortIP( points, eleSize, dim, arrBegin, arrEnd );
 		}
-
-		THREE.TypedArrayUtils.quicksortIP( points, eleSize, dim );
 
 		median = Math.floor( plength / 2 );
 
-		node = new self.Node( getPointSet( points, median ), depth, parent, median + pos );
-		node.left = buildTree( points.subarray( 0, median * eleSize), depth + 1, node, pos );
-		node.right = buildTree( points.subarray( ( median + 1 ) * eleSize, points.length ), depth + 1, node, pos + median + 1 );
+		node = new self.Node( ( median + arrBegin ) * eleSize, parent );
+		node.left = buildTree( depth + 1, node, arrBegin, arrBegin + median );
+		node.right = buildTree( depth + 1, node, arrBegin + median + 1, arrEnd );
 
 		return node;
 
 	}
 
-	this.root = buildTree( points, 0, null, 0 );
+	function getNodeDepth( node ){
+
+		if( node.parent === null ){
+			return 0;
+		}else{
+			return getNodeDepth( node.parent ) + 1;
+		}
+
+	}
+
+	function getNodePos( node ){
+
+		// TODO
+
+	}
+
+	this.root = buildTree( 0, null, 0, points.length / eleSize );
 
 	this.getMaxDepth = function () { return maxDepth; };
 
 	this.nearest = function ( point, maxNodes, maxDistance ) {
 
-		 /* point: array of elements with size eleSize
+		/*  point: array of elements with size eleSize
 			maxNodes: max amount of nodes to return
 			maxDistance: maximum distance of point to result nodes
 		*/
@@ -246,8 +264,13 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 		function nearestSearch( node ) {
 
 			var bestChild,
-				dimension = node.depth % eleSize,
-				ownDistance = metric( point, node.obj ),
+				dimension = getNodeDepth( node ) % eleSize,
+				ownPoint = [
+					points[ node.pos + 0 ],
+					points[ node.pos + 1 ],
+					points[ node.pos + 2 ]
+				],
+				ownDistance = metric( point, ownPoint ),
 				linearDistance = 0,
 				otherChild,
 				i,
@@ -265,27 +288,26 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 			}
 
-			for ( i = 0; i < eleSize; i += 1 ) {
+			for ( i = 0; i < dimSize; i += 1 ) {
 
-				if ( i === node.depth % eleSize ) {
+				if ( i === getNodeDepth( node ) % eleSize ) {
 
 					linearPoint[ i ] = point[ i ];
 
 				} else {
 
-					linearPoint[ i ] = node.obj[ i ];
+					linearPoint[ i ] = points[ node.pos + i ];
 
 				}
 
 			}
 
-			linearDistance = metric( linearPoint, node.obj );
+			linearDistance = metric( linearPoint, ownPoint );
 
 			// if it's a leaf
 
 			if ( node.right === null && node.left === null ) {
 
-				// if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
 				if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance < maxDistance ) {
 
 					saveNode( node, ownDistance );
@@ -306,7 +328,7 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 			} else {
 
-				if ( point[ dimension ] < node.obj[ dimension ] ) {
+				if ( point[ dimension ] < points[ node.pos + dimension ] ) {
 
 					bestChild = node.left;
 
@@ -322,7 +344,6 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 			nearestSearch( bestChild );
 
-			// if ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) {
 			if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ) {
 
 				saveNode( node, ownDistance );
@@ -331,7 +352,6 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 			// if there's still room or the current distance is nearer than the best distance
 
-			// if ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) {
 			if ( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) && Math.abs( linearDistance ) <= maxDistance ) {
 
 				if ( bestChild === node.left ) {
@@ -354,28 +374,11 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
 
 		}
 
-		// if ( maxDistance ) {
-
-		// 	for ( i = 0; i < maxNodes; i += 1 ) {
-
-		// 		bestNodes.push( [ null, maxDistance ] );
-
-		// 	}
-
-		// }
-
 		nearestSearch( self.root );
 
 		result = [];
 
-		// for ( i = 0; i < maxNodes; i += 1 ) {
 		for ( i = 0; i < Math.min( bestNodes.size(), maxNodes ); i += 1 ) {
-
-			/*if ( bestNodes.content[ i ][ 0 ] ) {
-
-				result.push( [ bestNodes.content[ i ][ 0 ], bestNodes.content[ i ][ 1 ] ] );
-
-			}*/
 
 			var inode = bestNodes.content[ i ];
 
@@ -408,14 +411,13 @@ THREE.TypedArrayUtils.Kdtree = function ( points, metric, eleSize ) {
  *
  * I experienced that for 200'000 nodes you can get rid of 4 MB memory each, leading to 8 MB memory saved.
  */
-THREE.TypedArrayUtils.Kdtree.prototype.Node = function ( obj, depth, parent, pos ) {
 
-	this.obj = obj;
+THREE.TypedArrayUtils.Kdtree.prototype.Node = function ( pos, parent ) {
+
+	this.pos = pos;
 	this.left = null;
 	this.right = null;
 	this.parent = parent;
-	this.depth = depth;
-	this.pos = pos;
 
 };
 

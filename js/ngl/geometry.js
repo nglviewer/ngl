@@ -1378,9 +1378,9 @@ NGL.HelixCrossing.prototype = {
 ///////////
 // Kdtree
 
-NGL.Kdtree = function( atomSet ){
+NGL.Kdtree = function( atoms ){
 
-    NGL.time( "NGL.Kdtree build" );
+    // NGL.time( "NGL.Kdtree build" );
 
     var metric = function( a, b ){
 
@@ -1388,33 +1388,42 @@ NGL.Kdtree = function( atomSet ){
         var dy = a[1] - b[1];
         var dz = a[2] - b[2];
 
-        // return dx*dx + dy*dy + dz*dz;
-        return Math.sqrt( dx*dx + dy*dy + dz*dz );
+        return dx*dx + dy*dy + dz*dz;
+        // return Math.sqrt( dx*dx + dy*dy + dz*dz );
 
     };
 
-    var p = atomSet.atomPosition();
-    var n = p.length;
-    var n3 = n / 3;
+    if( atoms instanceof NGL.AtomSet ||
+        atoms instanceof NGL.Structure ||
+        atoms instanceof NGL.StructureSubset
+    ){
 
-    var points = new Float32Array( n + n3 );
+        var atomSet = atoms;
+        atoms = atomSet.atoms;
 
-    for( var i = 0; i < n3; ++i ){
+    }
 
+    var n = atoms.length;
+    var points = new Float32Array( n * 4 );
+
+    for( var i = 0; i < n; ++i ){
+
+        var a = atoms[ i ];
         var i3 = i * 3;
         var i4 = i * 4;
 
-        points[ i4 + 0 ] = p[ i3 + 0 ];
-        points[ i4 + 1 ] = p[ i3 + 1 ];
-        points[ i4 + 2 ] = p[ i3 + 2 ];
+        points[ i4 + 0 ] = a.x;
+        points[ i4 + 1 ] = a.y;
+        points[ i4 + 2 ] = a.z;
         points[ i4 + 3 ] = i;
 
     }
 
-    this.atomSet = atomSet;
-    this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4 );
+    this.points = points;
+    this.atoms = atoms;
+    this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4, 3 );
 
-    NGL.timeEnd( "NGL.Kdtree build" );
+    // NGL.timeEnd( "NGL.Kdtree build" );
 
 };
 
@@ -1442,7 +1451,7 @@ NGL.Kdtree.prototype = {
                 pointArray, maxNodes, maxDistance
             );
 
-            var atoms = this.atomSet.atoms;
+            var atoms = this.atoms;
             var atomList = [];
 
             for( var i = 0, n = nodeList.length; i < n; ++i ){
@@ -1452,7 +1461,7 @@ NGL.Kdtree.prototype = {
                 var dist = d[ 1 ];
 
                 atomList.push( {
-                    atom: atoms[ node.obj[ 3 ] ],
+                    atom: atoms[ this.points[ node.pos + 3 ] ],
                     distance: dist
                 } );
 
