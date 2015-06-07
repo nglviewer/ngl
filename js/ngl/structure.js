@@ -2232,9 +2232,7 @@ NGL.Structure.prototype = {
 
         var bondSet = this.bondSet;
 
-        var i, j, n, ra, a1, a2;
-
-        // bonds within a residue
+        var i, j, n, m, ra, a1, a2, kdt, na, rad;
 
         NGL.time( "NGL.Structure.autoBond within" );
 
@@ -2243,15 +2241,48 @@ NGL.Structure.prototype = {
             ra = r.atoms;
             n = r.atomCount - 1;
 
-            for( i = 0; i < n; i++ ){
+            if( n > 15 ){
 
-                a1 = ra[ i ];
+                kdt = new NGL.Kdtree( ra );
+                rad = r.hasBackbone() ? 1.2 : 2.3;
 
-                for( j = i + 1; j <= n; j++ ){
+                for( i = 0; i <= n; i++ ){
 
-                    a2 = ra[ j ];
+                    a1 = ra[ i ];
 
-                    bondSet.addBondIfConnected( a1, a2 );
+                    na = kdt.nearest(
+                        a1, Infinity, Math.pow( a1.covalent + rad, 2 ) + 0.3
+                    );
+                    m = na.length;
+
+                    for( j = 0; j < m; j++ ){
+
+                        a2 = na[ j ].atom;
+
+                        // TODO make use of distance calculated in kdtree
+                        if( a1.index < a2.index ){
+
+                            bondSet.addBondIfConnected( a1, a2 );
+
+                        }
+
+                    }
+
+                }
+
+            }else{
+
+                for( i = 0; i < n; i++ ){
+
+                    a1 = ra[ i ];
+
+                    for( j = i + 1; j <= n; j++ ){
+
+                        a2 = ra[ j ];
+
+                        bondSet.addBondIfConnected( a1, a2 );
+
+                    }
 
                 }
 

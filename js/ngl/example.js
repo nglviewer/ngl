@@ -928,12 +928,12 @@ NGL.Examples = {
 
         "contact": function( stage ){
 
-            stage.loadFile( "data://3SN6.cif", function( o ){
+            // stage.loadFile( "data://3SN6.cif", function( o ){
             // stage.loadFile( "data://4UJD.cif.gz", function( o ){
             // stage.loadFile( "data://3l5q.pdb", function( o ){
             // stage.loadFile( "data://1blu.pdb", function( o ){
             // stage.loadFile( "data://3pqr.pdb", function( o ){
-            // stage.loadFile( "data://1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb", function( o ){
 
                 o.addRepresentation( "cartoon", {
                     color: "ss", flatShaded: true
