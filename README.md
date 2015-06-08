@@ -43,6 +43,7 @@ Version 0.6dev
 * WIP: scripting API
 * CODE: chunked data loading and parsing via streamer class
 * MIGRATION: Stage.loadFile signature changed
+* CODE: faster autobonding of large residues (e.g. hydrated lipids)
 
 
 Version 0.5
