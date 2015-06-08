@@ -1378,20 +1378,35 @@ NGL.HelixCrossing.prototype = {
 ///////////
 // Kdtree
 
-NGL.Kdtree = function( atoms ){
+NGL.Kdtree = function( atoms, useSquaredDist ){
 
     // NGL.time( "NGL.Kdtree build" );
 
-    var metric = function( a, b ){
+    if( useSquaredDist ){
 
-        var dx = a[0] - b[0];
-        var dy = a[1] - b[1];
-        var dz = a[2] - b[2];
+        var metric = function( a, b ){
 
-        return dx*dx + dy*dy + dz*dz;
-        // return Math.sqrt( dx*dx + dy*dy + dz*dz );
+            var dx = a[0] - b[0];
+            var dy = a[1] - b[1];
+            var dz = a[2] - b[2];
 
-    };
+            return dx*dx + dy*dy + dz*dz;
+
+        };
+
+    }else{
+
+        var metric = function( a, b ){
+
+            var dx = a[0] - b[0];
+            var dy = a[1] - b[1];
+            var dz = a[2] - b[2];
+
+            return Math.sqrt( dx*dx + dy*dy + dz*dz );
+
+        };
+
+    }
 
     if( atoms instanceof NGL.AtomSet ||
         atoms instanceof NGL.Structure ||

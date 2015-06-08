@@ -2243,6 +2243,7 @@ NGL.Structure.prototype = {
 
             if( n > 15 ){
 
+                kdt = new NGL.Kdtree( ra, true );
                 kdt = new NGL.Kdtree( ra );
                 rad = r.hasBackbone() ? 1.2 : 2.3;
 
