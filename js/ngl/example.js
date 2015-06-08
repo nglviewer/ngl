@@ -1185,6 +1185,18 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "popc": function( stage ){
+
+            stage.loadFile( "data://popc.gro", function( o ){
+
+                o.addRepresentation( "hyperball", { sele: "popc" } );
+                o.addRepresentation( "line", { sele: "water" } );
+                o.centerView();
+
+            } );
+
         }
 
     }
