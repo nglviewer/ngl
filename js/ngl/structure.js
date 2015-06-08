@@ -2232,7 +2232,7 @@ NGL.Structure.prototype = {
 
         var bondSet = this.bondSet;
 
-        var i, j, n, m, ra, a1, a2, kdt, na, rad;
+        var i, j, n, m, ra, a1, a2, kdtree, nearestAtoms, radius, maxd;
 
         NGL.time( "NGL.Structure.autoBond within" );
 
@@ -2241,24 +2241,24 @@ NGL.Structure.prototype = {
             ra = r.atoms;
             n = r.atomCount - 1;
 
-            if( n > 15 ){
+            if( n > 20 ){
 
-                kdt = new NGL.Kdtree( ra, true );
-                kdt = new NGL.Kdtree( ra );
-                rad = r.hasBackbone() ? 1.2 : 2.3;
+                kdtree = new NGL.Kdtree( ra, true );
+                radius = r.hasBackbone() ? 1.2 : 2.3;
 
-                for( i = 0; i <= n; i++ ){
+                for( i = 0; i <= n; ++i ){
 
                     a1 = ra[ i ];
 
-                    na = kdt.nearest(
-                        a1, Infinity, Math.pow( a1.covalent + rad, 2 ) + 0.3
+                    maxd = a1.covalent + radius + 0.2;
+                    nearestAtoms = kdtree.nearest(
+                        a1, Infinity, maxd * maxd
                     );
-                    m = na.length;
+                    m = nearestAtoms.length;
 
-                    for( j = 0; j < m; j++ ){
+                    for( j = 0; j < m; ++j ){
 
-                        a2 = na[ j ].atom;
+                        a2 = nearestAtoms[ j ].atom;
 
                         // TODO make use of distance calculated in kdtree
                         if( a1.index < a2.index ){
@@ -2273,11 +2273,11 @@ NGL.Structure.prototype = {
 
             }else{
 
-                for( i = 0; i < n; i++ ){
+                for( i = 0; i < n; ++i ){
 
                     a1 = ra[ i ];
 
-                    for( j = i + 1; j <= n; j++ ){
+                    for( j = i + 1; j <= n; ++j ){
 
                         a2 = ra[ j ];
 
@@ -4287,11 +4287,12 @@ NGL.Atom.prototype = {
         if( this.residue.isCg() && distSquared < 28.0 ) return true;
 
         if( isNaN( distSquared ) ) return false;
-        if( distSquared < 0.5 ) return false; // duplicate or altloc
 
-        var d = this.covalent + atom.covalent + 0.3;
+        var d = this.covalent + atom.covalent;
+        var d1 = d + 0.2;
+        var d2 = d - 0.2;
 
-        return distSquared < ( d * d );
+        return distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 );
 
     },
 
@@ -5177,10 +5178,12 @@ NGL.ProxyAtom.prototype = {
         if( taa.residue[ ti ].isCg() && distSquared < 28.0 ) return true;
 
         if( isNaN( distSquared ) ) return false;
-        if( distSquared < 0.5 ) return false; // duplicate or altloc
 
-        var d = taa.covalent[ ti ] + aaa.covalent[ ai ] + 0.3;
-        return distSquared < ( d * d );
+        var d = taa.covalent[ ti ] + aaa.covalent[ ai ];
+        var d1 = d + 0.2;
+        var d2 = d - 0.2;
+
+        return distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 );
 
     },
 
