@@ -2153,79 +2153,6 @@ NGL.Structure.prototype = {
 
     },
 
-    /*autoBond2: function( callback ){
-
-        NGL.time( "NGL.Structure.autoBond" );
-
-        var bondSet = this.bondSet;
-
-        var i, j, n, ra, a1, a2;
-
-        // bonds within a residue
-
-        NGL.time( "NGL.Structure.autoBond within" );
-
-        var chainRes = [];
-
-        this.eachChain( function( c ){
-
-            chainRes.push( c.residues );
-
-        } );
-
-        function _chunked( _i, _n ){
-
-            for( var k = _i; k < _n; ++k ){
-
-                var cr = chainRes[ k ];
-                var crn = cr.length
-
-                for( var l = 0; l < crn; ++l ){
-
-                    var r = cr[ l ];
-                    n = r.atomCount - 1;
-                    ra = r.atoms;
-
-                    for( i = 0; i < n; i++ ){
-
-                        a1 = ra[ i ];
-
-                        for( j = i + 1; j <= n; j++ ){
-
-                            a2 = ra[ j ];
-
-                            bondSet.addBondIfConnected( a1, a2 );
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        NGL.processArray(
-
-            chainRes,
-
-            _chunked,
-
-            function(){
-
-                NGL.timeEnd( "NGL.Structure.autoBond within" );
-
-                callback();
-
-            },
-
-            100
-
-        );
-
-    },*/
-
     autoBond: function(){
 
         NGL.time( "NGL.Structure.autoBond" );
@@ -2260,7 +2187,6 @@ NGL.Structure.prototype = {
 
                         a2 = nearestAtoms[ j ].atom;
 
-                        // TODO make use of distance calculated in kdtree
                         if( a1.index < a2.index ){
 
                             bondSet.addBondIfConnected( a1, a2 );
