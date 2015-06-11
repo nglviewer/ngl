@@ -2450,6 +2450,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                     var y = parseFloat( line.substr( 10, 10 ) );
                     var z = parseFloat( line.substr( 20, 10 ) );
                     var element = line.substr( 31, 3 ).trim();
+                    var atomname = element + ( idx + 1 );
 
                     var a;
 
@@ -2465,7 +2466,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                         atomArray.setChainname( idx, '' );
                         atomArray.resno[ idx ] = 1;
                         atomArray.serial[ idx ] = idx;
-                        atomArray.setAtomname( idx, element );
+                        atomArray.setAtomname( idx, atomname );
                         atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
                         atomArray.setAltloc( idx, '' );
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
@@ -2488,7 +2489,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                         a.chainname = '';
                         a.resno = 1;
                         a.serial = idx;
-                        a.atomname = element;
+                        a.atomname = atomname;
                         a.ss = 'c';
                         a.altloc = '';
                         a.vdw = vdwRadii[ element ];
@@ -2513,6 +2514,222 @@ NGL.SdfParser.prototype = NGL.createObject(
                 }
 
                 ++lineNo;
+
+            };
+
+        };
+
+        this.streamer.eachChunkOfLinesAsync(
+
+            _parseChunkOfLines,
+
+            function(){
+
+                callback();
+
+            }
+
+        );
+
+    }
+
+} );
+
+
+NGL.Mol2Parser = function( streamer, params ){
+
+    NGL.StructureParser.call( this, streamer, params );
+
+};
+
+NGL.Mol2Parser.prototype = NGL.createObject(
+
+    NGL.StructureParser.prototype, {
+
+    constructor: NGL.Mol2Parser,
+
+    type: "mol2",
+
+    _parse: function( callback ){
+
+        // http://www.tripos.com/data/support/mol2.pdf
+
+        var reWhitespace = /\s+/;
+
+        var s = this.structure;
+
+        var atoms = s.atoms;
+        var bondSet = s.bondSet;
+
+        var covRadii = NGL.CovalentRadii;
+        var vdwRadii = NGL.VdwRadii;
+
+        var atomArray;
+        var lineCount = this.streamer.lineCount();
+        if( lineCount > NGL.useAtomArrayThreshold ){
+            atomArray = new NGL.AtomArray( lineCount );
+            s.atomArray = atomArray;
+        }
+
+        var idx = 0;
+        var moleculeLineNo = 0;
+
+        var currentRecordType = 0;
+        var moleculeRecordType = 1;
+        var atomRecordType = 2;
+        var bondRecordType = 3;
+
+        var bondTypes = {
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "am": 1,  // amide
+            "ar": 1,  // aromatic
+            "du": 1,  // dummy
+            "un": 1,  // unknown
+            "nc": 0,  // not connected
+        };
+
+        function _parseChunkOfLines( _i, _n, lines ){
+
+            for( var i = _i; i < _n; ++i ){
+
+                var line = lines[ i ].trim();
+
+                if( line === "" || line[ 0 ] === "#" ) continue;
+
+                if( line[ 0 ] === "@" ){
+
+                    if( line === "@<TRIPOS>MOLECULE" ){
+
+                        currentRecordType = moleculeRecordType;
+                        moleculeLineNo = 0;
+
+                    }else if( line === "@<TRIPOS>ATOM" ){
+
+                        currentRecordType = atomRecordType;
+
+                    }else if( line === "@<TRIPOS>BOND" ){
+
+                        currentRecordType = bondRecordType;
+
+                    }
+
+                }else if( currentRecordType === moleculeRecordType ){
+
+                    if( moleculeLineNo === 0 ){
+
+                        s.title = line;
+                        s.id = line;
+
+                    }else if( moleculeLineNo === 1 ){
+
+                        var ls = line.split( reWhitespace );
+                        // num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
+
+                    }else if( moleculeLineNo === 2 ){
+
+                        var molType = line;
+                        // SMALL, BIOPOLYMER, PROTEIN, NUCLEIC_ACID, SACCHARIDE
+
+                    }else if( moleculeLineNo === 3 ){
+
+                        var chargeType = line;
+                        // NO_CHARGES, DEL_RE, GASTEIGER, GAST_HUCK, HUCKEL,
+                        // PULLMAN, GAUSS80_CHARGES, AMPAC_CHARGES,
+                        // MULLIKEN_CHARGES, DICT_ CHARGES, MMFF94_CHARGES,
+                        // USER_CHARGES
+
+                    }else if( moleculeLineNo === 4 ){
+
+                        var statusBits = line;
+
+                    }else if( moleculeLineNo === 5 ){
+
+                        var molComment = line;
+
+                    }
+
+                    ++moleculeLineNo;
+
+                }else if( currentRecordType === atomRecordType ){
+
+                    var ls = line.split( reWhitespace );
+
+                    var serial = ls[ 0 ];
+                    var element = ls[ 1 ];
+                    var atomname = element + ( idx + 1 );
+                    var x = parseFloat( ls[ 2 ] );
+                    var y = parseFloat( ls[ 3 ] );
+                    var z = parseFloat( ls[ 4 ] );
+                    // ls[ 5 ] is atomtype
+                    var resno = ls[ 6 ] ? parseInt( ls[ 6 ] ) : 1;
+                    var resname = ls[ 7 ] ? ls[ 7 ] : "";
+                    var bfactor = ls[ 8 ] ? parseFloat( ls[ 8 ] ) : 0.0;
+
+                    var a;
+
+                    if( atomArray ){
+
+                        a = new NGL.ProxyAtom( atomArray, idx );
+
+                        atomArray.setResname( idx, resname );
+                        atomArray.x[ idx ] = x;
+                        atomArray.y[ idx ] = y;
+                        atomArray.z[ idx ] = z;
+                        atomArray.setElement( idx, element );
+                        atomArray.setChainname( idx, '' );
+                        atomArray.resno[ idx ] = resno;
+                        atomArray.serial[ idx ] = idx;
+                        atomArray.setAtomname( idx, atomname );
+                        atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                        atomArray.setAltloc( idx, '' );
+                        atomArray.bfactor[ idx ] = bfactor;
+                        atomArray.vdw[ idx ] = vdwRadii[ element ];
+                        atomArray.covalent[ idx ] = covRadii[ element ];
+                        atomArray.modelindex[ idx ] = 1;  // TODO multi-model mol2 file
+
+                        atomArray.usedLength += 1;
+
+                    }else{
+
+                        a = new NGL.Atom();
+                        a.index = idx;
+
+                        a.resname = resname;
+                        a.x = x;
+                        a.y = y;
+                        a.z = z;
+                        a.element = element;
+                        a.hetero = 1
+                        a.chainname = '';
+                        a.resno = resno;
+                        a.serial = idx;
+                        a.atomname = atomname;
+                        a.ss = 'c';
+                        a.altloc = '';
+                        a.bfactor = bfactor;
+                        a.vdw = vdwRadii[ element ];
+                        a.covalent = covRadii[ element ];
+                        a.modelindex = 1;  // TODO multi-model mol2 file
+
+                    }
+
+                    idx += 1;
+                    atoms.push( a );
+
+                }else if( currentRecordType === bondRecordType ){
+
+                    var ls = line.split( reWhitespace );
+
+                    // ls[ 0 ] is bond id
+                    var from = parseInt( ls[ 1 ] ) - 1;
+                    var to = parseInt( ls[ 2 ] ) - 1;
+                    var order = bondTypes[ ls[ 3 ] ];
+
+                    bondSet.addBond( atoms[ from ], atoms[ to ], false, order );
+
+                }
 
             };
 

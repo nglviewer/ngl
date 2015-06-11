@@ -177,7 +177,7 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "ent", "gro", "cif", "mmcif", "sdf",
+        "pdb", "ent", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
         "mrc", "ccp4", "map", "cube",
         "obj", "ply",
         "ngl", "ngz",

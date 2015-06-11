@@ -1147,6 +1147,17 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "mol2": function( stage ){
+
+            stage.loadFile( "data://adrenalin.mol2", function( o ){
+
+                o.addRepresentation( "hyperball" );
+                o.centerView();
+
+            } );
+
         }
 
     }
