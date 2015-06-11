@@ -2573,6 +2573,8 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
         var idx = 0;
         var moleculeLineNo = 0;
+        var currentModelIndex = 0;
+        var modelAtomIdxStart = 0;
 
         var currentRecordType = 0;
         var moleculeRecordType = 1;
@@ -2604,6 +2606,8 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
                         currentRecordType = moleculeRecordType;
                         moleculeLineNo = 0;
+                        ++currentModelIndex;
+                        modelAtomIdxStart = atoms.length;
 
                     }else if( line === "@<TRIPOS>ATOM" ){
 
@@ -2612,6 +2616,10 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     }else if( line === "@<TRIPOS>BOND" ){
 
                         currentRecordType = bondRecordType;
+
+                    }else{
+
+                        currentRecordType = 0;
 
                     }
 
@@ -2657,12 +2665,11 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     var ls = line.split( reWhitespace );
 
                     var serial = ls[ 0 ];
-                    var element = ls[ 1 ];
-                    var atomname = element + ( idx + 1 );
+                    var atomname = ls[ 1 ];
                     var x = parseFloat( ls[ 2 ] );
                     var y = parseFloat( ls[ 3 ] );
                     var z = parseFloat( ls[ 4 ] );
-                    // ls[ 5 ] is atomtype
+                    var element = ls[ 5 ].split( "." )[ 0 ];
                     var resno = ls[ 6 ] ? parseInt( ls[ 6 ] ) : 1;
                     var resname = ls[ 7 ] ? ls[ 7 ] : "";
                     var bfactor = ls[ 8 ] ? parseFloat( ls[ 8 ] ) : 0.0;
@@ -2687,7 +2694,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                         atomArray.bfactor[ idx ] = bfactor;
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
                         atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = 1;  // TODO multi-model mol2 file
+                        atomArray.modelindex[ idx ] = currentModelIndex;
 
                         atomArray.usedLength += 1;
 
@@ -2711,7 +2718,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                         a.bfactor = bfactor;
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
-                        a.modelindex = 1;  // TODO multi-model mol2 file
+                        a.modelindex = currentModelIndex;
 
                     }
 
@@ -2723,8 +2730,8 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     var ls = line.split( reWhitespace );
 
                     // ls[ 0 ] is bond id
-                    var from = parseInt( ls[ 1 ] ) - 1;
-                    var to = parseInt( ls[ 2 ] ) - 1;
+                    var from = parseInt( ls[ 1 ] ) - 1 + modelAtomIdxStart;
+                    var to = parseInt( ls[ 2 ] ) - 1 + modelAtomIdxStart;
                     var order = bondTypes[ ls[ 3 ] ];
 
                     bondSet.addBond( atoms[ from ], atoms[ to ], false, order );
