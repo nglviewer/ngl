@@ -2557,6 +2557,13 @@ NGL.Mol2Parser.prototype = NGL.createObject(
         var reWhitespace = /\s+/;
 
         var s = this.structure;
+        var firstModelOnly = this.firstModelOnly;
+        var asTrajectory = this.asTrajectory;
+
+        var frames = s.frames;
+        var boxes = s.boxes;
+        var doFrames = false;
+        var currentFrame, currentCoord;
 
         var atoms = s.atoms;
         var bondSet = s.bondSet;
@@ -2573,8 +2580,9 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
         var idx = 0;
         var moleculeLineNo = 0;
-        var currentModelIndex = 0;
         var modelAtomIdxStart = 0;
+        var modelIdx = -1;
+        var numAtoms = 0;
 
         var currentRecordType = 0;
         var moleculeRecordType = 1;
@@ -2606,12 +2614,23 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
                         currentRecordType = moleculeRecordType;
                         moleculeLineNo = 0;
-                        ++currentModelIndex;
-                        modelAtomIdxStart = atoms.length;
+
+                        ++modelIdx;
 
                     }else if( line === "@<TRIPOS>ATOM" ){
 
                         currentRecordType = atomRecordType;
+                        modelAtomIdxStart = atoms.length;
+
+                        if( asTrajectory ){
+
+                            currentCoord = 0;
+                            currentFrame = new Float32Array( numAtoms * 3 );
+                            frames.push( currentFrame );
+
+                            if( modelIdx > 0 ) doFrames = true;
+
+                        }
 
                     }else if( line === "@<TRIPOS>BOND" ){
 
@@ -2633,6 +2652,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     }else if( moleculeLineNo === 1 ){
 
                         var ls = line.split( reWhitespace );
+                        numAtoms = parseInt( ls[ 0 ] );
                         // num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
 
                     }else if( moleculeLineNo === 2 ){
@@ -2664,11 +2684,28 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
                     var ls = line.split( reWhitespace );
 
-                    var serial = ls[ 0 ];
-                    var atomname = ls[ 1 ];
+                    if( firstModelOnly && modelIdx > 0 ) continue;
+
                     var x = parseFloat( ls[ 2 ] );
                     var y = parseFloat( ls[ 3 ] );
                     var z = parseFloat( ls[ 4 ] );
+
+                    if( asTrajectory ){
+
+                        var j = currentCoord * 3;
+
+                        currentFrame[ j + 0 ] = x;
+                        currentFrame[ j + 1 ] = y;
+                        currentFrame[ j + 2 ] = z;
+
+                        currentCoord += 1;
+
+                        if( doFrames ) continue;
+
+                    }
+
+                    var serial = ls[ 0 ];
+                    var atomname = ls[ 1 ];
                     var element = ls[ 5 ].split( "." )[ 0 ];
                     var resno = ls[ 6 ] ? parseInt( ls[ 6 ] ) : 1;
                     var resname = ls[ 7 ] ? ls[ 7 ] : "";
@@ -2694,7 +2731,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                         atomArray.bfactor[ idx ] = bfactor;
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
                         atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = currentModelIndex;
+                        atomArray.modelindex[ idx ] = modelIdx;
 
                         atomArray.usedLength += 1;
 
@@ -2718,7 +2755,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                         a.bfactor = bfactor;
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
-                        a.modelindex = currentModelIndex;
+                        a.modelindex = modelIdx;
 
                     }
 
@@ -2726,6 +2763,9 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     atoms.push( a );
 
                 }else if( currentRecordType === bondRecordType ){
+
+                    if( firstModelOnly && modelIdx > 0 ) continue;
+                    if( asTrajectory && modelIdx > 0 ) continue;
 
                     var ls = line.split( reWhitespace );
 
