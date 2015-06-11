@@ -1513,7 +1513,11 @@ NGL.BondSet.prototype = {
 
             this.addBond( atom1, atom2, notToAtoms, bondOrder );
 
+            return true;
+
         }
+
+        return false;
 
     },
 
@@ -2159,37 +2163,119 @@ NGL.Structure.prototype = {
 
         var bondSet = this.bondSet;
 
-        var i, j, n, m, ra, a1, a2, kdtree, nearestAtoms, radius, maxd;
+        var i, j, n, n1, m, ra, a1, a2;
+        var kdtree, nearestAtoms, radius, maxd;
+        var resname, atomnameList, bonding, equalAtomnames;
+
+        var bondingDict = {};
 
         NGL.time( "NGL.Structure.autoBond within" );
 
         this.eachResidue( function( r ){
 
             ra = r.atoms;
-            n = r.atomCount - 1;
+            n = r.atomCount;
+            n1 = n - 1;
 
-            if( n > 20 ){
+            resname = r.resname;
+            equalAtomnames = false;
 
-                kdtree = new NGL.Kdtree( ra, true );
-                radius = r.hasBackbone() ? 1.2 : 2.3;
+            if( bondingDict[ resname ] ){
 
-                for( i = 0; i <= n; ++i ){
+                atomnameList = bondingDict[ resname ].atomnameList;
 
-                    a1 = ra[ i ];
+                if( n === atomnameList.length ){
 
-                    maxd = a1.covalent + radius + 0.3;
-                    nearestAtoms = kdtree.nearest(
-                        a1, Infinity, maxd * maxd
+                    equalAtomnames = true;
+
+                    for( i = 0; i < n; ++i ){
+
+                        if( ra[ i ].atomname !== atomnameList[ i ] ){
+
+                            equalAtomnames = false;
+                            break;
+
+                        }
+
+                    }
+
+                }else{
+
+                    equalAtomnames = false;
+
+                }
+
+            }
+
+            if( equalAtomnames ){
+
+                var atomIndices1 = bondingDict[ resname ].atomIndices1;
+                var atomIndices2 = bondingDict[ resname ].atomIndices2;
+                var nn = atomIndices1.length;
+
+                for( i = 0; i < nn; ++i ){
+
+                    bondSet.addBond(
+                        ra[ atomIndices1[ i ] ], ra[ atomIndices2[ i ] ]
                     );
-                    m = nearestAtoms.length;
 
-                    for( j = 0; j < m; ++j ){
+                }
 
-                        a2 = nearestAtoms[ j ].atom;
+            }else{
 
-                        if( a1.index < a2.index ){
+                var atomIndices1 = [];
+                var atomIndices2 = [];
 
-                            bondSet.addBondIfConnected( a1, a2 );
+                if( n > 20 ){
+
+                    kdtree = new NGL.Kdtree( ra, true );
+                    radius = r.hasBackbone() ? 1.2 : 2.3;
+
+                    for( i = 0; i <= n1; ++i ){
+
+                        a1 = ra[ i ];
+
+                        maxd = a1.covalent + radius + 0.3;
+                        nearestAtoms = kdtree.nearest(
+                            a1, Infinity, maxd * maxd
+                        );
+                        m = nearestAtoms.length;
+
+                        for( j = 0; j < m; ++j ){
+
+                            a2 = nearestAtoms[ j ].atom;
+
+                            if( a1.index < a2.index ){
+
+                                if( bondSet.addBondIfConnected( a1, a2 ) ){
+
+                                    atomIndices1.push( i );
+                                    atomIndices2.push( ra.indexOf( a2 ) );
+
+                                };
+
+                            }
+
+                        }
+
+                    }
+
+                }else{
+
+                    for( i = 0; i < n1; ++i ){
+
+                        a1 = ra[ i ];
+
+                        for( j = i + 1; j <= n1; ++j ){
+
+                            a2 = ra[ j ];
+
+                            if( bondSet.addBondIfConnected( a1, a2 ) ){
+
+                                atomIndices1.push( i );
+                                atomIndices2.push( j );
+
+                            };
 
                         }
 
@@ -2197,21 +2283,13 @@ NGL.Structure.prototype = {
 
                 }
 
-            }else{
+                bondingDict[ resname ] = {
 
-                for( i = 0; i < n; ++i ){
+                    atomnameList: r.getAtomnameList(),
+                    atomIndices1: atomIndices1,
+                    atomIndices2: atomIndices2
 
-                    a1 = ra[ i ];
-
-                    for( j = i + 1; j <= n; ++j ){
-
-                        a2 = ra[ j ];
-
-                        bondSet.addBondIfConnected( a1, a2 );
-
-                    }
-
-                }
+                };
 
             }
 
@@ -3951,6 +4029,21 @@ NGL.Residue.prototype = {
         }
 
         return true;
+
+    },
+
+    getAtomnameList: function(){
+
+        var n = this.atoms.length;
+        var list = [];
+
+        for( var i = 0; i < n; ++i ){
+
+            list.push( this.atoms[ i ].atomname );
+
+        }
+
+        return list;
 
     },
 
