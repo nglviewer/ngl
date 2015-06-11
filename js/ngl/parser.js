@@ -1673,8 +1673,11 @@ NGL.CifParser.prototype = NGL.createObject(
                                 first = false;
 
                                 modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
-                                currentFrame = [];
-                                currentCoord = 0;
+
+                                if( asTrajectory ){
+                                    currentFrame = [];
+                                    currentCoord = 0;
+                                }
 
                             }
 
@@ -1684,13 +1687,17 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             if( modelNum !== _modelNum ){
 
-                                if( modelIdx === 0 ){
-                                    frames.push( new Float32Array( currentFrame ) );
-                                }
+                                if( asTrajectory ){
 
-                                currentFrame = new Float32Array( atoms.length * 3 );
-                                frames.push( currentFrame );
-                                currentCoord = 0;
+                                    if( modelIdx === 0 ){
+                                        frames.push( new Float32Array( currentFrame ) );
+                                    }
+
+                                    currentFrame = new Float32Array( atoms.length * 3 );
+                                    frames.push( currentFrame );
+                                    currentCoord = 0;
+
+                                }
 
                                 modelIdx += 1;
 
