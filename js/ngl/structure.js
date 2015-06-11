@@ -2177,7 +2177,7 @@ NGL.Structure.prototype = {
 
                     a1 = ra[ i ];
 
-                    maxd = a1.covalent + radius + 0.2;
+                    maxd = a1.covalent + radius + 0.3;
                     nearestAtoms = kdtree.nearest(
                         a1, Infinity, maxd * maxd
                     );
@@ -4210,13 +4210,13 @@ NGL.Atom.prototype = {
         var distSquared = x * x + y * y + z * z;
 
         // NGL.log( distSquared );
-        if( this.residue.isCg() && distSquared < 28.0 ) return true;
+        if( distSquared < 28.0 && this.residue.isCg() ) return true;
 
         if( isNaN( distSquared ) ) return false;
 
         var d = this.covalent + atom.covalent;
-        var d1 = d + 0.2;
-        var d2 = d - 0.2;
+        var d1 = d + 0.3;
+        var d2 = d - 0.3;
 
         return distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 );
 
@@ -5101,13 +5101,13 @@ NGL.ProxyAtom.prototype = {
         var distSquared = x * x + y * y + z * z;
 
         // NGL.log( distSquared );
-        if( taa.residue[ ti ].isCg() && distSquared < 28.0 ) return true;
+        if( distSquared < 28.0 && taa.residue[ ti ].isCg() ) return true;
 
         if( isNaN( distSquared ) ) return false;
 
         var d = taa.covalent[ ti ] + aaa.covalent[ ai ];
-        var d1 = d + 0.2;
-        var d2 = d - 0.2;
+        var d1 = d + 0.3;
+        var d2 = d - 0.3;
 
         return distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 );
 
