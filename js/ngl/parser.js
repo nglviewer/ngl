@@ -2414,20 +2414,19 @@ NGL.SdfParser.prototype = NGL.createObject(
         // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
         // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
 
-        var headerLines = this.streamer.peekLines( 4 );
-
-        var atomCount = parseInt( headerLines[ 3 ].substr( 0, 3 ) );
-        var bondCount = parseInt( headerLines[ 3 ].substr( 3, 3 ) );
-
-        var atomStart = 4;
-        var atomEnd = atomStart + atomCount;
-        var bondStart = atomEnd;
-        var bondEnd = bondStart + bondCount;
+        var headerLines = this.streamer.peekLines( 2 );
 
         var s = this.structure;
+        var firstModelOnly = this.firstModelOnly;
+        var asTrajectory = this.asTrajectory;
 
         s.id = headerLines[ 0 ].trim();
         s.title = headerLines[ 1 ].trim();
+
+        var frames = s.frames;
+        var boxes = s.boxes;
+        var doFrames = false;
+        var currentFrame, currentCoord;
 
         var atoms = s.atoms;
         var bondSet = s.bondSet;
@@ -2444,6 +2443,10 @@ NGL.SdfParser.prototype = NGL.createObject(
 
         var idx = 0;
         var lineNo = 0;
+        var modelIdx = 0;
+        var modelAtomIdxStart = 0;
+
+        var atomCount, bondCount, atomStart, atomEnd, bondStart, bondEnd;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -2451,11 +2454,58 @@ NGL.SdfParser.prototype = NGL.createObject(
 
                 var line = lines[ i ];
 
+                if( line.substr( 0, 4 ) === "$$$$" ){
+
+                    lineNo = -1;
+                    ++modelIdx;
+                    modelAtomIdxStart = atoms.length;
+
+                }
+
+                if( lineNo === 3 ){
+
+                    atomCount = parseInt( line.substr( 0, 3 ) );
+                    bondCount = parseInt( line.substr( 3, 3 ) );
+
+                    atomStart = 4;
+                    atomEnd = atomStart + atomCount;
+                    bondStart = atomEnd;
+                    bondEnd = bondStart + bondCount;
+
+                    if( asTrajectory ){
+
+                        currentCoord = 0;
+                        currentFrame = new Float32Array( atomCount * 3 );
+                        frames.push( currentFrame );
+
+                        if( modelIdx > 0 ) doFrames = true;
+
+                    }
+
+                }
+
                 if( lineNo >= atomStart && lineNo < atomEnd ){
+
+                    if( firstModelOnly && modelIdx > 0 ) continue;
 
                     var x = parseFloat( line.substr( 0, 10 ) );
                     var y = parseFloat( line.substr( 10, 10 ) );
                     var z = parseFloat( line.substr( 20, 10 ) );
+
+                    if( asTrajectory ){
+
+                        var j = currentCoord * 3;
+
+                        currentFrame[ j + 0 ] = x;
+                        currentFrame[ j + 1 ] = y;
+                        currentFrame[ j + 2 ] = z;
+
+                        currentCoord += 1;
+
+                        if( doFrames ) continue;
+
+                    }
+
                     var element = line.substr( 31, 3 ).trim();
                     var atomname = element + ( idx + 1 );
 
@@ -2478,7 +2528,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                         atomArray.setAltloc( idx, '' );
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
                         atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = 1;  // TODO multi-model sdf file
+                        atomArray.modelindex[ idx ] = modelIdx;
 
                         atomArray.usedLength += 1;
 
@@ -2501,7 +2551,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                         a.altloc = '';
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
-                        a.modelindex = 1;  // TODO multi-model sdf file
+                        a.modelindex = modelIdx;
 
                     }
 
@@ -2512,8 +2562,11 @@ NGL.SdfParser.prototype = NGL.createObject(
 
                 if( lineNo >= bondStart && lineNo < bondEnd ){
 
-                    var from = parseInt( line.substr( 0, 3 ) ) - 1;
-                    var to = parseInt( line.substr( 3, 3 ) ) - 1;
+                    if( firstModelOnly && modelIdx > 0 ) continue;
+                    if( asTrajectory && modelIdx > 0 ) continue;
+
+                    var from = parseInt( line.substr( 0, 3 ) ) - 1 + modelAtomIdxStart;
+                    var to = parseInt( line.substr( 3, 3 ) ) - 1 + modelAtomIdxStart;
                     var order = parseInt( line.substr( 6, 3 ) );
 
                     bondSet.addBond( atoms[ from ], atoms[ to ], false, order );
