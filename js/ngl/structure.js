@@ -665,6 +665,8 @@ NGL.LabelFactory.types = {
 
     "": "",
     "atomname": "atom name",
+    "atomindex": "atom index",
+    "atom": "atom name + index",
     "resname": "residue name",
     "resno": "residue no",
     "res": "residue name + no",
@@ -687,6 +689,16 @@ NGL.LabelFactory.prototype = {
             case "atomname":
 
                 l = a.atomname;
+                break;
+
+            case "atomindex":
+
+                l = "" + a.index;
+                break;
+
+            case "atom":
+
+                l = a.atomname + "|" + a.index;
                 break;
 
             case "resname":
