@@ -396,7 +396,7 @@ NGL.Stage.prototype = {
 
         this.eachComponent( function( comp ){
 
-            if( name === undefined || comp.name === name ){
+            if( name === undefined || comp.name.match( name ) !== null ){
                 compList.push( comp );
             }
 
@@ -422,11 +422,11 @@ NGL.Stage.prototype = {
 
         this.eachRepresentation( function( repr, comp ){
 
-            if( compName !== undefined && comp.name !== compName ){
+            if( compName !== undefined && comp.name.match( compName ) === null ){
                 return;
             }
 
-            if( reprName === undefined || repr.name === reprName ){
+            if( reprName === undefined || repr.name.match( reprName ) !== null ){
                 reprList.push( repr );
             }
 
