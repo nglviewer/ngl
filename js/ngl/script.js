@@ -261,37 +261,29 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     //
 
-    function color( value, list ){
+    function color( value, collection ){
 
-        list.forEach( function( o ){
-
-            o.setColor( value );
-
-        } );
+        collection.setColor( value );
 
     }
 
-    function visibility( value, list ){
+    function visibility( value, collection ){
 
-        list.forEach( function( o ){
-
-            o.setVisibility( value );
-
-        } );
+        collection.setVisibility( value );
 
     }
 
-    function hide( list ){
+    function hide( collection ){
 
-        visibility( false, list );
+        visibility( false, collection );
 
     }
 
-    function show( list, only ){
+    function show( collection, only ){
 
         if( only ) hide();
 
-        visibility( true, list );
+        visibility( true, collection );
 
     }
 
@@ -427,7 +419,9 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
-    function uiVisibilitySelect( list ){
+    function uiVisibilitySelect( collection ){
+
+        var list = collection.list;
 
         function getVisible(){
 
@@ -472,9 +466,9 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
                 var name = select.getValue();
 
                 if( name === "" ){
-                    show( list );
+                    show( collection );
                 }else{
-                    hide( list );
+                    hide( collection );
                     show( stage.getAnythingByName( name ) );
                 }
 
@@ -486,10 +480,11 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
-    function uiVisibilityButton( label, list ){
+    function uiVisibilityButton( label, collection ){
 
         label = U( label ? label : "all" );
-        list = list || [];
+        collection = collection || new NGL.Collection();
+        list = collection.list;
 
         function isVisible(){
 
@@ -523,7 +518,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         var btn = new UI.Button( getLabel() ).onClick( function(){
 
-            visibility( !isVisible(), list );
+            visibility( !isVisible(), collection );
 
         } );
 

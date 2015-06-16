@@ -402,7 +402,7 @@ NGL.Stage.prototype = {
 
         }, componentType );
 
-        return compList;
+        return new NGL.ComponentCollection( compList );
 
     },
 
@@ -432,7 +432,7 @@ NGL.Stage.prototype = {
 
         }, componentType );
 
-        return reprList;
+        return new NGL.RepresentationCollection( reprList );
 
     },
 
@@ -441,7 +441,7 @@ NGL.Stage.prototype = {
         var compList = this.getComponentsByName( name );
         var reprList = this.getRepresentationsByName( name );
 
-        return compList.concat( reprList );
+        return new NGL.Collection( compList.concat( reprList ) );
 
     },
 
@@ -1568,5 +1568,142 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     },
 
     getCenter: function(){}
+
+} );
+
+
+///////////////
+// Collection
+
+NGL.Collection = function( list ){
+
+    this.list = list || [];
+
+    // remove elements from list when they get disposed
+
+    var n = this.list.length;
+
+    for( var i = 0; i < n; ++i ){
+
+        var elm = this.list[ i ];
+
+        elm.signals.disposed.add( function(){
+
+            this._remove( elm );
+
+        }, this );
+
+    }
+
+};
+
+NGL.Collection.prototype = {
+
+    constructor: NGL.Collection,
+
+    _remove: function( elm ){
+
+        var idx = this.list.indexOf( elm );
+
+        if( idx !== -1 ){
+
+            this.list.splice( idx, 1 );
+
+        }
+
+    },
+
+    _invoke: function( methodName, methodArgs ){
+
+        var n = this.list.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            var elm = this.list[ i ];
+            var method = elm[ methodName ];
+
+            if( typeof method === "function" ){
+
+                method.apply( elm, methodArgs );
+
+            }
+
+        }
+
+        return this;
+
+    },
+
+    setVisibility: function( value ){
+
+        return this._invoke( "setVisibility", [ value ] );
+
+    },
+
+    setSelection: function( string ){
+
+        return this._invoke( "setSelection", [ string ] );
+
+    },
+
+    dispose: function(){
+
+        return this._invoke( "dispose" );
+
+    }
+
+};
+
+
+NGL.ComponentCollection = function( compList ){
+
+    NGL.Collection.call( this, compList );
+
+};
+
+NGL.ComponentCollection.prototype = NGL.createObject(
+
+    NGL.Collection.prototype, {
+
+    constructor: NGL.ComponentCollection,
+
+    addRepresentation: function( name, params ){
+
+        return this._invoke( "addRepresentation", [ name, params ] );
+
+    },
+
+    centerView: function( zoom, sele ){
+
+        return this._invoke( "centerView", [ zoom, sele ] );
+
+    }
+
+} );
+
+
+NGL.RepresentationCollection = function( reprList ){
+
+    NGL.Collection.call( this, reprList );
+
+};
+
+NGL.RepresentationCollection.prototype = NGL.createObject(
+
+    NGL.Collection.prototype, {
+
+    constructor: NGL.RepresentationCollection,
+
+    setParameters: function( params ){
+
+        return this._invoke( "setParameters", [ params ] );
+
+    },
+
+    setColor: function( value ){
+
+        return this._invoke( "setColor", [ color ] );
+
+    }
 
 } );
