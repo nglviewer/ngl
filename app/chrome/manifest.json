@@ -1,0 +1,22 @@
+{
+    "name": "NGL Viewer",
+    "description": "Molecular visualization",
+    "version": "0.1",
+    "manifest_version": 2,
+    "app": {
+        "background": {
+          "scripts": [ "background.js" ]
+        }
+    },
+    "icons": {
+        "16": "icon-16.png",
+        "32": "icon-32.png",
+        "48": "icon-48.png",
+        "128": "icon-128.png",
+        "256": "icon-256.png",
+        "512": "icon-512.png"
+    },
+    "permissions": [
+        "storage"
+    ]
+}

@@ -570,18 +570,29 @@ NGL.Preferences = function( stage, id ){
 
     };
 
+    this._localStorage = {};
 
     try{
 
-        if ( window.localStorage[ this.id ] === undefined ) {
+        if( window.chrome && chrome.runtime && chrome.runtime.id ){
 
-            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+            this._localStorage = window.chrome.storage.local;
 
-        } else {
+        }else{
 
-            var data = JSON.parse( window.localStorage[ this.id ] );
+            this._localStorage = window.localStorage;
 
-            for ( var key in data ) {
+        }
+
+        if( this._localStorage[ this.id ] === undefined ){
+
+            this._localStorage[ this.id ] = JSON.stringify( this.storage );
+
+        }else{
+
+            var data = JSON.parse( this._localStorage[ this.id ] );
+
+            for( var key in data ){
 
                 this.storage[ key ] = data[ key ];
 
@@ -591,7 +602,7 @@ NGL.Preferences = function( stage, id ){
 
     }catch( e ){
 
-        NGL.error( "localStorage not accessible/available" );
+        NGL.error( "localStorage not accessible/available", e );
 
     }
 
@@ -699,7 +710,7 @@ NGL.Preferences.prototype = {
 
         try{
 
-            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+            this._localStorage[ this.id ] = JSON.stringify( this.storage );
 
         }catch( e ){
 
@@ -723,7 +734,7 @@ NGL.Preferences.prototype = {
 
         try{
 
-            delete window.localStorage[ this.id ];
+            delete this._localStorage[ this.id ];
 
         }catch( e ){
 
