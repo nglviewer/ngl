@@ -484,7 +484,8 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         label = U( label ? label : "all" );
         collection = collection || new NGL.Collection();
-        list = collection.list;
+
+        var list = collection.list;
 
         function isVisible(){
 

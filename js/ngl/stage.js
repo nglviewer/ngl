@@ -1700,7 +1700,7 @@ NGL.RepresentationCollection.prototype = NGL.createObject(
 
     },
 
-    setColor: function( value ){
+    setColor: function( color ){
 
         return this._invoke( "setColor", [ color ] );
 
