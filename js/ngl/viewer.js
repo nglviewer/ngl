@@ -550,13 +550,16 @@ NGL.Utils = {
 };
 
 
-NGL.debug = false;
-
-
 NGL.init = function( onload, baseUrl ){
 
-    NGL.debug = NGL.GET( "debug" );
-    NGL.worker = NGL.GET( "worker" );
+    var debug = NGL.GET( "debug" );
+    if( debug !== undefined ) NGL.debug = debug;
+
+    var useWorker = NGL.GET( "useWorker" );
+    if( useWorker !== undefined ) NGL.useWorker = useWorker;
+
+    var disableImpostor = NGL.GET( "disableImpostor" );
+    if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
 
     this.textures = [];
 
@@ -569,10 +572,14 @@ NGL.init = function( onload, baseUrl ){
 
 NGL.dataURItoImage = function( dataURI ){
 
-    var img = document.createElement( "img" );
-    img.src = dataURI;
+    if( typeof importScripts !== 'function' ){
 
-    return img;
+        var img = document.createElement( "img" );
+        img.src = dataURI;
+
+        return img;
+
+    }
 
 };
 

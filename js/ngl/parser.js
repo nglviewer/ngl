@@ -456,12 +456,23 @@ NGL.Parser.prototype = {
 
     parseWorker: function( callback ){
 
-        if( NGL.worker && typeof Worker !== "undefined" ){
+        if( NGL.useWorker && typeof Worker !== "undefined" ){
 
             var __timeName = "NGL.Parser.parseWorker " + this.name;
             NGL.time( __timeName );
 
-            var worker = new Worker( "../js/worker/parse.js" );
+            var worker = new Worker( "../js/worker/parseX.js" );
+
+            worker.onerror = function( e ){
+
+                console.warn(
+                    "NGL.Parser.parseWorker error - trying without worker"
+                );
+                worker.terminate();
+
+                this.parse( callback );
+
+            }.bind( this );
 
             worker.onmessage = function( e ){
 
@@ -479,11 +490,7 @@ NGL.Parser.prototype = {
 
         }else{
 
-            this.parse( function(){
-
-                callback( this[ this.__objName ] );
-
-            }.bind( this ) );
+            this.parse( callback );
 
         }
 

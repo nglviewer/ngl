@@ -375,7 +375,7 @@ NGL.Volume.prototype = {
             // already generated
             callback();
 
-        }else if( NGL.worker && typeof Worker !== "undefined" ){
+        }else if( NGL.useWorker && typeof Worker !== "undefined" ){
 
             var __timeName = "NGL.Volume.generateSurfaceWorker " + this.name;
 
@@ -387,9 +387,22 @@ NGL.Volume.prototype = {
             if( this.worker === undefined ){
 
                 vol = this.toJSON();
-                this.worker = new Worker( "../js/worker/surf.js" );
+                this.worker = new Worker( "../js/worker/surfX.js" );
 
             }
+
+            this.worker.onerror = function( e ){
+
+                console.warn(
+                    "NGL.Volume.generateSurfaceWorker error - trying without worker"
+                );
+                this.worker.terminate();
+                this.worker = undefined;
+
+                this.generateSurface( isolevel, smooth );
+                callback();
+
+            }.bind( this );
 
             this.worker.onmessage = function( e ){
 
@@ -421,7 +434,6 @@ NGL.Volume.prototype = {
         }else{
 
             this.generateSurface( isolevel, smooth );
-
             callback();
 
         }
@@ -2288,7 +2300,7 @@ NGL.MolecularSurface.prototype = {
             // already generated
             callback();
 
-        }else if( NGL.worker && typeof Worker !== "undefined" ){
+        }else if( NGL.useWorker && typeof Worker !== "undefined" ){
 
             var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + type;
 

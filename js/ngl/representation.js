@@ -4,6 +4,12 @@
  */
 
 
+NGL.SideTypes = {};
+NGL.SideTypes[ THREE.FrontSide ] = "front";
+NGL.SideTypes[ THREE.BackSide ] = "back";
+NGL.SideTypes[ THREE.DoubleSide ] = "double";
+
+
 NGL.makeRepresentation = function( type, object, viewer, params ){
 
     NGL.time( "NGL.makeRepresentation " + type );
