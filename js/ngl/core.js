@@ -344,7 +344,11 @@ var NGL = {
     disableImpostor: false,
     useWorker: true,
     indexUint16: false,
-    debug: false
+    debug: false,
+    develop: (
+        self.location.pathname.indexOf( "core.js" ) !== -1 ||
+        self.location.pathname.indexOf( "dev.html" ) !== -1
+    )
 
 };
 
@@ -735,14 +739,63 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Worker
 
+NGL.Worker = {
+
+    funcDict: {},
+
+    add: function( name, func ){
+
+        NGL.Worker.funcDict[ name ] = func;
+
+    },
+
+    make: function( name, params ){
+
+        params = params || {};
+
+        var worker;
+
+        if( NGL.develop ){
+            worker = new Worker( "../js/ngl/core.js" );
+        }else{
+            worker = new Worker( "../js/build/ngl.full.min.js" );
+        }
+
+        worker.onerror = params.onerror;
+
+        worker.onmessage = params.onmessage;
+
+        var _postMessage = worker.postMessage;
+
+        worker.postMessage = function( aMessage, transferList ){
+
+            if( aMessage !== undefined ) aMessage.__name__ = name;
+
+            _postMessage.call( worker, aMessage, transferList );
+
+        }
+
+        if( params.messageData !== undefined ){
+
+            worker.postMessage.apply( worker, params.messageData );
+
+        }
+
+        return worker;
+
+    }
+
+};
+
+
 if( typeof importScripts === 'function' ){
 
-    if( false ){
+    if( NGL.develop ){
 
         importScripts(
 
             "../three/three.js",
-            // "../three/Detector.js",
+            "../three/Detector.js",
             "../three/TypedArrayUtils.js",
             "../three/controls/TrackballControls.js",
             "../three/loaders/OBJLoader.js",
@@ -780,46 +833,23 @@ if( typeof importScripts === 'function' ){
 
     onmessage = function( e ){
 
-        NGL.Worker.funcDict[ e.data.__name__ ]( e );
+        if( e.data.__name__ === undefined ){
+
+            NGL.error( "message __name__ undefined" );
+
+        }else if( NGL.Worker.funcDict[ e.data.__name__ ] === undefined ){
+
+            NGL.error( "funcDict __name__ undefined" );
+
+        }else{
+
+            NGL.Worker.funcDict[ e.data.__name__ ]( e );
+
+        }
 
     }
 
 }
-
-
-NGL.Worker = {
-
-    funcDict: {},
-
-    add: function( name, func ){
-
-        NGL.Worker.funcDict[ name ] = func;
-
-    },
-
-    make: function( name, params ){
-
-        var worker;
-
-        if( false ){
-            worker = new Worker( "../js/ngl/core.js" );
-        }else{
-            worker = new Worker( "../js/build/ngl.full.min.js" );
-        }
-
-        worker.onerror = params.onerror;
-
-        worker.onmessage = params.onmessage;
-
-        params.messageData[ 0 ].__name__ = name;
-
-        Worker.prototype.postMessage.apply( worker, params.messageData );
-
-        return worker;
-
-    }
-
-};
 
 
 // Decompress
@@ -920,7 +950,9 @@ NGL.Worker.add( "decompress", function( e ){
 
 NGL.decompressWorker = function( data, file, asBinary, callback ){
 
-    if( NGL.useWorker && typeof Worker !== "undefined" ){
+    if( NGL.useWorker && typeof Worker !== "undefined" &&
+        typeof importScripts !== 'function'
+    ){
 
         NGL.time( "NGL.decompressWorker" );
 
@@ -929,7 +961,7 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
             onerror: function( e ){
 
                 console.warn(
-                    "NGL.decompressWorker error - trying without worker"
+                    "NGL.decompressWorker error - trying without worker", e
                 );
                 worker.terminate();
 
@@ -1055,4 +1087,3 @@ NGL.Counter.prototype = {
     }
 
 };
-

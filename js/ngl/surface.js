@@ -214,6 +214,40 @@ NGL.Surface.prototype = {
 ///////////
 // Volume
 
+NGL.Worker.add( "surf", function( e ){
+
+    NGL.time( "WORKER surf" );
+
+    if( self.vol === undefined ) self.vol = new NGL.Volume();
+
+    var vol = self.vol;
+    var d = e.data;
+    var p = d.params;
+
+    if( d.vol ) vol.fromJSON( d.vol );
+
+    vol.generateSurface( p.isolevel, p.smooth );
+
+    NGL.timeEnd( "WORKER surf" );
+
+    var meshData = {
+        position: vol.position,
+        index: vol.index,
+        normal: vol.normal
+    };
+
+    var transferable = [
+        vol.position.buffer,
+        vol.index.buffer
+    ];
+
+    if( vol.normal ) transferable.push( vol.normal.buffer );
+
+    self.postMessage( meshData, transferable );
+
+} );
+
+
 NGL.Volume = function( name, path, data, nx, ny, nz ){
 
     this.name = name;
@@ -375,26 +409,26 @@ NGL.Volume.prototype = {
             // already generated
             callback();
 
-        }else if( NGL.useWorker && typeof Worker !== "undefined" ){
+        }else if( NGL.useWorker && typeof Worker !== "undefined" &&
+            typeof importScripts !== 'function'
+        ){
 
             var __timeName = "NGL.Volume.generateSurfaceWorker " + this.name;
-
             NGL.time( __timeName );
 
-            var scope = this;
             var vol = undefined;
 
             if( this.worker === undefined ){
 
                 vol = this.toJSON();
-                this.worker = new Worker( "../js/worker/surfX.js" );
+                this.worker = NGL.Worker.make( "surf" );
 
             }
 
             this.worker.onerror = function( e ){
 
                 console.warn(
-                    "NGL.Volume.generateSurfaceWorker error - trying without worker"
+                    "NGL.Volume.generateSurfaceWorker error - trying without worker", e
                 );
                 this.worker.terminate();
                 this.worker = undefined;
@@ -410,18 +444,18 @@ NGL.Volume.prototype = {
 
                 // if( NGL.debug ) console.log( e.data );
 
-                scope.position = e.data.position;
-                scope.normal = e.data.normal;
-                scope.index = e.data.index;
+                this.position = e.data.position;
+                this.normal = e.data.normal;
+                this.index = e.data.index;
 
-                scope.size = scope.position.length / 3;
+                this.size = this.position.length / 3;
 
-                scope.__isolevel = isolevel;
-                scope.__smooth = smooth;
+                this.__isolevel = isolevel;
+                this.__smooth = smooth;
 
                 callback();
 
-            };
+            }.bind( this );
 
             this.worker.postMessage( {
                 vol: vol,
@@ -2253,6 +2287,45 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
+NGL.Worker.add( "molsurf", function( e ){
+
+    NGL.time( "WORKER molsurf" );
+
+    var d = e.data;
+    var p = d.params;
+
+    if( d.atomSet ){
+
+        self.molsurf = new NGL.MolecularSurface(
+            new NGL.AtomSet().fromJSON( d.atomSet )
+        );
+
+    }
+
+    var molsurf = self.molsurf;
+
+    molsurf.generateSurface( p.type, p.probeRadius, p.scaleFactor, p.smooth );
+
+    NGL.timeEnd( "WORKER molsurf" );
+
+    var meshData = {
+        position: molsurf.position,
+        index: molsurf.index,
+        normal: molsurf.normal
+    };
+
+    var transferable = [
+        molsurf.position.buffer,
+        molsurf.index.buffer
+    ];
+
+    if( molsurf.normal ) transferable.push( molsurf.normal.buffer );
+
+    self.postMessage( meshData, transferable );
+
+} );
+
+
 NGL.MolecularSurface = function( atomSet ){
 
     this.atomSet = atomSet;
@@ -2300,21 +2373,35 @@ NGL.MolecularSurface.prototype = {
             // already generated
             callback();
 
-        }else if( NGL.useWorker && typeof Worker !== "undefined" ){
+        }else if( NGL.useWorker && typeof Worker !== "undefined" &&
+            typeof importScripts !== 'function'
+        ){
 
             var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + type;
 
             NGL.time( __timeName );
 
-            var scope = this;
             var atomSet = undefined;
 
             if( this.worker === undefined ){
 
                 atomSet = this.atomSet.toJSON();
-                this.worker = new Worker( "../js/worker/molsurf.js" );
+                this.worker = NGL.Worker.make( "molsurf" );
 
             }
+
+            this.worker.onerror = function( e ){
+
+                console.warn(
+                    "NGL.MolecularSurface.generateSurfaceWorker error - trying without worker", e
+                );
+                this.worker.terminate();
+                this.worker = undefined;
+
+                this.generateSurface( type, probeRadius, scaleFactor, smooth );
+                callback();
+
+            }.bind( this );
 
             this.worker.onmessage = function( e ){
 
@@ -2322,20 +2409,20 @@ NGL.MolecularSurface.prototype = {
 
                 // if( NGL.debug ) console.log( e.data );
 
-                scope.position = e.data.position;
-                scope.normal = e.data.normal;
-                scope.index = e.data.index;
+                this.position = e.data.position;
+                this.normal = e.data.normal;
+                this.index = e.data.index;
 
-                scope.size = scope.position.length / 3;
+                this.size = this.position.length / 3;
 
-                scope.__type = type;
-                scope.__probeRadius = probeRadius;
-                scope.__scaleFactor = scaleFactor;
-                scope.__smooth = smooth;
+                this.__type = type;
+                this.__probeRadius = probeRadius;
+                this.__scaleFactor = scaleFactor;
+                this.__smooth = smooth;
 
                 callback();
 
-            };
+            }.bind( this );
 
             this.worker.postMessage( {
                 atomSet: atomSet,
@@ -2350,7 +2437,6 @@ NGL.MolecularSurface.prototype = {
         }else{
 
             this.generateSurface( type, probeRadius, scaleFactor, smooth );
-
             callback();
 
         }

@@ -395,6 +395,26 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 ///////////
 // Parser
 
+NGL.Worker.add( "parse", function( e ){
+
+    NGL.time( "WORKER parse" );
+
+    var parser = NGL.fromJSON( e.data );
+
+    parser.parse( function(){
+
+        NGL.timeEnd( "WORKER parse" );
+
+        // no need to return the streamer data
+        parser.streamer.dispose();
+
+        self.postMessage( parser.toJSON(), parser.getTransferable() );
+
+    } );
+
+} );
+
+
 NGL.Parser = function( streamer, params ){
 
     var p = params || {};
@@ -456,37 +476,46 @@ NGL.Parser.prototype = {
 
     parseWorker: function( callback ){
 
-        if( NGL.useWorker && typeof Worker !== "undefined" ){
+        if( NGL.useWorker && typeof Worker !== "undefined" &&
+            typeof importScripts !== 'function'
+        ){
 
             var __timeName = "NGL.Parser.parseWorker " + this.name;
             NGL.time( __timeName );
 
-            var worker = new Worker( "../js/worker/parseX.js" );
+            var worker = NGL.Worker.make( "parse", {
 
-            worker.onerror = function( e ){
+                onerror: function( e ){
 
-                console.warn(
-                    "NGL.Parser.parseWorker error - trying without worker"
-                );
-                worker.terminate();
+                    console.warn(
+                        "NGL.Parser.parseWorker error - trying without worker", e
+                    );
+                    worker.terminate();
 
-                this.parse( callback );
+                    this.parse( callback );
 
-            }.bind( this );
+                }.bind( this ),
 
-            worker.onmessage = function( e ){
+                onmessage: function( e ){
 
-                NGL.timeEnd( __timeName );
-                if( NGL.debug ) NGL.log( e.data );
+                    NGL.timeEnd( __timeName );
+                    if( NGL.debug ) NGL.log( e.data );
 
-                worker.terminate();
+                    worker.terminate();
 
-                this.fromJSON( e.data );
-                this._afterWorker( callback );
+                    this.fromJSON( e.data );
+                    this._afterWorker( callback );
 
-            }.bind( this );
+                }.bind( this ),
 
-            worker.postMessage( this.toJSON(), this.getTransferable() );
+                messageData: [
+
+                    this.toJSON(),
+                    this.getTransferable()
+
+                ]
+
+            } );
 
         }else{
 
