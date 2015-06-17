@@ -44,6 +44,8 @@ Version 0.6dev
 * CODE: chunked data loading and parsing via streamer class
 * MIGRATION: Stage.loadFile signature changed
 * CODE: faster autobonding of large residues (e.g. hydrated lipids)
+* CODE: WebWorker support while using development and build files
+* CODE: WebWorker used for decompression, parsing and surface generation
 
 
 Version 0.5

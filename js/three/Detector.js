@@ -3,6 +3,8 @@
  * @author mr.doob / http://mrdoob.com/
  */
 
+if( typeof importScripts !== 'function' ){
+
 var Detector = {
 
 	canvas: !! window.CanvasRenderingContext2D,
@@ -57,3 +59,5 @@ var Detector = {
 	}
 
 };
+
+}

@@ -342,7 +342,13 @@ var NGL = {
     REVISION: '0.6dev',
     EPS: 0.0000001,
     disableImpostor: false,
-    indexUint16: false
+    useWorker: true,
+    indexUint16: false,
+    debug: false,
+    develop: (
+        self.location.pathname.indexOf( "core.js" ) !== -1 ||
+        self.location.pathname.indexOf( "dev.html" ) !== -1
+    )
 
 };
 
@@ -359,12 +365,6 @@ NGL.timeEnd = Function.prototype.bind.call( console.timeEnd, console );
 NGL.LeftMouseButton = 1;
 NGL.MiddleMouseButton = 2;
 NGL.RightMouseButton = 3;
-
-
-NGL.SideTypes = {};
-NGL.SideTypes[ THREE.FrontSide ] = "front";
-NGL.SideTypes[ THREE.BackSide ] = "back";
-NGL.SideTypes[ THREE.DoubleSide ] = "double";
 
 
 NGL.browser = function(){
@@ -419,7 +419,11 @@ NGL.GET = function( id ){
     var a = new RegExp( id + "=([^&#=]*)" );
     var m = a.exec( window.location.search );
 
-    if( m ) return decodeURIComponent( m[1] );
+    if( m ){
+        return decodeURIComponent( m[1] );
+    }else{
+        return undefined;
+    }
 
 };
 
@@ -733,6 +737,121 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 };
 
 
+// Worker
+
+NGL.Worker = {
+
+    funcDict: {},
+
+    add: function( name, func ){
+
+        NGL.Worker.funcDict[ name ] = func;
+
+    },
+
+    make: function( name, params ){
+
+        params = params || {};
+
+        var worker;
+
+        if( NGL.develop ){
+            worker = new Worker( "../js/ngl/core.js" );
+        }else{
+            worker = new Worker( "../js/build/ngl.full.min.js" );
+        }
+
+        worker.onerror = params.onerror;
+
+        worker.onmessage = params.onmessage;
+
+        var _postMessage = worker.postMessage;
+
+        worker.postMessage = function( aMessage, transferList ){
+
+            if( aMessage !== undefined ) aMessage.__name__ = name;
+
+            _postMessage.call( worker, aMessage, transferList );
+
+        }
+
+        if( params.messageData !== undefined ){
+
+            worker.postMessage.apply( worker, params.messageData );
+
+        }
+
+        return worker;
+
+    }
+
+};
+
+
+if( typeof importScripts === 'function' ){
+
+    if( NGL.develop ){
+
+        importScripts(
+
+            "../three/three.js",
+            "../three/Detector.js",
+            "../three/TypedArrayUtils.js",
+            "../three/controls/TrackballControls.js",
+            "../three/loaders/OBJLoader.js",
+            "../three/loaders/PLYLoader.js",
+
+            "../lib/async.js",
+            "../lib/promise-6.0.0.min.js",
+            "../lib/sprintf.min.js",
+            "../lib/jszip.min.js",
+            "../lib/pako.min.js",
+            "../lib/lzma.min.js",
+            "../lib/bzip2.min.js",
+            "../lib/chroma.min.js",
+            "../lib/svd.js",
+            "../lib/signals.min.js",
+
+            // "../ngl/core.js",
+            "../ngl/symmetry.js",
+            "../ngl/geometry.js",
+            "../ngl/structure.js",
+            "../ngl/trajectory.js",
+            "../ngl/surface.js",
+            "../ngl/script.js",
+            "../ngl/streamer.js",
+            "../ngl/parser.js",
+            "../ngl/loader.js",
+            "../ngl/viewer.js",
+            "../ngl/buffer.js",
+            "../ngl/representation.js",
+            "../ngl/stage.js"
+
+        );
+
+    }
+
+    onmessage = function( e ){
+
+        if( e.data.__name__ === undefined ){
+
+            NGL.error( "message __name__ undefined" );
+
+        }else if( NGL.Worker.funcDict[ e.data.__name__ ] === undefined ){
+
+            NGL.error( "funcDict __name__ undefined" );
+
+        }else{
+
+            NGL.Worker.funcDict[ e.data.__name__ ]( e );
+
+        }
+
+    }
+
+}
+
+
 // Decompress
 
 NGL.decompress = function( data, file, asBinary, callback ){
@@ -813,26 +932,59 @@ NGL.decompress = function( data, file, asBinary, callback ){
 };
 
 
+NGL.Worker.add( "decompress", function( e ){
+
+    var d = e.data;
+
+    var value = NGL.decompress( d.data, d.file, d.asBinary );
+    var transferable = [];
+
+    if( d.asBinary ){
+        transferable.push( value.buffer );
+    }
+
+    self.postMessage( value, transferable );
+
+} );
+
+
 NGL.decompressWorker = function( data, file, asBinary, callback ){
 
-    if( NGL.worker && typeof Worker !== "undefined" ){
+    if( NGL.useWorker && typeof Worker !== "undefined" &&
+        typeof importScripts !== 'function'
+    ){
 
         NGL.time( "NGL.decompressWorker" );
 
-        var worker = new Worker( "../js/worker/decompress.js" );
+        var worker = NGL.Worker.make( "decompress", {
 
-        worker.onmessage = function( e ){
+            onerror: function( e ){
 
-            NGL.timeEnd( "NGL.decompressWorker" );
-            worker.terminate();
-            callback( e.data );
+                console.warn(
+                    "NGL.decompressWorker error - trying without worker", e
+                );
+                worker.terminate();
 
-        };
+                NGL.decompress( data, file, asBinary, callback );
 
-        worker.postMessage(
-            { data: data, file: file, asBinary: asBinary },
-            [ data.buffer ? data.buffer : data ]
-        );
+            },
+
+            onmessage: function( e ){
+
+                NGL.timeEnd( "NGL.decompressWorker" );
+                worker.terminate();
+                callback( e.data );
+
+            },
+
+            messageData: [
+
+                { data: data, file: file, asBinary: asBinary },
+                [ data.buffer ? data.buffer : data ]
+
+            ]
+
+        } );
 
     }else{
 
@@ -935,4 +1087,3 @@ NGL.Counter.prototype = {
     }
 
 };
-

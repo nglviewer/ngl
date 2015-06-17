@@ -193,7 +193,7 @@ NGL.AtomArray.prototype = {
         if( this.residue && this.residue.chain &&
                 this.residue.chain.model ){
             name += "/" + this.residue.chain.model.index;
-        } 
+        }
 
         return name;
 
@@ -368,7 +368,7 @@ NGL.ProxyAtom.prototype = {
         if( this.residue && this.residue.chain &&
                 this.residue.chain.model ){
             name += "/" + this.residue.chain.model.index;
-        } 
+        }
 
         return name;
 
@@ -380,7 +380,7 @@ NGL.ProxyAtom.prototype = {
 onmessage = function( event ){
 
     var groStructure = new NGL.GroStructure2();
-    
+
     groStructure.__parse( event.data );
 
     var aa = groStructure.atomArray;
@@ -394,9 +394,9 @@ onmessage = function( event ){
         aa.covalent.buffer, aa.hetero.buffer, aa.bfactor.buffer,
         aa.altloc.buffer, aa.atomname.buffer
     ] );
-    
+
     // postMessage( "moin" );
-    
+
 };
 
 
