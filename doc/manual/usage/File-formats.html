@@ -18,6 +18,8 @@
 						<li><a href="#mmcif">mmCIF</a></li>
 						<li><a href="#pdb">PDB</a></li>
 						<li><a href="#gro">GRO</a></li>
+						<li><a href="#sdf">SDF</a></li>
+						<li><a href="#mol2">MOL2</a></li>
 					</ul>
 				<li>Trajectories (remote)</li>
 					<ul>
@@ -197,9 +199,80 @@
 		</p>
 
 
+		<h3 id="sdf">SDF</h3>
+
+		<p>
+			Extension: <strong>.sdf</strong>
+		</p>
+
+		<p>
+			Specification: <a "http://download.accelrys.com/freeware/ctfile-formats/" target="_blank">http://download.accelrys.com/freeware/ctfile-formats/</a>
+		</p>
+
+		<p>
+			Supported features:
+
+			<ul>
+				<li>Title: read from the second line of the header block</li>
+				<li>Box coordinates: not available in the format</li>
+				<li>Secondary structure: not available in the format, automatically calculated during post-processing</li>
+				<li>Atom data:</li>
+					<ul>
+						<li>*resname*: not available, set as "HET"</li>
+						<li>*x*, *y*, *z*: read from "position" fields</li>
+						<li>*resno*: read from "residue number" field</li>
+						<li>*serial*: not available, set from running index</li>
+						<li>*atomname*: not available set as "element + index"</li>
+						<li>*chainname*: not available, automatically assigned during post-processing</li>
+						<li>*element*: read from "element" field</li>
+						<li>*vdw*: deduced from *element*</li>
+						<li>*covalent*: deduced from *element*</li>
+						<li>*altloc*: not available, left empty</li>
+					</ul>
+				<li>Connectivity: read from bond block, includes bond order</li>
+			</ul>
+		</p>
+
+
+		<h3 id="mol2">MOL2</h3>
+
+		<p>
+			Extension: <strong>.mol2</strong>
+		</p>
+
+		<p>
+			Specification: <a href="http://www.tripos.com/data/support/mol2.pdf" target="_blank">http://www.tripos.com/data/support/mol2.pdf</a>
+		</p>
+
+		<p>
+			Supported features:
+
+			<ul>
+				<li>Title: read from the first line of the molecule record</li>
+				<li>Box coordinates: not available in the format</li>
+				<li>Secondary structure: not available in the format, automatically calculated during post-processing</li>
+				<li>Atom data:</li>
+					<ul>
+						<li>*resname*: read from "residue name" field</li>
+						<li>*x*, *y*, *z*: read from "coordinate" fields</li>
+						<li>*resno*: read from "residue number" field</li>
+						<li>*serial*: read from "atom number" field</li>
+						<li>*atomname*: read from "atom name" field</li>
+						<li>*chainname*: not available, automatically assigned during post-processing</li>
+						<li>*element*: read from "atom type" field</li>
+						<li>*vdw*: deduced from *element*</li>
+						<li>*covalent*: deduced from *element*</li>
+						<li>*altloc*: not available, left empty</li>
+						<li>*bfactor*: read from the "partial charge" field (i.e. not a bfactor)</li>
+					</ul>
+				<li>Connectivity: read from bond record, includes bond order</li>
+			</ul>
+		</p>
+
+
 		<h2>Trajectories</h2>
 
-		<p>Structure files in *mmCIF*, *PDB* or *GRO* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these files.</p>
+		<p>Structure files in *mmCIF*, *PDB*, *GRO*, *SDF* or *MOL2* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these file types.</p>
 
 
 		<h3 id="xtc">XTC/TRR</h3>

@@ -14,7 +14,7 @@ See it in action:
 Features
 ========
 
-* Molecular structures (mmCIF, PDB)
+* Molecular structures (mmCIF, PDB, GRO, SDF, MOL2)
 * Density volumes (MRC/MAP/CCP4)
 * User interaction (mouse picking, selection language, image export)
 * Coordinate trajectories (animation, server)
@@ -46,6 +46,7 @@ Version 0.6dev
 * CODE: faster autobonding of large residues (e.g. hydrated lipids)
 * CODE: WebWorker support while using development and build files
 * CODE: WebWorker used for decompression, parsing and surface generation
+* Support for MOL2 and SDF files
 
 
 Version 0.5
