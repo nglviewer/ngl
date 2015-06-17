@@ -37,22 +37,22 @@
 		<h2>Signals</h2>
 
 		<h3>visibilityChanged</h3>
-		<div></div>
+		<div>Emitted when the component's *visibility* property has changed.</div>
 
 		<h3>representationAdded</h3>
-		<div></div>
+		<div>Emitted when a representation is added to the component.</div>
 
 		<h3>representationRemoved</h3>
-		<div></div>
+		<div>Emitted when a representation is removed from the component.</div>
 
 		<h3>requestGuiVisibility</h3>
-		<div></div>
+		<div>Used to communicate with GUI code while avoiding implementation details of the GUI to be present in the [page:Stage] layer.</div>
 
 		<h3>statusChanged</h3>
-		<div></div>
+		<div>Emitted when the component's *status* property has changed.</div>
 
 		<h3>disposed</h3>
-		<div></div>
+		<div>Emitted when a component is disposed of, that is at the end of the <strong>.dispose()</strong> method.</div>
 
 
 		<h2>Methods</h2>
@@ -63,8 +63,8 @@
 		<h3>.removeRepresentation( repr )</h3>
 		<div></div>
 
-		<h3>.updateRepresentation( what )</h3>
-		<div></div>
+		<h3>.updateRepresentations( what )</h3>
+		<div>Triggers an update of data arrays (position, color, size) of all the components representations. For example, when the atom positions of a [page:Structure] have changed, the representations can be updated with <strong>component.updateRepresentations( { position: true } )</strong>. Mostly of internal use.</div>
 
 		<h3>.setVisibility( value )</h3>
 		<div></div>
@@ -76,7 +76,7 @@
 		<div></div>
 
 		<h3>.requestGuiVisibility( value )</h3>
-		<div></div>
+		<div>Triggers the *requestGuiVisibility* signal to which GUI code can listen to.</div>
 
 		<h3>.dispose()</h3>
 		<div></div>
