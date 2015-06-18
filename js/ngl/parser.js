@@ -2621,6 +2621,7 @@ NGL.SdfParser.prototype = NGL.createObject(
 
             function(){
 
+                s._dontAutoBond = true;
                 callback();
 
             }
@@ -2884,6 +2885,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
             function(){
 
+                s._dontAutoBond = true;
                 callback();
 
             }

@@ -1938,7 +1938,9 @@ NGL.Structure.prototype = {
 
             function( wcallback ){
 
-                self.autoBond();
+                if( !self._dontAutoBond ){
+                    self.autoBond();
+                }
                 wcallback();
 
             },
