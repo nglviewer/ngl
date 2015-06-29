@@ -19,12 +19,17 @@ load( "data://1u19.pdb", function( o ){
 } );
 
 
-load( "data://3dqb.pdb", function( o ){
+load( "data://3dqb.pdb", {
 
-    o.addRepresentation( "cartoon" );
-    o.centerView();
+    onLoad: function( o ){
 
-    o.setName( "3DQB" );
+        o.addRepresentation( "cartoon" );
+        o.addRepresentation( "hyperball", { sele: "1-100", name: "resno 1-100" } );
+        o.centerView();
+
+    },
+
+    name: "PDB entry 3DQB"
 
 } );
 

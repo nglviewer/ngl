@@ -1557,6 +1557,12 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
+    signals.nameChanged.add( function( value ){
+
+        name.setValue( NGL.unicodeHelper( value ) );
+
+    } );
+
     signals.disposed.add( function(){
 
         menu.dispose();
@@ -1567,7 +1573,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.EllipsisText( component.repr.type )
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
         .setWidth( "80px" );
 
     // Actions
@@ -1647,6 +1653,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     var menu = new UI.PopupMenu( "bars", "Representation" )
         .setMarginLeft( "45px" )
         .setEntryLabelWidth( "110px" );
+
+    menu.addEntry( "type", new UI.Text( component.repr.type ) );
 
     // Parameters
 
