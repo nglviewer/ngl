@@ -1531,7 +1531,7 @@ NGL.Viewer.prototype = {
 
         return function( x, y ){
 
-            var id, object, instance;
+            var id, object, instance, bondId;
 
             var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
 
@@ -1570,6 +1570,13 @@ NGL.Viewer.prototype = {
 
             }
 
+            if( id >> 20 ){
+
+                bondId = id >> 20;
+                id = id & 0x0FFFFF;
+
+            }
+
             object = this.pickingGroup.getObjectById(
                 Math.round( pixelBuffer[ 3 ] )
             );
@@ -1596,6 +1603,7 @@ NGL.Viewer.prototype = {
                     ]
                 );
                 NGL.log( "picked id", id );
+                NGL.log( "picked bondId", bondId );
                 NGL.log( "picked instance", instance );
                 NGL.log( "picked position", x, y );
                 NGL.log( "devicePixelRatio", window.devicePixelRatio );
@@ -1604,6 +1612,7 @@ NGL.Viewer.prototype = {
 
             return {
                 "id": id,
+                "bondId": bondId,
                 "instance": instance
             };
 

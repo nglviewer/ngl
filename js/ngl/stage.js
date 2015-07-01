@@ -511,10 +511,12 @@ NGL.PickingControls = function( viewer, stage ){
             box.height - offsetY
         );
         var id = pickingData.id;
+        var bondId = pickingData.bondId;
         var instance = pickingData.instance;
 
         // TODO early exit, binary search
         var pickedAtom = undefined;
+        var pickedBond = undefined;
         stage.eachComponent( function( o ){
 
             o.structure.eachAtom( function( a ){
@@ -526,6 +528,12 @@ NGL.PickingControls = function( viewer, stage ){
             } );
 
         }, NGL.StructureComponent );
+
+        if( pickedAtom && bondId !== undefined ){
+
+            pickedBond = pickedAtom.bonds[ bondId - 1 ];
+
+        }
 
         if( pickedAtom && e.which === NGL.MiddleMouseButton ){
 
@@ -545,7 +553,7 @@ NGL.PickingControls = function( viewer, stage ){
 
         }
 
-        stage.signals.atomPicked.dispatch( pickedAtom );
+        stage.signals.atomPicked.dispatch( pickedAtom, pickedBond );
 
     } );
 

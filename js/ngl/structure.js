@@ -1376,6 +1376,21 @@ NGL.AtomSet.prototype = {
                 color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
                 color[ i + 2 ] = ( c & 255 ) / 255;
 
+                if( type === "picking" ){
+
+                    var a = fromTo ? b.atom1 : b.atom2;
+                    var idx = a.bonds.indexOf( b );
+
+                    if( idx !== -1 ){
+
+                        // console.log( "FOO", color[ i + 2 ] );
+
+                        color[ i + 0 ] += ( ( idx + 1 ) << 4 ) / 255;
+
+                    }
+
+                }
+
                 i += 3;
 
             }
