@@ -58,6 +58,17 @@ varying vec4 w;
 #include fog_params
 
 
+float distSq3( vec3 v3a, vec3 v3b ){
+
+    return (
+        ( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +
+        ( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +
+        ( v3a.z - v3b.z ) * ( v3a.z - v3b.z )
+    );
+
+}
+
+
 // round caps
 // http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs
 
@@ -207,8 +218,7 @@ void main()
     #include light
 
     #ifdef PICKING
-        // TODO compare without sqrt
-        if( distance( new_point, end_cyl) < distance( new_point, base ) ){
+        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){
             if( b < 0.0 ){
                 gl_FragColor = vec4( vPickingColor, objectId );
             }else{
@@ -222,8 +232,7 @@ void main()
             }
         }
     #else
-        // TODO compare without sqrt
-        if( distance( new_point, end_cyl) < distance( new_point, base ) ){
+        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){
             if( b < 0.0 ){
                 gl_FragColor = vec4( vColor, opacity );
             }else{
