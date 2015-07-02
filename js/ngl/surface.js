@@ -853,7 +853,13 @@ NGL.Volume.prototype = {
             ny: this.ny,
             nz: this.nz,
 
-            matrix: this.matrix.toArray()
+            matrix: this.matrix.toArray(),
+
+            center: this.center.toArray(),
+            boundingBox: {
+                min: this.boundingBox.min.toArray(),
+                max: this.boundingBox.max.toArray()
+            }
 
         }
 
@@ -888,6 +894,12 @@ NGL.Volume.prototype = {
             this.header = Object.assign( {}, input.header );
 
         }
+
+        this.center.fromArray( input.center );
+        this.boundingBox.set(
+            input.boundingBox.min,
+            input.boundingBox.max
+        );
 
         return this;
 
