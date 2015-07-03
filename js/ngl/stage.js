@@ -262,6 +262,22 @@ NGL.Stage.prototype = {
 
     },
 
+    setOrientation: function( orientation ){
+
+        this.tasks.onZeroOnce( function(){
+
+            this.viewer.setOrientation( orientation );
+
+        }, this );
+
+    },
+
+    getOrientation: function(){
+
+        return this.viewer.getOrientation();
+
+    },
+
     exportImage: function( factor, antialias, transparent, trim, onProgress ){
 
         var reprParamsList = [];

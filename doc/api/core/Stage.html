@@ -70,6 +70,21 @@
 		<div></div>
 
 
+		<h3>.getOrientation()</h3>
+		<div>Returns the current orientation of the scene including rotation, translation and zoom. To restore the orientation, pass it to .*setOrientation*. Note that, for convenience, the current orientation is also available through the GUI via <i>Menubar > View > Orientation</i>.</div>
+
+
+		<h3>.setOrientation( orientation )</h3>
+		<div>Restores the passed orientation of a scene. In contrast to [page:Viewer viewer].*setOrientation*, this method waits for all pending representations to be added.</div>
+
+		<code>
+		// get orientation
+		var orientation = stage.getOrientation();
+		// restore orientation
+		stage.setOrientation( orientation );
+		</code>
+
+
 		<h3>.setTheme( value )</h3>
 		<div></div>
 
