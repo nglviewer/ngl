@@ -383,6 +383,7 @@ NGL.ColorFactory.userSchemes = {};
 
 NGL.ColorFactory.addScheme = function( fn, label ){
 
+    label = label || "";
     var id = " " + THREE.Math.generateUUID() + "|" + label;
 
     NGL.ColorFactory.userSchemes[ id ] = fn;

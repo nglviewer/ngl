@@ -15,24 +15,42 @@
 		<h2>Static signals</h2>
 
 		<h3>typesChanged</h3>
-		<div></div>
+		<div>Emitted when the list of available color schemes changes.</div>
+		<code>// subscribe to changes of the list of available color schemes
+		NGL.ColorFactory.typesChanged( function(){
+			console.log( "a color scheme has been added or removed" );
+		} )
+		</code>
 
 
 		<h2>Static methods</h2>
 
-		<h3>.addScheme( fn, label )</h3>
+		<h3>.addScheme( fn, [ label ] )</h3>
 		<div>Returns an *id* that can be used as input for the *color* parameter of [page:StructureRepresentation structure representations] and to delete the scheme. The *fn*( atom ) function must return a hexadecimal RGB value. The *label* is for cosmetic use (i.e. in the GUI). To refer to the scheme internally always use the *id*.</div>
+		<code>// color atoms with a b-factor smaller 0.5 in green, else in red
+		var myScheme = NGL.ColorFactory.addSelectionScheme( function( atom ){
+			if( atom.bfactor &lt; 0.5 ){
+				return 0x00FF00;  // green
+			}else{
+				return 0xFF0000;  // red
+			}
+		} );
+		// apply colorscheme to an existing representation
+		repr.setParameters( { color: myScheme } );
+		// set colorscheme when creating a new representation
+		component.addRepresentation( "cartoon", { color: myScheme } );
+		</code>
 
-		<h3>.addSelectionScheme( pairList, label )</h3>
+		<h3>.addSelectionScheme( pairList, [ label ] )</h3>
 		<div>Returns an *id* like <strong>.addScheme</strong>. Creates a coloring scheme based on *color*, *selection* pairs in *pairList*, where *selection* is a [page:Selection-language selection string] and *color* is either a color name, a hexadecimal RGB value or a CSS color string.</div>
-
 		<code>// color residues 1 to 100 in red, 101-200 in blue and the remaining in white
-		var myScheme = NGL.ColorFactory.addSelectionScheme( [
+		var mySelectionScheme = NGL.ColorFactory.addSelectionScheme( [
 			[ "red": "1-100" ],
 			[ "blue": "101-200" ],
 			[ "white": "*" ]
 		] );
-		repr.setParameters( { color: myScheme } );
+		// apply colorscheme to an existing representation
+		repr.setParameters( { color: mySelectionScheme } );
 		</code>
 
 		<h3>.removeScheme( id )</h3>
@@ -42,16 +60,44 @@
 		<h2>Constructor</h2>
 
 		<h3>[name]( type, [page:Structure structure] )</h3>
-		<div></div>
+		<div>
+			Available values for *type* are:
+			<ul>
+				<li>element (color by element)</li>
+				<li>resname (color by residue name)</li>
+				<li>ss (color by secondary structure)</li>
+				<li>atomindex (color by atom index)</li>
+				<li>residueindex (color by residue index)</li>
+				<li>chainindex (color by chain index)</li>
+				<li>modelindex (color by model index)</li>
+				<li>picking (color by picking id)</li>
+				<li>random (random color)</li>
+				<li>color (given uniform color, hexadecimal RGB value)</li>
+			</ul>
+			More schemes can be added with .*addScheme* and .*addSelectionScheme*.
+		</div>
+		<code>// create a new color factory for coloring by the chainindex atom property
+		var colorFactory = new NGL.ColorFactory( "chainindex", structure );
+		</code>
 
 
 		<h2>Methods</h2>
 
 		<h3>.atomColor( atom )</h3>
 		<div>Returns a hexadecimal RGB color value.</div>
+		<code>// get color for an atom
+		var hexColor = colorFactory.atomColor( atom );
+		</code>
 
 		<h3>.atomColorToArray( atom, array, offset )</h3>
-		<div></div>
+		<div>Gets a color value like .*atomColor* buts write the three individual  values for red, green and blue directly into an *array* at a specific *offset*</div>
+		<code>// fill an array with RGB values starting from position 3
+		var colorArray = new Array( 9 );
+		colorFactory.atomColorToArray( atom, colorArray, 3 );
+		// colorArray[ 3 ] = R
+		// colorArray[ 4 ] = G
+		// colorArray[ 5 ] = B
+		</code>
 
 
 	</body>
