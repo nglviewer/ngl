@@ -1068,9 +1068,13 @@ NGL.Counter.prototype = {
 
             var fn = function(){
 
-                this.signals.countChanged.remove( fn, this );
+                if( this.count === 0 ){
 
-                callback.apply( context, arguments );
+                    this.signals.countChanged.remove( fn, this );
+
+                    callback.apply( context, arguments );
+
+                }
 
             }
 
