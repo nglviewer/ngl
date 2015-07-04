@@ -454,8 +454,8 @@ NGL.Stage.prototype = {
 
     getAnythingByName: function( name ){
 
-        var compList = this.getComponentsByName( name );
-        var reprList = this.getRepresentationsByName( name );
+        var compList = this.getComponentsByName( name ).list;
+        var reprList = this.getRepresentationsByName( name ).list;
 
         return new NGL.Collection( compList.concat( reprList ) );
 
@@ -1659,6 +1659,12 @@ NGL.Collection.prototype = {
     setSelection: function( string ){
 
         return this._invoke( "setSelection", [ string ] );
+
+    },
+
+    requestGuiVisibility: function( value ){
+
+        return this._invoke( "requestGuiVisibility", [ value ] );
 
     },
 

@@ -1545,6 +1545,12 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     var container = new UI.CollapsibleIconPanel( "bookmark" )
         .setMarginLeft( "20px" );
 
+    signals.requestGuiVisibility.add( function( value ){
+
+        container.setCollapsed( !value );
+
+    } );
+
     signals.visibilityChanged.add( function( value ){
 
         toggle.setValue( value );
