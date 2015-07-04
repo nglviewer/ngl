@@ -30,6 +30,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
     this.background = p.background !== undefined ? p.background : false;
+    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
 
     this.attributes = {};
     this.geometry = new THREE.BufferGeometry();
@@ -169,21 +170,24 @@ NGL.Buffer.prototype = {
                 lights: false,
                 fog: false
 
-            });
+            } );
 
             material.side = this.side;
             material.defines[ "PICKING" ] = 1;
 
         }else if( type === "wireframe" || this.wireframe ){
 
-            material = new THREE.LineBasicMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
+            material = new THREE.ShaderMaterial( {
+                uniforms:  THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
-                vertexColors: true,
+                vertexShader: NGL.getShader( "Line.vert" ),
+                fragmentShader: NGL.getShader( "Line.frag" ),
+                depthTest: true,
+                transparent: this.transparent,
+                depthWrite: true,
                 lights: false,
-                fog: true
-
+                fog: true,
+                linewidth: this.lineWidth
             } );
 
         }else{
@@ -201,7 +205,7 @@ NGL.Buffer.prototype = {
                 lights: false,
                 fog: true
 
-            });
+            } );
 
             material.side = this.side;
 
@@ -225,7 +229,7 @@ NGL.Buffer.prototype = {
 
         }
 
-        if( this.nearClip && !( type === "wireframe" || this.wireframe ) ){
+        if( this.nearClip ){
 
             material.defines[ "NEAR_CLIP" ] = 1;
 
@@ -1404,7 +1408,7 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
             "opacity": { type: "f", value: this.opacity },
             "nearClip": { type: "f", value: 0.0 },
         }
-    ]);
+    ] );
 
     this.group = new THREE.Group();
 

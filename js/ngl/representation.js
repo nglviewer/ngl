@@ -2194,6 +2194,9 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         },
         wireframe: {
             type: "boolean", rebuild: true
+        },
+        lineWidth: {
+            type: "integer", max: 20, min: 1, property: "linewidth"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2221,6 +2224,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
         this.wireframe = p.wireframe || false;
+        this.lineWidth = p.lineWidth || 1;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -2292,6 +2296,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                                 ry: ry,
                                 capped: scope.capped,
                                 wireframe: scope.wireframe,
+                                lineWidth: scope.lineWidth,
                                 flatShaded: scope.flatShaded,
                                 transparent: scope.transparent,
                                 side: scope.side,
@@ -2442,6 +2447,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         wireframe: {
             type: "boolean", rebuild: true
         },
+        lineWidth: {
+            type: "integer", max: 20, min: 1, property: "linewidth"
+        },
         arrows: {
             type: "boolean", rebuild: true
         }
@@ -2472,6 +2480,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
         this.wireframe = p.wireframe || false;
+        this.lineWidth = p.lineWidth || 1;
         this.arrows = p.arrows || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -2548,6 +2557,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                                 ry: ry,
                                 capped: scope.capped,
                                 wireframe: scope.wireframe,
+                                lineWidth: scope.lineWidth,
                                 flatShaded: scope.flatShaded,
                                 transparent: scope.transparent,
                                 side: scope.side,
@@ -3476,6 +3486,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         wireframe: {
             type: "boolean", rebuild: true
         },
+        lineWidth: {
+            type: "integer", max: 20, min: 1, property: "linewidth"
+        },
         smooth: {
             type: "integer", max: 15, min: 0, rebuild: true
         }
@@ -3505,6 +3518,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         this.tension = p.tension || 0.5;
         this.capped = p.capped || true;
         this.wireframe = p.wireframe || false;
+        this.lineWidth = p.lineWidth || 1;
         this.smooth = p.smooth === undefined ? 2 : p.smooth;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -3579,6 +3593,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                                 ry: ry,
                                 capped: scope.capped,
                                 wireframe: scope.wireframe,
+                                lineWidth: scope.lineWidth,
                                 flatShaded: scope.flatShaded,
                                 transparent: scope.transparent,
                                 side: scope.side,
@@ -4117,6 +4132,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         wireframe: {
             type: "boolean", rebuild: true
         },
+        lineWidth: {
+            type: "integer", max: 20, min: 1, property: "linewidth"
+        },
         background: {
             type: "boolean", rebuild: true
         },
@@ -4154,6 +4172,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.scaleFactor = p.scaleFactor !== undefined ? p.scaleFactor : 2.0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
+        this.lineWidth = p.lineWidth || 1;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
@@ -4203,6 +4222,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 {
                     background: this.background,
                     wireframe: this.wireframe,
+                    lineWidth: this.lineWidth,
                     transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.FrontSide,
@@ -4217,6 +4237,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 {
                     background: this.background,
                     wireframe: this.wireframe,
+                    lineWidth: this.lineWidth,
                     transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.BackSide,
@@ -4235,6 +4256,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 {
                     background: this.background,
                     wireframe: this.wireframe,
+                    lineWidth: this.lineWidth,
                     transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: this.side,
@@ -4573,6 +4595,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         wireframe: {
             type: "boolean", rebuild: true
         },
+        lineWidth: {
+            type: "integer", max: 20, min: 1, property: "linewidth"
+        },
         background: {
             type: "boolean", rebuild: true
         },
@@ -4602,6 +4627,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
+        this.lineWidth = p.lineWidth || 1;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
@@ -4669,6 +4695,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 {
                     background: this.background,
                     wireframe: this.wireframe,
+                    lineWidth: this.lineWidth,
                     transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.FrontSide,
@@ -4683,6 +4710,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 {
                     background: this.background,
                     wireframe: this.wireframe,
+                    lineWidth: this.lineWidth,
                     transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.BackSide,
@@ -4701,6 +4729,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 {
                     background: this.background,
                     wireframe: this.wireframe,
+                    lineWidth: this.lineWidth,
                     transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: this.side,
