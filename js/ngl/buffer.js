@@ -1527,7 +1527,7 @@ NGL.LineBuffer.prototype = {
 
         var uniforms = THREE.UniformsUtils.clone( this.uniforms );
 
-        return new THREE.ShaderMaterial( {
+        var material = new THREE.ShaderMaterial( {
             uniforms: uniforms,
             attributes: this.attributes,
             vertexShader: NGL.getShader( this.vertexShader ),
@@ -1538,7 +1538,15 @@ NGL.LineBuffer.prototype = {
             lights: false,
             fog: true,
             linewidth: this.lineWidth
-        });
+        } );
+
+        if( this.nearClip ){
+
+            material.defines[ "NEAR_CLIP" ] = 1;
+
+        }
+
+        return material;
 
     },
 
