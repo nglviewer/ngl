@@ -44,11 +44,20 @@ vec3 cameraNormal;
 
 
 // Calculate depth based on the given camera position.
-float calcDepth( in vec3 camPos )
+float calcDepth( in vec3 cameraPos )
 {
-    vec2 clipZW = camPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
+    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
     return 0.5 + 0.5 * clipZW.x / clipZW.y;
 }
+
+
+float calcClip( vec3 cameraPos )
+{
+    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
+}
+
+
+bool flag2 = false;
 
 
 bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
@@ -73,13 +82,29 @@ bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 
         float intersectT = min(posT, negT);
         cameraPos = rayDirection * intersectT;
-        if( calcDepth( cameraPos ) <= 0.0 ){
-            cameraPos = rayDirection * max(posT, negT);
-            cameraNormal = vec3( 0.0, 0.0, 0.4 );
-            return false;
-        }else{
-            cameraNormal = normalize(cameraPos - cameraSpherePos2);
-        }
+
+        #ifdef NEAR_CLIP
+            if( calcDepth( cameraPos ) <= 0.0 ){
+                cameraPos = rayDirection * max(posT, negT);
+                cameraNormal = vec3( 0.0, 0.0, 0.4 );
+                return false;
+            }else if( calcClip( cameraPos ) > 0.0 ){
+                cameraPos = rayDirection * max(posT, negT);
+                cameraNormal = vec3( 0.0, 0.0, 0.4 );
+                flag2 = true;
+                return false;
+            }else{
+                cameraNormal = normalize(cameraPos - cameraSpherePos2);
+            }
+        #else
+            if( calcDepth( cameraPos ) <= 0.0 ){
+                cameraPos = rayDirection * max(posT, negT);
+                cameraNormal = vec3( 0.0, 0.0, 0.4 );
+                return false;
+            }else{
+                cameraNormal = normalize(cameraPos - cameraSpherePos2);
+            }
+        #endif
 
         return true;
     }
@@ -95,7 +120,7 @@ void main(void)
     bool flag = Impostor( cameraPos, cameraNormal );
 
     #ifdef NEAR_CLIP
-        if( dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
+        if( calcClip( cameraPos ) > 0.0 )
             discard;
     #endif
 
@@ -104,11 +129,19 @@ void main(void)
     gl_FragDepthEXT = calcDepth( cameraPos );
     if( !flag ){
 
-        if( gl_FragDepthEXT >= 0.0 ){
-            // clamp to near clipping plane and add a tiny value to
-            // make spheres with a greater radius occlude smaller ones
-            gl_FragDepthEXT = 0.0 + ( 0.000001 / sphereRadius );
-        }
+        // clamp to near clipping plane and add a tiny value to
+        // make spheres with a greater radius occlude smaller ones
+        #ifdef NEAR_CLIP
+            if( flag2 ){
+                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / sphereRadius ) );
+            }else if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );
+            }
+        #else
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );
+            }
+        #endif
 
     }
 
