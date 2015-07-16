@@ -4104,9 +4104,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     type: "surface",
 
-    parameters: Object.assign(
-
-        NGL.StructureRepresentation.prototype.parameters, {
+    parameters: Object.assign( {
 
         surfaceType: {
             type: "select", rebuild: true,
@@ -4152,7 +4150,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1, min: 0, uniform: true
         }
 
-    }, {
+    }, NGL.StructureRepresentation.prototype.parameters, {
 
         radiusType: null,
         radius: null,
