@@ -1187,6 +1187,27 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "distance": function( stage ){
+
+            stage.loadFile( "data://1blu.pdb", function( o ){
+
+                var atomPair = [
+                    [ "1.CA", "10.CA" ],
+                    [ "1.CA", "30.CA" ]
+                ];
+
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "distance", {
+                    atomPair: atomPair,
+                    color: new THREE.Color( "skyblue" ).getHex()
+                } );
+
+                o.centerView();
+
+            } );
+
         }
 
     }

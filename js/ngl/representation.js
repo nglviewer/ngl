@@ -4329,6 +4329,274 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.DistanceRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.DistanceRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.DistanceRepresentation,
+
+    type: "distance",
+
+    defaultSize: 0.15,
+
+    parameters: Object.assign( {
+
+        font: {
+            type: "select", options: {
+                // "Arial": "Arial",
+                // "DejaVu": "DejaVu",
+                "LatoBlack": "LatoBlack"
+            },
+            rebuild: true
+        },
+        labelSize: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        labelColor: {
+            type: "color"
+        },
+        antialias: {
+            type: "boolean", define: "ANTIALIAS"
+        },
+        atomPair: {
+            type: "hidden"
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
+        }
+
+    }, NGL.StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        p.radius = p.radius || this.defaultSize;
+
+        this.disableImpostor = p.disableImpostor || false;
+
+        if( p.quality === "low" ){
+            this.radiusSegments = 5;
+        }else if( p.quality === "medium" ){
+            this.radiusSegments = 10;
+        }else if( p.quality === "high" ){
+            this.radiusSegments = 20;
+        }else{
+            this.radiusSegments = p.radiusSegments || 10;
+        }
+
+        this.font = p.font || 'LatoBlack';
+        this.labelSize = p.labelSize || 1.0;
+        this.labelColor = p.labelColor || 0xFFFFFF;
+        this.antialias = p.antialias !== undefined ? p.antialias : true;
+        this.atomPair = p.atomPair || [];
+
+        NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    create: function(){
+
+        if( this.atomSet.atomCount === 0 ) return;
+
+        var opacity = this.transparent ? this.opacity : 1.0;
+
+        var n = this.atomPair.length;
+        if( n === 0 ) return;
+
+        var text = new Array( n );
+        var position = new Float32Array( n * 3 );
+        var sele1 = new NGL.Selection();
+        var sele2 = new NGL.Selection();
+
+        this.bondSet = new NGL.BondSet();
+        this.bondSet.structure = this.structure;
+        var bSet = this.bondSet;
+
+        this.atomPair.forEach( function( pair, i ){
+
+            var i3 = i * 3;
+
+            sele1.setString( pair[ 0 ] );
+            sele2.setString( pair[ 1 ] );
+
+            var a1 = this.atomSet.getAtoms( sele1, true );
+            var a2 = this.atomSet.getAtoms( sele2, true );
+
+            bSet.addBond( a1, a2, true );
+
+            text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+
+            position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
+            position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
+            position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+
+        }, this );
+
+        var c = new THREE.Color( this.labelColor );
+
+        this.textBuffer = new NGL.TextBuffer(
+            position,
+            NGL.Utils.uniformArray( n, this.labelSize ),
+            NGL.Utils.uniformArray3( n, c.r, c.g, c.b ),
+            text,
+            {
+                font: this.font,
+                antialias: this.antialias,
+                opacity: opacity,
+                nearClip: this.nearClip
+            }
+        );
+
+        this.__center = new Float32Array( bSet.bondCount * 3 );
+
+        this.cylinderBuffer = new NGL.CylinderBuffer(
+            bSet.bondPosition( null, 0 ),
+            bSet.bondPosition( null, 1 ),
+            bSet.bondColor( null, 0, this.color ),
+            bSet.bondColor( null, 1, this.color ),
+            bSet.bondRadius( null, null, this.radius, this.scale ),
+            bSet.bondColor( null, 0, "picking" ),
+            bSet.bondColor( null, 1, "picking" ),
+            {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                transparent: this.transparent,
+                side: this.side,
+                opacity: opacity,
+                nearClip: this.nearClip,
+                flatShaded: this.flatShaded
+            },
+            this.disableImpostor
+        );
+
+        this.bufferList.push( this.textBuffer, this.cylinderBuffer );
+
+    },
+
+    update: function( what ){
+
+        if( this.atomSet.atomCount === 0 ) return;
+
+        var n = this.atomPair.length;
+        if( n === 0 ) return;
+
+        what = what || {};
+
+        var bSet = this.bondSet;
+
+        var textData = {};
+        var cylinderData = {};
+
+        if( what[ "position" ] ){
+
+            var position = new Float32Array( n * 3 );
+            var sele1 = new NGL.Selection();
+            var sele2 = new NGL.Selection();
+
+            this.atomPair.forEach( function( pair, i ){
+
+                var i3 = i * 3;
+
+                sele1.setString( pair[ 0 ] );
+                sele2.setString( pair[ 1 ] );
+
+                var a1 = this.atomSet.getAtoms( sele1, true );
+                var a2 = this.atomSet.getAtoms( sele2, true );
+
+                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
+                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
+                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+
+            }, this );
+
+            textData[ "position" ] = position;
+
+            //
+
+            var from = bSet.bondPosition( null, 0 );
+            var to = bSet.bondPosition( null, 1 );
+
+            cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
+                from, to
+            );
+            cylinderData[ "position1" ] = from;
+            cylinderData[ "position2" ] = to;
+
+        }
+
+        if( what[ "labelSize" ] ){
+
+            textData[ "size" ] = NGL.Utils.uniformArray(
+                n, this.labelSize
+            );
+
+        }
+
+        if( what[ "labelColor" ] ){
+
+            var c = new THREE.Color( this.labelColor );
+            textData[ "color" ] = NGL.Utils.uniformArray3(
+                n, c.r, c.g, c.b
+            );
+
+        }
+
+        if( what[ "color" ] ){
+
+            cylinderData[ "color" ] = bSet.bondColor( null, 0, this.color );
+            cylinderData[ "color2" ] = bSet.bondColor( null, 1, this.color );
+
+        }
+
+        if( what[ "radius" ] || what[ "scale" ] ){
+
+            cylinderData[ "radius" ] = bSet.bondRadius(
+                null, 0, this.radius, this.scale
+            );
+
+        }
+
+        this.textBuffer.setAttributes( textData );
+        this.cylinderBuffer.setAttributes( cylinderData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params[ "labelSize" ] ){
+
+            what[ "labelSize" ] = true;
+
+        }
+
+        if( params && params[ "labelColor" ] ){
+
+            what[ "labelColor" ] = true;
+
+        }
+
+        NGL.StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    }
+
+} );
+
+
 //////////////////////////////
 // Trajectory representation
 
