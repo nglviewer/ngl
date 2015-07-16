@@ -1105,7 +1105,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( what[ "size" ] || what[ "scale" ] ){
+        if( what[ "radius" ] || what[ "scale" ] ){
 
             textData[ "size" ] = this.atomSet.atomRadius(
                 null, this.radius, this.scale
