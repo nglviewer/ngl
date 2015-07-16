@@ -1709,6 +1709,22 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
                 } );
 
+        }else if( p.type === "color" ){
+
+            input = new UI.ColorPopupMenu( name )
+                .setValue( repr[ name ] );
+
+        }else if( p.type === "hidden" ){
+
+            // nothing to display
+
+        }else{
+
+            NGL.warn(
+                "NGL.RepresentationComponentWidget: unknown parameter type " +
+                "'" + p.type + "'"
+            );
+
         }
 
         if( input ){
@@ -1719,14 +1735,40 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
             } );
 
-            input.onChange( function(){
+            if( p.type === "color" ){
 
-                var po = {};
-                po[ name ] = input.getValue();
-                component.setParameters( po );
-                repr.viewer.render();
+                input.onChange( (function(){
 
-            } );
+                    var c = new THREE.Color();
+                    return function( e ){
+
+                        var po = {};
+                        var scheme = input.getScheme();
+                        if( scheme === "color" ){
+                            c.setStyle( input.getColor() );
+                            po[ name ] = c.getHex();
+                        }else{
+                            po[ name ] = scheme;
+                        }
+                        component.setParameters( po );
+                        repr.viewer.requestRender();
+
+                    }
+
+                })() );
+
+            }else{
+
+                input.onChange( function(){
+
+                    var po = {};
+                    po[ name ] = input.getValue();
+                    component.setParameters( po );
+                    repr.viewer.requestRender();
+
+                } );
+
+            }
 
             menu.addEntry( name, input );
 
