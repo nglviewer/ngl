@@ -39,9 +39,14 @@ var list = {
             [ "Viewer", "api/core/Viewer" ]
         ],
         "Object": [
+            [ "Atom", "api/object/Atom" ],
+            [ "AtomArray", "api/object/AtomArray" ],
             [ "Chain", "api/object/Chain" ],
             [ "ColorFactory", "api/object/ColorFactory" ],
             [ "Fiber", "api/object/Fiber" ],
+            [ "Model", "api/object/Model" ],
+            [ "ProxyAtom", "api/object/ProxyAtom" ],
+            [ "Residue", "api/object/Residue" ],
             [ "Selection", "api/object/Selection" ],
             [ "Structure", "api/object/Structure" ],
             [ "Surface", "api/object/Surface" ],
