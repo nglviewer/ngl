@@ -4148,7 +4148,10 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         },
         opacity: {
             type: "number", precision: 1, max: 1, min: 0, uniform: true
-        }
+        },
+        lowResolution: {
+            type: "boolean", rebuild: true
+        },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -4175,6 +4178,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -4197,7 +4201,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.molsurf.generateSurfaceWorker(
             this.surfaceType, this.probeRadius,
             this.scaleFactor, this.smooth,
-            callback
+            this.lowResolution, callback
         );
 
     },

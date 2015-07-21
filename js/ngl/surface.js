@@ -2316,7 +2316,9 @@ NGL.Worker.add( "molsurf", function( e ){
 
     var molsurf = self.molsurf;
 
-    molsurf.generateSurface( p.type, p.probeRadius, p.scaleFactor, p.smooth );
+    molsurf.generateSurface(
+        p.type, p.probeRadius, p.scaleFactor, p.smooth, p.lowRes
+    );
 
     NGL.timeEnd( "WORKER molsurf" );
 
@@ -2346,10 +2348,11 @@ NGL.MolecularSurface = function( atomSet ){
 
 NGL.MolecularSurface.prototype = {
 
-    generateSurface: function( type, probeRadius, scaleFactor, smooth ){
+    generateSurface: function( type, probeRadius, scaleFactor, smooth, lowRes ){
 
         if( type === this.__type && probeRadius === this.__probeRadius &&
-            scaleFactor === this.__scaleFactor && smooth === this.__smooth
+            scaleFactor === this.__scaleFactor && smooth === this.__smooth &&
+            lowRes === this.lowRes
         ){
 
             // already generated
@@ -2359,7 +2362,7 @@ NGL.MolecularSurface.prototype = {
 
         var edtsurf = new NGL.EDTSurface( this.atomSet );
         var vol = edtsurf.getVolume(
-            type, probeRadius, scaleFactor
+            type, probeRadius, scaleFactor, lowRes
         );
         vol.generateSurface( 1, smooth );
 
@@ -2373,13 +2376,15 @@ NGL.MolecularSurface.prototype = {
         this.__probeRadius = probeRadius;
         this.__scaleFactor = scaleFactor;
         this.__smooth = smooth;
+        this.__lowRes = lowRes;
 
     },
 
-    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, callback ){
+    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, lowRes, callback ){
 
         if( type === this.__type && probeRadius === this.__probeRadius &&
-            scaleFactor === this.__scaleFactor && smooth === this.__smooth
+            scaleFactor === this.__scaleFactor && smooth === this.__smooth &&
+            lowRes === this.__lowRes
         ){
 
             // already generated
@@ -2410,7 +2415,7 @@ NGL.MolecularSurface.prototype = {
                 this.worker.terminate();
                 this.worker = undefined;
 
-                this.generateSurface( type, probeRadius, scaleFactor, smooth );
+                this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes );
                 callback();
 
             }.bind( this );
@@ -2431,6 +2436,7 @@ NGL.MolecularSurface.prototype = {
                 this.__probeRadius = probeRadius;
                 this.__scaleFactor = scaleFactor;
                 this.__smooth = smooth;
+                this.__lowRes = lowRes;
 
                 callback();
 
@@ -2442,13 +2448,14 @@ NGL.MolecularSurface.prototype = {
                     type: type,
                     probeRadius: probeRadius,
                     scaleFactor: scaleFactor,
-                    smooth: smooth
+                    smooth: smooth,
+                    lowRes: lowRes
                 }
             } );
 
         }else{
 
-            this.generateSurface( type, probeRadius, scaleFactor, smooth );
+            this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes );
             callback();
 
         }
@@ -2523,7 +2530,26 @@ NGL.EDTSurface = function( atomSet ){
     var cutRadius;
     var vpBits, vpDistance, vpAtomID;
 
-    function init( btype, _probeRadius, _scaleFactor, _cutoff ){
+    var radiusProperty;
+    var radiusDict;
+
+    function init( btype, _probeRadius, _scaleFactor, _cutoff, lowRes ){
+
+        if( lowRes ){
+
+            radiusProperty = "resname";
+            radiusDict = NGL.ResidueRadii;
+
+            atoms = atomSet.getAtoms( new NGL.Selection( ".CA" ) );
+
+        }else{
+
+            radiusProperty = "element";
+            radiusDict = NGL.VdwRadii;
+
+            atoms = atomSet.atoms;
+
+        }
 
         // 2 is .5A grid; if this is made user configurable and
         // also have to adjust offset used to find non-shown atoms
@@ -2534,7 +2560,7 @@ NGL.EDTSurface = function( atomSet ){
         cutoff = _cutoff || 2.0;
 
         // need margin to avoid boundary/round off effects
-        margin = ( 1 / scaleFactor ) * 5.5;
+        margin = ( ( 1 / scaleFactor ) * 5.5 ) + 10.0;
 
         pmin = new THREE.Vector3().copy( bbox.min );
         pmax = new THREE.Vector3().copy( bbox.max );
@@ -2617,7 +2643,7 @@ NGL.EDTSurface = function( atomSet ){
         cutRadius = probeRadius * scaleFactor;
 
         vpBits = new Uint8Array( pLength * pWidth * pHeight );
-        // float32 doesn't play nicely with native floats
+        // float32 doesn't play nicely with native floats (which are 64)
         vpDistance = new Float64Array( pLength * pWidth * pHeight );
         vpAtomID = new Int32Array( pLength * pWidth * pHeight );
 
@@ -2646,11 +2672,11 @@ NGL.EDTSurface = function( atomSet ){
 
     //
 
-    this.getVolume = function( type, probeRadius, scaleFactor ){
+    this.getVolume = function( type, probeRadius, scaleFactor, lowRes ){
 
         NGL.time( "NGL.EDTSurface.getVolume" );
 
-        init( type !== "vws", probeRadius, scaleFactor );
+        init( type !== "vws", probeRadius, scaleFactor, undefined, lowRes );
 
         fillvoxels();
         buildboundary();
@@ -2688,11 +2714,11 @@ NGL.EDTSurface = function( atomSet ){
         var txz, tdept, sradius, tradius, widxz_r;
         var indx;
 
-        for( var element in NGL.VdwRadii ){
+        for( var name in radiusDict ){
 
-            var r = NGL.VdwRadii[ element ];
+            var r = radiusDict[ name ];
 
-            if( depty[ element ] ) continue;
+            if( depty[ name ] ) continue;
 
             if( !btype ){
                 tradius = r * scaleFactor + 0.5;
@@ -2701,9 +2727,9 @@ NGL.EDTSurface = function( atomSet ){
             }
 
             sradius = tradius * tradius;
-            widxz[ element ] = Math.floor( tradius ) + 1;
-            widxz_r = widxz[ element ];
-            depty[ element ] = new Int32Array( widxz_r * widxz_r );
+            widxz[ name ] = Math.floor( tradius ) + 1;
+            widxz_r = widxz[ name ];
+            depty[ name ] = new Int32Array( widxz_r * widxz_r );
             indx = 0;
 
             for( j = 0; j < widxz_r; ++j ){
@@ -2714,12 +2740,12 @@ NGL.EDTSurface = function( atomSet ){
 
                     if( txz > sradius ){
 
-                        depty[ element ][ indx ] = -1;
+                        depty[ name ][ indx ] = -1;
 
                     }else{
 
                         tdept = Math.sqrt( sradius - txz );
-                        depty[ element ][ indx ] = Math.floor( tdept );
+                        depty[ name ][ indx ] = Math.floor( tdept );
 
                     }
 
@@ -2744,7 +2770,7 @@ NGL.EDTSurface = function( atomSet ){
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
         cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
 
-        var at = atom.element;
+        var at = atom[ radiusProperty ];
         var depty_at = depty[ at ];
         var nind = 0;
         var cnt = 0;
@@ -2849,7 +2875,7 @@ NGL.EDTSurface = function( atomSet ){
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
         cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
 
-        var at = atom.element;
+        var at = atom[ radiusProperty ];
         var pWH = pWidth * pHeight;
 
         for( i = 0, n = widxz[at]; i < n; ++i ){
