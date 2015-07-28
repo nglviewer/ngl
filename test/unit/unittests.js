@@ -79,6 +79,11 @@ if (!Array.from) {
 }
 
 
+// NGL.develop = true;
+NGL.useWorker = false;
+NGL.relativeScriptName = "../../js/ngl/core.js";
+
+
 ////////////////////
 // Selection parse
 //

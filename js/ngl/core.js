@@ -348,7 +348,8 @@ var NGL = {
     develop: (
         self.location.pathname.indexOf( "core.js" ) !== -1 ||
         self.location.pathname.indexOf( "dev.html" ) !== -1
-    )
+    ),
+    relativeScriptName: "../js/build/ngl.full.min.js"
 
 };
 
@@ -758,7 +759,7 @@ NGL.Worker = {
         if( NGL.develop ){
             worker = new Worker( "../js/ngl/core.js" );
         }else{
-            worker = new Worker( "../js/build/ngl.full.min.js" );
+            worker = new Worker( NGL.relativeScriptName );
         }
 
         worker.onerror = params.onerror;
