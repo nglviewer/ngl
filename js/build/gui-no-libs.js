@@ -2163,10 +2163,16 @@ UI.ColorPopupMenu = function(){
     var changeEvent = document.createEvent( 'Event' );
     changeEvent.initEvent( 'change', true, true );
 
+    NGL.ColorFactory.signals.typesChanged.add( function(){
+
+        this.schemeSelector.setOptions( NGL.ColorFactory.getTypes() );
+
+    }, this );
+
     this.schemeSelector = new UI.Select()
         .setColor( '#444' )
         .setWidth( "" )
-        .setOptions( NGL.ColorFactory.types )
+        .setOptions( NGL.ColorFactory.getTypes() )
         .onChange( function(){
 
             scope.setScheme( scope.schemeSelector.getValue() );
@@ -2272,6 +2278,12 @@ UI.ColorPopupMenu.prototype.setColor = function(){
 }();
 
 UI.ColorPopupMenu.prototype.getColor = function(){
+
+    return this.colorInput.getValue();
+
+};
+
+UI.ColorPopupMenu.prototype.getValue = function(){
 
     return this.colorInput.getValue();
 
@@ -2503,7 +2515,7 @@ UI.ComponentPanel = function( component ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            component.centerView( undefined, true );
+            component.centerView( true );
 
         } );
 
@@ -2732,7 +2744,7 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "ent", "gro", "cif", "mmcif",
+        "pdb", "ent", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
         "mrc", "ccp4", "map", "cube",
         "obj", "ply",
         "ngl", "ngz",
@@ -2753,14 +2765,11 @@ NGL.MenubarFileWidget = function( stage ){
 
         for( var i=0; i<n; ++i ){
 
-            stage.loadFile(
-                fileList[ i ], undefined, undefined, undefined,
-                {
-                    asTrajectory: asTrajectory,
-                    firstModelOnly: firstModelOnly,
-                    cAlphaOnly: cAlphaOnly
-                }
-            );
+            stage.loadFile( fileList[ i ], {
+                asTrajectory: asTrajectory,
+                firstModelOnly: firstModelOnly,
+                cAlphaOnly: cAlphaOnly
+            } );
 
         }
 
@@ -2792,14 +2801,11 @@ NGL.MenubarFileWidget = function( stage ){
 
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
 
-                    stage.loadFile(
-                        path.path, undefined, undefined, undefined,
-                        {
-                            asTrajectory: asTrajectory,
-                            firstModelOnly: firstModelOnly,
-                            cAlphaOnly: cAlphaOnly
-                        }
-                    );
+                    stage.loadFile( path.path, {
+                        asTrajectory: asTrajectory,
+                        firstModelOnly: firstModelOnly,
+                        cAlphaOnly: cAlphaOnly
+                    } );
 
                 }else{
 
@@ -2814,7 +2820,7 @@ NGL.MenubarFileWidget = function( stage ){
         );
 
         dirWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .attach();
@@ -2824,7 +2830,7 @@ NGL.MenubarFileWidget = function( stage ){
     function onExportImageOptionClick () {
 
         exportImageWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
@@ -2848,15 +2854,11 @@ NGL.MenubarFileWidget = function( stage ){
 
         if( e.keyCode === 13 ){
 
-            stage.loadFile(
-                "rcsb://" + e.target.value,
-                undefined, undefined, undefined,
-                {
-                    asTrajectory: asTrajectory,
-                    firstModelOnly: firstModelOnly,
-                    cAlphaOnly: cAlphaOnly
-                }
-            );
+            stage.loadFile( "rcsb://" + e.target.value, {
+                asTrajectory: asTrajectory,
+                firstModelOnly: firstModelOnly,
+                cAlphaOnly: cAlphaOnly
+            } );
             e.target.value = "";
 
         }
@@ -3046,7 +3048,7 @@ NGL.MenubarHelpWidget = function( stage ){
     function onPreferencesOptionClick () {
 
         preferencesWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
@@ -3058,7 +3060,7 @@ NGL.MenubarHelpWidget = function( stage ){
     function onOverviewOptionClick () {
 
         overviewWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
@@ -3555,6 +3557,38 @@ NGL.SidebarWidget = function( stage ){
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
 
+    // Busy indicator
+
+    var busy = new UI.Panel()
+        .setDisplay( "inline" )
+        .add(
+             new UI.Icon( "spinner" )
+                .addClass( "spin" )
+                .setMarginLeft( "45px" )
+        );
+
+    stage.tasks.signals.countChanged.add( function( delta, count ){
+
+        if( count > 0 ){
+
+            actions.add( busy );
+
+        }else{
+
+            try{
+
+                actions.remove( busy );
+
+            }catch( e ){
+
+                // already removed
+
+            }
+
+        }
+
+    } );
+
     // clipping
 
     var clipNear = new UI.Range(
@@ -3833,7 +3867,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         );
 
         dirWidget
-            .setOpacity( "0.8" )
+            .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .attach();
@@ -4078,6 +4112,12 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     var container = new UI.CollapsibleIconPanel( "bookmark" )
         .setMarginLeft( "20px" );
 
+    signals.requestGuiVisibility.add( function( value ){
+
+        container.setCollapsed( !value );
+
+    } );
+
     signals.visibilityChanged.add( function( value ){
 
         toggle.setValue( value );
@@ -4087,6 +4127,12 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     signals.colorChanged.add( function( value ){
 
         colorWidget.setValue( value );
+
+    } );
+
+    signals.nameChanged.add( function( value ){
+
+        name.setValue( NGL.unicodeHelper( value ) );
 
     } );
 
@@ -4100,7 +4146,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.EllipsisText( component.repr.type )
+    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
         .setWidth( "80px" );
 
     // Actions
@@ -4181,6 +4227,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         .setMarginLeft( "45px" )
         .setEntryLabelWidth( "110px" );
 
+    menu.addEntry( "type", new UI.Text( component.repr.type ) );
+
     // Parameters
 
     Object.keys( component.repr.parameters ).forEach( function( name ){
@@ -4228,6 +4276,22 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
                 } );
 
+        }else if( p.type === "color" ){
+
+            input = new UI.ColorPopupMenu( name )
+                .setValue( repr[ name ] );
+
+        }else if( p.type === "hidden" ){
+
+            // nothing to display
+
+        }else{
+
+            NGL.warn(
+                "NGL.RepresentationComponentWidget: unknown parameter type " +
+                "'" + p.type + "'"
+            );
+
         }
 
         if( input ){
@@ -4238,14 +4302,40 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
             } );
 
-            input.onChange( function(){
+            if( p.type === "color" ){
 
-                var po = {};
-                po[ name ] = input.getValue();
-                component.setParameters( po );
-                repr.viewer.render();
+                input.onChange( (function(){
 
-            } );
+                    var c = new THREE.Color();
+                    return function( e ){
+
+                        var po = {};
+                        var scheme = input.getScheme();
+                        if( scheme === "color" ){
+                            c.setStyle( input.getColor() );
+                            po[ name ] = c.getHex();
+                        }else{
+                            po[ name ] = scheme;
+                        }
+                        component.setParameters( po );
+                        repr.viewer.requestRender();
+
+                    }
+
+                })() );
+
+            }else{
+
+                input.onChange( function(){
+
+                    var po = {};
+                    po[ name ] = input.getValue();
+                    component.setParameters( po );
+                    repr.viewer.requestRender();
+
+                } );
+
+            }
 
             menu.addEntry( name, input );
 
