@@ -86,7 +86,7 @@ if (!Array.from) {
 
 // NGL.develop = true;
 NGL.useWorker = false;
-NGL.relativeScriptName = "../../js/ngl/core.js";
+NGL.mainScriptFilePath = "../../js/ngl/core.js";
 NGL.dataProtocolRelativePath = "../../data/";
 NGL.fileProtocolRelativePath = "../../file/";
 
