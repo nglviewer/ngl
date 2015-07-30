@@ -2560,7 +2560,8 @@ NGL.EDTSurface = function( atomSet ){
         cutoff = _cutoff || 2.0;
 
         // need margin to avoid boundary/round off effects
-        margin = ( ( 1 / scaleFactor ) * 5.5 ) + 10.0;
+        margin = ( 1 / scaleFactor ) * 5.5;
+        if( lowRes ) margin += 10.0;
 
         pmin = new THREE.Vector3().copy( bbox.min );
         pmax = new THREE.Vector3().copy( bbox.max );
