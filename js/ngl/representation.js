@@ -4136,18 +4136,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         background: {
             type: "boolean", rebuild: true
         },
-        transparent: {
-            type: "boolean", rebuild: true
-        },
         opaqueBack: {
             type: "boolean", define: "OPAQUE_BACK"
-        },
-        side: {
-            type: "select", options: NGL.SideTypes, rebuild: true,
-            int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0, uniform: true
         },
         lowResolution: {
             type: "boolean", rebuild: true
@@ -4157,7 +4147,15 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         radiusType: null,
         radius: null,
-        scale: null
+        scale: null,
+
+        transparent: {
+            type: "boolean", rebuild: true
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
+        }
 
     } ),
 
