@@ -1046,9 +1046,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'HELIX ' ){
 
-                    var startChain = line[ 19 ];
+                    var startChain = line[ 19 ].trim();
                     var startResi = parseInt( line.substr( 21, 4 ) );
-                    var endChain = line[ 31 ];
+                    var endChain = line[ 31 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     var helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = helixTypes[ helixType ] || helixTypes[""];
@@ -1056,9 +1056,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'SHEET ' ){
 
-                    var startChain = line[ 21 ];
+                    var startChain = line[ 21 ].trim();
                     var startResi = parseInt( line.substr( 22, 4 ) );
-                    var endChain = line[ 32 ];
+                    var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     sheets.push([ startChain, startResi, endChain, endResi ]);
 
