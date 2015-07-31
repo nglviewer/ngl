@@ -24,6 +24,9 @@ varying mat4 matrix_near;
 varying vec4 prime1;
 varying vec4 prime2;
 
+varying float vRadius;
+varying float vRadius2;
+
 uniform float opacity;
 uniform float nearClip;
 
@@ -31,6 +34,7 @@ uniform float shrink;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
+uniform mat4 projectionMatrix;
 
 #ifdef PICKING
     uniform float objectId;
@@ -44,6 +48,23 @@ uniform mat4 modelViewMatrixInverseTranspose;
 #include light_params
 
 #include fog_params
+
+
+float calcClip( vec4 cameraPos )
+{
+    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
+}
+float calcClip( vec3 cameraPos )
+{
+    return calcClip( vec4( cameraPos, 1.0 ) );
+}
+
+
+float calcDepth( in vec3 cameraPos )
+{
+    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
+    return 0.5 + 0.5 * clipZW.x / clipZW.y;
+}
 
 
 struct Ray {
@@ -86,6 +107,24 @@ vec3 isect_surf(Ray r, mat4 matrix_coef){
 }
 
 
+vec3 isect_surf2(Ray r, mat4 matrix_coef){
+    vec4 direction = vec4(r.direction, 0.0);
+    vec4 origin = vec4(r.origin, 1.0);
+    float a = dot(direction,(matrix_coef*direction));
+    float b = dot(origin,(matrix_coef*direction));
+    float c = dot(origin,(matrix_coef*origin));
+    float delta =b*b-a*c;
+    gl_FragColor.a = 1.0;
+    if (delta<0.0){
+        discard;
+        // gl_FragColor.a = 0.5;
+    }
+    float t2 =(-b+sqrt(delta))/a;
+
+    return r.origin+t2*r.direction;
+}
+
+
 Ray primary_ray(vec4 near1, vec4 far1){
     vec3 near=near1.xyz/near1.w;
     vec3 far=far1.xyz/far1.w;
@@ -117,6 +156,8 @@ float update_z_buffer(vec3 M, mat4 ModelViewP){
 
 void main()
 {
+
+    float radius = max( vRadius, vRadius2 );
 
     vec4 i_near, i_far, focus;
     vec3 e3, e1, e1_temp, e2;
@@ -182,25 +223,53 @@ void main()
     vec3 M;
     M = isect_surf(ray, mat);
 
-    #ifdef NEAR_CLIP
-        // custom clipping plane
-        // FIXME optimize, don't calculate values more than once
-        if( dot( modelViewMatrix*vec4(M,1.0), vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-            discard;
-    #endif
-
-    // Recalculate the depth in function of the new pixel position
-    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
-
     // cut the extremities of bonds to superimpose bond and spheres surfaces
     if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }
-
 
     // Transform normal to model space to view-space
     vec4 M1 = vec4(M,1.0);
     vec4 M2 =  mat*M1;
     vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );
 
+    // Recalculate the depth in function of the new pixel position
+    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
+
+    #ifdef NEAR_CLIP
+        if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){
+            M = isect_surf2(ray, mat);
+            if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )
+                discard;
+            normal = vec3( 0.0, 0.0, 0.4 );
+            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );
+            }
+        }else if( gl_FragDepthEXT <= 0.0 ){
+            M = isect_surf2(ray, mat);
+            normal = vec3( 0.0, 0.0, 0.4 );
+            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );
+            }
+        }
+    #else
+        if( gl_FragDepthEXT <= 0.0 ){
+            M = isect_surf2(ray, mat);
+            normal = vec3( 0.0, 0.0, 0.4 );
+            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );
+            }
+        }
+    #endif
+
+    // cut the extremities of bonds to superimpose bond and spheres surfaces
+    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }
+
+    if (gl_FragDepthEXT < 0.0)
+        discard;
+    if (gl_FragDepthEXT > 1.0)
+        discard;
 
     // Give color parameters to the Graphic card
     //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
@@ -236,7 +305,19 @@ void main()
         gl_FragColor.rgb *= vLightFront;
     #endif
 
-    #include fog
+    // #include fog
+
+    #ifdef USE_FOG
+        float depth = gl_FragDepthEXT / gl_FragCoord.w;
+        #ifdef FOG_EXP2
+            const float LOG2 = 1.442695;
+            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
+            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );
+        #else
+            float fogFactor = smoothstep( fogNear, fogFar, depth );
+        #endif
+        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+    #endif
 
     // ############## Fog effect #####################################################
     // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;

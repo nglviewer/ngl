@@ -123,21 +123,13 @@ void main(void){
     cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyzw;
     sphereRadius = radius;
 
+    // avoid clipping, added again in fragment shader
     cameraSpherePos.z -= radius;
 
     gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();
 
     point = ( projectionMatrixInverse * gl_Position ).xyz;
-
-    // move out of viewing frustum to avoid clipping artifacts
-    // if( gl_Position.z-sphereRadius<=1.0 ){
-    //     gl_Position.z = -10.0;
-    // }
-
-    // move out of viewing frustum for custom clipping
-    // if( dot( cameraSpherePos, vec4( 0.0, 0.0, 1.0, nearClip-1.0*radius ) ) > 0.0 )
-    //    gl_Position.w = -10.0;
 
 }
 

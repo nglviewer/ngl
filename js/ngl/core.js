@@ -348,7 +348,10 @@ var NGL = {
     develop: (
         self.location.pathname.indexOf( "core.js" ) !== -1 ||
         self.location.pathname.indexOf( "dev.html" ) !== -1
-    )
+    ),
+    mainScriptFilePath: "../js/build/ngl.full.min.js",
+    dataProtocolRelativePath: "../data/",
+    fileProtocolRelativePath: "../file/"
 
 };
 
@@ -424,6 +427,17 @@ NGL.GET = function( id ){
     }else{
         return undefined;
     }
+
+};
+
+
+NGL.getAbsolutePath = function( path ){
+
+    var loc = window.location;
+    var pn = loc.pathname;
+    var base = pn.substring( 0, pn.lastIndexOf("/") + 1 );
+
+    return loc.origin + base + path;
 
 };
 
@@ -758,7 +772,7 @@ NGL.Worker = {
         if( NGL.develop ){
             worker = new Worker( "../js/ngl/core.js" );
         }else{
-            worker = new Worker( "../js/build/ngl.full.min.js" );
+            worker = new Worker( NGL.mainScriptFilePath );
         }
 
         worker.onerror = params.onerror;
@@ -1068,9 +1082,13 @@ NGL.Counter.prototype = {
 
             var fn = function(){
 
-                this.signals.countChanged.remove( fn, this );
+                if( this.count === 0 ){
 
-                callback.apply( context, arguments );
+                    this.signals.countChanged.remove( fn, this );
+
+                    callback.apply( context, arguments );
+
+                }
 
             }
 

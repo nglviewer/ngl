@@ -262,6 +262,22 @@ NGL.Stage.prototype = {
 
     },
 
+    setOrientation: function( orientation ){
+
+        this.tasks.onZeroOnce( function(){
+
+            this.viewer.setOrientation( orientation );
+
+        }, this );
+
+    },
+
+    getOrientation: function(){
+
+        return this.viewer.getOrientation();
+
+    },
+
     exportImage: function( factor, antialias, transparent, trim, onProgress ){
 
         var reprParamsList = [];
@@ -438,8 +454,8 @@ NGL.Stage.prototype = {
 
     getAnythingByName: function( name ){
 
-        var compList = this.getComponentsByName( name );
-        var reprList = this.getRepresentationsByName( name );
+        var compList = this.getComponentsByName( name ).list;
+        var reprList = this.getRepresentationsByName( name ).list;
 
         return new NGL.Collection( compList.concat( reprList ) );
 
@@ -820,13 +836,29 @@ NGL.Component.prototype = {
 
     },
 
-    addRepresentation: function( repr ){
+    addRepresentation: function( type, object, params ){
 
-        this.reprList.push( repr );
+        var pref = this.stage.preferences;
+        var p = params || {};
+        p.quality = p.quality || pref.getKey( "quality" );
+        p.disableImpostor = p.disableImpostor !== undefined ? p.disableImpostor : !pref.getKey( "impostor" );
+        p.visible = p.visible !== undefined ? p.visible : true;
 
-        this.signals.representationAdded.dispatch( repr );
+        var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
 
-        return this;
+        var repr = NGL.makeRepresentation(
+            type, object, this.viewer, p2
+        );
+
+        var reprComp = new NGL.RepresentationComponent(
+            this.stage, repr, p, this
+        );
+
+        this.reprList.push( reprComp );
+
+        this.signals.representationAdded.dispatch( reprComp );
+
+        return reprComp;
 
     },
 
@@ -1027,47 +1059,19 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    addRepresentation: function( type, params, returnRepr ){
+    addRepresentation: function( type, params ){
 
-        var pref = this.stage.preferences;
-        params = params || {};
-        params.quality = params.quality || pref.getKey( "quality" );
-        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
-
-        var repr = NGL.makeRepresentation(
-            type, this.structure, this.viewer, params
+        return NGL.Component.prototype.addRepresentation.call(
+            this, type, this.structure, params
         );
-
-        var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, params, this
-        );
-
-        NGL.Component.prototype.addRepresentation.call( this, reprComp );
-
-        return returnRepr ? reprComp : this;
 
     },
 
-    addBufferRepresentation: function( buffer, params, returnRepr ){
+    addBufferRepresentation: function( buffer, params ){
 
-        // FIXME get rid of code duplication
-
-        var pref = this.stage.preferences;
-        params = params || {};
-        params.quality = params.quality || pref.getKey( "quality" );
-        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
-
-        var repr = NGL.makeRepresentation(
-            "buffer", buffer, this.viewer, params
+        return NGL.Component.prototype.addRepresentation.call(
+            this, "buffer", buffer, params
         );
-
-        var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, params, this
-        );
-
-        NGL.Component.prototype.addRepresentation.call( this, reprComp );
-
-        return returnRepr ? reprComp : this;
 
     },
 
@@ -1231,20 +1235,9 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
-        var pref = this.stage.preferences;
-        params = params || {};
-        params.quality = params.quality || pref.getKey( "quality" );
-        params.disableImpostor = params.disableImpostor !== undefined ? params.disableImpostor : !pref.getKey( "impostor" );
-
-        var repr = NGL.makeRepresentation(
-            type, this.surface, this.viewer, params
+        return NGL.Component.prototype.addRepresentation.call(
+            this, type, this.surface, params
         );
-
-        var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, params, this
-        );
-
-        return NGL.Component.prototype.addRepresentation.call( this, reprComp );
 
     },
 
@@ -1323,18 +1316,8 @@ NGL.TrajectoryComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
-        params = params || {};
-
-        var repr = NGL.makeRepresentation(
-            type, this.trajectory, this.viewer, params
-        );
-
-        var reprComp = new NGL.RepresentationComponent(
-            this.stage, repr, {}, this
-        );
-
         return NGL.Component.prototype.addRepresentation.call(
-            this, reprComp
+            this, type, this.trajectory, params
         );
 
     },
@@ -1651,6 +1634,12 @@ NGL.Collection.prototype = {
     setSelection: function( string ){
 
         return this._invoke( "setSelection", [ string ] );
+
+    },
+
+    requestGuiVisibility: function( value ){
+
+        return this._invoke( "requestGuiVisibility", [ value ] );
 
     },
 

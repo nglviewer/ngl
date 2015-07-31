@@ -253,11 +253,11 @@ NGL.autoLoad = function(){
 
         }else if( protocol === "data" ){
 
-            src = "../data/" + path;
+            src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
 
         }else{
 
-            src = "../file/" + path;
+            src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
 
         }
 

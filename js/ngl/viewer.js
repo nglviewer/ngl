@@ -2004,22 +2004,27 @@ NGL.Viewer.prototype = {
         return [
             this.camera.position.toArray(),
             this.camera.up.toArray(),
-            this.rotationGroup.position.toArray()
+            this.rotationGroup.position.toArray(),
+            this.controls.target.toArray()
         ];
 
     },
 
     setOrientation: function( orientation ){
 
+        console.log( "setOrientation" );
+
         // remove any paning/translation
         this.controls.object.position.sub( this.controls.target );
         this.controls.target.copy( this.controls.target0 );
 
-        this.camera.position.fromArray( orientation[ 0 ] );
-        this.camera.up.fromArray( orientation[ 1 ] );
+        this.controls.target.fromArray( orientation[ 3 ] );
 
         this.rotationGroup.position.fromArray( orientation[ 2 ] );
         this.rotationGroup.updateMatrixWorld();
+
+        this.camera.up.fromArray( orientation[ 1 ] );
+        this.camera.position.fromArray( orientation[ 0 ] );
 
         this.requestRender();
 

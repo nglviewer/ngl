@@ -102,20 +102,20 @@ void main()
     V = normalize( normalMatrix * left );
 
     vec4 base4 = modelViewMatrix * vec4( center - ldir + leftShift, 1.0 );
-    // base = base4.xyz / base4.w;
     base_radius.xyz = base4.xyz / base4.w;
 
     vec4 top_position = modelViewMatrix * vec4( center + ldir + leftShift, 1.0 );
     vec4 end4 = top_position;
-    // end = end4.xyz / end4.w;
     end_b.xyz = end4.xyz / end4.w;
 
     w = modelViewMatrix * vec4(
         center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
     );
-    // point = w.xyz / w.w;
 
     gl_Position = projectionMatrix * w;
+
+    // avoid clipping
+    gl_Position.z = 1.0;
 
 }
 

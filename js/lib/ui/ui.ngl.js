@@ -151,6 +151,12 @@ UI.ColorPopupMenu.prototype.getColor = function(){
 
 };
 
+UI.ColorPopupMenu.prototype.getValue = function(){
+
+    return this.colorInput.getValue();
+
+};
+
 UI.ColorPopupMenu.prototype.setValue = function( value ){
 
     if( parseInt( value ) === value ){

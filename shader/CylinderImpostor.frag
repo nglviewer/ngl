@@ -82,17 +82,23 @@ float distSq3( vec3 v3a, vec3 v3b ){
 //     #endif
 // }
 
+// Calculate depth based on the given camera position.
+float calcDepth( in vec3 cameraPos )
+{
+    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
+    return 0.5 + 0.5 * clipZW.x / clipZW.y;
+}
+
+
+float calcClip( vec3 cameraPos )
+{
+    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
+}
+
 
 void main()
 {
-
     vec3 point = w.xyz / w.w;
-    vec4 point4 = w;
-
-    #ifdef NEAR_CLIP
-        if( dot( point4, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-            discard;
-    #endif
 
     // unpacking
     vec3 base = base_radius.xyz;
@@ -199,17 +205,46 @@ void main()
         #endif
     }
 
-    vec2 clipZW = new_point.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
-    float depth2 = 0.5 + 0.5 * clipZW.x / clipZW.y;
+    gl_FragDepthEXT = calcDepth( new_point );
+
+    #ifdef NEAR_CLIP
+        if( calcClip( new_point ) > 0.0 ){
+            dist = (-a1 - sqrt(d)) / a2;
+            new_point = ray_target + dist * ray_direction;
+            if( calcClip( new_point ) > 0.0 )
+                discard;
+            normal = vec3( 0.0, 0.0, 0.4 );
+            gl_FragDepthEXT = calcDepth( new_point );
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );
+            }
+        }else if( gl_FragDepthEXT <= 0.0 ){
+            dist = (-a1 - sqrt(d)) / a2;
+            new_point = ray_target + dist * ray_direction;
+            normal = vec3( 0.0, 0.0, 0.4 );
+            gl_FragDepthEXT = calcDepth( new_point );
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );
+            }
+        }
+    #else
+        if( gl_FragDepthEXT <= 0.0 ){
+            dist = (-a1 - sqrt(d)) / a2;
+            new_point = ray_target + dist * ray_direction;
+            normal = vec3( 0.0, 0.0, 0.4 );
+            gl_FragDepthEXT = calcDepth( new_point );
+            if( gl_FragDepthEXT >= 0.0 ){
+                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );
+            }
+        }
+    #endif
 
     // this is a workaround necessary for Mac
     // otherwise the modified fragment won't clip properly
-    if (depth2 <= 0.0)
+    if (gl_FragDepthEXT < 0.0)
         discard;
-    if (depth2 >= 1.0)
+    if (gl_FragDepthEXT > 1.0)
         discard;
-
-    gl_FragDepthEXT = depth2;
 
 
     vec3 transformedNormal = normal;
@@ -249,7 +284,19 @@ void main()
         //gl_FragColor.rgb = transformedNormal;
     #endif
 
-    #include fog
+    // #include fog
+
+    #ifdef USE_FOG
+        float depth = gl_FragDepthEXT / gl_FragCoord.w;
+        #ifdef FOG_EXP2
+            const float LOG2 = 1.442695;
+            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
+            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );
+        #else
+            float fogFactor = smoothstep( fogNear, fogFar, depth );
+        #endif
+        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+    #endif
 }
 
 

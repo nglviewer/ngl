@@ -2,81 +2,93 @@
 // Production steps of ECMA-262, Edition 6, 22.1.2.1
 // Reference: https://people.mozilla.org/~jorendorff/es6-draft.html#sec-array.from
 if (!Array.from) {
-  Array.from = (function () {
-    var toStr = Object.prototype.toString;
-    var isCallable = function (fn) {
-      return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
-    };
-    var toInteger = function (value) {
-      var number = Number(value);
-      if (isNaN(number)) { return 0; }
-      if (number === 0 || !isFinite(number)) { return number; }
-      return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
-    };
-    var maxSafeInteger = Math.pow(2, 53) - 1;
-    var toLength = function (value) {
-      var len = toInteger(value);
-      return Math.min(Math.max(len, 0), maxSafeInteger);
-    };
 
-    // The length property of the from method is 1.
-    return function from(arrayLike/*, mapFn, thisArg */) {
-      // 1. Let C be the this value.
-      var C = this;
+    Array.from = (function () {
 
-      // 2. Let items be ToObject(arrayLike).
-      var items = Object(arrayLike);
+        var toStr = Object.prototype.toString;
+        var isCallable = function (fn) {
+            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+        };
+        var toInteger = function (value) {
+            var number = Number(value);
+            if (isNaN(number)) { return 0; }
+            if (number === 0 || !isFinite(number)) { return number; }
+            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        };
+        var maxSafeInteger = Math.pow(2, 53) - 1;
+        var toLength = function (value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        };
 
-      // 3. ReturnIfAbrupt(items).
-      if (arrayLike == null) {
-        throw new TypeError("Array.from requires an array-like object - not null or undefined");
-      }
+        // The length property of the from method is 1.
+        return function from(arrayLike/*, mapFn, thisArg */) {
 
-      // 4. If mapfn is undefined, then let mapping be false.
-      var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
-      var T;
-      if (typeof mapFn !== 'undefined') {
-        // 5. else
-        // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
-        if (!isCallable(mapFn)) {
-          throw new TypeError('Array.from: when provided, the second argument must be a function');
-        }
+            // 1. Let C be the this value.
+            var C = this;
 
-        // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
-        if (arguments.length > 2) {
-          T = arguments[2];
-        }
-      }
+            // 2. Let items be ToObject(arrayLike).
+            var items = Object(arrayLike);
 
-      // 10. Let lenValue be Get(items, "length").
-      // 11. Let len be ToLength(lenValue).
-      var len = toLength(items.length);
+            // 3. ReturnIfAbrupt(items).
+            if (arrayLike == null) {
+                throw new TypeError("Array.from requires an array-like object - not null or undefined");
+            }
 
-      // 13. If IsConstructor(C) is true, then
-      // 13. a. Let A be the result of calling the [[Construct]] internal method of C with an argument list containing the single item len.
-      // 14. a. Else, Let A be ArrayCreate(len).
-      var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+            // 4. If mapfn is undefined, then let mapping be false.
+            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+            var T;
+            if (typeof mapFn !== 'undefined') {
+                // 5. else
+                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                if (!isCallable(mapFn)) {
+                    throw new TypeError('Array.from: when provided, the second argument must be a function');
+                }
 
-      // 16. Let k be 0.
-      var k = 0;
-      // 17. Repeat, while k < len… (also steps a - h)
-      var kValue;
-      while (k < len) {
-        kValue = items[k];
-        if (mapFn) {
-          A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
-        } else {
-          A[k] = kValue;
-        }
-        k += 1;
-      }
-      // 18. Let putStatus be Put(A, "length", len, true).
-      A.length = len;
-      // 20. Return A.
-      return A;
-    };
-  }());
+                // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+                if (arguments.length > 2) {
+                    T = arguments[2];
+                }
+            }
+
+            // 10. Let lenValue be Get(items, "length").
+            // 11. Let len be ToLength(lenValue).
+            var len = toLength(items.length);
+
+            // 13. If IsConstructor(C) is true, then
+            // 13. a. Let A be the result of calling the [[Construct]] internal method of C with an argument list containing the single item len.
+            // 14. a. Else, Let A be ArrayCreate(len).
+            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+            // 16. Let k be 0.
+            var k = 0;
+            // 17. Repeat, while k < len… (also steps a - h)
+            var kValue;
+            while (k < len) {
+                kValue = items[k];
+                if (mapFn) {
+                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                } else {
+                    A[k] = kValue;
+                }
+                k += 1;
+            }
+            // 18. Let putStatus be Put(A, "length", len, true).
+            A.length = len;
+            // 20. Return A.
+            return A;
+        };
+
+    }());
+
 }
+
+
+// NGL.develop = true;
+NGL.useWorker = false;
+NGL.mainScriptFilePath = "../../js/ngl/core.js";
+NGL.dataProtocolRelativePath = "../../data/";
+NGL.fileProtocolRelativePath = "../../file/";
 
 
 ////////////////////
@@ -852,7 +864,7 @@ QUnit.asyncTest( "backbone", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -877,7 +889,7 @@ QUnit.asyncTest( "backbone [atomArray]", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -901,7 +913,7 @@ QUnit.asyncTest( ".CA", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -923,7 +935,7 @@ QUnit.asyncTest( "ARG or .N", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -944,7 +956,7 @@ QUnit.asyncTest( "not backbone", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -966,7 +978,7 @@ QUnit.asyncTest( "not backbone or .CA", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -988,7 +1000,7 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
     var selection1 = new NGL.Selection( "TYR" );
     var selection2 = new NGL.Selection( "not not TYR" );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1009,7 +1021,7 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
     var selection1 = new NGL.Selection( "not ( 12 and .CA )" );
     var selection2 = new NGL.Selection( "not ( 12.CA )" );
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1031,7 +1043,7 @@ QUnit.asyncTest( "/1 PDB", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1LVZ.pdb";
+    var path = "data://1LVZ.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1054,7 +1066,7 @@ QUnit.asyncTest( "/1 CIF", function( assert ) {
 
     var selection = new NGL.Selection( sele );
 
-    var path = "data://../../data/1LVZ.cif";
+    var path = "data://1LVZ.cif";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1079,7 +1091,7 @@ QUnit.module( "structure" );
 
 QUnit.asyncTest( "structure subset", function( assert ) {
 
-    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1099,7 +1111,7 @@ QUnit.asyncTest( "structure subset", function( assert ) {
 
 QUnit.asyncTest( "structure subset not", function( assert ) {
 
-    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1119,7 +1131,7 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
 
 QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
-    var path = "data://../../data/Bace1Trimer-inDPPC.gro";
+    var path = "data://Bace1Trimer-inDPPC.gro";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1139,7 +1151,7 @@ QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
 
 QUnit.asyncTest( "structure subset atomset chain", function( assert ) {
 
-    var path = "data://../../data/3SN6.cif";
+    var path = "data://3SN6.cif";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1160,7 +1172,7 @@ QUnit.asyncTest( "structure subset atomset chain", function( assert ) {
 
 QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
-    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1183,7 +1195,7 @@ QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
 QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
-    var path = "data://../../data/BaceCgProteinAtomistic.pdb";
+    var path = "data://BaceCgProteinAtomistic.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1206,7 +1218,7 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
 QUnit.asyncTest( "clone", function( assert ) {
 
-    var path = "data://../../data/1crn.pdb";
+    var path = "data://1crn.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1232,7 +1244,7 @@ QUnit.asyncTest( "clone", function( assert ) {
 
 QUnit.asyncTest( "clone multimodel", function( assert ) {
 
-    var path = "data://../../data/1LVZ.pdb";
+    var path = "data://1LVZ.pdb";
 
     NGL.autoLoad( path, function( structure ){
 
@@ -1399,7 +1411,7 @@ QUnit.test( "Uint8ToLines multiple chunks", function( assert ) {
 
 QUnit.asyncTest( "text parser", function( assert ) {
 
-    var path = "data://../../data/sample.txt";
+    var path = "data://sample.txt";
     var sampleText = "Moin world!";
 
     NGL.autoLoad( path, function( text ){
@@ -1415,7 +1427,7 @@ QUnit.asyncTest( "text parser", function( assert ) {
 
 QUnit.asyncTest( "csv parser", function( assert ) {
 
-    var path = "data://../../data/sample.csv";
+    var path = "data://sample.csv";
     var sampleText = "Moin world!";
 
     NGL.autoLoad( path, function( csv ){
@@ -1432,7 +1444,7 @@ QUnit.asyncTest( "csv parser", function( assert ) {
 
 QUnit.asyncTest( "json parser", function( assert ) {
 
-    var path = "data://../../data/sample.json";
+    var path = "data://sample.json";
     var sampleText = "Moin world!";
 
     NGL.autoLoad( path, function( json ){

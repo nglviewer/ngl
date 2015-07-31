@@ -26,6 +26,9 @@ varying mat4 matrix_near;
 varying vec4 prime1;
 varying vec4 prime2;
 
+varying float vRadius;
+varying float vRadius2;
+
 #ifdef PICKING
     attribute vec3 pickingColor;
     attribute vec3 pickingColor2;
@@ -45,6 +48,9 @@ uniform mat4 modelViewProjectionMatrixInverse;
 
 void main()
 {
+
+    vRadius = radius;
+    vRadius2 = radius2;
 
     vec4 spaceposition;
     vec3 position_atom1;
@@ -149,5 +155,9 @@ void main()
     focus.w = Rsquare;
 
     matrix_near = mat4( i_near, i_far, focus, e3 );
+
+    // avoid clipping
+    gl_Position.z = 1.0;
+
 }
 

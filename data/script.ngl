@@ -55,6 +55,13 @@ load( "data://1blu.pdb", function( o ){
 
     o.setName( "1BLU" );
 
+    // o.eachRepresentation( function( repr ){
+    //     repr.requestGuiVisibility( false );
+    // } );
+
+    stage.getRepresentationsByName( { comp: "1BLU" } )
+        .requestGuiVisibility( false );
+
 } );
 
 
@@ -80,5 +87,7 @@ then( function(){
     );
 
     stage.centerView();
+
+    representations().requestGuiVisibility( false );
 
 } );

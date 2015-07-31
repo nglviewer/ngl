@@ -195,95 +195,169 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     NGL.time( "NGL.assignSecondaryStructure" );
 
-    async.series( [
+    var helices = structure.helices || [];
 
-        // assign helix
-        function( wcallback ){
+    structure.eachModel( function( m ){
 
-            var helices = structure.helices || [];
+        var i = 0;
+        var n = helices.length;
+        if( n === 0 ) return;
+        var helix = helices[ i ];
+        var helixRun = false;
+        var done = false;
 
-            NGL.processArray(
+        m.eachChain( function( c ){
 
-                helices,
+            var chainChange = false;
 
-                function( _i, _n ){
+            if( c.chainname === helix[ 0 ] ){
 
-                    for( var i = _i; i < _n; ++i ){
+                var j = 0;
+                var m = c.residueCount;
 
-                        var helix = helices[ i ];
+                for( j = 0; j < m; ++j ){
 
-                        // [ begChain, begResno, endChain, endResno, type ]
+                    var r = c.residues[ j ];
 
-                        var selection = new NGL.Selection(
-                            helix[ 1 ] + "-" + helix[ 3 ] + ":" + helix[ 0 ]
-                        );
+                    // console.log( i, chainChange, done, helixRun )
 
-                        var helixType = helix[ 4 ];
+                    if( chainChange || done ) return;
 
-                        structure.eachResidue( function( r ){
+                    if( helixRun ){
 
-                            r.ss = helixType;
+                        r.ss = helix[ 4 ];
 
-                        }, selection );
+                        if( r.resno === helix[ 3 ] ){  // resnoEnd
 
-                    }
+                            helixRun = false
 
-                },
+                            i += 1;
 
-                wcallback,
+                            if( i < n ){
 
-                1000
+                                helix = helices[ i ];
+                                chainChange = c.chainname !== helix[ 0 ];
 
-            );
+                            }else{
 
-        },
+                                done = true;
 
-        // assign strand
-        function( wcallback ){
+                            }
 
-            var sheets = structure.sheets || [];
-
-            NGL.processArray(
-
-                sheets,
-
-                function( _i, _n ){
-
-                    for( var i = _i; i < _n; ++i ){
-
-                        var sheet = sheets[ i ];
-
-                        // [ begChain, begResno, endChain, endResno ]
-
-                        var selection = new NGL.Selection(
-                            sheet[ 1 ] + "-" + sheet[ 3 ] + ":" + sheet[ 0 ]
-                        );
-
-                        structure.eachResidue( function( r ){
-
-                            r.ss = "s";
-
-                        }, selection );
+                        }
 
                     }
 
-                },
+                    if( r.resno === helix[ 1 ] ){  // resnoBeg
 
-                wcallback,
+                        helixRun = true;
 
-                1000
+                        r.ss = helix[ 4 ];
 
-            );
+                    }
+
+                }
+
+            }
+
+        } );
+
+    } );
+
+    var sheets = structure.sheets || [];
+
+    sheets.sort( function( s1, s2 ){
+
+        var c1 = s1[ 0 ];
+        var c2 = s2[ 0 ];
+
+        var n1 = c1.length;
+        var n2 = c2.length;
+
+        if( n1 < n2 ) return -1;
+        if( n1 > n2 ) return 1;
+
+        for( var i = n1-1; i >= 0; --i ){
+
+            if( c1[ i ] < c2[ i ] ) return -1;
+            if( c1[ i ] > c2[ i ] ) return 1;
 
         }
 
-    ], function(){
-
-        NGL.timeEnd( "NGL.assignSecondaryStructure" );
-
-        callback();
+        return 0;
 
     } );
+
+    structure.eachModel( function( m ){
+
+        var i = 0;
+        var n = sheets.length;
+        if( n === 0 ) return;
+        var sheet = sheets[ i ];
+        var run = false;
+        var done = false;
+
+        m.eachChain( function( c ){
+
+            var chainChange = false;
+
+            if( c.chainname === sheet[ 0 ] ){
+
+                var j = 0;
+                var m = c.residueCount;
+
+                for( j = 0; j < m; ++j ){
+
+                    var r = c.residues[ j ];
+
+                    if( chainChange || done ) return;
+
+                    if( run ){
+
+                        r.ss = "s";
+
+                        if( r.resno === sheet[ 3 ] ){  // resnoEnd
+
+                            run = false
+                            i += 1;
+
+                            if( i < n ){
+
+                                // must look at previous residues as
+                                // sheet definitions are not ordered
+                                // by resno
+                                j = 0;
+                                sheet = sheets[ i ];
+                                chainChange = c.chainname !== sheet[ 0 ];
+
+                            }else{
+
+                                done = true;
+
+                            }
+
+                        }
+
+                    }
+
+                    if( r.resno === sheet[ 1 ] ){  // resnoBeg
+
+                        run = true;
+                        r.ss = "s";
+
+                    }
+
+                }
+
+            }
+
+        } );
+
+    } );
+
+    NGL.timeEnd( "NGL.assignSecondaryStructure" );
+
+    callback();
 
     return structure;
 
@@ -972,9 +1046,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'HELIX ' ){
 
-                    var startChain = line[ 19 ];
+                    var startChain = line[ 19 ].trim();
                     var startResi = parseInt( line.substr( 21, 4 ) );
-                    var endChain = line[ 31 ];
+                    var endChain = line[ 31 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     var helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = helixTypes[ helixType ] || helixTypes[""];
@@ -982,9 +1056,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'SHEET ' ){
 
-                    var startChain = line[ 21 ];
+                    var startChain = line[ 21 ].trim();
                     var startResi = parseInt( line.substr( 22, 4 ) );
-                    var endChain = line[ 32 ];
+                    var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     sheets.push([ startChain, startResi, endChain, endResi ]);
 
@@ -1946,9 +2020,9 @@ NGL.CifParser.prototype = NGL.createObject(
                                 helices.push( [
 
                                     sc.beg_label_asym_id[ i ],
-                                    sc.beg_auth_seq_id[ i ],
+                                    parseInt( sc.beg_auth_seq_id[ i ] ),
                                     sc.end_label_asym_id[ i ],
-                                    sc.end_auth_seq_id[ i ],
+                                    parseInt( sc.end_auth_seq_id[ i ] ),
                                     helixTypes[ helixType ] || helixTypes[""]
 
                                 ] );
@@ -1995,9 +2069,9 @@ NGL.CifParser.prototype = NGL.createObject(
                             sheets.push( [
 
                                 ssr.beg_label_asym_id[ i ],
-                                ssr.beg_auth_seq_id[ i ],
+                                parseInt( ssr.beg_auth_seq_id[ i ] ),
                                 ssr.end_label_asym_id[ i ],
-                                ssr.end_auth_seq_id[ i ]
+                                parseInt( ssr.end_auth_seq_id[ i ] )
 
                             ] );
 
