@@ -387,6 +387,33 @@ NGL.AA1 = {
 NGL.nextGlobalAtomindex = 0;
 
 
+/////////////
+// GlobalId
+
+NGL.GlobalIdRange = function( size ){
+
+};
+
+NGL.GlobalIdRange.prototype = {
+
+    getNextGid: function(){
+
+    }
+
+};
+
+
+NGL.GlobalIdPool = {
+
+    nextGlobalId: 0,
+
+    getNextGid: function(){
+
+    }
+
+}
+
+
 ////////////
 // Factory
 
