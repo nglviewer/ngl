@@ -383,10 +383,6 @@ NGL.AA1 = {
 };
 
 
-// REMEMBER not synced with worker
-NGL.nextGlobalAtomindex = 0;
-
-
 /////////////
 // GlobalId
 
@@ -405,9 +401,13 @@ NGL.GlobalIdRange.prototype = {
 
 NGL.GlobalIdPool = {
 
+    // REMEMBER not synced with worker
+
     nextGlobalId: 0,
 
     getNextGid: function(){
+
+        return NGL.GlobalIdPool.nextGlobalId++;
 
     }
 
@@ -678,6 +678,37 @@ NGL.ColorFactory.prototype = {
     atomColorToArray: function( a, array, offset ){
 
         var c = this.atomColor( a );
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
+        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
+        array[ offset + 2 ] = ( c & 255 ) / 255;
+
+        return array;
+
+    },
+
+    bondColor: function( b, fromTo ){
+
+        var a = fromTo ? b.atom1 : b.atom2;
+
+        if( this.type === "picking" ){
+
+            return b.gid + 1;
+
+        }else{
+
+            return this.atomColor( a );
+
+        }
+
+    },
+
+    bondColorToArray: function( b, fromTo, array, offset ){
+
+        var c = this.bondColor( b, fromTo );
 
         if( array === undefined ) array = [];
         if( offset === undefined ) offset = 0;
@@ -1478,7 +1509,7 @@ NGL.AtomSet.prototype = {
 
             this.eachBond( function( b ){
 
-                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
+                c = colorFactory.bondColor( b, fromTo );
 
                 color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
                 color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
@@ -1497,26 +1528,11 @@ NGL.AtomSet.prototype = {
 
                 var b = bonds[ j ];
 
-                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
+                c = colorFactory.bondColor( b, fromTo );
 
                 color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
                 color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
                 color[ i + 2 ] = ( c & 255 ) / 255;
-
-                if( type === "picking" ){
-
-                    var a = fromTo ? b.atom1 : b.atom2;
-                    var idx = a.bonds.indexOf( b );
-
-                    if( idx !== -1 ){
-
-                        // console.log( "FOO", color[ i + 2 ] );
-
-                        color[ i + 0 ] += ( ( idx + 1 ) << 4 ) / 255;
-
-                    }
-
-                }
 
                 i += 3;
 
@@ -1814,6 +1830,8 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
     }
 
     this.bondOrder = bondOrder || 1;
+
+    this.gid = NGL.GlobalIdPool.getNextGid();
 
 };
 
@@ -4400,7 +4418,7 @@ NGL.Atom = function( residue, globalindex ){
     this.residue = residue;
 
     if( globalindex === undefined ){
-        globalindex = NGL.nextGlobalAtomindex++;
+        globalindex = NGL.GlobalIdPool.getNextGid();
     }
     this.globalindex = globalindex;
 
@@ -5160,7 +5178,7 @@ NGL.ProxyAtom = function( atomArray, index ){
     this.atomArray = atomArray;
     this.index = index;
 
-    this.globalindex = NGL.nextGlobalAtomindex++;
+    this.globalindex = NGL.GlobalIdPool.getNextGid();
 
 };
 

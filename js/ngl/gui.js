@@ -116,18 +116,31 @@ NGL.ToolbarWidget = function( stage ){
     var messagePanel = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
     var statsPanel = new UI.Panel().setDisplay( "inline" ).setFloat( "right" );
 
-    signals.atomPicked.add( function( atom ){
+    signals.onPicking.add( function( d ){
 
-        var name = "none";
+        var msg;
 
-        if( atom ){
-            name = atom.qualifiedName() +
-                " (" + atom.residue.chain.model.structure.name + ")";
+        if( d.atom ){
+
+            msg = "Picked atom: " +
+                d.atom.qualifiedName() +
+                " (" + d.atom.residue.chain.model.structure.name + ")";
+
+        }else if( d.bond ){
+
+            msg = "Picked bond: " +
+                d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
+                " (" + d.bond.atom1.residue.chain.model.structure.name + ")";
+
+        }else{
+
+            msg = "Nothing to pick";
+
         }
 
         messagePanel
             .clear()
-            .add( new UI.Text( "Picked: " + name ) );
+            .add( new UI.Text( msg ) );
 
     } );
 

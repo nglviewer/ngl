@@ -1531,7 +1531,7 @@ NGL.Viewer.prototype = {
 
         return function( x, y ){
 
-            var id, object, instance, bondId;
+            var gid, object, instance, bondId;
 
             var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
 
@@ -1555,25 +1555,17 @@ NGL.Viewer.prototype = {
 
             if( this.supportsReadPixelsFloat() ){
 
-                // TODO simplify ...
-                id =
+                gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                     ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
                     ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
 
             }else{
 
-                id =
+                gid =
                     ( pixelBuffer[0] << 16 ) |
                     ( pixelBuffer[1] << 8 ) |
                     ( pixelBuffer[2] );
-
-            }
-
-            if( id >> 20 ){
-
-                bondId = id >> 20;
-                id = id & 0x0FFFFF;
 
             }
 
@@ -1602,8 +1594,7 @@ NGL.Viewer.prototype = {
                         ( rgba[3] ).toPrecision(2)
                     ]
                 );
-                NGL.log( "picked id", id );
-                NGL.log( "picked bondId", bondId );
+                NGL.log( "picked gid", gid );
                 NGL.log( "picked instance", instance );
                 NGL.log( "picked position", x, y );
                 NGL.log( "devicePixelRatio", window.devicePixelRatio );
@@ -1611,8 +1602,7 @@ NGL.Viewer.prototype = {
             }
 
             return {
-                "id": id,
-                "bondId": bondId,
+                "gid": gid,
                 "instance": instance
             };
 

@@ -19,6 +19,8 @@ NGL.Stage = function( eid ){
         componentRemoved: new SIGNALS.Signal(),
 
         atomPicked: new SIGNALS.Signal(),
+        bondPicked: new SIGNALS.Signal(),
+        onPicking: new SIGNALS.Signal(),
 
         requestTheme: new SIGNALS.Signal(),
 
@@ -475,7 +477,7 @@ NGL.Stage.prototype = {
 
 NGL.PickingControls = function( viewer, stage ){
 
-    var v3 = new THREE.Vector3();
+    var position = new THREE.Vector3();
 
     var mouse = {
 
@@ -526,50 +528,88 @@ NGL.PickingControls = function( viewer, stage ){
             offsetX,
             box.height - offsetY
         );
-        var id = pickingData.id;
-        var bondId = pickingData.bondId;
+        var gid = pickingData.gid;
         var instance = pickingData.instance;
 
-        // TODO early exit, binary search
         var pickedAtom = undefined;
         var pickedBond = undefined;
+
         stage.eachComponent( function( o ){
+
+            // TODO early exit, binary search, move logic to GlobalIdPool
 
             o.structure.eachAtom( function( a ){
 
-                if( a.globalindex === ( id - 1 ) ){
+                if( a.globalindex === ( gid - 1 ) ){
                     pickedAtom = a;
+                }
+
+            } );
+
+            o.structure.bondSet.eachBond( function( b ){
+
+                if( b.gid === ( gid - 1 ) ){
+                    pickedBond = b;
                 }
 
             } );
 
         }, NGL.StructureComponent );
 
-        if( pickedAtom && bondId !== undefined ){
+        //
 
-            pickedBond = pickedAtom.bonds[ bondId - 1 ];
+        if( ( pickedAtom || pickedBond ) && e.which === NGL.MiddleMouseButton ){
 
-        }
+            if( pickedAtom ){
 
-        if( pickedAtom && e.which === NGL.MiddleMouseButton ){
+                position.copy( pickedAtom );
 
-            v3.copy( pickedAtom );
+            }else if( pickedBond ){
 
-            if( instance ){
-
-                // var structure = pickedAtom.residue.chain.model.structure;
-                // var biomol = structure.biomolDict[ instance.assembly ];
-                // var matrix = biomol.matrixDict[ instance.name ];
-
-                v3.applyProjection( instance.matrix );
+                position.set( 0, 0, 0 )
+                    .addVectors( pickedBond.atom1, pickedBond.atom2 )
+                    .multiplyScalar( 0.5 );
 
             }
 
-            viewer.centerView( false, v3 );
+            if( instance ){
+
+                position.applyProjection( instance.matrix );
+
+            }
+
+            viewer.centerView( false, position );
 
         }
 
-        stage.signals.atomPicked.dispatch( pickedAtom, pickedBond );
+        //
+
+        if( pickedAtom ){
+
+            stage.signals.atomPicked.dispatch( pickedAtom );
+
+        }else if( pickedBond ){
+
+            stage.signals.bondPicked.dispatch( pickedBond );
+
+        }
+
+        stage.signals.onPicking.dispatch( {
+
+            "atom": pickedAtom,
+            "bond": pickedBond,
+            "instance": instance
+
+        } );
+
+        //
+
+        if( NGL.debug ){
+
+            NGL.log( "picked atom", pickedAtom );
+            NGL.log( "picked bond", pickedBond );
+
+        }
 
     } );
 
