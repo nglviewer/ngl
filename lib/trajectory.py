@@ -113,6 +113,19 @@ class Trajectory( object ):
             array.array( "f", coords ).tostring()
         )
 
+    def get_first_coords( self, atom_indices ):
+        if self.first_coords is None:
+            box, coords, time = self._get_frame( 0 )
+            self.first_coords = coords
+        if atom_indices:
+            coords = np.concatenate([
+                coords[ i:j ].ravel() for i, j in atom_indices
+            ])
+
+    def get_encoded_frame( self, index, atom_indices=None ):
+        first = self.get_first_frame( atom_indices )
+        frame = self.get_frame( index, atom_indices )
+
     def get_path( self, atom_index, frame_indices=None ):
         if( frame_indices ):
             size = len( frame_indices )
