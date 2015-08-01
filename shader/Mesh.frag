@@ -53,6 +53,12 @@ void main()
             #endif
         #endif
 
+        #ifdef DULL_INTERIOR
+            if( !gl_FrontFacing ){
+                transformedNormal = vec3( 0.0, 0.0, 0.4 );
+            }
+        #endif
+
         vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
 
         #ifndef NOLIGHT
