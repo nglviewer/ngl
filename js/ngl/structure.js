@@ -403,11 +403,81 @@ NGL.GlobalIdPool = {
 
     // REMEMBER not synced with worker
 
-    nextGlobalId: 0,
+    nextGlobalId: 1,
+
+    objectList: [],
+
+    addObject: function( object ){
+
+        NGL.GlobalIdPool.objectList.push( object );
+
+        return NGL.GlobalIdPool;
+
+    },
+
+    removeObject: function( object ){
+
+        var idx = NGL.GlobalIdPool.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            NGL.GlobalIdPool.objectList.splice( idx, 1 );
+
+        }
+
+        return NGL.GlobalIdPool;
+
+    },
 
     getNextGid: function(){
 
         return NGL.GlobalIdPool.nextGlobalId++;
+
+    },
+
+    getByGid: function( gid ){
+
+        // TODO
+        // - early exit
+        // - binary search
+
+        var entity;
+
+        NGL.GlobalIdPool.objectList.forEach( function( o ){
+
+            if( o instanceof NGL.Structure ){
+
+                o.eachAtom( function( a ){
+
+                    if( a.globalindex === gid ){
+                        entity = a;
+                    }
+
+                } );
+
+                // o.bondSet.eachBond( function( b ){
+
+                //     if( b.gid === gid ){
+                //         entity = b;
+                //     }
+
+                // } );
+
+            }else if( o instanceof NGL.BondSet ){
+
+                o.eachBond( function( b ){
+
+                    if( b.gid === gid ){
+                        entity = b;
+                    }
+
+                } );
+
+            }
+
+        } );
+
+        return entity;
 
     }
 
@@ -592,7 +662,7 @@ NGL.ColorFactory.prototype = {
 
             case "picking":
 
-                c = a.globalindex + 1;
+                c = a.globalindex;
                 break;
 
             case "element":
@@ -1657,6 +1727,8 @@ NGL.BondSet = function(){
     this.bonds = [];
     this.bondCount = 0;
 
+    NGL.GlobalIdPool.addObject( this );
+
 };
 
 NGL.BondSet.prototype = {
@@ -1810,6 +1882,8 @@ NGL.BondSet.prototype = {
     dispose: function(){
 
         this.clear();
+
+        NGL.GlobalIdPool.removeObject( this );
 
     }
 
@@ -2051,6 +2125,8 @@ NGL.Structure = function( name, path ){
     this.boxes = [];
 
     this.reset();
+
+    NGL.GlobalIdPool.addObject( this );
 
 };
 
@@ -3108,6 +3184,8 @@ NGL.Structure.prototype = {
         this.bondSet.dispose();
 
         if( this.atomArray ) this.atomArray.dispose();
+
+        NGL.GlobalIdPool.removeObject( this );
 
     }
 

@@ -534,27 +534,17 @@ NGL.PickingControls = function( viewer, stage ){
         var pickedAtom = undefined;
         var pickedBond = undefined;
 
-        stage.eachComponent( function( o ){
+        var picked = NGL.GlobalIdPool.getByGid( gid );
 
-            // TODO early exit, binary search, move logic to GlobalIdPool
+        if( picked instanceof NGL.Atom || picked instanceof NGL.ProxyAtom ){
 
-            o.structure.eachAtom( function( a ){
+            pickedAtom = picked;
 
-                if( a.globalindex === ( gid - 1 ) ){
-                    pickedAtom = a;
-                }
+        }else if( picked instanceof NGL.Bond ){
 
-            } );
+            pickedBond = picked;
 
-            o.structure.bondSet.eachBond( function( b ){
-
-                if( b.gid === ( gid - 1 ) ){
-                    pickedBond = b;
-                }
-
-            } );
-
-        }, NGL.StructureComponent );
+        }
 
         //
 
