@@ -1013,7 +1013,9 @@ NGL.Viewer.prototype = {
 
             scope.updateObjectUniforms( object, material, camera );
 
-            scope.renderer.loadUniformsGeneric( material.uniformsList );
+            scope.renderer.loadUniformsGeneric(
+                scope.renderer.properties.get( material ).uniformsList
+            );
 
             return program;
 
@@ -1332,13 +1334,11 @@ NGL.Viewer.prototype = {
         if( NGL.debug ){
 
             var bbSize = bb.size();
-            var material = new THREE.MeshBasicMaterial( {
-                color: Math.random() * 0xFFFFFF, wireframe: true
-            } );
             var boxGeometry = new THREE.BoxGeometry(
                 bbSize.x, bbSize.y, bbSize.z
             );
-            this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
+            var wireframeBox = new THREE.WireframeGeometry( boxGeometry );
+            this.boundingBoxMesh = new THREE.LineSegments( wireframeBox );
             bb.center( this.boundingBoxMesh.position );
             this.modelGroup.add( this.boundingBoxMesh );
 

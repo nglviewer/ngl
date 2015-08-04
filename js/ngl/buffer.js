@@ -33,7 +33,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.background = p.background !== undefined ? p.background : false;
     this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
 
-    this.attributes = {};
+    this.attributes = [];
     this.geometry = new THREE.BufferGeometry();
 
     this.addAttributes({
@@ -141,9 +141,7 @@ NGL.Buffer.prototype = {
 
             }
 
-            return new THREE.Line(
-                this.wireframeGeometry, material, THREE.LinePieces
-            );
+            return new THREE.LineSegments( this.wireframeGeometry, material );
 
         }else{
 
@@ -269,9 +267,7 @@ NGL.Buffer.prototype = {
             var buf;
             var a = attributes[ name ];
 
-            this.attributes[ name ] = {
-                "type": a.type, "value": null
-            };
+            this.attributes.push( name );
 
             if( a.value ){
 
@@ -474,7 +470,6 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
         }
 
         a.needsUpdate = true;
-        this.attributes[ name ].needsUpdate = true;
 
     }, this );
 
@@ -1388,10 +1383,7 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
     var n6 = n * 6;
     var nX = n * 2 * 2;
 
-    this.attributes = {
-        "position": { type: "v3", value: null },
-        "color": { type: "c", value: null },
-    };
+    this.attributes = [ "position", "color" ];
 
     this.geometry = new THREE.BufferGeometry();
 
@@ -1437,7 +1429,6 @@ NGL.LineBuffer.prototype = {
             to = data[ "to" ];
             aPosition = attributes[ "position" ].array;
             attributes[ "position" ].needsUpdate = true;
-            this.attributes[ "position" ].needsUpdate = true;
         }
 
         if( data[ "color" ] && data[ "color2" ] ){
@@ -1445,7 +1436,6 @@ NGL.LineBuffer.prototype = {
             color2 = data[ "color2" ];
             aColor = attributes[ "color" ].array;
             attributes[ "color" ].needsUpdate = true;
-            this.attributes[ "color" ].needsUpdate = true;
         }
 
         var n = this.size;
@@ -1528,9 +1518,7 @@ NGL.LineBuffer.prototype = {
 
         material = material || this.getMaterial( type );
 
-        return new THREE.Line(
-            this.geometry, material, THREE.LinePieces
-        );
+        return new THREE.LineSegments( this.geometry, material );
 
     },
 
@@ -1768,14 +1756,13 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     var n = this.size;
     var n4 = n * 4;
 
-    this.attributes = {
-        "inputDir": { type: 'v3', value: null },
-        "inputSize": { type: 'f', value: null },
-        "inputNormal": { type: 'v3', value: null },
-        "inputColor": { type: 'v3', value: null }
-    };
+    this.attributes = [
+        "position", "normal",
+        "inputDir", "inputSize", "inputNormal", "inputColor"
+    ];
+
     if( pickingColor ){
-        this.attributes[ "pickingColor" ] = { type: 'v3', value: null };
+        this.attributes.push( "pickingColor" );
     }
 
     this.uniforms = THREE.UniformsUtils.merge( [
@@ -2938,7 +2925,7 @@ NGL.BufferVectorHelper.prototype = {
 
         material = material || this.getMaterial( type );
 
-        return new THREE.Line( this.geometry, material, THREE.LinePieces );;
+        return new THREE.LineSegments( this.geometry, material );
 
     },
 
