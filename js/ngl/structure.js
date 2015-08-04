@@ -407,9 +407,13 @@ NGL.GlobalIdPool = {
 
     objectList: [],
 
+    rangeList: [],
+
     addObject: function( object ){
 
         NGL.GlobalIdPool.objectList.push( object );
+
+        NGL.GlobalIdPool.rangeList.push( NGL.GlobalIdPool.allocateGidRange( object ) );
 
         return NGL.GlobalIdPool;
 
@@ -429,9 +433,85 @@ NGL.GlobalIdPool = {
 
     },
 
+    updateObject: function( object ){
+
+        var idx = NGL.GlobalIdPool.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            NGL.GlobalIdPool.rangeList[ idx ] = NGL.GlobalIdPool.allocateGidRange( object );
+
+        }else{
+
+            NGL.warn( "NGL.GlobalIdPool.updateObject: object not found." );
+
+        }
+
+        return NGL.GlobalIdPool;
+
+    },
+
+    getGidCount: function( object ){
+
+        var count = 0;
+
+        if( object instanceof NGL.Structure ){
+
+            count = object.atomCount;
+
+        }else if( object instanceof NGL.BondSet ){
+
+            count = object.bondCount;
+
+        }
+
+        return count;
+
+    },
+
+    allocateGidRange: function( object ){
+
+        var firstGid = NGL.GlobalIdPool.nextGlobalId;
+
+        NGL.GlobalIdPool.nextGlobalId += NGL.GlobalIdPool.getGidCount( object );
+
+        return [ firstGid, NGL.GlobalIdPool.nextGlobalId ];
+
+    },
+
+    freeGidRange: function( object ){
+
+        // TODO
+
+    },
+
     getNextGid: function(){
 
         return NGL.GlobalIdPool.nextGlobalId++;
+
+    },
+
+    getGid: function( object, offset ){
+
+        offset = offset || 0;
+
+        var gid = 0;
+        var idx = NGL.GlobalIdPool.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            var range = NGL.GlobalIdPool.rangeList[ idx ];
+            var first = range[ 0 ];
+
+            gid = first + offset;
+
+        }else{
+
+            NGL.warn( "NGL.GlobalIdPool.getGid: object not found." );
+
+        }
+
+        return gid;
 
     },
 
@@ -449,25 +529,17 @@ NGL.GlobalIdPool = {
 
                 o.eachAtom( function( a ){
 
-                    if( a.globalindex === gid ){
+                    if( NGL.GlobalIdPool.getGid( o, a.index ) === gid ){
                         entity = a;
                     }
 
                 } );
 
-                // o.bondSet.eachBond( function( b ){
-
-                //     if( b.gid === gid ){
-                //         entity = b;
-                //     }
-
-                // } );
-
             }else if( o instanceof NGL.BondSet ){
 
                 o.eachBond( function( b ){
 
-                    if( b.gid === gid ){
+                    if( NGL.GlobalIdPool.getGid( o, b.index ) === gid ){
                         entity = b;
                     }
 
@@ -637,6 +709,8 @@ NGL.ColorFactory.prototype = {
     atomColor: function( a ){
 
         var type = this.type;
+        var structure = this.structure;
+
         var elemColors = NGL.ElementColors;
         var resColors = NGL.ResidueColors;
         var strucColors = NGL.StructureColors;
@@ -662,7 +736,9 @@ NGL.ColorFactory.prototype = {
 
             case "picking":
 
-                c = a.globalindex;
+                // c = a.globalindex;
+                c = NGL.GlobalIdPool.getGid( structure, a.index );
+                console.log( c, a.globalindex )
                 break;
 
             case "element":
@@ -762,13 +838,13 @@ NGL.ColorFactory.prototype = {
 
     bondColor: function( b, fromTo ){
 
-        var a = fromTo ? b.atom1 : b.atom2;
-
         if( this.type === "picking" ){
 
-            return b.gid + 1;
+            return b.gid;
 
         }else{
+
+            var a = fromTo ? b.atom1 : b.atom2;
 
             return this.atomColor( a );
 
@@ -1858,15 +1934,19 @@ NGL.BondSet.prototype = {
 
         for( var i = 0; i < n; i += 3 ){
 
-            bonds.push(
-                new NGL.Bond(
-                    atoms[ bondArray[ i ] ],
-                    atoms[ bondArray[ i + 1 ] ],
-                    bondArray[ i + 2 ]
-                )
+            var b = new NGL.Bond(
+                atoms[ bondArray[ i ] ],
+                atoms[ bondArray[ i + 1 ] ],
+                bondArray[ i + 2 ]
             );
 
+            b.index = i;
+
+            bonds.push( b );
+
         }
+
+        NGL.GlobalIdPool.updateObject( this );
 
         return this;
 
@@ -1916,6 +1996,8 @@ NGL.Bond.prototype = {
     atom1: undefined,
     atom2: undefined,
     bondOrder: undefined,
+
+    index: undefined,
 
     qualifiedName: function(){
 
@@ -3119,6 +3201,8 @@ NGL.Structure.prototype = {
             atoms[ b.atom2.index ].bonds.push( b );
 
         } );
+
+        NGL.GlobalIdPool.updateObject( this );
 
         NGL.timeEnd( "NGL.Structure.fromJSON" );
 
