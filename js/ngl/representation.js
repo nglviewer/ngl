@@ -1759,7 +1759,10 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         var bbSet = this.backboneBondSet;
 
         baSet.structure = this.structure;
-        bbSet.structure = this.structure;
+
+        var bbStructure = new NGL.Structure();
+        bbStructure.bondSet = bbSet;
+        bbSet.structure = bbStructure;
 
         var a1, a2;
 
@@ -1996,7 +1999,10 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
         var bbSet = this.baseBondSet;
 
         baSet.structure = this.structure;
-        bbSet.structure = this.structure;
+
+        var bbStructure = new NGL.Structure();
+        bbStructure.bondSet = bbSet;
+        bbSet.structure = bbStructure;
 
         var a1, a2;
         var bases = [ "A", "G", "DA", "DG" ];
@@ -4020,6 +4026,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         this.bufferList.push( this.cylinderBuffer );
 
+        structureSubset.dispose();
+
     },
 
     update: function( what ){
@@ -4591,6 +4599,14 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    },
+
+    clear: function(){
+
+        if( this.bondSet ) this.bondSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 

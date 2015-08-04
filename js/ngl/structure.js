@@ -426,6 +426,7 @@ NGL.GlobalIdPool = {
         if( idx !== -1 ){
 
             NGL.GlobalIdPool.objectList.splice( idx, 1 );
+            NGL.GlobalIdPool.rangeList.splice( idx, 1 );
 
         }
 
@@ -439,7 +440,19 @@ NGL.GlobalIdPool = {
 
         if( idx !== -1 ){
 
-            NGL.GlobalIdPool.rangeList[ idx ] = NGL.GlobalIdPool.allocateGidRange( object );
+            var range = NGL.GlobalIdPool.rangeList[ idx ];
+
+            if( range[1] === NGL.GlobalIdPool.nextGlobalId ){
+
+                var count = NGL.GlobalIdPool.getGidCount( object );
+                NGL.GlobalIdPool.nextGlobalId += count - ( range[1] - range[0] );
+                range[ 1 ] = NGL.GlobalIdPool.nextGlobalId;
+
+            }else{
+
+                NGL.GlobalIdPool.rangeList[ idx ] = NGL.GlobalIdPool.allocateGidRange( object );
+
+            }
 
         }else{
 
@@ -736,9 +749,7 @@ NGL.ColorFactory.prototype = {
 
             case "picking":
 
-                // c = a.globalindex;
                 c = NGL.GlobalIdPool.getGid( structure, a.index );
-                console.log( c, a.globalindex )
                 break;
 
             case "element":
@@ -840,7 +851,9 @@ NGL.ColorFactory.prototype = {
 
         if( this.type === "picking" ){
 
-            return b.gid;
+            var bondSet = this.structure.bondSet;
+
+            return NGL.GlobalIdPool.getGid( bondSet, b.index );
 
         }else{
 
@@ -1348,12 +1361,7 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            c = colorFactory.atomColor( a );
-
-            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-            color[ i + 2 ] = ( c & 255 ) / 255;
-
+            colorFactory.atomColorToArray( a, color, i );
             i += 3;
 
         }, selection );
@@ -1655,12 +1663,7 @@ NGL.AtomSet.prototype = {
 
             this.eachBond( function( b ){
 
-                c = colorFactory.bondColor( b, fromTo );
-
-                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-                color[ i + 2 ] = ( c & 255 ) / 255;
-
+                colorFactory.bondColorToArray( b, fromTo, color, i );
                 i += 3;
 
             }, selection );
@@ -1672,14 +1675,7 @@ NGL.AtomSet.prototype = {
 
             for( var j = 0; j < n; ++j ){
 
-                var b = bonds[ j ];
-
-                c = colorFactory.bondColor( b, fromTo );
-
-                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-                color[ i + 2 ] = ( c & 255 ) / 255;
-
+                colorFactory.bondColorToArray( bonds[ j ], fromTo, color, i );
                 i += 3;
 
             }
@@ -1814,6 +1810,7 @@ NGL.BondSet.prototype = {
     addBond: function( atom1, atom2, notToAtoms, bondOrder ){
 
         var b = new NGL.Bond( atom1, atom2, bondOrder );
+        b.index = this.bondCount;
 
         if( !notToAtoms ){
             atom1.bonds.push( b );
@@ -1822,6 +1819,8 @@ NGL.BondSet.prototype = {
         this.bonds.push( b );
 
         this.bondCount += 1;
+
+        NGL.GlobalIdPool.updateObject( this );
 
     },
 
@@ -1940,7 +1939,7 @@ NGL.BondSet.prototype = {
                 bondArray[ i + 2 ]
             );
 
-            b.index = i;
+            b.index = i / 3;
 
             bonds.push( b );
 
@@ -1957,9 +1956,15 @@ NGL.BondSet.prototype = {
         this.bonds.length = 0;
         this.bondCount = 0;
 
+        if( !this.__disposed ){
+            NGL.GlobalIdPool.updateObject( this );
+        }
+
     },
 
     dispose: function(){
+
+        this.__disposed = true;
 
         this.clear();
 
@@ -1984,8 +1989,6 @@ NGL.Bond = function( atomA, atomB, bondOrder ){
     }
 
     this.bondOrder = bondOrder || 1;
-
-    this.gid = NGL.GlobalIdPool.getNextGid();
 
 };
 
@@ -2227,7 +2230,12 @@ NGL.Structure.prototype = {
 
         this.atoms.length = 0;
         this.models.length = 0;
-        this.bondSet = new NGL.BondSet();
+
+        if( this.bondSet ){
+            this.bondSet.clear();
+        }else{
+             this.bondSet = new NGL.BondSet();
+        }
 
         this.biomolDict = {};
         this.helices.length = 0;
@@ -2290,6 +2298,8 @@ NGL.Structure.prototype = {
             }
 
         ], function(){
+
+            NGL.GlobalIdPool.updateObject( self );
 
             callback();
 
@@ -4575,14 +4585,9 @@ NGL.Residue.prototype = {
 NGL.AtomSet.prototype.apply( NGL.Residue.prototype );
 
 
-NGL.Atom = function( residue, globalindex ){
+NGL.Atom = function( residue ){
 
     this.residue = residue;
-
-    if( globalindex === undefined ){
-        globalindex = NGL.GlobalIdPool.getNextGid();
-    }
-    this.globalindex = globalindex;
 
     this.bonds = [];
 
@@ -4612,7 +4617,6 @@ NGL.Atom.prototype = {
     modelindex: undefined,
 
     residue: undefined,
-    globalindex: undefined,
     bonds: undefined,
 
     distanceTo: function( atom ){
@@ -4736,7 +4740,6 @@ NGL.Atom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
-        // this.globalindex = atom.globalindex;
 
         this.residue = atom.residue;
 
@@ -4881,7 +4884,6 @@ NGL.AtomArray.prototype = {
             this.altloc = new Uint8Array( size );
             this.atomname = new Uint8Array( 4 * size );
             this.modelindex = new Int32Array( size );
-            this.globalindex = new Int32Array( size );
 
         }
 
@@ -4915,8 +4917,7 @@ NGL.AtomArray.prototype = {
                 this.bfactor.buffer,
                 this.altloc.buffer,
                 this.atomname.buffer,
-                this.modelindex.buffer,
-                this.globalindex.buffer
+                this.modelindex.buffer
             ];
 
         }
@@ -4944,12 +4945,9 @@ NGL.AtomArray.prototype = {
         this.modelindexOffset = this.serialOffset + this.serialSize;
         this.modelindexSize = 4 * size;
 
-        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
-        this.globalindexSize = 4 * size;
-
         // Float32
 
-        this.xOffset = this.globalindexOffset + this.globalindexSize;
+        this.xOffset = this.modelindexOffset + this.modelindexSize;
         this.xSize = 4 * size;
 
         this.yOffset = this.xOffset + this.xSize;
@@ -5015,7 +5013,6 @@ NGL.AtomArray.prototype = {
         this.altloc = new Uint8Array( this.buffer, this.altlocOffset, this.altlocSize );
         this.atomname = new Uint8Array( this.buffer, this.atomnameOffset, this.atomnameSize );
         this.modelindex = new Int32Array( this.buffer, this.modelindexOffset, this.modelindexSize / 4 );
-        this.globalindex = new Int32Array( this.buffer, this.globalindexOffset, this.globalindexSize / 4 );
 
     },
 
@@ -5194,7 +5191,6 @@ NGL.AtomArray.prototype = {
         aa.altloc.set( this.altloc );
         aa.atomname.set( this.atomname );
         aa.modelindex.set( this.modelindex );
-        aa.globalindex.set( this.globalindex );
 
         aa.usedLength = this.usedLength;
 
@@ -5239,7 +5235,6 @@ NGL.AtomArray.prototype = {
                 altloc: this.altloc,
                 atomname: this.atomname,
                 modelindex: this.modelindex,
-                globalindex: this.globalindex,
 
                 // bonds: this.bonds,
                 // residue: this.residue
@@ -5279,7 +5274,6 @@ NGL.AtomArray.prototype = {
             this.altloc = input.altloc;
             this.atomname = input.atomname;
             this.modelindex = input.modelindex;
-            this.globalindex = input.globalindex;
 
         }
 
@@ -5322,7 +5316,6 @@ NGL.AtomArray.prototype = {
         delete this.altloc;
         delete this.atomname;
         delete this.modelindex;
-        delete this.globalindex;
 
         delete this.bonds;
         delete this.residue;
@@ -5339,8 +5332,6 @@ NGL.ProxyAtom = function( atomArray, index ){
 
     this.atomArray = atomArray;
     this.index = index;
-
-    this.globalindex = NGL.GlobalIdPool.getNextGid();
 
 };
 
@@ -5484,13 +5475,6 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.modelindex[ this.index ] = value;
     },
 
-    get globalindex () {
-        return this.atomArray.globalindex[ this.index ];
-    },
-    set globalindex ( value ) {
-        this.atomArray.globalindex[ this.index ] = value;
-    },
-
     // distanceTo: NGL.Atom.prototype.distanceTo,
 
     distanceTo: function( atom ){
@@ -5576,7 +5560,6 @@ NGL.ProxyAtom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
-        // this.globalindex = atom.globalindex;
 
         this.residue = atom.residue;
 
@@ -5684,7 +5667,6 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.altloc = a.altloc;
                     _a.atomname = a.atomname;
                     _a.modelindex = a.modelindex;
-                    _a.globalindex = a.globalindex;
 
                     atomIndexDict[ a.index ] = _a;
                     atoms.push( _a );
@@ -6264,11 +6246,12 @@ NGL.Selection.prototype = {
 
             // handle atom expressions
 
-            if( c.charAt( 0 ) === "@" ){
-                sele.globalindex = parseInt( c.substr( 1 ) );
-                pushRule( sele );
-                continue;
-            }
+            // TODO make replacement
+            // if( c.charAt( 0 ) === "@" ){
+            //     sele.globalindex = parseInt( c.substr( 1 ) );
+            //     pushRule( sele );
+            //     continue;
+            // }
 
             if( c.charAt( 0 ) === "#" ){
                 sele.element = c.substr( 1 ).toUpperCase();
@@ -6616,7 +6599,8 @@ NGL.Selection.prototype = {
 
             }
 
-            if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
+            // TODO make replacement
+            // if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
             if( s.resname!==undefined && s.resname!==a.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
             if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
@@ -6653,7 +6637,8 @@ NGL.Selection.prototype = {
             selection = this._filter( function( s ){
 
                 if( s.model!==undefined ) return true;
-                if( s.globalindex!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
@@ -6730,7 +6715,8 @@ NGL.Selection.prototype = {
                 if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
-                if( s.globalindex!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
@@ -6779,7 +6765,8 @@ NGL.Selection.prototype = {
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
-                if( s.globalindex!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;

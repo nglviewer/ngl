@@ -69,11 +69,13 @@
 
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+            var stage;
+
             document.addEventListener("DOMContentLoaded", function() {
 
                 NGL.init( function(){
 
-                    var stage = new NGL.Stage();
+                    stage = new NGL.Stage();
                     NGL.StageWidget( stage );
 
                     var example = NGL.GET( "example" );

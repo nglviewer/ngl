@@ -87,6 +87,8 @@ NGL.buildStructure = function( structure, callback ){
 
         function(){
 
+            NGL.GlobalIdPool.updateObject( structure );
+
             NGL.timeEnd( "NGL.buildStructure" );
 
             if( NGL.debug ) NGL.log( structure );

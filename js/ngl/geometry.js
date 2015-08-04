@@ -1663,9 +1663,15 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
     } );
 
     bondSet.structure = structure;
-    data.bondSet = bondSet;
 
-    return data;
+    data.bondSet.dispose();
+    donAtomSet.dispose();
+    accAtomSet.dispose();
+
+    return {
+        atomSet: data.atomSet,
+        bondSet: bondSet
+    };
 
 }
 
@@ -1734,8 +1740,14 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
     } );
 
     bondSet.structure = structure;
-    data.bondSet = bondSet;
 
-    return data;
+    data.bondSet.dispose();
+    donAtomSet.dispose();
+    accAtomSet.dispose();
+
+    return {
+        atomSet: data.atomSet,
+        bondSet: bondSet
+    };
 
 }
