@@ -581,8 +581,8 @@ NGL.Helixorient.prototype = {
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
-        var colorFactory = new NGL.ColorFactory( type );
-        var pickingColorFactory = new NGL.ColorFactory( "picking" );
+        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
+        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
 
         var i = 0;
         var a, c, pc;
