@@ -1759,10 +1759,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         var bbSet = this.backboneBondSet;
 
         baSet.structure = this.structure;
-
-        var bbStructure = new NGL.Structure();
-        bbStructure.bondSet = bbSet;
-        bbSet.structure = bbStructure;
+        bbSet.structure = this.structure;
 
         var a1, a2;
 
@@ -1999,10 +1996,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
         var bbSet = this.baseBondSet;
 
         baSet.structure = this.structure;
-
-        var bbStructure = new NGL.Structure();
-        bbStructure.bondSet = bbSet;
-        bbSet.structure = bbStructure;
+        bbSet.structure = this.structure;
 
         var a1, a2;
         var bases = [ "A", "G", "DA", "DG" ];

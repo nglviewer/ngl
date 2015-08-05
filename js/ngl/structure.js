@@ -572,12 +572,24 @@ NGL.GlobalIdPool = {
 ////////////
 // Factory
 
-NGL.ColorFactory = function( type, structure ){
+NGL.ColorFactory = function( type, params ){
 
     this.type = type;
-    this.structure = structure;
 
-    if( structure ){
+    this.structure = params.structure;
+    this.bondSet = params.bondSet;
+    this.surface = params.surface;
+
+    if( !this.bondSet && this.structure ){
+        this.bondSet = this.structure.bondSet;
+    }
+
+    // backwards compat
+    if( params instanceof NGL.Structure ){
+        this.structure = params;
+    }
+
+    if( this.structure ){
 
         this.atomindexScale = chroma
             //.scale( 'Spectral' )
@@ -851,9 +863,7 @@ NGL.ColorFactory.prototype = {
 
         if( this.type === "picking" ){
 
-            var bondSet = this.structure.bondSet;
-
-            return NGL.GlobalIdPool.getGid( bondSet, b.index );
+            return NGL.GlobalIdPool.getGid( this.bondSet, b.index );
 
         }else{
 
@@ -1343,13 +1353,21 @@ NGL.AtomSet.prototype = {
 
     },
 
+    getColorFactory: function( type ){
+
+        return new NGL.ColorFactory( type, {
+            "structure": this.structure
+        } );
+
+    },
+
     atomColor: function( selection, type ){
 
         // NGL.time( "atomColor" );
 
         // TODO cache
         var c, color;
-        var colorFactory = new NGL.ColorFactory( type, this.structure );
+        var colorFactory = this.getColorFactory( type );
 
         if( selection ){
             color = [];
@@ -1657,7 +1675,7 @@ NGL.AtomSet.prototype = {
         var color = [];
 
         var c;
-        var colorFactory = new NGL.ColorFactory( type, this.structure );
+        var colorFactory = this.getColorFactory( type );
 
         if( selection ){
 
@@ -1878,6 +1896,14 @@ NGL.BondSet.prototype = {
             }
 
         }
+
+    },
+
+    getColorFactory: function( type ){
+
+        return new NGL.ColorFactory( type, {
+            "bondSet": this
+        } );
 
     },
 
