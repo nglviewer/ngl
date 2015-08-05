@@ -158,6 +158,7 @@ if( !Object.assign ){
 
 }
 
+
 if( typeof importScripts !== 'function' ){
 
     ( function() {
@@ -219,6 +220,24 @@ if( typeof importScripts !== 'function' ){
 }
 
 
+if ( Function.prototype.name === undefined && Object.defineProperty !== undefined ) {
+
+    // Missing in IE9-11.
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+
+    Object.defineProperty( Function.prototype, 'name', {
+
+        get: function () {
+
+            return this.toString().match( /^\s*function\s*(\S*)\s*\(/ )[ 1 ];
+
+        }
+
+    } );
+
+}
+
+
 ////////////////
 // Workarounds
 
@@ -242,94 +261,6 @@ if( typeof importScripts !== 'function' ){
                 };
             }
         };
-
-    }();
-
-}
-
-
-if( typeof importScripts !== 'function' && WebGLRenderingContext ){
-
-    // wrap WebGL debug function used by three.js and
-    // ignore calls to them when the debug flag is not set
-
-    WebGLRenderingContext.prototype.getShaderParameter = function(){
-
-        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
-
-        return function(){
-
-            if( NGL.debug ){
-
-                return _getShaderParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        }
-
-    }();
-
-    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
-
-        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
-
-        return function(){
-
-            if( NGL.debug ){
-
-                return _getShaderInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        }
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramParameter = function(){
-
-        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
-
-        return function(){
-
-            if( NGL.debug ){
-
-                return _getProgramParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        }
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
-
-        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
-
-        return function(){
-
-            if( NGL.debug ){
-
-                return _getProgramInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        }
 
     }();
 
@@ -6569,6 +6500,7 @@ NGL.Spline.prototype = {
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
         var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
+        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
 
         var k = 0;
         var j, l, mh, a2, c2, pc2, a3, c3, pc3;
@@ -6579,39 +6511,23 @@ NGL.Spline.prototype = {
 
             a2 = r2.getTraceAtom();
 
-            c2 = colorFactory.atomColor( a2 );
-            pc2 = a2.globalindex + 1;
-
             for( j = 0; j < mh; ++j ){
 
                 l = k + j * 3;
 
-                col[ l + 0 ] = ( c2 >> 16 & 255 ) / 255;
-                col[ l + 1 ] = ( c2 >> 8 & 255 ) / 255;
-                col[ l + 2 ] = ( c2 & 255 ) / 255;
-
-                pcol[ l + 0 ] = ( pc2 >> 16 & 255 ) / 255;
-                pcol[ l + 1 ] = ( pc2 >> 8 & 255 ) / 255;
-                pcol[ l + 2 ] = ( pc2 & 255 ) / 255;
+                colorFactory.atomColorToArray( a2, col, l );
+                pickingColorFactory.atomColorToArray( a2, pcol, l );
 
             }
 
             a3 = r3.getTraceAtom();
 
-            c3 = colorFactory.atomColor( a3 );
-            pc3 = a3.globalindex + 1;
-
             for( j = mh; j < m; ++j ){
 
                 l = k + j * 3;
 
-                col[ l + 0 ] = ( c3 >> 16 & 255 ) / 255;
-                col[ l + 1 ] = ( c3 >> 8 & 255 ) / 255;
-                col[ l + 2 ] = ( c3 & 255 ) / 255;
-
-                pcol[ l + 0 ] = ( pc3 >> 16 & 255 ) / 255;
-                pcol[ l + 1 ] = ( pc3 >> 8 & 255 ) / 255;
-                pcol[ l + 2 ] = ( pc3 & 255 ) / 255;
+                colorFactory.atomColorToArray( a3, col, l );
+                pickingColorFactory.atomColorToArray( a3, pcol, l );
 
             }
 
@@ -7057,7 +6973,7 @@ NGL.Helixorient.prototype = {
             fa = fr.getTraceAtom();
 
             r = new NGL.Residue();
-            a = new NGL.Atom( r, fa.globalindex );
+            a = new NGL.Atom( r, fa.globalindex );  // FIXME get rid of globalindex
 
             r.atoms.push( a );
             r.atomCount += 1;
@@ -7100,7 +7016,7 @@ NGL.Helixorient.prototype = {
 
             residues.push( r );
 
-            if( padded && ( i === 0 || i === n-1 ) ){
+            if( padded && ( i === 0 || i === n - 1 ) ){
                 residues.push( r );
             }
 
@@ -7119,7 +7035,8 @@ NGL.Helixorient.prototype = {
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
-        var colorFactory = new NGL.ColorFactory( type );
+        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
+        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
 
         var i = 0;
         var a, c, pc;
@@ -7128,13 +7045,8 @@ NGL.Helixorient.prototype = {
 
             a = r.getTraceAtom();
 
-            c = colorFactory.atomColor( a );
             colorFactory.atomColorToArray( a, col, i );
-
-            pc = a.globalindex + 1;
-            pcol[ i + 0 ] = ( pc >> 16 & 255 ) / 255;
-            pcol[ i + 1 ] = ( pc >> 8 & 255 ) / 255;
-            pcol[ i + 2 ] = ( pc & 255 ) / 255;
+            pickingColorFactory.atomColorToArray( a, pcol, i );
 
             i += 3;
 
@@ -7704,6 +7616,7 @@ NGL.Helixbundle.prototype = {
         var pos = this.position;
 
         var colorFactory = new NGL.ColorFactory( color, this.fiber.structure );
+        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
         var radiusFactory = new NGL.RadiusFactory( radius, scale );
 
         var i, r, r2, a;
@@ -7789,11 +7702,7 @@ NGL.Helixbundle.prototype = {
                 _end.toArray( end, k );
 
                 colorFactory.atomColorToArray( a, col, k );
-
-                var pc = a.globalindex + 1;
-                pcol[ k + 0 ] = ( pc >> 16 & 255 ) / 255;
-                pcol[ k + 1 ] = ( pc >> 8 & 255 ) / 255;
-                pcol[ k + 2 ] = ( pc & 255 ) / 255;
+                pickingColorFactory.atomColorToArray( a, pcol, k );
 
                 size.push( radiusFactory.atomRadius( a ) );
 
@@ -8208,9 +8117,15 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
     } );
 
     bondSet.structure = structure;
-    data.bondSet = bondSet;
 
-    return data;
+    data.bondSet.dispose();
+    donAtomSet.dispose();
+    accAtomSet.dispose();
+
+    return {
+        atomSet: data.atomSet,
+        bondSet: bondSet
+    };
 
 }
 
@@ -8279,9 +8194,15 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
     } );
 
     bondSet.structure = structure;
-    data.bondSet = bondSet;
 
-    return data;
+    data.bondSet.dispose();
+    donAtomSet.dispose();
+    accAtomSet.dispose();
+
+    return {
+        atomSet: data.atomSet,
+        bondSet: bondSet
+    };
 
 }
 
@@ -8672,19 +8593,204 @@ NGL.AA1 = {
 };
 
 
-// REMEMBER not synced with worker
-NGL.nextGlobalAtomindex = 0;
+////////////
+// GidPool
+
+NGL.GidPool = {
+
+    // REMEMBER not synced with worker
+
+    nextGid: 1,
+
+    objectList: [],
+
+    rangeList: [],
+
+    addObject: function( object ){
+
+        NGL.GidPool.objectList.push( object );
+
+        NGL.GidPool.rangeList.push( NGL.GidPool.allocateGidRange( object ) );
+
+        return NGL.GidPool;
+
+    },
+
+    removeObject: function( object ){
+
+        var idx = NGL.GidPool.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            NGL.GidPool.objectList.splice( idx, 1 );
+            NGL.GidPool.rangeList.splice( idx, 1 );
+
+            if( NGL.GidPool.objectList.length === 0 ){
+                NGL.GidPool.nextGid = 1;
+            }
+
+        }
+
+        return NGL.GidPool;
+
+    },
+
+    updateObject: function( object ){
+
+        var idx = NGL.GidPool.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            var range = NGL.GidPool.rangeList[ idx ];
+
+            if( range[1] === NGL.GidPool.nextGid ){
+
+                var count = NGL.GidPool.getGidCount( object );
+                NGL.GidPool.nextGid += count - ( range[1] - range[0] );
+                range[ 1 ] = NGL.GidPool.nextGid;
+
+            }else{
+
+                NGL.GidPool.rangeList[ idx ] = NGL.GidPool.allocateGidRange( object );
+
+            }
+
+        }else{
+
+            NGL.warn( "NGL.GidPool.updateObject: object not found." );
+
+        }
+
+        return NGL.GidPool;
+
+    },
+
+    getGidCount: function( object ){
+
+        var count = 0;
+
+        if( object instanceof NGL.Structure ){
+
+            count = object.atomCount;
+
+        }else if( object instanceof NGL.BondSet ){
+
+            count = object.bondCount;
+
+        }
+
+        return count;
+
+    },
+
+    allocateGidRange: function( object ){
+
+        var firstGid = NGL.GidPool.nextGid;
+
+        NGL.GidPool.nextGid += NGL.GidPool.getGidCount( object );
+
+        return [ firstGid, NGL.GidPool.nextGid ];
+
+    },
+
+    freeGidRange: function( object ){
+
+        // TODO
+
+    },
+
+    getNextGid: function(){
+
+        return NGL.GidPool.nextGid++;
+
+    },
+
+    getGid: function( object, offset ){
+
+        offset = offset || 0;
+
+        var gid = 0;
+        var idx = NGL.GidPool.objectList.indexOf( object );
+
+        if( idx !== -1 ){
+
+            var range = NGL.GidPool.rangeList[ idx ];
+            var first = range[ 0 ];
+
+            gid = first + offset;
+
+        }else{
+
+            NGL.warn( "NGL.GidPool.getGid: object not found." );
+
+        }
+
+        return gid;
+
+    },
+
+    getByGid: function( gid ){
+
+        // TODO
+        // - early exit
+        // - binary search
+
+        var entity;
+
+        NGL.GidPool.objectList.forEach( function( o ){
+
+            if( o instanceof NGL.Structure ){
+
+                o.eachAtom( function( a ){
+
+                    if( NGL.GidPool.getGid( o, a.index ) === gid ){
+                        entity = a;
+                    }
+
+                } );
+
+            }else if( o instanceof NGL.BondSet ){
+
+                o.eachBond( function( b ){
+
+                    if( NGL.GidPool.getGid( o, b.index ) === gid ){
+                        entity = b;
+                    }
+
+                } );
+
+            }
+
+        } );
+
+        return entity;
+
+    }
+
+}
 
 
 ////////////
 // Factory
 
-NGL.ColorFactory = function( type, structure ){
+NGL.ColorFactory = function( type, params ){
 
     this.type = type;
-    this.structure = structure;
 
-    if( structure ){
+    this.structure = params.structure;
+    this.bondSet = params.bondSet;
+    this.surface = params.surface;
+
+    if( !this.bondSet && this.structure ){
+        this.bondSet = this.structure.bondSet;
+    }
+
+    // backwards compat
+    if( params instanceof NGL.Structure ){
+        this.structure = params;
+    }
+
+    if( this.structure ){
 
         this.atomindexScale = chroma
             //.scale( 'Spectral' )
@@ -8829,6 +8935,8 @@ NGL.ColorFactory.prototype = {
     atomColor: function( a ){
 
         var type = this.type;
+        var structure = this.structure;
+
         var elemColors = NGL.ElementColors;
         var resColors = NGL.ResidueColors;
         var strucColors = NGL.StructureColors;
@@ -8854,7 +8962,7 @@ NGL.ColorFactory.prototype = {
 
             case "picking":
 
-                c = a.globalindex + 1;
+                c = NGL.GidPool.getGid( structure, a.index );
                 break;
 
             case "element":
@@ -8940,6 +9048,37 @@ NGL.ColorFactory.prototype = {
     atomColorToArray: function( a, array, offset ){
 
         var c = this.atomColor( a );
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
+        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
+        array[ offset + 2 ] = ( c & 255 ) / 255;
+
+        return array;
+
+    },
+
+    bondColor: function( b, fromTo ){
+
+        if( this.type === "picking" ){
+
+            return NGL.GidPool.getGid( this.bondSet, b.index );
+
+        }else{
+
+            var a = fromTo ? b.atom1 : b.atom2;
+
+            return this.atomColor( a );
+
+        }
+
+    },
+
+    bondColorToArray: function( b, fromTo, array, offset ){
+
+        var c = this.bondColor( b, fromTo );
 
         if( array === undefined ) array = [];
         if( offset === undefined ) offset = 0;
@@ -9107,6 +9246,7 @@ NGL.LabelFactory.prototype = {
 
             case "text":
 
+                // TODO
                 l = this.text[ a.globalindex ];
                 break;
 
@@ -9415,13 +9555,21 @@ NGL.AtomSet.prototype = {
 
     },
 
+    getColorFactory: function( type ){
+
+        return new NGL.ColorFactory( type, {
+            "structure": this.structure
+        } );
+
+    },
+
     atomColor: function( selection, type ){
 
         // NGL.time( "atomColor" );
 
         // TODO cache
         var c, color;
-        var colorFactory = new NGL.ColorFactory( type, this.structure );
+        var colorFactory = this.getColorFactory( type );
 
         if( selection ){
             color = [];
@@ -9433,12 +9581,7 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            c = colorFactory.atomColor( a );
-
-            color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-            color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-            color[ i + 2 ] = ( c & 255 ) / 255;
-
+            colorFactory.atomColorToArray( a, color, i );
             i += 3;
 
         }, selection );
@@ -9734,18 +9877,13 @@ NGL.AtomSet.prototype = {
         var color = [];
 
         var c;
-        var colorFactory = new NGL.ColorFactory( type, this.structure );
+        var colorFactory = this.getColorFactory( type );
 
         if( selection ){
 
             this.eachBond( function( b ){
 
-                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
-
-                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-                color[ i + 2 ] = ( c & 255 ) / 255;
-
+                colorFactory.bondColorToArray( b, fromTo, color, i );
                 i += 3;
 
             }, selection );
@@ -9757,14 +9895,7 @@ NGL.AtomSet.prototype = {
 
             for( var j = 0; j < n; ++j ){
 
-                var b = bonds[ j ];
-
-                c = colorFactory.atomColor( fromTo ? b.atom1 : b.atom2 );
-
-                color[ i + 0 ] = ( c >> 16 & 255 ) / 255;
-                color[ i + 1 ] = ( c >> 8 & 255 ) / 255;
-                color[ i + 2 ] = ( c & 255 ) / 255;
-
+                colorFactory.bondColorToArray( bonds[ j ], fromTo, color, i );
                 i += 3;
 
             }
@@ -9888,6 +10019,8 @@ NGL.BondSet = function(){
     this.bonds = [];
     this.bondCount = 0;
 
+    NGL.GidPool.addObject( this );
+
 };
 
 NGL.BondSet.prototype = {
@@ -9897,6 +10030,7 @@ NGL.BondSet.prototype = {
     addBond: function( atom1, atom2, notToAtoms, bondOrder ){
 
         var b = new NGL.Bond( atom1, atom2, bondOrder );
+        b.index = this.bondCount;
 
         if( !notToAtoms ){
             atom1.bonds.push( b );
@@ -9905,6 +10039,8 @@ NGL.BondSet.prototype = {
         this.bonds.push( b );
 
         this.bondCount += 1;
+
+        NGL.GidPool.updateObject( this );
 
     },
 
@@ -9965,6 +10101,14 @@ NGL.BondSet.prototype = {
 
     },
 
+    getColorFactory: function( type ){
+
+        return new NGL.ColorFactory( type, {
+            "bondSet": this
+        } );
+
+    },
+
     bondPosition: NGL.AtomSet.prototype.bondPosition,
 
     bondColor: NGL.AtomSet.prototype.bondColor,
@@ -10017,15 +10161,19 @@ NGL.BondSet.prototype = {
 
         for( var i = 0; i < n; i += 3 ){
 
-            bonds.push(
-                new NGL.Bond(
-                    atoms[ bondArray[ i ] ],
-                    atoms[ bondArray[ i + 1 ] ],
-                    bondArray[ i + 2 ]
-                )
+            var b = new NGL.Bond(
+                atoms[ bondArray[ i ] ],
+                atoms[ bondArray[ i + 1 ] ],
+                bondArray[ i + 2 ]
             );
 
+            b.index = i / 3;
+
+            bonds.push( b );
+
         }
+
+        NGL.GidPool.updateObject( this );
 
         return this;
 
@@ -10036,11 +10184,19 @@ NGL.BondSet.prototype = {
         this.bonds.length = 0;
         this.bondCount = 0;
 
+        if( !this.__disposed ){
+            NGL.GidPool.updateObject( this );
+        }
+
     },
 
     dispose: function(){
 
+        this.__disposed = true;
+
         this.clear();
+
+        NGL.GidPool.removeObject( this );
 
     }
 
@@ -10071,6 +10227,8 @@ NGL.Bond.prototype = {
     atom1: undefined,
     atom2: undefined,
     bondOrder: undefined,
+
+    index: undefined,
 
     qualifiedName: function(){
 
@@ -10281,6 +10439,8 @@ NGL.Structure = function( name, path ){
 
     this.reset();
 
+    NGL.GidPool.addObject( this );
+
 };
 
 NGL.Structure.prototype = {
@@ -10298,7 +10458,12 @@ NGL.Structure.prototype = {
 
         this.atoms.length = 0;
         this.models.length = 0;
-        this.bondSet = new NGL.BondSet();
+
+        if( this.bondSet ){
+            this.bondSet.clear();
+        }else{
+             this.bondSet = new NGL.BondSet();
+        }
 
         this.biomolDict = {};
         this.helices.length = 0;
@@ -10361,6 +10526,8 @@ NGL.Structure.prototype = {
             }
 
         ], function(){
+
+            NGL.GidPool.updateObject( self );
 
             callback();
 
@@ -11273,6 +11440,8 @@ NGL.Structure.prototype = {
 
         } );
 
+        NGL.GidPool.updateObject( this );
+
         NGL.timeEnd( "NGL.Structure.fromJSON" );
 
         return this;
@@ -11337,6 +11506,8 @@ NGL.Structure.prototype = {
         this.bondSet.dispose();
 
         if( this.atomArray ) this.atomArray.dispose();
+
+        NGL.GidPool.removeObject( this );
 
     }
 
@@ -12642,14 +12813,9 @@ NGL.Residue.prototype = {
 NGL.AtomSet.prototype.apply( NGL.Residue.prototype );
 
 
-NGL.Atom = function( residue, globalindex ){
+NGL.Atom = function( residue ){
 
     this.residue = residue;
-
-    if( globalindex === undefined ){
-        globalindex = NGL.nextGlobalAtomindex++;
-    }
-    this.globalindex = globalindex;
 
     this.bonds = [];
 
@@ -12679,7 +12845,6 @@ NGL.Atom.prototype = {
     modelindex: undefined,
 
     residue: undefined,
-    globalindex: undefined,
     bonds: undefined,
 
     distanceTo: function( atom ){
@@ -12803,7 +12968,6 @@ NGL.Atom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
-        // this.globalindex = atom.globalindex;
 
         this.residue = atom.residue;
 
@@ -12948,7 +13112,6 @@ NGL.AtomArray.prototype = {
             this.altloc = new Uint8Array( size );
             this.atomname = new Uint8Array( 4 * size );
             this.modelindex = new Int32Array( size );
-            this.globalindex = new Int32Array( size );
 
         }
 
@@ -12982,8 +13145,7 @@ NGL.AtomArray.prototype = {
                 this.bfactor.buffer,
                 this.altloc.buffer,
                 this.atomname.buffer,
-                this.modelindex.buffer,
-                this.globalindex.buffer
+                this.modelindex.buffer
             ];
 
         }
@@ -13011,12 +13173,9 @@ NGL.AtomArray.prototype = {
         this.modelindexOffset = this.serialOffset + this.serialSize;
         this.modelindexSize = 4 * size;
 
-        this.globalindexOffset = this.modelindexOffset + this.modelindexSize;
-        this.globalindexSize = 4 * size;
-
         // Float32
 
-        this.xOffset = this.globalindexOffset + this.globalindexSize;
+        this.xOffset = this.modelindexOffset + this.modelindexSize;
         this.xSize = 4 * size;
 
         this.yOffset = this.xOffset + this.xSize;
@@ -13082,7 +13241,6 @@ NGL.AtomArray.prototype = {
         this.altloc = new Uint8Array( this.buffer, this.altlocOffset, this.altlocSize );
         this.atomname = new Uint8Array( this.buffer, this.atomnameOffset, this.atomnameSize );
         this.modelindex = new Int32Array( this.buffer, this.modelindexOffset, this.modelindexSize / 4 );
-        this.globalindex = new Int32Array( this.buffer, this.globalindexOffset, this.globalindexSize / 4 );
 
     },
 
@@ -13261,7 +13419,6 @@ NGL.AtomArray.prototype = {
         aa.altloc.set( this.altloc );
         aa.atomname.set( this.atomname );
         aa.modelindex.set( this.modelindex );
-        aa.globalindex.set( this.globalindex );
 
         aa.usedLength = this.usedLength;
 
@@ -13306,7 +13463,6 @@ NGL.AtomArray.prototype = {
                 altloc: this.altloc,
                 atomname: this.atomname,
                 modelindex: this.modelindex,
-                globalindex: this.globalindex,
 
                 // bonds: this.bonds,
                 // residue: this.residue
@@ -13346,7 +13502,6 @@ NGL.AtomArray.prototype = {
             this.altloc = input.altloc;
             this.atomname = input.atomname;
             this.modelindex = input.modelindex;
-            this.globalindex = input.globalindex;
 
         }
 
@@ -13389,7 +13544,6 @@ NGL.AtomArray.prototype = {
         delete this.altloc;
         delete this.atomname;
         delete this.modelindex;
-        delete this.globalindex;
 
         delete this.bonds;
         delete this.residue;
@@ -13406,8 +13560,6 @@ NGL.ProxyAtom = function( atomArray, index ){
 
     this.atomArray = atomArray;
     this.index = index;
-
-    this.globalindex = NGL.nextGlobalAtomindex++;
 
 };
 
@@ -13551,13 +13703,6 @@ NGL.ProxyAtom.prototype = {
         this.atomArray.modelindex[ this.index ] = value;
     },
 
-    get globalindex () {
-        return this.atomArray.globalindex[ this.index ];
-    },
-    set globalindex ( value ) {
-        this.atomArray.globalindex[ this.index ] = value;
-    },
-
     // distanceTo: NGL.Atom.prototype.distanceTo,
 
     distanceTo: function( atom ){
@@ -13643,7 +13788,6 @@ NGL.ProxyAtom.prototype = {
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
-        // this.globalindex = atom.globalindex;
 
         this.residue = atom.residue;
 
@@ -13751,7 +13895,6 @@ NGL.StructureSubset.prototype._build = function(){
                     _a.altloc = a.altloc;
                     _a.atomname = a.atomname;
                     _a.modelindex = a.modelindex;
-                    _a.globalindex = a.globalindex;
 
                     atomIndexDict[ a.index ] = _a;
                     atoms.push( _a );
@@ -13804,6 +13947,8 @@ NGL.StructureSubset.prototype._build = function(){
 
     _s.biomolDict = structure.biomolDict;
     _s.defaultAssembly = structure.defaultAssembly;
+
+    NGL.GidPool.updateObject( this );
 
     NGL.timeEnd( "NGL.StructureSubset._build" );
 
@@ -14331,11 +14476,12 @@ NGL.Selection.prototype = {
 
             // handle atom expressions
 
-            if( c.charAt( 0 ) === "@" ){
-                sele.globalindex = parseInt( c.substr( 1 ) );
-                pushRule( sele );
-                continue;
-            }
+            // TODO make replacement
+            // if( c.charAt( 0 ) === "@" ){
+            //     sele.globalindex = parseInt( c.substr( 1 ) );
+            //     pushRule( sele );
+            //     continue;
+            // }
 
             if( c.charAt( 0 ) === "#" ){
                 sele.element = c.substr( 1 ).toUpperCase();
@@ -14683,7 +14829,8 @@ NGL.Selection.prototype = {
 
             }
 
-            if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
+            // TODO make replacement
+            // if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
             if( s.resname!==undefined && s.resname!==a.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
             if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
@@ -14720,7 +14867,8 @@ NGL.Selection.prototype = {
             selection = this._filter( function( s ){
 
                 if( s.model!==undefined ) return true;
-                if( s.globalindex!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
@@ -14797,7 +14945,8 @@ NGL.Selection.prototype = {
                 if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
-                if( s.globalindex!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
@@ -14846,7 +14995,8 @@ NGL.Selection.prototype = {
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
-                if( s.globalindex!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
@@ -19149,7 +19299,8 @@ NGL.EDTSurface = function( atomSet ){
         cutoff = _cutoff || 2.0;
 
         // need margin to avoid boundary/round off effects
-        margin = ( ( 1 / scaleFactor ) * 5.5 ) + 10.0;
+        margin = ( 1 / scaleFactor ) * 5.5;
+        if( lowRes ) margin += 10.0;
 
         pmin = new THREE.Vector3().copy( bbox.min );
         pmax = new THREE.Vector3().copy( bbox.max );
@@ -21258,6 +21409,8 @@ NGL.buildStructure = function( structure, callback ){
 
         function(){
 
+            NGL.GidPool.updateObject( structure );
+
             NGL.timeEnd( "NGL.buildStructure" );
 
             if( NGL.debug ) NGL.log( structure );
@@ -22217,9 +22370,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'HELIX ' ){
 
-                    var startChain = line[ 19 ];
+                    var startChain = line[ 19 ].trim();
                     var startResi = parseInt( line.substr( 21, 4 ) );
-                    var endChain = line[ 31 ];
+                    var endChain = line[ 31 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     var helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = helixTypes[ helixType ] || helixTypes[""];
@@ -22227,9 +22380,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'SHEET ' ){
 
-                    var startChain = line[ 21 ];
+                    var startChain = line[ 21 ].trim();
                     var startResi = parseInt( line.substr( 22, 4 ) );
-                    var endChain = line[ 32 ];
+                    var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     sheets.push([ startChain, startResi, endChain, endResi ]);
 
@@ -26072,7 +26225,9 @@ NGL.Viewer.prototype = {
 
             scope.updateObjectUniforms( object, material, camera );
 
-            scope.renderer.loadUniformsGeneric( material.uniformsList );
+            scope.renderer.loadUniformsGeneric(
+                scope.renderer.properties.get( material ).uniformsList
+            );
 
             return program;
 
@@ -26391,13 +26546,11 @@ NGL.Viewer.prototype = {
         if( NGL.debug ){
 
             var bbSize = bb.size();
-            var material = new THREE.MeshBasicMaterial( {
-                color: Math.random() * 0xFFFFFF, wireframe: true
-            } );
             var boxGeometry = new THREE.BoxGeometry(
                 bbSize.x, bbSize.y, bbSize.z
             );
-            this.boundingBoxMesh = new THREE.Mesh( boxGeometry, material );
+            var wireframeBox = new THREE.WireframeGeometry( boxGeometry );
+            this.boundingBoxMesh = new THREE.LineSegments( wireframeBox );
             bb.center( this.boundingBoxMesh.position );
             this.modelGroup.add( this.boundingBoxMesh );
 
@@ -26590,7 +26743,7 @@ NGL.Viewer.prototype = {
 
         return function( x, y ){
 
-            var id, object, instance;
+            var gid, object, instance, bondId;
 
             var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
 
@@ -26614,15 +26767,14 @@ NGL.Viewer.prototype = {
 
             if( this.supportsReadPixelsFloat() ){
 
-                // TODO simplify ...
-                id =
+                gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                     ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
                     ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
 
             }else{
 
-                id =
+                gid =
                     ( pixelBuffer[0] << 16 ) |
                     ( pixelBuffer[1] << 8 ) |
                     ( pixelBuffer[2] );
@@ -26654,7 +26806,7 @@ NGL.Viewer.prototype = {
                         ( rgba[3] ).toPrecision(2)
                     ]
                 );
-                NGL.log( "picked id", id );
+                NGL.log( "picked gid", gid );
                 NGL.log( "picked instance", instance );
                 NGL.log( "picked position", x, y );
                 NGL.log( "devicePixelRatio", window.devicePixelRatio );
@@ -26662,7 +26814,7 @@ NGL.Viewer.prototype = {
             }
 
             return {
-                "id": id,
+                "gid": gid,
                 "instance": instance
             };
 
@@ -27427,13 +27579,14 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 
     this.transparent = p.transparent !== undefined ? p.transparent : false;
     this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
+    this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
     this.background = p.background !== undefined ? p.background : false;
     this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
 
-    this.attributes = {};
+    this.attributes = [];
     this.geometry = new THREE.BufferGeometry();
 
     this.addAttributes({
@@ -27541,9 +27694,7 @@ NGL.Buffer.prototype = {
 
             }
 
-            return new THREE.Line(
-                this.wireframeGeometry, material, THREE.LinePieces
-            );
+            return new THREE.LineSegments( this.wireframeGeometry, material );
 
         }else{
 
@@ -27628,6 +27779,12 @@ NGL.Buffer.prototype = {
 
             }
 
+            if( this.dullInterior ){
+
+                material.defines[ "DULL_INTERIOR" ] = 1;
+
+            }
+
         }
 
         if( this.nearClip ){
@@ -27663,9 +27820,7 @@ NGL.Buffer.prototype = {
             var buf;
             var a = attributes[ name ];
 
-            this.attributes[ name ] = {
-                "type": a.type, "value": null
-            };
+            this.attributes.push( name );
 
             if( a.value ){
 
@@ -27868,7 +28023,6 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
         }
 
         a.needsUpdate = true;
-        this.attributes[ name ].needsUpdate = true;
 
     }, this );
 
@@ -28782,10 +28936,7 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
     var n6 = n * 6;
     var nX = n * 2 * 2;
 
-    this.attributes = {
-        "position": { type: "v3", value: null },
-        "color": { type: "c", value: null },
-    };
+    this.attributes = [ "position", "color" ];
 
     this.geometry = new THREE.BufferGeometry();
 
@@ -28831,7 +28982,6 @@ NGL.LineBuffer.prototype = {
             to = data[ "to" ];
             aPosition = attributes[ "position" ].array;
             attributes[ "position" ].needsUpdate = true;
-            this.attributes[ "position" ].needsUpdate = true;
         }
 
         if( data[ "color" ] && data[ "color2" ] ){
@@ -28839,7 +28989,6 @@ NGL.LineBuffer.prototype = {
             color2 = data[ "color2" ];
             aColor = attributes[ "color" ].array;
             attributes[ "color" ].needsUpdate = true;
-            this.attributes[ "color" ].needsUpdate = true;
         }
 
         var n = this.size;
@@ -28922,9 +29071,7 @@ NGL.LineBuffer.prototype = {
 
         material = material || this.getMaterial( type );
 
-        return new THREE.Line(
-            this.geometry, material, THREE.LinePieces
-        );
+        return new THREE.LineSegments( this.geometry, material );
 
     },
 
@@ -29162,14 +29309,13 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     var n = this.size;
     var n4 = n * 4;
 
-    this.attributes = {
-        "inputDir": { type: 'v3', value: null },
-        "inputSize": { type: 'f', value: null },
-        "inputNormal": { type: 'v3', value: null },
-        "inputColor": { type: 'v3', value: null }
-    };
+    this.attributes = [
+        "position", "normal",
+        "inputDir", "inputSize", "inputNormal", "inputColor"
+    ];
+
     if( pickingColor ){
-        this.attributes[ "pickingColor" ] = { type: 'v3', value: null };
+        this.attributes.push( "pickingColor" );
     }
 
     this.uniforms = THREE.UniformsUtils.merge( [
@@ -30332,7 +30478,7 @@ NGL.BufferVectorHelper.prototype = {
 
         material = material || this.getMaterial( type );
 
-        return new THREE.Line( this.geometry, material, THREE.LinePieces );;
+        return new THREE.LineSegments( this.geometry, material );
 
     },
 
@@ -31211,7 +31357,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -31558,7 +31705,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -31581,7 +31729,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -31735,7 +31884,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -31756,7 +31906,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -31947,7 +32098,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -31970,7 +32122,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -32159,7 +32312,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -32180,7 +32334,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -32397,7 +32552,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -32418,7 +32574,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -32656,7 +32813,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                                 transparent: scope.transparent,
                                 side: scope.side,
                                 opacity: opacity,
-                                nearClip: scope.nearClip
+                                nearClip: scope.nearClip,
+                                dullInterior: true
                             }
                         )
 
@@ -32917,7 +33075,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                                 transparent: scope.transparent,
                                 side: scope.side,
                                 opacity: opacity,
-                                nearClip: scope.nearClip
+                                nearClip: scope.nearClip,
+                                dullInterior: true
                             }
                         )
 
@@ -33526,7 +33685,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     scope.disableImpostor
                 )
@@ -33734,7 +33894,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -33953,7 +34114,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                                 transparent: scope.transparent,
                                 side: scope.side,
                                 opacity: opacity,
-                                nearClip: scope.nearClip
+                                nearClip: scope.nearClip,
+                                dullInterior: true
                             }
                         )
 
@@ -34171,7 +34333,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     scope.disableImpostor
                 )
@@ -34217,7 +34380,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: true
                 },
                 this.disableImpostor
             )
@@ -34368,12 +34532,15 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
 
         this.bufferList.push( this.cylinderBuffer );
+
+        structureSubset.dispose();
 
     },
 
@@ -34491,18 +34658,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         background: {
             type: "boolean", rebuild: true
         },
-        transparent: {
-            type: "boolean", rebuild: true
-        },
         opaqueBack: {
             type: "boolean", define: "OPAQUE_BACK"
-        },
-        side: {
-            type: "select", options: NGL.SideTypes, rebuild: true,
-            int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0, uniform: true
         },
         lowResolution: {
             type: "boolean", rebuild: true
@@ -34512,7 +34669,15 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         radiusType: null,
         radius: null,
-        scale: null
+        scale: null,
+
+        transparent: {
+            type: "boolean", rebuild: true
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, rebuild: true,
+            int: true
+        }
 
     } ),
 
@@ -34585,7 +34750,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.FrontSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -34600,7 +34766,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.BackSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -34619,7 +34786,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -34776,7 +34944,11 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         this.bondSet.structure = this.structure;
         var bSet = this.bondSet;
 
+        var j = 0;
+
         this.atomPair.forEach( function( pair, i ){
+
+            i -= j;
 
             var i3 = i * 3;
 
@@ -34786,15 +34958,30 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             var a1 = this.atomSet.getAtoms( sele1, true );
             var a2 = this.atomSet.getAtoms( sele2, true );
 
-            bSet.addBond( a1, a2, true );
+            if( a1 && a2 ){
 
-            text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+                bSet.addBond( a1, a2, true );
 
-            position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
-            position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
-            position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+                text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+
+                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
+                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
+                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+
+            }else{
+
+                j += 1;
+
+            }
 
         }, this );
+
+        if( j > 0 ){
+
+            n -= j;
+            position = position.subarray( 0, n * 3 );
+
+        }
 
         var c = new THREE.Color( this.labelColor );
 
@@ -34829,7 +35016,8 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -34948,6 +35136,14 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    },
+
+    clear: function(){
+
+        if( this.bondSet ) this.bondSet.dispose();
+
+        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -35095,7 +35291,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     scope.disableImpostor
                 );
@@ -35122,7 +35319,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         side: this.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     this.disableImpostor
 
@@ -35326,7 +35524,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.FrontSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -35341,7 +35540,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.BackSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -35360,7 +35560,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -35559,7 +35760,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 },
                 this.disableImpostor
             );
@@ -35723,6 +35925,9 @@ NGL.Stage = function( eid ){
         componentRemoved: new SIGNALS.Signal(),
 
         atomPicked: new SIGNALS.Signal(),
+        bondPicked: new SIGNALS.Signal(),
+        nothingPicked: new SIGNALS.Signal(),
+        onPicking: new SIGNALS.Signal(),
 
         requestTheme: new SIGNALS.Signal(),
 
@@ -36179,7 +36384,7 @@ NGL.Stage.prototype = {
 
 NGL.PickingControls = function( viewer, stage ){
 
-    var v3 = new THREE.Vector3();
+    var position = new THREE.Vector3();
 
     var mouse = {
 
@@ -36230,42 +36435,82 @@ NGL.PickingControls = function( viewer, stage ){
             offsetX,
             box.height - offsetY
         );
-        var id = pickingData.id;
+        var gid = pickingData.gid;
         var instance = pickingData.instance;
 
-        // TODO early exit, binary search
         var pickedAtom = undefined;
-        stage.eachComponent( function( o ){
+        var pickedBond = undefined;
 
-            o.structure.eachAtom( function( a ){
+        var picked = NGL.GidPool.getByGid( gid );
 
-                if( a.globalindex === ( id - 1 ) ){
-                    pickedAtom = a;
-                }
+        if( picked instanceof NGL.Atom || picked instanceof NGL.ProxyAtom ){
 
-            } );
+            pickedAtom = picked;
 
-        }, NGL.StructureComponent );
+        }else if( picked instanceof NGL.Bond ){
 
-        if( pickedAtom && e.which === NGL.MiddleMouseButton ){
-
-            v3.copy( pickedAtom );
-
-            if( instance ){
-
-                // var structure = pickedAtom.residue.chain.model.structure;
-                // var biomol = structure.biomolDict[ instance.assembly ];
-                // var matrix = biomol.matrixDict[ instance.name ];
-
-                v3.applyProjection( instance.matrix );
-
-            }
-
-            viewer.centerView( false, v3 );
+            pickedBond = picked;
 
         }
 
-        stage.signals.atomPicked.dispatch( pickedAtom );
+        //
+
+        if( ( pickedAtom || pickedBond ) && e.which === NGL.MiddleMouseButton ){
+
+            if( pickedAtom ){
+
+                position.copy( pickedAtom );
+
+            }else if( pickedBond ){
+
+                position.set( 0, 0, 0 )
+                    .addVectors( pickedBond.atom1, pickedBond.atom2 )
+                    .multiplyScalar( 0.5 );
+
+            }
+
+            if( instance ){
+
+                position.applyProjection( instance.matrix );
+
+            }
+
+            viewer.centerView( false, position );
+
+        }
+
+        //
+
+        if( pickedAtom ){
+
+            stage.signals.atomPicked.dispatch( pickedAtom );
+
+        }else if( pickedBond ){
+
+            stage.signals.bondPicked.dispatch( pickedBond );
+
+        }else{
+
+            stage.signals.nothingPicked.dispatch();
+
+        }
+
+        stage.signals.onPicking.dispatch( {
+
+            "atom": pickedAtom,
+            "bond": pickedBond,
+            "instance": instance
+
+        } );
+
+        //
+
+        if( NGL.debug ){
+
+            NGL.log( "picked atom", pickedAtom );
+            NGL.log( "picked bond", pickedBond );
+
+        }
 
     } );
 
@@ -38657,7 +38902,7 @@ NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec4 cameraPos;\n\n#ifdef PIC
 
 // File:shader/Mesh.frag
 
-NGL.Resources[ '../shader/Mesh.frag'] = "\n#ifdef FLAT_SHADED\n    #extension GL_OES_standard_derivatives : enable\n#endif\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        #ifdef OPAQUE_BACK\n            #ifdef FLIP_SIDED\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }else{\n                    gl_FragColor = vec4( vColor, opacity );\n                }\n            #else\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, opacity );\n                }else{\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }\n            #endif\n        #else\n            gl_FragColor = vec4( vColor, opacity );\n        #endif\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
+NGL.Resources[ '../shader/Mesh.frag'] = "\n#ifdef FLAT_SHADED\n    #extension GL_OES_standard_derivatives : enable\n#endif\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        #ifdef DULL_INTERIOR\n            if( !gl_FrontFacing ){\n                transformedNormal = vec3( 0.0, 0.0, 0.4 );\n            }\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        #ifdef OPAQUE_BACK\n            #ifdef FLIP_SIDED\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }else{\n                    gl_FragColor = vec4( vColor, opacity );\n                }\n            #else\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, opacity );\n                }else{\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }\n            #endif\n        #else\n            gl_FragColor = vec4( vColor, opacity );\n        #endif\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
 
 // File:shader/ParticleSprite.vert
 
