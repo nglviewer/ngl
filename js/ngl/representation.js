@@ -4421,7 +4421,11 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         this.bondSet.structure = this.structure;
         var bSet = this.bondSet;
 
+        var j = 0;
+
         this.atomPair.forEach( function( pair, i ){
+
+            i -= j;
 
             var i3 = i * 3;
 
@@ -4431,15 +4435,30 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             var a1 = this.atomSet.getAtoms( sele1, true );
             var a2 = this.atomSet.getAtoms( sele2, true );
 
-            bSet.addBond( a1, a2, true );
+            if( a1 && a2 ){
 
-            text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+                bSet.addBond( a1, a2, true );
 
-            position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
-            position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
-            position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+                text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+
+                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
+                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
+                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+
+            }else{
+
+                j += 1;
+
+            }
 
         }, this );
+
+        if( j > 0 ){
+
+            n -= j;
+            position = position.subarray( 0, n * 3 );
+
+        }
 
         var c = new THREE.Color( this.labelColor );
 
