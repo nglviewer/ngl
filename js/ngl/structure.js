@@ -5738,6 +5738,8 @@ NGL.StructureSubset.prototype._build = function(){
     _s.biomolDict = structure.biomolDict;
     _s.defaultAssembly = structure.defaultAssembly;
 
+    NGL.GidPool.updateObject( this );
+
     NGL.timeEnd( "NGL.StructureSubset._build" );
 
 };
