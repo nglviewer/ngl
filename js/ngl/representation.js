@@ -856,7 +856,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1203,7 +1204,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1226,7 +1228,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1380,7 +1383,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1401,7 +1405,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1592,7 +1597,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1615,7 +1621,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1804,7 +1811,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -1825,7 +1833,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -2042,7 +2051,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -2063,7 +2073,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -2301,7 +2312,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                                 transparent: scope.transparent,
                                 side: scope.side,
                                 opacity: opacity,
-                                nearClip: scope.nearClip
+                                nearClip: scope.nearClip,
+                                dullInterior: true
                             }
                         )
 
@@ -2562,7 +2574,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                                 transparent: scope.transparent,
                                 side: scope.side,
                                 opacity: opacity,
-                                nearClip: scope.nearClip
+                                nearClip: scope.nearClip,
+                                dullInterior: true
                             }
                         )
 
@@ -3171,7 +3184,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     scope.disableImpostor
                 )
@@ -3379,7 +3393,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -3598,7 +3613,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                                 transparent: scope.transparent,
                                 side: scope.side,
                                 opacity: opacity,
-                                nearClip: scope.nearClip
+                                nearClip: scope.nearClip,
+                                dullInterior: true
                             }
                         )
 
@@ -3816,7 +3832,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     scope.disableImpostor
                 )
@@ -3862,7 +3879,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: true
                 },
                 this.disableImpostor
             )
@@ -4013,7 +4031,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -4230,7 +4249,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.FrontSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -4245,7 +4265,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.BackSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -4264,7 +4285,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -4493,7 +4515,8 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
                 side: this.side,
                 opacity: opacity,
                 nearClip: this.nearClip,
-                flatShaded: this.flatShaded
+                flatShaded: this.flatShaded,
+                dullInterior: true
             },
             this.disableImpostor
         );
@@ -4767,7 +4790,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         side: scope.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     scope.disableImpostor
                 );
@@ -4794,7 +4818,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         side: this.side,
                         opacity: opacity,
                         nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
+                        flatShaded: scope.flatShaded,
+                        dullInterior: true
                     },
                     this.disableImpostor
 
@@ -4998,7 +5023,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.FrontSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -5013,7 +5039,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     side: THREE.BackSide,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -5032,7 +5059,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 }
             );
 
@@ -5231,7 +5259,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                     side: this.side,
                     opacity: opacity,
                     nearClip: this.nearClip,
-                    flatShaded: this.flatShaded
+                    flatShaded: this.flatShaded,
+                    dullInterior: false
                 },
                 this.disableImpostor
             );
