@@ -383,27 +383,14 @@ NGL.AA1 = {
 };
 
 
-/////////////
-// GlobalId
+////////////
+// GidPool
 
-NGL.GlobalIdRange = function( size ){
-
-};
-
-NGL.GlobalIdRange.prototype = {
-
-    getNextGid: function(){
-
-    }
-
-};
-
-
-NGL.GlobalIdPool = {
+NGL.GidPool = {
 
     // REMEMBER not synced with worker
 
-    nextGlobalId: 1,
+    nextGid: 1,
 
     objectList: [],
 
@@ -411,56 +398,60 @@ NGL.GlobalIdPool = {
 
     addObject: function( object ){
 
-        NGL.GlobalIdPool.objectList.push( object );
+        NGL.GidPool.objectList.push( object );
 
-        NGL.GlobalIdPool.rangeList.push( NGL.GlobalIdPool.allocateGidRange( object ) );
+        NGL.GidPool.rangeList.push( NGL.GidPool.allocateGidRange( object ) );
 
-        return NGL.GlobalIdPool;
+        return NGL.GidPool;
 
     },
 
     removeObject: function( object ){
 
-        var idx = NGL.GlobalIdPool.objectList.indexOf( object );
+        var idx = NGL.GidPool.objectList.indexOf( object );
 
         if( idx !== -1 ){
 
-            NGL.GlobalIdPool.objectList.splice( idx, 1 );
-            NGL.GlobalIdPool.rangeList.splice( idx, 1 );
+            NGL.GidPool.objectList.splice( idx, 1 );
+            NGL.GidPool.rangeList.splice( idx, 1 );
+
+            if( NGL.GidPool.objectList.length === 0 ){
+                NGL.GidPool.nextGid = 1;
+            }
 
         }
 
-        return NGL.GlobalIdPool;
+        return NGL.GidPool;
 
     },
 
     updateObject: function( object ){
 
-        var idx = NGL.GlobalIdPool.objectList.indexOf( object );
+        var idx = NGL.GidPool.objectList.indexOf( object );
 
         if( idx !== -1 ){
 
-            var range = NGL.GlobalIdPool.rangeList[ idx ];
+            var range = NGL.GidPool.rangeList[ idx ];
 
-            if( range[1] === NGL.GlobalIdPool.nextGlobalId ){
+            if( range[1] === NGL.GidPool.nextGid ){
 
-                var count = NGL.GlobalIdPool.getGidCount( object );
-                NGL.GlobalIdPool.nextGlobalId += count - ( range[1] - range[0] );
-                range[ 1 ] = NGL.GlobalIdPool.nextGlobalId;
+                var count = NGL.GidPool.getGidCount( object );
+                NGL.GidPool.nextGid += count - ( range[1] - range[0] );
+                range[ 1 ] = NGL.GidPool.nextGid;
 
             }else{
 
-                NGL.GlobalIdPool.rangeList[ idx ] = NGL.GlobalIdPool.allocateGidRange( object );
+                NGL.GidPool.rangeList[ idx ] = NGL.GidPool.allocateGidRange( object );
 
             }
 
         }else{
 
-            NGL.warn( "NGL.GlobalIdPool.updateObject: object not found." );
+            NGL.warn( "NGL.GidPool.updateObject: object not found." );
 
         }
 
-        return NGL.GlobalIdPool;
+        return NGL.GidPool;
 
     },
 
@@ -484,11 +475,11 @@ NGL.GlobalIdPool = {
 
     allocateGidRange: function( object ){
 
-        var firstGid = NGL.GlobalIdPool.nextGlobalId;
+        var firstGid = NGL.GidPool.nextGid;
 
-        NGL.GlobalIdPool.nextGlobalId += NGL.GlobalIdPool.getGidCount( object );
+        NGL.GidPool.nextGid += NGL.GidPool.getGidCount( object );
 
-        return [ firstGid, NGL.GlobalIdPool.nextGlobalId ];
+        return [ firstGid, NGL.GidPool.nextGid ];
 
     },
 
@@ -500,7 +491,7 @@ NGL.GlobalIdPool = {
 
     getNextGid: function(){
 
-        return NGL.GlobalIdPool.nextGlobalId++;
+        return NGL.GidPool.nextGid++;
 
     },
 
@@ -509,18 +500,18 @@ NGL.GlobalIdPool = {
         offset = offset || 0;
 
         var gid = 0;
-        var idx = NGL.GlobalIdPool.objectList.indexOf( object );
+        var idx = NGL.GidPool.objectList.indexOf( object );
 
         if( idx !== -1 ){
 
-            var range = NGL.GlobalIdPool.rangeList[ idx ];
+            var range = NGL.GidPool.rangeList[ idx ];
             var first = range[ 0 ];
 
             gid = first + offset;
 
         }else{
 
-            NGL.warn( "NGL.GlobalIdPool.getGid: object not found." );
+            NGL.warn( "NGL.GidPool.getGid: object not found." );
 
         }
 
@@ -536,13 +527,13 @@ NGL.GlobalIdPool = {
 
         var entity;
 
-        NGL.GlobalIdPool.objectList.forEach( function( o ){
+        NGL.GidPool.objectList.forEach( function( o ){
 
             if( o instanceof NGL.Structure ){
 
                 o.eachAtom( function( a ){
 
-                    if( NGL.GlobalIdPool.getGid( o, a.index ) === gid ){
+                    if( NGL.GidPool.getGid( o, a.index ) === gid ){
                         entity = a;
                     }
 
@@ -552,7 +543,7 @@ NGL.GlobalIdPool = {
 
                 o.eachBond( function( b ){
 
-                    if( NGL.GlobalIdPool.getGid( o, b.index ) === gid ){
+                    if( NGL.GidPool.getGid( o, b.index ) === gid ){
                         entity = b;
                     }
 
@@ -761,7 +752,7 @@ NGL.ColorFactory.prototype = {
 
             case "picking":
 
-                c = NGL.GlobalIdPool.getGid( structure, a.index );
+                c = NGL.GidPool.getGid( structure, a.index );
                 break;
 
             case "element":
@@ -863,7 +854,7 @@ NGL.ColorFactory.prototype = {
 
         if( this.type === "picking" ){
 
-            return NGL.GlobalIdPool.getGid( this.bondSet, b.index );
+            return NGL.GidPool.getGid( this.bondSet, b.index );
 
         }else{
 
@@ -1045,6 +1036,7 @@ NGL.LabelFactory.prototype = {
 
             case "text":
 
+                // TODO
                 l = this.text[ a.globalindex ];
                 break;
 
@@ -1817,7 +1809,7 @@ NGL.BondSet = function(){
     this.bonds = [];
     this.bondCount = 0;
 
-    NGL.GlobalIdPool.addObject( this );
+    NGL.GidPool.addObject( this );
 
 };
 
@@ -1838,7 +1830,7 @@ NGL.BondSet.prototype = {
 
         this.bondCount += 1;
 
-        NGL.GlobalIdPool.updateObject( this );
+        NGL.GidPool.updateObject( this );
 
     },
 
@@ -1971,7 +1963,7 @@ NGL.BondSet.prototype = {
 
         }
 
-        NGL.GlobalIdPool.updateObject( this );
+        NGL.GidPool.updateObject( this );
 
         return this;
 
@@ -1983,7 +1975,7 @@ NGL.BondSet.prototype = {
         this.bondCount = 0;
 
         if( !this.__disposed ){
-            NGL.GlobalIdPool.updateObject( this );
+            NGL.GidPool.updateObject( this );
         }
 
     },
@@ -1994,7 +1986,7 @@ NGL.BondSet.prototype = {
 
         this.clear();
 
-        NGL.GlobalIdPool.removeObject( this );
+        NGL.GidPool.removeObject( this );
 
     }
 
@@ -2237,7 +2229,7 @@ NGL.Structure = function( name, path ){
 
     this.reset();
 
-    NGL.GlobalIdPool.addObject( this );
+    NGL.GidPool.addObject( this );
 
 };
 
@@ -2325,7 +2317,7 @@ NGL.Structure.prototype = {
 
         ], function(){
 
-            NGL.GlobalIdPool.updateObject( self );
+            NGL.GidPool.updateObject( self );
 
             callback();
 
@@ -3238,7 +3230,7 @@ NGL.Structure.prototype = {
 
         } );
 
-        NGL.GlobalIdPool.updateObject( this );
+        NGL.GidPool.updateObject( this );
 
         NGL.timeEnd( "NGL.Structure.fromJSON" );
 
@@ -3305,7 +3297,7 @@ NGL.Structure.prototype = {
 
         if( this.atomArray ) this.atomArray.dispose();
 
-        NGL.GlobalIdPool.removeObject( this );
+        NGL.GidPool.removeObject( this );
 
     }
 

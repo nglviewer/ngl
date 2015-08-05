@@ -20,6 +20,7 @@ NGL.Stage = function( eid ){
 
         atomPicked: new SIGNALS.Signal(),
         bondPicked: new SIGNALS.Signal(),
+        nothingPicked: new SIGNALS.Signal(),
         onPicking: new SIGNALS.Signal(),
 
         requestTheme: new SIGNALS.Signal(),
@@ -534,7 +535,7 @@ NGL.PickingControls = function( viewer, stage ){
         var pickedAtom = undefined;
         var pickedBond = undefined;
 
-        var picked = NGL.GlobalIdPool.getByGid( gid );
+        var picked = NGL.GidPool.getByGid( gid );
 
         if( picked instanceof NGL.Atom || picked instanceof NGL.ProxyAtom ){
 
@@ -581,6 +582,10 @@ NGL.PickingControls = function( viewer, stage ){
         }else if( pickedBond ){
 
             stage.signals.bondPicked.dispatch( pickedBond );
+
+        }else{
+
+            stage.signals.nothingPicked.dispatch();
 
         }
 
