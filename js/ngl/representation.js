@@ -129,6 +129,8 @@ NGL.Representation.prototype = {
 
             this.update( { "color": true } );
 
+            this.viewer.requestRender();
+
         }
 
         return this;
@@ -400,6 +402,8 @@ NGL.Representation.prototype = {
             // update buffer attribute
 
             this.update( what );
+
+            this.viewer.requestRender();
 
         }
 
