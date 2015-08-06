@@ -355,7 +355,9 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         var select = new UI.Select()
             .setOptions( options )
-            .onChange( callback );
+            .onChange( function(){
+                callback( select );
+            } );
 
         panel.add( select );
 
