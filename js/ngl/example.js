@@ -406,7 +406,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", {
 
-                    color: new THREE.Color().setRGB( 0.5, 0.75, 1 ).getHex(),
+                    color: "rgb( 127, 191, 255 )",
                     sele: ":A or :AA or :I or :N or :CA or :F or :V or :DA or :J or :SA or :U or :JA or :S or :GA or :H or :O or :G or :OP or :K or :Q or :C or :E or :OA or :TA or :M or :L or :B or :HA or :R or :W or :MA or :NA or :QA or :P or :KA or :Z or :LA or :KA or :X or :FA or :T or :IA or :BA or :IA or :Y or :D or :RA or :EA",
                     name: "60S"
 
@@ -414,7 +414,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "cartoon", {
 
-                    color: new THREE.Color().setRGB( 1, 1, 0.5 ).getHex(),
+                    color: "rgb( 255, 255, 127 )",
                     sele: ":XA or :QB or :XB or :RB or :BB or :HB or :DB or :EC or :NB or :BC or :VB or :WB or :EB or :OB or :KB or :IB or :AB or :TB or :FB or :SB or :PB or :YA or :UB or :LB or :MB or :ZA or :CC or :CB or :JB or :GB or :ZB or :PA or :DC or :YB or :AC",
                     name: "40S"
 
@@ -422,7 +422,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "spacefill", {
 
-                    color: new THREE.Color().setRGB( 1, 0.5, 1 ).getHex(),
+                    color: "rgb( 255, 127, 255 )",
                     sele: ":WA",
                     name: "IRES"
 
@@ -430,7 +430,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "spacefill", {
 
-                    color: new THREE.Color().setRGB( 0.2, 1, 0.2 ).getHex(),
+                    color: "rgb( 51, 255, 51 )",
                     sele: ":UA",
                     name: "tRNA"
 
@@ -438,7 +438,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "spacefill", {
 
-                    color: new THREE.Color().setRGB( 1, 0, 0 ).getHex(),
+                    color: "rgb( 255, 0, 0 )",
                     sele: ":VA",
                     name: "EIF5B"
 

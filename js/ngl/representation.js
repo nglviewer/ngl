@@ -135,6 +135,8 @@ NGL.Representation.prototype = {
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
         this.flatShaded = p.flatShaded || false;
 
+        this.setColor( p.color, p );
+
         this.colorScheme = p.colorScheme || "uniform";
         this.colorScale = p.colorScale || "";
         this.colorValue = p.colorValue || 0xFFFFFF;
@@ -150,12 +152,43 @@ NGL.Representation.prototype = {
 
         return {
 
+            scheme: this.colorScheme,
             scale: this.colorScale,
             value: this.colorValue,
             domain: this.colorDomain,
             mode: this.colorMode,
 
         };
+
+    },
+
+    setColor: function( value, p ){
+
+        var types = Object.keys( NGL.ColorMakerRegistry.getTypes() );
+
+        if( types.indexOf( value ) !== -1 ){
+
+            if( p ){
+                p.colorScheme = value;
+            }else{
+                this.setParameters( { colorScheme: value } );
+            }
+
+        }else if( value !== undefined ){
+
+            value = new THREE.Color( value ).getHex();
+            if( p ){
+                p.colorScheme = "uniform";
+                p.colorValue = value;
+            }else{
+                this.setParameters( {
+                    colorScheme: "uniform", colorValue: value
+                } );
+            }
+
+        }
+
+        return this;
 
     },
 

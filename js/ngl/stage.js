@@ -1583,6 +1583,14 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     },
 
+    setColor: function( value ){
+
+        this.repr.setColor( value );
+
+        return this;
+
+    },
+
     getCenter: function(){}
 
 } );
@@ -1719,6 +1727,12 @@ NGL.RepresentationCollection.prototype = NGL.createObject(
     setParameters: function( params ){
 
         return this._invoke( "setParameters", [ params ] );
+
+    },
+
+    setColor: function( color ){
+
+        return this._invoke( "setColor", [ color ] );
 
     }
 
