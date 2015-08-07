@@ -37,7 +37,7 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedColor: function( m, type ){
+    getSubdividedColor: function( m, type, params ){
 
         var n = this.size;
         var n1 = n - 1;
@@ -45,8 +45,11 @@ NGL.Spline.prototype = {
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
-        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
-        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
+        var p = params || {};
+        p.structure = this.fiber.structure;
+
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( type, p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getScheme( "picking", p );
 
         var k = 0;
         var j, l, mh, a2, c2, pc2, a3, c3, pc3;
@@ -61,8 +64,8 @@ NGL.Spline.prototype = {
 
                 l = k + j * 3;
 
-                colorFactory.atomColorToArray( a2, col, l );
-                pickingColorFactory.atomColorToArray( a2, pcol, l );
+                colorMaker.atomColorToArray( a2, col, l );
+                pickingColorMaker.atomColorToArray( a2, pcol, l );
 
             }
 
@@ -72,8 +75,8 @@ NGL.Spline.prototype = {
 
                 l = k + j * 3;
 
-                colorFactory.atomColorToArray( a3, col, l );
-                pickingColorFactory.atomColorToArray( a3, pcol, l );
+                colorMaker.atomColorToArray( a3, col, l );
+                pickingColorMaker.atomColorToArray( a3, pcol, l );
 
             }
 
@@ -574,15 +577,18 @@ NGL.Helixorient.prototype = {
 
     },
 
-    getColor: function( type ){
+    getColor: function( type, params ){
 
         var n = this.size;
 
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
-        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
-        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
+        var p = params || {};
+        p.structure = this.fiber.structure;
+
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( type, p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getScheme( "picking", p );
 
         var i = 0;
         var a, c, pc;
@@ -591,8 +597,8 @@ NGL.Helixorient.prototype = {
 
             a = r.getTraceAtom();
 
-            colorFactory.atomColorToArray( a, col, i );
-            pickingColorFactory.atomColorToArray( a, pcol, i );
+            colorMaker.atomColorToArray( a, col, i );
+            pickingColorMaker.atomColorToArray( a, pcol, i );
 
             i += 3;
 
@@ -1153,7 +1159,7 @@ NGL.Helixbundle.prototype = {
 
     },
 
-    getAxis: function( localAngle, centerDist, ssBorder, color, radius, scale ){
+    getAxis: function( localAngle, centerDist, ssBorder, colorScheme, colorParams, radius, scale ){
 
         localAngle = localAngle || 30;
         centerDist = centerDist || 2.5;
@@ -1161,8 +1167,12 @@ NGL.Helixbundle.prototype = {
 
         var pos = this.position;
 
-        var colorFactory = new NGL.ColorFactory( color, this.fiber.structure );
-        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
+        var p = colorParams || {};
+        p.structure = this.fiber.structure;
+
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( colorScheme, p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getScheme( "picking", p );
+
         var radiusFactory = new NGL.RadiusFactory( radius, scale );
 
         var i, r, r2, a;
@@ -1247,8 +1257,8 @@ NGL.Helixbundle.prototype = {
                 _beg.toArray( beg, k );
                 _end.toArray( end, k );
 
-                colorFactory.atomColorToArray( a, col, k );
-                pickingColorFactory.atomColorToArray( a, pcol, k );
+                colorMaker.atomColorToArray( a, col, k );
+                pickingColorMaker.atomColorToArray( a, pcol, k );
 
                 size.push( radiusFactory.atomRadius( a ) );
 

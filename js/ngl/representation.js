@@ -105,7 +105,26 @@ NGL.Representation.prototype = {
         },
         flatShaded: {
             type: "boolean", define: "FLAT_SHADED"
-        }
+        },
+
+        colorScheme: {
+            type: "select", update: "color",
+            options: NGL.ColorMakerRegistry.getTypes()
+        },
+        colorScale: {
+            type: "select", update: "color",
+            options: NGL.ColorMakerRegistry.getScales()
+        },
+        colorValue: {
+            type: "color", update: "color"
+        },
+        colorDomain: {
+            type: "hidden", update: "color"
+        },
+        colorMode: {
+            type: "select", update: "color",
+            options: NGL.ColorMakerRegistry.getModes()
+        },
 
     },
 
@@ -115,6 +134,12 @@ NGL.Representation.prototype = {
 
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
         this.flatShaded = p.flatShaded || false;
+
+        this.colorScheme = p.colorScheme || "uniform";
+        this.colorScale = p.colorScale || "";
+        this.colorValue = p.colorValue || 0xFFFFFF;
+        this.colorDomain = p.colorDomain || "";
+        this.colorMode = p.colorMode || "hcl";
 
         this.visible = p.visible !== undefined ? p.visible : true;
         this.quality = p.quality;
@@ -134,6 +159,19 @@ NGL.Representation.prototype = {
         }
 
         return this;
+
+    },
+
+    getColorParams: function(){
+
+        return {
+
+            scale: this.colorScale,
+            value: this.colorValue,
+            domain: this.colorDomain,
+            mode: this.colorMode,
+
+        };
 
     },
 
@@ -249,6 +287,7 @@ NGL.Representation.prototype = {
         var p = params;
         var tp = this.parameters;
 
+        what = what || {};
         rebuild = rebuild || false;
 
         Object.keys( tp ).forEach( function( name ){
@@ -380,6 +419,14 @@ NGL.Representation.prototype = {
 
             }
 
+            // mark for update
+
+            if( tp[ name ].update ){
+
+                what[ tp[ name ].update ] = true;
+
+            }
+
             // mark for rebuild
 
             if( tp[ name ].rebuild &&
@@ -416,7 +463,6 @@ NGL.Representation.prototype = {
         // FIXME move specific parts to subclasses
         var params = {
 
-            color: this.color,
             visible: this.visible,
             sele: this.selection ? this.selection.string : undefined,
             disableImpostor: this.disableImpostor,
@@ -605,8 +651,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
+        p.colorScheme = p.colorScheme || "element";
 
-        this.color = p.color !== undefined ? p.color : "element";
         this.radius = p.radius || "vdw";
         this.scale = p.scale || 1.0;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
@@ -851,7 +897,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
             this.atomSet.atomColor( null, "picking" ),
             {
@@ -886,7 +934,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            sphereData[ "color" ] = this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -967,7 +1017,9 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointBuffer = new NGL.PointBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             {
                 pointSize: this.pointSize,
                 sizeAttenuation: this.sizeAttenuation,
@@ -998,7 +1050,9 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            pointData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            pointData[ "color" ] = this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -1082,7 +1136,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         this.textBuffer = new NGL.TextBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             text,
             {
                 font: this.font,
@@ -1121,7 +1177,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         if( what[ "color" ] ){
 
             textData[ "color" ] = this.atomSet.atomColor(
-                null, this.color
+                null, this.colorScheme, this.getColorParams()
             );
 
         }
@@ -1199,9 +1255,13 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.atomRadius( null, this.radius, atomScale ),
-            this.atomSet.atomColor( null, "picking" ),
+            this.atomSet.atomColor(
+                null, "picking", this.getColorParams()
+            ),
             {
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
@@ -1219,11 +1279,19 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" ),
+            this.atomSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shift: 0,
                 cap: true,
@@ -1268,10 +1336,16 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            sphereData[ "color" ] = this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            );
 
-            cylinderData[ "color" ] = this.atomSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = this.atomSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = this.atomSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = this.atomSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -1378,9 +1452,13 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" ),
+            this.atomSet.atomColor(
+                null, "picking", this.getColorParams()
+            ),
             {
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
@@ -1396,11 +1474,19 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" ),
+            this.atomSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shift: 0,
                 cap: true,
@@ -1484,8 +1570,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
         this.lineBuffer = new NGL.LineBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             {
                 lineWidth: this.lineWidth,
                 transparent: this.transparent,
@@ -1515,8 +1605,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            lineData[ "color" ] = this.atomSet.bondColor( null, 0, this.color );
-            lineData[ "color2" ] = this.atomSet.bondColor( null, 1, this.color );
+            lineData[ "color" ] = this.atomSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            );
+            lineData[ "color2" ] = this.atomSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -1592,9 +1686,13 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" ),
+            this.atomSet.atomColor(
+                null, "picking", this.getColorParams()
+            ),
             {
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
@@ -1612,12 +1710,20 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.HyperballStickBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             this.atomSet.bondRadius( null, 0, this.radius, this.scale ),
             this.atomSet.bondRadius( null, 1, this.radius, this.scale ),
-            this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" ),
+            this.atomSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            this.atomSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shrink: this.shrink,
                 radiusSegments: this.radiusSegments,
@@ -1663,14 +1769,14 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         if( what[ "color" ] ){
 
             sphereData[ "color" ] = this.atomSet.atomColor(
-                null, this.color
+                null, this.colorScheme, this.getColorParams()
             );
 
             cylinderData[ "color" ] = this.atomSet.bondColor(
-                null, 0, this.color
+                null, 0, this.colorScheme, this.getColorParams()
             );
             cylinderData[ "color2" ] = this.atomSet.bondColor(
-                null, 1, this.color
+                null, 1, this.colorScheme, this.getColorParams()
             );
 
         }
@@ -1806,9 +1912,13 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
-            baSet.atomColor( null, this.color ),
+            baSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             baSet.atomRadius( null, this.radius, sphereScale ),
-            baSet.atomColor( null, "picking" ),
+            baSet.atomColor(
+                null, "picking", this.getColorParams()
+            ),
             {
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
@@ -1824,11 +1934,19 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bbSet.bondPosition( null, 0 ),
             bbSet.bondPosition( null, 1 ),
-            bbSet.bondColor( null, 0, this.color ),
-            bbSet.bondColor( null, 1, this.color ),
+            bbSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            bbSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            bbSet.bondColor( null, 0, "picking" ),
-            bbSet.bondColor( null, 1, "picking" ),
+            bbSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            bbSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shift: 0,
                 cap: true,
@@ -1878,10 +1996,16 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = baSet.atomColor( null, this.color );
+            sphereData[ "color" ] = baSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            );
 
-            cylinderData[ "color" ] = bbSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bbSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bbSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bbSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -2046,9 +2170,13 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
-            baSet.atomColor( null, this.color ),
+            baSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            ),
             baSet.atomRadius( null, this.radius, sphereScale ),
-            baSet.atomColor( null, "picking" ),
+            baSet.atomColor(
+                null, "picking", this.getColorParams()
+            ),
             {
                 sphereDetail: this.sphereDetail,
                 transparent: this.transparent,
@@ -2064,11 +2192,19 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bbSet.bondPosition( null, 0 ),
             bbSet.bondPosition( null, 1 ),
-            bbSet.bondColor( null, 0, this.color ),
-            bbSet.bondColor( null, 1, this.color ),
+            bbSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            bbSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            bbSet.bondColor( null, 0, "picking" ),
-            bbSet.bondColor( null, 1, "picking" ),
+            bbSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            bbSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shift: 0,
                 cap: true,
@@ -2118,10 +2254,16 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = baSet.atomColor( null, this.color );
+            sphereData[ "color" ] = baSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            );
 
-            cylinderData[ "color" ] = bbSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bbSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bbSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bbSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -2219,7 +2361,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || this.defaultSize;
 
         if( p.quality === "low" ){
@@ -2285,9 +2427,15 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                     var fiber = fiberList[ i ];
 
                     var spline = new NGL.Spline( fiber );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.colorScheme, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -2391,7 +2539,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
             if( what[ "color" ] ){
 
                 var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.color
+                    this.subdiv, this.colorScheme, this.getColorParams()
                 );
 
                 bufferData[ "color" ] = subCol.color;
@@ -2475,7 +2623,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || "ss";
 
         if( p.quality === "low" ){
@@ -2541,11 +2689,17 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                 for( var i = _i; i < _n; ++i ){
 
                     var fiber = fiberList[ i ];
-
                     var spline = new NGL.Spline( fiber, scope.arrows );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.colorScheme, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -2650,7 +2804,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.colorScheme, this.getColorParams()
+                );
 
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
@@ -2731,7 +2887,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || "ss";
         p.scale = p.scale || 3.0;
 
@@ -2791,9 +2947,15 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     var fiber = fiberList[ i ];
 
                     var spline = new NGL.Spline( fiber );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.colorScheme, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -2863,8 +3025,12 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             if( what[ "position" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
-                var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
+                var subPos = spline.getSubdividedPosition(
+                    this.subdiv, this.tension
+                );
+                var subOri = spline.getSubdividedOrientation(
+                    this.subdiv, this.tension
+                );
 
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.binormal;
@@ -2884,7 +3050,9 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.colorScheme, this.getColorParams()
+                );
 
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
@@ -2961,7 +3129,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -3022,8 +3190,12 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                     var fiber = fiberList[ i ];
 
                     var spline = new NGL.Spline( fiber );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.colorScheme, scope.getColorParams()
+                    );
 
                     scope.__bufferList.push(
 
@@ -3085,7 +3257,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
             if( what[ "position" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
+                var subPos = spline.getSubdividedPosition(
+                    this.subdiv, this.tension
+                );
 
                 bufferData[ "position" ] = subPos.position;
 
@@ -3093,7 +3267,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.colorScheme, this.getColorParams()
+                );
 
                 bufferData[ "color" ] = subCol.color;
 
@@ -3148,7 +3324,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         params = params || {};
-        params.color = params.color || "ss";
+        params.colorScheme = params.colorScheme || "sstruc";
         params.radius = params.radius || 0.15;
         params.scale = params.scale || 1.0;
 
@@ -3172,7 +3348,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             var helixorient = new NGL.Helixorient( fiber );
             var position = helixorient.getPosition();
-            var color = helixorient.getColor( scope.color );
+            var color = helixorient.getColor(
+                scope.colorScheme, scope.getColorParams()
+            );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
             scope.bufferList.push(
@@ -3307,7 +3485,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         params = params || {};
-        params.color = params.color || "ss";
+        params.colorScheme = params.colorScheme || "sstruc";
         params.radius = params.radius || 1.5;
         params.scale = params.scale || 1.0;
 
@@ -3349,7 +3527,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             var helixbundle = new NGL.Helixbundle( fiber );
             var axis = helixbundle.getAxis(
                 scope.localAngle, scope.centerDist, scope.ssBorder,
-                scope.color, scope.radius, scope.scale
+                scope.colorScheme, scope.getColorParams(),
+                scope.radius, scope.scale
             );
 
             length += axis.size.length;
@@ -3433,7 +3612,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
                 var axis = helixbundle.getAxis(
                     scope.localAngle, scope.centerDist, scope.ssBorder,
-                    scope.color, scope.radius, scope.scale
+                    scope.colorScheme, scope.getColorParams(),
+                    scope.radius, scope.scale
                 );
 
                 if( what[ "color" ] ){
@@ -3517,7 +3697,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || this.defaultSize;
 
         if( p.quality === "low" ){
@@ -3585,10 +3765,18 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
                     var helixorient = new NGL.Helixorient( fiber );
 
-                    var spline = new NGL.Spline( helixorient.getFiber( scope.smooth, true ) );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var spline = new NGL.Spline(
+                        helixorient.getFiber( scope.smooth, true )
+                    );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.colorScheme, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -3691,7 +3879,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
             if( what[ "color" ] ){
 
                 var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.color
+                    this.subdiv, this.colorScheme, this.getColorParams()
                 );
 
                 bufferData[ "color" ] = subCol.color;
@@ -3770,7 +3958,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         params = params || {};
-        params.color = params.color || "ss";
+        params.colorScheme = params.colorScheme || "sstruc";
         params.radius = params.radius || 0.7;
         params.scale = params.scale || 1.0;
 
@@ -3815,7 +4003,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
             var helixbundle = new NGL.Helixbundle( fiber );
             var axis = helixbundle.getAxis(
                 scope.localAngle, scope.centerDist, scope.ssBorder,
-                scope.color, scope.radius, scope.scale
+                scope.colorScheme, scope.getColorParams(),
+                scope.radius, scope.scale
             );
 
             scope.bufferList.push(
@@ -4022,11 +4211,19 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bondSet.bondPosition( null, 0 ),
             bondSet.bondPosition( null, 1 ),
-            bondSet.bondColor( null, 0, this.color ),
-            bondSet.bondColor( null, 1, this.color ),
+            bondSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            bondSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             bondSet.bondRadius( null, 0, this.radius, this.scale ),
-            bondSet.bondColor( null, 0, "picking" ),
-            bondSet.bondColor( null, 1, "picking" ),
+            bondSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            bondSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shift: 0,
                 cap: true,
@@ -4086,8 +4283,12 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            cylinderData[ "color" ] = bondSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bondSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bondSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bondSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -4404,7 +4605,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
         p.radius = p.radius || this.defaultSize;
 
         this.disableImpostor = p.disableImpostor || false;
@@ -4506,11 +4706,19 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bSet.bondPosition( null, 0 ),
             bSet.bondPosition( null, 1 ),
-            bSet.bondColor( null, 0, this.color ),
-            bSet.bondColor( null, 1, this.color ),
+            bSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            ),
+            bSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            ),
             bSet.bondRadius( null, null, this.radius, this.scale ),
-            bSet.bondColor( null, 0, "picking" ),
-            bSet.bondColor( null, 1, "picking" ),
+            bSet.bondColor(
+                null, 0, "picking", this.getColorParams()
+            ),
+            bSet.bondColor(
+                null, 1, "picking", this.getColorParams()
+            ),
             {
                 shift: 0,
                 cap: true,
@@ -4599,8 +4807,12 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            cylinderData[ "color" ] = bSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bSet.bondColor(
+                null, 0, this.colorScheme, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bSet.bondColor(
+                null, 1, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -4722,8 +4934,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
-        p.color = p.color || 0xDDDDDD;
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue || 0xDDDDDD;
 
         this.drawLine = p.drawLine || true;
         this.drawCylinder = p.drawCylinder || false;
@@ -4779,7 +4991,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.trajectory.getPath( index, function( path ){
 
             var n = path.length / 3;
-            var tc = new THREE.Color( scope.color );
+            var tc = new THREE.Color( scope.colorValue );
 
             if( scope.drawSphere ){
 
