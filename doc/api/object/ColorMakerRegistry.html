@@ -28,7 +28,7 @@
 		<h3>.addScheme( fn, [ label ] )</h3>
 		<div>Returns an *id* that can be used as input for the *color* parameter of [page:StructureRepresentation structure representations] and to delete the scheme. The *fn*( atom ) function must return a hexadecimal RGB value. The *label* is for cosmetic use (i.e. in the GUI). To refer to the scheme internally always use the *id*.</div>
 		<code>// color atoms with a b-factor smaller 0.5 in green, else in red
-		var myScheme = NGL.ColorMakerRegistry.addSelectionScheme( function( params ){
+		var myScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
 
 			this.atomColor = function( atom ){
 
