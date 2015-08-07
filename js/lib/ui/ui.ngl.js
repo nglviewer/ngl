@@ -31,26 +31,6 @@ UI.ColorPopupMenu = function(){
     var changeEvent = document.createEvent( 'Event' );
     changeEvent.initEvent( 'change', true, true );
 
-    NGL.ColorMakerRegistry.signals.typesChanged.add( function(){
-
-        this.schemeSelector.setOptions( NGL.ColorMakerRegistry.getTypes() );
-
-    }, this );
-
-    this.schemeSelector = new UI.Select()
-        .setColor( '#444' )
-        .setWidth( "" )
-        .setOptions( NGL.ColorMakerRegistry.getTypes() )
-        .onChange( function(){
-
-            scope.setScheme( scope.schemeSelector.getValue() );
-            if( scope.schemeSelector.getValue() !== "color" ){
-                scope.menu.setMenuDisplay( "none" );
-            }
-            scope.dom.dispatchEvent( changeEvent );
-
-        } );
-
     this.colorInput = new UI.Input()
         .onChange( function(){
 
@@ -64,14 +44,12 @@ UI.ColorPopupMenu = function(){
         .setDisplay( "inline-block" )
         .onChange( function( e ){
 
-            scope.setScheme( "color" );
             scope.setColor( scope.colorPicker.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
         } );
 
     this.menu
-        .addEntry( "Scheme", this.schemeSelector )
         .addEntry( "Input", this.colorInput )
         .addEntry( "Picker", this.colorPicker );
 
@@ -85,27 +63,6 @@ UI.ColorPopupMenu = function(){
 };
 
 UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
-
-UI.ColorPopupMenu.prototype.setScheme = function( value ){
-
-    value = value || "";
-
-    this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
-    this.schemeSelector.setValue( value );
-
-    if( value !== "color" ){
-        this.setColor( "#888888" );
-    }
-
-    return this;
-
-};
-
-UI.ColorPopupMenu.prototype.getScheme = function(){
-
-    return this.schemeSelector.getValue();
-
-};
 
 UI.ColorPopupMenu.prototype.setColor = function(){
 
@@ -153,18 +110,13 @@ UI.ColorPopupMenu.prototype.getColor = function(){
 
 UI.ColorPopupMenu.prototype.getValue = function(){
 
-    return this.colorInput.getValue();
+    return this.getColor();
 
 };
 
 UI.ColorPopupMenu.prototype.setValue = function( value ){
 
-    if( parseInt( value ) === value ){
-        this.setColor( value );
-        this.setScheme( "color" );
-    }else{
-        this.setScheme( value );
-    }
+    this.setColor( value );
 
     return this;
 

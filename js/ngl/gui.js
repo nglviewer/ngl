@@ -1570,12 +1570,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
-    signals.colorChanged.add( function( value ){
-
-        colorWidget.setValue( value );
-
-    } );
-
     signals.nameChanged.add( function( value ){
 
         name.setValue( NGL.unicodeHelper( value ) );
@@ -1585,7 +1579,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     signals.disposed.add( function(){
 
         menu.dispose();
-        colorWidget.dispose();
         container.dispose();
 
     } );
@@ -1593,7 +1586,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     // Name
 
     var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
-        .setWidth( "80px" );
+        .setWidth( "103px" );
 
     // Actions
 
@@ -1615,42 +1608,10 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         } );
 
-    var colorWidget = new UI.ColorPopupMenu()
-        .setMarginLeft( "10px" )
-        .setValue( component.repr.color )
-        .onChange( (function(){
-
-            var c = new THREE.Color();
-            return function( e ){
-
-                var scheme = colorWidget.getScheme();
-                if( scheme === "color" ){
-                    c.setStyle( colorWidget.getColor() );
-                    component.setColor( c.getHex() );
-                }else{
-                    component.setColor( scheme );
-                }
-                component.viewer.requestRender();
-
-            }
-
-        })() );
-
-    if( component.parent instanceof NGL.SurfaceComponent ){
-
-        colorWidget.schemeSelector.setOptions( {
-            "": "",
-            "value": "value",
-            "color": "color",
-        } );
-
-    }
-
     container
         .addStatic( name )
         .addStatic( toggle )
-        .addStatic( disposeIcon )
-        .addStatic( colorWidget );
+        .addStatic( disposeIcon );
 
     // Selection
 
@@ -1696,7 +1657,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
             }
 
             input.setRange( p.min, p.max )
-
 
         }else if( p.type === "boolean" ){
 
@@ -1748,40 +1708,14 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
             } );
 
-            if( p.type === "color" ){
+            input.onChange( function(){
 
-                input.onChange( (function(){
+                var po = {};
+                po[ name ] = input.getValue();
+                component.setParameters( po );
+                repr.viewer.requestRender();
 
-                    var c = new THREE.Color();
-                    return function( e ){
-
-                        var po = {};
-                        var scheme = input.getScheme();
-                        if( scheme === "color" ){
-                            c.setStyle( input.getColor() );
-                            po[ name ] = c.getHex();
-                        }else{
-                            po[ name ] = scheme;
-                        }
-                        component.setParameters( po );
-                        repr.viewer.requestRender();
-
-                    }
-
-                })() );
-
-            }else{
-
-                input.onChange( function(){
-
-                    var po = {};
-                    po[ name ] = input.getValue();
-                    component.setParameters( po );
-                    repr.viewer.requestRender();
-
-                } );
-
-            }
+            } );
 
             menu.addEntry( name, input );
 

@@ -146,22 +146,6 @@ NGL.Representation.prototype = {
 
     },
 
-    setColor: function( type ){
-
-        if( type && type !== this.color ){
-
-            this.color = type;
-
-            this.update( { "color": true } );
-
-            this.viewer.requestRender();
-
-        }
-
-        return this;
-
-    },
-
     getColorParams: function(){
 
         return {
@@ -4388,8 +4372,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
-        p.color = p.color !== undefined ? p.color : 0xDDDDDD;
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue !== undefined ? p.colorValue : 0xDDDDDD;
 
         this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
         this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
@@ -4435,7 +4419,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         if( this.atomSet.atomCount === 0 ) return;
 
         var position = this.molsurf.getPosition();
-        var color = this.molsurf.getColor( this.color );
+        var color = this.molsurf.getColor( this.colorValue );
         var normal = this.molsurf.getNormal();
         var index = this.molsurf.getIndex();
 
@@ -4517,7 +4501,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            surfaceData[ "color" ] = this.molsurf.getColor( this.color );
+            surfaceData[ "color" ] = this.molsurf.getColor( this.colorValue );
 
         }
 
@@ -5158,8 +5142,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue !== undefined ? p.colorValue : 0xDDDDDD;
 
-        this.color = p.color || 0xDDDDDD;
         this.isolevelType  = p.isolevelType !== undefined ? p.isolevelType : "sigma";
         this.isolevel = p.isolevel !== undefined ? p.isolevel : 2.0;
         this.smooth = p.smooth !== undefined ? p.smooth : 0;
@@ -5220,7 +5205,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var position = this.surface.getPosition();
-        var color = this.surface.getColor( this.color );
+        var color = this.surface.getColor( this.colorValue );
         var normal = this.surface.getNormal();
         var index = this.surface.getIndex();
 
@@ -5294,7 +5279,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            surfaceData[ "color" ] = this.surface.getColor( this.color );
+            surfaceData[ "color" ] = this.surface.getColor( this.colorValue );
 
         }
 

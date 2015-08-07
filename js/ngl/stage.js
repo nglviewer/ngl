@@ -1467,7 +1467,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     signals: Object.assign( {
 
-        colorChanged: null,
         parametersChanged: null,
 
     }, NGL.Component.prototype.signals ),
@@ -1581,15 +1580,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     getParameters: function(){
 
         return this.repr.getParameters();
-
-    },
-
-    setColor: function( value ){
-
-        this.repr.setColor( value );
-        this.signals.colorChanged.dispatch( this.repr.color );
-
-        return this;
 
     },
 
@@ -1729,12 +1719,6 @@ NGL.RepresentationCollection.prototype = NGL.createObject(
     setParameters: function( params ){
 
         return this._invoke( "setParameters", [ params ] );
-
-    },
-
-    setColor: function( color ){
-
-        return this._invoke( "setColor", [ color ] );
 
     }
 
