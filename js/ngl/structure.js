@@ -1087,6 +1087,7 @@ NGL.BfactorColorMaker = function( params ){
 
     if( !params.domain ){
 
+        var bfactor;
         var min = Infinity;
         var max = -Infinity;
 
@@ -1096,8 +1097,9 @@ NGL.BfactorColorMaker = function( params ){
 
             this.structure.eachAtom( function( a ){
 
-                min = Math.min( min, a.bfactor );
-                max = Math.max( max, a.bfactor );
+                bfactor = a.bfactor;
+                min = Math.min( min, bfactor );
+                max = Math.max( max, bfactor );
 
             }, selection );
 
@@ -1108,10 +1110,9 @@ NGL.BfactorColorMaker = function( params ){
 
             for( var i = 0; i < n; ++i ){
 
-                var a = atoms[ i ];
-
-                min = Math.min( min, a.bfactor );
-                max = Math.max( max, a.bfactor );
+                bfactor = atoms[ i ].bfactor;
+                min = Math.min( min, bfactor );
+                max = Math.max( max, bfactor );
 
             }
 
