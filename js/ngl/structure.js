@@ -686,12 +686,12 @@ NGL.ColorMakerRegistry = {
 
     },
 
-    addScheme: function( fn, label ){
+    addScheme: function( colorMakerClass, label ){
 
         label = label || "";
-        var id = " " + THREE.Math.generateUUID() + "|" + label;
+        var id = "" + THREE.Math.generateUUID() + "|" + label;
 
-        NGL.ColorMakerRegistry.userSchemes[ id ] = fn;
+        NGL.ColorMakerRegistry.userSchemes[ id ] = colorMakerClass;
         NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
 
         return id;
@@ -707,35 +707,45 @@ NGL.ColorMakerRegistry = {
 
     addSelectionScheme: function( pairList, label ){
 
-        var colorList = [];
-        var selectionList = [];
+        var SelectionColorMaker = function( params ){
 
-        pairList.forEach( function( pair ){
+            NGL.ColorMaker.call( this, params );
 
-            colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
-            selectionList.push( new NGL.Selection( pair[ 1 ] ) );
+            var colorList = [];
+            var selectionList = [];
 
-        } );
+            pairList.forEach( function( pair ){
 
-        var n = pairList.length;
+                colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
+                selectionList.push( new NGL.Selection( pair[ 1 ] ) );
 
-        var fn = function( atom ){
+            } );
 
-            for( var i = 0; i < n; ++i ){
+            var n = pairList.length;
 
-                if( selectionList[ i ].test( atom ) ){
+            this.atomColor = function( a ){
 
-                    return colorList[ i ];
+                for( var i = 0; i < n; ++i ){
+
+                    if( selectionList[ i ].test( a ) ){
+
+                        return colorList[ i ];
+
+                    }
 
                 }
 
-            }
+                return 0xFFFFFF;
 
-            return 0xFFFFFF;
+            };
 
-        };
+        }
 
-        return NGL.ColorMakerRegistry.addScheme( fn, label );
+        SelectionColorMaker.prototype = NGL.ColorMaker.prototype;
+
+        SelectionColorMaker.prototype.constructor = SelectionColorMaker;
+
+        return NGL.ColorMakerRegistry.addScheme( SelectionColorMaker, label );
 
     }
 
