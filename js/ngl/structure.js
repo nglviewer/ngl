@@ -1064,6 +1064,65 @@ NGL.ResnameColorMaker.prototype = NGL.ColorMaker.prototype;
 NGL.ResnameColorMaker.prototype.constructor = NGL.ResnameColorMaker;
 
 
+NGL.BfactorColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "OrRd";
+    }
+
+    if( !params.domain ){
+
+        var min = Infinity;
+        var max = -Infinity;
+
+        if( params.sele ){
+
+            var selection = new NGL.Selection( params.sele );
+
+            this.structure.eachAtom( function( a ){
+
+                min = Math.min( min, a.bfactor );
+                max = Math.max( max, a.bfactor );
+
+            }, selection );
+
+        }else{
+
+            var atoms = this.structure.atoms;
+            var n = atoms.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                var a = atoms[ i ];
+
+                min = Math.min( min, a.bfactor );
+                max = Math.max( max, a.bfactor );
+
+            }
+
+        }
+
+        this.domain = [ min, max ];
+
+    }
+
+    var bfactorScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return bfactorScale( a.bfactor );
+
+    };
+
+};
+
+NGL.BfactorColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.BfactorColorMaker.prototype.constructor = NGL.BfactorColorMaker;
+
+
 NGL.ColorMakerRegistry.types = {
 
     "": NGL.ColorMaker,
@@ -1077,6 +1136,7 @@ NGL.ColorMakerRegistry.types = {
     "sstruc": NGL.SstrucColorMaker,
     "element": NGL.ElementColorMaker,
     "resname": NGL.ResnameColorMaker,
+    "bfactor": NGL.BfactorColorMaker,
 
 };
 
