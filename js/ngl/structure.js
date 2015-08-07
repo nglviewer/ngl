@@ -686,12 +686,18 @@ NGL.ColorMakerRegistry = {
 
     },
 
-    addScheme: function( colorMakerClass, label ){
+    addScheme: function( scheme, label ){
+
+        if( !( scheme instanceof NGL.ColorMaker ) ){
+
+            scheme = NGL.ColorMakerRegistry.createScheme( scheme, label );
+
+        }
 
         label = label || "";
         var id = "" + THREE.Math.generateUUID() + "|" + label;
 
-        NGL.ColorMakerRegistry.userSchemes[ id ] = colorMakerClass;
+        NGL.ColorMakerRegistry.userSchemes[ id ] = scheme;
         NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
 
         return id;
@@ -705,11 +711,29 @@ NGL.ColorMakerRegistry = {
 
     },
 
-    addSelectionScheme: function( pairList, label ){
+    createScheme: function( constructor, label ){
 
-        var SelectionColorMaker = function( params ){
+        var ColorMaker = function( params ){
 
             NGL.ColorMaker.call( this, params );
+
+            this.label = label || "";
+
+            constructor.call( this, params );
+
+        }
+
+        ColorMaker.prototype = NGL.ColorMaker.prototype;
+
+        ColorMaker.prototype.constructor = ColorMaker;
+
+        return ColorMaker;
+
+    },
+
+    addSelectionScheme: function( pairList, label ){
+
+        return NGL.ColorMakerRegistry.addScheme( function( params ){
 
             var colorList = [];
             var selectionList = [];
@@ -739,13 +763,7 @@ NGL.ColorMakerRegistry = {
 
             };
 
-        }
-
-        SelectionColorMaker.prototype = NGL.ColorMaker.prototype;
-
-        SelectionColorMaker.prototype.constructor = SelectionColorMaker;
-
-        return NGL.ColorMakerRegistry.addScheme( SelectionColorMaker, label );
+        }, label );
 
     }
 
