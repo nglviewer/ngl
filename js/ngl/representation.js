@@ -5411,6 +5411,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
+        sort: {
+            type: "boolean", rebuild: true
+        },
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
@@ -5445,13 +5448,13 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             this.sphereDetail = p.sphereDetail || 1;
         }
 
-        this.color = p.color || 0xDDDDDD;
         // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
         this.minValue = p.minValue !== undefined ? p.minValue : NaN;
         this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
         this.dotType = p.dotType !== undefined ? p.dotType : "point";
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
+        this.sort = p.sort !== undefined ? p.sort : false;
         this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -5507,7 +5510,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 {
                     pointSize: this.radius,
                     sizeAttenuation: true,  // this.sizeAttenuation,
-                    sort: false,  // this.sort,
+                    sort: this.sort,
                     transparent: true,  // this.transparent,
                     opacity: opacity,
                     nearClip: this.nearClip
