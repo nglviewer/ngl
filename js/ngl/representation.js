@@ -5428,13 +5428,28 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1, min: 0, uniform: true
         }
 
-    }, NGL.Representation.prototype.parameters ),
+    }, NGL.Representation.prototype.parameters, {
+
+        colorScheme: {
+            type: "select", update: "color", options: {
+                "": "",
+                "value": "value",
+                "uniform": "uniform",
+                // "value-min": "value-min",
+                // "deviation": "deviation",
+                // "size": "size"
+            }
+        },
+
+    } ),
 
     defaultSize: 0.1,
 
     init: function( params ){
 
         var p = params || {};
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue || 0xDDDDDD;
 
         this.disableImpostor = p.disableImpostor || false;
 
@@ -5487,7 +5502,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
             this.dotBuffer = new NGL.SphereBuffer(
                 this.surface.getDataPosition(),
-                this.surface.getDataColor( this.color ),
+                this.surface.getDataColor( this.getColorParams() ),
                 this.surface.getDataSize( this.radius, this.scale ),
                 undefined,
                 {
@@ -5506,7 +5521,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
             this.dotBuffer = new NGL.PointBuffer(
                 this.surface.getDataPosition(),
-                this.surface.getDataColor( this.color ),
+                this.surface.getDataColor( this.getColorParams() ),
                 {
                     pointSize: this.radius,
                     sizeAttenuation: true,  // this.sizeAttenuation,
@@ -5531,7 +5546,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            dotData[ "color" ] = this.surface.getDataColor( this.color );
+            dotData[ "color" ] = this.surface.getDataColor(
+                this.getColorParams()
+            );
 
         }
 

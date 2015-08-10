@@ -97,9 +97,11 @@ NGL.Surface.prototype = {
 
     },
 
-    getColor: function( color ){
+    getColor: function( params ){
 
-        var tc = new THREE.Color( color );
+        var p = params || {};
+
+        var tc = new THREE.Color( p.value );
         var col = NGL.Utils.uniformArray3(
             this.size, tc.r, tc.g, tc.b
         );
@@ -132,9 +134,9 @@ NGL.Surface.prototype = {
 
     },
 
-    getDataColor: function(){
+    getDataColor: function( params ){
 
-        return this.getColor.apply( this, arguments );
+        return this.getColor.call( this, params );
 
     },
 
@@ -641,18 +643,20 @@ NGL.Volume.prototype = {
 
     },
 
-    getDataColor: function( color ){
+    getDataColor: function( params ){
+
+        var p = params || {};
 
         var spectralScale = chroma
-            .scale( 'Spectral' )
-            .mode('lch')
-            .domain( [ this.getDataMin(), this.getDataMax() ]);
+            .scale( p.scale || 'Spectral' )
+            .mode( p.mode || 'lch' )
+            .domain( p.domain || [ this.getDataMin(), this.getDataMax() ]);
 
         var n = this.dataPosition.length / 3;
         var data = this.data;
         var array;
 
-        switch( color ){
+        switch( p.scheme || "uniform" ){
 
             case "value":
 
@@ -666,9 +670,10 @@ NGL.Volume.prototype = {
                 }
                 break;
 
+            case "uniform":
             default:
 
-                var tc = new THREE.Color( color );
+                var tc = new THREE.Color( p.value );
                 array = NGL.Utils.uniformArray3(
                     n, tc.r, tc.g, tc.b
                 );
