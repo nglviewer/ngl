@@ -635,7 +635,11 @@ NGL.ColorMakerRegistry = {
 
     userSchemes: {},
 
-    getScheme: function( id, params ){
+    getScheme: function( params ){
+
+        var p = params || {};
+
+        var id = p.scheme || "";
 
         var schemeClass;
 
@@ -654,6 +658,15 @@ NGL.ColorMakerRegistry = {
         }
 
         return new schemeClass( params );
+
+    },
+
+    getPickingScheme: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return NGL.ColorMakerRegistry.getScheme( p );
 
     },
 
@@ -1647,23 +1660,23 @@ NGL.AtomSet.prototype = {
 
     },
 
-    getColorMaker: function( type, params ){
+    getColorMaker: function( params ){
 
         var p = params || {};
         p.structure = this.structure;
         p.bondSet = this.structure.bondSet;
 
-        return NGL.ColorMakerRegistry.getScheme( type, p );
+        return NGL.ColorMakerRegistry.getScheme( p );
 
     },
 
-    atomColor: function( selection, type, params ){
+    atomColor: function( selection, params ){
 
         // NGL.time( "atomColor" );
 
         // TODO cache
         var c, color;
-        var colorMaker = this.getColorMaker( type, params );
+        var colorMaker = this.getColorMaker( params );
 
         if( selection ){
             color = [];
@@ -1685,6 +1698,15 @@ NGL.AtomSet.prototype = {
         // NGL.timeEnd( "atomColor" );
 
         return color;
+
+    },
+
+    atomPickingColor: function( selection, params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.atomColor( selection, p );
 
     },
 
@@ -1963,7 +1985,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    bondColor: function( selection, fromTo, type, params ){
+    bondColor: function( selection, fromTo, params ){
 
         // NGL.time( "NGL.AtomSet.bondColor" );
 
@@ -1971,7 +1993,7 @@ NGL.AtomSet.prototype = {
         var color = [];
 
         var c;
-        var colorMaker = this.getColorMaker( type, params );
+        var colorMaker = this.getColorMaker( params );
 
         if( selection ){
 
@@ -1999,6 +2021,15 @@ NGL.AtomSet.prototype = {
         // NGL.timeEnd( "NGL.AtomSet.bondColor" );
 
         return new Float32Array( color );
+
+    },
+
+    bondPickingColor: function( selection, fromTo, params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.bondColor( selection, p );
 
     },
 
@@ -2195,19 +2226,21 @@ NGL.BondSet.prototype = {
 
     },
 
-    getColorMaker: function( type, params ){
+    getColorMaker: function( params ){
 
         var p = params || {};
         p.structure = this.structure;
         p.bondSet = this;
 
-        return NGL.ColorMakerRegistry.getScheme( type, p );
+        return NGL.ColorMakerRegistry.getScheme( p );
 
     },
 
     bondPosition: NGL.AtomSet.prototype.bondPosition,
 
     bondColor: NGL.AtomSet.prototype.bondColor,
+
+    bondPickingColor: NGL.AtomSet.prototype.bondPickingColor,
 
     bondRadius: NGL.AtomSet.prototype.bondRadius,
 

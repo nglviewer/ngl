@@ -37,7 +37,7 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedColor: function( m, type, params ){
+    getSubdividedColor: function( m, params ){
 
         var n = this.size;
         var n1 = n - 1;
@@ -48,8 +48,8 @@ NGL.Spline.prototype = {
         var p = params || {};
         p.structure = this.fiber.structure;
 
-        var colorMaker = NGL.ColorMakerRegistry.getScheme( type, p );
-        var pickingColorMaker = NGL.ColorMakerRegistry.getScheme( "picking", p );
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
         var k = 0;
         var j, l, mh, a2, c2, pc2, a3, c3, pc3;
@@ -577,7 +577,7 @@ NGL.Helixorient.prototype = {
 
     },
 
-    getColor: function( type, params ){
+    getColor: function( params ){
 
         var n = this.size;
 
@@ -587,8 +587,8 @@ NGL.Helixorient.prototype = {
         var p = params || {};
         p.structure = this.fiber.structure;
 
-        var colorMaker = NGL.ColorMakerRegistry.getScheme( type, p );
-        var pickingColorMaker = NGL.ColorMakerRegistry.getScheme( "picking", p );
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
         var i = 0;
         var a, c, pc;
@@ -1159,7 +1159,7 @@ NGL.Helixbundle.prototype = {
 
     },
 
-    getAxis: function( localAngle, centerDist, ssBorder, colorScheme, colorParams, radius, scale ){
+    getAxis: function( localAngle, centerDist, ssBorder, colorParams, radius, scale ){
 
         localAngle = localAngle || 30;
         centerDist = centerDist || 2.5;
@@ -1167,11 +1167,11 @@ NGL.Helixbundle.prototype = {
 
         var pos = this.position;
 
-        var p = colorParams || {};
-        p.structure = this.fiber.structure;
+        var cp = colorParams || {};
+        cp.structure = this.fiber.structure;
 
-        var colorMaker = NGL.ColorMakerRegistry.getScheme( colorScheme, p );
-        var pickingColorMaker = NGL.ColorMakerRegistry.getScheme( "picking", p );
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( cp );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( cp );
 
         var radiusFactory = new NGL.RadiusFactory( radius, scale );
 
