@@ -2029,7 +2029,7 @@ NGL.AtomSet.prototype = {
         var p = Object.assign( params || {} );
         p.scheme = "picking";
 
-        return this.bondColor( selection, p );
+        return this.bondColor( selection, fromTo, p );
 
     },
 
