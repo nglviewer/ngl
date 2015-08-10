@@ -1863,7 +1863,7 @@ NGL.Viewer.prototype = {
                 )
 
                 var attributes = o.geometry.attributes;
-                var n = attributes.position.length / 3;
+                var n = attributes.position.count;
 
                 if( !o.userData.sortData ){
                     o.userData.sortData = {};
