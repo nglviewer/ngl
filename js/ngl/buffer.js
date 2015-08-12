@@ -87,6 +87,32 @@ NGL.Buffer.prototype = {
 
     },
 
+    makeWireframeGeometry: function(){
+
+        var index = this.geometry.attributes.index.array;
+        var n = index.length;
+        var wireframeIndex = new Uint32Array( n * 6 );
+
+        for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
+
+            var a = index[ i + 0 ];
+            var b = index[ i + 1 ];
+            var c = index[ i + 2 ];
+
+            wireframeIndex[ j + 0 ] = a;
+            wireframeIndex[ j + 1 ] = b;
+            wireframeIndex[ j + 2 ] = a;
+            wireframeIndex[ j + 3 ] = c;
+            wireframeIndex[ j + 4 ] = b;
+            wireframeIndex[ j + 5 ] = c;
+
+        }
+
+        this.wireframeGeometry = this.geometry.clone();
+        this.wireframeGeometry.attributes.index.array = wireframeIndex;
+
+    },
+
     getRenderOrder: function(){
 
         var renderOrder = 0;
@@ -109,37 +135,13 @@ NGL.Buffer.prototype = {
 
     },
 
-    getMesh: function( type, material ){
+    getMesh: function( material ){
 
-        material = material || this.getMaterial( type );
+        material = material || this.getMaterial();
 
-        if( type === "wireframe" || this.wireframe ){
+        if( this.wireframe ){
 
-            if( !this.wireframeGeometry ){
-
-                var index = this.geometry.attributes.index.array;
-                var n = index.length;
-                var wireframeIndex = new Uint32Array( n * 6 );
-
-                for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
-
-                    var a = index[ i + 0 ];
-                    var b = index[ i + 1 ];
-                    var c = index[ i + 2 ];
-
-                    wireframeIndex[ j + 0 ] = a;
-                    wireframeIndex[ j + 1 ] = b;
-                    wireframeIndex[ j + 2 ] = a;
-                    wireframeIndex[ j + 3 ] = c;
-                    wireframeIndex[ j + 4 ] = b;
-                    wireframeIndex[ j + 5 ] = c;
-
-                }
-
-                this.wireframeGeometry = this.geometry.clone();
-                this.wireframeGeometry.attributes.index.array = wireframeIndex;
-
-            }
+            if( !this.wireframeGeometry ) this.makeWireframeGeometry();
 
             return new THREE.LineSegments( this.wireframeGeometry, material );
 
@@ -151,36 +153,25 @@ NGL.Buffer.prototype = {
 
     },
 
-    getMaterial: function( type ){
+    getPickingMesh: function( material ){
+
+        material = material || this.getPickingMaterial( type );
+
+        return new THREE.Mesh( this.geometry, material );
+
+    },
+
+    getMaterial: function(){
 
         var material;
 
-        if( type === "picking" ){
-
-            material = new THREE.ShaderMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
-                depthTest: true,
-                transparent: false,
-                depthWrite: true,
-                lights: false,
-                fog: false
-
-            } );
-
-            material.side = this.side;
-            material.defines[ "PICKING" ] = 1;
-
-        }else if( type === "wireframe" || this.wireframe ){
+        if( this.wireframe ){
 
             material = new THREE.RawShaderMaterial( {
                 uniforms:  THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
-                vertexShader: NGL.getShader( "Line.vert" ),
-                fragmentShader: NGL.getShader( "Line.frag" ),
+                vertexShader: this.getShader( "Line.vert" ),
+                fragmentShader: this.getShader( "Line.frag" ),
                 depthTest: true,
                 transparent: this.transparent,
                 depthWrite: true,
@@ -195,8 +186,8 @@ NGL.Buffer.prototype = {
 
                 uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
+                vertexShader:  this.getVertexShader(),
+                fragmentShader: this.getFragmentShader(),
                 depthTest: true,
                 transparent: this.transparent,
                 depthWrite: true,
@@ -206,39 +197,27 @@ NGL.Buffer.prototype = {
 
             } );
 
-            material.side = this.side;
-
-            if( type === "background" || this.background ){
-
-                material.defines[ "NOLIGHT" ] = 1;
-
-            }
-
-            if( this.flatShaded ){
-
-                material.defines[ "FLAT_SHADED" ] = 1;
-
-            }
-
-            if( this.opaqueBack ){
-
-                material.defines[ "OPAQUE_BACK" ] = 1;
-
-            }
-
-            if( this.dullInterior ){
-
-                material.defines[ "DULL_INTERIOR" ] = 1;
-
-            }
-
         }
 
-        if( this.nearClip ){
+        return material;
 
-            material.defines[ "NEAR_CLIP" ] = 1;
+    },
 
-        }
+    getPickingMaterial: function(){
+
+        var material = new THREE.RawShaderMaterial( {
+
+            uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
+            attributes: this.attributes,
+            vertexShader: this.getVertexShader( "picking" ),
+            fragmentShader: this.getFragmentShader( "picking" ),
+            depthTest: true,
+            transparent: false,
+            depthWrite: true,
+            lights: false,
+            fog: false
+
+        } );
 
         return material;
 
@@ -326,6 +305,141 @@ NGL.Buffer.prototype = {
             }
 
         }, this );
+
+    },
+
+    setUniforms: function( data ){
+
+    },
+
+    getShader: function( name, type ){
+
+        return NGL.getShader( name, this.getDefines( type ) );
+
+    },
+
+    getVertexShader: function( type ){
+
+        return this.getShader( this.vertexShader, type );
+
+    },
+
+    getFragmentShader: function( type ){
+
+        return this.getShader( this.fragmentShader, type );
+
+    },
+
+    getDefines: function( type ){
+
+        var defines = {};
+
+        if( this.nearClip ){
+            defines[ "NEAR_CLIP" ] = 1;
+        }
+
+        if( type === "picking" ){
+
+            if( this.side === THREE.DoubleSide ){
+                defines[ "DOUBLE_SIDED" ] = 1;
+            }else if( this.side === THREE.BackSide ){
+                defines[ "FLIP_SIDED" ] = 1;
+            }
+            defines[ "PICKING" ] = 1;
+
+        }else if( type === "wireframe" || this.wireframe ){
+
+        //
+
+        }else{
+
+            if( this.side === THREE.DoubleSide ){
+                defines[ "DOUBLE_SIDED" ] = 1;
+            }else if( this.side === THREE.BackSide ){
+                defines[ "FLIP_SIDED" ] = 1;
+            }
+            if( type === "background" || this.background ){
+                defines[ "NOLIGHT" ] = 1;
+            }
+            if( this.flatShaded ){
+                defines[ "FLAT_SHADED" ] = 1;
+            }
+            if( this.opaqueBack ){
+                defines[ "OPAQUE_BACK" ] = 1;
+            }
+            if( this.dullInterior ){
+                defines[ "DULL_INTERIOR" ] = 1;
+            }
+
+        }
+
+        return defines;
+
+    },
+
+    updateMaterial: function(){
+
+        function updateDefine(  mesh ){
+
+            var mat = mesh.material;
+
+            mat.vertexShader = this.getVertexShader(  );
+            mat.fragmentShader = NGL.getShader( this.fragmentShader, defines );
+
+            mesh.material.needsUpdate = true;
+
+        }
+
+        this.group.children.forEach( updateDefine );
+
+        if( this.pickingGroup ){
+            this.pickingGroup.children.forEach( updateDefine );
+        }
+
+    },
+
+    setDefines: function( data ){
+
+        function updateDefine( name, mesh ){
+
+            var mat = mesh.material;
+
+            mat.vertexShader = NGL.getShader( this.vertexShader, defines );
+            mat.fragmentShader = NGL.getShader( this.fragmentShader, defines );
+
+            if( data[ name ] ){
+
+                mesh.material.defines[ name ] = 1;
+
+            }else{
+
+                delete mesh.material.defines[ name ];
+
+            }
+
+            mesh.material.needsUpdate = true;
+
+        }
+
+        for( var name in data ){
+
+            this.group.children.forEach( function( mesh ){
+                updateDefine( name, mesh );
+            } );
+
+            if( this.pickingGroup ){
+                this.pickingGroup.children.forEach( function( mesh ){
+                    updateDefine( name, mesh );
+                } );
+            }
+
+        }
+
+    },
+
+    setProperties: function( data ){
+
+
 
     },
 
@@ -1524,12 +1638,17 @@ NGL.LineBuffer.prototype = {
 
     getMaterial: function( type ){
 
+        var defines = {};
+
+        if( this.nearClip ){
+            defines[ "NEAR_CLIP" ] = 1;
+        }
 
         var material = new THREE.RawShaderMaterial( {
             uniforms: THREE.UniformsUtils.clone( this.uniforms ),
             attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
+            vertexShader: NGL.getShader( this.vertexShader, defines ),
+            fragmentShader: NGL.getShader( this.fragmentShader, defines ),
             depthTest: true,
             transparent: this.transparent,
             depthWrite: true,
@@ -1537,12 +1656,6 @@ NGL.LineBuffer.prototype = {
             fog: true,
             linewidth: this.lineWidth
         } );
-
-        if( this.nearClip ){
-
-            material.defines[ "NEAR_CLIP" ] = 1;
-
-        }
 
         return material;
 

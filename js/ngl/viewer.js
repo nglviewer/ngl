@@ -653,13 +653,36 @@ NGL.getShader = function(){
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
     var cache = {};
 
-    return function( name ){
+    function getDefines( defines ){
 
-        var shader = NGL.Resources[ '../shader/' + name ];
+        if( defines === undefined ) return "";
+
+        var lines = [];
+
+        for ( var name in defines ) {
+
+            var value = defines[ name ];
+
+            if ( value === false ) continue;
+
+            lines.push( '#define ' + name + ' ' + value );
+
+        }
+
+        return lines.join( '\n' );
+
+    }
+
+    //
+
+    return function( name, defines ){
 
         if( !cache[ name ] ){
 
-            cache[ name ] = shader.replace( re, function( match, p1 ){
+            var definesText = getDefines( defines );
+
+            var shaderText = NGL.Resources[ '../shader/' + name ];
+            shaderText = shaderText.replace( re, function( match, p1 ){
 
                 var path = '../shader/chunk/' + p1 + '.glsl';
                 var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
@@ -667,6 +690,8 @@ NGL.getShader = function(){
                 return chunk ? chunk : "";
 
             });
+
+            cache[ name ] = definesText + shaderText;
 
         }
 
@@ -1225,12 +1250,10 @@ NGL.Viewer.prototype = {
         if( buffer.pickable ){
 
             if( !buffer.pickingMaterial ){
-                buffer.pickingMaterial = buffer.getMaterial( "picking" );
+                buffer.pickingMaterial = buffer.getPickingMaterial();
             }
 
-            var pickingMesh = buffer.getMesh(
-                "picking", buffer.pickingMaterial
-            );
+            var pickingMesh = buffer.getPickingMesh( buffer.pickingMaterial );
             pickingMesh.frustumCulled = false;
             pickingMesh.renderOrder = renderOrder;
             pickingMesh.userData[ "buffer" ] = buffer;
