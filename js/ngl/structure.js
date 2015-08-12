@@ -2026,7 +2026,7 @@ NGL.AtomSet.prototype = {
 
     bondPickingColor: function( selection, fromTo, params ){
 
-        var p = Object.assign( params || {} );
+        var p = Object.assign( {}, params );
         p.scheme = "picking";
 
         return this.bondColor( selection, fromTo, p );
