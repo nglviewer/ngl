@@ -2433,7 +2433,27 @@ NGL.CifParser.prototype = NGL.createObject(
 
                         for( var i = _i; i < _n; ++i ){
 
-                            if( sc.conn_type_id[ i ] === "hydrog" ) continue;
+                            // ignore:
+                            // hydrog - hydrogen bond
+                            // mismat - mismatched base pairs
+                            // saltbr - ionic interaction
+
+                            var conn_type_id = sc.conn_type_id[ i ]
+                            if( conn_type_id === "hydrog" ||
+                                conn_type_id === "mismat" ||
+                                conn_type_id === "saltbr" ) continue;
+
+                            // process:
+                            // covale - covalent bond
+                            // covale_base -
+                            //      covalent modification of a nucleotide base
+                            // covale_phosphate -
+                            //      covalent modification of a nucleotide phosphate
+                            // covale_sugar -
+                            //      covalent modification of a nucleotide sugar
+                            // disulf - disulfide bridge
+                            // metalc - metal coordination
+                            // modres - covalent residue modification
 
                             var sele1 = (
                                 sc.ptnr1_auth_seq_id[ i ] + ":" +
