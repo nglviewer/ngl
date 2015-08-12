@@ -1,3 +1,12 @@
+
+#extension GL_EXT_frag_depth : enable
+
+precision highp float;
+precision highp int;
+
+uniform mat4 viewMatrix;
+uniform vec3 cameraPosition;
+
 // Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
 
 //  All Rights Reserved
@@ -23,9 +32,6 @@
 // - ported to WebGL
 // - dual color
 // - picking color
-
-
-#extension GL_EXT_frag_depth : enable
 
 uniform float opacity;
 uniform float nearClip;

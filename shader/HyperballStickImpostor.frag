@@ -1,3 +1,12 @@
+
+#extension GL_EXT_frag_depth : enable
+
+precision highp float;
+precision highp int;
+
+uniform mat4 viewMatrix;
+uniform vec3 cameraPosition;
+
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
@@ -14,8 +23,6 @@
 // - dual color
 // - picking color
 
-
-#extension GL_EXT_frag_depth : enable
 
 // varying vec3 mapping;
 

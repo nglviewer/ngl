@@ -1,3 +1,16 @@
+
+precision highp float;
+precision highp int;
+
+uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
+uniform vec3 cameraPosition;
+
+attribute vec3 position;
+
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and

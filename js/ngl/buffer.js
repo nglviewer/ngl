@@ -176,7 +176,7 @@ NGL.Buffer.prototype = {
 
         }else if( type === "wireframe" || this.wireframe ){
 
-            material = new THREE.ShaderMaterial( {
+            material = new THREE.RawShaderMaterial( {
                 uniforms:  THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
                 vertexShader: NGL.getShader( "Line.vert" ),
@@ -191,7 +191,7 @@ NGL.Buffer.prototype = {
 
         }else{
 
-            material = new THREE.ShaderMaterial( {
+            material = new THREE.RawShaderMaterial( {
 
                 uniforms: THREE.UniformsUtils.clone( this.uniforms ),
                 attributes: this.attributes,
@@ -1524,10 +1524,9 @@ NGL.LineBuffer.prototype = {
 
     getMaterial: function( type ){
 
-        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
 
-        var material = new THREE.ShaderMaterial( {
-            uniforms: uniforms,
+        var material = new THREE.RawShaderMaterial( {
+            uniforms: THREE.UniformsUtils.clone( this.uniforms ),
             attributes: this.attributes,
             vertexShader: NGL.getShader( this.vertexShader ),
             fragmentShader: NGL.getShader( this.fragmentShader ),

@@ -1,7 +1,18 @@
 
+precision highp float;
+precision highp int;
+
+uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
+uniform vec3 cameraPosition;
+
+attribute vec3 position;
 attribute vec3 inputDir;
 attribute float inputSize;
-//attribute vec3 inputNormal;
+attribute vec3 normal;
 
 varying vec4 cameraPos;
 
