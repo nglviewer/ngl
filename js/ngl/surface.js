@@ -325,7 +325,7 @@ NGL.Volume.prototype = {
 
     generateSurface: function( isolevel, smooth ){
 
-        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         if( isolevel === this.__isolevel && smooth === this.__smooth ){
@@ -401,7 +401,7 @@ NGL.Volume.prototype = {
 
     generateSurfaceWorker: function( isolevel, smooth, callback ){
 
-        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         //
@@ -476,7 +476,7 @@ NGL.Volume.prototype = {
 
     },
 
-    getIsolevelForSigma: function( sigma ){
+    getValueForSigma: function( sigma ){
 
         sigma = sigma !== undefined ? sigma : 2;
 
@@ -484,11 +484,11 @@ NGL.Volume.prototype = {
 
     },
 
-    getSigmaForIsolevel: function( isolevel ){
+    getSigmaForValue: function( value ){
 
-        isolevel = isolevel !== undefined ? isolevel : 0;
+        value = value !== undefined ? value : 0;
 
-        return ( isolevel - this.getDataMean() ) / this.getDataRms();
+        return ( value - this.getDataMean() ) / this.getDataRms();
 
     },
 

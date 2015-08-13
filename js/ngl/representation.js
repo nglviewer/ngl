@@ -5124,7 +5124,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
             if( this.isolevelType === "sigma" ){
 
-                isolevel = this.surface.getIsolevelForSigma( this.isolevel );
+                isolevel = this.surface.getValueForSigma( this.isolevel );
 
             }else{
 
@@ -5243,7 +5243,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 params[ "isolevelType" ] === "sigma"
             ){
 
-                this.isolevel = this.surface.getSigmaForIsolevel(
+                this.isolevel = this.surface.getSigmaForValue(
                     this.isolevel
                 );
 
@@ -5251,7 +5251,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 params[ "isolevelType" ] === "value"
             ){
 
-                this.isolevel = this.surface.getIsolevelForSigma(
+                this.isolevel = this.surface.getValueForSigma(
                     this.isolevel
                 );
 
@@ -5292,10 +5292,15 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        minValue: {
+        thresholdType: {
+            type: "select", rebuild: true, options: {
+                "value": "value", "sigma": "sigma"
+            }
+        },
+        thresholdMin: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
-        maxValue: {
+        thresholdMax: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
         dotType: {
@@ -5372,9 +5377,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             this.sphereDetail = p.sphereDetail || 1;
         }
 
-        // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
-        this.minValue = p.minValue !== undefined ? p.minValue : NaN;
-        this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
+        this.thresholdType  = p.thresholdType !== undefined ? p.thresholdType : "sigma";
+        this.thresholdMin = p.thresholdMin !== undefined ? p.thresholdMin : 2.0;
+        this.thresholdMax = p.thresholdMax !== undefined ? p.thresholdMax : Infinity;
         this.dotType = p.dotType !== undefined ? p.dotType : "point";
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
@@ -5403,7 +5408,16 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        this.surface.filterData( this.minValue, this.maxValue );
+        var thresholdMin, thresholdMax;
+
+        if( this.thresholdType === "sigma" ){
+            thresholdMin = this.surface.getValueForSigma( this.thresholdMin );
+            thresholdMax = this.surface.getValueForSigma( this.thresholdMax );
+        }else{
+            thresholdMin = this.thresholdMin;
+            thresholdMax = this.thresholdMax;
+        }
+        this.surface.filterData( thresholdMin, thresholdMax );
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
@@ -5476,6 +5490,38 @@ NGL.DotRepresentation.prototype = NGL.createObject(
     setParameters: function( params, what, rebuild ){
 
         what = what || {};
+
+        if( params && params[ "thresholdType" ] !== undefined &&
+            this.surface instanceof NGL.Volume
+        ){
+
+            if( this.thresholdType === "value" &&
+                params[ "thresholdType" ] === "sigma"
+            ){
+
+                this.thresholdMin = this.surface.getSigmaForValue(
+                    this.thresholdMin
+                );
+                this.thresholdMax = this.surface.getSigmaForValue(
+                    this.thresholdMax
+                );
+
+            }else if( this.thresholdType === "sigma" &&
+                params[ "thresholdType" ] === "value"
+            ){
+
+                this.thresholdMin = this.surface.getValueForSigma(
+                    this.thresholdMin
+                );
+                this.thresholdMax = this.surface.getValueForSigma(
+                    this.thresholdMax
+                );
+
+            }
+
+            this.thresholdType = params[ "thresholdType" ];
+
+        }
 
         if( params && params[ "radiusType" ] !== undefined ){
 
