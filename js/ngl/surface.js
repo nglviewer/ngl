@@ -261,6 +261,8 @@ NGL.Volume = function( name, path, data, nx, ny, nz ){
 
     this.setData( data, nx, ny, nz );
 
+    NGL.GidPool.addObject( this );
+
 };
 
 NGL.Volume.prototype = {
@@ -293,6 +295,8 @@ NGL.Volume.prototype = {
         delete this.__dataRms;
 
         if( this.worker ) this.worker.terminate();
+
+        NGL.GidPool.updateObject( this, true );
 
     },
 
@@ -646,6 +650,7 @@ NGL.Volume.prototype = {
     getDataColor: function( params ){
 
         var p = params || {};
+        p.volume = this;
         p.scale = p.scale || 'Spectral';
         p.mode = p.mode || 'lch';
         p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
@@ -653,16 +658,24 @@ NGL.Volume.prototype = {
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
 
         var n = this.dataPosition.length / 3;
-        var data = this.data;
         var array = new Float32Array( n * 3 );
 
         for( var i = 0; i < n; ++i ){
 
-            colorMaker.valueColorToArray( data[ i ], array, i * 3 );
+            colorMaker.volumeColorToArray( i, array, i * 3 );
 
         }
 
         return array;
+
+    },
+
+    getPickingDataColor: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.getDataColor( p );
 
     },
 
@@ -906,6 +919,8 @@ NGL.Volume.prototype = {
     dispose: function(){
 
         if( this.worker ) this.worker.terminate();
+
+        NGL.GidPool.removeObject( this );
 
     }
 

@@ -425,7 +425,7 @@ NGL.GidPool = {
 
     },
 
-    updateObject: function( object ){
+    updateObject: function( object, silent ){
 
         var idx = NGL.GidPool.objectList.indexOf( object );
 
@@ -447,7 +447,11 @@ NGL.GidPool = {
 
         }else{
 
-            NGL.warn( "NGL.GidPool.updateObject: object not found." );
+            if( !silent ){
+
+                NGL.warn( "NGL.GidPool.updateObject: object not found." );
+
+            }
 
         }
 
@@ -466,6 +470,10 @@ NGL.GidPool = {
         }else if( object instanceof NGL.BondSet ){
 
             count = object.bondCount;
+
+        }else if( object instanceof NGL.Volume ){
+
+            count = object.__data.length;
 
         }
 
@@ -527,7 +535,7 @@ NGL.GidPool = {
 
         var entity;
 
-        NGL.GidPool.objectList.forEach( function( o ){
+        NGL.GidPool.objectList.forEach( function( o, i ){
 
             if( o instanceof NGL.Structure ){
 
@@ -548,6 +556,25 @@ NGL.GidPool = {
                     }
 
                 } );
+
+            }else if( o instanceof NGL.Volume ){
+
+                var range = NGL.GidPool.rangeList[ i ];
+
+                if( gid >= range[ 0 ] && gid < range[ 1 ] ){
+
+                    var offset = gid - range[ 0 ];
+
+                    entity = {
+                        volume: o,
+                        index: offset,
+                        value: o.data[ offset ],
+                        x: o.dataPosition[ offset * 3 ],
+                        y: o.dataPosition[ offset * 3 + 1 ],
+                        z: o.dataPosition[ offset * 3 + 2 ],
+                    };
+
+                }
 
             }
 
@@ -797,6 +824,7 @@ NGL.ColorMaker = function( params ){
 
     this.structure = p.structure;
     this.bondSet = p.bondSet;
+    this.volume = p.volume;
     this.surface = p.surface;
 
 };
@@ -864,15 +892,15 @@ NGL.ColorMaker.prototype = {
 
     },
 
-    valueColor: function( v ){
+    volumeColor: function( i ){
 
         return 0xFFFFFF;
 
     },
 
-    valueColorToArray: function( v, array, offset ){
+    volumeColorToArray: function( i, array, offset ){
 
-        var c = this.valueColor( v );
+        var c = this.volumeColor( i );
 
         if( array === undefined ) array = [];
         if( offset === undefined ) offset = 0;
@@ -894,9 +922,9 @@ NGL.ValueColorMaker = function( params ){
 
     var valueScale = this.getScale();
 
-    this.valueColor = function( v ){
+    this.volumeColor = function( i ){
 
-        return valueScale( v );
+        return valueScale( this.volume.data[ i ] );
 
     };
 
@@ -920,6 +948,12 @@ NGL.PickingColorMaker = function( params ){
     this.bondColor = function( b, fromTo ){
 
         return NGL.GidPool.getGid( this.bondSet, b.index );
+
+    };
+
+    this.volumeColor = function( i ){
+
+        return NGL.GidPool.getGid( this.volume, i );
 
     };
 
@@ -2659,6 +2693,8 @@ NGL.Structure.prototype = {
 
         this.center = new THREE.Vector3();
         this.boundingBox = new THREE.Box3();
+
+        NGL.GidPool.updateObject( this, true );
 
     },
 

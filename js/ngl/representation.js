@@ -5427,7 +5427,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 this.surface.getDataPosition(),
                 this.surface.getDataColor( this.getColorParams() ),
                 this.surface.getDataSize( this.radius, this.scale ),
-                undefined,
+                this.surface.getPickingDataColor( this.getColorParams() ),
                 {
                     sphereDetail: this.sphereDetail,
                     transparent: this.transparent,

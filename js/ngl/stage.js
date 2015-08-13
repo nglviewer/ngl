@@ -20,6 +20,7 @@ NGL.Stage = function( eid ){
 
         atomPicked: new SIGNALS.Signal(),
         bondPicked: new SIGNALS.Signal(),
+        volumePicked: new SIGNALS.Signal(),
         nothingPicked: new SIGNALS.Signal(),
         onPicking: new SIGNALS.Signal(),
 
@@ -534,6 +535,7 @@ NGL.PickingControls = function( viewer, stage ){
 
         var pickedAtom = undefined;
         var pickedBond = undefined;
+        var pickedVolume = undefined;
 
         var picked = NGL.GidPool.getByGid( gid );
 
@@ -545,11 +547,17 @@ NGL.PickingControls = function( viewer, stage ){
 
             pickedBond = picked;
 
+        }else if( picked && picked.volume instanceof NGL.Volume ){
+
+            pickedVolume = picked;
+
         }
 
         //
 
-        if( ( pickedAtom || pickedBond ) && e.which === NGL.MiddleMouseButton ){
+        if( ( pickedAtom || pickedBond || pickedVolume ) &&
+                e.which === NGL.MiddleMouseButton
+        ){
 
             if( pickedAtom ){
 
@@ -560,6 +568,10 @@ NGL.PickingControls = function( viewer, stage ){
                 position.set( 0, 0, 0 )
                     .addVectors( pickedBond.atom1, pickedBond.atom2 )
                     .multiplyScalar( 0.5 );
+
+            }else if( pickedVolume ){
+
+                position.copy( pickedVolume );
 
             }
 
@@ -583,6 +595,10 @@ NGL.PickingControls = function( viewer, stage ){
 
             stage.signals.bondPicked.dispatch( pickedBond );
 
+        }else if( pickedVolume ){
+
+            stage.signals.volumePicked.dispatch( pickedVolume );
+
         }else{
 
             stage.signals.nothingPicked.dispatch();
@@ -593,6 +609,7 @@ NGL.PickingControls = function( viewer, stage ){
 
             "atom": pickedAtom,
             "bond": pickedBond,
+            "volume": pickedVolume,
             "instance": instance
 
         } );
@@ -603,6 +620,7 @@ NGL.PickingControls = function( viewer, stage ){
 
             NGL.log( "picked atom", pickedAtom );
             NGL.log( "picked bond", pickedBond );
+            NGL.log( "picked volume", pickedVolume );
 
         }
 

@@ -924,7 +924,14 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
 
-                o.addRepresentation( "surface", { wireframe: true } );
+                o.addRepresentation( "surface", {
+                    wireframe: true,
+                    visible: false
+                } );
+                o.addRepresentation( "dot", {
+                    dotType: "sphere",
+                    radius: 0.3
+                } );
                 o.centerView();
 
             } );

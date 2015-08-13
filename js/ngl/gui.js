@@ -132,6 +132,12 @@ NGL.ToolbarWidget = function( stage ){
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.atom1.residue.chain.model.structure.name + ")";
 
+        }else if( d.volume ){
+
+            msg = "Picked volume: " +
+                d.volume.value.toPrecision( 3 ) +
+                " (" + d.volume.volume.name + ")";
+
         }else{
 
             msg = "Nothing to pick";
