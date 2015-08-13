@@ -799,8 +799,6 @@ NGL.ColorMaker = function( params ){
     this.bondSet = p.bondSet;
     this.surface = p.surface;
 
-    this.valueScale = this.getScale();
-
 };
 
 NGL.ColorMaker.prototype = {
@@ -868,7 +866,7 @@ NGL.ColorMaker.prototype = {
 
     valueColor: function( v ){
 
-        return this.valueScale( v );
+        return 0xFFFFFF;
 
     },
 
@@ -888,6 +886,25 @@ NGL.ColorMaker.prototype = {
     }
 
 };
+
+
+NGL.ValueColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var valueScale = this.getScale();
+
+    this.valueColor = function( v ){
+
+        return valueScale( v );
+
+    };
+
+};
+
+NGL.ValueColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ValueColorMaker.prototype.constructor = NGL.ValueColorMaker;
 
 
 NGL.PickingColorMaker = function( params ){
@@ -934,9 +951,23 @@ NGL.UniformColorMaker = function( params ){
 
     NGL.ColorMaker.call( this, params );
 
-    this.atomColor = function( a ){
+    var color = this.value;
 
-        return this.value;
+    this.atomColor = function(){
+
+        return color;
+
+    };
+
+    this.bondColor = function(){
+
+        return color;
+
+    };
+
+    this.valueColor = function(){
+
+        return color;
 
     };
 
@@ -1215,6 +1246,7 @@ NGL.ColorMakerRegistry.types = {
     "element": NGL.ElementColorMaker,
     "resname": NGL.ResnameColorMaker,
     "bfactor": NGL.BfactorColorMaker,
+    "value": NGL.ValueColorMaker,
 
 };
 

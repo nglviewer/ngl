@@ -650,7 +650,7 @@ NGL.Volume.prototype = {
         p.mode = p.mode || 'lch';
         p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
 
-        var colorMaker = new NGL.ColorMaker( p );
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
 
         var n = this.dataPosition.length / 3;
         var data = this.data;
