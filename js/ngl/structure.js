@@ -616,6 +616,9 @@ NGL.ColorMakerRegistry = {
         "Pastel2": "[Q] Pastel2",
         "Accent": "[Q] Accent",
 
+        // Other
+        "roygb": "[?] Rainbow",
+
     },
 
     modes: {
@@ -806,8 +809,13 @@ NGL.ColorMaker.prototype = {
 
         var p = params || {};
 
+        var scale = p.scale || this.scale;
+        if( scale === "rainbow" || scale === "roygb" ){
+            scale = [ "red", "orange", "yellow", "green", "blue" ];
+        }
+
         return chroma
-            .scale( p.scale || this.scale )
+            .scale( scale )
             .mode( p.mode || this.mode )
             .domain( p.domain || this.domain )
             .out( "num" );
@@ -921,7 +929,7 @@ NGL.AtomindexColorMaker = function( params ){
     NGL.ColorMaker.call( this, params );
 
     if( !params.scale ){
-        this.scale = [ "red", "orange", "yellow", "green", "blue" ];
+        this.scale = "roygb";
     }
 
     if( !params.domain ){
@@ -948,7 +956,7 @@ NGL.ResidueindexColorMaker = function( params ){
     NGL.ColorMaker.call( this, params );
 
     if( !params.scale ){
-        this.scale = [ "red", "orange", "yellow", "green", "blue" ];
+        this.scale = "roygb";
     }
 
     if( !params.domain ){
@@ -1014,7 +1022,7 @@ NGL.ModelindexColorMaker = function( params ){
     NGL.ColorMaker.call( this, params );
 
     if( !params.scale ){
-        this.scale = [ "red", "orange", "yellow", "green", "blue" ];
+        this.scale = "roygb";
     }
 
     if( !params.domain ){
@@ -1039,14 +1047,6 @@ NGL.ModelindexColorMaker.prototype.constructor = NGL.ModelindexColorMaker;
 NGL.SstrucColorMaker = function( params ){
 
     NGL.ColorMaker.call( this, params );
-
-    if( params.scale === "auto" ){
-        this.scale = "Spectral";
-    }
-
-    if( params.domain === "auto" ){
-        this.domain = [ 0, this.structure.chainCount ];
-    }
 
     var strucColors = NGL.StructureColors;
     var defaultStrucColor = NGL.StructureColors[""];
