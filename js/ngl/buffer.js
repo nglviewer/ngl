@@ -81,7 +81,7 @@ NGL.Buffer.prototype = {
 
         if( NGL.indexUint16 ){
 
-            this.geometry.drawcalls = this.geometry.computeOffsets();
+            this.geometry.computeOffsets();
 
         }
 
@@ -119,7 +119,7 @@ NGL.Buffer.prototype = {
 
                 var index = this.geometry.attributes.index.array;
                 var n = index.length;
-                var wireframeIndex = new Uint32Array( n * 6 );
+                var wireframeIndex = new Uint32Array( n * 2 );
 
                 for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
 
@@ -138,6 +138,12 @@ NGL.Buffer.prototype = {
 
                 this.wireframeGeometry = this.geometry.clone();
                 this.wireframeGeometry.attributes.index.array = wireframeIndex;
+
+                if( NGL.indexUint16 ){
+                    this.wireframeGeometry.computeOffsets();
+                }else{
+                    this.wireframeGeometry.clearDrawCalls();
+                }
 
             }
 
