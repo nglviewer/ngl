@@ -646,38 +646,19 @@ NGL.Volume.prototype = {
     getDataColor: function( params ){
 
         var p = params || {};
+        p.scale = p.scale || 'Spectral';
+        p.mode = p.mode || 'lch';
+        p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
 
-        var spectralScale = chroma
-            .scale( p.scale || 'Spectral' )
-            .mode( p.mode || 'lch' )
-            .domain( p.domain || [ this.getDataMin(), this.getDataMax() ]);
+        var colorMaker = new NGL.ColorMaker( p );
 
         var n = this.dataPosition.length / 3;
         var data = this.data;
-        var array;
+        var array = new Float32Array( n * 3 );
 
-        switch( p.scheme || "uniform" ){
+        for( var i = 0; i < n; ++i ){
 
-            case "value":
-
-                array = new Float32Array( n * 3 );
-                for( var i = 0; i < n; ++i ){
-                    var i3 = i * 3;
-                    var c = spectralScale( data[ i ] )._rgb
-                    array[ i3 + 0 ] = c[ 0 ] / 255;
-                    array[ i3 + 1 ] = c[ 1 ] / 255;
-                    array[ i3 + 2 ] = c[ 2 ] / 255;
-                }
-                break;
-
-            case "uniform":
-            default:
-
-                var tc = new THREE.Color( p.value );
-                array = NGL.Utils.uniformArray3(
-                    n, tc.r, tc.g, tc.b
-                );
-                break;
+            colorMaker.valueColorToArray( data[ i ], array, i * 3 );
 
         }
 

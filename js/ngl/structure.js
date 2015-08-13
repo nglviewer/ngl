@@ -799,6 +799,8 @@ NGL.ColorMaker = function( params ){
     this.bondSet = p.bondSet;
     this.surface = p.surface;
 
+    this.valueScale = this.getScale();
+
 };
 
 NGL.ColorMaker.prototype = {
@@ -852,6 +854,27 @@ NGL.ColorMaker.prototype = {
     bondColorToArray: function( b, fromTo, array, offset ){
 
         var c = this.bondColor( b, fromTo );
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
+        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
+        array[ offset + 2 ] = ( c & 255 ) / 255;
+
+        return array;
+
+    },
+
+    valueColor: function( v ){
+
+        return this.valueScale( v );
+
+    },
+
+    valueColorToArray: function( v, array, offset ){
+
+        var c = this.valueColor( v );
 
         if( array === undefined ) array = [];
         if( offset === undefined ) offset = 0;
