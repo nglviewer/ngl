@@ -106,6 +106,9 @@ NGL.Representation.prototype = {
         flatShaded: {
             type: "boolean", define: "FLAT_SHADED"
         },
+        outline: {
+            type: "boolean", define: "OUTLINE"
+        },
 
         colorScheme: {
             type: "select", update: "color",
@@ -134,6 +137,7 @@ NGL.Representation.prototype = {
 
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
         this.flatShaded = p.flatShaded || false;
+        this.outline = p.outline || false;
 
         this.setColor( p.color, p );
 
@@ -924,6 +928,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
                 opacity: opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
+                outline: this.outline,
                 dullInterior: true
             },
             this.disableImpostor

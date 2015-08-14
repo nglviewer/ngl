@@ -1215,6 +1215,19 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "outline": function( stage ){
+
+            stage.loadFile( "data://3pqr.pdb", function( o ){
+
+                o.addRepresentation( "spacefill", { outline: true, color: "lime" } );
+                o.addRepresentation( "spacefill" );
+
+                o.centerView();
+
+            } );
+
         }
 
     }

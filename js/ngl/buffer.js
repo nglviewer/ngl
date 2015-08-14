@@ -27,6 +27,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.transparent = p.transparent !== undefined ? p.transparent : false;
     this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
+    this.outline = p.outline !== undefined ? p.outline : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
@@ -235,6 +236,12 @@ NGL.Buffer.prototype = {
             if( this.dullInterior ){
 
                 material.defines[ "DULL_INTERIOR" ] = 1;
+
+            }
+
+            if( this.outline ){
+
+                material.defines[ "OUTLINE" ] = 1;
 
             }
 

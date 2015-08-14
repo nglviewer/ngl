@@ -124,26 +124,29 @@ void main(void)
             discard;
     #endif
 
-    // FIXME not compatible with custom clipping plane
-    //Set the depth based on the new cameraPos.
-    gl_FragDepthEXT = calcDepth( cameraPos );
-    if( !flag ){
 
-        // clamp to near clipping plane and add a tiny value to
-        // make spheres with a greater radius occlude smaller ones
-        #ifdef NEAR_CLIP
-            if( flag2 ){
-                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / sphereRadius ) );
-            }else if( gl_FragDepthEXT >= 0.0 ){
-                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );
-            }
-        #else
-            if( gl_FragDepthEXT >= 0.0 ){
-                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );
-            }
-        #endif
+    #ifndef OUTLINE
+        // FIXME not compatible with custom clipping plane
+        //Set the depth based on the new cameraPos.
+        gl_FragDepthEXT = calcDepth( cameraPos );
+        if( !flag ){
 
-    }
+            // clamp to near clipping plane and add a tiny value to
+            // make spheres with a greater radius occlude smaller ones
+            #ifdef NEAR_CLIP
+                if( flag2 ){
+                    gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / sphereRadius ) );
+                }else if( gl_FragDepthEXT >= 0.0 ){
+                    gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );
+                }
+            #else
+                if( gl_FragDepthEXT >= 0.0 ){
+                    gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );
+                }
+            #endif
+
+        }
+    #endif
 
     // bugfix (mac only?)
     if (gl_FragDepthEXT < 0.0)
@@ -155,13 +158,22 @@ void main(void)
         gl_FragColor = vec4( vPickingColor, objectId );
         //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );
     #else
-        vec3 transformedNormal = cameraNormal;
-        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
 
-        #include light
+        #ifdef OUTLINE
 
-        gl_FragColor = vec4( vColor, opacity );
-        gl_FragColor.rgb *= vLightFront;
+            gl_FragColor = vec4( vColor, opacity );
+
+        #else
+
+            vec3 transformedNormal = cameraNormal;
+            vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+
+            #include light
+
+            gl_FragColor = vec4( vColor, opacity );
+            gl_FragColor.rgb *= vLightFront;
+
+        #endif
 
         // gl_FragColor.a = 0.5;
         // gl_FragColor.rgb = transformedNormal;

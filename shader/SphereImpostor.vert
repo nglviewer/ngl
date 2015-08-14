@@ -123,8 +123,11 @@ void main(void){
     cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyzw;
     sphereRadius = radius;
 
+    #ifdef OUTLINE
+        sphereRadius += 0.2;
+    #endif
     // avoid clipping, added again in fragment shader
-    cameraSpherePos.z -= radius;
+    cameraSpherePos.z -= sphereRadius;
 
     gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();
