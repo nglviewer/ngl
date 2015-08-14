@@ -64,7 +64,9 @@ bool Impostor(out vec3 cameraPos, out vec3 cameraNormal)
 {
 
     vec3 cameraSpherePos2 = cameraSpherePos.xyz;
-    cameraSpherePos2.z += sphereRadius;
+    #ifndef OUTLINE
+        cameraSpherePos2.z += sphereRadius;
+    #endif
 
     vec3 rayDirection = normalize( point );
 

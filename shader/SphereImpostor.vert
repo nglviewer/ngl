@@ -125,9 +125,10 @@ void main(void){
 
     #ifdef OUTLINE
         sphereRadius += 0.2;
+    #else
+        // avoid clipping, added again in fragment shader
+        cameraSpherePos.z -= sphereRadius;
     #endif
-    // avoid clipping, added again in fragment shader
-    cameraSpherePos.z -= sphereRadius;
 
     gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();
