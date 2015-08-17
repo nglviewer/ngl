@@ -969,13 +969,22 @@ NGL.Examples = {
 
         "molsurf": function( stage ){
 
-            stage.loadFile( "data://3dqb.pdb", function( o ){
+            // stage.loadFile( "data://1crn.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
             // stage.loadFile( "data://3sn6.pdb", function( o ){
             // stage.loadFile( "data://3l5q.pdb", function( o ){
 
                 o.addRepresentation( "licorice", {} );
                 o.addRepresentation( "spacefill" );
-                o.addRepresentation( "surface" );
+                o.addRepresentation( "surface", {
+                    surfaceType: "ms",
+                    smooth: 2,
+                    probeRadius: 1.4,
+                    scaleFactor: 2,
+                    //flatShaded: true,
+                    transparent: true,
+                    opacity: 1.0
+                } );
                 stage.centerView();
 
             } );

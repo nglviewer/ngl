@@ -4287,6 +4287,10 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 5, min: 0,
             rebuild: true
         },
+        cutoff: {
+            type: "number", precision: 2, max: 50, min: 0,
+            rebuild: true
+        },
         wireframe: {
             type: "boolean", rebuild: true
         },
@@ -4329,6 +4333,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
         this.smooth = p.smooth !== undefined ? p.smooth : 2;
         this.scaleFactor = p.scaleFactor !== undefined ? p.scaleFactor : 2.0;
+        this.cutoff = p.cutoff || 0.0;
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.lineWidth = p.lineWidth || 1;
@@ -4359,7 +4364,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.molsurf.generateSurfaceWorker(
             this.surfaceType, this.probeRadius,
             this.scaleFactor, this.smooth,
-            this.lowResolution, callback
+            this.lowResolution, this.cutoff, callback
         );
 
     },

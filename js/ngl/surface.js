@@ -213,6 +213,83 @@ NGL.Surface.prototype = {
 };
 
 
+
+/////////
+// Grid
+
+NGL.Grid = function( length, width, height, dataCtor, elemSize ){
+
+    dataCtor = dataCtor || Int32Array;
+    elemSize = elemSize || 1;
+
+    var j;
+
+    var data = new dataCtor( length * width * height * elemSize );
+
+    function index( x, y, z ){
+
+        return ( ( ( ( x * width ) + y ) * height ) + z ) * elemSize;
+
+    }
+
+    this.data = data;
+
+    this.index = index;
+
+    this.set = function( x, y, z ){
+
+        var i = index( x, y, z );
+
+        for( j = 0; j < elemSize; ++j ){
+            data[ i + j ] = arguments[ 3 + j ];
+        }
+
+    };
+
+    this.toArray = function( x, y, z, array, offset ){
+
+        var i = index( x, y, z );
+
+        if ( array === undefined ) array = [];
+        if ( offset === undefined ) offset = 0;
+
+        for( j = 0; j < elemSize; ++j ){
+            array[ j ] = data[ i + j ];
+        }
+
+    };
+
+    this.fromArray = function( x, y, z, array, offset ){
+
+        var i = index( x, y, z );
+
+        if ( offset === undefined ) offset = 0;
+
+        for( j = 0; j < elemSize; ++j ){
+            data[ i + j ] = array[ offset + j ];
+        }
+
+    };
+
+    this.copy = function( grid ){
+
+        this.data.set( grid.data );
+
+    };
+
+    this.clone = function(){
+
+        return new NGL.Grid(
+
+            length, width, height, dataCtor, elemSize
+
+        ).copy( this );
+
+    };
+
+};
+
+
 ///////////
 // Volume
 
@@ -324,6 +401,13 @@ NGL.Volume.prototype = {
 
         bb.applyMatrix4( this.matrix );
         bb.center( this.center );
+
+    },
+
+    setAttribute: function( attribute ){
+
+        // same dimensions as data
+        // additional info
 
     },
 
@@ -2318,7 +2402,7 @@ NGL.Worker.add( "molsurf", function( e ){
     var molsurf = self.molsurf;
 
     molsurf.generateSurface(
-        p.type, p.probeRadius, p.scaleFactor, p.smooth, p.lowRes
+        p.type, p.probeRadius, p.scaleFactor, p.smooth, p.lowRes, p.cutoff
     );
 
     NGL.timeEnd( "WORKER molsurf" );
@@ -2349,11 +2433,11 @@ NGL.MolecularSurface = function( atomSet ){
 
 NGL.MolecularSurface.prototype = {
 
-    generateSurface: function( type, probeRadius, scaleFactor, smooth, lowRes ){
+    generateSurface: function( type, probeRadius, scaleFactor, smooth, lowRes, cutoff ){
 
         if( type === this.__type && probeRadius === this.__probeRadius &&
             scaleFactor === this.__scaleFactor && smooth === this.__smooth &&
-            lowRes === this.lowRes
+            lowRes === this.__lowRes && cutoff === this.__cutoff
         ){
 
             // already generated
@@ -2363,7 +2447,7 @@ NGL.MolecularSurface.prototype = {
 
         var edtsurf = new NGL.EDTSurface( this.atomSet );
         var vol = edtsurf.getVolume(
-            type, probeRadius, scaleFactor, lowRes
+            type, probeRadius, scaleFactor, lowRes, cutoff
         );
         vol.generateSurface( 1, smooth );
 
@@ -2378,14 +2462,17 @@ NGL.MolecularSurface.prototype = {
         this.__scaleFactor = scaleFactor;
         this.__smooth = smooth;
         this.__lowRes = lowRes;
+        this.__cutoff = cutoff;
+
+        vol.dispose();
 
     },
 
-    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, lowRes, callback ){
+    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, lowRes, cutoff, callback ){
 
         if( type === this.__type && probeRadius === this.__probeRadius &&
             scaleFactor === this.__scaleFactor && smooth === this.__smooth &&
-            lowRes === this.__lowRes
+            lowRes === this.__lowRes && cutoff === this.__cutoff
         ){
 
             // already generated
@@ -2416,7 +2503,7 @@ NGL.MolecularSurface.prototype = {
                 this.worker.terminate();
                 this.worker = undefined;
 
-                this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes );
+                this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes, cutoff );
                 callback();
 
             }.bind( this );
@@ -2438,6 +2525,7 @@ NGL.MolecularSurface.prototype = {
                 this.__scaleFactor = scaleFactor;
                 this.__smooth = smooth;
                 this.__lowRes = lowRes;
+                this.__cutoff = cutoff;
 
                 callback();
 
@@ -2450,13 +2538,14 @@ NGL.MolecularSurface.prototype = {
                     probeRadius: probeRadius,
                     scaleFactor: scaleFactor,
                     smooth: smooth,
-                    lowRes: lowRes
+                    lowRes: lowRes,
+                    cutoff: cutoff
                 }
             } );
 
         }else{
 
-            this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes );
+            this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes, cutoff );
             callback();
 
         }
@@ -2529,12 +2618,13 @@ NGL.EDTSurface = function( atomSet ){
     var matrix;
     var depty, widxz;
     var cutRadius;
+    var setAtomID;
     var vpBits, vpDistance, vpAtomID;
 
     var radiusProperty;
     var radiusDict;
 
-    function init( btype, _probeRadius, _scaleFactor, _cutoff, lowRes ){
+    function init( btype, _probeRadius, _scaleFactor, _cutoff, lowRes, _setAtomID ){
 
         if( lowRes ){
 
@@ -2552,29 +2642,30 @@ NGL.EDTSurface = function( atomSet ){
 
         }
 
-        // 2 is .5A grid; if this is made user configurable and
-        // also have to adjust offset used to find non-shown atoms
-        // FIXME scaleFactor = 0.5;
-
         probeRadius = _probeRadius || 1.4;
         scaleFactor = _scaleFactor || 2.0;
-        cutoff = _cutoff || 2.0;
+        setAtomID = _setAtomID;
+
+        var maxRadius = 0;
+        for( var name in radiusDict ){
+            maxRadius = Math.max( maxRadius, radiusDict[ name ] );
+        }
 
         // need margin to avoid boundary/round off effects
-        margin = ( 1 / scaleFactor ) * 5.5;
-        if( lowRes ) margin += 10.0;
+        margin = ( 1 / scaleFactor ) * 3;
+        margin += maxRadius;
 
         pmin = new THREE.Vector3().copy( bbox.min );
         pmax = new THREE.Vector3().copy( bbox.max );
 
         if( !btype ){
 
-            pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
+            pmin.subScalar( margin );
             pmax.addScalar( margin );
 
         }else{
 
-            pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
+            pmin.subScalar( probeRadius + margin );
             pmax.addScalar( probeRadius + margin );
 
         }
@@ -2639,15 +2730,21 @@ NGL.EDTSurface = function( atomSet ){
         widxz = {};
         boundingatom( btype );
 
-        // console.log( depty );
-        // console.log( widxz );
-
         cutRadius = probeRadius * scaleFactor;
 
+        if( _cutoff ){
+            cutoff = _cutoff;
+        }else{
+            cutoff = Math.max( 0.1, -1.2 + scaleFactor * probeRadius );
+        }
+
         vpBits = new Uint8Array( pLength * pWidth * pHeight );
-        // float32 doesn't play nicely with native floats (which are 64)
-        vpDistance = new Float64Array( pLength * pWidth * pHeight );
-        vpAtomID = new Int32Array( pLength * pWidth * pHeight );
+        if( btype ){
+            vpDistance = new Float64Array( pLength * pWidth * pHeight );
+        }
+        if( setAtomID ){
+            vpAtomID = new Int32Array( pLength * pWidth * pHeight );
+        }
 
     }
 
@@ -2674,25 +2771,27 @@ NGL.EDTSurface = function( atomSet ){
 
     //
 
-    this.getVolume = function( type, probeRadius, scaleFactor, lowRes ){
+    this.getVolume = function( type, probeRadius, scaleFactor, lowRes, cutoff, setAtomID ){
 
         NGL.time( "NGL.EDTSurface.getVolume" );
 
-        init( type !== "vws", probeRadius, scaleFactor, undefined, lowRes );
+        var btype = type !== "vws";
 
-        fillvoxels();
+        init( btype, probeRadius, scaleFactor, cutoff, lowRes, setAtomID );
+
+        fillvoxels( btype, setAtomID );
         buildboundary();
 
         if( type === "ms" || type === "ses" ){
 
-            fastdistancemap();
+            fastdistancemap( setAtomID );
 
         }
 
         if( type === "ses" ){
 
             boundingatom( false );
-            fillvoxelswaals();
+            fillvoxelswaals( setAtomID );
 
         }
 
@@ -2712,13 +2811,13 @@ NGL.EDTSurface = function( atomSet ){
 
     function boundingatom( btype ){
 
-        var j, k;
+        var r, j, k;
         var txz, tdept, sradius, tradius, widxz_r;
-        var indx;
+        var depty_name, indx;
 
         for( var name in radiusDict ){
 
-            var r = radiusDict[ name ];
+            r = radiusDict[ name ];
 
             if( depty[ name ] ) continue;
 
@@ -2729,9 +2828,8 @@ NGL.EDTSurface = function( atomSet ){
             }
 
             sradius = tradius * tradius;
-            widxz[ name ] = Math.floor( tradius ) + 1;
-            widxz_r = widxz[ name ];
-            depty[ name ] = new Int32Array( widxz_r * widxz_r );
+            widxz_r = Math.round( tradius ) + 1;
+            depty_name = new Int16Array( widxz_r * widxz_r );
             indx = 0;
 
             for( j = 0; j < widxz_r; ++j ){
@@ -2742,12 +2840,12 @@ NGL.EDTSurface = function( atomSet ){
 
                     if( txz > sradius ){
 
-                        depty[ name ][ indx ] = -1;
+                        depty_name[ indx ] = -1;
 
                     }else{
 
                         tdept = Math.sqrt( sradius - txz );
-                        depty[ name ][ indx ] = Math.floor( tdept );
+                        depty_name[ indx ] = Math.round( tdept );
 
                     }
 
@@ -2757,11 +2855,14 @@ NGL.EDTSurface = function( atomSet ){
 
             }
 
+            widxz[ name ] = widxz_r;
+            depty[ name ] = depty_name;
+
         }
 
     }
 
-    function fillatom( atomIndex ){
+    function fillatom( atomIndex, setAtomID ){
 
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk, n;
@@ -2778,10 +2879,14 @@ NGL.EDTSurface = function( atomSet ){
         var cnt = 0;
         var pWH = pWidth * pHeight;
 
+        var depty_at_nind;
+
         for( i = 0, n = widxz[ at ]; i < n; ++i ){
         for( j = 0; j < n; ++j ) {
 
-            if( depty_at[ nind ] != -1 ){
+            depty_at_nind = depty_at[ nind ];
+
+            if( depty_at_nind != -1 ){
 
                 for( ii = -1; ii < 2; ++ii ){
                 for( jj = -1; jj < 2; ++jj ){
@@ -2792,7 +2897,7 @@ NGL.EDTSurface = function( atomSet ){
                         mi = ii * i;
                         mk = kk * j;
 
-                        for( k = 0; k <= depty_at[ nind ]; ++k ){
+                        for( k = 0; k <= depty_at_nind; ++k ){
 
                             mj = k * jj;
                             si = cx + mi;
@@ -2807,22 +2912,30 @@ NGL.EDTSurface = function( atomSet ){
 
                             var index = si * pWH + sj * pHeight + sk;
 
-                            if( !( vpBits[ index ] & INOUT ) ){
+                            if( !setAtomID ){
 
                                 vpBits[ index ] |= INOUT;
-                                vpAtomID[ index ] = atomIndex;
 
                             }else{
 
-                                var atom2 = atoms[ vpAtomID[ index ] ];
-                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
-                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
-                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+                                if( !( vpBits[ index ] & INOUT ) ){
 
-                                if( mi * mi + mj * mj + mk * mk <
-                                    ox * ox + oy * oy + oz * oz
-                                ){
+                                    vpBits[ index ] |= INOUT;
                                     vpAtomID[ index ] = atomIndex;
+
+                                }else{
+
+                                    var atom2 = atoms[ vpAtomID[ index ] ];
+                                    ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                    oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                    oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+
+                                    if( mi * mi + mj * mj + mk * mk <
+                                        ox * ox + oy * oy + oz * oz
+                                    ){
+                                        vpAtomID[ index ] = atomIndex;
+                                    }
+
                                 }
 
                             }
@@ -2844,18 +2957,20 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillvoxels(){
+    function fillvoxels( btype, setAtomID ){
+
+        NGL.time( "NGL.EDTSurface fillvoxels" );
 
         var i, il;
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
             vpBits[ i ] = 0;
-            vpDistance[ i ] = -1.0;
-            vpAtomID[ i ] = -1;
+            if( btype ) vpDistance[ i ] = -1.0;
+            if( setAtomID ) vpAtomID[ i ] = -1;
         }
 
         for( i = 0, il = atoms.length; i < il; ++i ){
-            fillatom( i );
+            fillatom( i, setAtomID );
         }
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
@@ -2864,9 +2979,11 @@ NGL.EDTSurface = function( atomSet ){
             }
         }
 
+        NGL.timeEnd( "NGL.EDTSurface fillvoxels" );
+
     }
 
-    function fillAtomWaals( atomIndex ){
+    function fillAtomWaals( atomIndex, setAtomID ){
 
         var cx, cy, cz, ox, oy, oz, nind = 0;
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
@@ -2909,12 +3026,12 @@ NGL.EDTSurface = function( atomSet ){
 
                             var index = si * pWH + sj * pHeight + sk;
 
-                            if ( !( vpBits[ index ] & ISDONE ) ){
+                            if( !( vpBits[ index ] & ISDONE ) ){
 
                                 vpBits[ index ] |= ISDONE;
-                                vpAtomID[ index ] = atom.index;
+                                if( setAtomID ) vpAtomID[ index ] = atom.index;
 
-                            } else {
+                            }else if( setAtomID ){
 
                                 var atom2 = atoms[ vpAtomID[ index ] ];
                                 ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
@@ -2946,7 +3063,7 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillvoxelswaals() {
+    function fillvoxelswaals( setAtomID ){
 
         var i, il;
 
@@ -2955,7 +3072,7 @@ NGL.EDTSurface = function( atomSet ){
         }
 
         for( i = 0, il = atoms.length; i < il; ++i ){
-            fillAtomWaals( i );
+            fillAtomWaals( i, setAtomID );
         }
 
     }
@@ -3007,70 +3124,53 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    // a little class for 3d array, should really generalize this and
-    // use throughout...
-    var PointGrid = function( length, width, height ){
+    function fastdistancemap( setAtomID ){
 
-        // the standard says this is zero initialized
-        var data = new Int32Array( length * width * height * 3 );
-
-        // set position x,y,z to pt, which has ix,iy,and iz
-        this.set = function( x, y, z, pt ){
-            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
-            data[ index ] = pt.ix;
-            data[ index + 1] = pt.iy;
-            data[ index + 2] = pt.iz;
-        };
-
-        // return point at x,y,z
-        this.get = function( x, y, z ){
-            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
-            return {
-                ix : data[ index ],
-                iy : data[ index + 1],
-                iz : data[ index + 2]
-            };
-        };
-
-    };
-
-    function fastdistancemap(){
+        NGL.time( "NGL.EDTSurface fastdistancemap" );
 
         var eliminate = 0;
         var certificate;
         var i, j, k, n;
 
-        var boundPoint = new PointGrid( pLength, pWidth, pHeight );
+        var boundPoint = new NGL.Grid(
+            pLength, pWidth, pHeight, Uint16Array, 3
+        );
         var pWH = pWidth * pHeight;
         var cutRSq = cutRadius * cutRadius;
 
-        var inarray = [];
-        var outarray = [];
+        var totalsurfacevox = 0;
+        var totalinnervox = 0;
 
         var index;
+
+        // console.log( "lwh", pLength * pWidth * pHeight );
+        console.log( "l, w, h", pLength, pWidth, pHeight );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
                 for( k = 0; k < pHeight; ++k ){
 
                     index = i * pWH + j * pHeight + k;
-                    vpBits[ index ] &= ~ISDONE;  // isdone = false
+
+                    vpBits[ index ] &= ~ISDONE;
 
                     if( vpBits[ index ] & INOUT ){
 
                         if( vpBits[ index ] & ISBOUND ){
 
-                            var triple = {
-                                ix : i,
-                                iy : j,
-                                iz : k
-                            };
+                            boundPoint.set(
+                                i, j, k,
+                                i, j, k
+                            );
 
-                            boundPoint.set( i, j, k, triple );
-                            inarray.push( triple );
                             vpDistance[ index ] = 0;
                             vpBits[ index ] |= ISDONE;
-                            vpBits[ index ] &= ~ISBOUND;
+
+                            totalsurfacevox += 1;
+
+                        }else{
+
+                            totalinnervox += 1;
 
                         }
 
@@ -3080,39 +3180,67 @@ NGL.EDTSurface = function( atomSet ){
             }
         }
 
-        do {
+        console.log( "totalsurfacevox", totalsurfacevox );
+        console.log( "totalinnervox", totalinnervox );
 
-            outarray = fastoneshell( inarray, boundPoint );
-            inarray = [];
+        var inarray = new Int32Array( 3 * totalsurfacevox );
+        var positin = 0;
+        var outarray = new Int32Array( 3 * totalsurfacevox );
+        var positout = 0;
 
-            for( i = 0, n = outarray.length; i < n; ++i ){
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
 
-                index = pWH * outarray[ i ].ix + pHeight *
-                            outarray[ i ].iy + outarray[ i ].iz;
-                vpBits[index] &= ~ISBOUND;
+                    index = i * pWH + j * pHeight + k;
+
+                    if( vpBits[ index ] & ISBOUND ){
+
+                        inarray[ positin     ] = i;
+                        inarray[ positin + 1 ] = j;
+                        inarray[ positin + 2 ] = k;
+                        positin += 3;
+
+                        vpBits[ index ] &= ~ISBOUND;
+
+                    }
+
+                }
+            }
+        }
+
+        do{
+
+            positout = fastoneshell( inarray, boundPoint, positin, outarray );
+            positin = 0;
+
+            console.log( "positout", positout / 3 );
+
+            for( i = 0, n = positout; i < n; i+=3 ){
+
+                index = pWH * outarray[ i ] + pHeight * outarray[ i + 1 ] + outarray[ i + 2 ];
+                vpBits[ index ] &= ~ISBOUND;
 
                 if( vpDistance[ index ] <= 1.0404 * cutRSq ){
+                //if( vpDistance[ index ] <= 1.02 * cutRadius ){
 
-                    inarray.push({
-                        ix : outarray[ i ].ix,
-                        iy : outarray[ i ].iy,
-                        iz : outarray[ i ].iz
-                    });
+                    inarray[ positin     ] = outarray[ i     ];
+                    inarray[ positin + 1 ] = outarray[ i + 1 ];
+                    inarray[ positin + 2 ] = outarray[ i + 2 ];
+                    positin += 3;
 
                 }
 
             }
 
-        }while( inarray.length !== 0 );
+        }while( positin > 0 );
 
-        inarray = [];
-        outarray = [];
-        boundPoint = null;
+        // var cutsf = Math.max( 0, scaleFactor - 0.5 );
+        // cutoff = cutRadius - 0.5 / ( 0.1 + cutsf );
+        var cutoffSq = cutoff * cutoff;
 
-        var cutsf = Math.max( 0, scaleFactor - 0.5 );
-        // FIXME why does this seem to work?
-        // TODO check for other probeRadius and scaleFactor values
-        var cutoff = probeRadius * probeRadius;  //1.4 * 1.4// cutRSq - 0.50 / ( 0.1 + cutsf );
+        var index2;
+        var bp = new Uint16Array( 3 );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
@@ -3126,9 +3254,20 @@ NGL.EDTSurface = function( atomSet ){
                     if( vpBits[ index ] & INOUT ) {
 
                         if( !( vpBits[ index ] & ISDONE ) ||
-                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoff )
+                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoffSq )
                         ){
+
                             vpBits[ index ] |= ISBOUND;
+
+                            if( setAtomID && ( vpBits[ index ] & ISDONE ) ){
+
+                                boundPoint.toArray( i, j, k, bp );
+                                index2 = bp[ 0 ] * pWH + bp[ 1 ] * pHeight + bp[ 2 ];
+
+                                vpAtomID[ index ] = vpAtomID[ index2 ];
+
+                            }
+
                         }
                     }
 
@@ -3136,9 +3275,13 @@ NGL.EDTSurface = function( atomSet ){
             }
         }
 
+        NGL.timeEnd( "NGL.EDTSurface fastdistancemap" );
+
     }
 
-    function fastoneshell( inarray, boundPoint ){
+    function fastoneshell( inarray, boundPoint, positin, outarray ){
+
+        console.log( "positin", positin / 3 );
 
         // *allocout,voxel2
         // ***boundPoint, int*
@@ -3147,79 +3290,81 @@ NGL.EDTSurface = function( atomSet ){
         var dx, dy, dz;
         var i, j, n;
         var square;
-        var bp, index;
-        var outarray = [];
+        var index;
+        var nb_j;
+        var bp = new Uint16Array( 3 );
+        var positout = 0;
 
-        if( inarray.length === 0 ){
-            return outarray;
+        if( positin === 0 ){
+            return positout;
         }
 
-        var tnv = {
-            ix : -1,
-            iy : -1,
-            iz : -1
-        };
+        var tnv_ix = -1;
+        var tnv_iy = -1;
+        var tnv_iz = -1;
 
-        var pWH = pWidth*pHeight;
+        var pWH = pWidth * pHeight;
 
-        for( i = 0, n = inarray.length; i < n; ++i ){
+        for( i = 0, n = positin; i < n; i+=3 ){
 
-            tx = inarray[ i ].ix;
-            ty = inarray[ i ].iy;
-            tz = inarray[ i ].iz;
-            bp = boundPoint.get( tx, ty, tz );
+            tx = inarray[ i     ];
+            ty = inarray[ i + 1 ];
+            tz = inarray[ i + 2 ];
+            boundPoint.toArray( tx, ty, tz, bp );
 
             for( j = 0; j < 6; ++j ){
 
-                tnv.ix = tx + nb[ j ][ 0 ];
-                tnv.iy = ty + nb[ j ][ 1 ];
-                tnv.iz = tz + nb[ j ][ 2 ];
+                nb_j = nb[ j ];
+                tnv_ix = tx + nb_j[ 0 ];
+                tnv_iy = ty + nb_j[ 1 ];
+                tnv_iz = tz + nb_j[ 2 ];
 
-                if( tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
-                    tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1
+                if( tnv_ix < pLength && tnv_ix > -1 &&
+                    tnv_iy < pWidth  && tnv_iy > -1 &&
+                    tnv_iz < pHeight && tnv_iz > -1
                 ){
 
-                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+                    index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
                     if( ( vpBits[ index ] & INOUT ) && !( vpBits[ index ] & ISDONE ) ){
 
-                        boundPoint.set( tnv.ix, tnv.iy, tz + nb[ j ][ 2 ], bp );
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
 
                         vpDistance[ index ] = square;
                         vpBits[ index ] |= ISDONE;
                         vpBits[ index ] |= ISBOUND;
 
-                        outarray.push({
-                            ix : tnv.ix,
-                            iy : tnv.iy,
-                            iz : tnv.iz
-                        });
+                        outarray[ positout     ] = tnv_ix;
+                        outarray[ positout + 1 ] = tnv_iy;
+                        outarray[ positout + 2 ] = tnv_iz;
+                        positout += 3;
 
                     }else if( ( vpBits[ index ] & INOUT ) && ( vpBits[ index ] & ISDONE ) ){
 
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
 
                         if( square < vpDistance[ index ] ){
 
-                            boundPoint.set( tnv.ix, tnv.iy, tnv.iz, bp );
+                            boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[ index ] = square;
 
                             if( !( vpBits[ index ] & ISBOUND ) ){
 
                                 vpBits[ index ] |= ISBOUND;
 
-                                outarray.push({
-                                    ix : tnv.ix,
-                                    iy : tnv.iy,
-                                    iz : tnv.iz
-                                });
+                                outarray[ positout     ] = tnv_ix;
+                                outarray[ positout + 1 ] = tnv_iy;
+                                outarray[ positout + 2 ] = tnv_iz;
+                                positout += 3;
 
                             }
 
@@ -3233,117 +3378,153 @@ NGL.EDTSurface = function( atomSet ){
 
         // console.log("part1", positout);
 
-        for (i = 0, n = inarray.length; i < n; i++) {
-            tx = inarray[i].ix;
-            ty = inarray[i].iy;
-            tz = inarray[i].iz;
-            bp = boundPoint.get(tx, ty, tz);
+        for( i = 0, n = positin; i < n; i+=3 ){
+
+            tx = inarray[ i     ];
+            ty = inarray[ i + 1 ];
+            tz = inarray[ i + 2 ];
+            boundPoint.toArray( tx, ty, tz, bp );
 
             for (j = 6; j < 18; j++) {
-                tnv.ix = tx + nb[j][0];
-                tnv.iy = ty + nb[j][1];
-                tnv.iz = tz + nb[j][2];
 
-                if(tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
-                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
-                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+                nb_j = nb[ j ];
+                tnv_ix = tx + nb_j[ 0 ];
+                tnv_iy = ty + nb_j[ 1 ];
+                tnv_iz = tz + nb_j[ 2 ];
+
+                if( tnv_ix < pLength && tnv_ix > -1 &&
+                    tnv_iy < pWidth  && tnv_iy > -1 &&
+                    tnv_iz < pHeight && tnv_iz > -1
+                ) {
+
+                    index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
                     if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
-                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
 
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
                         vpDistance[index] = square;
                         vpBits[index] |= ISDONE;
                         vpBits[index] |= ISBOUND;
 
-                        outarray.push({
-                            ix : tnv.ix,
-                            iy : tnv.iy,
-                            iz : tnv.iz
-                        });
+                        outarray[ positout     ] = tnv_ix;
+                        outarray[ positout + 1 ] = tnv_iy;
+                        outarray[ positout + 2 ] = tnv_iz;
+                        positout += 3;
+
                     } else if ((vpBits[index] & INOUT) && (vpBits[index] & ISDONE)) {
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
                         if (square < vpDistance[index]) {
-                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+
+                            boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[index] = square;
+
                             if (!(vpBits[index] & ISBOUND)) {
+
                                 vpBits[index] |= ISBOUND;
-                                outarray.push({
-                                    ix : tnv.ix,
-                                    iy : tnv.iy,
-                                    iz : tnv.iz
-                                });
+
+                                outarray[ positout     ] = tnv_ix;
+                                outarray[ positout + 1 ] = tnv_iy;
+                                outarray[ positout + 2 ] = tnv_iz;
+                                positout += 3;
+
                             }
+
                         }
+
                     }
+
                 }
             }
         }
 
         // console.log("part2", positout);
 
-        for (i = 0, n = inarray.length; i < n; i++) {
-            tx = inarray[i].ix;
-            ty = inarray[i].iy;
-            tz = inarray[i].iz;
-            bp = boundPoint.get(tx, ty, tz);
+        for( i = 0, n = positin; i < n; i+=3 ){
+
+            tx = inarray[ i     ];
+            ty = inarray[ i + 1 ];
+            tz = inarray[ i + 2 ];
+            boundPoint.toArray( tx, ty, tz, bp );
 
             for (j = 18; j < 26; j++) {
-                tnv.ix = tx + nb[j][0];
-                tnv.iy = ty + nb[j][1];
-                tnv.iz = tz + nb[j][2];
 
-                if (tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
-                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
-                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+                nb_j = nb[ j ];
+                tnv_ix = tx + nb_j[ 0 ];
+                tnv_iy = ty + nb_j[ 1 ];
+                tnv_iz = tz + nb_j[ 2 ];
+
+                if( tnv_ix < pLength && tnv_ix > -1 &&
+                    tnv_iy < pWidth  && tnv_iy > -1 &&
+                    tnv_iz < pHeight && tnv_iz > -1
+                ){
+
+                    index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
                     if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
-                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
 
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
                         vpDistance[index] = square;
                         vpBits[index] |= ISDONE;
                         vpBits[index] |= ISBOUND;
 
-                        outarray.push({
-                            ix : tnv.ix,
-                            iy : tnv.iy,
-                            iz : tnv.iz
-                        });
-                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
-                        square = dx * dx + dy * dy + dz * dz;
-                        if (square < vpDistance[index]) {
-                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+                        outarray[ positout     ] = tnv_ix;
+                        outarray[ positout + 1 ] = tnv_iy;
+                        outarray[ positout + 2 ] = tnv_iz;
+                        positout += 3;
 
+                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
+
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
+                        square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
+                        if (square < vpDistance[index]) {
+
+                            boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[index] = square;
+
                             if (!(vpBits[index] & ISBOUND)) {
+
                                 vpBits[index] |= ISBOUND;
-                                outarray.push({
-                                    ix : tnv.ix,
-                                    iy : tnv.iy,
-                                    iz : tnv.iz
-                                });
+
+                                outarray[ positout     ] = tnv_ix;
+                                outarray[ positout + 1 ] = tnv_iy;
+                                outarray[ positout + 2 ] = tnv_iz;
+                                positout += 3;
+
                             }
+
                         }
+
                     }
+
                 }
             }
         }
 
         // console.log("part3", positout);
-        return outarray;
+
+        return positout;
 
     }
 
