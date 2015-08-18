@@ -818,24 +818,16 @@ NGL.Examples = {
             stage.loadFile( "data://3j3y.cif.gz", {
                 onLoad: function( o ){
 
-                    // o.addRepresentation( "point", {
-                    //     color: "chainindex", pointSize: 7, sizeAttenuation: true,
-                    //     sort: false
-                    // } );
                     o.addRepresentation( "surface", {
-                        surfaceType: "vws",
+                        surfaceType: "ms",
                         smooth: 2,
                         probeRadius: 4,
                         scaleFactor: 0.3,
                         lowResolution: true,
-                        //flatShaded: true,
-                        //transparent: true,
-                        //opacity: 1.0
+                        colorScheme: "chainindex"
                     } );
-                    // o.addRepresentation( "ribbon", {
-                    //     color: "chainindex"
-                    // } );
-                    o.centerView();
+
+                    stage.centerView();
 
                 },
                 cAlphaOnly: true

@@ -2738,7 +2738,7 @@ NGL.EDTSurface = function( atomSet ){
     var atoms = atomSet.atoms;
     var bbox = atomSet.getBoundingBox();
 
-    var probeRadius, scaleFactor, cutoff;
+    var probeRadius, scaleFactor, cutoff, lowRes;
     var margin;
     var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
     var matrix;
@@ -2749,28 +2749,30 @@ NGL.EDTSurface = function( atomSet ){
 
     var radiusProperty;
     var radiusDict;
+    var selection;
 
-    function init( btype, _probeRadius, _scaleFactor, _cutoff, lowRes, _setAtomID ){
+    function init( btype, _probeRadius, _scaleFactor, _cutoff, _lowRes, _setAtomID ){
+
+        probeRadius = _probeRadius || 1.4;
+        scaleFactor = _scaleFactor || 2.0;
+        lowRes = _lowRes || false;
+        setAtomID = _setAtomID || true;
 
         if( lowRes ){
 
             radiusProperty = "resname";
             radiusDict = NGL.ResidueRadii;
 
-            atoms = atomSet.getAtoms( new NGL.Selection( ".CA" ) );
+            selection = new NGL.Selection( ".CA" );
 
         }else{
 
             radiusProperty = "element";
             radiusDict = NGL.VdwRadii;
 
-            atoms = atomSet.atoms;
+            selection = undefined;
 
         }
-
-        probeRadius = _probeRadius || 1.4;
-        scaleFactor = _scaleFactor || 2.0;
-        setAtomID = _setAtomID || true;
 
         var maxRadius = 0;
         for( var name in radiusDict ){
@@ -2991,11 +2993,13 @@ NGL.EDTSurface = function( atomSet ){
     }
 
     function fillatom( atomIndex ){
-        var setAtomID = true;
+
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk;
 
         var atom = atoms[ atomIndex ];
+
+        if( selection && !selection.test( atom ) ) return;
 
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
@@ -3056,7 +3060,9 @@ NGL.EDTSurface = function( atomSet ){
                                 // }else{
 
                                     var atom2 = atoms[ vpAtomID[ index ] ];
+
                                     if( atom2 !== atom ){
+
                                         ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
                                         oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
                                         oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
@@ -3066,6 +3072,7 @@ NGL.EDTSurface = function( atomSet ){
                                         ){
                                             vpAtomID[ index ] = atomIndex;
                                         }
+
                                     }
 
                                 }
@@ -3121,6 +3128,8 @@ NGL.EDTSurface = function( atomSet ){
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
 
         var atom = atoms[ atomIndex ];
+
+        if( selection && !selection.test( atom ) ) return;
 
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
