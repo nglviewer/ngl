@@ -716,6 +716,17 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
+    getColorParams: function(){
+
+        var p = NGL.Representation.prototype.getColorParams.call( this );
+
+        p.structure = this.structure;
+        p.atomSet = this.atomSet;
+
+        return p;
+
+    },
+
     setSelection: function( string, extraString, silent ){
 
         this.selection.setString( string, extraString, silent );
@@ -4374,16 +4385,42 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         if( this.atomSet.atomCount === 0 ) return;
 
         var position = this.molsurf.getPosition();
-        var color = this.molsurf.getColor( this.colorValue );
+        var color = this.molsurf.getColor( this.getColorParams() );
+        var pickingColor = this.molsurf.getPickingColor( this.getColorParams() );
         var normal = this.molsurf.getNormal();
         var index = this.molsurf.getIndex();
 
         var opacity = this.transparent ? this.opacity : 1.0;
 
+        //
+
+        // this.molsurf.vol.makeDataPosition();
+
+        // var dotBuffer = new NGL.SphereBuffer(
+        //     this.molsurf.vol.getDataPosition(),
+        //     this.molsurf.vol.getDataColor( this.getColorParams() ),
+        //     this.molsurf.vol.getDataSize( 1, 0.1 ),
+        //     this.molsurf.vol.getPickingDataColor( this.getColorParams() ),
+        //     {
+        //         sphereDetail: 1,
+        //         transparent: this.transparent,
+        //         side: this.side,
+        //         opacity: opacity,
+        //         nearClip: this.nearClip,
+        //         flatShaded: this.flatShaded,
+        //         dullInterior: false
+        //     },
+        //     this.disableImpostor
+        // );
+
+        // this.bufferList.push( dotBuffer );
+
+        //
+
         if( this.transparent && this.side === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
+                position, color, index, normal, pickingColor,
                 {
                     background: this.background,
                     wireframe: this.wireframe,
@@ -4399,7 +4436,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             );
 
             var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
+                position, color, index, normal, pickingColor,
                 {
                     background: this.background,
                     wireframe: this.wireframe,
@@ -4419,7 +4456,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         }else{
 
             var surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
+                position, color, index, normal, pickingColor,
                 {
                     background: this.background,
                     wireframe: this.wireframe,
@@ -4456,7 +4493,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            surfaceData[ "color" ] = this.molsurf.getColor( this.colorValue );
+            surfaceData[ "color" ] = this.molsurf.getColor( this.getColorParams() );
 
         }
 

@@ -312,7 +312,8 @@ NGL.Worker.add( "surf", function( e ){
     var meshData = {
         position: vol.position,
         index: vol.index,
-        normal: vol.normal
+        normal: vol.normal,
+        atomindex: vol.atomindex
     };
 
     var transferable = [
@@ -321,13 +322,14 @@ NGL.Worker.add( "surf", function( e ){
     ];
 
     if( vol.normal ) transferable.push( vol.normal.buffer );
+    if( vol.atomindex ) transferable.push( vol.atomindex.buffer );
 
     self.postMessage( meshData, transferable );
 
 } );
 
 
-NGL.Volume = function( name, path, data, nx, ny, nz ){
+NGL.Volume = function( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.name = name;
     this.path = path;
@@ -336,7 +338,7 @@ NGL.Volume = function( name, path, data, nx, ny, nz ){
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
-    this.setData( data, nx, ny, nz );
+    this.setData( data, nx, ny, nz, dataAtomindex );
 
     NGL.GidPool.addObject( this );
 
@@ -346,7 +348,7 @@ NGL.Volume.prototype = {
 
     constructor: NGL.Volume,
 
-    setData: function( data, nx, ny, nz ){
+    setData: function( data, nx, ny, nz, dataAtomindex ){
 
         this.nx = nx || 1;
         this.ny = ny || 1;
@@ -354,6 +356,8 @@ NGL.Volume.prototype = {
 
         this.data = data || new Float32Array( 1 );
         this.__data = this.data;
+
+        this.setDataAtomindex( dataAtomindex );
 
         delete this.mc;
 
@@ -404,10 +408,12 @@ NGL.Volume.prototype = {
 
     },
 
-    setAttribute: function( attribute ){
+    setDataAtomindex: function( dataAtomindex ){
 
-        // same dimensions as data
-        // additional info
+        this.dataAtomindex = dataAtomindex;
+        this.__dataAtomindex = this.dataAtomindex;
+
+        delete this.__dataAtomindexBuffer;
 
     },
 
@@ -428,7 +434,7 @@ NGL.Volume.prototype = {
         if( this.mc === undefined ){
 
             this.mc = new NGL.MarchingCubes2(
-                this.__data, this.nx, this.ny, this.nz
+                this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex
             );
 
         }
@@ -449,6 +455,7 @@ NGL.Volume.prototype = {
         this.position = sd.position;
         this.normal = sd.normal;
         this.index = sd.index;
+        this.atomindex = sd.atomindex;
 
         this.size = this.position.length / 3;
 
@@ -537,6 +544,7 @@ NGL.Volume.prototype = {
                 this.position = e.data.position;
                 this.normal = e.data.normal;
                 this.index = e.data.index;
+                this.atomindex = e.data.atomindex;
 
                 this.size = this.position.length / 3;
 
@@ -580,22 +588,63 @@ NGL.Volume.prototype = {
 
     },
 
+    getAtomindex: function(){
+
+        return this.atomindex;
+
+    },
+
     getPosition: function(){
 
         return this.position;
 
     },
 
-    getColor: function( color ){
+    getColor: function( params ){
 
-        // re-use array
+        // TODO re-use array
 
-        var tc = new THREE.Color( color );
-        var col = NGL.Utils.uniformArray3(
-            this.size, tc.r, tc.g, tc.b
-        );
+        var p = params || {};
 
-        return col;
+        var n = this.size;
+        var array;
+
+        if( this.atomindex ){
+
+            p.volume = this;
+
+            var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+
+            array = new Float32Array( n * 3 );
+
+            var atoms = p.structure.atoms;
+            var atomindex = this.atomindex;
+
+            for( var i = 0, a; i < n; ++i ){
+
+                a = atoms[ atomindex[ i ] ];
+                colorMaker.atomColorToArray( a, array, i * 3 );
+
+            }
+
+        }else{
+
+            var tc = new THREE.Color( p.value );
+
+            array = NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b );
+
+        }
+
+        return array;
+
+    },
+
+    getPickingColor: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.getColor( p );
 
     },
 
@@ -725,6 +774,12 @@ NGL.Volume.prototype = {
 
     },
 
+    getDataAtomindex: function(){
+
+        return this.dataAtomindex;
+
+    },
+
     getDataPosition: function(){
 
         return this.dataPosition;
@@ -736,7 +791,6 @@ NGL.Volume.prototype = {
         var p = params || {};
         p.volume = this;
         p.scale = p.scale || 'Spectral';
-        p.mode = p.mode || 'lch';
         p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
@@ -744,9 +798,15 @@ NGL.Volume.prototype = {
         var n = this.dataPosition.length / 3;
         var array = new Float32Array( n * 3 );
 
+        // var atoms = p.structure.atoms;
+        // var atomindex = this.dataAtomindex;
+
         for( var i = 0; i < n; ++i ){
 
             colorMaker.volumeColorToArray( i, array, i * 3 );
+
+            // a = atoms[ atomindex[ i ] ];
+            // if( a ) colorMaker.atomColorToArray( a, array, i * 3 );
 
         }
 
@@ -897,11 +957,13 @@ NGL.Volume.prototype = {
             this.name,
             this.path,
 
-            this.data,
+            this.__data,
 
             this.nx,
             this.ny,
-            this.nz
+            this.nz,
+
+            this.__dataAtomindex
 
         );
 
@@ -930,11 +992,13 @@ NGL.Volume.prototype = {
             name: this.name,
             path: this.path,
 
-            data: this.data,
+            data: this.__data,
 
             nx: this.nx,
             ny: this.ny,
             nz: this.nz,
+
+            dataAtomindex: this.__dataAtomindex,
 
             matrix: this.matrix.toArray(),
 
@@ -964,9 +1028,12 @@ NGL.Volume.prototype = {
         this.setData(
 
             input.data,
+
             input.nx,
             input.ny,
-            input.nz
+            input.nz,
+
+            input.dataAtomindex
 
         );
 
@@ -992,9 +1059,13 @@ NGL.Volume.prototype = {
 
         var transferable = [
 
-            this.data.buffer
+            this.__data.buffer
 
         ];
+
+        if( this.__dataAtomindex ){
+            transferable.push( this.__dataAtomindex.buffer );
+        }
 
         return transferable;
 
@@ -1133,7 +1204,7 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
 };
 
-NGL.MarchingCubes2 = function( field, nx, ny, nz ){
+NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
     // Based on alteredq / http://alteredqualia.com/
     // port of greggman's ThreeD version of marching cubes to Three.js
@@ -1161,6 +1232,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
     var positionArray = [];
     var normalArray = [];
     var indexArray = [];
+    var atomindexArray = [];
 
     //
 
@@ -1191,13 +1263,15 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
         positionArray.length = count * 3;
         if( !noNormals ) normalArray.length = count * 3;
         indexArray.length = icount;
+        if( atomindex ) atomindexArray.length = count;
 
         NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
 
         return {
             position: new Float32Array( positionArray ),
             normal: noNormals ? undefined : new Float32Array( normalArray ),
-            index: new Uint32Array( indexArray )
+            index: new Uint32Array( indexArray ),
+            atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
         };
 
     }
@@ -1228,6 +1302,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
                 normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q3 + 5 ], mu );
 
             }
+
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
@@ -1266,6 +1342,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
             }
 
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * yd ];
+
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
 
@@ -1302,6 +1380,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
                 normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q6 + 2 ], mu );
 
             }
+
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * zd ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
@@ -2410,7 +2490,8 @@ NGL.Worker.add( "molsurf", function( e ){
     var meshData = {
         position: molsurf.position,
         index: molsurf.index,
-        normal: molsurf.normal
+        normal: molsurf.normal,
+        atomindex: molsurf.atomindex
     };
 
     var transferable = [
@@ -2419,6 +2500,7 @@ NGL.Worker.add( "molsurf", function( e ){
     ];
 
     if( molsurf.normal ) transferable.push( molsurf.normal.buffer );
+    if( molsurf.atomindex ) transferable.push( molsurf.atomindex.buffer );
 
     self.postMessage( meshData, transferable );
 
@@ -2454,6 +2536,7 @@ NGL.MolecularSurface.prototype = {
         this.position = vol.getPosition();
         this.normal = vol.getNormal();
         this.index = vol.getIndex();
+        this.atomindex = vol.getAtomindex();
 
         this.size = this.position.length / 3;
 
@@ -2463,6 +2546,8 @@ NGL.MolecularSurface.prototype = {
         this.__smooth = smooth;
         this.__lowRes = lowRes;
         this.__cutoff = cutoff;
+
+        // this.vol = vol;
 
         vol.dispose();
 
@@ -2517,6 +2602,7 @@ NGL.MolecularSurface.prototype = {
                 this.position = e.data.position;
                 this.normal = e.data.normal;
                 this.index = e.data.index;
+                this.atomindex = e.data.atomindex;
 
                 this.size = this.position.length / 3;
 
@@ -2552,22 +2638,62 @@ NGL.MolecularSurface.prototype = {
 
     },
 
+    getAtomindex: function(){
+
+        return this.atomindex;
+
+    },
+
     getPosition: function(){
 
         return this.position;
 
     },
 
-    getColor: function( color ){
+    getColor: function( params ){
 
-        // re-use array
+        // TODO re-use array
 
-        var tc = new THREE.Color( color );
-        var col = NGL.Utils.uniformArray3(
-            this.size, tc.r, tc.g, tc.b
-        );
+        var n = this.size;
+        var array;
 
-        return col;
+        if( this.atomindex ){
+
+            var p = params || {};
+            p.volume = this;
+
+            var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+
+            array = new Float32Array( n * 3 );
+
+            var atoms = p.atomSet.atoms;
+            var atomindex = this.atomindex;
+
+            for( var i = 0, a; i < n; ++i ){
+
+                a = atoms[ atomindex[ i ] ];
+                colorMaker.atomColorToArray( a, array, i * 3 );
+
+            }
+
+        }else{
+
+            var tc = new THREE.Color( p.value );
+
+            array = NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b );
+
+        }
+
+        return array;
+
+    },
+
+    getPickingColor: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.getColor( p );
 
     },
 
@@ -2644,7 +2770,7 @@ NGL.EDTSurface = function( atomSet ){
 
         probeRadius = _probeRadius || 1.4;
         scaleFactor = _scaleFactor || 2.0;
-        setAtomID = _setAtomID;
+        setAtomID = _setAtomID || true;
 
         var maxRadius = 0;
         for( var name in radiusDict ){
@@ -2669,8 +2795,6 @@ NGL.EDTSurface = function( atomSet ){
             pmax.addScalar( probeRadius + margin );
 
         }
-
-        ptran = new THREE.Vector3().copy( pmin ).negate();
 
         pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
         pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
@@ -2706,6 +2830,8 @@ NGL.EDTSurface = function( atomSet ){
             pHeight = pbox.z;
 
         }
+
+        ptran = new THREE.Vector3().copy( pmin ).negate();
 
         // coordinate transformation matrix
         matrix = new THREE.Matrix4();
@@ -2776,29 +2902,30 @@ NGL.EDTSurface = function( atomSet ){
         NGL.time( "NGL.EDTSurface.getVolume" );
 
         var btype = type !== "vws";
+        setAtomID = true;
 
         init( btype, probeRadius, scaleFactor, cutoff, lowRes, setAtomID );
 
-        fillvoxels( btype, setAtomID );
+        fillvoxels( btype );
         buildboundary();
 
         if( type === "ms" || type === "ses" ){
 
-            fastdistancemap( setAtomID );
+            fastdistancemap();
 
         }
 
         if( type === "ses" ){
 
             boundingatom( false );
-            fillvoxelswaals( setAtomID );
+            fillvoxelswaals();
 
         }
 
         marchingcubeinit( type );
 
         var vol = new NGL.Volume(
-            type, "", vpBits, pHeight, pWidth, pLength
+            type, "", vpBits, pHeight, pWidth, pLength, vpAtomID
         );
 
         vol.matrix.copy( matrix );
@@ -2808,6 +2935,7 @@ NGL.EDTSurface = function( atomSet ){
         return vol;
 
     };
+
 
     function boundingatom( btype ){
 
@@ -2828,8 +2956,8 @@ NGL.EDTSurface = function( atomSet ){
             }
 
             sradius = tradius * tradius;
-            widxz_r = Math.round( tradius ) + 1;
-            depty_name = new Int16Array( widxz_r * widxz_r );
+            widxz_r = Math.floor( tradius ) + 1;
+            depty_name = new Int32Array( widxz_r * widxz_r );
             indx = 0;
 
             for( j = 0; j < widxz_r; ++j ){
@@ -2845,7 +2973,7 @@ NGL.EDTSurface = function( atomSet ){
                     }else{
 
                         tdept = Math.sqrt( sradius - txz );
-                        depty_name[ indx ] = Math.round( tdept );
+                        depty_name[ indx ] = Math.floor( tdept );
 
                     }
 
@@ -2862,10 +2990,10 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillatom( atomIndex, setAtomID ){
-
+    function fillatom( atomIndex ){
+        var setAtomID = true;
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
-        var ii, jj, kk, n;
+        var ii, jj, kk;
 
         var atom = atoms[ atomIndex ];
 
@@ -2878,10 +3006,11 @@ NGL.EDTSurface = function( atomSet ){
         var nind = 0;
         var cnt = 0;
         var pWH = pWidth * pHeight;
+        var n = widxz[ at ];
 
         var depty_at_nind;
 
-        for( i = 0, n = widxz[ at ]; i < n; ++i ){
+        for( i = 0; i < n; ++i ){
         for( j = 0; j < n; ++j ) {
 
             depty_at_nind = depty_at[ nind ];
@@ -2923,17 +3052,20 @@ NGL.EDTSurface = function( atomSet ){
                                     vpBits[ index ] |= INOUT;
                                     vpAtomID[ index ] = atomIndex;
 
-                                }else{
+                                }else if( vpBits[ index ] & INOUT ){
+                                // }else{
 
                                     var atom2 = atoms[ vpAtomID[ index ] ];
-                                    ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
-                                    oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
-                                    oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+                                    if( atom2 !== atom ){
+                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
 
-                                    if( mi * mi + mj * mj + mk * mk <
-                                        ox * ox + oy * oy + oz * oz
-                                    ){
-                                        vpAtomID[ index ] = atomIndex;
+                                        if( mi * mi + mj * mj + mk * mk <
+                                            ox * ox + oy * oy + oz * oz
+                                        ){
+                                            vpAtomID[ index ] = atomIndex;
+                                        }
                                     }
 
                                 }
@@ -2957,7 +3089,7 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillvoxels( btype, setAtomID ){
+    function fillvoxels( btype ){
 
         NGL.time( "NGL.EDTSurface fillvoxels" );
 
@@ -2970,7 +3102,7 @@ NGL.EDTSurface = function( atomSet ){
         }
 
         for( i = 0, il = atoms.length; i < il; ++i ){
-            fillatom( i, setAtomID );
+            fillatom( i );
         }
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
@@ -2983,7 +3115,7 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillAtomWaals( atomIndex, setAtomID ){
+    function fillAtomWaals( atomIndex ){
 
         var cx, cy, cz, ox, oy, oz, nind = 0;
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
@@ -3063,7 +3195,7 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillvoxelswaals( setAtomID ){
+    function fillvoxelswaals(){
 
         var i, il;
 
@@ -3072,7 +3204,7 @@ NGL.EDTSurface = function( atomSet ){
         }
 
         for( i = 0, il = atoms.length; i < il; ++i ){
-            fillAtomWaals( i, setAtomID );
+            fillAtomWaals( i );
         }
 
     }
@@ -3090,9 +3222,10 @@ NGL.EDTSurface = function( atomSet ){
 
             if( vpBits[ index ] & INOUT ){
 
-                var flagbound = false;
+                // var flagbound = false;
                 var ii = 0;
 
+                // while( !flagbound && ii < 26 ){
                 while( ii < 26 ){
 
                     var ti = i + nb[ ii ][ 0 ];
@@ -3105,7 +3238,8 @@ NGL.EDTSurface = function( atomSet ){
                         !( vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT )
                     ){
 
-                        vpBits[index] |= ISBOUND;
+                        vpBits[ index ] |= ISBOUND;
+                        // flagbound = true;
                         break;
 
                     }else{
@@ -3124,7 +3258,7 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fastdistancemap( setAtomID ){
+    function fastdistancemap(){
 
         NGL.time( "NGL.EDTSurface fastdistancemap" );
 

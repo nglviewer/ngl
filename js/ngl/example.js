@@ -818,9 +818,19 @@ NGL.Examples = {
             stage.loadFile( "data://3j3y.cif.gz", {
                 onLoad: function( o ){
 
-                    o.addRepresentation( "point", {
-                        color: "chainindex", pointSize: 7, sizeAttenuation: true,
-                        sort: false
+                    // o.addRepresentation( "point", {
+                    //     color: "chainindex", pointSize: 7, sizeAttenuation: true,
+                    //     sort: false
+                    // } );
+                    o.addRepresentation( "surface", {
+                        surfaceType: "vws",
+                        smooth: 2,
+                        probeRadius: 4,
+                        scaleFactor: 0.3,
+                        lowResolution: true,
+                        //flatShaded: true,
+                        //transparent: true,
+                        //opacity: 1.0
                     } );
                     // o.addRepresentation( "ribbon", {
                     //     color: "chainindex"
@@ -969,6 +979,7 @@ NGL.Examples = {
 
         "molsurf": function( stage ){
 
+            // stage.loadFile( "data://acrolein.pdb", function( o ){
             // stage.loadFile( "data://1crn.pdb", function( o ){
             stage.loadFile( "data://3pqr.pdb", function( o ){
             // stage.loadFile( "data://3sn6.pdb", function( o ){
@@ -980,10 +991,12 @@ NGL.Examples = {
                     surfaceType: "ms",
                     smooth: 2,
                     probeRadius: 1.4,
-                    scaleFactor: 2,
-                    //flatShaded: true,
+                    scaleFactor: 2.0,
+                    flatShaded: false,
                     transparent: true,
-                    opacity: 1.0
+                    opacity: 0.8,
+                    lowResolution: false,
+                    colorScheme: "element"
                 } );
                 stage.centerView();
 
