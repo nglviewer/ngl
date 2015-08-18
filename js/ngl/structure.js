@@ -307,6 +307,37 @@ NGL.ResidueRadii = {
 };
 
 
+// http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
+NGL.ResidueHydrophobicity = {
+    // AA  DGwif   DGwoct  Oct-IF
+    "ALA": [  0.17,  0.50,  0.33 ],
+    "ARG": [  0.81,  1.81,  1.00 ],
+    "ASN": [  0.42,  0.85,  0.43 ],
+    "ASP": [  1.23,  3.64,  2.41 ],
+    "ASH": [ -0.07,  0.43,  0.50 ],
+    "CYS": [ -0.24, -0.02,  0.22 ],
+    "GLN": [  0.58,  0.77,  0.19 ],
+    "GLU": [  2.02,  3.63,  1.61 ],
+    "GLH": [ -0.01,  0.11,  0.12 ],
+    "GLY": [  0.01,  1.15,  1.14 ],
+    // "His+": [  0.96,  2.33,  1.37 ],
+    "HIS": [  0.17,  0.11, -0.06 ],
+    "ILE": [ -0.31, -1.12, -0.81 ],
+    "LEU": [ -0.56, -1.25, -0.69 ],
+    "LYS": [  0.99,  2.80,  1.81 ],
+    "MET": [ -0.23, -0.67, -0.44 ],
+    "PHE": [ -1.13, -1.71, -0.58 ],
+    "PRO": [  0.45,  0.14, -0.31 ],
+    "SER": [  0.13,  0.46,  0.33 ],
+    "THR": [  0.14,  0.25,  0.11 ],
+    "TRP": [ -1.85, -2.09, -0.24 ],
+    "TYR": [ -0.94, -0.71,  0.23 ],
+    "VAL": [  0.07, -0.46, -0.53 ],
+
+    "": [ 0.00, 0.00, 0.00 ]
+};
+
+
 NGL.guessElement = function(){
 
     var elm1 = [ "H", "C", "O", "N", "S", "P" ];
@@ -1266,6 +1297,55 @@ NGL.BfactorColorMaker.prototype = NGL.ColorMaker.prototype;
 NGL.BfactorColorMaker.prototype.constructor = NGL.BfactorColorMaker;
 
 
+NGL.HydrophobicityColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "RdYlGn";
+    }
+
+    var idx = 0;  // 0: DGwif, 1: DGwoct, 2: Oct-IF
+
+    var resHF = {};
+    for( var name in NGL.ResidueHydrophobicity ){
+        resHF[ name ] = NGL.ResidueHydrophobicity[ name ][ idx ];
+    }
+    var defaultResHF = resHF[""];
+
+    if( !params.domain ){
+
+        var val;
+        var min = Infinity;
+        var max = -Infinity;
+
+        for( var name in resHF ){
+
+            val = resHF[ name ];
+            min = Math.min( min, val );
+            max = Math.max( max, val );
+
+        }
+
+        this.domain = [ min, 0, max ];
+
+    }
+
+    var hfScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return hfScale( resHF[ a.resname ] || defaultResHF );
+
+    };
+
+};
+
+NGL.HydrophobicityColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.HydrophobicityColorMaker.prototype.constructor = NGL.HydrophobicityColorMaker;
+
+
 NGL.ColorMakerRegistry.types = {
 
     "": NGL.ColorMaker,
@@ -1280,6 +1360,7 @@ NGL.ColorMakerRegistry.types = {
     "element": NGL.ElementColorMaker,
     "resname": NGL.ResnameColorMaker,
     "bfactor": NGL.BfactorColorMaker,
+    "hydrophobicity": NGL.HydrophobicityColorMaker,
     "value": NGL.ValueColorMaker,
 
 };
