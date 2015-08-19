@@ -3517,17 +3517,20 @@ NGL.DxParser.prototype = NGL.createObject(
 
             for( var i = _i; i < _n; ++i ){
 
-                var line = lines[ i ].trim();
+                if( count < size && lineNo > dataLineStart ){
 
-                if( count < size && line !== "" && lineNo > dataLineStart ){
+                    var line = lines[ i ].trim();
 
-                    line = line.split( reWhitespace );
-                    for( var j = 0, lj = line.length; j < lj; ++j ){
-                        if ( line.length !==1 ) {
-                            data[ count ] = parseFloat( line[ j ] );
+                    if( line !== "" ){
+
+                        var ls = line.split( reWhitespace );
+
+                        for( var j = 0, lj = ls.length; j < lj; ++j ){
+                            data[ count ] = parseFloat( ls[ j ] );
                             ++count;
                         };
-                    };
+
+                    }
 
                 }
 
