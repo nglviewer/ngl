@@ -835,6 +835,14 @@ NGL.Volume.prototype = {
                 array = new Float32Array( this.data );
                 break;
 
+            case "abs-value":
+
+                array = new Float32Array( this.data );
+                for( var i = 0; i < n; ++i ){
+                    array[ i ] = Math.abs( array[ i ] );
+                }
+                break;
+
             case "value-min":
 
                 array = new Float32Array( this.data );
@@ -2647,8 +2655,6 @@ NGL.MolecularSurface.prototype = {
         if( sele && this.atomindex ){
 
             var selection = new NGL.Selection( sele );
-
-            // FIX need to loop over this.index ...
 
             var atoms = this.atomSet.atoms;
             var atomindex = this.atomindex;

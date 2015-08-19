@@ -5365,6 +5365,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             type: "select", options: {
                 "": "",
                 "value": "value",
+                "abs-value": "abs-value",
                 "value-min": "value-min",
                 "deviation": "deviation",
                 "size": "size"
