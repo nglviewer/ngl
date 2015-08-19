@@ -676,6 +676,7 @@ NGL.ColorMakerRegistry = {
 
         // Other
         "roygb": "[?] Rainbow",
+        "rwb": "[?] Red-White-Blue",
 
     },
 
@@ -871,6 +872,8 @@ NGL.ColorMaker.prototype = {
         var scale = p.scale || this.scale;
         if( scale === "rainbow" || scale === "roygb" ){
             scale = [ "red", "orange", "yellow", "green", "blue" ];
+        }else if( scale === "rwb" ){
+            scale = [ "red", "white", "blue" ];
         }
 
         return chroma
