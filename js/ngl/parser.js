@@ -3436,6 +3436,152 @@ NGL.CubeParser.prototype = NGL.createObject(
 } );
 
 
+NGL.DxParser = function( streamer, params ){
+
+    NGL.VolumeParser.call( this, streamer, params );
+
+};
+
+NGL.DxParser.prototype = NGL.createObject(
+
+    NGL.VolumeParser.prototype, {
+
+    constructor: NGL.DxParser,
+
+    type: "dx",
+
+    _parse: function( callback ){
+
+        // http://www.poissonboltzmann.org/docs/file-format-info/
+
+        var __timeName = "NGL.DxParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var v = this.volume;
+        var headerLines = this.streamer.peekLines( 30 );
+        var header = {};
+        var reWhitespace = /\s+/;
+
+        var dataLineStart = 0;
+        var deltaLineCount = 0;
+
+        for( var i = 0; i < 30; ++i ){
+
+            var line = headerLines[ i ];
+
+            if( line.startsWith( "object 1" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                header.nx = parseInt( ls[ 5 ] );
+                header.ny = parseInt( ls[ 6 ] );
+                header.nz = parseInt( ls[ 7 ] );
+
+            }else if( line.startsWith( "origin" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                header.xmin = parseFloat( ls[ 1 ] );
+                header.ymin = parseFloat( ls[ 2 ] );
+                header.zmin = parseFloat( ls[ 3 ] );
+
+            }else if( line.startsWith( "delta" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                if( deltaLineCount === 0 ){
+                    header.hx = parseFloat( ls[ 1 ] );
+                }else if( deltaLineCount === 1 ){
+                    header.hy = parseFloat( ls[ 2 ] );
+                }else if( deltaLineCount === 2 ){
+                    header.hz = parseFloat( ls[ 3 ] );
+                }
+
+                deltaLineCount += 1;
+
+            }else if( line.startsWith( "object 3" ) ){
+
+                dataLineStart = i;
+
+            }
+
+        }
+
+        var size = header.nx * header.ny * header.nz;
+        var data = new Float32Array( size );
+        var count = 0;
+        var lineNo = 0;
+
+        function _parseChunkOfLines( _i, _n, lines ){
+
+            for( var i = _i; i < _n; ++i ){
+
+                var line = lines[ i ].trim();
+
+                if( count < size && line !== "" && lineNo > dataLineStart ){
+
+                    line = line.split( reWhitespace );
+                    for( var j = 0, lj = line.length; j < lj; ++j ){
+                        if ( line.length !==1 ) {
+                            data[ count ] = parseFloat( line[ j ] );
+                            ++count;
+                        };
+                    };
+
+                }
+
+                ++lineNo;
+
+            };
+
+        };
+
+        this.streamer.eachChunkOfLinesAsync(
+
+            _parseChunkOfLines,
+
+            function(){
+
+                v.header = header;
+                v.setData( data, header.nz, header.ny, header.nx );
+                NGL.timeEnd( __timeName );
+                callback();
+
+            }
+
+        );
+
+    },
+
+    getMatrix: function(){
+
+        var h = this.volume.header;
+        var matrix = new THREE.Matrix4();
+
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -h.zmin, h.ymin, h.xmin
+            )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -h.hz, h.hy, h.hx
+            )
+        );
+
+        return matrix;
+
+    }
+
+} );
+
+
 ///////////////////
 // Surface parser
 
