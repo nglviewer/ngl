@@ -1229,6 +1229,67 @@ NGL.Examples = {
 
             } );
 
+        },
+
+        "apbs": function( stage ){
+
+            stage.loadFile( "data://1crn_apbs.pqr", function( o ){
+
+                o.addRepresentation( "cartoon", {
+                    colorScheme: "bfactor",
+                    colorScale: "rwb",
+                    colorDomain: [ -1, 0, 1 ]
+                } );
+                o.addRepresentation( "licorice", {
+                    colorScheme: "bfactor",
+                    colorScale: "rwb",
+                    colorDomain: [ -1, 0, 1 ]
+                } );
+
+                o.centerView();
+
+            } );
+
+            stage.loadFile( "data://1crn_apbs_pot.dx.gz", function( o ){
+
+                // o.addRepresentation( "dot", {
+                //     thresholdType: "value",
+                //     thresholdMin: -1000,
+                //     thresholdMax: 1000,
+                //     dotType: "sphere",
+                //     radius: "value",
+                //     scale: 0.001,
+                //     visible: false
+                // } );
+
+                o.addRepresentation( "surface", {
+                    isolevelType: "value",
+                    isolevel: -2,
+                    smooth: 1,
+                    color: "red",
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.BackSide,
+                    opaqueBack: false
+                } );
+                // FIXME should be handled in surface class
+                stage.tasks.onZeroOnce( function(){
+                    o.addRepresentation( "surface", {
+                        isolevelType: "value",
+                        isolevel: 2,
+                        smooth: 1,
+                        color: "blue",
+                        transparent: true,
+                        opacity: 0.6,
+                        side: THREE.FrontSide,
+                        opaqueBack: false
+                    } );
+                } );
+
+            } );
+
+            // stage.centerView();
+
         }
 
     }

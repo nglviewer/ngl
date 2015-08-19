@@ -493,12 +493,12 @@ NGL.Representation.prototype = {
 
         }, this );
 
-        if( typeof this.radius === "string" ){
+        // if( typeof this.radius === "string" ){
 
-            params[ "radiusType" ] = this.radius;
-            delete params[ "radius" ];
+        //     params[ "radiusType" ] = this.radius;
+        //     delete params[ "radius" ];
 
-        }
+        // }
 
         return params;
 
@@ -5195,7 +5195,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var position = this.surface.getPosition();
-        var color = this.surface.getColor( this.colorValue );
+        var color = this.surface.getColor( this.getColorParams() );
+        var pickingColor = undefined;  // this.surface.getPickingColor( this.getColorParams() );
         var normal = this.surface.getNormal();
         var index = this.surface.getIndex();
 
@@ -5204,7 +5205,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         if( this.transparent && this.side === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
+                position, color, index, normal, pickingColor,
                 {
                     background: this.background,
                     wireframe: this.wireframe,
@@ -5220,7 +5221,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             );
 
             var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
+                position, color, index, normal, pickingColor,
                 {
                     background: this.background,
                     wireframe: this.wireframe,
@@ -5240,7 +5241,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         }else{
 
             var surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
+                position, color, index, normal, pickingColor,
                 {
                     background: this.background,
                     wireframe: this.wireframe,
@@ -5269,7 +5270,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            surfaceData[ "color" ] = this.surface.getColor( this.colorValue );
+            surfaceData[ "color" ] = this.surface.getColor(
+                this.getColorParams()
+            );
 
         }
 
