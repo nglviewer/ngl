@@ -5354,6 +5354,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         thresholdMax: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
+        thresholdOut: {
+            type: "boolean", rebuild: true
+        },
         dotType: {
             type: "select", rebuild: true, options: {
                 "": "",
@@ -5432,6 +5435,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.thresholdType  = p.thresholdType !== undefined ? p.thresholdType : "sigma";
         this.thresholdMin = p.thresholdMin !== undefined ? p.thresholdMin : 2.0;
         this.thresholdMax = p.thresholdMax !== undefined ? p.thresholdMax : Infinity;
+        this.thresholdOut = p.thresholdOut !== undefined ? p.thresholdOut : false;
         this.dotType = p.dotType !== undefined ? p.dotType : "point";
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
@@ -5469,7 +5473,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             thresholdMin = this.thresholdMin;
             thresholdMax = this.thresholdMax;
         }
-        this.surface.filterData( thresholdMin, thresholdMax );
+        this.surface.filterData( thresholdMin, thresholdMax, this.thresholdOut );
 
         var opacity = this.transparent ? this.opacity : 1.0;
 

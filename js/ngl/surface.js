@@ -660,7 +660,7 @@ NGL.Volume.prototype = {
 
     },
 
-    filterData: function( minValue, maxValue ){
+    filterData: function( minValue, maxValue, outside ){
 
         if( isNaN( minValue ) && this.header ){
             minValue = this.header.DMEAN + 2.0 * this.header.ARMS;
@@ -668,6 +668,7 @@ NGL.Volume.prototype = {
 
         minValue = ( minValue !== undefined && !isNaN( minValue ) ) ? minValue : -Infinity;
         maxValue = maxValue !== undefined ? maxValue : Infinity;
+        outside = outside || false;
 
         if( !this.dataPosition ){
 
@@ -678,7 +679,9 @@ NGL.Volume.prototype = {
         var dataPosition = this.__dataPosition;
         var data = this.__data;
 
-        if( minValue === this.__minValue && maxValue == this.__maxValue ){
+        if( minValue === this.__minValue && maxValue == this.__maxValue &&
+            outside === this.__outside
+        ){
 
             // already filtered
             return;
@@ -711,7 +714,9 @@ NGL.Volume.prototype = {
                 var i3 = i * 3;
                 var v = data[ i ];
 
-                if( v >= minValue && v <= maxValue ){
+                if( ( !outside && v >= minValue && v <= maxValue ) ||
+                    ( outside && ( v < minValue || v > maxValue ) )
+                ){
 
                     var j3 = j * 3;
 
@@ -736,6 +741,7 @@ NGL.Volume.prototype = {
 
         this.__minValue = minValue;
         this.__maxValue = maxValue;
+        this.__outside = outside;
 
     },
 
