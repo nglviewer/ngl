@@ -2547,6 +2547,8 @@ NGL.MolecularSurface.prototype = {
         this.__lowRes = lowRes;
         this.__cutoff = cutoff;
 
+        this.__index = this.index;
+
         // this.vol = vol;
 
         vol.dispose();
@@ -2613,6 +2615,8 @@ NGL.MolecularSurface.prototype = {
                 this.__lowRes = lowRes;
                 this.__cutoff = cutoff;
 
+                this.__index = this.index;
+
                 callback();
 
             }.bind( this );
@@ -2633,6 +2637,53 @@ NGL.MolecularSurface.prototype = {
 
             this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes, cutoff );
             callback();
+
+        }
+
+    },
+
+    filter: function( sele ){
+
+        if( sele && this.atomindex ){
+
+            var selection = new NGL.Selection( sele );
+
+            // FIX need to loop over this.index ...
+
+            var atoms = this.atomSet.atoms;
+            var atomindex = this.atomindex;
+
+            var index = this.__index;
+            var n = index.length;
+            var test = selection.test;
+
+            var filteredIndex = [];
+
+            for( var i = 0; i < n; i+=3 ){
+
+                var idx1 = index[ i     ];
+                var idx2 = index[ i + 1 ];
+                var idx3 = index[ i + 2 ];
+
+                var a1 = atoms[ atomindex[ idx1 ] ];
+                var a2 = atoms[ atomindex[ idx2 ] ];
+                var a3 = atoms[ atomindex[ idx3 ] ];
+
+                if( test( a1 ) && test( a2 ) && test( a3 ) ){
+
+                    filteredIndex.push( idx1 );
+                    filteredIndex.push( idx2 );
+                    filteredIndex.push( idx3 );
+
+                }
+
+            }
+
+            this.index = new Uint32Array( filteredIndex );
+
+        }else{
+
+            this.index = this.__index;
 
         }
 

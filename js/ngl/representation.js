@@ -4317,6 +4317,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         lowResolution: {
             type: "boolean", rebuild: true
         },
+        filterSele: {
+            type: "text", rebuild: true
+        },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -4353,6 +4356,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
+        this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -4383,6 +4387,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
+
+        this.molsurf.filter( this.filterSele );
 
         var position = this.molsurf.getPosition();
         var color = this.molsurf.getColor( this.getColorParams() );
