@@ -1252,15 +1252,18 @@ NGL.Examples = {
 
             stage.loadFile( "data://1crn_apbs_pot.dx.gz", function( o ){
 
-                // o.addRepresentation( "dot", {
-                //     thresholdType: "value",
-                //     thresholdMin: -1000,
-                //     thresholdMax: 1000,
-                //     dotType: "sphere",
-                //     radius: "value",
-                //     scale: 0.001,
-                //     visible: false
-                // } );
+                o.addRepresentation( "dot", {
+                    thresholdType: "value",
+                    thresholdMin: -5,
+                    thresholdMax: 5,
+                    thresholdOut: true,
+                    dotType: "sphere",
+                    radius: "abs-value",
+                    scale: 0.001,
+                    visible: true,
+                    colorScheme: "value",
+                    colorScale: "rwb"
+                } );
 
                 o.addRepresentation( "surface", {
                     isolevelType: "value",
