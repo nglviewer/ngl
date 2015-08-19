@@ -868,6 +868,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         // http://www.wwpdb.org/documentation/file-format.php
 
+        var isPqr = this.type === "pqr";
+        var reWhitespace = /\s+/;
+
         var __timeName = "NGL.PdbParser._parse " + this.name;
 
         NGL.time( __timeName );
@@ -929,12 +932,28 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
-                    atomname = line.substr( 12, 4 ).trim();
-                    if( cAlphaOnly && atomname !== 'CA' ) continue;
+                    if( isPqr ){
 
-                    var x = parseFloat( line.substr( 30, 8 ) );
-                    var y = parseFloat( line.substr( 38, 8 ) );
-                    var z = parseFloat( line.substr( 46, 8 ) );
+                        var ls = line.split( reWhitespace );
+                        var dd = ls.length === 10 ? 1 : 0;
+
+                        atomname = ls[ 2 ];
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var x = parseFloat( ls[ 6 - dd ] );
+                        var y = parseFloat( ls[ 7 - dd ] );
+                        var z = parseFloat( ls[ 8 - dd ] );
+
+                    }else{
+
+                        atomname = line.substr( 12, 4 ).trim();
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var x = parseFloat( line.substr( 30, 8 ) );
+                        var y = parseFloat( line.substr( 38, 8 ) );
+                        var z = parseFloat( line.substr( 46, 8 ) );
+
+                    }
 
                     if( asTrajectory ){
 
@@ -950,14 +969,29 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     }
 
-                    serial = parseInt( line.substr( 6, 5 ) );
-                    element = line.substr( 76, 2 ).trim();
-                    hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                    chainname = line[ 21 ].trim();
-                    resno = parseInt( line.substr( 22, 5 ) );
-                    resname = line.substr( 17, 4 ).trim();
-                    bfactor = parseFloat( line.substr( 60, 8 ) );
-                    altloc = line[ 16 ].trim();
+                    if( isPqr ){
+
+                        serial = parseInt( ls[ 1 ] );
+                        element = "";
+                        hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                        chainname = dd ? "" : ls[ 4 ];
+                        resno = parseInt( ls[ 5 - dd ] );
+                        resname = ls[ 3 ];
+                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge
+                        altloc = "";
+
+                    }else{
+
+                        serial = parseInt( line.substr( 6, 5 ) );
+                        element = line.substr( 76, 2 ).trim();
+                        hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                        chainname = line[ 21 ].trim();
+                        resno = parseInt( line.substr( 22, 5 ) );
+                        resname = line.substr( 17, 4 ).trim();
+                        bfactor = parseFloat( line.substr( 60, 8 ) );
+                        altloc = line[ 16 ].trim();
+
+                    }
 
                     if( !element ) element = guessElem( atomname );
 
@@ -1308,6 +1342,23 @@ NGL.PdbParser.prototype = NGL.createObject(
         );
 
     }
+
+} );
+
+
+NGL.PqrParser = function( streamer, params ){
+
+    NGL.StructureParser.call( this, streamer, params );
+
+};
+
+NGL.PqrParser.prototype = NGL.createObject(
+
+    NGL.PdbParser.prototype, {
+
+    constructor: NGL.PqrParser,
+
+    type: "pqr",
 
 } );
 

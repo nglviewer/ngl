@@ -98,6 +98,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "gro": NGL.GroParser,
             "pdb": NGL.PdbParser,
             "ent": NGL.PdbParser,
+            "pqr": NGL.PqrParser,
             "cif": NGL.CifParser,
             "mcif": NGL.CifParser,
             "mmcif": NGL.CifParser,
@@ -109,6 +110,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "map": NGL.MrcParser,
 
             "cube": NGL.CubeParser,
+            "dx": NGL.DxParser,
 
             "ply": NGL.PlyParser,
             "obj": NGL.ObjParser,
@@ -166,6 +168,7 @@ NGL.autoLoad = function(){
         "gro": NGL.ParserLoader,
         "pdb": NGL.ParserLoader,
         "ent": NGL.ParserLoader,
+        "pqr": NGL.ParserLoader,
         "cif": NGL.ParserLoader,
         "mcif": NGL.ParserLoader,
         "mmcif": NGL.ParserLoader,
@@ -176,6 +179,7 @@ NGL.autoLoad = function(){
         "ccp4": NGL.ParserLoader,
         "map": NGL.ParserLoader,
         "cube": NGL.ParserLoader,
+        "dx": NGL.ParserLoader,
 
         "obj": NGL.ParserLoader,
         "ply": NGL.ParserLoader,
