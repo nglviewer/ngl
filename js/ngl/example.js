@@ -1264,7 +1264,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "surface", {
                     isolevelType: "value",
-                    isolevel: -2,
+                    isolevel: -0.4,
                     smooth: 1,
                     color: "red",
                     transparent: true,
@@ -1276,7 +1276,7 @@ NGL.Examples = {
                 stage.tasks.onZeroOnce( function(){
                     o.addRepresentation( "surface", {
                         isolevelType: "value",
-                        isolevel: 2,
+                        isolevel: 0.4,
                         smooth: 1,
                         color: "blue",
                         transparent: true,
