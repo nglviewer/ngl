@@ -472,7 +472,7 @@ NGL.deepCopy = function( src ){
 NGL.download = function( data, downloadName ){
 
     if( !data ){
-        NGL.warn( "NGL.download: no data given" );
+        NGL.warn( "NGL.download: no data given." );
         return;
     }
 
@@ -493,6 +493,42 @@ NGL.download = function( data, downloadName ){
     document.body.removeChild( a );
     if( data instanceof Blob ){
         URL.revokeObjectURL( data );
+    }
+
+};
+
+
+NGL.submit = function( url, data, callback, onerror ){
+
+    if( data instanceof FormData ){
+
+        var xhr = new XMLHttpRequest();
+        xhr.open( "POST", url );
+
+        xhr.addEventListener( 'load', function ( event ) {
+
+            if ( xhr.status === 200 || xhr.status === 304 ) {
+
+                callback( xhr.response );
+
+            } else {
+
+                if( typeof onerror === "function" ){
+
+                    onerror( xhr.status );
+
+                }
+
+            }
+
+        }, false );
+
+        xhr.send( data );
+
+    }else{
+
+        NGL.warn( "NGL.submit: type not supported.", data  );
+
     }
 
 };
