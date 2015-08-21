@@ -422,6 +422,7 @@ NGL.Volume = function( name, path, data, nx, ny, nz, dataAtomindex ){
     this.path = path;
 
     this.matrix = new THREE.Matrix4();
+    this.normalMatrix = new THREE.Matrix3();
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
@@ -493,6 +494,30 @@ NGL.Volume.prototype = {
         bb.applyMatrix4( this.matrix );
         bb.center( this.center );
 
+        // make normal matrix
+
+        var me = this.matrix.elements;
+        var r0 = new THREE.Vector3( me[0], me[1], me[2] );
+        var r1 = new THREE.Vector3( me[4], me[5], me[6] );
+        var r2 = new THREE.Vector3( me[8], me[9], me[10] );
+        var cp = new THREE.Vector3();
+        //        [ r0 ]       [ r1 x r2 ]
+        // M3x3 = [ r1 ]   N = [ r2 x r0 ]
+        //        [ r2 ]       [ r0 x r1 ]
+        var ne = this.normalMatrix.elements;
+        cp.crossVectors( r1, r2 );
+        ne[ 0 ] = cp.x;
+        ne[ 1 ] = cp.y;
+        ne[ 2 ] = cp.z;
+        cp.crossVectors( r2, r0 );
+        ne[ 3 ] = cp.x;
+        ne[ 4 ] = cp.y;
+        ne[ 5 ] = cp.z;
+        cp.crossVectors( r0, r1 );
+        ne[ 6 ] = cp.x;
+        ne[ 7 ] = cp.y;
+        ne[ 8 ] = cp.z;
+
     },
 
     setDataAtomindex: function( dataAtomindex ){
@@ -536,29 +561,7 @@ NGL.Volume.prototype = {
 
         if( sd.normal ){
 
-            var me = this.matrix.elements;
-            var r0 = new THREE.Vector3( me[0], me[1], me[2] );
-            var r1 = new THREE.Vector3( me[4], me[5], me[6] );
-            var r2 = new THREE.Vector3( me[8], me[9], me[10] );
-            var cp = new THREE.Vector3();
-            //        [ r0 ]       [ r1 x r2 ]
-            // M3x3 = [ r1 ]   N = [ r2 x r0 ]
-            //        [ r2 ]       [ r0 x r1 ]
-            var normalMatrix = new THREE.Matrix3();
-            var ne = normalMatrix.elements;
-            cp.crossVectors( r1, r2 );
-            ne[ 0 ] = cp.x;
-            ne[ 1 ] = cp.y;
-            ne[ 2 ] = cp.z;
-            cp.crossVectors( r2, r0 );
-            ne[ 3 ] = cp.x;
-            ne[ 4 ] = cp.y;
-            ne[ 5 ] = cp.z;
-            cp.crossVectors( r0, r1 );
-            ne[ 6 ] = cp.x;
-            ne[ 7 ] = cp.y;
-            ne[ 8 ] = cp.z;
-            normalMatrix.applyToVector3Array( sd.normal );
+            this.normalMatrix.applyToVector3Array( sd.normal );
 
         }
 
@@ -1006,6 +1009,7 @@ NGL.Volume.prototype = {
             dataAtomindex: this.__dataAtomindex,
 
             matrix: this.matrix.toArray(),
+            normalMatrix: this.normalMatrix.toArray(),
 
             center: this.center.toArray(),
             boundingBox: {
@@ -1043,6 +1047,7 @@ NGL.Volume.prototype = {
         );
 
         this.matrix.fromArray( input.matrix );
+        this.normalMatrix.fromArray( input.normalMatrix );
 
         if( input.header ){
 
