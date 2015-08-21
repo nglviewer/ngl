@@ -21,7 +21,7 @@ a{
     color: #719eff;
 }
 
-input.Number {
+input.Number, input.File {
     color: #A1B56C;
 }
 

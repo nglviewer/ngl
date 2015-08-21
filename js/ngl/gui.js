@@ -180,6 +180,7 @@ NGL.MenubarWidget = function( stage ){
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage ) );
     container.add( new NGL.MenubarExamplesWidget( stage ) );
+    container.add( new NGL.MenubarPluginsWidget( stage ) );
     container.add( new NGL.MenubarHelpWidget( stage ) );
 
     container.add(
@@ -477,6 +478,42 @@ NGL.MenubarExamplesWidget = function( stage ){
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
 
     return UI.MenubarHelper.createMenuContainer( 'Examples', optionsPanel );
+
+};
+
+
+NGL.MenubarPluginsWidget = function( stage ){
+
+    // configure menu contents
+
+    var createOption = UI.MenubarHelper.createOption;
+
+    var menuConfig = [];
+
+    var plugins = [
+        "apbs", "crosslink", "job"
+    ];
+
+    plugins.forEach( function( name ){
+
+        menuConfig.push(
+
+            createOption( name, function(){
+
+                stage.loadFile(
+                    "data://plugins/" + name + ".ngl",
+                    { name: name + " plugin" }
+                );
+
+            } )
+
+        );
+
+    } );
+
+    var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+
+    return UI.MenubarHelper.createMenuContainer( 'Plugins', optionsPanel );
 
 };
 

@@ -1,0 +1,249 @@
+
+var ApbsPreset = function( stage, pqrComp, dxComp, params ){
+
+    var p = params || {};
+
+    var isolevel = p.isolevel !== undefined ? p.isolevel : 0.4;
+
+    // pqr
+
+    var cartoonRepr = pqrComp.addRepresentation( "cartoon", {
+        colorScheme: "bfactor",
+        colorScale: "rwb",
+        colorDomain: [ -1, 0, 1 ]
+    } );
+
+    var licoriceRepr = pqrComp.addRepresentation( "licorice", {
+        colorScheme: "bfactor",
+        colorScale: "rwb",
+        colorDomain: [ -1, 0, 1 ]
+    } );
+
+    var molsurfRepr = pqrComp.addRepresentation( "surface", {
+        surfaceType: "ms",
+        colorScheme: "bfactor",
+        colorScale: "rwb",
+        colorDomain: [ -1, 0, 1 ]
+    } );
+
+    // dx
+
+    var negIsosurfRepr = dxComp.addRepresentation( "surface", {
+        name: "negative",
+        isolevelType: "value",
+        isolevel: -Math.abs( isolevel ),
+        smooth: 1,
+        color: "red",
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.BackSide,
+        opaqueBack: false
+    } );
+
+    var posIsosurfRepr;
+    stage.tasks.onZeroOnce( function(){
+        posIsosurfRepr = dxComp.addRepresentation( "surface", {
+            name: "positive",
+            isolevelType: "value",
+            isolevel: Math.abs( isolevel ),
+            smooth: 1,
+            color: "blue",
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.FrontSide,
+            opaqueBack: false
+        } );
+    } );
+
+    stage.centerView();
+
+    // params setter
+
+    this.setIsosurfParams = function( params ){
+
+        var p = params || {};
+        var negp = Object.assign( {}, p );
+        var posp = Object.assign( {}, p );
+
+        if( p.isolevel !== undefined ){
+            negp.isolevel = -Math.abs( p.isolevel );
+            posp.isolevel = Math.abs( p.isolevel );
+        }
+
+        negIsosurfRepr.setParameters( negp );
+        stage.tasks.onZeroOnce( function(){
+            posIsosurfRepr.setParameters( posp );
+        } );
+
+    };
+
+    this.setLicoriceParams = function( params ){
+
+        licoriceRepr.setParameters( params );
+
+    };
+
+    this.setCartoonParams = function( params ){
+
+        cartoonRepr.setParameters( params );
+
+    };
+
+    this.setMolsurfParams = function( params ){
+
+        molsurfRepr.setParameters( params );
+
+    };
+
+    this.isosurfRepr = new NGL.RepresentationCollection( [
+        negIsosurfRepr//, posIsosurfRepr
+    ] );
+    this.negIsosurfRepr = negIsosurfRepr;
+    this.posIsosurfRepr = posIsosurfRepr;
+
+    this.licoriceRepr = licoriceRepr;
+    this.cartoonRepr = cartoonRepr;
+    this.molsurfRepr = molsurfRepr;
+
+};
+
+
+var ApbsWidget = function( stage ){
+
+    var compDict = {};
+    var apbsPreset;
+    var isolevel = 0.5;
+
+    var container = new UI.Panel();
+
+    var pqrFile = new UI.File().setWidth( "200px" );
+    var dxFile = new UI.File().setWidth( "200px" );
+    var infoText = new UI.Text();
+    var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
+
+    //
+
+    var controls = new UI.Panel();
+
+    //
+
+    function loadFiles(){
+
+        if( !pqrFile.getFiles()[ 0 ] || !dxFile.getFiles()[ 0 ] ){
+            infoText.setValue( "please supply PQR and DX files" );
+            return;
+        }
+
+        infoText.setValue( "" );
+        compDict = {};
+        controls.clear();
+
+        stage.loadFile( pqrFile.getFiles()[ 0 ], {
+            ext: "pqr",
+            onLoad: function( comp ){
+                comp.requestGuiVisibility( false );
+                comp.centerView();
+                compDict[ "pqr" ] = comp;
+                initPreset();
+            }
+        } );
+
+        stage.loadFile( dxFile.getFiles()[ 0 ], {
+            ext: "dx",
+            onLoad: function( comp ){
+                comp.requestGuiVisibility( false );
+                comp.centerView();
+                compDict[ "dx" ] = comp;
+                initPreset();
+            }
+        } );
+
+    }
+
+    function initPreset(){
+
+        if( !compDict[ "pqr" ] || !compDict[ "dx" ] ) return;
+
+        apbsPreset = new ApbsPreset(
+            stage, compDict[ "pqr" ], compDict[ "dx" ], {
+                isolevel: isolevel
+            }
+        );
+
+        var isolevelNumber = new UI.Number( isolevel )
+            .onChange( function(){
+                apbsPreset.setIsosurfParams( {
+                    isolevel: isolevelNumber.getValue()
+                } );
+            } );
+
+        var isolevelSelect = new UI.Select()
+            .setOptions( {
+                "0.1": 0.1, "0.2": 0.2, "0.3": 0.3,
+                "0.4": 0.4, "0.5": 0.5, "0.7": 0.7,
+                "1.0": 1.0, "2.0": 2.0, "3.0": 3.0,
+                "4.0": 4.0, "5.0": 5.0, "7.0": 7.0,
+                "10.0": 10.0, "20.0": 20.0, "30.0": 30.0,
+            } )
+            .setValue( isolevel )
+            .onChange( function(){
+                apbsPreset.setIsosurfParams( {
+                    isolevel: parseFloat( isolevelSelect.getValue() )
+                } );
+            } );
+
+        controls.add(
+            new UI.Text( "isolevel" ).setMarginRight( "10px" ),
+            // isolevelNumber,
+            isolevelSelect,
+            new UI.Break(),
+            uiVisibilityButton(
+                "electrostatic isosurface", apbsPreset.isosurfRepr
+            ),
+            new UI.Break(),
+            uiVisibilityButton(
+                "molecular surface", apbsPreset.molsurfRepr
+            ),
+            new UI.Break(),
+            uiVisibilityButton(
+                "cartoon", apbsPreset.cartoonRepr
+            ),
+            new UI.Break(),
+            uiVisibilityButton(
+                "licorice", apbsPreset.licoriceRepr
+            )
+        );
+
+    }
+
+    //
+
+    var description = new UI.Panel().add(
+        new UI.Html( "There is a public APBS <a href='http://nbcr-222.ucsd.edu/pdb2pqr_2.0.0/'>server</a> to calculate PQR and DX files. Please <a href='https://docs.google.com/forms/d/1CsftV09vLGIxeMHwevGy8SDVYKoihs8EWLNjsbjxIRw/viewform'>register</a> your usage of APBS to support the <a href='http://www.poissonboltzmann.org/'>APBS project</a>." )
+    );
+
+    container.add(
+        description,
+        new UI.Break(),
+        new UI.Text( "PQR:" ).setWidth( "45px" ),
+        pqrFile,
+        new UI.Break(),
+        new UI.Text( "DX:" ).setWidth( "45px" ),
+        dxFile,
+        new UI.Break(),
+        new UI.Break(),
+        loadBtn.setMarginRight( "10px" ),
+        infoText,
+        new UI.Break(),
+        new UI.Break(),
+        controls
+    );
+
+    return container;
+
+};
+
+//
+
+var apbsWidget = new ApbsWidget( stage );
+panel.add( apbsWidget );

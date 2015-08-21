@@ -96,6 +96,7 @@ UI.File = function () {
 
     UI.Input.call( this );
 
+    this.dom.className = 'File';
     this.dom.type = "file";
     this.dom.multiple = false;
 
@@ -110,6 +111,12 @@ UI.File.prototype.setMultiple = function ( value ) {
     this.dom.multiple = value
 
     return this;
+
+};
+
+UI.File.prototype.getFiles = function ( value ) {
+
+    return this.dom.files;
 
 };
 

@@ -487,6 +487,13 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         label = U( label ? label : "all" );
         collection = collection || new NGL.Collection();
 
+        if( !( collection instanceof NGL.Collection ) &&
+            !( collection instanceof NGL.ComponentCollection ) &&
+            !( collection instanceof NGL.RepresentationCollection )
+        ){
+            collection = new NGL.Collection( [ collection ] );
+        }
+
         var list = collection.list;
 
         function isVisible(){
@@ -525,7 +532,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         } );
 
-        panel.add( btn );
+        // panel.add( btn );
 
         return btn;
 

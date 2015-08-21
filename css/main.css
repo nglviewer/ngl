@@ -76,6 +76,11 @@ input.Number {
     cursor: col-resize;
 }
 
+input.File {
+    border: 0px solid !important;
+    padding: 0px !important;
+}
+
 input[type=range]:focus:after {
     position: absolute;
     transform: translate(-100%,-50% );
