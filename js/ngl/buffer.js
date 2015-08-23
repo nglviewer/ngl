@@ -111,6 +111,12 @@ NGL.Buffer.prototype = {
         this.wireframeGeometry = this.geometry.clone();
         this.wireframeGeometry.attributes.index.array = wireframeIndex;
 
+        if( NGL.indexUint16 ){
+            this.wireframeGeometry.computeOffsets();
+        }else{
+            this.wireframeGeometry.clearDrawCalls();
+        }
+
     },
 
     getRenderOrder: function(){
