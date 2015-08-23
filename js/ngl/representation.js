@@ -4374,17 +4374,21 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             this.__forceNewMolsurf = false;
             this.__sele = this.selection.combinedString;
 
-        }
+            this.molsurf.getSurfaceWorker(
+                this.surfaceType, this.probeRadius,
+                this.scaleFactor, this.smooth,
+                this.lowResolution, this.cutoff,
+                function( surface ){
+                    this.surface = surface;
+                    callback();
+                }.bind( this )
+            );
 
-        this.molsurf.getSurfaceWorker(
-            this.surfaceType, this.probeRadius,
-            this.scaleFactor, this.smooth,
-            this.lowResolution, this.cutoff,
-            function( surface ){
-                this.surface = surface;
-                callback();
-            }.bind( this )
-        );
+        }else{
+
+            callback();
+
+        }
 
     },
 
@@ -5159,12 +5163,26 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 isolevel = this.isolevel;
             }
 
-            this.volume.getSurfaceWorker(
-                isolevel, this.smooth, function( surface ){
-                    this.surface = surface;
-                    callback();
-                }.bind( this )
-            );
+            if( !this.surface ||
+                this.__isolevel !== isolevel ||
+                this.__smooth !== this.smooth
+            ){
+
+                this.__isolevel = isolevel;
+                this.__smooth = this.smooth;
+
+                this.volume.getSurfaceWorker(
+                    isolevel, this.smooth, function( surface ){
+                        this.surface = surface;
+                        callback();
+                    }.bind( this )
+                );
+
+            }else{
+
+                callback();
+
+            }
 
         }else{
 

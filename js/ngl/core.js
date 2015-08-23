@@ -780,49 +780,125 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Worker
 
-NGL.Worker = {
+NGL.WorkerRegistry = {
+
+    activeWorkerCount: 0,
 
     funcDict: {},
 
     add: function( name, func ){
 
-        NGL.Worker.funcDict[ name ] = func;
+        NGL.WorkerRegistry.funcDict[ name ] = func;
 
     },
 
-    make: function( name, params ){
+};
 
-        params = params || {};
 
-        var worker;
+NGL.Worker = function( name, params ){
 
-        if( NGL.develop ){
-            worker = new Worker( "../js/ngl/core.js" );
+    params = params || {};
+
+    this.name = name;
+
+    if( NGL.develop ){
+        this.worker = new Worker( "../js/ngl/core.js" );
+    }else{
+        this.worker = new Worker( NGL.mainScriptFilePath );
+    }
+
+    this.worker.onmessage = function( event ){
+
+        NGL.timeEnd( "NGL.Worker.postMessage " + this.name + " #" + event.data.__postId );
+
+        if( typeof params.onmessage === "function" ){
+            params.onmessage.apply( this.worker, arguments );
+        };
+        if( this.__onmessageDict[ event.data.__postId ] ){
+            this.__onmessageDict[ event.data.__postId ].apply( this.worker, arguments );
+        }
+
+        return this.onmessage.call( this.worker, event );
+
+    }.bind( this );
+
+    this.worker.onerror = function( event ){
+
+        if( typeof params.onerror === "function" ){
+            params.onerror.apply( this.worker, arguments );
+        };
+        if( this.__onerrorDict[ event.data.__postId ] ){
+            this.__onerrorDict[ event.data.__postId ].apply( this.worker, arguments );
+        }
+
+        return this.onerror.call( this.worker, event );
+
+    }.bind( this );
+
+    NGL.WorkerRegistry.activeWorkerCount += 1;
+
+    if( params.messageData !== undefined ){
+
+        this.postMessage.apply( this, params.messageData );
+
+    }
+
+};
+
+NGL.Worker.prototype = {
+
+    constructor: NGL.Worker,
+
+    __postCount: 0,
+
+    __onmessageDict: {},
+
+    __onerrorDict: {},
+
+    onmessage: function( event ){
+
+    },
+
+    onerror: function( event ){
+
+    },
+
+    postMessage: function( aMessage, transferList ){
+
+        aMessage = aMessage || {};
+        aMessage.__name = this.name;
+        aMessage.__postId = this.__postCount;
+
+        NGL.time( "NGL.Worker.postMessage " + this.name + " #" + this.__postCount );
+
+        this.worker.postMessage.call( this.worker, aMessage, transferList );
+
+        this.__postCount += 1;
+
+    },
+
+    terminate: function(){
+
+        if( this.worker ){
+
+            this.worker.terminate();
+            delete this.worker;
+            NGL.WorkerRegistry.activeWorkerCount -= 1;
+
         }else{
-            worker = new Worker( NGL.mainScriptFilePath );
-        }
 
-        worker.onerror = params.onerror;
-
-        worker.onmessage = params.onmessage;
-
-        var _postMessage = worker.postMessage;
-
-        worker.postMessage = function( aMessage, transferList ){
-
-            if( aMessage !== undefined ) aMessage.__name__ = name;
-
-            _postMessage.call( worker, aMessage, transferList );
+            console.log( "no worker to terminate" );
 
         }
 
-        if( params.messageData !== undefined ){
+    },
 
-            worker.postMessage.apply( worker, params.messageData );
+    post: function( aMessage, transferList, onmessage, onerror ){
 
-        }
+        this.__onmessageDict[ this.__postCount ] = onmessage;
+        this.__onerrorDict[ this.__postCount ] = onerror;
 
-        return worker;
+        this.postMessage( aMessage, transferList );
 
     }
 
@@ -872,19 +948,31 @@ if( typeof importScripts === 'function' ){
 
     }
 
-    onmessage = function( e ){
+    self.onmessage = function( e ){
 
-        if( e.data.__name__ === undefined ){
+        var name = e.data.__name;
+        var postId = e.data.__postId;
 
-            NGL.error( "message __name__ undefined" );
+        if( name === undefined ){
 
-        }else if( NGL.Worker.funcDict[ e.data.__name__ ] === undefined ){
+            NGL.error( "message __name undefined" );
 
-            NGL.error( "funcDict __name__ undefined" );
+        }else if( NGL.WorkerRegistry.funcDict[ name ] === undefined ){
+
+            NGL.error( "funcDict[ __name ] undefined", name );
 
         }else{
 
-            NGL.Worker.funcDict[ e.data.__name__ ]( e );
+            var callback = function( aMessage, transferList ){
+
+                aMessage = aMessage || {};
+                if( postId !== undefined ) aMessage.__postId = postId;
+
+                self.postMessage( aMessage, transferList );
+
+            };
+
+            NGL.WorkerRegistry.funcDict[ name ]( e, callback );
 
         }
 
@@ -973,7 +1061,7 @@ NGL.decompress = function( data, file, asBinary, callback ){
 };
 
 
-NGL.Worker.add( "decompress", function( e ){
+NGL.WorkerRegistry.add( "decompress", function( e, callback ){
 
     var d = e.data;
 
@@ -984,7 +1072,7 @@ NGL.Worker.add( "decompress", function( e ){
         transferable.push( value.buffer );
     }
 
-    self.postMessage( value, transferable );
+    callback( value, transferable );
 
 } );
 
@@ -995,9 +1083,14 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
         typeof importScripts !== 'function'
     ){
 
-        NGL.time( "NGL.decompressWorker" );
+        var worker = new NGL.Worker( "decompress", {
 
-        var worker = NGL.Worker.make( "decompress", {
+            onmessage: function( e ){
+
+                worker.terminate();
+                callback( e.data );
+
+            },
 
             onerror: function( e ){
 
@@ -1007,14 +1100,6 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
                 worker.terminate();
 
                 NGL.decompress( data, file, asBinary, callback );
-
-            },
-
-            onmessage: function( e ){
-
-                NGL.timeEnd( "NGL.decompressWorker" );
-                worker.terminate();
-                callback( e.data );
 
             },
 

@@ -395,7 +395,7 @@ NGL.Grid = function( length, width, height, dataCtor, elemSize ){
 ///////////
 // Volume
 
-NGL.Worker.add( "surf", function( e ){
+NGL.WorkerRegistry.add( "surf", function( e, callback ){
 
     NGL.time( "WORKER surf" );
 
@@ -411,7 +411,7 @@ NGL.Worker.add( "surf", function( e ){
 
     NGL.timeEnd( "WORKER surf" );
 
-    self.postMessage( surface.toJSON(), surface.getTransferable() );
+    callback( surface.toJSON(), surface.getTransferable() );
 
 } );
 
@@ -584,50 +584,48 @@ NGL.Volume.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var __timeName = "NGL.Volume.generateSurfaceWorker " + this.name;
-            NGL.time( __timeName );
-
             var vol = undefined;
 
             if( this.worker === undefined ){
 
                 vol = this.toJSON();
-                this.worker = NGL.Worker.make( "surf" );
+                this.worker = new NGL.Worker( "surf" );
 
             }
 
-            this.worker.onerror = function( e ){
+            this.worker.post(
 
-                console.warn(
-                    "NGL.Volume.generateSurfaceWorker error - trying without worker", e
-                );
-                this.worker.terminate();
-                this.worker = undefined;
+                {
+                    vol: vol,
+                    params: {
+                        isolevel: isolevel,
+                        smooth: smooth
+                    }
+                },
 
-                var surface = this.getSurface( isolevel, smooth );
-                callback( surface );
+                undefined,
 
-            }.bind( this );
+                function( e ){
 
-            this.worker.onmessage = function( e ){
+                    var surface = NGL.fromJSON( e.data );
+                    callback( surface );
 
-                NGL.timeEnd( __timeName );
+                }.bind( this ),
 
-                // if( NGL.debug ) console.log( e.data );
+                function( e ){
 
-                var surface = NGL.fromJSON( e.data );
+                    console.warn(
+                        "NGL.Volume.generateSurfaceWorker error - trying without worker", e
+                    );
+                    this.worker.terminate();
+                    this.worker = undefined;
 
-                callback( surface );
+                    var surface = this.getSurface( isolevel, smooth );
+                    callback( surface );
 
-            }.bind( this );
+                }.bind( this )
 
-            this.worker.postMessage( {
-                vol: vol,
-                params: {
-                    isolevel: isolevel,
-                    smooth: smooth
-                }
-            } );
+            );
 
         }else{
 
@@ -2474,7 +2472,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
-NGL.Worker.add( "molsurf", function( e ){
+NGL.WorkerRegistry.add( "molsurf", function( e, callback ){
 
     NGL.time( "WORKER molsurf" );
 
@@ -2497,7 +2495,7 @@ NGL.Worker.add( "molsurf", function( e ){
 
     NGL.timeEnd( "WORKER molsurf" );
 
-    self.postMessage( surface.toJSON(), surface.getTransferable() );
+    callback( surface.toJSON(), surface.getTransferable() );
 
 } );
 
@@ -2537,57 +2535,54 @@ NGL.MolecularSurface.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + type;
-
-            NGL.time( __timeName );
-
             var atomSet = undefined;
 
             if( this.worker === undefined ){
 
                 atomSet = this.atomSet.toJSON();
-                this.worker = NGL.Worker.make( "molsurf" );
+                this.worker = new NGL.Worker( "molsurf" );
 
             }
 
-            this.worker.onerror = function( e ){
+            this.worker.post(
 
-                console.warn(
-                    "NGL.MolecularSurface.generateSurfaceWorker error - trying without worker", e
-                );
-                this.worker.terminate();
-                this.worker = undefined;
+                {
+                    atomSet: atomSet,
+                    params: {
+                        type: type,
+                        probeRadius: probeRadius,
+                        scaleFactor: scaleFactor,
+                        smooth: smooth,
+                        lowRes: lowRes,
+                        cutoff: cutoff
+                    }
+                },
 
-                var surface = this.getSurface(
-                    type, probeRadius, scaleFactor, smooth, lowRes, cutoff
-                );
-                callback( surface );
+                undefined,
 
-            }.bind( this );
+                function( e ){
 
-            this.worker.onmessage = function( e ){
+                    var surface = NGL.fromJSON( e.data );
+                    callback( surface );
 
-                NGL.timeEnd( __timeName );
+                }.bind( this ),
 
-                // if( NGL.debug ) console.log( e.data );
+                function( e ){
 
-                var surface = NGL.fromJSON( e.data );
+                    console.warn(
+                        "NGL.MolecularSurface.generateSurfaceWorker error - trying without worker", e
+                    );
+                    this.worker.terminate();
+                    this.worker = undefined;
 
-                callback( surface );
+                    var surface = this.getSurface(
+                        type, probeRadius, scaleFactor, smooth, lowRes, cutoff
+                    );
+                    callback( surface );
 
-            }.bind( this );
+                }.bind( this )
 
-            this.worker.postMessage( {
-                atomSet: atomSet,
-                params: {
-                    type: type,
-                    probeRadius: probeRadius,
-                    scaleFactor: scaleFactor,
-                    smooth: smooth,
-                    lowRes: lowRes,
-                    cutoff: cutoff
-                }
-            } );
+            );
 
         }else{
 
