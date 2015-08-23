@@ -399,6 +399,14 @@ UI.Input.prototype.setValue = function ( value ) {
 
 };
 
+UI.Input.prototype.setName = function ( value ) {
+
+    this.dom.name = value;
+
+    return this;
+
+};
+
 
 // TextArea
 

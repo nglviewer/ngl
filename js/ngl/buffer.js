@@ -81,7 +81,7 @@ NGL.Buffer.prototype = {
 
         if( NGL.indexUint16 ){
 
-            this.geometry.drawcalls = this.geometry.computeOffsets();
+            this.geometry.computeOffsets();
 
         }
 

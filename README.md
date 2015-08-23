@@ -35,18 +35,19 @@ Version 0.6dev
 
 * CODE: clearer atomnames handling for fiber creation
 * FIX: residues at the end of fibers may not require all backbone atoms
-* User-defined color schemes (API)
+* ADD: User-defined color schemes (API)
+* CODE: Color handling code refactored exposing more parameters
 * FIX: #7
 * DOC: pull request instruction for developers
 * Higher color contrast for GUI and documentation pages
-* Basic support for async creation of representations (so far used for molecular surfaces and volume triangulation)
+* CODE: Basic support for async creation of representations (so far used for molecular surfaces and volume triangulation)
 * WIP: scripting API
 * CODE: chunked data loading and parsing via streamer class
 * MIGRATION: Stage.loadFile signature changed
 * CODE: faster autobonding of large residues (e.g. hydrated lipids)
 * CODE: WebWorker support while using development and build files
 * CODE: WebWorker used for decompression, parsing and surface generation
-* Support for MOL2 and SDF files
+* ADD: Support for MOL2 and SDF files
 
 
 Version 0.5

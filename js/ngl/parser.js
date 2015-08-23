@@ -471,7 +471,7 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 ///////////
 // Parser
 
-NGL.Worker.add( "parse", function( e ){
+NGL.WorkerRegistry.add( "parse", function( e, callback ){
 
     NGL.time( "WORKER parse" );
 
@@ -484,7 +484,7 @@ NGL.Worker.add( "parse", function( e ){
         // no need to return the streamer data
         parser.streamer.dispose();
 
-        self.postMessage( parser.toJSON(), parser.getTransferable() );
+        callback( parser.toJSON(), parser.getTransferable() );
 
     } );
 
@@ -556,10 +556,16 @@ NGL.Parser.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var __timeName = "NGL.Parser.parseWorker " + this.name;
-            NGL.time( __timeName );
+            var worker = new NGL.Worker( "parse", {
 
-            var worker = NGL.Worker.make( "parse", {
+                onmessage: function( e ){
+
+                    worker.terminate();
+
+                    this.fromJSON( e.data );
+                    this._afterWorker( callback );
+
+                }.bind( this ),
 
                 onerror: function( e ){
 
@@ -569,18 +575,6 @@ NGL.Parser.prototype = {
                     worker.terminate();
 
                     this.parse( callback );
-
-                }.bind( this ),
-
-                onmessage: function( e ){
-
-                    NGL.timeEnd( __timeName );
-                    if( NGL.debug ) NGL.log( e.data );
-
-                    worker.terminate();
-
-                    this.fromJSON( e.data );
-                    this._afterWorker( callback );
 
                 }.bind( this ),
 
@@ -868,6 +862,9 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         // http://www.wwpdb.org/documentation/file-format.php
 
+        var isPqr = this.type === "pqr";
+        var reWhitespace = /\s+/;
+
         var __timeName = "NGL.PdbParser._parse " + this.name;
 
         NGL.time( __timeName );
@@ -929,12 +926,28 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
-                    atomname = line.substr( 12, 4 ).trim();
-                    if( cAlphaOnly && atomname !== 'CA' ) continue;
+                    if( isPqr ){
 
-                    var x = parseFloat( line.substr( 30, 8 ) );
-                    var y = parseFloat( line.substr( 38, 8 ) );
-                    var z = parseFloat( line.substr( 46, 8 ) );
+                        var ls = line.split( reWhitespace );
+                        var dd = ls.length === 10 ? 1 : 0;
+
+                        atomname = ls[ 2 ];
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var x = parseFloat( ls[ 6 - dd ] );
+                        var y = parseFloat( ls[ 7 - dd ] );
+                        var z = parseFloat( ls[ 8 - dd ] );
+
+                    }else{
+
+                        atomname = line.substr( 12, 4 ).trim();
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var x = parseFloat( line.substr( 30, 8 ) );
+                        var y = parseFloat( line.substr( 38, 8 ) );
+                        var z = parseFloat( line.substr( 46, 8 ) );
+
+                    }
 
                     if( asTrajectory ){
 
@@ -950,14 +963,29 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     }
 
-                    serial = parseInt( line.substr( 6, 5 ) );
-                    element = line.substr( 76, 2 ).trim();
-                    hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                    chainname = line[ 21 ].trim();
-                    resno = parseInt( line.substr( 22, 5 ) );
-                    resname = line.substr( 17, 4 ).trim();
-                    bfactor = parseFloat( line.substr( 60, 8 ) );
-                    altloc = line[ 16 ].trim();
+                    if( isPqr ){
+
+                        serial = parseInt( ls[ 1 ] );
+                        element = "";
+                        hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                        chainname = dd ? "" : ls[ 4 ];
+                        resno = parseInt( ls[ 5 - dd ] );
+                        resname = ls[ 3 ];
+                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge
+                        altloc = "";
+
+                    }else{
+
+                        serial = parseInt( line.substr( 6, 5 ) );
+                        element = line.substr( 76, 2 ).trim();
+                        hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                        chainname = line[ 21 ].trim();
+                        resno = parseInt( line.substr( 22, 5 ) );
+                        resname = line.substr( 17, 4 ).trim();
+                        bfactor = parseFloat( line.substr( 60, 8 ) );
+                        altloc = line[ 16 ].trim();
+
+                    }
 
                     if( !element ) element = guessElem( atomname );
 
@@ -1308,6 +1336,23 @@ NGL.PdbParser.prototype = NGL.createObject(
         );
 
     }
+
+} );
+
+
+NGL.PqrParser = function( streamer, params ){
+
+    NGL.StructureParser.call( this, streamer, params );
+
+};
+
+NGL.PqrParser.prototype = NGL.createObject(
+
+    NGL.PdbParser.prototype, {
+
+    constructor: NGL.PqrParser,
+
+    type: "pqr",
 
 } );
 
@@ -3375,6 +3420,155 @@ NGL.CubeParser.prototype = NGL.createObject(
         matrix.multiply(
             new THREE.Matrix4().makeScale(
                 -h.AVZ, h.AVY, h.AVX
+            )
+        );
+
+        return matrix;
+
+    }
+
+} );
+
+
+NGL.DxParser = function( streamer, params ){
+
+    NGL.VolumeParser.call( this, streamer, params );
+
+};
+
+NGL.DxParser.prototype = NGL.createObject(
+
+    NGL.VolumeParser.prototype, {
+
+    constructor: NGL.DxParser,
+
+    type: "dx",
+
+    _parse: function( callback ){
+
+        // http://www.poissonboltzmann.org/docs/file-format-info/
+
+        var __timeName = "NGL.DxParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var v = this.volume;
+        var headerLines = this.streamer.peekLines( 30 );
+        var header = {};
+        var reWhitespace = /\s+/;
+
+        var dataLineStart = 0;
+        var deltaLineCount = 0;
+
+        for( var i = 0; i < 30; ++i ){
+
+            var line = headerLines[ i ];
+
+            if( line.startsWith( "object 1" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                header.nx = parseInt( ls[ 5 ] );
+                header.ny = parseInt( ls[ 6 ] );
+                header.nz = parseInt( ls[ 7 ] );
+
+            }else if( line.startsWith( "origin" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                header.xmin = parseFloat( ls[ 1 ] );
+                header.ymin = parseFloat( ls[ 2 ] );
+                header.zmin = parseFloat( ls[ 3 ] );
+
+            }else if( line.startsWith( "delta" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                if( deltaLineCount === 0 ){
+                    header.hx = parseFloat( ls[ 1 ] );
+                }else if( deltaLineCount === 1 ){
+                    header.hy = parseFloat( ls[ 2 ] );
+                }else if( deltaLineCount === 2 ){
+                    header.hz = parseFloat( ls[ 3 ] );
+                }
+
+                deltaLineCount += 1;
+
+            }else if( line.startsWith( "object 3" ) ){
+
+                dataLineStart = i;
+
+            }
+
+        }
+
+        var size = header.nx * header.ny * header.nz;
+        var data = new Float32Array( size );
+        var count = 0;
+        var lineNo = 0;
+
+        function _parseChunkOfLines( _i, _n, lines ){
+
+            for( var i = _i; i < _n; ++i ){
+
+                if( count < size && lineNo > dataLineStart ){
+
+                    var line = lines[ i ].trim();
+
+                    if( line !== "" ){
+
+                        var ls = line.split( reWhitespace );
+
+                        for( var j = 0, lj = ls.length; j < lj; ++j ){
+                            data[ count ] = parseFloat( ls[ j ] );
+                            ++count;
+                        };
+
+                    }
+
+                }
+
+                ++lineNo;
+
+            };
+
+        };
+
+        this.streamer.eachChunkOfLinesAsync(
+
+            _parseChunkOfLines,
+
+            function(){
+
+                v.header = header;
+                v.setData( data, header.nz, header.ny, header.nx );
+                NGL.timeEnd( __timeName );
+                callback();
+
+            }
+
+        );
+
+    },
+
+    getMatrix: function(){
+
+        var h = this.volume.header;
+        var matrix = new THREE.Matrix4();
+
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -h.zmin, h.ymin, h.xmin
+            )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -h.hz, h.hy, h.hx
             )
         );
 

@@ -37,6 +37,83 @@ UI.Html.prototype.setValue = function ( value ) {
 };
 
 
+// Form
+
+UI.Form = function () {
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'form' );
+    dom.className = 'Form';
+    dom.method = "post";
+    dom.action = "";
+    dom.target = "_blank";
+    dom.enctype = "multipart/form-data";
+
+    this.dom = dom;
+
+    return this;
+};
+
+UI.Form.prototype = Object.create( UI.Panel.prototype );
+
+UI.Form.prototype.setMethod= function ( value ) {
+
+    this.dom.method = value;
+
+    return this;
+
+};
+
+UI.Form.prototype.setAction = function ( value ) {
+
+    this.dom.action = value
+
+    return this;
+
+};
+
+UI.Form.prototype.setTarget= function ( value ) {
+
+    this.dom.target = value;
+
+    return this;
+
+};
+
+UI.Form.prototype.setEnctype = function ( value ) {
+
+    this.dom.enctype = value
+
+    return this;
+
+};
+
+
+// File
+
+UI.File = function () {
+
+    UI.Input.call( this );
+
+    this.dom.type = "file";
+    this.dom.multiple = false;
+
+    return this;
+
+};
+
+UI.File.prototype = Object.create( UI.Input.prototype );
+
+UI.File.prototype.setMultiple = function ( value ) {
+
+    this.dom.multiple = value
+
+    return this;
+
+};
+
+
 // Ellipsis Text
 
 UI.EllipsisText = function ( text ) {
@@ -677,8 +754,8 @@ UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
         // iconClass1 = iconClass1 || "plus-square";
         // iconClass2 = iconClass2 || "minus-square";
 
-        iconClass1 = iconClass1 || "chevron-right";
-        iconClass2 = iconClass2 || "chevron-down";
+        iconClass1 = iconClass1 || "chevron-down";
+        iconClass2 = iconClass2 || "chevron-right";
 
     }
 

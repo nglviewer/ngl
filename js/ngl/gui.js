@@ -132,6 +132,12 @@ NGL.ToolbarWidget = function( stage ){
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.atom1.residue.chain.model.structure.name + ")";
 
+        }else if( d.volume ){
+
+            msg = "Picked volume: " +
+                d.volume.value.toPrecision( 3 ) +
+                " (" + d.volume.volume.name + ")";
+
         }else{
 
             msg = "Nothing to pick";
@@ -190,8 +196,8 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "ent", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
-        "mrc", "ccp4", "map", "cube",
+        "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
+        "mrc", "ccp4", "map", "cube", "dx",
         "obj", "ply",
         "ngl", "ngz",
         "gz", "lzma", "bz2", "zip"
@@ -2041,7 +2047,9 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
 NGL.lastUsedDirectory = "";
 
-NGL.DirectoryListing = function(){
+NGL.DirectoryListing = function( baseUrl ){
+
+    this.baseUrl = baseUrl !== undefined ? baseUrl : "../dir/";
 
     var SIGNALS = signals;
 
@@ -2064,7 +2072,7 @@ NGL.DirectoryListing.prototype = {
         path = path || "";
 
         var loader = new THREE.XHRLoader();
-        var url = "../dir/" + path;
+        var url = this.baseUrl + path;
 
         // force reload
         THREE.Cache.remove( url );
@@ -2101,7 +2109,7 @@ NGL.DirectoryListing.prototype = {
 };
 
 
-NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
+NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl ){
 
     // from http://stackoverflow.com/a/20463021/1435042
     function fileSizeSI(a,b,c,d,e){
@@ -2109,7 +2117,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
             +String.fromCharCode(160)+(e?'kMGTPEZY'[--e]+'B':'Bytes')
     }
 
-    var dirListing = new NGL.DirectoryListing();
+    var dirListing = new NGL.DirectoryListing( baseUrl );
 
     var signals = dirListing.signals;
     var container = new UI.OverlayPanel();

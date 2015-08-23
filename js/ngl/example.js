@@ -818,14 +818,16 @@ NGL.Examples = {
             stage.loadFile( "data://3j3y.cif.gz", {
                 onLoad: function( o ){
 
-                    o.addRepresentation( "point", {
-                        color: "chainindex", pointSize: 7, sizeAttenuation: true,
-                        sort: false
+                    o.addRepresentation( "surface", {
+                        surfaceType: "ms",
+                        smooth: 2,
+                        probeRadius: 4,
+                        scaleFactor: 0.3,
+                        lowResolution: true,
+                        colorScheme: "chainindex"
                     } );
-                    // o.addRepresentation( "ribbon", {
-                    //     color: "chainindex"
-                    // } );
-                    o.centerView();
+
+                    stage.centerView();
 
                 },
                 cAlphaOnly: true
@@ -924,7 +926,14 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
 
-                o.addRepresentation( "surface", { wireframe: true } );
+                o.addRepresentation( "surface", {
+                    wireframe: true,
+                    visible: false
+                } );
+                o.addRepresentation( "dot", {
+                    dotType: "sphere",
+                    radius: 0.3
+                } );
                 o.centerView();
 
             } );
@@ -962,13 +971,25 @@ NGL.Examples = {
 
         "molsurf": function( stage ){
 
-            stage.loadFile( "data://3dqb.pdb", function( o ){
+            // stage.loadFile( "data://acrolein.pdb", function( o ){
+            // stage.loadFile( "data://1crn.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb", function( o ){
             // stage.loadFile( "data://3sn6.pdb", function( o ){
             // stage.loadFile( "data://3l5q.pdb", function( o ){
 
                 o.addRepresentation( "licorice", {} );
                 o.addRepresentation( "spacefill" );
-                o.addRepresentation( "surface" );
+                o.addRepresentation( "surface", {
+                    surfaceType: "ms",
+                    smooth: 2,
+                    probeRadius: 1.4,
+                    scaleFactor: 2.0,
+                    flatShaded: false,
+                    transparent: true,
+                    opacity: 0.8,
+                    lowResolution: false,
+                    colorScheme: "element"
+                } );
                 stage.centerView();
 
             } );
@@ -1205,6 +1226,68 @@ NGL.Examples = {
                 } );
 
                 o.centerView();
+
+            } );
+
+        },
+
+        "apbs": function( stage ){
+
+            stage.loadFile( "data://1crn_apbs.pqr", function( o ){
+
+                o.addRepresentation( "cartoon", {
+                    colorScheme: "bfactor",
+                    colorScale: "rwb",
+                    colorDomain: [ -1, 0, 1 ]
+                } );
+                o.addRepresentation( "licorice", {
+                    colorScheme: "bfactor",
+                    colorScale: "rwb",
+                    colorDomain: [ -1, 0, 1 ]
+                } );
+
+                o.centerView();
+
+            } );
+
+            stage.loadFile( "data://1crn_apbs_pot.dx.gz", function( o ){
+
+                o.addRepresentation( "dot", {
+                    thresholdType: "value",
+                    thresholdMin: -5,
+                    thresholdMax: 5,
+                    thresholdOut: true,
+                    dotType: "sphere",
+                    radius: "abs-value",
+                    scale: 0.001,
+                    visible: true,
+                    colorScheme: "value",
+                    colorScale: "rwb"
+                } );
+
+                o.addRepresentation( "surface", {
+                    isolevelType: "value",
+                    isolevel: -0.4,
+                    smooth: 1,
+                    color: "red",
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.BackSide,
+                    opaqueBack: false
+                } );
+
+                o.addRepresentation( "surface", {
+                    isolevelType: "value",
+                    isolevel: 0.4,
+                    smooth: 1,
+                    color: "blue",
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.FrontSide,
+                    opaqueBack: false
+                } );
+
+                stage.centerView();
 
             } );
 
