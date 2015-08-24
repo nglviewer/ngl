@@ -1,6 +1,4 @@
 
-
-
 var Server = function( url, params ){
 
     this.url = url;
@@ -66,7 +64,7 @@ var Server = function( url, params ){
             var p = tools.data[ name ];
 
             this.tools[ name ] = new Tool(
-                name, server, p.args, p.attr
+                name, server, p.args, p.docu
             );
 
         }
@@ -78,12 +76,12 @@ var Server = function( url, params ){
 };
 
 
-var Tool = function( name, server, args, attr ){
+var Tool = function( name, server, args, docu ){
 
     this.name = name;
     this.server = server;
     this.args = args || {};
-    this.attr = attr || {};
+    this.docu = docu || "";
 
     this.urlFor = function( route ){
 
@@ -184,7 +182,7 @@ var Job = function( name, server, params ){
 
     // this.getParams();
 
-}
+};
 
 
 var ServerWidget = function( server ){
@@ -448,7 +446,7 @@ var JobWidget = function( job ){
 
 //
 
-var server = new Server( "http://alexpc/provi/job/" );
+var server = new Server( "http://alexpc/job/" );
 
 var serverWidget = new ServerWidget( server );
 panel.add( serverWidget );
