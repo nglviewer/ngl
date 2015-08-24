@@ -1,0 +1,163 @@
+
+
+var FragfitPreset = function( stage, data, params ){
+
+    var p = params || {};
+
+    var pdbComp = data[ "pdb" ];
+    var mrcComp = data[ "mrc" ];
+    var linkerComp = data[ "linker" ];
+    var json = data[ "json" ];
+
+    // pdb
+
+    var cartoonRepr = pdbComp.addRepresentation( "cartoon", {
+
+    } );
+
+    var licoriceRepr = pdbComp.addRepresentation( "licorice", {
+
+    } );
+
+    // linker
+
+    var backboneRepr = linkerComp.addRepresentation( "backbone", {
+        radius: 0.05,
+        colorScheme: "residueindex",
+        transparent: true,
+        opacity: 0.3
+    } );
+
+    // mrc
+
+    var surfaceRepr = mrcComp.addRepresentation( "surface", {
+        name: "negative",
+        isolevelType: "sigma",
+        isolevel: 2.0,
+        smooth: 1,
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+        opaqueBack: true
+    } );
+
+    // json
+
+    console.log( json );
+
+    //
+
+    stage.centerView();
+
+};
+
+
+var FragfitWidget = function( stage ){
+
+    var data = {};
+
+    var container = new UI.Panel();
+
+    var infoText = new UI.Text();
+    var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
+
+    function loadFiles( pdb, mrc, linker, json ){
+
+        // pqr = pqr || pqrFile.getFiles()[ 0 ];
+        // dx = dx || dxFile.getFiles()[ 0 ];
+
+        if( !pdb || !mrc || !linker || !json ){
+            infoText.setValue( "please supply all input files" );
+            return;
+        }
+
+        infoText.setValue( "" );
+        data = {};
+        // controls.clear();
+
+        stage.loadFile( pdb, {
+            ext: "pdb",
+            onLoad: function( comp ){
+                comp.requestGuiVisibility( false );
+                comp.centerView();
+                data[ "pdb" ] = comp;
+                initPreset();
+            }
+        } );
+
+        stage.loadFile( mrc, {
+            ext: "mrc",
+            onLoad: function( comp ){
+                comp.requestGuiVisibility( false );
+                comp.centerView();
+                data[ "mrc" ] = comp;
+                initPreset();
+            }
+        } );
+
+        stage.loadFile( linker, {
+            ext: "pdb",
+            onLoad: function( comp ){
+                comp.requestGuiVisibility( false );
+                comp.centerView();
+                data[ "linker" ] = comp;
+                initPreset();
+            }
+        } );
+
+        NGL.autoLoad( json, {
+            ext: "json",
+            onLoad: function( obj ){
+                data[ "json" ] = obj.data;
+                initPreset();
+            }
+        } );
+
+    }
+
+    function loadExample(){
+
+        loadFiles(
+            "file://dropbox/ngl/fragfit/input_pdb_file.pdb",
+            "file://dropbox/ngl/fragfit/input_mrc_file.mrc",
+            "file://dropbox/ngl/fragfit/loop_correl/ori_pdb_linker_file3.pdb",
+            "file://dropbox/ngl/fragfit/linker_correl.json"
+        );
+
+    }
+
+    function initPreset(){
+
+        if( !data[ "pdb" ] || !data[ "mrc" ] ||
+            !data[ "linker" ] || !data[ "json" ]
+        ){
+            return;
+        }
+
+        var params = {};
+
+        fragfitPreset = new FragfitPreset( stage, data, params );
+
+    }
+
+    //
+
+    var description = new UI.Panel().add(
+        new UI.Html( "FragFit..." )
+    );
+
+    container.add(
+        description,
+        new UI.Break(),
+        exampleBtn.setMarginRight( "10px" ),
+        infoText
+    );
+
+    return container;
+
+};
+
+//
+
+var fragfitWidget = new FragfitWidget( stage );
+panel.add( fragfitWidget );
