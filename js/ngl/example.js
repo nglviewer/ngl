@@ -1275,23 +1275,21 @@ NGL.Examples = {
                     side: THREE.BackSide,
                     opaqueBack: false
                 } );
-                // FIXME should be handled in surface class
-                stage.tasks.onZeroOnce( function(){
-                    o.addRepresentation( "surface", {
-                        isolevelType: "value",
-                        isolevel: 0.4,
-                        smooth: 1,
-                        color: "blue",
-                        transparent: true,
-                        opacity: 0.6,
-                        side: THREE.FrontSide,
-                        opaqueBack: false
-                    } );
+
+                o.addRepresentation( "surface", {
+                    isolevelType: "value",
+                    isolevel: 0.4,
+                    smooth: 1,
+                    color: "blue",
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.FrontSide,
+                    opaqueBack: false
                 } );
 
-            } );
+                stage.centerView();
 
-            // stage.centerView();
+            } );
 
         }
 

@@ -471,7 +471,7 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 ///////////
 // Parser
 
-NGL.Worker.add( "parse", function( e ){
+NGL.WorkerRegistry.add( "parse", function( e, callback ){
 
     NGL.time( "WORKER parse" );
 
@@ -484,7 +484,7 @@ NGL.Worker.add( "parse", function( e ){
         // no need to return the streamer data
         parser.streamer.dispose();
 
-        self.postMessage( parser.toJSON(), parser.getTransferable() );
+        callback( parser.toJSON(), parser.getTransferable() );
 
     } );
 
@@ -556,10 +556,16 @@ NGL.Parser.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var __timeName = "NGL.Parser.parseWorker " + this.name;
-            NGL.time( __timeName );
+            var worker = new NGL.Worker( "parse", {
 
-            var worker = NGL.Worker.make( "parse", {
+                onmessage: function( e ){
+
+                    worker.terminate();
+
+                    this.fromJSON( e.data );
+                    this._afterWorker( callback );
+
+                }.bind( this ),
 
                 onerror: function( e ){
 
@@ -569,18 +575,6 @@ NGL.Parser.prototype = {
                     worker.terminate();
 
                     this.parse( callback );
-
-                }.bind( this ),
-
-                onmessage: function( e ){
-
-                    NGL.timeEnd( __timeName );
-                    if( NGL.debug ) NGL.log( e.data );
-
-                    worker.terminate();
-
-                    this.fromJSON( e.data );
-                    this._afterWorker( callback );
 
                 }.bind( this ),
 
