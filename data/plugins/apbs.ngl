@@ -114,7 +114,9 @@ var ApbsWidget = function( stage ){
     var pqrFile = new UI.File().setWidth( "200px" );
     var dxFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
-    var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
+    var loadBtn = new UI.Button( "Load" ).onClick(
+        function(){ loadFiles(); }
+    );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
     //
