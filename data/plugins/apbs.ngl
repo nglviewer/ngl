@@ -40,19 +40,16 @@ var ApbsPreset = function( stage, pqrComp, dxComp, params ){
         opaqueBack: false
     } );
 
-    var posIsosurfRepr;
-    stage.tasks.onZeroOnce( function(){
-        posIsosurfRepr = dxComp.addRepresentation( "surface", {
-            name: "positive",
-            isolevelType: "value",
-            isolevel: Math.abs( isolevel ),
-            smooth: 1,
-            color: "blue",
-            transparent: true,
-            opacity: 0.6,
-            side: THREE.FrontSide,
-            opaqueBack: false
-        } );
+    var posIsosurfRepr = dxComp.addRepresentation( "surface", {
+        name: "positive",
+        isolevelType: "value",
+        isolevel: Math.abs( isolevel ),
+        smooth: 1,
+        color: "blue",
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.FrontSide,
+        opaqueBack: false
     } );
 
     stage.centerView();
@@ -71,9 +68,7 @@ var ApbsPreset = function( stage, pqrComp, dxComp, params ){
         }
 
         negIsosurfRepr.setParameters( negp );
-        stage.tasks.onZeroOnce( function(){
-            posIsosurfRepr.setParameters( posp );
-        } );
+        posIsosurfRepr.setParameters( posp );
 
     };
 
@@ -96,7 +91,7 @@ var ApbsPreset = function( stage, pqrComp, dxComp, params ){
     };
 
     this.isosurfRepr = new NGL.RepresentationCollection( [
-        negIsosurfRepr//, posIsosurfRepr
+        negIsosurfRepr, posIsosurfRepr
     ] );
     this.negIsosurfRepr = negIsosurfRepr;
     this.posIsosurfRepr = posIsosurfRepr;
@@ -120,6 +115,7 @@ var ApbsWidget = function( stage ){
     var dxFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
     var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
+    var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
     //
 
@@ -127,9 +123,12 @@ var ApbsWidget = function( stage ){
 
     //
 
-    function loadFiles(){
+    function loadFiles( pqr, dx ){
 
-        if( !pqrFile.getFiles()[ 0 ] || !dxFile.getFiles()[ 0 ] ){
+        pqr = pqr || pqrFile.getFiles()[ 0 ];
+        dx = dx || dxFile.getFiles()[ 0 ];
+
+        if( !pqr || !dx ){
             infoText.setValue( "please supply PQR and DX files" );
             return;
         }
@@ -138,7 +137,7 @@ var ApbsWidget = function( stage ){
         compDict = {};
         controls.clear();
 
-        stage.loadFile( pqrFile.getFiles()[ 0 ], {
+        stage.loadFile( pqr, {
             ext: "pqr",
             onLoad: function( comp ){
                 comp.requestGuiVisibility( false );
@@ -148,7 +147,7 @@ var ApbsWidget = function( stage ){
             }
         } );
 
-        stage.loadFile( dxFile.getFiles()[ 0 ], {
+        stage.loadFile( dx, {
             ext: "dx",
             onLoad: function( comp ){
                 comp.requestGuiVisibility( false );
@@ -157,6 +156,15 @@ var ApbsWidget = function( stage ){
                 initPreset();
             }
         } );
+
+    }
+
+    function loadExample(){
+
+        loadFiles(
+            "data://1crn_apbs.pqr",
+            "data://1crn_apbs_pot.dx.gz"
+        );
 
     }
 
@@ -194,8 +202,8 @@ var ApbsWidget = function( stage ){
 
         controls.add(
             new UI.Text( "isolevel" ).setMarginRight( "10px" ),
-            // isolevelNumber,
-            isolevelSelect,
+            isolevelNumber,
+            // isolevelSelect,
             new UI.Break(),
             uiVisibilityButton(
                 "electrostatic isosurface", apbsPreset.isosurfRepr
@@ -233,6 +241,7 @@ var ApbsWidget = function( stage ){
         new UI.Break(),
         new UI.Break(),
         loadBtn.setMarginRight( "10px" ),
+        exampleBtn.setMarginRight( "10px" ),
         infoText,
         new UI.Break(),
         new UI.Break(),
