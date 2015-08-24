@@ -889,6 +889,9 @@ NGL.Worker = function( name, params ){
 
     this.name = name;
 
+    this.__onmessageDict = {};
+    this.__onerrorDict = {};
+
     if( NGL.develop ){
         this.worker = new Worker( "../js/ngl/core.js" );
     }else{
@@ -939,9 +942,9 @@ NGL.Worker.prototype = {
 
     __postCount: 0,
 
-    __onmessageDict: {},
+    __onmessageDict: null,
 
-    __onerrorDict: {},
+    __onerrorDict: null,
 
     onmessage: function( event ){
 
