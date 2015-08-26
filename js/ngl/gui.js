@@ -23,17 +23,21 @@ NGL.StageWidget = function( stage ){
     var viewer = stage.viewer;
     var renderer = viewer.renderer;
 
-    this.viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
-    document.body.appendChild( this.viewport.dom );
+    //
 
-    this.toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
-    document.body.appendChild( this.toolbar.dom );
+    var viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
+    document.body.appendChild( viewport.dom );
 
-    this.menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
-    document.body.appendChild( this.menubar.dom );
+    var toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
+    document.body.appendChild( toolbar.dom );
 
-    this.sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
-    document.body.appendChild( this.sidebar.dom );
+    var menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
+    document.body.appendChild( menubar.dom );
+
+    var sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
+    document.body.appendChild( sidebar.dom );
+
+    //
 
     signals.requestTheme.add( function( value ){
 
@@ -52,9 +56,71 @@ NGL.StageWidget = function( stage ){
 
     stage.preferences.setTheme();
 
+    //
+
     viewer.onWindowResize();
     // FIXME hack for ie11
     setTimeout( function(){ viewer.onWindowResize(); }, 500 );
+
+    //
+
+    var doResizeLeft = false;
+    var movedResizeLeft = false;
+    var minResizeLeft = false;
+
+    var handleResizeLeft = function( clientX ){
+        if( clientX >= 50 && clientX <= window.innerWidth - 10 ){
+            sidebar.setWidth( window.innerWidth - clientX + "px" );
+            viewport.setWidth( clientX + "px" );
+            toolbar.setWidth( clientX + "px" );
+            stage.viewer.onWindowResize();
+        }
+        if( sidebar.dom.getBoundingClientRect().width <= 10 ){
+            minResizeLeft = true;
+        }else{
+            minResizeLeft = false;
+        }
+    };
+
+    var resizeLeft = new UI.Panel()
+        .setClass( "ResizeLeft" )
+        .onMouseDown( function(){
+            doResizeLeft = true;
+            movedResizeLeft = false;
+        } )
+        .onClick( function(){
+            if( minResizeLeft ){
+                handleResizeLeft( window.innerWidth - 300 );
+            }else if( !doResizeLeft && !movedResizeLeft ){
+                handleResizeLeft( window.innerWidth - 10 );
+            }
+        } );
+
+    sidebar.add( resizeLeft );
+
+    window.addEventListener(
+        'mousemove', function( event ){
+            if( doResizeLeft ){
+                document.body.style.cursor = "col-resize";
+                movedResizeLeft = true;
+                handleResizeLeft( event.clientX );
+            }
+        }, false
+    );
+
+    window.addEventListener(
+        'mouseup', function( event ){
+            doResizeLeft = false;
+            document.body.style.cursor = "";
+        }, false
+    );
+
+    //
+
+    this.viewport = viewport;
+    this.toolbar = toolbar;
+    this.menubar = menubar;
+    this.sidebar = sidebar;
 
     return this;
 

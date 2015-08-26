@@ -125,8 +125,9 @@ properties.forEach( function ( property ) {
 // events
 
 var events = [
-    'KeyUp', 'KeyDown', 'KeyPress', 'MouseOver', 'MouseOut', 'Click', 'Change',
-    'Input'
+    'KeyUp', 'KeyDown', 'KeyPress',
+    'MouseOver', 'MouseOut', 'MouseDown', 'MouseUp',
+    'Click', 'Change', 'Input'
 ];
 
 events.forEach( function ( event ) {

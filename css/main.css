@@ -216,13 +216,14 @@ input[type=range]:focus:after {
     overflow-wrap: break-word;
 }
 
-
 /* FlexiColorPicker */
+
 .picker-wrapper,
 .slide-wrapper {
     position: relative;
     float: left;
 }
+
 .picker-indicator,
 .slide-indicator {
     position: absolute;
@@ -230,14 +231,17 @@ input[type=range]:focus:after {
     top: 0;
     pointer-events: none;
 }
+
 .picker,
 .slide {
     cursor: crosshair;
     float: left;
 }
+
 .slide-wrapper {
     margin-left: 10px;
 }
+
 .picker-indicator {
     width: 5px;
     height: 5px;
@@ -252,6 +256,7 @@ input[type=range]:focus:after {
     filter: alpha(opacity=50);
     background-color: white;
 }
+
 .slide-indicator {
     width: 100%;
     height: 10px;
@@ -305,6 +310,19 @@ input[type=range]:focus:after {
     padding-right: 5px;
 
     text-align: right;
+}
+
+/* resize */
+
+.ResizeLeft, .ResizeLeft:hover {
+    position: relative;
+    float: left;
+    height: 100%;
+    width: 10px;
+}
+
+.ResizeLeft:hover{
+    cursor: col-resize;
 }
 
 /* id */
