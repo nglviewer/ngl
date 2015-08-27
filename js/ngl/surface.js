@@ -551,6 +551,13 @@ NGL.Volume.prototype = {
             sd = this.mc.triangulate( isolevel, true );
             NGL.laplacianSmooth( sd.position, sd.index, smooth, true );
 
+            var bg = new THREE.BufferGeometry();
+            bg.addAttribute( "position", new THREE.BufferAttribute( sd.position, 3 ) );
+            bg.addAttribute( "index", new THREE.BufferAttribute( sd.index, 1 ) );
+            bg.computeVertexNormals();
+            sd.normal = bg.attributes.normal.array;
+            bg.dispose();
+
         }else{
 
             sd = this.mc.triangulate( isolevel );
@@ -2816,7 +2823,7 @@ NGL.EDTSurface = function( atomSet ){
             type, "", vpBits, pHeight, pWidth, pLength, vpAtomID
         );
 
-        vol.matrix.copy( matrix );
+        vol.setMatrix( matrix );
 
         NGL.timeEnd( "NGL.EDTSurface.getVolume" );
 
