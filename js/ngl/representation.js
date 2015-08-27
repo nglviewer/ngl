@@ -4365,7 +4365,13 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     prepare: function( callback ){
 
         if( !this.molsurf || this.__forceNewMolsurf ||
-            this.__sele !== this.selection.combinedString
+            this.__sele !== this.selection.combinedString ||
+            this.__smooth !== this.smooth ||
+            this.__surfaceType !== this.surfaceType ||
+            this.__probeRadius !== this.probeRadius ||
+            this.__scaleFactor !== this.scaleFactor ||
+            this.__cutoff !== this.cutoff ||
+            this.__lowResolution !== this.lowResolution
         ){
 
             if( this.molsurf ) this.molsurf.dispose();
@@ -4373,6 +4379,12 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             this.molsurf = new NGL.MolecularSurface( this.atomSet );
             this.__forceNewMolsurf = false;
             this.__sele = this.selection.combinedString;
+            this.__smooth = this.smooth;
+            this.__surfaceType = this.surfaceType;
+            this.__probeRadius = this.probeRadius;
+            this.__scaleFactor = this.scaleFactor;
+            this.__cutoff = this.cutoff;
+            this.__lowResolution = this.lowResolution;
 
             this.molsurf.getSurfaceWorker(
                 this.surfaceType, this.probeRadius,
