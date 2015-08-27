@@ -700,6 +700,11 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
         return this;
     };
 
+    this.redraw = function(){
+        renderChunk( Math.floor( list.scrollTop / itemHeight ) );
+        return this;
+    };
+
     //
 
     list.appendChild( scroller );

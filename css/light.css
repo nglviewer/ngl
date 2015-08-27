@@ -57,6 +57,12 @@ input.Number, input.File {
     background-color: #345a69;
 }
 
+.highlight,
+.highlight > .Text {
+    color: #D8D8D8;
+    background-color: #345a69;
+}
+
 .EllipsisMultilineText:after {
     background: linear-gradient(to right, rgba(255, 255, 255, 0), #e1e4eb 50%, #e1e4eb);
 }

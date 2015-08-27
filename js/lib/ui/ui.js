@@ -99,7 +99,7 @@ var properties = [
     'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
     'verticalAlign', 'clear', 'float', 'zIndex', 'minHeight', 'maxHeight',
     'minWidth', 'maxWidth', 'wordBreak', 'wordWrap', 'spellcheck',
-    'lineHeight', 'whiteSpace', 'textOverflow'
+    'lineHeight', 'whiteSpace', 'textOverflow', 'textAlign'
 ];
 
 properties.forEach( function ( property ) {
@@ -333,7 +333,6 @@ UI.Text = function ( text ) {
 
     var dom = document.createElement( 'span' );
     dom.className = 'Text';
-    dom.style.cursor = 'default';
     dom.style.display = 'inline-block';
     dom.style.verticalAlign = 'middle';
 

@@ -7,6 +7,7 @@
 
 ::-webkit-scrollbar {
     width:9px;
+    height:9px;
 }
 
 ::-webkit-scrollbar-track {
@@ -119,6 +120,10 @@ input[type=range]:focus:after {
 
 .OverlayPanel:focus {
     z-index: 20;
+}
+
+.Text {
+    cursor: default;
 }
 
 .FancySelect {
@@ -332,6 +337,10 @@ input[type=range]:focus:after {
     overflow: hidden;
     white-space: nowrap;
     display: inline-block;
+}
+
+.VirtualListRow > .Text {
+    cursor: inherit;
 }
 
 /* id */

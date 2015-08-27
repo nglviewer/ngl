@@ -289,7 +289,7 @@ NGL.MenubarFileWidget = function( stage ){
     var fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.multiple = true;
-    fileInput.style.display = "hidden";
+    fileInput.style.display = "none";
     fileInput.accept = "." + fileTypesOpen.join( ",." );
     fileInput.addEventListener( 'change', function( e ){
 
