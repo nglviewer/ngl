@@ -117,6 +117,21 @@ NGL.StageWidget = function( stage ){
 
     //
 
+    document.addEventListener( 'dragover', function( e ){
+
+        e.stopPropagation();
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'none';
+
+    }, false );
+
+    document.addEventListener( 'drop', function( e ){
+
+        e.stopPropagation();
+        e.preventDefault();
+
+    }, false );
+
     this.viewport = viewport;
     this.toolbar = toolbar;
     this.menubar = menubar;
@@ -275,7 +290,6 @@ NGL.MenubarFileWidget = function( stage ){
     fileInput.type = "file";
     fileInput.multiple = true;
     fileInput.style.display = "hidden";
-    document.body.appendChild( fileInput );
     fileInput.accept = "." + fileTypesOpen.join( ",." );
     fileInput.addEventListener( 'change', function( e ){
 
@@ -419,6 +433,7 @@ NGL.MenubarFileWidget = function( stage ){
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+    optionsPanel.dom.appendChild( fileInput );
 
     return UI.MenubarHelper.createMenuContainer( 'File', optionsPanel );
 
