@@ -22,23 +22,27 @@ var FragfitPreset = function( stage, data, params ){
     // linker
 
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
-        radius: 0.05,
+        radius: 0.25,
         colorScheme: "residueindex",
-        transparent: true,
-        opacity: 0.3
+        // transparent: true,
+        // opacity: 0.3
     } );
+
+    linkerComp.centerView();
 
     // mrc
 
     var surfaceRepr = mrcComp.addRepresentation( "surface", {
-        name: "negative",
+        name: "map",
         isolevelType: "sigma",
-        isolevel: 2.0,
-        smooth: 1,
+        isolevel: p.isolevel || 2.0,
+        smooth: 0,
+        wireframe: p.wireframe || false,
         transparent: true,
         opacity: 0.6,
         side: THREE.DoubleSide,
-        opaqueBack: true
+        opaqueBack: true,
+        color: "grey"
     } );
 
     // json
@@ -46,6 +50,9 @@ var FragfitPreset = function( stage, data, params ){
     console.log( json );
 
     //
+
+    this.backboneRepr = backboneRepr;
+    this.surfaceRepr = surfaceRepr;
 
     stage.centerView();
 
@@ -55,11 +62,17 @@ var FragfitPreset = function( stage, data, params ){
 var FragfitWidget = function( stage ){
 
     var data = {};
+    var isolevel = 2.0;
+    var wireframe = false;
 
     var container = new UI.Panel();
 
+    var selectedLinker = null;
+
     var infoText = new UI.Text();
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
+
+    stage.viewer.setFog( null, null, 30, 55 );
 
     function loadFiles( pdb, mrc, linker, json ){
 
@@ -134,9 +147,102 @@ var FragfitWidget = function( stage ){
             return;
         }
 
-        var params = {};
+        var params = {
+            isolevel: isolevel,
+            wireframe: wireframe,
+        };
 
         fragfitPreset = new FragfitPreset( stage, data, params );
+
+        // Isolevel
+
+        var isolevelNumber = new UI.Number( isolevel )
+            .onChange( function(){
+                fragfitPreset.surfaceRepr.setParameters( {
+                    isolevel: isolevelNumber.getValue()
+                } );
+            } );
+
+        // Wireframe
+
+        var wireframeCheckbox = new UI.Checkbox( wireframe )
+            .onChange( function(){
+                fragfitPreset.surfaceRepr.setParameters( {
+                    wireframe: wireframeCheckbox.getValue()
+                } );
+            } );
+
+        // Linker list
+
+        var json = data[ "json" ];
+        var items = Object.keys( json );
+
+        var generatorFn = function( index ) {
+            var key = items[ index ];
+            var row = json[ key ];
+            var panel = new UI.Panel();
+            var margin = "10px"
+            panel.add(
+                new UI.Text()
+                    .setValue( key )
+                    .setWidth( "25px" )
+                    .setTextAlign( "right" )
+                    .setMarginRight( margin ),
+                new UI.Text()
+                    .setValue( row[ 0 ].toFixed(2) )
+                    .setMarginRight( margin ),
+                new UI.Text()
+                    .setValue( row[ 1 ].toFixed(2) )
+                    .setMarginRight( margin ),
+                new UI.Text()
+                    .setValue( row[ 2 ].toFixed(2) )
+                    .setMarginRight( margin ),
+                new UI.Text()
+                    .setValue( row[ 4 ] )
+                    .setWidth( "35px" )
+                    .setMarginRight( margin ),
+                new UI.Text()
+                    .setValue( row[ 5 ] )
+                    .setWidth( "15px" )
+                    .setTextAlign( "right" )
+                    .setMarginRight( margin ),
+                new UI.Text()
+                    .setValue( row[ 3 ] )
+            );
+            if( selectedLinker === index ){
+                panel.dom.classList.add( "highlight" )
+            }
+            panel
+                .setCursor( "pointer" )
+                .onClick( function(){
+                    console.log( index )
+                    selectedLinker = index;
+                    fragfitPreset.backboneRepr.setSelection(
+                        "/" + index
+                    );
+                    virtualList.redraw()
+                } )
+            return panel.dom;
+        };
+
+        var virtualList = new UI.VirtualList(
+                items, 18, 400, generatorFn
+            )
+            .setWidth( "100%" )
+            .setMarginTop( "5px" );
+
+        //
+
+        container.add(
+            new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
+            isolevelNumber,
+            new UI.Break(),
+            new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
+            wireframeCheckbox,
+            new UI.Break(),
+            new UI.Break(),
+            virtualList
+        );
 
     }
 
@@ -150,7 +256,9 @@ var FragfitWidget = function( stage ){
         description,
         new UI.Break(),
         exampleBtn.setMarginRight( "10px" ),
-        infoText
+        infoText,
+        new UI.Break(),
+        new UI.Break()
     );
 
     return container;

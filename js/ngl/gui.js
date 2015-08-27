@@ -572,7 +572,7 @@ NGL.MenubarPluginsWidget = function( stage ){
     var menuConfig = [];
 
     var plugins = [
-        "apbs", "crosslink", "job"
+        "apbs", "crosslink", "job", "fragfit"
     ];
 
     plugins.forEach( function( name ){
