@@ -609,7 +609,7 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
     function createRow( i ){
         var item = generatorFn( i );
         item.classList.add( 'VirtualListRow' );
-        item.style.position = 'absolute';
+        item.style.height = itemHeight + 'px';
         item.style.top = ( i * itemHeight ) + 'px';
         return item;
     }

@@ -325,6 +325,15 @@ input[type=range]:focus:after {
     cursor: col-resize;
 }
 
+/* virtual list */
+
+.VirtualListRow {
+    position: absolute;
+    overflow: hidden;
+    white-space: nowrap;
+    display: inline-block;
+}
+
 /* id */
 
 #viewport {
@@ -414,7 +423,7 @@ input[type=range]:focus:after {
         position: absolute;
         overflow: auto;
         right: 0px;
-        width: 300px;
+        width: 100%;
     }
 
 #toolbar {
