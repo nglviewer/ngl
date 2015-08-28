@@ -23,20 +23,21 @@ NGL.Examples = {
         "trajectory": function( stage ){
 
             stage.loadFile( "data://md.gro", {
-                onLoad: function( o ){
 
-                    o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
-                    o.addRepresentation( "cartoon", { sele: "protein" } );
-                    // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
-                    o.centerView();
-
-                    o.addTrajectory( "__example__/md.xtc" );
-
-                },
                 sele: "protein or na or cl"
+
+            } ).then( function( o ){
+
+                o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
+                o.addRepresentation( "cartoon", { sele: "protein" } );
+                // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
+                o.centerView();
+
+                o.addTrajectory( "__example__/md.xtc" );
+
             } );
 
-            stage.loadFile( "data://md.gro", function( o ){
+            stage.loadFile( "data://md.gro" ).then( function( o ){
 
                 o.addRepresentation( "backbone", { sele: "protein", color: "ss" } );
 
@@ -46,7 +47,7 @@ NGL.Examples = {
 
         "trr_trajectory": function( stage ){
 
-            stage.loadFile( "data://md.gro", function( o ){
+            stage.loadFile( "data://md.gro" ).then( function( o ){
 
                 o.addRepresentation( "line" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -60,7 +61,7 @@ NGL.Examples = {
 
         "dcd_trajectory": function( stage ){
 
-            stage.loadFile( "data://ala3.pdb", function( o ){
+            stage.loadFile( "data://ala3.pdb" ).then( function( o ){
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -79,7 +80,7 @@ NGL.Examples = {
 
         "netcdf_trajectory": function( stage ){
 
-            stage.loadFile( "data://DPDP.pdb", function( o ){
+            stage.loadFile( "data://DPDP.pdb" ).then( function( o ){
 
                 o.addRepresentation( "licorice" );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -98,7 +99,7 @@ NGL.Examples = {
 
         "anim_trajectory": function( stage ){
 
-            stage.loadFile( "data://md.gro", function( o ){
+            stage.loadFile( "data://md.gro" ).then( function( o ){
 
                 o.addRepresentation( "line", { sele: "not hydrogen and protein" } );
                 o.addRepresentation( "cartoon", { sele: "protein" } );
@@ -123,25 +124,21 @@ NGL.Examples = {
         "gro_trajectory": function( stage ){
 
             stage.loadFile( "data://md_1u19_trj.gro", {
-                onLoad: function( o ){
-
-                    o.addTrajectory();
-
-                    o.addRepresentation( "cartoon" );
-                    o.addRepresentation( "line", {
-                        sele: "not hydrogen and sidechainAttached"
-                    } );
-                    o.centerView();
-
-                },
                 asTrajectory: true
+            } ).then( function( o ){
+                o.addTrajectory();
+                o.addRepresentation( "cartoon" );
+                o.addRepresentation( "line", {
+                    sele: "not hydrogen and sidechainAttached"
+                } );
+                o.centerView();
             } );
 
         },
 
         "3pqr": function( stage ){
 
-            stage.loadFile( "data://3pqr.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
                 o.addRepresentation( "cartoon", {
                     color: "residueindex", aspectRatio: 4, scale: 0.5
@@ -180,7 +177,7 @@ NGL.Examples = {
 
         "1blu": function( stage ){
 
-            stage.loadFile( "data://1blu.pdb", function( o ){
+            stage.loadFile( "data://1blu.pdb" ).then( function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "backbone", {
@@ -197,38 +194,29 @@ NGL.Examples = {
         "multi_model": function( stage ){
 
             stage.loadFile( "data://1LVZ.pdb", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "cartoon", { sele: "*" } );
-                    // o.addRepresentation( "licorice", { sele: "*" } );
-                    o.centerView();
-
-                    // o.addTrajectory();
-
-                },
-                firstModelOnly: true
+                firstModelOnly: true,
                 // asTrajectory: true
+            } ).then( function( o ){
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                // o.addRepresentation( "licorice", { sele: "*" } );
+                o.centerView();
+                // o.addTrajectory();
             } );
 
-            // stage.loadFile( "data://md_ascii_trj.gro", function( o ){
             stage.loadFile( "data://md_1u19_trj.gro", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "cartoon", { sele: "*" } );
-                    // o.addRepresentation( "licorice", { sele: "*" } );
-                    o.centerView();
-
-                    o.addTrajectory();
-
-                },
                 asTrajectory: true
+            } ).then( function( o ){
+                o.addRepresentation( "cartoon", { sele: "*" } );
+                // o.addRepresentation( "licorice", { sele: "*" } );
+                o.centerView();
+                o.addTrajectory();
             } );
 
         },
 
         "multi_struc": function( stage ){
 
-            stage.loadFile( "data://1crn.pdb", function( o ){
+            stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -236,7 +224,7 @@ NGL.Examples = {
 
             } );
 
-            stage.loadFile( "data://3pqr.pdb", function( o ){
+            stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
                 o.addRepresentation( "cartoon", { sele: "*" } );
                 o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -248,52 +236,62 @@ NGL.Examples = {
 
         "superpose": function( stage ){
 
-            stage.loadFile( "data://1u19.pdb", {
-                onLoad: function( o1 ){
+            var s = "1-320:A";
 
-                    var s = "1-320:A";
+            Promise.all( [
 
-                    o1.addRepresentation( "cartoon", { sele: s } );
-                    o1.addRepresentation( "ball+stick", { sele: s } );
+                stage.loadFile( "data://1u19.pdb", {
+                    sele: ":A"
+                } ).then( function( o ){
+                    o.addRepresentation( "cartoon", { sele: s } );
+                    o.addRepresentation( "ball+stick", { sele: s } );
+                    return o;
+                } ),
 
-                    stage.loadFile( "data://3dqb.pdb", function( o2 ){
+                stage.loadFile( "data://3dqb.pdb", {
+                    sele: ":A"
+                } ).then( function( o ){
+                    o.addRepresentation( "cartoon", { sele: s } );
+                    o.addRepresentation( "licorice", { sele: s } );
+                    return o;
+                } )
 
-                        o2.addRepresentation( "cartoon", { sele: s } );
-                        o2.addRepresentation( "licorice", { sele: s } );
+            ] ).then( function( ol ){
 
-                        o1.superpose( o2, false, s );
-                        o1.centerView( true, ":A" );
+                ol[ 0 ].superpose( ol[ 1 ], false, s );
+                ol[ 0 ].centerView( true, ":A" );
 
-                    }, { sele: ":A" } );
-
-                },
-                sele: ":A"
             } );
 
         },
 
         "alignment": function( stage ){
 
-            stage.loadFile( "data://3dqb.pdb", function( o1 ){
+            Promise.all( [
 
-                o1.addRepresentation( "cartoon" );
-                o1.addRepresentation( "ball+stick", { sele: "hetero" } );
-                o1.centerView();
+                stage.loadFile( "data://3dqb.pdb", {
+                    assembly: "AU"
+                } ).then( function( o ){
+                    o.addRepresentation( "cartoon" );
+                    o.addRepresentation( "ball+stick", { sele: "hetero" } );
+                    o.centerView();
+                    return o;
+                } ),
 
-                stage.loadFile( "data://3sn6.pdb", function( o2 ){
+                stage.loadFile( "data://3sn6.pdb", function( o ){
+                    o.addRepresentation( "cartoon" );
+                    o.addRepresentation( "ball+stick", { sele: "hetero" } );
+                    o.centerView();
+                    return o;
+                } )
 
-                    o2.addRepresentation( "cartoon" );
-                    o2.addRepresentation( "ball+stick", { sele: "hetero" } );
+            ] ).then( function( ol ){
 
-                    var s1 = o1.structure;
-                    var s2 = o2.structure;
-
-                    NGL.superpose( s1, s2, true );
-
-                    o1.updateRepresentations();
-                    o1.centerView();
-
-                } );
+                var s1 = ol[ 0 ].structure;
+                var s2 = ol[ 1 ].structure;
+                NGL.superpose( s1, s2, true );
+                ol[ 0 ].updateRepresentations();
+                ol[ 0 ].centerView();
 
             } );
 
@@ -301,24 +299,27 @@ NGL.Examples = {
 
         "alignment2": function( stage ){
 
-            stage.loadFile( "data://1gzm.pdb", function( o1 ){
+            Promise.all( [
 
-                o1.addRepresentation( "cartoon" );
-                o1.centerView();
+                stage.loadFile( "data://1gzm.pdb" ).then( function( o ){
+                    o.addRepresentation( "cartoon" );
+                    o.centerView();
+                    return o;
+                } ),
 
-                stage.loadFile( "data://1u19.pdb", function( o2 ){
+                stage.loadFile( "data://1u19.pdb" ).then( function( o ){
+                    o.addRepresentation( "cartoon" );
+                    o.centerView();
+                    return o;
+                } )
 
-                    o2.addRepresentation( "cartoon" );
+            ] ).then( function( ol ){
 
-                    var s1 = o1.structure;
-                    var s2 = o2.structure;
-
-                    NGL.superpose( s1, s2, true );
-
-                    o1.updateRepresentations();
-                    o1.centerView();
-
-                } );
+                var s1 = ol[ 0 ].structure;
+                var s2 = ol[ 1 ].structure;
+                NGL.superpose( s1, s2, true );
+                ol[ 0 ].updateRepresentations();
+                ol[ 0 ].centerView();
 
             } );
 

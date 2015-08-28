@@ -183,11 +183,12 @@ var ApbsLoader = function( stage ){
         var initComp = function( comp ){
             comp.requestGuiVisibility( false );
             comp.centerView();
+            return comp;
         }
 
         var promiseList = [
-            stage.loadFile( pqr, { ext: "pqr", onLoad: initComp } ),
-            stage.loadFile( dx, { ext: "dx", onLoad: initComp } )
+            stage.loadFile( pqr, { ext: "pqr" } ).then( initComp ),
+            stage.loadFile( dx, { ext: "dx" } ).then( initComp )
         ];
 
         Promise.all( promiseList ).then( function( compList ){
