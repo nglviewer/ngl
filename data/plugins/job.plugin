@@ -1,0 +1,9 @@
+{
+	"name": "Job",
+	"description": "...",
+	"version": "0.1",
+	"files": [
+		"job.ngl"
+	],
+	"source": "serverWidget();"
+}

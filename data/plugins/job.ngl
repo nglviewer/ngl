@@ -42,7 +42,7 @@ var Server = function( url, params ){
 
     this.addJob = function( name ){
 
-        var job = new Job( name, server );
+        var job = new Job( name, this );
 
         this.jobs[ name ] = job;
         this.signals.jobAdded.dispatch();
@@ -64,7 +64,7 @@ var Server = function( url, params ){
             var p = tools.data[ name ];
 
             this.tools[ name ] = new Tool(
-                name, server, p.args, p.docu
+                name, this, p.args, p.docu
             );
 
         }
@@ -446,11 +446,15 @@ var JobWidget = function( job ){
 
 //
 
-var server = new Server( "http://alexpc/job/" );
+function serverWidget(){
 
-var serverWidget = new ServerWidget( server );
-panel.add( serverWidget );
+    var server = new Server( "http://localhost/job/" );
 
-server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
-server.addJob( "apbs_e3d07158-7e85-4133-9677-829d37e0d030" );
-server.addJob( "apbs_2c131393-8c87-4362-9061-e1d51561e828" );
+    var serverWidget = new ServerWidget( server );
+    panel.add( serverWidget );
+
+    server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
+    server.addJob( "apbs_e3d07158-7e85-4133-9677-829d37e0d030" );
+    server.addJob( "apbs_2c131393-8c87-4362-9061-e1d51561e828" );
+
+}

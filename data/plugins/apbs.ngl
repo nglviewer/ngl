@@ -103,11 +103,70 @@ var ApbsPreset = function( stage, pqrComp, dxComp, params ){
 };
 
 
-var ApbsWidget = function( stage ){
+var ApbsWidget = function( stage, pqrComp, dxComp ){
+
+    var isolevel = 0.5;
+
+    var container = new UI.Panel();
+
+    var apbsPreset = new ApbsPreset(
+        stage, pqrComp, dxComp, {
+            isolevel: isolevel
+        }
+    );
+
+    var isolevelNumber = new UI.Number( isolevel )
+        .onChange( function(){
+            apbsPreset.setIsosurfParams( {
+                isolevel: isolevelNumber.getValue()
+            } );
+        } );
+
+    var isolevelSelect = new UI.Select()
+        .setOptions( {
+            "0.1": 0.1, "0.2": 0.2, "0.3": 0.3,
+            "0.4": 0.4, "0.5": 0.5, "0.7": 0.7,
+            "1.0": 1.0, "2.0": 2.0, "3.0": 3.0,
+            "4.0": 4.0, "5.0": 5.0, "7.0": 7.0,
+            "10.0": 10.0, "20.0": 20.0, "30.0": 30.0,
+        } )
+        .setValue( isolevel )
+        .onChange( function(){
+            apbsPreset.setIsosurfParams( {
+                isolevel: parseFloat( isolevelSelect.getValue() )
+            } );
+        } );
+
+    container.add(
+        new UI.Text( "isolevel" ).setMarginRight( "10px" ),
+        isolevelNumber,
+        // isolevelSelect,
+        new UI.Break(),
+        uiVisibilityButton(
+            "electrostatic isosurface", apbsPreset.isosurfRepr
+        ),
+        new UI.Break(),
+        uiVisibilityButton(
+            "molecular surface", apbsPreset.molsurfRepr
+        ),
+        new UI.Break(),
+        uiVisibilityButton(
+            "cartoon", apbsPreset.cartoonRepr
+        ),
+        new UI.Break(),
+        uiVisibilityButton(
+            "licorice", apbsPreset.licoriceRepr
+        )
+    );
+
+    return container;
+
+};
+
+
+var ApbsLoader = function( stage ){
 
     var compDict = {};
-    var apbsPreset;
-    var isolevel = 0.5;
 
     var container = new UI.Panel();
 
@@ -118,10 +177,6 @@ var ApbsWidget = function( stage ){
         function(){ loadFiles(); }
     );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
-
-    //
-
-    var controls = new UI.Panel();
 
     //
 
@@ -137,7 +192,6 @@ var ApbsWidget = function( stage ){
 
         infoText.setValue( "" );
         compDict = {};
-        controls.clear();
 
         stage.loadFile( pqr, {
             ext: "pqr",
@@ -145,7 +199,7 @@ var ApbsWidget = function( stage ){
                 comp.requestGuiVisibility( false );
                 comp.centerView();
                 compDict[ "pqr" ] = comp;
-                initPreset();
+                initWidget();
             }
         } );
 
@@ -155,7 +209,7 @@ var ApbsWidget = function( stage ){
                 comp.requestGuiVisibility( false );
                 comp.centerView();
                 compDict[ "dx" ] = comp;
-                initPreset();
+                initWidget();
             }
         } );
 
@@ -170,59 +224,15 @@ var ApbsWidget = function( stage ){
 
     }
 
-    function initPreset(){
+    function initWidget(){
 
         if( !compDict[ "pqr" ] || !compDict[ "dx" ] ) return;
 
-        apbsPreset = new ApbsPreset(
-            stage, compDict[ "pqr" ], compDict[ "dx" ], {
-                isolevel: isolevel
-            }
+        apbsWidget = new ApbsWidget(
+            stage, compDict[ "pqr" ], compDict[ "dx" ]
         );
 
-        var isolevelNumber = new UI.Number( isolevel )
-            .onChange( function(){
-                apbsPreset.setIsosurfParams( {
-                    isolevel: isolevelNumber.getValue()
-                } );
-            } );
-
-        var isolevelSelect = new UI.Select()
-            .setOptions( {
-                "0.1": 0.1, "0.2": 0.2, "0.3": 0.3,
-                "0.4": 0.4, "0.5": 0.5, "0.7": 0.7,
-                "1.0": 1.0, "2.0": 2.0, "3.0": 3.0,
-                "4.0": 4.0, "5.0": 5.0, "7.0": 7.0,
-                "10.0": 10.0, "20.0": 20.0, "30.0": 30.0,
-            } )
-            .setValue( isolevel )
-            .onChange( function(){
-                apbsPreset.setIsosurfParams( {
-                    isolevel: parseFloat( isolevelSelect.getValue() )
-                } );
-            } );
-
-        controls.add(
-            new UI.Text( "isolevel" ).setMarginRight( "10px" ),
-            isolevelNumber,
-            // isolevelSelect,
-            new UI.Break(),
-            uiVisibilityButton(
-                "electrostatic isosurface", apbsPreset.isosurfRepr
-            ),
-            new UI.Break(),
-            uiVisibilityButton(
-                "molecular surface", apbsPreset.molsurfRepr
-            ),
-            new UI.Break(),
-            uiVisibilityButton(
-                "cartoon", apbsPreset.cartoonRepr
-            ),
-            new UI.Break(),
-            uiVisibilityButton(
-                "licorice", apbsPreset.licoriceRepr
-            )
-        );
+        panel.add( apbsWidget );
 
     }
 
@@ -244,10 +254,7 @@ var ApbsWidget = function( stage ){
         new UI.Break(),
         loadBtn.setMarginRight( "10px" ),
         exampleBtn.setMarginRight( "10px" ),
-        infoText,
-        new UI.Break(),
-        new UI.Break(),
-        controls
+        infoText
     );
 
     return container;
@@ -256,5 +263,9 @@ var ApbsWidget = function( stage ){
 
 //
 
-var apbsWidget = new ApbsWidget( stage );
-panel.add( apbsWidget );
+function apbsLoader(){
+
+    var apbsLoader = new ApbsLoader( stage );
+    panel.add( apbsLoader );
+
+}

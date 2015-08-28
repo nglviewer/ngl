@@ -267,5 +267,9 @@ var FragfitWidget = function( stage ){
 
 //
 
-var fragfitWidget = new FragfitWidget( stage );
-panel.add( fragfitWidget );
+function fragfitLoader(){
+
+    var fragfitWidget = new FragfitWidget( stage );
+    panel.add( fragfitWidget );
+
+}
