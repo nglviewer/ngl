@@ -1010,7 +1010,7 @@ if( typeof importScripts === 'function' ){
             "../three/loaders/PLYLoader.js",
 
             "../lib/async.js",
-            "../lib/promise-6.0.0.min.js",
+            "../lib/promise.min.js",
             "../lib/sprintf.min.js",
             "../lib/jszip.min.js",
             "../lib/pako.min.js",
