@@ -18,7 +18,9 @@ NGL.Loader = function( src, params ){
     this.compressed = p.compressed || false;
     this.name = p.name || "";
     this.ext = p.ext || "";
+    this.dir = p.dir || "";
     this.path = p.path || "";
+    this.protocol = p.protocol || "";
 
     this.params = params;
 
@@ -116,6 +118,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "obj": NGL.ObjParser,
 
             "txt": NGL.TextParser,
+            "text": NGL.TextParser,
             "csv": NGL.CsvParser,
             "json": NGL.JsonParser
 
@@ -161,6 +164,60 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 } );
 
 
+NGL.PluginLoader = function( src, params ){
+
+    NGL.Loader.call( this, src, params );
+
+};
+
+NGL.PluginLoader.prototype = NGL.createObject(
+
+    NGL.Loader.prototype, {
+
+    constructor: NGL.PluginLoader,
+
+    _load: function(){
+
+        var basePath = this.protocol + "://" + this.dir;
+
+        this.streamer.read( function(){
+
+            var text = NGL.Uint8ToString( this.streamer.data );
+            var manifest = JSON.parse( text );
+            var promiseList = [];
+
+            manifest.files.map( function( name ){
+
+                promiseList.push( new Promise( function( resolve, reject ){
+
+                    NGL.autoLoad( basePath + name, {
+                        ext: "text",
+                        onLoad: function( data ){ resolve( data ); }
+                    } );
+
+                } ) );
+
+            } );
+
+            Promise.all( promiseList ).then( function( dataList ){
+
+                var text = dataList.reduce( function( text, value ){
+                    return text + "\n\n" + value.data;
+                }, "" )
+                text += manifest.source || "";
+
+                var script = new NGL.Script( text, this.name, this.path );
+                this.onload( script );
+
+            }.bind( this ) );
+
+        }.bind( this ) );
+
+    }
+
+} );
+
+
 NGL.autoLoad = function(){
 
     var loaders = {
@@ -185,10 +242,12 @@ NGL.autoLoad = function(){
         "ply": NGL.ParserLoader,
 
         "txt": NGL.ParserLoader,
+        "text": NGL.ParserLoader,
         "csv": NGL.ParserLoader,
         "json": NGL.ParserLoader,
 
         "ngl": NGL.ScriptLoader,
+        "plugin": NGL.PluginLoader,
 
     };
 
@@ -200,6 +259,7 @@ NGL.autoLoad = function(){
         var path = fileInfo.path;
         var name = fileInfo.name;
         var ext = fileInfo.ext;
+        var dir = fileInfo.dir;
         var compressed = fileInfo.compressed;
         var protocol = fileInfo.protocol;
 
@@ -217,7 +277,7 @@ NGL.autoLoad = function(){
         //
 
         var _onLoad;
-        var p = params || {};
+        var p = Object.assign( {}, params );
 
         // allow loadFile( path, onLoad ) method signature
         if( typeof params === "function" ){
@@ -235,6 +295,8 @@ NGL.autoLoad = function(){
         p.ext = p.ext !== undefined ? p.ext : ext;
         p.compressed = p.compressed !== undefined ? p.compressed : compressed;
         p.path = p.path !== undefined ? p.path : path;
+        p.protocol = protocol;
+        p.dir = dir;
 
         p.onLoad = function( object ){
 

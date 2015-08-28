@@ -582,7 +582,7 @@ NGL.MenubarPluginsWidget = function( stage ){
             createOption( name, function(){
 
                 stage.loadFile(
-                    "data://plugins/" + name + ".ngl",
+                    "data://plugins/" + name + ".plugin",
                     { name: name + " plugin" }
                 );
 

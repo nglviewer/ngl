@@ -117,7 +117,7 @@ NGL.Stage.prototype = {
     loadFile: function( path, params ){
 
         var _onLoad;
-        var p = params || {};
+        var p = Object.assign( {}, params );
 
         // allow loadFile( path, onLoad ) method signature
         if( typeof params === "function" ){

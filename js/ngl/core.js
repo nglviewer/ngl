@@ -696,6 +696,8 @@ NGL.getFileInfo = function( file ){
         path = protocolMatch[ 2 ];
     }
 
+    var dir = path.substring( 0, path.lastIndexOf('/') + 1 );
+
     if( compressedExtList.indexOf( ext ) !== -1 ){
 
         compressed = ext;
@@ -717,6 +719,7 @@ NGL.getFileInfo = function( file ){
         "name": name,
         "ext": ext,
         "base": base,
+        "dir": dir,
         "compressed": compressed,
         "protocol": protocol
     };
