@@ -180,29 +180,15 @@ var ApbsLoader = function( stage ){
 
         infoText.setValue( "loading..." );
 
-        var promiseList = [];
+        var initComp = function( comp ){
+            comp.requestGuiVisibility( false );
+            comp.centerView();
+        }
 
-        promiseList.push( new Promise( function( resolve, reject ){
-            stage.loadFile( pqr, {
-                ext: "pqr",
-                onLoad: function( comp ){
-                    comp.requestGuiVisibility( false );
-                    comp.centerView();
-                    resolve( comp );
-                }
-            } )
-        } ) );
-
-        promiseList.push( new Promise( function( resolve, reject ){
-            stage.loadFile( dx, {
-                ext: "dx",
-                onLoad: function( comp ){
-                    comp.requestGuiVisibility( false );
-                    comp.centerView();
-                    resolve( comp );
-                }
-            } )
-        } ) );
+        var promiseList = [
+            stage.loadFile( pqr, { ext: "pqr", onLoad: initComp } ),
+            stage.loadFile( dx, { ext: "dx", onLoad: initComp } )
+        ];
 
         Promise.all( promiseList ).then( function( compList ){
             infoText.setValue( "" );

@@ -188,14 +188,9 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
             manifest.files.map( function( name ){
 
-                promiseList.push( new Promise( function( resolve, reject ){
-
-                    NGL.autoLoad( basePath + name, {
-                        ext: "text",
-                        onLoad: function( data ){ resolve( data ); }
-                    } );
-
-                } ) );
+                promiseList.push(
+                    NGL.autoLoad( basePath + name, { ext: "text" } )
+                );
 
             } );
 
@@ -203,7 +198,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
                 var text = dataList.reduce( function( text, value ){
                     return text + "\n\n" + value.data;
-                }, "" )
+                }, "" );
                 text += manifest.source || "";
 
                 var script = new NGL.Script( text, this.name, this.path );
@@ -218,43 +213,43 @@ NGL.PluginLoader.prototype = NGL.createObject(
 } );
 
 
-NGL.autoLoad = function(){
+NGL.loaderMap = {
 
-    var loaders = {
+    "gro": NGL.ParserLoader,
+    "pdb": NGL.ParserLoader,
+    "ent": NGL.ParserLoader,
+    "pqr": NGL.ParserLoader,
+    "cif": NGL.ParserLoader,
+    "mcif": NGL.ParserLoader,
+    "mmcif": NGL.ParserLoader,
+    "sdf": NGL.ParserLoader,
+    "mol2": NGL.ParserLoader,
 
-        "gro": NGL.ParserLoader,
-        "pdb": NGL.ParserLoader,
-        "ent": NGL.ParserLoader,
-        "pqr": NGL.ParserLoader,
-        "cif": NGL.ParserLoader,
-        "mcif": NGL.ParserLoader,
-        "mmcif": NGL.ParserLoader,
-        "sdf": NGL.ParserLoader,
-        "mol2": NGL.ParserLoader,
+    "mrc": NGL.ParserLoader,
+    "ccp4": NGL.ParserLoader,
+    "map": NGL.ParserLoader,
+    "cube": NGL.ParserLoader,
+    "dx": NGL.ParserLoader,
 
-        "mrc": NGL.ParserLoader,
-        "ccp4": NGL.ParserLoader,
-        "map": NGL.ParserLoader,
-        "cube": NGL.ParserLoader,
-        "dx": NGL.ParserLoader,
+    "obj": NGL.ParserLoader,
+    "ply": NGL.ParserLoader,
 
-        "obj": NGL.ParserLoader,
-        "ply": NGL.ParserLoader,
+    "txt": NGL.ParserLoader,
+    "text": NGL.ParserLoader,
+    "csv": NGL.ParserLoader,
+    "json": NGL.ParserLoader,
 
-        "txt": NGL.ParserLoader,
-        "text": NGL.ParserLoader,
-        "csv": NGL.ParserLoader,
-        "json": NGL.ParserLoader,
+    "ngl": NGL.ScriptLoader,
+    "plugin": NGL.PluginLoader,
 
-        "ngl": NGL.ScriptLoader,
-        "plugin": NGL.PluginLoader,
+};
 
-    };
 
-    return function( file, params ){
+NGL.autoLoad = function( file, params ){
+
+    return new Promise( function( resolve, reject ){
 
         var fileInfo = NGL.getFileInfo( file );
-        // NGL.log( fileInfo );
 
         var path = fileInfo.path;
         var name = fileInfo.name;
@@ -302,6 +297,7 @@ NGL.autoLoad = function(){
 
             // relay params
             if( typeof _onLoad === "function" ) _onLoad( object, p );
+            resolve( object, p );
 
         };
 
@@ -329,9 +325,9 @@ NGL.autoLoad = function(){
 
         //
 
-        if( p.ext in loaders ){
+        if( p.ext in NGL.loaderMap ){
 
-            var loader = new loaders[ p.ext ]( src, p );
+            var loader = new NGL.loaderMap[ p.ext ]( src, p );
 
             loader.load();
 
@@ -353,6 +349,6 @@ NGL.autoLoad = function(){
 
         }
 
-    }
+    } );
 
-}();
+};

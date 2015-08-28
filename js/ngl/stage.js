@@ -131,59 +131,39 @@ NGL.Stage.prototype = {
 
         }
 
-        var component;
+        delete p.onLoad;
 
-        p.onLoad = function( object, _params ){
+        var component = new NGL.Component( this, p );
+        component.name = NGL.getFileInfo( path ).name;
+        this.addComponent( component );
+
+        var onLoadFn = function( object, _params ){
 
             // check for placeholder component
             if( component ){
-
                 this.removeComponent( component );
-
             }
 
             component = this.addComponentFromObject( object, _params );
 
             if( typeof _onLoad === "function" ){
-
                 _onLoad( component );
-
             }else{
-
                 this.defaultFileRepresentation( component );
-
             }
+
+            return component;
 
         }.bind( this );
 
-        var _e;
-        var _onError = p.onError;
-
-        p.onError = function( e ){
-
-            _e = e;
+        var onErrorFn = function( e ){
 
             if( component ) component.setStatus( e );
-
-            if( typeof _onError === "function" ) _onError( e );
-
-        };
-
-        NGL.autoLoad( path, p );
-
-        // ensure that component isn't ready yet
-        if( !component ){
-
-            component = new NGL.Component( this, p );
-            var path2 = ( path instanceof File ) ? path.name : path;
-            component.name = path2.replace( /^.*[\\\/]/, '' );
-
-            this.addComponent( component );
+            if( typeof p.onError === "function" ) p.onError( e );
 
         }
 
-        // set error status when already known
-        if( _e ) component.setStatus( _e );
+        return NGL.autoLoad( path, p ).then( onLoadFn, onErrorFn );
 
     },
 
