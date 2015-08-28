@@ -166,73 +166,74 @@ var ApbsWidget = function( stage, pqrComp, dxComp ){
 
 var ApbsLoader = function( stage ){
 
-    var compDict = {};
-
     var container = new UI.Panel();
 
     var pqrFile = new UI.File().setWidth( "200px" );
     var dxFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
-    var loadBtn = new UI.Button( "Load" ).onClick(
-        function(){ loadFiles(); }
-    );
+    var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
     //
 
-    function loadFiles( pqr, dx ){
+    function load( pqr, dx ){
 
-        pqr = pqr || pqrFile.getFiles()[ 0 ];
-        dx = dx || dxFile.getFiles()[ 0 ];
+        infoText.setValue( "loading..." );
+
+        var promiseList = [];
+
+        promiseList.push( new Promise( function( resolve, reject ){
+            stage.loadFile( pqr, {
+                ext: "pqr",
+                onLoad: function( comp ){
+                    comp.requestGuiVisibility( false );
+                    comp.centerView();
+                    resolve( comp );
+                }
+            } )
+        } ) );
+
+        promiseList.push( new Promise( function( resolve, reject ){
+            stage.loadFile( dx, {
+                ext: "dx",
+                onLoad: function( comp ){
+                    comp.requestGuiVisibility( false );
+                    comp.centerView();
+                    resolve( comp );
+                }
+            } )
+        } ) );
+
+        Promise.all( promiseList ).then( function( compList ){
+            infoText.setValue( "" );
+            apbsWidget = new ApbsWidget(
+                stage, compList[ 0 ], compList[ 1 ]
+            );
+            panel.add( apbsWidget );
+        } );
+
+    }
+
+    function loadFiles(){
+
+        var pqr = pqrFile.getFiles()[ 0 ];
+        var dx = dxFile.getFiles()[ 0 ];
 
         if( !pqr || !dx ){
             infoText.setValue( "please supply PQR and DX files" );
             return;
         }
 
-        infoText.setValue( "" );
-        compDict = {};
-
-        stage.loadFile( pqr, {
-            ext: "pqr",
-            onLoad: function( comp ){
-                comp.requestGuiVisibility( false );
-                comp.centerView();
-                compDict[ "pqr" ] = comp;
-                initWidget();
-            }
-        } );
-
-        stage.loadFile( dx, {
-            ext: "dx",
-            onLoad: function( comp ){
-                comp.requestGuiVisibility( false );
-                comp.centerView();
-                compDict[ "dx" ] = comp;
-                initWidget();
-            }
-        } );
+        load( pqr, dx );
 
     }
 
     function loadExample(){
 
-        loadFiles(
+        load(
             "data://1crn_apbs.pqr",
             "data://1crn_apbs_pot.dx.gz"
         );
-
-    }
-
-    function initWidget(){
-
-        if( !compDict[ "pqr" ] || !compDict[ "dx" ] ) return;
-
-        apbsWidget = new ApbsWidget(
-            stage, compDict[ "pqr" ], compDict[ "dx" ]
-        );
-
-        panel.add( apbsWidget );
 
     }
 
