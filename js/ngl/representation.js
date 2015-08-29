@@ -2726,12 +2726,12 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
+        // NGL.time( "cartoon repr update" );
+
         what = what || {};
 
         var i = 0;
         var n = this.fiberList.length;
-
-        // NGL.time( "cartoon repr update" );
 
         for( i = 0; i < n; ++i ){
 
@@ -2773,15 +2773,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-            // if( NGL.debug ){
-
-            //     this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
-            //     this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
-            //     this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
-
-            // }
-
-        };
+        }
 
         // NGL.timeEnd( "cartoon repr update" );
 
@@ -3362,6 +3354,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
+        // NGL.time( "helixorient repr update" );
+
         what = what || {};
 
         var j;
@@ -3398,7 +3392,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ j ].setAttributes( bufferData );
 
-        };
+        }
+
+        // NGL.timeEnd( "helixorient repr update" );
 
     }
 
@@ -3795,6 +3791,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
+        // NGL.time( "rope repr update" );
+
         what = what || {};
 
         var i = 0;
@@ -3843,7 +3841,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-        };
+        }
+
+        // NGL.timeEnd( "rope repr update" );
 
     },
 

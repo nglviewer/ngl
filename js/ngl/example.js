@@ -128,6 +128,8 @@ NGL.Examples = {
             } ).then( function( o ){
                 o.addTrajectory();
                 o.addRepresentation( "cartoon" );
+                o.addRepresentation( "helixorient" );
+                o.addRepresentation( "rope" );
                 o.addRepresentation( "line", {
                     sele: "not hydrogen and sidechainAttached"
                 } );

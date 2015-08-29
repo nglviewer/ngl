@@ -490,11 +490,15 @@ NGL.Helixorient.prototype = {
         var i, j, a, r, fr, fa;
         var residues = [];
         var n = center.length / 3;
+        var fiber = this.fiber;
+
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
         for( i = 0; i < n; ++i ){
 
-            fr = this.fiber.residues[ i ];
-            fa = fr.getTraceAtom();
+            fa = trace[ i ];
+            fr = fa.residue;
 
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );  // FIXME get rid of globalindex
@@ -546,7 +550,7 @@ NGL.Helixorient.prototype = {
 
         }
 
-        var f = new NGL.Fiber( residues, this.fiber.structure );
+        var f = new NGL.Fiber( residues, fiber.structure );
 
         return f;
 
@@ -555,29 +559,29 @@ NGL.Helixorient.prototype = {
     getColor: function( params ){
 
         var n = this.size;
+        var fiber = this.fiber;
 
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
         var p = params || {};
-        p.structure = this.fiber.structure;
+        p.structure = fiber.structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        var i = 0;
-        var a, c, pc;
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
-        this.fiber.eachResidue( function( r ){
+        for( var i = 0; i < n; ++i ){
 
-            a = r.getTraceAtom();
+            var a = trace[ i ];
+            var i3 = i * 3;
 
-            colorMaker.atomColorToArray( a, col, i );
-            pickingColorMaker.atomColorToArray( a, pcol, i );
+            colorMaker.atomColorToArray( a, col, i3 );
+            pickingColorMaker.atomColorToArray( a, pcol, i3 );
 
-            i += 3;
-
-        } );
+        }
 
         return {
             "color": col,
@@ -589,23 +593,20 @@ NGL.Helixorient.prototype = {
     getSize: function( type, scale ){
 
         var n = this.size;
+        var fiber = this.fiber;
 
         var size = new Float32Array( n );
 
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        var i = 0;
-        var a;
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
-        this.fiber.eachResidue( function( r ){
+        for( var i = 0; i < n; ++i ){
 
-            a = r.getTraceAtom();
+            size[ i ] = radiusFactory.atomRadius( trace[ i ] );
 
-            size[ i ] = radiusFactory.atomRadius( a );
-
-            i += 1;
-
-        } );
+        }
 
         return {
             "size": size
@@ -647,14 +648,9 @@ NGL.Helixorient.prototype = {
         var _crossdir = new THREE.Vector3();
         var _center = new THREE.Vector3( 0, 0, 0 );
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             j = 3 * i;
-
-            a1 = r1.getTraceAtom();
-            a2 = r2.getTraceAtom();
-            a3 = r3.getTraceAtom();
-            a4 = r4.getTraceAtom();
 
             // ported from GROMACS src/tools/gmx_helixorient.c
 
@@ -707,7 +703,7 @@ NGL.Helixorient.prototype = {
             _prevAxis.copy( _axis );
             _center.copy( v1 );
 
-        } );
+        }, "trace" );
 
         //
 
