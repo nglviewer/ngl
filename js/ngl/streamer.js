@@ -320,6 +320,8 @@ NGL.Streamer.prototype = {
             chunkSize: this.chunkSize,
             newline: this.newline,
 
+
+
         }
 
         if( this.__srcName ){
@@ -412,6 +414,8 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
                     this.onerror( xhr.status );
 
                 }
+
+                throw "NGL.NetworkStreamer._read: " + xhr.status;
 
             }
 

@@ -9,11 +9,7 @@
 
 NGL.Loader = function( src, params ){
 
-    var p = params || {};
-
-    if( typeof p.onLoad === "function" ) this.onload = p.onLoad;
-    if( typeof p.onProgress === "function" ) this.onprogress = p.onProgress;
-    if( typeof p.onError === "function" ) this.onerror = p.onError;
+    var p = Object.assign( {}, params );
 
     this.compressed = p.compressed || false;
     this.name = p.name || "";
@@ -42,8 +38,11 @@ NGL.Loader = function( src, params ){
 
     }
 
-    this.streamer.onerror = this.onError;
-    this.streamer.onprogress = this.onProgress;
+    if( typeof p.onProgress === "function" ){
+
+        this.streamer.onprogress = p.onprogress;
+
+    }
 
 };
 
@@ -51,32 +50,31 @@ NGL.Loader.prototype = {
 
     constructor: NGL.Loader,
 
-    onload: function(){},
-
-    onprogress: function(){},
-
-    onerror: function( e ){
-
-        NGL.error( e );
-
-    },
-
     load: function(){
 
-        try{
+        return new Promise( function( resolve, reject ){
 
-            this._load();
+            this.streamer.onerror = reject;
 
-        }catch( e ){
+            try{
 
-            NGL.error( e );
-            this.onerror( "loading failed" );
+                this._load( resolve, reject );
 
-        }
+            }catch( e ){
+
+                reject( e );
+
+            }
+
+        }.bind( this ) );
 
     },
 
-    _load: function(){}
+    _load: function( resolve, reject ){
+
+        reject( "not implemented" );
+
+    }
 
 };
 
@@ -93,7 +91,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
     constructor: NGL.ParserLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         var parsersClasses = {
 
@@ -128,7 +126,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             this.streamer, this.params
         );
 
-        parser.parseWorker( this.onload );
+        parser.parseWorker( resolve );
 
     }
 
@@ -147,7 +145,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
     constructor: NGL.ScriptLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         this.streamer.read( function(){
 
@@ -155,7 +153,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
             var script = new NGL.Script( text, this.name, this.path );
 
-            this.onload( script );
+            resolve( script );
 
         }.bind( this ) );
 
@@ -176,7 +174,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
     constructor: NGL.PluginLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         var basePath = this.protocol + "://" + this.dir;
 
@@ -202,7 +200,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
                 text += manifest.source || "";
 
                 var script = new NGL.Script( text, this.name, this.path );
-                this.onload( script );
+                resolve( script );
 
             }.bind( this ) );
 
@@ -247,108 +245,79 @@ NGL.loaderMap = {
 
 NGL.autoLoad = function( file, params ){
 
-    return new Promise( function( resolve, reject ){
+    var fileInfo = NGL.getFileInfo( file );
 
-        var fileInfo = NGL.getFileInfo( file );
+    var path = fileInfo.path;
+    var name = fileInfo.name;
+    var ext = fileInfo.ext;
+    var dir = fileInfo.dir;
+    var compressed = fileInfo.compressed;
+    var protocol = fileInfo.protocol;
 
-        var path = fileInfo.path;
-        var name = fileInfo.name;
-        var ext = fileInfo.ext;
-        var dir = fileInfo.dir;
-        var compressed = fileInfo.compressed;
-        var protocol = fileInfo.protocol;
+    if( protocol === "rcsb" ){
 
-        if( protocol === "rcsb" ){
+        // ext = "pdb";
+        // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
+        ext = "cif";
+        compressed = "gz";
+        path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
+        protocol = "http";
 
-            // ext = "pdb";
-            // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
-            ext = "cif";
-            compressed = "gz";
-            path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
-            protocol = "http";
+    }
 
-        }
+    //
 
-        //
+    var p = Object.assign( {}, params );
 
-        var _onLoad;
-        var p = Object.assign( {}, params );
+    // deprecated
+    if( typeof params === "function" ){
+        console.warn( "NGL.autoLoad: function param deprecated" )
+        p = {};
+    }else{
+        if( p.onLoad ) console.warn( "NGL.autoLoad onLoad param deprecated" )
+        if( p.onError ) console.warn( "NGL.autoLoad onError param deprecated" )
+    }
 
-        // allow loadFile( path, onLoad ) method signature
-        if( typeof params === "function" ){
+    p.name = p.name !== undefined ? p.name : name;
+    p.ext = p.ext !== undefined ? p.ext : ext;
+    p.compressed = p.compressed !== undefined ? p.compressed : compressed;
+    p.path = p.path !== undefined ? p.path : path;
+    p.protocol = protocol;
+    p.dir = dir;
 
-            _onLoad = params;
-            p = {};
+    //
 
-        }else{
+    var src;
 
-            _onLoad = p.onLoad;
+    if( file instanceof File ){
 
-        }
+        src = file;
 
-        p.name = p.name !== undefined ? p.name : name;
-        p.ext = p.ext !== undefined ? p.ext : ext;
-        p.compressed = p.compressed !== undefined ? p.compressed : compressed;
-        p.path = p.path !== undefined ? p.path : path;
-        p.protocol = protocol;
-        p.dir = dir;
+    }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
 
-        p.onLoad = function( object ){
+        src = protocol + "://" + path;
 
-            // relay params
-            if( typeof _onLoad === "function" ) _onLoad( object, p );
-            resolve( object, p );
+    }else if( protocol === "data" ){
 
-        };
+        src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
 
-        //
+    }else{
 
-        var src;
+        src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
 
-        if( file instanceof File ){
+    }
 
-            src = file;
+    //
 
-        }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
+    if( p.ext in NGL.loaderMap ){
 
-            src = protocol + "://" + path;
+        var loader = new NGL.loaderMap[ p.ext ]( src, p );
+        return loader.load();
 
-        }else if( protocol === "data" ){
+    }else{
 
-            src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
+        return Promise.reject( "NGL.autoLoading: ext '" + p.ext + "' unknown" );
 
-        }else{
-
-            src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
-
-        }
-
-        //
-
-        if( p.ext in NGL.loaderMap ){
-
-            var loader = new NGL.loaderMap[ p.ext ]( src, p );
-
-            loader.load();
-
-        }else{
-
-            var e = "NGL.autoLoading: ext '" + p.ext + "' unknown";
-
-            if( typeof p.onError === "function" ){
-
-                p.onError( e );
-
-            }else{
-
-                NGL.error( e );
-
-            }
-
-            return null;
-
-        }
-
-    } );
+    }
 
 };
