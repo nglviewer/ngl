@@ -20,8 +20,6 @@ NGL.Widget.prototype = {
 NGL.StageWidget = function( stage ){
 
     var signals = stage.signals;
-    var viewer = stage.viewer;
-    var renderer = viewer.renderer;
 
     //
 
@@ -58,9 +56,9 @@ NGL.StageWidget = function( stage ){
 
     //
 
-    viewer.onWindowResize();
+    stage.handleResize();
     // FIXME hack for ie11
-    setTimeout( function(){ viewer.onWindowResize(); }, 500 );
+    setTimeout( function(){ stage.handleResize(); }, 500 );
 
     //
 
@@ -73,14 +71,24 @@ NGL.StageWidget = function( stage ){
             sidebar.setWidth( window.innerWidth - clientX + "px" );
             viewport.setWidth( clientX + "px" );
             toolbar.setWidth( clientX + "px" );
-            stage.viewer.onWindowResize();
+            stage.handleResize();
         }
-        if( sidebar.dom.getBoundingClientRect().width <= 10 ){
+        var sidebarWidth = sidebar.dom.getBoundingClientRect().width;
+        if( clientX === undefined ){
+            var mainWidth = window.innerWidth - sidebarWidth;
+            viewport.setWidth( mainWidth + "px" );
+            toolbar.setWidth( mainWidth + "px" );
+            stage.handleResize();
+        }
+        if( sidebarWidth <= 10 ){
             minResizeLeft = true;
         }else{
             minResizeLeft = false;
         }
     };
+    handleResizeLeft = NGL.throttle(
+        handleResizeLeft, 50, { leading: true, trailing: true }
+    );
 
     var resizeLeft = new UI.Panel()
         .setClass( "ResizeLeft" )
@@ -115,21 +123,23 @@ NGL.StageWidget = function( stage ){
         }, false
     );
 
+    window.addEventListener(
+        'resize', function( event ){
+            handleResizeLeft();
+        }, false
+    );
+
     //
 
     document.addEventListener( 'dragover', function( e ){
-
         e.stopPropagation();
         e.preventDefault();
         e.dataTransfer.dropEffect = 'none';
-
     }, false );
 
     document.addEventListener( 'drop', function( e ){
-
         e.stopPropagation();
         e.preventDefault();
-
     }, false );
 
     this.viewport = viewport;

@@ -24,9 +24,7 @@ NGL.Stage = function( eid ){
         nothingPicked: new SIGNALS.Signal(),
         onPicking: new SIGNALS.Signal(),
 
-        requestTheme: new SIGNALS.Signal(),
-
-        windowResize: new SIGNALS.Signal()
+        requestTheme: new SIGNALS.Signal()
 
     };
 
@@ -219,6 +217,12 @@ NGL.Stage.prototype = {
             }
 
         }, this );
+
+    },
+
+    handleResize: function(){
+
+        this.viewer.handleResize();
 
     },
 
