@@ -2731,7 +2731,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         var i = 0;
         var n = this.fiberList.length;
 
-        // NGL.time( this.name, "update" );
+        // NGL.time( "cartoon repr update" );
 
         for( i = 0; i < n; ++i ){
 
@@ -2783,7 +2783,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         };
 
-        // NGL.timeEnd( this.name, "update" );
+        // NGL.timeEnd( "cartoon repr update" );
 
     },
 

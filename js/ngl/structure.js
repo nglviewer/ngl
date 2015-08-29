@@ -4413,6 +4413,8 @@ NGL.Fiber = function( residues, structure ){
 
     }
 
+    this.computedAtoms = {};
+
 };
 
 NGL.Fiber.prototype = {
@@ -4452,6 +4454,90 @@ NGL.Fiber.prototype = {
     getBackboneType: function( position ){
 
         return this.residues[ 0 ].getBackboneType( position );
+
+    },
+
+    computeAtom: function( type ){
+
+        var getAtomFn;
+
+        switch( type ){
+
+            case "trace":
+
+                getAtomFn = function( r ){
+                    return r.getTraceAtom();
+                }
+                break;
+
+            case "direction1":
+
+                getAtomFn = function( r ){
+                    return r.getDirectionAtom1();
+                }
+                break;
+
+            case "direction2":
+
+                getAtomFn = function( r ){
+                    return r.getDirectionAtom2();
+                }
+                break;
+
+            default:
+
+                getAtomFn = function( r ){
+                    return r.getAtomByName( type );
+                }
+                return;
+
+        }
+
+        var n = this.residueCount;
+
+        if( !this.computedAtoms[ type ] ){
+
+            this.computedAtoms[ type ] = new Array( n );
+
+        }
+
+        var ca = this.computedAtoms[ type ];
+
+        for( var i = 0, r; i < n; ++i ){
+
+            ca[ i ] = getAtomFn( this.residues[ i ] );
+
+        }
+
+    },
+
+    eachAtomN: function( n, callback, type ){
+
+        if( this.residues.length < n ) return;
+
+        if( !this.computedAtoms[ type ] ) this.computeAtom( type );
+
+        var atoms = this.computedAtoms[ type ];
+        var array = new Array( n );
+        var len = atoms.length;
+        var i;
+
+        for( i = 0; i < n; i++ ){
+
+            array[ i ] = atoms[ i ];
+
+        }
+
+        callback.apply( this, array );
+
+        for( i = n; i < len; i++ ){
+
+            array.shift();
+            array.push( atoms[ i ] );
+
+            callback.apply( this, array );
+
+        }
 
     }
 
