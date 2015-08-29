@@ -185,7 +185,9 @@ NGL.ViewportWidget = function( stage ){
 
         for( var i=0; i<n; ++i ){
 
-            stage.loadFile( fileList[ i ] );
+            stage.loadFile( fileList[ i ], {
+                defaultRepresentation: true
+            } );
 
         }
 
@@ -309,6 +311,7 @@ NGL.MenubarFileWidget = function( stage ){
         for( var i=0; i<n; ++i ){
 
             stage.loadFile( fileList[ i ], {
+                defaultRepresentation: true,
                 asTrajectory: asTrajectory,
                 firstModelOnly: firstModelOnly,
                 cAlphaOnly: cAlphaOnly
@@ -345,6 +348,7 @@ NGL.MenubarFileWidget = function( stage ){
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
 
                     stage.loadFile( path.path, {
+                        defaultRepresentation: true,
                         asTrajectory: asTrajectory,
                         firstModelOnly: firstModelOnly,
                         cAlphaOnly: cAlphaOnly
@@ -398,6 +402,7 @@ NGL.MenubarFileWidget = function( stage ){
         if( e.keyCode === 13 ){
 
             stage.loadFile( "rcsb://" + e.target.value, {
+                defaultRepresentation: true,
                 asTrajectory: asTrajectory,
                 firstModelOnly: firstModelOnly,
                 cAlphaOnly: cAlphaOnly

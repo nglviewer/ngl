@@ -75,10 +75,6 @@ NGL.Stage.prototype = {
             object.addRepresentation( "surface" );
             object.centerView();
 
-        }else if( object instanceof NGL.ScriptComponent ){
-
-            object.run();
-
         }
 
     },
@@ -114,39 +110,34 @@ NGL.Stage.prototype = {
 
     loadFile: function( path, params ){
 
-        var _onLoad;
         var p = Object.assign( {}, params );
 
-        // allow loadFile( path, onLoad ) method signature
+        // deprecated
         if( typeof params === "function" ){
-
-            _onLoad = params;
+            console.warn( "NGL.Stage.loadFile: function param deprecated" )
             p = {};
-
         }else{
-
-            _onLoad = p.onLoad;
-
+            if( p.onLoad ) console.warn( "NGL.Stage.loadFile onLoad param deprecated" )
+            if( p.onError ) console.warn( "NGL.Stage.loadFile onError param deprecated" )
         }
 
-        delete p.onLoad;
-
+        // placeholder component
         var component = new NGL.Component( this, p );
         component.name = NGL.getFileInfo( path ).name;
         this.addComponent( component );
 
-        var onLoadFn = function( object, _params ){
+        var onLoadFn = function( object ){
 
-            // check for placeholder component
-            if( component ){
-                this.removeComponent( component );
+            // remove placeholder component
+            this.removeComponent( component );
+
+            component = this.addComponentFromObject( object, p );
+
+            if( component instanceof NGL.ScriptComponent ){
+                component.run();
             }
 
-            component = this.addComponentFromObject( object, _params );
-
-            if( typeof _onLoad === "function" ){
-                _onLoad( component );
-            }else{
+            if( p.defaultRepresentation ){
                 this.defaultFileRepresentation( component );
             }
 
@@ -156,8 +147,8 @@ NGL.Stage.prototype = {
 
         var onErrorFn = function( e ){
 
-            if( component ) component.setStatus( e );
-            if( typeof p.onError === "function" ) p.onError( e );
+            component.setStatus( e );
+            throw e;
 
         }
 
