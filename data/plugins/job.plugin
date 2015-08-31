@@ -3,7 +3,8 @@
 	"description": "...",
 	"version": "0.1",
 	"files": [
-		"job.ngl"
+		"job.ngl",
+		"fragfit.ngl"
 	],
 	"source": "serverWidget();"
 }

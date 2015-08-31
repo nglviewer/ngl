@@ -161,6 +161,32 @@ var Job = function( name, server, params ){
 
     };
 
+    this.loadResults = function(){
+
+        var tool = this.name.split( "_" )[ 0 ];
+        var baseUrl = this.urlFor( "file" ) + "/";
+
+        switch( tool ){
+
+            case "linkit-density":
+
+                loadFragfit(
+                    baseUrl + "input_pdb_file.pdb",
+                    baseUrl + "input_mrc_file.mrc",
+                    baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
+                    baseUrl + "linker_correl.json"
+                );
+
+            default:
+
+                return false;
+
+        }
+
+        return true;
+
+    };
+
     var getStatusIntervalId = setInterval( function(){
 
         this.getStatus( function(){
@@ -385,7 +411,7 @@ var JobWidget = function( job ){
     // files
 
     var files = new UI.Panel().add(
-        new UI.Button( "import" ).onClick( function(){
+        new UI.Button( "import files" ).onClick( function(){
 
             var dirWidget = new NGL.DirectoryListingWidget(
 
@@ -393,7 +419,10 @@ var JobWidget = function( job ){
 
                 function( path ){
                     console.log( path )
-                    stage.loadFile( job.urlFor( "file" ) + "/" + path.path );
+                    stage.loadFile(
+                        job.urlFor( "file" ) + "/" + path.path,
+                        { defaultRepresentation: true }
+                    );
                     dirWidget.dispose();
                 },
 
@@ -410,6 +439,13 @@ var JobWidget = function( job ){
         } )
     );
     info.add( files );
+
+    // load
+
+    var load = new UI.Button( "load results" )
+        .setDisplay( "none" )
+        .onClick( job.loadResults.bind( job ) );
+    info.add( load );
 
     // status
 
@@ -431,6 +467,7 @@ var JobWidget = function( job ){
                 new UI.Break()
             );
         }
+        if( job.check ) load.setDisplay( "" );
     }
 
     updateStatus();
