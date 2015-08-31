@@ -9,6 +9,8 @@ var FragfitPreset = function( stage, data, params ){
     var linkerComp = data[ "linker" ];
     var json = data[ "json" ];
 
+    stage.viewer.setFog( null, null, 30, 55 );
+
     // pdb
 
     var cartoonRepr = pdbComp.addRepresentation( "cartoon", {
@@ -59,7 +61,7 @@ var FragfitPreset = function( stage, data, params ){
 };
 
 
-var FragfitWidget = function( stage ){
+var FragfitWidget = function( stage, pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var data = {};
     var isolevel = 2.0;
@@ -67,181 +69,194 @@ var FragfitWidget = function( stage ){
 
     var container = new UI.Panel();
 
+    var data = {
+        pdb: pdbComp,
+        mrc: mrcComp,
+        linker: linkerComp,
+        json: linkerJson
+    }
+
+    var params = {
+        isolevel: isolevel,
+        wireframe: wireframe,
+    };
+
+    fragfitPreset = new FragfitPreset( stage, data, params );
+
+    // Isolevel
+
+    var isolevelNumber = new UI.Number( isolevel )
+        .onChange( function(){
+            fragfitPreset.surfaceRepr.setParameters( {
+                isolevel: isolevelNumber.getValue()
+            } );
+        } );
+
+    // Wireframe
+
+    var wireframeCheckbox = new UI.Checkbox( wireframe )
+        .onChange( function(){
+            fragfitPreset.surfaceRepr.setParameters( {
+                wireframe: wireframeCheckbox.getValue()
+            } );
+        } );
+
+    // Linker list
+
+    var linkerItems = Object.keys( linkerJson );
+
     var selectedLinker = null;
 
+    var generatorFn = function( index ) {
+        var key = linkerItems[ index ];
+        var row = linkerJson[ key ];
+        var panel = new UI.Panel();
+        var margin = "10px";
+        panel.add(
+            new UI.Text()
+                .setValue( key )
+                .setWidth( "25px" )
+                .setTextAlign( "right" )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 0 ].toFixed(2) )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 1 ].toFixed(2) )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 2 ].toFixed(2) )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 4 ] )
+                .setWidth( "35px" )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 5 ] )
+                .setWidth( "15px" )
+                .setTextAlign( "right" )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 3 ] )
+        );
+        if( selectedLinker === index ){
+            panel.dom.classList.add( "highlight" )
+        }
+        panel
+            .setCursor( "pointer" )
+            .onClick( function(){
+                console.log( index )
+                selectedLinker = index;
+                fragfitPreset.backboneRepr.setSelection(
+                    "/" + index
+                );
+                virtualList.redraw()
+            } )
+        return panel.dom;
+    };
+
+    var virtualList = new UI.VirtualList(
+            linkerItems, 18, 400, generatorFn
+        )
+        .setWidth( "100%" )
+        .setMarginTop( "5px" );
+
+    //
+
+    container.add(
+        new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
+        isolevelNumber,
+        new UI.Break(),
+        new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
+        wireframeCheckbox,
+        new UI.Break(),
+        new UI.Break(),
+        virtualList
+    );
+
+    return container;
+
+};
+
+
+function loadFragfit( pdb, mrc, linker, json ){
+
+    var initComp = function( comp ){
+            comp.requestGuiVisibility( false );
+            comp.centerView();
+            return comp;
+        }
+
+    var promiseList = [
+            stage.loadFile( pdb, { ext: "pdb" } ).then( initComp ),
+            stage.loadFile( mrc, { ext: "mrc" } ).then( initComp ),
+            stage.loadFile( linker, { ext: "pdb" } ).then( initComp ),
+            NGL.autoLoad( json, { ext: "json" } )
+        ];
+
+    function init( results ){
+        var jsonData = results[ 3 ].data;
+        var fragfitWidget = new FragfitWidget(
+            stage, results[ 0 ], results[ 1 ], results[ 2 ], jsonData
+        );
+        panel.add( fragfitWidget );
+        return fragfitWidget;
+    }
+
+    return Promise.all( promiseList ).then( init );
+
+}
+
+
+var FragfitLoader = function( stage ){
+
+    var container = new UI.Panel();
+
+    var pdbFile = new UI.File().setWidth( "200px" );
+    var mrcFile = new UI.File().setWidth( "200px" );
+    var linkerFile = new UI.File().setWidth( "200px" );
+    var jsonFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
+    var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
-    stage.viewer.setFog( null, null, 30, 55 );
+    //
 
-    function loadFiles( pdb, mrc, linker, json ){
+    function load( pdb, mrc, linker, json ){
 
-        // pqr = pqr || pqrFile.getFiles()[ 0 ];
-        // dx = dx || dxFile.getFiles()[ 0 ];
+        infoText.setValue( "loading..." );
+
+        loadFragfit( pdb, mrc, linker, json ).then( function(){
+            infoText.setValue( "" );
+        } ).catch( function( error ){
+            infoText.setValue( "ERROR" );
+        } );
+
+    }
+
+    function loadFiles(){
+
+        var pdb = pdbFile.getFiles()[ 0 ];
+        var mrc = mrcFile.getFiles()[ 0 ];
+        var linker = linkerFile.getFiles()[ 0 ];
+        var json = jsonFile.getFiles()[ 0 ];
 
         if( !pdb || !mrc || !linker || !json ){
-            infoText.setValue( "please supply all input files" );
+            infoText.setValue( "please supply all files" );
             return;
         }
 
-        infoText.setValue( "" );
-        data = {};
-        // controls.clear();
-
-        stage.loadFile( pdb, {
-            ext: "pdb",
-            onLoad: function( comp ){
-                comp.requestGuiVisibility( false );
-                comp.centerView();
-                data[ "pdb" ] = comp;
-                initPreset();
-            }
-        } );
-
-        stage.loadFile( mrc, {
-            ext: "mrc",
-            onLoad: function( comp ){
-                comp.requestGuiVisibility( false );
-                comp.centerView();
-                data[ "mrc" ] = comp;
-                initPreset();
-            }
-        } );
-
-        stage.loadFile( linker, {
-            ext: "pdb",
-            onLoad: function( comp ){
-                comp.requestGuiVisibility( false );
-                comp.centerView();
-                data[ "linker" ] = comp;
-                initPreset();
-            }
-        } );
-
-        NGL.autoLoad( json, {
-            ext: "json",
-            onLoad: function( obj ){
-                data[ "json" ] = obj.data;
-                initPreset();
-            }
-        } );
+        load( pdb, mrc, linker, json );
 
     }
 
     function loadExample(){
 
-        loadFiles(
+        load(
             "file://dropbox/ngl/fragfit/input_pdb_file.pdb",
             "file://dropbox/ngl/fragfit/input_mrc_file.mrc",
             "file://dropbox/ngl/fragfit/loop_correl/ori_pdb_linker_file3.pdb",
             "file://dropbox/ngl/fragfit/linker_correl.json"
-        );
-
-    }
-
-    function initPreset(){
-
-        if( !data[ "pdb" ] || !data[ "mrc" ] ||
-            !data[ "linker" ] || !data[ "json" ]
-        ){
-            return;
-        }
-
-        var params = {
-            isolevel: isolevel,
-            wireframe: wireframe,
-        };
-
-        fragfitPreset = new FragfitPreset( stage, data, params );
-
-        // Isolevel
-
-        var isolevelNumber = new UI.Number( isolevel )
-            .onChange( function(){
-                fragfitPreset.surfaceRepr.setParameters( {
-                    isolevel: isolevelNumber.getValue()
-                } );
-            } );
-
-        // Wireframe
-
-        var wireframeCheckbox = new UI.Checkbox( wireframe )
-            .onChange( function(){
-                fragfitPreset.surfaceRepr.setParameters( {
-                    wireframe: wireframeCheckbox.getValue()
-                } );
-            } );
-
-        // Linker list
-
-        var json = data[ "json" ];
-        var items = Object.keys( json );
-
-        var generatorFn = function( index ) {
-            var key = items[ index ];
-            var row = json[ key ];
-            var panel = new UI.Panel();
-            var margin = "10px"
-            panel.add(
-                new UI.Text()
-                    .setValue( key )
-                    .setWidth( "25px" )
-                    .setTextAlign( "right" )
-                    .setMarginRight( margin ),
-                new UI.Text()
-                    .setValue( row[ 0 ].toFixed(2) )
-                    .setMarginRight( margin ),
-                new UI.Text()
-                    .setValue( row[ 1 ].toFixed(2) )
-                    .setMarginRight( margin ),
-                new UI.Text()
-                    .setValue( row[ 2 ].toFixed(2) )
-                    .setMarginRight( margin ),
-                new UI.Text()
-                    .setValue( row[ 4 ] )
-                    .setWidth( "35px" )
-                    .setMarginRight( margin ),
-                new UI.Text()
-                    .setValue( row[ 5 ] )
-                    .setWidth( "15px" )
-                    .setTextAlign( "right" )
-                    .setMarginRight( margin ),
-                new UI.Text()
-                    .setValue( row[ 3 ] )
-            );
-            if( selectedLinker === index ){
-                panel.dom.classList.add( "highlight" )
-            }
-            panel
-                .setCursor( "pointer" )
-                .onClick( function(){
-                    console.log( index )
-                    selectedLinker = index;
-                    fragfitPreset.backboneRepr.setSelection(
-                        "/" + index
-                    );
-                    virtualList.redraw()
-                } )
-            return panel.dom;
-        };
-
-        var virtualList = new UI.VirtualList(
-                items, 18, 400, generatorFn
-            )
-            .setWidth( "100%" )
-            .setMarginTop( "5px" );
-
-        //
-
-        container.add(
-            new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
-            isolevelNumber,
-            new UI.Break(),
-            new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
-            wireframeCheckbox,
-            new UI.Break(),
-            new UI.Break(),
-            virtualList
         );
 
     }
@@ -255,10 +270,22 @@ var FragfitWidget = function( stage ){
     container.add(
         description,
         new UI.Break(),
-        exampleBtn.setMarginRight( "10px" ),
-        infoText,
+        new UI.Text( "PDB:" ).setWidth( "45px" ),
+        pdbFile,
         new UI.Break(),
-        new UI.Break()
+        new UI.Text( "MRC:" ).setWidth( "45px" ),
+        mrcFile,
+        new UI.Break(),
+        new UI.Text( "Linker PDB:" ).setWidth( "45px" ),
+        linkerFile,
+        new UI.Break(),
+        new UI.Text( "Linker JSON:" ).setWidth( "45px" ),
+        jsonFile,
+        new UI.Break(),
+        new UI.Break(),
+        loadBtn.setMarginRight( "10px" ),
+        exampleBtn.setMarginRight( "10px" ),
+        infoText
     );
 
     return container;
@@ -269,7 +296,7 @@ var FragfitWidget = function( stage ){
 
 function fragfitLoader(){
 
-    var fragfitWidget = new FragfitWidget( stage );
-    panel.add( fragfitWidget );
+    var fragfitLoader = new FragfitLoader( stage );
+    panel.add( fragfitLoader );
 
 }
