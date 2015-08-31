@@ -199,7 +199,7 @@ function loadFragfitResults( pdb, mrc, linker, json ){
         var fragfitResultsWidget = new FragfitResultsWidget(
             results[ 0 ], results[ 1 ], results[ 2 ], jsonData
         );
-        panel.add( fragfitResultsWidget );
+        // panel.add( fragfitResultsWidget );
         return fragfitResultsWidget;
     }
 
@@ -220,16 +220,27 @@ var FragfitResultsLoaderWidget = function(){
     var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
+    var results = new UI.Panel();
+
     //
 
     function load( pdb, mrc, linker, json ){
 
         infoText.setValue( "loading..." );
 
-        loadFragfitResults( pdb, mrc, linker, json ).then( function(){
+        loadFragfitResults(
+            pdb, mrc, linker, json
+        ).then( function( widget ){
             infoText.setValue( "" );
+            widget.setMarginLeft( "20px" );
+            results.add(
+                new UI.CollapsibleIconPanel()
+                    .addStatic( new UI.Text( "Results" ) )
+                    .add( widget )
+            );
         } ).catch( function( error ){
             infoText.setValue( "ERROR" );
+            console.error( error );
         } );
 
     }
@@ -285,7 +296,62 @@ var FragfitResultsLoaderWidget = function(){
         new UI.Break(),
         loadBtn.setMarginRight( "10px" ),
         exampleBtn.setMarginRight( "10px" ),
-        infoText
+        infoText,
+        new UI.Break(),
+        new UI.Break(),
+        results
+    );
+
+    return container;
+
+};
+
+
+var FragfitJobWidget = function( server ){
+
+    var container = new UI.Panel();
+
+    var description = new UI.Panel().add(
+        new UI.Html( "FragFit Job" )
+    );
+
+    var jobSelect = new JobSelectorWidget( server )
+        .setWidth( "120px" )
+        .onChange( loadResults );
+
+    var results = new UI.Panel();
+
+    //
+
+    function loadResults(){
+
+        var job = server.getJob( jobSelect.getValue() );
+        if( !job ) return;
+        var baseUrl = job.urlFor( "file" ) + "/";
+        loadFragfitResults(
+            baseUrl + "input_pdb_file.pdb",
+            baseUrl + "input_mrc_file.mrc",
+            baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
+            baseUrl + "linker_correl.json"
+        ).then( function( widget ){
+            widget.setMarginLeft( "20px" );
+            results.add(
+                new UI.CollapsibleIconPanel()
+                    .addStatic( new UI.Text( "Results" ) )
+                    .add( widget )
+            );
+        } );
+
+    }
+
+    //
+
+    container.add(
+        description,
+        jobSelect,
+        new UI.Break(),
+        new UI.Break(),
+        results
     );
 
     return container;
@@ -298,5 +364,15 @@ function fragfitResultsLoader(){
 
     var fragfitResultsLoaderWidget = new FragfitResultsLoaderWidget();
     panel.add( fragfitResultsLoaderWidget );
+
+}
+
+function fragfitJob(){
+
+    var server = new Server( "http://localhost/job/" );
+    server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
+
+    var fragfitJobWidget = new FragfitJobWidget( server );
+    panel.add( fragfitJobWidget );
 
 }

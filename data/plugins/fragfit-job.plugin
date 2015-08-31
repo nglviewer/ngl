@@ -1,9 +1,10 @@
 {
-	"name": "FragFit",
+	"name": "FragFit Job",
 	"description": "...",
 	"version": "0.1",
 	"files": [
+		"job.ngl",
 		"fragfit.ngl"
 	],
-	"source": "fragfitLoader();"
+	"source": "fragfitJob();"
 }

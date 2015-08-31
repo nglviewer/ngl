@@ -161,32 +161,6 @@ var Job = function( name, server, params ){
 
     };
 
-    this.loadResults = function(){
-
-        var tool = this.name.split( "_" )[ 0 ];
-        var baseUrl = this.urlFor( "file" ) + "/";
-
-        switch( tool ){
-
-            case "linkit-density":
-
-                loadFragfitResults(
-                    baseUrl + "input_pdb_file.pdb",
-                    baseUrl + "input_mrc_file.mrc",
-                    baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
-                    baseUrl + "linker_correl.json"
-                );
-
-            default:
-
-                return false;
-
-        }
-
-        return true;
-
-    };
-
     var getStatusIntervalId = setInterval( function(){
 
         this.getStatus( function(){
@@ -270,7 +244,7 @@ var ServerWidget = function( server ){
 
     // job selector
 
-    var jobSelect = new UI.Select()
+    var jobSelect = new JobSelectorWidget( server )
         .setWidth( "120px" )
         .onChange( makeJobInfo );
 
@@ -290,6 +264,25 @@ var ServerWidget = function( server ){
             )
     );
 
+    function makeJobInfo(){
+        jobInfo.clear();
+        var name = jobSelect.getValue();
+        if( name ){
+            var job = server.getJob( name );
+            jobInfo.add( new JobWidget( job ) );
+        }
+    }
+
+    return container;
+
+};
+
+
+var JobSelectorWidget = function( server ){
+
+    var jobSelect = new UI.Select()
+        .setWidth( "120px" )
+
     function makeJobSelector(){
         var options = { "": "" };
         for( var name in server.jobs ){
@@ -304,18 +297,10 @@ var ServerWidget = function( server ){
 
     server.signals.jobAdded.add( makeJobSelector );
 
-    function makeJobInfo(){
-        jobInfo.clear();
-        var name = jobSelect.getValue();
-        if( name ){
-            var job = server.getJob( name );
-            jobInfo.add( new JobWidget( job ) );
-        }
-    }
-
-    return container;
+    return jobSelect;
 
 };
+
 
 var ToolWidget = function( tool ){
 
@@ -440,13 +425,6 @@ var JobWidget = function( job ){
     );
     info.add( files );
 
-    // load
-
-    var load = new UI.Button( "load results" )
-        .setDisplay( "none" )
-        .onClick( job.loadResults.bind( job ) );
-    info.add( load );
-
     // status
 
     var status = new UI.Panel();
@@ -467,7 +445,6 @@ var JobWidget = function( job ){
                 new UI.Break()
             );
         }
-        if( job.check ) load.setDisplay( "" );
     }
 
     updateStatus();
