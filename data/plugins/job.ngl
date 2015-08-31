@@ -374,6 +374,7 @@ var ToolWidget = function( tool ){
 
 };
 
+
 var JobWidget = function( job ){
 
     var container = new UI.Panel();

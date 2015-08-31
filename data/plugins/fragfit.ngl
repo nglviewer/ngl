@@ -87,7 +87,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var isolevelNumber = new UI.Number( isolevel )
         .onChange( function(){
-            fragfitPreset.surfaceRepr.setParameters( {
+            fragfitResultsPreset.surfaceRepr.setParameters( {
                 isolevel: isolevelNumber.getValue()
             } );
         } );
@@ -96,7 +96,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var wireframeCheckbox = new UI.Checkbox( wireframe )
         .onChange( function(){
-            fragfitPreset.surfaceRepr.setParameters( {
+            fragfitResultsPreset.surfaceRepr.setParameters( {
                 wireframe: wireframeCheckbox.getValue()
             } );
         } );
@@ -147,7 +147,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             .onClick( function(){
                 console.log( index )
                 selectedLinker = index;
-                fragfitPreset.backboneRepr.setSelection(
+                fragfitResultsPreset.backboneRepr.setSelection(
                     "/" + index
                 );
                 virtualList.redraw()
