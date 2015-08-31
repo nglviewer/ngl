@@ -170,7 +170,7 @@ var Job = function( name, server, params ){
 
             case "linkit-density":
 
-                loadFragfit(
+                loadFragfitResults(
                     baseUrl + "input_pdb_file.pdb",
                     baseUrl + "input_mrc_file.mrc",
                     baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",

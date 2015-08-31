@@ -1,6 +1,6 @@
 
 
-var FragfitPreset = function( stage, data, params ){
+var FragfitResultsPreset = function( data, params ){
 
     var p = params || {};
 
@@ -61,7 +61,7 @@ var FragfitPreset = function( stage, data, params ){
 };
 
 
-var FragfitWidget = function( stage, pdbComp, mrcComp, linkerComp, linkerJson ){
+var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var data = {};
     var isolevel = 2.0;
@@ -81,7 +81,7 @@ var FragfitWidget = function( stage, pdbComp, mrcComp, linkerComp, linkerJson ){
         wireframe: wireframe,
     };
 
-    fragfitPreset = new FragfitPreset( stage, data, params );
+    fragfitResultsPreset = new FragfitResultsPreset( data, params );
 
     // Isolevel
 
@@ -179,28 +179,28 @@ var FragfitWidget = function( stage, pdbComp, mrcComp, linkerComp, linkerJson ){
 };
 
 
-function loadFragfit( pdb, mrc, linker, json ){
+function loadFragfitResults( pdb, mrc, linker, json ){
 
     var initComp = function( comp ){
-            comp.requestGuiVisibility( false );
-            comp.centerView();
-            return comp;
-        }
+        comp.requestGuiVisibility( false );
+        comp.centerView();
+        return comp;
+    }
 
     var promiseList = [
-            stage.loadFile( pdb, { ext: "pdb" } ).then( initComp ),
-            stage.loadFile( mrc, { ext: "mrc" } ).then( initComp ),
-            stage.loadFile( linker, { ext: "pdb" } ).then( initComp ),
-            NGL.autoLoad( json, { ext: "json" } )
-        ];
+        stage.loadFile( pdb, { ext: "pdb" } ).then( initComp ),
+        stage.loadFile( mrc, { ext: "mrc" } ).then( initComp ),
+        stage.loadFile( linker, { ext: "pdb" } ).then( initComp ),
+        NGL.autoLoad( json, { ext: "json" } )
+    ];
 
     function init( results ){
         var jsonData = results[ 3 ].data;
-        var fragfitWidget = new FragfitWidget(
-            stage, results[ 0 ], results[ 1 ], results[ 2 ], jsonData
+        var fragfitResultsWidget = new FragfitResultsWidget(
+            results[ 0 ], results[ 1 ], results[ 2 ], jsonData
         );
-        panel.add( fragfitWidget );
-        return fragfitWidget;
+        panel.add( fragfitResultsWidget );
+        return fragfitResultsWidget;
     }
 
     return Promise.all( promiseList ).then( init );
@@ -208,7 +208,7 @@ function loadFragfit( pdb, mrc, linker, json ){
 }
 
 
-var FragfitLoader = function( stage ){
+var FragfitResultsLoaderWidget = function(){
 
     var container = new UI.Panel();
 
@@ -226,7 +226,7 @@ var FragfitLoader = function( stage ){
 
         infoText.setValue( "loading..." );
 
-        loadFragfit( pdb, mrc, linker, json ).then( function(){
+        loadFragfitResults( pdb, mrc, linker, json ).then( function(){
             infoText.setValue( "" );
         } ).catch( function( error ){
             infoText.setValue( "ERROR" );
@@ -294,9 +294,9 @@ var FragfitLoader = function( stage ){
 
 //
 
-function fragfitLoader(){
+function fragfitResultsLoader(){
 
-    var fragfitLoader = new FragfitLoader( stage );
-    panel.add( fragfitLoader );
+    var fragfitResultsLoaderWidget = new FragfitResultsLoaderWidget();
+    panel.add( fragfitResultsLoaderWidget );
 
 }

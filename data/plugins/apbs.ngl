@@ -1,5 +1,5 @@
 
-var ApbsPreset = function( stage, pqrComp, dxComp, params ){
+var ApbsPreset = function( pqrComp, dxComp, params ){
 
     var p = params || {};
 
@@ -103,14 +103,14 @@ var ApbsPreset = function( stage, pqrComp, dxComp, params ){
 };
 
 
-var ApbsWidget = function( stage, pqrComp, dxComp ){
+var ApbsWidget = function( pqrComp, dxComp ){
 
     var isolevel = 0.5;
 
     var container = new UI.Panel();
 
     var apbsPreset = new ApbsPreset(
-        stage, pqrComp, dxComp, {
+        pqrComp, dxComp, {
             isolevel: isolevel
         }
     );
@@ -164,7 +164,7 @@ var ApbsWidget = function( stage, pqrComp, dxComp ){
 };
 
 
-var ApbsLoader = function( stage ){
+var ApbsLoader = function(){
 
     var container = new UI.Panel();
 
@@ -194,7 +194,7 @@ var ApbsLoader = function( stage ){
         Promise.all( promiseList ).then( function( compList ){
             infoText.setValue( "" );
             apbsWidget = new ApbsWidget(
-                stage, compList[ 0 ], compList[ 1 ]
+                compList[ 0 ], compList[ 1 ]
             );
             panel.add( apbsWidget );
         } );
@@ -253,7 +253,7 @@ var ApbsLoader = function( stage ){
 
 function apbsLoader(){
 
-    var apbsLoader = new ApbsLoader( stage );
+    var apbsLoader = new ApbsLoader();
     panel.add( apbsLoader );
 
 }
