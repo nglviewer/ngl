@@ -28,9 +28,8 @@ var Server = function( url, params ){
     this.retrieveTools = function( callback ){
 
         NGL.autoLoad( this.urlFor( "tools" ), {
-            onLoad: callback,
             ext: "json"
-        } );
+        } ).then( callback );
 
     };
 
@@ -92,9 +91,8 @@ var Tool = function( name, server, args, docu ){
     this.submit = function( callback ){
 
         NGL.autoLoad( this.urlFor( "tools" ), {
-            onLoad: callback,
             ext: "json"
-        } );
+        } ).then( callback );
 
     };
 
@@ -134,28 +132,26 @@ var Job = function( name, server, params ){
     this.getStatus = function( callback ){
 
         NGL.autoLoad( this.urlFor( "status" ), {
-            onLoad: function( o ){
-                console.log(o)
-                var status = o.data;
-                this.check = status.check;
-                this.running = status.running;
-                this.log = status.log;
-                if( typeof callback === "function" ){
-                    callback();
-                }
-                this.signals.statusChanged.dispatch();
-            }.bind( this ),
             ext: "json"
-        } );
+        } ).then( function( o ){
+            console.log(o)
+            var status = o.data;
+            this.check = status.check;
+            this.running = status.running;
+            this.log = status.log;
+            if( typeof callback === "function" ){
+                callback();
+            }
+            this.signals.statusChanged.dispatch();
+        }.bind( this ) );
 
     };
 
     this.getParams = function( callback ){
 
         NGL.autoLoad( this.urlFor( "params" ), {
-            onLoad: callback,
             ext: "json"
-        } );
+        } ).then( callback );
 
     };
 
