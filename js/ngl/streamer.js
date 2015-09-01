@@ -320,6 +320,8 @@ NGL.Streamer.prototype = {
             chunkSize: this.chunkSize,
             newline: this.newline,
 
+
+
         }
 
         if( this.__srcName ){
@@ -388,6 +390,7 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         if( typeof importScripts === 'function' ){
 
+            // FIXME
             // adjust relative path when inside a web worker
             if( url.substr( 0, 3 ) === "../" ) url = "../" + url;
 
@@ -411,6 +414,8 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
                     this.onerror( xhr.status );
 
                 }
+
+                throw "NGL.NetworkStreamer._read: " + xhr.status;
 
             }
 

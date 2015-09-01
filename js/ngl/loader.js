@@ -9,16 +9,14 @@
 
 NGL.Loader = function( src, params ){
 
-    var p = params || {};
-
-    if( typeof p.onLoad === "function" ) this.onload = p.onLoad;
-    if( typeof p.onProgress === "function" ) this.onprogress = p.onProgress;
-    if( typeof p.onError === "function" ) this.onerror = p.onError;
+    var p = Object.assign( {}, params );
 
     this.compressed = p.compressed || false;
     this.name = p.name || "";
     this.ext = p.ext || "";
+    this.dir = p.dir || "";
     this.path = p.path || "";
+    this.protocol = p.protocol || "";
 
     this.params = params;
 
@@ -40,8 +38,11 @@ NGL.Loader = function( src, params ){
 
     }
 
-    this.streamer.onerror = this.onError;
-    this.streamer.onprogress = this.onProgress;
+    if( typeof p.onProgress === "function" ){
+
+        this.streamer.onprogress = p.onprogress;
+
+    }
 
 };
 
@@ -49,32 +50,31 @@ NGL.Loader.prototype = {
 
     constructor: NGL.Loader,
 
-    onload: function(){},
-
-    onprogress: function(){},
-
-    onerror: function( e ){
-
-        NGL.error( e );
-
-    },
-
     load: function(){
 
-        try{
+        return new Promise( function( resolve, reject ){
 
-            this._load();
+            this.streamer.onerror = reject;
 
-        }catch( e ){
+            try{
 
-            NGL.error( e );
-            this.onerror( "loading failed" );
+                this._load( resolve, reject );
 
-        }
+            }catch( e ){
+
+                reject( e );
+
+            }
+
+        }.bind( this ) );
 
     },
 
-    _load: function(){}
+    _load: function( resolve, reject ){
+
+        reject( "not implemented" );
+
+    }
 
 };
 
@@ -91,13 +91,14 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
     constructor: NGL.ParserLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         var parsersClasses = {
 
             "gro": NGL.GroParser,
             "pdb": NGL.PdbParser,
             "ent": NGL.PdbParser,
+            "pqr": NGL.PqrParser,
             "cif": NGL.CifParser,
             "mcif": NGL.CifParser,
             "mmcif": NGL.CifParser,
@@ -109,11 +110,13 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "map": NGL.MrcParser,
 
             "cube": NGL.CubeParser,
+            "dx": NGL.DxParser,
 
             "ply": NGL.PlyParser,
             "obj": NGL.ObjParser,
 
             "txt": NGL.TextParser,
+            "text": NGL.TextParser,
             "csv": NGL.CsvParser,
             "json": NGL.JsonParser
 
@@ -123,7 +126,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             this.streamer, this.params
         );
 
-        parser.parseWorker( this.onload );
+        parser.parseWorker( resolve );
 
     }
 
@@ -142,7 +145,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
     constructor: NGL.ScriptLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         this.streamer.read( function(){
 
@@ -150,7 +153,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
             var script = new NGL.Script( text, this.name, this.path );
 
-            this.onload( script );
+            resolve( script );
 
         }.bind( this ) );
 
@@ -159,134 +162,162 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 } );
 
 
-NGL.autoLoad = function(){
+NGL.PluginLoader = function( src, params ){
 
-    var loaders = {
+    NGL.Loader.call( this, src, params );
 
-        "gro": NGL.ParserLoader,
-        "pdb": NGL.ParserLoader,
-        "ent": NGL.ParserLoader,
-        "cif": NGL.ParserLoader,
-        "mcif": NGL.ParserLoader,
-        "mmcif": NGL.ParserLoader,
-        "sdf": NGL.ParserLoader,
-        "mol2": NGL.ParserLoader,
+};
 
-        "mrc": NGL.ParserLoader,
-        "ccp4": NGL.ParserLoader,
-        "map": NGL.ParserLoader,
-        "cube": NGL.ParserLoader,
+NGL.PluginLoader.prototype = NGL.createObject(
 
-        "obj": NGL.ParserLoader,
-        "ply": NGL.ParserLoader,
+    NGL.Loader.prototype, {
 
-        "txt": NGL.ParserLoader,
-        "csv": NGL.ParserLoader,
-        "json": NGL.ParserLoader,
+    constructor: NGL.PluginLoader,
 
-        "ngl": NGL.ScriptLoader,
+    _load: function( resolve, reject ){
 
-    };
+        var basePath = this.protocol + "://" + this.dir;
 
-    return function( file, params ){
+        this.streamer.read( function(){
 
-        var fileInfo = NGL.getFileInfo( file );
-        // NGL.log( fileInfo );
+            var text = NGL.Uint8ToString( this.streamer.data );
+            var manifest = JSON.parse( text );
+            var promiseList = [];
 
-        var path = fileInfo.path;
-        var name = fileInfo.name;
-        var ext = fileInfo.ext;
-        var compressed = fileInfo.compressed;
-        var protocol = fileInfo.protocol;
+            manifest.files.map( function( name ){
 
-        if( protocol === "rcsb" ){
+                promiseList.push(
+                    NGL.autoLoad( basePath + name, { ext: "text" } )
+                );
 
-            // ext = "pdb";
-            // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
-            ext = "cif";
-            compressed = "gz";
-            path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
-            protocol = "http";
+            } );
 
-        }
+            Promise.all( promiseList ).then( function( dataList ){
 
-        //
+                var text = dataList.reduce( function( text, value ){
+                    return text + "\n\n" + value.data;
+                }, "" );
+                text += manifest.source || "";
 
-        var _onLoad;
-        var p = params || {};
+                var script = new NGL.Script( text, this.name, this.path );
+                resolve( script );
 
-        // allow loadFile( path, onLoad ) method signature
-        if( typeof params === "function" ){
+            }.bind( this ) );
 
-            _onLoad = params;
-            p = {};
-
-        }else{
-
-            _onLoad = p.onLoad;
-
-        }
-
-        p.name = p.name !== undefined ? p.name : name;
-        p.ext = p.ext !== undefined ? p.ext : ext;
-        p.compressed = p.compressed !== undefined ? p.compressed : compressed;
-        p.path = p.path !== undefined ? p.path : path;
-
-        p.onLoad = function( object ){
-
-            // relay params
-            if( typeof _onLoad === "function" ) _onLoad( object, p );
-
-        };
-
-        //
-
-        var src;
-
-        if( file instanceof File ){
-
-            src = file;
-
-        }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
-
-            src = protocol + "://" + path;
-
-        }else if( protocol === "data" ){
-
-            src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
-
-        }else{
-
-            src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
-
-        }
-
-        //
-
-        if( p.ext in loaders ){
-
-            var loader = new loaders[ p.ext ]( src, p );
-
-            loader.load();
-
-        }else{
-
-            var e = "NGL.autoLoading: ext '" + p.ext + "' unknown";
-
-            if( typeof p.onError === "function" ){
-
-                p.onError( e );
-
-            }else{
-
-                NGL.error( e );
-
-            }
-
-            return null;
-
-        }
+        }.bind( this ) );
 
     }
 
-}();
+} );
+
+
+NGL.loaderMap = {
+
+    "gro": NGL.ParserLoader,
+    "pdb": NGL.ParserLoader,
+    "ent": NGL.ParserLoader,
+    "pqr": NGL.ParserLoader,
+    "cif": NGL.ParserLoader,
+    "mcif": NGL.ParserLoader,
+    "mmcif": NGL.ParserLoader,
+    "sdf": NGL.ParserLoader,
+    "mol2": NGL.ParserLoader,
+
+    "mrc": NGL.ParserLoader,
+    "ccp4": NGL.ParserLoader,
+    "map": NGL.ParserLoader,
+    "cube": NGL.ParserLoader,
+    "dx": NGL.ParserLoader,
+
+    "obj": NGL.ParserLoader,
+    "ply": NGL.ParserLoader,
+
+    "txt": NGL.ParserLoader,
+    "text": NGL.ParserLoader,
+    "csv": NGL.ParserLoader,
+    "json": NGL.ParserLoader,
+
+    "ngl": NGL.ScriptLoader,
+    "plugin": NGL.PluginLoader,
+
+};
+
+
+NGL.autoLoad = function( file, params ){
+
+    var fileInfo = NGL.getFileInfo( file );
+
+    var path = fileInfo.path;
+    var name = fileInfo.name;
+    var ext = fileInfo.ext;
+    var dir = fileInfo.dir;
+    var compressed = fileInfo.compressed;
+    var protocol = fileInfo.protocol;
+
+    if( protocol === "rcsb" ){
+
+        // ext = "pdb";
+        // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
+        ext = "cif";
+        compressed = "gz";
+        path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
+        protocol = "http";
+
+    }
+
+    //
+
+    var p = Object.assign( {}, params );
+
+    // deprecated
+    if( typeof params === "function" ){
+        console.warn( "NGL.autoLoad: function param deprecated" )
+        p = {};
+    }else{
+        if( p.onLoad ) console.warn( "NGL.autoLoad onLoad param deprecated" )
+        if( p.onError ) console.warn( "NGL.autoLoad onError param deprecated" )
+    }
+
+    p.name = p.name !== undefined ? p.name : name;
+    p.ext = p.ext !== undefined ? p.ext : ext;
+    p.compressed = p.compressed !== undefined ? p.compressed : compressed;
+    p.path = p.path !== undefined ? p.path : path;
+    p.protocol = protocol;
+    p.dir = dir;
+
+    //
+
+    var src;
+
+    if( file instanceof File ){
+
+        src = file;
+
+    }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
+
+        src = protocol + "://" + path;
+
+    }else if( protocol === "data" ){
+
+        src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
+
+    }else{
+
+        src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
+
+    }
+
+    //
+
+    if( p.ext in NGL.loaderMap ){
+
+        var loader = new NGL.loaderMap[ p.ext ]( src, p );
+        return loader.load();
+
+    }else{
+
+        return Promise.reject( "NGL.autoLoading: ext '" + p.ext + "' unknown" );
+
+    }
+
+};

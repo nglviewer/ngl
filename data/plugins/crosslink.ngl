@@ -1,0 +1,286 @@
+
+var xlTable = [];
+var xlRes = {};
+var xlResList = [];
+var xlBond = {};
+var xlPair = [];
+
+var structure;
+var strucComp;
+
+var colorOptions = {};
+
+//
+
+uiText( "To map crosslink data onto a structure, open first a structure and then the corresponding crosslink data using the buttons below. Residues involved in crosslinks are marked with white spheres, which can be picked to highlight crosslinks with pink spheres." );
+
+uiBreak( 2 );
+
+uiOpenButton( "open structure...", function( files ){
+
+    stage.loadFile( files[ 0 ], prepareStructure )
+
+}, [ "pdb", "cif", "mmcif", "gro", "ent" ] );
+
+uiBreak( 2 );
+
+uiOpenButton( "open crosslink data...", function( files ){
+
+    NGL.autoLoad( files[ 0 ], prepareCrosslinkData );
+
+}, [ "csv" ] );
+
+uiBreak( 2 );
+
+initColorSchemes();
+
+uiHtml( "Color:&nbsp;" );
+
+uiSelect( Object.keys( colorOptions ), function( select ){
+
+    var color = colorOptions[ select.getValue() ];
+
+    if( color ){
+
+        stage.getRepresentationsByName( "allRes" )
+            .setColor( color );
+
+    }
+
+} );
+
+uiBreak( 2 );
+
+uiText( "Picked crosslink:" );
+
+uiBreak( 1 );
+
+var textElm = uiText( "none" );
+
+//
+
+stage.signals.onPicking.add( handlePicking );
+
+//
+
+function handlePicking( d ){
+
+    var focusedComp = stage.getRepresentationsByName( "focusedRes" );
+    var linkedComp = stage.getRepresentationsByName( "linkedRes" );
+    var focusedBondComp = stage.getRepresentationsByName( "focusedBond" );
+
+    if( !focusedComp || !linkedComp || !focusedBondComp ) return;
+
+    if( d.atom !== undefined && d.bond === undefined ){
+
+        var linkedRes = xlRes[ d.atom.resno ];
+
+        if( linkedRes ){
+
+            focusedComp.setSelection( resToSele( d.atom.resno ) );
+            linkedComp.setSelection( resToSele( linkedRes ) );
+
+            textElm.setValue( "[" + d.atom.resno + "] " + linkedRes.join( ", " ) );
+
+        }else{
+
+            focusedComp.setSelection( "none" );
+            linkedComp.setSelection( "none" );
+
+            textElm.setValue( "none" );
+
+        }
+
+        focusedBondComp.setSelection( "none" );
+
+    }else if( d.bond !== undefined ){
+
+        var bondedRes = xlBond[ getBondName( d.bond ) ];
+
+        if( bondedRes ){
+
+            focusedBondComp.setSelection( resToSele( bondedRes ) );
+
+            textElm.setValue( bondedRes.join( ", " ) );
+
+        }else{
+
+            focusedBondComp.setSelection( "none" );
+
+            textElm.setValue( "none" );
+
+        }
+
+        focusedComp.setSelection( "none" );
+        linkedComp.setSelection( "none" );
+
+    }else{
+
+        focusedComp.setSelection( "none" );
+        linkedComp.setSelection( "none" );
+        focusedBondComp.setSelection( "none" );
+
+        textElm.setValue( "none" );
+
+    }
+
+}
+
+
+function resToSele( resnoList, asSelection ){
+
+    if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
+    var sele = "( " + resnoList.join( " OR " ) + " ) AND .CA";
+    return asSelection ? new NGL.Selection( sele ) : sele;
+
+}
+
+
+function getBondName( bond ){
+
+    var resno1, resno2;
+
+    if( arguments.length > 1 ){
+        resno1 = arguments[ 0 ];
+        resno2 = arguments[ 1 ];
+    }else{
+        resno1 = bond.atom1.resno;
+        resno2 = bond.atom2.resno;
+    }
+
+    if( resno1 > resno2 ){
+        var tmp = resno1
+        resno1 = resno2;
+        resno2 = tmp;
+    }
+
+    return resno1 + "|" + resno2;
+
+}
+
+
+function prepareStructure( comp ){
+
+    strucComp = comp;
+    structure = comp.structure;
+
+    comp.requestGuiVisibility( false );
+
+    comp.addRepresentation( "cartoon", { color: "residueindex" } );
+
+    comp.addRepresentation( "spacefill", {
+        sele: "none",
+        // color: new THREE.Color( "white" ).getHex(),
+        color: linkCountScheme,
+        scale: 0.6,
+        name: "allRes"
+    } );
+
+    comp.addRepresentation( "spacefill", {
+        sele: "none",
+        color: new THREE.Color( "fuchsia" ).getHex(),
+        scale: 1.2,
+        transparent: true,
+        opacity: 0.7,
+        name: "focusedRes"
+    } );
+
+    comp.addRepresentation( "spacefill", {
+        sele: "none",
+        color: new THREE.Color( "fuchsia" ).getHex(),
+        scale: 0.9,
+        name: "linkedRes"
+    } );
+
+    stage.centerView( true );
+    comp.centerView( true );
+
+}
+
+
+function prepareCrosslinkData( table ){
+
+    xlTable = table;
+
+    xlTable.data.forEach( function( row ){
+
+        var resno1 = parseInt( row[ 0 ] );
+        var resno2 = parseInt( row[ 2 ] );
+
+        if( xlRes[ resno1 ] === undefined ){
+            xlRes[ resno1 ] = [];
+        }
+        xlRes[ resno1 ].push( resno2 );
+
+        if( xlRes[ resno2 ] === undefined ){
+            xlRes[ resno2 ] = [];
+        }
+        xlRes[ resno2 ].push( resno1 );
+
+        xlBond[ getBondName( resno1, resno2 ) ] = [ resno2, resno1 ];
+
+        var a1 = structure.getAtoms( resToSele( resno1, true ), true );
+        var a2 = structure.getAtoms( resToSele( resno2, true ), true );
+
+        if( a1 && a2 ){
+            xlPair.push( [ resToSele( resno1 ), resToSele( resno2 ) ] );
+        }
+
+    } );
+
+    xlResList = Object.keys( xlRes );
+
+    //
+
+    stage.getRepresentationsByName( "allRes" )
+        .setSelection( resToSele( xlResList ) );
+
+    strucComp.addRepresentation( "distance", {
+        atomPair: xlPair,
+        color: new THREE.Color( "lightgrey" ).getHex(),
+        labelSize: 0.001,
+        name: "bond"
+    } );
+
+    strucComp.addRepresentation( "distance", {
+        atomPair: xlPair,
+        sele: "none",
+        color: new THREE.Color( "fuchsia" ).getHex(),
+        labelSize: 2.0,
+        scale: 2.5,
+        transparent: true,
+        opacity: 0.6,
+        name: "focusedBond"
+    } );
+
+}
+
+//
+
+function initColorSchemes(){
+
+    var linkCountScale = chroma
+        .scale( 'YlGn' )
+        .mode('lch')
+        .domain( [ 0, 8 ] );
+
+    linkCountScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+
+        this.atomColor = function( atom ){
+
+            var count = xlRes[ atom.resno ].length;
+
+            var _c = linkCountScale( count )._rgb;
+            var c = _c[0] << 16 | _c[1] << 8 | _c[2];
+
+            return c;
+
+        }
+
+    }, "linkCount" );
+
+    colorOptions[ "linkCount" ] = linkCountScheme;
+    colorOptions[ "white" ] = new THREE.Color( "white" ).getHex();
+    colorOptions[ "lightgrey" ] = new THREE.Color( "lightgrey" ).getHex();
+
+}

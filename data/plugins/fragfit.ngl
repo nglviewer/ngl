@@ -1,0 +1,378 @@
+
+
+var FragfitResultsPreset = function( data, params ){
+
+    var p = params || {};
+
+    var pdbComp = data[ "pdb" ];
+    var mrcComp = data[ "mrc" ];
+    var linkerComp = data[ "linker" ];
+    var json = data[ "json" ];
+
+    stage.viewer.setFog( null, null, 30, 55 );
+
+    // pdb
+
+    var cartoonRepr = pdbComp.addRepresentation( "cartoon", {
+
+    } );
+
+    var licoriceRepr = pdbComp.addRepresentation( "licorice", {
+
+    } );
+
+    // linker
+
+    var backboneRepr = linkerComp.addRepresentation( "backbone", {
+        radius: 0.25,
+        colorScheme: "residueindex",
+        // transparent: true,
+        // opacity: 0.3
+    } );
+
+    linkerComp.centerView();
+
+    // mrc
+
+    var surfaceRepr = mrcComp.addRepresentation( "surface", {
+        name: "map",
+        isolevelType: "sigma",
+        isolevel: p.isolevel || 2.0,
+        smooth: 0,
+        wireframe: p.wireframe || false,
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+        opaqueBack: true,
+        color: "grey"
+    } );
+
+    // json
+
+    console.log( json );
+
+    //
+
+    this.backboneRepr = backboneRepr;
+    this.surfaceRepr = surfaceRepr;
+
+    stage.centerView();
+
+};
+
+
+var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
+
+    var data = {};
+    var isolevel = 2.0;
+    var wireframe = false;
+
+    var container = new UI.Panel();
+
+    var data = {
+        pdb: pdbComp,
+        mrc: mrcComp,
+        linker: linkerComp,
+        json: linkerJson
+    }
+
+    var params = {
+        isolevel: isolevel,
+        wireframe: wireframe,
+    };
+
+    fragfitResultsPreset = new FragfitResultsPreset( data, params );
+
+    // Isolevel
+
+    var isolevelNumber = new UI.Number( isolevel )
+        .onChange( function(){
+            fragfitResultsPreset.surfaceRepr.setParameters( {
+                isolevel: isolevelNumber.getValue()
+            } );
+        } );
+
+    // Wireframe
+
+    var wireframeCheckbox = new UI.Checkbox( wireframe )
+        .onChange( function(){
+            fragfitResultsPreset.surfaceRepr.setParameters( {
+                wireframe: wireframeCheckbox.getValue()
+            } );
+        } );
+
+    // Linker list
+
+    var linkerItems = Object.keys( linkerJson );
+
+    var selectedLinker = null;
+
+    var generatorFn = function( index ) {
+        var key = linkerItems[ index ];
+        var row = linkerJson[ key ];
+        var panel = new UI.Panel();
+        var margin = "10px";
+        panel.add(
+            new UI.Text()
+                .setValue( key )
+                .setWidth( "25px" )
+                .setTextAlign( "right" )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 0 ].toFixed(2) )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 1 ].toFixed(2) )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 2 ].toFixed(2) )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 4 ] )
+                .setWidth( "35px" )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 5 ] )
+                .setWidth( "15px" )
+                .setTextAlign( "right" )
+                .setMarginRight( margin ),
+            new UI.Text()
+                .setValue( row[ 3 ] )
+        );
+        if( selectedLinker === index ){
+            panel.dom.classList.add( "highlight" )
+        }
+        panel
+            .setCursor( "pointer" )
+            .onClick( function(){
+                console.log( index )
+                selectedLinker = index;
+                fragfitResultsPreset.backboneRepr.setSelection(
+                    "/" + index
+                );
+                virtualList.redraw()
+            } )
+        return panel.dom;
+    };
+
+    var virtualList = new UI.VirtualList(
+            linkerItems, 18, 400, generatorFn
+        )
+        .setWidth( "100%" )
+        .setMarginTop( "5px" );
+
+    //
+
+    container.add(
+        new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
+        isolevelNumber,
+        new UI.Break(),
+        new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
+        wireframeCheckbox,
+        new UI.Break(),
+        new UI.Break(),
+        virtualList
+    );
+
+    return container;
+
+};
+
+
+function loadFragfitResults( pdb, mrc, linker, json ){
+
+    var initComp = function( comp ){
+        comp.requestGuiVisibility( false );
+        comp.centerView();
+        return comp;
+    }
+
+    var promiseList = [
+        stage.loadFile( pdb, { ext: "pdb" } ).then( initComp ),
+        stage.loadFile( mrc, { ext: "mrc" } ).then( initComp ),
+        stage.loadFile( linker, { ext: "pdb" } ).then( initComp ),
+        NGL.autoLoad( json, { ext: "json" } )
+    ];
+
+    function init( results ){
+        var jsonData = results[ 3 ].data;
+        var fragfitResultsWidget = new FragfitResultsWidget(
+            results[ 0 ], results[ 1 ], results[ 2 ], jsonData
+        );
+        // panel.add( fragfitResultsWidget );
+        return fragfitResultsWidget;
+    }
+
+    return Promise.all( promiseList ).then( init );
+
+}
+
+
+var FragfitResultsLoaderWidget = function(){
+
+    var container = new UI.Panel();
+
+    var pdbFile = new UI.File().setWidth( "200px" );
+    var mrcFile = new UI.File().setWidth( "200px" );
+    var linkerFile = new UI.File().setWidth( "200px" );
+    var jsonFile = new UI.File().setWidth( "200px" );
+    var infoText = new UI.Text();
+    var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
+    var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
+
+    var results = new UI.Panel();
+
+    //
+
+    function load( pdb, mrc, linker, json ){
+
+        infoText.setValue( "loading..." );
+
+        loadFragfitResults(
+            pdb, mrc, linker, json
+        ).then( function( widget ){
+            infoText.setValue( "" );
+            widget.setMarginLeft( "20px" );
+            results.add(
+                new UI.CollapsibleIconPanel()
+                    .addStatic( new UI.Text( "Results" ) )
+                    .add( widget )
+            );
+        } ).catch( function( error ){
+            infoText.setValue( "ERROR" );
+            console.error( error );
+        } );
+
+    }
+
+    function loadFiles(){
+
+        var pdb = pdbFile.getFiles()[ 0 ];
+        var mrc = mrcFile.getFiles()[ 0 ];
+        var linker = linkerFile.getFiles()[ 0 ];
+        var json = jsonFile.getFiles()[ 0 ];
+
+        if( !pdb || !mrc || !linker || !json ){
+            infoText.setValue( "please supply all files" );
+            return;
+        }
+
+        load( pdb, mrc, linker, json );
+
+    }
+
+    function loadExample(){
+
+        load(
+            "file://dropbox/ngl/fragfit/input_pdb_file.pdb",
+            "file://dropbox/ngl/fragfit/input_mrc_file.mrc",
+            "file://dropbox/ngl/fragfit/loop_correl/ori_pdb_linker_file3.pdb",
+            "file://dropbox/ngl/fragfit/linker_correl.json"
+        );
+
+    }
+
+    //
+
+    var description = new UI.Panel().add(
+        new UI.Html( "FragFit..." )
+    );
+
+    container.add(
+        description,
+        new UI.Break(),
+        new UI.Text( "PDB:" ).setWidth( "45px" ),
+        pdbFile,
+        new UI.Break(),
+        new UI.Text( "MRC:" ).setWidth( "45px" ),
+        mrcFile,
+        new UI.Break(),
+        new UI.Text( "Linker PDB:" ).setWidth( "45px" ),
+        linkerFile,
+        new UI.Break(),
+        new UI.Text( "Linker JSON:" ).setWidth( "45px" ),
+        jsonFile,
+        new UI.Break(),
+        new UI.Break(),
+        loadBtn.setMarginRight( "10px" ),
+        exampleBtn.setMarginRight( "10px" ),
+        infoText,
+        new UI.Break(),
+        new UI.Break(),
+        results
+    );
+
+    return container;
+
+};
+
+
+var FragfitJobWidget = function( server ){
+
+    var container = new UI.Panel();
+
+    var description = new UI.Panel().add(
+        new UI.Html( "FragFit Job" )
+    );
+
+    var jobSelect = new JobSelectorWidget( server )
+        .setWidth( "120px" )
+        .onChange( loadResults );
+
+    var results = new UI.Panel();
+
+    //
+
+    function loadResults(){
+
+        var job = server.getJob( jobSelect.getValue() );
+        if( !job ) return;
+        var baseUrl = job.urlFor( "file" ) + "/";
+        loadFragfitResults(
+            baseUrl + "input_pdb_file.pdb",
+            baseUrl + "input_mrc_file.mrc",
+            baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
+            baseUrl + "linker_correl.json"
+        ).then( function( widget ){
+            widget.setMarginLeft( "20px" );
+            results.add(
+                new UI.CollapsibleIconPanel()
+                    .addStatic( new UI.Text( "Results" ) )
+                    .add( widget )
+            );
+        } );
+
+    }
+
+    //
+
+    container.add(
+        description,
+        jobSelect,
+        new UI.Break(),
+        new UI.Break(),
+        results
+    );
+
+    return container;
+
+};
+
+//
+
+function fragfitResultsLoader(){
+
+    var fragfitResultsLoaderWidget = new FragfitResultsLoaderWidget();
+    panel.add( fragfitResultsLoaderWidget );
+
+}
+
+function fragfitJob(){
+
+    var server = new Server( "http://localhost/job/" );
+    server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
+
+    var fragfitJobWidget = new FragfitJobWidget( server );
+    panel.add( fragfitJobWidget );
+
+}

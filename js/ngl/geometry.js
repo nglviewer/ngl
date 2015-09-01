@@ -54,11 +54,9 @@ NGL.Spline.prototype = {
         var k = 0;
         var j, l, mh, a2, c2, pc2, a3, c3, pc3;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             mh = Math.ceil( m / 2 );
-
-            a2 = r2.getTraceAtom();
 
             for( j = 0; j < mh; ++j ){
 
@@ -68,8 +66,6 @@ NGL.Spline.prototype = {
                 pickingColorMaker.atomColorToArray( a2, pcol, l );
 
             }
-
-            a3 = r3.getTraceAtom();
 
             for( j = mh; j < m; ++j ){
 
@@ -82,7 +78,7 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }, "trace" );
 
         col[ n1 * m * 3 + 0 ] = col[ n1 * m * 3 - 3 ];
         col[ n1 * m * 3 + 1 ] = col[ n1 * m * 3 - 2 ];
@@ -139,19 +135,16 @@ NGL.Spline.prototype = {
         var k = 0;
         var j, l, a2, a3, s2, s3, t;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
-
-            a2 = r2.getTraceAtom();
-            a3 = r3.getTraceAtom();
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             s2 = radiusFactory.atomRadius( a2 );
             s3 = radiusFactory.atomRadius( a3 );
 
             if( arrows && (
-                    ( r2.ss==="s" && r3.ss!=="s" ) ||
-                    ( r2.ss==="h" && r3.ss!=="h" ) ||
-                    ( r2.ss==="g" && r3.ss!=="g" ) ||
-                    ( r2.ss==="i" && r3.ss!=="i" )
+                    ( a2.ss==="s" && a3.ss!=="s" ) ||
+                    ( a2.ss==="h" && a3.ss!=="h" ) ||
+                    ( a2.ss==="g" && a3.ss!=="g" ) ||
+                    ( a2.ss==="i" && a3.ss!=="i" )
                 )
             ){
 
@@ -186,7 +179,7 @@ NGL.Spline.prototype = {
 
             k += m;
 
-        } );
+        }, "trace" );
 
         size[ k ] = size[ k - 1 ];
 
@@ -211,25 +204,11 @@ NGL.Spline.prototype = {
         var dt = 1.0 / m;
 
         var j, l, d;
-        var a1, a2, a3, a4;
+        var _a3;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
-            if( atomname ){
-
-                a1 = r1.getAtomByName( atomname );
-                a2 = r2.getAtomByName( atomname );
-                a3 = r3.getAtomByName( atomname );
-                a4 = r4.getAtomByName( atomname );
-
-            }else{
-
-                a1 = r1.getTraceAtom();
-                a2 = r2.getTraceAtom();
-                a3 = r3.getTraceAtom();
-                a4 = r4.getTraceAtom();
-
-            }
+            _a3 = a3;
 
             for( j = 0; j < m; ++j ){
 
@@ -244,9 +223,9 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }, atomname || "trace" );
 
-        a3.positionToArray( pos, k );
+        _a3.positionToArray( pos, k );
 
         return pos;
 
@@ -271,25 +250,8 @@ NGL.Spline.prototype = {
         var delta = 0.0001;
 
         var j, l, d, d1, d2;
-        var a1, a2, a3, a4;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
-
-            if( atomname ){
-
-                a1 = r1.getAtomByName( atomname );
-                a2 = r2.getAtomByName( atomname );
-                a3 = r3.getAtomByName( atomname );
-                a4 = r4.getAtomByName( atomname );
-
-            }else{
-
-                a1 = r1.getTraceAtom();
-                a2 = r2.getTraceAtom();
-                a3 = r3.getTraceAtom();
-                a4 = r4.getTraceAtom();
-
-            }
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             for( j = 0; j < m; ++j ){
 
@@ -317,7 +279,8 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }, atomname || "trace" );
+
 
         p2.toArray( tan, k );
 
@@ -332,6 +295,7 @@ NGL.Spline.prototype = {
 
         var interpolate = this.interpolate;
         var type = this.type;
+        var fiber = this.fiber;
 
         var n = this.size;
         var n1 = n - 1;
@@ -370,7 +334,18 @@ NGL.Spline.prototype = {
 
         var j, l, d, d1, d2;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        if( !fiber.computedAtoms[ "direction1" ] ){
+            fiber.computeAtom( "direction1" );
+        }
+        if( !fiber.computedAtoms[ "direction2" ] ){
+            fiber.computeAtom( "direction2" );
+        }
+        var direction1 = fiber.computedAtoms[ "direction1" ];
+        var direction2 = fiber.computedAtoms[ "direction2" ];
+
+        var len = direction1.length;
+
+        for( var i = 4; i <= len; i++ ){
 
             if( type !== NGL.CgType ){
 
@@ -378,13 +353,13 @@ NGL.Spline.prototype = {
 
                     first = false;
 
-                    d1a1.copy( r1.getDirectionAtom1() );
-                    d1a2.copy( r2.getDirectionAtom1() );
-                    d1a3.copy( r3.getDirectionAtom1() );
+                    d1a1.copy( direction1[ i - 4 ] );
+                    d1a2.copy( direction1[ i - 3 ] );
+                    d1a3.copy( direction1[ i - 2 ] );
 
-                    d2a1.copy( r1.getDirectionAtom2() );
-                    d2a2.copy( r2.getDirectionAtom2() );
-                    d2a3.copy( r3.getDirectionAtom2() );
+                    d2a1.copy( direction2[ i - 4 ] );
+                    d2a2.copy( direction2[ i - 3 ] );
+                    d2a3.copy( direction2[ i - 2 ] );
 
                     vSub1.subVectors( d2a1, d1a1 );
                     vSub2.subVectors( d2a2, d1a2 );
@@ -413,8 +388,8 @@ NGL.Spline.prototype = {
 
                 }
 
-                d1a4.copy( r4.getDirectionAtom1() );
-                d2a4.copy( r4.getDirectionAtom2() );
+                d1a4.copy( direction1[ i - 1 ] );
+                d2a4.copy( direction2[ i - 1 ] );
 
                 vSub4.subVectors( d2a4, d1a4 );
                 if( vSub3.dot( vSub4 ) < 0 ){
@@ -464,7 +439,7 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }
 
         if( type === NGL.ProteinType ){
 
@@ -515,11 +490,15 @@ NGL.Helixorient.prototype = {
         var i, j, a, r, fr, fa;
         var residues = [];
         var n = center.length / 3;
+        var fiber = this.fiber;
+
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
         for( i = 0; i < n; ++i ){
 
-            fr = this.fiber.residues[ i ];
-            fa = fr.getTraceAtom();
+            fa = trace[ i ];
+            fr = fa.residue;
 
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );  // FIXME get rid of globalindex
@@ -571,7 +550,7 @@ NGL.Helixorient.prototype = {
 
         }
 
-        var f = new NGL.Fiber( residues, this.fiber.structure );
+        var f = new NGL.Fiber( residues, fiber.structure );
 
         return f;
 
@@ -580,29 +559,29 @@ NGL.Helixorient.prototype = {
     getColor: function( params ){
 
         var n = this.size;
+        var fiber = this.fiber;
 
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
         var p = params || {};
-        p.structure = this.fiber.structure;
+        p.structure = fiber.structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        var i = 0;
-        var a, c, pc;
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
-        this.fiber.eachResidue( function( r ){
+        for( var i = 0; i < n; ++i ){
 
-            a = r.getTraceAtom();
+            var a = trace[ i ];
+            var i3 = i * 3;
 
-            colorMaker.atomColorToArray( a, col, i );
-            pickingColorMaker.atomColorToArray( a, pcol, i );
+            colorMaker.atomColorToArray( a, col, i3 );
+            pickingColorMaker.atomColorToArray( a, pcol, i3 );
 
-            i += 3;
-
-        } );
+        }
 
         return {
             "color": col,
@@ -614,23 +593,20 @@ NGL.Helixorient.prototype = {
     getSize: function( type, scale ){
 
         var n = this.size;
+        var fiber = this.fiber;
 
         var size = new Float32Array( n );
 
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        var i = 0;
-        var a;
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
-        this.fiber.eachResidue( function( r ){
+        for( var i = 0; i < n; ++i ){
 
-            a = r.getTraceAtom();
+            size[ i ] = radiusFactory.atomRadius( trace[ i ] );
 
-            size[ i ] = radiusFactory.atomRadius( a );
-
-            i += 1;
-
-        } );
+        }
 
         return {
             "size": size
@@ -672,14 +648,9 @@ NGL.Helixorient.prototype = {
         var _crossdir = new THREE.Vector3();
         var _center = new THREE.Vector3( 0, 0, 0 );
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             j = 3 * i;
-
-            a1 = r1.getTraceAtom();
-            a2 = r2.getTraceAtom();
-            a3 = r3.getTraceAtom();
-            a4 = r4.getTraceAtom();
 
             // ported from GROMACS src/tools/gmx_helixorient.c
 
@@ -732,7 +703,7 @@ NGL.Helixorient.prototype = {
             _prevAxis.copy( _axis );
             _center.copy( v1 );
 
-        } );
+        }, "trace" );
 
         //
 

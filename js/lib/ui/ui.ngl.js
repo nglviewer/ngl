@@ -34,7 +34,6 @@ UI.ColorPopupMenu = function(){
     this.colorInput = new UI.Input()
         .onChange( function(){
 
-            scope.setScheme( "color" );
             scope.setColor( scope.colorInput.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 

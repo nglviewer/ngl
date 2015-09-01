@@ -7,6 +7,7 @@
 
 ::-webkit-scrollbar {
     width:9px;
+    height:9px;
 }
 
 ::-webkit-scrollbar-track {
@@ -76,6 +77,11 @@ input.Number {
     cursor: col-resize;
 }
 
+input.File {
+    border: 0px solid !important;
+    padding: 0px !important;
+}
+
 input[type=range]:focus:after {
     position: absolute;
     transform: translate(-100%,-50% );
@@ -114,6 +120,10 @@ input[type=range]:focus:after {
 
 .OverlayPanel:focus {
     z-index: 20;
+}
+
+.Text {
+    cursor: default;
 }
 
 .FancySelect {
@@ -211,13 +221,14 @@ input[type=range]:focus:after {
     overflow-wrap: break-word;
 }
 
-
 /* FlexiColorPicker */
+
 .picker-wrapper,
 .slide-wrapper {
     position: relative;
     float: left;
 }
+
 .picker-indicator,
 .slide-indicator {
     position: absolute;
@@ -225,14 +236,17 @@ input[type=range]:focus:after {
     top: 0;
     pointer-events: none;
 }
+
 .picker,
 .slide {
     cursor: crosshair;
     float: left;
 }
+
 .slide-wrapper {
     margin-left: 10px;
 }
+
 .picker-indicator {
     width: 5px;
     height: 5px;
@@ -247,6 +261,7 @@ input[type=range]:focus:after {
     filter: alpha(opacity=50);
     background-color: white;
 }
+
 .slide-indicator {
     width: 100%;
     height: 10px;
@@ -300,6 +315,32 @@ input[type=range]:focus:after {
     padding-right: 5px;
 
     text-align: right;
+}
+
+/* resize */
+
+.ResizeLeft, .ResizeLeft:hover {
+    position: relative;
+    float: left;
+    height: 100%;
+    width: 10px;
+}
+
+.ResizeLeft:hover{
+    cursor: col-resize;
+}
+
+/* virtual list */
+
+.VirtualListRow {
+    position: absolute;
+    overflow: hidden;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.VirtualListRow > .Text {
+    cursor: inherit;
 }
 
 /* id */
@@ -391,7 +432,7 @@ input[type=range]:focus:after {
         position: absolute;
         overflow: auto;
         right: 0px;
-        width: 300px;
+        width: 100%;
     }
 
 #toolbar {

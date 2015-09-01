@@ -1,0 +1,471 @@
+
+var Server = function( url, params ){
+
+    this.url = url;
+
+    this.tools = {};
+    this.jobs = {};
+
+    this.signals = {
+        toolsLoaded: new signals.Signal(),
+        jobAdded: new signals.Signal(),
+    }
+
+    var p = params || {};
+
+    for( var name in p.listeners ){
+        if( name in this.signals ){
+            this.signals[ name ].add( p.listeners[ name ] );
+        }
+    }
+
+    this.urlFor = function( route ){
+
+        return this.url + route;
+
+    };
+
+    this.retrieveTools = function( callback ){
+
+        NGL.autoLoad( this.urlFor( "tools" ), {
+            ext: "json"
+        } ).then( callback );
+
+    };
+
+    this.getTool = function( name ){
+
+        return this.tools[ name ];
+
+    };
+
+    this.addJob = function( name ){
+
+        var job = new Job( name, this );
+
+        this.jobs[ name ] = job;
+        this.signals.jobAdded.dispatch();
+
+        return job;
+
+    };
+
+    this.getJob = function( name ){
+
+        return this.jobs[ name ];
+
+    };
+
+    this.retrieveTools( function( tools ){
+
+        for( var name in tools.data ){
+
+            var p = tools.data[ name ];
+
+            this.tools[ name ] = new Tool(
+                name, this, p.args, p.docu
+            );
+
+        }
+
+        this.signals.toolsLoaded.dispatch();
+
+    }.bind( this ) );
+
+};
+
+
+var Tool = function( name, server, args, docu ){
+
+    this.name = name;
+    this.server = server;
+    this.args = args || {};
+    this.docu = docu || "";
+
+    this.urlFor = function( route ){
+
+        return this.server.url + route;
+
+    };
+
+    this.submit = function( callback ){
+
+        NGL.autoLoad( this.urlFor( "tools" ), {
+            ext: "json"
+        } ).then( callback );
+
+    };
+
+};
+
+
+var Job = function( name, server, params ){
+
+    this.name = name;
+    this.server = server;
+
+    this.check = undefined;
+    this.running = undefined;
+    this.tool = undefined;
+    this.log = [];
+
+    this.signals = {
+        statusChanged: new signals.Signal(),
+        finished: new signals.Signal(),
+        error: new signals.Signal(),
+    }
+
+    var p = params || {};
+
+    for( var name in p.listeners ){
+        if( name in this.signals ){
+            this.signals[ name ].add( p.listeners[ name ] );
+        }
+    }
+
+    this.urlFor = function( route ){
+
+        return this.server.url + route + "/" + this.name;
+
+    };
+
+    this.getStatus = function( callback ){
+
+        NGL.autoLoad( this.urlFor( "status" ), {
+            ext: "json"
+        } ).then( function( o ){
+            console.log(o)
+            var status = o.data;
+            this.check = status.check;
+            this.running = status.running;
+            this.log = status.log;
+            if( typeof callback === "function" ){
+                callback();
+            }
+            this.signals.statusChanged.dispatch();
+        }.bind( this ) );
+
+    };
+
+    this.getParams = function( callback ){
+
+        NGL.autoLoad( this.urlFor( "params" ), {
+            ext: "json"
+        } ).then( callback );
+
+    };
+
+    this.download = function( name ){
+
+        NGL.download( this.urlFor( "download" ), name || this.name );
+
+    };
+
+    var getStatusIntervalId = setInterval( function(){
+
+        this.getStatus( function(){
+
+            if( this.running ){
+                console.log("still running")
+            }else{
+                clearInterval( getStatusIntervalId );
+                console.log("finished")
+            }
+
+        }.bind( this ) );
+
+    }.bind( this ), 1000 );
+
+    // this.getParams();
+
+};
+
+
+var ServerWidget = function( server ){
+
+    var container = new UI.Panel();
+
+    var header = new UI.Panel();
+    var content = new UI.Panel();
+
+    container.add(
+        header, content
+    );
+
+    // heading
+
+    var heading = new UI.Text( "Server: " + server.url );
+    header.add( heading );
+
+    // tool selector
+
+    var toolSelect = new UI.Select()
+        .setWidth( "120px" )
+        .onChange( makeToolForm );
+
+    var toolForm = new UI.Panel();
+
+    content.add(
+        new UI.CollapsibleIconPanel()
+            .addStatic( new UI.Text( "Form" ) )
+            .add(
+                new UI.Panel().setMarginLeft( "20px" ).add(
+                    new UI.Panel().add(
+                        new UI.Text( "Tool:" ).setMarginRight( "10px" ),
+                        toolSelect
+                    ),
+                    toolForm
+                )
+            )
+    );
+
+    function makeToolSelector(){
+        var options = { "": "" };
+        for( var name in server.tools ){
+            options[ name ] = name;
+        }
+        toolSelect
+            .setOptions( options )
+            .setValue( "" );
+    }
+
+    makeToolSelector();
+
+    server.signals.toolsLoaded.add( makeToolSelector );
+
+    function makeToolForm(){
+        toolForm.clear();
+        var name = toolSelect.getValue();
+        if( name ){
+            var tool = server.getTool( name );
+            toolForm.add( new ToolWidget( tool ) );
+        }
+    }
+
+    // job selector
+
+    var jobSelect = new JobSelectorWidget( server )
+        .setWidth( "120px" )
+        .onChange( makeJobInfo );
+
+    var jobInfo = new UI.Panel();
+
+    content.add(
+        new UI.CollapsibleIconPanel()
+            .addStatic( new UI.Text( "Info" ) )
+            .add(
+                new UI.Panel().setMarginLeft( "20px" ).add(
+                    new UI.Panel().add(
+                        new UI.Text( "Job:" ).setMarginRight( "10px" ),
+                        jobSelect
+                    ),
+                    jobInfo
+                )
+            )
+    );
+
+    function makeJobInfo(){
+        jobInfo.clear();
+        var name = jobSelect.getValue();
+        if( name ){
+            var job = server.getJob( name );
+            jobInfo.add( new JobWidget( job ) );
+        }
+    }
+
+    return container;
+
+};
+
+
+var JobSelectorWidget = function( server ){
+
+    var jobSelect = new UI.Select()
+        .setWidth( "120px" )
+
+    function makeJobSelector(){
+        var options = { "": "" };
+        for( var name in server.jobs ){
+            options[ name ] = name;
+        }
+        jobSelect
+            .setOptions( options )
+            .setValue( "" );
+    }
+
+    makeJobSelector();
+
+    server.signals.jobAdded.add( makeJobSelector );
+
+    return jobSelect;
+
+};
+
+
+var ToolWidget = function( tool ){
+
+    var container = new UI.Panel();
+
+    var form = new UI.Form();
+    var submit = new UI.Button( "submit" );
+
+    container.add(
+        form, submit
+    );
+
+    // form
+
+    for( var name in tool.args ){
+
+        var arg = tool.args[ name ];
+
+        console.log( arg );
+
+        form.add(
+            new UI.Text( arg.name + ":" ).setMarginRight( "10px" ),
+            new UI.Text( arg.type ).setMarginRight( "10px" )
+        );
+
+        var input;
+
+        if( arg.type === "file" ){
+            input = new UI.File();
+        }else{
+            input = new UI.Input();
+        };
+
+        input.setName( arg.name );
+
+        form.add(
+            input,
+            new UI.Break()
+        );
+
+    }
+
+    // submit
+
+    submit.onClick( function(){
+
+        var data = new FormData( form.dom );
+        data.append( "__type__", tool.name );
+
+        var url = tool.urlFor( "submit/" );
+
+        var xhr = new XMLHttpRequest();
+        xhr.open( "POST", url );
+
+        xhr.addEventListener( 'load', function ( event ) {
+
+            if( xhr.response === "ERROR" ){
+                console.error( "ToolWidget submit ERROR" );
+            }else{
+                var json = JSON.parse( xhr.response );
+                server.addJob( json.jobname );
+            }
+
+        }, false );
+
+        xhr.send( data );
+
+    } );
+
+    return container;
+
+};
+
+
+var JobWidget = function( job ){
+
+    var container = new UI.Panel();
+
+    var info = new UI.Panel();
+
+    container.add(
+        info
+    );
+
+    // download
+
+    var download = new UI.Panel().add(
+        new UI.Button( "download" ).onClick( function(){
+            job.download();
+        } )
+    );
+    info.add( download );
+
+    // files
+
+    var files = new UI.Panel().add(
+        new UI.Button( "import files" ).onClick( function(){
+
+            var dirWidget = new NGL.DirectoryListingWidget(
+
+                stage, "Import file", undefined,
+
+                function( path ){
+                    console.log( path )
+                    stage.loadFile(
+                        job.urlFor( "file" ) + "/" + path.path,
+                        { defaultRepresentation: true }
+                    );
+                    dirWidget.dispose();
+                },
+
+                job.urlFor( "dir" ) + "/"
+
+            );
+
+            dirWidget
+                .setOpacity( "0.9" )
+                .setLeft( "50px" )
+                .setTop( "80px" )
+                .attach();
+
+        } )
+    );
+    info.add( files );
+
+    // status
+
+    var status = new UI.Panel();
+    info.add( status );
+
+    function updateStatus(){
+        status.clear().add(
+            new UI.Text( "Check: " + job.check ),
+            new UI.Break(),
+            new UI.Text( "Running: " + job.running ),
+            new UI.Break(),
+            new UI.Text( "Log:" ),
+            new UI.Break()
+        )
+        for( var i = 0; i < job.log.length; ++i ){
+            status.add(
+                new UI.Text( job.log[ i ] ).setMarginLeft( "10px" ),
+                new UI.Break()
+            );
+        }
+    }
+
+    updateStatus();
+    job.signals.statusChanged.add( updateStatus );
+
+    return container;
+
+};
+
+//
+
+function serverWidget(){
+
+    var server = new Server( "http://localhost/job/" );
+
+    var serverWidget = new ServerWidget( server );
+    panel.add( serverWidget );
+
+    server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
+    server.addJob( "apbs_e3d07158-7e85-4133-9677-829d37e0d030" );
+    server.addJob( "apbs_2c131393-8c87-4362-9061-e1d51561e828" );
+
+}

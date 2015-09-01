@@ -99,7 +99,7 @@ var properties = [
     'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
     'verticalAlign', 'clear', 'float', 'zIndex', 'minHeight', 'maxHeight',
     'minWidth', 'maxWidth', 'wordBreak', 'wordWrap', 'spellcheck',
-    'lineHeight', 'whiteSpace', 'textOverflow'
+    'lineHeight', 'whiteSpace', 'textOverflow', 'textAlign'
 ];
 
 properties.forEach( function ( property ) {
@@ -125,8 +125,9 @@ properties.forEach( function ( property ) {
 // events
 
 var events = [
-    'KeyUp', 'KeyDown', 'KeyPress', 'MouseOver', 'MouseOut', 'Click', 'Change',
-    'Input'
+    'KeyUp', 'KeyDown', 'KeyPress',
+    'MouseOver', 'MouseOut', 'MouseDown', 'MouseUp',
+    'Click', 'Change', 'Input', 'Scroll'
 ];
 
 events.forEach( function ( event ) {
@@ -332,7 +333,6 @@ UI.Text = function ( text ) {
 
     var dom = document.createElement( 'span' );
     dom.className = 'Text';
-    dom.style.cursor = 'default';
     dom.style.display = 'inline-block';
     dom.style.verticalAlign = 'middle';
 
@@ -394,6 +394,14 @@ UI.Input.prototype.getValue = function () {
 UI.Input.prototype.setValue = function ( value ) {
 
     this.dom.value = value;
+
+    return this;
+
+};
+
+UI.Input.prototype.setName = function ( value ) {
+
+    this.dom.name = value;
 
     return this;
 

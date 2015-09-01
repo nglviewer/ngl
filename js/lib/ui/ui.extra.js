@@ -37,6 +37,90 @@ UI.Html.prototype.setValue = function ( value ) {
 };
 
 
+// Form
+
+UI.Form = function () {
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'form' );
+    dom.className = 'Form';
+    dom.method = "post";
+    dom.action = "";
+    dom.target = "_blank";
+    dom.enctype = "multipart/form-data";
+
+    this.dom = dom;
+
+    return this;
+};
+
+UI.Form.prototype = Object.create( UI.Panel.prototype );
+
+UI.Form.prototype.setMethod= function ( value ) {
+
+    this.dom.method = value;
+
+    return this;
+
+};
+
+UI.Form.prototype.setAction = function ( value ) {
+
+    this.dom.action = value
+
+    return this;
+
+};
+
+UI.Form.prototype.setTarget= function ( value ) {
+
+    this.dom.target = value;
+
+    return this;
+
+};
+
+UI.Form.prototype.setEnctype = function ( value ) {
+
+    this.dom.enctype = value
+
+    return this;
+
+};
+
+
+// File
+
+UI.File = function () {
+
+    UI.Input.call( this );
+
+    this.dom.className = 'File';
+    this.dom.type = "file";
+    this.dom.multiple = false;
+
+    return this;
+
+};
+
+UI.File.prototype = Object.create( UI.Input.prototype );
+
+UI.File.prototype.setMultiple = function ( value ) {
+
+    this.dom.multiple = value
+
+    return this;
+
+};
+
+UI.File.prototype.getFiles = function ( value ) {
+
+    return this.dom.files;
+
+};
+
+
 // Ellipsis Text
 
 UI.EllipsisText = function ( text ) {
@@ -420,8 +504,6 @@ UI.AdaptiveTextArea = function () {
 
     UI.Element.call( this );
 
-    var scope = this;
-
     var container = document.createElement( 'div' );
     container.className = 'AdaptiveTextAreaContainer';
 
@@ -482,50 +564,161 @@ UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
 };
 
 
-// Virtual List (requires Virtual DOM list)
+// Virtual List
 
-UI.VirtualList = function( items ){
+UI.VirtualList = function( items, itemHeight, height, generatorFn ){
+
+    // based on Virtual DOM List
+    // https://github.com/sergi/virtual-list
+    // The MIT License (MIT)
+    // Copyright (C) 2013 Sergi Mansilla
 
     UI.Element.call( this );
 
+    items = items || [];
+    itemHeight = itemHeight || 20;
+    height = height || 300;
+    generatorFn = generatorFn || function(){};
+
     var dom = document.createElement( 'div' );
     dom.className = 'VirtualList';
-    // dom.style.cursor = 'default';
-    // dom.style.display = 'inline-block';
-    // dom.style.verticalAlign = 'middle';
+    dom.style.height = height + 'px';
+
+    var totalRows = items.length;
+    var screenItemsCount = Math.ceil( height / itemHeight );
+    var cachedItemsCount = screenItemsCount * 3;
+    var lastRepaintY;
+    var maxBuffer = screenItemsCount * itemHeight;
+    var lastScrolled = 0;
+
+    var list = document.createElement('div');
+    list.style.width = '100%';
+    list.style.height = height + 'px';
+    list.style.overflow = 'auto';
+    list.style.position = 'relative';
+    list.style.padding = 0;
+
+    var scroller = document.createElement('div');
+    scroller.style.opacity = 0;
+    scroller.style.position = 'absolute';
+    scroller.style.top = 0;
+    scroller.style.left = 0;
+    scroller.style.width = '1px';
+    scroller.style.height = ( itemHeight * totalRows ) + 'px';
+
+    function createRow( i ){
+        var item = generatorFn( i );
+        item.classList.add( 'VirtualListRow' );
+        item.style.height = itemHeight + 'px';
+        item.style.top = ( i * itemHeight ) + 'px';
+        return item;
+    }
+
+    function renderChunk( from ){
+        var finalItem = Math.min( totalRows, from + cachedItemsCount );
+        // Append all the new rows in a document fragment
+        // that we will later append to the parent node
+        var fragment = document.createDocumentFragment();
+        for( var i = from; i < finalItem; i++ ){
+            fragment.appendChild( createRow( i ) );
+        }
+        // Hide and mark obsolete nodes for deletion.
+        for( var j = 1, l = list.childNodes.length; j < l; j++ ){
+            list.childNodes[ j ].style.display = 'none';
+            list.childNodes[ j ].setAttribute( 'data-rm', '1' );
+        }
+        list.appendChild( fragment );
+    };
+
+    // As soon as scrolling has stopped, this interval asynchronously
+    // removes all the nodes that are not used anymore
+    var rmNodeInterval = setInterval( function(){
+        // check if list is still attached to dom
+        var element = dom;
+        while( element !== document && element.parentNode ){
+            element = element.parentNode;
+        }
+        // if list not attached to dom, clear interval
+        if( element !== document ){
+            clearInterval( rmNodeInterval );
+        }
+        // remove tagged nodes
+        if( Date.now() - lastScrolled > 100 ){
+            var badNodes = list.querySelectorAll( '[data-rm="1"]' );
+            for( var i = 0, l = badNodes.length; i < l; i++ ) {
+                list.removeChild( badNodes[ i ] );
+            }
+        }
+    }, 500 );
+
+    function onScroll( e ){
+        var scrollTop = e.target.scrollTop;  // Triggers reflow
+        if( !lastRepaintY || Math.abs( scrollTop - lastRepaintY ) > maxBuffer ){
+            var first = Math.floor( scrollTop / itemHeight ) - screenItemsCount;
+            renderChunk( first < 0 ? 0 : first );
+            lastRepaintY = scrollTop;
+        }
+        lastScrolled = Date.now();
+        e.preventDefault && e.preventDefault();
+    }
+
+    // API
+
+    this.setItems = function( value ){
+        items = value;
+        totalRows = items.length;
+        scroller.style.height = ( itemHeight * totalRows ) + 'px';
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setItemHeight = function( value ){
+        itemHeight = value;
+        screenItemsCount = Math.ceil( height / itemHeight );
+        cachedItemsCount = screenItemsCount * 3;
+        maxBuffer = screenItemsCount * itemHeight;
+        scroller.style.height = ( itemHeight * totalRows ) + 'px';
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setHeight = function( value ){
+        UI.Element.prototype.setHeight.call( this, value + "px" );
+        height = value;
+        screenItemsCount = Math.ceil( height / itemHeight );
+        cachedItemsCount = screenItemsCount * 3;
+        maxBuffer = screenItemsCount * itemHeight;
+        list.style.height = height + 'px';
+        scroller.style.height = height + 'px';
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setGeneratorFn = function( value ){
+        generatorFn = value;
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.redraw = function(){
+        renderChunk( Math.floor( list.scrollTop / itemHeight ) );
+        return this;
+    };
+
+    //
+
+    list.appendChild( scroller );
+    dom.appendChild( list );
+    list.addEventListener( 'scroll', onScroll );
+    renderChunk( 0 );
 
     this.dom = dom;
-
-    this._items = items;
-
-    this.list = new VirtualList({
-        w: 280,
-        h: 300,
-        itemHeight: 31,
-        totalRows: items.length,
-        generatorFn: function( index ) {
-
-            var panel = new UI.Panel();
-            var text = new UI.Text()
-                .setColor( "orange" )
-                .setMarginLeft( "10px" )
-                .setValue( "ITEM " + items[ index ] );
-
-            panel.add( text );
-
-            return panel.dom;
-
-        }
-    });
-
-    console.log( this.dom );
-    console.log( this.list );
-
-    this.dom.appendChild( this.list.container );
 
     return this;
 
 };
+
+UI.VirtualList.prototype = Object.create( UI.Element.prototype );
 
 
 // Popup Menu (requires Tether)
@@ -627,7 +820,7 @@ UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 
@@ -635,7 +828,7 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
@@ -645,7 +838,7 @@ UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.setIconTitle = function( value ){
 
@@ -653,7 +846,7 @@ UI.PopupMenu.prototype.setIconTitle = function( value ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.dispose = function(){
 
@@ -661,7 +854,7 @@ UI.PopupMenu.prototype.dispose = function(){
 
     UI.Element.prototype.dispose.call( this );
 
-}
+};
 
 
 // Collapsible Icon Panel
@@ -677,8 +870,8 @@ UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
         // iconClass1 = iconClass1 || "plus-square";
         // iconClass2 = iconClass2 || "minus-square";
 
-        iconClass1 = iconClass1 || "chevron-right";
-        iconClass2 = iconClass2 || "chevron-down";
+        iconClass1 = iconClass1 || "chevron-down";
+        iconClass2 = iconClass2 || "chevron-right";
 
     }
 

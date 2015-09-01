@@ -81,7 +81,7 @@ NGL.Buffer.prototype = {
 
         if( NGL.indexUint16 ){
 
-            this.geometry.drawcalls = this.geometry.computeOffsets();
+            this.geometry.computeOffsets();
 
         }
 
@@ -143,6 +143,12 @@ NGL.Buffer.prototype = {
 
             if( !this.wireframeGeometry ) this.makeWireframeGeometry();
 
+
+                if( NGL.indexUint16 ){
+                    this.wireframeGeometry.computeOffsets();
+                }else{
+                    this.wireframeGeometry.clearDrawCalls();
+                }
             return new THREE.LineSegments( this.wireframeGeometry, material );
 
         }else{

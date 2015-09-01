@@ -50,21 +50,19 @@ NGL.Script.prototype = {
 
     call: function( stage, onFinish ){
 
-        var scope = this;
-
         var panel = {
 
             add: function( element ){
 
-                scope.signals.elementAdded.dispatch( arguments );
+                this.signals.elementAdded.dispatch( arguments );
 
-            },
+            }.bind( this ),
 
             setName: function( value ){
 
-                scope.signals.nameChanged.dispatch( value );
+                this.signals.nameChanged.dispatch( value );
 
-            }
+            }.bind( this )
 
         };
 
@@ -487,6 +485,13 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         label = U( label ? label : "all" );
         collection = collection || new NGL.Collection();
 
+        if( !( collection instanceof NGL.Collection ) &&
+            !( collection instanceof NGL.ComponentCollection ) &&
+            !( collection instanceof NGL.RepresentationCollection )
+        ){
+            collection = new NGL.Collection( [ collection ] );
+        }
+
         var list = collection.list;
 
         function isVisible(){
@@ -525,7 +530,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         } );
 
-        panel.add( btn );
+        // panel.add( btn );
 
         return btn;
 

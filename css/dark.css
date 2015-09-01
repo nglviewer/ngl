@@ -21,7 +21,7 @@ a{
     color: #719eff;
 }
 
-input.Number {
+input.Number, input.File {
     color: #A1B56C;
 }
 
@@ -53,6 +53,12 @@ input.Number {
 #menubar .menu .options .option:hover,
 .option:hover > .Icon,
 .option:hover > .Text {
+    color: #181818;
+    background-color: #7CAFC2;
+}
+
+.highlight,
+.highlight > .Text {
     color: #181818;
     background-color: #7CAFC2;
 }

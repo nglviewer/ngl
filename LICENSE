@@ -204,13 +204,13 @@ For license texts see at the end of this document.
 	js/lib/pako.min.js
 
 
-//////////////////
-// promisejs.org
+/////////////////////
+// promise polyfill
 
-	https://github.com/ForbesLindesay/promisejs.org
-	MIT License, Copyright (c) 2013 Forbes Lindesay
+	https://github.com/taylorhakes/promise-polyfill
+	MIT License, Copyright (c) 2014 Taylor Hakes, 2014 Forbes Lindesay,
 
-	js/lib/promise-6.0.0.min.js
+	js/lib/promise.min.js
 
 
 /////////////

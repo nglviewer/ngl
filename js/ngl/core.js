@@ -157,6 +157,66 @@ if( !Object.assign ){
 }
 
 
+if (!String.prototype.startsWith) {
+
+    /*! https://mths.be/startswith v0.2.0 by @mathias */
+
+    (function() {
+        'use strict'; // needed to support `apply`/`call` with `undefined`/`null`
+        var defineProperty = (function() {
+            // IE 8 only supports `Object.defineProperty` on DOM elements
+            try {
+                var object = {};
+                var $defineProperty = Object.defineProperty;
+                var result = $defineProperty(object, object, object) && $defineProperty;
+            } catch(error) {}
+            return result;
+        }());
+        var toString = {}.toString;
+        var startsWith = function(search) {
+            if (this == null) {
+                throw TypeError();
+            }
+            var string = String(this);
+            if (search && toString.call(search) == '[object RegExp]') {
+                throw TypeError();
+            }
+            var stringLength = string.length;
+            var searchString = String(search);
+            var searchLength = searchString.length;
+            var position = arguments.length > 1 ? arguments[1] : undefined;
+            // `ToInteger`
+            var pos = position ? Number(position) : 0;
+            if (pos != pos) { // better `isNaN`
+                pos = 0;
+            }
+            var start = Math.min(Math.max(pos, 0), stringLength);
+            // Avoid the `indexOf` call if no match is possible
+            if (searchLength + start > stringLength) {
+                return false;
+            }
+            var index = -1;
+            while (++index < searchLength) {
+                if (string.charCodeAt(start + index) != searchString.charCodeAt(index)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        if (defineProperty) {
+            defineProperty(String.prototype, 'startsWith', {
+                'value': startsWith,
+                'configurable': true,
+                'writable': true
+            });
+        } else {
+            String.prototype.startsWith = startsWith;
+        }
+    }());
+
+}
+
+
 if( typeof importScripts !== 'function' ){
 
     ( function() {
@@ -259,6 +319,94 @@ if( typeof importScripts !== 'function' ){
                 };
             }
         };
+
+    }();
+
+}
+
+
+if( typeof importScripts !== 'function' && WebGLRenderingContext ){
+
+    // wrap WebGL debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function( program, pname ){
+
+            if( NGL.debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
 
     }();
 
@@ -412,7 +560,7 @@ NGL.deepCopy = function( src ){
 NGL.download = function( data, downloadName ){
 
     if( !data ){
-        NGL.warn( "NGL.download: no data given" );
+        NGL.warn( "NGL.download: no data given." );
         return;
     }
 
@@ -433,6 +581,42 @@ NGL.download = function( data, downloadName ){
     document.body.removeChild( a );
     if( data instanceof Blob ){
         URL.revokeObjectURL( data );
+    }
+
+};
+
+
+NGL.submit = function( url, data, callback, onerror ){
+
+    if( data instanceof FormData ){
+
+        var xhr = new XMLHttpRequest();
+        xhr.open( "POST", url );
+
+        xhr.addEventListener( 'load', function ( event ) {
+
+            if ( xhr.status === 200 || xhr.status === 304 ) {
+
+                callback( xhr.response );
+
+            } else {
+
+                if( typeof onerror === "function" ){
+
+                    onerror( xhr.status );
+
+                }
+
+            }
+
+        }, false );
+
+        xhr.send( data );
+
+    }else{
+
+        NGL.warn( "NGL.submit: type not supported.", data  );
+
     }
 
 };
@@ -512,6 +696,8 @@ NGL.getFileInfo = function( file ){
         path = protocolMatch[ 2 ];
     }
 
+    var dir = path.substring( 0, path.lastIndexOf('/') + 1 );
+
     if( compressedExtList.indexOf( ext ) !== -1 ){
 
         compressed = ext;
@@ -533,6 +719,7 @@ NGL.getFileInfo = function( file ){
         "name": name,
         "ext": ext,
         "base": base,
+        "dir": dir,
         "compressed": compressed,
         "protocol": protocol
     };
@@ -603,6 +790,49 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
         );
 
     }
+
+};
+
+
+NGL.throttle = function( func, wait, options ){
+
+    // from http://underscorejs.org/docs/underscore.html
+
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+
+    if( !options ) options = {};
+
+    var later = function(){
+        previous = options.leading === false ? 0 : Date.now();
+        timeout = null;
+        result = func.apply( context, args );
+        if( !timeout ) context = args = null;
+    };
+
+    return function(){
+
+        var now = Date.now();
+        if( !previous && options.leading === false ) previous = now;
+        var remaining = wait - ( now - previous );
+        context = this;
+        args = arguments;
+        if( remaining <= 0 || remaining > wait ){
+            if( timeout ){
+                clearTimeout( timeout );
+                timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if( !timeout ) context = args = null;
+        }else if( !timeout && options.trailing !== false ){
+            timeout = setTimeout( later, remaining );
+        }
+
+        return result;
+
+    };
 
 };
 
@@ -684,49 +914,128 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Worker
 
-NGL.Worker = {
+NGL.WorkerRegistry = {
+
+    activeWorkerCount: 0,
 
     funcDict: {},
 
     add: function( name, func ){
 
-        NGL.Worker.funcDict[ name ] = func;
+        NGL.WorkerRegistry.funcDict[ name ] = func;
 
     },
 
-    make: function( name, params ){
+};
 
-        params = params || {};
 
-        var worker;
+NGL.Worker = function( name, params ){
 
-        if( NGL.develop ){
-            worker = new Worker( "../js/ngl/core.js" );
+    params = params || {};
+
+    this.name = name;
+
+    this.__onmessageDict = {};
+    this.__onerrorDict = {};
+
+    if( NGL.develop ){
+        this.worker = new Worker( "../js/ngl/core.js" );
+    }else{
+        this.worker = new Worker( NGL.mainScriptFilePath );
+    }
+
+    this.worker.onmessage = function( event ){
+
+        NGL.timeEnd( "NGL.Worker.postMessage " + this.name + " #" + event.data.__postId );
+
+        if( typeof params.onmessage === "function" ){
+            params.onmessage.apply( this.worker, arguments );
+        };
+        if( this.__onmessageDict[ event.data.__postId ] ){
+            this.__onmessageDict[ event.data.__postId ].apply( this.worker, arguments );
+        }
+
+        return this.onmessage.call( this.worker, event );
+
+    }.bind( this );
+
+    this.worker.onerror = function( event ){
+
+        if( typeof params.onerror === "function" ){
+            params.onerror.apply( this.worker, arguments );
+        };
+        if( this.__onerrorDict[ event.data.__postId ] ){
+            this.__onerrorDict[ event.data.__postId ].apply( this.worker, arguments );
+        }
+
+        return this.onerror.call( this.worker, event );
+
+    }.bind( this );
+
+    NGL.WorkerRegistry.activeWorkerCount += 1;
+
+    if( params.messageData !== undefined ){
+
+        this.postMessage.apply( this, params.messageData );
+
+    }
+
+};
+
+NGL.Worker.prototype = {
+
+    constructor: NGL.Worker,
+
+    __postCount: 0,
+
+    __onmessageDict: null,
+
+    __onerrorDict: null,
+
+    onmessage: function( event ){
+
+    },
+
+    onerror: function( event ){
+
+    },
+
+    postMessage: function( aMessage, transferList ){
+
+        aMessage = aMessage || {};
+        aMessage.__name = this.name;
+        aMessage.__postId = this.__postCount;
+
+        NGL.time( "NGL.Worker.postMessage " + this.name + " #" + this.__postCount );
+
+        this.worker.postMessage.call( this.worker, aMessage, transferList );
+
+        this.__postCount += 1;
+
+    },
+
+    terminate: function(){
+
+        if( this.worker ){
+
+            this.worker.terminate();
+            delete this.worker;
+            NGL.WorkerRegistry.activeWorkerCount -= 1;
+
         }else{
-            worker = new Worker( NGL.mainScriptFilePath );
-        }
 
-        worker.onerror = params.onerror;
-
-        worker.onmessage = params.onmessage;
-
-        var _postMessage = worker.postMessage;
-
-        worker.postMessage = function( aMessage, transferList ){
-
-            if( aMessage !== undefined ) aMessage.__name__ = name;
-
-            _postMessage.call( worker, aMessage, transferList );
+            console.log( "no worker to terminate" );
 
         }
 
-        if( params.messageData !== undefined ){
+    },
 
-            worker.postMessage.apply( worker, params.messageData );
+    post: function( aMessage, transferList, onmessage, onerror ){
 
-        }
+        this.__onmessageDict[ this.__postCount ] = onmessage;
+        this.__onerrorDict[ this.__postCount ] = onerror;
 
-        return worker;
+        this.postMessage( aMessage, transferList );
 
     }
 
@@ -747,7 +1056,7 @@ if( typeof importScripts === 'function' ){
             "../three/loaders/PLYLoader.js",
 
             "../lib/async.js",
-            "../lib/promise-6.0.0.min.js",
+            "../lib/promise.min.js",
             "../lib/sprintf.min.js",
             "../lib/jszip.min.js",
             "../lib/pako.min.js",
@@ -776,19 +1085,31 @@ if( typeof importScripts === 'function' ){
 
     }
 
-    onmessage = function( e ){
+    self.onmessage = function( e ){
 
-        if( e.data.__name__ === undefined ){
+        var name = e.data.__name;
+        var postId = e.data.__postId;
 
-            NGL.error( "message __name__ undefined" );
+        if( name === undefined ){
 
-        }else if( NGL.Worker.funcDict[ e.data.__name__ ] === undefined ){
+            NGL.error( "message __name undefined" );
 
-            NGL.error( "funcDict __name__ undefined" );
+        }else if( NGL.WorkerRegistry.funcDict[ name ] === undefined ){
+
+            NGL.error( "funcDict[ __name ] undefined", name );
 
         }else{
 
-            NGL.Worker.funcDict[ e.data.__name__ ]( e );
+            var callback = function( aMessage, transferList ){
+
+                aMessage = aMessage || {};
+                if( postId !== undefined ) aMessage.__postId = postId;
+
+                self.postMessage( aMessage, transferList );
+
+            };
+
+            NGL.WorkerRegistry.funcDict[ name ]( e, callback );
 
         }
 
@@ -877,7 +1198,7 @@ NGL.decompress = function( data, file, asBinary, callback ){
 };
 
 
-NGL.Worker.add( "decompress", function( e ){
+NGL.WorkerRegistry.add( "decompress", function( e, callback ){
 
     var d = e.data;
 
@@ -888,7 +1209,7 @@ NGL.Worker.add( "decompress", function( e ){
         transferable.push( value.buffer );
     }
 
-    self.postMessage( value, transferable );
+    callback( value, transferable );
 
 } );
 
@@ -899,9 +1220,14 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
         typeof importScripts !== 'function'
     ){
 
-        NGL.time( "NGL.decompressWorker" );
+        var worker = new NGL.Worker( "decompress", {
 
-        var worker = NGL.Worker.make( "decompress", {
+            onmessage: function( e ){
+
+                worker.terminate();
+                callback( e.data );
+
+            },
 
             onerror: function( e ){
 
@@ -911,14 +1237,6 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
                 worker.terminate();
 
                 NGL.decompress( data, file, asBinary, callback );
-
-            },
-
-            onmessage: function( e ){
-
-                NGL.timeEnd( "NGL.decompressWorker" );
-                worker.terminate();
-                callback( e.data );
 
             },
 

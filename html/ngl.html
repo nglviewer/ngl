@@ -36,6 +36,12 @@
                     var load = NGL.GET( "load" );
                     if( load ) stage.loadFile( load );
 
+                    var plugin = NGL.GET( "plugin" );
+                    if( plugin ) stage.loadFile(
+                        "data://plugins/" + plugin + ".ngl",
+                        { name: plugin + " plugin" }
+                    );
+
                 } );
 
             } );

@@ -915,10 +915,6 @@ NGL.Viewer = function( eid ){
 
     this.initStats();
 
-    window.addEventListener(
-        'resize', this.onWindowResize.bind( this ), false
-    );
-
     // fog & background
     this.setBackground();
     this.setFog();
@@ -1463,7 +1459,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    onWindowResize: function(){
+    handleResize: function(){
 
         if( this.container === document ){
 
