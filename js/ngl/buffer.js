@@ -1871,67 +1871,30 @@ NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, params ){
 
     var p = params || {};
+    var n = ( position.length / 3 ) - 1;
+    var n4 = n * 4;
+    var x = n4 * 3;
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
-    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
+    this.meshPosition = new Float32Array( x );
+    this.meshColor = new Float32Array( x );
+    this.meshNormal = new Float32Array( x );
+    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
+    this.meshIndex = new Uint32Array( x );
+
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor, p
+    );
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
-    this.size = ( position.length/3 ) - 1;
-
-    var n = this.size;
-    var n4 = n * 4;
-
-    this.attributes = [
-        "position", "normal",
-        "inputDir", "inputSize", "inputNormal", "inputColor"
-    ];
-
-    if( pickingColor ){
-        this.attributes.push( "pickingColor" );
-    }
-
-    this.uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-            "objectId": { type: "f", value: 0.0 },
-        }
-    ]);
-
-    this.pickingUniforms = {
-        "nearClip": { type: "f", value: 0.0 },
-        "objectId": { type: "f", value: 0.0 },
-    };
-
-    this.geometry = new THREE.BufferGeometry();
 
     this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
+        'dir', new THREE.BufferAttribute( new Float32Array( x ), 3 )
     );
     this.geometry.addAttribute(
-        'inputDir', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
+        'size', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
     );
-    this.geometry.addAttribute(
-        'inputSize', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
-    );
-    this.geometry.addAttribute(
-        'normal', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-    );
-    this.geometry.addAttribute(
-        'inputColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-    );
-    if( pickingColor ){
-        this.geometry.addAttribute(
-            'pickingColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-        );
-        this.pickable = true;
-    }
 
     this.setAttributes({
         position: position,
@@ -1942,218 +1905,188 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
         pickingColor: pickingColor
     });
 
-    this.group = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
-
-    NGL.Buffer.prototype.finalize.call( this );
-
 };
 
-NGL.RibbonBuffer.prototype = {
+NGL.RibbonBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.RibbonBuffer,
+NGL.RibbonBuffer.prototype.constructor = NGL.RibbonBuffer;
 
-    setAttributes: function( data ){
+NGL.RibbonBuffer.prototype.setAttributes = function( data ){
 
-        var n = this.size;
-        var n4 = n * 4;
+    var n4 = this.size;
+    var n = n4 / 4;
 
-        var attributes = this.geometry.attributes;
+    var attributes = this.geometry.attributes;
 
-        var position, normal, size, dir, color, pickingColor;
-        var aPosition, inputNormal, inputSize, inputDir, inputColor, inputPickingColor;
+    var position, normal, size, dir, color, pickingColor;
+    var aPosition, aNormal, aSize, aDir, aColor, aPickingColor;
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
+
+    if( data[ "normal" ] ){
+        normal = data[ "normal" ];
+        aNormal = attributes[ "normal" ].array;
+        attributes[ "normal" ].needsUpdate = true;
+    }
+
+    if( data[ "size" ] ){
+        size = data[ "size" ];
+        aSize = attributes[ "size" ].array;
+        attributes[ "size" ].needsUpdate = true;
+    }
+
+    if( data[ "dir" ] ){
+        dir = data[ "dir" ];
+        aDir = attributes[ "dir" ].array;
+        attributes[ "dir" ].needsUpdate = true;
+    }
+
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
+
+    if( data[ "pickingColor" ] ){
+        pickingColor = data[ "pickingColor" ];
+        aPickingColor = attributes[ "pickingColor" ].array;
+        attributes[ "pickingColor" ].needsUpdate = true;
+    }
+
+    var v, i, k, p, l, v3;
+    var currSize;
+    var prevSize = size ? size[ 0 ] : null;
+
+    for( v = 0; v < n; ++v ){
+
+        v3 = v * 3;
+        k = v * 3 * 4;
+        l = v * 4;
+
+        if( position ){
+
+            aPosition[ k     ] = aPosition[ k + 3 ] = position[ v3     ];
+            aPosition[ k + 1 ] = aPosition[ k + 4 ] = position[ v3 + 1 ];
+            aPosition[ k + 2 ] = aPosition[ k + 5 ] = position[ v3 + 2 ];
+
+            aPosition[ k + 6 ] = aPosition[ k +  9 ] = position[ v3 + 3 ];
+            aPosition[ k + 7 ] = aPosition[ k + 10 ] = position[ v3 + 4 ];
+            aPosition[ k + 8 ] = aPosition[ k + 11 ] = position[ v3 + 5 ];
+
         }
 
-        if( data[ "normal" ] ){
-            normal = data[ "normal" ];
-            inputNormal = attributes[ "normal" ].array;
-            attributes[ "normal" ].needsUpdate = true;
+        if( normal ){
+
+            aNormal[ k     ] = aNormal[ k + 3 ] = -normal[ v3     ];
+            aNormal[ k + 1 ] = aNormal[ k + 4 ] = -normal[ v3 + 1 ];
+            aNormal[ k + 2 ] = aNormal[ k + 5 ] = -normal[ v3 + 2 ];
+
+            aNormal[ k + 6 ] = aNormal[ k +  9 ] = -normal[ v3 + 3 ];
+            aNormal[ k + 7 ] = aNormal[ k + 10 ] = -normal[ v3 + 4 ];
+            aNormal[ k + 8 ] = aNormal[ k + 11 ] = -normal[ v3 + 5 ];
+
         }
 
-        if( data[ "size" ] ){
-            size = data[ "size" ];
-            inputSize = attributes[ "inputSize" ].array;
-            attributes[ "inputSize" ].needsUpdate = true;
-        }
 
-        if( data[ "dir" ] ){
-            dir = data[ "dir" ];
-            inputDir = attributes[ "inputDir" ].array;
-            attributes[ "inputDir" ].needsUpdate = true;
-        }
+        for( i = 0; i<4; ++i ){
 
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            inputColor = attributes[ "inputColor" ].array;
-            attributes[ "inputColor" ].needsUpdate = true;
-        }
+            p = k + 3 * i;
 
-        if( data[ "pickingColor" ] ){
-            pickingColor = data[ "pickingColor" ];
-            inputPickingColor = attributes[ "pickingColor" ].array;
-            attributes[ "pickingColor" ].needsUpdate = true;
-        }
+            if( color ){
 
-        var v, i, k, p, l, v3;
-        var prevSize = size ? size[0] : null;
-
-        for( v = 0; v < n; ++v ){
-
-            v3 = v * 3;
-            k = v * 3 * 4;
-            l = v * 4;
-
-            if( position ){
-
-                aPosition[ k + 0 ] = position[ v3 + 0 ];
-                aPosition[ k + 1 ] = position[ v3 + 1 ];
-                aPosition[ k + 2 ] = position[ v3 + 2 ];
-
-                aPosition[ k + 3 ] = position[ v3 + 0 ];
-                aPosition[ k + 4 ] = position[ v3 + 1 ];
-                aPosition[ k + 5 ] = position[ v3 + 2 ];
-
-                aPosition[ k + 6 ] = position[ v3 + 3 ];
-                aPosition[ k + 7 ] = position[ v3 + 4 ];
-                aPosition[ k + 8 ] = position[ v3 + 5 ];
-
-                aPosition[ k + 9 ] = position[ v3 + 3 ];
-                aPosition[ k + 10 ] = position[ v3 + 4 ];
-                aPosition[ k + 11 ] = position[ v3 + 5 ];
+                aColor[ p     ] = color[ v3     ];
+                aColor[ p + 1 ] = color[ v3 + 1 ];
+                aColor[ p + 2 ] = color[ v3 + 2 ];
 
             }
 
-            if( normal ){
+            if( pickingColor ){
 
-                inputNormal[ k + 0 ] = -normal[ v3 + 0 ];
-                inputNormal[ k + 1 ] = -normal[ v3 + 1 ];
-                inputNormal[ k + 2 ] = -normal[ v3 + 2 ];
-
-                inputNormal[ k + 3 ] = -normal[ v3 + 0 ];
-                inputNormal[ k + 4 ] = -normal[ v3 + 1 ];
-                inputNormal[ k + 5 ] = -normal[ v3 + 2 ];
-
-                inputNormal[ k + 6 ] = -normal[ v3 + 3 ];
-                inputNormal[ k + 7 ] = -normal[ v3 + 4 ];
-                inputNormal[ k + 8 ] = -normal[ v3 + 5 ];
-
-                inputNormal[ k + 9 ] = -normal[ v3 + 3 ];
-                inputNormal[ k + 10 ] = -normal[ v3 + 4 ];
-                inputNormal[ k + 11 ] = -normal[ v3 + 5 ];
-
-            }
-
-
-            for( i = 0; i<4; ++i ){
-                p = k + 3 * i;
-
-                if( color ){
-
-                    inputColor[ p + 0 ] = color[ v3 + 0 ];
-                    inputColor[ p + 1 ] = color[ v3 + 1 ];
-                    inputColor[ p + 2 ] = color[ v3 + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    inputPickingColor[ p + 0 ] = pickingColor[ v3 + 0 ];
-                    inputPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
-                    inputPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
-
-                }
-
-            }
-
-            if( size ){
-
-                if( prevSize!=size[ v ] ){
-                    inputSize[ l + 0 ] = Math.abs( prevSize );
-                    inputSize[ l + 1 ] = Math.abs( prevSize );
-                    inputSize[ l + 2 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 3 ] = Math.abs( size[ v ] );
-                }else{
-                    inputSize[ l + 0 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 1 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 2 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 3 ] = Math.abs( size[ v ] );
-                }
-                prevSize = size[ v ];
-
-            }
-
-            if( dir ){
-
-                inputDir[ k + 0 ] = dir[ v3 + 0 ];
-                inputDir[ k + 1 ] = dir[ v3 + 1 ];
-                inputDir[ k + 2 ] = dir[ v3 + 2 ];
-
-                inputDir[ k + 3 ] = -dir[ v3 + 0 ];
-                inputDir[ k + 4 ] = -dir[ v3 + 1 ];
-                inputDir[ k + 5 ] = -dir[ v3 + 2 ];
-
-                inputDir[ k + 6 ] = dir[ v3 + 3 ];
-                inputDir[ k + 7 ] = dir[ v3 + 4 ];
-                inputDir[ k + 8 ] = dir[ v3 + 5 ];
-
-                inputDir[ k + 9 ] = -dir[ v3 + 3 ];
-                inputDir[ k + 10 ] = -dir[ v3 + 4 ];
-                inputDir[ k + 11 ] = -dir[ v3 + 5 ];
+                aPickingColor[ p     ] = pickingColor[ v3     ];
+                aPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
+                aPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
 
             }
 
         }
 
-    },
+        if( size ){
 
-    makeIndex: function(){
+            currSize = size[ v ];
 
-        var n = this.size;
-        var n4 = n * 4;
+            if( prevSize !== size[ v ] ){
 
-        var quadIndices = new Uint32Array([
-            0, 1, 2,
-            1, 3, 2
-        ]);
+                aSize[ l     ] = prevSize;
+                aSize[ l + 1 ] = prevSize;
+                aSize[ l + 2 ] = currSize;
+                aSize[ l + 3 ] = currSize;
 
-        this.geometry.addAttribute(
-            'index', new THREE.BufferAttribute(
-                new Uint32Array( n4 * 3 ), 1
-            )
-        );
+            }else{
 
-        var index = this.geometry.attributes[ "index" ].array;
+                aSize[ l     ] = currSize;
+                aSize[ l + 1 ] = currSize;
+                aSize[ l + 2 ] = currSize;
+                aSize[ l + 3 ] = currSize;
 
-        var s, v, ix, it;
-
-        for( v = 0; v < n; ++v ){
-
-            ix = v * 6;
-            it = v * 4;
-
-            index.set( quadIndices, ix );
-            for( s = 0; s < 6; ++s ){
-                index[ ix + s ] += it;
             }
+
+            prevSize = currSize;
 
         }
 
-    },
+        if( dir ){
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+            aDir[ k     ] = dir[ v3     ];
+            aDir[ k + 1 ] = dir[ v3 + 1 ];
+            aDir[ k + 2 ] = dir[ v3 + 2 ];
 
-    getMesh: NGL.Buffer.prototype.getMesh,
+            aDir[ k + 3 ] = -dir[ v3     ];
+            aDir[ k + 4 ] = -dir[ v3 + 1 ];
+            aDir[ k + 5 ] = -dir[ v3 + 2 ];
 
-    getMaterial: NGL.Buffer.prototype.getMaterial,
+            aDir[ k + 6 ] = dir[ v3 + 3 ];
+            aDir[ k + 7 ] = dir[ v3 + 4 ];
+            aDir[ k + 8 ] = dir[ v3 + 5 ];
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
+            aDir[ k +  9 ] = -dir[ v3 + 3 ];
+            aDir[ k + 10 ] = -dir[ v3 + 4 ];
+            aDir[ k + 11 ] = -dir[ v3 + 5 ];
 
-    dispose: NGL.Buffer.prototype.dispose
+        }
+
+    }
+
+}
+
+NGL.RibbonBuffer.prototype.makeIndex = function(){
+
+    var meshIndex = this.meshIndex;
+    var n = this.size / 4;
+
+    var quadIndices = new Uint32Array([
+        0, 1, 2,
+        1, 3, 2
+    ]);
+
+    var s, v, ix, it;
+
+    for( v = 0; v < n; ++v ){
+
+        ix = v * 6;
+        it = v * 4;
+
+        meshIndex.set( quadIndices, ix );
+        for( s = 0; s < 6; ++s ){
+            meshIndex[ ix + s ] += it;
+        }
+
+    }
+
+    NGL.MeshBuffer.prototype.makeIndex.call( this );
 
 };
 
@@ -2184,7 +2117,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshPosition = new Float32Array( x );
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
-    this.meshPickingColor = new Float32Array( x );
+    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
     this.meshIndex = new Uint32Array(
         n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
     );
@@ -2195,13 +2128,13 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     );
 
     this.setAttributes({
-        "position": position,
-        "normal": normal,
-        "binormal": binormal,
-        "tangent": tangent,
-        "color": color,
-        "size": size,
-        "pickingColor": pickingColor
+        position: position,
+        normal: normal,
+        binormal: binormal,
+        tangent: tangent,
+        color: color,
+        size: size,
+        pickingColor: pickingColor
     });
 
 }
@@ -2225,35 +2158,41 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
         var capVertices = this.capVertices;
         var radialSegments = this.radialSegments;
 
+        var attributes = this.geometry.attributes;
+
         var position, normal, binormal, tangent, color, size, pickingColor;
         var meshPosition, meshColor, meshNormal, meshPickingColor
-        console.log(n,"data",data,this.geometry.attributes)
+
         if( data[ "position" ] ){
+
             position = data[ "position" ];
             normal = data[ "normal" ];
             binormal = data[ "binormal" ];
             tangent = data[ "tangent" ];
             size = data[ "size" ];
-            meshPosition = this.geometry.attributes[ "position" ].array;  // this.meshPosition;
-            meshNormal = this.geometry.attributes[ "normal" ].array;  //this.meshNormal;
 
-            this.geometry.attributes[ "position" ].needsUpdate = true;
-            this.geometry.attributes[ "normal" ].needsUpdate = true;
-            // this.geometry.attributes[ "radius" ].needsUpdate = true;
+            meshPosition = attributes[ "position" ].array;
+            meshNormal = attributes[ "normal" ].array;
+
+            attributes[ "position" ].needsUpdate = true;
+            attributes[ "normal" ].needsUpdate = true;
+
         }
 
         if( data[ "color" ] ){
-            color = data[ "color" ];
-            meshColor = this.geometry.attributes[ "color" ].array;  // this.meshColor;
 
-            this.geometry.attributes[ "color" ].needsUpdate = true;
+            color = data[ "color" ];
+            meshColor = attributes[ "color" ].array;
+            attributes[ "color" ].needsUpdate = true;
+
         }
 
         if( data[ "pickingColor" ] ){
-            pickingColor = data[ "pickingColor" ];
-            meshPickingColor = this.geometry.attributes[ "pickingColor" ].array;  // this.meshPickingColor;
 
-            this.geometry.attributes[ "pickingColor" ].needsUpdate = true;
+            pickingColor = data[ "pickingColor" ];
+            meshPickingColor = attributes[ "pickingColor" ].array;
+            attributes[ "pickingColor" ].needsUpdate = true;
+
         }
 
         var i, j, k, l, s, t;
