@@ -81,7 +81,9 @@
                     if( example ) NGL.Examples.load( example, stage );
 
                     var load = NGL.GET( "load" );
-                    if( load ) stage.loadFile( load );
+                    if( load ) stage.loadFile( load, {
+                        defaultRepresentation: true
+                    } );
 
                     var plugin = NGL.GET( "plugin" );
                     if( plugin ) stage.loadFile(
