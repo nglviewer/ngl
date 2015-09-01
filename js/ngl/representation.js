@@ -307,6 +307,10 @@ NGL.Representation.prototype = {
         what = what || {};
         rebuild = rebuild || false;
 
+        var uniformData = {};
+        var defineData = {};
+        var propertyData = {};
+
         Object.keys( tp ).forEach( function( name ){
 
             if( p[ name ] === undefined ) return;
@@ -320,121 +324,11 @@ NGL.Representation.prototype = {
 
             this[ name ] = p[ name ];
 
-            // update buffer material uniform
+            // buffer data
 
-            if( tp[ name ].uniform ){
-
-                var updateUniform = function( mesh ){
-
-                    var u = mesh.material.uniforms;
-
-                    if( u && u[ name ] ){
-
-                        u[ name ].value = p[ name ];
-
-                    }else{
-
-                        // happens when the buffers in a repr
-                        // do not suppport the same parameters
-
-                        // NGL.info( name )
-
-                    }
-
-                }
-
-                this.bufferList.forEach( function( buffer ){
-
-                    buffer.group.children.forEach( updateUniform );
-                    if( buffer.pickingGroup ){
-                        buffer.pickingGroup.children.forEach( updateUniform );
-                    }
-
-                } );
-
-            }
-
-            // update buffer material define
-
-            if( tp[ name ].define ){
-
-                var updateDefine = function( mesh ){
-
-                    if( p[ name ] ){
-
-                        mesh.material.defines[ tp[ name ].define ] = 1;
-
-                    }else{
-
-                        delete mesh.material.defines[ tp[ name ].define ];
-
-                    }
-
-                    mesh.material.needsUpdate = true;
-
-                }
-
-                this.bufferList.forEach( function( buffer ){
-
-                    buffer.group.children.forEach( updateDefine );
-                    if( buffer.pickingGroup ){
-                        buffer.pickingGroup.children.forEach( updateDefine );
-                    }
-
-                } );
-
-            }
-
-            // update buffer material property
-
-            if( tp[ name ].property ){
-
-                var propertyName = (
-                    tp[ name ].property === true ? name : tp[ name ].property
-                );
-
-                var updateProperty = function( mesh ){
-
-                    if( propertyName in mesh.material ){
-
-                        mesh.material[ propertyName ] = p[ name ];
-
-                    }else{
-
-                        // happens when the buffers in a repr
-                        // do not suppport the same parameters
-
-                        // NGL.info( name )
-
-                    }
-
-                    // FIXME generalize?
-                    //  add .buffer and .renderOrder to parameters?
-                    if( name === "transparent" ){
-
-                        var buffer = mesh.userData[ "buffer" ];
-                        buffer.transparent = p[ name ];
-
-                        mesh.renderOrder = buffer.getRenderOrder();
-
-                    }
-
-                    mesh.material.needsUpdate = true;
-
-                }
-
-                this.bufferList.forEach( function( buffer ){
-
-                    buffer.group.children.forEach( updateProperty );
-                    // FIXME is there a cleaner way to ensure
-                    //  that picking materials are not set transparent?
-                    if( buffer.pickingGroup && name !== "transparent" ){
-                        buffer.pickingGroup.children.forEach( updateProperty );
-                    }
-
-                } );
-
-            }
+            if( tp[ name ].uniform ) uniformData[ name ] = p[ name ];
+            if( tp[ name ].define ) defineData[ name ] = p[ name ];
+            if( tp[ name ].property ) propertyData[ name ] = p[ name ];
 
             // mark for update
 
@@ -456,6 +350,16 @@ NGL.Representation.prototype = {
             }
 
         }, this );
+
+        // update buffers
+
+        this.bufferList.forEach( function( buffer ){
+
+            buffer.setUniforms( uniformData );
+            buffer.setDefines( defineData );
+            buffer.setProperties( propertyData );
+
+        } );
 
         if( rebuild ){
 
@@ -3005,7 +2909,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                 );
 
                 bufferData[ "color" ] = subCol.color;
-                bufferData[ "pickingColor" ] = subCol.pickingColor;
 
             }
 

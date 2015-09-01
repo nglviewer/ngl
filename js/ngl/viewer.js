@@ -677,7 +677,14 @@ NGL.getShader = function(){
 
     return function( name, defines ){
 
-        if( !cache[ name ] ){
+        defines = defines || {};
+
+        var hash = name + "|";
+        for( var key in defines ){
+            hash += key + ":" + defines[ key ];
+        }
+
+        if( !cache[ hash ] ){
 
             var definesText = getDefines( defines );
 
@@ -691,11 +698,11 @@ NGL.getShader = function(){
 
             });
 
-            cache[ name ] = definesText + shaderText;
+            cache[ hash ] = definesText + shaderText;
 
         }
 
-        return cache[ name ];
+        return cache[ hash ];
 
     }
 
@@ -1230,11 +1237,7 @@ NGL.Viewer.prototype = {
 
         var renderOrder = buffer.getRenderOrder();
 
-        if( !buffer.material ){
-            buffer.material = buffer.getMaterial();
-        }
-
-        var mesh = buffer.getMesh( undefined, buffer.material );
+        var mesh = buffer.getMesh();
         mesh.frustumCulled = false;
         mesh.renderOrder = renderOrder;
         mesh.userData[ "buffer" ] = buffer;
@@ -1245,11 +1248,7 @@ NGL.Viewer.prototype = {
 
         if( buffer.pickable ){
 
-            if( !buffer.pickingMaterial ){
-                buffer.pickingMaterial = buffer.getPickingMaterial();
-            }
-
-            var pickingMesh = buffer.getPickingMesh( buffer.pickingMaterial );
+            var pickingMesh = buffer.getPickingMesh();
             pickingMesh.frustumCulled = false;
             pickingMesh.renderOrder = renderOrder;
             pickingMesh.userData[ "buffer" ] = buffer;

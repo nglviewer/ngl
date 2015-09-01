@@ -123,7 +123,7 @@ NGL.Examples = {
 
         "gro_trajectory": function( stage ){
 
-            stage.loadFile( "data://md_1u19_trjFOO.gro", {
+            stage.loadFile( "data://md_1u19_trj.gro", {
                 asTrajectory: true
             } ).then( function( o ){
                 o.addTrajectory();
@@ -142,34 +142,34 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
-                o.addRepresentation( "cartoon", {
+                o.addRepresentation( "ribbon", {
                     color: "residueindex", aspectRatio: 4, scale: 0.5
                 } );
-                o.addRepresentation( "rope", {
-                    color: "residueindex", visible: false
-                } );
-                o.addRepresentation( "ball+stick", {
-                    sele: "296 or RET", scale: 3, aspectRatio: 1.5
-                } );
-                o.addRepresentation( "surface", {
-                    sele: "RET", transparent: true, opacity: 0.4
-                } );
-                o.addRepresentation( "licorice", {
-                    sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
-                    scale: 3, aspectRatio: 1.5
-                } );
-                o.addRepresentation( "contact", {
-                    sele: "135 or 223 or 347",
-                    scale: 0.7
-                } );
-                o.addRepresentation( "label", {
-                    sele: "( 135 or 223 or 347 or 296 ) and .CB",
-                    scale: 1.7
-                } );
-                o.addRepresentation( "label", {
-                    sele: "RET and .C19",
-                    scale: 1.7, labelType: "resname"
-                } );
+                // o.addRepresentation( "rope", {
+                //     color: "residueindex", visible: false
+                // } );
+                // o.addRepresentation( "ball+stick", {
+                //     sele: "296 or RET", scale: 3, aspectRatio: 1.5
+                // } );
+                // o.addRepresentation( "surface", {
+                //     sele: "RET", transparent: true, opacity: 0.4
+                // } );
+                // o.addRepresentation( "licorice", {
+                //     sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
+                //     scale: 3, aspectRatio: 1.5
+                // } );
+                // o.addRepresentation( "contact", {
+                //     sele: "135 or 223 or 347",
+                //     scale: 0.7
+                // } );
+                // o.addRepresentation( "label", {
+                //     sele: "( 135 or 223 or 347 or 296 ) and .CB",
+                //     scale: 1.7
+                // } );
+                // o.addRepresentation( "label", {
+                //     sele: "RET and .C19",
+                //     scale: 1.7, labelType: "resname"
+                // } );
 
                 o.centerView();
 

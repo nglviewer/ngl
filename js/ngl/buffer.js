@@ -141,18 +141,20 @@ NGL.Buffer.prototype = {
 
     },
 
-    getMesh: function( material ){
+    getMesh: function(){
 
-        material = material || this.getMaterial();
+        if( !this.material ) this.makeMaterial();
 
         if( this.wireframe ){
 
             if( !this.wireframeGeometry ) this.makeWireframeGeometry();
-            return new THREE.LineSegments( this.wireframeGeometry, material );
+            return new THREE.LineSegments(
+                this.wireframeGeometry, this.wireframeMaterial
+            );
 
         }else{
 
-            return new THREE.Mesh( this.geometry, material );
+            return new THREE.Mesh( this.geometry, this.material );
 
         }
 
@@ -160,59 +162,43 @@ NGL.Buffer.prototype = {
 
     getPickingMesh: function( material ){
 
-        material = material || this.getPickingMaterial( type );
+        if( !this.material ) this.makeMaterial();
 
-        return new THREE.Mesh( this.geometry, material );
-
-    },
-
-    getMaterial: function(){
-
-        var material;
-
-        if( this.wireframe ){
-
-            material = new THREE.RawShaderMaterial( {
-                uniforms:  THREE.UniformsUtils.clone( this.uniforms ),
-                attributes: this.attributes,
-                vertexShader: this.getShader( "Line.vert" ),
-                fragmentShader: this.getShader( "Line.frag" ),
-                depthTest: true,
-                transparent: this.transparent,
-                depthWrite: true,
-                lights: false,
-                fog: true,
-                linewidth: this.lineWidth
-            } );
-
-        }else{
-
-            material = new THREE.RawShaderMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
-                attributes: this.attributes,
-                vertexShader:  this.getVertexShader(),
-                fragmentShader: this.getFragmentShader(),
-                depthTest: true,
-                transparent: this.transparent,
-                depthWrite: true,
-                // lights: true,
-                lights: false,
-                fog: true
-
-            } );
-
-        }
-
-        return material;
+        return new THREE.Mesh( this.geometry, this.pickingMaterial );
 
     },
 
-    getPickingMaterial: function(){
+    makeMaterial: function(){
 
-        var material = new THREE.RawShaderMaterial( {
+        this.wireframeMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader: this.getShader( "Line.vert" ),
+            fragmentShader: this.getShader( "Line.frag" ),
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.lineWidth
+        } );
 
-            uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
+        this.material = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader:  this.getVertexShader(),
+            fragmentShader: this.getFragmentShader(),
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side
+        } );
+
+        this.pickingMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.pickingUniforms,
             attributes: this.attributes,
             vertexShader: this.getVertexShader( "picking" ),
             fragmentShader: this.getFragmentShader( "picking" ),
@@ -220,11 +206,9 @@ NGL.Buffer.prototype = {
             transparent: false,
             depthWrite: true,
             lights: false,
-            fog: false
-
+            fog: false,
+            side: this.side
         } );
-
-        return material;
 
     },
 
@@ -315,6 +299,23 @@ NGL.Buffer.prototype = {
 
     setUniforms: function( data ){
 
+        if( !data ) return;
+
+        var u = this.material.uniforms;
+        var pu = this.pickingMaterial.uniforms;
+
+        for( var name in data ){
+
+            if( u[ name ] !== undefined ){
+                u[ name ].value = data[ name ];
+            }
+
+            if( pu[ name ] !== undefined ){
+                pu[ name ].value = data[ name ];
+            }
+
+        }
+
     },
 
     getShader: function( name, type ){
@@ -375,6 +376,7 @@ NGL.Buffer.prototype = {
             if( this.dullInterior ){
                 defines[ "DULL_INTERIOR" ] = 1;
             }
+            defines[ "USE_FOG" ] = 1;
 
         }
 
@@ -382,69 +384,61 @@ NGL.Buffer.prototype = {
 
     },
 
-    updateMaterial: function(){
-
-        function updateDefine(  mesh ){
-
-            var mat = mesh.material;
-
-            mat.vertexShader = this.getVertexShader(  );
-            mat.fragmentShader = NGL.getShader( this.fragmentShader, defines );
-
-            mesh.material.needsUpdate = true;
-
-        }
-
-        this.group.children.forEach( updateDefine );
-
-        if( this.pickingGroup ){
-            this.pickingGroup.children.forEach( updateDefine );
-        }
-
-    },
-
     setDefines: function( data ){
 
-        function updateDefine( name, mesh ){
+        if( !data ) return;
 
-            var mat = mesh.material;
-
-            mat.vertexShader = NGL.getShader( this.vertexShader, defines );
-            mat.fragmentShader = NGL.getShader( this.fragmentShader, defines );
-
-            if( data[ name ] ){
-
-                mesh.material.defines[ name ] = 1;
-
-            }else{
-
-                delete mesh.material.defines[ name ];
-
-            }
-
-            mesh.material.needsUpdate = true;
-
-        }
+        var m = this.material;
+        var pm = this.pickingMaterial;
 
         for( var name in data ){
 
-            this.group.children.forEach( function( mesh ){
-                updateDefine( name, mesh );
-            } );
-
-            if( this.pickingGroup ){
-                this.pickingGroup.children.forEach( function( mesh ){
-                    updateDefine( name, mesh );
-                } );
+            if( this[ name ] !== undefined ){
+                this[ name ] = data[ name ];
             }
 
         }
+
+        m.vertexShader = this.getVertexShader();
+        m.fragmentShader = this.getFragmentShader();
+        m.needsUpdate = true;
+
+        pm.vertexShader = this.getVertexShader( "picking" );
+        pm.fragmentShader = this.getFragmentShader( "picking" );
+        pm.needsUpdate = true;
 
     },
 
     setProperties: function( data ){
 
-        //
+        if( !data ) return;
+
+        var m = this.material;
+        var pm = this.pickingMaterial;
+
+        for( var name in data ){
+
+            if( m[ name ] !== undefined ){
+                m[ name ] = data[ name ];
+            }
+
+            if( pm[ name ] !== undefined ){
+                pm[ name ] = data[ name ];
+            }
+
+        }
+
+        // if( name === "transparent" ){
+
+        //     var buffer = mesh.userData[ "buffer" ];
+        //     buffer.transparent = p[ name ];
+
+        //     mesh.renderOrder = buffer.getRenderOrder();
+
+        // }
+
+        m.needsUpdate = true;
+        pm.needsUpdate = true;
 
     },
 
@@ -1871,6 +1865,7 @@ NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, params ){
 
     var p = params || {};
+
     var n = ( position.length / 3 ) - 1;
     var n4 = n * 4;
     var x = n4 * 3;
@@ -2060,7 +2055,7 @@ NGL.RibbonBuffer.prototype.setAttributes = function( data ){
 
     }
 
-}
+};
 
 NGL.RibbonBuffer.prototype.makeIndex = function(){
 
@@ -2238,18 +2233,18 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
             if( position ){
 
                 vTangent.set(
-                    tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
+                    tangent[ k ], tangent[ k + 1 ], tangent[ k + 2 ]
                 );
 
-                normX = normal[ k + 0 ];
+                normX = normal[ k     ];
                 normY = normal[ k + 1 ];
                 normZ = normal[ k + 2 ];
 
-                biX = binormal[ k + 0 ];
+                biX = binormal[ k     ];
                 biY = binormal[ k + 1 ];
                 biZ = binormal[ k + 2 ];
 
-                posX = position[ k + 0 ];
+                posX = position[ k     ];
                 posY = position[ k + 1 ];
                 posZ = position[ k + 2 ];
 
@@ -2271,7 +2266,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
                     cx2 = -radius * cx2Arr[ j ];
                     cy2 = radius * cy2Arr[ j ];
 
-                    meshPosition[ s + 0 ] = posX + cx * normX + cy * biX;
+                    meshPosition[ s     ] = posX + cx * normX + cy * biX;
                     meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
                     meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
 
@@ -2286,7 +2281,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
                             ( cx1 * normZ + cy1 * biZ )
                     ).cross( vTangent );
 
-                    meshNormal[ s + 0 ] = vMeshNormal.x;
+                    meshNormal[ s     ] = vMeshNormal.x;
                     meshNormal[ s + 1 ] = vMeshNormal.y;
                     meshNormal[ s + 2 ] = vMeshNormal.z;
 
@@ -2294,7 +2289,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
                 if( color ){
 
-                    meshColor[ s + 0 ] = color[ k + 0 ];
+                    meshColor[ s     ] = color[ k     ];
                     meshColor[ s + 1 ] = color[ k + 1 ];
                     meshColor[ s + 2 ] = color[ k + 2 ];
 
@@ -2302,7 +2297,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
                 if( pickingColor ){
 
-                    meshPickingColor[ s + 0 ] = pickingColor[ k + 0 ];
+                    meshPickingColor[ s     ] = pickingColor[ k     ];
                     meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
                     meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
 
@@ -2324,11 +2319,11 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
             if( position ){
 
-                meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
+                meshPosition[ t     ] = meshPosition[ s     ];
                 meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
                 meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
 
-                meshNormal[ t + 0 ] = tangent[ k + 0 ];
+                meshNormal[ t     ] = tangent[ k     ];
                 meshNormal[ t + 1 ] = tangent[ k + 1 ];
                 meshNormal[ t + 2 ] = tangent[ k + 2 ];
 
@@ -2336,7 +2331,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
             if( color ){
 
-                meshColor[ t + 0 ] = meshColor[ s + 0 ];
+                meshColor[ t     ] = meshColor[ s     ];
                 meshColor[ t + 1 ] = meshColor[ s + 1 ];
                 meshColor[ t + 2 ] = meshColor[ s + 2 ];
 
@@ -2344,7 +2339,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
             if( pickingColor ){
 
-                meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
                 meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
                 meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
 
@@ -2364,11 +2359,11 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
             if( position ){
 
-                meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
+                meshPosition[ t     ] = meshPosition[ s     ];
                 meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
                 meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
 
-                meshNormal[ t + 0 ] = tangent[ n1 * 3 + 0 ];
+                meshNormal[ t     ] = tangent[ n1 * 3     ];
                 meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
                 meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
 
@@ -2376,7 +2371,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
             if( color ){
 
-                meshColor[ t + 0 ] = meshColor[ s + 0 ];
+                meshColor[ t     ] = meshColor[ s     ];
                 meshColor[ t + 1 ] = meshColor[ s + 1 ];
                 meshColor[ t + 2 ] = meshColor[ s + 2 ];
 
@@ -2384,7 +2379,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
             if( pickingColor ){
 
-                meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
                 meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
                 meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
 
