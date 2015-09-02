@@ -30,7 +30,9 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
     this.background = p.background !== undefined ? p.background : false;
-    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
+    this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
+    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
+    this.wireframeLinewidth = p.wireframeLinewidth || 1;
 
     this.attributes = [];
     this.geometry = new THREE.BufferGeometry();
@@ -144,14 +146,7 @@ NGL.Buffer.prototype = {
 
         if( !this.material ) this.makeMaterial();
 
-        if( this.wireframe ){
-
-            if( !this.wireframeGeometry ) this.makeWireframeGeometry();
-            return new THREE.LineSegments(
-                this.wireframeGeometry, this.wireframeMaterial
-            );
-
-        }else if( this.line ){
+        if( this.line ){
 
             return new THREE.LineSegments( this.geometry, this.material );
 
@@ -173,20 +168,6 @@ NGL.Buffer.prototype = {
 
     makeMaterial: function(){
 
-        this.wireframeMaterial = new THREE.RawShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader: this.getShader( "Line.vert" ),
-            fragmentShader: this.getShader( "Line.frag" ),
-            depthTest: true,
-            transparent: this.transparent,
-            depthWrite: true,
-            lights: false,
-            fog: true,
-            side: this.side,
-            linewidth: this.lineWidth
-        } );
-
         this.material = new THREE.RawShaderMaterial( {
             uniforms: this.uniforms,
             attributes: this.attributes,
@@ -198,7 +179,9 @@ NGL.Buffer.prototype = {
             lights: false,
             fog: true,
             side: this.side,
-            linewidth: this.lineWidth
+            linewidth: this.linewidth,
+            wireframe: this.wireframe,
+            wireframeLinewidth: this.wireframeLinewidth
         } );
 
         this.pickingMaterial = new THREE.RawShaderMaterial( {
@@ -212,7 +195,9 @@ NGL.Buffer.prototype = {
             lights: false,
             fog: false,
             side: this.side,
-            linewidth: this.lineWidth
+            linewidth: this.linewidth,
+            wireframe: this.wireframe,
+            wireframeLinewidth: this.wireframeLinewidth
         } );
 
     },
