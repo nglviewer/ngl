@@ -54,7 +54,6 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 
     this.uniforms = THREE.UniformsUtils.merge([
         NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
         {
             "opacity": { type: "f", value: this.opacity },
             "nearClip": { type: "f", value: 0.0 }
