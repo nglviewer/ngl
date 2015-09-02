@@ -1517,14 +1517,18 @@ NGL.TraceBuffer.prototype.setAttributes = function( data ){
     var position, color;
     var linePosition, lineColor;
 
+    var attributes = this.geometry.attributes;
+
     if( data[ "position" ] ){
         position = data[ "position" ];
-        linePosition = this.linePosition;
+        linePosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
     }
 
     if( data[ "color" ] ){
         color = data[ "color" ];
-        lineColor = this.lineColor;
+        lineColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
     }
 
     if( !position && !color ){
