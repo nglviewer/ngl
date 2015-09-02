@@ -2,34 +2,38 @@
 panel.setName( "Noro virus" );
 
 
-load( "data://1IHM.pdb", function( o ){
+stage.loadFile( "data://1IHM.pdb" ).then( function( o ){
 
     o.addRepresentation( "rope", {
-        subdiv: 3, radialSegments: 6, color: "chainindex",
-        transparent: false, opacity: 0.8, side: THREE.FrontSide,
-        scale: 4.0, quality: "low"
+        subdiv: 3, radialSegments: 6, quality: "user",
+        colorScheme: "chainindex", scale: 4.0
     } );
 
-    o.addRepresentation( "cartoon", {
-        color: "ss", aspectRatio: 2.5, scale: 2.0
-    } );
+    o.requestGuiVisibility( false );
+
+    stage.centerView();
 
 } );
 
 
-load( "data://2L1F.pdb", {
-    onLoad: function( o ){
+stage.loadFile( "data://2L1F.pdb", {
 
-        o.addRepresentation( "cartoon", {
-            color: "ss", aspectRatio: 2.5, scale: 2.0
-        } );
-
-        o.addRepresentation( "base", {
-            color: "resname", radius: 0.7
-        } );
-
-    },
     firstModelOnly: true
+
+} ).then( function( o ){
+
+    o.addRepresentation( "cartoon", {
+        color: "white", aspectRatio: 2.5, scale: 2.0
+    } );
+
+    o.addRepresentation( "base", {
+        colorScheme: "resname", radius: 0.7
+    } );
+
+    o.requestGuiVisibility( false );
+
+    stage.centerView();
+
 } );
 
 
@@ -63,20 +67,6 @@ then( function(){
             stage.viewer.setClip( 42, 100 );
         }
     );
-
-    uiBreak( 2 );
-
-    uiVisibilityButton( "virus capsid", components( "1IHM.pdb" ) );
-
-    uiBreak( 2 );
-
-    uiSelect( [ "moin", "foo", "bar" ], function(){ console.log( "hello" )} );
-
-    uiBreak( 2 );
-
-    uiVisibilitySelect( structures() );
-
-    hide( representations( { comp: "1IHM.pdb", repr: "rope" } ) );
 
     uiBreak( 2 );
 
