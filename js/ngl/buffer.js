@@ -1602,7 +1602,7 @@ NGL.TraceBuffer.prototype.setAttributes = function( data ){
         return;
     }
 
-    var v;
+    var v, v2;
     var n = this.size;
     var n1 = n - 1;
 
