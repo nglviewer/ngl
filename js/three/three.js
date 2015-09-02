@@ -24189,11 +24189,9 @@ THREE.WebGLObjects = function ( gl, properties, info ) {
 				var b = array[ i + 1 ];
 				var c = array[ i + 2 ];
 
-				// if ( checkEdge( edges, a, b ) ) indices.push( a, b );
-				// if ( checkEdge( edges, b, c ) ) indices.push( b, c );
-				// if ( checkEdge( edges, c, a ) ) indices.push( c, a );
-
-				indices.push( a, b, b, c, c, a );
+				if ( checkEdge( edges, a, b ) ) indices.push( a, b );
+				if ( checkEdge( edges, b, c ) ) indices.push( b, c );
+				if ( checkEdge( edges, c, a ) ) indices.push( c, a );
 
 			}
 
@@ -24228,13 +24226,29 @@ THREE.WebGLObjects = function ( gl, properties, info ) {
 
 	function checkEdge( edges, a, b ) {
 
-		var hash = a < b ? a + '_' + b : b + '_' + a;
+		if ( a > b ){
 
-		if ( edges.hasOwnProperty( hash ) ) return false;
+			var tmp = a;
+			a = b;
+			b = tmp;
 
-		edges[ hash ] = 1;
+		}
 
-		return true;
+		var list = edges[ a ];
+
+		if( list === undefined ){
+
+			edges[ a ] = [ b ];
+			return true;
+
+		}else if( list.indexOf( b ) === -1 ){
+
+			list.push( b );
+			return true;
+
+		}
+
+		return false;
 
 	}
 
