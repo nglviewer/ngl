@@ -1771,7 +1771,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     var menu = new UI.PopupMenu( "bars", "Representation" )
         .setMarginLeft( "45px" )
-        .setEntryLabelWidth( "110px" );
+        .setEntryLabelWidth( "130px" );
 
     menu.addEntry( "type", new UI.Text( component.repr.type ) );
 
