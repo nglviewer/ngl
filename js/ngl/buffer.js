@@ -2573,24 +2573,22 @@ NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 NGL.TextBuffer.prototype.constructor = NGL.TextBuffer;
 
-NGL.TextBuffer.prototype.getMaterial = function(){
+NGL.TextBuffer.prototype.makeMaterial = function(){
 
-    var material = NGL.Buffer.prototype.getMaterial.call( this );
+    NGL.Buffer.prototype.makeMaterial.call( this );
 
     if( this.antialias ){
 
-        material.transparent = true;
-        material.depthWrite = true;
-        material.blending = THREE.NormalBlending;
-        material.defines[ "ANTIALIAS" ] = 1;
+        this.material.transparent = true;
+        this.material.depthWrite = true;
+        this.material.blending = THREE.NormalBlending;
+        this.material.defines[ "ANTIALIAS" ] = 1;
 
     }
 
-    material.lights = false;
-    material.uniforms.fontTexture.value = this.tex;
-    material.needsUpdate = true;
-
-    return material;
+    this.material.lights = false;
+    this.material.uniforms.fontTexture.value = this.tex;
+    this.material.needsUpdate = true;
 
 };
 
@@ -2638,25 +2636,25 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
 
             for( var m = 0; m < 4; m++ ) {
 
-                j = iCharAll * 4 * 3 + (3 * m);
+                j = iCharAll * 4 * 3 + ( 3 * m );
 
-                if( data[ "position" ] ){
+                if( position ){
 
-                    aPosition[ j + 0 ] = position[ o + 0 ];
+                    aPosition[ j     ] = position[ o     ];
                     aPosition[ j + 1 ] = position[ o + 1 ];
                     aPosition[ j + 2 ] = position[ o + 2 ];
 
                 }
 
-                if( data[ "size" ] ){
+                if( size ){
 
-                    inputSize[ (iCharAll * 4) + m ] = size[ v ];
+                    inputSize[ ( iCharAll * 4 ) + m ] = size[ v ];
 
                 }
 
                 if( color ){
 
-                    aColor[ j + 0 ] = color[ o + 0 ];
+                    aColor[ j     ] = color[ o     ];
                     aColor[ j + 1 ] = color[ o + 1 ];
                     aColor[ j + 2 ] = color[ o + 2 ];
 
