@@ -26,7 +26,6 @@ var FragfitResultsPreset = function( data, params ){
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
         colorScheme: "residueindex",
-        // transparent: true,
         // opacity: 0.3
     } );
 
@@ -40,7 +39,6 @@ var FragfitResultsPreset = function( data, params ){
         isolevel: p.isolevel || 2.0,
         smooth: 0,
         wireframe: p.wireframe || false,
-        transparent: true,
         opacity: 0.6,
         side: THREE.DoubleSide,
         opaqueBack: true,

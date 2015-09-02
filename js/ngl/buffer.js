@@ -24,7 +24,6 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 
     this.pickable = false;
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
     this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
@@ -70,6 +69,10 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 NGL.Buffer.prototype = {
 
     constructor: NGL.Buffer,
+
+    get transparent () {
+        return this.opacity < 1;
+    },
 
     finalize: function(){
 
@@ -443,7 +446,6 @@ NGL.Buffer.prototype = {
             var value = data[ name ];
 
             if( name === "transparent" ){
-                this.transparent = value;
                 this.updateRenderOrder();
             }
 

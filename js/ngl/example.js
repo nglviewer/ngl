@@ -142,34 +142,34 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
-                o.addRepresentation( "ribbon", {
+                o.addRepresentation( "cartoon", {
                     color: "residueindex", aspectRatio: 4, scale: 0.5
                 } );
-                // o.addRepresentation( "rope", {
-                //     color: "residueindex", visible: false
-                // } );
-                // o.addRepresentation( "ball+stick", {
-                //     sele: "296 or RET", scale: 3, aspectRatio: 1.5
-                // } );
-                // o.addRepresentation( "surface", {
-                //     sele: "RET", transparent: true, opacity: 0.4
-                // } );
-                // o.addRepresentation( "licorice", {
-                //     sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
-                //     scale: 3, aspectRatio: 1.5
-                // } );
-                // o.addRepresentation( "contact", {
-                //     sele: "135 or 223 or 347",
-                //     scale: 0.7
-                // } );
-                // o.addRepresentation( "label", {
-                //     sele: "( 135 or 223 or 347 or 296 ) and .CB",
-                //     scale: 1.7
-                // } );
-                // o.addRepresentation( "label", {
-                //     sele: "RET and .C19",
-                //     scale: 1.7, labelType: "resname"
-                // } );
+                o.addRepresentation( "rope", {
+                    color: "residueindex", visible: false
+                } );
+                o.addRepresentation( "ball+stick", {
+                    sele: "296 or RET", scale: 3, aspectRatio: 1.5
+                } );
+                o.addRepresentation( "surface", {
+                    sele: "RET", opacity: 0.4
+                } );
+                o.addRepresentation( "licorice", {
+                    sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
+                    scale: 3, aspectRatio: 1.5
+                } );
+                o.addRepresentation( "contact", {
+                    sele: "135 or 223 or 347",
+                    scale: 0.7
+                } );
+                o.addRepresentation( "label", {
+                    sele: "( 135 or 223 or 347 or 296 ) and .CB",
+                    scale: 1.7
+                } );
+                o.addRepresentation( "label", {
+                    sele: "RET and .C19",
+                    scale: 1.7, labelType: "resname"
+                } );
 
                 o.centerView();
 
@@ -635,7 +635,7 @@ NGL.Examples = {
             stage.loadFile( "data://1crn.ply" ).then( function( o ){
 
                 o.addRepresentation( "surface", {
-                    transparent: true, opacity: 0.3, side: THREE.DoubleSide
+                    opacity: 0.3, side: THREE.DoubleSide
                 } );
 
             } );
@@ -716,7 +716,7 @@ NGL.Examples = {
             stage.loadFile( "data://1crn.ply" ).then( function( o ){
 
                 o.addRepresentation( "surface", {
-                    transparent: true, opacity: 0.3, side: THREE.FrontSide
+                    opacity: 0.3, side: THREE.FrontSide
                 } );
 
             } );
@@ -741,7 +741,7 @@ NGL.Examples = {
             stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
                 // o.addRepresentation( "line", {
-                //     lineWidth: 5, transparent: true, opacity: 0.5
+                //     lineWidth: 5, opacity: 0.5
                 // } );
                 // o.addRepresentation( "cartoon" );
 
@@ -774,7 +774,7 @@ NGL.Examples = {
             stage.loadFile( "data://1CRN.cif.lzma" ).then( function( o ){
 
                 o.addRepresentation( "rocket", {
-                    transparent: true, opacity: 0.5
+                    opacity: 0.5
                 } );
                 o.centerView();
 
@@ -846,7 +846,7 @@ NGL.Examples = {
                 } );
 
                 o.addRepresentation( "spacefill", {
-                    sele: centerSele, transparent: true, opacity: 0.5
+                    sele: centerSele, opacity: 0.5
                 } );
 
             } );
@@ -927,7 +927,6 @@ NGL.Examples = {
             stage.loadFile( "data://emd_2682.map.gz" ).then( function( o ){
 
                 o.addRepresentation( "surface", {
-                    transparent: true,
                     opacity: 0.5,
                     opaqueBack: true
                 } );
@@ -960,7 +959,6 @@ NGL.Examples = {
                     probeRadius: 1.4,
                     scaleFactor: 2.0,
                     flatShaded: false,
-                    transparent: true,
                     opacity: 0.8,
                     lowResolution: false,
                     colorScheme: "element"
@@ -1079,7 +1077,7 @@ NGL.Examples = {
 
                 o.addRepresentation( "helixorient" );
                 o.addRepresentation( "rope", {
-                    transparent: true, opacity: 0.4, side: THREE.FrontSide, smooth: 0
+                    opacity: 0.4, side: THREE.FrontSide, smooth: 0
                 } );
                 o.addRepresentation( "licorice", { sele: "backbone" } );
                 o.centerView();
@@ -1244,7 +1242,6 @@ NGL.Examples = {
                     isolevel: -0.4,
                     smooth: 1,
                     color: "red",
-                    transparent: true,
                     opacity: 0.6,
                     side: THREE.BackSide,
                     opaqueBack: false
@@ -1255,7 +1252,6 @@ NGL.Examples = {
                     isolevel: 0.4,
                     smooth: 1,
                     color: "blue",
-                    transparent: true,
                     opacity: 0.6,
                     side: THREE.FrontSide,
                     opaqueBack: false

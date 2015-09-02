@@ -572,7 +572,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.radius = p.radius || "vdw";
         this.scale = p.scale || 1.0;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.assembly = p.assembly || "";
@@ -821,8 +820,6 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.getColorParams() ),
@@ -830,9 +827,8 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             this.atomSet.atomPickingColor(),
             {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -921,7 +917,6 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
         this.sort = p.sort !== undefined ? p.sort : false;
-        p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -932,8 +927,6 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.pointBuffer = new NGL.PointBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.getColorParams() ),
@@ -941,8 +934,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
                 pointSize: this.pointSize,
                 sizeAttenuation: this.sizeAttenuation,
                 sort: this.sort,
-                transparent: this.transparent,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip
             }
         );
@@ -1037,8 +1029,6 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var text = [];
         var labelFactory = new NGL.LabelFactory(
             this.labelType, this.labelText
@@ -1058,7 +1048,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             {
                 font: this.font,
                 antialias: this.antialias,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip
             }
         );
@@ -1165,7 +1155,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
         var atomScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
@@ -1175,9 +1164,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.atomSet.atomPickingColor( null ),
             {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1199,9 +1187,8 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1351,8 +1338,6 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.getColorParams() ),
@@ -1360,9 +1345,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             this.atomSet.atomPickingColor(),
             {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1382,9 +1366,8 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1438,7 +1421,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
         var p = params || {};
 
         this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -1449,8 +1431,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.lineBuffer = new NGL.LineBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
@@ -1458,8 +1438,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
             this.atomSet.bondColor( null, 1, this.getColorParams() ),
             {
                 lineWidth: this.lineWidth,
-                transparent: this.transparent,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip
             }
         );
@@ -1562,8 +1541,6 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomColor( null, this.getColorParams() ),
@@ -1571,9 +1548,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             this.atomSet.atomPickingColor(),
             {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1595,9 +1571,8 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             {
                 shrink: this.shrink,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1733,8 +1708,6 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var test = this.selection.test;
 
         this.backboneAtomSet = new NGL.AtomSet();
@@ -1785,9 +1758,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             baSet.atomPickingColor(),
             {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1807,9 +1779,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -1978,8 +1949,6 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var test = this.selection.test;
 
         this.baseAtomSet = new NGL.AtomSet();
@@ -2031,9 +2000,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
             baSet.atomPickingColor(),
             {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -2053,9 +2021,8 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -2248,8 +2215,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -2305,9 +2270,8 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                                 wireframe: scope.wireframe,
                                 lineWidth: scope.lineWidth,
                                 flatShaded: scope.flatShaded,
-                                transparent: scope.transparent,
                                 side: scope.side,
-                                opacity: opacity,
+                                opacity: scope.opacity,
                                 nearClip: scope.nearClip,
                                 dullInterior: true
                             }
@@ -2512,8 +2476,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -2573,9 +2535,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                                 wireframe: scope.wireframe,
                                 lineWidth: scope.lineWidth,
                                 flatShaded: scope.flatShaded,
-                                transparent: scope.transparent,
                                 side: scope.side,
-                                opacity: opacity,
+                                opacity: scope.opacity,
                                 nearClip: scope.nearClip,
                                 dullInterior: true
                             }
@@ -2763,8 +2724,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -2809,9 +2768,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                             subSize.size,
                             subCol.pickingColor,
                             {
-                                transparent: scope.transparent,
                                 side: scope.side,
-                                opacity: opacity,
+                                opacity: scope.opacity,
                                 nearClip: scope.nearClip,
                                 flatShaded: scope.flatShaded
                             }
@@ -2974,7 +2932,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         this.tension = p.tension || NaN;
         this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -2997,8 +2954,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         }
 
         var scope = this;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         this.structure.eachFiber( function( fiber ){
 
@@ -3035,8 +2990,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                             subCol.color,
                             {
                                 lineWidth: scope.lineWidth,
-                                transparent: scope.transparent,
-                                opacity: opacity,
+                                opacity: scope.opacity,
                                 nearClip: scope.nearClip
                             }
                         )
@@ -3167,8 +3121,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var scope = this;
 
         // TODO reduce buffer count as in e.g. rocket repr
@@ -3191,9 +3143,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     color.pickingColor,
                     {
                         sphereDetail: scope.sphereDetail,
-                        transparent: scope.transparent,
                         side: scope.side,
-                        opacity: opacity,
+                        opacity: scope.opacity,
                         nearClip: scope.nearClip,
                         flatShaded: scope.flatShaded,
                         dullInterior: true
@@ -3346,8 +3297,6 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var scope = this;
 
         var length = 0;
@@ -3404,9 +3353,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -3572,8 +3520,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
@@ -3633,9 +3579,8 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                                 wireframe: scope.wireframe,
                                 lineWidth: scope.lineWidth,
                                 flatShaded: scope.flatShaded,
-                                transparent: scope.transparent,
                                 side: scope.side,
-                                opacity: opacity,
+                                opacity: scope.opacity,
                                 nearClip: scope.nearClip,
                                 dullInterior: true
                             }
@@ -3825,8 +3770,6 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var helixList = [];
 
         // TODO reduce buffer count as in e.g. rocket repr
@@ -3855,9 +3798,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         shift: 0,
                         cap: true,
                         radiusSegments: scope.radiusSegments,
-                        transparent: scope.transparent,
                         side: scope.side,
-                        opacity: opacity,
+                        opacity: scope.opacity,
                         nearClip: scope.nearClip,
                         flatShaded: scope.flatShaded,
                         dullInterior: true
@@ -3902,9 +3844,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     shift: 0,
                     cap: true,
                     radiusSegments: this.radiusSegments,
-                    transparent: this.transparent,
                     side: this.side,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: true
@@ -4019,8 +3960,6 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var structureSubset = new NGL.StructureSubset(
             this.structure, this.selection
         );
@@ -4054,9 +3993,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -4208,9 +4146,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         radius: null,
         scale: null,
 
-        transparent: {
-            type: "boolean", rebuild: true
-        },
         side: {
             type: "select", options: NGL.SideTypes, rebuild: true,
             int: true
@@ -4232,7 +4167,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -4295,9 +4229,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         var normal = this.surface.getNormal();
         var index = this.surface.getFilteredIndex( this.filterSele, this.atomSet.atoms );
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
-        if( this.transparent && this.side === THREE.DoubleSide ){
+        if( this.opacity < 1 && this.side === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, pickingColor,
@@ -4305,10 +4237,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     lineWidth: this.lineWidth,
-                    transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.FrontSide,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -4321,10 +4252,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     lineWidth: this.lineWidth,
-                    transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.BackSide,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -4341,10 +4271,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     lineWidth: this.lineWidth,
-                    transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: this.side,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -4489,8 +4418,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var n = this.atomPair.length;
         if( n === 0 ) return;
 
@@ -4552,7 +4479,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             {
                 font: this.font,
                 antialias: this.antialias,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip
             }
         );
@@ -4571,9 +4498,8 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
                 side: this.side,
-                opacity: opacity,
+                opacity: this.opacity,
                 nearClip: this.nearClip,
                 flatShaded: this.flatShaded,
                 dullInterior: true
@@ -4763,9 +4689,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         sort: {
             type: "boolean", rebuild: true
         },
-        transparent: {
-            type: "boolean", rebuild: true
-        },
         side: {
             type: "select", options: NGL.SideTypes, rebuild: true,
             int: true
@@ -4794,7 +4717,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
         this.sort = p.sort !== undefined ? p.sort : true;
-        p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
@@ -4833,7 +4755,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
         var index = this.atomSet.atoms[ 0 ].index;
 
         this.trajectory.getPath( index, function( path ){
@@ -4850,9 +4771,8 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
                     {
                         sphereDetail: scope.sphereDetail,
-                        transparent: scope.transparent,
                         side: scope.side,
-                        opacity: opacity,
+                        opacity: scope.opacity,
                         nearClip: scope.nearClip,
                         flatShaded: scope.flatShaded,
                         dullInterior: true
@@ -4877,15 +4797,14 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     {
                         shift: 0,
                         cap: true,
-                        radiusSegments: this.radiusSegments,
-                        transparent: this.transparent,
-                        side: this.side,
-                        opacity: opacity,
+                        radiusSegments: scope.radiusSegments,
+                        side: scope.side,
+                        opacity: scope.opacity,
                         nearClip: scope.nearClip,
                         flatShaded: scope.flatShaded,
                         dullInterior: true
                     },
-                    this.disableImpostor
+                    scope.disableImpostor
 
                 );
 
@@ -4902,8 +4821,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         pointSize: scope.pointSize,
                         sizeAttenuation: scope.sizeAttenuation,
                         sort: scope.sort,
-                        transparent: scope.transparent,
-                        opacity: opacity,
+                        opacity: scope.opacity,
                         nearClip: scope.nearClip,
                         flatShaded: scope.flatShaded
                     }
@@ -4922,8 +4840,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     {
                         lineWidth: scope.lineWidth,
-                        transparent: scope.transparent,
-                        opacity: opacity,
+                        opacity: scope.opacity,
                         nearClip: scope.nearClip,
                         flatShaded: scope.flatShaded
                     }
@@ -5015,7 +4932,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.wireframe = p.wireframe || false;
         this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -5087,9 +5003,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         var normal = this.surface.getNormal();
         var index = this.surface.getIndex();
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
-        if( this.transparent && this.side === THREE.DoubleSide ){
+        if( this.opacity < 1 && this.side === THREE.DoubleSide ){
 
             var frontBuffer = new NGL.SurfaceBuffer(
                 position, color, index, normal, pickingColor,
@@ -5097,10 +5011,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     lineWidth: this.lineWidth,
-                    transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.FrontSide,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -5113,10 +5026,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     lineWidth: this.lineWidth,
-                    transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: THREE.BackSide,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -5133,10 +5045,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                     background: this.background,
                     wireframe: this.wireframe,
                     lineWidth: this.lineWidth,
-                    transparent: this.transparent,
                     opaqueBack: this.opaqueBack,
                     side: this.side,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -5327,7 +5238,6 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
         this.sort = p.sort !== undefined ? p.sort : false;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
@@ -5380,10 +5290,6 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
         }
 
-
-
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         if( this.dotType === "sphere" ){
 
             this.dotBuffer = new NGL.SphereBuffer(
@@ -5393,9 +5299,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 pickingColor,
                 {
                     sphereDetail: this.sphereDetail,
-                    transparent: this.transparent,
                     side: this.side,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: false
@@ -5412,8 +5317,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                     pointSize: this.radius,
                     sizeAttenuation: true,  // this.sizeAttenuation,
                     sort: this.sort,
-                    transparent: true,  // this.transparent,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip
                 }
             );

@@ -180,7 +180,6 @@ function prepareStructure( comp ){
         sele: "none",
         color: new THREE.Color( "fuchsia" ).getHex(),
         scale: 1.2,
-        transparent: true,
         opacity: 0.7,
         name: "focusedRes"
     } );
@@ -248,7 +247,6 @@ function prepareCrosslinkData( table ){
         color: new THREE.Color( "fuchsia" ).getHex(),
         labelSize: 2.0,
         scale: 2.5,
-        transparent: true,
         opacity: 0.6,
         name: "focusedBond"
     } );
