@@ -2,8 +2,8 @@
 precision highp float;
 precision highp int;
 
-uniform mat4 viewMatrix;
-uniform vec3 cameraPosition;
+// uniform mat4 viewMatrix;
+// uniform vec3 cameraPosition;
 
 varying float dist;
 varying highp vec3 color;

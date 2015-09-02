@@ -4,8 +4,8 @@
 precision highp float;
 precision highp int;
 
-uniform mat4 viewMatrix;
-uniform vec3 cameraPosition;
+// uniform mat4 viewMatrix;
+// uniform vec3 cameraPosition;
 
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
@@ -24,19 +24,14 @@ uniform vec3 cameraPosition;
 // - picking color
 
 
-// varying vec3 mapping;
-
 varying mat4 matrix_near;
-
 varying vec4 prime1;
 varying vec4 prime2;
-
 varying float vRadius;
 varying float vRadius2;
 
 uniform float opacity;
 uniform float nearClip;
-
 uniform float shrink;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;

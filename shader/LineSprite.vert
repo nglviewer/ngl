@@ -2,14 +2,12 @@
 precision highp float;
 precision highp int;
 
-uniform mat4 modelMatrix;
+// uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat3 normalMatrix;
+// uniform mat4 viewMatrix;
+// uniform mat3 normalMatrix;
 uniform vec3 cameraPosition;
-
-attribute vec3 position;
 
 // Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
 
@@ -39,7 +37,7 @@ attribute vec3 position;
 // - dual color
 // - adapted for line sprites
 
-
+attribute vec3 position;
 attribute lowp vec2 inputMapping;
 attribute lowp vec3 inputColor;
 attribute lowp vec3 inputColor2;

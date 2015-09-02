@@ -4,6 +4,9 @@
 precision highp float;
 precision highp int;
 
+// uniform mat4 viewMatrix;
+// uniform vec3 cameraPosition;
+
 uniform vec3 backgroundColor;
 uniform sampler2D fontTexture;
 

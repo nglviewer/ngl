@@ -2,12 +2,12 @@
 precision highp float;
 precision highp int;
 
-uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat3 normalMatrix;
-uniform vec3 cameraPosition;
+// uniform mat4 modelMatrix;
+// uniform mat4 modelViewMatrix;
+// uniform mat4 projectionMatrix;
+// uniform mat4 viewMatrix;
+// uniform mat3 normalMatrix;
+// uniform vec3 cameraPosition;
 
 attribute vec3 position;
 
@@ -27,7 +27,6 @@ attribute vec3 position;
 // - dual color
 // - picking color
 
-
 attribute vec3 mapping;
 attribute float radius;
 attribute float radius2;
@@ -35,10 +34,8 @@ attribute vec3 position1;
 attribute vec3 position2;
 
 varying mat4 matrix_near;
-
 varying vec4 prime1;
 varying vec4 prime2;
-
 varying float vRadius;
 varying float vRadius2;
 
