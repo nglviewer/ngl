@@ -24189,9 +24189,11 @@ THREE.WebGLObjects = function ( gl, properties, info ) {
 				var b = array[ i + 1 ];
 				var c = array[ i + 2 ];
 
-				if ( checkEdge( edges, a, b ) ) indices.push( a, b );
-				if ( checkEdge( edges, b, c ) ) indices.push( b, c );
-				if ( checkEdge( edges, c, a ) ) indices.push( c, a );
+				// if ( checkEdge( edges, a, b ) ) indices.push( a, b );
+				// if ( checkEdge( edges, b, c ) ) indices.push( b, c );
+				// if ( checkEdge( edges, c, a ) ) indices.push( c, a );
+
+				indices.push( a, b, b, c, c, a );
 
 			}
 
