@@ -72,7 +72,9 @@ NGL.Buffer.prototype = {
     constructor: NGL.Buffer,
 
     get transparent () {
+
         return this.opacity < 1;
+
     },
 
     finalize: function(){
@@ -87,34 +89,51 @@ NGL.Buffer.prototype = {
 
     },
 
-    makeWireframeGeometry: function(){
+    makeMaterial: function(){
 
-        var index = this.geometry.attributes.index.array;
-        var n = index.length;
-        var wireframeIndex = new Uint32Array( n * 6 );
+        this.material = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            attributes: this.attributes,
+            vertexShader:  this.getVertexShader(),
+            fragmentShader: this.getFragmentShader(),
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.linewidth,
+            wireframe: this.wireframe,
+            wireframeLinewidth: this.wireframeLinewidth
+        } );
 
-        for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
+        this.pickingMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.pickingUniforms,
+            attributes: this.attributes,
+            vertexShader: this.getVertexShader( "picking" ),
+            fragmentShader: this.getFragmentShader( "picking" ),
+            depthTest: true,
+            transparent: false,
+            depthWrite: true,
+            lights: false,
+            fog: false,
+            side: this.side,
+            linewidth: this.linewidth,
+            wireframe: this.wireframe,
+            wireframeLinewidth: this.wireframeLinewidth
+        } );
 
-            var a = index[ i + 0 ];
-            var b = index[ i + 1 ];
-            var c = index[ i + 2 ];
+    },
 
-            wireframeIndex[ j + 0 ] = a;
-            wireframeIndex[ j + 1 ] = b;
-            wireframeIndex[ j + 2 ] = a;
-            wireframeIndex[ j + 3 ] = c;
-            wireframeIndex[ j + 4 ] = b;
-            wireframeIndex[ j + 5 ] = c;
+    makeIndex: function(){
 
-        }
+        if( this.index ){
 
-        this.wireframeGeometry = this.geometry.clone();
-        this.wireframeGeometry.attributes.index.array = wireframeIndex;
+            this.geometry.addAttribute(
+                "index",
+                new THREE.BufferAttribute( this.index, 1 )
+            );
 
-        if( NGL.indexUint16 ){
-            this.wireframeGeometry.computeOffsets();
-        }else{
-            this.wireframeGeometry.clearDrawCalls();
         }
 
     },
@@ -162,154 +181,6 @@ NGL.Buffer.prototype = {
         if( !this.material ) this.makeMaterial();
 
         return new THREE.Mesh( this.geometry, this.pickingMaterial );
-
-    },
-
-    makeMaterial: function(){
-
-        this.material = new THREE.RawShaderMaterial( {
-            uniforms: this.uniforms,
-            attributes: this.attributes,
-            vertexShader:  this.getVertexShader(),
-            fragmentShader: this.getFragmentShader(),
-            depthTest: true,
-            transparent: this.transparent,
-            depthWrite: true,
-            lights: false,
-            fog: true,
-            side: this.side,
-            linewidth: this.linewidth,
-            wireframe: this.wireframe,
-            wireframeLinewidth: this.wireframeLinewidth
-        } );
-
-        this.pickingMaterial = new THREE.RawShaderMaterial( {
-            uniforms: this.pickingUniforms,
-            attributes: this.attributes,
-            vertexShader: this.getVertexShader( "picking" ),
-            fragmentShader: this.getFragmentShader( "picking" ),
-            depthTest: true,
-            transparent: false,
-            depthWrite: true,
-            lights: false,
-            fog: false,
-            side: this.side,
-            linewidth: this.linewidth,
-            wireframe: this.wireframe,
-            wireframeLinewidth: this.wireframeLinewidth
-        } );
-
-    },
-
-    addUniforms: function( uniforms ){
-
-        this.uniforms = THREE.UniformsUtils.merge(
-            [ this.uniforms, uniforms ]
-        );
-
-        this.pickingUniforms = THREE.UniformsUtils.merge(
-            [ this.pickingUniforms, uniforms ]
-        );
-
-    },
-
-    addAttributes: function( attributes ){
-
-        var itemSize = {
-            "f": 1, "v2": 2, "v3": 3, "c": 3
-        };
-
-        Object.keys( attributes ).forEach( function( name ){
-
-            var buf;
-            var a = attributes[ name ];
-
-            this.attributes.push( name );
-
-            if( a.value ){
-
-                if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
-                    NGL.error( "attribute value has wrong length", name );
-                }
-
-                buf = a.value;
-
-            }else{
-
-                buf = new Float32Array(
-                    this.attributeSize * itemSize[ a.type ]
-                );
-
-            }
-
-            this.geometry.addAttribute(
-                name,
-                new THREE.BufferAttribute( buf, itemSize[ a.type ] )
-            );
-
-        }, this );
-
-    },
-
-    setAttributes: function( data ){
-
-        /**
-         * Sets buffer attributes
-         * @param {Object} data - An object where the keys are the attribute names
-         *      and the values are the attribute data.
-         * @example
-         * var buffer = new NGL.Buffer();
-         * buffer.setAttributes({ attrName: attrData });
-         */
-
-        var attributes = this.geometry.attributes;
-
-        if( this.wireframeGeometry ){
-
-            var wireframeAttributes = this.wireframeGeometry.attributes;
-
-        }
-
-        Object.keys( data ).forEach( function( name ){
-
-            attributes[ name ].set( data[ name ] );
-            attributes[ name ].needsUpdate = true;
-
-            if( this.wireframeGeometry ){
-
-                wireframeAttributes[ name ].set( data[ name ] );
-                wireframeAttributes[ name ].needsUpdate = true;
-
-            }
-
-        }, this );
-
-    },
-
-    setUniforms: function( data ){
-
-        if( !data ) return;
-
-        var u = this.material.uniforms;
-        var pu = this.pickingMaterial.uniforms;
-
-        for( var name in data ){
-
-            var value = data[ name ];
-
-            if( name === "opacity" ){
-                this.setProperties( { transparent: value < 1 } );
-            }
-
-            if( u[ name ] !== undefined ){
-                u[ name ].value = value
-            }
-
-            if( pu[ name ] !== undefined ){
-                pu[ name ].value = value;
-            }
-
-        }
 
     },
 
@@ -379,6 +250,119 @@ NGL.Buffer.prototype = {
 
     },
 
+    addUniforms: function( uniforms ){
+
+        this.uniforms = THREE.UniformsUtils.merge(
+            [ this.uniforms, uniforms ]
+        );
+
+        this.pickingUniforms = THREE.UniformsUtils.merge(
+            [ this.pickingUniforms, uniforms ]
+        );
+
+    },
+
+    addAttributes: function( attributes ){
+
+        var itemSize = {
+            "f": 1, "v2": 2, "v3": 3, "c": 3
+        };
+
+        Object.keys( attributes ).forEach( function( name ){
+
+            var buf;
+            var a = attributes[ name ];
+
+            this.attributes.push( name );
+
+            if( a.value ){
+
+                if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
+                    NGL.error( "attribute value has wrong length", name );
+                }
+
+                buf = a.value;
+
+            }else{
+
+                buf = new Float32Array(
+                    this.attributeSize * itemSize[ a.type ]
+                );
+
+            }
+
+            this.geometry.addAttribute(
+                name,
+                new THREE.BufferAttribute( buf, itemSize[ a.type ] )
+            );
+
+        }, this );
+
+    },
+
+    updateRenderOrder: function(){
+
+        var renderOrder = this.getRenderOrder();
+        function setRenderOrder( mesh ){
+            mesh.renderOrder = renderOrder;
+        }
+
+        this.group.children.forEach( setRenderOrder );
+        if( this.pickingGroup ){
+            this.pickingGroup.children.forEach( setRenderOrder );
+        }
+
+    },
+
+    setAttributes: function( data ){
+
+        /**
+         * Sets buffer attributes
+         * @param {Object} data - An object where the keys are the attribute names
+         *      and the values are the attribute data.
+         * @example
+         * var buffer = new NGL.Buffer();
+         * buffer.setAttributes({ attrName: attrData });
+         */
+
+        var attributes = this.geometry.attributes;
+
+        Object.keys( data ).forEach( function( name ){
+
+            attributes[ name ].set( data[ name ] );
+            attributes[ name ].needsUpdate = true;
+
+        }, this );
+
+    },
+
+    setUniforms: function( data ){
+
+        if( !data ) return;
+
+        var u = this.material.uniforms;
+        var pu = this.pickingMaterial.uniforms;
+
+        for( var name in data ){
+
+            var value = data[ name ];
+
+            if( name === "opacity" ){
+                this.setProperties( { transparent: value < 1 } );
+            }
+
+            if( u[ name ] !== undefined ){
+                u[ name ].value = value
+            }
+
+            if( pu[ name ] !== undefined ){
+                pu[ name ].value = value;
+            }
+
+        }
+
+    },
+
     setDefines: function( data ){
 
         if( !data ) return;
@@ -401,20 +385,6 @@ NGL.Buffer.prototype = {
         pm.vertexShader = this.getVertexShader( "picking" );
         pm.fragmentShader = this.getFragmentShader( "picking" );
         pm.needsUpdate = true;
-
-    },
-
-    updateRenderOrder: function(){
-
-        var renderOrder = this.getRenderOrder();
-        function setRenderOrder( mesh ){
-            mesh.renderOrder = renderOrder;
-        }
-
-        this.group.children.forEach( setRenderOrder );
-        if( this.pickingGroup ){
-            this.pickingGroup.children.forEach( setRenderOrder );
-        }
 
     },
 
@@ -448,19 +418,6 @@ NGL.Buffer.prototype = {
 
     },
 
-    makeIndex: function(){
-
-        if( this.index ){
-
-            this.geometry.addAttribute(
-                "index",
-                new THREE.BufferAttribute( this.index, 1 )
-            );
-
-        }
-
-    },
-
     setVisibility: function( value ){
 
         this.group.visible = value;
@@ -472,22 +429,9 @@ NGL.Buffer.prototype = {
 
     dispose: function(){
 
-        this.group.traverse( function ( o ){
-            if( o.material ){
-                o.material.dispose();
-            }
-        } );
-
-        if( this.pickable ){
-            this.pickingGroup.traverse( function ( o ){
-                if( o.material ){
-                    o.material.dispose();
-                }
-            } );
-        }
-
+        this.material.dispose();
+        this.pickingMaterial.dispose();
         this.geometry.dispose();
-        if( this.wireframeGeometry ) this.wireframeGeometry.dispose();
 
     }
 
