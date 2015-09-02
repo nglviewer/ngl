@@ -148,6 +148,10 @@ NGL.Buffer.prototype = {
                 this.wireframeGeometry, this.wireframeMaterial
             );
 
+        }else if( this.line ){
+
+            return new THREE.LineSegments( this.geometry, this.material );
+
         }else{
 
             return new THREE.Mesh( this.geometry, this.material );
@@ -190,7 +194,8 @@ NGL.Buffer.prototype = {
             depthWrite: true,
             lights: false,
             fog: true,
-            side: this.side
+            side: this.side,
+            linewidth: this.lineWidth
         } );
 
         this.pickingMaterial = new THREE.RawShaderMaterial( {
@@ -203,7 +208,8 @@ NGL.Buffer.prototype = {
             depthWrite: true,
             lights: false,
             fog: false,
-            side: this.side
+            side: this.side,
+            linewidth: this.lineWidth
         } );
 
     },
@@ -1510,6 +1516,7 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
     this.size = from.length / 3;
     this.vertexShader = 'Line.vert';
     this.fragmentShader = 'Line.frag';
+    this.line = true;
 
     var n = this.size;
     var n6 = n * 6;
@@ -1616,164 +1623,93 @@ NGL.LineBuffer.prototype.setAttributes = function( data ){
 
 };
 
-NGL.LineBuffer.prototype.getMesh = function(){
-
-    if( !this.material ) this.makeMaterial();
-
-    return new THREE.LineSegments( this.geometry, this.material );
-
-};
-
-NGL.LineBuffer.prototype.getPickingMesh = function(){
-
-    NGL.error( "NGL.LineBuffer.prototype.getPickingMesh not implemented" );
-
-};
-
 
 NGL.TraceBuffer = function( position, color, params ){
 
+    var p = params || {};
+
     this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
 
     var n = this.size;
     var n1 = n - 1;
 
-    this.from = new Float32Array( n1 * 3 );
-    this.to = new Float32Array( n1 * 3 );
-    this.lineColor = new Float32Array( n1 * 3 );
-    this.lineColor2 = new Float32Array( n1 * 3 );
+    this.attributeSize = n1 * 2;
+
+    this.linePosition = new Float32Array( n1 * 3 * 2 );
+    this.lineColor = new Float32Array( n1 * 3 * 2 );
+
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, params
+    );
 
     this.setAttributes({
         position: position,
         color: color
     });
 
-    this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2, params
-    );
-
-    this.pickable = this.lineBuffer.pickable;
-    this.geometry = this.lineBuffer.geometry;
-
 };
 
-NGL.TraceBuffer.prototype = {
+NGL.TraceBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.TraceBuffer,
+NGL.TraceBuffer.prototype.constructor = NGL.TraceBuffer;
 
-    get group () {
+NGL.TraceBuffer.prototype.setAttributes = function( data ){
 
-        return this.lineBuffer.group;
+    var position, color;
+    var linePosition, lineColor;
 
-    },
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        linePosition = this.linePosition;
+    }
 
-    get pickingGroup () {
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        lineColor = this.lineColor;
+    }
 
-        return this.lineBuffer.pickingGroup;
+    if( !position && !color ){
+        NGL.warn( "NGL.TraceBuffer.prototype.setAttributes no data" );
+        return;
+    }
 
-    },
+    var v;
+    var n = this.size;
+    var n1 = n - 1;
 
-    get transparent () {
+    for( var i = 0; i < n1; ++i ){
 
-        return this.lineBuffer.transparent;
-
-    },
-
-    set transparent ( value ) {
-
-        this.lineBuffer.transparent = value;
-
-    },
-
-    setAttributes: function( data ){
-
-        var position, color;
-        var from, to, lineColor, lineColor2;
-
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            from = this.from;
-            to = this.to;
-        }
-
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            lineColor = this.lineColor;
-            lineColor2 = this.lineColor2;
-        }
-
-        var n = this.size;
-        var n1 = n - 1;
-
-        for( var i=0, v; i<n1; ++i ){
-
-            v = 3 * i;
-
-            if( position ){
-
-                from[ v + 0 ] = position[ v + 0 ];
-                from[ v + 1 ] = position[ v + 1 ];
-                from[ v + 2 ] = position[ v + 2 ];
-
-                to[ v + 0 ] = position[ v + 3 ];
-                to[ v + 1 ] = position[ v + 4 ];
-                to[ v + 2 ] = position[ v + 5 ];
-
-            }
-
-            if( color ){
-
-                lineColor[ v + 0 ] = color[ v + 0 ];
-                lineColor[ v + 1 ] = color[ v + 1 ];
-                lineColor[ v + 2 ] = color[ v + 2 ];
-
-                lineColor2[ v + 0 ] = color[ v + 3 ];
-                lineColor2[ v + 1 ] = color[ v + 4 ];
-                lineColor2[ v + 2 ] = color[ v + 5 ];
-
-            }
-
-        }
-
-        var lineData = {};
+        v = 3 * i;
+        v2 = 3 * i * 2;
 
         if( position ){
-            lineData[ "from" ] = from;
-            lineData[ "to" ] = to;
+
+            linePosition[ v2     ] = position[ v     ];
+            linePosition[ v2 + 1 ] = position[ v + 1 ];
+            linePosition[ v2 + 2 ] = position[ v + 2 ];
+
+            linePosition[ v2 + 3 ] = position[ v + 3 ];
+            linePosition[ v2 + 4 ] = position[ v + 4 ];
+            linePosition[ v2 + 5 ] = position[ v + 5 ];
+
         }
 
         if( color ){
-            lineData[ "color" ] = lineColor;
-            lineData[ "color2" ] = lineColor2;
+
+            lineColor[ v2     ] = color[ v     ];
+            lineColor[ v2 + 1 ] = color[ v + 1 ];
+            lineColor[ v2 + 2 ] = color[ v + 2 ];
+
+            lineColor[ v2 + 3 ] = color[ v + 3 ];
+            lineColor[ v2 + 4 ] = color[ v + 4 ];
+            lineColor[ v2 + 5 ] = color[ v + 5 ];
+
         }
 
-        if( this.lineBuffer ){
-            this.lineBuffer.setAttributes( lineData );
-        }
-
-    },
-
-    getRenderOrder: function(){
-
-        return this.lineBuffer.getRenderOrder();
-
-    },
-
-    getMesh: function( type, material ){
-
-        return this.lineBuffer.getMesh( type, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        return this.lineBuffer.getMaterial( type );
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+    }
 
 };
 
