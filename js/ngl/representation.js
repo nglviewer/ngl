@@ -315,7 +315,7 @@ NGL.Representation.prototype = {
         var defineData = {};
         var propertyData = {};
 
-        Object.keys( tp ).forEach( function( name ){
+        Object.keys( p ).forEach( function( name ){
 
             if( p[ name ] === undefined ) return;
             if( tp[ name ] === undefined ) return;
