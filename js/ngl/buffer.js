@@ -218,10 +218,6 @@ NGL.Buffer.prototype = {
             }
             defines[ "PICKING" ] = 1;
 
-        }else if( type === "wireframe" || this.wireframe ){
-
-        //
-
         }else{
 
             if( this.side === THREE.DoubleSide ){
