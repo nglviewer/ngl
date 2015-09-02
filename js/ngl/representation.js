@@ -401,9 +401,10 @@ NGL.Representation.prototype = {
 
                 // update buffer attribute
                 this.update( what );
-                this.viewer.requestRender();
 
             }
+
+            this.viewer.requestRender();
 
         }
 
