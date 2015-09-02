@@ -553,7 +553,7 @@ NGL.Volume.prototype = {
 
             var bg = new THREE.BufferGeometry();
             bg.addAttribute( "position", new THREE.BufferAttribute( sd.position, 3 ) );
-            bg.addAttribute( "index", new THREE.BufferAttribute( sd.index, 1 ) );
+            bg.addIndex( new THREE.BufferAttribute( sd.index, 1 ) );
             bg.computeVertexNormals();
             sd.normal = bg.attributes.normal.array;
             bg.dispose();
@@ -2262,7 +2262,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
         var bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
-        bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
+        bg.addIndex( new THREE.BufferAttribute( faces, 1 ) );
 
     }
 

@@ -1014,7 +1014,7 @@ NGL.Viewer.prototype = {
             NGL.info( "EXT_frag_depth not supported" );
         }
 
-        if( !this.renderer.supportsStandardDerivatives() ){
+        if( !this.renderer.extensions.get( 'OES_standard_derivatives' ) ){
             NGL.warn( "OES_standard_derivatives not supported" );
         }
 
@@ -1051,7 +1051,7 @@ NGL.Viewer.prototype = {
 
         // picking texture
 
-        if( !this.renderer.supportsFloatTextures() ){
+        if( !this.renderer.extensions.get( 'OES_texture_float' ) ){
             NGL.warn( "OES_texture_float not supported" );
         }
 
@@ -1087,9 +1087,9 @@ NGL.Viewer.prototype = {
                 value = (
 
                     ( NGL.browser === "Chrome" &&
-                        this.renderer.supportsFloatTextures() ) ||
+                        this.renderer.extensions.get( 'OES_texture_float' ) ) ||
 
-                    ( this.renderer.supportsFloatTextures() &&
+                    ( this.renderer.extensions.get( 'OES_texture_float' ) &&
                         gl.getExtension( "WEBGL_color_buffer_float" ) )
 
                 );
@@ -1809,7 +1809,7 @@ NGL.Viewer.prototype = {
 
             if( u.modelViewMatrixInverse ){
                 u.modelViewMatrixInverse.value.getInverse(
-                    o._modelViewMatrix
+                    o.modelViewMatrix
                 );
             }
 
@@ -1820,14 +1820,14 @@ NGL.Viewer.prototype = {
                     ).transpose();
                 }else{
                     u.modelViewMatrixInverseTranspose.value
-                        .getInverse( o._modelViewMatrix )
+                        .getInverse( o.modelViewMatrix )
                         .transpose();
                 }
             }
 
             if( u.modelViewProjectionMatrix ){
                 u.modelViewProjectionMatrix.value.multiplyMatrices(
-                    camera.projectionMatrix, o._modelViewMatrix
+                    camera.projectionMatrix, o.modelViewMatrix
                 );
             }
 
@@ -1841,7 +1841,7 @@ NGL.Viewer.prototype = {
                     );
                 }else{
                     matrix.multiplyMatrices(
-                        camera.projectionMatrix, o._modelViewMatrix
+                        camera.projectionMatrix, o.modelViewMatrix
                     );
                     u.modelViewProjectionMatrixInverse.value.getInverse(
                         matrix

@@ -93,7 +93,6 @@ NGL.Buffer.prototype = {
 
         this.material = new THREE.RawShaderMaterial( {
             uniforms: this.uniforms,
-            attributes: this.attributes,
             vertexShader:  this.getVertexShader(),
             fragmentShader: this.getFragmentShader(),
             depthTest: true,
@@ -109,7 +108,6 @@ NGL.Buffer.prototype = {
 
         this.pickingMaterial = new THREE.RawShaderMaterial( {
             uniforms: this.pickingUniforms,
-            attributes: this.attributes,
             vertexShader: this.getVertexShader( "picking" ),
             fragmentShader: this.getFragmentShader( "picking" ),
             depthTest: true,
@@ -129,8 +127,7 @@ NGL.Buffer.prototype = {
 
         if( this.index ){
 
-            this.geometry.addAttribute(
-                "index",
+            this.geometry.addIndex(
                 new THREE.BufferAttribute( this.index, 1 )
             );
 
@@ -561,14 +558,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
     var mappingIndicesSize = this.mappingIndicesSize;
     var mappingItemSize = this.mappingItemSize;
 
-    this.geometry.addAttribute(
-        "index",
-        new THREE.BufferAttribute(
-            new Uint32Array( size * mappingIndicesSize ), 1
-        )
-    );
-
-    var index = this.geometry.attributes[ "index" ].array;
+    var index = new Uint32Array( size * mappingIndicesSize );
 
     var i, ix, it;
 
@@ -585,6 +575,9 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
         }
 
     }
+
+    this.index = index;
+    NGL.Buffer.prototype.makeIndex.call( this );
 
 };
 
