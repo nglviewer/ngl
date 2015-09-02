@@ -93,8 +93,8 @@ NGL.Buffer.prototype = {
 
         this.material = new THREE.RawShaderMaterial( {
             uniforms: this.uniforms,
-            vertexShader:  this.getVertexShader(),
-            fragmentShader: this.getFragmentShader(),
+            vertexShader: "",
+            fragmentShader: "",
             depthTest: true,
             transparent: this.transparent,
             depthWrite: true,
@@ -108,8 +108,8 @@ NGL.Buffer.prototype = {
 
         this.pickingMaterial = new THREE.RawShaderMaterial( {
             uniforms: this.pickingUniforms,
-            vertexShader: this.getVertexShader( "picking" ),
-            fragmentShader: this.getFragmentShader( "picking" ),
+            vertexShader: "",
+            fragmentShader: "",
             depthTest: true,
             transparent: false,
             depthWrite: true,
@@ -120,6 +120,8 @@ NGL.Buffer.prototype = {
             wireframe: this.wireframe,
             wireframeLinewidth: this.wireframeLinewidth
         } );
+
+        this.updateShader();
 
     },
 
@@ -311,6 +313,32 @@ NGL.Buffer.prototype = {
 
     },
 
+    updateShader: function(){
+
+        var m = this.material;
+        var pm = this.pickingMaterial;
+
+        if( this.wireframe ){
+
+            m.vertexShader = this.getShader( "Line.vert" );
+            m.fragmentShader = this.getShader( "Line.frag" );
+            pm.vertexShader = this.getShader( "Line.vert", "picking" );
+            pm.fragmentShader = this.getShader( "Line.frag", "picking" );
+
+        }else{
+
+            m.vertexShader = this.getVertexShader();
+            m.fragmentShader = this.getFragmentShader();
+            pm.vertexShader = this.getVertexShader( "picking" );
+            pm.fragmentShader = this.getFragmentShader( "picking" );
+
+        }
+
+        m.needsUpdate = true;
+        pm.needsUpdate = true;
+
+    },
+
     setAttributes: function( data ){
 
         /**
@@ -364,9 +392,6 @@ NGL.Buffer.prototype = {
 
         if( !data ) return;
 
-        var m = this.material;
-        var pm = this.pickingMaterial;
-
         for( var name in data ){
 
             if( this[ name ] !== undefined ){
@@ -375,13 +400,7 @@ NGL.Buffer.prototype = {
 
         }
 
-        m.vertexShader = this.getVertexShader();
-        m.fragmentShader = this.getFragmentShader();
-        m.needsUpdate = true;
-
-        pm.vertexShader = this.getVertexShader( "picking" );
-        pm.fragmentShader = this.getFragmentShader( "picking" );
-        pm.needsUpdate = true;
+        this.updateShader();
 
     },
 
@@ -398,6 +417,11 @@ NGL.Buffer.prototype = {
 
             if( name === "transparent" ){
                 this.updateRenderOrder();
+            }
+
+            if( name === "wireframe" ){
+                this.wireframe = value;
+                this.updateShader();
             }
 
             if( m[ name ] !== undefined ){
