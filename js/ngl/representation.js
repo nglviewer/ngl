@@ -331,7 +331,12 @@ NGL.Representation.prototype = {
             // buffer material
             if( tp[ name ].uniform ) uniformData[ name ] = p[ name ];
             if( tp[ name ].define ) defineData[ name ] = p[ name ];
-            if( tp[ name ].property ) propertyData[ name ] = p[ name ];
+            if( tp[ name ].property ){
+                var propertyName = (
+                    tp[ name ].property === true ? name : tp[ name ].property
+                );
+                propertyData[ propertyName ] = p[ name ];
+            }
 
             // mark for update
             if( tp[ name ].update ){

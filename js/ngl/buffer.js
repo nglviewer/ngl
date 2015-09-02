@@ -45,13 +45,10 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.pickingGroup = new THREE.Group();
 
     if( pickingColor ){
-
         this.addAttributes({
             "pickingColor": { type: "c", value: pickingColor },
         });
-
         this.pickable = true;
-
     }
 
     this.uniforms = THREE.UniformsUtils.merge([
@@ -59,8 +56,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         NGL.UniformsLib[ "lights" ],
         {
             "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-            "objectId": { type: "f", value: 0.0 },
+            "nearClip": { type: "f", value: 0.0 }
         }
     ]);
 
@@ -160,7 +156,7 @@ NGL.Buffer.prototype = {
 
     },
 
-    getPickingMesh: function( material ){
+    getPickingMesh: function(){
 
         if( !this.material ) this.makeMaterial();
 
@@ -529,9 +525,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
     this.finalize();
 
     if( normal === undefined ){
-
         this.geometry.computeVertexNormals();
-
     }
 
 };
@@ -1513,11 +1507,6 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
 
     var p = params || {};
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
-    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
-
     this.size = from.length / 3;
     this.vertexShader = 'Line.vert';
     this.fragmentShader = 'Line.frag';
@@ -1526,15 +1515,13 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
     var n6 = n * 6;
     var nX = n * 2 * 2;
 
-    this.attributes = [ "position", "color" ];
+    this.attributeSize = nX;
 
-    this.geometry = new THREE.BufferGeometry();
+    this.linePosition = new Float32Array( nX * 3 );
+    this.lineColor = new Float32Array( nX * 3 );
 
-    this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
-    );
-    this.geometry.addAttribute(
-        'color', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, p
     );
 
     this.setAttributes({
@@ -1544,155 +1531,102 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
         color2: color2
     });
 
-    this.uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-        }
-    ] );
+};
 
-    this.group = new THREE.Group();
+NGL.LineBuffer.prototype = Object.create( NGL.Buffer.prototype );
+
+NGL.LineBuffer.prototype.constructor = NGL.LineBuffer;
+
+NGL.LineBuffer.prototype.setAttributes = function( data ){
+
+    var from, to, color, color2;
+    var aPosition, aColor;
+
+    var attributes = this.geometry.attributes;
+
+    if( data[ "from" ] && data[ "to" ] ){
+        from = data[ "from" ];
+        to = data[ "to" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
+
+    if( data[ "color" ] && data[ "color2" ] ){
+        color = data[ "color" ];
+        color2 = data[ "color2" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
+
+    var n = this.size;
+    var n6 = n * 6;
+
+    var i, j, i2;
+    var x, y, z, x1, y1, z1, x2, y2, z2;
+
+    for( var v = 0; v < n; v++ ){
+
+        j = v * 3;
+        i = v * 2 * 3;
+        i2 = i + n6;
+
+        if( from && to ){
+
+            x1 = from[ j     ];
+            y1 = from[ j + 1 ];
+            z1 = from[ j + 2 ];
+
+            x2 = to[ j     ];
+            y2 = to[ j + 1 ];
+            z2 = to[ j + 2 ];
+
+            x = ( x1 + x2 ) / 2.0;
+            y = ( y1 + y2 ) / 2.0;
+            z = ( z1 + z2 ) / 2.0;
+
+            aPosition[ i     ] = x1;
+            aPosition[ i + 1 ] = y1;
+            aPosition[ i + 2 ] = z1;
+            aPosition[ i + 3 ] = x;
+            aPosition[ i + 4 ] = y;
+            aPosition[ i + 5 ] = z;
+
+            aPosition[ i2     ] = x;
+            aPosition[ i2 + 1 ] = y;
+            aPosition[ i2 + 2 ] = z;
+            aPosition[ i2 + 3 ] = x2;
+            aPosition[ i2 + 4 ] = y2;
+            aPosition[ i2 + 5 ] = z2;
+
+        }
+
+        if( color && color2 ){
+
+            aColor[ i     ] = aColor[ i + 3 ] = color[ j     ];
+            aColor[ i + 1 ] = aColor[ i + 4 ] = color[ j + 1 ];
+            aColor[ i + 2 ] = aColor[ i + 5 ] = color[ j + 2 ];
+
+            aColor[ i2     ] = aColor[ i2 + 3 ] = color2[ j     ];
+            aColor[ i2 + 1 ] = aColor[ i2 + 4 ] = color2[ j + 1 ];
+            aColor[ i2 + 2 ] = aColor[ i2 + 5 ] = color2[ j + 2 ];
+
+        }
+
+    }
 
 };
 
-NGL.LineBuffer.prototype = {
+NGL.LineBuffer.prototype.getMesh = function(){
 
-    constructor: NGL.LineBuffer,
+    if( !this.material ) this.makeMaterial();
 
-    setAttributes: function( data ){
+    return new THREE.LineSegments( this.geometry, this.material );
 
-        var from, to, color, color2;
-        var aPosition, aColor;
+};
 
-        var attributes = this.geometry.attributes;
+NGL.LineBuffer.prototype.getPickingMesh = function(){
 
-        if( data[ "from" ] && data[ "to" ] ){
-            from = data[ "from" ];
-            to = data[ "to" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
-        }
-
-        if( data[ "color" ] && data[ "color2" ] ){
-            color = data[ "color" ];
-            color2 = data[ "color2" ];
-            aColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
-        }
-
-        var n = this.size;
-        var n6 = n * 6;
-
-        var i, j, i2;
-
-        var x, y, z, x1, y1, z1, x2, y2, z2;
-
-        for( var v = 0; v < n; v++ ){
-
-            j = v * 3;
-            i = v * 2 * 3;
-
-            if( from && to ){
-
-                x1 = from[ j + 0 ];
-                y1 = from[ j + 1 ];
-                z1 = from[ j + 2 ];
-
-                x2 = to[ j + 0 ];
-                y2 = to[ j + 1 ];
-                z2 = to[ j + 2 ];
-
-                x = ( x1 + x2 ) / 2.0;
-                y = ( y1 + y2 ) / 2.0;
-                z = ( z1 + z2 ) / 2.0;
-
-                aPosition[ i + 0 ] = from[ j + 0 ];
-                aPosition[ i + 1 ] = from[ j + 1 ];
-                aPosition[ i + 2 ] = from[ j + 2 ];
-                aPosition[ i + 3 ] = x;
-                aPosition[ i + 4 ] = y;
-                aPosition[ i + 5 ] = z;
-
-            }
-
-            if( color && color2 ){
-
-                aColor[ i + 0 ] = color[ j + 0 ];
-                aColor[ i + 1 ] = color[ j + 1 ];
-                aColor[ i + 2 ] = color[ j + 2 ];
-                aColor[ i + 3 ] = color[ j + 0 ];
-                aColor[ i + 4 ] = color[ j + 1 ];
-                aColor[ i + 5 ] = color[ j + 2 ];
-
-            }
-
-            i2 = i + n6;
-
-            if( from && to ){
-
-                aPosition[ i2 + 0 ] = x;
-                aPosition[ i2 + 1 ] = y;
-                aPosition[ i2 + 2 ] = z;
-                aPosition[ i2 + 3 ] = to[ j + 0 ];
-                aPosition[ i2 + 4 ] = to[ j + 1 ];
-                aPosition[ i2 + 5 ] = to[ j + 2 ];
-
-            }
-
-            if( color && color2 ){
-
-                aColor[ i2 + 0 ] = color2[ j + 0 ];
-                aColor[ i2 + 1 ] = color2[ j + 1 ];
-                aColor[ i2 + 2 ] = color2[ j + 2 ];
-                aColor[ i2 + 3 ] = color2[ j + 0 ];
-                aColor[ i2 + 4 ] = color2[ j + 1 ];
-                aColor[ i2 + 5 ] = color2[ j + 2 ];
-
-            }
-
-        }
-
-    },
-
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
-
-    getMesh: function( type, material ){
-
-        material = material || this.getMaterial( type );
-
-        return new THREE.LineSegments( this.geometry, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        var defines = {};
-
-        if( this.nearClip ){
-            defines[ "NEAR_CLIP" ] = 1;
-        }
-
-        var material = new THREE.RawShaderMaterial( {
-            uniforms: THREE.UniformsUtils.clone( this.uniforms ),
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader, defines ),
-            fragmentShader: NGL.getShader( this.fragmentShader, defines ),
-            depthTest: true,
-            transparent: this.transparent,
-            depthWrite: true,
-            lights: false,
-            fog: true,
-            linewidth: this.lineWidth
-        } );
-
-        return material;
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+    NGL.error( "NGL.LineBuffer.prototype.getPickingMesh not implemented" );
 
 };
 

@@ -11,6 +11,10 @@ uniform float nearClip;
 varying vec3 vColor;
 varying vec4 cameraPos;
 
+#ifdef PICKING
+    uniform float objectId;
+#endif
+
 #include fog_params
 
 
