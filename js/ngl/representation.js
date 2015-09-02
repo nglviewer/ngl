@@ -106,6 +106,10 @@ NGL.Representation.prototype = {
         flatShaded: {
             type: "boolean", define: "FLAT_SHADED"
         },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0,
+            uniform: true
+        },
 
         colorScheme: {
             type: "select", update: "color",
@@ -324,54 +328,48 @@ NGL.Representation.prototype = {
 
             this[ name ] = p[ name ];
 
-            // buffer data
-
+            // buffer material
             if( tp[ name ].uniform ) uniformData[ name ] = p[ name ];
             if( tp[ name ].define ) defineData[ name ] = p[ name ];
             if( tp[ name ].property ) propertyData[ name ] = p[ name ];
 
             // mark for update
-
             if( tp[ name ].update ){
-
                 what[ tp[ name ].update ] = true;
-
             }
-
             // mark for rebuild
-
             if( tp[ name ].rebuild &&
                 !( tp[ name ].rebuild === "impostor" &&
                     NGL.extensionFragDepth && !this.disableImpostor )
             ){
-
                 rebuild = true;
-
             }
 
         }, this );
 
-        // update buffers
-
-        this.bufferList.forEach( function( buffer ){
-
-            buffer.setUniforms( uniformData );
-            buffer.setDefines( defineData );
-            buffer.setProperties( propertyData );
-
-        } );
+        //
 
         if( rebuild ){
 
             this.build();
 
-        }else if( what && Object.keys( what ).length ){
+        }else{
 
-            // update buffer attribute
+            this.bufferList.forEach( function( buffer ){
 
-            this.update( what );
+                buffer.setUniforms( uniformData );
+                buffer.setDefines( defineData );
+                buffer.setProperties( propertyData );
 
-            this.viewer.requestRender();
+            } );
+
+            if( Object.keys( what ).length ){
+
+                // update buffer attribute
+                this.update( what );
+                this.viewer.requestRender();
+
+            }
 
         }
 
@@ -545,16 +543,9 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        transparent: {
-            type: "boolean", property: true
-        },
         side: {
             type: "select", options: NGL.SideTypes, property: true,
             int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
         },
         assembly: null
 
@@ -909,13 +900,6 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         },
         sort: {
             type: "boolean", rebuild: true
-        },
-        transparent: {
-            type: "boolean", property: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            property: true
         }
 
         // FIXME nearClip support missing
@@ -1436,13 +1420,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         lineWidth: {
             type: "integer", max: 20, min: 1, property: "linewidth"
-        },
-        transparent: {
-            type: "boolean", property: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
         }
 
     }, NGL.Representation.prototype.parameters, {
@@ -2471,7 +2448,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         wireframe: {
-            type: "boolean", rebuild: true
+            type: "boolean", property: true
         },
         lineWidth: {
             type: "integer", max: 20, min: 1, property: "linewidth"
@@ -2734,6 +2711,9 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        wireframe: {
+            type: "boolean", property: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2964,13 +2944,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         },
         lineWidth: {
             type: "integer", max: 20, min: 1, property: "linewidth"
-        },
-        transparent: {
-            type: "boolean", property: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
         }
 
     }, NGL.Representation.prototype.parameters, {
@@ -5015,9 +4988,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         background: {
             type: "boolean", rebuild: true
         },
-        transparent: {
-            type: "boolean", rebuild: true
-        },
         opaqueBack: {
             type: "boolean", define: "OPAQUE_BACK"
         },
@@ -5025,9 +4995,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             type: "select", options: NGL.SideTypes, rebuild: true,
             int: true
         },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0, uniform: true
-        }
 
     }, NGL.Representation.prototype.parameters ),
 
@@ -5307,16 +5274,10 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
-        transparent: {
-            type: "boolean", property: true
-        },
         side: {
             type: "select", options: NGL.SideTypes, property: true,
             int: true
         },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0, uniform: true
-        }
 
     }, NGL.Representation.prototype.parameters, {
 

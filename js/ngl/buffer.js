@@ -306,12 +306,18 @@ NGL.Buffer.prototype = {
 
         for( var name in data ){
 
+            var value = data[ name ];
+
+            if( name === "opacity" ){
+                this.setProperties( { transparent: value < 1 } );
+            }
+
             if( u[ name ] !== undefined ){
-                u[ name ].value = data[ name ];
+                u[ name ].value = value
             }
 
             if( pu[ name ] !== undefined ){
-                pu[ name ].value = data[ name ];
+                pu[ name ].value = value;
             }
 
         }
@@ -409,6 +415,20 @@ NGL.Buffer.prototype = {
 
     },
 
+    updateRenderOrder: function(){
+
+        var renderOrder = this.getRenderOrder();
+        function setRenderOrder( mesh ){
+            mesh.renderOrder = renderOrder;
+        }
+
+        this.group.children.forEach( setRenderOrder );
+        if( this.pickingGroup ){
+            this.pickingGroup.children.forEach( setRenderOrder );
+        }
+
+    },
+
     setProperties: function( data ){
 
         if( !data ) return;
@@ -418,24 +438,22 @@ NGL.Buffer.prototype = {
 
         for( var name in data ){
 
+            var value = data[ name ];
+
+            if( name === "transparent" ){
+                this.transparent = value;
+                this.updateRenderOrder();
+            }
+
             if( m[ name ] !== undefined ){
-                m[ name ] = data[ name ];
+                m[ name ] = value;
             }
 
             if( pm[ name ] !== undefined ){
-                pm[ name ] = data[ name ];
+                pm[ name ] = value;
             }
 
         }
-
-        // if( name === "transparent" ){
-
-        //     var buffer = mesh.userData[ "buffer" ];
-        //     buffer.transparent = p[ name ];
-
-        //     mesh.renderOrder = buffer.getRenderOrder();
-
-        // }
 
         m.needsUpdate = true;
         pm.needsUpdate = true;
