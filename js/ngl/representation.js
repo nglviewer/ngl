@@ -4099,44 +4099,17 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         var normal = this.surface.getNormal();
         var index = this.surface.getFilteredIndex( this.filterSele, this.atomSet.atoms );
 
-        if( this.opacity < 1 && this.side === THREE.DoubleSide ){
+        var surfaceBuffer = new NGL.SurfaceBuffer(
+            position, color, index, normal, pickingColor,
+            this.getBufferParams( {
+                background: this.background,
+                opaqueBack: this.opaqueBack,
+                dullInterior: false
+            } )
+        );
+        var doubleSidedBuffer = new NGL.DoubleSidedBuffer( surfaceBuffer );
 
-            var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, pickingColor,
-                this.getBufferParams( {
-                    background: this.background,
-                    opaqueBack: this.opaqueBack,
-                    dullInterior: false,
-                    side: THREE.FrontSide
-                } )
-            );
-
-            var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, pickingColor,
-                this.getBufferParams( {
-                    background: this.background,
-                    opaqueBack: this.opaqueBack,
-                    dullInterior: false,
-                    side: THREE.BackSide
-                } )
-            );
-
-            this.bufferList.push( backBuffer, frontBuffer );
-
-        }else{
-
-            var surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, pickingColor,
-                this.getBufferParams( {
-                    background: this.background,
-                    opaqueBack: this.opaqueBack,
-                    dullInterior: false
-                } )
-            );
-
-            this.bufferList.push( surfaceBuffer );
-
-        }
+        this.bufferList.push( doubleSidedBuffer );
 
     },
 

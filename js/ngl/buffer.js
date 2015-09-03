@@ -7,6 +7,121 @@
 ////////////////
 // Buffer Core
 
+NGL.DoubleSidedBuffer = function( buffer ){
+
+    this.size = buffer.size;
+    this.side = buffer.side;
+
+    this.group = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
+
+    var frontMeshes = [];
+    var backMeshes = [];
+
+    var frontBuffer = buffer;
+    var backBuffer = new buffer.constructor();
+
+    frontBuffer.makeMaterial();
+    backBuffer.makeMaterial();
+
+    backBuffer.geometry = buffer.geometry;
+    backBuffer.size = buffer.size;
+    backBuffer.attributeSize = buffer.attributeSize;
+    backBuffer.pickable = buffer.pickable;
+    backBuffer.setParameters( buffer.getParameters() );
+
+    frontBuffer.setParameters( {
+        side: THREE.FrontSide
+    } );
+    backBuffer.setParameters( {
+        side: THREE.BackSide,
+        opacity: backBuffer.opacity
+    } );
+
+    this.getMesh = function(){
+
+        var back = backBuffer.getMesh();
+        var front = frontBuffer.getMesh();
+
+        frontMeshes.push( front );
+        backMeshes.push( back );
+
+        this.setParameters( { side: this.side } );
+
+        return new THREE.Group().add( back, front );
+
+    };
+
+    this.getPickingMesh = function(){
+
+        var back = backBuffer.getPickingMesh();
+        var front = frontBuffer.getPickingMesh();
+
+        frontMeshes.push( front );
+        backMeshes.push( back );
+
+        this.setParameters( { side: this.side } );
+
+        return new THREE.Group().add( back, front );
+
+    };
+
+    this.setAttributes = function( data ){
+
+        buffer.setAttributes( data );
+
+    };
+
+    this.setParameters = function( data ){
+
+        data = Object.assign( {}, data );
+
+        if( data.side === THREE.FrontSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = true; } );
+            backMeshes.forEach( function( m ){ m.visible = false; } );
+
+        }else if( data.side === THREE.BackSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = false; } );
+            backMeshes.forEach( function( m ){ m.visible = true; } );
+
+        }else if( data.side === THREE.DoubleSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = true; } );
+            backMeshes.forEach( function( m ){ m.visible = true; } );
+
+        }
+
+        if( data.side !== undefined ){
+            this.side = data.side;
+        }
+        delete data.side;
+
+        frontBuffer.setParameters( data );
+        backBuffer.setParameters( data );
+
+    };
+
+    this.setVisibility = function( value ){
+
+        this.group.visible = value;
+        if( buffer.pickable ){
+            this.pickingGroup.visible = value;
+        }
+
+    };
+
+    this.dispose = function(){
+
+        frontBuffer.dispose();
+        backBuffer.dispose();
+
+    };
+
+};
+
+
 /**
  * The core buffer class.
  * @class
