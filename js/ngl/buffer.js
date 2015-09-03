@@ -34,7 +34,6 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
     this.wireframeLinewidth = p.wireframeLinewidth || 1;
 
-    this.attributes = [];
     this.geometry = new THREE.BufferGeometry();
 
     this.addAttributes({
@@ -267,8 +266,6 @@ NGL.Buffer.prototype = {
 
             var buf;
             var a = attributes[ name ];
-
-            this.attributes.push( name );
 
             if( a.value ){
 
