@@ -1229,11 +1229,7 @@ NGL.Viewer.prototype = {
 
         // NGL.time( "Viewer.addBuffer" );
 
-        var renderOrder = buffer.getRenderOrder();
-
         var mesh = buffer.getMesh();
-        mesh.frustumCulled = false;
-        mesh.renderOrder = renderOrder;
         mesh.userData[ "buffer" ] = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
@@ -1243,8 +1239,6 @@ NGL.Viewer.prototype = {
         if( buffer.pickable ){
 
             var pickingMesh = buffer.getPickingMesh();
-            pickingMesh.frustumCulled = false;
-            pickingMesh.renderOrder = renderOrder;
             pickingMesh.userData[ "buffer" ] = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );

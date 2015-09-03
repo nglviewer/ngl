@@ -101,24 +101,23 @@ NGL.Representation.prototype = {
     parameters: {
 
         nearClip: {
-            type: "boolean", define: "NEAR_CLIP"
+            type: "boolean", buffer: true
         },
         flatShaded: {
-            type: "boolean", define: "FLAT_SHADED"
+            type: "boolean", buffer: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
+            type: "number", precision: 1, max: 1, min: 0, buffer: true
         },
         side: {
-            type: "select", options: NGL.SideTypes, property: true,
+            type: "select", options: NGL.SideTypes, buffer: true,
             int: true
         },
         wireframe: {
-            type: "boolean", property: true
+            type: "boolean", buffer: true
         },
         wireframeLinewidth: {
-            type: "integer", max: 50, min: 1, property: true
+            type: "integer", max: 50, min: 1, buffer: true
         },
 
         colorScheme: {
@@ -340,9 +339,7 @@ NGL.Representation.prototype = {
         what = what || {};
         rebuild = rebuild || false;
 
-        var uniformData = {};
-        var defineData = {};
-        var propertyData = {};
+        var bufferParams = {};
 
         Object.keys( p ).forEach( function( name ){
 
@@ -357,14 +354,13 @@ NGL.Representation.prototype = {
 
             this[ name ] = p[ name ];
 
-            // buffer material
-            if( tp[ name ].uniform ) uniformData[ name ] = p[ name ];
-            if( tp[ name ].define ) defineData[ name ] = p[ name ];
-            if( tp[ name ].property ){
-                var propertyName = (
-                    tp[ name ].property === true ? name : tp[ name ].property
-                );
-                propertyData[ propertyName ] = p[ name ];
+            // buffer param
+            if( tp[ name ].buffer ){
+                if( tp[ name ].buffer === true ){
+                    bufferParams[ name ] = p[ name ];
+                }{
+                    bufferParams[ tp[ name ].buffer ] = p[ name ];
+                }
             }
 
             // mark for update
@@ -390,18 +386,11 @@ NGL.Representation.prototype = {
         }else{
 
             this.bufferList.forEach( function( buffer ){
-
-                buffer.setUniforms( uniformData );
-                buffer.setDefines( defineData );
-                buffer.setProperties( propertyData );
-
+                buffer.setParameters( bufferParams );
             } );
 
             if( Object.keys( what ).length ){
-
-                // update buffer attribute
-                this.update( what );
-
+                this.update( what );  // update buffer attribute
             }
 
             this.viewer.requestRender();
@@ -4018,10 +4007,10 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             rebuild: true
         },
         background: {
-            type: "boolean", rebuild: true
+            type: "boolean", rebuild: true //FIXME
         },
         opaqueBack: {
-            type: "boolean", define: "OPAQUE_BACK"
+            type: "boolean", buffer: true
         },
         lowResolution: {
             type: "boolean", rebuild: true

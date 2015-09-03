@@ -29,6 +29,7 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
     this.background = p.background !== undefined ? p.background : false;
     this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
     this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
@@ -160,25 +161,39 @@ NGL.Buffer.prototype = {
 
     getMesh: function(){
 
+        var mesh;
+
         if( !this.material ) this.makeMaterial();
 
         if( this.line ){
 
-            return new THREE.LineSegments( this.geometry, this.material );
+            mesh = new THREE.LineSegments( this.geometry, this.material );
 
         }else{
 
-            return new THREE.Mesh( this.geometry, this.material );
+            mesh = new THREE.Mesh( this.geometry, this.material );
 
         }
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
 
     },
 
     getPickingMesh: function(){
 
+        var mesh;
+
         if( !this.material ) this.makeMaterial();
 
-        return new THREE.Mesh( this.geometry, this.pickingMaterial );
+        mesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
 
     },
 
@@ -241,6 +256,23 @@ NGL.Buffer.prototype = {
         }
 
         return defines;
+
+    },
+
+    getParameters: function(){
+
+        return {
+            opaqueBack: this.opaqueBack,
+            dullInterior: this.dullInterior,
+            side: this.side,
+            opacity: this.opacity,
+            nearClip: this.nearClip,
+            flatShaded: this.flatShaded,
+            background: this.background,
+            linewidth: this.linewidth,
+            wireframe: this.wireframe,
+            wireframeLinewidth: this.wireframeLinewidth
+        };
 
     },
 
@@ -332,6 +364,57 @@ NGL.Buffer.prototype = {
 
     },
 
+    setParameters: function( params ){
+
+        var p = params || {};
+
+        var properties = [
+            "linewidth", "wireframe", "wireframeLinewidth", "side"
+        ];
+
+        var defines = [
+            "opaqueBack", "dullInterior", "side", "nearClip", "background",
+            "flatShaded"
+        ];
+
+        var uniforms = [
+            "opacity"
+        ];
+
+        var propertyData = {};
+        var uniformData = {};
+        var doShaderUpdate = false;
+
+        for( var name in p ){
+
+            var valid = false;
+            var value = p[ name ];
+
+            if( properties.indexOf( name ) !== -1 ){
+                propertyData[ name ] = value;
+                valid = true;
+            }
+
+            if( uniforms.indexOf( name ) !== -1 ){
+                uniformData[ name ] = value;
+                valid = true;
+            }
+
+            if( defines.indexOf( name ) !== -1 ){
+                doShaderUpdate = true;
+                valid = true;
+            }
+
+            if( valid ) this[ name ] = value;
+
+        }
+
+        this.setProperties( propertyData );
+        this.setUniforms( uniformData );
+        if( doShaderUpdate ) this.updateShader();
+
+    },
+
     setAttributes: function( data ){
 
         /**
@@ -412,11 +495,6 @@ NGL.Buffer.prototype = {
                 this.updateRenderOrder();
             }
 
-            if( name === "wireframe" ){
-                this.wireframe = value;
-                this.updateShader();
-            }
-
             if( m[ name ] !== undefined ){
                 m[ name ] = value;
             }
@@ -456,10 +534,7 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
 
     var p = params || {};
 
-    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
-
-    this.size = position.length / 3;
+    this.size = position ? position.length / 3 : 0;
     this.attributeSize = this.size;
     this.vertexShader = 'Mesh.vert';
     this.fragmentShader = 'Mesh.frag';
@@ -896,7 +971,6 @@ NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpos
 ////////////////////////
 // Geometry Primitives
 
-
 NGL.GeometryBuffer = function( position, color, pickingColor, params ){
 
     var p = params || {};
@@ -1089,8 +1163,6 @@ NGL.GeometryBuffer.prototype.makeIndex = function(){
     NGL.MeshBuffer.prototype.makeIndex.call( this );
 
 };
-
-
 
 
 NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
@@ -2697,4 +2769,3 @@ NGL.BufferVectorHelper.prototype = {
     dispose: NGL.Buffer.prototype.dispose
 
 }
-
