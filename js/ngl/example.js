@@ -164,11 +164,11 @@ NGL.Examples = {
                 } );
                 o.addRepresentation( "label", {
                     sele: "( 135 or 223 or 347 or 296 ) and .CB",
-                    scale: 1.7
+                    color: "white", scale: 1.7
                 } );
                 o.addRepresentation( "label", {
                     sele: "RET and .C19",
-                    scale: 1.7, labelType: "resname"
+                    color: "white", scale: 1.7, labelType: "resname"
                 } );
 
                 o.centerView();
