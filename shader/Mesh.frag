@@ -26,7 +26,6 @@ varying vec4 cameraPos;
 
 #include fog_params
 
-
 void main()
 {
 
