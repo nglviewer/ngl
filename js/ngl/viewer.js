@@ -1746,7 +1746,6 @@ NGL.Viewer.prototype = {
 
         return function( group, camera ){
 
-            var bgColor = this.params.backgroundColor;
             var nearClip = this.nearClip;
 
             projectionMatrixInverse.getInverse(
@@ -1763,10 +1762,6 @@ NGL.Viewer.prototype = {
 
                 var u = o.material.uniforms;
                 if( !u ) return;
-
-                if( u.backgroundColor ){
-                    u.backgroundColor.value.set( bgColor );
-                }
 
                 if( u.nearClip ){
                     u.nearClip.value = nearClip;

@@ -1016,9 +1016,6 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
                 "LatoBlack": "LatoBlack"
             },
             rebuild: true
-        },
-        antialias: {
-            type: "boolean", define: "ANTIALIAS"
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -1036,7 +1033,6 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         this.labelType = p.labelType || "res";
         this.labelText = p.labelText || {};
         this.font = p.font || 'LatoBlack';
-        this.antialias = p.antialias !== undefined ? p.antialias : true;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1064,7 +1060,6 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             text,
             this.getBufferParams( {
                 font: this.font,
-                antialias: this.antialias,
             } )
         );
 

@@ -2396,8 +2396,6 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     var p = params || {};
 
-    this.antialias = p.antialias !== undefined ? p.antialias : true;
-
     var fontName = p.font !== undefined ? p.font : 'LatoBlack';
     this.font = NGL.getFont( fontName );
 
@@ -2423,8 +2421,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     NGL.QuadBuffer.call( this, p );
 
     this.addUniforms({
-        "fontTexture"  : { type: "t", value: this.tex },
-        "backgroundColor"  : { type: "c", value: new THREE.Color( "black" ) }
+        "fontTexture"  : { type: "t", value: this.tex }
     });
 
     this.addAttributes({
@@ -2450,16 +2447,8 @@ NGL.TextBuffer.prototype.makeMaterial = function(){
 
     NGL.Buffer.prototype.makeMaterial.call( this );
 
-    if( this.antialias ){
-
-        this.material.transparent = true;
-        this.material.depthWrite = true;
-        this.material.blending = THREE.NormalBlending;
-        this.material.defines[ "ANTIALIAS" ] = 1;
-
-    }
-
     this.material.lights = false;
+    this.material.transparent = true;
     this.material.uniforms.fontTexture.value = this.tex;
     this.material.needsUpdate = true;
 
@@ -2538,6 +2527,15 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
         }
 
     }
+
+};
+
+NGL.TextBuffer.prototype.setProperties = function( data ){
+
+    // alpha channel must stay enabled for anti-aliasing
+    if( data && data.transparent !== undefined ) data.transparent = true;
+
+    NGL.QuadBuffer.prototype.setProperties.call( this, data );
 
 };
 

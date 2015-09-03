@@ -7,9 +7,7 @@ precision highp int;
 // uniform mat4 viewMatrix;
 // uniform vec3 cameraPosition;
 
-uniform vec3 backgroundColor;
 uniform sampler2D fontTexture;
-
 uniform float opacity;
 
 varying vec3 vColor;
@@ -40,11 +38,7 @@ void main() {
 
     a *= opacity;
 
-    #ifndef ANTIALIAS
-        gl_FragColor = vec4( mix( backgroundColor, vColor, a ), 1.0 );
-    #else
-        gl_FragColor = vec4( vColor, a );
-    #endif
+    gl_FragColor = vec4( vColor, a );
 
     #include fog
 
