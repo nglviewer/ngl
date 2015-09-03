@@ -3073,10 +3073,6 @@ NGL.Structure.prototype = {
 
                     }
 
-                }else{
-
-                    equalAtomnames = false;
-
                 }
 
             }
