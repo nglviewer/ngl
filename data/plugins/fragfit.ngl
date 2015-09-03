@@ -2,12 +2,14 @@
 
 var FragfitResultsPreset = function( data, params ){
 
-    var p = params || {};
+    var p = Object.assign( {}, params );
 
     var pdbComp = data[ "pdb" ];
     var mrcComp = data[ "mrc" ];
     var linkerComp = data[ "linker" ];
     var json = data[ "json" ];
+
+    var surfaceOpacity = p.surfaceOpacity || 0.6;
 
     stage.viewer.setFog( null, null, 30, 55 );
 
@@ -39,7 +41,7 @@ var FragfitResultsPreset = function( data, params ){
         isolevel: p.isolevel || 2.0,
         smooth: 0,
         wireframe: p.wireframe || false,
-        opacity: 0.6,
+        opacity: p.wireframe ? 1.0 : surfaceOpacity,
         side: THREE.DoubleSide,
         opaqueBack: true,
         color: "grey"
@@ -50,6 +52,24 @@ var FragfitResultsPreset = function( data, params ){
     console.log( json );
 
     //
+
+    this.setSurfaceParams = function( params ){
+
+        var p = Object.assign( {}, params );
+
+        if( p.opacity !== undefined ){
+            surfaceOpacity = p.opacity;
+        }
+
+        if( p.wireframe === true ){
+            p.opacity = 1.0;
+        }else if( p.wireframe === false ){
+            p.opacity = surfaceOpacity;
+        }
+
+        surfaceRepr.setParameters( p );
+
+    };
 
     this.backboneRepr = backboneRepr;
     this.surfaceRepr = surfaceRepr;
@@ -85,7 +105,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var isolevelNumber = new UI.Number( isolevel )
         .onChange( function(){
-            fragfitResultsPreset.surfaceRepr.setParameters( {
+            fragfitResultsPreset.setSurfaceParams( {
                 isolevel: isolevelNumber.getValue()
             } );
         } );
@@ -94,7 +114,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var wireframeCheckbox = new UI.Checkbox( wireframe )
         .onChange( function(){
-            fragfitResultsPreset.surfaceRepr.setParameters( {
+            fragfitResultsPreset.setSurfaceParams( {
                 wireframe: wireframeCheckbox.getValue()
             } );
         } );
