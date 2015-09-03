@@ -1124,6 +1124,8 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
+        this.modelGroup.fog = new THREE.Fog();
+
     },
 
     initLights: function(){
@@ -1678,12 +1680,10 @@ NGL.Viewer.prototype = {
 
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
-        var fog = new THREE.Fog(
-            this.params.fogColor,
-            Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
-            Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
-        );
-        this.modelGroup.fog = fog;
+        var fog = this.modelGroup.fog;
+        fog.color.setHex( this.params.fogColor );
+        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
+        fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
         //
 
