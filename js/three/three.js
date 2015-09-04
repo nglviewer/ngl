@@ -21147,6 +21147,16 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 						}
 
+					} else if ( geometry.groups.length > 0 ) {
+
+						var groups = geometry.groups;
+
+						for ( var i = 0, l = groups.length; i < l; i ++ ) {
+
+							pushRenderItem( object, geometry, material, _vector3.z, groups[ i ] );
+
+						}
+
 					} else {
 
 						pushRenderItem( object, geometry, material, _vector3.z );
