@@ -270,28 +270,39 @@ NGL.Representation.prototype = {
 
         NGL.time( "NGL.Representation.make " + this.type );
 
-        if( params ){
+        if( params && !params.__update ){
             this.init( params );
         }
 
         this.prepare( function(){
 
-            this.clear();
-            this.create();
+            if( params.__update ){
 
-            if( !this.manualAttach && !this.disposed ){
+                this.update( params.__update );
+                this.viewer.requestRender();
 
-                NGL.time( "NGL.Representation.attach " + this.type );
+                this.tasks.decrement();
+                callback();
 
-                this.attach( function(){
+            }else{
 
-                    NGL.timeEnd( "NGL.Representation.attach " + this.type );
+                this.clear();
+                this.create();
 
-                    this.tasks.decrement();
+                if( !this.manualAttach && !this.disposed ){
 
-                    callback();
+                    NGL.time( "NGL.Representation.attach " + this.type );
 
-                }.bind( this ) );
+                    this.attach( function(){
+
+                        NGL.timeEnd( "NGL.Representation.attach " + this.type );
+
+                        this.tasks.decrement();
+                        callback();
+
+                    }.bind( this ) );
+
+                }
 
             }
 
@@ -4690,15 +4701,15 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         isolevelType: {
-            type: "select", rebuild: true, options: {
+            type: "select", options: {
                 "value": "value", "sigma": "sigma"
             }
         },
         isolevel: {
-            type: "number", precision: 2, max: 1000, min: -1000, rebuild: true
+            type: "number", precision: 2, max: 1000, min: -1000
         },
         smooth: {
-            type: "integer", precision: 1, max: 10, min: 0, rebuild: true
+            type: "integer", precision: 1, max: 10, min: 0
         },
         background: {
             type: "boolean", rebuild: true  // FIXME
@@ -4755,7 +4766,6 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth
             ){
-
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
 
@@ -4765,17 +4775,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                         callback();
                     }.bind( this )
                 );
-
             }else{
-
                 callback();
-
             }
 
         }else{
-
             callback();
-
         }
 
     },
@@ -4806,18 +4811,26 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         var surfaceData = {};
 
-        if( what[ "color" ] ){
+        if( what[ "position" ] ){
+            surfaceData[ "position" ] = this.surface.getPosition();
+        }
 
+        if( what[ "color" ] ){
             surfaceData[ "color" ] = this.surface.getColor(
                 this.getColorParams()
             );
+        }
 
+        if( what[ "index" ] ){
+            surfaceData[ "index" ] = this.surface.getIndex();
+        }
+
+        if( what[ "normal" ] ){
+            surfaceData[ "normal" ] = this.surface.getNormal();
         }
 
         this.bufferList.forEach( function( buffer ){
-
             buffer.setAttributes( surfaceData );
-
         } );
 
     },
@@ -4848,6 +4861,21 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
             this.isolevelType = params[ "isolevelType" ];
 
+        }
+
+        if( this.surface && (
+                params[ "isolevel" ] !== undefined ||
+                params[ "smooth" ] !== undefined
+            )
+        ){
+            this.build( {
+                "__update": {
+                    "position": true,
+                    "color": true,
+                    "index": true,
+                    "normal": true
+                }
+            } );
         }
 
         NGL.Representation.prototype.setParameters.call(

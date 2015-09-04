@@ -186,8 +186,6 @@ NGL.Buffer.prototype = {
 
     constructor: NGL.Buffer,
 
-    type: "",
-
     parameters: {
 
         opaqueBack: { updateShader: true },
@@ -540,14 +538,54 @@ NGL.Buffer.prototype = {
          * buffer.setAttributes({ attrName: attrData });
          */
 
-        var attributes = this.geometry.attributes;
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
 
-        Object.keys( data ).forEach( function( name ){
+        for( var name in data ){
 
-            attributes[ name ].set( data[ name ] );
-            attributes[ name ].needsUpdate = true;
+            var array = data[ name ];
+            var length = array.length;
 
-        }, this );
+            if( name === "index" ){
+
+                geometry.clearGroups();
+
+                if( length > geometry.index.array.length ){
+
+                    geometry.addIndex(
+                        new THREE.BufferAttribute( array, 1 )
+                    );
+
+                }else{
+
+                    geometry.index.set( data[ name ] );
+                    geometry.index.needsUpdate = true;
+
+                    geometry.addGroup( 0, data[ name ].length );
+
+                }
+
+            }else{
+
+                var attribute = attributes[ name ];
+
+                if( length > attribute.array.length ){
+
+                    geometry.addAttribute(
+                        name,
+                        new THREE.BufferAttribute( array, attribute.itemSize )
+                    );
+
+                }else{
+
+                    attributes[ name ].set( data[ name ] );
+                    attributes[ name ].needsUpdate = true;
+
+                }
+
+            }
+
+        }
 
     },
 
