@@ -58,26 +58,6 @@ NGL.Resources = {
 
 
 /**
- * [UniformsLib description]
- * @type {Object}
- * @private
- */
-NGL.UniformsLib = {
-
-    'fog': THREE.UniformsLib[ "fog" ],
-
-    'lights': THREE.UniformsUtils.merge([
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
-    ])
-
-};
-
-
-/**
  * [Utils description]
  * @namespace NGL.Utils
  * @type {Object}
@@ -949,14 +929,11 @@ NGL.Viewer.prototype = {
 
         this.params = {
 
-            fogType: null,
-            fogColor: 0x000000,
+            fogColor: new THREE.Color( 0x000000 ),
             fogNear: 50,
             fogFar: 100,
-            fogDensity: 0.00025,
 
-            // backgroundColor: 0xFFFFFF,
-            backgroundColor: 0x000000,
+            backgroundColor: new THREE.Color( 0x000000 ),
 
             cameraType: 1,
             cameraFov: 40,
@@ -1374,39 +1351,25 @@ NGL.Viewer.prototype = {
 
     },
 
-    /**
-     * [setFog description]
-     * @param {String} type - Either 'linear' or 'exp2'.
-     * @param {String} color - Fog color.
-     * @param {Number} near - Where the fog effect starts (only 'linear').
-     * @param {Number} far - Where the fog effect ends (only 'linear').
-     * @param {Number} density - Density of the fog (only 'exp2').
-     */
-    setFog: function( type, color, near, far, density, foo ){
+    setFog: function( color, near, far ){
 
         var p = this.params;
 
-        if( type!==null ) p.fogType = type;
-        if( color ) p.fogColor = color;
+        if( color ) p.fogColor.set( color );
         if( near ) p.fogNear = near;
         if( far ) p.fogFar = far;
-        if( density ) p.fogDensity = density;
 
         this.requestRender();
 
     },
 
-    /**
-     * Sets the background color (and also the fog color).
-     * @param {String} color
-     */
     setBackground: function( color ){
 
         var p = this.params;
 
-        if( color ) p.backgroundColor = color;
+        if( color ) p.backgroundColor.set( color );
 
-        this.setFog( null, p.backgroundColor );
+        this.setFog( p.backgroundColor );
         this.renderer.setClearColor( p.backgroundColor, 1 );
 
         this.requestRender();
@@ -1663,11 +1626,11 @@ NGL.Viewer.prototype = {
         this.nearClip = nearClip;
 
         // fog
-
+console.log(this.params.fogColor)
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
         var fog = this.modelGroup.fog;
-        fog.color.setHex( this.params.fogColor );
+        fog.color.set( this.params.fogColor );
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 

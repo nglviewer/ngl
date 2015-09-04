@@ -1208,7 +1208,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.fogNear, 1
         )
         .onInput( function(){
-            stage.viewer.setFog( null, null, fogNear.getValue(), fogFar.getValue() );
+            stage.viewer.setFog( null, fogNear.getValue(), fogFar.getValue() );
         } );
 
     var fogFar = new UI.Range(
@@ -1216,7 +1216,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.fogFar, 1
         )
         .onInput( function(){
-            stage.viewer.setFog( null, null, fogNear.getValue(), fogFar.getValue() );
+            stage.viewer.setFog( null, fogNear.getValue(), fogFar.getValue() );
         } );
 
     //

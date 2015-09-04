@@ -167,13 +167,13 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         this.pickable = true;
     }
 
-    this.uniforms = THREE.UniformsUtils.merge([
-        NGL.UniformsLib[ "fog" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 }
-        }
-    ]);
+    this.uniforms = {
+        "fogColor": { type: "c", value: null },
+        "fogNear": { type: "f", value: 0.0 },
+        "fogFar": { type: "f", value: 0.0 },
+        "opacity": { type: "f", value: this.opacity },
+        "nearClip": { type: "f", value: 0.0 }
+    };
 
     this.pickingUniforms = {
         "nearClip": { type: "f", value: 0.0 },
