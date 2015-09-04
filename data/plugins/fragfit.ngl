@@ -11,7 +11,7 @@ var FragfitResultsPreset = function( data, params ){
 
     var surfaceOpacity = p.surfaceOpacity || 0.6;
 
-    stage.viewer.setFog( null, null, 30, 55 );
+    stage.viewer.setFog( null, 30, 55 );
 
     // pdb
 
