@@ -883,17 +883,10 @@ NGL.Viewer = function( eid ){
     this.aspect = this.width / this.height;
 
     this.initParams();
-
     this.initCamera();
-
     this.initScene();
-
     this.initRenderer();
-
-    this.initLights();
-
     this.initControls();
-
     this.initStats();
 
     // fog & background
@@ -942,8 +935,6 @@ NGL.Viewer.prototype = {
             clipNear: 0,
             clipFar: 100,
             clipDist: 20,
-
-            specular: 0x050505,
 
         };
 
@@ -1094,22 +1085,6 @@ NGL.Viewer.prototype = {
         this.rotationGroup.add( this.backgroundGroup );
 
         this.modelGroup.fog = new THREE.Fog();
-
-    },
-
-    initLights: function(){
-
-        var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
-        directionalLight.position.copy( new THREE.Vector3( 1, 1, -2.5 ).normalize() );
-        directionalLight.intensity = 0.5;
-
-        var ambientLight = new THREE.AmbientLight( 0x101010 );
-
-        var hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0.01 );
-
-        this.scene.add( directionalLight );
-        this.scene.add( ambientLight );
-        this.scene.add( hemisphereLight );
 
     },
 
@@ -1626,7 +1601,7 @@ NGL.Viewer.prototype = {
         this.nearClip = nearClip;
 
         // fog
-console.log(this.params.fogColor)
+
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
         var fog = this.modelGroup.fog;
