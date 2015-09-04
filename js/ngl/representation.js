@@ -333,7 +333,7 @@ NGL.Representation.prototype = {
 
     setParameters: function( params, what, rebuild ){
 
-        var p = params;
+        var p = params || {};
         var tp = this.parameters;
 
         what = what || {};
@@ -341,7 +341,7 @@ NGL.Representation.prototype = {
 
         var bufferParams = {};
 
-        Object.keys( p ).forEach( function( name ){
+        for( var name in p ){
 
             if( p[ name ] === undefined ) return;
             if( tp[ name ] === undefined ) return;
@@ -358,7 +358,7 @@ NGL.Representation.prototype = {
             if( tp[ name ].buffer ){
                 if( tp[ name ].buffer === true ){
                     bufferParams[ name ] = p[ name ];
-                }{
+                }else{
                     bufferParams[ tp[ name ].buffer ] = p[ name ];
                 }
             }
@@ -367,6 +367,7 @@ NGL.Representation.prototype = {
             if( tp[ name ].update ){
                 what[ tp[ name ].update ] = true;
             }
+
             // mark for rebuild
             if( tp[ name ].rebuild &&
                 !( tp[ name ].rebuild === "impostor" &&
@@ -375,7 +376,7 @@ NGL.Representation.prototype = {
                 rebuild = true;
             }
 
-        }, this );
+        }
 
         //
 
@@ -903,10 +904,10 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         pointSize: {
-            type: "integer", max: 20, min: 1, property: "size"
+            type: "integer", max: 20, min: 1, buffer: true
         },
         sizeAttenuation: {
-            type: "boolean", property: true
+            type: "boolean", buffer: true
         },
         sort: {
             type: "boolean", rebuild: true
@@ -1388,12 +1389,15 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         linewidth: {
-            type: "integer", max: 20, min: 1, property: true
+            type: "integer", max: 20, min: 1, buffer: true
         }
 
     }, NGL.Representation.prototype.parameters, {
 
-        flatShaded: null
+        flatShaded: null,
+        side: null,
+        wireframe: null,
+        wireframeLinewidth: null
 
     } ),
 
@@ -1477,7 +1481,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         shrink: {
-            type: "number", precision: 3, max: 1.0, min: 0.001, uniform: true
+            type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
         },
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
@@ -2605,7 +2609,13 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.StructureRepresentation.prototype.parameters, {
+
+        side: null,
+        wireframe: null,
+        wireframeLinewidth: null
+
+    } ),
 
     init: function( params ){
 
@@ -2824,12 +2834,15 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         },
         linewidth: {
-            type: "integer", max: 20, min: 1, property: true
+            type: "integer", max: 20, min: 1, buffer: true
         }
 
     }, NGL.Representation.prototype.parameters, {
 
-        flatShaded: null
+        flatShaded: null,
+        side: null,
+        wireframe: null,
+        wireframeLinewidth: null
 
     } ),
 
@@ -4007,7 +4020,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             rebuild: true
         },
         background: {
-            type: "boolean", rebuild: true //FIXME
+            type: "boolean", rebuild: true  // FIXME
         },
         opaqueBack: {
             type: "boolean", buffer: true
@@ -4093,14 +4106,12 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var position = this.surface.getPosition();
-        var color = this.surface.getColor( this.getColorParams() );
-        var pickingColor = this.surface.getPickingColor( this.getColorParams() );
-        var normal = this.surface.getNormal();
-        var index = this.surface.getFilteredIndex( this.filterSele, this.atomSet.atoms );
-
         var surfaceBuffer = new NGL.SurfaceBuffer(
-            position, color, index, normal, pickingColor,
+            this.surface.getPosition(),
+            this.surface.getColor( this.getColorParams() ),
+            this.surface.getFilteredIndex( this.filterSele, this.atomSet.atoms ),
+            this.surface.getNormal(),
+            this.surface.getPickingColor( this.getColorParams() ),
             this.getBufferParams( {
                 background: this.background,
                 opaqueBack: this.opaqueBack,
@@ -4201,9 +4212,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         },
         labelColor: {
             type: "color"
-        },
-        antialias: {
-            type: "boolean", define: "ANTIALIAS"
         },
         atomPair: {
             type: "hidden"
@@ -4687,18 +4695,16 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             }
         },
         isolevel: {
-            type: "number", precision: 2, max: 1000, min: -1000,
-            rebuild: true
+            type: "number", precision: 2, max: 1000, min: -1000, rebuild: true
         },
         smooth: {
-            type: "integer", precision: 1, max: 10, min: 0,
-            rebuild: true
+            type: "integer", precision: 1, max: 10, min: 0, rebuild: true
         },
         background: {
-            type: "boolean", rebuild: true
+            type: "boolean", rebuild: true  // FIXME
         },
         opaqueBack: {
-            type: "boolean", define: "OPAQUE_BACK"
+            type: "boolean", buffer: true
         },
 
     }, NGL.Representation.prototype.parameters ),
@@ -4776,50 +4782,21 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var position = this.surface.getPosition();
-        var color = this.surface.getColor( this.getColorParams() );
-        var pickingColor = undefined;  // this.surface.getPickingColor( this.getColorParams() );
-        var normal = this.surface.getNormal();
-        var index = this.surface.getIndex();
+        var surfaceBuffer = new NGL.SurfaceBuffer(
+            this.surface.getPosition(),
+            this.surface.getColor( this.getColorParams() ),
+            this.surface.getIndex(),
+            this.surface.getNormal(),
+            undefined,  // this.surface.getPickingColor( this.getColorParams() ),
+            this.getBufferParams( {
+                background: this.background,
+                opaqueBack: this.opaqueBack,
+                dullInterior: false
+            } )
+        );
+        var doubleSidedBuffer = new NGL.DoubleSidedBuffer( surfaceBuffer );
 
-        if( this.opacity < 1 && this.side === THREE.DoubleSide ){
-
-            var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, pickingColor,
-                this.getBufferParams( {
-                    background: this.background,
-                    opaqueBack: this.opaqueBack,
-                    side: THREE.FrontSide,
-                    dullInterior: false
-                } )
-            );
-
-            var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, pickingColor,
-                this.getBufferParams( {
-                    background: this.background,
-                    opaqueBack: this.opaqueBack,
-                    side: THREE.BackSide,
-                    dullInterior: false
-                } )
-            );
-
-            this.bufferList.push( backBuffer, frontBuffer );
-
-        }else{
-
-            var surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, pickingColor,
-                this.getBufferParams( {
-                    background: this.background,
-                    opaqueBack: this.opaqueBack,
-                    dullInterior: false
-                } )
-            );
-
-            this.bufferList.push( surfaceBuffer );
-
-        }
+        this.bufferList.push( doubleSidedBuffer );
 
     },
 

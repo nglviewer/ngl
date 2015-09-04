@@ -29,6 +29,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
     backBuffer.attributeSize = buffer.attributeSize;
     backBuffer.pickable = buffer.pickable;
     backBuffer.setParameters( buffer.getParameters() );
+    backBuffer.updateShader();
 
     frontBuffer.setParameters( {
         side: THREE.FrontSide
@@ -38,10 +39,17 @@ NGL.DoubleSidedBuffer = function( buffer ){
         opacity: backBuffer.opacity
     } );
 
-    this.getMesh = function(){
+    this.getMesh = function( picking ){
 
-        var back = backBuffer.getMesh();
-        var front = frontBuffer.getMesh();
+        var front, back;
+
+        if( picking ){
+            back = backBuffer.getPickingMesh();
+            front = frontBuffer.getPickingMesh();
+        }else{
+            back = backBuffer.getMesh();
+            front = frontBuffer.getMesh();
+        }
 
         frontMeshes.push( front );
         backMeshes.push( back );
@@ -54,15 +62,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
 
     this.getPickingMesh = function(){
 
-        var back = backBuffer.getPickingMesh();
-        var front = frontBuffer.getPickingMesh();
-
-        frontMeshes.push( front );
-        backMeshes.push( back );
-
-        this.setParameters( { side: this.side } );
-
-        return new THREE.Group().add( back, front );
+        return this.getMesh( true );
 
     };
 
@@ -185,6 +185,23 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 NGL.Buffer.prototype = {
 
     constructor: NGL.Buffer,
+
+    type: "",
+
+    parameters: {
+
+        opaqueBack: { updateShader: true },
+        dullInterior: { updateShader: true },
+        side: { updateShader: true, property: true },
+        opacity: { uniform: true },
+        nearClip: { updateShader: true },
+        flatShaded: { updateShader: true },
+        background: { updateShader: true },
+        linewidth: { property: true },
+        wireframe: { updateShader: true, property: true },
+        wireframeLinewidth: { property: true }
+
+    },
 
     get transparent () {
 
@@ -376,18 +393,13 @@ NGL.Buffer.prototype = {
 
     getParameters: function(){
 
-        return {
-            opaqueBack: this.opaqueBack,
-            dullInterior: this.dullInterior,
-            side: this.side,
-            opacity: this.opacity,
-            nearClip: this.nearClip,
-            flatShaded: this.flatShaded,
-            background: this.background,
-            linewidth: this.linewidth,
-            wireframe: this.wireframe,
-            wireframeLinewidth: this.wireframeLinewidth
-        };
+        var params = {};
+
+        for( var name in this.parameters ){
+            params[ name ] = this[ name ];
+        }
+
+        return params;
 
     },
 
@@ -481,20 +493,10 @@ NGL.Buffer.prototype = {
 
     setParameters: function( params ){
 
-        var p = params || {};
+        if( !params ) return;
 
-        var properties = [
-            "linewidth", "wireframe", "wireframeLinewidth", "side"
-        ];
-
-        var defines = [
-            "opaqueBack", "dullInterior", "side", "nearClip", "background",
-            "flatShaded"
-        ];
-
-        var uniforms = [
-            "opacity"
-        ];
+        var p = params;
+        var tp = this.parameters;
 
         var propertyData = {};
         var uniformData = {};
@@ -502,25 +504,22 @@ NGL.Buffer.prototype = {
 
         for( var name in p ){
 
-            var valid = false;
-            var value = p[ name ];
+            if( p[ name ] === undefined ) return;
+            if( tp[ name ] === undefined ) return;
 
-            if( properties.indexOf( name ) !== -1 ){
-                propertyData[ name ] = value;
-                valid = true;
+            this[ name ] = p[ name ];
+
+            if( tp[ name ].property ){
+                propertyData[ name ] = p[ name ];
             }
 
-            if( uniforms.indexOf( name ) !== -1 ){
-                uniformData[ name ] = value;
-                valid = true;
+            if( tp[ name ].uniform ){
+                uniformData[ name ] = p[ name ];
             }
 
-            if( defines.indexOf( name ) !== -1 ){
+            if( tp[ name ].updateShader ){
                 doShaderUpdate = true;
-                valid = true;
             }
-
-            if( valid ) this[ name ] = value;
 
         }
 
@@ -561,37 +560,19 @@ NGL.Buffer.prototype = {
 
         for( var name in data ){
 
-            var value = data[ name ];
-
             if( name === "opacity" ){
-                this.setProperties( { transparent: value < 1 } );
+                this.setProperties( { transparent: data[ name ] < 1 } );
             }
 
             if( u[ name ] !== undefined ){
-                u[ name ].value = value
+                u[ name ].value = data[ name ];
             }
 
             if( pu[ name ] !== undefined ){
-                pu[ name ].value = value;
+                pu[ name ].value = data[ name ];
             }
 
         }
-
-    },
-
-    setDefines: function( data ){
-
-        if( !data ) return;
-
-        for( var name in data ){
-
-            if( this[ name ] !== undefined ){
-                this[ name ] = data[ name ];
-            }
-
-        }
-
-        this.updateShader();
 
     },
 
@@ -604,18 +585,16 @@ NGL.Buffer.prototype = {
 
         for( var name in data ){
 
-            var value = data[ name ];
-
             if( name === "transparent" ){
                 this.updateRenderOrder();
             }
 
             if( m[ name ] !== undefined ){
-                m[ name ] = value;
+                m[ name ] = data[ name ];
             }
 
             if( pm[ name ] !== undefined ){
-                pm[ name ] = value;
+                pm[ name ] = data[ name ];
             }
 
         }
@@ -1081,6 +1060,12 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.prototype );
 
 NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpostorBuffer;
+
+NGL.HyperballStickImpostorBuffer.prototype.parameters = Object.assign( {
+
+    shrink: { uniform: true }
+
+}, NGL.BoxBuffer.prototype.parameters );
 
 
 ////////////////////////
