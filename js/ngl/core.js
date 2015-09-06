@@ -932,6 +932,7 @@ NGL.WorkerRegistry = {
 NGL.Worker = function( name ){
 
     var worker;
+    var pending = 0;
     var postCount = 0;
     var onmessageDict = {};
     var onerrorDict = {};
@@ -946,29 +947,35 @@ NGL.Worker = function( name ){
 
     worker.onmessage = function( event ){
 
+        pending -= 1;
         var postId = event.data.__postId;
 
         NGL.timeEnd( "NGL.Worker.postMessage " + name + " #" + postId );
 
         if( onmessageDict[ postId ] ){
             onmessageDict[ postId ].call( worker, event );
-            delete onmessageDict[ postId ];
         }else{
             // NGL.debug( "No onmessage", postId, name );
         }
+
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
 
     };
 
     worker.onerror = function( event ){
 
+        pending -= 1;
         var postId = event.data.__postId;
 
         if( onerrorDict[ postId ] ){
             onerrorDict[ postId ].call( worker, event );
-            delete onerrorDict[ postId ];
         }else{
             NGL.error( "NGL.Worker.onerror", postId, name, event );
         }
+
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
 
     };
 
@@ -989,6 +996,7 @@ NGL.Worker = function( name ){
 
         worker.postMessage.call( worker, aMessage, transferList );
 
+        pending += 1;
         postCount += 1;
 
         return this;
@@ -1006,31 +1014,36 @@ NGL.Worker = function( name ){
 
     };
 
+    Object.defineProperties( this, {
+        postCount: {
+            get: function(){ return postCount; }
+        },
+        pending: {
+            get: function(){ return pending; }
+        }
+    } );
+
 };
 
 NGL.Worker.prototype.constructor = NGL.Worker;
 
 
-NGL.WorkerPool = function( name, count ){
+NGL.WorkerPool = function( name, maxCount ){
 
-    count = count || 1;
+    maxCount = Math.min( 8, maxCount || 2 );
 
     var pool = [];
-    var postId = 0;
-
-    for( var i = 0; i < count; ++i ){
-        pool.push( new NGL.Worker( name ) );
-    }
+    var count = 0;
 
     // API
 
     this.name = name;
 
-    this.count = count;
+    this.maxCount = maxCount;
 
     this.post = function( aMessage, transferList, onmessage, onerror ){
 
-        var worker = pool[ postId++ % count ];
+        var worker = this.getNextWorker();
         worker.post( aMessage, transferList, onmessage, onerror );
 
         return this;
@@ -1045,11 +1058,48 @@ NGL.WorkerPool = function( name, count ){
 
     };
 
-    this.getPostCount = function(){
+    this.getNextWorker = function(){
 
-        return postId;
+        var nextWorker;
+        var minPending = Infinity;
+
+        for( var i = 0; i < maxCount; ++i ){
+
+            if( i >= count ){
+
+                nextWorker = new NGL.Worker( name );
+                pool.push( nextWorker );
+                count += 1;
+                break;
+
+            }
+
+            var worker = pool[ i ];
+
+            if( worker.pending === 0 ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+                break;
+
+            }else if( worker.pending < minPending ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+
+            }
+
+        }
+
+        return nextWorker;
 
     };
+
+    Object.defineProperties( this, {
+        count: {
+            get: function(){ return count; }
+        }
+    } );
 
 };
 

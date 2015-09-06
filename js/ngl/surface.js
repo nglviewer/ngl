@@ -597,16 +597,16 @@ NGL.Volume.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var count = 2;
-
-            if( this.worker === undefined ){
-                this.worker = new NGL.WorkerPool( "surf", count );
+            if( this.workerPool === undefined ){
+                this.workerPool = new NGL.WorkerPool( "surf", 2 );
             }
 
-            this.worker.post(
+            var worker = this.workerPool.getNextWorker();
+
+            worker.post(
 
                 {
-                    vol: this.worker.getPostCount() < count ? this.toJSON() : null,
+                    vol: worker.postCount === 0 ? this.toJSON() : null,
                     params: {
                         isolevel: isolevel,
                         smooth: smooth
@@ -1089,7 +1089,7 @@ NGL.Volume.prototype = {
 
     dispose: function(){
 
-        if( this.worker ) this.worker.terminate();
+        if( this.workerPool ) this.workerPool.terminate();
 
         NGL.GidPool.removeObject( this );
 
