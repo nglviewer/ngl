@@ -1045,6 +1045,12 @@ NGL.WorkerPool = function( name, count ){
 
     };
 
+    this.getPostCount = function(){
+
+        return postId;
+
+    };
+
 };
 
 NGL.WorkerPool.prototype.constructor = NGL.WorkerPool;

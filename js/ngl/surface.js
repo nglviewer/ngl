@@ -407,11 +407,17 @@ NGL.WorkerRegistry.add( "surf", function( e, callback ){
 
     if( d.vol ) vol.fromJSON( d.vol );
 
-    var surface = vol.getSurface( p.isolevel, p.smooth );
+    if( p ){
+        var surface = vol.getSurface( p.isolevel, p.smooth );
+    }
 
     NGL.timeEnd( "WORKER surf" );
 
-    callback( surface.toJSON(), surface.getTransferable() );
+    if( p ){
+        callback( surface.toJSON(), surface.getTransferable() );
+    }else{
+        callback();
+    }
 
 } );
 
@@ -591,19 +597,16 @@ NGL.Volume.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var vol = undefined;
+            var count = 2;
 
             if( this.worker === undefined ){
-
-                vol = this.toJSON();
-                this.worker = new NGL.Worker( "surf" );
-
+                this.worker = new NGL.WorkerPool( "surf", count );
             }
 
             this.worker.post(
 
                 {
-                    vol: vol,
+                    vol: this.worker.getPostCount() < count ? this.toJSON() : null,
                     params: {
                         isolevel: isolevel,
                         smooth: smooth
@@ -617,15 +620,13 @@ NGL.Volume.prototype = {
                     var surface = NGL.fromJSON( e.data );
                     callback( surface );
 
-                }.bind( this ),
+                },
 
                 function( e ){
 
                     console.warn(
                         "NGL.Volume.generateSurfaceWorker error - trying without worker", e
                     );
-                    this.worker.terminate();
-                    this.worker = undefined;
 
                     var surface = this.getSurface( isolevel, smooth );
                     callback( surface );
