@@ -127,7 +127,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
  * @class
  * @private
  */
-NGL.Buffer = function( position, color, pickingColor, params ){
+NGL.Buffer = function( position, color, index, pickingColor, params ){
 
     var p = params || {};
 
@@ -152,18 +152,21 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 
     this.geometry = new THREE.BufferGeometry();
 
-    this.addAttributes({
+    this.addAttributes( {
         "position": { type: "v3", value: position },
         "color": { type: "c", value: color },
-    });
+    } );
 
-    this.group = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
+    if( index ){
+        this.geometry.addIndex(
+            new THREE.BufferAttribute( index, 1 )
+        );
+    }
 
     if( pickingColor ){
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: pickingColor },
-        });
+        } );
         this.pickable = true;
     }
 
@@ -179,6 +182,9 @@ NGL.Buffer = function( position, color, pickingColor, params ){
         "nearClip": { type: "f", value: 0.0 },
         "objectId": { type: "f", value: 0.0 },
     };
+
+    this.group = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
 
 };
 
@@ -204,18 +210,6 @@ NGL.Buffer.prototype = {
     get transparent () {
 
         return this.opacity < 1;
-
-    },
-
-    finalize: function(){
-
-        this.makeIndex();
-
-        if( NGL.indexUint16 ){
-
-            this.geometry.computeOffsets();
-
-        }
 
     },
 
@@ -252,18 +246,6 @@ NGL.Buffer.prototype = {
         } );
 
         this.updateShader();
-
-    },
-
-    makeIndex: function(){
-
-        if( this.index ){
-
-            this.geometry.addIndex(
-                new THREE.BufferAttribute( this.index, 1 )
-            );
-
-        }
 
     },
 
@@ -419,7 +401,7 @@ NGL.Buffer.prototype = {
             "f": 1, "v2": 2, "v3": 3, "c": 3
         };
 
-        Object.keys( attributes ).forEach( function( name ){
+        for( var name in attributes ){
 
             var buf;
             var a = attributes[ name ];
@@ -445,7 +427,7 @@ NGL.Buffer.prototype = {
                 new THREE.BufferAttribute( buf, itemSize[ a.type ] )
             );
 
-        }, this );
+        }
 
     },
 
@@ -671,15 +653,11 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
     this.vertexShader = 'Mesh.vert';
     this.fragmentShader = 'Mesh.frag';
 
-    this.index = index;
+    NGL.Buffer.call( this, position, color, index, pickingColor, p );
 
-    NGL.Buffer.call( this, position, color, pickingColor, p );
-
-    this.addAttributes({
+    this.addAttributes( {
         "normal": { type: "v3", value: normal },
-    });
-
-    this.finalize();
+    } );
 
     if( normal === undefined ){
         this.geometry.computeVertexNormals();
@@ -694,14 +672,26 @@ NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
 
 NGL.MappedBuffer = function( params ){
 
-    this.mappedSize = this.size * this.mappingSize;
-    this.attributeSize = this.mappedSize;
+    // required
+    // - mapping
+    // - mappingType
+    // - mappingSize
+    // - mappingItemSize
+    // - mappingIndices
+    // - mappingIndicesSize
 
-    NGL.Buffer.call( this, null, null, null, params );
+    this.size = this.count;
+    this.attributeSize = this.count * this.mappingSize;
 
-    this.addAttributes({
+    var index = new Uint32Array( this.count * this.mappingIndicesSize );
+
+    NGL.Buffer.call( this, null, null, index, null, params );
+
+    this.addAttributes( {
         "mapping": { type: this.mappingType, value: null },
-    });
+    } );
+
+    this.makeIndex();
 
 };
 
@@ -709,37 +699,29 @@ NGL.MappedBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.MappedBuffer.prototype.constructor = NGL.MappedBuffer;
 
-NGL.MappedBuffer.prototype.finalize = function(){
-
-    this.makeMapping();
-
-    NGL.Buffer.prototype.finalize.call( this );
-
-};
-
 NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
-    var attributes = this.geometry.attributes;
-    var size = this.size;
+    var count = this.count;
     var mappingSize = this.mappingSize;
+    var attributes = this.geometry.attributes;
 
     var a, d, itemSize, array, n, i, j;
 
-    Object.keys( data ).forEach( function( name ){
+    for( var name in data ){
 
         d = data[ name ];
         a = attributes[ name ];
         itemSize = a.itemSize;
         array = a.array;
 
-        for( var k = 0; k < size; ++k ) {
+        for( var k = 0; k < count; ++k ) {
 
             n = k * itemSize;
             i = n * mappingSize;
 
             for( var l = 0; l < mappingSize; ++l ) {
 
-                j = i + (itemSize * l);
+                j = i + ( itemSize * l );
 
                 for( var m = 0; m < itemSize; ++m ) {
 
@@ -753,20 +735,20 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
         a.needsUpdate = true;
 
-    }, this );
+    }
 
 };
 
 NGL.MappedBuffer.prototype.makeMapping = function(){
 
-    var size = this.size;
+    var count = this.count;
     var mapping = this.mapping;
     var mappingSize = this.mappingSize;
     var mappingItemSize = this.mappingItemSize;
 
     var aMapping = this.geometry.attributes[ "mapping" ].array;
 
-    for( var v = 0; v < size; v++ ) {
+    for( var v = 0; v < count; v++ ) {
 
         aMapping.set( mapping, v * mappingItemSize * mappingSize );
 
@@ -776,17 +758,17 @@ NGL.MappedBuffer.prototype.makeMapping = function(){
 
 NGL.MappedBuffer.prototype.makeIndex = function(){
 
-    var size = this.size;
+    var count = this.count;
     var mappingSize = this.mappingSize;
     var mappingIndices = this.mappingIndices;
     var mappingIndicesSize = this.mappingIndicesSize;
     var mappingItemSize = this.mappingItemSize;
 
-    var index = new Uint32Array( size * mappingIndicesSize );
+    var index = this.geometry.index.array;
 
     var i, ix, it;
 
-    for( var v = 0; v < size; v++ ) {
+    for( var v = 0; v < count; v++ ) {
 
         i = v * mappingItemSize * mappingSize;
         ix = v * mappingIndicesSize;
@@ -794,14 +776,11 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 
         index.set( mappingIndices, ix );
 
-        for( var s=0; s<mappingIndicesSize; ++s ){
+        for( var s = 0; s < mappingIndicesSize; ++s ){
             index[ ix + s ] += it;
         }
 
     }
-
-    this.index = index;
-    NGL.Buffer.prototype.makeIndex.call( this );
 
 };
 
@@ -913,41 +892,41 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 
 NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
-    this.size = position.length / 3;
+    this.count = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
     this.fragmentShader = 'SphereImpostor.frag';
 
     NGL.QuadBuffer.call( this, params );
 
-    this.addUniforms({
+    this.addUniforms( {
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "color": color,
         "radius": radius,
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -966,25 +945,25 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
 
     this.cap = p.cap !== undefined ? p.cap : true;
 
-    this.size = from.length / 3;
+    this.count = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
     this.fragmentShader = 'CylinderImpostor.frag';
 
     NGL.AlignedBoxBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'shift': { type: "f", value: this.shift },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
         "color2": { type: "c", value: null },
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": NGL.Utils.calculateCenterArray( from, to ),
 
         "position1": from,
@@ -992,25 +971,25 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
         "color": color,
         "color2": color2,
         "radius": radius,
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
             "pickingColor2": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
     // FIXME
     // if( this.cap ){
@@ -1042,29 +1021,29 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
-    this.size = position1.length / 3;
+    this.count = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
     this.fragmentShader = 'HyperballStickImpostor.frag';
 
     NGL.BoxBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
         'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
         'shrink': { type: "f", value: shrink },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "color": { type: "c", value: null },
         "color2": { type: "c", value: null },
         "radius": { type: "f", value: null },
         "radius2": { type: "f", value: null },
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "color": color,
         "color2": color2,
         "radius": radius1,
@@ -1073,25 +1052,25 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
         "position2": position2,
 
         "position": NGL.Utils.calculateCenterArray( position1, position2 ),
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
             "pickingColor2": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -1152,6 +1131,8 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
     } );
 
     this.initNormals = false;
+
+    this.makeIndex();
 
 };
 
@@ -1298,8 +1279,6 @@ NGL.GeometryBuffer.prototype.makeIndex = function(){
 
     }
 
-    NGL.MeshBuffer.prototype.makeIndex.call( this );
-
 };
 
 
@@ -1375,7 +1354,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
 
     this.setPositionTransform( this._from, this._to, this._radius );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position1": from,
         "position2": to,
         "color": color,
@@ -1501,7 +1480,7 @@ NGL.PointBuffer = function( position, color, params ){
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
 
-    NGL.Buffer.call( this, position, color, null, p );
+    NGL.Buffer.call( this, position, color, undefined, undefined, p );
 
 };
 
@@ -1604,15 +1583,15 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
     this.lineColor = new Float32Array( nX * 3 );
 
     NGL.Buffer.call(
-        this, this.linePosition, this.lineColor, undefined, p
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.setAttributes({
+    this.setAttributes( {
         from: from,
         to: to,
         color: color,
         color2: color2
-    });
+    } );
 
 };
 
@@ -1718,13 +1697,13 @@ NGL.TraceBuffer = function( position, color, params ){
     this.lineColor = new Float32Array( n1 * 3 * 2 );
 
     NGL.Buffer.call(
-        this, this.linePosition, this.lineColor, undefined, params
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         color: color
-    });
+    } );
 
 };
 
@@ -1799,7 +1778,7 @@ NGL.TraceBuffer.prototype.setAttributes = function( data ){
 
 NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
-    this.size = position.length / 3;
+    this.count = position.length / 3;
     this.vertexShader = 'ParticleSprite.vert';
     this.fragmentShader = 'ParticleSprite.frag';
 
@@ -1809,17 +1788,15 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
     });
 
-    this.addAttributes({
+    this.addAttributes( {
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "color": color,
         "radius": radius,
-    });
-
-    this.finalize();
+    } );
 
     this.material.lights = false;
 
@@ -1859,14 +1836,16 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
         'size', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
     );
 
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         normal: normal,
         dir: dir,
         color: color,
         size: size,
         pickingColor: pickingColor
-    });
+    } );
+
+    this.makeIndex();
 
 };
 
@@ -2049,8 +2028,6 @@ NGL.RibbonBuffer.prototype.makeIndex = function(){
 
     }
 
-    NGL.MeshBuffer.prototype.makeIndex.call( this );
-
 };
 
 
@@ -2090,7 +2067,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
         this.meshNormal, this.meshPickingColor, p
     );
 
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         normal: normal,
         binormal: binormal,
@@ -2098,7 +2075,9 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
         color: color,
         size: size,
         pickingColor: pickingColor
-    });
+    } );
+
+    this.makeIndex();
 
 }
 
@@ -2448,8 +2427,6 @@ NGL.TubeMeshBuffer.prototype.makeIndex = function(){
 
     }
 
-    NGL.MeshBuffer.prototype.makeIndex.call( this );
-
 };
 
 
@@ -2619,7 +2596,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     }
 
     this.text = text;
-    this.size = charCount;
+    this.count = charCount;
     this.positionCount = n;
 
     this.vertexShader = 'SDFFont.vert';
@@ -2627,22 +2604,22 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     NGL.QuadBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         "fontTexture"  : { type: "t", value: this.tex }
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "inputTexCoord": { type: "v2", value: null },
         "inputSize": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "size": size,
         "color": color
-    });
+    } );
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
