@@ -556,9 +556,13 @@ NGL.Parser.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var worker = new NGL.Worker( "parse", {
+            var worker = new NGL.Worker( "parse" ).post(
 
-                onmessage: function( e ){
+                this.toJSON(),
+
+                this.getTransferable(),
+
+                function( e ){
 
                     worker.terminate();
 
@@ -567,7 +571,7 @@ NGL.Parser.prototype = {
 
                 }.bind( this ),
 
-                onerror: function( e ){
+                function( e ){
 
                     console.warn(
                         "NGL.Parser.parseWorker error - trying without worker", e
@@ -576,16 +580,9 @@ NGL.Parser.prototype = {
 
                     this.parse( callback );
 
-                }.bind( this ),
+                }.bind( this )
 
-                messageData: [
-
-                    this.toJSON(),
-                    this.getTransferable()
-
-                ]
-
-            } );
+            );
 
         }else{
 

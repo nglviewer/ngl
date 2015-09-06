@@ -929,117 +929,125 @@ NGL.WorkerRegistry = {
 };
 
 
-NGL.Worker = function( name, params ){
+NGL.Worker = function( name ){
 
-    params = params || {};
-
-    this.name = name;
-
-    this.__onmessageDict = {};
-    this.__onerrorDict = {};
+    var worker;
+    var postCount = 0;
+    var onmessageDict = {};
+    var onerrorDict = {};
 
     if( NGL.develop ){
-        this.worker = new Worker( "../js/ngl/core.js" );
+        worker = new Worker( "../js/ngl/core.js" );
     }else{
-        this.worker = new Worker( NGL.mainScriptFilePath );
+        worker = new Worker( NGL.mainScriptFilePath );
     }
-
-    this.worker.onmessage = function( event ){
-
-        NGL.timeEnd( "NGL.Worker.postMessage " + this.name + " #" + event.data.__postId );
-
-        if( typeof params.onmessage === "function" ){
-            params.onmessage.apply( this.worker, arguments );
-        };
-        if( this.__onmessageDict[ event.data.__postId ] ){
-            this.__onmessageDict[ event.data.__postId ].apply( this.worker, arguments );
-        }
-
-        return this.onmessage.call( this.worker, event );
-
-    }.bind( this );
-
-    this.worker.onerror = function( event ){
-
-        if( typeof params.onerror === "function" ){
-            params.onerror.apply( this.worker, arguments );
-        };
-        if( this.__onerrorDict[ event.data.__postId ] ){
-            this.__onerrorDict[ event.data.__postId ].apply( this.worker, arguments );
-        }
-
-        return this.onerror.call( this.worker, event );
-
-    }.bind( this );
 
     NGL.WorkerRegistry.activeWorkerCount += 1;
 
-    if( params.messageData !== undefined ){
+    worker.onmessage = function( event ){
 
-        this.postMessage.apply( this, params.messageData );
+        var postId = event.data.__postId;
 
-    }
+        NGL.timeEnd( "NGL.Worker.postMessage " + name + " #" + postId );
 
-};
-
-NGL.Worker.prototype = {
-
-    constructor: NGL.Worker,
-
-    __postCount: 0,
-
-    __onmessageDict: null,
-
-    __onerrorDict: null,
-
-    onmessage: function( event ){
-
-    },
-
-    onerror: function( event ){
-
-    },
-
-    postMessage: function( aMessage, transferList ){
-
-        aMessage = aMessage || {};
-        aMessage.__name = this.name;
-        aMessage.__postId = this.__postCount;
-
-        NGL.time( "NGL.Worker.postMessage " + this.name + " #" + this.__postCount );
-
-        this.worker.postMessage.call( this.worker, aMessage, transferList );
-
-        this.__postCount += 1;
-
-    },
-
-    terminate: function(){
-
-        if( this.worker ){
-
-            this.worker.terminate();
-            delete this.worker;
-            NGL.WorkerRegistry.activeWorkerCount -= 1;
-
+        if( onmessageDict[ postId ] ){
+            onmessageDict[ postId ].call( worker, event );
+            delete onmessageDict[ postId ];
         }else{
-
-            console.log( "no worker to terminate" );
-
+            // NGL.debug( "No onmessage", postId, name );
         }
 
-    },
+    };
 
-    post: function( aMessage, transferList, onmessage, onerror ){
+    worker.onerror = function( event ){
 
-        this.__onmessageDict[ this.__postCount ] = onmessage;
-        this.__onerrorDict[ this.__postCount ] = onerror;
+        var postId = event.data.__postId;
 
-        this.postMessage( aMessage, transferList );
+        if( onerrorDict[ postId ] ){
+            onerrorDict[ postId ].call( worker, event );
+            delete onerrorDict[ postId ];
+        }else{
+            NGL.error( "NGL.Worker.onerror", postId, name, event );
+        }
 
-    }
+    };
+
+    // API
+
+    this.name = name;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        onmessageDict[ postCount ] = onmessage;
+        onerrorDict[ postCount ] = onerror;
+
+        aMessage = aMessage || {};
+        aMessage.__name = name;
+        aMessage.__postId = postCount;
+
+        NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
+
+        worker.postMessage.call( worker, aMessage, transferList );
+
+        postCount += 1;
+
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        if( worker ){
+            worker.terminate();
+            NGL.WorkerRegistry.activeWorkerCount -= 1;
+        }else{
+            console.log( "no worker to terminate" );
+        }
+
+    };
 
 };
+
+NGL.Worker.prototype.constructor = NGL.Worker;
+
+
+NGL.WorkerPool = function( name, count ){
+
+    count = count || 1;
+
+    var pool = [];
+    var postId = 0;
+
+    for( var i = 0; i < count; ++i ){
+        pool.push( new NGL.Worker( name ) );
+    }
+
+    // API
+
+    this.name = name;
+
+    this.count = count;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        var worker = pool[ postId++ % count ];
+        worker.post( aMessage, transferList, onmessage, onerror );
+
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        pool.forEach( function( worker ){
+            worker.terminate();
+        } );
+
+    };
+
+};
+
+NGL.WorkerPool.prototype.constructor = NGL.WorkerPool;
 
 
 if( typeof importScripts === 'function' ){
@@ -1220,16 +1228,20 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
         typeof importScripts !== 'function'
     ){
 
-        var worker = new NGL.Worker( "decompress", {
+        var worker = new NGL.Worker( "decompress" ).post(
 
-            onmessage: function( e ){
+            { data: data, file: file, asBinary: asBinary },
+
+            [ data.buffer ? data.buffer : data ],
+
+            function( e ){
 
                 worker.terminate();
                 callback( e.data );
 
             },
 
-            onerror: function( e ){
+            function( e ){
 
                 console.warn(
                     "NGL.decompressWorker error - trying without worker", e
@@ -1238,16 +1250,9 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
                 NGL.decompress( data, file, asBinary, callback );
 
-            },
+            }
 
-            messageData: [
-
-                { data: data, file: file, asBinary: asBinary },
-                [ data.buffer ? data.buffer : data ]
-
-            ]
-
-        } );
+        );
 
     }else{
 
