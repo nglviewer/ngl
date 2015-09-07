@@ -84,9 +84,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.queue = async.queue( this.make.bind( this ), 1 );
     this.tasks = new NGL.Counter();
-
     this.bufferList = [];
-    this.debugBufferList = [];
 
     this.init( params );
 
@@ -233,7 +231,6 @@ NGL.Representation.prototype = {
     create: function(){
 
         // this.bufferList.length = 0;
-        // this.debugBufferList.length = 0;
 
     },
 
@@ -327,12 +324,6 @@ NGL.Representation.prototype = {
         this.bufferList.forEach( function( buffer ){
 
             buffer.setVisibility( value );
-
-        } );
-
-        this.debugBufferList.forEach( function( debugBuffer ){
-
-            debugBuffer.setVisibility( value );
 
         } );
 
@@ -452,15 +443,6 @@ NGL.Representation.prototype = {
         }, this );
 
         this.bufferList.length = 0;
-
-        this.debugBufferList.forEach( function( debugBuffer ){
-
-            this.viewer.remove( debugBuffer );
-            debugBuffer.dispose();
-
-        }, this );
-
-        this.debugBufferList.length = 0;
 
         this.viewer.requestRender();
 
@@ -758,17 +740,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                     callback();
                 }
 
-            }.bind( this ) );
-
-        }.bind( this ) );
-
-        this.debugBufferList.forEach( function( debugBuffer ){
-
-            if( instanceList.length > 1 ){
-                viewer.add( debugBuffer, instanceList );
-            }else{
-                viewer.add( debugBuffer );
-            }
+            } );
 
         } );
 
