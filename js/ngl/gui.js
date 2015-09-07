@@ -180,16 +180,15 @@ NGL.ViewportWidget = function( stage ){
         e.stopPropagation();
         e.preventDefault();
 
-        var fileList = e.dataTransfer.files;
-        var n = fileList.length;
-
-        for( var i=0; i<n; ++i ){
-
-            stage.loadFile( fileList[ i ], {
-                defaultRepresentation: true
-            } );
-
-        }
+        async.eachLimit(
+            e.dataTransfer.files,
+            4,
+            function( file, callback ){
+                stage.loadFile( file, {
+                    defaultRepresentation: true
+                } ).then( function(){ callback(); } );
+            }
+        );
 
     }, false );
 
@@ -305,19 +304,18 @@ NGL.MenubarFileWidget = function( stage ){
     fileInput.accept = "." + fileTypesOpen.join( ",." );
     fileInput.addEventListener( 'change', function( e ){
 
-        var fileList = e.target.files;
-        var n = fileList.length;
-
-        for( var i=0; i<n; ++i ){
-
-            stage.loadFile( fileList[ i ], {
-                defaultRepresentation: true,
-                asTrajectory: asTrajectory,
-                firstModelOnly: firstModelOnly,
-                cAlphaOnly: cAlphaOnly
-            } );
-
-        }
+        async.eachLimit(
+            e.target.files,
+            4,
+            function( file, callback ){
+                stage.loadFile( file, {
+                    defaultRepresentation: true,
+                    asTrajectory: asTrajectory,
+                    firstModelOnly: firstModelOnly,
+                    cAlphaOnly: cAlphaOnly
+                } ).then( function(){ callback(); } );
+            }
+        );
 
     }, false );
 
