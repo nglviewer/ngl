@@ -635,8 +635,8 @@ NGL.Buffer.prototype = {
 
     dispose: function(){
 
-        this.material.dispose();
-        this.pickingMaterial.dispose();
+        if( this.material ) this.material.dispose();
+        if( this.pickingMaterial ) this.pickingMaterial.dispose();
         this.geometry.dispose();
 
     }
