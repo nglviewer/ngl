@@ -2970,102 +2970,76 @@ NGL.TextBuffer.prototype.dispose = function(){
 ///////////
 // Helper
 
-NGL.BufferVectorHelper = function( position, vector, color, scale ){
+NGL.VectorBuffer = function( position, vector, params ){
 
-    scale = scale || 1;
+    var p = params || {};
 
-    var n = position.length/3;
+    this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
+
+    var n = this.size;
     var n2 = n * 2;
 
-    this.size = n;
+    this.attributeSize = n2;
 
-    this.geometry = new THREE.BufferGeometry();
+    this.scale = p.scale || 1;
+    var color = new THREE.Color( p.color || "grey" );
 
-    this.geometry.addAttribute(
-        'position',
-        new THREE.BufferAttribute( new Float32Array( n2 * 3 ), 3 )
+    this.linePosition = new Float32Array( n2 * 3 );
+    this.lineColor = NGL.Utils.uniformArray3( n2, color.r, color.g, color.b );
+
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.color = color;
-    this.scale = scale;
-
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         vector: vector
-    });
-
-    this.group = new THREE.Group();
+    } );
 
 };
 
-NGL.BufferVectorHelper.prototype = {
+NGL.VectorBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.BufferVectorHelper,
+NGL.VectorBuffer.prototype.constructor = NGL.VectorBuffer;
 
-    setAttributes: function( data ){
+NGL.VectorBuffer.prototype.setAttributes = function( data ){
 
-        var n = this.size;
+    var attributes = this.geometry.attributes;
 
-        var attributes = this.geometry.attributes;
+    var position, vector;
+    var aPosition;
 
-        var position;
-        var aPosition;
+    if( data[ "position" ] && data[ "vector" ] ){
+        position = data[ "position" ];
+        vector = data[ "vector" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
-        }
+    var n = this.size;
+    var scale = this.scale;
 
-        if( data[ "vector" ] ){
-            this.vector = data[ "vector" ];
-        }
+    var i, j;
 
-        var scale = this.scale;
-        var vector = this.vector;
+    if( data[ "position" ] && data[ "vector" ] ){
 
-        var i, j;
+        for( var v = 0; v < n; v++ ){
 
-        if( data[ "position" ] ){
+            i = v * 2 * 3;
+            j = v * 3;
 
-            for( var v = 0; v < n; v++ ){
-
-                i = v * 2 * 3;
-                j = v * 3;
-
-                aPosition[ i + 0 ] = position[ j + 0 ];
-                aPosition[ i + 1 ] = position[ j + 1 ];
-                aPosition[ i + 2 ] = position[ j + 2 ];
-                aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
-                aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
-                aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
-
-            }
+            aPosition[ i + 0 ] = position[ j + 0 ];
+            aPosition[ i + 1 ] = position[ j + 1 ];
+            aPosition[ i + 2 ] = position[ j + 2 ];
+            aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
+            aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
+            aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
 
         }
 
-    },
+    }
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
-
-    getMesh: function( type, material ){
-
-        material = material || this.getMaterial( type );
-
-        return new THREE.LineSegments( this.geometry, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        return new THREE.LineBasicMaterial( {
-            color: this.color, fog: true
-        } );
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
-
-}
+};

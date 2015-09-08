@@ -3050,22 +3050,26 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             scope.bufferList.push(
 
-                new NGL.BufferVectorHelper(
+                new NGL.VectorBuffer(
                     position.center,
                     position.axis,
-                    "skyblue",
-                    1
+                    {
+                        color: "skyblue",
+                        scale: 1
+                    }
                 )
 
             );
 
             scope.bufferList.push(
 
-                new NGL.BufferVectorHelper(
+                new NGL.VectorBuffer(
                     position.center,
                     position.resdir,
-                    "lightgreen",
-                    1
+                    {
+                        color: "lightgreen",
+                        scale: 1
+                    }
                 )
 
             );
@@ -3111,7 +3115,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                 } );
                 this.bufferList[ j + 2 ].setAttributes( {
                     "position": position.center,
-                    "vector": position.redir,
+                    "vector": position.resdir,
                 } );
 
             }
