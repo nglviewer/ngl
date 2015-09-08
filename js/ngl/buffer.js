@@ -11,8 +11,11 @@ NGL.DoubleSidedBuffer = function( buffer ){
 
     this.size = buffer.size;
     this.side = buffer.side;
+    this.wireframe = buffer.wireframe;
+    this.visible = buffer.visible;
 
     this.group = new THREE.Group();
+    this.wireframeGroup = new THREE.Group();
     this.pickingGroup = new THREE.Group();
 
     var frontMeshes = [];
@@ -60,6 +63,12 @@ NGL.DoubleSidedBuffer = function( buffer ){
 
     };
 
+    this.getWireframeMesh = function(){
+
+        return frontBuffer.getWireframeMesh();
+
+    };
+
     this.getPickingMesh = function(){
 
         return this.getMesh( true );
@@ -101,16 +110,14 @@ NGL.DoubleSidedBuffer = function( buffer ){
         frontBuffer.setParameters( data );
         backBuffer.setParameters( data );
 
-    };
-
-    this.setVisibility = function( value ){
-
-        this.group.visible = value;
-        if( buffer.pickable ){
-            this.pickingGroup.visible = value;
+        if( data.wireframe !== undefined ){
+            this.wireframe = data.wireframe;
+            this.setVisibility( this.visible );
         }
 
     };
+
+    this.setVisibility = NGL.Buffer.prototype.setVisibility;
 
     this.dispose = function(){
 
@@ -184,6 +191,7 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     };
 
     this.group = new THREE.Group();
+    this.wireframeGroup = new THREE.Group();
     this.pickingGroup = new THREE.Group();
 
 };
@@ -202,8 +210,7 @@ NGL.Buffer.prototype = {
         flatShaded: { updateShader: true },
         background: { updateShader: true },
         linewidth: { property: true },
-        wireframe: { updateShader: true, property: true },
-        wireframeLinewidth: { property: true }
+        wireframe: { updateVisibility: true }
 
     },
 
@@ -225,9 +232,20 @@ NGL.Buffer.prototype = {
             lights: false,
             fog: true,
             side: this.side,
-            linewidth: this.linewidth,
-            wireframe: this.wireframe,
-            wireframeLinewidth: this.wireframeLinewidth
+            linewidth: this.linewidth
+        } );
+
+        this.wireframeMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            vertexShader: "Line.vert",
+            fragmentShader: "Line.frag",
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.linewidth
         } );
 
         this.pickingMaterial = new THREE.RawShaderMaterial( {
@@ -240,12 +258,69 @@ NGL.Buffer.prototype = {
             lights: false,
             fog: false,
             side: this.side,
-            linewidth: this.linewidth,
-            wireframe: this.wireframe,
-            wireframeLinewidth: this.wireframeLinewidth
+            linewidth: this.linewidth
         } );
 
         this.updateShader();
+
+    },
+
+    makeWireframeGeometry: function(){
+
+        this.makeWireframeIndex();
+
+        var geometry = this.geometry;
+        var wireframeIndex = this.wireframeIndex;
+        var wireframeGeometry = new THREE.BufferGeometry();
+
+        wireframeGeometry.attributes = geometry.attributes;
+        if( wireframeIndex ){
+            wireframeGeometry.addIndex(
+                new THREE.BufferAttribute( wireframeIndex, 1 )
+            );
+        }
+
+        this.wireframeGeometry = wireframeGeometry;
+
+    },
+
+    makeWireframeIndex: function(){
+
+        var index = this.geometry.index;
+
+        if( index ){
+
+            var array = index.array;
+            var n = array.length;
+            if( this.geometry.groups.length ){
+                n = this.geometry.groups[ 0 ].count;
+            }
+            var wireframeIndex;
+            if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
+                wireframeIndex = this.wireframeIndex;
+            }else{
+                wireframeIndex = new Uint32Array( n * 2 );
+            }
+
+            var j = 0;
+            for( var i = 0; i < n; i+=3, j+=6 ){
+
+                var a = array[ i + 0 ];
+                var b = array[ i + 1 ];
+                var c = array[ i + 2 ];
+
+                wireframeIndex[ j + 0 ] = a;
+                wireframeIndex[ j + 1 ] = b;
+                wireframeIndex[ j + 2 ] = a;
+                wireframeIndex[ j + 3 ] = c;
+                wireframeIndex[ j + 4 ] = b;
+                wireframeIndex[ j + 5 ] = c;
+
+            }
+
+            this.wireframeIndex = wireframeIndex;
+
+        }
 
     },
 
@@ -286,6 +361,24 @@ NGL.Buffer.prototype = {
             mesh = new THREE.Mesh( this.geometry, this.material );
 
         }
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
+
+    },
+
+    getWireframeMesh: function(){
+
+        var mesh;
+
+        if( !this.material ) this.makeMaterial();
+        if( !this.wireframeGeometry ) this.makeWireframeGeometry();
+
+        mesh = new THREE.LineSegments(
+            this.wireframeGeometry, this.wireframeMaterial
+        );
 
         mesh.frustumCulled = false;
         mesh.renderOrder = this.getRenderOrder();
@@ -448,25 +541,19 @@ NGL.Buffer.prototype = {
     updateShader: function(){
 
         var m = this.material;
+        var wm = this.wireframeMaterial;
         var pm = this.pickingMaterial;
 
-        if( this.wireframe ){
-
-            m.vertexShader = this.getShader( "Line.vert" );
-            m.fragmentShader = this.getShader( "Line.frag" );
-            pm.vertexShader = this.getShader( "Line.vert", "picking" );
-            pm.fragmentShader = this.getShader( "Line.frag", "picking" );
-
-        }else{
-
-            m.vertexShader = this.getVertexShader();
-            m.fragmentShader = this.getFragmentShader();
-            pm.vertexShader = this.getVertexShader( "picking" );
-            pm.fragmentShader = this.getFragmentShader( "picking" );
-
-        }
-
+        m.vertexShader = this.getVertexShader();
+        m.fragmentShader = this.getFragmentShader();
         m.needsUpdate = true;
+
+        wm.vertexShader = this.getShader( "Line.vert" );
+        wm.fragmentShader = this.getShader( "Line.frag" );
+        wm.needsUpdate = true;
+
+        pm.vertexShader = this.getVertexShader( "picking" );
+        pm.fragmentShader = this.getFragmentShader( "picking" );
         pm.needsUpdate = true;
 
     },
@@ -481,11 +568,12 @@ NGL.Buffer.prototype = {
         var propertyData = {};
         var uniformData = {};
         var doShaderUpdate = false;
+        var doVisibilityUpdate = false;
 
         for( var name in p ){
 
-            if( p[ name ] === undefined ) return;
-            if( tp[ name ] === undefined ) return;
+            if( p[ name ] === undefined ) continue;
+            if( tp[ name ] === undefined ) continue;
 
             this[ name ] = p[ name ];
 
@@ -501,11 +589,16 @@ NGL.Buffer.prototype = {
                 doShaderUpdate = true;
             }
 
+            if( tp[ name ].updateVisibility ){
+                doVisibilityUpdate = true;
+            }
+
         }
 
         this.setProperties( propertyData );
         this.setUniforms( uniformData );
         if( doShaderUpdate ) this.updateShader();
+        if( doVisibilityUpdate ) this.setVisibility( this.visible );
 
     },
 
@@ -531,11 +624,20 @@ NGL.Buffer.prototype = {
             if( name === "index" ){
 
                 geometry.clearGroups();
+                this.wireframeGeometry.clearGroups();
 
                 if( length > geometry.index.array.length ){
 
                     geometry.addIndex(
                         new THREE.BufferAttribute( array, 1 )
+                    );
+
+                    //
+
+                    this.makeWireframeIndex();
+
+                    this.wireframeGeometry.addIndex(
+                        new THREE.BufferAttribute( this.wireframeIndex, 1 )
                     );
 
                 }else{
@@ -544,6 +646,15 @@ NGL.Buffer.prototype = {
                     geometry.index.needsUpdate = true;
 
                     geometry.addGroup( 0, data[ name ].length );
+
+                    //
+
+                    this.makeWireframeIndex();
+
+                    this.wireframeGeometry.index.set( this.wireframeIndex );
+                    this.wireframeGeometry.index.needsUpdate = true;
+
+                    this.wireframeGeometry.addGroup( 0, data[ name ].length * 2 );
 
                 }
 
@@ -576,6 +687,7 @@ NGL.Buffer.prototype = {
         if( !data ) return;
 
         var u = this.material.uniforms;
+        var wu = this.wireframeMaterial.uniforms;
         var pu = this.pickingMaterial.uniforms;
 
         for( var name in data ){
@@ -586,6 +698,10 @@ NGL.Buffer.prototype = {
 
             if( u[ name ] !== undefined ){
                 u[ name ].value = data[ name ];
+            }
+
+            if( wu[ name ] !== undefined ){
+                wu[ name ].value = data[ name ];
             }
 
             if( pu[ name ] !== undefined ){
@@ -601,6 +717,7 @@ NGL.Buffer.prototype = {
         if( !data ) return;
 
         var m = this.material;
+        var wm = this.wireframeMaterial;
         var pm = this.pickingMaterial;
 
         for( var name in data ){
@@ -613,6 +730,10 @@ NGL.Buffer.prototype = {
                 m[ name ] = data[ name ];
             }
 
+            if( wm[ name ] !== undefined ){
+                wm[ name ] = data[ name ];
+            }
+
             if( pm[ name ] !== undefined ){
                 pm[ name ] = data[ name ];
             }
@@ -620,15 +741,31 @@ NGL.Buffer.prototype = {
         }
 
         m.needsUpdate = true;
+        wm.needsUpdate = true;
         pm.needsUpdate = true;
 
     },
 
     setVisibility: function( value ){
 
-        this.group.visible = value;
-        if( this.pickable ){
-            this.pickingGroup.visible = value;
+        this.visible = value;
+
+        if( this.wireframe ){
+
+            this.group.visible = false;
+            this.wireframeGroup.visible = value;
+            if( this.pickable ){
+                this.pickingGroup.visible = false;
+            }
+
+        }else{
+
+            this.group.visible = value;
+            this.wireframeGroup.visible = false;
+            if( this.pickable ){
+                this.pickingGroup.visible = value;
+            }
+
         }
 
     },
@@ -636,8 +773,11 @@ NGL.Buffer.prototype = {
     dispose: function(){
 
         if( this.material ) this.material.dispose();
+        if( this.wireframeMaterial ) this.wireframeMaterial.dispose();
         if( this.pickingMaterial ) this.pickingMaterial.dispose();
+
         this.geometry.dispose();
+        if( this.wireframeGeometry ) this.wireframeGeometry.dispose();
 
     }
 

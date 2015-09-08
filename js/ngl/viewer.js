@@ -1130,41 +1130,32 @@ NGL.Viewer.prototype = {
 
         // NGL.time( "Viewer.add" );
 
-        var group, pickingGroup;
-
-        group = buffer.group;
-        if( buffer.pickable ){
-            pickingGroup = buffer.pickingGroup;
-        }
-
         if( buffer.size > 0 ){
 
             if( instanceList ){
 
                 instanceList.forEach( function( instance ){
 
-                    this.addBuffer(
-                        buffer, group, pickingGroup, instance
-                    );
+                    this.addBuffer( buffer, instance );
 
                 }, this );
 
             }else{
 
-                this.addBuffer(
-                    buffer, group, pickingGroup
-                );
+                this.addBuffer( buffer );
 
             }
 
             if( buffer.background ){
-                this.backgroundGroup.add( group );
+                this.backgroundGroup.add( buffer.group );
+                this.backgroundGroup.add( buffer.wireframeGroup );
             }else{
-                this.modelGroup.add( group );
+                this.modelGroup.add( buffer.group );
+                this.modelGroup.add( buffer.wireframeGroup );
             }
 
             if( buffer.pickable ){
-                this.pickingGroup.add( pickingGroup );
+                this.pickingGroup.add( buffer.pickingGroup );
             }
 
         }
@@ -1177,7 +1168,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBuffer: function( buffer, group, pickingGroup, instance ){
+    addBuffer: function( buffer, instance ){
 
         // NGL.time( "Viewer.addBuffer" );
 
@@ -1186,7 +1177,18 @@ NGL.Viewer.prototype = {
         if( instance ){
             mesh.applyMatrix( instance.matrix );
         }
-        group.add( mesh );
+        buffer.group.add( mesh );
+
+        var wireframeMesh = buffer.getWireframeMesh();
+        wireframeMesh.userData[ "buffer" ] = buffer;
+        if( instance ){
+            // wireframeMesh.applyMatrix( instance.matrix );
+            wireframeMesh.matrix.copy( mesh.matrix );
+            wireframeMesh.position.copy( mesh.position );
+            wireframeMesh.quaternion.copy( mesh.quaternion );
+            wireframeMesh.scale.copy( mesh.scale );
+        }
+        buffer.wireframeGroup.add( wireframeMesh );
 
         if( buffer.pickable ){
 
@@ -1200,9 +1202,7 @@ NGL.Viewer.prototype = {
                 pickingMesh.scale.copy( mesh.scale );
                 pickingMesh.userData[ "instance" ] = instance;
             }
-            pickingGroup.add( pickingMesh );
-
-            // NGL.log( pickingMesh )
+            buffer.pickingGroup.add( pickingMesh );
 
         }
 
@@ -1220,6 +1220,7 @@ NGL.Viewer.prototype = {
 
         this.rotationGroup.children.forEach( function( group ){
             group.remove( buffer.group );
+            group.remove( buffer.wireframeGroup );
         } );
 
         if( buffer.pickable ){

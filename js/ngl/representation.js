@@ -114,7 +114,7 @@ NGL.Representation.prototype = {
         wireframe: {
             type: "boolean", buffer: true
         },
-        wireframeLinewidth: {
+        linewidth: {
             type: "integer", max: 50, min: 1, buffer: true
         },
 
@@ -148,7 +148,7 @@ NGL.Representation.prototype = {
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.wireframe = p.wireframe || false;
-        this.wireframeLinewidth = p.wireframeLinewidth || 1;
+        this.linewidth = p.linewidth || 1;
 
         this.setColor( p.color, p );
 
@@ -186,7 +186,7 @@ NGL.Representation.prototype = {
             opacity: this.opacity,
             side: this.side,
             wireframe: this.wireframe,
-            wireframeLinewidth: this.wireframeLinewidth,
+            linewidth: this.linewidth,
 
         }, p );
 
@@ -345,14 +345,14 @@ NGL.Representation.prototype = {
 
         for( var name in p ){
 
-            if( p[ name ] === undefined ) return;
-            if( tp[ name ] === undefined ) return;
+            if( p[ name ] === undefined ) continue;
+            if( tp[ name ] === undefined ) continue;
 
             if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
             if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
 
             // no value change
-            if( p[ name ] === this[ name ] ) return;
+            if( p[ name ] === this[ name ] ) continue;
 
             this[ name ] = p[ name ];
 
@@ -1371,16 +1371,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        linewidth: {
-            type: "integer", max: 20, min: 1, buffer: true
-        }
 
     }, NGL.Representation.prototype.parameters, {
 
         flatShaded: null,
         side: null,
-        wireframe: null,
-        wireframeLinewidth: null
+        wireframe: null
 
     } ),
 
@@ -1403,9 +1399,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
             this.atomSet.bondPosition( null, 1 ),
             this.atomSet.bondColor( null, 0, this.getColorParams() ),
             this.atomSet.bondColor( null, 1, this.getColorParams() ),
-            this.getBufferParams( {
-                linewidth: this.linewidth
-            } )
+            this.getBufferParams()
         );
 
         this.bufferList.push( this.lineBuffer );
@@ -2596,7 +2590,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         side: null,
         wireframe: null,
-        wireframeLinewidth: null
+        linewidth: null
 
     } ),
 
@@ -2815,17 +2809,13 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        linewidth: {
-            type: "integer", max: 20, min: 1, buffer: true
         }
 
     }, NGL.Representation.prototype.parameters, {
 
         flatShaded: null,
         side: null,
-        wireframe: null,
-        wireframeLinewidth: null
+        wireframe: null
 
     } ),
 
@@ -2845,7 +2835,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         }
 
         this.tension = p.tension || NaN;
-        this.linewidth = p.linewidth || 1;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -2901,9 +2890,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                         new NGL.TraceBuffer(
                             subPos.position,
                             subCol.color,
-                            scope.getBufferParams( {
-                                linewidth: scope.linewidth,
-                            } )
+                            scope.getBufferParams()
                         )
 
                     );
@@ -4515,7 +4502,6 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         this.drawPoint = p.drawPoint || false;
         this.drawSphere = p.drawSphere || false;
 
-        this.linewidth = p.linewidth || 1;
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
         this.sort = p.sort !== undefined ? p.sort : true;
