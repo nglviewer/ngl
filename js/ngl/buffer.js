@@ -278,6 +278,7 @@ NGL.Buffer.prototype = {
             wireframeGeometry.addIndex(
                 new THREE.BufferAttribute( wireframeIndex, 1 )
             );
+            wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
         }
 
         this.wireframeGeometry = wireframeGeometry;
@@ -286,43 +287,87 @@ NGL.Buffer.prototype = {
 
     makeWireframeIndex: function(){
 
-        var index = this.geometry.index;
+        function checkEdge( edges, a, b ) {
 
-        if( index ){
+            if ( a > b ){
 
-            var array = index.array;
-            var n = array.length;
-            if( this.geometry.groups.length ){
-                n = this.geometry.groups[ 0 ].count;
-            }
-            var wireframeIndex;
-            if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
-                wireframeIndex = this.wireframeIndex;
-            }else{
-                wireframeIndex = new Uint32Array( n * 2 );
-            }
-
-            var j = 0;
-            for( var i = 0; i < n; i+=3, j+=6 ){
-
-                var a = array[ i + 0 ];
-                var b = array[ i + 1 ];
-                var c = array[ i + 2 ];
-
-                wireframeIndex[ j + 0 ] = a;
-                wireframeIndex[ j + 1 ] = b;
-                wireframeIndex[ j + 2 ] = a;
-                wireframeIndex[ j + 3 ] = c;
-                wireframeIndex[ j + 4 ] = b;
-                wireframeIndex[ j + 5 ] = c;
+                var tmp = a;
+                a = b;
+                b = tmp;
 
             }
 
-            this.wireframeIndex = wireframeIndex;
+            var list = edges[ a ];
+
+            if( list === undefined ){
+
+                edges[ a ] = [ b ];
+                return true;
+
+            }else if( list.indexOf( b ) === -1 ){
+
+                list.push( b );
+                return true;
+
+            }
+
+            return false;
 
         }
 
-    },
+        return function(){
+
+            var index = this.geometry.index;
+
+            if( index ){
+
+                var array = index.array;
+                var n = array.length;
+                if( this.geometry.groups.length ){
+                    n = this.geometry.groups[ 0 ].count;
+                }
+                var wireframeIndex;
+                if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
+                    wireframeIndex = this.wireframeIndex;
+                }else{
+                    wireframeIndex = new Uint32Array( n * 2 );
+                }
+
+                var j = 0;
+                var edges = {};
+
+                for( var i = 0; i < n; i += 3 ){
+
+                    var a = array[ i + 0 ];
+                    var b = array[ i + 1 ];
+                    var c = array[ i + 2 ];
+
+                    if( checkEdge( edges, a, b ) ){
+                        wireframeIndex[ j + 0 ] = a;
+                        wireframeIndex[ j + 1 ] = b;
+                        j += 2;
+                    }
+                    if( checkEdge( edges, b, c ) ){
+                        wireframeIndex[ j + 0 ] = b;
+                        wireframeIndex[ j + 1 ] = c;
+                        j += 2;
+                    }
+                    if( checkEdge( edges, c, a ) ){
+                        wireframeIndex[ j + 0 ] = c;
+                        wireframeIndex[ j + 1 ] = a;
+                        j += 2;
+                    }
+
+                }
+
+                this.wireframeIndex = wireframeIndex;
+                this.wireframeIndexCount = j;
+
+            }
+
+        }
+
+    }(),
 
     getRenderOrder: function(){
 
@@ -654,9 +699,9 @@ NGL.Buffer.prototype = {
                     this.wireframeGeometry.index.set( this.wireframeIndex );
                     this.wireframeGeometry.index.needsUpdate = true;
 
-                    this.wireframeGeometry.addGroup( 0, data[ name ].length * 2 );
-
                 }
+
+                this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
 
             }else{
 
