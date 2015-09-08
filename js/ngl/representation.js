@@ -899,7 +899,10 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         // FIXME nearClip support missing
     }, NGL.Representation.prototype.parameters, {
 
-        nearClip: null, flatShaded: null
+        nearClip: null,
+        flatShaded: null,
+        wireframe: null,
+        linewidth: null
 
     } ),
 

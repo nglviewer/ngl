@@ -401,6 +401,11 @@ NGL.Buffer.prototype = {
 
             mesh = new THREE.LineSegments( this.geometry, this.material );
 
+        }else if( this.point ){
+
+            mesh = new THREE.PointCloud( this.geometry, this.material );
+            if( this.sort ) mesh.sortParticles = true;
+
         }else{
 
             mesh = new THREE.Mesh( this.geometry, this.material );
@@ -623,7 +628,11 @@ NGL.Buffer.prototype = {
             this[ name ] = p[ name ];
 
             if( tp[ name ].property ){
-                propertyData[ name ] = p[ name ];
+                if( tp[ name ].property !== true ){
+                    propertyData[ tp[ name ].property ] = p[ name ];
+                }else{
+                    propertyData[ name ] = p[ name ];
+                }
             }
 
             if( tp[ name ].uniform ){
@@ -1648,6 +1657,7 @@ NGL.PointBuffer = function( position, color, params ){
 
     var p = params || {};
 
+    this.point = true;
     this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
     this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
     this.sort = p.sort !== undefined ? p.sort : false;
@@ -1673,21 +1683,15 @@ NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
 
-NGL.PointBuffer.prototype.getMesh = function( type, material ){
+NGL.PointBuffer.prototype.parameters = Object.assign( {
 
-    material = material || this.getMaterial( type );
+    pointSize: { property: "size" },
+    sizeAttenuation: { property: true },
+    sort: {}
 
-    var points = new THREE.PointCloud(
-        this.geometry, material
-    );
+}, NGL.Buffer.prototype.parameters );
 
-    if( this.sort ) points.sortParticles = true
-
-    return points;
-
-};
-
-NGL.PointBuffer.prototype.getMaterial = function( type ){
+NGL.PointBuffer.prototype.makeMaterial = function(){
 
     var material;
 
@@ -1736,7 +1740,9 @@ NGL.PointBuffer.prototype.getMaterial = function( type ){
 
     }
 
-    return material;
+    this.material = material;
+    this.wireframeMaterial = material;
+    this.pickingMaterial = material;
 
 };
 
