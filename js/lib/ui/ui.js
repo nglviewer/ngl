@@ -93,7 +93,8 @@ UI.Element.prototype = {
 var properties = [
     'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border',
     'borderLeft', 'borderTop', 'borderRight', 'borderBottom', 'borderColor',
-    'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
+    'display', 'overflow', 'overflowX', 'overflowY', 'margin', 'marginLeft',
+    'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
     'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
