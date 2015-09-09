@@ -734,7 +734,7 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
     var defaultWidth = p.defaultWidth !== undefined ? p.defaultWidth : 30;
     var defaultMargin = p.defaultMargin !== undefined ? p.defaultMargin : 5;
     var defaultAlign = p.defaultAlign !== undefined ? p.defaultAlign : "left";
-    var rowOnClick = params.rowOnClick;
+    var onRowSelect = p.onRowSelect;
 
     // header
 
@@ -770,6 +770,16 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
                 return sort( a[ idx ], b[ idx ] );
             }
         } );
+        virtualList.redraw();
+        return this;
+    };
+
+    var selectRow = function( idx ){
+        selected.length = 0;
+        if( onRowSelect ) onRowSelect( idx );
+        if( idx !== undefined ){
+            selected.push( items[ idx ][ 0 ] );
+        }
         virtualList.redraw();
         return this;
     };
@@ -830,9 +840,7 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
         panel
             .setCursor( "pointer" )
             .onClick( function(){
-                selected.length = 0;
-                selected.push( items[ index ][ 0 ] );
-                if( rowOnClick ) rowOnClick( index );
+                selectRow( index );
             } );
 
         if( selected.indexOf( items[ index ][ 0 ] ) !== -1 ){
@@ -862,6 +870,7 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
     this.header = header;
     this.list = virtualList;
     this.sortColumn = sortColumn;
+    this.selectRow = selectRow;
 
     return this;
 

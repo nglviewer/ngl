@@ -49,7 +49,7 @@ var FragfitResultsPreset = function( data, params ){
 
     // json
 
-    console.log( json );
+    // console.log( json );
 
     //
 
@@ -83,7 +83,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var data = {};
     var isolevel = 2.0;
-    var wireframe = false;
+    var wireframe = true;
 
     var container = new UI.Panel();
 
@@ -119,6 +119,12 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             } );
         } );
 
+    var showAllBtn = new UI.Button( "show all" )
+        .onClick( function(){
+            fragfitResultsPreset.backboneRepr.setSelection( "*" );
+            virtualTable.selectRow();
+        } );
+
     // Linker list
 
     var linkerItems = [];
@@ -128,17 +134,14 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         );
     }
 
-    console.log( linkerItems )
+    // console.log( linkerItems )
 
-    var selectedLinker = null;
-
-    var tableOnClick = function( index ){
-        console.log( index )
-        selectedLinker = index;
-        fragfitResultsPreset.backboneRepr.setSelection(
-            "/" + index
-        );
-        virtualTable.list.redraw()
+    var selectLinker = function( index ){
+        if( index !== undefined ){
+            fragfitResultsPreset.backboneRepr.setSelection(
+                "/" + ( linkerItems[ index ][ 0 ] - 1 )
+            );
+        }
     };
 
     var getField = function( columnIndex, rowIndex ){
@@ -200,7 +203,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
     ];
 
     var params = {
-        rowOnClick: tableOnClick
+        onRowSelect: selectLinker
     }
 
     var virtualTable = new UI.VirtualTable(
@@ -208,8 +211,12 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         )
         .setWidth( "100%" )
         .setOverflowX( "auto" )
-        .setMarginTop( "5px" )
-        .sortColumn( 1, true );
+        .setMarginTop( "5px" );
+
+    // sort by crosscorrel & select first
+    virtualTable
+        .sortColumn( 1, true )
+        .selectRow( 0 );
 
     //
 
@@ -219,6 +226,8 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         new UI.Break(),
         new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
         wireframeCheckbox,
+        new UI.Break(),
+        showAllBtn,
         new UI.Break(),
         new UI.Break(),
         virtualTable
