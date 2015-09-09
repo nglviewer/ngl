@@ -721,6 +721,87 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
 UI.VirtualList.prototype = Object.create( UI.Element.prototype );
 
 
+// Virtual Table
+
+UI.VirtualTable = function( items, itemHeight, height, colums ){
+
+    UI.Panel.call( this );
+
+    var defaultWidth = "30px";
+    var defaultMargin = "5px";
+    var defaultAlign = "left";
+
+    // header
+
+    var header = new UI.Panel()
+        .setWidth( "100%" );
+
+    colums.forEach( function( col, i ){
+
+        var text = new UI.EllipsisText()
+            .setValue( col.name )
+            .setWidth( col.width || defaultWidth )
+            .setTextAlign( col.align || defaultAlign )
+            .setMarginLeft( col.margin || defaultMargin )
+            .setMarginRight( col.margin || defaultMargin );
+
+        header.add( text );
+
+    } );
+
+    // list
+
+    var generatorFn = function( index ){
+
+        var panel = new UI.Panel();
+
+        colums.forEach( function( col, i ){
+
+            var value = col.value( index );
+
+            var text = new UI.Text()
+                .setValue( value )
+                .setWidth( col.width || defaultWidth )
+                .setTextAlign( col.align || defaultAlign )
+                .setMarginLeft( col.margin || defaultMargin )
+                .setMarginRight( col.margin || defaultMargin );
+
+            if( col.onClick ){
+                text.setCursor( "pointer" )
+                    .onClick( function(){
+                        col.onClick( index );
+                    } );
+            }
+
+            panel.add( text );
+
+        } );
+
+        return panel.dom;
+
+    };
+
+    var virtualList = new UI.VirtualList(
+        items, itemHeight, height, generatorFn
+    ).setWidth( "100%" );
+
+    //
+
+    this.add(
+        header,
+        virtualList
+    );
+
+    this.header = header;
+    this.list = virtualList;
+
+    return this;
+
+};
+
+UI.VirtualTable.prototype = Object.create( UI.Panel.prototype );
+
+
 // Popup Menu (requires Tether)
 
 UI.PopupMenu = function( iconClass, heading, constraintTo ){

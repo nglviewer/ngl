@@ -34,7 +34,6 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         isolevel: -Math.abs( isolevel ),
         smooth: 1,
         color: "red",
-        transparent: true,
         opacity: 0.6,
         side: THREE.BackSide,
         opaqueBack: false
@@ -46,7 +45,6 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         isolevel: Math.abs( isolevel ),
         smooth: 1,
         color: "blue",
-        transparent: true,
         opacity: 0.6,
         side: THREE.FrontSide,
         opaqueBack: false

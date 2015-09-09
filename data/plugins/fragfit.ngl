@@ -2,14 +2,16 @@
 
 var FragfitResultsPreset = function( data, params ){
 
-    var p = params || {};
+    var p = Object.assign( {}, params );
 
     var pdbComp = data[ "pdb" ];
     var mrcComp = data[ "mrc" ];
     var linkerComp = data[ "linker" ];
     var json = data[ "json" ];
 
-    stage.viewer.setFog( null, null, 30, 55 );
+    var surfaceOpacity = p.surfaceOpacity || 0.6;
+
+    stage.viewer.setFog( null, 30, 55 );
 
     // pdb
 
@@ -26,7 +28,6 @@ var FragfitResultsPreset = function( data, params ){
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
         colorScheme: "residueindex",
-        // transparent: true,
         // opacity: 0.3
     } );
 
@@ -40,8 +41,7 @@ var FragfitResultsPreset = function( data, params ){
         isolevel: p.isolevel || 2.0,
         smooth: 0,
         wireframe: p.wireframe || false,
-        transparent: true,
-        opacity: 0.6,
+        opacity: p.wireframe ? 1.0 : surfaceOpacity,
         side: THREE.DoubleSide,
         opaqueBack: true,
         color: "grey"
@@ -52,6 +52,24 @@ var FragfitResultsPreset = function( data, params ){
     console.log( json );
 
     //
+
+    this.setSurfaceParams = function( params ){
+
+        var p = Object.assign( {}, params );
+
+        if( p.opacity !== undefined ){
+            surfaceOpacity = p.opacity;
+        }
+
+        if( p.wireframe === true ){
+            p.opacity = 1.0;
+        }else if( p.wireframe === false ){
+            p.opacity = surfaceOpacity;
+        }
+
+        surfaceRepr.setParameters( p );
+
+    };
 
     this.backboneRepr = backboneRepr;
     this.surfaceRepr = surfaceRepr;
@@ -87,7 +105,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var isolevelNumber = new UI.Number( isolevel )
         .onChange( function(){
-            fragfitResultsPreset.surfaceRepr.setParameters( {
+            fragfitResultsPreset.setSurfaceParams( {
                 isolevel: isolevelNumber.getValue()
             } );
         } );
@@ -96,7 +114,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var wireframeCheckbox = new UI.Checkbox( wireframe )
         .onChange( function(){
-            fragfitResultsPreset.surfaceRepr.setParameters( {
+            fragfitResultsPreset.setSurfaceParams( {
                 wireframe: wireframeCheckbox.getValue()
             } );
         } );
@@ -107,56 +125,89 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var selectedLinker = null;
 
-    var generatorFn = function( index ) {
-        var key = linkerItems[ index ];
-        var row = linkerJson[ key ];
-        var panel = new UI.Panel();
-        var margin = "10px";
-        panel.add(
-            new UI.Text()
-                .setValue( key )
-                .setWidth( "25px" )
-                .setTextAlign( "right" )
-                .setMarginRight( margin ),
-            new UI.Text()
-                .setValue( row[ 0 ].toFixed(2) )
-                .setMarginRight( margin ),
-            new UI.Text()
-                .setValue( row[ 1 ].toFixed(2) )
-                .setMarginRight( margin ),
-            new UI.Text()
-                .setValue( row[ 2 ].toFixed(2) )
-                .setMarginRight( margin ),
-            new UI.Text()
-                .setValue( row[ 4 ] )
-                .setWidth( "35px" )
-                .setMarginRight( margin ),
-            new UI.Text()
-                .setValue( row[ 5 ] )
-                .setWidth( "15px" )
-                .setTextAlign( "right" )
-                .setMarginRight( margin ),
-            new UI.Text()
-                .setValue( row[ 3 ] )
+    var tableOnClick = function( index ){
+        console.log( index )
+        selectedLinker = index;
+        fragfitResultsPreset.backboneRepr.setSelection(
+            "/" + index
         );
-        if( selectedLinker === index ){
-            panel.dom.classList.add( "highlight" )
-        }
-        panel
-            .setCursor( "pointer" )
-            .onClick( function(){
-                console.log( index )
-                selectedLinker = index;
-                fragfitResultsPreset.backboneRepr.setSelection(
-                    "/" + index
-                );
-                virtualList.redraw()
-            } )
-        return panel.dom;
+        virtualTable.list.redraw()
     };
 
-    var virtualList = new UI.VirtualList(
-            linkerItems, 18, 400, generatorFn
+    var getField = function( columnIndex, rowIndex ){
+        var key = linkerItems[ columnIndex ];
+        var row = linkerJson[ key ];
+        return row[ rowIndex ];
+    };
+
+    var columns = [
+        {
+            name: "ID",
+            align: "right",
+            width: "25px",
+            value: function( index ){
+                return linkerItems[ index ];
+            },
+            onClick: tableOnClick
+        },
+        {
+            name: "Cross-correlation",
+            align: "right",
+            width: "25px",
+            value: function( index ){
+                return getField( index, 0 ).toFixed( 2 );
+            },
+            onClick: tableOnClick
+        },
+        {
+            name: "Score 1?",
+            align: "right",
+            width: "25px",
+            value: function( index ){
+                return getField( index, 1 ).toFixed( 2 );
+            },
+            onClick: tableOnClick
+        },
+        {
+            name: "Score 2?",
+            align: "right",
+            width: "25px",
+            value: function( index ){
+                return getField( index, 2 ).toFixed( 2 );
+            },
+            onClick: tableOnClick
+        },
+        {
+            name: "PDB",
+            align: "left",
+            width: "35px",
+            value: function( index ){
+                return getField( index, 4 );
+            },
+            onClick: tableOnClick
+        },
+        {
+            name: "Clashes",
+            align: "right",
+            width: "15px",
+            value: function( index ){
+                return getField( index, 5 );
+            },
+            onClick: tableOnClick
+        },
+        {
+            name: "Sequence",
+            align: "left",
+            width: "90px",
+            value: function( index ){
+                return getField( index, 3 );
+            },
+            onClick: tableOnClick
+        }
+    ];
+
+    var virtualTable = new UI.VirtualTable(
+            linkerItems, 18, 400, columns
         )
         .setWidth( "100%" )
         .setMarginTop( "5px" );
@@ -171,7 +222,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         wireframeCheckbox,
         new UI.Break(),
         new UI.Break(),
-        virtualList
+        virtualTable
     );
 
     return container;

@@ -14,7 +14,7 @@
 
             if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-            document.addEventListener("DOMContentLoaded", function() {
+            document.addEventListener( "DOMContentLoaded", function() {
 
                 var types = Object.keys( NGL.representationTypes );
                 var reprDict = {};
@@ -40,7 +40,7 @@
                     stage.setTheme( "light" );
                     stage.viewer.setBackground( 0xfff7ed );
 
-                    stage.loadFile( "../../files/1crn.pdb", function( o ){
+                    stage.loadFile( "../../files/1crn.pdb" ).then( function( o ){
 
                         types.forEach( function( name ){
 
@@ -48,15 +48,15 @@
 
                             if( name === "label" ){
                                 reprDict[ name ] = o.addRepresentation(
-                                    name, { visible: false, color: "element", sele: ".C" }, true
+                                    name, { visible: false, colorScheme: "element", sele: ".C" }
                                 );
                             }else if( name === "cartoon" ){
                                 reprDict[ name ] = o.addRepresentation(
-                                    name, { visible: true }, true
+                                    name, { visible: true }
                                 );
                             }else{
                                 reprDict[ name ] = o.addRepresentation(
-                                    name, { visible: false }, true
+                                    name, { visible: false }
                                 );
                             }
 

@@ -904,7 +904,11 @@ UI.Number.prototype.getValue = function () {
 
 UI.Number.prototype.setValue = function ( value ) {
 
-    if ( value !== undefined ) {
+    if( isNaN( value ) ){
+
+        this.dom.value = NaN;
+
+    }else if ( value !== undefined ) {
 
         this.dom.value = value.toFixed( this.precision );
 

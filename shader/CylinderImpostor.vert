@@ -1,3 +1,16 @@
+
+precision highp float;
+precision highp int;
+
+// uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+// uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
+// uniform vec3 cameraPosition;
+
+attribute vec3 position;
+
 // Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
 
 //  All Rights Reserved
@@ -25,21 +38,16 @@
 // - picking color
 // - shift
 
-
 attribute vec3 mapping;
 attribute vec3 position1;
 attribute vec3 position2;
 attribute float radius;
 
-// varying float vRadius;
-
-// varying vec3 point;
 varying vec3 axis;
 varying vec4 base_radius;
 varying vec4 end_b;
 varying vec3 U;
 varying vec3 V;
-// varying float b;
 varying vec4 w;
 
 #ifdef PICKING
@@ -97,7 +105,7 @@ void main()
     vec3 up = radius * normalize( cross( left, ldir ) );
 
     // transform to modelview coordinates
-    axis =  normalize( normalMatrix * ldir );
+    axis = normalize( normalMatrix * ldir );
     U = normalize( normalMatrix * up );
     V = normalize( normalMatrix * left );
 

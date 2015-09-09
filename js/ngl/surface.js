@@ -407,11 +407,17 @@ NGL.WorkerRegistry.add( "surf", function( e, callback ){
 
     if( d.vol ) vol.fromJSON( d.vol );
 
-    var surface = vol.getSurface( p.isolevel, p.smooth );
+    if( p ){
+        var surface = vol.getSurface( p.isolevel, p.smooth );
+    }
 
     NGL.timeEnd( "WORKER surf" );
 
-    callback( surface.toJSON(), surface.getTransferable() );
+    if( p ){
+        callback( surface.toJSON(), surface.getTransferable() );
+    }else{
+        callback();
+    }
 
 } );
 
@@ -553,7 +559,7 @@ NGL.Volume.prototype = {
 
             var bg = new THREE.BufferGeometry();
             bg.addAttribute( "position", new THREE.BufferAttribute( sd.position, 3 ) );
-            bg.addAttribute( "index", new THREE.BufferAttribute( sd.index, 1 ) );
+            bg.addIndex( new THREE.BufferAttribute( sd.index, 1 ) );
             bg.computeVertexNormals();
             sd.normal = bg.attributes.normal.array;
             bg.dispose();
@@ -591,19 +597,16 @@ NGL.Volume.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var vol = undefined;
-
-            if( this.worker === undefined ){
-
-                vol = this.toJSON();
-                this.worker = new NGL.Worker( "surf" );
-
+            if( this.workerPool === undefined ){
+                this.workerPool = new NGL.WorkerPool( "surf", 2 );
             }
 
-            this.worker.post(
+            var worker = this.workerPool.getNextWorker();
+
+            worker.post(
 
                 {
-                    vol: vol,
+                    vol: worker.postCount === 0 ? this.toJSON() : null,
                     params: {
                         isolevel: isolevel,
                         smooth: smooth
@@ -617,15 +620,13 @@ NGL.Volume.prototype = {
                     var surface = NGL.fromJSON( e.data );
                     callback( surface );
 
-                }.bind( this ),
+                },
 
                 function( e ){
 
                     console.warn(
                         "NGL.Volume.generateSurfaceWorker error - trying without worker", e
                     );
-                    this.worker.terminate();
-                    this.worker = undefined;
 
                     var surface = this.getSurface( isolevel, smooth );
                     callback( surface );
@@ -1088,7 +1089,7 @@ NGL.Volume.prototype = {
 
     dispose: function(){
 
-        if( this.worker ) this.worker.terminate();
+        if( this.workerPool ) this.workerPool.terminate();
 
         NGL.GidPool.removeObject( this );
 
@@ -2262,7 +2263,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
         var bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
-        bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
+        bg.addIndex( new THREE.BufferAttribute( faces, 1 ) );
 
     }
 

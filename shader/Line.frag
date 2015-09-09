@@ -1,9 +1,19 @@
 
+precision highp float;
+precision highp int;
+
+// uniform mat4 viewMatrix;
+// uniform vec3 cameraPosition;
+
 uniform float opacity;
 uniform float nearClip;
 
 varying vec3 vColor;
 varying vec4 cameraPos;
+
+#ifdef PICKING
+    uniform float objectId;
+#endif
 
 #include fog_params
 

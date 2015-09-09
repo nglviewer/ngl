@@ -7,12 +7,134 @@
 ////////////////
 // Buffer Core
 
+NGL.DoubleSidedBuffer = function( buffer ){
+
+    this.size = buffer.size;
+    this.side = buffer.side;
+    this.wireframe = buffer.wireframe;
+    this.visible = buffer.visible;
+
+    this.group = new THREE.Group();
+    this.wireframeGroup = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
+
+    var frontMeshes = [];
+    var backMeshes = [];
+
+    var frontBuffer = buffer;
+    var backBuffer = new buffer.constructor();
+
+    frontBuffer.makeMaterial();
+    backBuffer.makeMaterial();
+
+    backBuffer.geometry = buffer.geometry;
+    backBuffer.size = buffer.size;
+    backBuffer.attributeSize = buffer.attributeSize;
+    backBuffer.pickable = buffer.pickable;
+    backBuffer.setParameters( buffer.getParameters() );
+    backBuffer.updateShader();
+
+    frontBuffer.setParameters( {
+        side: THREE.FrontSide
+    } );
+    backBuffer.setParameters( {
+        side: THREE.BackSide,
+        opacity: backBuffer.opacity
+    } );
+
+    this.getMesh = function( picking ){
+
+        var front, back;
+
+        if( picking ){
+            back = backBuffer.getPickingMesh();
+            front = frontBuffer.getPickingMesh();
+        }else{
+            back = backBuffer.getMesh();
+            front = frontBuffer.getMesh();
+        }
+
+        frontMeshes.push( front );
+        backMeshes.push( back );
+
+        this.setParameters( { side: this.side } );
+
+        return new THREE.Group().add( back, front );
+
+    };
+
+    this.getWireframeMesh = function(){
+
+        return frontBuffer.getWireframeMesh();
+
+    };
+
+    this.getPickingMesh = function(){
+
+        return this.getMesh( true );
+
+    };
+
+    this.setAttributes = function( data ){
+
+        buffer.setAttributes( data );
+
+    };
+
+    this.setParameters = function( data ){
+
+        data = Object.assign( {}, data );
+
+        if( data.side === THREE.FrontSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = true; } );
+            backMeshes.forEach( function( m ){ m.visible = false; } );
+
+        }else if( data.side === THREE.BackSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = false; } );
+            backMeshes.forEach( function( m ){ m.visible = true; } );
+
+        }else if( data.side === THREE.DoubleSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = true; } );
+            backMeshes.forEach( function( m ){ m.visible = true; } );
+
+        }
+
+        if( data.side !== undefined ){
+            this.side = data.side;
+        }
+        delete data.side;
+
+        frontBuffer.setParameters( data );
+        backBuffer.setParameters( data );
+
+        if( data.wireframe !== undefined ){
+            this.wireframe = data.wireframe;
+            this.setVisibility( this.visible );
+        }
+
+    };
+
+    this.setVisibility = NGL.Buffer.prototype.setVisibility;
+
+    this.dispose = function(){
+
+        frontBuffer.dispose();
+        backBuffer.dispose();
+
+    };
+
+};
+
+
 /**
  * The core buffer class.
  * @class
  * @private
  */
-NGL.Buffer = function( position, color, pickingColor, params ){
+NGL.Buffer = function( position, color, index, pickingColor, params ){
 
     var p = params || {};
 
@@ -24,50 +146,53 @@ NGL.Buffer = function( position, color, pickingColor, params ){
 
     this.pickable = false;
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
     this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
     this.background = p.background !== undefined ? p.background : false;
-    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
+    this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
+    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
+    this.wireframeLinewidth = p.wireframeLinewidth || 1;
 
-    this.attributes = [];
     this.geometry = new THREE.BufferGeometry();
 
-    this.addAttributes({
+    this.addAttributes( {
         "position": { type: "v3", value: position },
         "color": { type: "c", value: color },
-    });
+    } );
 
-    this.group = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
-
-    if( pickingColor ){
-
-        this.addAttributes({
-            "pickingColor": { type: "c", value: pickingColor },
-        });
-
-        this.pickable = true;
-
+    if( index ){
+        this.geometry.addIndex(
+            new THREE.BufferAttribute( index, 1 )
+        );
     }
 
-    this.uniforms = THREE.UniformsUtils.merge([
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-            "objectId": { type: "f", value: 0.0 },
-        }
-    ]);
+    if( pickingColor ){
+        this.addAttributes( {
+            "pickingColor": { type: "c", value: pickingColor },
+        } );
+        this.pickable = true;
+    }
+
+    this.uniforms = {
+        "fogColor": { type: "c", value: null },
+        "fogNear": { type: "f", value: 0.0 },
+        "fogFar": { type: "f", value: 0.0 },
+        "opacity": { type: "f", value: this.opacity },
+        "nearClip": { type: "f", value: 0.0 }
+    };
 
     this.pickingUniforms = {
         "nearClip": { type: "f", value: 0.0 },
         "objectId": { type: "f", value: 0.0 },
     };
+
+    this.group = new THREE.Group();
+    this.wireframeGroup = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
 
 };
 
@@ -75,17 +200,174 @@ NGL.Buffer.prototype = {
 
     constructor: NGL.Buffer,
 
-    finalize: function(){
+    parameters: {
 
-        this.makeIndex();
+        opaqueBack: { updateShader: true },
+        dullInterior: { updateShader: true },
+        side: { updateShader: true, property: true },
+        opacity: { uniform: true },
+        nearClip: { updateShader: true },
+        flatShaded: { updateShader: true },
+        background: { updateShader: true },
+        linewidth: { property: true },
+        wireframe: { updateVisibility: true }
 
-        if( NGL.indexUint16 ){
+    },
 
-            this.geometry.computeOffsets();
+    get transparent () {
+
+        return this.opacity < 1;
+
+    },
+
+    makeMaterial: function(){
+
+        this.material = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            vertexShader: "",
+            fragmentShader: "",
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.linewidth
+        } );
+
+        this.wireframeMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            vertexShader: "Line.vert",
+            fragmentShader: "Line.frag",
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.linewidth
+        } );
+
+        this.pickingMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.pickingUniforms,
+            vertexShader: "",
+            fragmentShader: "",
+            depthTest: true,
+            transparent: false,
+            depthWrite: true,
+            lights: false,
+            fog: false,
+            side: this.side,
+            linewidth: this.linewidth
+        } );
+
+        this.updateShader();
+
+    },
+
+    makeWireframeGeometry: function(){
+
+        this.makeWireframeIndex();
+
+        var geometry = this.geometry;
+        var wireframeIndex = this.wireframeIndex;
+        var wireframeGeometry = new THREE.BufferGeometry();
+
+        wireframeGeometry.attributes = geometry.attributes;
+        if( wireframeIndex ){
+            wireframeGeometry.addIndex(
+                new THREE.BufferAttribute( wireframeIndex, 1 )
+            );
+            wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+        }
+
+        this.wireframeGeometry = wireframeGeometry;
+
+    },
+
+    makeWireframeIndex: function(){
+
+        function checkEdge( edges, a, b ) {
+
+            if ( a > b ){
+
+                var tmp = a;
+                a = b;
+                b = tmp;
+
+            }
+
+            var list = edges[ a ];
+
+            if( list === undefined ){
+
+                edges[ a ] = [ b ];
+                return true;
+
+            }else if( list.indexOf( b ) === -1 ){
+
+                list.push( b );
+                return true;
+
+            }
+
+            return false;
 
         }
 
-    },
+        return function(){
+
+            var index = this.geometry.index;
+
+            if( index ){
+
+                var array = index.array;
+                var n = array.length;
+                if( this.geometry.groups.length ){
+                    n = this.geometry.groups[ 0 ].count;
+                }
+                var wireframeIndex;
+                if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
+                    wireframeIndex = this.wireframeIndex;
+                }else{
+                    wireframeIndex = new Uint32Array( n * 2 );
+                }
+
+                var j = 0;
+                var edges = {};
+
+                for( var i = 0; i < n; i += 3 ){
+
+                    var a = array[ i + 0 ];
+                    var b = array[ i + 1 ];
+                    var c = array[ i + 2 ];
+
+                    if( checkEdge( edges, a, b ) ){
+                        wireframeIndex[ j + 0 ] = a;
+                        wireframeIndex[ j + 1 ] = b;
+                        j += 2;
+                    }
+                    if( checkEdge( edges, b, c ) ){
+                        wireframeIndex[ j + 0 ] = b;
+                        wireframeIndex[ j + 1 ] = c;
+                        j += 2;
+                    }
+                    if( checkEdge( edges, c, a ) ){
+                        wireframeIndex[ j + 0 ] = c;
+                        wireframeIndex[ j + 1 ] = a;
+                        j += 2;
+                    }
+
+                }
+
+                this.wireframeIndex = wireframeIndex;
+                this.wireframeIndexCount = j;
+
+            }
+
+        }
+
+    }(),
 
     getRenderOrder: function(){
 
@@ -109,144 +391,138 @@ NGL.Buffer.prototype = {
 
     },
 
-    getMesh: function( type, material ){
+    getMesh: function(){
 
-        material = material || this.getMaterial( type );
+        var mesh;
 
-        if( type === "wireframe" || this.wireframe ){
+        if( !this.material ) this.makeMaterial();
 
-            if( !this.wireframeGeometry ){
+        if( this.line ){
 
-                var index = this.geometry.attributes.index.array;
-                var n = index.length;
-                var wireframeIndex = new Uint32Array( n * 2 );
+            mesh = new THREE.LineSegments( this.geometry, this.material );
 
-                for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
+        }else if( this.point ){
 
-                    var a = index[ i + 0 ];
-                    var b = index[ i + 1 ];
-                    var c = index[ i + 2 ];
-
-                    wireframeIndex[ j + 0 ] = a;
-                    wireframeIndex[ j + 1 ] = b;
-                    wireframeIndex[ j + 2 ] = a;
-                    wireframeIndex[ j + 3 ] = c;
-                    wireframeIndex[ j + 4 ] = b;
-                    wireframeIndex[ j + 5 ] = c;
-
-                }
-
-                this.wireframeGeometry = this.geometry.clone();
-                this.wireframeGeometry.attributes.index.array = wireframeIndex;
-
-                if( NGL.indexUint16 ){
-                    this.wireframeGeometry.computeOffsets();
-                }else{
-                    this.wireframeGeometry.clearDrawCalls();
-                }
-
-            }
-
-            return new THREE.LineSegments( this.wireframeGeometry, material );
+            mesh = new THREE.PointCloud( this.geometry, this.material );
+            if( this.sort ) mesh.sortParticles = true;
 
         }else{
 
-            return new THREE.Mesh( this.geometry, material );
+            mesh = new THREE.Mesh( this.geometry, this.material );
 
         }
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
 
     },
 
-    getMaterial: function( type ){
+    getWireframeMesh: function(){
 
-        var material;
+        var mesh;
+
+        if( !this.material ) this.makeMaterial();
+        if( !this.wireframeGeometry ) this.makeWireframeGeometry();
+
+        mesh = new THREE.LineSegments(
+            this.wireframeGeometry, this.wireframeMaterial
+        );
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
+
+    },
+
+    getPickingMesh: function(){
+
+        var mesh;
+
+        if( !this.material ) this.makeMaterial();
+
+        mesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
+
+    },
+
+    getShader: function( name, type ){
+
+        return NGL.getShader( name, this.getDefines( type ) );
+
+    },
+
+    getVertexShader: function( type ){
+
+        return this.getShader( this.vertexShader, type );
+
+    },
+
+    getFragmentShader: function( type ){
+
+        return this.getShader( this.fragmentShader, type );
+
+    },
+
+    getDefines: function( type ){
+
+        var defines = {};
+
+        if( this.nearClip ){
+            defines[ "NEAR_CLIP" ] = 1;
+        }
 
         if( type === "picking" ){
 
-            material = new THREE.ShaderMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
-                depthTest: true,
-                transparent: false,
-                depthWrite: true,
-                lights: false,
-                fog: false
-
-            } );
-
-            material.side = this.side;
-            material.defines[ "PICKING" ] = 1;
-
-        }else if( type === "wireframe" || this.wireframe ){
-
-            material = new THREE.ShaderMaterial( {
-                uniforms:  THREE.UniformsUtils.clone( this.uniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( "Line.vert" ),
-                fragmentShader: NGL.getShader( "Line.frag" ),
-                depthTest: true,
-                transparent: this.transparent,
-                depthWrite: true,
-                lights: false,
-                fog: true,
-                linewidth: this.lineWidth
-            } );
+            if( this.side === THREE.DoubleSide ){
+                defines[ "DOUBLE_SIDED" ] = 1;
+            }else if( this.side === THREE.BackSide ){
+                defines[ "FLIP_SIDED" ] = 1;
+            }
+            defines[ "PICKING" ] = 1;
 
         }else{
 
-            material = new THREE.ShaderMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
-                depthTest: true,
-                transparent: this.transparent,
-                depthWrite: true,
-                // lights: true,
-                lights: false,
-                fog: true
-
-            } );
-
-            material.side = this.side;
-
+            if( this.side === THREE.DoubleSide ){
+                defines[ "DOUBLE_SIDED" ] = 1;
+            }else if( this.side === THREE.BackSide ){
+                defines[ "FLIP_SIDED" ] = 1;
+            }
             if( type === "background" || this.background ){
-
-                material.defines[ "NOLIGHT" ] = 1;
-
+                defines[ "NOLIGHT" ] = 1;
             }
-
             if( this.flatShaded ){
-
-                material.defines[ "FLAT_SHADED" ] = 1;
-
+                defines[ "FLAT_SHADED" ] = 1;
             }
-
             if( this.opaqueBack ){
-
-                material.defines[ "OPAQUE_BACK" ] = 1;
-
+                defines[ "OPAQUE_BACK" ] = 1;
             }
-
             if( this.dullInterior ){
-
-                material.defines[ "DULL_INTERIOR" ] = 1;
-
+                defines[ "DULL_INTERIOR" ] = 1;
             }
+            defines[ "USE_FOG" ] = 1;
 
         }
 
-        if( this.nearClip ){
+        return defines;
 
-            material.defines[ "NEAR_CLIP" ] = 1;
+    },
 
+    getParameters: function(){
+
+        var params = {};
+
+        for( var name in this.parameters ){
+            params[ name ] = this[ name ];
         }
 
-        return material;
+        return params;
 
     },
 
@@ -268,12 +544,10 @@ NGL.Buffer.prototype = {
             "f": 1, "v2": 2, "v3": 3, "c": 3
         };
 
-        Object.keys( attributes ).forEach( function( name ){
+        for( var name in attributes ){
 
             var buf;
             var a = attributes[ name ];
-
-            this.attributes.push( name );
 
             if( a.value ){
 
@@ -296,7 +570,89 @@ NGL.Buffer.prototype = {
                 new THREE.BufferAttribute( buf, itemSize[ a.type ] )
             );
 
-        }, this );
+        }
+
+    },
+
+    updateRenderOrder: function(){
+
+        var renderOrder = this.getRenderOrder();
+        function setRenderOrder( mesh ){
+            mesh.renderOrder = renderOrder;
+        }
+
+        this.group.children.forEach( setRenderOrder );
+        if( this.pickingGroup ){
+            this.pickingGroup.children.forEach( setRenderOrder );
+        }
+
+    },
+
+    updateShader: function(){
+
+        var m = this.material;
+        var wm = this.wireframeMaterial;
+        var pm = this.pickingMaterial;
+
+        m.vertexShader = this.getVertexShader();
+        m.fragmentShader = this.getFragmentShader();
+        m.needsUpdate = true;
+
+        wm.vertexShader = this.getShader( "Line.vert" );
+        wm.fragmentShader = this.getShader( "Line.frag" );
+        wm.needsUpdate = true;
+
+        pm.vertexShader = this.getVertexShader( "picking" );
+        pm.fragmentShader = this.getFragmentShader( "picking" );
+        pm.needsUpdate = true;
+
+    },
+
+    setParameters: function( params ){
+
+        if( !params ) return;
+
+        var p = params;
+        var tp = this.parameters;
+
+        var propertyData = {};
+        var uniformData = {};
+        var doShaderUpdate = false;
+        var doVisibilityUpdate = false;
+
+        for( var name in p ){
+
+            if( p[ name ] === undefined ) continue;
+            if( tp[ name ] === undefined ) continue;
+
+            this[ name ] = p[ name ];
+
+            if( tp[ name ].property ){
+                if( tp[ name ].property !== true ){
+                    propertyData[ tp[ name ].property ] = p[ name ];
+                }else{
+                    propertyData[ name ] = p[ name ];
+                }
+            }
+
+            if( tp[ name ].uniform ){
+                uniformData[ name ] = p[ name ];
+            }
+
+            if( tp[ name ].updateShader ){
+                doShaderUpdate = true;
+            }
+
+            if( tp[ name ].updateVisibility ){
+                doVisibilityUpdate = true;
+            }
+
+        }
+
+        this.setProperties( propertyData );
+        this.setUniforms( uniformData );
+        if( doShaderUpdate ) this.updateShader();
+        if( doVisibilityUpdate ) this.setVisibility( this.visible );
 
     },
 
@@ -311,67 +667,168 @@ NGL.Buffer.prototype = {
          * buffer.setAttributes({ attrName: attrData });
          */
 
-        var attributes = this.geometry.attributes;
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
 
-        if( this.wireframeGeometry ){
+        for( var name in data ){
 
-            var wireframeAttributes = this.wireframeGeometry.attributes;
+            var array = data[ name ];
+            var length = array.length;
 
-        }
+            if( name === "index" ){
 
-        Object.keys( data ).forEach( function( name ){
+                geometry.clearGroups();
+                this.wireframeGeometry.clearGroups();
 
-            attributes[ name ].set( data[ name ] );
-            attributes[ name ].needsUpdate = true;
+                if( length > geometry.index.array.length ){
 
-            if( this.wireframeGeometry ){
+                    geometry.addIndex(
+                        new THREE.BufferAttribute( array, 1 )
+                    );
 
-                wireframeAttributes[ name ].set( data[ name ] );
-                wireframeAttributes[ name ].needsUpdate = true;
+                    //
+
+                    this.makeWireframeIndex();
+
+                    this.wireframeGeometry.addIndex(
+                        new THREE.BufferAttribute( this.wireframeIndex, 1 )
+                    );
+
+                }else{
+
+                    geometry.index.set( data[ name ] );
+                    geometry.index.needsUpdate = true;
+
+                    geometry.addGroup( 0, data[ name ].length );
+
+                    //
+
+                    this.makeWireframeIndex();
+
+                    this.wireframeGeometry.index.set( this.wireframeIndex );
+                    this.wireframeGeometry.index.needsUpdate = true;
+
+                }
+
+                this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+
+            }else{
+
+                var attribute = attributes[ name ];
+
+                if( length > attribute.array.length ){
+
+                    geometry.addAttribute(
+                        name,
+                        new THREE.BufferAttribute( array, attribute.itemSize )
+                    );
+
+                }else{
+
+                    attributes[ name ].set( data[ name ] );
+                    attributes[ name ].needsUpdate = true;
+
+                }
 
             }
 
-        }, this );
+        }
 
     },
 
-    makeIndex: function(){
+    setUniforms: function( data ){
 
-        if( this.index ){
+        if( !data ) return;
 
-            this.geometry.addAttribute(
-                "index",
-                new THREE.BufferAttribute( this.index, 1 )
-            );
+        var u = this.material.uniforms;
+        var wu = this.wireframeMaterial.uniforms;
+        var pu = this.pickingMaterial.uniforms;
+
+        for( var name in data ){
+
+            if( name === "opacity" ){
+                this.setProperties( { transparent: data[ name ] < 1 } );
+            }
+
+            if( u[ name ] !== undefined ){
+                u[ name ].value = data[ name ];
+            }
+
+            if( wu[ name ] !== undefined ){
+                wu[ name ].value = data[ name ];
+            }
+
+            if( pu[ name ] !== undefined ){
+                pu[ name ].value = data[ name ];
+            }
 
         }
+
+    },
+
+    setProperties: function( data ){
+
+        if( !data ) return;
+
+        var m = this.material;
+        var wm = this.wireframeMaterial;
+        var pm = this.pickingMaterial;
+
+        for( var name in data ){
+
+            if( name === "transparent" ){
+                this.updateRenderOrder();
+            }
+
+            if( m[ name ] !== undefined ){
+                m[ name ] = data[ name ];
+            }
+
+            if( wm[ name ] !== undefined ){
+                wm[ name ] = data[ name ];
+            }
+
+            if( pm[ name ] !== undefined ){
+                pm[ name ] = data[ name ];
+            }
+
+        }
+
+        m.needsUpdate = true;
+        wm.needsUpdate = true;
+        pm.needsUpdate = true;
 
     },
 
     setVisibility: function( value ){
 
-        this.group.visible = value;
-        if( this.pickable ){
-            this.pickingGroup.visible = value;
+        this.visible = value;
+
+        if( this.wireframe ){
+
+            this.group.visible = false;
+            this.wireframeGroup.visible = value;
+            if( this.pickable ){
+                this.pickingGroup.visible = false;
+            }
+
+        }else{
+
+            this.group.visible = value;
+            this.wireframeGroup.visible = false;
+            if( this.pickable ){
+                this.pickingGroup.visible = value;
+            }
+
         }
 
     },
 
     dispose: function(){
 
-        this.group.traverse( function ( o ){
-            if( o.material ){
-                o.material.dispose();
-            }
-        } );
-
-        if( this.pickable ){
-            this.pickingGroup.traverse( function ( o ){
-                if( o.material ){
-                    o.material.dispose();
-                }
-            } );
-        }
+        if( this.material ) this.material.dispose();
+        if( this.wireframeMaterial ) this.wireframeMaterial.dispose();
+        if( this.pickingMaterial ) this.pickingMaterial.dispose();
 
         this.geometry.dispose();
         if( this.wireframeGeometry ) this.wireframeGeometry.dispose();
@@ -385,28 +842,19 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
 
     var p = params || {};
 
-    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
-
-    this.size = position.length / 3;
+    this.size = position ? position.length / 3 : 0;
     this.attributeSize = this.size;
     this.vertexShader = 'Mesh.vert';
     this.fragmentShader = 'Mesh.frag';
 
-    this.index = index;
+    NGL.Buffer.call( this, position, color, index, pickingColor, p );
 
-    NGL.Buffer.call( this, position, color, pickingColor, p );
-
-    this.addAttributes({
+    this.addAttributes( {
         "normal": { type: "v3", value: normal },
-    });
-
-    this.finalize();
+    } );
 
     if( normal === undefined ){
-
         this.geometry.computeVertexNormals();
-
     }
 
 };
@@ -418,14 +866,26 @@ NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
 
 NGL.MappedBuffer = function( params ){
 
-    this.mappedSize = this.size * this.mappingSize;
-    this.attributeSize = this.mappedSize;
+    // required
+    // - mapping
+    // - mappingType
+    // - mappingSize
+    // - mappingItemSize
+    // - mappingIndices
+    // - mappingIndicesSize
 
-    NGL.Buffer.call( this, null, null, null, params );
+    this.size = this.count;
+    this.attributeSize = this.count * this.mappingSize;
 
-    this.addAttributes({
+    var index = new Uint32Array( this.count * this.mappingIndicesSize );
+
+    NGL.Buffer.call( this, null, null, index, null, params );
+
+    this.addAttributes( {
         "mapping": { type: this.mappingType, value: null },
-    });
+    } );
+
+    this.makeIndex();
 
 };
 
@@ -433,37 +893,29 @@ NGL.MappedBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.MappedBuffer.prototype.constructor = NGL.MappedBuffer;
 
-NGL.MappedBuffer.prototype.finalize = function(){
-
-    this.makeMapping();
-
-    NGL.Buffer.prototype.finalize.call( this );
-
-};
-
 NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
-    var attributes = this.geometry.attributes;
-    var size = this.size;
+    var count = this.count;
     var mappingSize = this.mappingSize;
+    var attributes = this.geometry.attributes;
 
     var a, d, itemSize, array, n, i, j;
 
-    Object.keys( data ).forEach( function( name ){
+    for( var name in data ){
 
         d = data[ name ];
         a = attributes[ name ];
         itemSize = a.itemSize;
         array = a.array;
 
-        for( var k = 0; k < size; ++k ) {
+        for( var k = 0; k < count; ++k ) {
 
             n = k * itemSize;
             i = n * mappingSize;
 
             for( var l = 0; l < mappingSize; ++l ) {
 
-                j = i + (itemSize * l);
+                j = i + ( itemSize * l );
 
                 for( var m = 0; m < itemSize; ++m ) {
 
@@ -477,20 +929,20 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
         a.needsUpdate = true;
 
-    }, this );
+    }
 
 };
 
 NGL.MappedBuffer.prototype.makeMapping = function(){
 
-    var size = this.size;
+    var count = this.count;
     var mapping = this.mapping;
     var mappingSize = this.mappingSize;
     var mappingItemSize = this.mappingItemSize;
 
     var aMapping = this.geometry.attributes[ "mapping" ].array;
 
-    for( var v = 0; v < size; v++ ) {
+    for( var v = 0; v < count; v++ ) {
 
         aMapping.set( mapping, v * mappingItemSize * mappingSize );
 
@@ -500,24 +952,17 @@ NGL.MappedBuffer.prototype.makeMapping = function(){
 
 NGL.MappedBuffer.prototype.makeIndex = function(){
 
-    var size = this.size;
+    var count = this.count;
     var mappingSize = this.mappingSize;
     var mappingIndices = this.mappingIndices;
     var mappingIndicesSize = this.mappingIndicesSize;
     var mappingItemSize = this.mappingItemSize;
 
-    this.geometry.addAttribute(
-        "index",
-        new THREE.BufferAttribute(
-            new Uint32Array( size * mappingIndicesSize ), 1
-        )
-    );
-
-    var index = this.geometry.attributes[ "index" ].array;
+    var index = this.geometry.index.array;
 
     var i, ix, it;
 
-    for( var v = 0; v < size; v++ ) {
+    for( var v = 0; v < count; v++ ) {
 
         i = v * mappingItemSize * mappingSize;
         ix = v * mappingIndicesSize;
@@ -525,7 +970,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 
         index.set( mappingIndices, ix );
 
-        for( var s=0; s<mappingIndicesSize; ++s ){
+        for( var s = 0; s < mappingIndicesSize; ++s ){
             index[ ix + s ] += it;
         }
 
@@ -641,41 +1086,41 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 
 NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
-    this.size = position.length / 3;
+    this.count = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
     this.fragmentShader = 'SphereImpostor.frag';
 
     NGL.QuadBuffer.call( this, params );
 
-    this.addUniforms({
+    this.addUniforms( {
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "color": color,
         "radius": radius,
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -694,25 +1139,25 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
 
     this.cap = p.cap !== undefined ? p.cap : true;
 
-    this.size = from.length / 3;
+    this.count = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
     this.fragmentShader = 'CylinderImpostor.frag';
 
     NGL.AlignedBoxBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'shift': { type: "f", value: this.shift },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
         "color2": { type: "c", value: null },
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": NGL.Utils.calculateCenterArray( from, to ),
 
         "position1": from,
@@ -720,25 +1165,25 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
         "color": color,
         "color2": color2,
         "radius": radius,
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
             "pickingColor2": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
     // FIXME
     // if( this.cap ){
@@ -770,29 +1215,29 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
-    this.size = position1.length / 3;
+    this.count = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
     this.fragmentShader = 'HyperballStickImpostor.frag';
 
     NGL.BoxBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
         'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
         'shrink': { type: "f", value: shrink },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "color": { type: "c", value: null },
         "color2": { type: "c", value: null },
         "radius": { type: "f", value: null },
         "radius2": { type: "f", value: null },
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "color": color,
         "color2": color2,
         "radius": radius1,
@@ -801,25 +1246,25 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
         "position2": position2,
 
         "position": NGL.Utils.calculateCenterArray( position1, position2 ),
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
             "pickingColor2": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -827,12 +1272,19 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
 
 NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpostorBuffer;
 
+NGL.HyperballStickImpostorBuffer.prototype.parameters = Object.assign( {
+
+    shrink: { uniform: true }
+
+}, NGL.BoxBuffer.prototype.parameters );
+
 
 ////////////////////////
 // Geometry Primitives
 
-
 NGL.GeometryBuffer = function( position, color, pickingColor, params ){
+
+    var p = params || {};
 
     // required properties:
     // - geo
@@ -850,233 +1302,178 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
     this.geoNormal = NGL.Utils.normalFromGeometry( geo );
     this.geoIndex = NGL.Utils.indexFromGeometry( geo );
 
+    this.transformedGeoPosition = new Float32Array( m * 3 );
+    this.transformedGeoNormal = new Float32Array( m * 3 );
+
     this.meshPosition = new Float32Array( this.size * 3 );
     this.meshNormal = new Float32Array( this.size * 3 );
     this.meshIndex = new Uint32Array( n * o * 3 );
     this.meshColor = new Float32Array( this.size * 3 );
     this.meshPickingColor = new Float32Array( this.size * 3 );
 
-    this.transformedGeoPosition = new Float32Array( m * 3 );
-    this.transformedGeoNormal = new Float32Array( m * 3 );
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor, p
+    );
+
+    this.initNormals = true;
+
+    this.setAttributes( {
+        position: position,
+        color: color,
+        pickingColor: pickingColor
+    } );
+
+    this.initNormals = false;
 
     this.makeIndex();
 
-    this.setAttributes({
-        "position": position,
-        "color": color,
-        "pickingColor": pickingColor
-    });
-
-    this.meshBuffer = new NGL.MeshBuffer(
-        this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, params
-    );
-
-    this.pickable = this.meshBuffer.pickable;
-    this.geometry = this.meshBuffer.geometry;
-
 };
 
-NGL.GeometryBuffer.prototype = {
+NGL.GeometryBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.GeometryBuffer,
+NGL.GeometryBuffer.prototype.constructor = NGL.GeometryBuffer;
 
-    get group () {
+NGL.GeometryBuffer.prototype.applyPositionTransform = function(){};
 
-        return this.meshBuffer.group;
+NGL.GeometryBuffer.prototype.setAttributes = function(){
 
-    },
+    var matrix = new THREE.Matrix4();
+    var normalMatrix = new THREE.Matrix3();
 
-    get pickingGroup () {
+    return function( data ){
 
-        return this.meshBuffer.pickingGroup;
+        var attributes = this.geometry.attributes;
 
-    },
+        var position, color, pickingColor;
+        var geoPosition, geoNormal;
+        var transformedGeoPosition, transformedGeoNormal;
+        var meshPosition, meshColor, meshPickingColor, meshNormal;
 
-    get transparent () {
-
-        return this.meshBuffer.transparent;
-
-    },
-
-    set transparent ( value ) {
-
-        this.meshBuffer.transparent = value;
-
-    },
-
-    applyPositionTransform: function(){},
-
-    setAttributes: function(){
-
-        var matrix = new THREE.Matrix4();
-        var normalMatrix = new THREE.Matrix3();
-
-        return function( data ){
-
-            var position, color, pickingColor;
-
-            if( data[ "position" ] ){
-                position = data[ "position" ];
-                var geoPosition = this.geoPosition;
-                var meshPosition = this.meshPosition;
-                var transformedGeoPosition = this.transformedGeoPosition;
-            }
-
-            if( data[ "color" ] ){
-                color = data[ "color" ];
-                var meshColor = this.meshColor;
-            }
-
-            if( data[ "pickingColor" ] ){
-                pickingColor = data[ "pickingColor" ];
-                var meshPickingColor = this.meshPickingColor;
-            }
-
-            var updateNormals = ( this.updateNormals && position ) || !this.meshBuffer;
-
-            if( updateNormals ){
-                var geoNormal = this.geoNormal;
-                var meshNormal = this.meshNormal;
-                var transformedGeoNormal = this.transformedGeoNormal;
-            }
-
-            var n = this.positionCount;
-            var m = this.geo.vertices.length;
-
-            var i, j, k, l, i3;
-
-            for( i = 0; i < n; ++i ){
-
-                k = i * m * 3;
-                i3 = i * 3;
-
-                if( position ){
-
-                    transformedGeoPosition.set( geoPosition );
-                    matrix.makeTranslation(
-                        position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
-                    );
-                    this.applyPositionTransform( matrix, i, i3 );
-                    matrix.applyToVector3Array( transformedGeoPosition );
-
-                    meshPosition.set( transformedGeoPosition, k );
-
-                }
-
-                if( updateNormals ){
-
-                    transformedGeoNormal.set( geoNormal );
-                    normalMatrix.getNormalMatrix( matrix );
-                    normalMatrix.applyToVector3Array( transformedGeoNormal );
-
-                    meshNormal.set( transformedGeoNormal, k );
-
-                }
-
-                if( color ){
-
-                    for( j = 0; j < m; ++j ){
-
-                        l = k + 3 * j;
-
-                        meshColor[ l + 0 ] = color[ i3 + 0 ];
-                        meshColor[ l + 1 ] = color[ i3 + 1 ];
-                        meshColor[ l + 2 ] = color[ i3 + 2 ];
-
-                    }
-
-                }
-
-                if( pickingColor ){
-
-                    for( j = 0; j < m; ++j ){
-
-                        l = k + 3 * j;
-
-                        meshPickingColor[ l + 0 ] = pickingColor[ i3 + 0 ];
-                        meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
-                        meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
-
-                    }
-
-                }
-
-            }
-
-            var meshData = {};
-
-            if( position ){
-                meshData[ "position" ] = meshPosition;
-            }
-
-            if( updateNormals ){
-                meshData[ "normal" ] = meshNormal;
-            }
-
-            if( color ){
-                meshData[ "color" ] = meshColor;
-            }
-
-            if( pickingColor ){
-                meshData[ "pickingColor" ] = meshPickingColor;
-            }
-
-            if( this.meshBuffer ){
-                this.meshBuffer.setAttributes( meshData );
-            }
-
+        if( data[ "position" ] ){
+            position = data[ "position" ];
+            geoPosition = this.geoPosition;
+            meshPosition = this.meshPosition;
+            transformedGeoPosition = this.transformedGeoPosition;
+            attributes[ "position" ].needsUpdate = true;
         }
 
-    }(),
+        if( data[ "color" ] ){
+            color = data[ "color" ];
+            meshColor = this.meshColor;
+            attributes[ "color" ].needsUpdate = true;
+        }
 
-    makeIndex: function(){
+        if( data[ "pickingColor" ] ){
+            pickingColor = data[ "pickingColor" ];
+            meshPickingColor = this.meshPickingColor;
+            attributes[ "pickingColor" ].needsUpdate = true;
+        }
 
-        var geoIndex = this.geoIndex;
-        var meshIndex = this.meshIndex;
+        var updateNormals = !!( this.updateNormals && position );
+        var initNormals = !!( this.initNormals && position );
+
+        if( updateNormals || initNormals ){
+            geoNormal = this.geoNormal;
+            meshNormal = this.meshNormal;
+            transformedGeoNormal = this.transformedGeoNormal;
+            attributes[ "normal" ].needsUpdate = true;
+        }
 
         var n = this.positionCount;
         var m = this.geo.vertices.length;
-        var o = this.geo.faces.length;
 
-        var p, i, j, q;
-        var o3 = o * 3;
+        var i, j, k, l, i3;
 
         for( i = 0; i < n; ++i ){
 
-            j = i * o3;
-            q = j + o3;
+            k = i * m * 3;
+            i3 = i * 3;
 
-            meshIndex.set( geoIndex, j );
-            for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
+            if( position ){
+
+                transformedGeoPosition.set( geoPosition );
+                matrix.makeTranslation(
+                    position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
+                );
+                this.applyPositionTransform( matrix, i, i3 );
+                matrix.applyToVector3Array( transformedGeoPosition );
+
+                meshPosition.set( transformedGeoPosition, k );
+
+            }
+
+            if( updateNormals ){
+
+                transformedGeoNormal.set( geoNormal );
+                normalMatrix.getNormalMatrix( matrix );
+                normalMatrix.applyToVector3Array( transformedGeoNormal );
+
+                meshNormal.set( transformedGeoNormal, k );
+
+            }else if( initNormals ){
+
+                meshNormal.set( geoNormal, k );
+
+            }
+
+            if( color ){
+
+                for( j = 0; j < m; ++j ){
+
+                    l = k + 3 * j;
+
+                    meshColor[ l     ] = color[ i3     ];
+                    meshColor[ l + 1 ] = color[ i3 + 1 ];
+                    meshColor[ l + 2 ] = color[ i3 + 2 ];
+
+                }
+
+            }
+
+            if( pickingColor ){
+
+                for( j = 0; j < m; ++j ){
+
+                    l = k + 3 * j;
+
+                    meshPickingColor[ l     ] = pickingColor[ i3     ];
+                    meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
+                    meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
+
+                }
+
+            }
 
         }
 
-    },
+    }
 
-    getRenderOrder: function(){
+}();
 
-        return this.meshBuffer.getRenderOrder();
+NGL.GeometryBuffer.prototype.makeIndex = function(){
 
-    },
+    var geoIndex = this.geoIndex;
+    var meshIndex = this.meshIndex;
 
-    getMesh: function( type, material ){
+    var n = this.positionCount;
+    var m = this.geo.vertices.length;
+    var o = this.geo.faces.length;
 
-        return this.meshBuffer.getMesh( type, material );
+    var p, i, j, q;
+    var o3 = o * 3;
 
-    },
+    for( i = 0; i < n; ++i ){
 
-    getMaterial: function( type ){
+        j = i * o3;
+        q = j + o3;
 
-        return this.meshBuffer.getMaterial( type );
+        meshIndex.set( geoIndex, j );
+        for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
 
-    },
+    }
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
-
-}
+};
 
 
 NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
@@ -1145,7 +1542,13 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
 
     this.__center = new Float32Array( n );
 
-    this.setAttributes({
+    NGL.GeometryBuffer.call(
+        this, this._position, this._color, this._pickingColor, params
+    );
+
+    this.setPositionTransform( this._from, this._to, this._radius );
+
+    this.setAttributes( {
         "position1": from,
         "position2": to,
         "color": color,
@@ -1153,13 +1556,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
         "radius": radius,
         "pickingColor": pickingColor,
         "pickingColor2": pickingColor2
-    }, true );
-
-    this.setPositionTransform( this._from, this._to, this._radius );
-
-    NGL.GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor, params
-    );
+    } );
 
 };
 
@@ -1189,14 +1586,7 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
 
 };
 
-NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
-
-    if( !this.meshBuffer && !init ){
-
-        NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
-        return;
-
-    }
+NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
 
     var n = this._position.length / 2;
     var m = this._radius.length / 2;
@@ -1255,11 +1645,7 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
 
     }
 
-    if( this.meshBuffer ){
-
-        NGL.GeometryBuffer.prototype.setAttributes.call( this, geoData );
-
-    }
+    NGL.GeometryBuffer.prototype.setAttributes.call( this, geoData );
 
 }
 
@@ -1271,6 +1657,7 @@ NGL.PointBuffer = function( position, color, params ){
 
     var p = params || {};
 
+    this.point = true;
     this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
     this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
     this.sort = p.sort !== undefined ? p.sort : false;
@@ -1288,7 +1675,7 @@ NGL.PointBuffer = function( position, color, params ){
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
 
-    NGL.Buffer.call( this, position, color, null, p );
+    NGL.Buffer.call( this, position, color, undefined, undefined, p );
 
 };
 
@@ -1296,21 +1683,15 @@ NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
 
-NGL.PointBuffer.prototype.getMesh = function( type, material ){
+NGL.PointBuffer.prototype.parameters = Object.assign( {
 
-    material = material || this.getMaterial( type );
+    pointSize: { property: "size" },
+    sizeAttenuation: { property: true },
+    sort: {}
 
-    var points = new THREE.PointCloud(
-        this.geometry, material
-    );
+}, NGL.Buffer.prototype.parameters );
 
-    if( this.sort ) points.sortParticles = true
-
-    return points;
-
-};
-
-NGL.PointBuffer.prototype.getMaterial = function( type ){
+NGL.PointBuffer.prototype.makeMaterial = function(){
 
     var material;
 
@@ -1359,7 +1740,9 @@ NGL.PointBuffer.prototype.getMaterial = function( type ){
 
     }
 
-    return material;
+    this.material = material;
+    this.wireframeMaterial = material;
+    this.pickingMaterial = material;
 
 };
 
@@ -1376,335 +1759,207 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
 
     var p = params || {};
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
-    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
-
     this.size = from.length / 3;
     this.vertexShader = 'Line.vert';
     this.fragmentShader = 'Line.frag';
+    this.line = true;
 
     var n = this.size;
     var n6 = n * 6;
     var nX = n * 2 * 2;
 
-    this.attributes = [ "position", "color" ];
+    this.attributeSize = nX;
 
-    this.geometry = new THREE.BufferGeometry();
+    this.linePosition = new Float32Array( nX * 3 );
+    this.lineColor = new Float32Array( nX * 3 );
 
-    this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
-    );
-    this.geometry.addAttribute(
-        'color', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.setAttributes({
+    this.setAttributes( {
         from: from,
         to: to,
         color: color,
         color2: color2
-    });
-
-    this.uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-        }
-    ] );
-
-    this.group = new THREE.Group();
+    } );
 
 };
 
-NGL.LineBuffer.prototype = {
+NGL.LineBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.LineBuffer,
+NGL.LineBuffer.prototype.constructor = NGL.LineBuffer;
 
-    setAttributes: function( data ){
+NGL.LineBuffer.prototype.setAttributes = function( data ){
 
-        var from, to, color, color2;
-        var aPosition, aColor;
+    var from, to, color, color2;
+    var aPosition, aColor;
 
-        var attributes = this.geometry.attributes;
+    var attributes = this.geometry.attributes;
 
-        if( data[ "from" ] && data[ "to" ] ){
-            from = data[ "from" ];
-            to = data[ "to" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
-        }
+    if( data[ "from" ] && data[ "to" ] ){
+        from = data[ "from" ];
+        to = data[ "to" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        if( data[ "color" ] && data[ "color2" ] ){
-            color = data[ "color" ];
-            color2 = data[ "color2" ];
-            aColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
-        }
+    if( data[ "color" ] && data[ "color2" ] ){
+        color = data[ "color" ];
+        color2 = data[ "color2" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
 
-        var n = this.size;
-        var n6 = n * 6;
+    var n = this.size;
+    var n6 = n * 6;
 
-        var i, j, i2;
+    var i, j, i2;
+    var x, y, z, x1, y1, z1, x2, y2, z2;
 
-        var x, y, z, x1, y1, z1, x2, y2, z2;
+    for( var v = 0; v < n; v++ ){
 
-        for( var v = 0; v < n; v++ ){
+        j = v * 3;
+        i = v * 2 * 3;
+        i2 = i + n6;
 
-            j = v * 3;
-            i = v * 2 * 3;
+        if( from && to ){
 
-            if( from && to ){
+            x1 = from[ j     ];
+            y1 = from[ j + 1 ];
+            z1 = from[ j + 2 ];
 
-                x1 = from[ j + 0 ];
-                y1 = from[ j + 1 ];
-                z1 = from[ j + 2 ];
+            x2 = to[ j     ];
+            y2 = to[ j + 1 ];
+            z2 = to[ j + 2 ];
 
-                x2 = to[ j + 0 ];
-                y2 = to[ j + 1 ];
-                z2 = to[ j + 2 ];
+            x = ( x1 + x2 ) / 2.0;
+            y = ( y1 + y2 ) / 2.0;
+            z = ( z1 + z2 ) / 2.0;
 
-                x = ( x1 + x2 ) / 2.0;
-                y = ( y1 + y2 ) / 2.0;
-                z = ( z1 + z2 ) / 2.0;
+            aPosition[ i     ] = x1;
+            aPosition[ i + 1 ] = y1;
+            aPosition[ i + 2 ] = z1;
+            aPosition[ i + 3 ] = x;
+            aPosition[ i + 4 ] = y;
+            aPosition[ i + 5 ] = z;
 
-                aPosition[ i + 0 ] = from[ j + 0 ];
-                aPosition[ i + 1 ] = from[ j + 1 ];
-                aPosition[ i + 2 ] = from[ j + 2 ];
-                aPosition[ i + 3 ] = x;
-                aPosition[ i + 4 ] = y;
-                aPosition[ i + 5 ] = z;
-
-            }
-
-            if( color && color2 ){
-
-                aColor[ i + 0 ] = color[ j + 0 ];
-                aColor[ i + 1 ] = color[ j + 1 ];
-                aColor[ i + 2 ] = color[ j + 2 ];
-                aColor[ i + 3 ] = color[ j + 0 ];
-                aColor[ i + 4 ] = color[ j + 1 ];
-                aColor[ i + 5 ] = color[ j + 2 ];
-
-            }
-
-            i2 = i + n6;
-
-            if( from && to ){
-
-                aPosition[ i2 + 0 ] = x;
-                aPosition[ i2 + 1 ] = y;
-                aPosition[ i2 + 2 ] = z;
-                aPosition[ i2 + 3 ] = to[ j + 0 ];
-                aPosition[ i2 + 4 ] = to[ j + 1 ];
-                aPosition[ i2 + 5 ] = to[ j + 2 ];
-
-            }
-
-            if( color && color2 ){
-
-                aColor[ i2 + 0 ] = color2[ j + 0 ];
-                aColor[ i2 + 1 ] = color2[ j + 1 ];
-                aColor[ i2 + 2 ] = color2[ j + 2 ];
-                aColor[ i2 + 3 ] = color2[ j + 0 ];
-                aColor[ i2 + 4 ] = color2[ j + 1 ];
-                aColor[ i2 + 5 ] = color2[ j + 2 ];
-
-            }
+            aPosition[ i2     ] = x;
+            aPosition[ i2 + 1 ] = y;
+            aPosition[ i2 + 2 ] = z;
+            aPosition[ i2 + 3 ] = x2;
+            aPosition[ i2 + 4 ] = y2;
+            aPosition[ i2 + 5 ] = z2;
 
         }
 
-    },
+        if( color && color2 ){
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+            aColor[ i     ] = aColor[ i + 3 ] = color[ j     ];
+            aColor[ i + 1 ] = aColor[ i + 4 ] = color[ j + 1 ];
+            aColor[ i + 2 ] = aColor[ i + 5 ] = color[ j + 2 ];
 
-    getMesh: function( type, material ){
-
-        material = material || this.getMaterial( type );
-
-        return new THREE.LineSegments( this.geometry, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
-
-        var material = new THREE.ShaderMaterial( {
-            uniforms: uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: this.transparent,
-            depthWrite: true,
-            lights: false,
-            fog: true,
-            linewidth: this.lineWidth
-        } );
-
-        if( this.nearClip ){
-
-            material.defines[ "NEAR_CLIP" ] = 1;
+            aColor[ i2     ] = aColor[ i2 + 3 ] = color2[ j     ];
+            aColor[ i2 + 1 ] = aColor[ i2 + 4 ] = color2[ j + 1 ];
+            aColor[ i2 + 2 ] = aColor[ i2 + 5 ] = color2[ j + 2 ];
 
         }
 
-        return material;
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+    }
 
 };
 
 
 NGL.TraceBuffer = function( position, color, params ){
 
+    var p = params || {};
+
     this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
 
     var n = this.size;
     var n1 = n - 1;
 
-    this.from = new Float32Array( n1 * 3 );
-    this.to = new Float32Array( n1 * 3 );
-    this.lineColor = new Float32Array( n1 * 3 );
-    this.lineColor2 = new Float32Array( n1 * 3 );
+    this.attributeSize = n1 * 2;
 
-    this.setAttributes({
-        position: position,
-        color: color
-    });
+    this.linePosition = new Float32Array( n1 * 3 * 2 );
+    this.lineColor = new Float32Array( n1 * 3 * 2 );
 
-    this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2, params
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.pickable = this.lineBuffer.pickable;
-    this.geometry = this.lineBuffer.geometry;
+    this.setAttributes( {
+        position: position,
+        color: color
+    } );
 
 };
 
-NGL.TraceBuffer.prototype = {
+NGL.TraceBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.TraceBuffer,
+NGL.TraceBuffer.prototype.constructor = NGL.TraceBuffer;
 
-    get group () {
+NGL.TraceBuffer.prototype.setAttributes = function( data ){
 
-        return this.lineBuffer.group;
+    var position, color;
+    var linePosition, lineColor;
 
-    },
+    var attributes = this.geometry.attributes;
 
-    get pickingGroup () {
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        linePosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        return this.lineBuffer.pickingGroup;
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        lineColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
 
-    },
+    if( !position && !color ){
+        NGL.warn( "NGL.TraceBuffer.prototype.setAttributes no data" );
+        return;
+    }
 
-    get transparent () {
+    var v, v2;
+    var n = this.size;
+    var n1 = n - 1;
 
-        return this.lineBuffer.transparent;
+    for( var i = 0; i < n1; ++i ){
 
-    },
-
-    set transparent ( value ) {
-
-        this.lineBuffer.transparent = value;
-
-    },
-
-    setAttributes: function( data ){
-
-        var position, color;
-        var from, to, lineColor, lineColor2;
-
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            from = this.from;
-            to = this.to;
-        }
-
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            lineColor = this.lineColor;
-            lineColor2 = this.lineColor2;
-        }
-
-        var n = this.size;
-        var n1 = n - 1;
-
-        for( var i=0, v; i<n1; ++i ){
-
-            v = 3 * i;
-
-            if( position ){
-
-                from[ v + 0 ] = position[ v + 0 ];
-                from[ v + 1 ] = position[ v + 1 ];
-                from[ v + 2 ] = position[ v + 2 ];
-
-                to[ v + 0 ] = position[ v + 3 ];
-                to[ v + 1 ] = position[ v + 4 ];
-                to[ v + 2 ] = position[ v + 5 ];
-
-            }
-
-            if( color ){
-
-                lineColor[ v + 0 ] = color[ v + 0 ];
-                lineColor[ v + 1 ] = color[ v + 1 ];
-                lineColor[ v + 2 ] = color[ v + 2 ];
-
-                lineColor2[ v + 0 ] = color[ v + 3 ];
-                lineColor2[ v + 1 ] = color[ v + 4 ];
-                lineColor2[ v + 2 ] = color[ v + 5 ];
-
-            }
-
-        }
-
-        var lineData = {};
+        v = 3 * i;
+        v2 = 3 * i * 2;
 
         if( position ){
-            lineData[ "from" ] = from;
-            lineData[ "to" ] = to;
+
+            linePosition[ v2     ] = position[ v     ];
+            linePosition[ v2 + 1 ] = position[ v + 1 ];
+            linePosition[ v2 + 2 ] = position[ v + 2 ];
+
+            linePosition[ v2 + 3 ] = position[ v + 3 ];
+            linePosition[ v2 + 4 ] = position[ v + 4 ];
+            linePosition[ v2 + 5 ] = position[ v + 5 ];
+
         }
 
         if( color ){
-            lineData[ "color" ] = lineColor;
-            lineData[ "color2" ] = lineColor2;
+
+            lineColor[ v2     ] = color[ v     ];
+            lineColor[ v2 + 1 ] = color[ v + 1 ];
+            lineColor[ v2 + 2 ] = color[ v + 2 ];
+
+            lineColor[ v2 + 3 ] = color[ v + 3 ];
+            lineColor[ v2 + 4 ] = color[ v + 4 ];
+            lineColor[ v2 + 5 ] = color[ v + 5 ];
+
         }
 
-        if( this.lineBuffer ){
-            this.lineBuffer.setAttributes( lineData );
-        }
-
-    },
-
-    getRenderOrder: function(){
-
-        return this.lineBuffer.getRenderOrder();
-
-    },
-
-    getMesh: function( type, material ){
-
-        return this.lineBuffer.getMesh( type, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        return this.lineBuffer.getMaterial( type );
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+    }
 
 };
 
@@ -1714,7 +1969,7 @@ NGL.TraceBuffer.prototype = {
 
 NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
-    this.size = position.length / 3;
+    this.count = position.length / 3;
     this.vertexShader = 'ParticleSprite.vert';
     this.fragmentShader = 'ParticleSprite.frag';
 
@@ -1724,17 +1979,15 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
     });
 
-    this.addAttributes({
+    this.addAttributes( {
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "color": color,
         "radius": radius,
-    });
-
-    this.finalize();
+    } );
 
     this.material.lights = false;
 
@@ -1749,288 +2002,222 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
 
     var p = params || {};
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
-    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
+    var n = ( position.length / 3 ) - 1;
+    var n4 = n * 4;
+    var x = n4 * 3;
+
+    this.meshPosition = new Float32Array( x );
+    this.meshColor = new Float32Array( x );
+    this.meshNormal = new Float32Array( x );
+    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
+    this.meshIndex = new Uint32Array( x );
+
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor, p
+    );
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
-    this.size = ( position.length/3 ) - 1;
-
-    var n = this.size;
-    var n4 = n * 4;
-
-    this.attributes = [
-        "position", "normal",
-        "inputDir", "inputSize", "inputNormal", "inputColor"
-    ];
-
-    if( pickingColor ){
-        this.attributes.push( "pickingColor" );
-    }
-
-    this.uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-            "objectId": { type: "f", value: 0.0 },
-        }
-    ]);
-
-    this.pickingUniforms = {
-        "nearClip": { type: "f", value: 0.0 },
-        "objectId": { type: "f", value: 0.0 },
-    };
-
-    this.geometry = new THREE.BufferGeometry();
 
     this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
+        'dir', new THREE.BufferAttribute( new Float32Array( x ), 3 )
     );
     this.geometry.addAttribute(
-        'inputDir', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
+        'size', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
     );
-    this.geometry.addAttribute(
-        'inputSize', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
-    );
-    this.geometry.addAttribute(
-        'normal', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-    );
-    this.geometry.addAttribute(
-        'inputColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-    );
-    if( pickingColor ){
-        this.geometry.addAttribute(
-            'pickingColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-        );
-        this.pickable = true;
-    }
 
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         normal: normal,
         dir: dir,
         color: color,
         size: size,
         pickingColor: pickingColor
-    });
+    } );
 
-    this.group = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
-
-    NGL.Buffer.prototype.finalize.call( this );
+    this.makeIndex();
 
 };
 
-NGL.RibbonBuffer.prototype = {
+NGL.RibbonBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.RibbonBuffer,
+NGL.RibbonBuffer.prototype.constructor = NGL.RibbonBuffer;
 
-    setAttributes: function( data ){
+NGL.RibbonBuffer.prototype.setAttributes = function( data ){
 
-        var n = this.size;
-        var n4 = n * 4;
+    var n4 = this.size;
+    var n = n4 / 4;
 
-        var attributes = this.geometry.attributes;
+    var attributes = this.geometry.attributes;
 
-        var position, normal, size, dir, color, pickingColor;
-        var aPosition, inputNormal, inputSize, inputDir, inputColor, inputPickingColor;
+    var position, normal, size, dir, color, pickingColor;
+    var aPosition, aNormal, aSize, aDir, aColor, aPickingColor;
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
+
+    if( data[ "normal" ] ){
+        normal = data[ "normal" ];
+        aNormal = attributes[ "normal" ].array;
+        attributes[ "normal" ].needsUpdate = true;
+    }
+
+    if( data[ "size" ] ){
+        size = data[ "size" ];
+        aSize = attributes[ "size" ].array;
+        attributes[ "size" ].needsUpdate = true;
+    }
+
+    if( data[ "dir" ] ){
+        dir = data[ "dir" ];
+        aDir = attributes[ "dir" ].array;
+        attributes[ "dir" ].needsUpdate = true;
+    }
+
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
+
+    if( data[ "pickingColor" ] ){
+        pickingColor = data[ "pickingColor" ];
+        aPickingColor = attributes[ "pickingColor" ].array;
+        attributes[ "pickingColor" ].needsUpdate = true;
+    }
+
+    var v, i, k, p, l, v3;
+    var currSize;
+    var prevSize = size ? size[ 0 ] : null;
+
+    for( v = 0; v < n; ++v ){
+
+        v3 = v * 3;
+        k = v * 3 * 4;
+        l = v * 4;
+
+        if( position ){
+
+            aPosition[ k     ] = aPosition[ k + 3 ] = position[ v3     ];
+            aPosition[ k + 1 ] = aPosition[ k + 4 ] = position[ v3 + 1 ];
+            aPosition[ k + 2 ] = aPosition[ k + 5 ] = position[ v3 + 2 ];
+
+            aPosition[ k + 6 ] = aPosition[ k +  9 ] = position[ v3 + 3 ];
+            aPosition[ k + 7 ] = aPosition[ k + 10 ] = position[ v3 + 4 ];
+            aPosition[ k + 8 ] = aPosition[ k + 11 ] = position[ v3 + 5 ];
+
         }
 
-        if( data[ "normal" ] ){
-            normal = data[ "normal" ];
-            inputNormal = attributes[ "normal" ].array;
-            attributes[ "normal" ].needsUpdate = true;
+        if( normal ){
+
+            aNormal[ k     ] = aNormal[ k + 3 ] = -normal[ v3     ];
+            aNormal[ k + 1 ] = aNormal[ k + 4 ] = -normal[ v3 + 1 ];
+            aNormal[ k + 2 ] = aNormal[ k + 5 ] = -normal[ v3 + 2 ];
+
+            aNormal[ k + 6 ] = aNormal[ k +  9 ] = -normal[ v3 + 3 ];
+            aNormal[ k + 7 ] = aNormal[ k + 10 ] = -normal[ v3 + 4 ];
+            aNormal[ k + 8 ] = aNormal[ k + 11 ] = -normal[ v3 + 5 ];
+
         }
 
-        if( data[ "size" ] ){
-            size = data[ "size" ];
-            inputSize = attributes[ "inputSize" ].array;
-            attributes[ "inputSize" ].needsUpdate = true;
-        }
 
-        if( data[ "dir" ] ){
-            dir = data[ "dir" ];
-            inputDir = attributes[ "inputDir" ].array;
-            attributes[ "inputDir" ].needsUpdate = true;
-        }
+        for( i = 0; i<4; ++i ){
 
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            inputColor = attributes[ "inputColor" ].array;
-            attributes[ "inputColor" ].needsUpdate = true;
-        }
+            p = k + 3 * i;
 
-        if( data[ "pickingColor" ] ){
-            pickingColor = data[ "pickingColor" ];
-            inputPickingColor = attributes[ "pickingColor" ].array;
-            attributes[ "pickingColor" ].needsUpdate = true;
-        }
+            if( color ){
 
-        var v, i, k, p, l, v3;
-        var prevSize = size ? size[0] : null;
-
-        for( v = 0; v < n; ++v ){
-
-            v3 = v * 3;
-            k = v * 3 * 4;
-            l = v * 4;
-
-            if( position ){
-
-                aPosition[ k + 0 ] = position[ v3 + 0 ];
-                aPosition[ k + 1 ] = position[ v3 + 1 ];
-                aPosition[ k + 2 ] = position[ v3 + 2 ];
-
-                aPosition[ k + 3 ] = position[ v3 + 0 ];
-                aPosition[ k + 4 ] = position[ v3 + 1 ];
-                aPosition[ k + 5 ] = position[ v3 + 2 ];
-
-                aPosition[ k + 6 ] = position[ v3 + 3 ];
-                aPosition[ k + 7 ] = position[ v3 + 4 ];
-                aPosition[ k + 8 ] = position[ v3 + 5 ];
-
-                aPosition[ k + 9 ] = position[ v3 + 3 ];
-                aPosition[ k + 10 ] = position[ v3 + 4 ];
-                aPosition[ k + 11 ] = position[ v3 + 5 ];
+                aColor[ p     ] = color[ v3     ];
+                aColor[ p + 1 ] = color[ v3 + 1 ];
+                aColor[ p + 2 ] = color[ v3 + 2 ];
 
             }
 
-            if( normal ){
+            if( pickingColor ){
 
-                inputNormal[ k + 0 ] = -normal[ v3 + 0 ];
-                inputNormal[ k + 1 ] = -normal[ v3 + 1 ];
-                inputNormal[ k + 2 ] = -normal[ v3 + 2 ];
-
-                inputNormal[ k + 3 ] = -normal[ v3 + 0 ];
-                inputNormal[ k + 4 ] = -normal[ v3 + 1 ];
-                inputNormal[ k + 5 ] = -normal[ v3 + 2 ];
-
-                inputNormal[ k + 6 ] = -normal[ v3 + 3 ];
-                inputNormal[ k + 7 ] = -normal[ v3 + 4 ];
-                inputNormal[ k + 8 ] = -normal[ v3 + 5 ];
-
-                inputNormal[ k + 9 ] = -normal[ v3 + 3 ];
-                inputNormal[ k + 10 ] = -normal[ v3 + 4 ];
-                inputNormal[ k + 11 ] = -normal[ v3 + 5 ];
-
-            }
-
-
-            for( i = 0; i<4; ++i ){
-                p = k + 3 * i;
-
-                if( color ){
-
-                    inputColor[ p + 0 ] = color[ v3 + 0 ];
-                    inputColor[ p + 1 ] = color[ v3 + 1 ];
-                    inputColor[ p + 2 ] = color[ v3 + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    inputPickingColor[ p + 0 ] = pickingColor[ v3 + 0 ];
-                    inputPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
-                    inputPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
-
-                }
-
-            }
-
-            if( size ){
-
-                if( prevSize!=size[ v ] ){
-                    inputSize[ l + 0 ] = Math.abs( prevSize );
-                    inputSize[ l + 1 ] = Math.abs( prevSize );
-                    inputSize[ l + 2 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 3 ] = Math.abs( size[ v ] );
-                }else{
-                    inputSize[ l + 0 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 1 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 2 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 3 ] = Math.abs( size[ v ] );
-                }
-                prevSize = size[ v ];
-
-            }
-
-            if( dir ){
-
-                inputDir[ k + 0 ] = dir[ v3 + 0 ];
-                inputDir[ k + 1 ] = dir[ v3 + 1 ];
-                inputDir[ k + 2 ] = dir[ v3 + 2 ];
-
-                inputDir[ k + 3 ] = -dir[ v3 + 0 ];
-                inputDir[ k + 4 ] = -dir[ v3 + 1 ];
-                inputDir[ k + 5 ] = -dir[ v3 + 2 ];
-
-                inputDir[ k + 6 ] = dir[ v3 + 3 ];
-                inputDir[ k + 7 ] = dir[ v3 + 4 ];
-                inputDir[ k + 8 ] = dir[ v3 + 5 ];
-
-                inputDir[ k + 9 ] = -dir[ v3 + 3 ];
-                inputDir[ k + 10 ] = -dir[ v3 + 4 ];
-                inputDir[ k + 11 ] = -dir[ v3 + 5 ];
+                aPickingColor[ p     ] = pickingColor[ v3     ];
+                aPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
+                aPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
 
             }
 
         }
 
-    },
+        if( size ){
 
-    makeIndex: function(){
+            currSize = size[ v ];
 
-        var n = this.size;
-        var n4 = n * 4;
+            if( prevSize !== size[ v ] ){
 
-        var quadIndices = new Uint32Array([
-            0, 1, 2,
-            1, 3, 2
-        ]);
+                aSize[ l     ] = prevSize;
+                aSize[ l + 1 ] = prevSize;
+                aSize[ l + 2 ] = currSize;
+                aSize[ l + 3 ] = currSize;
 
-        this.geometry.addAttribute(
-            'index', new THREE.BufferAttribute(
-                new Uint32Array( n4 * 3 ), 1
-            )
-        );
+            }else{
 
-        var index = this.geometry.attributes[ "index" ].array;
+                aSize[ l     ] = currSize;
+                aSize[ l + 1 ] = currSize;
+                aSize[ l + 2 ] = currSize;
+                aSize[ l + 3 ] = currSize;
 
-        var s, v, ix, it;
-
-        for( v = 0; v < n; ++v ){
-
-            ix = v * 6;
-            it = v * 4;
-
-            index.set( quadIndices, ix );
-            for( s = 0; s < 6; ++s ){
-                index[ ix + s ] += it;
             }
+
+            prevSize = currSize;
 
         }
 
-    },
+        if( dir ){
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+            aDir[ k     ] = dir[ v3     ];
+            aDir[ k + 1 ] = dir[ v3 + 1 ];
+            aDir[ k + 2 ] = dir[ v3 + 2 ];
 
-    getMesh: NGL.Buffer.prototype.getMesh,
+            aDir[ k + 3 ] = -dir[ v3     ];
+            aDir[ k + 4 ] = -dir[ v3 + 1 ];
+            aDir[ k + 5 ] = -dir[ v3 + 2 ];
 
-    getMaterial: NGL.Buffer.prototype.getMaterial,
+            aDir[ k + 6 ] = dir[ v3 + 3 ];
+            aDir[ k + 7 ] = dir[ v3 + 4 ];
+            aDir[ k + 8 ] = dir[ v3 + 5 ];
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
+            aDir[ k +  9 ] = -dir[ v3 + 3 ];
+            aDir[ k + 10 ] = -dir[ v3 + 4 ];
+            aDir[ k + 11 ] = -dir[ v3 + 5 ];
 
-    dispose: NGL.Buffer.prototype.dispose
+        }
+
+    }
+
+};
+
+NGL.RibbonBuffer.prototype.makeIndex = function(){
+
+    var meshIndex = this.meshIndex;
+    var n = this.size / 4;
+
+    var quadIndices = new Uint32Array([
+        0, 1, 2,
+        1, 3, 2
+    ]);
+
+    var s, v, ix, it;
+
+    for( v = 0; v < n; ++v ){
+
+        ix = v * 6;
+        it = v * 4;
+
+        meshIndex.set( quadIndices, ix );
+        for( s = 0; s < 6; ++s ){
+            meshIndex[ ix + s ] += it;
+        }
+
+    }
 
 };
 
@@ -2049,443 +2236,387 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     this.capVertices = this.capped ? this.radialSegments : 0;
     this.capTriangles = this.capped ? this.radialSegments - 2 : 0;
-    this.size = position.length / 3;
 
-    var n = this.size;
+    var n = position.length / 3;
     var n1 = n - 1;
     var radialSegments1 = this.radialSegments + 1;
 
     var x = n * this.radialSegments * 3 + 2 * this.capVertices * 3;
 
+    this.size2 = n;
+
     this.meshPosition = new Float32Array( x );
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
-    this.meshPickingColor = new Float32Array( x );
+    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
     this.meshIndex = new Uint32Array(
         n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
     );
 
-    this.makeIndex();
-
-    this.setAttributes({
-        "position": position,
-        "normal": normal,
-        "binormal": binormal,
-        "tangent": tangent,
-        "color": color,
-        "size": size,
-        "pickingColor": pickingColor
-    });
-
-    this.meshBuffer = new NGL.MeshBuffer(
-        this.meshPosition, this.meshColor, this.meshIndex,
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, p
     );
 
-    this.pickable = this.meshBuffer.pickable;
-    this.geometry = this.meshBuffer.geometry;
+    this.setAttributes( {
+        position: position,
+        normal: normal,
+        binormal: binormal,
+        tangent: tangent,
+        color: color,
+        size: size,
+        pickingColor: pickingColor
+    } );
+
+    this.makeIndex();
 
 }
 
-NGL.TubeMeshBuffer.prototype = {
+NGL.TubeMeshBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.TubeMeshBuffer,
+NGL.TubeMeshBuffer.prototype.constructor = NGL.TubeMeshBuffer;
 
-    get group () {
+NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
-        return this.meshBuffer.group;
+    var vTangent = new THREE.Vector3();
+    var vMeshNormal = new THREE.Vector3();
 
-    },
+    return function( data ){
 
-    get pickingGroup () {
+        var rx = this.rx;
+        var ry = this.ry;
 
-        return this.meshBuffer.pickingGroup;
-
-    },
-
-    get transparent () {
-
-        return this.meshBuffer.transparent;
-
-    },
-
-    set transparent ( value ) {
-
-        this.meshBuffer.transparent = value;
-
-    },
-
-    setAttributes: function(){
-
-        var vTangent = new THREE.Vector3();
-        var vMeshNormal = new THREE.Vector3();
-
-        return function( data ){
-
-            var rx = this.rx;
-            var ry = this.ry;
-
-            var n = this.size;
-            var n1 = n - 1;
-            var capVertices = this.capVertices;
-            var radialSegments = this.radialSegments;
-
-            var position, normal, binormal, tangent, color, size, pickingColor;
-            var meshPosition, meshColor, meshNormal, meshPickingColor
-
-            if( data[ "position" ] ){
-                position = data[ "position" ];
-                normal = data[ "normal" ];
-                binormal = data[ "binormal" ];
-                tangent = data[ "tangent" ];
-                size = data[ "size" ];
-                meshPosition = this.meshPosition;
-                meshNormal = this.meshNormal;
-            }
-
-            if( data[ "color" ] ){
-                color = data[ "color" ];
-                meshColor = this.meshColor;
-            }
-
-            if( data[ "pickingColor" ] ){
-                pickingColor = data[ "pickingColor" ];
-                meshPickingColor = this.meshPickingColor;
-            }
-
-            var i, j, k, l, s, t;
-            var v, cx, cy;
-            var cx1, cy1, cx2, cy2;
-            var radius;
-            var irs, irs1;
-
-            var normX, normY, normZ;
-            var biX, biY, biZ;
-            var posX, posY, posZ;
-
-            var cxArr = [];
-            var cyArr = [];
-            var cx1Arr = [];
-            var cy1Arr = [];
-            var cx2Arr = [];
-            var cy2Arr = [];
-
-            if( position ){
-
-                for( j = 0; j < radialSegments; ++j ){
-
-                    v = ( j / radialSegments ) * 2 * Math.PI;
-
-                    cxArr[ j ] = rx * Math.cos( v );
-                    cyArr[ j ] = ry * Math.sin( v );
-
-                    cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
-                    cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
-                    cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
-                    cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
-
-                }
-
-            }
-
-            for( i = 0; i < n; ++i ){
-
-                k = i * 3;
-                l = k * radialSegments;
-
-                if( position ){
-
-                    vTangent.set(
-                        tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
-                    );
-
-                    normX = normal[ k + 0 ];
-                    normY = normal[ k + 1 ];
-                    normZ = normal[ k + 2 ];
-
-                    biX = binormal[ k + 0 ];
-                    biY = binormal[ k + 1 ];
-                    biZ = binormal[ k + 2 ];
-
-                    posX = position[ k + 0 ];
-                    posY = position[ k + 1 ];
-                    posZ = position[ k + 2 ];
-
-                    radius = size[ i ];
-
-                }
-
-                for( j = 0; j < radialSegments; ++j ){
-
-                    s = l + j * 3
-
-                    if( position ){
-
-                        cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
-                        cy = radius * cyArr[ j ];
-
-                        cx1 = -radius * cx1Arr[ j ];
-                        cy1 = radius * cy1Arr[ j ];
-                        cx2 = -radius * cx2Arr[ j ];
-                        cy2 = radius * cy2Arr[ j ];
-
-                        meshPosition[ s + 0 ] = posX + cx * normX + cy * biX;
-                        meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
-                        meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
-
-                        // TODO half of these are symmetric
-                        vMeshNormal.set(
-                            // ellipse tangent approximated as vector from/to adjacent points
-                            ( cx2 * normX + cy2 * biX ) -
-                                ( cx1 * normX + cy1 * biX ),
-                            ( cx2 * normY + cy2 * biY ) -
-                                ( cx1 * normY + cy1 * biY ),
-                            ( cx2 * normZ + cy2 * biZ ) -
-                                ( cx1 * normZ + cy1 * biZ )
-                        ).cross( vTangent );
-
-                        meshNormal[ s + 0 ] = vMeshNormal.x;
-                        meshNormal[ s + 1 ] = vMeshNormal.y;
-                        meshNormal[ s + 2 ] = vMeshNormal.z;
-
-                    }
-
-                    if( color ){
-
-                        meshColor[ s + 0 ] = color[ k + 0 ];
-                        meshColor[ s + 1 ] = color[ k + 1 ];
-                        meshColor[ s + 2 ] = color[ k + 2 ];
-
-                    }
-
-                    if( pickingColor ){
-
-                        meshPickingColor[ s + 0 ] = pickingColor[ k + 0 ];
-                        meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
-                        meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
-
-                    }
-
-                }
-
-            }
-
-            // front cap
-
-            k = 0;
-            l = n * 3 * radialSegments;
-
-            for( j = 0; j < radialSegments; ++j ){
-
-                s = k + j * 3;
-                t = l + j * 3;
-
-                if( position ){
-
-                    meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
-                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
-                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
-
-                    meshNormal[ t + 0 ] = tangent[ k + 0 ];
-                    meshNormal[ t + 1 ] = tangent[ k + 1 ];
-                    meshNormal[ t + 2 ] = tangent[ k + 2 ];
-
-                }
-
-                if( color ){
-
-                    meshColor[ t + 0 ] = meshColor[ s + 0 ];
-                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
-                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
-                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
-
-                }
-
-            }
-
-            // back cap
-
-            k = ( n - 1 ) * 3 * radialSegments;
-            l = ( n + 1 ) * 3 * radialSegments;
-
-            for( j = 0; j < radialSegments; ++j ){
-
-                s = k + j * 3;
-                t = l + j * 3;
-
-                if( position ){
-
-                    meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
-                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
-                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
-
-                    meshNormal[ t + 0 ] = tangent[ n1 * 3 + 0 ];
-                    meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
-                    meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
-
-                }
-
-                if( color ){
-
-                    meshColor[ t + 0 ] = meshColor[ s + 0 ];
-                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
-                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
-                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
-
-                }
-
-            }
-
-
-            var meshData = {};
-
-            if( position ){
-                meshData[ "position" ] = meshPosition;
-                meshData[ "normal" ] = meshNormal;
-            }
-
-            if( color ){
-                meshData[ "color" ] = meshColor;
-            }
-
-            if( pickingColor ){
-                meshData[ "pickingColor" ] = meshPickingColor;
-            }
-
-            if( this.meshBuffer ){
-                this.meshBuffer.setAttributes( meshData );
-            }
-
-        }
-
-    }(),
-
-    makeIndex: function(){
-
-        var meshIndex = this.meshIndex;
-
-        var n = this.size;
+        var n = this.size2;
         var n1 = n - 1;
-        var capTriangles = this.capTriangles;
+        var capVertices = this.capVertices;
         var radialSegments = this.radialSegments;
-        var radialSegments1 = this.radialSegments + 1;
 
-        var i, k, irs, irs1, l, j;
+        var attributes = this.geometry.attributes;
 
-        for( i = 0; i < n1; ++i ){
+        var position, normal, binormal, tangent, color, size, pickingColor;
+        var meshPosition, meshColor, meshNormal, meshPickingColor
 
-            k = i * radialSegments * 3 * 2
+        if( data[ "position" ] ){
 
-            irs = i * radialSegments;
-            irs1 = ( i + 1 ) * radialSegments;
+            position = data[ "position" ];
+            normal = data[ "normal" ];
+            binormal = data[ "binormal" ];
+            tangent = data[ "tangent" ];
+            size = data[ "size" ];
+
+            meshPosition = attributes[ "position" ].array;
+            meshNormal = attributes[ "normal" ].array;
+
+            attributes[ "position" ].needsUpdate = true;
+            attributes[ "normal" ].needsUpdate = true;
+
+        }
+
+        if( data[ "color" ] ){
+
+            color = data[ "color" ];
+            meshColor = attributes[ "color" ].array;
+            attributes[ "color" ].needsUpdate = true;
+
+        }
+
+        if( data[ "pickingColor" ] ){
+
+            pickingColor = data[ "pickingColor" ];
+            meshPickingColor = attributes[ "pickingColor" ].array;
+            attributes[ "pickingColor" ].needsUpdate = true;
+
+        }
+
+        var i, j, k, l, s, t;
+        var v, cx, cy;
+        var cx1, cy1, cx2, cy2;
+        var radius;
+        var irs, irs1;
+
+        var normX, normY, normZ;
+        var biX, biY, biZ;
+        var posX, posY, posZ;
+
+        var cxArr = [];
+        var cyArr = [];
+        var cx1Arr = [];
+        var cy1Arr = [];
+        var cx2Arr = [];
+        var cy2Arr = [];
+
+        if( position ){
 
             for( j = 0; j < radialSegments; ++j ){
 
-                l = k + j * 3 * 2;
+                v = ( j / radialSegments ) * 2 * Math.PI;
 
-                // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
-                meshIndex[ l ] = irs + j;
-                meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
-                // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
-                meshIndex[ l + 2 ] = irs1 + j;
+                cxArr[ j ] = rx * Math.cos( v );
+                cyArr[ j ] = ry * Math.sin( v );
 
-                // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
-                meshIndex[ l + 3 ] = irs1 + j;
-                meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
-                meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
+                cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
+                cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
+                cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
+                cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
 
             }
 
         }
 
-        // capping
+        for( i = 0; i < n; ++i ){
 
-        var strip = [ 0 ];
+            k = i * 3;
+            l = k * radialSegments;
 
-        for( j = 1; j < radialSegments1 / 2; ++j ){
+            if( position ){
 
-            strip.push( j );
-            if( radialSegments - j !== j ){
-                strip.push( radialSegments - j );
+                vTangent.set(
+                    tangent[ k ], tangent[ k + 1 ], tangent[ k + 2 ]
+                );
+
+                normX = normal[ k     ];
+                normY = normal[ k + 1 ];
+                normZ = normal[ k + 2 ];
+
+                biX = binormal[ k     ];
+                biY = binormal[ k + 1 ];
+                biZ = binormal[ k + 2 ];
+
+                posX = position[ k     ];
+                posY = position[ k + 1 ];
+                posZ = position[ k + 2 ];
+
+                radius = size[ i ];
+
+            }
+
+            for( j = 0; j < radialSegments; ++j ){
+
+                s = l + j * 3
+
+                if( position ){
+
+                    cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
+                    cy = radius * cyArr[ j ];
+
+                    cx1 = -radius * cx1Arr[ j ];
+                    cy1 = radius * cy1Arr[ j ];
+                    cx2 = -radius * cx2Arr[ j ];
+                    cy2 = radius * cy2Arr[ j ];
+
+                    meshPosition[ s     ] = posX + cx * normX + cy * biX;
+                    meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
+                    meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
+
+                    // TODO half of these are symmetric
+                    vMeshNormal.set(
+                        // ellipse tangent approximated as vector from/to adjacent points
+                        ( cx2 * normX + cy2 * biX ) -
+                            ( cx1 * normX + cy1 * biX ),
+                        ( cx2 * normY + cy2 * biY ) -
+                            ( cx1 * normY + cy1 * biY ),
+                        ( cx2 * normZ + cy2 * biZ ) -
+                            ( cx1 * normZ + cy1 * biZ )
+                    ).cross( vTangent );
+
+                    meshNormal[ s     ] = vMeshNormal.x;
+                    meshNormal[ s + 1 ] = vMeshNormal.y;
+                    meshNormal[ s + 2 ] = vMeshNormal.z;
+
+                }
+
+                if( color ){
+
+                    meshColor[ s     ] = color[ k     ];
+                    meshColor[ s + 1 ] = color[ k + 1 ];
+                    meshColor[ s + 2 ] = color[ k + 2 ];
+
+                }
+
+                if( pickingColor ){
+
+                    meshPickingColor[ s     ] = pickingColor[ k     ];
+                    meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
+                    meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
+
+                }
+
             }
 
         }
 
         // front cap
 
-        l = n1 * radialSegments * 3 * 2;
-        k = n * radialSegments;
+        k = 0;
+        l = n * 3 * radialSegments;
 
-        for( j = 0; j < strip.length - 2; ++j ){
+        for( j = 0; j < radialSegments; ++j ){
 
-            if( j % 2 === 0 ){
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
-            }else{
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+            s = k + j * 3;
+            t = l + j * 3;
+
+            if( position ){
+
+                meshPosition[ t     ] = meshPosition[ s     ];
+                meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                meshNormal[ t     ] = tangent[ k     ];
+                meshNormal[ t + 1 ] = tangent[ k + 1 ];
+                meshNormal[ t + 2 ] = tangent[ k + 2 ];
+
+            }
+
+            if( color ){
+
+                meshColor[ t     ] = meshColor[ s     ];
+                meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+            }
+
+            if( pickingColor ){
+
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
+                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
             }
 
         }
 
         // back cap
 
-        l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
-        k = n * radialSegments + radialSegments;
+        k = ( n - 1 ) * 3 * radialSegments;
+        l = ( n + 1 ) * 3 * radialSegments;
 
-        for( j = 0; j < strip.length - 2; ++j ){
+        for( j = 0; j < radialSegments; ++j ){
 
-            if( j % 2 === 0 ){
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
-            }else{
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+            s = k + j * 3;
+            t = l + j * 3;
+
+            if( position ){
+
+                meshPosition[ t     ] = meshPosition[ s     ];
+                meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                meshNormal[ t     ] = tangent[ n1 * 3     ];
+                meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
+                meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
+
+            }
+
+            if( color ){
+
+                meshColor[ t     ] = meshColor[ s     ];
+                meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+            }
+
+            if( pickingColor ){
+
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
+                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
             }
 
         }
 
-    },
+    }
 
-    getRenderOrder: function(){
+}();
 
-        return this.meshBuffer.getRenderOrder();
+NGL.TubeMeshBuffer.prototype.makeIndex = function(){
 
-    },
+    var meshIndex = this.meshIndex;
 
-    getMesh: function( type, material ){
+    var n = this.size2;
+    var n1 = n - 1;
+    var capTriangles = this.capTriangles;
+    var radialSegments = this.radialSegments;
+    var radialSegments1 = this.radialSegments + 1;
 
-        return this.meshBuffer.getMesh( type, material );
+    var i, k, irs, irs1, l, j;
 
-    },
+    for( i = 0; i < n1; ++i ){
 
-    getMaterial: function( type ){
+        k = i * radialSegments * 3 * 2
 
-        return this.meshBuffer.getMaterial( type );
+        irs = i * radialSegments;
+        irs1 = ( i + 1 ) * radialSegments;
 
-    },
+        for( j = 0; j < radialSegments; ++j ){
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
+            l = k + j * 3 * 2;
 
-    dispose: NGL.Buffer.prototype.dispose
+            // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l ] = irs + j;
+            meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
+            // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 2 ] = irs1 + j;
+
+            // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 3 ] = irs1 + j;
+            meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
+
+        }
+
+    }
+
+    // capping
+
+    var strip = [ 0 ];
+
+    for( j = 1; j < radialSegments1 / 2; ++j ){
+
+        strip.push( j );
+        if( radialSegments - j !== j ){
+            strip.push( radialSegments - j );
+        }
+
+    }
+
+    // front cap
+
+    l = n1 * radialSegments * 3 * 2;
+    k = n * radialSegments;
+
+    for( j = 0; j < strip.length - 2; ++j ){
+
+        if( j % 2 === 0 ){
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
+        }else{
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+        }
+
+    }
+
+    // back cap
+
+    l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
+    k = n * radialSegments + radialSegments;
+
+    for( j = 0; j < strip.length - 2; ++j ){
+
+        if( j % 2 === 0 ){
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
+        }else{
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+        }
+
+    }
 
 };
 
@@ -2640,8 +2771,6 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     var p = params || {};
 
-    this.antialias = p.antialias !== undefined ? p.antialias : true;
-
     var fontName = p.font !== undefined ? p.font : 'LatoBlack';
     this.font = NGL.getFont( fontName );
 
@@ -2658,7 +2787,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     }
 
     this.text = text;
-    this.size = charCount;
+    this.count = charCount;
     this.positionCount = n;
 
     this.vertexShader = 'SDFFont.vert';
@@ -2666,23 +2795,22 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     NGL.QuadBuffer.call( this, p );
 
-    this.addUniforms({
-        "fontTexture"  : { type: "t", value: this.tex },
-        "backgroundColor"  : { type: "c", value: new THREE.Color( "black" ) }
-    });
+    this.addUniforms( {
+        "fontTexture"  : { type: "t", value: this.tex }
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "inputTexCoord": { type: "v2", value: null },
         "inputSize": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "size": size,
         "color": color
-    });
+    } );
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -2690,24 +2818,14 @@ NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 NGL.TextBuffer.prototype.constructor = NGL.TextBuffer;
 
-NGL.TextBuffer.prototype.getMaterial = function(){
+NGL.TextBuffer.prototype.makeMaterial = function(){
 
-    var material = NGL.Buffer.prototype.getMaterial.call( this );
+    NGL.Buffer.prototype.makeMaterial.call( this );
 
-    if( this.antialias ){
-
-        material.transparent = true;
-        material.depthWrite = true;
-        material.blending = THREE.NormalBlending;
-        material.defines[ "ANTIALIAS" ] = 1;
-
-    }
-
-    material.lights = false;
-    material.uniforms.fontTexture.value = this.tex;
-    material.needsUpdate = true;
-
-    return material;
+    this.material.lights = false;
+    this.material.transparent = true;
+    this.material.uniforms.fontTexture.value = this.tex;
+    this.material.needsUpdate = true;
 
 };
 
@@ -2755,25 +2873,25 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
 
             for( var m = 0; m < 4; m++ ) {
 
-                j = iCharAll * 4 * 3 + (3 * m);
+                j = iCharAll * 4 * 3 + ( 3 * m );
 
-                if( data[ "position" ] ){
+                if( position ){
 
-                    aPosition[ j + 0 ] = position[ o + 0 ];
+                    aPosition[ j     ] = position[ o     ];
                     aPosition[ j + 1 ] = position[ o + 1 ];
                     aPosition[ j + 2 ] = position[ o + 2 ];
 
                 }
 
-                if( data[ "size" ] ){
+                if( size ){
 
-                    inputSize[ (iCharAll * 4) + m ] = size[ v ];
+                    inputSize[ ( iCharAll * 4 ) + m ] = size[ v ];
 
                 }
 
                 if( color ){
 
-                    aColor[ j + 0 ] = color[ o + 0 ];
+                    aColor[ j     ] = color[ o     ];
                     aColor[ j + 1 ] = color[ o + 1 ];
                     aColor[ j + 2 ] = color[ o + 2 ];
 
@@ -2784,6 +2902,15 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
         }
 
     }
+
+};
+
+NGL.TextBuffer.prototype.setProperties = function( data ){
+
+    // alpha channel must stay enabled for anti-aliasing
+    if( data && data.transparent !== undefined ) data.transparent = true;
+
+    NGL.QuadBuffer.prototype.setProperties.call( this, data );
 
 };
 
@@ -2849,103 +2976,76 @@ NGL.TextBuffer.prototype.dispose = function(){
 ///////////
 // Helper
 
-NGL.BufferVectorHelper = function( position, vector, color, scale ){
+NGL.VectorBuffer = function( position, vector, params ){
 
-    scale = scale || 1;
+    var p = params || {};
 
-    var n = position.length/3;
+    this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
+
+    var n = this.size;
     var n2 = n * 2;
 
-    this.size = n;
+    this.attributeSize = n2;
 
-    this.geometry = new THREE.BufferGeometry();
+    this.scale = p.scale || 1;
+    var color = new THREE.Color( p.color || "grey" );
 
-    this.geometry.addAttribute(
-        'position',
-        new THREE.BufferAttribute( new Float32Array( n2 * 3 ), 3 )
+    this.linePosition = new Float32Array( n2 * 3 );
+    this.lineColor = NGL.Utils.uniformArray3( n2, color.r, color.g, color.b );
+
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.color = color;
-    this.scale = scale;
-
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         vector: vector
-    });
-
-    this.group = new THREE.Group();
+    } );
 
 };
 
-NGL.BufferVectorHelper.prototype = {
+NGL.VectorBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.BufferVectorHelper,
+NGL.VectorBuffer.prototype.constructor = NGL.VectorBuffer;
 
-    setAttributes: function( data ){
+NGL.VectorBuffer.prototype.setAttributes = function( data ){
 
-        var n = this.size;
+    var attributes = this.geometry.attributes;
 
-        var attributes = this.geometry.attributes;
+    var position, vector;
+    var aPosition;
 
-        var position;
-        var aPosition;
+    if( data[ "position" ] && data[ "vector" ] ){
+        position = data[ "position" ];
+        vector = data[ "vector" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
-        }
+    var n = this.size;
+    var scale = this.scale;
 
-        if( data[ "vector" ] ){
-            this.vector = data[ "vector" ];
-        }
+    var i, j;
 
-        var scale = this.scale;
-        var vector = this.vector;
+    if( data[ "position" ] && data[ "vector" ] ){
 
-        var i, j;
+        for( var v = 0; v < n; v++ ){
 
-        if( data[ "position" ] ){
+            i = v * 2 * 3;
+            j = v * 3;
 
-            for( var v = 0; v < n; v++ ){
-
-                i = v * 2 * 3;
-                j = v * 3;
-
-                aPosition[ i + 0 ] = position[ j + 0 ];
-                aPosition[ i + 1 ] = position[ j + 1 ];
-                aPosition[ i + 2 ] = position[ j + 2 ];
-                aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
-                aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
-                aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
-
-            }
+            aPosition[ i + 0 ] = position[ j + 0 ];
+            aPosition[ i + 1 ] = position[ j + 1 ];
+            aPosition[ i + 2 ] = position[ j + 2 ];
+            aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
+            aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
+            aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
 
         }
 
-    },
+    }
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
-
-    getMesh: function( type, material ){
-
-        material = material || this.getMaterial( type );
-
-        return new THREE.LineSegments( this.geometry, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        return new THREE.LineBasicMaterial( {
-            color: this.color, fog: true
-        } );
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
-
-}
-
+};

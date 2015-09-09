@@ -5,9 +5,14 @@
 // #extension GL_ARB_conservative_depth : enable
 // layout(depth_less) out float gl_FragDepthEXT;
 
+precision highp float;
+precision highp int;
+
+// uniform mat4 viewMatrix;
+// uniform vec3 cameraPosition;
+
 uniform float opacity;
 uniform float nearClip;
-
 uniform mat4 projectionMatrix;
 
 varying vec3 point;

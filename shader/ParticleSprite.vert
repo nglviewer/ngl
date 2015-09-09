@@ -1,4 +1,15 @@
 
+precision highp float;
+precision highp int;
+
+// uniform mat4 modelMatrix;
+// uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+// uniform mat4 viewMatrix;
+// uniform mat3 normalMatrix;
+// uniform vec3 cameraPosition;
+
+attribute vec3 position;
 attribute vec2 mapping;
 attribute vec3 color;
 attribute float radius;
@@ -67,12 +78,12 @@ mat4 transpose( in mat4 inMatrix ) {
 //  Stephane Ploix (EDF)
 //
 // </verbatim>
-// 
+//
 // Contributions by Alexander Rose
 // - ported to WebGL
 // - adapted to work with quads
 void ComputePointSizeAndPositionInClipCoordSphere(){
-    
+
     vec2 xbc;
     vec2 ybc;
 

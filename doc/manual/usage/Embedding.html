@@ -14,7 +14,7 @@
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-			document.addEventListener("DOMContentLoaded", function() {
+			document.addEventListener( "DOMContentLoaded", function() {
 
 				NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
 
@@ -23,7 +23,9 @@
 					var stage = new NGL.Stage( "viewport" );
 					stage.setTheme( "light" );
 					stage.viewer.setBackground( 0xfff7ed );
-					stage.loadFile( "../../files/1crn.pdb" );
+					stage.loadFile( "../../files/1crn.pdb", {
+						defaultRepresentation: true
+					} );
 
 				} );
 
@@ -58,14 +60,16 @@
 
 					if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-					document.addEventListener("DOMContentLoaded", function() {
+					document.addEventListener( "DOMContentLoaded", function(){
 
 						NGL.mainScriptFilePath = "path/to/ngl.embedded.min.js";
 
 						NGL.init( function(){
 
 							var stage = new NGL.Stage( "viewport" );
-							stage.loadFile( "rcsb://1crn" );
+							stage.loadFile( "rcsb://1crn", {
+								defaultRepresentation: true
+							} );
 
 						} );
 

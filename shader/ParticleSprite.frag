@@ -1,4 +1,10 @@
 
+precision highp float;
+precision highp int;
+
+// uniform mat4 viewMatrix;
+// uniform vec3 cameraPosition;
+
 varying vec3 point;
 varying vec3 vColor;
 varying vec3 cameraSpherePos;
@@ -10,7 +16,7 @@ varying float sphereRadius;
 void main() {
 
     vec3 rayDirection = normalize( point );
-    
+
     float B = -2.0 * dot(rayDirection, cameraSpherePos);
     float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);
     float det = (B * B) - (4.0 * C);

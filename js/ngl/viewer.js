@@ -58,26 +58,6 @@ NGL.Resources = {
 
 
 /**
- * [UniformsLib description]
- * @type {Object}
- * @private
- */
-NGL.UniformsLib = {
-
-    'fog': THREE.UniformsLib[ "fog" ],
-
-    'lights': THREE.UniformsUtils.merge([
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
-    ])
-
-};
-
-
-/**
  * [Utils description]
  * @namespace NGL.Utils
  * @type {Object}
@@ -653,13 +633,43 @@ NGL.getShader = function(){
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
     var cache = {};
 
-    return function( name ){
+    function getDefines( defines ){
 
-        var shader = NGL.Resources[ '../shader/' + name ];
+        if( defines === undefined ) return "";
 
-        if( !cache[ name ] ){
+        var lines = [];
 
-            cache[ name ] = shader.replace( re, function( match, p1 ){
+        for ( var name in defines ) {
+
+            var value = defines[ name ];
+
+            if ( value === false ) continue;
+
+            lines.push( '#define ' + name + ' ' + value );
+
+        }
+
+        return lines.join( '\n' );
+
+    }
+
+    //
+
+    return function( name, defines ){
+
+        defines = defines || {};
+
+        var hash = name + "|";
+        for( var key in defines ){
+            hash += key + ":" + defines[ key ];
+        }
+
+        if( !cache[ hash ] ){
+
+            var definesText = getDefines( defines );
+
+            var shaderText = NGL.Resources[ '../shader/' + name ];
+            shaderText = shaderText.replace( re, function( match, p1 ){
 
                 var path = '../shader/chunk/' + p1 + '.glsl';
                 var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
@@ -668,9 +678,11 @@ NGL.getShader = function(){
 
             });
 
+            cache[ hash ] = definesText + shaderText;
+
         }
 
-        return cache[ name ];
+        return cache[ hash ];
 
     }
 
@@ -854,40 +866,27 @@ NGL.Stats.prototype = {
 NGL.Viewer = function( eid ){
 
     if( eid ){
-
-        this.eid = eid;
-
         this.container = document.getElementById( eid );
-
-        if ( this.container === document ) {
-            this.width = window.innerWidth;
-            this.height = window.innerHeight;
-        } else {
-            var box = this.container.getBoundingClientRect();
-            this.width = box.width;
-            this.height = box.height;
-        }
-
     }else{
-
         this.container = document.createElement( 'div' );
+    }
 
+    if ( this.container === document ) {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+    } else {
+        var box = this.container.getBoundingClientRect();
+        this.width = box.width;
+        this.height = box.height;
     }
 
     this.aspect = this.width / this.height;
 
     this.initParams();
-
     this.initCamera();
-
     this.initScene();
-
     this.initRenderer();
-
-    this.initLights();
-
     this.initControls();
-
     this.initStats();
 
     // fog & background
@@ -923,14 +922,11 @@ NGL.Viewer.prototype = {
 
         this.params = {
 
-            fogType: null,
-            fogColor: 0x000000,
+            fogColor: new THREE.Color( 0x000000 ),
             fogNear: 50,
             fogFar: 100,
-            fogDensity: 0.00025,
 
-            // backgroundColor: 0xFFFFFF,
-            backgroundColor: 0x000000,
+            backgroundColor: new THREE.Color( 0x000000 ),
 
             cameraType: 1,
             cameraFov: 40,
@@ -939,8 +935,6 @@ NGL.Viewer.prototype = {
             clipNear: 0,
             clipFar: 100,
             clipDist: 20,
-
-            specular: 0x050505,
 
         };
 
@@ -982,7 +976,7 @@ NGL.Viewer.prototype = {
             NGL.info( "EXT_frag_depth not supported" );
         }
 
-        if( !this.renderer.supportsStandardDerivatives() ){
+        if( !this.renderer.extensions.get( 'OES_standard_derivatives' ) ){
             NGL.warn( "OES_standard_derivatives not supported" );
         }
 
@@ -991,9 +985,7 @@ NGL.Viewer.prototype = {
             NGL.info( "OES_element_index_uint not supported" );
         }
 
-        if( this.eid ){
-            this.container.appendChild( this.renderer.domElement );
-        }
+        this.container.appendChild( this.renderer.domElement );
 
         //
 
@@ -1019,7 +1011,7 @@ NGL.Viewer.prototype = {
 
         // picking texture
 
-        if( !this.renderer.supportsFloatTextures() ){
+        if( !this.renderer.extensions.get( 'OES_texture_float' ) ){
             NGL.warn( "OES_texture_float not supported" );
         }
 
@@ -1055,9 +1047,9 @@ NGL.Viewer.prototype = {
                 value = (
 
                     ( NGL.browser === "Chrome" &&
-                        this.renderer.supportsFloatTextures() ) ||
+                        this.renderer.extensions.get( 'OES_texture_float' ) ) ||
 
-                    ( this.renderer.supportsFloatTextures() &&
+                    ( this.renderer.extensions.get( 'OES_texture_float' ) &&
                         gl.getExtension( "WEBGL_color_buffer_float" ) )
 
                 );
@@ -1092,21 +1084,7 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
-    },
-
-    initLights: function(){
-
-        var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
-        directionalLight.position.copy( new THREE.Vector3( 1, 1, -2.5 ).normalize() );
-        directionalLight.intensity = 0.5;
-
-        var ambientLight = new THREE.AmbientLight( 0x101010 );
-
-        var hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0.01 );
-
-        this.scene.add( directionalLight );
-        this.scene.add( ambientLight );
-        this.scene.add( hemisphereLight );
+        this.modelGroup.fog = new THREE.Fog();
 
     },
 
@@ -1152,41 +1130,32 @@ NGL.Viewer.prototype = {
 
         // NGL.time( "Viewer.add" );
 
-        var group, pickingGroup;
-
-        group = buffer.group;
-        if( buffer.pickable ){
-            pickingGroup = buffer.pickingGroup;
-        }
-
         if( buffer.size > 0 ){
 
             if( instanceList ){
 
                 instanceList.forEach( function( instance ){
 
-                    this.addBuffer(
-                        buffer, group, pickingGroup, instance
-                    );
+                    this.addBuffer( buffer, instance );
 
                 }, this );
 
             }else{
 
-                this.addBuffer(
-                    buffer, group, pickingGroup
-                );
+                this.addBuffer( buffer );
 
             }
 
             if( buffer.background ){
-                this.backgroundGroup.add( group );
+                this.backgroundGroup.add( buffer.group );
+                this.backgroundGroup.add( buffer.wireframeGroup );
             }else{
-                this.modelGroup.add( group );
+                this.modelGroup.add( buffer.group );
+                this.modelGroup.add( buffer.wireframeGroup );
             }
 
             if( buffer.pickable ){
-                this.pickingGroup.add( pickingGroup );
+                this.pickingGroup.add( buffer.pickingGroup );
             }
 
         }
@@ -1199,36 +1168,31 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBuffer: function( buffer, group, pickingGroup, instance ){
+    addBuffer: function( buffer, instance ){
 
         // NGL.time( "Viewer.addBuffer" );
 
-        var renderOrder = buffer.getRenderOrder();
-
-        if( !buffer.material ){
-            buffer.material = buffer.getMaterial();
-        }
-
-        var mesh = buffer.getMesh( undefined, buffer.material );
-        mesh.frustumCulled = false;
-        mesh.renderOrder = renderOrder;
+        var mesh = buffer.getMesh();
         mesh.userData[ "buffer" ] = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
         }
-        group.add( mesh );
+        buffer.group.add( mesh );
+
+        var wireframeMesh = buffer.getWireframeMesh();
+        wireframeMesh.userData[ "buffer" ] = buffer;
+        if( instance ){
+            // wireframeMesh.applyMatrix( instance.matrix );
+            wireframeMesh.matrix.copy( mesh.matrix );
+            wireframeMesh.position.copy( mesh.position );
+            wireframeMesh.quaternion.copy( mesh.quaternion );
+            wireframeMesh.scale.copy( mesh.scale );
+        }
+        buffer.wireframeGroup.add( wireframeMesh );
 
         if( buffer.pickable ){
 
-            if( !buffer.pickingMaterial ){
-                buffer.pickingMaterial = buffer.getMaterial( "picking" );
-            }
-
-            var pickingMesh = buffer.getMesh(
-                "picking", buffer.pickingMaterial
-            );
-            pickingMesh.frustumCulled = false;
-            pickingMesh.renderOrder = renderOrder;
+            var pickingMesh = buffer.getPickingMesh();
             pickingMesh.userData[ "buffer" ] = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );
@@ -1238,9 +1202,7 @@ NGL.Viewer.prototype = {
                 pickingMesh.scale.copy( mesh.scale );
                 pickingMesh.userData[ "instance" ] = instance;
             }
-            pickingGroup.add( pickingMesh );
-
-            // NGL.log( pickingMesh )
+            buffer.pickingGroup.add( pickingMesh );
 
         }
 
@@ -1258,6 +1220,7 @@ NGL.Viewer.prototype = {
 
         this.rotationGroup.children.forEach( function( group ){
             group.remove( buffer.group );
+            group.remove( buffer.wireframeGroup );
         } );
 
         if( buffer.pickable ){
@@ -1364,39 +1327,25 @@ NGL.Viewer.prototype = {
 
     },
 
-    /**
-     * [setFog description]
-     * @param {String} type - Either 'linear' or 'exp2'.
-     * @param {String} color - Fog color.
-     * @param {Number} near - Where the fog effect starts (only 'linear').
-     * @param {Number} far - Where the fog effect ends (only 'linear').
-     * @param {Number} density - Density of the fog (only 'exp2').
-     */
-    setFog: function( type, color, near, far, density, foo ){
+    setFog: function( color, near, far ){
 
         var p = this.params;
 
-        if( type!==null ) p.fogType = type;
-        if( color ) p.fogColor = color;
+        if( color ) p.fogColor.set( color );
         if( near ) p.fogNear = near;
         if( far ) p.fogFar = far;
-        if( density ) p.fogDensity = density;
 
         this.requestRender();
 
     },
 
-    /**
-     * Sets the background color (and also the fog color).
-     * @param {String} color
-     */
     setBackground: function( color ){
 
         var p = this.params;
 
-        if( color ) p.backgroundColor = color;
+        if( color ) p.backgroundColor.set( color );
 
-        this.setFog( null, p.backgroundColor );
+        this.setFog( p.backgroundColor );
         this.renderer.setClearColor( p.backgroundColor, 1 );
 
         this.requestRender();
@@ -1656,12 +1605,10 @@ NGL.Viewer.prototype = {
 
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
-        var fog = new THREE.Fog(
-            this.params.fogColor,
-            Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
-            Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
-        );
-        this.modelGroup.fog = fog;
+        var fog = this.modelGroup.fog;
+        fog.color.set( this.params.fogColor );
+        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
+        fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
         //
 
@@ -1724,7 +1671,6 @@ NGL.Viewer.prototype = {
 
         return function( group, camera ){
 
-            var bgColor = this.params.backgroundColor;
             var nearClip = this.nearClip;
 
             projectionMatrixInverse.getInverse(
@@ -1741,10 +1687,6 @@ NGL.Viewer.prototype = {
 
                 var u = o.material.uniforms;
                 if( !u ) return;
-
-                if( u.backgroundColor ){
-                    u.backgroundColor.value.set( bgColor );
-                }
 
                 if( u.nearClip ){
                     u.nearClip.value = nearClip;
@@ -1787,7 +1729,7 @@ NGL.Viewer.prototype = {
 
             if( u.modelViewMatrixInverse ){
                 u.modelViewMatrixInverse.value.getInverse(
-                    o._modelViewMatrix
+                    o.modelViewMatrix
                 );
             }
 
@@ -1798,14 +1740,14 @@ NGL.Viewer.prototype = {
                     ).transpose();
                 }else{
                     u.modelViewMatrixInverseTranspose.value
-                        .getInverse( o._modelViewMatrix )
+                        .getInverse( o.modelViewMatrix )
                         .transpose();
                 }
             }
 
             if( u.modelViewProjectionMatrix ){
                 u.modelViewProjectionMatrix.value.multiplyMatrices(
-                    camera.projectionMatrix, o._modelViewMatrix
+                    camera.projectionMatrix, o.modelViewMatrix
                 );
             }
 
@@ -1819,7 +1761,7 @@ NGL.Viewer.prototype = {
                     );
                 }else{
                     matrix.multiplyMatrices(
-                        camera.projectionMatrix, o._modelViewMatrix
+                        camera.projectionMatrix, o.modelViewMatrix
                     );
                     u.modelViewProjectionMatrixInverse.value.getInverse(
                         matrix

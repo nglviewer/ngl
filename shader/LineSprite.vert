@@ -1,3 +1,14 @@
+
+precision highp float;
+precision highp int;
+
+// uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+// uniform mat4 viewMatrix;
+// uniform mat3 normalMatrix;
+uniform vec3 cameraPosition;
+
 // Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
 
 //  All Rights Reserved
@@ -26,7 +37,7 @@
 // - dual color
 // - adapted for line sprites
 
-
+attribute vec3 position;
 attribute lowp vec2 inputMapping;
 attribute lowp vec3 inputColor;
 attribute lowp vec3 inputColor2;
@@ -62,7 +73,7 @@ void main(void){
     mat4 PMatrix = projectionMatrix;
     vec4 EyePoint = vec4( cameraPosition, 1.0 );
 
-    vec3 center = position.xyz;   
+    vec3 center = position.xyz;
     vec3 dir = normalize(inputAxis);
     // float ext = inputCylinderHeight/2.0;
     vec3 ldir;
@@ -81,8 +92,8 @@ void main(void){
     left = inputWidth*normalize(left);
     up = inputWidth*normalize(up);
 
-    vec4 w = MVMatrix * vec4( 
-        center + inputMapping.x*ldir + inputMapping.y*left, 1.0 
+    vec4 w = MVMatrix * vec4(
+        center + inputMapping.x*ldir + inputMapping.y*left, 1.0
     );
 
     gl_Position = PMatrix * w;
@@ -99,7 +110,7 @@ void main(void){
 
     color = inputColor;
     color2 = inputColor2;
-    
+
     // TODO compare without sqrt
     if( distance( point, end ) < distance( point, base ) ){
         dist = b > 0.0 ? 1.0 : 0.0;

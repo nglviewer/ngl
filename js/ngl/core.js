@@ -929,117 +929,181 @@ NGL.WorkerRegistry = {
 };
 
 
-NGL.Worker = function( name, params ){
+NGL.Worker = function( name ){
 
-    params = params || {};
-
-    this.name = name;
-
-    this.__onmessageDict = {};
-    this.__onerrorDict = {};
+    var worker;
+    var pending = 0;
+    var postCount = 0;
+    var onmessageDict = {};
+    var onerrorDict = {};
 
     if( NGL.develop ){
-        this.worker = new Worker( "../js/ngl/core.js" );
+        worker = new Worker( "../js/ngl/core.js" );
     }else{
-        this.worker = new Worker( NGL.mainScriptFilePath );
+        worker = new Worker( NGL.mainScriptFilePath );
     }
-
-    this.worker.onmessage = function( event ){
-
-        NGL.timeEnd( "NGL.Worker.postMessage " + this.name + " #" + event.data.__postId );
-
-        if( typeof params.onmessage === "function" ){
-            params.onmessage.apply( this.worker, arguments );
-        };
-        if( this.__onmessageDict[ event.data.__postId ] ){
-            this.__onmessageDict[ event.data.__postId ].apply( this.worker, arguments );
-        }
-
-        return this.onmessage.call( this.worker, event );
-
-    }.bind( this );
-
-    this.worker.onerror = function( event ){
-
-        if( typeof params.onerror === "function" ){
-            params.onerror.apply( this.worker, arguments );
-        };
-        if( this.__onerrorDict[ event.data.__postId ] ){
-            this.__onerrorDict[ event.data.__postId ].apply( this.worker, arguments );
-        }
-
-        return this.onerror.call( this.worker, event );
-
-    }.bind( this );
 
     NGL.WorkerRegistry.activeWorkerCount += 1;
 
-    if( params.messageData !== undefined ){
+    worker.onmessage = function( event ){
 
-        this.postMessage.apply( this, params.messageData );
+        pending -= 1;
+        var postId = event.data.__postId;
 
-    }
+        NGL.timeEnd( "NGL.Worker.postMessage " + name + " #" + postId );
+
+        if( onmessageDict[ postId ] ){
+            onmessageDict[ postId ].call( worker, event );
+        }else{
+            // NGL.debug( "No onmessage", postId, name );
+        }
+
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
+
+    };
+
+    worker.onerror = function( event ){
+
+        pending -= 1;
+        var postId = event.data.__postId;
+
+        if( onerrorDict[ postId ] ){
+            onerrorDict[ postId ].call( worker, event );
+        }else{
+            NGL.error( "NGL.Worker.onerror", postId, name, event );
+        }
+
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
+
+    };
+
+    // API
+
+    this.name = name;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        onmessageDict[ postCount ] = onmessage;
+        onerrorDict[ postCount ] = onerror;
+
+        aMessage = aMessage || {};
+        aMessage.__name = name;
+        aMessage.__postId = postCount;
+
+        NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
+
+        worker.postMessage.call( worker, aMessage, transferList );
+
+        pending += 1;
+        postCount += 1;
+
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        if( worker ){
+            worker.terminate();
+            NGL.WorkerRegistry.activeWorkerCount -= 1;
+        }else{
+            console.log( "no worker to terminate" );
+        }
+
+    };
+
+    Object.defineProperties( this, {
+        postCount: {
+            get: function(){ return postCount; }
+        },
+        pending: {
+            get: function(){ return pending; }
+        }
+    } );
 
 };
 
-NGL.Worker.prototype = {
+NGL.Worker.prototype.constructor = NGL.Worker;
 
-    constructor: NGL.Worker,
 
-    __postCount: 0,
+NGL.WorkerPool = function( name, maxCount ){
 
-    __onmessageDict: null,
+    maxCount = Math.min( 8, maxCount || 2 );
 
-    __onerrorDict: null,
+    var pool = [];
+    var count = 0;
 
-    onmessage: function( event ){
+    // API
 
-    },
+    this.name = name;
 
-    onerror: function( event ){
+    this.maxCount = maxCount;
 
-    },
+    this.post = function( aMessage, transferList, onmessage, onerror ){
 
-    postMessage: function( aMessage, transferList ){
+        var worker = this.getNextWorker();
+        worker.post( aMessage, transferList, onmessage, onerror );
 
-        aMessage = aMessage || {};
-        aMessage.__name = this.name;
-        aMessage.__postId = this.__postCount;
+        return this;
 
-        NGL.time( "NGL.Worker.postMessage " + this.name + " #" + this.__postCount );
+    };
 
-        this.worker.postMessage.call( this.worker, aMessage, transferList );
+    this.terminate = function(){
 
-        this.__postCount += 1;
+        pool.forEach( function( worker ){
+            worker.terminate();
+        } );
 
-    },
+    };
 
-    terminate: function(){
+    this.getNextWorker = function(){
 
-        if( this.worker ){
+        var nextWorker;
+        var minPending = Infinity;
 
-            this.worker.terminate();
-            delete this.worker;
-            NGL.WorkerRegistry.activeWorkerCount -= 1;
+        for( var i = 0; i < maxCount; ++i ){
 
-        }else{
+            if( i >= count ){
 
-            console.log( "no worker to terminate" );
+                nextWorker = new NGL.Worker( name );
+                pool.push( nextWorker );
+                count += 1;
+                break;
+
+            }
+
+            var worker = pool[ i ];
+
+            if( worker.pending === 0 ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+                break;
+
+            }else if( worker.pending < minPending ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+
+            }
 
         }
 
-    },
+        return nextWorker;
 
-    post: function( aMessage, transferList, onmessage, onerror ){
+    };
 
-        this.__onmessageDict[ this.__postCount ] = onmessage;
-        this.__onerrorDict[ this.__postCount ] = onerror;
-
-        this.postMessage( aMessage, transferList );
-
-    }
+    Object.defineProperties( this, {
+        count: {
+            get: function(){ return count; }
+        }
+    } );
 
 };
+
+NGL.WorkerPool.prototype.constructor = NGL.WorkerPool;
 
 
 if( typeof importScripts === 'function' ){
@@ -1220,16 +1284,20 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
         typeof importScripts !== 'function'
     ){
 
-        var worker = new NGL.Worker( "decompress", {
+        var worker = new NGL.Worker( "decompress" ).post(
 
-            onmessage: function( e ){
+            { data: data, file: file, asBinary: asBinary },
+
+            [ data.buffer ? data.buffer : data ],
+
+            function( e ){
 
                 worker.terminate();
                 callback( e.data );
 
             },
 
-            onerror: function( e ){
+            function( e ){
 
                 console.warn(
                     "NGL.decompressWorker error - trying without worker", e
@@ -1238,16 +1306,9 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
                 NGL.decompress( data, file, asBinary, callback );
 
-            },
+            }
 
-            messageData: [
-
-                { data: data, file: file, asBinary: asBinary },
-                [ data.buffer ? data.buffer : data ]
-
-            ]
-
-        } );
+        );
 
     }else{
 

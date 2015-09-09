@@ -1269,6 +1269,14 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
 
     },
 
+    dispose: function(){
+
+        this.surface.dispose();
+
+        NGL.Component.prototype.dispose.call( this );
+
+    },
+
     centerView: function( zoom ){
 
         var center = this.surface.center;
