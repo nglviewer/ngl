@@ -208,7 +208,8 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         )
         .setWidth( "100%" )
         .setOverflowX( "auto" )
-        .setMarginTop( "5px" );
+        .setMarginTop( "5px" )
+        .sortColumn( 1, true );
 
     //
 

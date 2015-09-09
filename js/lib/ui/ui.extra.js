@@ -750,17 +750,34 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
 
     var numericalSort = function( a, b ){
         return a - b;
-    }
+    };
 
     var lexicalSort = function( a, b ){
         return a.localeCompare( b );
-    }
+    };
+
+    var sortColumn = function( idx, flag ){
+        var sort;
+        if( typeof items[ 0 ][ idx ] === "string" ){
+            sort = lexicalSort;
+        }else{
+            sort = numericalSort;
+        }
+        items.sort( function( a, b ){
+            if( flag ){
+                return sort( b[ idx ], a[ idx ] );
+            }else{
+                return sort( a[ idx ], b[ idx ] );
+            }
+        } );
+        virtualList.redraw();
+        return this;
+    };
 
     columns.forEach( function( col ){
 
         var width = col.width || defaultWidth;
         var margin = col.margin || defaultMargin;
-        var sort = typeof items[ 0 ][ col.index ] === "string" ? lexicalSort : numericalSort;
 
         var text = new UI.EllipsisText()
             .setValue( col.name )
@@ -771,22 +788,13 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
             .setCursor( "pointer" )
             .onClick( function( e ){
                 var flag = col.__sortFlag === "ASC";
-                var idx = col.index;
-                items.sort( function( a, b ){
-                    if( flag ){
-                        return sort( b[ idx ], a[ idx ] );
-                    }else{
-                        return sort( a[ idx ], b[ idx ] );
-                    }
-                } );
+                sortColumn( col.index, flag )
                 if( flag ){
                     col.__sortFlag = "DESC";
                 }else{
                     col.__sortFlag = "ASC";
                 }
-                virtualList.redraw()
             } );
-
 
         header.add( text );
 
@@ -849,8 +857,11 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
 
     console.log( header.dom.clientWidth )
 
+    // API
+
     this.header = header;
     this.list = virtualList;
+    this.sortColumn = sortColumn;
 
     return this;
 
