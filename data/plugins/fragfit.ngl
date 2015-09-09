@@ -144,10 +144,6 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         }
     };
 
-    var getField = function( columnIndex, rowIndex ){
-        return linkerItems[ columnIndex ][ rowIndex ];
-    };
-
     var columns = [
         {
             name: "ID",
