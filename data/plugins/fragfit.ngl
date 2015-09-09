@@ -315,10 +315,10 @@ var FragfitResultsLoaderWidget = function(){
     function loadExample(){
 
         load(
-            "file://dropbox/ngl/fragfit/input_pdb_file.pdb",
-            "file://dropbox/ngl/fragfit/input_mrc_file.mrc",
-            "file://dropbox/ngl/fragfit/loop_correl/ori_pdb_linker_file3.pdb",
-            "file://dropbox/ngl/fragfit/linker_correl.json"
+            "data://ribosomexample.pdb",
+            "data://ribocut4a.mrc",
+            "data://ori_pdb_linker_file3.pdb",
+            "data://linker_correl.json"
         );
 
     }
