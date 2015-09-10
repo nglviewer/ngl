@@ -2261,6 +2261,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
         .setMarginTop( "10px" )
         .setMinHeight( "100px" )
         .setMaxHeight( "500px" )
+        .setPaddingRight( "15px" )
         .setOverflow( "auto" );
 
     var folderSelect = new UI.Select()
@@ -2326,6 +2327,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
 
             var pathRow = new UI.Panel()
                 .setDisplay( "block" )
+                .setWhiteSpace( "nowrap" )
                 .add( new UI.Icon( icon ).setWidth( "20px" ) )
                 .add( new UI.Text( name ) )
                 .onClick( function(){
