@@ -269,15 +269,6 @@ NGL.autoLoad = function( file, params ){
 
     var p = Object.assign( {}, params );
 
-    // deprecated
-    if( typeof params === "function" ){
-        console.warn( "NGL.autoLoad: function param deprecated" )
-        p = {};
-    }else{
-        if( p.onLoad ) console.warn( "NGL.autoLoad onLoad param deprecated" )
-        if( p.onError ) console.warn( "NGL.autoLoad onError param deprecated" )
-    }
-
     p.name = p.name !== undefined ? p.name : name;
     p.ext = p.ext !== undefined ? p.ext : ext;
     p.compressed = p.compressed !== undefined ? p.compressed : compressed;

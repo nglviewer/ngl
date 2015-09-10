@@ -112,15 +112,6 @@ NGL.Stage.prototype = {
 
         var p = Object.assign( {}, params );
 
-        // deprecated
-        if( typeof params === "function" ){
-            console.warn( "NGL.Stage.loadFile: function param deprecated" )
-            p = {};
-        }else{
-            if( p.onLoad ) console.warn( "NGL.Stage.loadFile onLoad param deprecated" )
-            if( p.onError ) console.warn( "NGL.Stage.loadFile onError param deprecated" )
-        }
-
         // placeholder component
         var component = new NGL.Component( this, p );
         component.name = NGL.getFileInfo( path ).name;
