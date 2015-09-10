@@ -994,7 +994,12 @@ NGL.Worker = function( name ){
 
         NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
 
-        worker.postMessage.call( worker, aMessage, transferList );
+        try{
+            worker.postMessage.call( worker, aMessage, transferList );
+        }catch( error ){
+            NGL.error( "NGL.worker.post:", error );
+            worker.postMessage.call( worker, aMessage );
+        }
 
         pending += 1;
         postCount += 1;
@@ -1169,7 +1174,12 @@ if( typeof importScripts === 'function' ){
                 aMessage = aMessage || {};
                 if( postId !== undefined ) aMessage.__postId = postId;
 
-                self.postMessage( aMessage, transferList );
+                try{
+                    self.postMessage( aMessage, transferList );
+                }catch( error ){
+                    NGL.error( "self.postMessage:", error );
+                    self.postMessage( aMessage );
+                }
 
             };
 
