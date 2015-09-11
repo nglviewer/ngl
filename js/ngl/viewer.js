@@ -1130,34 +1130,30 @@ NGL.Viewer.prototype = {
 
         // NGL.time( "Viewer.add" );
 
-        if( buffer.size > 0 ){
+        if( instanceList ){
 
-            if( instanceList ){
+            instanceList.forEach( function( instance ){
 
-                instanceList.forEach( function( instance ){
+                this.addBuffer( buffer, instance );
 
-                    this.addBuffer( buffer, instance );
+            }, this );
 
-                }, this );
+        }else{
 
-            }else{
+            this.addBuffer( buffer );
 
-                this.addBuffer( buffer );
+        }
 
-            }
+        if( buffer.background ){
+            this.backgroundGroup.add( buffer.group );
+            this.backgroundGroup.add( buffer.wireframeGroup );
+        }else{
+            this.modelGroup.add( buffer.group );
+            this.modelGroup.add( buffer.wireframeGroup );
+        }
 
-            if( buffer.background ){
-                this.backgroundGroup.add( buffer.group );
-                this.backgroundGroup.add( buffer.wireframeGroup );
-            }else{
-                this.modelGroup.add( buffer.group );
-                this.modelGroup.add( buffer.wireframeGroup );
-            }
-
-            if( buffer.pickable ){
-                this.pickingGroup.add( buffer.pickingGroup );
-            }
-
+        if( buffer.pickable ){
+            this.pickingGroup.add( buffer.pickingGroup );
         }
 
         this.rotationGroup.updateMatrixWorld();
