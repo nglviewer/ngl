@@ -901,15 +901,39 @@ NGL.Examples = {
 
             stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
 
-                o.addRepresentation( "surface", {
+                var surface = o.addRepresentation( "surface", {
                     wireframe: true,
-                    visible: false
+                    visible: true,
+                    boxSize: 10
                 } );
                 o.addRepresentation( "dot", {
                     dotType: "sphere",
-                    radius: 0.3
+                    radius: 0.3,
+                    visible: false
                 } );
                 o.centerView();
+
+                // var sphereBuffer = new NGL.SphereBuffer(
+                //     new Float32Array( [ 0, 0, 0 ] ),
+                //     new Float32Array( [ 1, 0, 0 ] ),
+                //     new Float32Array( [ 1 ] ),
+                //     undefined,
+                //     { flatShaded: true },
+                //     true
+                // );
+                // o.addBufferRepresentation( sphereBuffer );
+
+                // var position = new THREE.Vector3();
+                // stage.viewer.controls.addEventListener(
+                //     'change', function(){
+                //         var target = stage.viewer.controls.target;
+                //         var group = stage.viewer.rotationGroup.position;
+                //         position.copy( group ).negate().add( target );
+                //         sphereBuffer.setAttributes( {
+                //             "position": position.toArray(),
+                //         } );
+                //     }
+                // );
 
             } );
 

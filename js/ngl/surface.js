@@ -408,7 +408,9 @@ NGL.WorkerRegistry.add( "surf", function( e, callback ){
     if( d.vol ) vol.fromJSON( d.vol );
 
     if( p ){
-        var surface = vol.getSurface( p.isolevel, p.smooth );
+        var surface = vol.getSurface(
+            p.isolevel, p.smooth, p.center, p.size
+        );
     }
 
     NGL.timeEnd( "WORKER surf" );
@@ -429,6 +431,7 @@ NGL.Volume = function( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.matrix = new THREE.Matrix4();
     this.normalMatrix = new THREE.Matrix3();
+    this.inverseMatrix = new THREE.Matrix4();
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
@@ -524,6 +527,8 @@ NGL.Volume.prototype = {
         ne[ 7 ] = cp.y;
         ne[ 8 ] = cp.z;
 
+        this.inverseMatrix.getInverse( this.matrix );
+
     },
 
     setDataAtomindex: function( dataAtomindex ){
@@ -535,10 +540,12 @@ NGL.Volume.prototype = {
 
     },
 
-    getSurface: function( isolevel, smooth ){
+    getSurface: function( isolevel, smooth, center, size ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
+        center = center;
+        size = size;
 
         //
 
@@ -550,11 +557,23 @@ NGL.Volume.prototype = {
 
         }
 
+        var box;
+
+        if( center && size ){
+
+            if( !this.__box ) this.__box = new THREE.Box3();
+            box = this.__box;
+            box.set( center, center );
+            box.expandByScalar( size );
+            box.applyMatrix4( this.inverseMatrix );
+
+        }
+
         var sd;
 
         if( smooth ){
 
-            sd = this.mc.triangulate( isolevel, true );
+            sd = this.mc.triangulate( isolevel, true, box );
             NGL.laplacianSmooth( sd.position, sd.index, smooth, true );
 
             var bg = new THREE.BufferGeometry();
@@ -566,7 +585,7 @@ NGL.Volume.prototype = {
 
         }else{
 
-            sd = this.mc.triangulate( isolevel );
+            sd = this.mc.triangulate( isolevel, false, box );
 
         }
 
@@ -586,7 +605,7 @@ NGL.Volume.prototype = {
 
     },
 
-    getSurfaceWorker: function( isolevel, smooth, callback ){
+    getSurfaceWorker: function( isolevel, smooth, center, size, callback ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -609,7 +628,9 @@ NGL.Volume.prototype = {
                     vol: worker.postCount === 0 ? this.toJSON() : null,
                     params: {
                         isolevel: isolevel,
-                        smooth: smooth
+                        smooth: smooth,
+                        center: center,
+                        size: size
                     }
                 },
 
@@ -628,7 +649,7 @@ NGL.Volume.prototype = {
                         "NGL.Volume.generateSurfaceWorker error - trying without worker", e
                     );
 
-                    var surface = this.getSurface( isolevel, smooth );
+                    var surface = this.getSurface( isolevel, smooth, center, size );
                     callback( surface );
 
                 }.bind( this )
@@ -637,7 +658,7 @@ NGL.Volume.prototype = {
 
         }else{
 
-            var surface = this.getSurface( isolevel, smooth );
+            var surface = this.getSurface( isolevel, smooth, center, size );
             callback( surface );
 
         }
@@ -1016,6 +1037,7 @@ NGL.Volume.prototype = {
 
             matrix: this.matrix.toArray(),
             normalMatrix: this.normalMatrix.toArray(),
+            inverseMatrix: this.inverseMatrix.toArray(),
 
             center: this.center.toArray(),
             boundingBox: {
@@ -1054,6 +1076,7 @@ NGL.Volume.prototype = {
 
         this.matrix.fromArray( input.matrix );
         this.normalMatrix.fromArray( input.normalMatrix );
+        this.inverseMatrix.fromArray( input.inverseMatrix );
 
         if( input.header ){
 
@@ -1233,6 +1256,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
     var isolevel = 0;
     var noNormals = false;
+    var center = undefined;
+    var size = Infinity;
 
     var n = nx * ny * nz;
 
@@ -1252,7 +1277,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
     //
 
-    this.triangulate = function( _isolevel, _noNormals ){
+    this.triangulate = function( _isolevel, _noNormals, _box ){
 
         NGL.time( "NGL.MarchingCubes2.triangulate" );
 
@@ -1274,7 +1299,20 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
         count = 0;
         icount = 0;
 
-        triangulate();
+        if( _box !== undefined ){
+
+            _box.min.round();
+            _box.max.round();
+            triangulate(
+                _box.min.x, _box.min.y, _box.min.z,
+                _box.max.x, _box.max.y, _box.max.z
+            );
+
+        }else{
+
+            triangulate();
+
+        }
 
         positionArray.length = count * 3;
         if( !noNormals ) normalArray.length = count * 3;
@@ -1615,39 +1653,49 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
     }
 
-    function triangulate() {
+    function triangulate( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd ) {
 
         var q, x, y, z, fx, fy, fz, y_offset, z_offset
 
-        var beg, xEnd, yEnd, zEnd;
+        xBeg = xBeg !== undefined ? xBeg : 0;
+        yBeg = yBeg !== undefined ? yBeg : 0;
+        zBeg = zBeg !== undefined ? zBeg : 0;
+
+        xEnd = xEnd !== undefined ? xEnd : nx - 1;
+        yEnd = yEnd !== undefined ? yEnd : ny - 1;
+        zEnd = zEnd !== undefined ? zEnd : nz - 1;
 
         if( noNormals ){
 
-            beg = 0;
+            xBeg = Math.max( 0, xBeg );
+            yBeg = Math.max( 0, yBeg );
+            zBeg = Math.max( 0, zBeg );
 
-            xEnd = nx - 1;
-            yEnd = ny - 1;
-            zEnd = nz - 1;
+            xEnd = Math.min( nx - 1, xEnd );
+            yEnd = Math.min( ny - 1, yEnd );
+            zEnd = Math.min( nz - 1, zEnd );
 
         }else{
 
-            beg = 1;
+            xBeg = Math.max( 1, xBeg );
+            yBeg = Math.max( 1, yBeg );
+            zBeg = Math.max( 1, zBeg );
 
-            xEnd = nx - 2;
-            yEnd = ny - 2;
-            zEnd = nz - 2;
+            xEnd = Math.min( nx - 2, xEnd );
+            yEnd = Math.min( ny - 2, yEnd );
+            zEnd = Math.min( nz - 2, zEnd );
 
         }
 
-        for ( z = beg; z < zEnd; ++z ) {
+        for ( z = zBeg; z < zEnd; ++z ) {
 
             z_offset = zd * z;
 
-            for ( y = beg; y < yEnd; ++y ) {
+            for ( y = yBeg; y < yEnd; ++y ) {
 
                 y_offset = z_offset + yd * y;
 
-                for ( x = beg; x < xEnd; ++x ) {
+                for ( x = xBeg; x < xEnd; ++x ) {
 
                     q = y_offset + x;
                     polygonize( x, y, z, q );

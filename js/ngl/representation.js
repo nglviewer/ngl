@@ -4651,6 +4651,23 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
         this.volume = undefined;
     }
 
+    this.boxCenter = new THREE.Vector3();
+    this.__boxCenter = new THREE.Vector3();
+
+    this.setBox = ( function(){
+        var position = new THREE.Vector3();
+        return function(){
+            var target = viewer.controls.target;
+            var group = viewer.rotationGroup.position;
+            position.copy( group ).negate().add( target );
+            this.setParameters( { "boxCenter": position } );
+        }.bind( this );
+    }.bind( this ) )();
+
+    this.viewer.controls.addEventListener(
+        'change', this.setBox
+    );
+
     this.build();
 
 };
@@ -4682,6 +4699,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         opaqueBack: {
             type: "boolean", buffer: true
         },
+        boxSize: {
+            type: "integer", precision: 1, max: 100, min: 0
+        }
 
     }, NGL.Representation.prototype.parameters ),
 
@@ -4696,6 +4716,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
+        this.boxSize = p.boxSize !== undefined ? p.boxSize : 0;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -4729,13 +4750,19 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
             if( !this.surface ||
                 this.__isolevel !== isolevel ||
-                this.__smooth !== this.smooth
+                this.__smooth !== this.smooth ||
+                this.__boxSize !== this.boxSize ||
+                ( this.boxSize > 0 &&
+                    !this.__boxCenter.equals( this.boxCenter ) )
             ){
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
+                this.__boxSize = this.boxSize;
+                this.__boxCenter.copy( this.boxCenter );
 
                 this.volume.getSurfaceWorker(
-                    isolevel, this.smooth, function( surface ){
+                    isolevel, this.smooth, this.boxCenter, this.boxSize,
+                    function( surface ){
                         this.surface = surface;
                         callback();
                     }.bind( this )
@@ -4761,7 +4788,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             this.getBufferParams( {
                 background: this.background,
                 opaqueBack: this.opaqueBack,
-                dullInterior: false
+                dullInterior: false,
             } )
         );
         var doubleSidedBuffer = new NGL.DoubleSidedBuffer( surfaceBuffer );
@@ -4828,9 +4855,21 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "boxCenter" ] ){
+            this.boxCenter.copy( params[ "boxCenter" ] );
+            delete params[ "boxCenter" ];
+        }
+
+        NGL.Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
         if( this.surface && (
                 params[ "isolevel" ] !== undefined ||
-                params[ "smooth" ] !== undefined
+                params[ "smooth" ] !== undefined ||
+                params[ "boxSize" ] !== undefined ||
+                ( this.boxSize > 0 &&
+                    !this.__boxCenter.equals( this.boxCenter ) )
             )
         ){
             this.build( {
@@ -4843,11 +4882,17 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             } );
         }
 
-        NGL.Representation.prototype.setParameters.call(
-            this, params, what, rebuild
+        return this;
+
+    },
+
+    dispose: function(){
+
+        this.viewer.controls.removeEventListener(
+            'change', this.setBox
         );
 
-        return this;
+        NGL.Representation.prototype.dispose.call( this );
 
     }
 
