@@ -66,7 +66,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
 
     this.getWireframeMesh = function(){
 
-        return frontBuffer.getWireframeMesh();
+        return buffer.getWireframeMesh();
 
     };
 
@@ -194,6 +194,8 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     this.group = new THREE.Group();
     this.wireframeGroup = new THREE.Group();
     this.pickingGroup = new THREE.Group();
+
+    this.makeWireframeGeometry();
 
 };
 
