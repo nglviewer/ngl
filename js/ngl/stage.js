@@ -881,6 +881,14 @@ NGL.Component.prototype = {
 
     },
 
+    addBufferRepresentation: function( buffer, params ){
+
+        return NGL.Component.prototype.addRepresentation.call(
+            this, "buffer", buffer, params
+        );
+
+    },
+
     removeRepresentation: function( repr ){
 
         var idx = this.reprList.indexOf( repr );
@@ -1082,14 +1090,6 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
         return NGL.Component.prototype.addRepresentation.call(
             this, type, this.structure, params
-        );
-
-    },
-
-    addBufferRepresentation: function( buffer, params ){
-
-        return NGL.Component.prototype.addRepresentation.call(
-            this, "buffer", buffer, params
         );
 
     },
