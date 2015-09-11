@@ -478,6 +478,18 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
 
     type: "buffer",
 
+    parameters: Object.assign( {
+
+    }, NGL.Representation.prototype.parameters, {
+
+        colorScheme: null,
+        colorScale: null,
+        colorValue: null,
+        colorDomain: null,
+        colorMode: null
+
+    } ),
+
     create: function(){
 
         this.bufferList.push( this.buffer );
