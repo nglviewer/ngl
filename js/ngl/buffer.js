@@ -13,6 +13,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
     this.side = buffer.side;
     this.wireframe = buffer.wireframe;
     this.visible = buffer.visible;
+    this.geometry = buffer.geometry;
 
     this.group = new THREE.Group();
     this.wireframeGroup = new THREE.Group();

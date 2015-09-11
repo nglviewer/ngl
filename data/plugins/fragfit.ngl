@@ -49,7 +49,7 @@ var FragfitResultsPreset = function( data, params ){
 
     // json
 
-    console.log( json );
+    // console.log( json );
 
     //
 
@@ -83,7 +83,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var data = {};
     var isolevel = 2.0;
-    var wireframe = false;
+    var wireframe = true;
 
     var container = new UI.Panel();
 
@@ -119,98 +119,100 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             } );
         } );
 
+    var showAllBtn = new UI.Button( "show all" )
+        .onClick( function(){
+            fragfitResultsPreset.backboneRepr.setSelection( "*" );
+            virtualTable.selectRow();
+        } );
+
     // Linker list
 
-    var linkerItems = Object.keys( linkerJson );
-
-    var selectedLinker = null;
-
-    var tableOnClick = function( index ){
-        console.log( index )
-        selectedLinker = index;
-        fragfitResultsPreset.backboneRepr.setSelection(
-            "/" + index
+    var linkerItems = [];
+    for( var name in linkerJson ){
+        linkerItems.push(
+            [ parseInt( name ) ].concat( linkerJson[ name ] )
         );
-        virtualTable.list.redraw()
-    };
+    }
 
-    var getField = function( columnIndex, rowIndex ){
-        var key = linkerItems[ columnIndex ];
-        var row = linkerJson[ key ];
-        return row[ rowIndex ];
+    // console.log( linkerItems )
+
+    var selectLinker = function( index ){
+        if( index !== undefined ){
+            fragfitResultsPreset.backboneRepr.setSelection(
+                "/" + ( linkerItems[ index ][ 0 ] - 1 )
+            );
+        }
     };
 
     var columns = [
         {
             name: "ID",
+            index: 0,
             align: "right",
-            width: "25px",
-            value: function( index ){
-                return linkerItems[ index ];
-            },
-            onClick: tableOnClick
+            width: 25
         },
         {
             name: "Cross-correlation",
+            index: 1,
             align: "right",
-            width: "25px",
-            value: function( index ){
-                return getField( index, 0 ).toFixed( 2 );
-            },
-            onClick: tableOnClick
+            width: 30,
+            format: function( value ){
+                return value.toFixed( 2 );
+            }
         },
         {
             name: "Score 1?",
+            index: 2,
             align: "right",
-            width: "25px",
-            value: function( index ){
-                return getField( index, 1 ).toFixed( 2 );
-            },
-            onClick: tableOnClick
+            width: 30,
+            format: function( value ){
+                return value.toFixed( 2 );
+            }
         },
         {
             name: "Score 2?",
+            index: 3,
             align: "right",
-            width: "25px",
-            value: function( index ){
-                return getField( index, 2 ).toFixed( 2 );
-            },
-            onClick: tableOnClick
+            width: 30,
+            format: function( value ){
+                return value.toFixed( 2 );
+            }
         },
         {
             name: "PDB",
+            index: 5,
             align: "left",
-            width: "35px",
-            value: function( index ){
-                return getField( index, 4 );
-            },
-            onClick: tableOnClick
+            width: 35
         },
         {
             name: "Clashes",
+            index: 6,
             align: "right",
-            width: "15px",
-            value: function( index ){
-                return getField( index, 5 );
-            },
-            onClick: tableOnClick
+            width: 30
         },
         {
             name: "Sequence",
+            index: 4,
             align: "left",
-            width: "90px",
-            value: function( index ){
-                return getField( index, 3 );
-            },
-            onClick: tableOnClick
+            width: 120
         }
     ];
 
+    var params = {
+        onRowSelect: selectLinker
+    }
+
     var virtualTable = new UI.VirtualTable(
-            linkerItems, 18, 400, columns
+            linkerItems, 18, 400, columns, params
         )
         .setWidth( "100%" )
+        .setOverflowX( "auto" )
         .setMarginTop( "5px" );
+
+    // sort by crosscorrel & select first
+    virtualTable
+        .sortColumn( 1, true )
+        .selectRow( 0 );
 
     //
 
@@ -220,6 +222,8 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         new UI.Break(),
         new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
         wireframeCheckbox,
+        new UI.Break(),
+        showAllBtn,
         new UI.Break(),
         new UI.Break(),
         virtualTable

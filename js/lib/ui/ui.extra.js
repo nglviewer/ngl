@@ -594,7 +594,7 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
     var list = document.createElement('div');
     list.style.width = '100%';
     list.style.height = height + 'px';
-    list.style.overflow = 'auto';
+    list.style[ "overflow-y" ] = 'auto';
     list.style.position = 'relative';
     list.style.padding = 0;
 
@@ -723,29 +723,92 @@ UI.VirtualList.prototype = Object.create( UI.Element.prototype );
 
 // Virtual Table
 
-UI.VirtualTable = function( items, itemHeight, height, colums ){
+UI.VirtualTable = function( items, itemHeight, height, columns, params ){
+
+    var p = params || {};
 
     UI.Panel.call( this );
 
-    var defaultWidth = "30px";
-    var defaultMargin = "5px";
-    var defaultAlign = "left";
+    // this.setOverflow( "scroll" );
+
+    var defaultWidth = p.defaultWidth !== undefined ? p.defaultWidth : 30;
+    var defaultMargin = p.defaultMargin !== undefined ? p.defaultMargin : 5;
+    var defaultAlign = p.defaultAlign !== undefined ? p.defaultAlign : "left";
+    var onRowSelect = p.onRowSelect;
 
     // header
 
     var header = new UI.Panel()
+        .setWhiteSpace( "nowrap" )
+        .setDisplay( "inline-block" )
+        .setOverflow( "" )
         .setWidth( "100%" );
 
-    colums.forEach( function( col, i ){
+    var fullWidth = 0;
+
+    var selected = [];
+
+    var numericalSort = function( a, b ){
+        return a - b;
+    };
+
+    var lexicalSort = function( a, b ){
+        return a.localeCompare( b );
+    };
+
+    var sortColumn = function( idx, flag ){
+        var sort;
+        if( typeof items[ 0 ][ idx ] === "string" ){
+            sort = lexicalSort;
+        }else{
+            sort = numericalSort;
+        }
+        items.sort( function( a, b ){
+            if( flag ){
+                return sort( b[ idx ], a[ idx ] );
+            }else{
+                return sort( a[ idx ], b[ idx ] );
+            }
+        } );
+        virtualList.redraw();
+        return this;
+    };
+
+    var selectRow = function( idx ){
+        selected.length = 0;
+        if( onRowSelect ) onRowSelect( idx );
+        if( idx !== undefined ){
+            selected.push( items[ idx ][ 0 ] );
+        }
+        virtualList.redraw();
+        return this;
+    };
+
+    columns.forEach( function( col ){
+
+        var width = col.width || defaultWidth;
+        var margin = col.margin || defaultMargin;
 
         var text = new UI.EllipsisText()
             .setValue( col.name )
-            .setWidth( col.width || defaultWidth )
+            .setWidth( width + "px" )
             .setTextAlign( col.align || defaultAlign )
-            .setMarginLeft( col.margin || defaultMargin )
-            .setMarginRight( col.margin || defaultMargin );
+            .setMarginLeft( margin + "px" )
+            .setMarginRight( margin + "px" )
+            .setCursor( "pointer" )
+            .onClick( function( e ){
+                var flag = col.__sortFlag === "ASC";
+                sortColumn( col.index, flag )
+                if( flag ){
+                    col.__sortFlag = "DESC";
+                }else{
+                    col.__sortFlag = "ASC";
+                }
+            } );
 
         header.add( text );
+
+        fullWidth += width + 2 * margin;
 
     } );
 
@@ -755,35 +818,43 @@ UI.VirtualTable = function( items, itemHeight, height, colums ){
 
         var panel = new UI.Panel();
 
-        colums.forEach( function( col, i ){
+        columns.forEach( function( col ){
 
-            var value = col.value( index );
+            var value = items[ index ][ col.index ];
+            if( col.format ) value = col.format( value );
+
+            var width = col.width || defaultWidth;
+            var margin = col.margin || defaultMargin;
 
             var text = new UI.Text()
                 .setValue( value )
-                .setWidth( col.width || defaultWidth )
+                .setWidth( width + "px" )
                 .setTextAlign( col.align || defaultAlign )
-                .setMarginLeft( col.margin || defaultMargin )
-                .setMarginRight( col.margin || defaultMargin );
-
-            if( col.onClick ){
-                text.setCursor( "pointer" )
-                    .onClick( function(){
-                        col.onClick( index );
-                    } );
-            }
+                .setMarginLeft( margin + "px" )
+                .setMarginRight( margin + "px" );
 
             panel.add( text );
 
         } );
+
+        panel
+            .setCursor( "pointer" )
+            .onClick( function(){
+                selectRow( index );
+            } );
+
+        if( selected.indexOf( items[ index ][ 0 ] ) !== -1 ){
+            panel.dom.classList.add( "highlight" )
+        }
 
         return panel.dom;
 
     };
 
     var virtualList = new UI.VirtualList(
-        items, itemHeight, height, generatorFn
-    ).setWidth( "100%" );
+            items, itemHeight, height, generatorFn
+        )
+        .setWidth( ( fullWidth + 20 ) + "px" );
 
     //
 
@@ -792,8 +863,14 @@ UI.VirtualTable = function( items, itemHeight, height, colums ){
         virtualList
     );
 
+    console.log( header.dom.clientWidth )
+
+    // API
+
     this.header = header;
     this.list = virtualList;
+    this.sortColumn = sortColumn;
+    this.selectRow = selectRow;
 
     return this;
 
