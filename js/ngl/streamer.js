@@ -487,43 +487,58 @@ NGL.FileStreamer.prototype = NGL.createObject(
 
     _read: function( callback ){
 
-        var reader = new FileReader();
+        if( typeof importScripts === 'function' ){
 
-        //
+            // Use FileReaderSync within Worker
 
-        reader.onload = function( event ){
+            var reader = new FileReaderSync();
+            var data = reader.readAsArrayBuffer( this.file );
 
-            callback( event.target.result );
+            //
 
-        }.bind( this );
+            callback( data );
 
-        //
+        }else{
 
-        if( typeof this.onprogress === "function" ){
+            var reader = new FileReader();
 
-            reader.onprogress = function ( event ) {
+            //
 
-                this.onprogress( event );
+            reader.onload = function( event ){
 
-            }.bind( this );
-
-        }
-
-        //
-
-        if( typeof this.onerror === "function" ){
-
-            reader.onerror = function ( event ) {
-
-                this.onerror( event );
+                callback( event.target.result );
 
             }.bind( this );
 
+            //
+
+            if( typeof this.onprogress === "function" ){
+
+                reader.onprogress = function ( event ) {
+
+                    this.onprogress( event );
+
+                }.bind( this );
+
+            }
+
+            //
+
+            if( typeof this.onerror === "function" ){
+
+                reader.onerror = function ( event ) {
+
+                    this.onerror( event );
+
+                }.bind( this );
+
+            }
+
+            //
+
+            reader.readAsArrayBuffer( this.file );
+
         }
-
-        //
-
-        reader.readAsArrayBuffer( this.file );
 
     }
 

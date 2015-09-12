@@ -7,3 +7,4 @@ var exports;
 var performance;
 var require;
 var process;
+var FileReaderSync;
