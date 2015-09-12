@@ -4884,7 +4884,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         if( this.surface && (
                 params[ "isolevel" ] !== undefined ||
                 params[ "smooth" ] !== undefined ||
-                !this.__box.equals( this.box )
+                params[ "boxSize" ] !== undefined ||
+                ( this.boxSize > 0 &&
+                    !this.__box.equals( this.box ) )
             )
         ){
             this.build( {
