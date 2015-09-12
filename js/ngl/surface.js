@@ -1292,10 +1292,6 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
             vertexIndex = new Int32Array( n );
         }
 
-        for( var i = 0; i < n; ++i ){
-            vertexIndex[ i ] = -1;
-        }
-
         count = 0;
         icount = 0;
 
@@ -1687,23 +1683,39 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
         }
 
-        for ( z = zBeg; z < zEnd; ++z ) {
+        // init part of the vertexIndex
+        // (take a significant amount of time to do it fully)
 
+        var xBeg2 = Math.max( 0, xBeg - 1);
+        var yBeg2 = Math.max( 0, yBeg - 1 );
+        var zBeg2 = Math.max( 0, zBeg - 1 );
+
+        var xEnd2 = Math.min( nx - 1, xEnd + 1 );
+        var yEnd2 = Math.min( ny - 1, yEnd + 1 );
+        var zEnd2 = Math.min( nz - 1, zEnd + 1 );
+
+        for ( z = zBeg2; z < zEnd2; ++z ) {
             z_offset = zd * z;
-
-            for ( y = yBeg; y < yEnd; ++y ) {
-
+            for ( y = yBeg2; y < yEnd2; ++y ) {
                 y_offset = z_offset + yd * y;
+                for ( x = xBeg2; x < xEnd2; ++x ) {
+                    q = y_offset + x;
+                    vertexIndex[ q ] = -1;
+                }
+            }
+        }
 
+        // polygonize part of the grid
+
+        for ( z = zBeg; z < zEnd; ++z ) {
+            z_offset = zd * z;
+            for ( y = yBeg; y < yEnd; ++y ) {
+                y_offset = z_offset + yd * y;
                 for ( x = xBeg; x < xEnd; ++x ) {
-
                     q = y_offset + x;
                     polygonize( x, y, z, q );
-
                 }
-
             }
-
         }
 
     }
