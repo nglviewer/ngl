@@ -540,6 +540,21 @@ NGL.Volume.prototype = {
 
     },
 
+    getBox: function( center, size, target ){
+
+        if( !target ) target = new THREE.Box3();
+
+        target.set( center, center );
+        target.expandByScalar( size );
+        target.applyMatrix4( this.inverseMatrix );
+
+        target.min.round();
+        target.max.round();
+
+        return target;
+
+    },
+
     getSurface: function( isolevel, smooth, center, size ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
@@ -563,9 +578,7 @@ NGL.Volume.prototype = {
 
             if( !this.__box ) this.__box = new THREE.Box3();
             box = this.__box;
-            box.set( center, center );
-            box.expandByScalar( size );
-            box.applyMatrix4( this.inverseMatrix );
+            this.getBox( center, size, box );
 
         }
 

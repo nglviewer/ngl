@@ -4665,6 +4665,8 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
     this.boxCenter = new THREE.Vector3();
     this.__boxCenter = new THREE.Vector3();
+    this.box = new THREE.Box3();
+    this.__box = new THREE.Box3();
 
     this.setBox = ( function(){
         var position = new THREE.Vector3();
@@ -4771,6 +4773,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 this.__smooth = this.smooth;
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
+                this.__box.copy( this.box );
 
                 this.volume.getSurfaceWorker(
                     isolevel, this.smooth, this.boxCenter, this.boxSize,
@@ -4876,12 +4879,12 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             this, params, what, rebuild
         );
 
+        this.volume.getBox( this.boxCenter, this.boxSize, this.box );
+
         if( this.surface && (
                 params[ "isolevel" ] !== undefined ||
                 params[ "smooth" ] !== undefined ||
-                params[ "boxSize" ] !== undefined ||
-                ( this.boxSize > 0 &&
-                    !this.__boxCenter.equals( this.boxCenter ) )
+                !this.__box.equals( this.box )
             )
         ){
             this.build( {
