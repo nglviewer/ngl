@@ -146,6 +146,7 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     // - fragmentShader
 
     this.pickable = false;
+    this.dynamic = true;
 
     this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
@@ -169,6 +170,7 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
         this.geometry.addIndex(
             new THREE.BufferAttribute( index, 1 )
         );
+        this.geometry.index.setDynamic( this.dynamic );
     }
 
     if( pickingColor ){
@@ -280,6 +282,7 @@ NGL.Buffer.prototype = {
         if( wireframeIndex ){
             wireframeGeometry.addIndex(
                 new THREE.BufferAttribute( wireframeIndex, 1 )
+                    .setDynamic( this.dynamic )
             );
             wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
         }
@@ -571,6 +574,7 @@ NGL.Buffer.prototype = {
             this.geometry.addAttribute(
                 name,
                 new THREE.BufferAttribute( buf, itemSize[ a.type ] )
+                    .setDynamic( this.dynamic )
             );
 
         }
@@ -687,6 +691,7 @@ NGL.Buffer.prototype = {
 
                     geometry.addIndex(
                         new THREE.BufferAttribute( array, 1 )
+                            .setDynamic( this.dynamic )
                     );
 
                     //
@@ -695,21 +700,28 @@ NGL.Buffer.prototype = {
 
                     this.wireframeGeometry.addIndex(
                         new THREE.BufferAttribute( this.wireframeIndex, 1 )
+                            .setDynamic( this.dynamic )
                     );
 
                 }else{
 
                     geometry.index.set( data[ name ] );
                     geometry.index.needsUpdate = true;
+                    geometry.index.updateRange.count = data[ name ].length;
 
                     geometry.addGroup( 0, data[ name ].length );
 
                     //
 
-                    this.makeWireframeIndex();
+                    if( this.wireframe ){
 
-                    this.wireframeGeometry.index.set( this.wireframeIndex );
-                    this.wireframeGeometry.index.needsUpdate = true;
+                        this.makeWireframeIndex();
+
+                        this.wireframeGeometry.index.set( this.wireframeIndex );
+                        this.wireframeGeometry.index.needsUpdate = true;
+                        this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
+
+                    }
 
                 }
 
@@ -724,12 +736,14 @@ NGL.Buffer.prototype = {
                     geometry.addAttribute(
                         name,
                         new THREE.BufferAttribute( array, attribute.itemSize )
+                            .setDynamic( this.dynamic )
                     );
 
                 }else{
 
                     attributes[ name ].set( data[ name ] );
                     attributes[ name ].needsUpdate = true;
+                    attributes[ name ].updateRange.count = data[ name ].length;
 
                 }
 
