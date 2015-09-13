@@ -293,7 +293,9 @@ NGL.Buffer.prototype = {
 
     makeWireframeIndex: function(){
 
-        function checkEdge( edges, a, b ) {
+        var edges = [];
+
+        function checkEdge( a, b ) {
 
             if ( a > b ){
 
@@ -340,7 +342,7 @@ NGL.Buffer.prototype = {
                 }
 
                 var j = 0;
-                var edges = {};
+                edges.length = 0;
 
                 for( var i = 0; i < n; i += 3 ){
 
@@ -348,17 +350,17 @@ NGL.Buffer.prototype = {
                     var b = array[ i + 1 ];
                     var c = array[ i + 2 ];
 
-                    if( checkEdge( edges, a, b ) ){
+                    if( checkEdge( a, b ) ){
                         wireframeIndex[ j + 0 ] = a;
                         wireframeIndex[ j + 1 ] = b;
                         j += 2;
                     }
-                    if( checkEdge( edges, b, c ) ){
+                    if( checkEdge( b, c ) ){
                         wireframeIndex[ j + 0 ] = b;
                         wireframeIndex[ j + 1 ] = c;
                         j += 2;
                     }
-                    if( checkEdge( edges, c, a ) ){
+                    if( checkEdge( c, a ) ){
                         wireframeIndex[ j + 0 ] = c;
                         wireframeIndex[ j + 1 ] = a;
                         j += 2;
