@@ -707,11 +707,11 @@ NGL.Buffer.prototype = {
 
                 }else{
 
-                    geometry.index.set( data[ name ] );
-                    geometry.index.needsUpdate = true;
-                    geometry.index.updateRange.count = data[ name ].length;
+                    geometry.index.set( array );
+                    geometry.index.needsUpdate = length > 0;
+                    geometry.index.updateRange.count = length;
 
-                    geometry.addGroup( 0, data[ name ].length );
+                    geometry.addGroup( 0, length );
 
                     //
 
@@ -720,7 +720,7 @@ NGL.Buffer.prototype = {
                         this.makeWireframeIndex();
 
                         this.wireframeGeometry.index.set( this.wireframeIndex );
-                        this.wireframeGeometry.index.needsUpdate = true;
+                        this.wireframeGeometry.index.needsUpdate = this.wireframeIndexCount > 0;
                         this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
 
                     }
@@ -743,9 +743,9 @@ NGL.Buffer.prototype = {
 
                 }else{
 
-                    attributes[ name ].set( data[ name ] );
-                    attributes[ name ].needsUpdate = true;
-                    attributes[ name ].updateRange.count = data[ name ].length;
+                    attributes[ name ].set( array );
+                    attributes[ name ].needsUpdate = length > 0;
+                    attributes[ name ].updateRange.count = length;
 
                 }
 
@@ -896,15 +896,15 @@ NGL.MappedBuffer = function( params ){
     this.size = this.count;
     this.attributeSize = this.count * this.mappingSize;
 
-    var index = new Uint32Array( this.count * this.mappingIndicesSize );
+    this.index = new Uint32Array( this.count * this.mappingIndicesSize );
 
-    NGL.Buffer.call( this, null, null, index, null, params );
+    this.makeIndex();
+
+    NGL.Buffer.call( this, null, null, this.index, null, params );
 
     this.addAttributes( {
         "mapping": { type: this.mappingType, value: null },
     } );
-
-    this.makeIndex();
 
 };
 
@@ -977,7 +977,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
     var mappingIndicesSize = this.mappingIndicesSize;
     var mappingItemSize = this.mappingItemSize;
 
-    var index = this.geometry.index.array;
+    var index = this.index;
 
     var i, ix, it;
 
@@ -1330,6 +1330,8 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
     this.meshColor = new Float32Array( this.size * 3 );
     this.meshPickingColor = new Float32Array( this.size * 3 );
 
+    this.makeIndex();
+
     NGL.MeshBuffer.call(
         this, this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, p
@@ -1344,8 +1346,6 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
     } );
 
     this.initNormals = false;
-
-    this.makeIndex();
 
 };
 
@@ -2031,6 +2031,8 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
     this.meshIndex = new Uint32Array( x );
 
+    this.makeIndex();
+
     NGL.MeshBuffer.call(
         this, this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, p
@@ -2054,8 +2056,6 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
         size: size,
         pickingColor: pickingColor
     } );
-
-    this.makeIndex();
 
 };
 
@@ -2217,7 +2217,7 @@ NGL.RibbonBuffer.prototype.setAttributes = function( data ){
 NGL.RibbonBuffer.prototype.makeIndex = function(){
 
     var meshIndex = this.meshIndex;
-    var n = this.size / 4;
+    var n = meshIndex.length / 4 / 3;
 
     var quadIndices = new Uint32Array([
         0, 1, 2,
@@ -2272,6 +2272,8 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
         n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
     );
 
+    this.makeIndex();
+
     NGL.MeshBuffer.call(
         this, this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, p
@@ -2286,8 +2288,6 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
         size: size,
         pickingColor: pickingColor
     } );
-
-    this.makeIndex();
 
 }
 
