@@ -118,7 +118,8 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "txt": NGL.TextParser,
             "text": NGL.TextParser,
             "csv": NGL.CsvParser,
-            "json": NGL.JsonParser
+            "json": NGL.JsonParser,
+            "xml": NGL.XmlParser
 
         };
 
@@ -236,6 +237,7 @@ NGL.loaderMap = {
     "text": NGL.ParserLoader,
     "csv": NGL.ParserLoader,
     "json": NGL.ParserLoader,
+    "xml": NGL.ParserLoader,
 
     "ngl": NGL.ScriptLoader,
     "plugin": NGL.PluginLoader,

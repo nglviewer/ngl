@@ -1458,6 +1458,27 @@ QUnit.asyncTest( "json parser", function( assert ) {
 });
 
 
+QUnit.asyncTest( "xml parser", function( assert ) {
+
+    var path = "data://3dqbInfo.xml";
+
+    return NGL.autoLoad( path ).then( function( xml ){
+
+        // console.log( xml )
+
+        var descr = xml.data.root;
+        var pdb = descr.children[ 0 ];
+        var id = pdb.attributes.structureId;
+
+        assert.equal( "3DQB", id, "Passed!" );
+
+        QUnit.start();
+
+    } );
+
+});
+
+
 //////////////////////
 // Typed array utils
 //
