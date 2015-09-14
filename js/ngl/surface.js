@@ -1697,7 +1697,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
         }
 
         // init part of the vertexIndex
-        // (take a significant amount of time to do it fully)
+        // (takes a significant amount of time to do for all)
 
         var xBeg2 = Math.max( 0, xBeg - 1);
         var yBeg2 = Math.max( 0, yBeg - 1 );
@@ -1707,6 +1707,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
         var yEnd2 = Math.min( ny - 1, yEnd + 1 );
         var zEnd2 = Math.min( nz - 1, zEnd + 1 );
 
+        console.time( "PREP" )
         for ( z = zBeg2; z < zEnd2; ++z ) {
             z_offset = zd * z;
             for ( y = yBeg2; y < yEnd2; ++y ) {
@@ -1717,6 +1718,121 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
                 }
             }
         }
+        console.timeEnd( "PREP" )
+
+        // clip space where the isovalue is too low
+
+        console.time( "__PREP" )
+
+        var __break;
+        var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
+        var __xEnd = xEnd; var __yEnd = yEnd; var __zEnd = zEnd;
+
+        __break = false;
+        for ( z = zBeg; z < zEnd; ++z ) {
+            for ( y = yBeg; y < yEnd; ++y ) {
+                for ( x = xBeg; x < xEnd; ++x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __zBeg = z;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( y = yBeg; y < yEnd; ++y ) {
+            for ( z = __zBeg; z < zEnd; ++z ) {
+                for ( x = xBeg; x < xEnd; ++x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __yBeg = y;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( x = xBeg; x < xEnd; ++x ) {
+            for ( y = __yBeg; y < yEnd; ++y ) {
+                for ( z = __zBeg; z < zEnd; ++z ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __xBeg = x;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( z = zEnd; z >= zBeg; --z ) {
+            for ( y = yEnd; y >= yBeg; --y ) {
+                for ( x = xEnd; x >= xBeg; --x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __zEnd = z;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( y = yEnd; y >= yBeg; --y ) {
+            for ( z = __zEnd; z >= zBeg; --z ) {
+                for ( x = xEnd; x >= xBeg; --x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __yEnd = y;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( x = xEnd; x >= xBeg; --x ) {
+            for ( y = __yEnd; y >= yBeg; --y ) {
+                for ( z = __zEnd; z >= zBeg; --z ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __xEnd = x;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        console.timeEnd( "__PREP" )
+
+        //
+
+        console.log( __xBeg, __yBeg, __zBeg, __xEnd, __yEnd, __zEnd );
+        console.log( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd );
+
+        xBeg = __xBeg; yBeg = __yBeg; zBeg = __zBeg;
+        xEnd = __xEnd; yEnd = __yEnd; zEnd = __zEnd;
 
         // polygonize part of the grid
 
