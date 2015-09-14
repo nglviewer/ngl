@@ -919,7 +919,7 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
-                    // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
+                    // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -968,7 +968,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         chainname = dd ? "" : ls[ 4 ];
                         resno = parseInt( ls[ 5 - dd ] );
                         resname = ls[ 3 ];
-                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge
+                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge FIXME should be its own field
                         altloc = "";
 
                     }else{
@@ -977,7 +977,8 @@ NGL.PdbParser.prototype = NGL.createObject(
                         element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
-                        resno = parseInt( line.substr( 22, 5 ) );
+                        resno = parseInt( line.substr( 22, 4 ) );
+                        // icode = line[ 26 ];  // FIXME currently not supported
                         resname = line.substr( 17, 4 ).trim();
                         bfactor = parseFloat( line.substr( 60, 8 ) );
                         altloc = line[ 16 ].trim();
@@ -1060,7 +1061,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                             continue;
                         }/*else if( to < from ){
                             // likely a duplicate in standard PDB format
-                            // but not necessarily so better remove duplicates
+                            // but not necessarily, so better remove duplicates
                             // in a pass after parsing (and auto bonding)
                             continue;
                         }*/
@@ -1088,36 +1089,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                     var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     sheets.push([ startChain, startResi, endChain, endResi ]);
-
-                // }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '290' ){
-
-                //     if( line.substr( 11, 41 ) === "CRYSTALLOGRAPHIC SYMMETRY TRANSFORMATIONS" ){
-
-                //         biomolDict[ "REL" ] = {
-                //             matrixDict: {},
-                //             chainList: []
-                //         };
-                //         currentBiomol = biomolDict[ "REL" ];
-
-                //     }else if( line.substr( 13, 5 ) === "SMTRY" ){
-
-                //         var ls = line.split( /\s+/ );
-
-                //         var row = parseInt( line[ 18 ] ) - 1;
-                //         var mat = ls[ 3 ].trim();
-
-                //         if( row === 0 ){
-                //             currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
-                //         }
-
-                //         var elms = currentBiomol.matrixDict[ mat ].elements;
-
-                //         elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
-                //         elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
-                //         elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
-                //         elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
-
-                //     }
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
