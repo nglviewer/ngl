@@ -1,0 +1,9 @@
+{
+	"name": "FragSearch Loader",
+	"description": "...",
+	"version": "0.1",
+	"files": [
+		"fragsearch.ngl"
+	],
+	"source": "fragsearchResultsLoader();"
+}

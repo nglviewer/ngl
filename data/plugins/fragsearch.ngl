@@ -1,17 +1,12 @@
 
 
-var FragfitResultsPreset = function( data, params ){
+var FragsearchResultsPreset = function( data, params ){
 
     var p = Object.assign( {}, params );
 
     var pdbComp = data[ "pdb" ];
-    var mrcComp = data[ "mrc" ];
     var linkerComp = data[ "linker" ];
     var json = data[ "json" ];
-
-    var surfaceOpacity = p.surfaceOpacity || 0.6;
-
-    stage.viewer.setFog( null, 30, 55 );
 
     // pdb
 
@@ -33,97 +28,107 @@ var FragfitResultsPreset = function( data, params ){
 
     linkerComp.centerView();
 
-    // mrc
-
-    var surfaceRepr = mrcComp.addRepresentation( "surface", {
-        name: "map",
-        isolevelType: "sigma",
-        isolevel: p.isolevel || 2.0,
-        smooth: 0,
-        wireframe: p.wireframe || false,
-        opacity: p.wireframe ? 1.0 : surfaceOpacity,
-        side: THREE.DoubleSide,
-        opaqueBack: true,
-        color: "grey"
-    } );
-
     // json
 
     // console.log( json );
 
     //
 
-    this.setSurfaceParams = function( params ){
-
-        var p = Object.assign( {}, params );
-
-        if( p.opacity !== undefined ){
-            surfaceOpacity = p.opacity;
-        }
-
-        if( p.wireframe === true ){
-            p.opacity = 1.0;
-        }else if( p.wireframe === false ){
-            p.opacity = surfaceOpacity;
-        }
-
-        surfaceRepr.setParameters( p );
-
-    };
-
     this.backboneRepr = backboneRepr;
-    this.surfaceRepr = surfaceRepr;
 
     stage.centerView();
 
 };
 
 
-var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
+var FragsearchResultsWidget = function( pdbComp, linkerComp, linkerJson ){
 
     var data = {};
-    var isolevel = 2.0;
-    var wireframe = true;
 
     var container = new UI.Panel();
 
     var data = {
         pdb: pdbComp,
-        mrc: mrcComp,
         linker: linkerComp,
         json: linkerJson
     }
 
     var params = {
-        isolevel: isolevel,
-        wireframe: wireframe,
     };
 
-    fragfitResultsPreset = new FragfitResultsPreset( data, params );
-
-    // Isolevel
-
-    var isolevelNumber = new UI.Number( isolevel )
-        .onChange( function(){
-            fragfitResultsPreset.setSurfaceParams( {
-                isolevel: isolevelNumber.getValue()
-            } );
-        } );
-
-    // Wireframe
-
-    var wireframeCheckbox = new UI.Checkbox( wireframe )
-        .onChange( function(){
-            fragfitResultsPreset.setSurfaceParams( {
-                wireframe: wireframeCheckbox.getValue()
-            } );
-        } );
+    fragsearchResultsPreset = new FragsearchResultsPreset( data, params );
 
     var showAllBtn = new UI.Button( "show all" )
         .onClick( function(){
-            fragfitResultsPreset.backboneRepr.setSelection( "*" );
+            fragsearchResultsPreset.backboneRepr.setSelection( "*" );
             virtualTable.selectRow();
         } );
+
+    // PDB info
+
+    var tether;
+
+    var pdbTitle = new UI.Text();
+
+    var pdbInfo = new UI.OverlayPanel()
+        .setDisplay( "none" )
+        .attach( this.dom )
+        .setMaxWidth( "250px" )
+        .add(
+            pdbTitle
+        );
+
+    var setPdbTitle = function( event, title ){
+
+        pdbTitle.setValue( title );
+        pdbInfo.setDisplay( "block" );
+
+        tether = new Tether( {
+            element: pdbInfo.dom,
+            target: event.target,
+            attachment: 'top right',
+            targetAttachment: 'top left',
+            offset: '0px 5px',
+            constraints: [
+                {
+                    to: container,
+                    attachment: 'element',
+                    pin: [ 'top', 'bottom' ]
+                }
+            ]
+        } );
+
+        tether.position();
+
+    };
+
+    var pdbTitleCache = {};
+
+    var getPdbTitle = function( event, id ){
+
+        if( id in pdbTitleCache ){
+
+            setPdbTitle( event, pdbTitleCache[ id ] );
+
+        }else{
+
+            var base = "http://www.rcsb.org/pdb/rest/describePDB?structureId=";
+            var url = base + id;
+
+            NGL.autoLoad( url, { ext: "xml" } ).then( function( xml ){
+
+                var descr = xml.data.root;
+                var pdb = descr.children[ 0 ];
+                var title = pdb.attributes.title;
+
+                pdbTitleCache[ id ] = title;
+                setPdbTitle( event, title );
+
+            } );
+
+        }
+
+    };
 
     // Linker list
 
@@ -138,7 +143,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var selectLinker = function( index ){
         if( index !== undefined ){
-            fragfitResultsPreset.backboneRepr.setSelection(
+            fragsearchResultsPreset.backboneRepr.setSelection(
                 "/" + ( linkerItems[ index ][ 0 ] - 1 )
             );
         }
@@ -152,7 +157,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             width: 25
         },
         {
-            name: "Cross-correlation",
+            name: "Score 1?",
             index: 1,
             align: "right",
             width: 30,
@@ -161,7 +166,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             }
         },
         {
-            name: "Score 1?",
+            name: "Score 2?",
             index: 2,
             align: "right",
             width: 30,
@@ -170,31 +175,28 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             }
         },
         {
-            name: "Score 2?",
-            index: 3,
-            align: "right",
-            width: 30,
-            format: function( value ){
-                return value.toFixed( 2 );
+            name: "PDB",
+            index: 4,
+            align: "left",
+            width: 35,
+            onMouseOver: function( event, index, value ){
+                getPdbTitle( event, value );
+            },
+            onMouseOut: function( event, index, value ){
+                pdbInfo.setDisplay( "none" );
             }
         },
         {
-            name: "PDB",
-            index: 5,
-            align: "left",
-            width: 35
-        },
-        {
             name: "Clashes",
-            index: 6,
+            index: 5,
             align: "right",
             width: 30
         },
         {
             name: "Sequence",
-            index: 4,
+            index: 3,
             align: "left",
-            width: 120
+            width: linkerItems[ 0 ][ 3 ].length * 11
         }
     ];
 
@@ -211,7 +213,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         .setOverflowX( "auto" )
         .setMarginTop( "5px" );
 
-    // sort by crosscorrel & select first
+    // sort by score & select first
     virtualTable
         .sortColumn( 1, true )
         .selectRow( 0 );
@@ -219,12 +221,6 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
     //
 
     container.add(
-        new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
-        isolevelNumber,
-        new UI.Break(),
-        new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
-        wireframeCheckbox,
-        new UI.Break(),
         showAllBtn,
         new UI.Break(),
         new UI.Break(),
@@ -236,7 +232,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 };
 
 
-function loadFragfitResults( pdb, mrc, linker, json ){
+function loadFragsearchResults( pdb, linker, json ){
 
     var initComp = function( comp ){
         comp.requestGuiVisibility( false );
@@ -246,18 +242,17 @@ function loadFragfitResults( pdb, mrc, linker, json ){
 
     var promiseList = [
         stage.loadFile( pdb, { ext: "pdb" } ).then( initComp ),
-        stage.loadFile( mrc, { ext: "mrc" } ).then( initComp ),
         stage.loadFile( linker, { ext: "pdb" } ).then( initComp ),
         NGL.autoLoad( json, { ext: "json" } )
     ];
 
     function init( results ){
-        var jsonData = results[ 3 ].data;
-        var fragfitResultsWidget = new FragfitResultsWidget(
-            results[ 0 ], results[ 1 ], results[ 2 ], jsonData
+        var jsonData = results[ 2 ].data;
+        var fragsearchResultsWidget = new FragsearchResultsWidget(
+            results[ 0 ], results[ 1 ], jsonData
         );
-        // panel.add( fragfitResultsWidget );
-        return fragfitResultsWidget;
+        // panel.add( fragsearchResultsWidget );
+        return fragsearchResultsWidget;
     }
 
     return Promise.all( promiseList ).then( init );
@@ -265,12 +260,11 @@ function loadFragfitResults( pdb, mrc, linker, json ){
 }
 
 
-var FragfitResultsLoaderWidget = function(){
+var FragsearchResultsLoaderWidget = function(){
 
     var container = new UI.Panel();
 
     var pdbFile = new UI.File().setWidth( "200px" );
-    var mrcFile = new UI.File().setWidth( "200px" );
     var linkerFile = new UI.File().setWidth( "200px" );
     var jsonFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
@@ -281,12 +275,12 @@ var FragfitResultsLoaderWidget = function(){
 
     //
 
-    function load( pdb, mrc, linker, json ){
+    function load( pdb, linker, json ){
 
         infoText.setValue( "loading..." );
 
-        loadFragfitResults(
-            pdb, mrc, linker, json
+        loadFragsearchResults(
+            pdb, linker, json
         ).then( function( widget ){
             infoText.setValue( "" );
             widget.setMarginLeft( "20px" );
@@ -305,26 +299,24 @@ var FragfitResultsLoaderWidget = function(){
     function loadFiles(){
 
         var pdb = pdbFile.getFiles()[ 0 ];
-        var mrc = mrcFile.getFiles()[ 0 ];
         var linker = linkerFile.getFiles()[ 0 ];
         var json = jsonFile.getFiles()[ 0 ];
 
-        if( !pdb || !mrc || !linker || !json ){
+        if( !pdb || !linker || !json ){
             infoText.setValue( "please supply all files" );
             return;
         }
 
-        load( pdb, mrc, linker, json );
+        load( pdb, linker, json );
 
     }
 
     function loadExample(){
 
         load(
-            "data://ribosomexample.pdb",
-            "data://ribocut4a.mrc",
-            "data://ori_pdb_linker_file3.pdb",
-            "data://linker_correl.json"
+            "data://3dqb.pdb",
+            "data://fragsearch/input_pdb_file_linker3.pdb",
+            "data://fragsearch/input_pdb_file_linker.json"
         );
 
     }
@@ -332,7 +324,7 @@ var FragfitResultsLoaderWidget = function(){
     //
 
     var description = new UI.Panel().add(
-        new UI.Html( "FragFit..." )
+        new UI.Html( "FragSearch..." )
     );
 
     container.add(
@@ -340,9 +332,6 @@ var FragfitResultsLoaderWidget = function(){
         new UI.Break(),
         new UI.Text( "PDB:" ).setWidth( "45px" ),
         pdbFile,
-        new UI.Break(),
-        new UI.Text( "MRC:" ).setWidth( "45px" ),
-        mrcFile,
         new UI.Break(),
         new UI.Text( "Linker PDB:" ).setWidth( "45px" ),
         linkerFile,
@@ -364,12 +353,12 @@ var FragfitResultsLoaderWidget = function(){
 };
 
 
-var FragfitJobWidget = function( server ){
+var FragsearchJobWidget = function( server ){
 
     var container = new UI.Panel();
 
     var description = new UI.Panel().add(
-        new UI.Html( "FragFit Job" )
+        new UI.Html( "FragSearch Job" )
     );
 
     var jobSelect = new JobSelectorWidget( server )
@@ -385,9 +374,8 @@ var FragfitJobWidget = function( server ){
         var job = server.getJob( jobSelect.getValue() );
         if( !job ) return;
         var baseUrl = job.urlFor( "file" ) + "/";
-        loadFragfitResults(
+        loadFragsearchResults(
             baseUrl + "input_pdb_file.pdb",
-            baseUrl + "input_mrc_file.mrc",
             baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
             baseUrl + "linker_correl.json"
         ).then( function( widget ){
@@ -417,19 +405,19 @@ var FragfitJobWidget = function( server ){
 
 //
 
-function fragfitResultsLoader(){
+function fragsearchResultsLoader(){
 
-    var fragfitResultsLoaderWidget = new FragfitResultsLoaderWidget();
-    panel.add( fragfitResultsLoaderWidget );
+    var fragsearchResultsLoaderWidget = new FragsearchResultsLoaderWidget();
+    panel.add( fragsearchResultsLoaderWidget );
 
 }
 
-function fragfitJob(){
+function fragsearchJob(){
 
     var server = new Server( "http://localhost/job/" );
-    server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
+    // server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
 
-    var fragfitJobWidget = new FragfitJobWidget( server );
-    panel.add( fragfitJobWidget );
+    var fragsearchJobWidget = new FragsearchJobWidget( server );
+    panel.add( fragsearchJobWidget );
 
 }

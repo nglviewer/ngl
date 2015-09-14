@@ -774,9 +774,9 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
         return this;
     };
 
-    var selectRow = function( idx ){
+    var selectRow = function( event, idx ){
         selected.length = 0;
-        if( onRowSelect ) onRowSelect( idx );
+        if( onRowSelect ) onRowSelect( event, idx );
         if( idx !== undefined ){
             selected.push( items[ idx ][ 0 ] );
         }
@@ -831,7 +831,22 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
                 .setWidth( width + "px" )
                 .setTextAlign( col.align || defaultAlign )
                 .setMarginLeft( margin + "px" )
-                .setMarginRight( margin + "px" );
+                .setMarginRight( margin + "px" )
+                .onClick( function( event ){
+                    if( typeof col.onClick === "function" ){
+                        col.onClick( event, index, value );
+                    }
+                } )
+                .onMouseOver( function( event ){
+                    if( typeof col.onMouseOver === "function" ){
+                        col.onMouseOver( event, index, value );
+                    }
+                } )
+                .onMouseOut( function( event ){
+                    if( typeof col.onMouseOut === "function" ){
+                        col.onMouseOut( event, index, value );
+                    }
+                } );
 
             panel.add( text );
 
@@ -839,8 +854,8 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
 
         panel
             .setCursor( "pointer" )
-            .onClick( function(){
-                selectRow( index );
+            .onClick( function( event ){
+                selectRow( event, index );
             } );
 
         if( selected.indexOf( items[ index ][ 0 ] ) !== -1 ){

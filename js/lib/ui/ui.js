@@ -358,7 +358,13 @@ UI.Text.prototype.setValue = function ( value ) {
 
 };
 
+UI.Text.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
 // Input
 
 UI.Input = function () {
@@ -516,6 +522,14 @@ UI.Select.prototype.getValue = function () {
 UI.Select.prototype.setValue = function ( value ) {
 
     this.dom.value = value;
+
+    return this;
+
+};
+
+UI.Select.prototype.setName = function ( value ) {
+
+    this.dom.name = value;
 
     return this;
 
@@ -712,7 +726,13 @@ UI.Checkbox.prototype.setValue = function ( value ) {
 
 };
 
+UI.Checkbox.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
 // Color
 
 UI.Color = function () {
@@ -936,7 +956,13 @@ UI.Number.prototype.setPrecision = function ( precision ) {
 
 };
 
+UI.Number.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
 // Integer
 
 UI.Integer = function ( number ) {
@@ -1089,7 +1115,19 @@ UI.Integer.prototype.setRange = function ( min, max ) {
 
 };
 
+UI.Integer.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
+
+UI.Integer.prototype.setStep =function ( step ) {
+    this.step = step;
+
+    return this;
+}
 // Break
 
 UI.Break = function () {

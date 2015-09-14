@@ -919,7 +919,7 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
-                    // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
+                    // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -968,7 +968,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         chainname = dd ? "" : ls[ 4 ];
                         resno = parseInt( ls[ 5 - dd ] );
                         resname = ls[ 3 ];
-                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge
+                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge FIXME should be its own field
                         altloc = "";
 
                     }else{
@@ -977,7 +977,8 @@ NGL.PdbParser.prototype = NGL.createObject(
                         element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
-                        resno = parseInt( line.substr( 22, 5 ) );
+                        resno = parseInt( line.substr( 22, 4 ) );
+                        // icode = line[ 26 ];  // FIXME currently not supported
                         resname = line.substr( 17, 4 ).trim();
                         bfactor = parseFloat( line.substr( 60, 8 ) );
                         altloc = line[ 16 ].trim();
@@ -1060,7 +1061,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                             continue;
                         }/*else if( to < from ){
                             // likely a duplicate in standard PDB format
-                            // but not necessarily so better remove duplicates
+                            // but not necessarily, so better remove duplicates
                             // in a pass after parsing (and auto bonding)
                             continue;
                         }*/
@@ -1088,36 +1089,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                     var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     sheets.push([ startChain, startResi, endChain, endResi ]);
-
-                // }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '290' ){
-
-                //     if( line.substr( 11, 41 ) === "CRYSTALLOGRAPHIC SYMMETRY TRANSFORMATIONS" ){
-
-                //         biomolDict[ "REL" ] = {
-                //             matrixDict: {},
-                //             chainList: []
-                //         };
-                //         currentBiomol = biomolDict[ "REL" ];
-
-                //     }else if( line.substr( 13, 5 ) === "SMTRY" ){
-
-                //         var ls = line.split( /\s+/ );
-
-                //         var row = parseInt( line[ 18 ] ) - 1;
-                //         var mat = ls[ 3 ].trim();
-
-                //         if( row === 0 ){
-                //             currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
-                //         }
-
-                //         var elms = currentBiomol.matrixDict[ mat ].elements;
-
-                //         elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
-                //         elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
-                //         elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
-                //         elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
-
-                //     }
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
@@ -3795,6 +3766,178 @@ NGL.JsonParser.prototype = NGL.createObject(
         var text = NGL.Uint8ToString( this.streamer.data );
 
         this.json.data = JSON.parse( text );
+
+        callback();
+
+    }
+
+} );
+
+
+////////////////
+// Xml parser
+
+NGL.XmlParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.xml = {
+
+        name: this.name,
+        path: this.path,
+        data: {}
+
+    };
+
+};
+
+NGL.XmlParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.XmlParser,
+
+    type: "xml",
+
+    __objName: "xml",
+
+    _parse: function( callback ){
+
+        var text = NGL.Uint8ToString( this.streamer.data );
+
+        // https://github.com/segmentio/xml-parser
+        // MIT license
+
+        function parse( xml ){
+
+            xml = xml.trim();
+
+            // strip comments
+            xml = xml.replace( /<!--[\s\S]*?-->/g, '' );
+
+            return document();
+
+            function document(){
+
+                return {
+                    declaration: declaration(),
+                    root: tag()
+                }
+
+            }
+
+            function declaration(){
+
+                var m = match(/^<\?xml\s*/);
+                if (!m) return;
+
+                // tag
+                var node = {
+                    attributes: {}
+                };
+
+                // attributes
+                while (!(eos() || is('?>'))) {
+                    var attr = attribute();
+                    if (!attr) return node;
+                    node.attributes[attr.name] = attr.value;
+                }
+
+                match(/\?>\s*/);
+                return node;
+
+            }
+
+            function tag(){
+
+                var m = match(/^<([\w-:.]+)\s*/);
+                if (!m) return;
+
+                // name
+                var node = {
+                    name: m[1],
+                    attributes: {},
+                    children: []
+                };
+
+                // attributes
+                while (!(eos() || is('>') || is('?>') || is('/>'))) {
+                    var attr = attribute();
+                    if (!attr) return node;
+                    node.attributes[attr.name] = attr.value;
+                }
+
+                // self closing tag
+                if (match(/^\s*\/>\s*/)) {
+                    return node;
+                }
+
+                match(/\??>\s*/);
+
+                // content
+                node.content = content();
+
+                // children
+                var child;
+                while (child = tag()) {
+                    node.children.push(child);
+                }
+
+                // closing
+                match(/^<\/[\w-:.]+>\s*/);
+
+                return node;
+
+            }
+
+            function content(){
+
+                var m = match(/^([^<]*)/);
+                if (m) return m[1];
+                return '';
+
+            }
+
+            function attribute(){
+
+                var m = match(/([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|\w+)\s*/);
+                if (!m) return;
+                return { name: m[1], value: strip(m[2]) }
+
+            }
+
+            function strip( val ){
+
+                return val.replace(/^['"]|['"]$/g, '');
+
+            }
+
+            function match( re ){
+
+                var m = xml.match(re);
+                if (!m) return;
+                xml = xml.slice(m[0].length);
+                return m;
+
+            }
+
+            function eos(){
+
+                return 0 == xml.length;
+
+            }
+
+            function is( prefix ){
+
+                return 0 == xml.indexOf(prefix);
+
+            }
+
+        }
+
+        this.xml.data = parse( text );
 
         callback();
 
