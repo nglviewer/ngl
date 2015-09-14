@@ -329,38 +329,38 @@ var ToolWidget = function( tool ){
 
         if( arg.type === "file" ){
             input = new UI.File();
-        }else if ( arg.type === "str") {
-            if ( arg.options ) {
+        }else if( arg.type === "str" ){
+            if( arg.options ){
                 var options = {};
                 arg.options.forEach( function( val ){
                     options[ val ] = val;
                 } );
                 input = new UI.Select().setOptions( options );
             }else{
-                input = new UI.Input(); 
+                input = new UI.Input();
             }
-        }else if ( arg.type === "int") {
+        }else if( arg.type === "int" ){
             input = new UI.Integer();
             if( arg.range ) input.setRange( arg.range[ 0 ], arg.range[ 1 ] );
-            if( arg.step ) input.setStep ( arg.step );
-        }else if ( arg.type === "sele") {
+            if( arg.step ) input.setStep( arg.step );
+        }else if( arg.type === "sele" ){
             input = new UI.Input();
-        }else if ( arg.type === "float") {
-            input= new UI.Number();
-            if ( arg.range ) input.setRange (arg.range [0], arg.range [1]);
-            if ( arg.precision ) input.setPrecision ( arg.precision )
-                //code
-       
-            
+        }else if( arg.type === "float" ){
+            input = new UI.Number();
+            if( arg.range ) input.setRange( arg.range [ 0 ], arg.range [ 1 ] );
+            if( arg.precision ) input.setPrecision( arg.precision );
         }else if ( arg.type === "bool") {
-            input= new UI.Checkbox();
+            input = new UI.Checkbox();
         }else{
             input = new UI.Input();
         }
-        if( arg.default !== undefined ){
-            input.setValue( arg.default ); 
+
+        if( arg[ "default" ] !== undefined ){
+            input.setValue( arg[ "default" ] );
         }
+
         input.setName( arg.name );
+
         form.add(
             input,
             new UI.Break()
