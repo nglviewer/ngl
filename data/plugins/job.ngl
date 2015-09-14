@@ -306,6 +306,8 @@ var ToolWidget = function( tool ){
 
     var container = new UI.Panel();
 
+    var server = tool.server;
+
     var form = new UI.Form();
     var submit = new UI.Button( "submit" );
 
