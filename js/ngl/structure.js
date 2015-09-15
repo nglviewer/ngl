@@ -518,6 +518,10 @@ NGL.GidPool = {
 
         NGL.GidPool.nextGid += NGL.GidPool.getGidCount( object );
 
+        if( NGL.GidPool.nextGid > Math.pow( 2, 24 ) ){
+            NGL.error( "GidPool overflown" );
+        }
+
         return [ firstGid, NGL.GidPool.nextGid ];
 
     },

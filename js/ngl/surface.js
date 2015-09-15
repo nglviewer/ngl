@@ -437,7 +437,9 @@ NGL.Volume = function( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.setData( data, nx, ny, nz, dataAtomindex );
 
-    NGL.GidPool.addObject( this );
+    if( this.__data.length <= Math.pow( 10, 7 ) ){
+        NGL.GidPool.addObject( this );
+    }
 
 };
 
@@ -474,7 +476,12 @@ NGL.Volume.prototype = {
 
         if( this.worker ) this.worker.terminate();
 
-        NGL.GidPool.updateObject( this, true );
+        if( this.__data.length <= Math.pow( 10, 7 ) ){
+            NGL.GidPool.updateObject( this, true );
+        }else{
+            NGL.warn( "Volume too large (>10^7), not adding to GidPool" );
+            NGL.GidPool.removeObject( this );
+        }
 
     },
 
