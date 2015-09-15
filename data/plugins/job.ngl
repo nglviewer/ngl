@@ -486,7 +486,7 @@ var JobWidget = function( job ){
 
 function serverWidget(){
 
-    var server = new Server( "http://localhost/job/" );
+    var server = new Server( window.location.origin + "/job/" );
 
     var serverWidget = new ServerWidget( server );
     panel.add( serverWidget );
