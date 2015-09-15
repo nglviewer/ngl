@@ -4678,8 +4678,8 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
         }.bind( this );
     }.bind( this ) )();
 
-    this.viewer.controls.addEventListener(
-        'change', this.setBox
+    this.viewer.signals.orientationChanged.add(
+        this.setBox
     );
 
     this.build();
@@ -4905,8 +4905,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     dispose: function(){
 
-        this.viewer.controls.removeEventListener(
-            'change', this.setBox
+        this.viewer.signals.orientationChanged.remove(
+            this.setBox
         );
 
         NGL.Representation.prototype.dispose.call( this );
