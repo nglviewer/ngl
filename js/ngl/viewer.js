@@ -865,6 +865,14 @@ NGL.Stats.prototype = {
  */
 NGL.Viewer = function( eid ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        orientationChanged: new SIGNALS.Signal(),
+
+    };
+
     if( eid ){
         this.container = document.getElementById( eid );
     }else{
@@ -1115,6 +1123,14 @@ NGL.Viewer.prototype = {
         document.addEventListener(
             'touchmove',
             this.controls.update.bind( this.controls ),
+            false
+        );
+
+        this.controls.addEventListener(
+            'change',
+            function(){
+                this.signals.orientationChanged.dispatch();
+            }.bind( this ),
             false
         );
 
@@ -1919,6 +1935,8 @@ NGL.Viewer.prototype = {
 
             this.requestRender();
 
+            this.signals.orientationChanged.dispatch();
+
         }
 
     }(),
@@ -1951,6 +1969,8 @@ NGL.Viewer.prototype = {
         this.camera.position.fromArray( orientation[ 0 ] );
 
         this.requestRender();
+
+        this.signals.orientationChanged.dispatch();
 
     }
 
