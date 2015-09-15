@@ -654,8 +654,8 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
     function onScroll( e ){
         var scrollTop = e.target.scrollTop;  // Triggers reflow
         if( !lastRepaintY || Math.abs( scrollTop - lastRepaintY ) > maxBuffer ){
-            var first = Math.floor( scrollTop / itemHeight ) - screenItemsCount;
-            renderChunk( first < 0 ? 0 : first );
+            var first = Math.floor( scrollTop / itemHeight );
+            renderChunk( Math.max( 0, first - screenItemsCount ) );
             lastRepaintY = scrollTop;
         }
         lastScrolled = Date.now();
@@ -701,7 +701,9 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
     };
 
     this.redraw = function(){
-        renderChunk( Math.floor( list.scrollTop / itemHeight ) );
+        var first = Math.floor( list.scrollTop / itemHeight );
+        renderChunk( Math.max( 0, first - screenItemsCount ) );
+        lastRepaintY = list.scrollTop;
         return this;
     };
 
