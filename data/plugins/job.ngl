@@ -82,17 +82,45 @@ var Tool = function( name, server, args, docu ){
     this.args = args || {};
     this.docu = docu || "";
 
+    this.signals = {
+        jobSubmitted: new signals.Signal(),
+    }
+
     this.urlFor = function( route ){
 
         return this.server.url + route;
 
     };
 
-    this.submit = function( callback ){
+    this.submit = function( data, callback ){
 
-        NGL.autoLoad( this.urlFor( "tools" ), {
-            ext: "json"
-        } ).then( callback );
+        data.append( "__type__", this.name );
+
+        var url = this.urlFor( "submit/" );
+
+        var xhr = new XMLHttpRequest();
+        xhr.open( "POST", url );
+
+        xhr.addEventListener( 'load', function ( event ) {
+
+            if( xhr.response === "ERROR" ){
+                console.error( "ToolWidget submit ERROR" );
+                if( typeof callback === "function" ){
+                    callback( "ERROR" );
+                }
+                this.signals.jobSubmitted.dispatch( "ERROR" );
+            }else{
+                var json = JSON.parse( xhr.response );
+                var job = server.addJob( json.jobname );
+                if( typeof callback === "function" ){
+                    callback( job );
+                }
+                this.signals.jobSubmitted.dispatch( job );
+            }
+
+        }.bind( this ), false );
+
+        xhr.send( data );
 
     };
 
@@ -321,8 +349,6 @@ var ToolWidget = function( tool ){
 
         var arg = tool.args[ name ];
 
-        console.log( arg );
-
         form.add(
             new UI.Text( arg.name + ":" ).setMarginRight( "10px" )
         );
@@ -373,28 +399,8 @@ var ToolWidget = function( tool ){
     // submit
 
     submit.onClick( function(){
-
         var data = new FormData( form.dom );
-        data.append( "__type__", tool.name );
-
-        var url = tool.urlFor( "submit/" );
-
-        var xhr = new XMLHttpRequest();
-        xhr.open( "POST", url );
-
-        xhr.addEventListener( 'load', function ( event ) {
-
-            if( xhr.response === "ERROR" ){
-                console.error( "ToolWidget submit ERROR" );
-            }else{
-                var json = JSON.parse( xhr.response );
-                server.addJob( json.jobname );
-            }
-
-        }, false );
-
-        xhr.send( data );
-
+        tool.submit( data );
     } );
 
     return container;

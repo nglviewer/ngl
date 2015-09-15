@@ -372,17 +372,42 @@ var FragfitJobWidget = function( server ){
         new UI.Html( "FragFit Job" )
     );
 
-    var jobSelect = new JobSelectorWidget( server )
-        .setWidth( "120px" )
-        .onChange( loadResults );
-
     var results = new UI.Panel();
 
     //
 
-    function loadResults(){
+    // assumes server is ready
+    var tool = server.getTool( "linkit-density" );
 
-        var job = server.getJob( jobSelect.getValue() );
+    tool.signals.jobSubmitted.add( function( job ){
+
+        results.clear();
+
+        if( job === "ERROR" ){
+            results.add(
+                new UI.Text( "ERROR submitting job" )
+            );
+        }else{
+            toolWidget.setDisplay( "none" );
+            results.add(
+                new JobWidget( job )
+            );
+            job.signals.statusChanged.add( function(){
+                if( /*job.check === true && */job.running === false ){
+                    results.clear();
+                    loadResults( job );
+                }
+            } );
+        }
+
+    } );
+
+    var toolWidget = new ToolWidget( tool );
+
+    //
+
+    function loadResults( job ){
+
         if( !job ) return;
         var baseUrl = job.urlFor( "file" ) + "/";
         loadFragfitResults(
@@ -405,7 +430,7 @@ var FragfitJobWidget = function( server ){
 
     container.add(
         description,
-        jobSelect,
+        toolWidget,
         new UI.Break(),
         new UI.Break(),
         results
@@ -428,8 +453,13 @@ function fragfitJob(){
 
     var server = new Server( window.location.origin + "/job/" );
     // server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
+    // 154:C, 164:C, EDKVEGYKK, 4.2
 
-    var fragfitJobWidget = new FragfitJobWidget( server );
-    panel.add( fragfitJobWidget );
+    server.signals.toolsLoaded.add( function(){
+
+        var fragfitJobWidget = new FragfitJobWidget( server );
+        panel.add( fragfitJobWidget );
+
+    } );
 
 }
