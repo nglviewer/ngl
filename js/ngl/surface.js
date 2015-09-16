@@ -1706,15 +1706,14 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
         // init part of the vertexIndex
         // (takes a significant amount of time to do for all)
 
-        var xBeg2 = Math.max( 0, xBeg - 1);
-        var yBeg2 = Math.max( 0, yBeg - 1 );
-        var zBeg2 = Math.max( 0, zBeg - 1 );
+        var xBeg2 = Math.max( 0, xBeg - 2);
+        var yBeg2 = Math.max( 0, yBeg - 2 );
+        var zBeg2 = Math.max( 0, zBeg - 2 );
 
-        var xEnd2 = Math.min( nx - 1, xEnd + 1 );
-        var yEnd2 = Math.min( ny - 1, yEnd + 1 );
-        var zEnd2 = Math.min( nz - 1, zEnd + 1 );
+        var xEnd2 = Math.min( nx, xEnd + 2 );
+        var yEnd2 = Math.min( ny, yEnd + 2 );
+        var zEnd2 = Math.min( nz, zEnd + 2 );
 
-        console.time( "PREP" )
         for ( z = zBeg2; z < zEnd2; ++z ) {
             z_offset = zd * z;
             for ( y = yBeg2; y < yEnd2; ++y ) {
@@ -1725,11 +1724,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
                 }
             }
         }
-        console.timeEnd( "PREP" )
 
         // clip space where the isovalue is too low
-
-        console.time( "__PREP" )
 
         var __break;
         var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
@@ -1831,15 +1827,29 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
             if( __break ) break;
         }
 
-        console.timeEnd( "__PREP" )
-
         //
 
-        console.log( __xBeg, __yBeg, __zBeg, __xEnd, __yEnd, __zEnd );
-        console.log( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd );
+        if( noNormals ){
 
-        xBeg = __xBeg; yBeg = __yBeg; zBeg = __zBeg;
-        xEnd = __xEnd; yEnd = __yEnd; zEnd = __zEnd;
+            xBeg = Math.max( 0, __xBeg - 1);
+            yBeg = Math.max( 0, __yBeg - 1 );
+            zBeg = Math.max( 0, __zBeg - 1 );
+
+            xEnd = Math.min( nx - 1, __xEnd + 1 );
+            yEnd = Math.min( ny - 1, __yEnd + 1 );
+            zEnd = Math.min( nz - 1, __zEnd + 1 );
+
+        }else{
+
+            xBeg = Math.max( 1, __xBeg - 1 );
+            yBeg = Math.max( 1, __yBeg - 1 );
+            zBeg = Math.max( 1, __zBeg - 1 );
+
+            xEnd = Math.min( nx - 2, __xEnd + 1 );
+            yEnd = Math.min( ny - 2, __yEnd + 1 );
+            zEnd = Math.min( nz - 2, __zEnd + 1 );
+
+        }
 
         // polygonize part of the grid
 
