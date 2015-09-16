@@ -887,7 +887,9 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
     this.header = header;
     this.list = virtualList;
     this.sortColumn = sortColumn;
-    this.selectRow = selectRow;
+    this.selectRow = function( idx ){
+        selectRow( undefined, idx );
+    };
 
     return this;
 
