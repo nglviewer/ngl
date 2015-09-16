@@ -2839,9 +2839,8 @@ NGL.EDTSurface = function( atomSet ){
     var bbox = atomSet.getBoundingBox();
 
     var probeRadius, scaleFactor, cutoff, lowRes;
-    var margin;
-    var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
-    var matrix;
+    var pLength, pWidth, pHeight;
+    var matrix, ptran;
     var depty, widxz;
     var cutRadius;
     var setAtomID;
@@ -2879,79 +2878,17 @@ NGL.EDTSurface = function( atomSet ){
             maxRadius = Math.max( maxRadius, radiusDict[ name ] );
         }
 
-        // need margin to avoid boundary/round off effects
-        margin = ( 1 / scaleFactor ) * 3;
-        margin += maxRadius;
-
-        pmin = new THREE.Vector3().copy( bbox.min );
-        pmax = new THREE.Vector3().copy( bbox.max );
-
-        if( !btype ){
-
-            pmin.subScalar( margin );
-            pmax.addScalar( margin );
-
-        }else{
-
-            pmin.subScalar( probeRadius + margin );
-            pmax.addScalar( probeRadius + margin );
-
-        }
-
-        pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-        pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
-
-        pbox = new THREE.Vector3()
-            .subVectors( pmax, pmin )
-            .multiplyScalar( scaleFactor )
-            .ceil()
-            .addScalar( 1 );
-
-        pLength = pbox.x;
-        pWidth = pbox.y;
-        pHeight = pbox.z;
-
-        var maxSize = Math.pow( 10, 6 ) * 256;
-        var tmpSize = pHeight * pWidth * pLength * 3;
-
-        if( maxSize <= tmpSize ){
-
-            scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
-
-            pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-            pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
-
-            pbox = new THREE.Vector3()
-                .subVectors( pmax, pmin )
-                .multiplyScalar( scaleFactor )
-                .ceil()
-                .addScalar( 1 );
-
-            pLength = pbox.x;
-            pWidth = pbox.y;
-            pHeight = pbox.z;
-
-        }
-
-        ptran = new THREE.Vector3().copy( pmin ).negate();
-
-        // coordinate transformation matrix
-        matrix = new THREE.Matrix4();
-        matrix.multiply(
-            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        var grid = NGL.getSurfaceGrid(
+            bbox, maxRadius, scaleFactor, btype ? probeRadius : 0
         );
-        matrix.multiply(
-            new THREE.Matrix4().makeScale(
-                -1/scaleFactor, 1/scaleFactor, 1/scaleFactor
-            )
-        );
-        matrix.multiply(
-            new THREE.Matrix4().makeTranslation(
-                -scaleFactor*ptran.z,
-                -scaleFactor*ptran.y,
-                -scaleFactor*ptran.x
-            )
-        );
+
+        pLength = grid.dim.x;
+        pWidth = grid.dim.y;
+        pHeight = grid.dim.z;
+
+        matrix = grid.matrix;
+        ptran = grid.tran;
+        scaleFactor = grid.scaleFactor;
 
         // boundingatom caches
         depty = {};
@@ -3821,6 +3758,76 @@ NGL.EDTSurface = function( atomSet ){
 
         }
 
+    };
+
+};
+
+
+NGL.getSurfaceGrid = function( bbox, maxRadius, scaleFactor, extraMargin ){
+
+    // need margin to avoid boundary/round off effects
+    var margin = ( 1 / scaleFactor ) * 3;
+    margin += maxRadius;
+
+    var min = new THREE.Vector3().copy( bbox.min );
+    var max = new THREE.Vector3().copy( bbox.max );
+
+    min.subScalar( extraMargin + margin );
+    max.addScalar( extraMargin + margin );
+
+    min.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+    max.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+    var dim = new THREE.Vector3()
+        .subVectors( max, min )
+        .multiplyScalar( scaleFactor )
+        .ceil()
+        .addScalar( 1 );
+
+    var maxSize = Math.pow( 10, 6 ) * 256;
+    var tmpSize = dim.x * dim.y * dim.z * 3;
+
+    if( maxSize <= tmpSize ){
+
+        scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
+
+        min.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+        max.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+        dim.subVectors( max, min )
+            .multiplyScalar( scaleFactor )
+            .ceil()
+            .addScalar( 1 );
+
+    }
+
+    var tran = new THREE.Vector3().copy( min ).negate();
+
+    // coordinate transformation matrix
+    var matrix = new THREE.Matrix4();
+    matrix.multiply(
+        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    );
+    matrix.multiply(
+        new THREE.Matrix4().makeScale(
+            -1 / scaleFactor,
+             1 / scaleFactor,
+             1 / scaleFactor
+        )
+    );
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            -scaleFactor * tran.z,
+            -scaleFactor * tran.y,
+            -scaleFactor * tran.x
+        )
+    );
+
+    return {
+        dim: dim,
+        tran: tran,
+        matrix: matrix,
+        scaleFactor: scaleFactor
     };
 
 };
