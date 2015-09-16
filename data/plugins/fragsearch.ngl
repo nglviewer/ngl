@@ -22,7 +22,7 @@ var FragsearchResultsPreset = function( data, params ){
 
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
-        colorScheme: "residueindex",
+        colorScheme: "modelindex",
         // opacity: 0.3
     } );
 

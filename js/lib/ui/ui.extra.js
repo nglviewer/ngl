@@ -880,8 +880,6 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
         virtualList
     );
 
-    console.log( header.dom.clientWidth )
-
     // API
 
     this.header = header;

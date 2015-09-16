@@ -11,7 +11,7 @@ var FragfitResultsPreset = function( data, params ){
 
     var surfaceOpacity = p.surfaceOpacity || 0.6;
 
-    stage.viewer.setFog( null, 30, 55 );
+    stage.viewer.setFog( null, 40, 60 );
 
     // pdb
 
@@ -27,7 +27,7 @@ var FragfitResultsPreset = function( data, params ){
 
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
-        colorScheme: "residueindex",
+        colorScheme: "modelindex",
         // opacity: 0.3
     } );
 
@@ -389,14 +389,8 @@ var FragfitJobWidget = function( server ){
             );
         }else{
             toolWidget.setDisplay( "none" );
-            results.add(
-                new JobWidget( job )
-            );
             job.signals.statusChanged.add( function(){
-                if( /*job.check === true && */job.running === false ){
-                    results.clear();
-                    loadResults( job );
-                }
+                updateStatus( job )
             } );
         }
 
@@ -404,24 +398,67 @@ var FragfitJobWidget = function( server ){
 
     var toolWidget = new ToolWidget( tool );
 
+    // status
+
+    var status = new UI.Panel()
+        .setDisplay( "none" );
+
+    function updateStatus( job ){
+
+        if( job.running === false ){
+            if( job.check === true ){
+                status.setDisplay( "none" );
+                results.clear();
+                loadResults( job );
+            }else{
+                toolWidget.setDisplay( "block" );
+            }
+        }else{
+            status.setDisplay( "block" );
+            status.clear().add(
+                new UI.Text( "Check: " + job.check ),
+                new UI.Break(),
+                new UI.Text( "Running: " + job.running ),
+                new UI.Break(),
+                new UI.Text( "Log:" ),
+                new UI.Break()
+            )
+            for( var i = 0; i < job.log.length; ++i ){
+                status.add(
+                    new UI.Text( job.log[ i ] ).setMarginLeft( "10px" ),
+                    new UI.Break()
+                );
+            }
+        }
+
+    }
+
     //
 
     function loadResults( job ){
 
         if( !job ) return;
+
         var baseUrl = job.urlFor( "file" ) + "/";
+
         loadFragfitResults(
+
             baseUrl + "input_pdb_file.pdb",
             baseUrl + "input_mrc_file.mrc",
             baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
             baseUrl + "linker_correl.json"
+
         ).then( function( widget ){
-            widget.setMarginLeft( "20px" );
-            results.add(
-                new UI.CollapsibleIconPanel()
-                    .addStatic( new UI.Text( "Results" ) )
-                    .add( widget )
-            );
+
+            results.add(  widget );
+
+            // widget.setMarginLeft( "20px" );
+            // results.add(
+            //     new UI.CollapsibleIconPanel()
+            //         .addStatic( new UI.Text( "Results" ) )
+            //         .add( widget )
+            // );
+
         } );
 
     }
@@ -429,10 +466,9 @@ var FragfitJobWidget = function( server ){
     //
 
     container.add(
-        description,
+        // description,
         toolWidget,
-        new UI.Break(),
-        new UI.Break(),
+        status,
         results
     );
 
