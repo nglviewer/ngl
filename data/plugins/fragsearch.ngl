@@ -412,6 +412,8 @@ function fragsearchResultsLoader(){
 
 function fragsearchJob(){
 
+    panel.setName( "FragSearch Job" );
+
     var server = new Server( window.location.origin + "/job/" );
     // server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
 

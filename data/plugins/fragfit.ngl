@@ -256,7 +256,6 @@ function loadFragfitResults( pdb, mrc, linker, json ){
         var fragfitResultsWidget = new FragfitResultsWidget(
             results[ 0 ], results[ 1 ], results[ 2 ], jsonData
         );
-        // panel.add( fragfitResultsWidget );
         return fragfitResultsWidget;
     }
 
@@ -367,11 +366,6 @@ var FragfitResultsLoaderWidget = function(){
 var FragfitJobWidget = function( server ){
 
     var container = new UI.Panel();
-
-    var description = new UI.Panel().add(
-        new UI.Html( "FragFit Job" )
-    );
-
     var results = new UI.Panel();
 
     //
@@ -452,13 +446,6 @@ var FragfitJobWidget = function( server ){
 
             results.add(  widget );
 
-            // widget.setMarginLeft( "20px" );
-            // results.add(
-            //     new UI.CollapsibleIconPanel()
-            //         .addStatic( new UI.Text( "Results" ) )
-            //         .add( widget )
-            // );
-
         } );
 
     }
@@ -466,7 +453,6 @@ var FragfitJobWidget = function( server ){
     //
 
     container.add(
-        // description,
         toolWidget,
         status,
         results
@@ -480,12 +466,16 @@ var FragfitJobWidget = function( server ){
 
 function fragfitResultsLoader(){
 
+    panel.setName( "FragFit Loader" );
+
     var fragfitResultsLoaderWidget = new FragfitResultsLoaderWidget();
     panel.add( fragfitResultsLoaderWidget );
 
 }
 
 function fragfitJob(){
+
+    panel.setName( "FragFit Job" );
 
     var server = new Server( window.location.origin + "/job/" );
     // server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
@@ -497,5 +487,54 @@ function fragfitJob(){
         panel.add( fragfitJobWidget );
 
     } );
+
+}
+
+function fragfitExample(){
+
+    panel.setName( "FragFit Example" );
+
+    loadFragfitResults(
+
+        "data://ribosomexample.pdb",
+        "data://ribocut4a.mrc",
+        "data://ori_pdb_linker_file3.pdb",
+        "data://linker_correl.json"
+
+    ).then( function( widget ){
+
+        panel.add( widget );
+
+    } ).catch( function( error ){
+
+        panel.add( new UI.Text( "ERROR" ) );
+        console.error( error );
+
+    } );
+
+}
+
+function fragfitStage(){
+
+    panel.setName( "FragFit Stage" );
+
+    var description = new UI.Panel().add(
+        new UI.Html( "FragFit description ..." )
+    );
+    panel.add( description );
+
+    var newJobBtn = new UI.Button( "New FragFit Job" ).onClick( function(){
+
+        stage.loadFile( "data://plugins/fragfit-job.plugin" );
+
+    } );
+    panel.add( newJobBtn )
+
+    var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
+
+        stage.loadFile( "data://plugins/fragfit-example.plugin" );
+
+    } );
+    panel.add( exampleBtn )
 
 }
