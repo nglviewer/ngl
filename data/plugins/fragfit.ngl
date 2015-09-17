@@ -129,6 +129,8 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var tether;
 
+    var showPdbInfo = false;
+
     var pdbTitle = new UI.Text();
 
     var pdbInfo = new UI.OverlayPanel()
@@ -165,27 +167,45 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var getPdbTitle = function( event, id ){
 
+        id = id.toUpperCase();
+
         if( id in pdbTitleCache ){
 
             setPdbTitle( event, pdbTitleCache[ id ] );
 
         }else{
 
-            var base = "http://www.rcsb.org/pdb/rest/describePDB?structureId=";
-            var url = base + id;
+            fetchPdbTitles( [ id ] ).then( function(){
 
-            NGL.autoLoad( url, { ext: "xml" } ).then( function( xml ){
-
-                var descr = xml.data.root;
-                var pdb = descr.children[ 0 ];
-                var title = pdb.attributes.title;
-
-                pdbTitleCache[ id ] = title;
-                setPdbTitle( event, title );
+                if( showPdbInfo ){
+                    setPdbTitle( event, pdbTitleCache[ id ] );
+                }
 
             } );
 
         }
+
+    };
+
+    var fetchPdbTitles = function( idList ){
+
+        var base = "http://www.rcsb.org/pdb/rest/describePDB?structureId=";
+        var url = base + idList.join( "," ).toUpperCase();
+
+        return NGL.autoLoad( url, { ext: "xml" } ).then( function( xml ){
+
+            var descr = xml.data.root;
+
+            descr.children.forEach( function( pdb ){
+
+                var title = pdb.attributes.title;
+                var id = pdb.attributes.structureId;
+
+                pdbTitleCache[ id.toUpperCase() ] = title;
+
+            } )
+
+        } );
 
     };
 
@@ -248,9 +268,11 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             align: "left",
             width: 35,
             onMouseOver: function( event, index, value ){
+                showPdbInfo = true;
                 getPdbTitle( event, value );
             },
             onMouseOut: function( event, index, value ){
+                showPdbInfo = false;
                 pdbInfo.setDisplay( "none" );
             }
         },
