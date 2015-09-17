@@ -84,7 +84,7 @@ var Tool = function( name, server, args, docu ){
 
     this.signals = {
         jobSubmitted: new signals.Signal(),
-    }
+    };
 
     this.urlFor = function( route ){
 
@@ -343,20 +343,77 @@ var ToolWidget = function( tool ){
         form, submit
     );
 
+    // help
+
+    var helpText = new UI.Text();
+    var helpPanel = new UI.OverlayPanel()
+        .setDisplay( "none" )
+        .attach( this.dom )
+        .setMaxWidth( "250px" )
+        .add( helpText );
+
+    var setHelpText = function( event, text ){
+
+        helpText.setValue( text );
+        helpPanel.setDisplay( "block" );
+
+        tether = new Tether( {
+            element: helpPanel.dom,
+            target: event.target,
+            attachment: 'top right',
+            targetAttachment: 'top left',
+            offset: '0px 5px',
+            constraints: [
+                {
+                    to: container,
+                    attachment: 'element',
+                    pin: [ 'top', 'bottom' ]
+                }
+            ]
+        } );
+
+        tether.position();
+
+    };
+
     // form
 
-    for( var name in tool.args ){
+    tool.args.forEach( function( arg ){
 
-        var arg = tool.args[ name ];
+        var label = arg.label ? arg.label : arg.name;
+        var help = arg.help || "";
+        var hidden = arg.advanced && arg[ "default" ];
 
-        form.add(
-            new UI.Text( arg.name + ":" ).setMarginRight( "10px" )
-        );
+        if( !hidden ){
+            var labelPanel = new UI.Panel()
+                .setWhiteSpace( "nowrap" )
+                .setMarginBottom( "3px" )
+                .add(
+                    new UI.Text( label )
+                        .setMarginRight( "10px" )
+                );
+            if( help ){
+                labelPanel.add(
+                    new UI.Icon( "info-circle" )
+                        .onMouseOver( function( text ){
+                            return function( event ){
+                                setHelpText( event, text );
+                            };
+                        }( label + ": " + help ) )
+                        .onMouseOut( function( event, index, value ){
+                            helpPanel.setDisplay( "none" );
+                        } )
+                )
+            }
+            form.add( labelPanel );
+        }
 
         var input;
 
         if( arg.type === "file" ){
             input = new UI.File();
+        }else if( hidden ){
+            input = new UI.Hidden();
         }else if( arg.type === "str" ){
             if( arg.options ){
                 var options = {};
@@ -375,7 +432,7 @@ var ToolWidget = function( tool ){
             input = new UI.Input();
         }else if( arg.type === "float" ){
             input = new UI.Number();
-            if( arg.range ) input.setRange( arg.range [ 0 ], arg.range [ 1 ] );
+            if( arg.range ) input.setRange( arg.range[ 0 ], arg.range[ 1 ] );
             if( arg.precision ) input.setPrecision( arg.precision );
         }else if ( arg.type === "bool") {
             input = new UI.Checkbox();
@@ -389,12 +446,16 @@ var ToolWidget = function( tool ){
 
         input.setName( arg.name );
 
-        form.add(
-            input,
-            new UI.Break()
-        );
+        form.add( input );
 
-    }
+        if( !hidden ){
+            form.add(
+                new UI.Break(),
+                new UI.Break()
+            );
+        }
+
+    } );
 
     // submit
 

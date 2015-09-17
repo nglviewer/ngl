@@ -74,9 +74,7 @@ var FragsearchResultsWidget = function( pdbComp, linkerComp, linkerJson ){
         .setDisplay( "none" )
         .attach( this.dom )
         .setMaxWidth( "250px" )
-        .add(
-            pdbTitle
-        );
+        .add( pdbTitle );
 
     var setPdbTitle = function( event, title ){
 
