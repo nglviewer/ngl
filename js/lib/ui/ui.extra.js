@@ -121,6 +121,21 @@ UI.File.prototype.getFiles = function ( value ) {
 };
 
 
+// Hidden
+
+UI.Hidden = function () {
+
+    UI.Input.call( this );
+
+    this.dom.type = 'hidden';
+
+    return this;
+
+};
+
+UI.Hidden.prototype = Object.create( UI.Input.prototype );
+
+
 // Ellipsis Text
 
 UI.EllipsisText = function ( text ) {
