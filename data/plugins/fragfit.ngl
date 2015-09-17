@@ -523,7 +523,7 @@ function fragfitStage(){
     );
     panel.add( description );
 
-    var newJobBtn = new UI.Button( "New FragFit Job" ).onClick( function(){
+    var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
 
         stage.loadFile( "data://plugins/fragfit-job.plugin" );
 
