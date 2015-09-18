@@ -605,6 +605,7 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
     var lastRepaintY;
     var maxBuffer = screenItemsCount * itemHeight;
     var lastScrolled = 0;
+    var renderChunkCallback = function(){};
 
     var list = document.createElement('div');
     list.style.width = '100%';
@@ -631,6 +632,7 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
 
     function renderChunk( from ){
         var finalItem = Math.min( totalRows, from + cachedItemsCount );
+        renderChunkCallback( from, finalItem );
         // Append all the new rows in a document fragment
         // that we will later append to the parent node
         var fragment = document.createDocumentFragment();
@@ -713,6 +715,11 @@ UI.VirtualList = function( items, itemHeight, height, generatorFn ){
         generatorFn = value;
         renderChunk( 0 );
         return this;
+    };
+
+    this.setRenderChunkCallback = function( value ){
+        renderChunkCallback = value;
+        return;
     };
 
     this.redraw = function(){
