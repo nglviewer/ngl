@@ -1708,7 +1708,11 @@ NGL.PointBuffer.prototype.parameters = Object.assign( {
     sizeAttenuation: { property: true },
     sort: {}
 
-}, NGL.Buffer.prototype.parameters );
+}, NGL.Buffer.prototype.parameters, {
+
+    opacity: { property: true },
+
+} );
 
 NGL.PointBuffer.prototype.makeMaterial = function(){
 
