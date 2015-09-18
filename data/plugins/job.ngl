@@ -403,7 +403,7 @@ var ToolWidget = function( tool ){
                         .onMouseOut( function( event, index, value ){
                             helpPanel.setDisplay( "none" );
                         } )
-                )
+                );
             }
             form.add( labelPanel );
         }

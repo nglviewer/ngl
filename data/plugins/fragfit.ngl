@@ -171,13 +171,15 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
         if( id in pdbTitleCache ){
 
-            setPdbTitle( event, pdbTitleCache[ id ] );
+            if( pdbTitleCache[ id ] !== null ){
+                setPdbTitle( event, pdbTitleCache[ id ] );
+            }
 
         }else{
 
             fetchPdbTitles( [ id ] ).then( function(){
 
-                if( showPdbInfo ){
+                if( showPdbInfo.toUpperCase() === id ){
                     setPdbTitle( event, pdbTitleCache[ id ] );
                 }
 
@@ -189,8 +191,23 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var fetchPdbTitles = function( idList ){
 
+        var idListFiltered = [];
+
+        idList.forEach( function( id ){
+
+            if( pdbTitleCache[ id ] === undefined ){
+                pdbTitleCache[ id ] = null;  // mark as pending
+                idListFiltered.push( id );
+            }
+
+        } );
+
+        if( idListFiltered.length === 0 ) return Promise.resolve();
+
         var base = "http://www.rcsb.org/pdb/rest/describePDB?structureId=";
-        var url = base + idList.join( "," ).toUpperCase();
+        var url = base + idListFiltered.join( "," ).toUpperCase();
+
+        console.log( url )
 
         return NGL.autoLoad( url, { ext: "xml" } ).then( function( xml ){
 
@@ -203,7 +220,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
                 pdbTitleCache[ id.toUpperCase() ] = title;
 
-            } )
+            } );
 
         } );
 
@@ -268,7 +285,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             align: "left",
             width: 35,
             onMouseOver: function( event, index, value ){
-                showPdbInfo = true;
+                showPdbInfo = value;
                 getPdbTitle( event, value );
             },
             onMouseOut: function( event, index, value ){
@@ -302,6 +319,15 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         .setWidth( "100%" )
         .setOverflowX( "auto" )
         .setMarginTop( "5px" );
+
+    // pre-fetch pdb info
+    virtualTable.list.setRenderChunkCallback( function( from, to ){
+        var idList = [];
+        for( var i = from; i < to; ++i ){
+            idList.push( linkerItems[ i ][ 5 ] );
+        }
+        fetchPdbTitles( idList );
+    } );
 
     // sort by crosscorrel & select first
     virtualTable
