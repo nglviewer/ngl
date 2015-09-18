@@ -3178,6 +3178,11 @@ NGL.MrcParser.prototype = NGL.createObject(
         //  .          "
         // 52          "
 
+        // 50-52 origin in X,Y,Z used for transforms
+        header.originX = floatView[ 49 ];
+        header.originY = floatView[ 50 ];
+        header.originZ = floatView[ 51 ];
+
         // 53  MAP         Character string 'MAP ' to identify file type
         // => see top of this parser
 
@@ -3267,7 +3272,9 @@ NGL.MrcParser.prototype = NGL.createObject(
 
         matrix.multiply(
             new THREE.Matrix4().makeTranslation(
-                h.NXSTART, h.NYSTART, h.NZSTART
+                h.NXSTART + h.originX,
+                h.NYSTART + h.originY,
+                h.NZSTART + h.originZ
             )
         );
 
