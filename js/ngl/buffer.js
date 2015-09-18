@@ -14,6 +14,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
     this.wireframe = buffer.wireframe;
     this.visible = buffer.visible;
     this.geometry = buffer.geometry;
+    this.pickable = buffer.pickable;
 
     this.group = new THREE.Group();
     this.wireframeGroup = new THREE.Group();
