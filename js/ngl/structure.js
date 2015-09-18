@@ -3055,6 +3055,11 @@ NGL.Structure.prototype = {
             n = r.atomCount;
             n1 = n - 1;
 
+            if( n > 500 ){
+                NGL.warn( "more than 500 atoms, skip residue for auto-bonding" );
+                return;
+            }
+
             resname = r.resname;
             equalAtomnames = false;
 
