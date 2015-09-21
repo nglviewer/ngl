@@ -1144,6 +1144,7 @@ if( typeof importScripts === 'function' ){
             "../ngl/script.js",
             "../ngl/streamer.js",
             "../ngl/parser.js",
+            "../ngl/writer.js",
             "../ngl/loader.js",
             "../ngl/viewer.js",
             "../ngl/buffer.js",

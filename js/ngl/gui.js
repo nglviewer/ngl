@@ -1358,12 +1358,8 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var pdb = new UI.Button( "export" ).onClick( function(){
 
-        var blob = new Blob(
-            [ component.structure.toPdb() ],
-            { type: 'text/plain' }
-        );
-
-        NGL.download( blob, "structure.pdb" );
+        var pdbWriter = new NGL.PdbWriter( component.structure );
+        pdbWriter.download( "structure" );
 
         componentPanel.setMenuDisplay( "none" );
 
