@@ -313,6 +313,29 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         }
     };
 
+    var downloadAllLinker = function(){
+
+        var stem = getStemInfo( linkerComp.structure.models[ 0 ] );
+        var nterm = stem.ntermResno + ":" + stem.ntermChain;
+        var cterm = stem.ctermResno + ":" + stem.ctermChain;
+
+        var selection = new NGL.Selection(
+            "not ( " + nterm + " ) and not ( " + cterm + ")"
+        );
+        var subset = new NGL.StructureSubset(
+            linkerComp.structure, selection
+        );
+
+        var pdbWriter = new NGL.PdbWriter( subset );
+        pdbWriter.download( "fragFitLinker" );
+
+    };
+
+    var downloadAllBtn = new UI.Button( "download all" )
+        .onClick(
+            downloadAllLinker
+        );
+
     var downLoadLinkerStructure = function( index ){
 
         var linkerItem = linkerItems[ index ];
@@ -338,7 +361,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             var pdbWriter = new NGL.PdbWriter( newStructure, {
                 remarks: remarks
             } );
-            pdbWriter.download( "structureLinker" + idx );
+            pdbWriter.download( "fragFitModel" + idx );
         } );
 
     };
@@ -454,7 +477,8 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
         wireframeCheckbox,
         new UI.Break(),
-        showAllBtn,
+        showAllBtn.setMarginRight( "10px" ),
+        downloadAllBtn,
         new UI.Break(),
         new UI.Break(),
         virtualTable
