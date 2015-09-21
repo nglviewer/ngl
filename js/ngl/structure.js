@@ -3473,6 +3473,12 @@ NGL.Structure.prototype = {
 
     },
 
+    copy: function( s ){
+
+        // no properties to copy
+
+    },
+
     clone: function(){
 
         NGL.time( "NGL.Structure.clone" );
@@ -3944,6 +3950,12 @@ NGL.Model.prototype = {
 
     },
 
+    copy: function( m ){
+
+        // no properties to copy
+
+    },
+
     clone: function( s ){
 
         var m = new NGL.Model( s );
@@ -4272,6 +4284,12 @@ NGL.Chain.prototype = {
             callback( scope.getFiber( i, j, padded ) );
 
         }
+
+    },
+
+    copy: function( c ){
+
+        this.chainname = c.chainname;
 
     },
 
@@ -5050,6 +5068,14 @@ NGL.Residue.prototype = {
 
     },
 
+    copy: function( r ){
+
+        this.resno = r.resno;
+        this.resname = r.resname;
+        this.ss = r.ss;
+
+    },
+
     clone: function( c ){
 
         var r = new NGL.Residue( c );
@@ -5287,7 +5313,7 @@ NGL.Atom.prototype = {
         this.covalent = atom.covalent;
         this.hetero = atom.hetero;
         this.bfactor = atom.bfactor;
-        this.bonds = atom.bonds;
+        // this.bonds = atom.bonds;
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
@@ -6179,45 +6205,29 @@ NGL.StructureSubset.prototype._build = function(){
 
     var atomIndexDict = {};
 
+    _s.copy( structure );
+
     structure.eachModel( function( m ){
 
         _m = _s.addModel();
+        _m.copy( m );
 
         m.eachChain( function( c ){
 
             _c = _m.addChain();
-            _c.chainname = c.chainname;
+            _c.copy( c );
 
             c.eachResidue( function( r ){
 
                 _r = _c.addResidue();
-                _r.resno = r.resno;
-                _r.resname = r.resname;
-                _r.ss = r.ss;
+                _r.copy( r );
 
                 r.eachAtom( function( a ){
 
                     // TODO by reference? index? bonds? residue?
 
                     _a = _r.addAtom();
-                    _a.atomno = a.atomno;
-                    _a.resname = a.resname;
-                    _a.x = a.x;
-                    _a.y = a.y;
-                    _a.z = a.z;
-                    _a.element = a.element;
-                    _a.chainname = a.chainname;
-                    _a.resno = a.resno;
-                    _a.serial = a.serial;
-                    _a.ss = a.ss;
-                    _a.vdw = a.vdw;
-                    _a.covalent = a.covalent;
-                    _a.hetero = a.hetero;
-                    _a.bfactor = a.bfactor;
-                    _a.bonds = [];
-                    _a.altloc = a.altloc;
-                    _a.atomname = a.atomname;
-                    _a.modelindex = a.modelindex;
+                    _a.copy( a );
 
                     atomIndexDict[ a.index ] = _a;
                     atoms.push( _a );
