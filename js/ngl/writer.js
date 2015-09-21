@@ -9,50 +9,47 @@
 
 NGL.PdbWriter = function( structure, params ){
 
-	var p = Object.assign( {}, params );
+    var p = Object.assign( {}, params );
 
-	var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true;
+    var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true;
 
-	var records;
+    var records;
 
-	function writeRecords(){
+    function writeRecords(){
 
-		records = [];
+        records = [];
 
-		writeTitle();
-		writeRemarks();
-		writeAtoms();
+        writeTitle();
+        writeRemarks();
+        writeAtoms();
 
-	}
+    }
 
-	// http://www.bmsc.washington.edu/CrystaLinks/man/pdb/part_62.html
+    // http://www.wwpdb.org/documentation/file-format
 
     // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
     // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
-
-    // use sprintf %8.3f for coords
-    // printf PDB2 ("ATOM  %5d %4s %3s A%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n", $index,$atname[$i],$resname[$i],$resnum[$i],$x[$i],$y[$i],$z[$i],$occ[$i],$bfac[$i]),$segid[$i],$element[$i];
 
     function DEF( x, y ){
         return x !== undefined ? x : y;
     }
 
     var atomFormat =
-        "ATOM  %5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
+        "ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
 
-	var hetatmFormat =
-        "HETATM%5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
+    var hetatmFormat =
+        "HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
 
     function writeTitle(){
 
-    	// FIXME multiline if title line longer than 80 chars
+        // FIXME multiline if title line longer than 80 chars
         records.push( sprintf( "TITEL %-74s", structure.name ) );
 
     }
 
     function writeRemarks(){
 
-    	if( structure.trajectory ){
+        if( structure.trajectory ){
             records.push( sprintf(
                 "REMARK %-73s",
                 "Trajectory '" + structure.trajectory.name + "'"
@@ -76,14 +73,19 @@ NGL.PdbWriter = function( structure, params ){
 
             m.eachAtom( function( a ){
 
-            	var formatString = a.hetero ? hetatmFormat : atomFormat;
-            	var serial = renumberSerial ? ia : a.serial;
+                var formatString = a.hetero ? hetatmFormat : atomFormat;
+                var serial = renumberSerial ? ia : a.serial;
+
+                // Alignment of one-letter atom name such as C starts at column 14,
+                // while two-letter atom name such as FE starts at column 13.
+                var atomname = a.atomname;
+                if( atomname.length === 1 ) atomname = " " + atomname;
 
                 records.push( sprintf(
                     formatString,
 
                     a.serial,
-                    a.atomname,
+                    atomname,
                     a.resname,
                     DEF( a.chainname, " " ),
                     a.resno,
@@ -98,7 +100,7 @@ NGL.PdbWriter = function( structure, params ){
             } );
 
             records.push( sprintf( "%-80s", "ENDMDL" ) );
-	        im += 1;
+            im += 1;
 
         } );
 
@@ -108,36 +110,36 @@ NGL.PdbWriter = function( structure, params ){
 
     function getString(){
 
-		writeRecords();
-		return records.join( "\n" );
+        writeRecords();
+        return records.join( "\n" );
 
-	}
+    }
 
-	function getBlob(){
+    function getBlob(){
 
-		return new Blob(
+        return new Blob(
             [ getString() ],
             { type: 'text/plain' }
         );
 
-	}
+    }
 
-	function download( name, ext ){
+    function download( name, ext ){
 
-		name = name || "structure"
-		ext = ext || "pdb";
+        name = name || "structure"
+        ext = ext || "pdb";
 
-		var file = name + "." + ext;
-		var blob = getBlob();
+        var file = name + "." + ext;
+        var blob = getBlob();
 
         NGL.download( blob, file );
 
-	}
+    }
 
-	// API
+    // API
 
-	this.getString = getString;
-	this.getBlob = getBlob;
-	this.download = download;
+    this.getString = getString;
+    this.getBlob = getBlob;
+    this.download = download;
 
 };
