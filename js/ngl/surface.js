@@ -139,6 +139,7 @@ NGL.Surface.prototype = {
             array = new Float32Array( n * 3 );
 
             var atoms = p.structure.atoms;
+            if( p.atomSet ) atoms = p.atomSet.atoms;
             var atomindex = this.atomindex;
 
             for( var i = 0, a; i < n; ++i ){

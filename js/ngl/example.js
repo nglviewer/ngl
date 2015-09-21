@@ -970,9 +970,9 @@ NGL.Examples = {
         "molsurf": function( stage ){
 
             // stage.loadFile( "data://acrolein.pdb" ).then( function( o ){
-            stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            // stage.loadFile( "data://1crn.pdb" ).then( function( o ){
             // stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
-            // stage.loadFile( "data://3sn6.pdb" ).then( function( o ){
+            stage.loadFile( "data://3sn6.pdb" ).then( function( o ){
             // stage.loadFile( "data://3l5q.pdb" ).then( function( o ){
 
                 o.addRepresentation( "licorice" );
@@ -985,7 +985,8 @@ NGL.Examples = {
                     flatShaded: false,
                     opacity: 0.7,
                     lowResolution: false,
-                    colorScheme: "element"
+                    colorScheme: "chainindex",
+                    splitChains: true
                 } );
                 stage.centerView();
 
