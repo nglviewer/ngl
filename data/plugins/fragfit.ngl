@@ -79,6 +79,60 @@ var FragfitResultsPreset = function( data, params ){
 };
 
 
+var buildLinkerStructure = function( structure, linkerModel, callback ){
+
+    var newStructure = new NGL.Structure();
+    var atoms = newStructure.atoms;
+    var model = structure.models[ 0 ];
+    var modelindex = structure.atoms[ 0 ].modelindex;
+
+    var linkerResidues = linkerModel.chains[ 0 ].residues;
+    var ntermResidue = linkerResidues[ 0 ];
+    var ctermResidue = linkerResidues[ linkerResidues.length - 1 ];
+    var ntermChain = ntermResidue.atoms[ 0 ].chainname;
+    var ntermResno = ntermResidue.atoms[ 0 ].resno;
+    var ctermChain = ctermResidue.atoms[ 0 ].chainname;
+    var ctermResno = ctermResidue.atoms[ 0 ].resno;
+
+    var linkerAdded = false;
+
+    model.eachAtom( function( a ){
+
+        if( !linkerAdded &&
+            a.chainname === ctermChain && a.resno === ctermResno
+        ){
+
+            linkerModel.eachAtom( function( a ){
+                var resno = a.resno;
+                if( resno > ntermResno && resno < ctermResno ){
+                    var newAtom = new NGL.Atom().copy( a );
+                    newAtom.modelindex = modelindex;
+                    atoms.push( newAtom );
+                }
+            } );
+
+            linkerAdded = true;
+
+        }
+
+        if( a.chainname <= ntermChain || a.chainname >= ctermChain ||
+            ( a.chainname === ntermChain && a.resno < ntermResno ) ||
+            ( a.chainname === ctermChain && a.resno > ctermResno )
+        ){
+
+            atoms.push( new NGL.Atom().copy( a ) );
+
+        }
+
+    } );
+
+    NGL.buildStructure( newStructure, function(){
+        callback( newStructure );
+    } );
+
+};
+
+
 var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var data = {};
@@ -251,6 +305,25 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             index: 0,
             align: "right",
             width: 25
+        },
+        {
+            name: "Download",
+            index: 0,
+            align: "center",
+            width: 13,
+            format: function( value ){
+                return new UI.Icon( "download" );
+            },
+            onClick: function( event, index, value ){
+                var structure = pdbComp.structure;
+                var idx = linkerItems[ index ][ 0 ];
+                var linker = linkerComp.structure.models[ idx - 1 ];
+                buildLinkerStructure( structure, linker, function( newStructure ){
+                    var pdbWriter = new NGL.PdbWriter( newStructure );
+                    pdbWriter.download( "structureLinker" + idx );
+                } );
+                event.stopPropagation();
+            }
         },
         {
             name: "Cross-correlation",
