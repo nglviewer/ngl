@@ -58,6 +58,7 @@ input.Number, input.File {
 }
 
 .highlight,
+.highlight > .Icon,
 .highlight > .Text {
     color: #181818;
     background-color: #7CAFC2;
