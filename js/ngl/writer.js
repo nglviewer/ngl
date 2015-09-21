@@ -12,6 +12,8 @@ NGL.PdbWriter = function( structure, params ){
     var p = Object.assign( {}, params );
 
     var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true;
+    var remarks = p.remarks || [];
+    if( !Array.isArray( remarks ) ) remarks = [ remarks ];
 
     var records;
 
@@ -48,6 +50,10 @@ NGL.PdbWriter = function( structure, params ){
     }
 
     function writeRemarks(){
+
+        remarks.forEach( function( str ){
+            records.push( sprintf( "REMARK %-73s", str ) );
+        } );
 
         if( structure.trajectory ){
             records.push( sprintf(
