@@ -179,7 +179,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
             fetchPdbTitles( [ id ] ).then( function(){
 
-                if( showPdbInfo.toUpperCase() === id ){
+                if( showPdbInfo && showPdbInfo.toUpperCase() === id ){
                     setPdbTitle( event, pdbTitleCache[ id ] );
                 }
 
@@ -646,13 +646,13 @@ function fragfitStage(){
         stage.loadFile( "data://plugins/fragfit-job.plugin" );
 
     } );
-    panel.add( newJobBtn )
+    panel.add( newJobBtn.setMarginRight( "10px" ) );
 
     var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
 
         stage.loadFile( "data://plugins/fragfit-example.plugin" );
 
     } );
-    panel.add( exampleBtn )
+    panel.add( exampleBtn );
 
 }
