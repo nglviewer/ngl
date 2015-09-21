@@ -79,6 +79,22 @@ var FragfitResultsPreset = function( data, params ){
 };
 
 
+var getStemInfo = function( linkerModel ){
+
+    var linkerResidues = linkerModel.chains[ 0 ].residues;
+    var ntermResidue = linkerResidues[ 0 ];
+    var ctermResidue = linkerResidues[ linkerResidues.length - 1 ];
+
+    return {
+        ntermChain: ntermResidue.atoms[ 0 ].chainname,
+        ntermResno: ntermResidue.atoms[ 0 ].resno,
+        ctermChain: ctermResidue.atoms[ 0 ].chainname,
+        ctermResno: ctermResidue.atoms[ 0 ].resno
+    };
+
+};
+
+
 var buildLinkerStructure = function( structure, linkerModel, callback ){
 
     var newStructure = new NGL.Structure();
@@ -86,13 +102,11 @@ var buildLinkerStructure = function( structure, linkerModel, callback ){
     var model = structure.models[ 0 ];
     var modelindex = structure.atoms[ 0 ].modelindex;
 
-    var linkerResidues = linkerModel.chains[ 0 ].residues;
-    var ntermResidue = linkerResidues[ 0 ];
-    var ctermResidue = linkerResidues[ linkerResidues.length - 1 ];
-    var ntermChain = ntermResidue.atoms[ 0 ].chainname;
-    var ntermResno = ntermResidue.atoms[ 0 ].resno;
-    var ctermChain = ctermResidue.atoms[ 0 ].chainname;
-    var ctermResno = ctermResidue.atoms[ 0 ].resno;
+    var stem = getStemInfo( linkerModel );
+    var ntermChain = stem.ntermChain;
+    var ntermResno = stem.ntermResno;
+    var ctermChain = stem.ctermChain;
+    var ctermResno = stem.ctermResno;
 
     var linkerAdded = false;
 
@@ -299,6 +313,36 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         }
     };
 
+    var downLoadLinkerStructure = function( index ){
+
+        var linkerItem = linkerItems[ index ];
+        var idx = linkerItem[ 0 ];
+
+        var structure = pdbComp.structure;
+        var linkerModel = linkerComp.structure.models[ idx - 1 ];
+
+        var stem = getStemInfo( linkerModel );
+        var nterm = stem.ntermResno + ":" + stem.ntermChain;
+        var cterm = stem.ctermResno + ":" + stem.ctermChain;
+
+        var remarks = [
+            "FragFit linker ID: " + idx,
+            "FragFit stem residues: " + nterm + " -- " + cterm,
+            "FragFit cross-correlation: " + linkerItem[ 1 ],
+            "FragFit score: " + linkerItem[ 2 ],
+            "FragFit source PDB ID: " + linkerItem[ 5 ],
+            "FragFit source sequence: " + linkerItem[ 4 ]
+        ];
+
+        buildLinkerStructure( structure, linkerModel, function( newStructure ){
+            var pdbWriter = new NGL.PdbWriter( newStructure, {
+                remarks: remarks
+            } );
+            pdbWriter.download( "structureLinker" + idx );
+        } );
+
+    };
+
     var columns = [
         {
             name: "ID",
@@ -315,13 +359,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
                 return new UI.Icon( "download" );
             },
             onClick: function( event, index, value ){
-                var structure = pdbComp.structure;
-                var idx = linkerItems[ index ][ 0 ];
-                var linker = linkerComp.structure.models[ idx - 1 ];
-                buildLinkerStructure( structure, linker, function( newStructure ){
-                    var pdbWriter = new NGL.PdbWriter( newStructure );
-                    pdbWriter.download( "structureLinker" + idx );
-                } );
+                downLoadLinkerStructure( index );
                 event.stopPropagation();
             }
         },
