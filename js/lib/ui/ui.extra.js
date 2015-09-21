@@ -850,8 +850,15 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
             var width = col.width || defaultWidth;
             var margin = col.margin || defaultMargin;
 
-            var text = new UI.Text()
-                .setValue( value )
+            var element;
+            if( typeof value === "object" ){
+                element = value;
+            }else{
+                element = new UI.Text()
+                    .setValue( value );
+            }
+
+            element
                 .setWidth( width + "px" )
                 .setTextAlign( col.align || defaultAlign )
                 .setMarginLeft( margin + "px" )
@@ -872,7 +879,7 @@ UI.VirtualTable = function( items, itemHeight, height, columns, params ){
                     }
                 } );
 
-            panel.add( text );
+            panel.add( element );
 
         } );
 
