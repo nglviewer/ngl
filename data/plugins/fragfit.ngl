@@ -603,6 +603,7 @@ var FragResultsLoaderWidget = function( isFragfit ){
 
     form.add(
         new UI.Text( "Structure PDB file" ).setMarginBottom( "3px" ),
+        new UI.Break(),
         pdbFile,
         new UI.Break(),
         new UI.Break()
@@ -611,6 +612,7 @@ var FragResultsLoaderWidget = function( isFragfit ){
     if( isFragfit ){
         form.add(
             new UI.Text( "Map MRC file" ).setMarginBottom( "3px" ),
+            new UI.Break(),
             mrcFile,
             new UI.Break(),
             new UI.Break()
@@ -619,10 +621,12 @@ var FragResultsLoaderWidget = function( isFragfit ){
 
     form.add(
         new UI.Text( "Linker PDB file" ).setMarginBottom( "3px" ),
+        new UI.Break(),
         linkerFile,
         new UI.Break(),
         new UI.Break(),
         new UI.Text( "Linker JSON file" ).setMarginBottom( "3px" ),
+        new UI.Break(),
         jsonFile,
         new UI.Break(),
         new UI.Break(),
@@ -644,7 +648,7 @@ var FragResultsLoaderWidget = function( isFragfit ){
 };
 
 
-var FragfitJobWidget = function( server ){
+var FragJobWidget = function( server, isFragfit ){
 
     var container = new UI.Panel();
     var results = new UI.Panel();
@@ -652,7 +656,9 @@ var FragfitJobWidget = function( server ){
     //
 
     // assumes server is ready
-    var tool = server.getTool( "linkit-density" );
+    var tool = server.getTool(
+        isFragfit ? "linkit-density" : "linkit"
+    );
 
     tool.signals.jobSubmitted.add( function( job ){
 
@@ -716,18 +722,24 @@ var FragfitJobWidget = function( server ){
 
         var baseUrl = job.urlFor( "file" ) + "/";
 
-        loadFragfitResults(
+        var files = {
+            structurePdb: baseUrl + "input_pdb_file.pdb",
+            linkerJson: baseUrl + "linker_correl.json"
+        };
 
-            baseUrl + "input_pdb_file.pdb",
-            baseUrl + "input_mrc_file.mrc",
-            baseUrl + "loop_correl/ori_pdb_linker_file3.pdb",
-            baseUrl + "linker_correl.json"
+        if( isFragfit ){
+            files.mapMrc = baseUrl + "input_mrc_file.mrc";
+            files.linkerPdb = baseUrl + "loop_correl/ori_pdb_linker_file3.pdb";
+        }else{
+            files.linkerPdb = baseUrl + "input_pdb_file_linker3.pdb";
+        }
 
-        ).then( function( widget ){
+        function init( widget ){
+            results.add( widget );
+        }
 
-            results.add(  widget );
-
-        } );
+        loadFragResults( files )
+            .then( init );
 
     }
 
@@ -743,6 +755,8 @@ var FragfitJobWidget = function( server ){
 
 };
 
+
+////////////
 // FragFit
 
 function fragfitResultsLoader(){
@@ -757,15 +771,13 @@ function fragfitJob(){
     panel.setName( "FragFit Job" );
 
     var server = new Server( window.location.origin + "/job/" );
-    // server.addJob( "linkit-density_14e5e352-04c4-464f-8d4f-3bdc55d577f2" );
     // 154:C, 164:C, EDKVEGYKK, 4.2
 
-    server.signals.toolsLoaded.add( function(){
+    function init(){
+        panel.add( new FragJobWidget( server, true ) );
+    }
 
-        var fragfitJobWidget = new FragfitJobWidget( server );
-        panel.add( fragfitJobWidget );
-
-    } );
+    server.signals.toolsLoaded.add( init );
 
 }
 
@@ -824,12 +836,28 @@ function fragfitStage(){
 
 }
 
+
+///////////////
 // FragSearch
 
 function fragsearchResultsLoader(){
 
     panel.setName( "FragSearch Loader" );
     panel.add( new FragResultsLoaderWidget( false ) );
+
+}
+
+function fragsearchJob(){
+
+    panel.setName( "FragSearch Job" );
+
+    var server = new Server( window.location.origin + "/job/" );
+
+    function init(){
+        panel.add( new FragJobWidget( server, false ) );
+    }
+
+    server.signals.toolsLoaded.add( init );
 
 }
 
@@ -855,5 +883,34 @@ function fragsearchExample(){
     loadFragResults( files )
         .then( init )
         .catch( onError );
+
+}
+
+function fragsearchStage(){
+
+    panel.setName( "FragSearch Stage" );
+
+    var description = new UI.Panel().add(
+        new UI.Html( "FragSearch description ..." )
+    );
+
+    var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragsearch-job.plugin" );
+    } );
+
+    var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragsearch-example.plugin" );
+    } );
+
+    var loaderBtn = new UI.Button( "Results Loader" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragsearch-loader.plugin" );
+    } );
+
+    panel.add(
+        description,
+        new UI.Panel().add( newJobBtn ),
+        new UI.Panel().add( exampleBtn ),
+        new UI.Panel().add( loaderBtn )
+    );
 
 }

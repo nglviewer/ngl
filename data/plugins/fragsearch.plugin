@@ -1,0 +1,10 @@
+{
+	"name": "FragSearch",
+	"description": "...",
+	"version": "0.1",
+	"files": [
+		"job.ngl",
+		"fragfit.ngl"
+	],
+	"source": "fragsearchStage();"
+}
