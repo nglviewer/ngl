@@ -79,7 +79,7 @@ var FragfitResultsPreset = function( data, params ){
 };
 
 
-var getStemInfo = function( linkerModel ){
+function getStemInfo( linkerModel ){
 
     var linkerResidues = linkerModel.chains[ 0 ].residues;
     var ntermResidue = linkerResidues[ 0 ];
@@ -92,10 +92,10 @@ var getStemInfo = function( linkerModel ){
         ctermResno: ctermResidue.atoms[ 0 ].resno
     };
 
-};
+}
 
 
-var buildLinkerStructure = function( structure, linkerModel, callback ){
+function buildLinkerStructure( structure, linkerModel, callback ){
 
     var newStructure = new NGL.Structure();
     var atoms = newStructure.atoms;
@@ -144,7 +144,7 @@ var buildLinkerStructure = function( structure, linkerModel, callback ){
         callback( newStructure );
     } );
 
-};
+}
 
 
 var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
@@ -533,7 +533,6 @@ var FragfitResultsLoaderWidget = function(){
     var jsonFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
     var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
-    var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
     var results = new UI.Panel();
 
@@ -576,17 +575,6 @@ var FragfitResultsLoaderWidget = function(){
 
     }
 
-    function loadExample(){
-
-        load(
-            "data://ribosomexample.pdb",
-            "data://ribocut4a.mrc",
-            "data://ori_pdb_linker_file3.pdb",
-            "data://linker_correl.json"
-        );
-
-    }
-
     //
 
     var description = new UI.Panel().add(
@@ -610,7 +598,6 @@ var FragfitResultsLoaderWidget = function(){
         new UI.Break(),
         new UI.Break(),
         loadBtn.setMarginRight( "10px" ),
-        exampleBtn.setMarginRight( "10px" ),
         infoText,
         new UI.Break(),
         new UI.Break(),
@@ -780,20 +767,24 @@ function fragfitStage(){
     var description = new UI.Panel().add(
         new UI.Html( "FragFit description ..." )
     );
-    panel.add( description );
 
     var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
-
         stage.loadFile( "data://plugins/fragfit-job.plugin" );
-
     } );
-    panel.add( newJobBtn.setMarginRight( "10px" ) );
 
     var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
-
         stage.loadFile( "data://plugins/fragfit-example.plugin" );
-
     } );
-    panel.add( exampleBtn );
+
+    var loaderBtn = new UI.Button( "Results Loader" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragfit-loader.plugin" );
+    } );
+
+    panel.add(
+        description,
+        new UI.Panel().add( newJobBtn ),
+        new UI.Panel().add( exampleBtn ),
+        new UI.Panel().add( loaderBtn )
+    );
 
 }
