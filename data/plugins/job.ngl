@@ -28,7 +28,8 @@ var Server = function( url, params ){
     this.retrieveTools = function( callback ){
 
         NGL.autoLoad( this.urlFor( "tools" ), {
-            ext: "json"
+            ext: "json",
+            noWorker: true
         } ).then( callback );
 
     };
@@ -160,7 +161,8 @@ var Job = function( name, server, params ){
     this.getStatus = function( callback ){
 
         NGL.autoLoad( this.urlFor( "status" ), {
-            ext: "json"
+            ext: "json",
+            noWorker: true
         } ).then( function( o ){
             console.log(o)
             var status = o.data;
@@ -178,7 +180,8 @@ var Job = function( name, server, params ){
     this.getParams = function( callback ){
 
         NGL.autoLoad( this.urlFor( "params" ), {
-            ext: "json"
+            ext: "json",
+            noWorker: true
         } ).then( callback );
 
     };
