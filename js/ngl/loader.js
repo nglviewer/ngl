@@ -83,6 +83,8 @@ NGL.ParserLoader = function( src, params ){
 
     NGL.Loader.call( this, src, params );
 
+    this.noWorker = this.params.noWorker || false;
+
 };
 
 NGL.ParserLoader.prototype = NGL.createObject(
@@ -127,7 +129,15 @@ NGL.ParserLoader.prototype = NGL.createObject(
             this.streamer, this.params
         );
 
-        parser.parseWorker( resolve );
+        if( this.noWorker ){
+
+            parser.parse( resolve );
+
+        }else{
+
+            parser.parseWorker( resolve );
+
+        }
 
     }
 
