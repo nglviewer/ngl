@@ -278,7 +278,12 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
         console.log( url )
 
-        return NGL.autoLoad( url, { ext: "xml" } ).then( function( xml ){
+        return NGL.autoLoad( url, {
+
+            ext: "xml",
+            noWorker: true
+
+        } ).then( function( xml ){
 
             var descr = xml.data.root;
 
