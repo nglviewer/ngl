@@ -198,7 +198,9 @@ NGL.PluginLoader.prototype = NGL.createObject(
             manifest.files.map( function( name ){
 
                 promiseList.push(
-                    NGL.autoLoad( basePath + name, { ext: "text" } )
+                    NGL.autoLoad( basePath + name, {
+                        ext: "text", noWorker: true
+                    } )
                 );
 
             } );
