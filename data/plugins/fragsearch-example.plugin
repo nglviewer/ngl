@@ -1,9 +1,9 @@
 {
-	"name": "FragSearch Loader",
+	"name": "FragSearch Example",
 	"description": "...",
 	"version": "0.1",
 	"files": [
 		"fragfit.ngl"
 	],
-	"source": "fragsearchResultsLoader();"
+	"source": "fragsearchExample();"
 }

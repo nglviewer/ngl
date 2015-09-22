@@ -1,25 +1,27 @@
 
 
-var FragfitResultsPreset = function( data, params ){
+var FragResultsPreset = function( data, params ){
+
+    var structureComp = data.structureComp;
+    var linkerComp = data.linkerComp;
+    var linkerData = data.linkerData;
+    var mapComp = data.mapComp;
+
+    var isFragfit = data.mapComp !== undefined;
 
     var p = Object.assign( {}, params );
-
-    var pdbComp = data[ "pdb" ];
-    var mrcComp = data[ "mrc" ];
-    var linkerComp = data[ "linker" ];
-    var json = data[ "json" ];
 
     var surfaceOpacity = p.surfaceOpacity || 0.6;
 
     stage.viewer.setFog( null, 40, 60 );
 
-    // pdb
+    // structure
 
-    var cartoonRepr = pdbComp.addRepresentation( "cartoon", {
+    var cartoonRepr = structureComp.addRepresentation( "cartoon", {
 
     } );
 
-    var licoriceRepr = pdbComp.addRepresentation( "licorice", {
+    var licoriceRepr = structureComp.addRepresentation( "licorice", {
 
     } );
 
@@ -35,25 +37,29 @@ var FragfitResultsPreset = function( data, params ){
 
     // mrc
 
-    var surfaceRepr = mrcComp.addRepresentation( "surface", {
-        name: "map",
-        isolevelType: "sigma",
-        isolevel: p.isolevel || 2.0,
-        smooth: 0,
-        wireframe: p.wireframe || false,
-        opacity: p.wireframe ? 1.0 : surfaceOpacity,
-        side: THREE.DoubleSide,
-        opaqueBack: true,
-        color: "grey"
-    } );
+    var surfaceRepr;
 
-    // json
+    if( isFragfit ){
 
-    // console.log( json );
+        surfaceRepr = mapComp.addRepresentation( "surface", {
+            name: "map",
+            isolevelType: "sigma",
+            isolevel: p.isolevel || 2.0,
+            smooth: 0,
+            wireframe: p.wireframe || false,
+            opacity: p.wireframe ? 1.0 : surfaceOpacity,
+            side: THREE.DoubleSide,
+            opaqueBack: true,
+            color: "grey"
+        } );
 
-    //
+    }
+
+    // API
 
     this.setSurfaceParams = function( params ){
+
+        if( !isFragfit ) return;
 
         var p = Object.assign( {}, params );
 
@@ -147,34 +153,32 @@ function buildLinkerStructure( structure, linkerModel, callback ){
 }
 
 
-var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
+var FragResultsWidget = function( data ){
 
-    var data = {};
+    var structureComp = data.structureComp;
+    var linkerComp = data.linkerComp;
+    var linkerData = data.linkerData;
+
+    var isFragfit = data.mapComp !== undefined;
+
     var isolevel = 2.0;
     var wireframe = true;
 
     var container = new UI.Panel();
-
-    var data = {
-        pdb: pdbComp,
-        mrc: mrcComp,
-        linker: linkerComp,
-        json: linkerJson
-    }
 
     var params = {
         isolevel: isolevel,
         wireframe: wireframe,
     };
 
-    fragfitResultsPreset = new FragfitResultsPreset( data, params );
+    var fragResultsPreset = new FragResultsPreset( data, params );
 
     // Isolevel
 
     var isolevelNumber = new UI.Number( isolevel )
         .setWidth( "100px" )
         .onChange( function(){
-            fragfitResultsPreset.setSurfaceParams( {
+            fragResultsPreset.setSurfaceParams( {
                 isolevel: isolevelNumber.getValue()
             } );
         } );
@@ -183,14 +187,16 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
     var wireframeCheckbox = new UI.Checkbox( wireframe )
         .onChange( function(){
-            fragfitResultsPreset.setSurfaceParams( {
+            fragResultsPreset.setSurfaceParams( {
                 wireframe: wireframeCheckbox.getValue()
             } );
         } );
 
+    // Show all linker
+
     var showAllBtn = new UI.Button( "show all" )
         .onClick( function(){
-            fragfitResultsPreset.backboneRepr.setSelection( "*" );
+            fragResultsPreset.backboneRepr.setSelection( "*" );
             virtualTable.selectRow();
         } );
 
@@ -208,8 +214,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         .setMaxWidth( "250px" )
         .add( pdbTitle );
 
-    var setPdbTitle = function( event, title ){
-
+    function setPdbTitle( event, title ){
         pdbTitle.setValue( title );
         pdbInfo.setDisplay( "block" );
 
@@ -229,13 +234,11 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         } );
 
         tether.position();
-
-    };
+    }
 
     var pdbTitleCache = {};
 
-    var getPdbTitle = function( event, id ){
-
+    function getPdbTitle( event, id ){
         id = id.toUpperCase();
 
         if( id in pdbTitleCache ){
@@ -255,28 +258,20 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             } );
 
         }
+    }
 
-    };
-
-    var fetchPdbTitles = function( idList ){
-
+    function fetchPdbTitles( idList ){
         var idListFiltered = [];
-
         idList.forEach( function( id ){
-
             if( pdbTitleCache[ id ] === undefined ){
                 pdbTitleCache[ id ] = null;  // mark as pending
                 idListFiltered.push( id );
             }
-
         } );
-
         if( idListFiltered.length === 0 ) return Promise.resolve();
 
         var base = "http://www.rcsb.org/pdb/rest/describePDB?structureId=";
         var url = base + idListFiltered.join( "," ).toUpperCase();
-
-        console.log( url )
 
         return NGL.autoLoad( url, {
 
@@ -297,30 +292,11 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             } );
 
         } );
-
     };
 
-    // Linker list
+    // Download linker
 
-    var linkerItems = [];
-    for( var name in linkerJson ){
-        linkerItems.push(
-            [ parseInt( name ) ].concat( linkerJson[ name ] )
-        );
-    }
-
-    // console.log( linkerItems )
-
-    var selectLinker = function( index ){
-        if( index !== undefined ){
-            fragfitResultsPreset.backboneRepr.setSelection(
-                "/" + ( linkerItems[ index ][ 0 ] - 1 )
-            );
-        }
-    };
-
-    var downloadAllLinker = function(){
-
+    function downloadAllLinker(){
         var stem = getStemInfo( linkerComp.structure.models[ 0 ] );
         var nterm = stem.ntermResno + ":" + stem.ntermChain;
         var cterm = stem.ctermResno + ":" + stem.ctermChain;
@@ -334,20 +310,18 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 
         var pdbWriter = new NGL.PdbWriter( subset );
         pdbWriter.download( "fragFitLinker" );
-
-    };
+    }
 
     var downloadAllBtn = new UI.Button( "download all" )
         .onClick(
             downloadAllLinker
         );
 
-    var downLoadLinkerStructure = function( index ){
-
+    function downLoadLinkerStructure( index ){
         var linkerItem = linkerItems[ index ];
         var idx = linkerItem[ 0 ];
 
-        var structure = pdbComp.structure;
+        var structure = structureComp.structure;
         var linkerModel = linkerComp.structure.models[ idx - 1 ];
 
         var stem = getStemInfo( linkerModel );
@@ -357,11 +331,17 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         var remarks = [
             "FragFit linker ID: " + idx,
             "FragFit stem residues: " + nterm + " -- " + cterm,
-            "FragFit cross-correlation: " + linkerItem[ 1 ],
-            "FragFit score: " + linkerItem[ 2 ],
-            "FragFit source PDB ID: " + linkerItem[ 5 ],
-            "FragFit source sequence: " + linkerItem[ 4 ]
+            "FragFit score: " + linkerItem[ isFragfit ? 3 : 2 ],
+            "FragFit source PDB ID: " + linkerItem[ isFragfit ? 5 : 4 ],
+            "FragFit source sequence: " + linkerItem[ isFragfit ? 4 : 3 ]
         ];
+
+        if( isFragfit ){
+            remarks.splice(
+                2, 0,
+                "FragFit cross-correlation: " + linkerItem[ 1 ]
+            );
+        }
 
         buildLinkerStructure( structure, linkerModel, function( newStructure ){
             var pdbWriter = new NGL.PdbWriter( newStructure, {
@@ -369,8 +349,26 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
             } );
             pdbWriter.download( "fragFitModel" + idx );
         } );
+    }
 
-    };
+    // Linker list
+
+    var linkerItems = [];
+    for( var name in linkerData ){
+        linkerItems.push(
+            [ parseInt( name ) ].concat( linkerData[ name ] )
+        );
+    }
+
+    // console.log( linkerItems )
+
+    function selectLinker( index ){
+        if( index !== undefined ){
+            fragResultsPreset.backboneRepr.setSelection(
+                "/" + ( linkerItems[ index ][ 0 ] - 1 )
+            );
+        }
+    }
 
     var columns = [
         {
@@ -392,27 +390,18 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
                 event.stopPropagation();
             }
         },
+        // {
+        //     name: "Score",
+        //     index: isFragfit ? 2 : 1,
+        //     align: "right",
+        //     width: 30,
+        //     format: function( value ){
+        //         return value.toFixed( 2 );
+        //     }
+        // },
         {
-            name: "Cross-correlation",
-            index: 1,
-            align: "right",
-            width: 30,
-            format: function( value ){
-                return value.toFixed( 2 );
-            }
-        },
-        {
-            name: "Score 1?",
-            index: 2,
-            align: "right",
-            width: 30,
-            format: function( value ){
-                return value.toFixed( 2 );
-            }
-        },
-        {
-            name: "Score 2?",
-            index: 3,
+            name: "Score",
+            index: isFragfit ? 3 : 2,
             align: "right",
             width: 30,
             format: function( value ){
@@ -421,7 +410,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         },
         {
             name: "PDB",
-            index: 5,
+            index: isFragfit ? 5 : 4,
             align: "left",
             width: 35,
             onMouseOver: function( event, index, value ){
@@ -435,17 +424,32 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
         },
         {
             name: "Clashes",
-            index: 6,
+            index: isFragfit ? 6 : 5,
             align: "right",
             width: 30
         },
         {
             name: "Sequence",
-            index: 4,
+            index: isFragfit ? 4 : 3,
             align: "left",
             width: 120
         }
     ];
+
+    if( isFragfit ){
+        columns.splice(
+            2, 0,
+            {
+                name: "Cross-correlation",
+                index: 1,
+                align: "right",
+                width: 30,
+                format: function( value ){
+                    return value.toFixed( 2 );
+                }
+            }
+        )
+    }
 
     var params = {
         onRowSelect: function( event, index ){
@@ -464,25 +468,30 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
     virtualTable.list.setRenderChunkCallback( function( from, to ){
         var idList = [];
         for( var i = from; i < to; ++i ){
-            idList.push( linkerItems[ i ][ 5 ] );
+            idList.push( linkerItems[ i ][ isFragfit ? 5 : 4 ] );
         }
         fetchPdbTitles( idList );
     } );
 
-    // sort by crosscorrel & select first
+    // sort by crosscorrel/score & select first
     virtualTable
-        .sortColumn( 1, true )
+        .sortColumn( isFragfit ? 1 : 2, true )
         .selectRow( 0 );
 
     //
 
+    if( isFragfit ){
+        container.add(
+            new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
+            isolevelNumber,
+            new UI.Break(),
+            new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
+            wireframeCheckbox,
+            new UI.Break()
+        );
+    }
+
     container.add(
-        new UI.Text( "Isolevel (sigma):" ).setMarginRight( "10px" ),
-        isolevelNumber,
-        new UI.Break(),
-        new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
-        wireframeCheckbox,
-        new UI.Break(),
         showAllBtn.setMarginRight( "10px" ),
         downloadAllBtn,
         new UI.Break(),
@@ -495,7 +504,9 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
 };
 
 
-function loadFragfitResults( pdb, mrc, linker, json ){
+function loadFragResults( files ){
+
+    var isFragfit = files.mapMrc !== undefined;
 
     var initComp = function( comp ){
         comp.requestGuiVisibility( false );
@@ -504,18 +515,25 @@ function loadFragfitResults( pdb, mrc, linker, json ){
     }
 
     var promiseList = [
-        stage.loadFile( pdb, { ext: "pdb" } ).then( initComp ),
-        stage.loadFile( mrc, { ext: "mrc" } ).then( initComp ),
-        stage.loadFile( linker, { ext: "pdb" } ).then( initComp ),
-        NGL.autoLoad( json, { ext: "json" } )
+        stage.loadFile( files.structurePdb, { ext: "pdb" } ).then( initComp ),
+        stage.loadFile( files.linkerPdb, { ext: "pdb" } ).then( initComp ),
+        NGL.autoLoad( files.linkerJson, { ext: "json" } )
     ];
 
-    function init( results ){
-        var jsonData = results[ 3 ].data;
-        var fragfitResultsWidget = new FragfitResultsWidget(
-            results[ 0 ], results[ 1 ], results[ 2 ], jsonData
+    if( isFragfit ){
+        promiseList.push(
+            stage.loadFile( files.mapMrc, { ext: "mrc" } ).then( initComp )
         );
-        return fragfitResultsWidget;
+    }
+
+    function init( results ){
+        var data = {
+            structureComp: results[ 0 ],
+            linkerComp: results[ 1 ],
+            linkerData: results[ 2 ].data,
+            mapComp: isFragfit ? results[ 3 ] : undefined
+        };
+        return new FragResultsWidget( data );
     }
 
     return Promise.all( promiseList ).then( init );
@@ -523,84 +541,101 @@ function loadFragfitResults( pdb, mrc, linker, json ){
 }
 
 
-var FragfitResultsLoaderWidget = function(){
+var FragResultsLoaderWidget = function( isFragfit ){
 
     var container = new UI.Panel();
 
-    var pdbFile = new UI.File().setWidth( "200px" );
-    var mrcFile = new UI.File().setWidth( "200px" );
-    var linkerFile = new UI.File().setWidth( "200px" );
-    var jsonFile = new UI.File().setWidth( "200px" );
-    var infoText = new UI.Text();
-    var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
+    var pdbFile = new UI.File();
+    var mrcFile = new UI.File();
+    var linkerFile = new UI.File();
+    var jsonFile = new UI.File();
+    var loadBtn = new UI.Button( "Load" ).onClick( load );
 
+    var infoText = new UI.Text();
+
+    var form = new UI.Panel();
+    var info = new UI.Panel();
     var results = new UI.Panel();
 
     //
 
-    function load( pdb, mrc, linker, json ){
+    function load(){
 
+        form.setDisplay( "none" );
         infoText.setValue( "loading..." );
 
-        loadFragfitResults(
-            pdb, mrc, linker, json
-        ).then( function( widget ){
-            infoText.setValue( "" );
-            widget.setMarginLeft( "20px" );
-            results.add(
-                new UI.CollapsibleIconPanel()
-                    .addStatic( new UI.Text( "Results" ) )
-                    .add( widget )
-            );
-        } ).catch( function( error ){
-            infoText.setValue( "ERROR" );
-            console.error( error );
-        } );
+        var files = {
+            structurePdb: pdbFile.getFiles()[ 0 ],
+            mapMrc: isFragfit ? mrcFile.getFiles()[ 0 ] : undefined,
+            linkerPdb: linkerFile.getFiles()[ 0 ],
+            linkerJson: jsonFile.getFiles()[ 0 ]
+        };
 
-    }
-
-    function loadFiles(){
-
-        var pdb = pdbFile.getFiles()[ 0 ];
-        var mrc = mrcFile.getFiles()[ 0 ];
-        var linker = linkerFile.getFiles()[ 0 ];
-        var json = jsonFile.getFiles()[ 0 ];
-
-        if( !pdb || !mrc || !linker || !json ){
+        if( !files.structurePdb ||
+            ( isFragfit && !files.mapMrc ) ||
+            !files.linkerPdb ||
+            !files.linkerJson
+        ){
             infoText.setValue( "please supply all files" );
             return;
         }
 
-        load( pdb, mrc, linker, json );
+        function init( widget ){
+            infoText.setValue( "" );
+            info.setDisplay( "none" );
+            form.setDisplay( "none" );
+            results.add( widget );
+        }
+
+        function onError( error ){
+            form.setDisplay( "block" );
+            infoText.setValue( "ERROR" );
+            console.error( error );
+        }
+
+        loadFragResults( files )
+            .then( init )
+            .catch( onError );
 
     }
 
     //
 
-    var description = new UI.Panel().add(
-        new UI.Html( "FragFit..." )
-    );
-
-    container.add(
-        description,
-        new UI.Break(),
-        new UI.Text( "PDB:" ).setWidth( "45px" ),
+    form.add(
+        new UI.Text( "Structure PDB file" ).setMarginBottom( "3px" ),
         pdbFile,
         new UI.Break(),
-        new UI.Text( "MRC:" ).setWidth( "45px" ),
-        mrcFile,
-        new UI.Break(),
-        new UI.Text( "Linker PDB:" ).setWidth( "45px" ),
+        new UI.Break()
+    );
+
+    if( isFragfit ){
+        form.add(
+            new UI.Text( "Map MRC file" ).setMarginBottom( "3px" ),
+            mrcFile,
+            new UI.Break(),
+            new UI.Break()
+        );
+    }
+
+    form.add(
+        new UI.Text( "Linker PDB file" ).setMarginBottom( "3px" ),
         linkerFile,
         new UI.Break(),
-        new UI.Text( "Linker JSON:" ).setWidth( "45px" ),
+        new UI.Break(),
+        new UI.Text( "Linker JSON file" ).setMarginBottom( "3px" ),
         jsonFile,
         new UI.Break(),
         new UI.Break(),
-        loadBtn.setMarginRight( "10px" ),
-        infoText,
-        new UI.Break(),
-        new UI.Break(),
+        loadBtn.setMarginRight( "10px" )
+    );
+
+    info.add(
+        infoText
+    );
+
+    container.add(
+        form,
+        info,
         results
     );
 
@@ -708,14 +743,12 @@ var FragfitJobWidget = function( server ){
 
 };
 
-//
+// FragFit
 
 function fragfitResultsLoader(){
 
     panel.setName( "FragFit Loader" );
-
-    var fragfitResultsLoaderWidget = new FragfitResultsLoaderWidget();
-    panel.add( fragfitResultsLoaderWidget );
+    panel.add( new FragResultsLoaderWidget( true ) );
 
 }
 
@@ -740,23 +773,25 @@ function fragfitExample(){
 
     panel.setName( "FragFit Example" );
 
-    loadFragfitResults(
+    var files = {
+        structurePdb: "data://ribosomexample.pdb",
+        mapMrc: "data://ribocut4a.mrc",
+        linkerPdb: "data://ori_pdb_linker_file3.pdb",
+        linkerJson: "data://linker_correl.json"
+    };
 
-        "data://ribosomexample.pdb",
-        "data://ribocut4a.mrc",
-        "data://ori_pdb_linker_file3.pdb",
-        "data://linker_correl.json"
-
-    ).then( function( widget ){
-
+    function init( widget ){
         panel.add( widget );
+    }
 
-    } ).catch( function( error ){
-
+    function onError( error ){
         panel.add( new UI.Text( "ERROR" ) );
         console.error( error );
+    }
 
-    } );
+    loadFragResults( files )
+        .then( init )
+        .catch( onError );
 
 }
 
@@ -786,5 +821,39 @@ function fragfitStage(){
         new UI.Panel().add( exampleBtn ),
         new UI.Panel().add( loaderBtn )
     );
+
+}
+
+// FragSearch
+
+function fragsearchResultsLoader(){
+
+    panel.setName( "FragSearch Loader" );
+    panel.add( new FragResultsLoaderWidget( false ) );
+
+}
+
+function fragsearchExample(){
+
+    panel.setName( "FragSearch Example" );
+
+    var files = {
+        structurePdb: "data://3dqb.pdb",
+        linkerPdb: "data://fragsearch/input_pdb_file_linker3.pdb",
+        linkerJson: "data://fragsearch/input_pdb_file_linker.json"
+    };
+
+    function init( widget ){
+        panel.add( widget );
+    }
+
+    function onError( error ){
+        panel.add( new UI.Text( "ERROR" ) );
+        console.error( error );
+    }
+
+    loadFragResults( files )
+        .then( init )
+        .catch( onError );
 
 }
