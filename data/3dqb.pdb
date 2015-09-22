@@ -1,51 +1,50 @@
 HEADER    SIGNALING PROTEIN                       09-JUL-08   3DQB              
-TITLE     CRYSTAL STRUCTURE OF THE ACTIVE G-PROTEIN-COUPLED RECEPTOR            
-TITLE    2 OPSIN IN COMPLEX WITH A C-TERMINAL PEPTIDE DERIVED FROM              
-TITLE    3 THE GALPHA SUBUNIT OF TRANSDUCIN                                     
+TITLE     CRYSTAL STRUCTURE OF THE ACTIVE G-PROTEIN-COUPLED RECEPTOR OPSIN IN   
+TITLE    2 COMPLEX WITH A C-TERMINAL PEPTIDE DERIVED FROM THE GALPHA SUBUNIT OF 
+TITLE    3 TRANSDUCIN                                                           
 COMPND    MOL_ID: 1;                                                            
 COMPND   2 MOLECULE: RHODOPSIN;                                                 
 COMPND   3 CHAIN: A;                                                            
-COMPND   4 OTHER_DETAILS: THIS PROTEIN IS LIGAND-FREE RHODOPSIN,                
-COMPND   5 OPSIN.;                                                              
-COMPND   6 MOL_ID: 2;                                                           
-COMPND   7 MOLECULE: 11MERIC PEPTIDE FORM GUANINE NUCLEOTIDE-BINDING            
-COMPND   8 PROTEIN G(T) SUBUNIT ALPHA-1;                                        
-COMPND   9 CHAIN: B;                                                            
-COMPND  10 FRAGMENT: C-TERMINAL DOMAIN, UNP RESIDUES 340-350;                   
-COMPND  11 SYNONYM: TRANSDUCIN ALPHA-1 CHAIN;                                   
-COMPND  12 ENGINEERED: YES;                                                     
-COMPND  13 MUTATION: YES                                                        
+COMPND   4 OTHER_DETAILS: THIS PROTEIN IS LIGAND-FREE RHODOPSIN, OPSIN.;        
+COMPND   5 MOL_ID: 2;                                                           
+COMPND   6 MOLECULE: 11MERIC PEPTIDE FORM GUANINE NUCLEOTIDE-BINDING PROTEIN    
+COMPND   7 G(T) SUBUNIT ALPHA-1;                                                
+COMPND   8 CHAIN: B;                                                            
+COMPND   9 FRAGMENT: C-TERMINAL DOMAIN, UNP RESIDUES 340-350;                   
+COMPND  10 SYNONYM: TRANSDUCIN ALPHA-1 CHAIN;                                   
+COMPND  11 ENGINEERED: YES;                                                     
+COMPND  12 MUTATION: YES                                                        
 SOURCE    MOL_ID: 1;                                                            
 SOURCE   2 ORGANISM_SCIENTIFIC: BOS TAURUS;                                     
 SOURCE   3 ORGANISM_COMMON: BOVINE;                                             
 SOURCE   4 ORGANISM_TAXID: 9913;                                                
 SOURCE   5 MOL_ID: 2;                                                           
 SOURCE   6 SYNTHETIC: YES;                                                      
-SOURCE   7 OTHER_DETAILS: THIS PEPTIDE(11 AMINO ACIDS-340-350) WAS              
-SOURCE   8 CHEMICALLY SYNTHESIZED WITH K341L MUTATION.                          
+SOURCE   7 OTHER_DETAILS: THIS PEPTIDE(11 AMINO ACIDS-340-350) WAS CHEMICALLY   
+SOURCE   8 SYNTHESIZED WITH K341L MUTATION.                                     
 KEYWDS    PROTEIN, RETINAL PROTEIN, PHOTORECEPTOR, LIGAND-FREE STATE,           
-KEYWDS   2 ACETYLATION, CHROMOPHORE, G-PROTEIN COUPLED RECEPTOR,                
-KEYWDS   3 GLYCOPROTEIN, LIPOPROTEIN, PALMITATE, PHOSPHOPROTEIN,                
-KEYWDS   4 PHOTORECEPTOR PROTEIN, SENSORY TRANSDUCTION, TRANSDUCER,             
-KEYWDS   5 TRANSMEMBRANE, VISION, SIGNALING PROTEIN, G-PROTEIN,                 
-KEYWDS   6 TRANSDUCIN, GALPHA SUBUNIT, MEMBRANE, RECEPTOR, GTP-BINDING,         
-KEYWDS   7 MYRISTATE, NUCLEOTIDE-BINDING, G-PROTEIN-COUPLED RECEPTOR,           
-KEYWDS   8 RHODOPSIN, OPSIN                                                     
+KEYWDS   2 CHROMOPHORE, G-PROTEIN COUPLED RECEPTOR, GLYCOPROTEIN, LIPOPROTEIN,  
+KEYWDS   3 PALMITATE, PHOSPHOPROTEIN, PHOTORECEPTOR PROTEIN, SENSORY            
+KEYWDS   4 TRANSDUCTION, TRANSDUCER, TRANSMEMBRANE, VISION, SIGNALING PROTEIN,  
+KEYWDS   5 G-PROTEIN, TRANSDUCIN, GALPHA SUBUNIT, MEMBRANE, RECEPTOR, GTP-      
+KEYWDS   6 BINDING, MYRISTATE, NUCLEOTIDE-BINDING, G-PROTEIN-COUPLED RECEPTOR,  
+KEYWDS   7 RHODOPSIN, OPSIN                                                     
 EXPDTA    X-RAY DIFFRACTION                                                     
-AUTHOR    P.SCHEERER,J.H.PARK,P.W.HILDEBRAND,Y.J.KIM,N.KRAUSS,H.-               
-AUTHOR   2 W.CHOE,K.P.HOFMANN,O.P.ERNST                                         
+AUTHOR    P.SCHEERER,J.H.PARK,P.W.HILDEBRAND,Y.J.KIM,N.KRAUSS,H.-W.CHOE,        
+AUTHOR   2 K.P.HOFMANN,O.P.ERNST                                                
+REVDAT   5   05-FEB-14 3DQB    1       REMARK                                   
+REVDAT   4   13-JUL-11 3DQB    1       VERSN                                    
 REVDAT   3   24-FEB-09 3DQB    1       VERSN                                    
 REVDAT   2   30-SEP-08 3DQB    1       JRNL                                     
 REVDAT   1   23-SEP-08 3DQB    0                                                
-JRNL        AUTH   P.SCHEERER,J.H.PARK,P.W.HILDEBRAND,Y.J.KIM,                  
-JRNL        AUTH 2 N.KRAUSS,H.-W.CHOE,K.P.HOFMANN,O.P.ERNST                     
-JRNL        TITL   CRYSTAL STRUCTURE OF OPSIN IN ITS                            
-JRNL        TITL 2 G-PROTEIN-INTERACTING CONFORMATION                           
+JRNL        AUTH   P.SCHEERER,J.H.PARK,P.W.HILDEBRAND,Y.J.KIM,N.KRAUSS,         
+JRNL        AUTH 2 H.-W.CHOE,K.P.HOFMANN,O.P.ERNST                              
+JRNL        TITL   CRYSTAL STRUCTURE OF OPSIN IN ITS G-PROTEIN-INTERACTING      
+JRNL        TITL 2 CONFORMATION                                                 
 JRNL        REF    NATURE                        V. 455   497 2008              
 JRNL        REFN                   ISSN 0028-0836                               
 JRNL        PMID   18818650                                                     
 JRNL        DOI    10.1038/NATURE07330                                          
-REMARK   1                                                                      
 REMARK   2                                                                      
 REMARK   2 RESOLUTION.    3.20 ANGSTROMS.                                       
 REMARK   3                                                                      
@@ -82,7 +81,7 @@ REMARK   3   BIN FREE R VALUE SET COUNT          : 79
 REMARK   3   BIN FREE R VALUE                    : 0.2860                       
 REMARK   3                                                                      
 REMARK   3  NUMBER OF NON-HYDROGEN ATOMS USED IN REFINEMENT.                    
-REMARK   3   PROTEIN ATOMS            : 2691                                    
+REMARK   3   PROTEIN ATOMS            : 2680                                    
 REMARK   3   NUCLEIC ACID ATOMS       : 0                                       
 REMARK   3   HETEROGEN ATOMS          : 172                                     
 REMARK   3   SOLVENT ATOMS            : 3                                       
@@ -139,8 +138,13 @@ REMARK   3  ISOTROPIC THERMAL FACTOR RESTRAINTS.     COUNT   RMS    WEIGHT
 REMARK   3   MAIN-CHAIN BOND REFINED ATOMS  (A**2):  NULL ;  NULL ;  NULL       
 REMARK   3   MAIN-CHAIN BOND OTHER ATOMS    (A**2):  NULL ;  NULL ;  NULL       
 REMARK   3   MAIN-CHAIN ANGLE REFINED ATOMS (A**2):  NULL ;  NULL ;  NULL       
+REMARK   3   MAIN-CHAIN ANGLE OTHER ATOMS   (A**2):  NULL ;  NULL ;  NULL       
 REMARK   3   SIDE-CHAIN BOND REFINED ATOMS  (A**2):  NULL ;  NULL ;  NULL       
+REMARK   3   SIDE-CHAIN BOND OTHER ATOMS    (A**2):  NULL ;  NULL ;  NULL       
 REMARK   3   SIDE-CHAIN ANGLE REFINED ATOMS (A**2):  NULL ;  NULL ;  NULL       
+REMARK   3   SIDE-CHAIN ANGLE OTHER ATOMS   (A**2):  NULL ;  NULL ;  NULL       
+REMARK   3   LONG RANGE B REFINED ATOMS     (A**2):  NULL ;  NULL ;  NULL       
+REMARK   3   LONG RANGE B OTHER ATOMS       (A**2):  NULL ;  NULL ;  NULL       
 REMARK   3                                                                      
 REMARK   3 ANISOTROPIC THERMAL FACTOR RESTRAINTS.    COUNT   RMS   WEIGHT       
 REMARK   3   RIGID-BOND RESTRAINTS          (A**2):  NULL ;  NULL ;  NULL       
@@ -162,7 +166,7 @@ REMARK   3   SHRINKAGE RADIUS   : 0.80
 REMARK   3                                                                      
 REMARK   3  OTHER REFINEMENT REMARKS: NULL                                      
 REMARK   4                                                                      
-REMARK   4 3DQB COMPLIES WITH FORMAT V. 3.15, 01-DEC-08                         
+REMARK   4 3DQB COMPLIES WITH FORMAT V. 3.30, 13-JUL-11                         
 REMARK 100                                                                      
 REMARK 100 THIS ENTRY HAS BEEN PROCESSED BY PDBJ ON 23-JUL-08.                  
 REMARK 100 THE RCSB ID CODE IS RCSB048355.                                      
@@ -180,8 +184,8 @@ REMARK 200  BEAMLINE                       : 14.2
 REMARK 200  X-RAY GENERATOR MODEL          : NULL                               
 REMARK 200  MONOCHROMATIC OR LAUE    (M/L) : M                                  
 REMARK 200  WAVELENGTH OR RANGE        (A) : 0.9184                             
-REMARK 200  MONOCHROMATOR                  : SI-111 CRYSTAL - DOUBLE            
-REMARK 200                                   CRYSTAL MONOCHROMATOR              
+REMARK 200  MONOCHROMATOR                  : SI-111 CRYSTAL - DOUBLE CRYSTAL    
+REMARK 200                                   MONOCHROMATOR                      
 REMARK 200  OPTICS                         : MIRRORS                            
 REMARK 200                                                                      
 REMARK 200  DETECTOR TYPE                  : CCD                                
@@ -312,7 +316,7 @@ REMARK 290   SMTRY3  18  0.000000  0.000000 -1.000000       72.75467
 REMARK 290                                                                      
 REMARK 290 REMARK: NULL                                                         
 REMARK 300                                                                      
-REMARK 300 BIOMOLECULE: 1, 2, 3                                                 
+REMARK 300 BIOMOLECULE: 1                                                       
 REMARK 300 SEE REMARK 350 FOR THE AUTHOR PROVIDED AND/OR PROGRAM                
 REMARK 300 GENERATED ASSEMBLY INFORMATION FOR THE STRUCTURE IN                  
 REMARK 300 THIS ENTRY. THE REMARK MAY ALSO PROVIDE INFORMATION ON               
@@ -325,20 +329,7 @@ REMARK 350 GIVEN BELOW.  BOTH NON-CRYSTALLOGRAPHIC AND
 REMARK 350 CRYSTALLOGRAPHIC OPERATIONS ARE GIVEN.                               
 REMARK 350                                                                      
 REMARK 350 BIOMOLECULE: 1                                                       
-REMARK 350 AUTHOR DETERMINED BIOLOGICAL UNIT: MONOMERIC                         
-REMARK 350 APPLY THE FOLLOWING TO CHAINS: A                                     
-REMARK 350   BIOMT1   1  1.000000  0.000000  0.000000        0.00000            
-REMARK 350   BIOMT2   1  0.000000  1.000000  0.000000        0.00000            
-REMARK 350   BIOMT3   1  0.000000  0.000000  1.000000        0.00000            
-REMARK 350                                                                      
-REMARK 350 BIOMOLECULE: 2                                                       
-REMARK 350 AUTHOR DETERMINED BIOLOGICAL UNIT: MONOMERIC                         
-REMARK 350 APPLY THE FOLLOWING TO CHAINS: B                                     
-REMARK 350   BIOMT1   1  1.000000  0.000000  0.000000        0.00000            
-REMARK 350   BIOMT2   1  0.000000  1.000000  0.000000        0.00000            
-REMARK 350   BIOMT3   1  0.000000  0.000000  1.000000        0.00000            
-REMARK 350                                                                      
-REMARK 350 BIOMOLECULE: 3                                                       
+REMARK 350 AUTHOR DETERMINED BIOLOGICAL UNIT: DIMERIC                           
 REMARK 350 SOFTWARE DETERMINED QUATERNARY STRUCTURE: DIMERIC                    
 REMARK 350 SOFTWARE USED: PISA                                                  
 REMARK 350 TOTAL BURIED SURFACE AREA: 3600 ANGSTROM**2                          
@@ -424,33 +415,43 @@ REMARK 800 SITE
 REMARK 800 SITE_IDENTIFIER: AC1                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE NAG A 401                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC2                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE NAG A 402                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC3                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE BMA A 403                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC4                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE MAN A 404                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC5                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE NAG A 501                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC6                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE NAG A 502                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC7                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE BOG A 601                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC8                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE BOG A 602                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: AC9                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE BOG A 603                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: BC1                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE PLM A 701                 
+REMARK 800                                                                      
 REMARK 800 SITE_IDENTIFIER: BC2                                                 
 REMARK 800 EVIDENCE_CODE: SOFTWARE                                              
 REMARK 800 SITE_DESCRIPTION: BINDING SITE FOR RESIDUE PLM A 702                 
@@ -503,7 +504,6 @@ HETNAM     BMA BETA-D-MANNOSE
 HETNAM     MAN ALPHA-D-MANNOSE                                                  
 HETNAM     BOG B-OCTYLGLUCOSIDE                                                 
 HETNAM     PLM PALMITIC ACID                                                    
-HETSYN     NAG NAG                                                              
 FORMUL   3  NAG    4(C8 H15 N O6)                                               
 FORMUL   3  BMA    C6 H12 O6                                                    
 FORMUL   3  MAN    C6 H12 O6                                                    
@@ -3606,5 +3606,5 @@ CONECT 2862 2861 2863
 CONECT 2863 2862 2864                                                           
 CONECT 2864 2863 2865                                                           
 CONECT 2865 2864                                                                
-MASTER      409    0   11   15    4    0   15    6 2866    2  178   28          
+MASTER      410    0   11   15    4    0   15    6 2855    2  178   28          
 END                                                                             
