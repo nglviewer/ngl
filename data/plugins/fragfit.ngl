@@ -172,6 +172,7 @@ var FragfitResultsWidget = function( pdbComp, mrcComp, linkerComp, linkerJson ){
     // Isolevel
 
     var isolevelNumber = new UI.Number( isolevel )
+        .setWidth( "100px" )
         .onChange( function(){
             fragfitResultsPreset.setSurfaceParams( {
                 isolevel: isolevelNumber.getValue()
