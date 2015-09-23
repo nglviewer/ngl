@@ -649,9 +649,11 @@ NGL.Trajectory.prototype = {
 };
 
 
-NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
+NGL.RemoteTrajectory = function( trajSource, structure, selectionString ){
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
+
+    this.source = trajSource
 
 }
 
@@ -714,8 +716,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         var request = new XMLHttpRequest();
 
-        var url = "../traj/frame/" + i + "/" + this.trajPath;
-        var params = "atomIndices=" + this.atomIndices.join(";");
+        // var url = "../traj/frame/" + i + "/" + this.trajPath;
+        // var params = "atomIndices=" + this.atomIndices.join(";");
+
+        var url = this.source.getFrameUrl( i );
+        var params = this.source.getFrameParams( this.atomIndices );
 
         request.open( "POST", url, true );
         request.responseType = "arraybuffer";
@@ -760,7 +765,8 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
         var scope = this;
 
         var loader = new THREE.XHRLoader();
-        var url = "../traj/numframes/" + this.trajPath;
+        // var url = "../traj/numframes/" + this.trajPath;
+        var url = this.source.getNumframesUrl();
 
         loader.load( url, function( n ){
 
@@ -783,9 +789,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         var request = new XMLHttpRequest();
 
-        var url = "../traj/path/" + index + "/" + this.trajPath;
+        // var url = "../traj/path/" + index + "/" + this.trajPath;
+        // var params = "";
+
+        var url = this.source.getPathUrl( index );
         var params = "";
-        // var params = "frameIndices=" + this.atomIndices.join(";");
 
         request.open( "POST", url, true );
         request.responseType = "arraybuffer";

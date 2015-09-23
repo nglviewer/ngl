@@ -428,9 +428,7 @@ var NGL = {
         self.location.pathname.indexOf( "core.js" ) !== -1 ||
         self.location.pathname.indexOf( "dev.html" ) !== -1
     ),
-    mainScriptFilePath: "../js/build/ngl.full.min.js",
-    dataProtocolRelativePath: "../data/",
-    fileProtocolRelativePath: "../file/"
+    mainScriptFilePath: "../js/build/ngl.full.min.js"
 
 };
 
@@ -721,7 +719,8 @@ NGL.getFileInfo = function( file ){
         "base": base,
         "dir": dir,
         "compressed": compressed,
-        "protocol": protocol
+        "protocol": protocol,
+        "src": file
     };
 
 };

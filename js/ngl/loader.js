@@ -5,6 +5,123 @@
 
 
 ///////////
+// Source
+
+// dataProtocolRelativePath: "../data/",
+//     fileProtocolRelativePath: "../file/"
+
+
+NGL.DatasourceRegistry = {
+
+    sourceDict: {},
+
+    add: function( name, datasource ){
+        this.sourceDict[ name ] = datasource;
+    },
+
+    get: function( name ){
+        if( name in this.sourceDict ){
+            return this.sourceDict[ name ];
+        }else{
+            return {
+                getUrl: function( path ){
+                    return path;
+                }
+            };
+        }
+    },
+
+};
+
+
+NGL.getDataInfo = function( src ){
+
+    var info = NGL.getFileInfo( src );
+    var datasource = NGL.DatasourceRegistry.get( info.protocol );
+    var url = datasource.getUrl( info.src );
+
+    return NGL.getFileInfo( url );
+
+};
+
+
+NGL.ExampleDatasource = function( baseUrl ){
+
+    baseUrl = baseUrl || "";
+
+    this.getUrl = function( src ){
+        var info = NGL.getFileInfo( src );
+        return NGL.getAbsolutePath( baseUrl + "data/" + info.path );
+    };
+
+};
+
+NGL.DatasourceRegistry.add(
+    "data", new NGL.ExampleDatasource( "../" )
+);
+
+
+NGL.FileDatasource = function( baseUrl ){
+
+    baseUrl = baseUrl || "";
+
+    this.getListing = function( path ){
+        var url = baseUrl + "file/" + path;
+        return NGL.autoLoad( url, {
+            ext: "json", noWorker: true
+        } );
+    };
+
+    this.getUrl = function( src ){
+        var info = NGL.getFileInfo( src );
+        return NGL.getAbsolutePath( baseUrl + "file/" + info.path );
+    };
+
+};
+
+NGL.DatasourceRegistry.add(
+    "file", new NGL.FileDatasource( "../" )
+);
+
+
+NGL.RcsbDatasource = function(){
+
+    var baseUrl = "http://www.rcsb.org/pdb/files/";
+
+    this.getUrl = function( src ){
+        var info = NGL.getFileInfo( src );
+        return baseUrl + info.name + ".cif.gz";
+    };
+
+};
+
+NGL.DatasourceRegistry.add(
+    "rcsb", new NGL.RcsbDatasource()
+);
+
+
+NGL.TrajectoryDatasource = function( path ){
+
+    this.getNumframesUrl = function(){
+        return "../traj/numframes/" + path;
+    };
+
+    this.getFrameUrl = function( frameIndex ){
+        return "../traj/frame/" + frameIndex + "/" + path;
+    };
+
+    this.getFrameParams = function( atomIndices ){
+        return "atomIndices=" + atomIndices.join(";");
+    };
+
+    this.getPathUrl = function( atomIndex ){
+        return "../traj/path/" + atomIndex + "/" + path;
+    };
+
+};
+
+
+///////////
 // Loader
 
 NGL.Loader = function( src, params ){
@@ -259,70 +376,13 @@ NGL.loaderMap = {
 
 NGL.autoLoad = function( file, params ){
 
-    var fileInfo = NGL.getFileInfo( file );
+    var p = Object.assign( NGL.getDataInfo( file ), params );
+    var loader = new NGL.loaderMap[ p.ext ]( p.src, p );
 
-    var path = fileInfo.path;
-    var name = fileInfo.name;
-    var ext = fileInfo.ext;
-    var dir = fileInfo.dir;
-    var compressed = fileInfo.compressed;
-    var protocol = fileInfo.protocol;
-
-    if( protocol === "rcsb" ){
-
-        // ext = "pdb";
-        // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
-        ext = "cif";
-        compressed = "gz";
-        path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
-        protocol = "http";
-
-    }
-
-    //
-
-    var p = Object.assign( {}, params );
-
-    p.name = p.name !== undefined ? p.name : name;
-    p.ext = p.ext !== undefined ? p.ext : ext;
-    p.compressed = p.compressed !== undefined ? p.compressed : compressed;
-    p.path = p.path !== undefined ? p.path : path;
-    p.protocol = protocol;
-    p.dir = dir;
-
-    //
-
-    var src;
-
-    if( file instanceof File ){
-
-        src = file;
-
-    }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
-
-        src = protocol + "://" + path;
-
-    }else if( protocol === "data" ){
-
-        src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
-
-    }else{
-
-        src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
-
-    }
-
-    //
-
-    if( p.ext in NGL.loaderMap ){
-
-        var loader = new NGL.loaderMap[ p.ext ]( src, p );
+    if( loader ){
         return loader.load();
-
     }else{
-
         return Promise.reject( "NGL.autoLoading: ext '" + p.ext + "' unknown" );
-
     }
 
 };
