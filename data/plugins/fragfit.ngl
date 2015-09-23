@@ -135,9 +135,9 @@ function buildLinkerStructure( structure, linkerModel, callback ){
 
         }
 
-        if( a.chainname <= ntermChain || a.chainname >= ctermChain ||
-            ( a.chainname === ntermChain && a.resno < ntermResno ) ||
-            ( a.chainname === ctermChain && a.resno > ctermResno )
+        if( a.chainname < ntermChain || a.chainname > ctermChain ||
+            ( a.chainname === ntermChain && a.resno <= ntermResno ) ||
+            ( a.chainname === ctermChain && a.resno >= ctermResno )
         ){
 
             atoms.push( new NGL.Atom().copy( a ) );
