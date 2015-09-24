@@ -28,7 +28,12 @@ NGL.PluginRegistry = {
     },
 
     get count(){
-        Object.keys( this.dict ).length
+        return Object.keys( this.dict ).length;
+    },
+
+    load: function( name, stage ){
+        var path = this.get( name );
+        stage.loadFile( path, { name: name + " plugin" } );
     }
 
 };
@@ -601,14 +606,10 @@ NGL.MenubarPluginsWidget = function( stage ){
     var menuConfig = [];
 
     for( var name in NGL.PluginRegistry.dict ){
-        var path = NGL.PluginRegistry.get( name );
-        menuConfig.push(
-            createOption( info.name, function(){
-                stage.loadFile( path, {
-                    name: name + " plugin"
-                } );
-            } )
-        );
+        var option = createOption( name, function( name ){
+            return function(){ NGL.PluginRegistry.load( name, stage ) }
+        }( name ) );
+        menuConfig.push( option );
     }
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );

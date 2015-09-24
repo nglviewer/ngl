@@ -21,40 +21,46 @@
 
         <script>
 
-            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+            if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
-            document.addEventListener("DOMContentLoaded", function() {
+            // Datasources
 
-                NGL.DatasourceRegistry.add(
-                    "data", new NGL.ExampleDatasource( "../" )
-                );
-                NGL.DatasourceRegistry.add(
-                    "file", new NGL.FileDatasource( "../" )
-                );
-                NGL.DatasourceRegistry.listing = NGL.DatasourceRegistry.get( "file" );
-                NGL.DatasourceRegistry.trajectory = new NGL.TrajectoryDatasource( "../" );
+            NGL.DatasourceRegistry.add(
+                "data", new NGL.ExampleDatasource( "../" )
+            );
+            NGL.DatasourceRegistry.add(
+                "file", new NGL.FileDatasource( "../" )
+            );
+            NGL.DatasourceRegistry.listing = NGL.DatasourceRegistry.get( "file" );
+            NGL.DatasourceRegistry.trajectory = new NGL.TrajectoryDatasource( "../" );
 
-                NGL.init( function(){
+            // Plugins
 
-                    var stage = new NGL.Stage();
-                    NGL.StageWidget( stage );
+            NGL.PluginRegistry.add(
+                "apbs", "data://plugins/apbs.plugin"
+            );
+            NGL.PluginRegistry.add(
+                "crosslink", "data://plugins/crosslink.plugin"
+            );
 
-                    var example = NGL.GET( "example" );
-                    if( example ) NGL.Examples.load( example, stage );
+            //
 
-                    var load = NGL.GET( "load" );
-                    if( load ) stage.loadFile( load, {
-                        defaultRepresentation: true
-                    } );
+            function onInit(){
+                var stage = new NGL.Stage();
+                NGL.StageWidget( stage );
 
-                    var plugin = NGL.GET( "plugin" );
-                    if( plugin ) stage.loadFile(
-                        "data://plugins/" + plugin + ".ngl",
-                        { name: plugin + " plugin" }
-                    );
+                var example = NGL.GET( "example" );
+                if( example ) NGL.Examples.load( example, stage );
 
-                } );
+                var load = NGL.GET( "load" );
+                if( load ) stage.loadFile( load, { defaultRepresentation: true } );
 
+                var plugin = NGL.GET( "plugin" );
+                if( plugin ) NGL.PluginRegistry.load( plugin, stage );
+            }
+
+            document.addEventListener( "DOMContentLoaded", function(){
+                NGL.init( onInit );
             } );
 
         </script>

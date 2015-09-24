@@ -16,24 +16,19 @@
 
         <script>
 
-            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+            if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
-            document.addEventListener("DOMContentLoaded", function() {
-
-                NGL.init( function(){
-
-                    var stage = new NGL.Stage( "viewport" );
-
-                    stage.loadFile( "rcsb://1crn" ).then( function( o ){
-
-                        o.addRepresentation( "cartoon" );
-                        o.addRepresentation( "licorice" );
-                        o.centerView();
-
-                    } );
-
+            function onInit(){
+                var stage = new NGL.Stage( "viewport" );
+                stage.loadFile( "rcsb://1crn" ).then( function( o ){
+                    o.addRepresentation( "cartoon" );
+                    o.addRepresentation( "licorice" );
+                    o.centerView();
                 } );
+            }
 
+            document.addEventListener( "DOMContentLoaded", function() {
+                NGL.init( onInit );
             } );
 
         </script>

@@ -12,23 +12,17 @@
 
 		<script>
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			if( !Detector.webgl ) Detector.addGetWebGLMessage();
+
+			NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
+
+			function onInit(){
+				var stage = new NGL.Stage( "viewport" );
+				stage.loadFile( "rcsb://1crn", { defaultRepresentation: true } );
+			}
 
 			document.addEventListener( "DOMContentLoaded", function() {
-
-				NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
-
-				NGL.init( function(){
-
-					var stage = new NGL.Stage( "viewport" );
-					stage.setTheme( "light" );
-					stage.viewer.setBackground( 0xfff7ed );
-					stage.loadFile( "rcsb://1crn", {
-						defaultRepresentation: true
-					} );
-
-				} );
-
+				NGL.init( onInit );
 			} );
 
 		</script>
@@ -36,8 +30,8 @@
 		<h1>[name]</h1>
 
 		<div style="float:right; margin-left:30px">
-            <div id="viewport" style="width:400px; height:300px;"></div>
-        </div>
+			<div id="viewport" style="width:400px; height:300px;"></div>
+		</div>
 
 		For embedding the viewer into other websites a single JavaScript file is available (<a href="../../../js/build/ngl.embedded.min.js" target="_blank">ngl.embedded.min.js</a>), fully containing the viewer sans the GUI code.
 
@@ -49,37 +43,33 @@
 		<code>
 		&lt;!DOCTYPE html&gt;
 		&lt;html lang="en"&gt;
-			&lt;head&gt;
-				&lt;meta charset="utf-8"&gt;
-			&lt;/head&gt;
-			&lt;body&gt;
+		&lt;head&gt;
+			&lt;meta charset="utf-8"&gt;
+		&lt;/head&gt;
+		&lt;body&gt;
 
-				&lt;script src="ngl.embedded.min.js"&gt;&lt;/script&gt;
+			&lt;script src="ngl.embedded.min.js"&gt;&lt;/script&gt;
 
-				&lt;script&gt;
+			&lt;script&gt;
 
-					if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+				if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
-					document.addEventListener( "DOMContentLoaded", function(){
+				NGL.mainScriptFilePath = "path/to/ngl.embedded.min.js";
 
-						NGL.mainScriptFilePath = "path/to/ngl.embedded.min.js";
+				function onInit(){
+					var stage = new NGL.Stage( "viewport" );
+					stage.loadFile( "rcsb://1crn", { defaultRepresentation: true } );
+				}
 
-						NGL.init( function(){
+				document.addEventListener( "DOMContentLoaded", function() {
+					NGL.init( onInit );
+				} );
 
-							var stage = new NGL.Stage( "viewport" );
-							stage.loadFile( "rcsb://1crn", {
-								defaultRepresentation: true
-							} );
+			&lt;/script&gt;
 
-						} );
+			&lt;div id="viewport" style="width:400px; height:300px;"&gt;&lt;/div&gt;
 
-					} );
-
-				&lt;/script&gt;
-
-				&lt;div id="viewport" style="width:400px; height:300px;"&gt;&lt;/div&gt;
-
-			&lt;/body&gt;
+		&lt;/body&gt;
 		&lt;/html&gt;
 		</code>
 

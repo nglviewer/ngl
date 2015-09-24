@@ -66,6 +66,8 @@ code {
 	white-space: pre-wrap;
 	background-color: #fff7ed;
 	overflow: auto;
+	-moz-tab-size: 4;
+	tab-size: 4;
 }
 
 strong {
