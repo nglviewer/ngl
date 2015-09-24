@@ -675,18 +675,16 @@ NGL.getFileInfo = function( file ){
     var path, compressed, protocol;
 
     if( file instanceof File ){
-
         path = file.name;
-
     }else{
-
         path = file
-
     }
 
     var name = path.replace( /^.*[\\\/]/, '' );
-    var base = name.substring( 0, name.lastIndexOf('.') );
-    var ext = path.split('.').pop().toLowerCase();
+    var base = name.substring( 0, name.lastIndexOf( '.' ) );
+
+    var pathSplit = path.split( '.' );
+    var ext = pathSplit.length > 1 ? pathSplit.pop().toLowerCase() : "";
 
     var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
     if( protocolMatch ){
@@ -694,14 +692,14 @@ NGL.getFileInfo = function( file ){
         path = protocolMatch[ 2 ];
     }
 
-    var dir = path.substring( 0, path.lastIndexOf('/') + 1 );
+    var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
     if( compressedExtList.indexOf( ext ) !== -1 ){
 
         compressed = ext;
 
         var n = path.length - ext.length - 1;
-        ext = path.substr( 0, n ).split('.').pop().toLowerCase();
+        ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
 
         var m = base.length - ext.length - 1;
         base = base.substr( 0, m );
