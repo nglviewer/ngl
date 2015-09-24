@@ -847,6 +847,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -951,6 +952,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -1055,6 +1057,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -1190,6 +1193,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -1423,6 +1427,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -1552,6 +1557,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -1752,6 +1758,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -1986,6 +1993,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -2242,6 +2250,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -2493,6 +2502,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         // NGL.time( "cartoon repr update" );
 
@@ -2724,6 +2734,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -2937,6 +2948,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -3097,6 +3109,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         // NGL.time( "helixorient repr update" );
 
@@ -3277,6 +3290,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -3510,6 +3524,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         // NGL.time( "rope repr update" );
 
@@ -3907,6 +3922,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         //
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -4113,6 +4129,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -4331,6 +4349,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         var n = this.atomPair.length;
         if( n === 0 ) return;
@@ -4813,6 +4832,8 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.bufferList.length === 0 ) return;
+
         what = what || {};
 
         var surfaceData = {};
@@ -5111,6 +5132,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
     },
 
     update: function( what ){
+
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
