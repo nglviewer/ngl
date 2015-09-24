@@ -78,8 +78,19 @@ NGL.RcsbDatasource = function(){
     var baseUrl = "http://www.rcsb.org/pdb/files/";
 
     this.getUrl = function( src ){
+        // valid path are
+        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz
+        // XXXX defaults to XXXX.cif.gz
         var info = NGL.getFileInfo( src );
-        return baseUrl + info.name + ".cif.gz";
+        var file;
+        if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
+            ( info.compressed === false || info.compressed === "gz" )
+        ){
+            file = info.path;
+        }else{
+            file = info.name + ".cif.gz";
+        }
+        return baseUrl + file;
     };
 
 };
