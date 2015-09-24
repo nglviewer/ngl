@@ -649,11 +649,9 @@ NGL.Trajectory.prototype = {
 };
 
 
-NGL.RemoteTrajectory = function( trajSource, structure, selectionString ){
+NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
-
-    this.source = trajSource
 
 }
 
@@ -712,15 +710,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         // NGL.time( "NGL.RemoteTrajectory._loadFrame" );
 
-        var scope = this;
-
         var request = new XMLHttpRequest();
 
-        // var url = "../traj/frame/" + i + "/" + this.trajPath;
-        // var params = "atomIndices=" + this.atomIndices.join(";");
-
-        var url = this.source.getFrameUrl( i );
-        var params = this.source.getFrameParams( this.atomIndices );
+        var ds = NGL.DatasourceRegistry.trajectory;
+        var url = ds.getFrameUrl( this.trajPath, i );
+        var params = ds.getFrameParams( this.trajPath, this.atomIndices );
 
         request.open( "POST", url, true );
         request.responseType = "arraybuffer";
@@ -732,8 +726,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             // NGL.timeEnd( "NGL.RemoteTrajectory._loadFrame" );
 
-            var arrayBuffer = this.response;
-
+            var arrayBuffer = request.response;
             if( !arrayBuffer ){
                 NGL.error( "empty arrayBuffer for '" + url + "'" );
                 return;
@@ -744,17 +737,12 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
             var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
             var coords = new Float32Array( arrayBuffer, 11 * 4 );
 
-            // NGL.log( time );
-
-            scope.process( i, box, coords, numframes );
-
+            this.process( i, box, coords, numframes );
             if( typeof callback === "function" ){
-
                 callback();
-
             }
 
-        }, false );
+        }.bind( this ), false );
 
         request.send( params );
 
@@ -762,17 +750,13 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
     getNumframes: function(){
 
-        var scope = this;
-
         var loader = new THREE.XHRLoader();
-        // var url = "../traj/numframes/" + this.trajPath;
-        var url = this.source.getNumframesUrl();
+        var ds = NGL.DatasourceRegistry.trajectory;
+        var url = ds.getNumframesUrl( this.trajPath );
 
         loader.load( url, function( n ){
-
-            scope.setNumframes( parseInt( n ) );
-
-        });
+            this.setNumframes( parseInt( n ) );
+        }.bind( this ) );
 
     },
 
@@ -785,14 +769,10 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         NGL.time( "loadPath" );
 
-        var scope = this;
-
         var request = new XMLHttpRequest();
 
-        // var url = "../traj/path/" + index + "/" + this.trajPath;
-        // var params = "";
-
-        var url = this.source.getPathUrl( index );
+        var ds = NGL.DatasourceRegistry.trajectory;
+        var url = ds.getPathUrl( this.trajPath, index );
         var params = "";
 
         request.open( "POST", url, true );
@@ -805,22 +785,18 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             NGL.timeEnd( "loadPath" );
 
-            var arrayBuffer = this.response;
-
+            var arrayBuffer = request.response;
             if( !arrayBuffer ){
                 NGL.error( "empty arrayBuffer for '" + url + "'" );
                 return;
             }
 
             var path = new Float32Array( arrayBuffer );
-
-            scope.pathCache[ index ] = path;
-
             // NGL.log( path )
-
+            this.pathCache[ index ] = path;
             callback( path );
 
-        }, false );
+        }.bind( this ), false );
 
         request.send( params );
 

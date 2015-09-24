@@ -292,21 +292,14 @@ NGL.MenubarFileWidget = function( stage ){
         "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
         "mrc", "ccp4", "map", "cube", "dx",
         "obj", "ply",
-        "ngl", "ngz",
+        "ngl",
         "gz", "lzma", "bz2", "zip"
     ];
-    var fileTypesImport = fileTypesOpen + [ "ngl" ];
+    var fileTypesImport = fileTypesOpen;
 
-    var fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.multiple = true;
-    fileInput.style.display = "none";
-    fileInput.accept = "." + fileTypesOpen.join( ",." );
-    fileInput.addEventListener( 'change', function( e ){
-
+    function fileInputOnChange( e ){
         async.eachLimit(
-            e.target.files,
-            4,
+            e.target.files, 4,
             function( file, callback ){
                 stage.loadFile( file, {
                     defaultRepresentation: true,
@@ -316,8 +309,14 @@ NGL.MenubarFileWidget = function( stage ){
                 } ).then( function(){ callback(); } );
             }
         );
+    }
 
-    }, false );
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.multiple = true;
+    fileInput.style.display = "none";
+    fileInput.accept = "." + fileTypesOpen.join( ",." );
+    fileInput.addEventListener( 'change', fileInputOnChange, false );
 
     // export image
 
@@ -328,33 +327,32 @@ NGL.MenubarFileWidget = function( stage ){
     // event handlers
 
     function onOpenOptionClick () {
-
         fileInput.click();
-
     }
 
     function onImportOptionClick(){
 
+        var datasource = NGL.DatasourceRegistry.listing;
         var dirWidget;
 
         function onListingClick( info ){
             var ext = info.path.split('.').pop().toLowerCase();
             if( fileTypesImport.indexOf( ext ) !== -1 ){
-                stage.loadFile( info.path, {
+                stage.loadFile( datasource.getUrl( info.path ), {
                     defaultRepresentation: true,
                     asTrajectory: asTrajectory,
                     firstModelOnly: firstModelOnly,
                     cAlphaOnly: cAlphaOnly
                 } );
+                dirWidget.dispose();
             }else{
                 NGL.log( "unknown filetype: " + ext );
             }
-            dirWidget.dispose();
         }
 
         dirWidget = new NGL.DirectoryListingWidget(
-            NGL.DatasourceRegistry.listing, stage,
-            "Import file", fileTypesImport, onListingClick
+            datasource, stage, "Import file",
+            fileTypesImport, onListingClick
         );
 
         dirWidget
@@ -1322,44 +1320,33 @@ NGL.StructureComponentWidget = function( component, stage ){
     var trajContainer = new UI.Panel();
 
     signals.requestGuiVisibility.add( function( value ){
-
         container.setCollapsed( !value );
-
     } );
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     signals.trajectoryAdded.add( function( traj ){
-
         trajContainer.add( new NGL.TrajectoryComponentWidget( traj, stage ) );
-
     } );
 
     // Selection
 
     container.add(
-
         new UI.SelectionPanel( component.selection )
             .setMarginLeft( "20px" )
             .setInputWidth( '214px' )
-
     );
 
     // Export PDB
 
     var pdb = new UI.Button( "export" ).onClick( function(){
-
         var pdbWriter = new NGL.PdbWriter( component.structure );
         pdbWriter.download( "structure" );
-
         componentPanel.setMenuDisplay( "none" );
-
     });
 
     // Add representation
@@ -1367,20 +1354,16 @@ NGL.StructureComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = { "": "[ add ]" };
             for( var key in NGL.representationTypes ){
                 reprOptions[ key ] = key;
             }
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Assembly
@@ -1388,25 +1371,20 @@ NGL.StructureComponentWidget = function( component, stage ){
     var assembly = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var biomolDict = component.structure.biomolDict;
             var assemblyOptions = { "__AU": "AU" };
             Object.keys( biomolDict ).forEach( function( k ){
                 assemblyOptions[ k ] = k;
             } );
             return assemblyOptions;
-
         })() )
         .setValue(
             component.structure.defaultAssembly
         )
         .onChange( function(){
-
             component.structure.setDefaultAssembly( assembly.getValue() );
             component.rebuildRepresentations();
-            // component.centerView();
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Import trajectory
@@ -1416,31 +1394,22 @@ NGL.StructureComponentWidget = function( component, stage ){
         componentPanel.setMenuDisplay( "none" );
 
         var trajExt = [ "xtc", "trr", "dcd", "netcdf", "nc" ];
+        var datasource = NGL.DatasourceRegistry.listing;
+        var dirWidget;
 
-        var dirWidget = new NGL.DirectoryListingWidget(
-
-            stage, "Import trajectory", trajExt,
-
-            function( path ){
-
-                var ext = path.path.split('.').pop().toLowerCase();
-
-                if( trajExt.indexOf( ext ) !== -1 ){
-
-                    NGL.log( path );
-
-                    component.addTrajectory( path.path );
-
-                    dirWidget.dispose();
-
-                }else{
-
-                    NGL.log( "unknown trajectory type: " + ext );
-
-                }
-
+        function onListingClick( info ){
+            var ext = info.path.split('.').pop().toLowerCase();
+            if( trajExt.indexOf( ext ) !== -1 ){
+                component.addTrajectory( info.path );
+                dirWidget.dispose();
+            }else{
+                NGL.log( "unknown trajectory type: " + ext );
             }
+        }
 
+        dirWidget = new NGL.DirectoryListingWidget(
+            datasource, stage, "Import trajectory",
+            trajExt, onListingClick
         );
 
         dirWidget
@@ -1454,9 +1423,7 @@ NGL.StructureComponentWidget = function( component, stage ){
     // Superpose
 
     function setSuperposeOptions(){
-
         var superposeOptions = { "": "[ structure ]" };
-
         stage.eachComponent( function( o, i ){
 
             if( o !== component ){
@@ -1464,9 +1431,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             }
 
         }, NGL.StructureComponent );
-
         superpose.setOptions( superposeOptions );
-
     }
 
     stage.signals.componentAdded.add( setSuperposeOptions );
@@ -1475,17 +1440,13 @@ NGL.StructureComponentWidget = function( component, stage ){
     var superpose = new UI.Select()
         .setColor( '#444' )
         .onChange( function(){
-
             component.superpose(
                 stage.compList[ superpose.getValue() ],
                 true
             );
-
             component.centerView();
-
             superpose.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     setSuperposeOptions();
@@ -1493,28 +1454,21 @@ NGL.StructureComponentWidget = function( component, stage ){
     // SS calculate
 
     var ssButton = new UI.Button( "calculate" ).onClick( function(){
-
         component.structure.autoSS();
         component.rebuildRepresentations();
-
         componentPanel.setMenuDisplay( "none" );
-
     } );
 
     // duplicate structure
 
     var duplicateButton = new UI.Button( "duplicate" ).onClick( function(){
-
         stage.addComponent(
             new NGL.StructureComponent(
                 stage,
-                component.structure.clone(),
-                {}
+                component.structure.clone()
             )
         );
-
         componentPanel.setMenuDisplay( "none" );
-
     } );
 
     // Component panel
@@ -1525,14 +1479,21 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "PDB file", pdb )
         .addMenuEntry( "Representation", repr )
         .addMenuEntry( "Assembly", assembly )
-        .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
         .addMenuEntry( "Structure", duplicateButton )
         .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setOverflow( "auto" )
+                        //.setWordWrap( "break-word" )
+                        );
+
+    if( NGL.DatasourceRegistry.listing &&
+        NGL.DatasourceRegistry.trajectory
+    ){
+        componentPanel.addMenuEntry( "Trajectory", traj )
+    }
 
     // Fill container
 

@@ -11,6 +11,9 @@ NGL.DatasourceRegistry = {
 
     sourceDict: {},
 
+    listing: undefined,
+    trajectory: undefined,
+
     __passThrough: {
         getUrl: function( path ){
             return path;
@@ -26,19 +29,18 @@ NGL.DatasourceRegistry = {
     },
 
     get: function( name ){
+        name = name || "";
         name = name.toLowerCase();
         if( name in this.sourceDict ){
             return this.sourceDict[ name ];
         }else if( [ "http", "https", "ftp" ].indexOf( name ) !== -1 ){
             return this.__passThrough;
+        }else if( !name ){
+            return this.__passThrough;
         }else{
             NGL.error( "no datasource named '" + name + "' found" );
         }
-    },
-
-    listing: undefined,
-
-    trajectory: undefined
+    }
 
 };
 
@@ -118,22 +120,24 @@ NGL.DatasourceRegistry.add(
 );
 
 
-NGL.TrajectoryDatasource = function( path ){
+NGL.TrajectoryDatasource = function( baseUrl ){
 
-    this.getNumframesUrl = function(){
-        return "../traj/numframes/" + path;
+    baseUrl = baseUrl || "";
+
+    this.getNumframesUrl = function( path ){
+        return baseUrl + "traj/numframes/" + path;
     };
 
-    this.getFrameUrl = function( frameIndex ){
-        return "../traj/frame/" + frameIndex + "/" + path;
+    this.getFrameUrl = function( path, frameIndex ){
+        return baseUrl + "traj/frame/" + frameIndex + "/" + path;
     };
 
-    this.getFrameParams = function( atomIndices ){
+    this.getFrameParams = function( path, atomIndices ){
         return "atomIndices=" + atomIndices.join(";");
     };
 
-    this.getPathUrl = function( atomIndex ){
-        return "../traj/path/" + atomIndex + "/" + path;
+    this.getPathUrl = function( path, atomIndex ){
+        return baseUrl + "traj/path/" + atomIndex + "/" + path;
     };
 
 };

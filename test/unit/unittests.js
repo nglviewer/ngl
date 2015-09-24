@@ -91,6 +91,7 @@ NGL.mainScriptFilePath = "../../js/ngl/core.js";
 NGL.DatasourceRegistry.add(
     "data", new NGL.ExampleDatasource( "../../" )
 );
+NGL.DatasourceRegistry.trajectory = new NGL.TrajectoryDatasource( "../../" );
 
 
 ////////////////////
