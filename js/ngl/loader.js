@@ -4,12 +4,8 @@
  */
 
 
-///////////
-// Source
-
-// dataProtocolRelativePath: "../data/",
-//     fileProtocolRelativePath: "../file/"
-
+///////////////
+// Datasource
 
 NGL.DatasourceRegistry = {
 
@@ -23,6 +19,7 @@ NGL.DatasourceRegistry = {
         if( name in this.sourceDict ){
             return this.sourceDict[ name ];
         }else{
+            console.info( "no datasource named '" + name + "' found" );
             return {
                 getUrl: function( path ){
                     return path;
@@ -56,10 +53,6 @@ NGL.ExampleDatasource = function( baseUrl ){
 
 };
 
-NGL.DatasourceRegistry.add(
-    "data", new NGL.ExampleDatasource( "../" )
-);
-
 
 NGL.FileDatasource = function( baseUrl ){
 
@@ -78,10 +71,6 @@ NGL.FileDatasource = function( baseUrl ){
     };
 
 };
-
-NGL.DatasourceRegistry.add(
-    "file", new NGL.FileDatasource( "../" )
-);
 
 
 NGL.RcsbDatasource = function(){

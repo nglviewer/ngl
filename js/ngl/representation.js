@@ -52,7 +52,6 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
         }
 
-
     }else if( object instanceof NGL.Trajectory ){
 
         ReprClass = NGL.TrajectoryRepresentation;
