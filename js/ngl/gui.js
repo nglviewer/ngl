@@ -27,13 +27,50 @@ NGL.PluginRegistry = {
         return this.dict[ name ];
     },
 
+    get names(){
+        return Object.keys( this.dict );
+    },
+
     get count(){
-        return Object.keys( this.dict ).length;
+        return this.names.length;
     },
 
     load: function( name, stage ){
         var path = this.get( name );
         stage.loadFile( path, { name: name + " plugin" } );
+    }
+
+};
+
+
+NGL.ExampleRegistry = {
+
+    dict: {},
+
+    add: function( name, fn ){
+        this.dict[ name ] = fn;
+    },
+
+    addDict: function( dict ){
+        Object.keys( dict ).forEach( function( name ){
+            this.add( name, dict[ name ] );
+        }.bind( this ) );
+    },
+
+    get: function( name ){
+        return this.dict[ name ];
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        this.get( name )( stage );
     }
 
 };
@@ -295,7 +332,9 @@ NGL.MenubarWidget = function( stage ){
 
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage ) );
-    container.add( new NGL.MenubarExamplesWidget( stage ) );
+    if( NGL.ExampleRegistry.count > 0 ){
+        container.add( new NGL.MenubarExamplesWidget( stage ) );
+    }
     if( NGL.PluginRegistry.count > 0 ){
         container.add( new NGL.MenubarPluginsWidget( stage ) );
     }
@@ -562,37 +601,22 @@ NGL.MenubarExamplesWidget = function( stage ){
 
     var createOption = UI.MenubarHelper.createOption;
     var createDivider = UI.MenubarHelper.createDivider;
-
     var menuConfig = [];
 
-    Object.keys( NGL.Examples.data ).forEach( function( name ){
-
+    NGL.ExampleRegistry.names.forEach( function( name ){
         if( name === "__divider__" ){
-
             menuConfig.push( createDivider() );
-
         }else if( name.charAt( 0 ) === "_" ){
-
-            return;
-
+            return;  // hidden
         }else{
-
-            menuConfig.push(
-
-                createOption( name, function(){
-
-                    NGL.Examples.load( name, stage );
-
-                } )
-
-            );
-
+            var option = createOption( name, function(){
+                NGL.ExampleRegistry.load( name, stage );
+            } );
+            menuConfig.push( option );
         }
-
     } );
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
-
     return UI.MenubarHelper.createMenuContainer( 'Examples', optionsPanel );
 
 };
@@ -605,12 +629,12 @@ NGL.MenubarPluginsWidget = function( stage ){
     var createOption = UI.MenubarHelper.createOption;
     var menuConfig = [];
 
-    for( var name in NGL.PluginRegistry.dict ){
-        var option = createOption( name, function( name ){
-            return function(){ NGL.PluginRegistry.load( name, stage ) }
-        }( name ) );
+    NGL.PluginRegistry.names.forEach( function( name ){
+        var option = createOption( name, function(){
+            NGL.PluginRegistry.load( name, stage );
+        } );
         menuConfig.push( option );
-    }
+    } );
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
     return UI.MenubarHelper.createMenuContainer( 'Plugins', optionsPanel );

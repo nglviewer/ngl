@@ -14,7 +14,6 @@
     "js/ngl/buffer.js",
 	"js/ngl/representation.js",
 	"js/ngl/stage.js",
-	"js/ngl/example.js",
 
 	"shader/CylinderImpostor.vert",
     "shader/CylinderImpostor.frag",
