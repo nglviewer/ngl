@@ -11,22 +11,34 @@ NGL.DatasourceRegistry = {
 
     sourceDict: {},
 
+    __passThrough: {
+        getUrl: function( path ){
+            return path;
+        }
+    },
+
     add: function( name, datasource ){
+        name = name.toLowerCase();
+        if( name in this.sourceDict ){
+            NGL.warn( "overwriting datasource named '" + name + "'" );
+        }
         this.sourceDict[ name ] = datasource;
     },
 
     get: function( name ){
+        name = name.toLowerCase();
         if( name in this.sourceDict ){
             return this.sourceDict[ name ];
+        }else if( [ "http", "https", "ftp" ].indexOf( name ) !== -1 ){
+            return this.__passThrough;
         }else{
-            console.info( "no datasource named '" + name + "' found" );
-            return {
-                getUrl: function( path ){
-                    return path;
-                }
-            };
+            NGL.error( "no datasource named '" + name + "' found" );
         }
     },
+
+    listing: undefined,
+
+    trajectory: undefined
 
 };
 
@@ -59,9 +71,15 @@ NGL.FileDatasource = function( baseUrl ){
     baseUrl = baseUrl || "";
 
     this.getListing = function( path ){
-        var url = baseUrl + "file/" + path;
+        path = path || "";
+        var url = NGL.getAbsolutePath( baseUrl + "dir/" + path );
         return NGL.autoLoad( url, {
             ext: "json", noWorker: true
+        } ).then( function( jsonData ){
+            return {
+                path: path,
+                data: jsonData.data
+            };
         } );
     };
 

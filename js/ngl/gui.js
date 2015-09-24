@@ -335,33 +335,26 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onImportOptionClick(){
 
-        var dirWidget = new NGL.DirectoryListingWidget(
+        var dirWidget;
 
-            stage, "Import file", fileTypesImport,
-
-            function( path ){
-
-                var ext = path.path.split('.').pop().toLowerCase();
-
-                if( fileTypesImport.indexOf( ext ) !== -1 ){
-
-                    stage.loadFile( path.path, {
-                        defaultRepresentation: true,
-                        asTrajectory: asTrajectory,
-                        firstModelOnly: firstModelOnly,
-                        cAlphaOnly: cAlphaOnly
-                    } );
-
-                }else{
-
-                    NGL.log( "unknown filetype: " + ext );
-
-                }
-
-                dirWidget.dispose();
-
+        function onListingClick( info ){
+            var ext = info.path.split('.').pop().toLowerCase();
+            if( fileTypesImport.indexOf( ext ) !== -1 ){
+                stage.loadFile( info.path, {
+                    defaultRepresentation: true,
+                    asTrajectory: asTrajectory,
+                    firstModelOnly: firstModelOnly,
+                    cAlphaOnly: cAlphaOnly
+                } );
+            }else{
+                NGL.log( "unknown filetype: " + ext );
             }
+            dirWidget.dispose();
+        }
 
+        dirWidget = new NGL.DirectoryListingWidget(
+            NGL.DatasourceRegistry.listing, stage,
+            "Import file", fileTypesImport, onListingClick
         );
 
         dirWidget
@@ -435,7 +428,6 @@ NGL.MenubarFileWidget = function( stage ){
 
     var menuConfig = [
         createOption( 'Open...', onOpenOptionClick ),
-        createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createCheckbox( 'asTrajectory', false, onAsTrajectoryChange ),
         createCheckbox( 'firstModelOnly', false, onFirstModelOnlyyChange ),
@@ -444,6 +436,12 @@ NGL.MenubarFileWidget = function( stage ){
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),
     ];
+
+    if( NGL.DatasourceRegistry.listing ){
+        menuConfig.splice(
+            1, 0, createOption( 'Import...', onImportOptionClick )
+        );
+    }
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
     optionsPanel.dom.appendChild( fileInput );
@@ -2170,73 +2168,9 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 };
 
 
-// Directory
+// Listing
 
-NGL.lastUsedDirectory = "";
-
-NGL.DirectoryListing = function( baseUrl ){
-
-    this.baseUrl = baseUrl !== undefined ? baseUrl : "../dir/";
-
-    var SIGNALS = signals;
-
-    this.signals = {
-
-        listingLoaded: new SIGNALS.Signal(),
-
-    };
-
-};
-
-NGL.DirectoryListing.prototype = {
-
-    constructor: NGL.DirectoryListing,
-
-    getListing: function( path ){
-
-        var scope = this;
-
-        path = path || "";
-
-        var loader = new THREE.XHRLoader();
-        var url = this.baseUrl + path;
-
-        // force reload
-        THREE.Cache.remove( url );
-
-        loader.load( url, function( responseText ){
-
-            var json = JSON.parse( responseText );
-
-            // NGL.log( json );
-
-            scope.signals.listingLoaded.dispatch( path, json );
-
-        });
-
-    },
-
-    getFolderDict: function( path ){
-
-        path = path || "";
-        var options = { "": "" };
-        var full = [];
-
-        path.split( "/" ).forEach( function( chunk ){
-
-            full.push( chunk );
-            options[ full.join( "/" ) ] = chunk;
-
-        } );
-
-        return options;
-
-    }
-
-};
-
-
-NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl ){
+NGL.DirectoryListingWidget = function( datasource, stage, heading, filter, callback ){
 
     // from http://stackoverflow.com/a/20463021/1435042
     function fileSizeSI(a,b,c,d,e){
@@ -2244,9 +2178,17 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
             +String.fromCharCode(160)+(e?'kMGTPEZY'[--e]+'B':'Bytes')
     }
 
-    var dirListing = new NGL.DirectoryListing( baseUrl );
+    function getFolderDict( path ){
+        path = path || "";
+        var options = { "": "" };
+        var full = [];
+        path.split( "/" ).forEach( function( chunk ){
+            full.push( chunk );
+            options[ full.join( "/" ) ] = chunk;
+        } );
+        return options;
+    }
 
-    var signals = dirListing.signals;
     var container = new UI.OverlayPanel();
 
     var headingPanel = new UI.Panel()
@@ -2265,11 +2207,10 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
         .setMarginLeft( "20px" )
         .setWidth( "" )
         .setMaxWidth( "200px" )
-        .setOptions( dirListing.getFolderDict() )
+        .setOptions( getFolderDict() )
         .onChange( function(){
-
-            dirListing.getListing( folderSelect.getValue() );
-
+            datasource.getListing( folderSelect.getValue() )
+                .then( onListingLoaded );
         } );
 
     heading = heading || "Directoy listing"
@@ -2282,43 +2223,40 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
-
                 container.dispose();
-
             } )
     );
 
     container.add( headingPanel );
     container.add( listingPanel );
 
-    signals.listingLoaded.add( function( folder, listing ){
+    function onListingLoaded( listing ){
+
+        var folder = listing.path;
+        var data = listing.data;
 
         NGL.lastUsedDirectory = folder;
-
         listingPanel.clear();
 
         folderSelect
-            .setOptions( dirListing.getFolderDict( folder ) )
+            .setOptions( getFolderDict( folder ) )
             .setValue( folder );
 
-        listing.forEach( function( path ){
+        data.forEach( function( info ){
 
-            var ext = path.path.split('.').pop().toLowerCase();
-
-            if( filter && !path.dir && filter.indexOf( ext ) === -1 ){
-
+            var ext = info.path.split('.').pop().toLowerCase();
+            if( filter && !info.dir && filter.indexOf( ext ) === -1 ){
                 return;
-
             }
 
             var icon, name;
-            if( path.dir ){
+            if( info.dir ){
                 icon = "folder-o";
-                name = path.name;
+                name = info.name;
             }else{
                 icon = "file-o";
-                name = path.name + String.fromCharCode(160) +
-                    "(" + fileSizeSI( path.size ) + ")";
+                name = info.name + String.fromCharCode( 160 ) +
+                    "(" + fileSizeSI( info.size ) + ")";
             }
 
             var pathRow = new UI.Panel()
@@ -2327,20 +2265,15 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
                 .add( new UI.Icon( icon ).setWidth( "20px" ) )
                 .add( new UI.Text( name ) )
                 .onClick( function(){
-
-                    if( path.dir ){
-
-                        dirListing.getListing( path.path );
-
+                    if( info.dir ){
+                        datasource.getListing( info.path )
+                            .then( onListingLoaded );
                     }else{
-
-                        callback( path );
-
+                        callback( info );
                     }
-
                 } );
 
-            if( path.restricted ){
+            if( info.restricted ){
                 pathRow.add( new UI.Icon( "lock" ).setMarginLeft( "5px" ) )
             }
 
@@ -2348,9 +2281,10 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback, baseUrl
 
         } )
 
-    } );
+    }
 
-    dirListing.getListing( NGL.lastUsedDirectory );
+    datasource.getListing( NGL.lastUsedDirectory )
+        .then( onListingLoaded );
 
     return container;
 
