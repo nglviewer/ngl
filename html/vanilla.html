@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <title>NGL</title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+        <link rel="stylesheet" href="../css/font-awesome.min.css" />
+        <link rel="stylesheet" href="../css/main.css" />
+        <link rel="stylesheet" href="../css/dark.css" id="theme" />
+
+    </head>
+
+    <body>
+
+        <script src="../js/build/ngl.full.min.js"></script>
+
+        <script>
+
+            if( !Detector.webgl ) Detector.addGetWebGLMessage();
+
+            function onInit(){
+                var stage = new NGL.Stage();
+                NGL.StageWidget( stage );
+
+                var load = NGL.GET( "load" );
+                if( load ) stage.loadFile( load, { defaultRepresentation: true } );
+            }
+
+            document.addEventListener( "DOMContentLoaded", function(){
+                NGL.init( onInit );
+            } );
+
+        </script>
+
+        <script src="../js/tracking.js"></script>
+
+    </body>
+
+</html>
