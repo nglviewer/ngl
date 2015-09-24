@@ -15,6 +15,25 @@ NGL.Widget.prototype = {
 };
 
 
+NGL.PluginRegistry = {
+
+    dict: {},
+
+    add: function( name, path ){
+        this.dict[ name ] = path;
+    },
+
+    get: function( name ){
+        return this.dict[ name ];
+    },
+
+    get count(){
+        Object.keys( this.dict ).length
+    }
+
+};
+
+
 // Stage
 
 NGL.StageWidget = function( stage ){
@@ -272,7 +291,9 @@ NGL.MenubarWidget = function( stage ){
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage ) );
     container.add( new NGL.MenubarExamplesWidget( stage ) );
-    container.add( new NGL.MenubarPluginsWidget( stage ) );
+    if( NGL.PluginRegistry.count > 0 ){
+        container.add( new NGL.MenubarPluginsWidget( stage ) );
+    }
     container.add( new NGL.MenubarHelpWidget( stage ) );
 
     container.add(
@@ -577,32 +598,20 @@ NGL.MenubarPluginsWidget = function( stage ){
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
-
     var menuConfig = [];
 
-    var plugins = [
-        "apbs", "crosslink", "job", "fragfit", "fragsearch"
-    ];
-
-    plugins.forEach( function( name ){
-
+    for( var name in NGL.PluginRegistry.dict ){
+        var path = NGL.PluginRegistry.get( name );
         menuConfig.push(
-
-            createOption( name, function(){
-
-                stage.loadFile(
-                    "data://plugins/" + name + ".plugin",
-                    { name: name + " plugin" }
-                );
-
+            createOption( info.name, function(){
+                stage.loadFile( path, {
+                    name: name + " plugin"
+                } );
             } )
-
         );
-
-    } );
+    }
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
-
     return UI.MenubarHelper.createMenuContainer( 'Plugins', optionsPanel );
 
 };
