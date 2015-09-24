@@ -39,7 +39,7 @@ NGL.Examples = {
 
             stage.loadFile( "data://md.gro" ).then( function( o ){
 
-                o.addRepresentation( "backbone", { sele: "protein", color: "ss" } );
+                o.addRepresentation( "backbone", { sele: "protein", colorScheme: "sstruc" } );
 
             } );
 
@@ -863,10 +863,10 @@ NGL.Examples = {
             stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
                 o.addRepresentation( "cartoon", {
-                    color: "ss", flatShaded: true
+                    colorScheme: "sstruc", flatShaded: true
                 } );
                 o.addRepresentation( "ribbon", {
-                    color: "ss", flatShaded: true
+                    colorScheme: "sstruc", flatShaded: true
                 } );
                 o.addRepresentation( "contact", { contactType: "polarBackbone" } );
                 o.addRepresentation( "trace" );
