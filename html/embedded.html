@@ -24,7 +24,7 @@
 
                     var stage = new NGL.Stage( "viewport" );
 
-                    stage.loadFile( "rcsb://1crn", function( o ){
+                    stage.loadFile( "rcsb://1crn" ).then( function( o ){
 
                         o.addRepresentation( "cartoon" );
                         o.addRepresentation( "licorice" );
