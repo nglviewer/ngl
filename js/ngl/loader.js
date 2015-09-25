@@ -56,25 +56,25 @@ NGL.getDataInfo = function( src ){
 };
 
 
-NGL.ExampleDatasource = function( baseUrl ){
+NGL.StaticDatasource = function( baseUrl ){
 
     baseUrl = baseUrl || "";
 
     this.getUrl = function( src ){
         var info = NGL.getFileInfo( src );
-        return NGL.getAbsolutePath( baseUrl + "data/" + info.path );
+        return NGL.getAbsolutePath( baseUrl + info.path );
     };
 
 };
 
 
-NGL.FileDatasource = function( baseUrl ){
+NGL.MdsrvDatasource = function( baseUrl ){
 
     baseUrl = baseUrl || "";
 
     this.getListing = function( path ){
         path = path || "";
-        var url = NGL.getAbsolutePath( baseUrl + "dir/" + path );
+        var url = baseUrl + "dir/" + path;
         return NGL.autoLoad( url, {
             ext: "json", noWorker: true
         } ).then( function( jsonData ){
@@ -87,7 +87,7 @@ NGL.FileDatasource = function( baseUrl ){
 
     this.getUrl = function( src ){
         var info = NGL.getFileInfo( src );
-        return NGL.getAbsolutePath( baseUrl + "file/" + info.path );
+        return baseUrl + "file/" + info.path;
     };
 
 };

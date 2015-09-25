@@ -89,9 +89,8 @@ NGL.useWorker = false;
 NGL.mainScriptFilePath = "../../js/ngl/core.js";
 
 NGL.DatasourceRegistry.add(
-    "data", new NGL.ExampleDatasource( "../../" )
+    "data", new NGL.StaticDatasource( "../../data/" )
 );
-NGL.DatasourceRegistry.trajectory = new NGL.TrajectoryDatasource( "../../" );
 
 
 ////////////////////

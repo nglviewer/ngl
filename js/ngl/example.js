@@ -4,7 +4,7 @@ NGL.ExampleRegistry.addDict( {
 
     "trajectory": function( stage ){
 
-        stage.loadFile( "data://md.gro", {
+        stage.loadFile( "file://example_data/md.gro", {
 
             sele: "protein or na or cl"
 
@@ -15,11 +15,11 @@ NGL.ExampleRegistry.addDict( {
             // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
             o.centerView();
 
-            o.addTrajectory( "__example__/md.xtc" );
+            o.addTrajectory( "example_data/md.xtc" );
 
         } );
 
-        stage.loadFile( "data://md.gro" ).then( function( o ){
+        stage.loadFile( "file://example_data/md.gro" ).then( function( o ){
 
             o.addRepresentation( "backbone", { sele: "protein", colorScheme: "sstruc" } );
 

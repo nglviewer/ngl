@@ -508,13 +508,13 @@ NGL.GET = function( id ){
 };
 
 
-NGL.getAbsolutePath = function( path ){
+NGL.getAbsolutePath = function( relativePath ){
 
     var loc = window.location;
     var pn = loc.pathname;
-    var base = pn.substring( 0, pn.lastIndexOf("/") + 1 );
+    var basePath = pn.substring( 0, pn.lastIndexOf("/") + 1 );
 
-    return loc.origin + base + path;
+    return loc.origin + basePath + relativePath;
 
 };
 

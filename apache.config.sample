@@ -1,15 +1,9 @@
 <VirtualHost *:80>
     ServerName localhost
 
-    WSGIDaemonProcess ngl user=www-data group=www-data threads=5
-    WSGIScriptAlias /ngl /var/www/ngl/ngl.wsgi
-
-    <Directory /var/www/ngl>
-        WSGIProcessGroup ngl
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIScriptReloading On
-        WSGIPassAuthorization On
-        Order deny,allow
+    <Directory /var/www/html/ngl>
+        Order allow,deny
         Allow from all
+        Require all granted
     </Directory>
 </VirtualHost>
