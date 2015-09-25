@@ -11,10 +11,6 @@ if [ ! -f app.cfg ]; then
     cp app.cfg.sample app.cfg
 fi
 
-if [ ! -f js/examples.js ]; then
-    cp js/examples.js.sample js/examples.js
-fi
-
 if [ ! -f js/tracking.js ]; then
     cp js/tracking.js.sample js/tracking.js
 fi
