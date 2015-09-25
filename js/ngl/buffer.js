@@ -30,6 +30,7 @@ NGL.DoubleSidedBuffer = function( buffer ){
     backBuffer.makeMaterial();
 
     backBuffer.geometry = buffer.geometry;
+    backBuffer.wireframeGeometry = buffer.wireframeGeometry;
     backBuffer.size = buffer.size;
     backBuffer.attributeSize = buffer.attributeSize;
     backBuffer.pickable = buffer.pickable;
@@ -110,12 +111,14 @@ NGL.DoubleSidedBuffer = function( buffer ){
         delete data.side;
 
         frontBuffer.setParameters( data );
-        backBuffer.setParameters( data );
 
         if( data.wireframe !== undefined ){
             this.wireframe = data.wireframe;
             this.setVisibility( this.visible );
         }
+        delete data.wireframe;
+
+        backBuffer.setParameters( data );
 
     };
 
@@ -377,6 +380,30 @@ NGL.Buffer.prototype = {
         }
 
     }(),
+
+    updateWireframeIndex: function(){
+
+        this.wireframeGeometry.clearGroups();
+        this.makeWireframeIndex();
+
+        if( this.wireframeIndex.length > this.wireframeGeometry.index.array.length ){
+
+            this.wireframeGeometry.addIndex(
+                new THREE.BufferAttribute( this.wireframeIndex, 1 )
+                    .setDynamic( this.dynamic )
+            );
+
+        }else{
+
+            this.wireframeGeometry.index.set( this.wireframeIndex );
+            this.wireframeGeometry.index.needsUpdate = this.wireframeIndexCount > 0;
+            this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
+
+        }
+
+        this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+
+    },
 
     getRenderOrder: function(){
 
@@ -657,6 +684,10 @@ NGL.Buffer.prototype = {
                 doVisibilityUpdate = true;
             }
 
+            if( this.dynamic && name === "wireframe" && p[ name ] === true ){
+                this.updateWireframeIndex();
+            }
+
         }
 
         this.setProperties( propertyData );
@@ -688,7 +719,6 @@ NGL.Buffer.prototype = {
             if( name === "index" ){
 
                 geometry.clearGroups();
-                this.wireframeGeometry.clearGroups();
 
                 if( length > geometry.index.array.length ){
 
@@ -697,38 +727,16 @@ NGL.Buffer.prototype = {
                             .setDynamic( this.dynamic )
                     );
 
-                    //
-
-                    this.makeWireframeIndex();
-
-                    this.wireframeGeometry.addIndex(
-                        new THREE.BufferAttribute( this.wireframeIndex, 1 )
-                            .setDynamic( this.dynamic )
-                    );
-
                 }else{
 
                     geometry.index.set( array );
                     geometry.index.needsUpdate = length > 0;
                     geometry.index.updateRange.count = length;
-
                     geometry.addGroup( 0, length );
-
-                    //
-
-                    if( this.wireframe ){
-
-                        this.makeWireframeIndex();
-
-                        this.wireframeGeometry.index.set( this.wireframeIndex );
-                        this.wireframeGeometry.index.needsUpdate = this.wireframeIndexCount > 0;
-                        this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
-
-                    }
 
                 }
 
-                this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+                if( this.wireframe ) this.updateWireframeIndex();
 
             }else{
 
