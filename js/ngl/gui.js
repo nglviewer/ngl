@@ -542,8 +542,7 @@ NGL.MenubarExamplesWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
     var menuConfig = [];
 
-    var exampleNames = NGL.ExampleRegistry.names.sort();
-    exampleNames.forEach( function( name ){
+    NGL.ExampleRegistry.names.sort().forEach( function( name ){
         if( name === "__divider__" ){
             menuConfig.push( createDivider() );
         }else if( name.charAt( 0 ) === "_" ){
@@ -569,7 +568,7 @@ NGL.MenubarPluginsWidget = function( stage ){
     var createOption = UI.MenubarHelper.createOption;
     var menuConfig = [];
 
-    NGL.PluginRegistry.names.forEach( function( name ){
+    NGL.PluginRegistry.names.sort().forEach( function( name ){
         var option = createOption( name, function(){
             NGL.PluginRegistry.load( name, stage );
         } );
