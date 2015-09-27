@@ -90,6 +90,26 @@ NGL.MdsrvDatasource = function( baseUrl ){
         return baseUrl + "file/" + info.path;
     };
 
+    this.getNumframesUrl = function( src ){
+        var info = NGL.getFileInfo( src );
+        return baseUrl + "traj/numframes/" + info.path;
+    };
+
+    this.getFrameUrl = function( src, frameIndex ){
+        var info = NGL.getFileInfo( src );
+        return baseUrl + "traj/frame/" + frameIndex + "/" + info.path;
+    };
+
+    this.getFrameParams = function( src, atomIndices ){
+        var info = NGL.getFileInfo( src );
+        return "atomIndices=" + atomIndices.join(";");
+    };
+
+    this.getPathUrl = function( src, atomIndex ){
+        var info = NGL.getFileInfo( src );
+        return baseUrl + "traj/path/" + atomIndex + "/" + info.path;
+    };
+
 };
 
 
@@ -118,29 +138,6 @@ NGL.RcsbDatasource = function(){
 NGL.DatasourceRegistry.add(
     "rcsb", new NGL.RcsbDatasource()
 );
-
-
-NGL.TrajectoryDatasource = function( baseUrl ){
-
-    baseUrl = baseUrl || "";
-
-    this.getNumframesUrl = function( path ){
-        return baseUrl + "traj/numframes/" + path;
-    };
-
-    this.getFrameUrl = function( path, frameIndex ){
-        return baseUrl + "traj/frame/" + frameIndex + "/" + path;
-    };
-
-    this.getFrameParams = function( path, atomIndices ){
-        return "atomIndices=" + atomIndices.join(";");
-    };
-
-    this.getPathUrl = function( path, atomIndex ){
-        return baseUrl + "traj/path/" + atomIndex + "/" + path;
-    };
-
-};
 
 
 ///////////

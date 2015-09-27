@@ -63,6 +63,7 @@
 
         <!-- EXTRA -->
         <script src="../js/extra/examples.js"></script>
+        <script src="../js/extra/examples_mdsrv.js"></script>
 
         <script>
 
@@ -75,6 +76,11 @@
             NGL.DatasourceRegistry.add(
                 "data", new NGL.StaticDatasource( "../data/" )
             );
+            NGL.DatasourceRegistry.add(
+                "file", new NGL.MdsrvDatasource( window.location.origin + "/mdsrv/" )
+            );
+            NGL.DatasourceRegistry.listing = NGL.DatasourceRegistry.get( "file" );
+            NGL.DatasourceRegistry.trajectory = NGL.DatasourceRegistry.get( "file" );
 
             // Plugins
 

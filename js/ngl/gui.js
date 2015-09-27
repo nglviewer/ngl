@@ -15,67 +15,6 @@ NGL.Widget.prototype = {
 };
 
 
-NGL.PluginRegistry = {
-
-    dict: {},
-
-    add: function( name, path ){
-        this.dict[ name ] = path;
-    },
-
-    get: function( name ){
-        return this.dict[ name ];
-    },
-
-    get names(){
-        return Object.keys( this.dict );
-    },
-
-    get count(){
-        return this.names.length;
-    },
-
-    load: function( name, stage ){
-        var path = this.get( name );
-        stage.loadFile( path, { name: name + " plugin" } );
-    }
-
-};
-
-
-NGL.ExampleRegistry = {
-
-    dict: {},
-
-    add: function( name, fn ){
-        this.dict[ name ] = fn;
-    },
-
-    addDict: function( dict ){
-        Object.keys( dict ).forEach( function( name ){
-            this.add( name, dict[ name ] );
-        }.bind( this ) );
-    },
-
-    get: function( name ){
-        return this.dict[ name ];
-    },
-
-    get names(){
-        return Object.keys( this.dict );
-    },
-
-    get count(){
-        return this.names.length;
-    },
-
-    load: function( name, stage ){
-        this.get( name )( stage );
-    }
-
-};
-
-
 // Stage
 
 NGL.StageWidget = function( stage ){
@@ -603,7 +542,8 @@ NGL.MenubarExamplesWidget = function( stage ){
     var createDivider = UI.MenubarHelper.createDivider;
     var menuConfig = [];
 
-    NGL.ExampleRegistry.names.forEach( function( name ){
+    var exampleNames = NGL.ExampleRegistry.names.sort();
+    exampleNames.forEach( function( name ){
         if( name === "__divider__" ){
             menuConfig.push( createDivider() );
         }else if( name.charAt( 0 ) === "_" ){
