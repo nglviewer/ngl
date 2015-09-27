@@ -323,7 +323,12 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
     _load: function( resolve, reject ){
 
-        var basePath = this.protocol + "://" + this.dir;
+        var basePath;
+        if( this.protocol ){
+            basePath = this.protocol + "://" + this.dir;
+        }else{
+            basePath = this.dir;
+        }
 
         this.streamer.read( function(){
 
