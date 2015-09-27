@@ -1,22 +1,25 @@
 
 panel.setName( "Noro virus" );
+var loadingInfo = new UI.Text( "loading..." );
+panel.add( loadingInfo );
 
 
-stage.loadFile( "data://1IHM.pdb" ).then( function( o ){
+var promiseList = [];
+
+
+promiseList.push( stage.loadFile( "data://1IHM.pdb" ).then( function( o ){
 
     o.addRepresentation( "rope", {
         subdiv: 3, radialSegments: 6, quality: "user",
         colorScheme: "chainindex", scale: 4.0
     } );
-
     o.requestGuiVisibility( false );
-
     stage.centerView();
 
-} );
+} ) );
 
 
-stage.loadFile( "data://2L1F.pdb", {
+promiseList.push( stage.loadFile( "data://2L1F.pdb", {
 
     firstModelOnly: true
 
@@ -25,40 +28,32 @@ stage.loadFile( "data://2L1F.pdb", {
     o.addRepresentation( "cartoon", {
         color: "white", aspectRatio: 2.5, scale: 2.0
     } );
-
     o.addRepresentation( "base", {
         colorScheme: "resname", radius: 0.7
     } );
-
     o.requestGuiVisibility( false );
-
     stage.centerView();
 
-} );
+} ) );
 
 
 function pdbLink( id ){
-
     var url = "http://www.rcsb.org/pdb/explore/explore.do?structureId=";
-
     return "<a href='" + url + id + "'>" + id + "</a>";
-
 }
 
 
-then( function(){
+Promise.all( promiseList ).then( function(){
 
-	stage.centerView();
+    loadingInfo.dispose();
 
-    uiHtml(
+    var html1 = new UI.Html(
         "Structure of the Noro virus capsid " +
         "(" + pdbLink( "1IHM" ) + "), " +
         "that forms the outer shell of the virus."
-    );
+    ).setMarginBottom( "10px" );
 
-    uiBreak( 2 );
-
-    uiToggleButton(
+    var btn = new UI.ToggleButton(
         "show full virus capsid", "look inside virus capsid",
         function(){
             stage.viewer.setClip( 1, 100 );
@@ -66,16 +61,15 @@ then( function(){
         function(){
             stage.viewer.setClip( 42, 100 );
         }
-    );
+    ).setMarginBottom( "10px" );
 
-    uiBreak( 2 );
-
-    uiHtml(
+    var html2 = new UI.Html(
         "Inside the virus capsid is the " +
         "structure of a conserved retroviral RNA packaging element " +
         "from the Moloney murine leukemia virus " +
         "(" + pdbLink( "2LIF" ) + "), for size comparision."
     );
 
-} );
+    panel.add( html1, btn, html2 );
 
+} );

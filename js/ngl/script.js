@@ -391,34 +391,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
     }
 
-    function uiToggleButton( labelA, labelB, callbackA, callbackB ){
-
-        var flag = true;
-
-        var btn = new UI.Button( U( labelB ) ).onClick( function(){
-
-            if( flag ){
-
-                flag = false;
-                btn.setLabel( U( labelA ) );
-                callbackB();
-
-            }else{
-
-                flag = true;
-                btn.setLabel( U( labelB ) );
-                callbackA();
-
-            }
-
-        } );
-
-        panel.add( btn );
-
-        return btn;
-
-    }
-
     function uiVisibilitySelect( collection ){
 
         var list = collection.list;
@@ -587,7 +559,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'uiButton': uiButton,
         'uiOpenButton': uiOpenButton,
         'uiDownloadButton': uiDownloadButton,
-        'uiToggleButton': uiToggleButton,
         'uiVisibilitySelect': uiVisibilitySelect,
         'uiVisibilityButton': uiVisibilityButton,
         'uiPlayButton': uiPlayButton,
