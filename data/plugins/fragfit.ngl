@@ -27,9 +27,33 @@ var FragResultsPreset = function( data, params ){
 
     // linker
 
+    var clashScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+    
+        if( !params.scale ){
+            this.scale = "OrRd";
+        }
+    
+        this.domain = [ 0, 20 ];
+    
+        var clashScale = this.getScale();
+    
+        this.atomColor = function( atom ){
+    
+            var modelindex = atom.residue.chain.model.index + 1
+    
+            var clashValue = linkerData[ modelindex ][ 5 ];
+            //var baSet = 
+            return clashScale( clashValue );
+        };
+    
+    } );
+    
+    // backboneRepr.setParameters( { colorScheme: clashScheme } );
+    
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
-        colorScheme: "modelindex",
+        // colorScheme: "modelindex",
+        colorScheme: clashScheme,
         // opacity: 0.3
     } );
 
@@ -55,7 +79,7 @@ var FragResultsPreset = function( data, params ){
 
     }
 
-    // API
+     //API
 
     this.setSurfaceParams = function( params ){
 
