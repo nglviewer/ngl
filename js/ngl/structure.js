@@ -5300,7 +5300,7 @@ NGL.Atom.prototype = {
 
     copy: function( atom ){
 
-        this.index = atom.index;
+        // this.index = atom.index;
         this.atomno = atom.atomno;
         this.resname = atom.resname;
         this.x = atom.x;
@@ -5315,7 +5315,7 @@ NGL.Atom.prototype = {
         this.covalent = atom.covalent;
         this.hetero = atom.hetero;
         this.bfactor = atom.bfactor;
-        // this.bonds = atom.bonds;
+        this.bonds = atom.bonds;
         this.altloc = atom.altloc;
         this.atomname = atom.atomname;
         this.modelindex = atom.modelindex;
@@ -6119,7 +6119,11 @@ NGL.ProxyAtom.prototype = {
 
     copy: function( atom, index ){
 
-        this.index = index;
+        if( index !== undefined ){
+            this.index = index;
+        }else if( this.index === undefined ){
+            NGL.warn( "NGL.ProxyAtom.copy no index set" );
+        }
 
         this.atomno = atom.atomno;
         this.resname = atom.resname;

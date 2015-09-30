@@ -4,6 +4,110 @@
  */
 
 
+NGL.atomArrayQuicksort = function( atomArray, compareFunction ){
+
+    NGL.time( "NGL.atomArrayQuicksort" );
+
+    var tmpAtom = new NGL.Atom();
+    var proxyAtom1 = new NGL.ProxyAtom( atomArray );
+    var proxyAtom2 = new NGL.ProxyAtom( atomArray );
+
+    function cmp( index1, index2 ){
+        proxyAtom1.index = index1;
+        proxyAtom2.index = index2;
+        return compareFunction( proxyAtom1, proxyAtom2 );
+    }
+
+    function swap( index1, index2 ){
+        if( index1 === index2 ) return;
+        proxyAtom1.index = index1;
+        proxyAtom2.index = index2;
+        tmpAtom.copy( proxyAtom1 );
+        proxyAtom1.copy( proxyAtom2 );
+        proxyAtom2.copy( tmpAtom );
+    }
+
+    function quicksort( left, right ){
+        if( left < right ){
+            var pivot = Math.floor( ( left + right ) / 2 );
+            var left_new = left;
+            var right_new = right;
+            do{
+                while( cmp( left_new, pivot ) < 0 ){
+                    left_new += 1;
+                }
+                while( cmp( right_new, pivot ) > 0 ){
+                    right_new -= 1;
+                }
+                if( left_new <= right_new ){
+                    if( left_new === pivot ){
+                        pivot = right_new;
+                    }else if( right_new === pivot ){
+                        pivot = left_new;
+                    }
+                    swap( left_new, right_new );
+                    left_new += 1;
+                    right_new -= 1;
+                }
+            }while( left_new <= right_new );
+            quicksort( left, right_new );
+            quicksort( left_new, right );
+        }
+    }
+
+    quicksort( 0, atomArray.usedLength - 1 );
+
+    NGL.timeEnd( "NGL.atomArrayQuicksort" );
+
+};
+
+
+NGL.reorderAtoms = function( structure ){
+
+    NGL.time( "NGL.reorderAtoms" );
+
+    var atoms = structure.atoms;
+    var atomArray = structure.atomArray;
+
+    function compareModelChainResno( a1, a2 ){
+
+        if( a1.modelindex < a2.modelindex ){
+            return -1;
+        }else if( a1.modelindex > a2.modelindex ){
+            return 1;
+        }else{
+            if( a1.chainname < a2.chainname ){
+                return -1;
+            }else if( a1.chainname > a2.chainname ){
+                return 1;
+            }else{
+                if( a1.resno < a2.resno ){
+                    return -1;
+                }else if( a1.resno > a2.resno ){
+                    return 1;
+                }else{
+                    return 0;
+                }
+            }
+        }
+
+    }
+
+    if( atomArray ){
+        NGL.atomArrayQuicksort( atomArray, compareModelChainResno );
+    }else{
+        atoms.sort( compareModelChainResno );
+    }
+
+    for( var i = 0, il = atoms.length; i < il; ++i ){
+        atoms[ i ].index = i;
+    }
+
+    NGL.timeEnd( "NGL.reorderAtoms" );
+
+};
+
+
 NGL.buildStructure = function( structure, callback ){
 
     NGL.time( "NGL.buildStructure" );
@@ -727,6 +831,10 @@ NGL.StructureParser.prototype = NGL.createObject(
         async.series( [
 
             function( wcallback ){
+
+                // if( self.structure.atoms.length < 10000 ){
+                //     NGL.reorderAtoms( self.structure );
+                // }
 
                 if( !self.structure.atomArray &&
                     self.structure.atoms.length > NGL.useAtomArrayThreshold
