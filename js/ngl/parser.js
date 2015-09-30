@@ -268,25 +268,21 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     var sheets = structure.sheets || [];
 
+    var chainnames = [];
+    structure.eachModel( function( m ){
+        m.eachChain( function( c ){
+            chainnames.push( c.chainname );
+        } );
+    } );
+
     sheets.sort( function( s1, s2 ){
 
         var c1 = s1[ 0 ];
         var c2 = s2[ 0 ];
 
-        var n1 = c1.length;
-        var n2 = c2.length;
-
-        if( n1 < n2 ) return -1;
-        if( n1 > n2 ) return 1;
-
-        for( var i = n1-1; i >= 0; --i ){
-
-            if( c1[ i ] < c2[ i ] ) return -1;
-            if( c1[ i ] > c2[ i ] ) return 1;
-
-        }
-
-        return 0;
+        if( c1 === c2 ) return 0;
+        var less = chainnames.indexOf( c1 ) < chainnames.indexOf( c2 )
+        return less ? -1 : 1;
 
     } );
 
