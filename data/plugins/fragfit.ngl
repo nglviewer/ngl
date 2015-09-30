@@ -776,6 +776,12 @@ var FragJobWidget = function( server, isFragfit ){
 
 };
 
+function makePluginLoader( name ){
+    return function(){
+        stage.loadFile( "data://plugins/" + name + ".plugin" );
+    };
+}
+
 
 ////////////
 // FragFit
@@ -836,17 +842,14 @@ function fragfitStage(){
         new UI.Html( "FragFit description ..." )
     );
 
-    var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
-        stage.loadFile( "data://plugins/fragfit-job.plugin" );
-    } );
+    var newJobBtn = new UI.Button( "New Job" )
+        .onClick( makePluginLoader( "fragfit-job" ) );
 
-    var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
-        stage.loadFile( "data://plugins/fragfit-example.plugin" );
-    } );
+    var exampleBtn = new UI.Button( "Load Example" )
+        .onClick( makePluginLoader( "fragfit-example" ) );
 
-    var loaderBtn = new UI.Button( "Results Loader" ).onClick( function(){
-        stage.loadFile( "data://plugins/fragfit-loader.plugin" );
-    } );
+    var loaderBtn = new UI.Button( "Results Loader" )
+        .onClick( makePluginLoader( "fragfit-loader" ) );
 
     panel.add(
         description,
@@ -915,17 +918,14 @@ function fragsearchStage(){
         new UI.Html( "FragSearch description ..." )
     );
 
-    var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
-        stage.loadFile( "data://plugins/fragsearch-job.plugin" );
-    } );
+    var newJobBtn = new UI.Button( "New Job" )
+        .onClick( makePluginLoader( "fragsearch-job" ) );
 
-    var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
-        stage.loadFile( "data://plugins/fragsearch-example.plugin" );
-    } );
+    var exampleBtn = new UI.Button( "Load Example" )
+        .onClick( makePluginLoader( "fragsearch-example" ) );
 
-    var loaderBtn = new UI.Button( "Results Loader" ).onClick( function(){
-        stage.loadFile( "data://plugins/fragsearch-loader.plugin" );
-    } );
+    var loaderBtn = new UI.Button( "Results Loader" )
+        .onClick( makePluginLoader( "fragsearch-loader" ) );
 
     panel.add(
         description,
