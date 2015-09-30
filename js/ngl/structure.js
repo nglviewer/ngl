@@ -347,6 +347,8 @@ NGL.guessElement = function(){
 
         var at = atomName.trim().toUpperCase();
         if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
+        // parse again to check for a second integer
+        if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
         var n = at.length;
 
         if( n===0 ) return "";
