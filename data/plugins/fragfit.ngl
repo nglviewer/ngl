@@ -42,19 +42,16 @@ var FragResultsPreset = function( data, params ){
             var modelindex = atom.residue.chain.model.index + 1
     
             var clashValue = linkerData[ modelindex ][ 5 ];
-            //var baSet = 
             return clashScale( clashValue );
         };
     
     } );
     
-    // backboneRepr.setParameters( { colorScheme: clashScheme } );
-    
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
-        // colorScheme: "modelindex",
+       
         colorScheme: clashScheme,
-        // opacity: 0.3
+       
     } );
 
     linkerComp.centerView();
@@ -780,13 +777,6 @@ var FragJobWidget = function( server, isFragfit ){
 };
 
 
-function makePluginLoader( name ){
-    return function(){
-        stage.loadFile( "data://plugins/" + name + ".plugin" );
-    };
-}
-
-
 ////////////
 // FragFit
 
@@ -846,14 +836,17 @@ function fragfitStage(){
         new UI.Html( "FragFit description ..." )
     );
 
-    var newJobBtn = new UI.Button( "New Job" )
-        .onClick( makePluginLoader( "fragfit-job" ) );
+    var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragfit-job.plugin" );
+    } );
 
-    var exampleBtn = new UI.Button( "Load Example" )
-        .onClick( makePluginLoader( "fragfit-example" ) );
+    var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragfit-example.plugin" );
+    } );
 
-    var loaderBtn = new UI.Button( "Results Loader" )
-        .onClick( makePluginLoader( "fragfit-loader" ) );
+    var loaderBtn = new UI.Button( "Results Loader" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragfit-loader.plugin" );
+    } );
 
     panel.add(
         description,
@@ -922,14 +915,17 @@ function fragsearchStage(){
         new UI.Html( "FragSearch description ..." )
     );
 
-    var newJobBtn = new UI.Button( "New Job" )
-        .onClick( makePluginLoader( "fragsearch-job" ) );
+    var newJobBtn = new UI.Button( "New Job" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragsearch-job.plugin" );
+    } );
 
-    var exampleBtn = new UI.Button( "Load Example" )
-        .onClick( makePluginLoader( "fragsearch-example" ) );
+    var exampleBtn = new UI.Button( "Load Example" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragsearch-example.plugin" );
+    } );
 
-    var loaderBtn = new UI.Button( "Results Loader" )
-        .onClick( makePluginLoader( "fragsearch-loader" ) );
+    var loaderBtn = new UI.Button( "Results Loader" ).onClick( function(){
+        stage.loadFile( "data://plugins/fragsearch-loader.plugin" );
+    } );
 
     panel.add(
         description,
