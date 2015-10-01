@@ -309,11 +309,7 @@ NGL.MenubarFileWidget = function( stage ){
             4,
             function( file, callback ){
                 stage.loadFile( file, {
-                    defaultRepresentation: true,
-                    asTrajectory: asTrajectory,
-                    firstModelOnly: firstModelOnly,
-                    cAlphaOnly: cAlphaOnly,
-                    reorderAtoms: reorderAtoms
+                    defaultRepresentation: true
                 } ).then( function(){ callback(); } );
             }
         );
@@ -341,27 +337,15 @@ NGL.MenubarFileWidget = function( stage ){
             stage, "Import file", fileTypesImport,
 
             function( path ){
-
                 var ext = path.path.split('.').pop().toLowerCase();
-
                 if( fileTypesImport.indexOf( ext ) !== -1 ){
-
                     stage.loadFile( path.path, {
-                        defaultRepresentation: true,
-                        asTrajectory: asTrajectory,
-                        firstModelOnly: firstModelOnly,
-                        cAlphaOnly: cAlphaOnly,
-                        reorderAtoms: reorderAtoms
+                        defaultRepresentation: true
                     } );
-
                 }else{
-
                     NGL.log( "unknown filetype: " + ext );
-
                 }
-
                 dirWidget.dispose();
-
             }
 
         );
@@ -400,38 +384,28 @@ NGL.MenubarFileWidget = function( stage ){
     function onPdbInputKeyDown ( e ) {
 
         if( e.keyCode === 13 ){
-
             stage.loadFile( "rcsb://" + e.target.value, {
-                defaultRepresentation: true,
-                asTrajectory: asTrajectory,
-                firstModelOnly: firstModelOnly,
-                cAlphaOnly: cAlphaOnly,
-                reorderAtoms: reorderAtoms
+                defaultRepresentation: true
             } );
             e.target.value = "";
-
         }
 
     }
 
-    var asTrajectory = false;
     function onAsTrajectoryChange ( e ) {
-        asTrajectory = e.target.checked;
+        stage.defaultFileParams.asTrajectory = e.target.checked;
     }
 
-    var firstModelOnly = false;
-    function onFirstModelOnlyChange ( e ) {
-        firstModelOnly = e.target.checked;
+    function onFirstModelOnlyChange( e ){
+        stage.defaultFileParams.firstModelOnly = e.target.checked;
     }
 
-    var cAlphaOnly = false;
-    function onCAlphaOnlyChange ( e ) {
-        cAlphaOnly = e.target.checked;
+    function onCAlphaOnlyChange( e ){
+        stage.defaultFileParams.cAlphaOnly = e.target.checked;
     }
 
-    var reorderAtoms = false;
-    function onReorderAtomsChange ( e ) {
-        reorderAtoms = e.target.checked;
+    function onReorderAtomsChange( e ){
+        stage.defaultFileParams.reorderAtoms = e.target.checked;
     }
 
     // configure menu contents

@@ -38,6 +38,8 @@ NGL.Stage = function( eid ){
 
     this.preferences.setTheme();
 
+    this.defaultFileParams = {};
+
     this.initFileDragDrop();
 
     this.viewer.animate();
@@ -110,7 +112,7 @@ NGL.Stage.prototype = {
 
     loadFile: function( path, params ){
 
-        var p = Object.assign( {}, params );
+        var p = Object.assign( {}, this.defaultFileParams, params );
 
         // placeholder component
         var component = new NGL.Component( this, p );
