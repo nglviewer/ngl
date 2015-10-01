@@ -301,7 +301,43 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     NGL.time( "NGL.assignSecondaryStructure" );
 
+    var chainnames = [];
+    structure.eachModel( function( m ){
+        m.eachChain( function( c ){
+            chainnames.push( c.chainname );
+        } );
+    } );
+
+    var chainnamesSorted = chainnames.slice().sort();
+    var chainnamesIndex = [];
+    chainnamesSorted.forEach( function( c ){
+        chainnamesIndex.push( chainnames.indexOf( c ) );
+    } );
+
+    // helix assignment
+
     var helices = structure.helices || [];
+
+    helices.sort( function( h1, h2 ){
+
+        var c1 = h1[ 0 ];
+        var c2 = h2[ 0 ];
+        var r1 = h1[ 1 ];
+        var r2 = h2[ 1 ];
+
+        if( c1 === c2 ){
+            if( r1 === r2 ){
+                return 0;
+            }else{
+                return r1 < r2 ? -1 : 1;
+            }
+        }else{
+            var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+            var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+            return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
+        }
+
+    } );
 
     structure.eachModel( function( m ){
 
@@ -370,14 +406,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     } );
 
-    var sheets = structure.sheets || [];
+    // sheet assignment
 
-    var chainnames = [];
-    structure.eachModel( function( m ){
-        m.eachChain( function( c ){
-            chainnames.push( c.chainname );
-        } );
-    } );
+    var sheets = structure.sheets || [];
 
     sheets.sort( function( s1, s2 ){
 
@@ -385,8 +416,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var c2 = s2[ 0 ];
 
         if( c1 === c2 ) return 0;
-        var less = chainnames.indexOf( c1 ) < chainnames.indexOf( c2 )
-        return less ? -1 : 1;
+        var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+        var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+        return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
 
     } );
 

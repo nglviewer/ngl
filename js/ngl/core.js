@@ -837,6 +837,32 @@ NGL.throttle = function( func, wait, options ){
 };
 
 
+NGL.binarySearchIndexOf = function(){
+    function _compareFunction( elm1, elm2 ){
+        if( elm1 < elm2 ) return -1;
+        if( elm1 > elm2 ) return 1;
+        return 0;
+    }
+    return function( array, element, compareFunction ){
+        var low = 0;
+        var high = array.length - 1;
+        if( !compareFunction ) compareFunction = _compareFunction;
+        while( low <= high ){
+            var i = ( low + high ) >> 1;
+            var cmp = compareFunction( element, array[ i ] );
+            if( cmp > 0 ){
+                low = i + 1;
+            }else if( cmp < 0 ){
+                high = i - 1;
+            } else {
+                return i;
+            }
+        }
+        return -low - 1;
+    }
+}();
+
+
 // String/arraybuffer conversion
 
 NGL.Uint8ToString = function( u8a ){
