@@ -312,7 +312,8 @@ NGL.MenubarFileWidget = function( stage ){
                     defaultRepresentation: true,
                     asTrajectory: asTrajectory,
                     firstModelOnly: firstModelOnly,
-                    cAlphaOnly: cAlphaOnly
+                    cAlphaOnly: cAlphaOnly,
+                    reorderAtoms: reorderAtoms
                 } ).then( function(){ callback(); } );
             }
         );
@@ -349,7 +350,8 @@ NGL.MenubarFileWidget = function( stage ){
                         defaultRepresentation: true,
                         asTrajectory: asTrajectory,
                         firstModelOnly: firstModelOnly,
-                        cAlphaOnly: cAlphaOnly
+                        cAlphaOnly: cAlphaOnly,
+                        reorderAtoms: reorderAtoms
                     } );
 
                 }else{
@@ -403,7 +405,8 @@ NGL.MenubarFileWidget = function( stage ){
                 defaultRepresentation: true,
                 asTrajectory: asTrajectory,
                 firstModelOnly: firstModelOnly,
-                cAlphaOnly: cAlphaOnly
+                cAlphaOnly: cAlphaOnly,
+                reorderAtoms: reorderAtoms
             } );
             e.target.value = "";
 
@@ -417,13 +420,18 @@ NGL.MenubarFileWidget = function( stage ){
     }
 
     var firstModelOnly = false;
-    function onFirstModelOnlyyChange ( e ) {
+    function onFirstModelOnlyChange ( e ) {
         firstModelOnly = e.target.checked;
     }
 
     var cAlphaOnly = false;
     function onCAlphaOnlyChange ( e ) {
         cAlphaOnly = e.target.checked;
+    }
+
+    var reorderAtoms = false;
+    function onReorderAtomsChange ( e ) {
+        reorderAtoms = e.target.checked;
     }
 
     // configure menu contents
@@ -438,8 +446,9 @@ NGL.MenubarFileWidget = function( stage ){
         createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createCheckbox( 'asTrajectory', false, onAsTrajectoryChange ),
-        createCheckbox( 'firstModelOnly', false, onFirstModelOnlyyChange ),
+        createCheckbox( 'firstModelOnly', false, onFirstModelOnlyChange ),
         createCheckbox( 'cAlphaOnly', false, onCAlphaOnlyChange ),
+        createCheckbox( 'reorderAtoms', false, onReorderAtomsChange ),
         createDivider(),
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),

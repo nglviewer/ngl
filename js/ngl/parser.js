@@ -839,6 +839,7 @@ NGL.StructureParser = function( streamer, params ){
     this.firstModelOnly = p.firstModelOnly || false;
     this.asTrajectory = p.asTrajectory || false;
     this.cAlphaOnly = p.cAlphaOnly || false;
+    this.reorderAtoms = p.reorderAtoms || false;
 
     NGL.Parser.call( this, streamer, p );
 
@@ -864,9 +865,9 @@ NGL.StructureParser.prototype = NGL.createObject(
 
             function( wcallback ){
 
-                // if( self.structure.atoms.length < 10000 ){
-                //     NGL.reorderAtoms( self.structure );
-                // }
+                if( self.reorderAtoms ){
+                    NGL.reorderAtoms( self.structure );
+                }
 
                 if( !self.structure.atomArray &&
                     self.structure.atoms.length > NGL.useAtomArrayThreshold
@@ -957,6 +958,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         output.firstModelOnly = this.firstModelOnly;
         output.asTrajectory = this.asTrajectory;
         output.cAlphaOnly = this.cAlphaOnly;
+        output.reorderAtoms = this.reorderAtoms;
 
         return output;
 
@@ -969,6 +971,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         this.firstModelOnly = input.firstModelOnly;
         this.asTrajectory = input.asTrajectory;
         this.cAlphaOnly = input.cAlphaOnly;
+        this.reorderAtoms = input.reorderAtoms;
 
         return this;
 
