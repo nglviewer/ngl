@@ -1031,8 +1031,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var serial, elem, chainname, resno, resname, atomname, element,
-            hetero, bfactor, altloc;
+        var serial, chainname, resno, resname,
+            atomname, element, hetero, bfactor, altloc;
 
         var serialDict = {};
         var unitcellDict = {};
@@ -1048,6 +1048,7 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         var idx = 0;
         var modelIdx = 0;
+        var pendingStart = true;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -1059,6 +1060,28 @@ NGL.PdbParser.prototype = NGL.createObject(
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
                     // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+
+                    if( pendingStart ){
+
+                        if( asTrajectory ){
+
+                            if( doFrames ){
+                                currentFrame = new Float32Array( atoms.length * 3 );
+                                frames.push( currentFrame );
+                            }else{
+                                currentFrame = [];
+                            }
+                            currentCoord = 0;
+
+                        }else{
+
+                            if( !firstModelOnly ) serialDict = {};
+
+                        }
+
+                    }
+
+                    pendingStart = false;
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -1190,7 +1213,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         continue;
                     }
 
-                    for (var j = 0; j < 4; j++) {
+                    for( var j = 0; j < 4; ++j ){
 
                         var to = parseInt( line.substr( pos[ j ], 5 ) );
                         if( Number.isNaN( to ) ) continue;
@@ -1286,23 +1309,11 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'MODEL ' ){
 
-                    if( asTrajectory ){
+                    pendingStart = true;
 
-                        if( doFrames ){
-                            currentFrame = new Float32Array( atoms.length * 3 );
-                            frames.push( currentFrame );
-                        }else{
-                            currentFrame = [];
-                        }
-                        currentCoord = 0;
+                }else if( recordName === 'ENDMDL' || line.substr( 0, 3 ) === 'END' ){
 
-                    }else if( a ){
-
-                        if( !firstModelOnly ) serialDict = {};
-
-                    }
-
-                }else if( recordName === 'ENDMDL' ){
+                    if( pendingStart ) continue;
 
                     if( asTrajectory && !doFrames ){
 
@@ -1312,6 +1323,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     }
 
                     modelIdx += 1;
+                    pendingStart = true;
 
                 }else if( line.substr( 0, 5 ) === 'MTRIX' ){
 
