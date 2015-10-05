@@ -28,105 +28,67 @@ var FragResultsPreset = function( data, params ){
     // linker
 
     var clashScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
-    
-        if( !params.scale ){
-            this.scale = "OrRd";
-        }
-    
+        if( !params.scale ) this.scale = "OrRd";
         this.domain = [ 0, 20 ];
-    
         var clashScale = this.getScale();
-    
         this.atomColor = function( atom ){
-    
             var modelindex = atom.residue.chain.model.index + 1
-    
             var clashValue = linkerData[ modelindex ][ 5 ];
             return clashScale( clashValue );
         };
-    
+
     } );
-    
-    var seqidScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
-        
-        if( !params.scale ){
-            this.scale = "Greens";
-        }
-        
+
+    var seqidentityScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+        if( !params.scale ) this.scale = "Greens";
         this.domain = [ 0, 100 ];
-        
         var seqidScale = this.getScale();
-        
         this.atomColor = function( atom ){
-    
             var modelindex = atom.residue.chain.model.index + 1
-            
             var seqidValue = linkerData[ modelindex ][ 8 ];
             return seqidScale( seqidValue );
         };
-        
-     } );
-    
+    } );
+
     var scoreScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
-        
-        if( !params.scale ){
-            this.scale = "PuBuGn";
-        }
-        
+        if( !params.scale ) this.scale = "PuBuGn";
         this.domain = [ 0, 0.3 ];
-        
         var scoreScale = this.getScale();
-        
         this.atomColor = function( atom ){
-    
             var modelindex = atom.residue.chain.model.index + 1
-            
             var scoreValue = linkerData[ modelindex ][ 2 ];
             return scoreScale( scoreValue );
         };
-        
-     } );
-    
-    
+    } );
+
     var correlationScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
-        
-        if( !params.scale ){
-            this.scale = "YlGnBu";
-        }
-        var ma= 
+        if( !params.scale ) this.scale = "YlGnBu";
         this.domain = [ 0, 0.5 ];
-        
         var correlationScale = this.getScale();
-        
         this.atomColor = function( atom ){
-    
             var modelindex = atom.residue.chain.model.index + 1
-            
             var correlationValue = linkerData[ modelindex ][ 0 ];
             return correlationScale( correlationValue );
         };
-        
     } );
-    
+
     this.getColorschemeOptions = function(){
         var options = { "": "" };
         options[ correlationScheme ] = "Correlation";
         options[ scoreScheme ] = "Score";
-        options[ seqidScheme ] = "Sequence Identity";
+        options[ seqidentityScheme ] = "Sequence Identity";
         options[ clashScheme ] = "Clashes";
         return options;
     }
-    
+
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
-       
         colorScheme: correlationScheme
-       
     } );
 
     linkerComp.centerView();
-    
-        // mrc
+
+    // mrc
 
     var surfaceRepr;
 
@@ -146,7 +108,7 @@ var FragResultsPreset = function( data, params ){
 
     }
 
-     //API
+    //API
 
     this.setSurfaceParams = function( params ){
 
@@ -176,7 +138,7 @@ var FragResultsPreset = function( data, params ){
     this.dispose = function(){
         // TODO remove color schemes
     };
-    
+
 };
 
 
@@ -264,10 +226,10 @@ var FragResultsWidget = function( data ){
     var params = {
         isolevel: isolevel,
         wireframe: wireframe
-        };
+    };
 
     var fragResultsPreset = new FragResultsPreset( data, params );
-    
+
 
     // Isolevel
 
@@ -456,8 +418,6 @@ var FragResultsWidget = function( data ){
         );
     }
 
-
-
     function selectLinker( index ){
         if( index !== undefined ){
             fragResultsPreset.backboneRepr.setSelection(
@@ -574,19 +534,13 @@ var FragResultsWidget = function( data ){
         .sortColumn( isFragfit ? 1 : 2, true )
         .selectRow( 0 );
 
-    
-    var colorOptions = fragResultsPreset.getColorschemeOptions ();
-    
-    
-
-        
-    
+    var colorOptions = fragResultsPreset.getColorschemeOptions();
     var linkercolorSelect = new UI.Select()
         .setOptions( colorOptions )
         .onChange( function(){
-            fragResultsPreset.backboneRepr.setParameters({
-       
-        colorScheme:linkercolorSelect.getValue() })
+            fragResultsPreset.backboneRepr.setParameters( {
+                colorScheme:linkercolorSelect.getValue()
+            } )
         } );
 
     if( isFragfit ){
