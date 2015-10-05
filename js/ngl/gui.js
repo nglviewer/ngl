@@ -42,9 +42,9 @@ NGL.StageWidget = function( stage ){
         var cssPath;
 
         if( value === "light" ){
-            cssPath = "../css/light.css";
+            cssPath = NGL.cssDirectory + "light.css";
         }else{
-            cssPath = "../css/dark.css";
+            cssPath = NGL.cssDirectory + "dark.css";
         }
 
         // FIXME element must be created by a Widget

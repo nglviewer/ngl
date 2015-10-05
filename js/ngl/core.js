@@ -428,7 +428,8 @@ var NGL = {
         self.location.pathname.indexOf( "core.js" ) !== -1 ||
         self.location.pathname.indexOf( "dev.html" ) !== -1
     ),
-    mainScriptFilePath: "../js/build/ngl.full.min.js"
+    mainScriptFilePath: "../js/build/ngl.full.min.js",
+    cssDirectory: "../css/"
 
 };
 
