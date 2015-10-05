@@ -33,7 +33,7 @@ var FragResultsPreset = function( data, params ){
         var clashScale = this.getScale();
         this.atomColor = function( atom ){
             var modelindex = atom.residue.chain.model.index + 1
-            var clashValue = linkerData[ modelindex ][ 5 ];
+            var clashValue = linkerData[ modelindex ][ isFragfit ? 5 : 4 ];
             return clashScale( clashValue );
         };
 
@@ -45,7 +45,7 @@ var FragResultsPreset = function( data, params ){
         var seqidentScale = this.getScale();
         this.atomColor = function( atom ){
             var modelindex = atom.residue.chain.model.index + 1
-            var seqidentValue = linkerData[ modelindex ][ fragfit ? 7 : 6 ];
+            var seqidentValue = linkerData[ modelindex ][ isFragfit ? 7 : 6 ];
             return seqidentScale( seqidentValue );
         };
     } );
@@ -56,7 +56,7 @@ var FragResultsPreset = function( data, params ){
         var scoreScale = this.getScale();
         this.atomColor = function( atom ){
             var modelindex = atom.residue.chain.model.index + 1
-            var scoreValue = linkerData[ modelindex ][ 2 ];
+            var scoreValue = linkerData[ modelindex ][ isFragfit ? 2 : 1 ];
             return scoreScale( scoreValue );
         };
     } );
@@ -74,7 +74,7 @@ var FragResultsPreset = function( data, params ){
 
     this.getColorschemeOptions = function(){
         var options = { "": "" };
-        options[ correlationScheme ] = "Correlation";
+        if( isFragfit ) options[ correlationScheme ] = "Correlation";
         options[ scoreScheme ] = "Score";
         options[ seqidentScheme ] = "Sequence Identity";
         options[ clashScheme ] = "Clashes";
@@ -83,7 +83,7 @@ var FragResultsPreset = function( data, params ){
 
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
-        colorScheme: correlationScheme
+        colorScheme: isFragfit ? correlationScheme : scoreScheme
     } );
 
     linkerComp.centerView();
@@ -563,12 +563,15 @@ var FragResultsWidget = function( data ){
             new UI.Break(),
             new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
             wireframeCheckbox,
-            new UI.Break(),
-            new UI.Text( "Color scheme:" ).setMarginRight( "10px" ),
-            linkercolorSelect,
             new UI.Break()
         );
     }
+
+    container.add(
+        new UI.Text( "Color scheme:" ).setMarginRight( "10px" ),
+        linkercolorSelect,
+        new UI.Break()
+    );
 
     container.add(
         new UI.Break(),
