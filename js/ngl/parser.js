@@ -4,6 +4,110 @@
  */
 
 
+NGL.atomArrayQuicksort = function( atomArray, compareFunction ){
+
+    NGL.time( "NGL.atomArrayQuicksort" );
+
+    var tmpAtom = new NGL.Atom();
+    var proxyAtom1 = new NGL.ProxyAtom( atomArray );
+    var proxyAtom2 = new NGL.ProxyAtom( atomArray );
+
+    function cmp( index1, index2 ){
+        proxyAtom1.index = index1;
+        proxyAtom2.index = index2;
+        return compareFunction( proxyAtom1, proxyAtom2 );
+    }
+
+    function swap( index1, index2 ){
+        if( index1 === index2 ) return;
+        proxyAtom1.index = index1;
+        proxyAtom2.index = index2;
+        tmpAtom.copy( proxyAtom1 );
+        proxyAtom1.copy( proxyAtom2 );
+        proxyAtom2.copy( tmpAtom );
+    }
+
+    function quicksort( left, right ){
+        if( left < right ){
+            var pivot = Math.floor( ( left + right ) / 2 );
+            var left_new = left;
+            var right_new = right;
+            do{
+                while( cmp( left_new, pivot ) < 0 ){
+                    left_new += 1;
+                }
+                while( cmp( right_new, pivot ) > 0 ){
+                    right_new -= 1;
+                }
+                if( left_new <= right_new ){
+                    if( left_new === pivot ){
+                        pivot = right_new;
+                    }else if( right_new === pivot ){
+                        pivot = left_new;
+                    }
+                    swap( left_new, right_new );
+                    left_new += 1;
+                    right_new -= 1;
+                }
+            }while( left_new <= right_new );
+            quicksort( left, right_new );
+            quicksort( left_new, right );
+        }
+    }
+
+    quicksort( 0, atomArray.usedLength - 1 );
+
+    NGL.timeEnd( "NGL.atomArrayQuicksort" );
+
+};
+
+
+NGL.reorderAtoms = function( structure ){
+
+    NGL.time( "NGL.reorderAtoms" );
+
+    var atoms = structure.atoms;
+    var atomArray = structure.atomArray;
+
+    function compareModelChainResno( a1, a2 ){
+
+        if( a1.modelindex < a2.modelindex ){
+            return -1;
+        }else if( a1.modelindex > a2.modelindex ){
+            return 1;
+        }else{
+            if( a1.chainname < a2.chainname ){
+                return -1;
+            }else if( a1.chainname > a2.chainname ){
+                return 1;
+            }else{
+                if( a1.resno < a2.resno ){
+                    return -1;
+                }else if( a1.resno > a2.resno ){
+                    return 1;
+                }else{
+                    return 0;
+                }
+            }
+        }
+
+    }
+
+    if( atomArray ){
+        NGL.atomArrayQuicksort( atomArray, compareModelChainResno );
+    }else{
+        atoms.sort( compareModelChainResno );
+    }
+
+    for( var i = 0, il = atoms.length; i < il; ++i ){
+        atoms[ i ].index = i;
+    }
+
+    NGL.timeEnd( "NGL.reorderAtoms" );
+
+};
+
+
 NGL.buildStructure = function( structure, callback ){
 
     NGL.time( "NGL.buildStructure" );
@@ -197,7 +301,43 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     NGL.time( "NGL.assignSecondaryStructure" );
 
+    var chainnames = [];
+    structure.eachModel( function( m ){
+        m.eachChain( function( c ){
+            chainnames.push( c.chainname );
+        } );
+    } );
+
+    var chainnamesSorted = chainnames.slice().sort();
+    var chainnamesIndex = [];
+    chainnamesSorted.forEach( function( c ){
+        chainnamesIndex.push( chainnames.indexOf( c ) );
+    } );
+
+    // helix assignment
+
     var helices = structure.helices || [];
+
+    helices.sort( function( h1, h2 ){
+
+        var c1 = h1[ 0 ];
+        var c2 = h2[ 0 ];
+        var r1 = h1[ 1 ];
+        var r2 = h2[ 1 ];
+
+        if( c1 === c2 ){
+            if( r1 === r2 ){
+                return 0;
+            }else{
+                return r1 < r2 ? -1 : 1;
+            }
+        }else{
+            var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+            var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+            return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
+        }
+
+    } );
 
     structure.eachModel( function( m ){
 
@@ -266,6 +406,8 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     } );
 
+    // sheet assignment
+
     var sheets = structure.sheets || [];
 
     sheets.sort( function( s1, s2 ){
@@ -273,20 +415,10 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var c1 = s1[ 0 ];
         var c2 = s2[ 0 ];
 
-        var n1 = c1.length;
-        var n2 = c2.length;
-
-        if( n1 < n2 ) return -1;
-        if( n1 > n2 ) return 1;
-
-        for( var i = n1-1; i >= 0; --i ){
-
-            if( c1[ i ] < c2[ i ] ) return -1;
-            if( c1[ i ] > c2[ i ] ) return 1;
-
-        }
-
-        return 0;
+        if( c1 === c2 ) return 0;
+        var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+        var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+        return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
 
     } );
 
@@ -707,6 +839,7 @@ NGL.StructureParser = function( streamer, params ){
     this.firstModelOnly = p.firstModelOnly || false;
     this.asTrajectory = p.asTrajectory || false;
     this.cAlphaOnly = p.cAlphaOnly || false;
+    this.reorderAtoms = p.reorderAtoms || false;
 
     NGL.Parser.call( this, streamer, p );
 
@@ -731,6 +864,10 @@ NGL.StructureParser.prototype = NGL.createObject(
         async.series( [
 
             function( wcallback ){
+
+                if( self.reorderAtoms ){
+                    NGL.reorderAtoms( self.structure );
+                }
 
                 if( !self.structure.atomArray &&
                     self.structure.atoms.length > NGL.useAtomArrayThreshold
@@ -821,6 +958,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         output.firstModelOnly = this.firstModelOnly;
         output.asTrajectory = this.asTrajectory;
         output.cAlphaOnly = this.cAlphaOnly;
+        output.reorderAtoms = this.reorderAtoms;
 
         return output;
 
@@ -833,6 +971,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         this.firstModelOnly = input.firstModelOnly;
         this.asTrajectory = input.asTrajectory;
         this.cAlphaOnly = input.cAlphaOnly;
+        this.reorderAtoms = input.reorderAtoms;
 
         return this;
 
@@ -892,8 +1031,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var serial, elem, chainname, resno, resname, atomname, element,
-            hetero, bfactor, altloc;
+        var serial, chainname, resno, resname,
+            atomname, element, hetero, bfactor, altloc;
 
         var serialDict = {};
         var unitcellDict = {};
@@ -909,6 +1048,7 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         var idx = 0;
         var modelIdx = 0;
+        var pendingStart = true;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -920,6 +1060,28 @@ NGL.PdbParser.prototype = NGL.createObject(
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
                     // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+
+                    if( pendingStart ){
+
+                        if( asTrajectory ){
+
+                            if( doFrames ){
+                                currentFrame = new Float32Array( atoms.length * 3 );
+                                frames.push( currentFrame );
+                            }else{
+                                currentFrame = [];
+                            }
+                            currentCoord = 0;
+
+                        }else{
+
+                            if( !firstModelOnly ) serialDict = {};
+
+                        }
+
+                    }
+
+                    pendingStart = false;
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -1051,7 +1213,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         continue;
                     }
 
-                    for (var j = 0; j < 4; j++) {
+                    for( var j = 0; j < 4; ++j ){
 
                         var to = parseInt( line.substr( pos[ j ], 5 ) );
                         if( Number.isNaN( to ) ) continue;
@@ -1147,23 +1309,11 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'MODEL ' ){
 
-                    if( asTrajectory ){
+                    pendingStart = true;
 
-                        if( doFrames ){
-                            currentFrame = new Float32Array( atoms.length * 3 );
-                            frames.push( currentFrame );
-                        }else{
-                            currentFrame = [];
-                        }
-                        currentCoord = 0;
+                }else if( recordName === 'ENDMDL' || line.substr( 0, 3 ) === 'END' ){
 
-                    }else if( a ){
-
-                        if( !firstModelOnly ) serialDict = {};
-
-                    }
-
-                }else if( recordName === 'ENDMDL' ){
+                    if( pendingStart ) continue;
 
                     if( asTrajectory && !doFrames ){
 
@@ -1173,6 +1323,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     }
 
                     modelIdx += 1;
+                    pendingStart = true;
 
                 }else if( line.substr( 0, 5 ) === 'MTRIX' ){
 
