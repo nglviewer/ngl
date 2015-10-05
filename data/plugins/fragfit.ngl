@@ -489,6 +489,27 @@ var FragResultsWidget = function( data ){
             index: isFragfit ? 4 : 3,
             align: "left",
             width: 120
+        },
+        {
+            name: "Sequence Identity",
+            index: isFragfit ? 9 : 8,
+            align: "right",
+            width: 30,
+            format: function( value ){
+                return value.toFixed( 2 );
+            }
+        },
+        {
+            name: "Sequence Position Start",
+            index: isFragfit ? 8 : 7,
+            align: "right",
+            width: 30
+        },
+        {
+            name: "Sequence Position Chain",
+            index: isFragfit ? 7 : 6,
+            align: "right",
+            width: 30
         }
     ];
 
