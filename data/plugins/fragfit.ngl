@@ -47,16 +47,86 @@ var FragResultsPreset = function( data, params ){
     
     } );
     
+    var seqidScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+        
+        if( !params.scale ){
+            this.scale = "Greens";
+        }
+        
+        this.domain = [ 0, 100 ];
+        
+        var seqidScale = this.getScale();
+        
+        this.atomColor = function( atom ){
+    
+            var modelindex = atom.residue.chain.model.index + 1
+            
+            var seqidValue = linkerData[ modelindex ][ 8 ];
+            return seqidScale( seqidValue );
+        };
+        
+     } );
+    
+    var scoreScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+        
+        if( !params.scale ){
+            this.scale = "PuBuGn";
+        }
+        
+        this.domain = [ 0, 0.3 ];
+        
+        var scoreScale = this.getScale();
+        
+        this.atomColor = function( atom ){
+    
+            var modelindex = atom.residue.chain.model.index + 1
+            
+            var scoreValue = linkerData[ modelindex ][ 2 ];
+            return scoreScale( scoreValue );
+        };
+        
+     } );
+    
+    
+    var correlationScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+        
+        if( !params.scale ){
+            this.scale = "YlGnBu";
+        }
+        var ma= 
+        this.domain = [ 0, 0.5 ];
+        
+        var correlationScale = this.getScale();
+        
+        this.atomColor = function( atom ){
+    
+            var modelindex = atom.residue.chain.model.index + 1
+            
+            var correlationValue = linkerData[ modelindex ][ 0 ];
+            return correlationScale( correlationValue );
+        };
+        
+    } );
+    
+    this.getColorschemeOptions = function(){
+        var options = { "": "" };
+        options[ correlationScheme ] = "Correlation";
+        options[ scoreScheme ] = "Score";
+        options[ seqidScheme ] = "Sequence Identity";
+        options[ clashScheme ] = "Clashes";
+        return options;
+    }
+    
     var backboneRepr = linkerComp.addRepresentation( "backbone", {
         radius: 0.25,
        
-        colorScheme: clashScheme,
+        colorScheme: correlationScheme
        
     } );
 
     linkerComp.centerView();
-
-    // mrc
+    
+        // mrc
 
     var surfaceRepr;
 
@@ -103,6 +173,10 @@ var FragResultsPreset = function( data, params ){
 
     stage.centerView();
 
+    this.dispose = function(){
+        // TODO remove color schemes
+    };
+    
 };
 
 
@@ -189,10 +263,11 @@ var FragResultsWidget = function( data ){
 
     var params = {
         isolevel: isolevel,
-        wireframe: wireframe,
-    };
+        wireframe: wireframe
+        };
 
     var fragResultsPreset = new FragResultsPreset( data, params );
+    
 
     // Isolevel
 
@@ -381,7 +456,7 @@ var FragResultsWidget = function( data ){
         );
     }
 
-    // console.log( linkerItems )
+
 
     function selectLinker( index ){
         if( index !== undefined ){
@@ -499,7 +574,20 @@ var FragResultsWidget = function( data ){
         .sortColumn( isFragfit ? 1 : 2, true )
         .selectRow( 0 );
 
-    //
+    
+    var colorOptions = fragResultsPreset.getColorschemeOptions ();
+    
+    
+
+        
+    
+    var linkercolorSelect = new UI.Select()
+        .setOptions( colorOptions )
+        .onChange( function(){
+            fragResultsPreset.backboneRepr.setParameters({
+       
+        colorScheme:linkercolorSelect.getValue() })
+        } );
 
     if( isFragfit ){
         container.add(
@@ -508,11 +596,15 @@ var FragResultsWidget = function( data ){
             new UI.Break(),
             new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
             wireframeCheckbox,
+            new UI.Break(),
+            new UI.Text( "Color Options:" ).setMarginRight( "10px" ),
+            linkercolorSelect,
             new UI.Break()
         );
     }
 
     container.add(
+        new UI.Break(),
         showAllBtn.setMarginRight( "10px" ),
         downloadAllBtn,
         new UI.Break(),
@@ -548,10 +640,12 @@ function loadFragResults( files ){
     }
 
     function init( results ){
+        var json = results[ 2 ].data;
         var data = {
             structureComp: results[ 0 ],
             linkerComp: results[ 1 ],
-            linkerData: results[ 2 ].data,
+            linkerData: json.linker ? json.linker : json,
+            linkerParams: json.params ? json.params : {},
             mapComp: isFragfit ? results[ 3 ] : undefined
         };
         return new FragResultsWidget( data );
