@@ -1437,7 +1437,11 @@ NGL.PluginRegistry = {
     },
 
     get: function( name ){
-        return this.dict[ name ];
+        if( name in this.dict ){
+            return this.dict[ name ];
+        }else{
+            throw "NGL.PluginRegistry '" + name + "' not defined";
+        }
     },
 
     get names(){
