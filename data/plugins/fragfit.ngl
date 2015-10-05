@@ -133,8 +133,6 @@ var FragResultsPreset = function( data, params ){
     this.backboneRepr = backboneRepr;
     this.surfaceRepr = surfaceRepr;
 
-    stage.centerView();
-
     this.dispose = function(){
         // TODO remove color schemes
     };
@@ -592,7 +590,6 @@ function loadFragResults( files ){
 
     var initComp = function( comp ){
         comp.requestGuiVisibility( false );
-        comp.centerView();
         return comp;
     }
 
