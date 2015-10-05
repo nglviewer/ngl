@@ -488,7 +488,7 @@ var FragResultsWidget = function( data ){
             name: "Sequence",
             index: isFragfit ? 4 : 3,
             align: "left",
-            width: 120
+            width: linkerItems[ 0 ][ isFragfit ? 4 : 3 ].length * 10
         },
         {
             name: "Sequence Identity",
