@@ -572,7 +572,7 @@ var FragResultsWidget = function( data ){
             new UI.Text( "Wireframe:" ).setMarginRight( "10px" ),
             wireframeCheckbox,
             new UI.Break(),
-            new UI.Text( "Color Options:" ).setMarginRight( "10px" ),
+            new UI.Text( "Color scheme:" ).setMarginRight( "10px" ),
             linkercolorSelect,
             new UI.Break()
         );
