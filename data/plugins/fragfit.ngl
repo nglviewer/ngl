@@ -39,14 +39,14 @@ var FragResultsPreset = function( data, params ){
 
     } );
 
-    var seqidentityScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
+    var seqidentScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
         if( !params.scale ) this.scale = "Greens";
         this.domain = [ 0, 100 ];
-        var seqidScale = this.getScale();
+        var seqidentScale = this.getScale();
         this.atomColor = function( atom ){
             var modelindex = atom.residue.chain.model.index + 1
-            var seqidValue = linkerData[ modelindex ][ 7 ];
-            return seqidScale( seqidValue );
+            var seqidentValue = linkerData[ modelindex ][ fragfit ? 7 : 6 ];
+            return seqidentScale( seqidentValue );
         };
     } );
 
@@ -76,7 +76,7 @@ var FragResultsPreset = function( data, params ){
         var options = { "": "" };
         options[ correlationScheme ] = "Correlation";
         options[ scoreScheme ] = "Score";
-        options[ seqidentityScheme ] = "Sequence Identity";
+        options[ seqidentScheme ] = "Sequence Identity";
         options[ clashScheme ] = "Clashes";
         return options;
     }
@@ -492,24 +492,18 @@ var FragResultsWidget = function( data ){
         },
         {
             name: "Sequence Identity",
-            index: isFragfit ? 9 : 8,
+            index: isFragfit ? 8 : 7,
             align: "right",
-            width: 30,
+            width: 35,
             format: function( value ){
                 return value.toFixed( 2 );
             }
         },
         {
-            name: "Sequence Position Start",
-            index: isFragfit ? 8 : 7,
-            align: "right",
-            width: 30
-        },
-        {
-            name: "Sequence Position Chain",
+            name: "Sequence Position",
             index: isFragfit ? 7 : 6,
             align: "right",
-            width: 30
+            width: 90
         }
     ];
 
