@@ -61,7 +61,7 @@ var FragResultsPreset = function( data, params ){
     
             var modelindex = atom.residue.chain.model.index + 1
             
-            var seqidValue = linkerData[ modelindex ][ 8 ];
+            var seqidValue = linkerData[ modelindex ][ 7 ];
             return seqidScale( seqidValue );
         };
         
