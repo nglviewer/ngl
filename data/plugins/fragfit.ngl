@@ -811,10 +811,11 @@ var FragJobWidget = function( server, isFragfit ){
         if( !job ) return;
 
         var baseUrl = job.urlFor( "file" ) + "/";
+        var linkerName = isFragfit ? "linker_correl" : "input_pdb_file_linker";
 
         var files = {
             structurePdb: baseUrl + "input_pdb_file.pdb",
-            linkerJson: baseUrl + "linker_correl.json"
+            linkerJson: baseUrl + linkerName + ".json"
         };
 
         if( isFragfit ){
