@@ -54,6 +54,8 @@
 
             var stage;  // global, for development
 
+            NGL.mainScriptFilePath = "../js/ngl/core.js";
+
             function onInit(){
                 stage = new NGL.Stage( "viewport" );
                 stage.loadFile( "rcsb://1crn" ).then( function( o ){

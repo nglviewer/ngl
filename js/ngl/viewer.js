@@ -12,47 +12,47 @@
 NGL.Resources = {
 
     // fonts
-    // '../fonts/Arial.fnt': null,
-    // '../fonts/Arial.png': 'image',
-    // '../fonts/DejaVu.fnt': null,
-    // '../fonts/DejaVu.png': 'image',
-    '../fonts/LatoBlack.fnt': null,
-    '../fonts/LatoBlack.png': 'image',
+    // 'fonts/Arial.fnt': null,
+    // 'fonts/Arial.png': 'image',
+    // 'fonts/DejaVu.fnt': null,
+    // 'fonts/DejaVu.png': 'image',
+    'fonts/LatoBlack.fnt': null,
+    'fonts/LatoBlack.png': 'image',
 
     // sprites
-    // '../img/circle.png': 'image',
-    // '../img/spark1.png': 'image',
-    '../img/radial.png': 'image',
+    // 'img/circle.png': 'image',
+    // 'img/spark1.png': 'image',
+    'img/radial.png': 'image',
 
     // shaders
-    '../shader/CylinderImpostor.vert': null,
-    '../shader/CylinderImpostor.frag': null,
-    '../shader/HyperballStickImpostor.vert': null,
-    '../shader/HyperballStickImpostor.frag': null,
-    '../shader/Line.vert': null,
-    '../shader/Line.frag': null,
-    '../shader/LineSprite.vert': null,
-    '../shader/LineSprite.frag': null,
-    '../shader/Mesh.vert': null,
-    '../shader/Mesh.frag': null,
-    '../shader/ParticleSprite.vert': null,
-    '../shader/ParticleSprite.frag': null,
-    '../shader/Quad.vert': null,
-    '../shader/Quad.frag': null,
-    '../shader/Ribbon.vert': null,
-    '../shader/Ribbon.frag': null,
-    '../shader/SDFFont.vert': null,
-    '../shader/SDFFont.frag': null,
-    '../shader/SphereHalo.vert': null,
-    '../shader/SphereHalo.frag': null,
-    '../shader/SphereImpostor.vert': null,
-    '../shader/SphereImpostor.frag': null,
+    'shader/CylinderImpostor.vert': null,
+    'shader/CylinderImpostor.frag': null,
+    'shader/HyperballStickImpostor.vert': null,
+    'shader/HyperballStickImpostor.frag': null,
+    'shader/Line.vert': null,
+    'shader/Line.frag': null,
+    'shader/LineSprite.vert': null,
+    'shader/LineSprite.frag': null,
+    'shader/Mesh.vert': null,
+    'shader/Mesh.frag': null,
+    'shader/ParticleSprite.vert': null,
+    'shader/ParticleSprite.frag': null,
+    'shader/Quad.vert': null,
+    'shader/Quad.frag': null,
+    'shader/Ribbon.vert': null,
+    'shader/Ribbon.frag': null,
+    'shader/SDFFont.vert': null,
+    'shader/SDFFont.frag': null,
+    'shader/SphereHalo.vert': null,
+    'shader/SphereHalo.frag': null,
+    'shader/SphereImpostor.vert': null,
+    'shader/SphereImpostor.frag': null,
 
     // shader chunks
-    '../shader/chunk/fog.glsl': null,
-    '../shader/chunk/fog_params.glsl': null,
-    '../shader/chunk/light.glsl': null,
-    '../shader/chunk/light_params.glsl': null,
+    'shader/chunk/fog.glsl': null,
+    'shader/chunk/fog_params.glsl': null,
+    'shader/chunk/light.glsl': null,
+    'shader/chunk/light_params.glsl': null,
 
 };
 
@@ -530,7 +530,7 @@ NGL.Utils = {
 };
 
 
-NGL.init = function( onload, baseUrl ){
+NGL.init = function( onload ){
 
     var debug = NGL.GET( "debug" );
     if( debug !== undefined ) NGL.debug = debug;
@@ -543,7 +543,7 @@ NGL.init = function( onload, baseUrl ){
 
     this.textures = [];
 
-    NGL.initResources( onload, baseUrl );
+    NGL.initResources( onload );
 
     return this;
 
@@ -564,9 +564,7 @@ NGL.dataURItoImage = function( dataURI ){
 };
 
 
-NGL.initResources = function( onLoad, baseUrl ){
-
-    baseUrl = baseUrl || "";
+NGL.initResources = function( onLoad ){
 
     var onLoadFn = function(){
 
@@ -592,7 +590,7 @@ NGL.initResources = function( onLoad, baseUrl ){
     resourceKeys.forEach( function( url ){
 
         var v = NGL.Resources[ url ];
-        var url2 = baseUrl + url;
+        var url2 = NGL.assetsDirectory + url;
 
         if( v==="image" ){
 
@@ -668,10 +666,10 @@ NGL.getShader = function(){
 
             var definesText = getDefines( defines );
 
-            var shaderText = NGL.Resources[ '../shader/' + name ];
+            var shaderText = NGL.Resources[ 'shader/' + name ];
             shaderText = shaderText.replace( re, function( match, p1 ){
 
-                var path = '../shader/chunk/' + p1 + '.glsl';
+                var path = 'shader/chunk/' + p1 + '.glsl';
                 var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
 
                 return chunk ? chunk : "";

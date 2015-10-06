@@ -429,7 +429,8 @@ var NGL = {
         self.location.pathname.indexOf( "dev.html" ) !== -1
     ),
     mainScriptFilePath: "../js/build/ngl.full.min.js",
-    cssDirectory: "../css/"
+    cssDirectory: "../css/",
+    assetsDirectory: "../"
 
 };
 
@@ -929,17 +930,12 @@ NGL.WorkerRegistry = {
 
 NGL.Worker = function( name ){
 
-    var worker;
     var pending = 0;
     var postCount = 0;
     var onmessageDict = {};
     var onerrorDict = {};
 
-    if( NGL.develop ){
-        worker = new Worker( "../js/ngl/core.js" );
-    }else{
-        worker = new Worker( NGL.mainScriptFilePath );
-    }
+    var worker = new Worker( NGL.mainScriptFilePath );
 
     NGL.WorkerRegistry.activeWorkerCount += 1;
 

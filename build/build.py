@@ -52,20 +52,20 @@ def main( argv=None ):
         for filename in files:
             tmp.write( '// File:' + filename )
             tmp.write( u'\n\n' )
-            filename = '../' + filename
-            sources.append( filename )
-            if re.match( ".*\.(glsl|frag|vert|fnt)$", filename ):
-                with open( filename, 'r', encoding='utf-8' ) as f:
-                    tmp.write( 'NGL.Resources[ \'' + filename + '\'] = "' )
+            filename2 = '../' + filename
+            sources.append( filename2 )
+            if re.match( ".*\.(glsl|frag|vert|fnt)$", filename2 ):
+                with open( filename2, 'r', encoding='utf-8' ) as f:
+                    tmp.write( 'NGL.Resources[ \'' + filename + '\' ] = "' )
                     tmp.write( f.read().replace( '\n', '\\n' ).replace( '"', '\\"' ) )
                     tmp.write( u'";\n\n' )
-            elif re.match( ".*\.(js)$", filename ):
-                with open( filename, 'r', encoding='utf-8' ) as f:
+            elif re.match( ".*\.(js)$", filename2 ):
+                with open( filename2, 'r', encoding='utf-8' ) as f:
                     tmp.write( f.read() )
                     tmp.write( u'\n' )
-            elif re.match( ".*\.(png)$", filename ):
-                with open( filename, 'rb' ) as f:
-                    tmp.write( u'NGL.Resources[ \'' + filename + '\'] = ' )
+            elif re.match( ".*\.(png)$", filename2 ):
+                with open( filename2, 'rb' ) as f:
+                    tmp.write( u'NGL.Resources[ \'' + filename + '\' ] = ' )
                     tmp.write( u'NGL.dataURItoImage("data:image/png;base64,' )
                     tmp.write( unicode( f.read().encode( "base64" ).replace( '\n', '\\n' ) ) )
                     tmp.write( u'");\n\n' )
