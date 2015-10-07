@@ -159,6 +159,66 @@ if( !Object.assign ){
 }
 
 
+if (!String.prototype.startsWith) {
+
+    /*! https://mths.be/startswith v0.2.0 by @mathias */
+
+    (function() {
+        'use strict'; // needed to support `apply`/`call` with `undefined`/`null`
+        var defineProperty = (function() {
+            // IE 8 only supports `Object.defineProperty` on DOM elements
+            try {
+                var object = {};
+                var $defineProperty = Object.defineProperty;
+                var result = $defineProperty(object, object, object) && $defineProperty;
+            } catch(error) {}
+            return result;
+        }());
+        var toString = {}.toString;
+        var startsWith = function(search) {
+            if (this == null) {
+                throw TypeError();
+            }
+            var string = String(this);
+            if (search && toString.call(search) == '[object RegExp]') {
+                throw TypeError();
+            }
+            var stringLength = string.length;
+            var searchString = String(search);
+            var searchLength = searchString.length;
+            var position = arguments.length > 1 ? arguments[1] : undefined;
+            // `ToInteger`
+            var pos = position ? Number(position) : 0;
+            if (pos != pos) { // better `isNaN`
+                pos = 0;
+            }
+            var start = Math.min(Math.max(pos, 0), stringLength);
+            // Avoid the `indexOf` call if no match is possible
+            if (searchLength + start > stringLength) {
+                return false;
+            }
+            var index = -1;
+            while (++index < searchLength) {
+                if (string.charCodeAt(start + index) != searchString.charCodeAt(index)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        if (defineProperty) {
+            defineProperty(String.prototype, 'startsWith', {
+                'value': startsWith,
+                'configurable': true,
+                'writable': true
+            });
+        } else {
+            String.prototype.startsWith = startsWith;
+        }
+    }());
+
+}
+
+
 if( typeof importScripts !== 'function' ){
 
     ( function() {
@@ -267,6 +327,94 @@ if( typeof importScripts !== 'function' ){
 }
 
 
+if( typeof importScripts !== 'function' && WebGLRenderingContext ){
+
+    // wrap WebGL debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function( program, pname ){
+
+            if( NGL.debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        }
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function(){
+
+            if( NGL.debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        }
+
+    }();
+
+}
+
+
 ////////
 // NGL
 
@@ -283,8 +431,8 @@ var NGL = {
         self.location.pathname.indexOf( "dev.html" ) !== -1
     ),
     mainScriptFilePath: "../js/build/ngl.full.min.js",
-    dataProtocolRelativePath: "../data/",
-    fileProtocolRelativePath: "../file/"
+    cssDirectory: "../css/",
+    assetsDirectory: "../"
 
 };
 
@@ -364,13 +512,13 @@ NGL.GET = function( id ){
 };
 
 
-NGL.getAbsolutePath = function( path ){
+NGL.getAbsolutePath = function( relativePath ){
 
     var loc = window.location;
     var pn = loc.pathname;
-    var base = pn.substring( 0, pn.lastIndexOf("/") + 1 );
+    var basePath = pn.substring( 0, pn.lastIndexOf("/") + 1 );
 
-    return loc.origin + base + path;
+    return loc.origin + basePath + relativePath;
 
 };
 
@@ -414,7 +562,7 @@ NGL.deepCopy = function( src ){
 NGL.download = function( data, downloadName ){
 
     if( !data ){
-        NGL.warn( "NGL.download: no data given" );
+        NGL.warn( "NGL.download: no data given." );
         return;
     }
 
@@ -435,6 +583,42 @@ NGL.download = function( data, downloadName ){
     document.body.removeChild( a );
     if( data instanceof Blob ){
         URL.revokeObjectURL( data );
+    }
+
+};
+
+
+NGL.submit = function( url, data, callback, onerror ){
+
+    if( data instanceof FormData ){
+
+        var xhr = new XMLHttpRequest();
+        xhr.open( "POST", url );
+
+        xhr.addEventListener( 'load', function ( event ) {
+
+            if ( xhr.status === 200 || xhr.status === 304 ) {
+
+                callback( xhr.response );
+
+            } else {
+
+                if( typeof onerror === "function" ){
+
+                    onerror( xhr.status );
+
+                }
+
+            }
+
+        }, false );
+
+        xhr.send( data );
+
+    }else{
+
+        NGL.warn( "NGL.submit: type not supported.", data  );
+
     }
 
 };
@@ -495,18 +679,16 @@ NGL.getFileInfo = function( file ){
     var path, compressed, protocol;
 
     if( file instanceof File ){
-
         path = file.name;
-
     }else{
-
         path = file
-
     }
 
     var name = path.replace( /^.*[\\\/]/, '' );
-    var base = name.substring( 0, name.lastIndexOf('.') );
-    var ext = path.split('.').pop().toLowerCase();
+    var base = name.substring( 0, name.lastIndexOf( '.' ) );
+
+    var pathSplit = path.split( '.' );
+    var ext = pathSplit.length > 1 ? pathSplit.pop().toLowerCase() : "";
 
     var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
     if( protocolMatch ){
@@ -514,12 +696,14 @@ NGL.getFileInfo = function( file ){
         path = protocolMatch[ 2 ];
     }
 
+    var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
+
     if( compressedExtList.indexOf( ext ) !== -1 ){
 
         compressed = ext;
 
         var n = path.length - ext.length - 1;
-        ext = path.substr( 0, n ).split('.').pop().toLowerCase();
+        ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
 
         var m = base.length - ext.length - 1;
         base = base.substr( 0, m );
@@ -535,8 +719,10 @@ NGL.getFileInfo = function( file ){
         "name": name,
         "ext": ext,
         "base": base,
+        "dir": dir,
         "compressed": compressed,
-        "protocol": protocol
+        "protocol": protocol,
+        "src": file
     };
 
 };
@@ -607,6 +793,75 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
     }
 
 };
+
+
+NGL.throttle = function( func, wait, options ){
+
+    // from http://underscorejs.org/docs/underscore.html
+
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+
+    if( !options ) options = {};
+
+    var later = function(){
+        previous = options.leading === false ? 0 : Date.now();
+        timeout = null;
+        result = func.apply( context, args );
+        if( !timeout ) context = args = null;
+    };
+
+    return function(){
+
+        var now = Date.now();
+        if( !previous && options.leading === false ) previous = now;
+        var remaining = wait - ( now - previous );
+        context = this;
+        args = arguments;
+        if( remaining <= 0 || remaining > wait ){
+            if( timeout ){
+                clearTimeout( timeout );
+                timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if( !timeout ) context = args = null;
+        }else if( !timeout && options.trailing !== false ){
+            timeout = setTimeout( later, remaining );
+        }
+
+        return result;
+
+    };
+
+};
+
+
+NGL.binarySearchIndexOf = function(){
+    function _compareFunction( elm1, elm2 ){
+        if( elm1 < elm2 ) return -1;
+        if( elm1 > elm2 ) return 1;
+        return 0;
+    }
+    return function( array, element, compareFunction ){
+        var low = 0;
+        var high = array.length - 1;
+        if( !compareFunction ) compareFunction = _compareFunction;
+        while( low <= high ){
+            var i = ( low + high ) >> 1;
+            var cmp = compareFunction( element, array[ i ] );
+            if( cmp > 0 ){
+                low = i + 1;
+            }else if( cmp < 0 ){
+                high = i - 1;
+            } else {
+                return i;
+            }
+        }
+        return -low - 1;
+    }
+}();
 
 
 // String/arraybuffer conversion
@@ -686,53 +941,196 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Worker
 
-NGL.Worker = {
+NGL.WorkerRegistry = {
+
+    activeWorkerCount: 0,
 
     funcDict: {},
 
     add: function( name, func ){
 
-        NGL.Worker.funcDict[ name ] = func;
+        NGL.WorkerRegistry.funcDict[ name ] = func;
 
     },
 
-    make: function( name, params ){
+};
 
-        params = params || {};
 
-        var worker;
+NGL.Worker = function( name ){
 
-        if( NGL.develop ){
-            worker = new Worker( "../js/ngl/core.js" );
+    var pending = 0;
+    var postCount = 0;
+    var onmessageDict = {};
+    var onerrorDict = {};
+
+    var worker = new Worker( NGL.mainScriptFilePath );
+
+    NGL.WorkerRegistry.activeWorkerCount += 1;
+
+    worker.onmessage = function( event ){
+
+        pending -= 1;
+        var postId = event.data.__postId;
+
+        NGL.timeEnd( "NGL.Worker.postMessage " + name + " #" + postId );
+
+        if( onmessageDict[ postId ] ){
+            onmessageDict[ postId ].call( worker, event );
         }else{
-            worker = new Worker( NGL.mainScriptFilePath );
+            // NGL.debug( "No onmessage", postId, name );
         }
 
-        worker.onerror = params.onerror;
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
 
-        worker.onmessage = params.onmessage;
+    };
 
-        var _postMessage = worker.postMessage;
+    worker.onerror = function( event ){
 
-        worker.postMessage = function( aMessage, transferList ){
+        pending -= 1;
+        var postId = event.data.__postId;
 
-            if( aMessage !== undefined ) aMessage.__name__ = name;
-
-            _postMessage.call( worker, aMessage, transferList );
-
+        if( onerrorDict[ postId ] ){
+            onerrorDict[ postId ].call( worker, event );
+        }else{
+            NGL.error( "NGL.Worker.onerror", postId, name, event );
         }
 
-        if( params.messageData !== undefined ){
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
 
-            worker.postMessage.apply( worker, params.messageData );
+    };
 
+    // API
+
+    this.name = name;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        onmessageDict[ postCount ] = onmessage;
+        onerrorDict[ postCount ] = onerror;
+
+        aMessage = aMessage || {};
+        aMessage.__name = name;
+        aMessage.__postId = postCount;
+
+        NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
+
+        try{
+            worker.postMessage.call( worker, aMessage, transferList );
+        }catch( error ){
+            NGL.error( "NGL.worker.post:", error );
+            worker.postMessage.call( worker, aMessage );
         }
 
-        return worker;
+        pending += 1;
+        postCount += 1;
 
-    }
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        if( worker ){
+            worker.terminate();
+            NGL.WorkerRegistry.activeWorkerCount -= 1;
+        }else{
+            console.log( "no worker to terminate" );
+        }
+
+    };
+
+    Object.defineProperties( this, {
+        postCount: {
+            get: function(){ return postCount; }
+        },
+        pending: {
+            get: function(){ return pending; }
+        }
+    } );
 
 };
+
+NGL.Worker.prototype.constructor = NGL.Worker;
+
+
+NGL.WorkerPool = function( name, maxCount ){
+
+    maxCount = Math.min( 8, maxCount || 2 );
+
+    var pool = [];
+    var count = 0;
+
+    // API
+
+    this.name = name;
+
+    this.maxCount = maxCount;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        var worker = this.getNextWorker();
+        worker.post( aMessage, transferList, onmessage, onerror );
+
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        pool.forEach( function( worker ){
+            worker.terminate();
+        } );
+
+    };
+
+    this.getNextWorker = function(){
+
+        var nextWorker;
+        var minPending = Infinity;
+
+        for( var i = 0; i < maxCount; ++i ){
+
+            if( i >= count ){
+
+                nextWorker = new NGL.Worker( name );
+                pool.push( nextWorker );
+                count += 1;
+                break;
+
+            }
+
+            var worker = pool[ i ];
+
+            if( worker.pending === 0 ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+                break;
+
+            }else if( worker.pending < minPending ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+
+            }
+
+        }
+
+        return nextWorker;
+
+    };
+
+    Object.defineProperties( this, {
+        count: {
+            get: function(){ return count; }
+        }
+    } );
+
+};
+
+NGL.WorkerPool.prototype.constructor = NGL.WorkerPool;
 
 
 if( typeof importScripts === 'function' ){
@@ -749,7 +1147,7 @@ if( typeof importScripts === 'function' ){
             "../three/loaders/PLYLoader.js",
 
             "../lib/async.js",
-            "../lib/promise-6.0.0.min.js",
+            "../lib/promise.min.js",
             "../lib/sprintf.min.js",
             "../lib/jszip.min.js",
             "../lib/pako.min.js",
@@ -768,6 +1166,7 @@ if( typeof importScripts === 'function' ){
             "../ngl/script.js",
             "../ngl/streamer.js",
             "../ngl/parser.js",
+            "../ngl/writer.js",
             "../ngl/loader.js",
             "../ngl/viewer.js",
             "../ngl/buffer.js",
@@ -778,19 +1177,36 @@ if( typeof importScripts === 'function' ){
 
     }
 
-    onmessage = function( e ){
+    self.onmessage = function( e ){
 
-        if( e.data.__name__ === undefined ){
+        var name = e.data.__name;
+        var postId = e.data.__postId;
 
-            NGL.error( "message __name__ undefined" );
+        if( name === undefined ){
 
-        }else if( NGL.Worker.funcDict[ e.data.__name__ ] === undefined ){
+            NGL.error( "message __name undefined" );
 
-            NGL.error( "funcDict __name__ undefined" );
+        }else if( NGL.WorkerRegistry.funcDict[ name ] === undefined ){
+
+            NGL.error( "funcDict[ __name ] undefined", name );
 
         }else{
 
-            NGL.Worker.funcDict[ e.data.__name__ ]( e );
+            var callback = function( aMessage, transferList ){
+
+                aMessage = aMessage || {};
+                if( postId !== undefined ) aMessage.__postId = postId;
+
+                try{
+                    self.postMessage( aMessage, transferList );
+                }catch( error ){
+                    NGL.error( "self.postMessage:", error );
+                    self.postMessage( aMessage );
+                }
+
+            };
+
+            NGL.WorkerRegistry.funcDict[ name ]( e, callback );
 
         }
 
@@ -879,7 +1295,7 @@ NGL.decompress = function( data, file, asBinary, callback ){
 };
 
 
-NGL.Worker.add( "decompress", function( e ){
+NGL.WorkerRegistry.add( "decompress", function( e, callback ){
 
     var d = e.data;
 
@@ -890,7 +1306,7 @@ NGL.Worker.add( "decompress", function( e ){
         transferable.push( value.buffer );
     }
 
-    self.postMessage( value, transferable );
+    callback( value, transferable );
 
 } );
 
@@ -901,11 +1317,20 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
         typeof importScripts !== 'function'
     ){
 
-        NGL.time( "NGL.decompressWorker" );
+        var worker = new NGL.Worker( "decompress" ).post(
 
-        var worker = NGL.Worker.make( "decompress", {
+            { data: data, file: file, asBinary: asBinary },
 
-            onerror: function( e ){
+            [ data.buffer ? data.buffer : data ],
+
+            function( e ){
+
+                worker.terminate();
+                callback( e.data );
+
+            },
+
+            function( e ){
 
                 console.warn(
                     "NGL.decompressWorker error - trying without worker", e
@@ -914,24 +1339,9 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
                 NGL.decompress( data, file, asBinary, callback );
 
-            },
+            }
 
-            onmessage: function( e ){
-
-                NGL.timeEnd( "NGL.decompressWorker" );
-                worker.terminate();
-                callback( e.data );
-
-            },
-
-            messageData: [
-
-                { data: data, file: file, asBinary: asBinary },
-                [ data.buffer ? data.buffer : data ]
-
-            ]
-
-        } );
+        );
 
     }else{
 
@@ -1035,6 +1445,78 @@ NGL.Counter.prototype = {
 
         this.clear();
 
+    }
+
+};
+
+
+// Registry
+
+NGL.PluginRegistry = {
+
+    dict: {},
+
+    add: function( name, path ){
+        this.dict[ name ] = path;
+    },
+
+    get: function( name ){
+        if( name in this.dict ){
+            return this.dict[ name ];
+        }else{
+            throw "NGL.PluginRegistry '" + name + "' not defined";
+        }
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var path = this.get( name );
+        stage.loadFile( path, { name: name + " plugin" } );
+    }
+
+};
+
+
+NGL.ExampleRegistry = {
+
+    dict: {},
+
+    add: function( name, fn ){
+        this.dict[ name ] = fn;
+    },
+
+    addDict: function( dict ){
+        Object.keys( dict ).forEach( function( name ){
+            this.add( name, dict[ name ] );
+        }.bind( this ) );
+    },
+
+    get: function( name ){
+        return this.dict[ name ];
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var fn = this.get( name );
+        if( typeof fn === "function" ){
+            fn( stage );
+        }else{
+            NGL.warn( "NGL.ExampleRegistry.load not available:", name );
+        }
     }
 
 };
@@ -6491,7 +6973,7 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedColor: function( m, type ){
+    getSubdividedColor: function( m, params ){
 
         var n = this.size;
         var n1 = n - 1;
@@ -6499,41 +6981,40 @@ NGL.Spline.prototype = {
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
-        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
-        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
+        var p = params || {};
+        p.structure = this.fiber.structure;
+
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
         var k = 0;
         var j, l, mh, a2, c2, pc2, a3, c3, pc3;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             mh = Math.ceil( m / 2 );
-
-            a2 = r2.getTraceAtom();
 
             for( j = 0; j < mh; ++j ){
 
                 l = k + j * 3;
 
-                colorFactory.atomColorToArray( a2, col, l );
-                pickingColorFactory.atomColorToArray( a2, pcol, l );
+                colorMaker.atomColorToArray( a2, col, l );
+                pickingColorMaker.atomColorToArray( a2, pcol, l );
 
             }
-
-            a3 = r3.getTraceAtom();
 
             for( j = mh; j < m; ++j ){
 
                 l = k + j * 3;
 
-                colorFactory.atomColorToArray( a3, col, l );
-                pickingColorFactory.atomColorToArray( a3, pcol, l );
+                colorMaker.atomColorToArray( a3, col, l );
+                pickingColorMaker.atomColorToArray( a3, pcol, l );
 
             }
 
             k += 3 * m;
 
-        } );
+        }, "trace" );
 
         col[ n1 * m * 3 + 0 ] = col[ n1 * m * 3 - 3 ];
         col[ n1 * m * 3 + 1 ] = col[ n1 * m * 3 - 2 ];
@@ -6590,19 +7071,16 @@ NGL.Spline.prototype = {
         var k = 0;
         var j, l, a2, a3, s2, s3, t;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
-
-            a2 = r2.getTraceAtom();
-            a3 = r3.getTraceAtom();
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             s2 = radiusFactory.atomRadius( a2 );
             s3 = radiusFactory.atomRadius( a3 );
 
             if( arrows && (
-                    ( r2.ss==="s" && r3.ss!=="s" ) ||
-                    ( r2.ss==="h" && r3.ss!=="h" ) ||
-                    ( r2.ss==="g" && r3.ss!=="g" ) ||
-                    ( r2.ss==="i" && r3.ss!=="i" )
+                    ( a2.ss==="s" && a3.ss!=="s" ) ||
+                    ( a2.ss==="h" && a3.ss!=="h" ) ||
+                    ( a2.ss==="g" && a3.ss!=="g" ) ||
+                    ( a2.ss==="i" && a3.ss!=="i" )
                 )
             ){
 
@@ -6637,7 +7115,7 @@ NGL.Spline.prototype = {
 
             k += m;
 
-        } );
+        }, "trace" );
 
         size[ k ] = size[ k - 1 ];
 
@@ -6662,25 +7140,11 @@ NGL.Spline.prototype = {
         var dt = 1.0 / m;
 
         var j, l, d;
-        var a1, a2, a3, a4;
+        var _a3;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
-            if( atomname ){
-
-                a1 = r1.getAtomByName( atomname );
-                a2 = r2.getAtomByName( atomname );
-                a3 = r3.getAtomByName( atomname );
-                a4 = r4.getAtomByName( atomname );
-
-            }else{
-
-                a1 = r1.getTraceAtom();
-                a2 = r2.getTraceAtom();
-                a3 = r3.getTraceAtom();
-                a4 = r4.getTraceAtom();
-
-            }
+            _a3 = a3;
 
             for( j = 0; j < m; ++j ){
 
@@ -6695,9 +7159,9 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }, atomname || "trace" );
 
-        a3.positionToArray( pos, k );
+        _a3.positionToArray( pos, k );
 
         return pos;
 
@@ -6722,25 +7186,8 @@ NGL.Spline.prototype = {
         var delta = 0.0001;
 
         var j, l, d, d1, d2;
-        var a1, a2, a3, a4;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
-
-            if( atomname ){
-
-                a1 = r1.getAtomByName( atomname );
-                a2 = r2.getAtomByName( atomname );
-                a3 = r3.getAtomByName( atomname );
-                a4 = r4.getAtomByName( atomname );
-
-            }else{
-
-                a1 = r1.getTraceAtom();
-                a2 = r2.getTraceAtom();
-                a3 = r3.getTraceAtom();
-                a4 = r4.getTraceAtom();
-
-            }
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             for( j = 0; j < m; ++j ){
 
@@ -6768,7 +7215,8 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }, atomname || "trace" );
+
 
         p2.toArray( tan, k );
 
@@ -6783,6 +7231,7 @@ NGL.Spline.prototype = {
 
         var interpolate = this.interpolate;
         var type = this.type;
+        var fiber = this.fiber;
 
         var n = this.size;
         var n1 = n - 1;
@@ -6821,7 +7270,18 @@ NGL.Spline.prototype = {
 
         var j, l, d, d1, d2;
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        if( !fiber.computedAtoms[ "direction1" ] ){
+            fiber.computeAtom( "direction1" );
+        }
+        if( !fiber.computedAtoms[ "direction2" ] ){
+            fiber.computeAtom( "direction2" );
+        }
+        var direction1 = fiber.computedAtoms[ "direction1" ];
+        var direction2 = fiber.computedAtoms[ "direction2" ];
+
+        var len = direction1.length;
+
+        for( var i = 4; i <= len; i++ ){
 
             if( type !== NGL.CgType ){
 
@@ -6829,13 +7289,13 @@ NGL.Spline.prototype = {
 
                     first = false;
 
-                    d1a1.copy( r1.getDirectionAtom1() );
-                    d1a2.copy( r2.getDirectionAtom1() );
-                    d1a3.copy( r3.getDirectionAtom1() );
+                    d1a1.copy( direction1[ i - 4 ] );
+                    d1a2.copy( direction1[ i - 3 ] );
+                    d1a3.copy( direction1[ i - 2 ] );
 
-                    d2a1.copy( r1.getDirectionAtom2() );
-                    d2a2.copy( r2.getDirectionAtom2() );
-                    d2a3.copy( r3.getDirectionAtom2() );
+                    d2a1.copy( direction2[ i - 4 ] );
+                    d2a2.copy( direction2[ i - 3 ] );
+                    d2a3.copy( direction2[ i - 2 ] );
 
                     vSub1.subVectors( d2a1, d1a1 );
                     vSub2.subVectors( d2a2, d1a2 );
@@ -6864,8 +7324,8 @@ NGL.Spline.prototype = {
 
                 }
 
-                d1a4.copy( r4.getDirectionAtom1() );
-                d2a4.copy( r4.getDirectionAtom2() );
+                d1a4.copy( direction1[ i - 1 ] );
+                d2a4.copy( direction2[ i - 1 ] );
 
                 vSub4.subVectors( d2a4, d1a4 );
                 if( vSub3.dot( vSub4 ) < 0 ){
@@ -6915,7 +7375,7 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        } );
+        }
 
         if( type === NGL.ProteinType ){
 
@@ -6966,11 +7426,15 @@ NGL.Helixorient.prototype = {
         var i, j, a, r, fr, fa;
         var residues = [];
         var n = center.length / 3;
+        var fiber = this.fiber;
+
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
         for( i = 0; i < n; ++i ){
 
-            fr = this.fiber.residues[ i ];
-            fa = fr.getTraceAtom();
+            fa = trace[ i ];
+            fr = fa.residue;
 
             r = new NGL.Residue();
             a = new NGL.Atom( r, fa.globalindex );  // FIXME get rid of globalindex
@@ -7022,35 +7486,38 @@ NGL.Helixorient.prototype = {
 
         }
 
-        var f = new NGL.Fiber( residues, this.fiber.structure );
+        var f = new NGL.Fiber( residues, fiber.structure );
 
         return f;
 
     },
 
-    getColor: function( type ){
+    getColor: function( params ){
 
         var n = this.size;
+        var fiber = this.fiber;
 
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
-        var colorFactory = new NGL.ColorFactory( type, this.fiber.structure );
-        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
+        var p = params || {};
+        p.structure = fiber.structure;
 
-        var i = 0;
-        var a, c, pc;
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        this.fiber.eachResidue( function( r ){
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
-            a = r.getTraceAtom();
+        for( var i = 0; i < n; ++i ){
 
-            colorFactory.atomColorToArray( a, col, i );
-            pickingColorFactory.atomColorToArray( a, pcol, i );
+            var a = trace[ i ];
+            var i3 = i * 3;
 
-            i += 3;
+            colorMaker.atomColorToArray( a, col, i3 );
+            pickingColorMaker.atomColorToArray( a, pcol, i3 );
 
-        } );
+        }
 
         return {
             "color": col,
@@ -7062,23 +7529,20 @@ NGL.Helixorient.prototype = {
     getSize: function( type, scale ){
 
         var n = this.size;
+        var fiber = this.fiber;
 
         var size = new Float32Array( n );
 
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        var i = 0;
-        var a;
+        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
+        var trace = fiber.computedAtoms[ "trace" ];
 
-        this.fiber.eachResidue( function( r ){
+        for( var i = 0; i < n; ++i ){
 
-            a = r.getTraceAtom();
+            size[ i ] = radiusFactory.atomRadius( trace[ i ] );
 
-            size[ i ] = radiusFactory.atomRadius( a );
-
-            i += 1;
-
-        } );
+        }
 
         return {
             "size": size
@@ -7120,14 +7584,9 @@ NGL.Helixorient.prototype = {
         var _crossdir = new THREE.Vector3();
         var _center = new THREE.Vector3( 0, 0, 0 );
 
-        this.fiber.eachResidueN( 4, function( r1, r2, r3, r4 ){
+        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
 
             j = 3 * i;
-
-            a1 = r1.getTraceAtom();
-            a2 = r2.getTraceAtom();
-            a3 = r3.getTraceAtom();
-            a4 = r4.getTraceAtom();
 
             // ported from GROMACS src/tools/gmx_helixorient.c
 
@@ -7180,7 +7639,7 @@ NGL.Helixorient.prototype = {
             _prevAxis.copy( _axis );
             _center.copy( v1 );
 
-        } );
+        }, "trace" );
 
         //
 
@@ -7607,7 +8066,7 @@ NGL.Helixbundle.prototype = {
 
     },
 
-    getAxis: function( localAngle, centerDist, ssBorder, color, radius, scale ){
+    getAxis: function( localAngle, centerDist, ssBorder, colorParams, radius, scale ){
 
         localAngle = localAngle || 30;
         centerDist = centerDist || 2.5;
@@ -7615,8 +8074,12 @@ NGL.Helixbundle.prototype = {
 
         var pos = this.position;
 
-        var colorFactory = new NGL.ColorFactory( color, this.fiber.structure );
-        var pickingColorFactory = new NGL.ColorFactory( "picking", this.fiber.structure );
+        var cp = colorParams || {};
+        cp.structure = this.fiber.structure;
+
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( cp );
+        var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( cp );
+
         var radiusFactory = new NGL.RadiusFactory( radius, scale );
 
         var i, r, r2, a;
@@ -7701,8 +8164,8 @@ NGL.Helixbundle.prototype = {
                 _beg.toArray( beg, k );
                 _end.toArray( end, k );
 
-                colorFactory.atomColorToArray( a, col, k );
-                pickingColorFactory.atomColorToArray( a, pcol, k );
+                colorMaker.atomColorToArray( a, col, k );
+                pickingColorMaker.atomColorToArray( a, pcol, k );
 
                 size.push( radiusFactory.atomRadius( a ) );
 
@@ -8517,6 +8980,37 @@ NGL.ResidueRadii = {
 };
 
 
+// http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
+NGL.ResidueHydrophobicity = {
+    // AA  DGwif   DGwoct  Oct-IF
+    "ALA": [  0.17,  0.50,  0.33 ],
+    "ARG": [  0.81,  1.81,  1.00 ],
+    "ASN": [  0.42,  0.85,  0.43 ],
+    "ASP": [  1.23,  3.64,  2.41 ],
+    "ASH": [ -0.07,  0.43,  0.50 ],
+    "CYS": [ -0.24, -0.02,  0.22 ],
+    "GLN": [  0.58,  0.77,  0.19 ],
+    "GLU": [  2.02,  3.63,  1.61 ],
+    "GLH": [ -0.01,  0.11,  0.12 ],
+    "GLY": [  0.01,  1.15,  1.14 ],
+    // "His+": [  0.96,  2.33,  1.37 ],
+    "HIS": [  0.17,  0.11, -0.06 ],
+    "ILE": [ -0.31, -1.12, -0.81 ],
+    "LEU": [ -0.56, -1.25, -0.69 ],
+    "LYS": [  0.99,  2.80,  1.81 ],
+    "MET": [ -0.23, -0.67, -0.44 ],
+    "PHE": [ -1.13, -1.71, -0.58 ],
+    "PRO": [  0.45,  0.14, -0.31 ],
+    "SER": [  0.13,  0.46,  0.33 ],
+    "THR": [  0.14,  0.25,  0.11 ],
+    "TRP": [ -1.85, -2.09, -0.24 ],
+    "TYR": [ -0.94, -0.71,  0.23 ],
+    "VAL": [  0.07, -0.46, -0.53 ],
+
+    "": [ 0.00, 0.00, 0.00 ]
+};
+
+
 NGL.guessElement = function(){
 
     var elm1 = [ "H", "C", "O", "N", "S", "P" ];
@@ -8525,6 +9019,8 @@ NGL.guessElement = function(){
     return function( atomName ){
 
         var at = atomName.trim().toUpperCase();
+        if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
+        // parse again to check for a second integer
         if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
         var n = at.length;
 
@@ -8635,7 +9131,7 @@ NGL.GidPool = {
 
     },
 
-    updateObject: function( object ){
+    updateObject: function( object, silent ){
 
         var idx = NGL.GidPool.objectList.indexOf( object );
 
@@ -8657,7 +9153,11 @@ NGL.GidPool = {
 
         }else{
 
-            NGL.warn( "NGL.GidPool.updateObject: object not found." );
+            if( !silent ){
+
+                NGL.warn( "NGL.GidPool.updateObject: object not found." );
+
+            }
 
         }
 
@@ -8677,6 +9177,10 @@ NGL.GidPool = {
 
             count = object.bondCount;
 
+        }else if( object instanceof NGL.Volume ){
+
+            count = object.__data.length;
+
         }
 
         return count;
@@ -8688,6 +9192,10 @@ NGL.GidPool = {
         var firstGid = NGL.GidPool.nextGid;
 
         NGL.GidPool.nextGid += NGL.GidPool.getGidCount( object );
+
+        if( NGL.GidPool.nextGid > Math.pow( 2, 24 ) ){
+            NGL.error( "GidPool overflown" );
+        }
 
         return [ firstGid, NGL.GidPool.nextGid ];
 
@@ -8737,7 +9245,7 @@ NGL.GidPool = {
 
         var entity;
 
-        NGL.GidPool.objectList.forEach( function( o ){
+        NGL.GidPool.objectList.forEach( function( o, i ){
 
             if( o instanceof NGL.Structure ){
 
@@ -8759,6 +9267,25 @@ NGL.GidPool = {
 
                 } );
 
+            }else if( o instanceof NGL.Volume ){
+
+                var range = NGL.GidPool.rangeList[ i ];
+
+                if( gid >= range[ 0 ] && gid < range[ 1 ] ){
+
+                    var offset = gid - range[ 0 ];
+
+                    entity = {
+                        volume: o,
+                        index: offset,
+                        value: o.data[ offset ],
+                        x: o.dataPosition[ offset * 3 ],
+                        y: o.dataPosition[ offset * 3 + 1 ],
+                        z: o.dataPosition[ offset * 3 + 2 ],
+                    };
+
+                }
+
             }
 
         } );
@@ -8770,278 +9297,275 @@ NGL.GidPool = {
 }
 
 
-////////////
-// Factory
+///////////////
+// ColorMaker
 
-NGL.ColorFactory = function( type, params ){
+NGL.ColorMakerRegistry = {
 
-    this.type = type;
+    signals: {
 
-    this.structure = params.structure;
-    this.bondSet = params.bondSet;
-    this.surface = params.surface;
+        typesChanged: new signals.Signal(),
 
-    if( !this.bondSet && this.structure ){
-        this.bondSet = this.structure.bondSet;
-    }
+    },
 
-    // backwards compat
-    if( params instanceof NGL.Structure ){
-        this.structure = params;
-    }
+    scales: {
 
-    if( this.structure ){
+        "": "",
 
-        this.atomindexScale = chroma
-            //.scale( 'Spectral' )
-            //.scale( 'RdYlGn' )
-            .scale([ "red", "orange", "yellow", "green", "blue" ])
-            .mode('lch')
-            .domain( [ 0, this.structure.atomCount ]);
+        // Sequential
+        "OrRd": "[S] Orange-Red",
+        "PuBu": "[S] Purple-Blue",
+        "BuPu": "[S] Blue-Purple",
+        "Oranges": "[S] Oranges",
+        "BuGn": "[S] Blue-Green",
+        "YlOrBr": "[S] Yellow-Orange-Brown",
+        "YlGn": "[S] Yellow-Green",
+        "Reds": "[S] Reds",
+        "RdPu": "[S] Red-Purple",
+        "Greens": "[S] Greens",
+        "YlGnBu": "[S] Yellow-Green-Blue",
+        "Purples": "[S] Purples",
+        "GnBu": "[S] Green-Blue",
+        "Greys": "[S] Greys",
+        "YlOrRd": "[S] Yellow-Orange-Red",
+        "PuRd": "[S] Purple-Red",
+        "Blues": "[S] Blues",
+        "PuBuGn": "[S] Purple-Blue-Green",
 
-        this.residueindexScale = chroma
-            //.scale( 'Spectral' )
-            //.scale( 'RdYlGn' )
-            .scale([ "red", "orange", "yellow", "green", "blue" ])
-            .mode('lch')
-            .domain( [ 0, this.structure.residueCount ]);
+        // Diverging
+        "Spectral": "[D] Spectral",
+        "RdYlGn": "[D] Red-Yellow-Green",
+        "RdBu": "[D] Red-Blue",
+        "PiYG": "[D] Pink-Yellowgreen",
+        "PRGn": "[D] Purplered-Green",
+        "RdYlBu": "[D] Red-Yellow-Blue",
+        "BrBG": "[D] Brown-Bluegreen",
+        "RdGy": "[D] Red-Grey",
+        "PuOr": "[D] Purple-Orange",
 
-        this.chainindexScale = chroma
-            .scale( 'Spectral' )
-            //.scale( 'RdYlGn' )
-            //.scale([ "red", "orange", "yellow", "green", "blue" ])
-            .mode('lch')
-            .domain( [ 0, this.structure.chainCount ]);
+        // Qualitative
+        "Set1": "[Q] Set1",
+        "Set2": "[Q] Set2",
+        "Set3": "[Q] Set3",
+        "Dark2": "[Q] Dark2",
+        "Paired": "[Q] Paired",
+        "Pastel1": "[Q] Pastel1",
+        "Pastel2": "[Q] Pastel2",
+        "Accent": "[Q] Accent",
 
-        this.modelindexScale = chroma
-            //.scale( 'Spectral' )
-            //.scale( 'RdYlGn' )
-            .scale([ "red", "orange", "yellow", "green", "blue" ])
-            .mode('lch')
-            .domain( [ 0, this.structure.modelCount ]);
+        // Other
+        "roygb": "[?] Rainbow",
+        "rwb": "[?] Red-White-Blue",
 
-    }
+    },
 
-    this.chainNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-                      "abcdefghijklmnopqrstuvwxyz" +
-                      "0123456789";
+    modes: {
 
-    this.chainnameScale = chroma
-        .scale( 'Spectral' )
-        //.scale( 'RdYlGn' )
-        //.scale([ "red", "orange", "yellow", "green", "blue" ])
-        .mode('lch')
-        .domain( [ 0, 26 ]);
+        "": "",
 
-};
+        "rgb": "Red Green Blue",
+        "hsv": "Hue Saturation Value",
+        "hsl": "Hue Saturation Lightness",
+        "hsi": "Hue Saturation Intensity",
+        "lab": "CIE L*a*b*",
+        "hcl": "Hue Chroma Lightness"
 
-NGL.ColorFactory.types = {
+    },
 
-    "": "",
-    "element": "by element",
-    "resname": "by residue name",
-    "ss": "by secondary structure",
-    "atomindex": "by atom index",
-    "residueindex": "by residue index",
-    "chainindex": "by chain index",
-    "modelindex": "by model index",
-    "picking": "by picking id",
-    "random": "random",
-    "color": "color"
+    types: {},
 
-};
+    userSchemes: {},
 
-NGL.ColorFactory.getTypes = function(){
+    getScheme: function( params ){
 
-    var types = {};
+        var p = params || {};
 
-    Object.keys( NGL.ColorFactory.types ).forEach( function( k ){
-        types[ k ] = NGL.ColorFactory.types[ k ];
-    } );
+        var id = p.scheme || "";
 
-    Object.keys( NGL.ColorFactory.userSchemes ).forEach( function( k ){
-        types[ k ] = k.split( "|" )[ 1 ];
-    } );
+        var schemeClass;
 
-    return types;
+        if( id in NGL.ColorMakerRegistry.types ){
 
-};
+            schemeClass = NGL.ColorMakerRegistry.types[ id ];
 
-NGL.ColorFactory.signals = {
+        }else if( id in NGL.ColorMakerRegistry.userSchemes ){
 
-    typesChanged: new signals.Signal(),
+            schemeClass = NGL.ColorMakerRegistry.userSchemes[ id ];
 
-};
+        }else{
 
-NGL.ColorFactory.userSchemes = {};
-
-NGL.ColorFactory.addScheme = function( fn, label ){
-
-    label = label || "";
-    var id = " " + THREE.Math.generateUUID() + "|" + label;
-
-    NGL.ColorFactory.userSchemes[ id ] = fn;
-    NGL.ColorFactory.signals.typesChanged.dispatch();
-
-    return id;
-
-};
-
-NGL.ColorFactory.removeScheme = function( id ){
-
-    delete NGL.ColorFactory.userSchemes[ id ];
-    NGL.ColorFactory.signals.typesChanged.dispatch();
-
-};
-
-NGL.ColorFactory.addSelectionScheme = function( pairList, label ){
-
-    var colorList = [];
-    var selectionList = [];
-
-    pairList.forEach( function( pair ){
-
-        colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
-        selectionList.push( new NGL.Selection( pair[ 1 ] ) );
-
-    } );
-
-    var n = pairList.length;
-
-    var fn = function( atom ){
-
-        for( var i = 0; i < n; ++i ){
-
-            if( selectionList[ i ].test( atom ) ){
-
-                return colorList[ i ];
-
-            }
+            schemeClass = NGL.ColorMaker;
 
         }
 
-        return 0xFFFFFF;
+        return new schemeClass( params );
 
-    };
+    },
 
-    return NGL.ColorFactory.addScheme( fn, label );
+    getPickingScheme: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return NGL.ColorMakerRegistry.getScheme( p );
+
+    },
+
+    getTypes: function(){
+
+        var types = {};
+
+        Object.keys( NGL.ColorMakerRegistry.types ).forEach( function( k ){
+            // NGL.ColorMakerRegistry.types[ k ]
+            types[ k ] = k;
+        } );
+
+        Object.keys( NGL.ColorMakerRegistry.userSchemes ).forEach( function( k ){
+            types[ k ] = k.split( "|" )[ 1 ];
+        } );
+
+        return types;
+
+    },
+
+    getScales: function(){
+
+        return NGL.ColorMakerRegistry.scales;
+
+    },
+
+    getModes: function(){
+
+        return NGL.ColorMakerRegistry.modes;
+
+    },
+
+    addScheme: function( scheme, label ){
+
+        if( !( scheme instanceof NGL.ColorMaker ) ){
+
+            scheme = NGL.ColorMakerRegistry.createScheme( scheme, label );
+
+        }
+
+        label = label || "";
+        var id = "" + THREE.Math.generateUUID() + "|" + label;
+
+        NGL.ColorMakerRegistry.userSchemes[ id ] = scheme;
+        NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
+
+        return id;
+
+    },
+
+    removeScheme: function( id ){
+
+        delete NGL.ColorMakerRegistry.userSchemes[ id ];
+        NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
+
+    },
+
+    createScheme: function( constructor, label ){
+
+        var ColorMaker = function( params ){
+
+            NGL.ColorMaker.call( this, params );
+
+            this.label = label || "";
+
+            constructor.call( this, params );
+
+        }
+
+        ColorMaker.prototype = NGL.ColorMaker.prototype;
+
+        ColorMaker.prototype.constructor = ColorMaker;
+
+        return ColorMaker;
+
+    },
+
+    addSelectionScheme: function( pairList, label ){
+
+        return NGL.ColorMakerRegistry.addScheme( function( params ){
+
+            var colorList = [];
+            var selectionList = [];
+
+            pairList.forEach( function( pair ){
+
+                colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
+                selectionList.push( new NGL.Selection( pair[ 1 ] ) );
+
+            } );
+
+            var n = pairList.length;
+
+            this.atomColor = function( a ){
+
+                for( var i = 0; i < n; ++i ){
+
+                    if( selectionList[ i ].test( a ) ){
+
+                        return colorList[ i ];
+
+                    }
+
+                }
+
+                return 0xFFFFFF;
+
+            };
+
+        }, label );
+
+    }
+
+}
+
+
+NGL.ColorMaker = function( params ){
+
+    var p = params || {};
+
+    this.scale = p.scale || "uniform";
+    this.mode = p.mode || "hcl";
+    this.domain = p.domain || [ 0, 1 ];
+    this.value = new THREE.Color( p.value || 0xFFFFFF ).getHex();
+
+    this.structure = p.structure;
+    this.bondSet = p.bondSet;
+    this.volume = p.volume;
+    this.surface = p.surface;
 
 };
 
-NGL.ColorFactory.prototype = {
+NGL.ColorMaker.prototype = {
 
-    constructor: NGL.ColorFactory,
+    constructor: NGL.ColorMaker,
+
+    getScale: function( params ){
+
+        var p = params || {};
+
+        var scale = p.scale || this.scale;
+        if( scale === "rainbow" || scale === "roygb" ){
+            scale = [ "red", "orange", "yellow", "green", "blue" ];
+        }else if( scale === "rwb" ){
+            scale = [ "red", "white", "blue" ];
+        }
+
+        return chroma
+            .scale( scale )
+            .mode( p.mode || this.mode )
+            .domain( p.domain || this.domain )
+            .out( "num" );
+
+    },
 
     atomColor: function( a ){
 
-        var type = this.type;
-        var structure = this.structure;
-
-        var elemColors = NGL.ElementColors;
-        var resColors = NGL.ResidueColors;
-        var strucColors = NGL.StructureColors;
-
-        var defaultElemColor = NGL.ElementColors[""];
-        var defaultResColor = NGL.ResidueColors[""];
-        var defaultStrucColor = NGL.StructureColors[""];
-
-        var atomindexScale = this.atomindexScale;
-        var residueindexScale = this.residueindexScale;
-        var chainindexScale = this.chainindexScale;
-        var modelindexScale = this.modelindexScale;
-
-        var c, _c;
-
-        if( NGL.ColorFactory.userSchemes[ type ] ){
-
-            return NGL.ColorFactory.userSchemes[ type ]( a );
-
-        }
-
-        switch( type ){
-
-            case "picking":
-
-                c = NGL.GidPool.getGid( structure, a.index );
-                break;
-
-            case "element":
-
-                c = elemColors[ a.element ] || defaultElemColor;
-                break;
-
-            case "resname":
-
-                c = resColors[ a.resname ] || defaultResColor;
-                break;
-
-            case "atomindex":
-
-                _c = atomindexScale( a.index )._rgb;
-                c = _c[0] << 16 | _c[1] << 8 | _c[2];
-                break;
-
-            case "residueindex":
-
-                _c = residueindexScale( a.residue.index )._rgb;
-                c = _c[0] << 16 | _c[1] << 8 | _c[2];
-                break;
-
-            case "chainindex":
-
-                if( a.residue.chain.chainname === "" ){
-                    _c = this.chainnameScale(
-                        this.chainNames.indexOf( a.chainname ) * 10
-                    )._rgb;
-                }else{
-                    _c = chainindexScale( a.residue.chain.index )._rgb;
-                }
-                c = _c[0] << 16 | _c[1] << 8 | _c[2];
-                break;
-
-            case "modelindex":
-
-                _c = modelindexScale( a.residue.chain.model.index )._rgb;
-                c = _c[0] << 16 | _c[1] << 8 | _c[2];
-                break;
-
-            case "random":
-
-                c = Math.random() * 0xFFFFFF;
-                break;
-
-            case "ss":
-
-                if( a.ss === "h" ){
-                    c = strucColors[ "alphaHelix" ];
-                }else if( a.ss === "g" ){
-                    c = strucColors[ "3_10Helix" ];
-                }else if( a.ss === "i" ){
-                    c = strucColors[ "piHelix" ];
-                }else if( a.ss === "s" ){
-                    c = strucColors[ "betaStrand" ];
-                }else if( a.residue.isNucleic() ){
-                    c = strucColors[ "dna" ];
-                }else if( a.residue.isProtein() || a.ss === "c" ){
-                    c = strucColors[ "coil" ];
-                }else{
-                    c = defaultStrucColor;
-                }
-                break;
-
-            case undefined:
-
-                c = 0xFFFFFF;
-                break;
-
-            default:
-
-                c = type;
-                break;
-
-        }
-
-        return c;
+        return 0xFFFFFF;
 
     },
 
@@ -9062,17 +9586,7 @@ NGL.ColorFactory.prototype = {
 
     bondColor: function( b, fromTo ){
 
-        if( this.type === "picking" ){
-
-            return NGL.GidPool.getGid( this.bondSet, b.index );
-
-        }else{
-
-            var a = fromTo ? b.atom1 : b.atom2;
-
-            return this.atomColor( a );
-
-        }
+        return this.atomColor( fromTo ? b.atom1 : b.atom2 );
 
     },
 
@@ -9089,10 +9603,463 @@ NGL.ColorFactory.prototype = {
 
         return array;
 
+    },
+
+    volumeColor: function( i ){
+
+        return 0xFFFFFF;
+
+    },
+
+    volumeColorToArray: function( i, array, offset ){
+
+        var c = this.volumeColor( i );
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
+        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
+        array[ offset + 2 ] = ( c & 255 ) / 255;
+
+        return array;
+
     }
 
 };
 
+
+NGL.ValueColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var valueScale = this.getScale();
+
+    this.volumeColor = function( i ){
+
+        return valueScale( this.volume.data[ i ] );
+
+    };
+
+};
+
+NGL.ValueColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ValueColorMaker.prototype.constructor = NGL.ValueColorMaker;
+
+
+NGL.PickingColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+
+        return NGL.GidPool.getGid( this.structure, a.index );
+
+    };
+
+    this.bondColor = function( b, fromTo ){
+
+        return NGL.GidPool.getGid( this.bondSet, b.index );
+
+    };
+
+    this.volumeColor = function( i ){
+
+        return NGL.GidPool.getGid( this.volume, i );
+
+    };
+
+};
+
+NGL.PickingColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.PickingColorMaker.prototype.constructor = NGL.PickingColorMaker;
+
+
+NGL.RandomColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+
+        return Math.random() * 0xFFFFFF;
+
+    };
+
+};
+
+NGL.RandomColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.RandomColorMaker.prototype.constructor = NGL.RandomColorMaker;
+
+
+NGL.UniformColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var color = this.value;
+
+    this.atomColor = function(){
+
+        return color;
+
+    };
+
+    this.bondColor = function(){
+
+        return color;
+
+    };
+
+    this.valueColor = function(){
+
+        return color;
+
+    };
+
+};
+
+NGL.UniformColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.UniformColorMaker.prototype.constructor = NGL.UniformColorMaker;
+
+
+NGL.AtomindexColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "roygb";
+    }
+
+    if( !params.domain ){
+        this.domain = [ 0, this.structure.atomCount ];
+    }
+
+    var atomindexScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return atomindexScale( a.index );
+
+    };
+
+};
+
+NGL.AtomindexColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.AtomindexColorMaker.prototype.constructor = NGL.AtomindexColorMaker;
+
+
+NGL.ResidueindexColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "roygb";
+    }
+
+    if( !params.domain ){
+        this.domain = [ 0, this.structure.residueCount ];
+    }
+
+    var residueindexScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return residueindexScale( a.residue.index );
+
+    };
+
+};
+
+NGL.ResidueindexColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ResidueindexColorMaker.prototype.constructor = NGL.ResidueindexColorMaker;
+
+
+NGL.ChainindexColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+
+    if( !params.domain ){
+        this.domain = [ 0, this.structure.chainCount ];
+    }
+
+    var chainindexScale = this.getScale();
+
+    var chainNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                      "abcdefghijklmnopqrstuvwxyz" +
+                      "0123456789";
+
+    var chainnameScale = this.getScale( { domain: [ 0, 26 ] } );
+
+    this.atomColor = function( a ){
+
+        if( a.residue.chain.chainname === "" ){
+            return chainnameScale(
+                chainNames.indexOf( a.chainname ) * 10
+            );
+        }else{
+            return chainindexScale( a.residue.chain.index );
+        }
+
+    };
+
+};
+
+NGL.ChainindexColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ChainindexColorMaker.prototype.constructor = NGL.ChainindexColorMaker;
+
+
+NGL.ModelindexColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "roygb";
+    }
+
+    if( !params.domain ){
+        this.domain = [ 0, this.structure.modelCount ];
+    }
+
+    var modelindexScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return modelindexScale( a.residue.chain.model.index );
+
+    };
+
+};
+
+NGL.ModelindexColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ModelindexColorMaker.prototype.constructor = NGL.ModelindexColorMaker;
+
+
+NGL.SstrucColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var strucColors = NGL.StructureColors;
+    var defaultStrucColor = NGL.StructureColors[""];
+
+    this.atomColor = function( a ){
+
+        if( a.ss === "h" ){
+            return strucColors[ "alphaHelix" ];
+        }else if( a.ss === "g" ){
+            return strucColors[ "3_10Helix" ];
+        }else if( a.ss === "i" ){
+            return strucColors[ "piHelix" ];
+        }else if( a.ss === "s" ){
+            return strucColors[ "betaStrand" ];
+        }else if( a.residue.isNucleic() ){
+            return strucColors[ "dna" ];
+        }else if( a.residue.isProtein() || a.ss === "c" ){
+            return strucColors[ "coil" ];
+        }else{
+            return defaultStrucColor;
+        }
+
+    };
+
+};
+
+NGL.SstrucColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.SstrucColorMaker.prototype.constructor = NGL.SstrucColorMaker;
+
+
+NGL.ElementColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var elemColors = NGL.ElementColors;
+    var defaultElemColor = NGL.ElementColors[""];
+    var colorValue = this.value;
+    if( params.value === undefined ){
+        colorValue = NGL.ElementColors[ "C" ];
+    }
+
+    this.atomColor = function( a ){
+
+        var element = a.element;
+
+        if( element === "C" ){
+            return colorValue;
+        }else{
+            return elemColors[ element ] || defaultElemColor;
+        }
+
+    };
+
+};
+
+NGL.ElementColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ElementColorMaker.prototype.constructor = NGL.ElementColorMaker;
+
+
+NGL.ResnameColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var resColors = NGL.ResidueColors;
+    var defaultResColor = NGL.ResidueColors[""];
+
+    this.atomColor = function( a ){
+
+        return resColors[ a.resname ] || defaultResColor;
+
+    };
+
+};
+
+NGL.ResnameColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.ResnameColorMaker.prototype.constructor = NGL.ResnameColorMaker;
+
+
+NGL.BfactorColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "OrRd";
+    }
+
+    if( !params.domain ){
+
+        var bfactor;
+        var min = Infinity;
+        var max = -Infinity;
+
+        if( params.sele ){
+
+            var selection = new NGL.Selection( params.sele );
+
+            this.structure.eachAtom( function( a ){
+
+                bfactor = a.bfactor;
+                min = Math.min( min, bfactor );
+                max = Math.max( max, bfactor );
+
+            }, selection );
+
+        }else{
+
+            var atoms = this.structure.atoms;
+            var n = atoms.length;
+
+            for( var i = 0; i < n; ++i ){
+
+                bfactor = atoms[ i ].bfactor;
+                min = Math.min( min, bfactor );
+                max = Math.max( max, bfactor );
+
+            }
+
+        }
+
+        this.domain = [ min, max ];
+
+    }
+
+    var bfactorScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return bfactorScale( a.bfactor );
+
+    };
+
+};
+
+NGL.BfactorColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.BfactorColorMaker.prototype.constructor = NGL.BfactorColorMaker;
+
+
+NGL.HydrophobicityColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "RdYlGn";
+    }
+
+    var idx = 0;  // 0: DGwif, 1: DGwoct, 2: Oct-IF
+
+    var resHF = {};
+    for( var name in NGL.ResidueHydrophobicity ){
+        resHF[ name ] = NGL.ResidueHydrophobicity[ name ][ idx ];
+    }
+    var defaultResHF = resHF[""];
+
+    if( !params.domain ){
+
+        var val;
+        var min = Infinity;
+        var max = -Infinity;
+
+        for( var name in resHF ){
+
+            val = resHF[ name ];
+            min = Math.min( min, val );
+            max = Math.max( max, val );
+
+        }
+
+        this.domain = [ min, 0, max ];
+
+    }
+
+    var hfScale = this.getScale();
+
+    this.atomColor = function( a ){
+
+        return hfScale( resHF[ a.resname ] || defaultResHF );
+
+    };
+
+};
+
+NGL.HydrophobicityColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.HydrophobicityColorMaker.prototype.constructor = NGL.HydrophobicityColorMaker;
+
+
+NGL.ColorMakerRegistry.types = {
+
+    "": NGL.ColorMaker,
+    "picking": NGL.PickingColorMaker,
+    "random": NGL.RandomColorMaker,
+    "uniform": NGL.UniformColorMaker,
+    "atomindex": NGL.AtomindexColorMaker,
+    "residueindex": NGL.ResidueindexColorMaker,
+    "chainindex": NGL.ChainindexColorMaker,
+    "modelindex": NGL.ModelindexColorMaker,
+    "sstruc": NGL.SstrucColorMaker,
+    "element": NGL.ElementColorMaker,
+    "resname": NGL.ResnameColorMaker,
+    "bfactor": NGL.BfactorColorMaker,
+    "hydrophobicity": NGL.HydrophobicityColorMaker,
+    "value": NGL.ValueColorMaker,
+
+};
+
+
+////////////
+// Factory
 
 NGL.RadiusFactory = function( type, scale ){
 
@@ -9555,21 +10522,23 @@ NGL.AtomSet.prototype = {
 
     },
 
-    getColorFactory: function( type ){
+    getColorMaker: function( params ){
 
-        return new NGL.ColorFactory( type, {
-            "structure": this.structure
-        } );
+        var p = params || {};
+        p.structure = this.structure;
+        p.bondSet = this.structure.bondSet;
+
+        return NGL.ColorMakerRegistry.getScheme( p );
 
     },
 
-    atomColor: function( selection, type ){
+    atomColor: function( selection, params ){
 
         // NGL.time( "atomColor" );
 
         // TODO cache
         var c, color;
-        var colorFactory = this.getColorFactory( type );
+        var colorMaker = this.getColorMaker( params );
 
         if( selection ){
             color = [];
@@ -9581,7 +10550,7 @@ NGL.AtomSet.prototype = {
 
         this.eachAtom( function( a ){
 
-            colorFactory.atomColorToArray( a, color, i );
+            colorMaker.atomColorToArray( a, color, i );
             i += 3;
 
         }, selection );
@@ -9591,6 +10560,15 @@ NGL.AtomSet.prototype = {
         // NGL.timeEnd( "atomColor" );
 
         return color;
+
+    },
+
+    atomPickingColor: function( selection, params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.atomColor( selection, p );
 
     },
 
@@ -9869,7 +10847,7 @@ NGL.AtomSet.prototype = {
 
     },
 
-    bondColor: function( selection, fromTo, type ){
+    bondColor: function( selection, fromTo, params ){
 
         // NGL.time( "NGL.AtomSet.bondColor" );
 
@@ -9877,13 +10855,13 @@ NGL.AtomSet.prototype = {
         var color = [];
 
         var c;
-        var colorFactory = this.getColorFactory( type );
+        var colorMaker = this.getColorMaker( params );
 
         if( selection ){
 
             this.eachBond( function( b ){
 
-                colorFactory.bondColorToArray( b, fromTo, color, i );
+                colorMaker.bondColorToArray( b, fromTo, color, i );
                 i += 3;
 
             }, selection );
@@ -9895,7 +10873,7 @@ NGL.AtomSet.prototype = {
 
             for( var j = 0; j < n; ++j ){
 
-                colorFactory.bondColorToArray( bonds[ j ], fromTo, color, i );
+                colorMaker.bondColorToArray( bonds[ j ], fromTo, color, i );
                 i += 3;
 
             }
@@ -9905,6 +10883,15 @@ NGL.AtomSet.prototype = {
         // NGL.timeEnd( "NGL.AtomSet.bondColor" );
 
         return new Float32Array( color );
+
+    },
+
+    bondPickingColor: function( selection, fromTo, params ){
+
+        var p = Object.assign( {}, params );
+        p.scheme = "picking";
+
+        return this.bondColor( selection, fromTo, p );
 
     },
 
@@ -10101,17 +11088,21 @@ NGL.BondSet.prototype = {
 
     },
 
-    getColorFactory: function( type ){
+    getColorMaker: function( params ){
 
-        return new NGL.ColorFactory( type, {
-            "bondSet": this
-        } );
+        var p = params || {};
+        p.structure = this.structure;
+        p.bondSet = this;
+
+        return NGL.ColorMakerRegistry.getScheme( p );
 
     },
 
     bondPosition: NGL.AtomSet.prototype.bondPosition,
 
     bondColor: NGL.AtomSet.prototype.bondColor,
+
+    bondPickingColor: NGL.AtomSet.prototype.bondPickingColor,
 
     bondRadius: NGL.AtomSet.prototype.bondRadius,
 
@@ -10476,6 +11467,8 @@ NGL.Structure.prototype = {
         this.center = new THREE.Vector3();
         this.boundingBox = new THREE.Box3();
 
+        NGL.GidPool.updateObject( this, true );
+
     },
 
     setDefaultAssembly: function( value ){
@@ -10747,6 +11740,11 @@ NGL.Structure.prototype = {
             n = r.atomCount;
             n1 = n - 1;
 
+            if( n > 500 ){
+                NGL.warn( "more than 500 atoms, skip residue for auto-bonding" );
+                return;
+            }
+
             resname = r.resname;
             equalAtomnames = false;
 
@@ -10768,10 +11766,6 @@ NGL.Structure.prototype = {
                         }
 
                     }
-
-                }else{
-
-                    equalAtomnames = false;
 
                 }
 
@@ -11164,77 +12158,11 @@ NGL.Structure.prototype = {
 
     },
 
-    toPdb: function(){
+    copy: function( s ){
 
-        // http://www.bmsc.washington.edu/CrystaLinks/man/pdb/part_62.html
+        // no properties to copy
 
-        // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
-        // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
-
-        // use sprintf %8.3f for coords
-        // printf PDB2 ("ATOM  %5d %4s %3s A%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n", $index,$atname[$i],$resname[$i],$resnum[$i],$x[$i],$y[$i],$z[$i],$occ[$i],$bfac[$i]),$segid[$i],$element[$i];
-
-        function DEF( x, y ){
-            return x !== undefined ? x : y;
-        }
-
-        var pdbFormatString =
-            "ATOM  %5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s\n";
-
-        return function(){
-
-            var ia;
-            var im = 1;
-            var pdbRecords = [];
-
-            // FIXME multiline if title line longer than 80 chars
-            pdbRecords.push( sprintf( "TITEL %-74s\n", this.name ) );
-
-            if( this.trajectory ){
-                pdbRecords.push( sprintf(
-                    "REMARK %-73s\n",
-                    "Trajectory '" + this.trajectory.name + "'"
-                ) );
-                pdbRecords.push( sprintf(
-                    "REMARK %-73s\n",
-                    "Frame " + this.trajectory.frame + ""
-                ) );
-            }
-
-            this.eachModel( function( m ){
-
-                pdbRecords.push( sprintf( "MODEL %-74d\n", im++ ) );
-
-                m.eachAtom( function( a ){
-
-                    pdbRecords.push(
-                        sprintf(
-                            pdbFormatString,
-
-                            a.serial, a.atomname, a.resname,
-                            DEF( a.chainname, " " ),
-                            a.resno,
-                            a.x, a.y, a.z,
-                            DEF( a.occurence, 1.0 ),
-                            DEF( a.bfactor, 0.0 ),
-                            DEF( a.segid, "" ),
-                            DEF( a.element, "" )
-                        )
-                    );
-
-                } );
-
-                pdbRecords.push( sprintf( "%-80s\n", "ENDMDL" ) );
-
-            } );
-
-            pdbRecords.push( sprintf( "%-80s\n", "END" ) );
-
-            return pdbRecords.join( "" );
-
-        }
-
-    }(),
+    },
 
     clone: function(){
 
@@ -11707,6 +12635,12 @@ NGL.Model.prototype = {
 
     },
 
+    copy: function( m ){
+
+        // no properties to copy
+
+    },
+
     clone: function( s ){
 
         var m = new NGL.Model( s );
@@ -12038,6 +12972,12 @@ NGL.Chain.prototype = {
 
     },
 
+    copy: function( c ){
+
+        this.chainname = c.chainname;
+
+    },
+
     clone: function( m ){
 
         var c = new NGL.Chain( m );
@@ -12109,6 +13049,8 @@ NGL.Fiber = function( residues, structure ){
 
     }
 
+    this.computedAtoms = {};
+
 };
 
 NGL.Fiber.prototype = {
@@ -12148,6 +13090,90 @@ NGL.Fiber.prototype = {
     getBackboneType: function( position ){
 
         return this.residues[ 0 ].getBackboneType( position );
+
+    },
+
+    computeAtom: function( type ){
+
+        var getAtomFn;
+
+        switch( type ){
+
+            case "trace":
+
+                getAtomFn = function( r ){
+                    return r.getTraceAtom();
+                }
+                break;
+
+            case "direction1":
+
+                getAtomFn = function( r ){
+                    return r.getDirectionAtom1();
+                }
+                break;
+
+            case "direction2":
+
+                getAtomFn = function( r ){
+                    return r.getDirectionAtom2();
+                }
+                break;
+
+            default:
+
+                getAtomFn = function( r ){
+                    return r.getAtomByName( type );
+                }
+                return;
+
+        }
+
+        var n = this.residueCount;
+
+        if( !this.computedAtoms[ type ] ){
+
+            this.computedAtoms[ type ] = new Array( n );
+
+        }
+
+        var ca = this.computedAtoms[ type ];
+
+        for( var i = 0, r; i < n; ++i ){
+
+            ca[ i ] = getAtomFn( this.residues[ i ] );
+
+        }
+
+    },
+
+    eachAtomN: function( n, callback, type ){
+
+        if( this.residues.length < n ) return;
+
+        if( !this.computedAtoms[ type ] ) this.computeAtom( type );
+
+        var atoms = this.computedAtoms[ type ];
+        var array = new Array( n );
+        var len = atoms.length;
+        var i;
+
+        for( i = 0; i < n; i++ ){
+
+            array[ i ] = atoms[ i ];
+
+        }
+
+        callback.apply( this, array );
+
+        for( i = n; i < len; i++ ){
+
+            array.shift();
+            array.push( atoms[ i ] );
+
+            callback.apply( this, array );
+
+        }
 
     }
 
@@ -12727,6 +13753,14 @@ NGL.Residue.prototype = {
 
     },
 
+    copy: function( r ){
+
+        this.resno = r.resno;
+        this.resname = r.resname;
+        this.ss = r.ss;
+
+    },
+
     clone: function( c ){
 
         var r = new NGL.Residue( c );
@@ -12949,7 +13983,7 @@ NGL.Atom.prototype = {
 
     copy: function( atom ){
 
-        this.index = atom.index;
+        // this.index = atom.index;
         this.atomno = atom.atomno;
         this.resname = atom.resname;
         this.x = atom.x;
@@ -13768,7 +14802,11 @@ NGL.ProxyAtom.prototype = {
 
     copy: function( atom, index ){
 
-        this.index = index;
+        if( index !== undefined ){
+            this.index = index;
+        }else if( this.index === undefined ){
+            NGL.warn( "NGL.ProxyAtom.copy no index set" );
+        }
 
         this.atomno = atom.atomno;
         this.resname = atom.resname;
@@ -13856,45 +14894,30 @@ NGL.StructureSubset.prototype._build = function(){
 
     var atomIndexDict = {};
 
+    _s.copy( structure );
+
     structure.eachModel( function( m ){
 
         _m = _s.addModel();
+        _m.copy( m );
 
         m.eachChain( function( c ){
 
             _c = _m.addChain();
-            _c.chainname = c.chainname;
+            _c.copy( c );
 
             c.eachResidue( function( r ){
 
                 _r = _c.addResidue();
-                _r.resno = r.resno;
-                _r.resname = r.resname;
-                _r.ss = r.ss;
+                _r.copy( r );
 
                 r.eachAtom( function( a ){
 
                     // TODO by reference? index? bonds? residue?
 
                     _a = _r.addAtom();
-                    _a.atomno = a.atomno;
-                    _a.resname = a.resname;
-                    _a.x = a.x;
-                    _a.y = a.y;
-                    _a.z = a.z;
-                    _a.element = a.element;
-                    _a.chainname = a.chainname;
-                    _a.resno = a.resno;
-                    _a.serial = a.serial;
-                    _a.ss = a.ss;
-                    _a.vdw = a.vdw;
-                    _a.covalent = a.covalent;
-                    _a.hetero = a.hetero;
-                    _a.bfactor = a.bfactor;
-                    _a.bonds = [];
-                    _a.altloc = a.altloc;
-                    _a.atomname = a.atomname;
-                    _a.modelindex = a.modelindex;
+                    _a.copy( a );
+                    _a.index = atoms.length;
 
                     atomIndexDict[ a.index ] = _a;
                     atoms.push( _a );
@@ -16291,12 +17314,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         // NGL.time( "NGL.RemoteTrajectory._loadFrame" );
 
-        var scope = this;
-
         var request = new XMLHttpRequest();
 
-        var url = "../traj/frame/" + i + "/" + this.trajPath;
-        var params = "atomIndices=" + this.atomIndices.join(";");
+        var ds = NGL.DatasourceRegistry.trajectory;
+        var url = ds.getFrameUrl( this.trajPath, i );
+        var params = ds.getFrameParams( this.trajPath, this.atomIndices );
 
         request.open( "POST", url, true );
         request.responseType = "arraybuffer";
@@ -16308,8 +17330,7 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             // NGL.timeEnd( "NGL.RemoteTrajectory._loadFrame" );
 
-            var arrayBuffer = this.response;
-
+            var arrayBuffer = request.response;
             if( !arrayBuffer ){
                 NGL.error( "empty arrayBuffer for '" + url + "'" );
                 return;
@@ -16320,17 +17341,12 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
             var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
             var coords = new Float32Array( arrayBuffer, 11 * 4 );
 
-            // NGL.log( time );
-
-            scope.process( i, box, coords, numframes );
-
+            this.process( i, box, coords, numframes );
             if( typeof callback === "function" ){
-
                 callback();
-
             }
 
-        }, false );
+        }.bind( this ), false );
 
         request.send( params );
 
@@ -16338,16 +17354,13 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
     getNumframes: function(){
 
-        var scope = this;
-
         var loader = new THREE.XHRLoader();
-        var url = "../traj/numframes/" + this.trajPath;
+        var ds = NGL.DatasourceRegistry.trajectory;
+        var url = ds.getNumframesUrl( this.trajPath );
 
         loader.load( url, function( n ){
-
-            scope.setNumframes( parseInt( n ) );
-
-        });
+            this.setNumframes( parseInt( n ) );
+        }.bind( this ) );
 
     },
 
@@ -16360,13 +17373,11 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
         NGL.time( "loadPath" );
 
-        var scope = this;
-
         var request = new XMLHttpRequest();
 
-        var url = "../traj/path/" + index + "/" + this.trajPath;
+        var ds = NGL.DatasourceRegistry.trajectory;
+        var url = ds.getPathUrl( this.trajPath, index );
         var params = "";
-        // var params = "frameIndices=" + this.atomIndices.join(";");
 
         request.open( "POST", url, true );
         request.responseType = "arraybuffer";
@@ -16378,22 +17389,18 @@ NGL.RemoteTrajectory.prototype = NGL.createObject(
 
             NGL.timeEnd( "loadPath" );
 
-            var arrayBuffer = this.response;
-
+            var arrayBuffer = request.response;
             if( !arrayBuffer ){
                 NGL.error( "empty arrayBuffer for '" + url + "'" );
                 return;
             }
 
             var path = new Float32Array( arrayBuffer );
-
-            scope.pathCache[ index ] = path;
-
             // NGL.log( path )
-
+            this.pathCache[ index ] = path;
             callback( path );
 
-        }, false );
+        }.bind( this ), false );
 
         request.send( params );
 
@@ -16746,21 +17753,51 @@ NGL.TrajectoryPlayer.prototype = {
 ////////////
 // Surface
 
-NGL.Surface = function( name, path, geometry ){
+NGL.Surface = function( name, path, data ){
 
     this.name = name;
     this.path = path;
+    this.info = {};
 
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
-    if( geometry ) this.fromGeometry( geometry );
+    if( data instanceof THREE.Geometry ||
+        data instanceof THREE.BufferGeometry ||
+        data instanceof THREE.Group
+    ){
+
+        this.fromGeometry( data );
+
+    }else if( data ){
+
+        this.set(
+            data.position,
+            data.index,
+            data.normal,
+            data.color,
+            data.atomindex
+        );
+
+    }
 
 };
 
 NGL.Surface.prototype = {
 
     constructor: NGL.Surface,
+
+    set: function( position, index, normal, color, atomindex ){
+
+        this.position = position;
+        this.index = index;
+        this.normal = normal;
+        this.color = color;
+        this.atomindex = atomindex;
+
+        this.size = position.length / 3;
+
+    },
 
     fromGeometry: function( geometry ){
 
@@ -16820,11 +17857,7 @@ NGL.Surface.prototype = {
 
         }
 
-        this.position = position;
-        this.index = index;
-        this.normal = normal;
-
-        this.size = position.length / 3;
+        this.set( position, index, normal, color, undefined );
 
         NGL.timeEnd( "NGL.GeometrySurface.setGeometry" );
 
@@ -16836,14 +17869,49 @@ NGL.Surface.prototype = {
 
     },
 
-    getColor: function( color ){
+    getColor: function( params ){
 
-        var tc = new THREE.Color( color );
-        var col = NGL.Utils.uniformArray3(
-            this.size, tc.r, tc.g, tc.b
-        );
+        var p = params || {};
 
-        return col;
+        var n = this.size;
+        var array;
+
+        if( this.atomindex ){
+
+            p.volume = this;
+
+            var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+
+            array = new Float32Array( n * 3 );
+
+            var atoms = p.structure.atoms;
+            var atomindex = this.atomindex;
+
+            for( var i = 0, a; i < n; ++i ){
+
+                a = atoms[ atomindex[ i ] ];
+                colorMaker.atomColorToArray( a, array, i * 3 );
+
+            }
+
+        }else{
+
+            var tc = new THREE.Color( p.value );
+
+            array = NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b );
+
+        }
+
+        return array;
+
+    },
+
+    getPickingColor: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.getColor( p );
 
     },
 
@@ -16853,33 +17921,63 @@ NGL.Surface.prototype = {
 
     },
 
+    getSize: function( size ){
+
+        return NGL.Utils.uniformArray( this.size, size );
+
+    },
+
     getIndex: function(){
 
         return this.index;
 
     },
 
-    filterData: function( minValue, maxValue ){
+    getFilteredIndex: function( sele, atoms ){
 
-        // nothing to do
+        if( sele && this.atomindex ){
+
+            var selection = new NGL.Selection( sele );
+            var filteredIndex = [];
+
+            var atomindex = this.atomindex;
+            var index = this.index;
+            var n = index.length;
+            var test = selection.test;
+
+            for( var i = 0; i < n; i+=3 ){
+
+                var idx1 = index[ i     ];
+                var idx2 = index[ i + 1 ];
+                var idx3 = index[ i + 2 ];
+
+                var a1 = atoms[ atomindex[ idx1 ] ];
+                var a2 = atoms[ atomindex[ idx2 ] ];
+                var a3 = atoms[ atomindex[ idx3 ] ];
+
+                if( test( a1 ) && test( a2 ) && test( a3 ) ){
+
+                    filteredIndex.push( idx1 );
+                    filteredIndex.push( idx2 );
+                    filteredIndex.push( idx3 );
+
+                }
+
+            }
+
+            return new Uint32Array( filteredIndex );
+
+        }else{
+
+            return this.index;
+
+        }
 
     },
 
-    getDataPosition: function(){
+    getAtomindex: function(){
 
-        return this.getPosition.apply( this, arguments );
-
-    },
-
-    getDataColor: function(){
-
-        return this.getColor.apply( this, arguments );
-
-    },
-
-    getDataSize: function( size ){
-
-        return NGL.Utils.uniformArray( this.size, size );
+        return this.atomindex;
 
     },
 
@@ -16895,10 +17993,13 @@ NGL.Surface.prototype = {
 
             name: this.name,
             path: this.path,
+            info: this.info,
 
             position: this.position,
             index: this.index,
             normal: this.normal,
+            color: this.color,
+            atomindex: this.atomindex,
 
             size: this.size,
 
@@ -16918,10 +18019,13 @@ NGL.Surface.prototype = {
 
         this.name = input.name;
         this.path = input.path;
+        this.info = input.info;
 
         this.position = input.position;
         this.index = input.index;
         this.normal = input.normal;
+        this.color = input.color;
+        this.atomindex = input.atomindex;
 
         this.size = input.size;
 
@@ -16942,10 +18046,94 @@ NGL.Surface.prototype = {
         if( this.position ) transferable.push( this.position.buffer );
         if( this.index ) transferable.push( this.index.buffer );
         if( this.normal ) transferable.push( this.normal.buffer );
+        if( this.color ) transferable.push( this.color.buffer );
+        if( this.atomindex ) transferable.push( this.atomindex.buffer );
 
         return transferable;
 
+    },
+
+    dispose: function(){
+
+        //
+
     }
+
+};
+
+
+/////////
+// Grid
+
+NGL.Grid = function( length, width, height, dataCtor, elemSize ){
+
+    dataCtor = dataCtor || Int32Array;
+    elemSize = elemSize || 1;
+
+    var j;
+
+    var data = new dataCtor( length * width * height * elemSize );
+
+    function index( x, y, z ){
+
+        return ( ( ( ( x * width ) + y ) * height ) + z ) * elemSize;
+
+    }
+
+    this.data = data;
+
+    this.index = index;
+
+    this.set = function( x, y, z ){
+
+        var i = index( x, y, z );
+
+        for( j = 0; j < elemSize; ++j ){
+            data[ i + j ] = arguments[ 3 + j ];
+        }
+
+    };
+
+    this.toArray = function( x, y, z, array, offset ){
+
+        var i = index( x, y, z );
+
+        if ( array === undefined ) array = [];
+        if ( offset === undefined ) offset = 0;
+
+        for( j = 0; j < elemSize; ++j ){
+            array[ j ] = data[ i + j ];
+        }
+
+    };
+
+    this.fromArray = function( x, y, z, array, offset ){
+
+        var i = index( x, y, z );
+
+        if ( offset === undefined ) offset = 0;
+
+        for( j = 0; j < elemSize; ++j ){
+            data[ i + j ] = array[ offset + j ];
+        }
+
+    };
+
+    this.copy = function( grid ){
+
+        this.data.set( grid.data );
+
+    };
+
+    this.clone = function(){
+
+        return new NGL.Grid(
+
+            length, width, height, dataCtor, elemSize
+
+        ).copy( this );
+
+    };
 
 };
 
@@ -16953,7 +18141,7 @@ NGL.Surface.prototype = {
 ///////////
 // Volume
 
-NGL.Worker.add( "surf", function( e ){
+NGL.WorkerRegistry.add( "surf", function( e, callback ){
 
     NGL.time( "WORKER surf" );
 
@@ -16965,38 +18153,39 @@ NGL.Worker.add( "surf", function( e ){
 
     if( d.vol ) vol.fromJSON( d.vol );
 
-    vol.generateSurface( p.isolevel, p.smooth );
+    if( p ){
+        var surface = vol.getSurface(
+            p.isolevel, p.smooth, p.center, p.size
+        );
+    }
 
     NGL.timeEnd( "WORKER surf" );
 
-    var meshData = {
-        position: vol.position,
-        index: vol.index,
-        normal: vol.normal
-    };
-
-    var transferable = [
-        vol.position.buffer,
-        vol.index.buffer
-    ];
-
-    if( vol.normal ) transferable.push( vol.normal.buffer );
-
-    self.postMessage( meshData, transferable );
+    if( p ){
+        callback( surface.toJSON(), surface.getTransferable() );
+    }else{
+        callback();
+    }
 
 } );
 
 
-NGL.Volume = function( name, path, data, nx, ny, nz ){
+NGL.Volume = function( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.name = name;
     this.path = path;
 
     this.matrix = new THREE.Matrix4();
+    this.normalMatrix = new THREE.Matrix3();
+    this.inverseMatrix = new THREE.Matrix4();
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
-    this.setData( data, nx, ny, nz );
+    this.setData( data, nx, ny, nz, dataAtomindex );
+
+    if( this.__data.length <= Math.pow( 10, 7 ) ){
+        NGL.GidPool.addObject( this );
+    }
 
 };
 
@@ -17004,7 +18193,7 @@ NGL.Volume.prototype = {
 
     constructor: NGL.Volume,
 
-    setData: function( data, nx, ny, nz ){
+    setData: function( data, nx, ny, nz, dataAtomindex ){
 
         this.nx = nx || 1;
         this.ny = ny || 1;
@@ -17012,6 +18201,8 @@ NGL.Volume.prototype = {
 
         this.data = data || new Float32Array( 1 );
         this.__data = this.data;
+
+        this.setDataAtomindex( dataAtomindex );
 
         delete this.mc;
 
@@ -17030,6 +18221,13 @@ NGL.Volume.prototype = {
         delete this.__dataRms;
 
         if( this.worker ) this.worker.terminate();
+
+        if( this.__data.length <= Math.pow( 10, 7 ) ){
+            NGL.GidPool.updateObject( this, true );
+        }else{
+            NGL.warn( "Volume too large (>10^7), not adding to GidPool" );
+            NGL.GidPool.removeObject( this );
+        }
 
     },
 
@@ -17058,27 +18256,82 @@ NGL.Volume.prototype = {
         bb.applyMatrix4( this.matrix );
         bb.center( this.center );
 
+        // make normal matrix
+
+        var me = this.matrix.elements;
+        var r0 = new THREE.Vector3( me[0], me[1], me[2] );
+        var r1 = new THREE.Vector3( me[4], me[5], me[6] );
+        var r2 = new THREE.Vector3( me[8], me[9], me[10] );
+        var cp = new THREE.Vector3();
+        //        [ r0 ]       [ r1 x r2 ]
+        // M3x3 = [ r1 ]   N = [ r2 x r0 ]
+        //        [ r2 ]       [ r0 x r1 ]
+        var ne = this.normalMatrix.elements;
+        cp.crossVectors( r1, r2 );
+        ne[ 0 ] = cp.x;
+        ne[ 1 ] = cp.y;
+        ne[ 2 ] = cp.z;
+        cp.crossVectors( r2, r0 );
+        ne[ 3 ] = cp.x;
+        ne[ 4 ] = cp.y;
+        ne[ 5 ] = cp.z;
+        cp.crossVectors( r0, r1 );
+        ne[ 6 ] = cp.x;
+        ne[ 7 ] = cp.y;
+        ne[ 8 ] = cp.z;
+
+        this.inverseMatrix.getInverse( this.matrix );
+
     },
 
-    generateSurface: function( isolevel, smooth ){
+    setDataAtomindex: function( dataAtomindex ){
 
-        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
+        this.dataAtomindex = dataAtomindex;
+        this.__dataAtomindex = this.dataAtomindex;
+
+        delete this.__dataAtomindexBuffer;
+
+    },
+
+    getBox: function( center, size, target ){
+
+        if( !target ) target = new THREE.Box3();
+
+        target.set( center, center );
+        target.expandByScalar( size );
+        target.applyMatrix4( this.inverseMatrix );
+
+        target.min.round();
+        target.max.round();
+
+        return target;
+
+    },
+
+    getSurface: function( isolevel, smooth, center, size ){
+
+        isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
-
-        if( isolevel === this.__isolevel && smooth === this.__smooth ){
-
-            // already generated
-            return;
-
-        }
+        center = center;
+        size = size;
 
         //
 
         if( this.mc === undefined ){
 
             this.mc = new NGL.MarchingCubes2(
-                this.__data, this.nx, this.ny, this.nz
+                this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex
             );
+
+        }
+
+        var box;
+
+        if( center && size ){
+
+            if( !this.__box ) this.__box = new THREE.Box3();
+            box = this.__box;
+            this.getBox( center, size, box );
 
         }
 
@@ -17086,134 +18339,99 @@ NGL.Volume.prototype = {
 
         if( smooth ){
 
-            sd = this.mc.triangulate( isolevel, true );
+            sd = this.mc.triangulate( isolevel, true, box );
             NGL.laplacianSmooth( sd.position, sd.index, smooth, true );
+
+            var bg = new THREE.BufferGeometry();
+            bg.addAttribute( "position", new THREE.BufferAttribute( sd.position, 3 ) );
+            bg.addIndex( new THREE.BufferAttribute( sd.index, 1 ) );
+            bg.computeVertexNormals();
+            sd.normal = bg.attributes.normal.array;
+            bg.dispose();
 
         }else{
 
-            sd = this.mc.triangulate( isolevel );
+            sd = this.mc.triangulate( isolevel, false, box );
 
         }
 
-        this.position = sd.position;
-        this.normal = sd.normal;
-        this.index = sd.index;
+        this.matrix.applyToVector3Array( sd.position );
 
-        this.size = this.position.length / 3;
+        if( sd.normal ){
 
-        this.matrix.applyToVector3Array( this.position );
-
-        if( this.normal ){
-
-            var me = this.matrix.elements;
-            var r0 = new THREE.Vector3( me[0], me[1], me[2] );
-            var r1 = new THREE.Vector3( me[4], me[5], me[6] );
-            var r2 = new THREE.Vector3( me[8], me[9], me[10] );
-            var cp = new THREE.Vector3();
-            //        [ r0 ]       [ r1 x r2 ]
-            // M3x3 = [ r1 ]   N = [ r2 x r0 ]
-            //        [ r2 ]       [ r0 x r1 ]
-            var normalMatrix = new THREE.Matrix3();
-            var ne = normalMatrix.elements;
-            cp.crossVectors( r1, r2 );
-            ne[ 0 ] = cp.x;
-            ne[ 1 ] = cp.y;
-            ne[ 2 ] = cp.z;
-            cp.crossVectors( r2, r0 );
-            ne[ 3 ] = cp.x;
-            ne[ 4 ] = cp.y;
-            ne[ 5 ] = cp.z;
-            cp.crossVectors( r0, r1 );
-            ne[ 6 ] = cp.x;
-            ne[ 7 ] = cp.y;
-            ne[ 8 ] = cp.z;
-            normalMatrix.applyToVector3Array( this.normal );
+            this.normalMatrix.applyToVector3Array( sd.normal );
 
         }
 
-        this.__isolevel = isolevel;
-        this.__smooth = smooth;
+        var surface = new NGL.Surface( "", "", sd );
+        surface.info[ "isolevel" ] = isolevel;
+        surface.info[ "smooth" ] = smooth;
+
+        return surface;
 
     },
 
-    generateSurfaceWorker: function( isolevel, smooth, callback ){
+    getSurfaceWorker: function( isolevel, smooth, center, size, callback ){
 
-        isolevel = isNaN( isolevel ) ? this.getIsolevelForSigma( 2 ) : isolevel;
+        isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
 
         //
 
-        if( isolevel === this.__isolevel && smooth === this.__smooth ){
-
-            // already generated
-            callback();
-
-        }else if( NGL.useWorker && typeof Worker !== "undefined" &&
+        if( NGL.useWorker && typeof Worker !== "undefined" &&
             typeof importScripts !== 'function'
         ){
 
-            var __timeName = "NGL.Volume.generateSurfaceWorker " + this.name;
-            NGL.time( __timeName );
-
-            var vol = undefined;
-
-            if( this.worker === undefined ){
-
-                vol = this.toJSON();
-                this.worker = NGL.Worker.make( "surf" );
-
+            if( this.workerPool === undefined ){
+                this.workerPool = new NGL.WorkerPool( "surf", 2 );
             }
 
-            this.worker.onerror = function( e ){
+            var worker = this.workerPool.getNextWorker();
 
-                console.warn(
-                    "NGL.Volume.generateSurfaceWorker error - trying without worker", e
-                );
-                this.worker.terminate();
-                this.worker = undefined;
+            worker.post(
 
-                this.generateSurface( isolevel, smooth );
-                callback();
+                {
+                    vol: worker.postCount === 0 ? this.toJSON() : null,
+                    params: {
+                        isolevel: isolevel,
+                        smooth: smooth,
+                        center: center,
+                        size: size
+                    }
+                },
 
-            }.bind( this );
+                undefined,
 
-            this.worker.onmessage = function( e ){
+                function( e ){
 
-                NGL.timeEnd( __timeName );
+                    var surface = NGL.fromJSON( e.data );
+                    callback( surface );
 
-                // if( NGL.debug ) console.log( e.data );
+                },
 
-                this.position = e.data.position;
-                this.normal = e.data.normal;
-                this.index = e.data.index;
+                function( e ){
 
-                this.size = this.position.length / 3;
+                    console.warn(
+                        "NGL.Volume.generateSurfaceWorker error - trying without worker", e
+                    );
 
-                this.__isolevel = isolevel;
-                this.__smooth = smooth;
+                    var surface = this.getSurface( isolevel, smooth, center, size );
+                    callback( surface );
 
-                callback();
+                }.bind( this )
 
-            }.bind( this );
-
-            this.worker.postMessage( {
-                vol: vol,
-                params: {
-                    isolevel: isolevel,
-                    smooth: smooth
-                }
-            } );
+            );
 
         }else{
 
-            this.generateSurface( isolevel, smooth );
-            callback();
+            var surface = this.getSurface( isolevel, smooth, center, size );
+            callback( surface );
 
         }
 
     },
 
-    getIsolevelForSigma: function( sigma ){
+    getValueForSigma: function( sigma ){
 
         sigma = sigma !== undefined ? sigma : 2;
 
@@ -17221,46 +18439,15 @@ NGL.Volume.prototype = {
 
     },
 
-    getSigmaForIsolevel: function( isolevel ){
+    getSigmaForValue: function( value ){
 
-        isolevel = isolevel !== undefined ? isolevel : 0;
+        value = value !== undefined ? value : 0;
 
-        return ( isolevel - this.getDataMean() ) / this.getDataRms();
-
-    },
-
-    getPosition: function(){
-
-        return this.position;
+        return ( value - this.getDataMean() ) / this.getDataRms();
 
     },
 
-    getColor: function( color ){
-
-        // re-use array
-
-        var tc = new THREE.Color( color );
-        var col = NGL.Utils.uniformArray3(
-            this.size, tc.r, tc.g, tc.b
-        );
-
-        return col;
-
-    },
-
-    getNormal: function(){
-
-        return this.normal;
-
-    },
-
-    getIndex: function(){
-
-        return this.index;
-
-    },
-
-    filterData: function( minValue, maxValue ){
+    filterData: function( minValue, maxValue, outside ){
 
         if( isNaN( minValue ) && this.header ){
             minValue = this.header.DMEAN + 2.0 * this.header.ARMS;
@@ -17268,6 +18455,7 @@ NGL.Volume.prototype = {
 
         minValue = ( minValue !== undefined && !isNaN( minValue ) ) ? minValue : -Infinity;
         maxValue = maxValue !== undefined ? maxValue : Infinity;
+        outside = outside || false;
 
         if( !this.dataPosition ){
 
@@ -17278,7 +18466,9 @@ NGL.Volume.prototype = {
         var dataPosition = this.__dataPosition;
         var data = this.__data;
 
-        if( minValue === this.__minValue && maxValue == this.__maxValue ){
+        if( minValue === this.__minValue && maxValue == this.__maxValue &&
+            outside === this.__outside
+        ){
 
             // already filtered
             return;
@@ -17311,7 +18501,9 @@ NGL.Volume.prototype = {
                 var i3 = i * 3;
                 var v = data[ i ];
 
-                if( v >= minValue && v <= maxValue ){
+                if( ( !outside && v >= minValue && v <= maxValue ) ||
+                    ( outside && ( v < minValue || v > maxValue ) )
+                ){
 
                     var j3 = j * 3;
 
@@ -17336,6 +18528,7 @@ NGL.Volume.prototype = {
 
         this.__minValue = minValue;
         this.__maxValue = maxValue;
+        this.__outside = outside;
 
     },
 
@@ -17374,48 +18567,52 @@ NGL.Volume.prototype = {
 
     },
 
+    getDataAtomindex: function(){
+
+        return this.dataAtomindex;
+
+    },
+
     getDataPosition: function(){
 
         return this.dataPosition;
 
     },
 
-    getDataColor: function( color ){
+    getDataColor: function( params ){
 
-        var spectralScale = chroma
-            .scale( 'Spectral' )
-            .mode('lch')
-            .domain( [ this.getDataMin(), this.getDataMax() ]);
+        var p = params || {};
+        p.volume = this;
+        p.scale = p.scale || 'Spectral';
+        p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
+
+        var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
 
         var n = this.dataPosition.length / 3;
-        var data = this.data;
-        var array;
+        var array = new Float32Array( n * 3 );
 
-        switch( color ){
+        // var atoms = p.structure.atoms;
+        // var atomindex = this.dataAtomindex;
 
-            case "value":
+        for( var i = 0; i < n; ++i ){
 
-                array = new Float32Array( n * 3 );
-                for( var i = 0; i < n; ++i ){
-                    var i3 = i * 3;
-                    var c = spectralScale( data[ i ] )._rgb
-                    array[ i3 + 0 ] = c[ 0 ] / 255;
-                    array[ i3 + 1 ] = c[ 1 ] / 255;
-                    array[ i3 + 2 ] = c[ 2 ] / 255;
-                }
-                break;
+            colorMaker.volumeColorToArray( i, array, i * 3 );
 
-            default:
-
-                var tc = new THREE.Color( color );
-                array = NGL.Utils.uniformArray3(
-                    n, tc.r, tc.g, tc.b
-                );
-                break;
+            // a = atoms[ atomindex[ i ] ];
+            // if( a ) colorMaker.atomColorToArray( a, array, i * 3 );
 
         }
 
         return array;
+
+    },
+
+    getPickingDataColor: function( params ){
+
+        var p = Object.assign( params || {} );
+        p.scheme = "picking";
+
+        return this.getDataColor( p );
 
     },
 
@@ -17429,6 +18626,14 @@ NGL.Volume.prototype = {
             case "value":
 
                 array = new Float32Array( this.data );
+                break;
+
+            case "abs-value":
+
+                array = new Float32Array( this.data );
+                for( var i = 0; i < n; ++i ){
+                    array[ i ] = Math.abs( array[ i ] );
+                }
                 break;
 
             case "value-min":
@@ -17553,11 +18758,13 @@ NGL.Volume.prototype = {
             this.name,
             this.path,
 
-            this.data,
+            this.__data,
 
             this.nx,
             this.ny,
-            this.nz
+            this.nz,
+
+            this.__dataAtomindex
 
         );
 
@@ -17586,13 +18793,17 @@ NGL.Volume.prototype = {
             name: this.name,
             path: this.path,
 
-            data: this.data,
+            data: this.__data,
 
             nx: this.nx,
             ny: this.ny,
             nz: this.nz,
 
+            dataAtomindex: this.__dataAtomindex,
+
             matrix: this.matrix.toArray(),
+            normalMatrix: this.normalMatrix.toArray(),
+            inverseMatrix: this.inverseMatrix.toArray(),
 
             center: this.center.toArray(),
             boundingBox: {
@@ -17620,13 +18831,18 @@ NGL.Volume.prototype = {
         this.setData(
 
             input.data,
+
             input.nx,
             input.ny,
-            input.nz
+            input.nz,
+
+            input.dataAtomindex
 
         );
 
         this.matrix.fromArray( input.matrix );
+        this.normalMatrix.fromArray( input.normalMatrix );
+        this.inverseMatrix.fromArray( input.inverseMatrix );
 
         if( input.header ){
 
@@ -17648,9 +18864,13 @@ NGL.Volume.prototype = {
 
         var transferable = [
 
-            this.data.buffer
+            this.__data.buffer
 
         ];
+
+        if( this.__dataAtomindex ){
+            transferable.push( this.__dataAtomindex.buffer );
+        }
 
         return transferable;
 
@@ -17658,7 +18878,9 @@ NGL.Volume.prototype = {
 
     dispose: function(){
 
-        if( this.worker ) this.worker.terminate();
+        if( this.workerPool ) this.workerPool.terminate();
+
+        NGL.GidPool.removeObject( this );
 
     }
 
@@ -17787,7 +19009,7 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
 };
 
-NGL.MarchingCubes2 = function( field, nx, ny, nz ){
+NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
     // Based on alteredq / http://alteredqualia.com/
     // port of greggman's ThreeD version of marching cubes to Three.js
@@ -17800,6 +19022,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
     var isolevel = 0;
     var noNormals = false;
+    var center = undefined;
+    var size = Infinity;
 
     var n = nx * ny * nz;
 
@@ -17815,10 +19039,11 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
     var positionArray = [];
     var normalArray = [];
     var indexArray = [];
+    var atomindexArray = [];
 
     //
 
-    this.triangulate = function( _isolevel, _noNormals ){
+    this.triangulate = function( _isolevel, _noNormals, _box ){
 
         NGL.time( "NGL.MarchingCubes2.triangulate" );
 
@@ -17833,25 +19058,36 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
             vertexIndex = new Int32Array( n );
         }
 
-        for( var i = 0; i < n; ++i ){
-            vertexIndex[ i ] = -1;
-        }
-
         count = 0;
         icount = 0;
 
-        triangulate();
+        if( _box !== undefined ){
+
+            _box.min.round();
+            _box.max.round();
+            triangulate(
+                _box.min.x, _box.min.y, _box.min.z,
+                _box.max.x, _box.max.y, _box.max.z
+            );
+
+        }else{
+
+            triangulate();
+
+        }
 
         positionArray.length = count * 3;
         if( !noNormals ) normalArray.length = count * 3;
         indexArray.length = icount;
+        if( atomindex ) atomindexArray.length = count;
 
         NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
 
         return {
             position: new Float32Array( positionArray ),
             normal: noNormals ? undefined : new Float32Array( normalArray ),
-            index: new Uint32Array( indexArray )
+            index: new Uint32Array( indexArray ),
+            atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
         };
 
     }
@@ -17882,6 +19118,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
                 normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q3 + 5 ], mu );
 
             }
+
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
@@ -17920,6 +19158,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
             }
 
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * yd ];
+
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
 
@@ -17956,6 +19196,8 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
                 normalArray[ c + 2 ] = -lerp( nc[ q3 + 2 ], nc[ q6 + 2 ], mu );
 
             }
+
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * zd ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
@@ -18173,47 +19415,199 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz ){
 
     }
 
-    function triangulate() {
+    function triangulate( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd ) {
 
         var q, x, y, z, fx, fy, fz, y_offset, z_offset
 
-        var beg, xEnd, yEnd, zEnd;
+        xBeg = xBeg !== undefined ? xBeg : 0;
+        yBeg = yBeg !== undefined ? yBeg : 0;
+        zBeg = zBeg !== undefined ? zBeg : 0;
+
+        xEnd = xEnd !== undefined ? xEnd : nx - 1;
+        yEnd = yEnd !== undefined ? yEnd : ny - 1;
+        zEnd = zEnd !== undefined ? zEnd : nz - 1;
 
         if( noNormals ){
 
-            beg = 0;
+            xBeg = Math.max( 0, xBeg );
+            yBeg = Math.max( 0, yBeg );
+            zBeg = Math.max( 0, zBeg );
 
-            xEnd = nx - 1;
-            yEnd = ny - 1;
-            zEnd = nz - 1;
+            xEnd = Math.min( nx - 1, xEnd );
+            yEnd = Math.min( ny - 1, yEnd );
+            zEnd = Math.min( nz - 1, zEnd );
 
         }else{
 
-            beg = 1;
+            xBeg = Math.max( 1, xBeg );
+            yBeg = Math.max( 1, yBeg );
+            zBeg = Math.max( 1, zBeg );
 
-            xEnd = nx - 2;
-            yEnd = ny - 2;
-            zEnd = nz - 2;
+            xEnd = Math.min( nx - 2, xEnd );
+            yEnd = Math.min( ny - 2, yEnd );
+            zEnd = Math.min( nz - 2, zEnd );
 
         }
 
-        for ( z = beg; z < zEnd; ++z ) {
+        // init part of the vertexIndex
+        // (takes a significant amount of time to do for all)
 
+        var xBeg2 = Math.max( 0, xBeg - 2);
+        var yBeg2 = Math.max( 0, yBeg - 2 );
+        var zBeg2 = Math.max( 0, zBeg - 2 );
+
+        var xEnd2 = Math.min( nx, xEnd + 2 );
+        var yEnd2 = Math.min( ny, yEnd + 2 );
+        var zEnd2 = Math.min( nz, zEnd + 2 );
+
+        for ( z = zBeg2; z < zEnd2; ++z ) {
             z_offset = zd * z;
-
-            for ( y = beg; y < yEnd; ++y ) {
-
+            for ( y = yBeg2; y < yEnd2; ++y ) {
                 y_offset = z_offset + yd * y;
+                for ( x = xBeg2; x < xEnd2; ++x ) {
+                    q = y_offset + x;
+                    vertexIndex[ q ] = -1;
+                }
+            }
+        }
 
-                for ( x = beg; x < xEnd; ++x ) {
+        // clip space where the isovalue is too low
 
+        var __break;
+        var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
+        var __xEnd = xEnd; var __yEnd = yEnd; var __zEnd = zEnd;
+
+        __break = false;
+        for ( z = zBeg; z < zEnd; ++z ) {
+            for ( y = yBeg; y < yEnd; ++y ) {
+                for ( x = xBeg; x < xEnd; ++x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __zBeg = z;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( y = yBeg; y < yEnd; ++y ) {
+            for ( z = __zBeg; z < zEnd; ++z ) {
+                for ( x = xBeg; x < xEnd; ++x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __yBeg = y;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( x = xBeg; x < xEnd; ++x ) {
+            for ( y = __yBeg; y < yEnd; ++y ) {
+                for ( z = __zBeg; z < zEnd; ++z ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __xBeg = x;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( z = zEnd; z >= zBeg; --z ) {
+            for ( y = yEnd; y >= yBeg; --y ) {
+                for ( x = xEnd; x >= xBeg; --x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __zEnd = z;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( y = yEnd; y >= yBeg; --y ) {
+            for ( z = __zEnd; z >= zBeg; --z ) {
+                for ( x = xEnd; x >= xBeg; --x ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __yEnd = y;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        __break = false;
+        for ( x = xEnd; x >= xBeg; --x ) {
+            for ( y = __yEnd; y >= yBeg; --y ) {
+                for ( z = __zEnd; z >= zBeg; --z ) {
+                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                    if( field[ q ] >= isolevel ){
+                        __xEnd = x;
+                        __break = true;
+                        break;
+                    }
+                }
+                if( __break ) break;
+            }
+            if( __break ) break;
+        }
+
+        //
+
+        if( noNormals ){
+
+            xBeg = Math.max( 0, __xBeg - 1);
+            yBeg = Math.max( 0, __yBeg - 1 );
+            zBeg = Math.max( 0, __zBeg - 1 );
+
+            xEnd = Math.min( nx - 1, __xEnd + 1 );
+            yEnd = Math.min( ny - 1, __yEnd + 1 );
+            zEnd = Math.min( nz - 1, __zEnd + 1 );
+
+        }else{
+
+            xBeg = Math.max( 1, __xBeg - 1 );
+            yBeg = Math.max( 1, __yBeg - 1 );
+            zBeg = Math.max( 1, __zBeg - 1 );
+
+            xEnd = Math.min( nx - 2, __xEnd + 1 );
+            yEnd = Math.min( ny - 2, __yEnd + 1 );
+            zEnd = Math.min( nz - 2, __zEnd + 1 );
+
+        }
+
+        // polygonize part of the grid
+
+        for ( z = zBeg; z < zEnd; ++z ) {
+            z_offset = zd * z;
+            for ( y = yBeg; y < yEnd; ++y ) {
+                y_offset = z_offset + yd * y;
+                for ( x = xBeg; x < xEnd; ++x ) {
                     q = y_offset + x;
                     polygonize( x, y, z, q );
-
                 }
-
             }
-
         }
 
     }
@@ -18821,7 +20215,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
         var bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
-        bg.addAttribute( "index", new THREE.BufferAttribute( faces, 1 ) );
+        bg.addIndex( new THREE.BufferAttribute( faces, 1 ) );
 
     }
 
@@ -19038,7 +20432,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 //////////////////////
 // Molecular surface
 
-NGL.Worker.add( "molsurf", function( e ){
+NGL.WorkerRegistry.add( "molsurf", function( e, callback ){
 
     NGL.time( "WORKER molsurf" );
 
@@ -19055,26 +20449,13 @@ NGL.Worker.add( "molsurf", function( e ){
 
     var molsurf = self.molsurf;
 
-    molsurf.generateSurface(
-        p.type, p.probeRadius, p.scaleFactor, p.smooth, p.lowRes
+    var surface = molsurf.getSurface(
+        p.type, p.probeRadius, p.scaleFactor, p.smooth, p.lowRes, p.cutoff
     );
 
     NGL.timeEnd( "WORKER molsurf" );
 
-    var meshData = {
-        position: molsurf.position,
-        index: molsurf.index,
-        normal: molsurf.normal
-    };
-
-    var transferable = [
-        molsurf.position.buffer,
-        molsurf.index.buffer
-    ];
-
-    if( molsurf.normal ) transferable.push( molsurf.normal.buffer );
-
-    self.postMessage( meshData, transferable );
+    callback( surface.toJSON(), surface.getTransferable() );
 
 } );
 
@@ -19087,148 +20468,90 @@ NGL.MolecularSurface = function( atomSet ){
 
 NGL.MolecularSurface.prototype = {
 
-    generateSurface: function( type, probeRadius, scaleFactor, smooth, lowRes ){
-
-        if( type === this.__type && probeRadius === this.__probeRadius &&
-            scaleFactor === this.__scaleFactor && smooth === this.__smooth &&
-            lowRes === this.lowRes
-        ){
-
-            // already generated
-            return;
-
-        }
+    getSurface: function( type, probeRadius, scaleFactor, smooth, lowRes, cutoff ){
 
         var edtsurf = new NGL.EDTSurface( this.atomSet );
         var vol = edtsurf.getVolume(
-            type, probeRadius, scaleFactor, lowRes
+            type, probeRadius, scaleFactor, lowRes, cutoff
         );
-        vol.generateSurface( 1, smooth );
+        var surface = vol.getSurface( 1, smooth );
 
-        this.position = vol.getPosition();
-        this.normal = vol.getNormal();
-        this.index = vol.getIndex();
+        surface.info[ "type" ] = type;
+        surface.info[ "probeRadius" ] = probeRadius;
+        surface.info[ "scaleFactor" ] = scaleFactor;
+        surface.info[ "smooth" ] = smooth;
+        surface.info[ "lowRes" ] = lowRes;
+        surface.info[ "cutoff" ] = cutoff;
 
-        this.size = this.position.length / 3;
+        vol.dispose();
 
-        this.__type = type;
-        this.__probeRadius = probeRadius;
-        this.__scaleFactor = scaleFactor;
-        this.__smooth = smooth;
-        this.__lowRes = lowRes;
+        return surface;
 
     },
 
-    generateSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, lowRes, callback ){
+    getSurfaceWorker: function( type, probeRadius, scaleFactor, smooth, lowRes, cutoff, callback ){
 
-        if( type === this.__type && probeRadius === this.__probeRadius &&
-            scaleFactor === this.__scaleFactor && smooth === this.__smooth &&
-            lowRes === this.__lowRes
-        ){
-
-            // already generated
-            callback();
-
-        }else if( NGL.useWorker && typeof Worker !== "undefined" &&
+        if( NGL.useWorker && typeof Worker !== "undefined" &&
             typeof importScripts !== 'function'
         ){
-
-            var __timeName = "NGL.MolecularSurface.generateSurfaceWorker " + type;
-
-            NGL.time( __timeName );
 
             var atomSet = undefined;
 
             if( this.worker === undefined ){
 
                 atomSet = this.atomSet.toJSON();
-                this.worker = NGL.Worker.make( "molsurf" );
+                this.worker = new NGL.Worker( "molsurf" );
 
             }
 
-            this.worker.onerror = function( e ){
+            this.worker.post(
 
-                console.warn(
-                    "NGL.MolecularSurface.generateSurfaceWorker error - trying without worker", e
-                );
-                this.worker.terminate();
-                this.worker = undefined;
+                {
+                    atomSet: atomSet,
+                    params: {
+                        type: type,
+                        probeRadius: probeRadius,
+                        scaleFactor: scaleFactor,
+                        smooth: smooth,
+                        lowRes: lowRes,
+                        cutoff: cutoff
+                    }
+                },
 
-                this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes );
-                callback();
+                undefined,
 
-            }.bind( this );
+                function( e ){
 
-            this.worker.onmessage = function( e ){
+                    var surface = NGL.fromJSON( e.data );
+                    callback( surface );
 
-                NGL.timeEnd( __timeName );
+                }.bind( this ),
 
-                // if( NGL.debug ) console.log( e.data );
+                function( e ){
 
-                this.position = e.data.position;
-                this.normal = e.data.normal;
-                this.index = e.data.index;
+                    console.warn(
+                        "NGL.MolecularSurface.generateSurfaceWorker error - trying without worker", e
+                    );
+                    this.worker.terminate();
+                    this.worker = undefined;
 
-                this.size = this.position.length / 3;
+                    var surface = this.getSurface(
+                        type, probeRadius, scaleFactor, smooth, lowRes, cutoff
+                    );
+                    callback( surface );
 
-                this.__type = type;
-                this.__probeRadius = probeRadius;
-                this.__scaleFactor = scaleFactor;
-                this.__smooth = smooth;
-                this.__lowRes = lowRes;
+                }.bind( this )
 
-                callback();
-
-            }.bind( this );
-
-            this.worker.postMessage( {
-                atomSet: atomSet,
-                params: {
-                    type: type,
-                    probeRadius: probeRadius,
-                    scaleFactor: scaleFactor,
-                    smooth: smooth,
-                    lowRes: lowRes
-                }
-            } );
+            );
 
         }else{
 
-            this.generateSurface( type, probeRadius, scaleFactor, smooth, lowRes );
-            callback();
+            var surface = this.getSurface(
+                type, probeRadius, scaleFactor, smooth, lowRes, cutoff
+            );
+            callback( surface );
 
         }
-
-    },
-
-    getPosition: function(){
-
-        return this.position;
-
-    },
-
-    getColor: function( color ){
-
-        // re-use array
-
-        var tc = new THREE.Color( color );
-        var col = NGL.Utils.uniformArray3(
-            this.size, tc.r, tc.g, tc.b
-        );
-
-        return col;
-
-    },
-
-    getNormal: function(){
-
-        return this.normal;
-
-    },
-
-    getIndex: function(){
-
-        return this.index;
 
     },
 
@@ -19261,131 +20584,78 @@ NGL.EDTSurface = function( atomSet ){
     var atoms = atomSet.atoms;
     var bbox = atomSet.getBoundingBox();
 
-    var probeRadius, scaleFactor, cutoff;
-    var margin;
-    var pmin, pmax, ptran, pbox, pLength, pWidth, pHeight;
-    var matrix;
+    var probeRadius, scaleFactor, cutoff, lowRes;
+    var pLength, pWidth, pHeight;
+    var matrix, ptran;
     var depty, widxz;
     var cutRadius;
+    var setAtomID;
     var vpBits, vpDistance, vpAtomID;
 
     var radiusProperty;
     var radiusDict;
+    var selection;
 
-    function init( btype, _probeRadius, _scaleFactor, _cutoff, lowRes ){
+    function init( btype, _probeRadius, _scaleFactor, _cutoff, _lowRes, _setAtomID ){
+
+        probeRadius = _probeRadius || 1.4;
+        scaleFactor = _scaleFactor || 2.0;
+        lowRes = _lowRes || false;
+        setAtomID = _setAtomID || true;
 
         if( lowRes ){
 
             radiusProperty = "resname";
             radiusDict = NGL.ResidueRadii;
 
-            atoms = atomSet.getAtoms( new NGL.Selection( ".CA" ) );
+            selection = new NGL.Selection( ".CA" );
 
         }else{
 
             radiusProperty = "element";
             radiusDict = NGL.VdwRadii;
 
-            atoms = atomSet.atoms;
+            selection = undefined;
 
         }
 
-        // 2 is .5A grid; if this is made user configurable and
-        // also have to adjust offset used to find non-shown atoms
-        // FIXME scaleFactor = 0.5;
-
-        probeRadius = _probeRadius || 1.4;
-        scaleFactor = _scaleFactor || 2.0;
-        cutoff = _cutoff || 2.0;
-
-        // need margin to avoid boundary/round off effects
-        margin = ( 1 / scaleFactor ) * 5.5;
-        if( lowRes ) margin += 10.0;
-
-        pmin = new THREE.Vector3().copy( bbox.min );
-        pmax = new THREE.Vector3().copy( bbox.max );
-
-        if( !btype ){
-
-            pmin.addScalar( -margin );  // TODO need to update THREE for subScalar
-            pmax.addScalar( margin );
-
-        }else{
-
-            pmin.addScalar( -( probeRadius + margin ) );  // TODO need to update THREE for subScalar
-            pmax.addScalar( probeRadius + margin );
-
+        var maxRadius = 0;
+        for( var name in radiusDict ){
+            maxRadius = Math.max( maxRadius, radiusDict[ name ] );
         }
 
-        ptran = new THREE.Vector3().copy( pmin ).negate();
-
-        pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-        pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
-
-        pbox = new THREE.Vector3()
-            .subVectors( pmax, pmin )
-            .multiplyScalar( scaleFactor )
-            .ceil()
-            .addScalar( 1 );
-
-        pLength = pbox.x;
-        pWidth = pbox.y;
-        pHeight = pbox.z;
-
-        var maxSize = Math.pow( 10, 6 ) * 256;
-        var tmpSize = pHeight * pWidth * pLength * 3;
-
-        if( maxSize <= tmpSize ){
-
-            scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
-
-            pmin.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-            pmax.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
-
-            pbox = new THREE.Vector3()
-                .subVectors( pmax, pmin )
-                .multiplyScalar( scaleFactor )
-                .ceil()
-                .addScalar( 1 );
-
-            pLength = pbox.x;
-            pWidth = pbox.y;
-            pHeight = pbox.z;
-
-        }
-
-        // coordinate transformation matrix
-        matrix = new THREE.Matrix4();
-        matrix.multiply(
-            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        var grid = NGL.getSurfaceGrid(
+            bbox, maxRadius, scaleFactor, btype ? probeRadius : 0
         );
-        matrix.multiply(
-            new THREE.Matrix4().makeScale(
-                -1/scaleFactor, 1/scaleFactor, 1/scaleFactor
-            )
-        );
-        matrix.multiply(
-            new THREE.Matrix4().makeTranslation(
-                -scaleFactor*ptran.z,
-                -scaleFactor*ptran.y,
-                -scaleFactor*ptran.x
-            )
-        );
+
+        pLength = grid.dim.x;
+        pWidth = grid.dim.y;
+        pHeight = grid.dim.z;
+
+        matrix = grid.matrix;
+        ptran = grid.tran;
+        scaleFactor = grid.scaleFactor;
 
         // boundingatom caches
         depty = {};
         widxz = {};
         boundingatom( btype );
 
-        // console.log( depty );
-        // console.log( widxz );
-
         cutRadius = probeRadius * scaleFactor;
 
+        if( _cutoff ){
+            cutoff = _cutoff;
+        }else{
+            cutoff = Math.max( 0.1, -1.2 + scaleFactor * probeRadius );
+        }
+
         vpBits = new Uint8Array( pLength * pWidth * pHeight );
-        // float32 doesn't play nicely with native floats (which are 64)
-        vpDistance = new Float64Array( pLength * pWidth * pHeight );
-        vpAtomID = new Int32Array( pLength * pWidth * pHeight );
+        if( btype ){
+            vpDistance = new Float64Array( pLength * pWidth * pHeight );
+        }
+        if( setAtomID ){
+            vpAtomID = new Int32Array( pLength * pWidth * pHeight );
+        }
 
     }
 
@@ -19412,13 +20682,16 @@ NGL.EDTSurface = function( atomSet ){
 
     //
 
-    this.getVolume = function( type, probeRadius, scaleFactor, lowRes ){
+    this.getVolume = function( type, probeRadius, scaleFactor, lowRes, cutoff, setAtomID ){
 
         NGL.time( "NGL.EDTSurface.getVolume" );
 
-        init( type !== "vws", probeRadius, scaleFactor, undefined, lowRes );
+        var btype = type !== "vws";
+        setAtomID = true;
 
-        fillvoxels();
+        init( btype, probeRadius, scaleFactor, cutoff, lowRes, setAtomID );
+
+        fillvoxels( btype );
         buildboundary();
 
         if( type === "ms" || type === "ses" ){
@@ -19437,10 +20710,10 @@ NGL.EDTSurface = function( atomSet ){
         marchingcubeinit( type );
 
         var vol = new NGL.Volume(
-            type, "", vpBits, pHeight, pWidth, pLength
+            type, "", vpBits, pHeight, pWidth, pLength, vpAtomID
         );
 
-        vol.matrix.copy( matrix );
+        vol.setMatrix( matrix );
 
         NGL.timeEnd( "NGL.EDTSurface.getVolume" );
 
@@ -19448,15 +20721,16 @@ NGL.EDTSurface = function( atomSet ){
 
     };
 
+
     function boundingatom( btype ){
 
-        var j, k;
+        var r, j, k;
         var txz, tdept, sradius, tradius, widxz_r;
-        var indx;
+        var depty_name, indx;
 
         for( var name in radiusDict ){
 
-            var r = radiusDict[ name ];
+            r = radiusDict[ name ];
 
             if( depty[ name ] ) continue;
 
@@ -19467,9 +20741,8 @@ NGL.EDTSurface = function( atomSet ){
             }
 
             sradius = tradius * tradius;
-            widxz[ name ] = Math.floor( tradius ) + 1;
-            widxz_r = widxz[ name ];
-            depty[ name ] = new Int32Array( widxz_r * widxz_r );
+            widxz_r = Math.floor( tradius ) + 1;
+            depty_name = new Int32Array( widxz_r * widxz_r );
             indx = 0;
 
             for( j = 0; j < widxz_r; ++j ){
@@ -19480,12 +20753,12 @@ NGL.EDTSurface = function( atomSet ){
 
                     if( txz > sradius ){
 
-                        depty[ name ][ indx ] = -1;
+                        depty_name[ indx ] = -1;
 
                     }else{
 
                         tdept = Math.sqrt( sradius - txz );
-                        depty[ name ][ indx ] = Math.floor( tdept );
+                        depty_name[ indx ] = Math.floor( tdept );
 
                     }
 
@@ -19495,6 +20768,9 @@ NGL.EDTSurface = function( atomSet ){
 
             }
 
+            widxz[ name ] = widxz_r;
+            depty[ name ] = depty_name;
+
         }
 
     }
@@ -19502,9 +20778,11 @@ NGL.EDTSurface = function( atomSet ){
     function fillatom( atomIndex ){
 
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
-        var ii, jj, kk, n;
+        var ii, jj, kk;
 
         var atom = atoms[ atomIndex ];
+
+        if( selection && !selection.test( atom ) ) return;
 
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
@@ -19515,11 +20793,16 @@ NGL.EDTSurface = function( atomSet ){
         var nind = 0;
         var cnt = 0;
         var pWH = pWidth * pHeight;
+        var n = widxz[ at ];
 
-        for( i = 0, n = widxz[ at ]; i < n; ++i ){
+        var depty_at_nind;
+
+        for( i = 0; i < n; ++i ){
         for( j = 0; j < n; ++j ) {
 
-            if( depty_at[ nind ] != -1 ){
+            depty_at_nind = depty_at[ nind ];
+
+            if( depty_at_nind != -1 ){
 
                 for( ii = -1; ii < 2; ++ii ){
                 for( jj = -1; jj < 2; ++jj ){
@@ -19530,7 +20813,7 @@ NGL.EDTSurface = function( atomSet ){
                         mi = ii * i;
                         mk = kk * j;
 
-                        for( k = 0; k <= depty_at[ nind ]; ++k ){
+                        for( k = 0; k <= depty_at_nind; ++k ){
 
                             mj = k * jj;
                             si = cx + mi;
@@ -19545,22 +20828,36 @@ NGL.EDTSurface = function( atomSet ){
 
                             var index = si * pWH + sj * pHeight + sk;
 
-                            if( !( vpBits[ index ] & INOUT ) ){
+                            if( !setAtomID ){
 
                                 vpBits[ index ] |= INOUT;
-                                vpAtomID[ index ] = atomIndex;
 
                             }else{
 
-                                var atom2 = atoms[ vpAtomID[ index ] ];
-                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
-                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
-                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+                                if( !( vpBits[ index ] & INOUT ) ){
 
-                                if( mi * mi + mj * mj + mk * mk <
-                                    ox * ox + oy * oy + oz * oz
-                                ){
+                                    vpBits[ index ] |= INOUT;
                                     vpAtomID[ index ] = atomIndex;
+
+                                }else if( vpBits[ index ] & INOUT ){
+                                // }else{
+
+                                    var atom2 = atoms[ vpAtomID[ index ] ];
+
+                                    if( atom2 !== atom ){
+
+                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
+                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
+                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+
+                                        if( mi * mi + mj * mj + mk * mk <
+                                            ox * ox + oy * oy + oz * oz
+                                        ){
+                                            vpAtomID[ index ] = atomIndex;
+                                        }
+
+                                    }
+
                                 }
 
                             }
@@ -19582,14 +20879,16 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillvoxels(){
+    function fillvoxels( btype ){
+
+        NGL.time( "NGL.EDTSurface fillvoxels" );
 
         var i, il;
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
             vpBits[ i ] = 0;
-            vpDistance[ i ] = -1.0;
-            vpAtomID[ i ] = -1;
+            if( btype ) vpDistance[ i ] = -1.0;
+            if( setAtomID ) vpAtomID[ i ] = -1;
         }
 
         for( i = 0, il = atoms.length; i < il; ++i ){
@@ -19602,6 +20901,8 @@ NGL.EDTSurface = function( atomSet ){
             }
         }
 
+        NGL.timeEnd( "NGL.EDTSurface fillvoxels" );
+
     }
 
     function fillAtomWaals( atomIndex ){
@@ -19610,6 +20911,8 @@ NGL.EDTSurface = function( atomSet ){
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
 
         var atom = atoms[ atomIndex ];
+
+        if( selection && !selection.test( atom ) ) return;
 
         cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
@@ -19647,12 +20950,12 @@ NGL.EDTSurface = function( atomSet ){
 
                             var index = si * pWH + sj * pHeight + sk;
 
-                            if ( !( vpBits[ index ] & ISDONE ) ){
+                            if( !( vpBits[ index ] & ISDONE ) ){
 
                                 vpBits[ index ] |= ISDONE;
-                                vpAtomID[ index ] = atom.index;
+                                if( setAtomID ) vpAtomID[ index ] = atom.index;
 
-                            } else {
+                            }else if( setAtomID ){
 
                                 var atom2 = atoms[ vpAtomID[ index ] ];
                                 ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
@@ -19684,7 +20987,7 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    function fillvoxelswaals() {
+    function fillvoxelswaals(){
 
         var i, il;
 
@@ -19711,9 +21014,10 @@ NGL.EDTSurface = function( atomSet ){
 
             if( vpBits[ index ] & INOUT ){
 
-                var flagbound = false;
+                // var flagbound = false;
                 var ii = 0;
 
+                // while( !flagbound && ii < 26 ){
                 while( ii < 26 ){
 
                     var ti = i + nb[ ii ][ 0 ];
@@ -19726,7 +21030,8 @@ NGL.EDTSurface = function( atomSet ){
                         !( vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT )
                     ){
 
-                        vpBits[index] |= ISBOUND;
+                        vpBits[ index ] |= ISBOUND;
+                        // flagbound = true;
                         break;
 
                     }else{
@@ -19745,70 +21050,53 @@ NGL.EDTSurface = function( atomSet ){
 
     }
 
-    // a little class for 3d array, should really generalize this and
-    // use throughout...
-    var PointGrid = function( length, width, height ){
-
-        // the standard says this is zero initialized
-        var data = new Int32Array( length * width * height * 3 );
-
-        // set position x,y,z to pt, which has ix,iy,and iz
-        this.set = function( x, y, z, pt ){
-            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
-            data[ index ] = pt.ix;
-            data[ index + 1] = pt.iy;
-            data[ index + 2] = pt.iz;
-        };
-
-        // return point at x,y,z
-        this.get = function( x, y, z ){
-            var index = ( ( ( ( x * width ) + y ) * height ) + z ) * 3;
-            return {
-                ix : data[ index ],
-                iy : data[ index + 1],
-                iz : data[ index + 2]
-            };
-        };
-
-    };
-
     function fastdistancemap(){
+
+        NGL.time( "NGL.EDTSurface fastdistancemap" );
 
         var eliminate = 0;
         var certificate;
         var i, j, k, n;
 
-        var boundPoint = new PointGrid( pLength, pWidth, pHeight );
+        var boundPoint = new NGL.Grid(
+            pLength, pWidth, pHeight, Uint16Array, 3
+        );
         var pWH = pWidth * pHeight;
         var cutRSq = cutRadius * cutRadius;
 
-        var inarray = [];
-        var outarray = [];
+        var totalsurfacevox = 0;
+        var totalinnervox = 0;
 
         var index;
+
+        // console.log( "lwh", pLength * pWidth * pHeight );
+        console.log( "l, w, h", pLength, pWidth, pHeight );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
                 for( k = 0; k < pHeight; ++k ){
 
                     index = i * pWH + j * pHeight + k;
-                    vpBits[ index ] &= ~ISDONE;  // isdone = false
+
+                    vpBits[ index ] &= ~ISDONE;
 
                     if( vpBits[ index ] & INOUT ){
 
                         if( vpBits[ index ] & ISBOUND ){
 
-                            var triple = {
-                                ix : i,
-                                iy : j,
-                                iz : k
-                            };
+                            boundPoint.set(
+                                i, j, k,
+                                i, j, k
+                            );
 
-                            boundPoint.set( i, j, k, triple );
-                            inarray.push( triple );
                             vpDistance[ index ] = 0;
                             vpBits[ index ] |= ISDONE;
-                            vpBits[ index ] &= ~ISBOUND;
+
+                            totalsurfacevox += 1;
+
+                        }else{
+
+                            totalinnervox += 1;
 
                         }
 
@@ -19818,39 +21106,67 @@ NGL.EDTSurface = function( atomSet ){
             }
         }
 
-        do {
+        console.log( "totalsurfacevox", totalsurfacevox );
+        console.log( "totalinnervox", totalinnervox );
 
-            outarray = fastoneshell( inarray, boundPoint );
-            inarray = [];
+        var inarray = new Int32Array( 3 * totalsurfacevox );
+        var positin = 0;
+        var outarray = new Int32Array( 3 * totalsurfacevox );
+        var positout = 0;
 
-            for( i = 0, n = outarray.length; i < n; ++i ){
+        for( i = 0; i < pLength; ++i ){
+            for( j = 0; j < pWidth; ++j ){
+                for( k = 0; k < pHeight; ++k ){
 
-                index = pWH * outarray[ i ].ix + pHeight *
-                            outarray[ i ].iy + outarray[ i ].iz;
-                vpBits[index] &= ~ISBOUND;
+                    index = i * pWH + j * pHeight + k;
+
+                    if( vpBits[ index ] & ISBOUND ){
+
+                        inarray[ positin     ] = i;
+                        inarray[ positin + 1 ] = j;
+                        inarray[ positin + 2 ] = k;
+                        positin += 3;
+
+                        vpBits[ index ] &= ~ISBOUND;
+
+                    }
+
+                }
+            }
+        }
+
+        do{
+
+            positout = fastoneshell( inarray, boundPoint, positin, outarray );
+            positin = 0;
+
+            console.log( "positout", positout / 3 );
+
+            for( i = 0, n = positout; i < n; i+=3 ){
+
+                index = pWH * outarray[ i ] + pHeight * outarray[ i + 1 ] + outarray[ i + 2 ];
+                vpBits[ index ] &= ~ISBOUND;
 
                 if( vpDistance[ index ] <= 1.0404 * cutRSq ){
+                //if( vpDistance[ index ] <= 1.02 * cutRadius ){
 
-                    inarray.push({
-                        ix : outarray[ i ].ix,
-                        iy : outarray[ i ].iy,
-                        iz : outarray[ i ].iz
-                    });
+                    inarray[ positin     ] = outarray[ i     ];
+                    inarray[ positin + 1 ] = outarray[ i + 1 ];
+                    inarray[ positin + 2 ] = outarray[ i + 2 ];
+                    positin += 3;
 
                 }
 
             }
 
-        }while( inarray.length !== 0 );
+        }while( positin > 0 );
 
-        inarray = [];
-        outarray = [];
-        boundPoint = null;
+        // var cutsf = Math.max( 0, scaleFactor - 0.5 );
+        // cutoff = cutRadius - 0.5 / ( 0.1 + cutsf );
+        var cutoffSq = cutoff * cutoff;
 
-        var cutsf = Math.max( 0, scaleFactor - 0.5 );
-        // FIXME why does this seem to work?
-        // TODO check for other probeRadius and scaleFactor values
-        var cutoff = probeRadius * probeRadius;  //1.4 * 1.4// cutRSq - 0.50 / ( 0.1 + cutsf );
+        var index2;
+        var bp = new Uint16Array( 3 );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
@@ -19864,9 +21180,20 @@ NGL.EDTSurface = function( atomSet ){
                     if( vpBits[ index ] & INOUT ) {
 
                         if( !( vpBits[ index ] & ISDONE ) ||
-                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoff )
+                            ( ( vpBits[ index ] & ISDONE ) && vpDistance[ index ] >= cutoffSq )
                         ){
+
                             vpBits[ index ] |= ISBOUND;
+
+                            if( setAtomID && ( vpBits[ index ] & ISDONE ) ){
+
+                                boundPoint.toArray( i, j, k, bp );
+                                index2 = bp[ 0 ] * pWH + bp[ 1 ] * pHeight + bp[ 2 ];
+
+                                vpAtomID[ index ] = vpAtomID[ index2 ];
+
+                            }
+
                         }
                     }
 
@@ -19874,9 +21201,13 @@ NGL.EDTSurface = function( atomSet ){
             }
         }
 
+        NGL.timeEnd( "NGL.EDTSurface fastdistancemap" );
+
     }
 
-    function fastoneshell( inarray, boundPoint ){
+    function fastoneshell( inarray, boundPoint, positin, outarray ){
+
+        console.log( "positin", positin / 3 );
 
         // *allocout,voxel2
         // ***boundPoint, int*
@@ -19885,79 +21216,81 @@ NGL.EDTSurface = function( atomSet ){
         var dx, dy, dz;
         var i, j, n;
         var square;
-        var bp, index;
-        var outarray = [];
+        var index;
+        var nb_j;
+        var bp = new Uint16Array( 3 );
+        var positout = 0;
 
-        if( inarray.length === 0 ){
-            return outarray;
+        if( positin === 0 ){
+            return positout;
         }
 
-        var tnv = {
-            ix : -1,
-            iy : -1,
-            iz : -1
-        };
+        var tnv_ix = -1;
+        var tnv_iy = -1;
+        var tnv_iz = -1;
 
-        var pWH = pWidth*pHeight;
+        var pWH = pWidth * pHeight;
 
-        for( i = 0, n = inarray.length; i < n; ++i ){
+        for( i = 0, n = positin; i < n; i+=3 ){
 
-            tx = inarray[ i ].ix;
-            ty = inarray[ i ].iy;
-            tz = inarray[ i ].iz;
-            bp = boundPoint.get( tx, ty, tz );
+            tx = inarray[ i     ];
+            ty = inarray[ i + 1 ];
+            tz = inarray[ i + 2 ];
+            boundPoint.toArray( tx, ty, tz, bp );
 
             for( j = 0; j < 6; ++j ){
 
-                tnv.ix = tx + nb[ j ][ 0 ];
-                tnv.iy = ty + nb[ j ][ 1 ];
-                tnv.iz = tz + nb[ j ][ 2 ];
+                nb_j = nb[ j ];
+                tnv_ix = tx + nb_j[ 0 ];
+                tnv_iy = ty + nb_j[ 1 ];
+                tnv_iz = tz + nb_j[ 2 ];
 
-                if( tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
-                    tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1
+                if( tnv_ix < pLength && tnv_ix > -1 &&
+                    tnv_iy < pWidth  && tnv_iy > -1 &&
+                    tnv_iz < pHeight && tnv_iz > -1
                 ){
 
-                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+                    index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
                     if( ( vpBits[ index ] & INOUT ) && !( vpBits[ index ] & ISDONE ) ){
 
-                        boundPoint.set( tnv.ix, tnv.iy, tz + nb[ j ][ 2 ], bp );
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
 
                         vpDistance[ index ] = square;
                         vpBits[ index ] |= ISDONE;
                         vpBits[ index ] |= ISBOUND;
 
-                        outarray.push({
-                            ix : tnv.ix,
-                            iy : tnv.iy,
-                            iz : tnv.iz
-                        });
+                        outarray[ positout     ] = tnv_ix;
+                        outarray[ positout + 1 ] = tnv_iy;
+                        outarray[ positout + 2 ] = tnv_iz;
+                        positout += 3;
 
                     }else if( ( vpBits[ index ] & INOUT ) && ( vpBits[ index ] & ISDONE ) ){
 
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
 
                         if( square < vpDistance[ index ] ){
 
-                            boundPoint.set( tnv.ix, tnv.iy, tnv.iz, bp );
+                            boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[ index ] = square;
 
                             if( !( vpBits[ index ] & ISBOUND ) ){
 
                                 vpBits[ index ] |= ISBOUND;
 
-                                outarray.push({
-                                    ix : tnv.ix,
-                                    iy : tnv.iy,
-                                    iz : tnv.iz
-                                });
+                                outarray[ positout     ] = tnv_ix;
+                                outarray[ positout + 1 ] = tnv_iy;
+                                outarray[ positout + 2 ] = tnv_iz;
+                                positout += 3;
 
                             }
 
@@ -19971,117 +21304,153 @@ NGL.EDTSurface = function( atomSet ){
 
         // console.log("part1", positout);
 
-        for (i = 0, n = inarray.length; i < n; i++) {
-            tx = inarray[i].ix;
-            ty = inarray[i].iy;
-            tz = inarray[i].iz;
-            bp = boundPoint.get(tx, ty, tz);
+        for( i = 0, n = positin; i < n; i+=3 ){
+
+            tx = inarray[ i     ];
+            ty = inarray[ i + 1 ];
+            tz = inarray[ i + 2 ];
+            boundPoint.toArray( tx, ty, tz, bp );
 
             for (j = 6; j < 18; j++) {
-                tnv.ix = tx + nb[j][0];
-                tnv.iy = ty + nb[j][1];
-                tnv.iz = tz + nb[j][2];
 
-                if(tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
-                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
-                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+                nb_j = nb[ j ];
+                tnv_ix = tx + nb_j[ 0 ];
+                tnv_iy = ty + nb_j[ 1 ];
+                tnv_iz = tz + nb_j[ 2 ];
+
+                if( tnv_ix < pLength && tnv_ix > -1 &&
+                    tnv_iy < pWidth  && tnv_iy > -1 &&
+                    tnv_iz < pHeight && tnv_iz > -1
+                ) {
+
+                    index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
                     if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
-                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
 
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
                         vpDistance[index] = square;
                         vpBits[index] |= ISDONE;
                         vpBits[index] |= ISBOUND;
 
-                        outarray.push({
-                            ix : tnv.ix,
-                            iy : tnv.iy,
-                            iz : tnv.iz
-                        });
+                        outarray[ positout     ] = tnv_ix;
+                        outarray[ positout + 1 ] = tnv_iy;
+                        outarray[ positout + 2 ] = tnv_iz;
+                        positout += 3;
+
                     } else if ((vpBits[index] & INOUT) && (vpBits[index] & ISDONE)) {
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
                         if (square < vpDistance[index]) {
-                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+
+                            boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[index] = square;
+
                             if (!(vpBits[index] & ISBOUND)) {
+
                                 vpBits[index] |= ISBOUND;
-                                outarray.push({
-                                    ix : tnv.ix,
-                                    iy : tnv.iy,
-                                    iz : tnv.iz
-                                });
+
+                                outarray[ positout     ] = tnv_ix;
+                                outarray[ positout + 1 ] = tnv_iy;
+                                outarray[ positout + 2 ] = tnv_iz;
+                                positout += 3;
+
                             }
+
                         }
+
                     }
+
                 }
             }
         }
 
         // console.log("part2", positout);
 
-        for (i = 0, n = inarray.length; i < n; i++) {
-            tx = inarray[i].ix;
-            ty = inarray[i].iy;
-            tz = inarray[i].iz;
-            bp = boundPoint.get(tx, ty, tz);
+        for( i = 0, n = positin; i < n; i+=3 ){
+
+            tx = inarray[ i     ];
+            ty = inarray[ i + 1 ];
+            tz = inarray[ i + 2 ];
+            boundPoint.toArray( tx, ty, tz, bp );
 
             for (j = 18; j < 26; j++) {
-                tnv.ix = tx + nb[j][0];
-                tnv.iy = ty + nb[j][1];
-                tnv.iz = tz + nb[j][2];
 
-                if (tnv.ix < pLength && tnv.ix > -1 && tnv.iy < pWidth &&
-                        tnv.iy > -1 && tnv.iz < pHeight && tnv.iz > -1) {
-                    index = tnv.ix * pWH + pHeight * tnv.iy + tnv.iz;
+                nb_j = nb[ j ];
+                tnv_ix = tx + nb_j[ 0 ];
+                tnv_iy = ty + nb_j[ 1 ];
+                tnv_iz = tz + nb_j[ 2 ];
+
+                if( tnv_ix < pLength && tnv_ix > -1 &&
+                    tnv_iy < pWidth  && tnv_iy > -1 &&
+                    tnv_iz < pHeight && tnv_iz > -1
+                ){
+
+                    index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
                     if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
-                        boundPoint.set(tnv.ix, tnv.iy, tz + nb[j][2], bp);
 
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
+                        boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
                         square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
                         vpDistance[index] = square;
                         vpBits[index] |= ISDONE;
                         vpBits[index] |= ISBOUND;
 
-                        outarray.push({
-                            ix : tnv.ix,
-                            iy : tnv.iy,
-                            iz : tnv.iz
-                        });
-                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
-                        dx = tnv.ix - bp.ix;
-                        dy = tnv.iy - bp.iy;
-                        dz = tnv.iz - bp.iz;
-                        square = dx * dx + dy * dy + dz * dz;
-                        if (square < vpDistance[index]) {
-                            boundPoint.set(tnv.ix, tnv.iy, tnv.iz, bp);
+                        outarray[ positout     ] = tnv_ix;
+                        outarray[ positout + 1 ] = tnv_iy;
+                        outarray[ positout + 2 ] = tnv_iz;
+                        positout += 3;
 
+                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
+
+                        dx = tnv_ix - bp[ 0 ];
+                        dy = tnv_iy - bp[ 1 ];
+                        dz = tnv_iz - bp[ 2 ];
+                        square = dx * dx + dy * dy + dz * dz;
+                        //square = Math.sqrt( square );
+
+                        if (square < vpDistance[index]) {
+
+                            boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[index] = square;
+
                             if (!(vpBits[index] & ISBOUND)) {
+
                                 vpBits[index] |= ISBOUND;
-                                outarray.push({
-                                    ix : tnv.ix,
-                                    iy : tnv.iy,
-                                    iz : tnv.iz
-                                });
+
+                                outarray[ positout     ] = tnv_ix;
+                                outarray[ positout + 1 ] = tnv_iy;
+                                outarray[ positout + 2 ] = tnv_iz;
+                                positout += 3;
+
                             }
+
                         }
+
                     }
+
                 }
             }
         }
 
         // console.log("part3", positout);
-        return outarray;
+
+        return positout;
 
     }
 
@@ -20135,6 +21504,76 @@ NGL.EDTSurface = function( atomSet ){
 
         }
 
+    };
+
+};
+
+
+NGL.getSurfaceGrid = function( bbox, maxRadius, scaleFactor, extraMargin ){
+
+    // need margin to avoid boundary/round off effects
+    var margin = ( 1 / scaleFactor ) * 3;
+    margin += maxRadius;
+
+    var min = new THREE.Vector3().copy( bbox.min );
+    var max = new THREE.Vector3().copy( bbox.max );
+
+    min.subScalar( extraMargin + margin );
+    max.addScalar( extraMargin + margin );
+
+    min.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+    max.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+    var dim = new THREE.Vector3()
+        .subVectors( max, min )
+        .multiplyScalar( scaleFactor )
+        .ceil()
+        .addScalar( 1 );
+
+    var maxSize = Math.pow( 10, 6 ) * 256;
+    var tmpSize = dim.x * dim.y * dim.z * 3;
+
+    if( maxSize <= tmpSize ){
+
+        scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
+
+        min.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
+        max.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+
+        dim.subVectors( max, min )
+            .multiplyScalar( scaleFactor )
+            .ceil()
+            .addScalar( 1 );
+
+    }
+
+    var tran = new THREE.Vector3().copy( min ).negate();
+
+    // coordinate transformation matrix
+    var matrix = new THREE.Matrix4();
+    matrix.multiply(
+        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    );
+    matrix.multiply(
+        new THREE.Matrix4().makeScale(
+            -1 / scaleFactor,
+             1 / scaleFactor,
+             1 / scaleFactor
+        )
+    );
+    matrix.multiply(
+        new THREE.Matrix4().makeTranslation(
+            -scaleFactor * tran.z,
+            -scaleFactor * tran.y,
+            -scaleFactor * tran.x
+        )
+    );
+
+    return {
+        dim: dim,
+        tran: tran,
+        matrix: matrix,
+        scaleFactor: scaleFactor
     };
 
 };
@@ -20193,21 +21632,19 @@ NGL.Script.prototype = {
 
     call: function( stage, onFinish ){
 
-        var scope = this;
-
         var panel = {
 
             add: function( element ){
 
-                scope.signals.elementAdded.dispatch( arguments );
+                this.signals.elementAdded.dispatch( arguments );
 
-            },
+            }.bind( this ),
 
             setName: function( value ){
 
-                scope.signals.nameChanged.dispatch( value );
+                this.signals.nameChanged.dispatch( value );
 
-            }
+            }.bind( this )
 
         };
 
@@ -20498,7 +21935,9 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         var select = new UI.Select()
             .setOptions( options )
-            .onChange( callback );
+            .onChange( function(){
+                callback( select );
+            } );
 
         panel.add( select );
 
@@ -20525,34 +21964,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         var btn = new UI.Button( U( label ) ).onClick( function(){
 
             NGL.download( callback(), downloadName );
-
-        } );
-
-        panel.add( btn );
-
-        return btn;
-
-    }
-
-    function uiToggleButton( labelA, labelB, callbackA, callbackB ){
-
-        var flag = true;
-
-        var btn = new UI.Button( U( labelB ) ).onClick( function(){
-
-            if( flag ){
-
-                flag = false;
-                btn.setLabel( U( labelA ) );
-                callbackB();
-
-            }else{
-
-                flag = true;
-                btn.setLabel( U( labelB ) );
-                callbackA();
-
-            }
 
         } );
 
@@ -20628,6 +22039,13 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         label = U( label ? label : "all" );
         collection = collection || new NGL.Collection();
 
+        if( !( collection instanceof NGL.Collection ) &&
+            !( collection instanceof NGL.ComponentCollection ) &&
+            !( collection instanceof NGL.RepresentationCollection )
+        ){
+            collection = new NGL.Collection( [ collection ] );
+        }
+
         var list = collection.list;
 
         function isVisible(){
@@ -20666,7 +22084,7 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
 
         } );
 
-        panel.add( btn );
+        // panel.add( btn );
 
         return btn;
 
@@ -20723,7 +22141,6 @@ NGL.makeScriptHelper = function( stage, queue, panel ){
         'uiButton': uiButton,
         'uiOpenButton': uiOpenButton,
         'uiDownloadButton': uiDownloadButton,
-        'uiToggleButton': uiToggleButton,
         'uiVisibilitySelect': uiVisibilitySelect,
         'uiVisibilityButton': uiVisibilityButton,
         'uiPlayButton': uiPlayButton,
@@ -21056,6 +22473,8 @@ NGL.Streamer.prototype = {
             chunkSize: this.chunkSize,
             newline: this.newline,
 
+
+
         }
 
         if( this.__srcName ){
@@ -21124,6 +22543,7 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         if( typeof importScripts === 'function' ){
 
+            // FIXME
             // adjust relative path when inside a web worker
             if( url.substr( 0, 3 ) === "../" ) url = "../" + url;
 
@@ -21147,6 +22567,8 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
                     this.onerror( xhr.status );
 
                 }
+
+                throw "NGL.NetworkStreamer._read: " + xhr.status;
 
             }
 
@@ -21218,43 +22640,58 @@ NGL.FileStreamer.prototype = NGL.createObject(
 
     _read: function( callback ){
 
-        var reader = new FileReader();
+        if( typeof importScripts === 'function' ){
 
-        //
+            // Use FileReaderSync within Worker
 
-        reader.onload = function( event ){
+            var reader = new FileReaderSync();
+            var data = reader.readAsArrayBuffer( this.file );
 
-            callback( event.target.result );
+            //
 
-        }.bind( this );
+            callback( data );
 
-        //
+        }else{
 
-        if( typeof this.onprogress === "function" ){
+            var reader = new FileReader();
 
-            reader.onprogress = function ( event ) {
+            //
 
-                this.onprogress( event );
+            reader.onload = function( event ){
 
-            }.bind( this );
-
-        }
-
-        //
-
-        if( typeof this.onerror === "function" ){
-
-            reader.onerror = function ( event ) {
-
-                this.onerror( event );
+                callback( event.target.result );
 
             }.bind( this );
 
+            //
+
+            if( typeof this.onprogress === "function" ){
+
+                reader.onprogress = function ( event ) {
+
+                    this.onprogress( event );
+
+                }.bind( this );
+
+            }
+
+            //
+
+            if( typeof this.onerror === "function" ){
+
+                reader.onerror = function ( event ) {
+
+                    this.onerror( event );
+
+                }.bind( this );
+
+            }
+
+            //
+
+            reader.readAsArrayBuffer( this.file );
+
         }
-
-        //
-
-        reader.readAsArrayBuffer( this.file );
 
     }
 
@@ -21324,6 +22761,110 @@ NGL.BinaryStreamer.prototype = NGL.createObject(
  * @file Parser
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
+
+
+NGL.atomArrayQuicksort = function( atomArray, compareFunction ){
+
+    NGL.time( "NGL.atomArrayQuicksort" );
+
+    var tmpAtom = new NGL.Atom();
+    var proxyAtom1 = new NGL.ProxyAtom( atomArray );
+    var proxyAtom2 = new NGL.ProxyAtom( atomArray );
+
+    function cmp( index1, index2 ){
+        proxyAtom1.index = index1;
+        proxyAtom2.index = index2;
+        return compareFunction( proxyAtom1, proxyAtom2 );
+    }
+
+    function swap( index1, index2 ){
+        if( index1 === index2 ) return;
+        proxyAtom1.index = index1;
+        proxyAtom2.index = index2;
+        tmpAtom.copy( proxyAtom1 );
+        proxyAtom1.copy( proxyAtom2 );
+        proxyAtom2.copy( tmpAtom );
+    }
+
+    function quicksort( left, right ){
+        if( left < right ){
+            var pivot = Math.floor( ( left + right ) / 2 );
+            var left_new = left;
+            var right_new = right;
+            do{
+                while( cmp( left_new, pivot ) < 0 ){
+                    left_new += 1;
+                }
+                while( cmp( right_new, pivot ) > 0 ){
+                    right_new -= 1;
+                }
+                if( left_new <= right_new ){
+                    if( left_new === pivot ){
+                        pivot = right_new;
+                    }else if( right_new === pivot ){
+                        pivot = left_new;
+                    }
+                    swap( left_new, right_new );
+                    left_new += 1;
+                    right_new -= 1;
+                }
+            }while( left_new <= right_new );
+            quicksort( left, right_new );
+            quicksort( left_new, right );
+        }
+    }
+
+    quicksort( 0, atomArray.usedLength - 1 );
+
+    NGL.timeEnd( "NGL.atomArrayQuicksort" );
+
+};
+
+
+NGL.reorderAtoms = function( structure ){
+
+    NGL.time( "NGL.reorderAtoms" );
+
+    var atoms = structure.atoms;
+    var atomArray = structure.atomArray;
+
+    function compareModelChainResno( a1, a2 ){
+
+        if( a1.modelindex < a2.modelindex ){
+            return -1;
+        }else if( a1.modelindex > a2.modelindex ){
+            return 1;
+        }else{
+            if( a1.chainname < a2.chainname ){
+                return -1;
+            }else if( a1.chainname > a2.chainname ){
+                return 1;
+            }else{
+                if( a1.resno < a2.resno ){
+                    return -1;
+                }else if( a1.resno > a2.resno ){
+                    return 1;
+                }else{
+                    return 0;
+                }
+            }
+        }
+
+    }
+
+    if( atomArray ){
+        NGL.atomArrayQuicksort( atomArray, compareModelChainResno );
+    }else{
+        atoms.sort( compareModelChainResno );
+    }
+
+    for( var i = 0, il = atoms.length; i < il; ++i ){
+        atoms[ i ].index = i;
+    }
+
+    NGL.timeEnd( "NGL.reorderAtoms" );
+
+};
 
 
 NGL.buildStructure = function( structure, callback ){
@@ -21519,7 +23060,43 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     NGL.time( "NGL.assignSecondaryStructure" );
 
+    var chainnames = [];
+    structure.eachModel( function( m ){
+        m.eachChain( function( c ){
+            chainnames.push( c.chainname );
+        } );
+    } );
+
+    var chainnamesSorted = chainnames.slice().sort();
+    var chainnamesIndex = [];
+    chainnamesSorted.forEach( function( c ){
+        chainnamesIndex.push( chainnames.indexOf( c ) );
+    } );
+
+    // helix assignment
+
     var helices = structure.helices || [];
+
+    helices.sort( function( h1, h2 ){
+
+        var c1 = h1[ 0 ];
+        var c2 = h2[ 0 ];
+        var r1 = h1[ 1 ];
+        var r2 = h2[ 1 ];
+
+        if( c1 === c2 ){
+            if( r1 === r2 ){
+                return 0;
+            }else{
+                return r1 < r2 ? -1 : 1;
+            }
+        }else{
+            var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+            var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+            return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
+        }
+
+    } );
 
     structure.eachModel( function( m ){
 
@@ -21588,6 +23165,8 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     } );
 
+    // sheet assignment
+
     var sheets = structure.sheets || [];
 
     sheets.sort( function( s1, s2 ){
@@ -21595,20 +23174,10 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var c1 = s1[ 0 ];
         var c2 = s2[ 0 ];
 
-        var n1 = c1.length;
-        var n2 = c2.length;
-
-        if( n1 < n2 ) return -1;
-        if( n1 > n2 ) return 1;
-
-        for( var i = n1-1; i >= 0; --i ){
-
-            if( c1[ i ] < c2[ i ] ) return -1;
-            if( c1[ i ] > c2[ i ] ) return 1;
-
-        }
-
-        return 0;
+        if( c1 === c2 ) return 0;
+        var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+        var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+        return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
 
     } );
 
@@ -21793,7 +23362,7 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 ///////////
 // Parser
 
-NGL.Worker.add( "parse", function( e ){
+NGL.WorkerRegistry.add( "parse", function( e, callback ){
 
     NGL.time( "WORKER parse" );
 
@@ -21806,7 +23375,7 @@ NGL.Worker.add( "parse", function( e ){
         // no need to return the streamer data
         parser.streamer.dispose();
 
-        self.postMessage( parser.toJSON(), parser.getTransferable() );
+        callback( parser.toJSON(), parser.getTransferable() );
 
     } );
 
@@ -21878,26 +23447,13 @@ NGL.Parser.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var __timeName = "NGL.Parser.parseWorker " + this.name;
-            NGL.time( __timeName );
+            var worker = new NGL.Worker( "parse" ).post(
 
-            var worker = NGL.Worker.make( "parse", {
+                this.toJSON(),
 
-                onerror: function( e ){
+                this.getTransferable(),
 
-                    console.warn(
-                        "NGL.Parser.parseWorker error - trying without worker", e
-                    );
-                    worker.terminate();
-
-                    this.parse( callback );
-
-                }.bind( this ),
-
-                onmessage: function( e ){
-
-                    NGL.timeEnd( __timeName );
-                    if( NGL.debug ) NGL.log( e.data );
+                function( e ){
 
                     worker.terminate();
 
@@ -21906,14 +23462,18 @@ NGL.Parser.prototype = {
 
                 }.bind( this ),
 
-                messageData: [
+                function( e ){
 
-                    this.toJSON(),
-                    this.getTransferable()
+                    console.warn(
+                        "NGL.Parser.parseWorker error - trying without worker", e
+                    );
+                    worker.terminate();
 
-                ]
+                    this.parse( callback );
 
-            } );
+                }.bind( this )
+
+            );
 
         }else{
 
@@ -22038,6 +23598,7 @@ NGL.StructureParser = function( streamer, params ){
     this.firstModelOnly = p.firstModelOnly || false;
     this.asTrajectory = p.asTrajectory || false;
     this.cAlphaOnly = p.cAlphaOnly || false;
+    this.reorderAtoms = p.reorderAtoms || false;
 
     NGL.Parser.call( this, streamer, p );
 
@@ -22062,6 +23623,10 @@ NGL.StructureParser.prototype = NGL.createObject(
         async.series( [
 
             function( wcallback ){
+
+                if( self.reorderAtoms ){
+                    NGL.reorderAtoms( self.structure );
+                }
 
                 if( !self.structure.atomArray &&
                     self.structure.atoms.length > NGL.useAtomArrayThreshold
@@ -22152,6 +23717,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         output.firstModelOnly = this.firstModelOnly;
         output.asTrajectory = this.asTrajectory;
         output.cAlphaOnly = this.cAlphaOnly;
+        output.reorderAtoms = this.reorderAtoms;
 
         return output;
 
@@ -22164,6 +23730,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         this.firstModelOnly = input.firstModelOnly;
         this.asTrajectory = input.asTrajectory;
         this.cAlphaOnly = input.cAlphaOnly;
+        this.reorderAtoms = input.reorderAtoms;
 
         return this;
 
@@ -22189,6 +23756,9 @@ NGL.PdbParser.prototype = NGL.createObject(
     _parse: function( callback ){
 
         // http://www.wwpdb.org/documentation/file-format.php
+
+        var isPqr = this.type === "pqr";
+        var reWhitespace = /\s+/;
 
         var __timeName = "NGL.PdbParser._parse " + this.name;
 
@@ -22220,8 +23790,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var serial, elem, chainname, resno, resname, atomname, element,
-            hetero, bfactor, altloc;
+        var serial, chainname, resno, resname,
+            atomname, element, hetero, bfactor, altloc;
 
         var serialDict = {};
         var unitcellDict = {};
@@ -22237,6 +23807,7 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         var idx = 0;
         var modelIdx = 0;
+        var pendingStart = true;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -22247,16 +23818,54 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
-                    // http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
+                    // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+
+                    if( pendingStart ){
+
+                        if( asTrajectory ){
+
+                            if( doFrames ){
+                                currentFrame = new Float32Array( atoms.length * 3 );
+                                frames.push( currentFrame );
+                            }else{
+                                currentFrame = [];
+                            }
+                            currentCoord = 0;
+
+                        }else{
+
+                            if( !firstModelOnly ) serialDict = {};
+
+                        }
+
+                    }
+
+                    pendingStart = false;
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
-                    atomname = line.substr( 12, 4 ).trim();
-                    if( cAlphaOnly && atomname !== 'CA' ) continue;
+                    if( isPqr ){
 
-                    var x = parseFloat( line.substr( 30, 8 ) );
-                    var y = parseFloat( line.substr( 38, 8 ) );
-                    var z = parseFloat( line.substr( 46, 8 ) );
+                        var ls = line.split( reWhitespace );
+                        var dd = ls.length === 10 ? 1 : 0;
+
+                        atomname = ls[ 2 ];
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var x = parseFloat( ls[ 6 - dd ] );
+                        var y = parseFloat( ls[ 7 - dd ] );
+                        var z = parseFloat( ls[ 8 - dd ] );
+
+                    }else{
+
+                        atomname = line.substr( 12, 4 ).trim();
+                        if( cAlphaOnly && atomname !== 'CA' ) continue;
+
+                        var x = parseFloat( line.substr( 30, 8 ) );
+                        var y = parseFloat( line.substr( 38, 8 ) );
+                        var z = parseFloat( line.substr( 46, 8 ) );
+
+                    }
 
                     if( asTrajectory ){
 
@@ -22272,14 +23881,30 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     }
 
-                    serial = parseInt( line.substr( 6, 5 ) );
-                    element = line.substr( 76, 2 ).trim();
-                    hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                    chainname = line[ 21 ].trim();
-                    resno = parseInt( line.substr( 22, 5 ) );
-                    resname = line.substr( 17, 4 ).trim();
-                    bfactor = parseFloat( line.substr( 60, 8 ) );
-                    altloc = line[ 16 ].trim();
+                    if( isPqr ){
+
+                        serial = parseInt( ls[ 1 ] );
+                        element = "";
+                        hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                        chainname = dd ? "" : ls[ 4 ];
+                        resno = parseInt( ls[ 5 - dd ] );
+                        resname = ls[ 3 ];
+                        bfactor = parseFloat( ls[ 9 - dd ] );  // charge FIXME should be its own field
+                        altloc = "";
+
+                    }else{
+
+                        serial = parseInt( line.substr( 6, 5 ) );
+                        element = line.substr( 76, 2 ).trim();
+                        hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
+                        chainname = line[ 21 ].trim();
+                        resno = parseInt( line.substr( 22, 4 ) );
+                        // icode = line[ 26 ];  // FIXME currently not supported
+                        resname = line.substr( 17, 4 ).trim();
+                        bfactor = parseFloat( line.substr( 60, 8 ) );
+                        altloc = line[ 16 ].trim();
+
+                    }
 
                     if( !element ) element = guessElem( atomname );
 
@@ -22347,7 +23972,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         continue;
                     }
 
-                    for (var j = 0; j < 4; j++) {
+                    for( var j = 0; j < 4; ++j ){
 
                         var to = parseInt( line.substr( pos[ j ], 5 ) );
                         if( Number.isNaN( to ) ) continue;
@@ -22357,7 +23982,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                             continue;
                         }/*else if( to < from ){
                             // likely a duplicate in standard PDB format
-                            // but not necessarily so better remove duplicates
+                            // but not necessarily, so better remove duplicates
                             // in a pass after parsing (and auto bonding)
                             continue;
                         }*/
@@ -22385,36 +24010,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                     var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     sheets.push([ startChain, startResi, endChain, endResi ]);
-
-                // }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '290' ){
-
-                //     if( line.substr( 11, 41 ) === "CRYSTALLOGRAPHIC SYMMETRY TRANSFORMATIONS" ){
-
-                //         biomolDict[ "REL" ] = {
-                //             matrixDict: {},
-                //             chainList: []
-                //         };
-                //         currentBiomol = biomolDict[ "REL" ];
-
-                //     }else if( line.substr( 13, 5 ) === "SMTRY" ){
-
-                //         var ls = line.split( /\s+/ );
-
-                //         var row = parseInt( line[ 18 ] ) - 1;
-                //         var mat = ls[ 3 ].trim();
-
-                //         if( row === 0 ){
-                //             currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
-                //         }
-
-                //         var elms = currentBiomol.matrixDict[ mat ].elements;
-
-                //         elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
-                //         elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
-                //         elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
-                //         elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
-
-                //     }
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
@@ -22473,23 +24068,11 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                 }else if( recordName === 'MODEL ' ){
 
-                    if( asTrajectory ){
+                    pendingStart = true;
 
-                        if( doFrames ){
-                            currentFrame = new Float32Array( atoms.length * 3 );
-                            frames.push( currentFrame );
-                        }else{
-                            currentFrame = [];
-                        }
-                        currentCoord = 0;
+                }else if( recordName === 'ENDMDL' || line.substr( 0, 3 ) === 'END' ){
 
-                    }else if( a ){
-
-                        if( !firstModelOnly ) serialDict = {};
-
-                    }
-
-                }else if( recordName === 'ENDMDL' ){
+                    if( pendingStart ) continue;
 
                     if( asTrajectory && !doFrames ){
 
@@ -22499,6 +24082,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     }
 
                     modelIdx += 1;
+                    pendingStart = true;
 
                 }else if( line.substr( 0, 5 ) === 'MTRIX' ){
 
@@ -22630,6 +24214,23 @@ NGL.PdbParser.prototype = NGL.createObject(
         );
 
     }
+
+} );
+
+
+NGL.PqrParser = function( streamer, params ){
+
+    NGL.StructureParser.call( this, streamer, params );
+
+};
+
+NGL.PqrParser.prototype = NGL.createObject(
+
+    NGL.PdbParser.prototype, {
+
+    constructor: NGL.PqrParser,
+
+    type: "pqr",
 
 } );
 
@@ -23755,7 +25356,27 @@ NGL.CifParser.prototype = NGL.createObject(
 
                         for( var i = _i; i < _n; ++i ){
 
-                            if( sc.conn_type_id[ i ] === "hydrog" ) continue;
+                            // ignore:
+                            // hydrog - hydrogen bond
+                            // mismat - mismatched base pairs
+                            // saltbr - ionic interaction
+
+                            var conn_type_id = sc.conn_type_id[ i ]
+                            if( conn_type_id === "hydrog" ||
+                                conn_type_id === "mismat" ||
+                                conn_type_id === "saltbr" ) continue;
+
+                            // process:
+                            // covale - covalent bond
+                            // covale_base -
+                            //      covalent modification of a nucleotide base
+                            // covale_phosphate -
+                            //      covalent modification of a nucleotide phosphate
+                            // covale_sugar -
+                            //      covalent modification of a nucleotide sugar
+                            // disulf - disulfide bridge
+                            // metalc - metal coordination
+                            // modres - covalent residue modification
 
                             var sele1 = (
                                 sc.ptnr1_auth_seq_id[ i ] + ":" +
@@ -24467,6 +26088,11 @@ NGL.MrcParser.prototype = NGL.createObject(
         //  .          "
         // 52          "
 
+        // 50-52 origin in X,Y,Z used for transforms
+        header.originX = floatView[ 49 ];
+        header.originY = floatView[ 50 ];
+        header.originZ = floatView[ 51 ];
+
         // 53  MAP         Character string 'MAP ' to identify file type
         // => see top of this parser
 
@@ -24556,7 +26182,9 @@ NGL.MrcParser.prototype = NGL.createObject(
 
         matrix.multiply(
             new THREE.Matrix4().makeTranslation(
-                h.NXSTART, h.NYSTART, h.NZSTART
+                h.NXSTART + h.originX,
+                h.NYSTART + h.originY,
+                h.NZSTART + h.originZ
             )
         );
 
@@ -24677,6 +26305,155 @@ NGL.CubeParser.prototype = NGL.createObject(
         matrix.multiply(
             new THREE.Matrix4().makeScale(
                 -h.AVZ, h.AVY, h.AVX
+            )
+        );
+
+        return matrix;
+
+    }
+
+} );
+
+
+NGL.DxParser = function( streamer, params ){
+
+    NGL.VolumeParser.call( this, streamer, params );
+
+};
+
+NGL.DxParser.prototype = NGL.createObject(
+
+    NGL.VolumeParser.prototype, {
+
+    constructor: NGL.DxParser,
+
+    type: "dx",
+
+    _parse: function( callback ){
+
+        // http://www.poissonboltzmann.org/docs/file-format-info/
+
+        var __timeName = "NGL.DxParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var v = this.volume;
+        var headerLines = this.streamer.peekLines( 30 );
+        var header = {};
+        var reWhitespace = /\s+/;
+
+        var dataLineStart = 0;
+        var deltaLineCount = 0;
+
+        for( var i = 0; i < 30; ++i ){
+
+            var line = headerLines[ i ];
+
+            if( line.startsWith( "object 1" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                header.nx = parseInt( ls[ 5 ] );
+                header.ny = parseInt( ls[ 6 ] );
+                header.nz = parseInt( ls[ 7 ] );
+
+            }else if( line.startsWith( "origin" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                header.xmin = parseFloat( ls[ 1 ] );
+                header.ymin = parseFloat( ls[ 2 ] );
+                header.zmin = parseFloat( ls[ 3 ] );
+
+            }else if( line.startsWith( "delta" ) ){
+
+                var ls = line.split( reWhitespace );
+
+                if( deltaLineCount === 0 ){
+                    header.hx = parseFloat( ls[ 1 ] );
+                }else if( deltaLineCount === 1 ){
+                    header.hy = parseFloat( ls[ 2 ] );
+                }else if( deltaLineCount === 2 ){
+                    header.hz = parseFloat( ls[ 3 ] );
+                }
+
+                deltaLineCount += 1;
+
+            }else if( line.startsWith( "object 3" ) ){
+
+                dataLineStart = i;
+
+            }
+
+        }
+
+        var size = header.nx * header.ny * header.nz;
+        var data = new Float32Array( size );
+        var count = 0;
+        var lineNo = 0;
+
+        function _parseChunkOfLines( _i, _n, lines ){
+
+            for( var i = _i; i < _n; ++i ){
+
+                if( count < size && lineNo > dataLineStart ){
+
+                    var line = lines[ i ].trim();
+
+                    if( line !== "" ){
+
+                        var ls = line.split( reWhitespace );
+
+                        for( var j = 0, lj = ls.length; j < lj; ++j ){
+                            data[ count ] = parseFloat( ls[ j ] );
+                            ++count;
+                        };
+
+                    }
+
+                }
+
+                ++lineNo;
+
+            };
+
+        };
+
+        this.streamer.eachChunkOfLinesAsync(
+
+            _parseChunkOfLines,
+
+            function(){
+
+                v.header = header;
+                v.setData( data, header.nz, header.ny, header.nx );
+                NGL.timeEnd( __timeName );
+                callback();
+
+            }
+
+        );
+
+    },
+
+    getMatrix: function(){
+
+        var h = this.volume.header;
+        var matrix = new THREE.Matrix4();
+
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -h.zmin, h.ymin, h.xmin
+            )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -h.hz, h.hy, h.hx
             )
         );
 
@@ -24913,6 +26690,332 @@ NGL.JsonParser.prototype = NGL.createObject(
 
 } );
 
+
+////////////////
+// Xml parser
+
+NGL.XmlParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.xml = {
+
+        name: this.name,
+        path: this.path,
+        data: {}
+
+    };
+
+};
+
+NGL.XmlParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.XmlParser,
+
+    type: "xml",
+
+    __objName: "xml",
+
+    _parse: function( callback ){
+
+        var text = NGL.Uint8ToString( this.streamer.data );
+
+        // https://github.com/segmentio/xml-parser
+        // MIT license
+
+        function parse( xml ){
+
+            xml = xml.trim();
+
+            // strip comments
+            xml = xml.replace( /<!--[\s\S]*?-->/g, '' );
+
+            return document();
+
+            function document(){
+
+                return {
+                    declaration: declaration(),
+                    root: tag()
+                }
+
+            }
+
+            function declaration(){
+
+                var m = match(/^<\?xml\s*/);
+                if (!m) return;
+
+                // tag
+                var node = {
+                    attributes: {}
+                };
+
+                // attributes
+                while (!(eos() || is('?>'))) {
+                    var attr = attribute();
+                    if (!attr) return node;
+                    node.attributes[attr.name] = attr.value;
+                }
+
+                match(/\?>\s*/);
+                return node;
+
+            }
+
+            function tag(){
+
+                var m = match(/^<([\w-:.]+)\s*/);
+                if (!m) return;
+
+                // name
+                var node = {
+                    name: m[1],
+                    attributes: {},
+                    children: []
+                };
+
+                // attributes
+                while (!(eos() || is('>') || is('?>') || is('/>'))) {
+                    var attr = attribute();
+                    if (!attr) return node;
+                    node.attributes[attr.name] = attr.value;
+                }
+
+                // self closing tag
+                if (match(/^\s*\/>\s*/)) {
+                    return node;
+                }
+
+                match(/\??>\s*/);
+
+                // content
+                node.content = content();
+
+                // children
+                var child;
+                while (child = tag()) {
+                    node.children.push(child);
+                }
+
+                // closing
+                match(/^<\/[\w-:.]+>\s*/);
+
+                return node;
+
+            }
+
+            function content(){
+
+                var m = match(/^([^<]*)/);
+                if (m) return m[1];
+                return '';
+
+            }
+
+            function attribute(){
+
+                var m = match(/([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|\w+)\s*/);
+                if (!m) return;
+                return { name: m[1], value: strip(m[2]) }
+
+            }
+
+            function strip( val ){
+
+                return val.replace(/^['"]|['"]$/g, '');
+
+            }
+
+            function match( re ){
+
+                var m = xml.match(re);
+                if (!m) return;
+                xml = xml.slice(m[0].length);
+                return m;
+
+            }
+
+            function eos(){
+
+                return 0 == xml.length;
+
+            }
+
+            function is( prefix ){
+
+                return 0 == xml.indexOf(prefix);
+
+            }
+
+        }
+
+        this.xml.data = parse( text );
+
+        callback();
+
+    }
+
+} );
+
+// File:js/ngl/writer.js
+
+/**
+ * @file Writer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+///////////////
+// PDB Writer
+
+NGL.PdbWriter = function( structure, params ){
+
+    var p = Object.assign( {}, params );
+
+    var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true;
+    var remarks = p.remarks || [];
+    if( !Array.isArray( remarks ) ) remarks = [ remarks ];
+
+    var records;
+
+    function writeRecords(){
+
+        records = [];
+
+        writeTitle();
+        writeRemarks();
+        writeAtoms();
+
+    }
+
+    // http://www.wwpdb.org/documentation/file-format
+
+    // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
+    // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
+
+    function DEF( x, y ){
+        return x !== undefined ? x : y;
+    }
+
+    var atomFormat =
+        "ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
+
+    var hetatmFormat =
+        "HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
+
+    function writeTitle(){
+
+        // FIXME multiline if title line longer than 80 chars
+        records.push( sprintf( "TITEL %-74s", structure.name ) );
+
+    }
+
+    function writeRemarks(){
+
+        remarks.forEach( function( str ){
+            records.push( sprintf( "REMARK %-73s", str ) );
+        } );
+
+        if( structure.trajectory ){
+            records.push( sprintf(
+                "REMARK %-73s",
+                "Trajectory '" + structure.trajectory.name + "'"
+            ) );
+            records.push( sprintf(
+                "REMARK %-73s",
+                "Frame " + structure.trajectory.frame + ""
+            ) );
+        }
+
+    }
+
+    function writeAtoms(){
+
+        var ia = 1;
+        var im = 1;
+
+        structure.eachModel( function( m ){
+
+            records.push( sprintf( "MODEL %-74d", im++ ) );
+
+            m.eachAtom( function( a ){
+
+                var formatString = a.hetero ? hetatmFormat : atomFormat;
+                var serial = renumberSerial ? ia : a.serial;
+
+                // Alignment of one-letter atom name such as C starts at column 14,
+                // while two-letter atom name such as FE starts at column 13.
+                var atomname = a.atomname;
+                if( atomname.length === 1 ) atomname = " " + atomname;
+
+                records.push( sprintf(
+                    formatString,
+
+                    a.serial,
+                    atomname,
+                    a.resname,
+                    DEF( a.chainname, " " ),
+                    a.resno,
+                    a.x, a.y, a.z,
+                    DEF( a.occurence, 1.0 ),
+                    DEF( a.bfactor, 0.0 ),
+                    DEF( a.segid, "" ),
+                    DEF( a.element, "" )
+                ) );
+                ia += 1;
+
+            } );
+
+            records.push( sprintf( "%-80s", "ENDMDL" ) );
+            im += 1;
+
+        } );
+
+        records.push( sprintf( "%-80s", "END" ) );
+
+    }
+
+    function getString(){
+
+        writeRecords();
+        return records.join( "\n" );
+
+    }
+
+    function getBlob(){
+
+        return new Blob(
+            [ getString() ],
+            { type: 'text/plain' }
+        );
+
+    }
+
+    function download( name, ext ){
+
+        name = name || "structure"
+        ext = ext || "pdb";
+
+        var file = name + "." + ext;
+        var blob = getBlob();
+
+        NGL.download( blob, file );
+
+    }
+
+    // API
+
+    this.getString = getString;
+    this.getBlob = getBlob;
+    this.download = download;
+
+};
+
 // File:js/ngl/loader.js
 
 /**
@@ -24921,21 +27024,110 @@ NGL.JsonParser.prototype = NGL.createObject(
  */
 
 
+///////////////
+// Datasource
+
+NGL.DatasourceRegistry = {
+
+    sourceDict: {},
+
+    listing: undefined,
+    trajectory: undefined,
+
+    __passThrough: {
+        getUrl: function( path ){
+            return path;
+        }
+    },
+
+    add: function( name, datasource ){
+        name = name.toLowerCase();
+        if( name in this.sourceDict ){
+            NGL.warn( "overwriting datasource named '" + name + "'" );
+        }
+        this.sourceDict[ name ] = datasource;
+    },
+
+    get: function( name ){
+        name = name || "";
+        name = name.toLowerCase();
+        if( name in this.sourceDict ){
+            return this.sourceDict[ name ];
+        }else if( [ "http", "https", "ftp" ].indexOf( name ) !== -1 ){
+            return this.__passThrough;
+        }else if( !name ){
+            return this.__passThrough;
+        }else{
+            NGL.error( "no datasource named '" + name + "' found" );
+        }
+    }
+
+};
+
+
+NGL.getDataInfo = function( src ){
+
+    var info = NGL.getFileInfo( src );
+    var datasource = NGL.DatasourceRegistry.get( info.protocol );
+    var url = datasource.getUrl( info.src );
+
+    return NGL.getFileInfo( url );
+
+};
+
+
+NGL.StaticDatasource = function( baseUrl ){
+
+    baseUrl = baseUrl || "";
+
+    this.getUrl = function( src ){
+        var info = NGL.getFileInfo( src );
+        return NGL.getAbsolutePath( baseUrl + info.path );
+    };
+
+};
+
+
+NGL.RcsbDatasource = function(){
+
+    var baseUrl = "http://www.rcsb.org/pdb/files/";
+
+    this.getUrl = function( src ){
+        // valid path are
+        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz
+        // XXXX defaults to XXXX.cif.gz
+        var info = NGL.getFileInfo( src );
+        var file;
+        if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
+            ( info.compressed === false || info.compressed === "gz" )
+        ){
+            file = info.path;
+        }else{
+            file = info.name + ".cif.gz";
+        }
+        return baseUrl + file;
+    };
+
+};
+
+NGL.DatasourceRegistry.add(
+    "rcsb", new NGL.RcsbDatasource()
+);
+
+
 ///////////
 // Loader
 
 NGL.Loader = function( src, params ){
 
-    var p = params || {};
-
-    if( typeof p.onLoad === "function" ) this.onload = p.onLoad;
-    if( typeof p.onProgress === "function" ) this.onprogress = p.onProgress;
-    if( typeof p.onError === "function" ) this.onerror = p.onError;
+    var p = Object.assign( {}, params );
 
     this.compressed = p.compressed || false;
     this.name = p.name || "";
     this.ext = p.ext || "";
+    this.dir = p.dir || "";
     this.path = p.path || "";
+    this.protocol = p.protocol || "";
 
     this.params = params;
 
@@ -24957,8 +27149,11 @@ NGL.Loader = function( src, params ){
 
     }
 
-    this.streamer.onerror = this.onError;
-    this.streamer.onprogress = this.onProgress;
+    if( typeof p.onProgress === "function" ){
+
+        this.streamer.onprogress = p.onprogress;
+
+    }
 
 };
 
@@ -24966,32 +27161,31 @@ NGL.Loader.prototype = {
 
     constructor: NGL.Loader,
 
-    onload: function(){},
-
-    onprogress: function(){},
-
-    onerror: function( e ){
-
-        NGL.error( e );
-
-    },
-
     load: function(){
 
-        try{
+        return new Promise( function( resolve, reject ){
 
-            this._load();
+            this.streamer.onerror = reject;
 
-        }catch( e ){
+            try{
 
-            NGL.error( e );
-            this.onerror( "loading failed" );
+                this._load( resolve, reject );
 
-        }
+            }catch( e ){
+
+                reject( e );
+
+            }
+
+        }.bind( this ) );
 
     },
 
-    _load: function(){}
+    _load: function( resolve, reject ){
+
+        reject( "not implemented" );
+
+    }
 
 };
 
@@ -24999,6 +27193,8 @@ NGL.Loader.prototype = {
 NGL.ParserLoader = function( src, params ){
 
     NGL.Loader.call( this, src, params );
+
+    this.noWorker = this.params.noWorker || false;
 
 };
 
@@ -25008,13 +27204,14 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
     constructor: NGL.ParserLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         var parsersClasses = {
 
             "gro": NGL.GroParser,
             "pdb": NGL.PdbParser,
             "ent": NGL.PdbParser,
+            "pqr": NGL.PqrParser,
             "cif": NGL.CifParser,
             "mcif": NGL.CifParser,
             "mmcif": NGL.CifParser,
@@ -25026,13 +27223,16 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "map": NGL.MrcParser,
 
             "cube": NGL.CubeParser,
+            "dx": NGL.DxParser,
 
             "ply": NGL.PlyParser,
             "obj": NGL.ObjParser,
 
             "txt": NGL.TextParser,
+            "text": NGL.TextParser,
             "csv": NGL.CsvParser,
-            "json": NGL.JsonParser
+            "json": NGL.JsonParser,
+            "xml": NGL.XmlParser
 
         };
 
@@ -25040,7 +27240,15 @@ NGL.ParserLoader.prototype = NGL.createObject(
             this.streamer, this.params
         );
 
-        parser.parseWorker( this.onload );
+        if( this.noWorker ){
+
+            parser.parse( resolve );
+
+        }else{
+
+            parser.parseWorker( resolve );
+
+        }
 
     }
 
@@ -25059,7 +27267,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
     constructor: NGL.ScriptLoader,
 
-    _load: function(){
+    _load: function( resolve, reject ){
 
         this.streamer.read( function(){
 
@@ -25067,7 +27275,7 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
             var script = new NGL.Script( text, this.name, this.path );
 
-            this.onload( script );
+            resolve( script );
 
         }.bind( this ) );
 
@@ -25076,137 +27284,107 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 } );
 
 
-NGL.autoLoad = function(){
+NGL.PluginLoader = function( src, params ){
 
-    var loaders = {
+    NGL.Loader.call( this, src, params );
 
-        "gro": NGL.ParserLoader,
-        "pdb": NGL.ParserLoader,
-        "ent": NGL.ParserLoader,
-        "cif": NGL.ParserLoader,
-        "mcif": NGL.ParserLoader,
-        "mmcif": NGL.ParserLoader,
-        "sdf": NGL.ParserLoader,
-        "mol2": NGL.ParserLoader,
+};
 
-        "mrc": NGL.ParserLoader,
-        "ccp4": NGL.ParserLoader,
-        "map": NGL.ParserLoader,
-        "cube": NGL.ParserLoader,
+NGL.PluginLoader.prototype = NGL.createObject(
 
-        "obj": NGL.ParserLoader,
-        "ply": NGL.ParserLoader,
+    NGL.Loader.prototype, {
 
-        "txt": NGL.ParserLoader,
-        "csv": NGL.ParserLoader,
-        "json": NGL.ParserLoader,
+    constructor: NGL.PluginLoader,
 
-        "ngl": NGL.ScriptLoader,
+    _load: function( resolve, reject ){
 
-    };
-
-    return function( file, params ){
-
-        var fileInfo = NGL.getFileInfo( file );
-        // NGL.log( fileInfo );
-
-        var path = fileInfo.path;
-        var name = fileInfo.name;
-        var ext = fileInfo.ext;
-        var compressed = fileInfo.compressed;
-        var protocol = fileInfo.protocol;
-
-        if( protocol === "rcsb" ){
-
-            // ext = "pdb";
-            // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
-            ext = "cif";
-            compressed = "gz";
-            path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
-            protocol = "http";
-
-        }
-
-        //
-
-        var _onLoad;
-        var p = params || {};
-
-        // allow loadFile( path, onLoad ) method signature
-        if( typeof params === "function" ){
-
-            _onLoad = params;
-            p = {};
-
+        var basePath;
+        if( this.protocol ){
+            basePath = this.protocol + "://" + this.dir;
         }else{
-
-            _onLoad = p.onLoad;
-
+            basePath = this.dir;
         }
 
-        p.name = p.name !== undefined ? p.name : name;
-        p.ext = p.ext !== undefined ? p.ext : ext;
-        p.compressed = p.compressed !== undefined ? p.compressed : compressed;
-        p.path = p.path !== undefined ? p.path : path;
+        this.streamer.read( function(){
 
-        p.onLoad = function( object ){
+            var text = NGL.Uint8ToString( this.streamer.data );
+            var manifest = JSON.parse( text );
+            var promiseList = [];
 
-            // relay params
-            if( typeof _onLoad === "function" ) _onLoad( object, p );
+            manifest.files.map( function( name ){
 
-        };
+                promiseList.push(
+                    NGL.autoLoad( basePath + name, {
+                        ext: "text", noWorker: true
+                    } )
+                );
 
-        //
+            } );
 
-        var src;
+            Promise.all( promiseList ).then( function( dataList ){
 
-        if( file instanceof File ){
+                var text = dataList.reduce( function( text, value ){
+                    return text + "\n\n" + value.data;
+                }, "" );
+                text += manifest.source || "";
 
-            src = file;
+                var script = new NGL.Script( text, this.name, this.path );
+                resolve( script );
 
-        }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
+            }.bind( this ) );
 
-            src = protocol + "://" + path;
-
-        }else if( protocol === "data" ){
-
-            src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
-
-        }else{
-
-            src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
-
-        }
-
-        //
-
-        if( p.ext in loaders ){
-
-            var loader = new loaders[ p.ext ]( src, p );
-
-            loader.load();
-
-        }else{
-
-            var e = "NGL.autoLoading: ext '" + p.ext + "' unknown";
-
-            if( typeof p.onError === "function" ){
-
-                p.onError( e );
-
-            }else{
-
-                NGL.error( e );
-
-            }
-
-            return null;
-
-        }
+        }.bind( this ) );
 
     }
 
-}();
+} );
+
+
+NGL.loaderMap = {
+
+    "gro": NGL.ParserLoader,
+    "pdb": NGL.ParserLoader,
+    "ent": NGL.ParserLoader,
+    "pqr": NGL.ParserLoader,
+    "cif": NGL.ParserLoader,
+    "mcif": NGL.ParserLoader,
+    "mmcif": NGL.ParserLoader,
+    "sdf": NGL.ParserLoader,
+    "mol2": NGL.ParserLoader,
+
+    "mrc": NGL.ParserLoader,
+    "ccp4": NGL.ParserLoader,
+    "map": NGL.ParserLoader,
+    "cube": NGL.ParserLoader,
+    "dx": NGL.ParserLoader,
+
+    "obj": NGL.ParserLoader,
+    "ply": NGL.ParserLoader,
+
+    "txt": NGL.ParserLoader,
+    "text": NGL.ParserLoader,
+    "csv": NGL.ParserLoader,
+    "json": NGL.ParserLoader,
+    "xml": NGL.ParserLoader,
+
+    "ngl": NGL.ScriptLoader,
+    "plugin": NGL.PluginLoader,
+
+};
+
+
+NGL.autoLoad = function( file, params ){
+
+    var p = Object.assign( NGL.getDataInfo( file ), params );
+    var loader = new NGL.loaderMap[ p.ext ]( p.src, p );
+
+    if( loader ){
+        return loader.load();
+    }else{
+        return Promise.reject( "NGL.autoLoading: ext '" + p.ext + "' unknown" );
+    }
+
+};
 
 // File:js/ngl/viewer.js
 
@@ -25224,67 +27402,47 @@ NGL.autoLoad = function(){
 NGL.Resources = {
 
     // fonts
-    // '../fonts/Arial.fnt': null,
-    // '../fonts/Arial.png': 'image',
-    // '../fonts/DejaVu.fnt': null,
-    // '../fonts/DejaVu.png': 'image',
-    '../fonts/LatoBlack.fnt': null,
-    '../fonts/LatoBlack.png': 'image',
+    // 'fonts/Arial.fnt': null,
+    // 'fonts/Arial.png': 'image',
+    // 'fonts/DejaVu.fnt': null,
+    // 'fonts/DejaVu.png': 'image',
+    'fonts/LatoBlack.fnt': null,
+    'fonts/LatoBlack.png': 'image',
 
     // sprites
-    // '../img/circle.png': 'image',
-    // '../img/spark1.png': 'image',
-    '../img/radial.png': 'image',
+    // 'img/circle.png': 'image',
+    // 'img/spark1.png': 'image',
+    'img/radial.png': 'image',
 
     // shaders
-    '../shader/CylinderImpostor.vert': null,
-    '../shader/CylinderImpostor.frag': null,
-    '../shader/HyperballStickImpostor.vert': null,
-    '../shader/HyperballStickImpostor.frag': null,
-    '../shader/Line.vert': null,
-    '../shader/Line.frag': null,
-    '../shader/LineSprite.vert': null,
-    '../shader/LineSprite.frag': null,
-    '../shader/Mesh.vert': null,
-    '../shader/Mesh.frag': null,
-    '../shader/ParticleSprite.vert': null,
-    '../shader/ParticleSprite.frag': null,
-    '../shader/Quad.vert': null,
-    '../shader/Quad.frag': null,
-    '../shader/Ribbon.vert': null,
-    '../shader/Ribbon.frag': null,
-    '../shader/SDFFont.vert': null,
-    '../shader/SDFFont.frag': null,
-    '../shader/SphereHalo.vert': null,
-    '../shader/SphereHalo.frag': null,
-    '../shader/SphereImpostor.vert': null,
-    '../shader/SphereImpostor.frag': null,
+    'shader/CylinderImpostor.vert': null,
+    'shader/CylinderImpostor.frag': null,
+    'shader/HyperballStickImpostor.vert': null,
+    'shader/HyperballStickImpostor.frag': null,
+    'shader/Line.vert': null,
+    'shader/Line.frag': null,
+    'shader/LineSprite.vert': null,
+    'shader/LineSprite.frag': null,
+    'shader/Mesh.vert': null,
+    'shader/Mesh.frag': null,
+    'shader/ParticleSprite.vert': null,
+    'shader/ParticleSprite.frag': null,
+    'shader/Quad.vert': null,
+    'shader/Quad.frag': null,
+    'shader/Ribbon.vert': null,
+    'shader/Ribbon.frag': null,
+    'shader/SDFFont.vert': null,
+    'shader/SDFFont.frag': null,
+    'shader/SphereHalo.vert': null,
+    'shader/SphereHalo.frag': null,
+    'shader/SphereImpostor.vert': null,
+    'shader/SphereImpostor.frag': null,
 
     // shader chunks
-    '../shader/chunk/fog.glsl': null,
-    '../shader/chunk/fog_params.glsl': null,
-    '../shader/chunk/light.glsl': null,
-    '../shader/chunk/light_params.glsl': null,
-
-};
-
-
-/**
- * [UniformsLib description]
- * @type {Object}
- * @private
- */
-NGL.UniformsLib = {
-
-    'fog': THREE.UniformsLib[ "fog" ],
-
-    'lights': THREE.UniformsUtils.merge([
-        THREE.UniformsLib[ "lights" ],
-        {
-            "ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-        }
-    ])
+    'shader/chunk/fog.glsl': null,
+    'shader/chunk/fog_params.glsl': null,
+    'shader/chunk/light.glsl': null,
+    'shader/chunk/light_params.glsl': null,
 
 };
 
@@ -25762,7 +27920,7 @@ NGL.Utils = {
 };
 
 
-NGL.init = function( onload, baseUrl ){
+NGL.init = function( onload ){
 
     var debug = NGL.GET( "debug" );
     if( debug !== undefined ) NGL.debug = debug;
@@ -25775,7 +27933,7 @@ NGL.init = function( onload, baseUrl ){
 
     this.textures = [];
 
-    NGL.initResources( onload, baseUrl );
+    NGL.initResources( onload );
 
     return this;
 
@@ -25796,9 +27954,7 @@ NGL.dataURItoImage = function( dataURI ){
 };
 
 
-NGL.initResources = function( onLoad, baseUrl ){
-
-    baseUrl = baseUrl || "";
+NGL.initResources = function( onLoad ){
 
     var onLoadFn = function(){
 
@@ -25824,7 +27980,7 @@ NGL.initResources = function( onLoad, baseUrl ){
     resourceKeys.forEach( function( url ){
 
         var v = NGL.Resources[ url ];
-        var url2 = baseUrl + url;
+        var url2 = NGL.assetsDirectory + url;
 
         if( v==="image" ){
 
@@ -25865,24 +28021,56 @@ NGL.getShader = function(){
     var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
     var cache = {};
 
-    return function( name ){
+    function getDefines( defines ){
 
-        var shader = NGL.Resources[ '../shader/' + name ];
+        if( defines === undefined ) return "";
 
-        if( !cache[ name ] ){
+        var lines = [];
 
-            cache[ name ] = shader.replace( re, function( match, p1 ){
+        for ( var name in defines ) {
 
-                var path = '../shader/chunk/' + p1 + '.glsl';
+            var value = defines[ name ];
+
+            if ( value === false ) continue;
+
+            lines.push( '#define ' + name + ' ' + value );
+
+        }
+
+        return lines.join( '\n' );
+
+    }
+
+    //
+
+    return function( name, defines ){
+
+        defines = defines || {};
+
+        var hash = name + "|";
+        for( var key in defines ){
+            hash += key + ":" + defines[ key ];
+        }
+
+        if( !cache[ hash ] ){
+
+            var definesText = getDefines( defines );
+
+            var shaderText = NGL.Resources[ 'shader/' + name ];
+            shaderText = shaderText.replace( re, function( match, p1 ){
+
+                var path = 'shader/chunk/' + p1 + '.glsl';
                 var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
 
                 return chunk ? chunk : "";
 
             });
 
+            cache[ hash ] = definesText + shaderText;
+
         }
 
-        return cache[ name ];
+        return cache[ hash ];
 
     }
 
@@ -26065,46 +28253,37 @@ NGL.Stats.prototype = {
  */
 NGL.Viewer = function( eid ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        orientationChanged: new SIGNALS.Signal(),
+
+    };
+
     if( eid ){
-
-        this.eid = eid;
-
         this.container = document.getElementById( eid );
-
-        if ( this.container === document ) {
-            this.width = window.innerWidth;
-            this.height = window.innerHeight;
-        } else {
-            var box = this.container.getBoundingClientRect();
-            this.width = box.width;
-            this.height = box.height;
-        }
-
     }else{
-
         this.container = document.createElement( 'div' );
+    }
 
+    if ( this.container === document ) {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+    } else {
+        var box = this.container.getBoundingClientRect();
+        this.width = box.width;
+        this.height = box.height;
     }
 
     this.aspect = this.width / this.height;
 
     this.initParams();
-
     this.initCamera();
-
     this.initScene();
-
     this.initRenderer();
-
-    this.initLights();
-
     this.initControls();
-
     this.initStats();
-
-    window.addEventListener(
-        'resize', this.onWindowResize.bind( this ), false
-    );
 
     // fog & background
     this.setBackground();
@@ -26139,14 +28318,11 @@ NGL.Viewer.prototype = {
 
         this.params = {
 
-            fogType: null,
-            fogColor: 0x000000,
+            fogColor: new THREE.Color( 0x000000 ),
             fogNear: 50,
             fogFar: 100,
-            fogDensity: 0.00025,
 
-            // backgroundColor: 0xFFFFFF,
-            backgroundColor: 0x000000,
+            backgroundColor: new THREE.Color( 0x000000 ),
 
             cameraType: 1,
             cameraFov: 40,
@@ -26155,8 +28331,6 @@ NGL.Viewer.prototype = {
             clipNear: 0,
             clipFar: 100,
             clipDist: 20,
-
-            specular: 0x050505,
 
         };
 
@@ -26198,7 +28372,7 @@ NGL.Viewer.prototype = {
             NGL.info( "EXT_frag_depth not supported" );
         }
 
-        if( !this.renderer.supportsStandardDerivatives() ){
+        if( !this.renderer.extensions.get( 'OES_standard_derivatives' ) ){
             NGL.warn( "OES_standard_derivatives not supported" );
         }
 
@@ -26207,9 +28381,7 @@ NGL.Viewer.prototype = {
             NGL.info( "OES_element_index_uint not supported" );
         }
 
-        if( this.eid ){
-            this.container.appendChild( this.renderer.domElement );
-        }
+        this.container.appendChild( this.renderer.domElement );
 
         //
 
@@ -26235,7 +28407,7 @@ NGL.Viewer.prototype = {
 
         // picking texture
 
-        if( !this.renderer.supportsFloatTextures() ){
+        if( !this.renderer.extensions.get( 'OES_texture_float' ) ){
             NGL.warn( "OES_texture_float not supported" );
         }
 
@@ -26271,9 +28443,9 @@ NGL.Viewer.prototype = {
                 value = (
 
                     ( NGL.browser === "Chrome" &&
-                        this.renderer.supportsFloatTextures() ) ||
+                        this.renderer.extensions.get( 'OES_texture_float' ) ) ||
 
-                    ( this.renderer.supportsFloatTextures() &&
+                    ( this.renderer.extensions.get( 'OES_texture_float' ) &&
                         gl.getExtension( "WEBGL_color_buffer_float" ) )
 
                 );
@@ -26308,21 +28480,7 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
-    },
-
-    initLights: function(){
-
-        var directionalLight = new THREE.DirectionalLight( 0xFFFFFF );
-        directionalLight.position.copy( new THREE.Vector3( 1, 1, -2.5 ).normalize() );
-        directionalLight.intensity = 0.5;
-
-        var ambientLight = new THREE.AmbientLight( 0x101010 );
-
-        var hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0.01 );
-
-        this.scene.add( directionalLight );
-        this.scene.add( ambientLight );
-        this.scene.add( hemisphereLight );
+        this.modelGroup.fog = new THREE.Fog();
 
     },
 
@@ -26356,6 +28514,14 @@ NGL.Viewer.prototype = {
             false
         );
 
+        this.controls.addEventListener(
+            'change',
+            function(){
+                this.signals.orientationChanged.dispatch();
+            }.bind( this ),
+            false
+        );
+
     },
 
     initStats: function(){
@@ -26368,43 +28534,30 @@ NGL.Viewer.prototype = {
 
         // NGL.time( "Viewer.add" );
 
-        var group, pickingGroup;
+        if( instanceList ){
 
-        group = buffer.group;
-        if( buffer.pickable ){
-            pickingGroup = buffer.pickingGroup;
+            instanceList.forEach( function( instance ){
+
+                this.addBuffer( buffer, instance );
+
+            }, this );
+
+        }else{
+
+            this.addBuffer( buffer );
+
         }
 
-        if( buffer.size > 0 ){
+        if( buffer.background ){
+            this.backgroundGroup.add( buffer.group );
+            this.backgroundGroup.add( buffer.wireframeGroup );
+        }else{
+            this.modelGroup.add( buffer.group );
+            this.modelGroup.add( buffer.wireframeGroup );
+        }
 
-            if( instanceList ){
-
-                instanceList.forEach( function( instance ){
-
-                    this.addBuffer(
-                        buffer, group, pickingGroup, instance
-                    );
-
-                }, this );
-
-            }else{
-
-                this.addBuffer(
-                    buffer, group, pickingGroup
-                );
-
-            }
-
-            if( buffer.background ){
-                this.backgroundGroup.add( group );
-            }else{
-                this.modelGroup.add( group );
-            }
-
-            if( buffer.pickable ){
-                this.pickingGroup.add( pickingGroup );
-            }
-
+        if( buffer.pickable ){
+            this.pickingGroup.add( buffer.pickingGroup );
         }
 
         this.rotationGroup.updateMatrixWorld();
@@ -26415,36 +28568,31 @@ NGL.Viewer.prototype = {
 
     },
 
-    addBuffer: function( buffer, group, pickingGroup, instance ){
+    addBuffer: function( buffer, instance ){
 
         // NGL.time( "Viewer.addBuffer" );
 
-        var renderOrder = buffer.getRenderOrder();
-
-        if( !buffer.material ){
-            buffer.material = buffer.getMaterial();
-        }
-
-        var mesh = buffer.getMesh( undefined, buffer.material );
-        mesh.frustumCulled = false;
-        mesh.renderOrder = renderOrder;
+        var mesh = buffer.getMesh();
         mesh.userData[ "buffer" ] = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
         }
-        group.add( mesh );
+        buffer.group.add( mesh );
+
+        var wireframeMesh = buffer.getWireframeMesh();
+        wireframeMesh.userData[ "buffer" ] = buffer;
+        if( instance ){
+            // wireframeMesh.applyMatrix( instance.matrix );
+            wireframeMesh.matrix.copy( mesh.matrix );
+            wireframeMesh.position.copy( mesh.position );
+            wireframeMesh.quaternion.copy( mesh.quaternion );
+            wireframeMesh.scale.copy( mesh.scale );
+        }
+        buffer.wireframeGroup.add( wireframeMesh );
 
         if( buffer.pickable ){
 
-            if( !buffer.pickingMaterial ){
-                buffer.pickingMaterial = buffer.getMaterial( "picking" );
-            }
-
-            var pickingMesh = buffer.getMesh(
-                "picking", buffer.pickingMaterial
-            );
-            pickingMesh.frustumCulled = false;
-            pickingMesh.renderOrder = renderOrder;
+            var pickingMesh = buffer.getPickingMesh();
             pickingMesh.userData[ "buffer" ] = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );
@@ -26454,9 +28602,7 @@ NGL.Viewer.prototype = {
                 pickingMesh.scale.copy( mesh.scale );
                 pickingMesh.userData[ "instance" ] = instance;
             }
-            pickingGroup.add( pickingMesh );
-
-            // NGL.log( pickingMesh )
+            buffer.pickingGroup.add( pickingMesh );
 
         }
 
@@ -26474,6 +28620,7 @@ NGL.Viewer.prototype = {
 
         this.rotationGroup.children.forEach( function( group ){
             group.remove( buffer.group );
+            group.remove( buffer.wireframeGroup );
         } );
 
         if( buffer.pickable ){
@@ -26580,39 +28727,25 @@ NGL.Viewer.prototype = {
 
     },
 
-    /**
-     * [setFog description]
-     * @param {String} type - Either 'linear' or 'exp2'.
-     * @param {String} color - Fog color.
-     * @param {Number} near - Where the fog effect starts (only 'linear').
-     * @param {Number} far - Where the fog effect ends (only 'linear').
-     * @param {Number} density - Density of the fog (only 'exp2').
-     */
-    setFog: function( type, color, near, far, density, foo ){
+    setFog: function( color, near, far ){
 
         var p = this.params;
 
-        if( type!==null ) p.fogType = type;
-        if( color ) p.fogColor = color;
+        if( color ) p.fogColor.set( color );
         if( near ) p.fogNear = near;
         if( far ) p.fogFar = far;
-        if( density ) p.fogDensity = density;
 
         this.requestRender();
 
     },
 
-    /**
-     * Sets the background color (and also the fog color).
-     * @param {String} color
-     */
     setBackground: function( color ){
 
         var p = this.params;
 
-        if( color ) p.backgroundColor = color;
+        if( color ) p.backgroundColor.set( color );
 
-        this.setFog( null, p.backgroundColor );
+        this.setFog( p.backgroundColor );
         this.renderer.setClearColor( p.backgroundColor, 1 );
 
         this.requestRender();
@@ -26652,7 +28785,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    onWindowResize: function(){
+    handleResize: function(){
 
         if( this.container === document ){
 
@@ -26872,12 +29005,10 @@ NGL.Viewer.prototype = {
 
         var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
         var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
-        var fog = new THREE.Fog(
-            this.params.fogColor,
-            Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) ),
-            Math.max( 1, cDist + ( bRadius * fogFarFactor ) )
-        );
-        this.modelGroup.fog = fog;
+        var fog = this.modelGroup.fog;
+        fog.color.set( this.params.fogColor );
+        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
+        fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
         //
 
@@ -26940,7 +29071,6 @@ NGL.Viewer.prototype = {
 
         return function( group, camera ){
 
-            var bgColor = this.params.backgroundColor;
             var nearClip = this.nearClip;
 
             projectionMatrixInverse.getInverse(
@@ -26957,10 +29087,6 @@ NGL.Viewer.prototype = {
 
                 var u = o.material.uniforms;
                 if( !u ) return;
-
-                if( u.backgroundColor ){
-                    u.backgroundColor.value.set( bgColor );
-                }
 
                 if( u.nearClip ){
                     u.nearClip.value = nearClip;
@@ -27003,7 +29129,7 @@ NGL.Viewer.prototype = {
 
             if( u.modelViewMatrixInverse ){
                 u.modelViewMatrixInverse.value.getInverse(
-                    o._modelViewMatrix
+                    o.modelViewMatrix
                 );
             }
 
@@ -27014,14 +29140,14 @@ NGL.Viewer.prototype = {
                     ).transpose();
                 }else{
                     u.modelViewMatrixInverseTranspose.value
-                        .getInverse( o._modelViewMatrix )
+                        .getInverse( o.modelViewMatrix )
                         .transpose();
                 }
             }
 
             if( u.modelViewProjectionMatrix ){
                 u.modelViewProjectionMatrix.value.multiplyMatrices(
-                    camera.projectionMatrix, o._modelViewMatrix
+                    camera.projectionMatrix, o.modelViewMatrix
                 );
             }
 
@@ -27035,7 +29161,7 @@ NGL.Viewer.prototype = {
                     );
                 }else{
                     matrix.multiplyMatrices(
-                        camera.projectionMatrix, o._modelViewMatrix
+                        camera.projectionMatrix, o.modelViewMatrix
                     );
                     u.modelViewProjectionMatrixInverse.value.getInverse(
                         matrix
@@ -27075,7 +29201,7 @@ NGL.Viewer.prototype = {
                 )
 
                 var attributes = o.geometry.attributes;
-                var n = attributes.position.length / 3;
+                var n = attributes.position.count;
 
                 if( !o.userData.sortData ){
                     o.userData.sortData = {};
@@ -27197,6 +29323,8 @@ NGL.Viewer.prototype = {
 
             this.requestRender();
 
+            this.signals.orientationChanged.dispatch();
+
         }
 
     }(),
@@ -27229,6 +29357,8 @@ NGL.Viewer.prototype = {
         this.camera.position.fromArray( orientation[ 0 ] );
 
         this.requestRender();
+
+        this.signals.orientationChanged.dispatch();
 
     }
 
@@ -27560,12 +29690,139 @@ NGL.screenshot = function( viewer, params ){
 ////////////////
 // Buffer Core
 
+NGL.DoubleSidedBuffer = function( buffer ){
+
+    this.size = buffer.size;
+    this.side = buffer.side;
+    this.wireframe = buffer.wireframe;
+    this.visible = buffer.visible;
+    this.geometry = buffer.geometry;
+    this.pickable = buffer.pickable;
+
+    this.group = new THREE.Group();
+    this.wireframeGroup = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
+
+    var frontMeshes = [];
+    var backMeshes = [];
+
+    var frontBuffer = buffer;
+    var backBuffer = new buffer.constructor();
+
+    frontBuffer.makeMaterial();
+    backBuffer.makeMaterial();
+
+    backBuffer.geometry = buffer.geometry;
+    backBuffer.wireframeGeometry = buffer.wireframeGeometry;
+    backBuffer.size = buffer.size;
+    backBuffer.attributeSize = buffer.attributeSize;
+    backBuffer.pickable = buffer.pickable;
+    backBuffer.setParameters( buffer.getParameters() );
+    backBuffer.updateShader();
+
+    frontBuffer.setParameters( {
+        side: THREE.FrontSide
+    } );
+    backBuffer.setParameters( {
+        side: THREE.BackSide,
+        opacity: backBuffer.opacity
+    } );
+
+    this.getMesh = function( picking ){
+
+        var front, back;
+
+        if( picking ){
+            back = backBuffer.getPickingMesh();
+            front = frontBuffer.getPickingMesh();
+        }else{
+            back = backBuffer.getMesh();
+            front = frontBuffer.getMesh();
+        }
+
+        frontMeshes.push( front );
+        backMeshes.push( back );
+
+        this.setParameters( { side: this.side } );
+
+        return new THREE.Group().add( back, front );
+
+    };
+
+    this.getWireframeMesh = function(){
+
+        return buffer.getWireframeMesh();
+
+    };
+
+    this.getPickingMesh = function(){
+
+        return this.getMesh( true );
+
+    };
+
+    this.setAttributes = function( data ){
+
+        buffer.setAttributes( data );
+
+    };
+
+    this.setParameters = function( data ){
+
+        data = Object.assign( {}, data );
+
+        if( data.side === THREE.FrontSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = true; } );
+            backMeshes.forEach( function( m ){ m.visible = false; } );
+
+        }else if( data.side === THREE.BackSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = false; } );
+            backMeshes.forEach( function( m ){ m.visible = true; } );
+
+        }else if( data.side === THREE.DoubleSide ){
+
+            frontMeshes.forEach( function( m ){ m.visible = true; } );
+            backMeshes.forEach( function( m ){ m.visible = true; } );
+
+        }
+
+        if( data.side !== undefined ){
+            this.side = data.side;
+        }
+        delete data.side;
+
+        frontBuffer.setParameters( data );
+
+        if( data.wireframe !== undefined ){
+            this.wireframe = data.wireframe;
+            this.setVisibility( this.visible );
+        }
+        delete data.wireframe;
+
+        backBuffer.setParameters( data );
+
+    };
+
+    this.setVisibility = NGL.Buffer.prototype.setVisibility;
+
+    this.dispose = function(){
+
+        frontBuffer.dispose();
+        backBuffer.dispose();
+
+    };
+
+};
+
+
 /**
  * The core buffer class.
  * @class
  * @private
  */
-NGL.Buffer = function( position, color, pickingColor, params ){
+NGL.Buffer = function( position, color, index, pickingColor, params ){
 
     var p = params || {};
 
@@ -27576,51 +29833,58 @@ NGL.Buffer = function( position, color, pickingColor, params ){
     // - fragmentShader
 
     this.pickable = false;
+    this.dynamic = true;
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
     this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
     this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
     this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
     this.background = p.background !== undefined ? p.background : false;
-    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
+    this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
+    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
+    this.wireframeLinewidth = p.wireframeLinewidth || 1;
 
-    this.attributes = [];
     this.geometry = new THREE.BufferGeometry();
 
-    this.addAttributes({
+    this.addAttributes( {
         "position": { type: "v3", value: position },
         "color": { type: "c", value: color },
-    });
+    } );
 
-    this.group = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
-
-    if( pickingColor ){
-
-        this.addAttributes({
-            "pickingColor": { type: "c", value: pickingColor },
-        });
-
-        this.pickable = true;
-
+    if( index ){
+        this.geometry.addIndex(
+            new THREE.BufferAttribute( index, 1 )
+        );
+        this.geometry.index.setDynamic( this.dynamic );
     }
 
-    this.uniforms = THREE.UniformsUtils.merge([
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-            "objectId": { type: "f", value: 0.0 },
-        }
-    ]);
+    if( pickingColor ){
+        this.addAttributes( {
+            "pickingColor": { type: "c", value: pickingColor },
+        } );
+        this.pickable = true;
+    }
+
+    this.uniforms = {
+        "fogColor": { type: "c", value: null },
+        "fogNear": { type: "f", value: 0.0 },
+        "fogFar": { type: "f", value: 0.0 },
+        "opacity": { type: "f", value: this.opacity },
+        "nearClip": { type: "f", value: 0.0 }
+    };
 
     this.pickingUniforms = {
         "nearClip": { type: "f", value: 0.0 },
         "objectId": { type: "f", value: 0.0 },
     };
+
+    this.group = new THREE.Group();
+    this.wireframeGroup = new THREE.Group();
+    this.pickingGroup = new THREE.Group();
+
+    this.makeWireframeGeometry();
 
 };
 
@@ -27628,15 +29892,199 @@ NGL.Buffer.prototype = {
 
     constructor: NGL.Buffer,
 
-    finalize: function(){
+    parameters: {
 
-        this.makeIndex();
+        opaqueBack: { updateShader: true },
+        dullInterior: { updateShader: true },
+        side: { updateShader: true, property: true },
+        opacity: { uniform: true },
+        nearClip: { updateShader: true },
+        flatShaded: { updateShader: true },
+        background: { updateShader: true },
+        linewidth: { property: true },
+        wireframe: { updateVisibility: true }
 
-        if( NGL.indexUint16 ){
+    },
 
-            this.geometry.drawcalls = this.geometry.computeOffsets();
+    get transparent () {
+
+        return this.opacity < 1;
+
+    },
+
+    makeMaterial: function(){
+
+        this.material = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            vertexShader: "",
+            fragmentShader: "",
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.linewidth
+        } );
+
+        this.wireframeMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.uniforms,
+            vertexShader: "Line.vert",
+            fragmentShader: "Line.frag",
+            depthTest: true,
+            transparent: this.transparent,
+            depthWrite: true,
+            lights: false,
+            fog: true,
+            side: this.side,
+            linewidth: this.linewidth
+        } );
+
+        this.pickingMaterial = new THREE.RawShaderMaterial( {
+            uniforms: this.pickingUniforms,
+            vertexShader: "",
+            fragmentShader: "",
+            depthTest: true,
+            transparent: false,
+            depthWrite: true,
+            lights: false,
+            fog: false,
+            side: this.side,
+            linewidth: this.linewidth
+        } );
+
+        this.updateShader();
+
+    },
+
+    makeWireframeGeometry: function(){
+
+        this.makeWireframeIndex();
+
+        var geometry = this.geometry;
+        var wireframeIndex = this.wireframeIndex;
+        var wireframeGeometry = new THREE.BufferGeometry();
+
+        wireframeGeometry.attributes = geometry.attributes;
+        if( wireframeIndex ){
+            wireframeGeometry.addIndex(
+                new THREE.BufferAttribute( wireframeIndex, 1 )
+                    .setDynamic( this.dynamic )
+            );
+            wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+        }
+
+        this.wireframeGeometry = wireframeGeometry;
+
+    },
+
+    makeWireframeIndex: function(){
+
+        var edges = [];
+
+        function checkEdge( a, b ) {
+
+            if ( a > b ){
+
+                var tmp = a;
+                a = b;
+                b = tmp;
+
+            }
+
+            var list = edges[ a ];
+
+            if( list === undefined ){
+
+                edges[ a ] = [ b ];
+                return true;
+
+            }else if( list.indexOf( b ) === -1 ){
+
+                list.push( b );
+                return true;
+
+            }
+
+            return false;
 
         }
+
+        return function(){
+
+            var index = this.geometry.index;
+
+            if( index ){
+
+                var array = index.array;
+                var n = array.length;
+                if( this.geometry.groups.length ){
+                    n = this.geometry.groups[ 0 ].count;
+                }
+                var wireframeIndex;
+                if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
+                    wireframeIndex = this.wireframeIndex;
+                }else{
+                    wireframeIndex = new Uint32Array( n * 2 );
+                }
+
+                var j = 0;
+                edges.length = 0;
+
+                for( var i = 0; i < n; i += 3 ){
+
+                    var a = array[ i + 0 ];
+                    var b = array[ i + 1 ];
+                    var c = array[ i + 2 ];
+
+                    if( checkEdge( a, b ) ){
+                        wireframeIndex[ j + 0 ] = a;
+                        wireframeIndex[ j + 1 ] = b;
+                        j += 2;
+                    }
+                    if( checkEdge( b, c ) ){
+                        wireframeIndex[ j + 0 ] = b;
+                        wireframeIndex[ j + 1 ] = c;
+                        j += 2;
+                    }
+                    if( checkEdge( c, a ) ){
+                        wireframeIndex[ j + 0 ] = c;
+                        wireframeIndex[ j + 1 ] = a;
+                        j += 2;
+                    }
+
+                }
+
+                this.wireframeIndex = wireframeIndex;
+                this.wireframeIndexCount = j;
+
+            }
+
+        }
+
+    }(),
+
+    updateWireframeIndex: function(){
+
+        this.wireframeGeometry.clearGroups();
+        this.makeWireframeIndex();
+
+        if( this.wireframeIndex.length > this.wireframeGeometry.index.array.length ){
+
+            this.wireframeGeometry.addIndex(
+                new THREE.BufferAttribute( this.wireframeIndex, 1 )
+                    .setDynamic( this.dynamic )
+            );
+
+        }else{
+
+            this.wireframeGeometry.index.set( this.wireframeIndex );
+            this.wireframeGeometry.index.needsUpdate = this.wireframeIndexCount > 0;
+            this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
+
+        }
+
+        this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
 
     },
 
@@ -27662,138 +30110,138 @@ NGL.Buffer.prototype = {
 
     },
 
-    getMesh: function( type, material ){
+    getMesh: function(){
 
-        material = material || this.getMaterial( type );
+        var mesh;
 
-        if( type === "wireframe" || this.wireframe ){
+        if( !this.material ) this.makeMaterial();
 
-            if( !this.wireframeGeometry ){
+        if( this.line ){
 
-                var index = this.geometry.attributes.index.array;
-                var n = index.length;
-                var wireframeIndex = new Uint32Array( n * 6 );
+            mesh = new THREE.LineSegments( this.geometry, this.material );
 
-                for( var i = 0, j = 0; i < n; i+=3, j+=6 ){
+        }else if( this.point ){
 
-                    var a = index[ i + 0 ];
-                    var b = index[ i + 1 ];
-                    var c = index[ i + 2 ];
-
-                    wireframeIndex[ j + 0 ] = a;
-                    wireframeIndex[ j + 1 ] = b;
-                    wireframeIndex[ j + 2 ] = a;
-                    wireframeIndex[ j + 3 ] = c;
-                    wireframeIndex[ j + 4 ] = b;
-                    wireframeIndex[ j + 5 ] = c;
-
-                }
-
-                this.wireframeGeometry = this.geometry.clone();
-                this.wireframeGeometry.attributes.index.array = wireframeIndex;
-
-            }
-
-            return new THREE.LineSegments( this.wireframeGeometry, material );
+            mesh = new THREE.PointCloud( this.geometry, this.material );
+            if( this.sort ) mesh.sortParticles = true;
 
         }else{
 
-            return new THREE.Mesh( this.geometry, material );
+            mesh = new THREE.Mesh( this.geometry, this.material );
 
         }
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
 
     },
 
-    getMaterial: function( type ){
+    getWireframeMesh: function(){
 
-        var material;
+        var mesh;
+
+        if( !this.material ) this.makeMaterial();
+        if( !this.wireframeGeometry ) this.makeWireframeGeometry();
+
+        mesh = new THREE.LineSegments(
+            this.wireframeGeometry, this.wireframeMaterial
+        );
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
+
+    },
+
+    getPickingMesh: function(){
+
+        var mesh;
+
+        if( !this.material ) this.makeMaterial();
+
+        mesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+
+        mesh.frustumCulled = false;
+        mesh.renderOrder = this.getRenderOrder();
+
+        return mesh;
+
+    },
+
+    getShader: function( name, type ){
+
+        return NGL.getShader( name, this.getDefines( type ) );
+
+    },
+
+    getVertexShader: function( type ){
+
+        return this.getShader( this.vertexShader, type );
+
+    },
+
+    getFragmentShader: function( type ){
+
+        return this.getShader( this.fragmentShader, type );
+
+    },
+
+    getDefines: function( type ){
+
+        var defines = {};
+
+        if( this.nearClip ){
+            defines[ "NEAR_CLIP" ] = 1;
+        }
 
         if( type === "picking" ){
 
-            material = new THREE.ShaderMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.pickingUniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
-                depthTest: true,
-                transparent: false,
-                depthWrite: true,
-                lights: false,
-                fog: false
-
-            } );
-
-            material.side = this.side;
-            material.defines[ "PICKING" ] = 1;
-
-        }else if( type === "wireframe" || this.wireframe ){
-
-            material = new THREE.ShaderMaterial( {
-                uniforms:  THREE.UniformsUtils.clone( this.uniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( "Line.vert" ),
-                fragmentShader: NGL.getShader( "Line.frag" ),
-                depthTest: true,
-                transparent: this.transparent,
-                depthWrite: true,
-                lights: false,
-                fog: true,
-                linewidth: this.lineWidth
-            } );
+            if( this.side === THREE.DoubleSide ){
+                defines[ "DOUBLE_SIDED" ] = 1;
+            }else if( this.side === THREE.BackSide ){
+                defines[ "FLIP_SIDED" ] = 1;
+            }
+            defines[ "PICKING" ] = 1;
 
         }else{
 
-            material = new THREE.ShaderMaterial( {
-
-                uniforms: THREE.UniformsUtils.clone( this.uniforms ),
-                attributes: this.attributes,
-                vertexShader: NGL.getShader( this.vertexShader ),
-                fragmentShader: NGL.getShader( this.fragmentShader ),
-                depthTest: true,
-                transparent: this.transparent,
-                depthWrite: true,
-                // lights: true,
-                lights: false,
-                fog: true
-
-            } );
-
-            material.side = this.side;
-
+            if( this.side === THREE.DoubleSide ){
+                defines[ "DOUBLE_SIDED" ] = 1;
+            }else if( this.side === THREE.BackSide ){
+                defines[ "FLIP_SIDED" ] = 1;
+            }
             if( type === "background" || this.background ){
-
-                material.defines[ "NOLIGHT" ] = 1;
-
+                defines[ "NOLIGHT" ] = 1;
             }
-
             if( this.flatShaded ){
-
-                material.defines[ "FLAT_SHADED" ] = 1;
-
+                defines[ "FLAT_SHADED" ] = 1;
             }
-
             if( this.opaqueBack ){
-
-                material.defines[ "OPAQUE_BACK" ] = 1;
-
+                defines[ "OPAQUE_BACK" ] = 1;
             }
-
             if( this.dullInterior ){
-
-                material.defines[ "DULL_INTERIOR" ] = 1;
-
+                defines[ "DULL_INTERIOR" ] = 1;
             }
+            defines[ "USE_FOG" ] = 1;
 
         }
 
-        if( this.nearClip ){
+        return defines;
 
-            material.defines[ "NEAR_CLIP" ] = 1;
+    },
 
+    getParameters: function(){
+
+        var params = {};
+
+        for( var name in this.parameters ){
+            params[ name ] = this[ name ];
         }
 
-        return material;
+        return params;
 
     },
 
@@ -27815,12 +30263,10 @@ NGL.Buffer.prototype = {
             "f": 1, "v2": 2, "v3": 3, "c": 3
         };
 
-        Object.keys( attributes ).forEach( function( name ){
+        for( var name in attributes ){
 
             var buf;
             var a = attributes[ name ];
-
-            this.attributes.push( name );
 
             if( a.value ){
 
@@ -27841,9 +30287,96 @@ NGL.Buffer.prototype = {
             this.geometry.addAttribute(
                 name,
                 new THREE.BufferAttribute( buf, itemSize[ a.type ] )
+                    .setDynamic( this.dynamic )
             );
 
-        }, this );
+        }
+
+    },
+
+    updateRenderOrder: function(){
+
+        var renderOrder = this.getRenderOrder();
+        function setRenderOrder( mesh ){
+            mesh.renderOrder = renderOrder;
+        }
+
+        this.group.children.forEach( setRenderOrder );
+        if( this.pickingGroup ){
+            this.pickingGroup.children.forEach( setRenderOrder );
+        }
+
+    },
+
+    updateShader: function(){
+
+        var m = this.material;
+        var wm = this.wireframeMaterial;
+        var pm = this.pickingMaterial;
+
+        m.vertexShader = this.getVertexShader();
+        m.fragmentShader = this.getFragmentShader();
+        m.needsUpdate = true;
+
+        wm.vertexShader = this.getShader( "Line.vert" );
+        wm.fragmentShader = this.getShader( "Line.frag" );
+        wm.needsUpdate = true;
+
+        pm.vertexShader = this.getVertexShader( "picking" );
+        pm.fragmentShader = this.getFragmentShader( "picking" );
+        pm.needsUpdate = true;
+
+    },
+
+    setParameters: function( params ){
+
+        if( !params ) return;
+
+        var p = params;
+        var tp = this.parameters;
+
+        var propertyData = {};
+        var uniformData = {};
+        var doShaderUpdate = false;
+        var doVisibilityUpdate = false;
+
+        for( var name in p ){
+
+            if( p[ name ] === undefined ) continue;
+            if( tp[ name ] === undefined ) continue;
+
+            this[ name ] = p[ name ];
+
+            if( tp[ name ].property ){
+                if( tp[ name ].property !== true ){
+                    propertyData[ tp[ name ].property ] = p[ name ];
+                }else{
+                    propertyData[ name ] = p[ name ];
+                }
+            }
+
+            if( tp[ name ].uniform ){
+                uniformData[ name ] = p[ name ];
+            }
+
+            if( tp[ name ].updateShader ){
+                doShaderUpdate = true;
+            }
+
+            if( tp[ name ].updateVisibility ){
+                doVisibilityUpdate = true;
+            }
+
+            if( this.dynamic && name === "wireframe" && p[ name ] === true ){
+                this.updateWireframeIndex();
+            }
+
+        }
+
+        this.setProperties( propertyData );
+        this.setUniforms( uniformData );
+        if( doShaderUpdate ) this.updateShader();
+        if( doVisibilityUpdate ) this.setVisibility( this.visible );
 
     },
 
@@ -27858,67 +30391,155 @@ NGL.Buffer.prototype = {
          * buffer.setAttributes({ attrName: attrData });
          */
 
-        var attributes = this.geometry.attributes;
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
 
-        if( this.wireframeGeometry ){
+        for( var name in data ){
 
-            var wireframeAttributes = this.wireframeGeometry.attributes;
+            var array = data[ name ];
+            var length = array.length;
 
-        }
+            if( name === "index" ){
 
-        Object.keys( data ).forEach( function( name ){
+                geometry.clearGroups();
 
-            attributes[ name ].set( data[ name ] );
-            attributes[ name ].needsUpdate = true;
+                if( length > geometry.index.array.length ){
 
-            if( this.wireframeGeometry ){
+                    geometry.addIndex(
+                        new THREE.BufferAttribute( array, 1 )
+                            .setDynamic( this.dynamic )
+                    );
 
-                wireframeAttributes[ name ].set( data[ name ] );
-                wireframeAttributes[ name ].needsUpdate = true;
+                }else{
+
+                    geometry.index.set( array );
+                    geometry.index.needsUpdate = length > 0;
+                    geometry.index.updateRange.count = length;
+                    geometry.addGroup( 0, length );
+
+                }
+
+                if( this.wireframe ) this.updateWireframeIndex();
+
+            }else{
+
+                var attribute = attributes[ name ];
+
+                if( length > attribute.array.length ){
+
+                    geometry.addAttribute(
+                        name,
+                        new THREE.BufferAttribute( array, attribute.itemSize )
+                            .setDynamic( this.dynamic )
+                    );
+
+                }else{
+
+                    attributes[ name ].set( array );
+                    attributes[ name ].needsUpdate = length > 0;
+                    attributes[ name ].updateRange.count = length;
+
+                }
 
             }
 
-        }, this );
+        }
 
     },
 
-    makeIndex: function(){
+    setUniforms: function( data ){
 
-        if( this.index ){
+        if( !data ) return;
 
-            this.geometry.addAttribute(
-                "index",
-                new THREE.BufferAttribute( this.index, 1 )
-            );
+        var u = this.material.uniforms;
+        var wu = this.wireframeMaterial.uniforms;
+        var pu = this.pickingMaterial.uniforms;
+
+        for( var name in data ){
+
+            if( name === "opacity" ){
+                this.setProperties( { transparent: data[ name ] < 1 } );
+            }
+
+            if( u[ name ] !== undefined ){
+                u[ name ].value = data[ name ];
+            }
+
+            if( wu[ name ] !== undefined ){
+                wu[ name ].value = data[ name ];
+            }
+
+            if( pu[ name ] !== undefined ){
+                pu[ name ].value = data[ name ];
+            }
 
         }
+
+    },
+
+    setProperties: function( data ){
+
+        if( !data ) return;
+
+        var m = this.material;
+        var wm = this.wireframeMaterial;
+        var pm = this.pickingMaterial;
+
+        for( var name in data ){
+
+            if( name === "transparent" ){
+                this.updateRenderOrder();
+            }
+
+            if( m[ name ] !== undefined ){
+                m[ name ] = data[ name ];
+            }
+
+            if( wm[ name ] !== undefined ){
+                wm[ name ] = data[ name ];
+            }
+
+            if( pm[ name ] !== undefined ){
+                pm[ name ] = data[ name ];
+            }
+
+        }
+
+        m.needsUpdate = true;
+        wm.needsUpdate = true;
+        pm.needsUpdate = true;
 
     },
 
     setVisibility: function( value ){
 
-        this.group.visible = value;
-        if( this.pickable ){
-            this.pickingGroup.visible = value;
+        this.visible = value;
+
+        if( this.wireframe ){
+
+            this.group.visible = false;
+            this.wireframeGroup.visible = value;
+            if( this.pickable ){
+                this.pickingGroup.visible = false;
+            }
+
+        }else{
+
+            this.group.visible = value;
+            this.wireframeGroup.visible = false;
+            if( this.pickable ){
+                this.pickingGroup.visible = value;
+            }
+
         }
 
     },
 
     dispose: function(){
 
-        this.group.traverse( function ( o ){
-            if( o.material ){
-                o.material.dispose();
-            }
-        } );
-
-        if( this.pickable ){
-            this.pickingGroup.traverse( function ( o ){
-                if( o.material ){
-                    o.material.dispose();
-                }
-            } );
-        }
+        if( this.material ) this.material.dispose();
+        if( this.wireframeMaterial ) this.wireframeMaterial.dispose();
+        if( this.pickingMaterial ) this.pickingMaterial.dispose();
 
         this.geometry.dispose();
         if( this.wireframeGeometry ) this.wireframeGeometry.dispose();
@@ -27932,28 +30553,19 @@ NGL.MeshBuffer = function( position, color, index, normal, pickingColor, params 
 
     var p = params || {};
 
-    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
-
-    this.size = position.length / 3;
+    this.size = position ? position.length / 3 : 0;
     this.attributeSize = this.size;
     this.vertexShader = 'Mesh.vert';
     this.fragmentShader = 'Mesh.frag';
 
-    this.index = index;
+    NGL.Buffer.call( this, position, color, index, pickingColor, p );
 
-    NGL.Buffer.call( this, position, color, pickingColor, p );
-
-    this.addAttributes({
+    this.addAttributes( {
         "normal": { type: "v3", value: normal },
-    });
-
-    this.finalize();
+    } );
 
     if( normal === undefined ){
-
         this.geometry.computeVertexNormals();
-
     }
 
 };
@@ -27965,14 +30577,26 @@ NGL.MeshBuffer.prototype.constructor = NGL.MeshBuffer;
 
 NGL.MappedBuffer = function( params ){
 
-    this.mappedSize = this.size * this.mappingSize;
-    this.attributeSize = this.mappedSize;
+    // required
+    // - mapping
+    // - mappingType
+    // - mappingSize
+    // - mappingItemSize
+    // - mappingIndices
+    // - mappingIndicesSize
 
-    NGL.Buffer.call( this, null, null, null, params );
+    this.size = this.count;
+    this.attributeSize = this.count * this.mappingSize;
 
-    this.addAttributes({
+    this.index = new Uint32Array( this.count * this.mappingIndicesSize );
+
+    this.makeIndex();
+
+    NGL.Buffer.call( this, null, null, this.index, null, params );
+
+    this.addAttributes( {
         "mapping": { type: this.mappingType, value: null },
-    });
+    } );
 
 };
 
@@ -27980,37 +30604,29 @@ NGL.MappedBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.MappedBuffer.prototype.constructor = NGL.MappedBuffer;
 
-NGL.MappedBuffer.prototype.finalize = function(){
-
-    this.makeMapping();
-
-    NGL.Buffer.prototype.finalize.call( this );
-
-};
-
 NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
-    var attributes = this.geometry.attributes;
-    var size = this.size;
+    var count = this.count;
     var mappingSize = this.mappingSize;
+    var attributes = this.geometry.attributes;
 
     var a, d, itemSize, array, n, i, j;
 
-    Object.keys( data ).forEach( function( name ){
+    for( var name in data ){
 
         d = data[ name ];
         a = attributes[ name ];
         itemSize = a.itemSize;
         array = a.array;
 
-        for( var k = 0; k < size; ++k ) {
+        for( var k = 0; k < count; ++k ) {
 
             n = k * itemSize;
             i = n * mappingSize;
 
             for( var l = 0; l < mappingSize; ++l ) {
 
-                j = i + (itemSize * l);
+                j = i + ( itemSize * l );
 
                 for( var m = 0; m < itemSize; ++m ) {
 
@@ -28024,20 +30640,20 @@ NGL.MappedBuffer.prototype.setAttributes = function( data ){
 
         a.needsUpdate = true;
 
-    }, this );
+    }
 
 };
 
 NGL.MappedBuffer.prototype.makeMapping = function(){
 
-    var size = this.size;
+    var count = this.count;
     var mapping = this.mapping;
     var mappingSize = this.mappingSize;
     var mappingItemSize = this.mappingItemSize;
 
     var aMapping = this.geometry.attributes[ "mapping" ].array;
 
-    for( var v = 0; v < size; v++ ) {
+    for( var v = 0; v < count; v++ ) {
 
         aMapping.set( mapping, v * mappingItemSize * mappingSize );
 
@@ -28047,24 +30663,17 @@ NGL.MappedBuffer.prototype.makeMapping = function(){
 
 NGL.MappedBuffer.prototype.makeIndex = function(){
 
-    var size = this.size;
+    var count = this.count;
     var mappingSize = this.mappingSize;
     var mappingIndices = this.mappingIndices;
     var mappingIndicesSize = this.mappingIndicesSize;
     var mappingItemSize = this.mappingItemSize;
 
-    this.geometry.addAttribute(
-        "index",
-        new THREE.BufferAttribute(
-            new Uint32Array( size * mappingIndicesSize ), 1
-        )
-    );
-
-    var index = this.geometry.attributes[ "index" ].array;
+    var index = this.index;
 
     var i, ix, it;
 
-    for( var v = 0; v < size; v++ ) {
+    for( var v = 0; v < count; v++ ) {
 
         i = v * mappingItemSize * mappingSize;
         ix = v * mappingIndicesSize;
@@ -28072,7 +30681,7 @@ NGL.MappedBuffer.prototype.makeIndex = function(){
 
         index.set( mappingIndices, ix );
 
-        for( var s=0; s<mappingIndicesSize; ++s ){
+        for( var s = 0; s < mappingIndicesSize; ++s ){
             index[ ix + s ] += it;
         }
 
@@ -28188,41 +30797,41 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 
 NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
-    this.size = position.length / 3;
+    this.count = position.length / 3;
     this.vertexShader = 'SphereImpostor.vert';
     this.fragmentShader = 'SphereImpostor.frag';
 
     NGL.QuadBuffer.call( this, params );
 
-    this.addUniforms({
+    this.addUniforms( {
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "color": color,
         "radius": radius,
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -28241,25 +30850,25 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
 
     this.cap = p.cap !== undefined ? p.cap : true;
 
-    this.size = from.length / 3;
+    this.count = from.length / 3;
     this.vertexShader = 'CylinderImpostor.vert';
     this.fragmentShader = 'CylinderImpostor.frag';
 
     NGL.AlignedBoxBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'shift': { type: "f", value: this.shift },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
         "color2": { type: "c", value: null },
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": NGL.Utils.calculateCenterArray( from, to ),
 
         "position1": from,
@@ -28267,25 +30876,25 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
         "color": color,
         "color2": color2,
         "radius": radius,
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
             "pickingColor2": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
     // FIXME
     // if( this.cap ){
@@ -28317,29 +30926,29 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
-    this.size = position1.length / 3;
+    this.count = position1.length / 3;
     this.vertexShader = 'HyperballStickImpostor.vert';
     this.fragmentShader = 'HyperballStickImpostor.frag';
 
     NGL.BoxBuffer.call( this, p );
 
-    this.addUniforms({
+    this.addUniforms( {
         'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
         'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
         'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
         'shrink': { type: "f", value: shrink },
-    });
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "color": { type: "c", value: null },
         "color2": { type: "c", value: null },
         "radius": { type: "f", value: null },
         "radius2": { type: "f", value: null },
         "position1": { type: "v3", value: null },
         "position2": { type: "v3", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "color": color,
         "color2": color2,
         "radius": radius1,
@@ -28348,25 +30957,25 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
         "position2": position2,
 
         "position": NGL.Utils.calculateCenterArray( position1, position2 ),
-    });
+    } );
 
     if( pickingColor ){
 
-        this.addAttributes({
+        this.addAttributes( {
             "pickingColor": { type: "c", value: null },
             "pickingColor2": { type: "c", value: null },
-        });
+        } );
 
-        this.setAttributes({
+        this.setAttributes( {
             "pickingColor": pickingColor,
             "pickingColor2": pickingColor2,
-        });
+        } );
 
         this.pickable = true;
 
     }
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -28374,12 +30983,19 @@ NGL.HyperballStickImpostorBuffer.prototype = Object.create( NGL.BoxBuffer.protot
 
 NGL.HyperballStickImpostorBuffer.prototype.constructor = NGL.HyperballStickImpostorBuffer;
 
+NGL.HyperballStickImpostorBuffer.prototype.parameters = Object.assign( {
+
+    shrink: { uniform: true }
+
+}, NGL.BoxBuffer.prototype.parameters );
+
 
 ////////////////////////
 // Geometry Primitives
 
-
 NGL.GeometryBuffer = function( position, color, pickingColor, params ){
+
+    var p = params || {};
 
     // required properties:
     // - geo
@@ -28397,233 +31013,178 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
     this.geoNormal = NGL.Utils.normalFromGeometry( geo );
     this.geoIndex = NGL.Utils.indexFromGeometry( geo );
 
+    this.transformedGeoPosition = new Float32Array( m * 3 );
+    this.transformedGeoNormal = new Float32Array( m * 3 );
+
     this.meshPosition = new Float32Array( this.size * 3 );
     this.meshNormal = new Float32Array( this.size * 3 );
     this.meshIndex = new Uint32Array( n * o * 3 );
     this.meshColor = new Float32Array( this.size * 3 );
     this.meshPickingColor = new Float32Array( this.size * 3 );
 
-    this.transformedGeoPosition = new Float32Array( m * 3 );
-    this.transformedGeoNormal = new Float32Array( m * 3 );
-
     this.makeIndex();
 
-    this.setAttributes({
-        "position": position,
-        "color": color,
-        "pickingColor": pickingColor
-    });
-
-    this.meshBuffer = new NGL.MeshBuffer(
-        this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, params
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor, p
     );
 
-    this.pickable = this.meshBuffer.pickable;
-    this.geometry = this.meshBuffer.geometry;
+    this.initNormals = true;
+
+    this.setAttributes( {
+        position: position,
+        color: color,
+        pickingColor: pickingColor
+    } );
+
+    this.initNormals = false;
 
 };
 
-NGL.GeometryBuffer.prototype = {
+NGL.GeometryBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.GeometryBuffer,
+NGL.GeometryBuffer.prototype.constructor = NGL.GeometryBuffer;
 
-    get group () {
+NGL.GeometryBuffer.prototype.applyPositionTransform = function(){};
 
-        return this.meshBuffer.group;
+NGL.GeometryBuffer.prototype.setAttributes = function(){
 
-    },
+    var matrix = new THREE.Matrix4();
+    var normalMatrix = new THREE.Matrix3();
 
-    get pickingGroup () {
+    return function( data ){
 
-        return this.meshBuffer.pickingGroup;
+        var attributes = this.geometry.attributes;
 
-    },
+        var position, color, pickingColor;
+        var geoPosition, geoNormal;
+        var transformedGeoPosition, transformedGeoNormal;
+        var meshPosition, meshColor, meshPickingColor, meshNormal;
 
-    get transparent () {
-
-        return this.meshBuffer.transparent;
-
-    },
-
-    set transparent ( value ) {
-
-        this.meshBuffer.transparent = value;
-
-    },
-
-    applyPositionTransform: function(){},
-
-    setAttributes: function(){
-
-        var matrix = new THREE.Matrix4();
-        var normalMatrix = new THREE.Matrix3();
-
-        return function( data ){
-
-            var position, color, pickingColor;
-
-            if( data[ "position" ] ){
-                position = data[ "position" ];
-                var geoPosition = this.geoPosition;
-                var meshPosition = this.meshPosition;
-                var transformedGeoPosition = this.transformedGeoPosition;
-            }
-
-            if( data[ "color" ] ){
-                color = data[ "color" ];
-                var meshColor = this.meshColor;
-            }
-
-            if( data[ "pickingColor" ] ){
-                pickingColor = data[ "pickingColor" ];
-                var meshPickingColor = this.meshPickingColor;
-            }
-
-            var updateNormals = ( this.updateNormals && position ) || !this.meshBuffer;
-
-            if( updateNormals ){
-                var geoNormal = this.geoNormal;
-                var meshNormal = this.meshNormal;
-                var transformedGeoNormal = this.transformedGeoNormal;
-            }
-
-            var n = this.positionCount;
-            var m = this.geo.vertices.length;
-
-            var i, j, k, l, i3;
-
-            for( i = 0; i < n; ++i ){
-
-                k = i * m * 3;
-                i3 = i * 3;
-
-                if( position ){
-
-                    transformedGeoPosition.set( geoPosition );
-                    matrix.makeTranslation(
-                        position[ i3 + 0 ], position[ i3 + 1 ], position[ i3 + 2 ]
-                    );
-                    this.applyPositionTransform( matrix, i, i3 );
-                    matrix.applyToVector3Array( transformedGeoPosition );
-
-                    meshPosition.set( transformedGeoPosition, k );
-
-                }
-
-                if( updateNormals ){
-
-                    transformedGeoNormal.set( geoNormal );
-                    normalMatrix.getNormalMatrix( matrix );
-                    normalMatrix.applyToVector3Array( transformedGeoNormal );
-
-                    meshNormal.set( transformedGeoNormal, k );
-
-                }
-
-                if( color ){
-
-                    for( j = 0; j < m; ++j ){
-
-                        l = k + 3 * j;
-
-                        meshColor[ l + 0 ] = color[ i3 + 0 ];
-                        meshColor[ l + 1 ] = color[ i3 + 1 ];
-                        meshColor[ l + 2 ] = color[ i3 + 2 ];
-
-                    }
-
-                }
-
-                if( pickingColor ){
-
-                    for( j = 0; j < m; ++j ){
-
-                        l = k + 3 * j;
-
-                        meshPickingColor[ l + 0 ] = pickingColor[ i3 + 0 ];
-                        meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
-                        meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
-
-                    }
-
-                }
-
-            }
-
-            var meshData = {};
-
-            if( position ){
-                meshData[ "position" ] = meshPosition;
-            }
-
-            if( updateNormals ){
-                meshData[ "normal" ] = meshNormal;
-            }
-
-            if( color ){
-                meshData[ "color" ] = meshColor;
-            }
-
-            if( pickingColor ){
-                meshData[ "pickingColor" ] = meshPickingColor;
-            }
-
-            if( this.meshBuffer ){
-                this.meshBuffer.setAttributes( meshData );
-            }
-
+        if( data[ "position" ] ){
+            position = data[ "position" ];
+            geoPosition = this.geoPosition;
+            meshPosition = this.meshPosition;
+            transformedGeoPosition = this.transformedGeoPosition;
+            attributes[ "position" ].needsUpdate = true;
         }
 
-    }(),
+        if( data[ "color" ] ){
+            color = data[ "color" ];
+            meshColor = this.meshColor;
+            attributes[ "color" ].needsUpdate = true;
+        }
 
-    makeIndex: function(){
+        if( data[ "pickingColor" ] ){
+            pickingColor = data[ "pickingColor" ];
+            meshPickingColor = this.meshPickingColor;
+            attributes[ "pickingColor" ].needsUpdate = true;
+        }
 
-        var geoIndex = this.geoIndex;
-        var meshIndex = this.meshIndex;
+        var updateNormals = !!( this.updateNormals && position );
+        var initNormals = !!( this.initNormals && position );
+
+        if( updateNormals || initNormals ){
+            geoNormal = this.geoNormal;
+            meshNormal = this.meshNormal;
+            transformedGeoNormal = this.transformedGeoNormal;
+            attributes[ "normal" ].needsUpdate = true;
+        }
 
         var n = this.positionCount;
         var m = this.geo.vertices.length;
-        var o = this.geo.faces.length;
 
-        var p, i, j, q;
-        var o3 = o * 3;
+        var i, j, k, l, i3;
 
         for( i = 0; i < n; ++i ){
 
-            j = i * o3;
-            q = j + o3;
+            k = i * m * 3;
+            i3 = i * 3;
 
-            meshIndex.set( geoIndex, j );
-            for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
+            if( position ){
+
+                transformedGeoPosition.set( geoPosition );
+                matrix.makeTranslation(
+                    position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
+                );
+                this.applyPositionTransform( matrix, i, i3 );
+                matrix.applyToVector3Array( transformedGeoPosition );
+
+                meshPosition.set( transformedGeoPosition, k );
+
+            }
+
+            if( updateNormals ){
+
+                transformedGeoNormal.set( geoNormal );
+                normalMatrix.getNormalMatrix( matrix );
+                normalMatrix.applyToVector3Array( transformedGeoNormal );
+
+                meshNormal.set( transformedGeoNormal, k );
+
+            }else if( initNormals ){
+
+                meshNormal.set( geoNormal, k );
+
+            }
+
+            if( color ){
+
+                for( j = 0; j < m; ++j ){
+
+                    l = k + 3 * j;
+
+                    meshColor[ l     ] = color[ i3     ];
+                    meshColor[ l + 1 ] = color[ i3 + 1 ];
+                    meshColor[ l + 2 ] = color[ i3 + 2 ];
+
+                }
+
+            }
+
+            if( pickingColor ){
+
+                for( j = 0; j < m; ++j ){
+
+                    l = k + 3 * j;
+
+                    meshPickingColor[ l     ] = pickingColor[ i3     ];
+                    meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
+                    meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
+
+                }
+
+            }
 
         }
 
-    },
+    }
 
-    getRenderOrder: function(){
+}();
 
-        return this.meshBuffer.getRenderOrder();
+NGL.GeometryBuffer.prototype.makeIndex = function(){
 
-    },
+    var geoIndex = this.geoIndex;
+    var meshIndex = this.meshIndex;
 
-    getMesh: function( type, material ){
+    var n = this.positionCount;
+    var m = this.geo.vertices.length;
+    var o = this.geo.faces.length;
 
-        return this.meshBuffer.getMesh( type, material );
+    var p, i, j, q;
+    var o3 = o * 3;
 
-    },
+    for( i = 0; i < n; ++i ){
 
-    getMaterial: function( type ){
+        j = i * o3;
+        q = j + o3;
 
-        return this.meshBuffer.getMaterial( type );
+        meshIndex.set( geoIndex, j );
+        for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
 
-    },
+    }
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
-
-}
+};
 
 
 NGL.SphereGeometryBuffer = function( position, color, radius, pickingColor, params ){
@@ -28692,7 +31253,13 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
 
     this.__center = new Float32Array( n );
 
-    this.setAttributes({
+    NGL.GeometryBuffer.call(
+        this, this._position, this._color, this._pickingColor, params
+    );
+
+    this.setPositionTransform( this._from, this._to, this._radius );
+
+    this.setAttributes( {
         "position1": from,
         "position2": to,
         "color": color,
@@ -28700,13 +31267,7 @@ NGL.CylinderGeometryBuffer = function( from, to, color, color2, radius, pickingC
         "radius": radius,
         "pickingColor": pickingColor,
         "pickingColor2": pickingColor2
-    }, true );
-
-    this.setPositionTransform( this._from, this._to, this._radius );
-
-    NGL.GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor, params
-    );
+    } );
 
 };
 
@@ -28736,14 +31297,7 @@ NGL.CylinderGeometryBuffer.prototype.setPositionTransform = function( from, to, 
 
 };
 
-NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
-
-    if( !this.meshBuffer && !init ){
-
-        NGL.GeometryBuffer.prototype.setAttributes.call( this, data );
-        return;
-
-    }
+NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
 
     var n = this._position.length / 2;
     var m = this._radius.length / 2;
@@ -28802,11 +31356,7 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data, init ){
 
     }
 
-    if( this.meshBuffer ){
-
-        NGL.GeometryBuffer.prototype.setAttributes.call( this, geoData );
-
-    }
+    NGL.GeometryBuffer.prototype.setAttributes.call( this, geoData );
 
 }
 
@@ -28818,6 +31368,7 @@ NGL.PointBuffer = function( position, color, params ){
 
     var p = params || {};
 
+    this.point = true;
     this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
     this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
     this.sort = p.sort !== undefined ? p.sort : false;
@@ -28835,7 +31386,7 @@ NGL.PointBuffer = function( position, color, params ){
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
 
-    NGL.Buffer.call( this, position, color, null, p );
+    NGL.Buffer.call( this, position, color, undefined, undefined, p );
 
 };
 
@@ -28843,21 +31394,19 @@ NGL.PointBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
 NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
 
-NGL.PointBuffer.prototype.getMesh = function( type, material ){
+NGL.PointBuffer.prototype.parameters = Object.assign( {
 
-    material = material || this.getMaterial( type );
+    pointSize: { property: "size" },
+    sizeAttenuation: { property: true },
+    sort: {}
 
-    var points = new THREE.PointCloud(
-        this.geometry, material
-    );
+}, NGL.Buffer.prototype.parameters, {
 
-    if( this.sort ) points.sortParticles = true
+    opacity: { property: true },
 
-    return points;
+} );
 
-};
-
-NGL.PointBuffer.prototype.getMaterial = function( type ){
+NGL.PointBuffer.prototype.makeMaterial = function(){
 
     var material;
 
@@ -28906,7 +31455,9 @@ NGL.PointBuffer.prototype.getMaterial = function( type ){
 
     }
 
-    return material;
+    this.material = material;
+    this.wireframeMaterial = material;
+    this.pickingMaterial = material;
 
 };
 
@@ -28923,335 +31474,207 @@ NGL.LineBuffer = function( from, to, color, color2, params ){
 
     var p = params || {};
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
-    this.lineWidth = p.lineWidth !== undefined ? p.lineWidth : 1;
-
     this.size = from.length / 3;
     this.vertexShader = 'Line.vert';
     this.fragmentShader = 'Line.frag';
+    this.line = true;
 
     var n = this.size;
     var n6 = n * 6;
     var nX = n * 2 * 2;
 
-    this.attributes = [ "position", "color" ];
+    this.attributeSize = nX;
 
-    this.geometry = new THREE.BufferGeometry();
+    this.linePosition = new Float32Array( nX * 3 );
+    this.lineColor = new Float32Array( nX * 3 );
 
-    this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
-    );
-    this.geometry.addAttribute(
-        'color', new THREE.BufferAttribute( new Float32Array( nX * 3 ), 3 )
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.setAttributes({
+    this.setAttributes( {
         from: from,
         to: to,
         color: color,
         color2: color2
-    });
-
-    this.uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-        }
-    ] );
-
-    this.group = new THREE.Group();
+    } );
 
 };
 
-NGL.LineBuffer.prototype = {
+NGL.LineBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.LineBuffer,
+NGL.LineBuffer.prototype.constructor = NGL.LineBuffer;
 
-    setAttributes: function( data ){
+NGL.LineBuffer.prototype.setAttributes = function( data ){
 
-        var from, to, color, color2;
-        var aPosition, aColor;
+    var from, to, color, color2;
+    var aPosition, aColor;
 
-        var attributes = this.geometry.attributes;
+    var attributes = this.geometry.attributes;
 
-        if( data[ "from" ] && data[ "to" ] ){
-            from = data[ "from" ];
-            to = data[ "to" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
-        }
+    if( data[ "from" ] && data[ "to" ] ){
+        from = data[ "from" ];
+        to = data[ "to" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        if( data[ "color" ] && data[ "color2" ] ){
-            color = data[ "color" ];
-            color2 = data[ "color2" ];
-            aColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
-        }
+    if( data[ "color" ] && data[ "color2" ] ){
+        color = data[ "color" ];
+        color2 = data[ "color2" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
 
-        var n = this.size;
-        var n6 = n * 6;
+    var n = this.size;
+    var n6 = n * 6;
 
-        var i, j, i2;
+    var i, j, i2;
+    var x, y, z, x1, y1, z1, x2, y2, z2;
 
-        var x, y, z, x1, y1, z1, x2, y2, z2;
+    for( var v = 0; v < n; v++ ){
 
-        for( var v = 0; v < n; v++ ){
+        j = v * 3;
+        i = v * 2 * 3;
+        i2 = i + n6;
 
-            j = v * 3;
-            i = v * 2 * 3;
+        if( from && to ){
 
-            if( from && to ){
+            x1 = from[ j     ];
+            y1 = from[ j + 1 ];
+            z1 = from[ j + 2 ];
 
-                x1 = from[ j + 0 ];
-                y1 = from[ j + 1 ];
-                z1 = from[ j + 2 ];
+            x2 = to[ j     ];
+            y2 = to[ j + 1 ];
+            z2 = to[ j + 2 ];
 
-                x2 = to[ j + 0 ];
-                y2 = to[ j + 1 ];
-                z2 = to[ j + 2 ];
+            x = ( x1 + x2 ) / 2.0;
+            y = ( y1 + y2 ) / 2.0;
+            z = ( z1 + z2 ) / 2.0;
 
-                x = ( x1 + x2 ) / 2.0;
-                y = ( y1 + y2 ) / 2.0;
-                z = ( z1 + z2 ) / 2.0;
+            aPosition[ i     ] = x1;
+            aPosition[ i + 1 ] = y1;
+            aPosition[ i + 2 ] = z1;
+            aPosition[ i + 3 ] = x;
+            aPosition[ i + 4 ] = y;
+            aPosition[ i + 5 ] = z;
 
-                aPosition[ i + 0 ] = from[ j + 0 ];
-                aPosition[ i + 1 ] = from[ j + 1 ];
-                aPosition[ i + 2 ] = from[ j + 2 ];
-                aPosition[ i + 3 ] = x;
-                aPosition[ i + 4 ] = y;
-                aPosition[ i + 5 ] = z;
-
-            }
-
-            if( color && color2 ){
-
-                aColor[ i + 0 ] = color[ j + 0 ];
-                aColor[ i + 1 ] = color[ j + 1 ];
-                aColor[ i + 2 ] = color[ j + 2 ];
-                aColor[ i + 3 ] = color[ j + 0 ];
-                aColor[ i + 4 ] = color[ j + 1 ];
-                aColor[ i + 5 ] = color[ j + 2 ];
-
-            }
-
-            i2 = i + n6;
-
-            if( from && to ){
-
-                aPosition[ i2 + 0 ] = x;
-                aPosition[ i2 + 1 ] = y;
-                aPosition[ i2 + 2 ] = z;
-                aPosition[ i2 + 3 ] = to[ j + 0 ];
-                aPosition[ i2 + 4 ] = to[ j + 1 ];
-                aPosition[ i2 + 5 ] = to[ j + 2 ];
-
-            }
-
-            if( color && color2 ){
-
-                aColor[ i2 + 0 ] = color2[ j + 0 ];
-                aColor[ i2 + 1 ] = color2[ j + 1 ];
-                aColor[ i2 + 2 ] = color2[ j + 2 ];
-                aColor[ i2 + 3 ] = color2[ j + 0 ];
-                aColor[ i2 + 4 ] = color2[ j + 1 ];
-                aColor[ i2 + 5 ] = color2[ j + 2 ];
-
-            }
+            aPosition[ i2     ] = x;
+            aPosition[ i2 + 1 ] = y;
+            aPosition[ i2 + 2 ] = z;
+            aPosition[ i2 + 3 ] = x2;
+            aPosition[ i2 + 4 ] = y2;
+            aPosition[ i2 + 5 ] = z2;
 
         }
 
-    },
+        if( color && color2 ){
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+            aColor[ i     ] = aColor[ i + 3 ] = color[ j     ];
+            aColor[ i + 1 ] = aColor[ i + 4 ] = color[ j + 1 ];
+            aColor[ i + 2 ] = aColor[ i + 5 ] = color[ j + 2 ];
 
-    getMesh: function( type, material ){
-
-        material = material || this.getMaterial( type );
-
-        return new THREE.LineSegments( this.geometry, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        var uniforms = THREE.UniformsUtils.clone( this.uniforms );
-
-        var material = new THREE.ShaderMaterial( {
-            uniforms: uniforms,
-            attributes: this.attributes,
-            vertexShader: NGL.getShader( this.vertexShader ),
-            fragmentShader: NGL.getShader( this.fragmentShader ),
-            depthTest: true,
-            transparent: this.transparent,
-            depthWrite: true,
-            lights: false,
-            fog: true,
-            linewidth: this.lineWidth
-        } );
-
-        if( this.nearClip ){
-
-            material.defines[ "NEAR_CLIP" ] = 1;
+            aColor[ i2     ] = aColor[ i2 + 3 ] = color2[ j     ];
+            aColor[ i2 + 1 ] = aColor[ i2 + 4 ] = color2[ j + 1 ];
+            aColor[ i2 + 2 ] = aColor[ i2 + 5 ] = color2[ j + 2 ];
 
         }
 
-        return material;
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+    }
 
 };
 
 
 NGL.TraceBuffer = function( position, color, params ){
 
+    var p = params || {};
+
     this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
 
     var n = this.size;
     var n1 = n - 1;
 
-    this.from = new Float32Array( n1 * 3 );
-    this.to = new Float32Array( n1 * 3 );
-    this.lineColor = new Float32Array( n1 * 3 );
-    this.lineColor2 = new Float32Array( n1 * 3 );
+    this.attributeSize = n1 * 2;
 
-    this.setAttributes({
-        position: position,
-        color: color
-    });
+    this.linePosition = new Float32Array( n1 * 3 * 2 );
+    this.lineColor = new Float32Array( n1 * 3 * 2 );
 
-    this.lineBuffer = new NGL.LineBuffer(
-        this.from, this.to, this.lineColor, this.lineColor2, params
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.pickable = this.lineBuffer.pickable;
-    this.geometry = this.lineBuffer.geometry;
+    this.setAttributes( {
+        position: position,
+        color: color
+    } );
 
 };
 
-NGL.TraceBuffer.prototype = {
+NGL.TraceBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.TraceBuffer,
+NGL.TraceBuffer.prototype.constructor = NGL.TraceBuffer;
 
-    get group () {
+NGL.TraceBuffer.prototype.setAttributes = function( data ){
 
-        return this.lineBuffer.group;
+    var position, color;
+    var linePosition, lineColor;
 
-    },
+    var attributes = this.geometry.attributes;
 
-    get pickingGroup () {
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        linePosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        return this.lineBuffer.pickingGroup;
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        lineColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
 
-    },
+    if( !position && !color ){
+        NGL.warn( "NGL.TraceBuffer.prototype.setAttributes no data" );
+        return;
+    }
 
-    get transparent () {
+    var v, v2;
+    var n = this.size;
+    var n1 = n - 1;
 
-        return this.lineBuffer.transparent;
+    for( var i = 0; i < n1; ++i ){
 
-    },
-
-    set transparent ( value ) {
-
-        this.lineBuffer.transparent = value;
-
-    },
-
-    setAttributes: function( data ){
-
-        var position, color;
-        var from, to, lineColor, lineColor2;
-
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            from = this.from;
-            to = this.to;
-        }
-
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            lineColor = this.lineColor;
-            lineColor2 = this.lineColor2;
-        }
-
-        var n = this.size;
-        var n1 = n - 1;
-
-        for( var i=0, v; i<n1; ++i ){
-
-            v = 3 * i;
-
-            if( position ){
-
-                from[ v + 0 ] = position[ v + 0 ];
-                from[ v + 1 ] = position[ v + 1 ];
-                from[ v + 2 ] = position[ v + 2 ];
-
-                to[ v + 0 ] = position[ v + 3 ];
-                to[ v + 1 ] = position[ v + 4 ];
-                to[ v + 2 ] = position[ v + 5 ];
-
-            }
-
-            if( color ){
-
-                lineColor[ v + 0 ] = color[ v + 0 ];
-                lineColor[ v + 1 ] = color[ v + 1 ];
-                lineColor[ v + 2 ] = color[ v + 2 ];
-
-                lineColor2[ v + 0 ] = color[ v + 3 ];
-                lineColor2[ v + 1 ] = color[ v + 4 ];
-                lineColor2[ v + 2 ] = color[ v + 5 ];
-
-            }
-
-        }
-
-        var lineData = {};
+        v = 3 * i;
+        v2 = 3 * i * 2;
 
         if( position ){
-            lineData[ "from" ] = from;
-            lineData[ "to" ] = to;
+
+            linePosition[ v2     ] = position[ v     ];
+            linePosition[ v2 + 1 ] = position[ v + 1 ];
+            linePosition[ v2 + 2 ] = position[ v + 2 ];
+
+            linePosition[ v2 + 3 ] = position[ v + 3 ];
+            linePosition[ v2 + 4 ] = position[ v + 4 ];
+            linePosition[ v2 + 5 ] = position[ v + 5 ];
+
         }
 
         if( color ){
-            lineData[ "color" ] = lineColor;
-            lineData[ "color2" ] = lineColor2;
+
+            lineColor[ v2     ] = color[ v     ];
+            lineColor[ v2 + 1 ] = color[ v + 1 ];
+            lineColor[ v2 + 2 ] = color[ v + 2 ];
+
+            lineColor[ v2 + 3 ] = color[ v + 3 ];
+            lineColor[ v2 + 4 ] = color[ v + 4 ];
+            lineColor[ v2 + 5 ] = color[ v + 5 ];
+
         }
 
-        if( this.lineBuffer ){
-            this.lineBuffer.setAttributes( lineData );
-        }
-
-    },
-
-    getRenderOrder: function(){
-
-        return this.lineBuffer.getRenderOrder();
-
-    },
-
-    getMesh: function( type, material ){
-
-        return this.lineBuffer.getMesh( type, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        return this.lineBuffer.getMaterial( type );
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
+    }
 
 };
 
@@ -29261,7 +31684,7 @@ NGL.TraceBuffer.prototype = {
 
 NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
-    this.size = position.length / 3;
+    this.count = position.length / 3;
     this.vertexShader = 'ParticleSprite.vert';
     this.fragmentShader = 'ParticleSprite.frag';
 
@@ -29271,17 +31694,15 @@ NGL.ParticleSpriteBuffer = function( position, color, radius ){
         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
     });
 
-    this.addAttributes({
+    this.addAttributes( {
         "radius": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "color": color,
         "radius": radius,
-    });
-
-    this.finalize();
+    } );
 
     this.material.lights = false;
 
@@ -29296,288 +31717,222 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
 
     var p = params || {};
 
-    this.transparent = p.transparent !== undefined ? p.transparent : false;
-    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
+    var n = ( position.length / 3 ) - 1;
+    var n4 = n * 4;
+    var x = n4 * 3;
+
+    this.meshPosition = new Float32Array( x );
+    this.meshColor = new Float32Array( x );
+    this.meshNormal = new Float32Array( x );
+    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
+    this.meshIndex = new Uint32Array( x );
+
+    this.makeIndex();
+
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
+        this.meshNormal, this.meshPickingColor, p
+    );
 
     this.vertexShader = 'Ribbon.vert';
     this.fragmentShader = 'Ribbon.frag';
-    this.size = ( position.length/3 ) - 1;
-
-    var n = this.size;
-    var n4 = n * 4;
-
-    this.attributes = [
-        "position", "normal",
-        "inputDir", "inputSize", "inputNormal", "inputColor"
-    ];
-
-    if( pickingColor ){
-        this.attributes.push( "pickingColor" );
-    }
-
-    this.uniforms = THREE.UniformsUtils.merge( [
-        NGL.UniformsLib[ "fog" ],
-        NGL.UniformsLib[ "lights" ],
-        {
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 },
-            "objectId": { type: "f", value: 0.0 },
-        }
-    ]);
-
-    this.pickingUniforms = {
-        "nearClip": { type: "f", value: 0.0 },
-        "objectId": { type: "f", value: 0.0 },
-    };
-
-    this.geometry = new THREE.BufferGeometry();
 
     this.geometry.addAttribute(
-        'position', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
+        'dir', new THREE.BufferAttribute( new Float32Array( x ), 3 )
     );
     this.geometry.addAttribute(
-        'inputDir', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
+        'size', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
     );
-    this.geometry.addAttribute(
-        'inputSize', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
-    );
-    this.geometry.addAttribute(
-        'normal', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-    );
-    this.geometry.addAttribute(
-        'inputColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-    );
-    if( pickingColor ){
-        this.geometry.addAttribute(
-            'pickingColor', new THREE.BufferAttribute( new Float32Array( n4 * 3 ), 3 )
-        );
-        this.pickable = true;
-    }
 
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         normal: normal,
         dir: dir,
         color: color,
         size: size,
         pickingColor: pickingColor
-    });
-
-    this.group = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
-
-    NGL.Buffer.prototype.finalize.call( this );
+    } );
 
 };
 
-NGL.RibbonBuffer.prototype = {
+NGL.RibbonBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.RibbonBuffer,
+NGL.RibbonBuffer.prototype.constructor = NGL.RibbonBuffer;
 
-    setAttributes: function( data ){
+NGL.RibbonBuffer.prototype.setAttributes = function( data ){
 
-        var n = this.size;
-        var n4 = n * 4;
+    var n4 = this.size;
+    var n = n4 / 4;
 
-        var attributes = this.geometry.attributes;
+    var attributes = this.geometry.attributes;
 
-        var position, normal, size, dir, color, pickingColor;
-        var aPosition, inputNormal, inputSize, inputDir, inputColor, inputPickingColor;
+    var position, normal, size, dir, color, pickingColor;
+    var aPosition, aNormal, aSize, aDir, aColor, aPickingColor;
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+    if( data[ "position" ] ){
+        position = data[ "position" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
+
+    if( data[ "normal" ] ){
+        normal = data[ "normal" ];
+        aNormal = attributes[ "normal" ].array;
+        attributes[ "normal" ].needsUpdate = true;
+    }
+
+    if( data[ "size" ] ){
+        size = data[ "size" ];
+        aSize = attributes[ "size" ].array;
+        attributes[ "size" ].needsUpdate = true;
+    }
+
+    if( data[ "dir" ] ){
+        dir = data[ "dir" ];
+        aDir = attributes[ "dir" ].array;
+        attributes[ "dir" ].needsUpdate = true;
+    }
+
+    if( data[ "color" ] ){
+        color = data[ "color" ];
+        aColor = attributes[ "color" ].array;
+        attributes[ "color" ].needsUpdate = true;
+    }
+
+    if( data[ "pickingColor" ] ){
+        pickingColor = data[ "pickingColor" ];
+        aPickingColor = attributes[ "pickingColor" ].array;
+        attributes[ "pickingColor" ].needsUpdate = true;
+    }
+
+    var v, i, k, p, l, v3;
+    var currSize;
+    var prevSize = size ? size[ 0 ] : null;
+
+    for( v = 0; v < n; ++v ){
+
+        v3 = v * 3;
+        k = v * 3 * 4;
+        l = v * 4;
+
+        if( position ){
+
+            aPosition[ k     ] = aPosition[ k + 3 ] = position[ v3     ];
+            aPosition[ k + 1 ] = aPosition[ k + 4 ] = position[ v3 + 1 ];
+            aPosition[ k + 2 ] = aPosition[ k + 5 ] = position[ v3 + 2 ];
+
+            aPosition[ k + 6 ] = aPosition[ k +  9 ] = position[ v3 + 3 ];
+            aPosition[ k + 7 ] = aPosition[ k + 10 ] = position[ v3 + 4 ];
+            aPosition[ k + 8 ] = aPosition[ k + 11 ] = position[ v3 + 5 ];
+
         }
 
-        if( data[ "normal" ] ){
-            normal = data[ "normal" ];
-            inputNormal = attributes[ "normal" ].array;
-            attributes[ "normal" ].needsUpdate = true;
+        if( normal ){
+
+            aNormal[ k     ] = aNormal[ k + 3 ] = -normal[ v3     ];
+            aNormal[ k + 1 ] = aNormal[ k + 4 ] = -normal[ v3 + 1 ];
+            aNormal[ k + 2 ] = aNormal[ k + 5 ] = -normal[ v3 + 2 ];
+
+            aNormal[ k + 6 ] = aNormal[ k +  9 ] = -normal[ v3 + 3 ];
+            aNormal[ k + 7 ] = aNormal[ k + 10 ] = -normal[ v3 + 4 ];
+            aNormal[ k + 8 ] = aNormal[ k + 11 ] = -normal[ v3 + 5 ];
+
         }
 
-        if( data[ "size" ] ){
-            size = data[ "size" ];
-            inputSize = attributes[ "inputSize" ].array;
-            attributes[ "inputSize" ].needsUpdate = true;
-        }
 
-        if( data[ "dir" ] ){
-            dir = data[ "dir" ];
-            inputDir = attributes[ "inputDir" ].array;
-            attributes[ "inputDir" ].needsUpdate = true;
-        }
+        for( i = 0; i<4; ++i ){
 
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            inputColor = attributes[ "inputColor" ].array;
-            attributes[ "inputColor" ].needsUpdate = true;
-        }
+            p = k + 3 * i;
 
-        if( data[ "pickingColor" ] ){
-            pickingColor = data[ "pickingColor" ];
-            inputPickingColor = attributes[ "pickingColor" ].array;
-            attributes[ "pickingColor" ].needsUpdate = true;
-        }
+            if( color ){
 
-        var v, i, k, p, l, v3;
-        var prevSize = size ? size[0] : null;
-
-        for( v = 0; v < n; ++v ){
-
-            v3 = v * 3;
-            k = v * 3 * 4;
-            l = v * 4;
-
-            if( position ){
-
-                aPosition[ k + 0 ] = position[ v3 + 0 ];
-                aPosition[ k + 1 ] = position[ v3 + 1 ];
-                aPosition[ k + 2 ] = position[ v3 + 2 ];
-
-                aPosition[ k + 3 ] = position[ v3 + 0 ];
-                aPosition[ k + 4 ] = position[ v3 + 1 ];
-                aPosition[ k + 5 ] = position[ v3 + 2 ];
-
-                aPosition[ k + 6 ] = position[ v3 + 3 ];
-                aPosition[ k + 7 ] = position[ v3 + 4 ];
-                aPosition[ k + 8 ] = position[ v3 + 5 ];
-
-                aPosition[ k + 9 ] = position[ v3 + 3 ];
-                aPosition[ k + 10 ] = position[ v3 + 4 ];
-                aPosition[ k + 11 ] = position[ v3 + 5 ];
+                aColor[ p     ] = color[ v3     ];
+                aColor[ p + 1 ] = color[ v3 + 1 ];
+                aColor[ p + 2 ] = color[ v3 + 2 ];
 
             }
 
-            if( normal ){
+            if( pickingColor ){
 
-                inputNormal[ k + 0 ] = -normal[ v3 + 0 ];
-                inputNormal[ k + 1 ] = -normal[ v3 + 1 ];
-                inputNormal[ k + 2 ] = -normal[ v3 + 2 ];
-
-                inputNormal[ k + 3 ] = -normal[ v3 + 0 ];
-                inputNormal[ k + 4 ] = -normal[ v3 + 1 ];
-                inputNormal[ k + 5 ] = -normal[ v3 + 2 ];
-
-                inputNormal[ k + 6 ] = -normal[ v3 + 3 ];
-                inputNormal[ k + 7 ] = -normal[ v3 + 4 ];
-                inputNormal[ k + 8 ] = -normal[ v3 + 5 ];
-
-                inputNormal[ k + 9 ] = -normal[ v3 + 3 ];
-                inputNormal[ k + 10 ] = -normal[ v3 + 4 ];
-                inputNormal[ k + 11 ] = -normal[ v3 + 5 ];
-
-            }
-
-
-            for( i = 0; i<4; ++i ){
-                p = k + 3 * i;
-
-                if( color ){
-
-                    inputColor[ p + 0 ] = color[ v3 + 0 ];
-                    inputColor[ p + 1 ] = color[ v3 + 1 ];
-                    inputColor[ p + 2 ] = color[ v3 + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    inputPickingColor[ p + 0 ] = pickingColor[ v3 + 0 ];
-                    inputPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
-                    inputPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
-
-                }
-
-            }
-
-            if( size ){
-
-                if( prevSize!=size[ v ] ){
-                    inputSize[ l + 0 ] = Math.abs( prevSize );
-                    inputSize[ l + 1 ] = Math.abs( prevSize );
-                    inputSize[ l + 2 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 3 ] = Math.abs( size[ v ] );
-                }else{
-                    inputSize[ l + 0 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 1 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 2 ] = Math.abs( size[ v ] );
-                    inputSize[ l + 3 ] = Math.abs( size[ v ] );
-                }
-                prevSize = size[ v ];
-
-            }
-
-            if( dir ){
-
-                inputDir[ k + 0 ] = dir[ v3 + 0 ];
-                inputDir[ k + 1 ] = dir[ v3 + 1 ];
-                inputDir[ k + 2 ] = dir[ v3 + 2 ];
-
-                inputDir[ k + 3 ] = -dir[ v3 + 0 ];
-                inputDir[ k + 4 ] = -dir[ v3 + 1 ];
-                inputDir[ k + 5 ] = -dir[ v3 + 2 ];
-
-                inputDir[ k + 6 ] = dir[ v3 + 3 ];
-                inputDir[ k + 7 ] = dir[ v3 + 4 ];
-                inputDir[ k + 8 ] = dir[ v3 + 5 ];
-
-                inputDir[ k + 9 ] = -dir[ v3 + 3 ];
-                inputDir[ k + 10 ] = -dir[ v3 + 4 ];
-                inputDir[ k + 11 ] = -dir[ v3 + 5 ];
+                aPickingColor[ p     ] = pickingColor[ v3     ];
+                aPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
+                aPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
 
             }
 
         }
 
-    },
+        if( size ){
 
-    makeIndex: function(){
+            currSize = size[ v ];
 
-        var n = this.size;
-        var n4 = n * 4;
+            if( prevSize !== size[ v ] ){
 
-        var quadIndices = new Uint32Array([
-            0, 1, 2,
-            1, 3, 2
-        ]);
+                aSize[ l     ] = prevSize;
+                aSize[ l + 1 ] = prevSize;
+                aSize[ l + 2 ] = currSize;
+                aSize[ l + 3 ] = currSize;
 
-        this.geometry.addAttribute(
-            'index', new THREE.BufferAttribute(
-                new Uint32Array( n4 * 3 ), 1
-            )
-        );
+            }else{
 
-        var index = this.geometry.attributes[ "index" ].array;
+                aSize[ l     ] = currSize;
+                aSize[ l + 1 ] = currSize;
+                aSize[ l + 2 ] = currSize;
+                aSize[ l + 3 ] = currSize;
 
-        var s, v, ix, it;
-
-        for( v = 0; v < n; ++v ){
-
-            ix = v * 6;
-            it = v * 4;
-
-            index.set( quadIndices, ix );
-            for( s = 0; s < 6; ++s ){
-                index[ ix + s ] += it;
             }
+
+            prevSize = currSize;
 
         }
 
-    },
+        if( dir ){
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
+            aDir[ k     ] = dir[ v3     ];
+            aDir[ k + 1 ] = dir[ v3 + 1 ];
+            aDir[ k + 2 ] = dir[ v3 + 2 ];
 
-    getMesh: NGL.Buffer.prototype.getMesh,
+            aDir[ k + 3 ] = -dir[ v3     ];
+            aDir[ k + 4 ] = -dir[ v3 + 1 ];
+            aDir[ k + 5 ] = -dir[ v3 + 2 ];
 
-    getMaterial: NGL.Buffer.prototype.getMaterial,
+            aDir[ k + 6 ] = dir[ v3 + 3 ];
+            aDir[ k + 7 ] = dir[ v3 + 4 ];
+            aDir[ k + 8 ] = dir[ v3 + 5 ];
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
+            aDir[ k +  9 ] = -dir[ v3 + 3 ];
+            aDir[ k + 10 ] = -dir[ v3 + 4 ];
+            aDir[ k + 11 ] = -dir[ v3 + 5 ];
 
-    dispose: NGL.Buffer.prototype.dispose
+        }
+
+    }
+
+};
+
+NGL.RibbonBuffer.prototype.makeIndex = function(){
+
+    var meshIndex = this.meshIndex;
+    var n = meshIndex.length / 4 / 3;
+
+    var quadIndices = new Uint32Array([
+        0, 1, 2,
+        1, 3, 2
+    ]);
+
+    var s, v, ix, it;
+
+    for( v = 0; v < n; ++v ){
+
+        ix = v * 6;
+        it = v * 4;
+
+        meshIndex.set( quadIndices, ix );
+        for( s = 0; s < 6; ++s ){
+            meshIndex[ ix + s ] += it;
+        }
+
+    }
 
 };
 
@@ -29596,443 +31951,387 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     this.capVertices = this.capped ? this.radialSegments : 0;
     this.capTriangles = this.capped ? this.radialSegments - 2 : 0;
-    this.size = position.length / 3;
 
-    var n = this.size;
+    var n = position.length / 3;
     var n1 = n - 1;
     var radialSegments1 = this.radialSegments + 1;
 
     var x = n * this.radialSegments * 3 + 2 * this.capVertices * 3;
 
+    this.size2 = n;
+
     this.meshPosition = new Float32Array( x );
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
-    this.meshPickingColor = new Float32Array( x );
+    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
     this.meshIndex = new Uint32Array(
         n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
     );
 
     this.makeIndex();
 
-    this.setAttributes({
-        "position": position,
-        "normal": normal,
-        "binormal": binormal,
-        "tangent": tangent,
-        "color": color,
-        "size": size,
-        "pickingColor": pickingColor
-    });
-
-    this.meshBuffer = new NGL.MeshBuffer(
-        this.meshPosition, this.meshColor, this.meshIndex,
+    NGL.MeshBuffer.call(
+        this, this.meshPosition, this.meshColor, this.meshIndex,
         this.meshNormal, this.meshPickingColor, p
     );
 
-    this.pickable = this.meshBuffer.pickable;
-    this.geometry = this.meshBuffer.geometry;
+    this.setAttributes( {
+        position: position,
+        normal: normal,
+        binormal: binormal,
+        tangent: tangent,
+        color: color,
+        size: size,
+        pickingColor: pickingColor
+    } );
 
 }
 
-NGL.TubeMeshBuffer.prototype = {
+NGL.TubeMeshBuffer.prototype = Object.create( NGL.MeshBuffer.prototype );
 
-    constructor: NGL.TubeMeshBuffer,
+NGL.TubeMeshBuffer.prototype.constructor = NGL.TubeMeshBuffer;
 
-    get group () {
+NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
-        return this.meshBuffer.group;
+    var vTangent = new THREE.Vector3();
+    var vMeshNormal = new THREE.Vector3();
 
-    },
+    return function( data ){
 
-    get pickingGroup () {
+        var rx = this.rx;
+        var ry = this.ry;
 
-        return this.meshBuffer.pickingGroup;
-
-    },
-
-    get transparent () {
-
-        return this.meshBuffer.transparent;
-
-    },
-
-    set transparent ( value ) {
-
-        this.meshBuffer.transparent = value;
-
-    },
-
-    setAttributes: function(){
-
-        var vTangent = new THREE.Vector3();
-        var vMeshNormal = new THREE.Vector3();
-
-        return function( data ){
-
-            var rx = this.rx;
-            var ry = this.ry;
-
-            var n = this.size;
-            var n1 = n - 1;
-            var capVertices = this.capVertices;
-            var radialSegments = this.radialSegments;
-
-            var position, normal, binormal, tangent, color, size, pickingColor;
-            var meshPosition, meshColor, meshNormal, meshPickingColor
-
-            if( data[ "position" ] ){
-                position = data[ "position" ];
-                normal = data[ "normal" ];
-                binormal = data[ "binormal" ];
-                tangent = data[ "tangent" ];
-                size = data[ "size" ];
-                meshPosition = this.meshPosition;
-                meshNormal = this.meshNormal;
-            }
-
-            if( data[ "color" ] ){
-                color = data[ "color" ];
-                meshColor = this.meshColor;
-            }
-
-            if( data[ "pickingColor" ] ){
-                pickingColor = data[ "pickingColor" ];
-                meshPickingColor = this.meshPickingColor;
-            }
-
-            var i, j, k, l, s, t;
-            var v, cx, cy;
-            var cx1, cy1, cx2, cy2;
-            var radius;
-            var irs, irs1;
-
-            var normX, normY, normZ;
-            var biX, biY, biZ;
-            var posX, posY, posZ;
-
-            var cxArr = [];
-            var cyArr = [];
-            var cx1Arr = [];
-            var cy1Arr = [];
-            var cx2Arr = [];
-            var cy2Arr = [];
-
-            if( position ){
-
-                for( j = 0; j < radialSegments; ++j ){
-
-                    v = ( j / radialSegments ) * 2 * Math.PI;
-
-                    cxArr[ j ] = rx * Math.cos( v );
-                    cyArr[ j ] = ry * Math.sin( v );
-
-                    cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
-                    cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
-                    cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
-                    cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
-
-                }
-
-            }
-
-            for( i = 0; i < n; ++i ){
-
-                k = i * 3;
-                l = k * radialSegments;
-
-                if( position ){
-
-                    vTangent.set(
-                        tangent[ k + 0 ], tangent[ k + 1 ], tangent[ k + 2 ]
-                    );
-
-                    normX = normal[ k + 0 ];
-                    normY = normal[ k + 1 ];
-                    normZ = normal[ k + 2 ];
-
-                    biX = binormal[ k + 0 ];
-                    biY = binormal[ k + 1 ];
-                    biZ = binormal[ k + 2 ];
-
-                    posX = position[ k + 0 ];
-                    posY = position[ k + 1 ];
-                    posZ = position[ k + 2 ];
-
-                    radius = size[ i ];
-
-                }
-
-                for( j = 0; j < radialSegments; ++j ){
-
-                    s = l + j * 3
-
-                    if( position ){
-
-                        cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
-                        cy = radius * cyArr[ j ];
-
-                        cx1 = -radius * cx1Arr[ j ];
-                        cy1 = radius * cy1Arr[ j ];
-                        cx2 = -radius * cx2Arr[ j ];
-                        cy2 = radius * cy2Arr[ j ];
-
-                        meshPosition[ s + 0 ] = posX + cx * normX + cy * biX;
-                        meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
-                        meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
-
-                        // TODO half of these are symmetric
-                        vMeshNormal.set(
-                            // ellipse tangent approximated as vector from/to adjacent points
-                            ( cx2 * normX + cy2 * biX ) -
-                                ( cx1 * normX + cy1 * biX ),
-                            ( cx2 * normY + cy2 * biY ) -
-                                ( cx1 * normY + cy1 * biY ),
-                            ( cx2 * normZ + cy2 * biZ ) -
-                                ( cx1 * normZ + cy1 * biZ )
-                        ).cross( vTangent );
-
-                        meshNormal[ s + 0 ] = vMeshNormal.x;
-                        meshNormal[ s + 1 ] = vMeshNormal.y;
-                        meshNormal[ s + 2 ] = vMeshNormal.z;
-
-                    }
-
-                    if( color ){
-
-                        meshColor[ s + 0 ] = color[ k + 0 ];
-                        meshColor[ s + 1 ] = color[ k + 1 ];
-                        meshColor[ s + 2 ] = color[ k + 2 ];
-
-                    }
-
-                    if( pickingColor ){
-
-                        meshPickingColor[ s + 0 ] = pickingColor[ k + 0 ];
-                        meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
-                        meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
-
-                    }
-
-                }
-
-            }
-
-            // front cap
-
-            k = 0;
-            l = n * 3 * radialSegments;
-
-            for( j = 0; j < radialSegments; ++j ){
-
-                s = k + j * 3;
-                t = l + j * 3;
-
-                if( position ){
-
-                    meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
-                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
-                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
-
-                    meshNormal[ t + 0 ] = tangent[ k + 0 ];
-                    meshNormal[ t + 1 ] = tangent[ k + 1 ];
-                    meshNormal[ t + 2 ] = tangent[ k + 2 ];
-
-                }
-
-                if( color ){
-
-                    meshColor[ t + 0 ] = meshColor[ s + 0 ];
-                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
-                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
-                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
-
-                }
-
-            }
-
-            // back cap
-
-            k = ( n - 1 ) * 3 * radialSegments;
-            l = ( n + 1 ) * 3 * radialSegments;
-
-            for( j = 0; j < radialSegments; ++j ){
-
-                s = k + j * 3;
-                t = l + j * 3;
-
-                if( position ){
-
-                    meshPosition[ t + 0 ] = meshPosition[ s + 0 ];
-                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
-                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
-
-                    meshNormal[ t + 0 ] = tangent[ n1 * 3 + 0 ];
-                    meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
-                    meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
-
-                }
-
-                if( color ){
-
-                    meshColor[ t + 0 ] = meshColor[ s + 0 ];
-                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
-                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    meshPickingColor[ t + 0 ] = meshPickingColor[ s + 0 ];
-                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
-
-                }
-
-            }
-
-
-            var meshData = {};
-
-            if( position ){
-                meshData[ "position" ] = meshPosition;
-                meshData[ "normal" ] = meshNormal;
-            }
-
-            if( color ){
-                meshData[ "color" ] = meshColor;
-            }
-
-            if( pickingColor ){
-                meshData[ "pickingColor" ] = meshPickingColor;
-            }
-
-            if( this.meshBuffer ){
-                this.meshBuffer.setAttributes( meshData );
-            }
-
-        }
-
-    }(),
-
-    makeIndex: function(){
-
-        var meshIndex = this.meshIndex;
-
-        var n = this.size;
+        var n = this.size2;
         var n1 = n - 1;
-        var capTriangles = this.capTriangles;
+        var capVertices = this.capVertices;
         var radialSegments = this.radialSegments;
-        var radialSegments1 = this.radialSegments + 1;
 
-        var i, k, irs, irs1, l, j;
+        var attributes = this.geometry.attributes;
 
-        for( i = 0; i < n1; ++i ){
+        var position, normal, binormal, tangent, color, size, pickingColor;
+        var meshPosition, meshColor, meshNormal, meshPickingColor
 
-            k = i * radialSegments * 3 * 2
+        if( data[ "position" ] ){
 
-            irs = i * radialSegments;
-            irs1 = ( i + 1 ) * radialSegments;
+            position = data[ "position" ];
+            normal = data[ "normal" ];
+            binormal = data[ "binormal" ];
+            tangent = data[ "tangent" ];
+            size = data[ "size" ];
+
+            meshPosition = attributes[ "position" ].array;
+            meshNormal = attributes[ "normal" ].array;
+
+            attributes[ "position" ].needsUpdate = true;
+            attributes[ "normal" ].needsUpdate = true;
+
+        }
+
+        if( data[ "color" ] ){
+
+            color = data[ "color" ];
+            meshColor = attributes[ "color" ].array;
+            attributes[ "color" ].needsUpdate = true;
+
+        }
+
+        if( data[ "pickingColor" ] ){
+
+            pickingColor = data[ "pickingColor" ];
+            meshPickingColor = attributes[ "pickingColor" ].array;
+            attributes[ "pickingColor" ].needsUpdate = true;
+
+        }
+
+        var i, j, k, l, s, t;
+        var v, cx, cy;
+        var cx1, cy1, cx2, cy2;
+        var radius;
+        var irs, irs1;
+
+        var normX, normY, normZ;
+        var biX, biY, biZ;
+        var posX, posY, posZ;
+
+        var cxArr = [];
+        var cyArr = [];
+        var cx1Arr = [];
+        var cy1Arr = [];
+        var cx2Arr = [];
+        var cy2Arr = [];
+
+        if( position ){
 
             for( j = 0; j < radialSegments; ++j ){
 
-                l = k + j * 3 * 2;
+                v = ( j / radialSegments ) * 2 * Math.PI;
 
-                // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
-                meshIndex[ l ] = irs + j;
-                meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
-                // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
-                meshIndex[ l + 2 ] = irs1 + j;
+                cxArr[ j ] = rx * Math.cos( v );
+                cyArr[ j ] = ry * Math.sin( v );
 
-                // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
-                meshIndex[ l + 3 ] = irs1 + j;
-                meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
-                meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
+                cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
+                cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
+                cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
+                cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
 
             }
 
         }
 
-        // capping
+        for( i = 0; i < n; ++i ){
 
-        var strip = [ 0 ];
+            k = i * 3;
+            l = k * radialSegments;
 
-        for( j = 1; j < radialSegments1 / 2; ++j ){
+            if( position ){
 
-            strip.push( j );
-            if( radialSegments - j !== j ){
-                strip.push( radialSegments - j );
+                vTangent.set(
+                    tangent[ k ], tangent[ k + 1 ], tangent[ k + 2 ]
+                );
+
+                normX = normal[ k     ];
+                normY = normal[ k + 1 ];
+                normZ = normal[ k + 2 ];
+
+                biX = binormal[ k     ];
+                biY = binormal[ k + 1 ];
+                biZ = binormal[ k + 2 ];
+
+                posX = position[ k     ];
+                posY = position[ k + 1 ];
+                posZ = position[ k + 2 ];
+
+                radius = size[ i ];
+
+            }
+
+            for( j = 0; j < radialSegments; ++j ){
+
+                s = l + j * 3
+
+                if( position ){
+
+                    cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
+                    cy = radius * cyArr[ j ];
+
+                    cx1 = -radius * cx1Arr[ j ];
+                    cy1 = radius * cy1Arr[ j ];
+                    cx2 = -radius * cx2Arr[ j ];
+                    cy2 = radius * cy2Arr[ j ];
+
+                    meshPosition[ s     ] = posX + cx * normX + cy * biX;
+                    meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
+                    meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
+
+                    // TODO half of these are symmetric
+                    vMeshNormal.set(
+                        // ellipse tangent approximated as vector from/to adjacent points
+                        ( cx2 * normX + cy2 * biX ) -
+                            ( cx1 * normX + cy1 * biX ),
+                        ( cx2 * normY + cy2 * biY ) -
+                            ( cx1 * normY + cy1 * biY ),
+                        ( cx2 * normZ + cy2 * biZ ) -
+                            ( cx1 * normZ + cy1 * biZ )
+                    ).cross( vTangent );
+
+                    meshNormal[ s     ] = vMeshNormal.x;
+                    meshNormal[ s + 1 ] = vMeshNormal.y;
+                    meshNormal[ s + 2 ] = vMeshNormal.z;
+
+                }
+
+                if( color ){
+
+                    meshColor[ s     ] = color[ k     ];
+                    meshColor[ s + 1 ] = color[ k + 1 ];
+                    meshColor[ s + 2 ] = color[ k + 2 ];
+
+                }
+
+                if( pickingColor ){
+
+                    meshPickingColor[ s     ] = pickingColor[ k     ];
+                    meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
+                    meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
+
+                }
+
             }
 
         }
 
         // front cap
 
-        l = n1 * radialSegments * 3 * 2;
-        k = n * radialSegments;
+        k = 0;
+        l = n * 3 * radialSegments;
 
-        for( j = 0; j < strip.length - 2; ++j ){
+        for( j = 0; j < radialSegments; ++j ){
 
-            if( j % 2 === 0 ){
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
-            }else{
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+            s = k + j * 3;
+            t = l + j * 3;
+
+            if( position ){
+
+                meshPosition[ t     ] = meshPosition[ s     ];
+                meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                meshNormal[ t     ] = tangent[ k     ];
+                meshNormal[ t + 1 ] = tangent[ k + 1 ];
+                meshNormal[ t + 2 ] = tangent[ k + 2 ];
+
+            }
+
+            if( color ){
+
+                meshColor[ t     ] = meshColor[ s     ];
+                meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+            }
+
+            if( pickingColor ){
+
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
+                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
             }
 
         }
 
         // back cap
 
-        l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
-        k = n * radialSegments + radialSegments;
+        k = ( n - 1 ) * 3 * radialSegments;
+        l = ( n + 1 ) * 3 * radialSegments;
 
-        for( j = 0; j < strip.length - 2; ++j ){
+        for( j = 0; j < radialSegments; ++j ){
 
-            if( j % 2 === 0 ){
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
-            }else{
-                meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
-                meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
-                meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+            s = k + j * 3;
+            t = l + j * 3;
+
+            if( position ){
+
+                meshPosition[ t     ] = meshPosition[ s     ];
+                meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                meshNormal[ t     ] = tangent[ n1 * 3     ];
+                meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
+                meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
+
+            }
+
+            if( color ){
+
+                meshColor[ t     ] = meshColor[ s     ];
+                meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+            }
+
+            if( pickingColor ){
+
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
+                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
             }
 
         }
 
-    },
+    }
 
-    getRenderOrder: function(){
+}();
 
-        return this.meshBuffer.getRenderOrder();
+NGL.TubeMeshBuffer.prototype.makeIndex = function(){
 
-    },
+    var meshIndex = this.meshIndex;
 
-    getMesh: function( type, material ){
+    var n = this.size2;
+    var n1 = n - 1;
+    var capTriangles = this.capTriangles;
+    var radialSegments = this.radialSegments;
+    var radialSegments1 = this.radialSegments + 1;
 
-        return this.meshBuffer.getMesh( type, material );
+    var i, k, irs, irs1, l, j;
 
-    },
+    for( i = 0; i < n1; ++i ){
 
-    getMaterial: function( type ){
+        k = i * radialSegments * 3 * 2
 
-        return this.meshBuffer.getMaterial( type );
+        irs = i * radialSegments;
+        irs1 = ( i + 1 ) * radialSegments;
 
-    },
+        for( j = 0; j < radialSegments; ++j ){
 
-    setVisibility: NGL.Buffer.prototype.setVisibility,
+            l = k + j * 3 * 2;
 
-    dispose: NGL.Buffer.prototype.dispose
+            // meshIndex[ l + 0 ] = irs + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l ] = irs + j;
+            meshIndex[ l + 1 ] = irs + ( ( j + 1 ) % radialSegments );
+            // meshIndex[ l + 2 ] = irs1 + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 2 ] = irs1 + j;
+
+            // meshIndex[ l + 3 ] = irs1 + ( ( j + 0 ) % radialSegments );
+            meshIndex[ l + 3 ] = irs1 + j;
+            meshIndex[ l + 4 ] = irs + ( ( j + 1 ) % radialSegments );
+            meshIndex[ l + 5 ] = irs1 + ( ( j + 1 ) % radialSegments );
+
+        }
+
+    }
+
+    // capping
+
+    var strip = [ 0 ];
+
+    for( j = 1; j < radialSegments1 / 2; ++j ){
+
+        strip.push( j );
+        if( radialSegments - j !== j ){
+            strip.push( radialSegments - j );
+        }
+
+    }
+
+    // front cap
+
+    l = n1 * radialSegments * 3 * 2;
+    k = n * radialSegments;
+
+    for( j = 0; j < strip.length - 2; ++j ){
+
+        if( j % 2 === 0 ){
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
+        }else{
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+        }
+
+    }
+
+    // back cap
+
+    l = n1 * radialSegments * 3 * 2 + 3 * capTriangles;
+    k = n * radialSegments + radialSegments;
+
+    for( j = 0; j < strip.length - 2; ++j ){
+
+        if( j % 2 === 0 ){
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 0 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 2 ];
+        }else{
+            meshIndex[ l + j * 3 + 0 ] = k + strip[ j + 2 ];
+            meshIndex[ l + j * 3 + 1 ] = k + strip[ j + 1 ];
+            meshIndex[ l + j * 3 + 2 ] = k + strip[ j + 0 ];
+        }
+
+    }
 
 };
 
@@ -30122,7 +32421,7 @@ NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, 
 
 NGL.getFont = function( name ){
 
-    var fnt = NGL.Resources[ '../fonts/' + name + '.fnt' ].split('\n');
+    var fnt = NGL.Resources[ 'fonts/' + name + '.fnt' ].split('\n');
     var font = {};
     var m, tWidth, tHeight, base, lineHeight;
 
@@ -30187,13 +32486,11 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     var p = params || {};
 
-    this.antialias = p.antialias !== undefined ? p.antialias : true;
-
     var fontName = p.font !== undefined ? p.font : 'LatoBlack';
     this.font = NGL.getFont( fontName );
 
     this.tex = new THREE.Texture(
-        NGL.Resources[ '../fonts/' + fontName + '.png' ]
+        NGL.Resources[ 'fonts/' + fontName + '.png' ]
     );
     this.tex.needsUpdate = true;
 
@@ -30205,7 +32502,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     }
 
     this.text = text;
-    this.size = charCount;
+    this.count = charCount;
     this.positionCount = n;
 
     this.vertexShader = 'SDFFont.vert';
@@ -30213,23 +32510,22 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     NGL.QuadBuffer.call( this, p );
 
-    this.addUniforms({
-        "fontTexture"  : { type: "t", value: this.tex },
-        "backgroundColor"  : { type: "c", value: new THREE.Color( "black" ) }
-    });
+    this.addUniforms( {
+        "fontTexture"  : { type: "t", value: this.tex }
+    } );
 
-    this.addAttributes({
+    this.addAttributes( {
         "inputTexCoord": { type: "v2", value: null },
         "inputSize": { type: "f", value: null },
-    });
+    } );
 
-    this.setAttributes({
+    this.setAttributes( {
         "position": position,
         "size": size,
         "color": color
-    });
+    } );
 
-    this.finalize();
+    this.makeMapping();
 
 };
 
@@ -30237,24 +32533,14 @@ NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 NGL.TextBuffer.prototype.constructor = NGL.TextBuffer;
 
-NGL.TextBuffer.prototype.getMaterial = function(){
+NGL.TextBuffer.prototype.makeMaterial = function(){
 
-    var material = NGL.Buffer.prototype.getMaterial.call( this );
+    NGL.Buffer.prototype.makeMaterial.call( this );
 
-    if( this.antialias ){
-
-        material.transparent = true;
-        material.depthWrite = true;
-        material.blending = THREE.NormalBlending;
-        material.defines[ "ANTIALIAS" ] = 1;
-
-    }
-
-    material.lights = false;
-    material.uniforms.fontTexture.value = this.tex;
-    material.needsUpdate = true;
-
-    return material;
+    this.material.lights = false;
+    this.material.transparent = true;
+    this.material.uniforms.fontTexture.value = this.tex;
+    this.material.needsUpdate = true;
 
 };
 
@@ -30302,25 +32588,25 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
 
             for( var m = 0; m < 4; m++ ) {
 
-                j = iCharAll * 4 * 3 + (3 * m);
+                j = iCharAll * 4 * 3 + ( 3 * m );
 
-                if( data[ "position" ] ){
+                if( position ){
 
-                    aPosition[ j + 0 ] = position[ o + 0 ];
+                    aPosition[ j     ] = position[ o     ];
                     aPosition[ j + 1 ] = position[ o + 1 ];
                     aPosition[ j + 2 ] = position[ o + 2 ];
 
                 }
 
-                if( data[ "size" ] ){
+                if( size ){
 
-                    inputSize[ (iCharAll * 4) + m ] = size[ v ];
+                    inputSize[ ( iCharAll * 4 ) + m ] = size[ v ];
 
                 }
 
                 if( color ){
 
-                    aColor[ j + 0 ] = color[ o + 0 ];
+                    aColor[ j     ] = color[ o     ];
                     aColor[ j + 1 ] = color[ o + 1 ];
                     aColor[ j + 2 ] = color[ o + 2 ];
 
@@ -30331,6 +32617,15 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
         }
 
     }
+
+};
+
+NGL.TextBuffer.prototype.setProperties = function( data ){
+
+    // alpha channel must stay enabled for anti-aliasing
+    if( data && data.transparent !== undefined ) data.transparent = true;
+
+    NGL.QuadBuffer.prototype.setProperties.call( this, data );
 
 };
 
@@ -30396,106 +32691,79 @@ NGL.TextBuffer.prototype.dispose = function(){
 ///////////
 // Helper
 
-NGL.BufferVectorHelper = function( position, vector, color, scale ){
+NGL.VectorBuffer = function( position, vector, params ){
 
-    scale = scale || 1;
+    var p = params || {};
 
-    var n = position.length/3;
+    this.size = position.length / 3;
+    this.vertexShader = 'Line.vert';
+    this.fragmentShader = 'Line.frag';
+    this.line = true;
+
+    var n = this.size;
     var n2 = n * 2;
 
-    this.size = n;
+    this.attributeSize = n2;
 
-    this.geometry = new THREE.BufferGeometry();
+    this.scale = p.scale || 1;
+    var color = new THREE.Color( p.color || "grey" );
 
-    this.geometry.addAttribute(
-        'position',
-        new THREE.BufferAttribute( new Float32Array( n2 * 3 ), 3 )
+    this.linePosition = new Float32Array( n2 * 3 );
+    this.lineColor = NGL.Utils.uniformArray3( n2, color.r, color.g, color.b );
+
+    NGL.Buffer.call(
+        this, this.linePosition, this.lineColor, undefined, undefined, p
     );
 
-    this.color = color;
-    this.scale = scale;
-
-    this.setAttributes({
+    this.setAttributes( {
         position: position,
         vector: vector
-    });
-
-    this.group = new THREE.Group();
+    } );
 
 };
 
-NGL.BufferVectorHelper.prototype = {
+NGL.VectorBuffer.prototype = Object.create( NGL.Buffer.prototype );
 
-    constructor: NGL.BufferVectorHelper,
+NGL.VectorBuffer.prototype.constructor = NGL.VectorBuffer;
 
-    setAttributes: function( data ){
+NGL.VectorBuffer.prototype.setAttributes = function( data ){
 
-        var n = this.size;
+    var attributes = this.geometry.attributes;
 
-        var attributes = this.geometry.attributes;
+    var position, vector;
+    var aPosition;
 
-        var position;
-        var aPosition;
+    if( data[ "position" ] && data[ "vector" ] ){
+        position = data[ "position" ];
+        vector = data[ "vector" ];
+        aPosition = attributes[ "position" ].array;
+        attributes[ "position" ].needsUpdate = true;
+    }
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
-        }
+    var n = this.size;
+    var scale = this.scale;
 
-        if( data[ "vector" ] ){
-            this.vector = data[ "vector" ];
-        }
+    var i, j;
 
-        var scale = this.scale;
-        var vector = this.vector;
+    if( data[ "position" ] && data[ "vector" ] ){
 
-        var i, j;
+        for( var v = 0; v < n; v++ ){
 
-        if( data[ "position" ] ){
+            i = v * 2 * 3;
+            j = v * 3;
 
-            for( var v = 0; v < n; v++ ){
-
-                i = v * 2 * 3;
-                j = v * 3;
-
-                aPosition[ i + 0 ] = position[ j + 0 ];
-                aPosition[ i + 1 ] = position[ j + 1 ];
-                aPosition[ i + 2 ] = position[ j + 2 ];
-                aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
-                aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
-                aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
-
-            }
+            aPosition[ i + 0 ] = position[ j + 0 ];
+            aPosition[ i + 1 ] = position[ j + 1 ];
+            aPosition[ i + 2 ] = position[ j + 2 ];
+            aPosition[ i + 3 ] = position[ j + 0 ] + vector[ j + 0 ] * scale;
+            aPosition[ i + 4 ] = position[ j + 1 ] + vector[ j + 1 ] * scale;
+            aPosition[ i + 5 ] = position[ j + 2 ] + vector[ j + 2 ] * scale;
 
         }
 
-    },
+    }
 
-    getRenderOrder: NGL.Buffer.prototype.getRenderOrder,
-
-    getMesh: function( type, material ){
-
-        material = material || this.getMaterial( type );
-
-        return new THREE.LineSegments( this.geometry, material );
-
-    },
-
-    getMaterial: function( type ){
-
-        return new THREE.LineBasicMaterial( {
-            color: this.color, fog: true
-        } );
-
-    },
-
-    setVisibility: NGL.Buffer.prototype.setVisibility,
-
-    dispose: NGL.Buffer.prototype.dispose
-
-}
-
+};
 
 // File:js/ngl/representation.js
 
@@ -30553,7 +32821,6 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
         }
 
-
     }else if( object instanceof NGL.Trajectory ){
 
         ReprClass = NGL.TrajectoryRepresentation;
@@ -30585,9 +32852,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.queue = async.queue( this.make.bind( this ), 1 );
     this.tasks = new NGL.Counter();
-
     this.bufferList = [];
-    this.debugBufferList = [];
 
     this.init( params );
 
@@ -30602,11 +32867,43 @@ NGL.Representation.prototype = {
     parameters: {
 
         nearClip: {
-            type: "boolean", define: "NEAR_CLIP"
+            type: "boolean", buffer: true
         },
         flatShaded: {
-            type: "boolean", define: "FLAT_SHADED"
-        }
+            type: "boolean", buffer: true
+        },
+        opacity: {
+            type: "number", precision: 1, max: 1, min: 0, buffer: true
+        },
+        side: {
+            type: "select", options: NGL.SideTypes, buffer: true,
+            int: true
+        },
+        wireframe: {
+            type: "boolean", buffer: true
+        },
+        linewidth: {
+            type: "integer", max: 50, min: 1, buffer: true
+        },
+
+        colorScheme: {
+            type: "select", update: "color",
+            options: NGL.ColorMakerRegistry.getTypes()
+        },
+        colorScale: {
+            type: "select", update: "color",
+            options: NGL.ColorMakerRegistry.getScales()
+        },
+        colorValue: {
+            type: "color", update: "color"
+        },
+        colorDomain: {
+            type: "hidden", update: "color"
+        },
+        colorMode: {
+            type: "select", update: "color",
+            options: NGL.ColorMakerRegistry.getModes()
+        },
 
     },
 
@@ -30616,19 +32913,76 @@ NGL.Representation.prototype = {
 
         this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
         this.flatShaded = p.flatShaded || false;
+        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.wireframe = p.wireframe || false;
+        this.linewidth = p.linewidth || 1;
+
+        this.setColor( p.color, p );
+
+        this.colorScheme = p.colorScheme || "uniform";
+        this.colorScale = p.colorScale || "";
+        this.colorValue = p.colorValue || 0x909090;
+        this.colorDomain = p.colorDomain || "";
+        this.colorMode = p.colorMode || "hcl";
 
         this.visible = p.visible !== undefined ? p.visible : true;
         this.quality = p.quality;
 
     },
 
-    setColor: function( type ){
+    getColorParams: function(){
 
-        if( type && type !== this.color ){
+        return {
 
-            this.color = type;
+            scheme: this.colorScheme,
+            scale: this.colorScale,
+            value: this.colorValue,
+            domain: this.colorDomain,
+            mode: this.colorMode,
 
-            this.update( { "color": true } );
+        };
+
+    },
+
+    getBufferParams: function( p ){
+
+        return Object.assign( {
+
+            nearClip: this.nearClip,
+            flatShaded: this.flatShaded,
+            opacity: this.opacity,
+            side: this.side,
+            wireframe: this.wireframe,
+            linewidth: this.linewidth,
+
+        }, p );
+
+    },
+
+    setColor: function( value, p ){
+
+        var types = Object.keys( NGL.ColorMakerRegistry.getTypes() );
+
+        if( types.indexOf( value ) !== -1 ){
+
+            if( p ){
+                p.colorScheme = value;
+            }else{
+                this.setParameters( { colorScheme: value } );
+            }
+
+        }else if( value !== undefined ){
+
+            value = new THREE.Color( value ).getHex();
+            if( p ){
+                p.colorScheme = "uniform";
+                p.colorValue = value;
+            }else{
+                this.setParameters( {
+                    colorScheme: "uniform", colorValue: value
+                } );
+            }
 
         }
 
@@ -30645,7 +32999,6 @@ NGL.Representation.prototype = {
     create: function(){
 
         // this.bufferList.length = 0;
-        // this.debugBufferList.length = 0;
 
     },
 
@@ -30682,28 +33035,39 @@ NGL.Representation.prototype = {
 
         NGL.time( "NGL.Representation.make " + this.type );
 
-        if( params ){
+        if( params && !params.__update ){
             this.init( params );
         }
 
         this.prepare( function(){
 
-            this.clear();
-            this.create();
+            if( params.__update ){
 
-            if( !this.manualAttach && !this.disposed ){
+                this.update( params.__update );
+                this.viewer.requestRender();
 
-                NGL.time( "NGL.Representation.attach " + this.type );
+                this.tasks.decrement();
+                callback();
 
-                this.attach( function(){
+            }else{
 
-                    NGL.timeEnd( "NGL.Representation.attach " + this.type );
+                this.clear();
+                this.create();
 
-                    this.tasks.decrement();
+                if( !this.manualAttach && !this.disposed ){
 
-                    callback();
+                    NGL.time( "NGL.Representation.attach " + this.type );
 
-                }.bind( this ) );
+                    this.attach( function(){
+
+                        NGL.timeEnd( "NGL.Representation.attach " + this.type );
+
+                        this.tasks.decrement();
+                        callback();
+
+                    }.bind( this ) );
+
+                }
 
             }
 
@@ -30731,12 +33095,6 @@ NGL.Representation.prototype = {
 
         } );
 
-        this.debugBufferList.forEach( function( debugBuffer ){
-
-            debugBuffer.setVisibility( value );
-
-        } );
-
         this.viewer.requestRender();
 
         return this;
@@ -30745,162 +33103,68 @@ NGL.Representation.prototype = {
 
     setParameters: function( params, what, rebuild ){
 
-        var p = params;
+        var p = params || {};
         var tp = this.parameters;
 
+        what = what || {};
         rebuild = rebuild || false;
 
-        Object.keys( tp ).forEach( function( name ){
+        var bufferParams = {};
 
-            if( p[ name ] === undefined ) return;
-            if( tp[ name ] === undefined ) return;
+        for( var name in p ){
+
+            if( p[ name ] === undefined ) continue;
+            if( tp[ name ] === undefined ) continue;
 
             if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
             if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
 
             // no value change
-            if( p[ name ] === this[ name ] ) return;
+            if( p[ name ] === this[ name ] ) continue;
 
             this[ name ] = p[ name ];
 
-            // update buffer material uniform
-
-            if( tp[ name ].uniform ){
-
-                var updateUniform = function( mesh ){
-
-                    var u = mesh.material.uniforms;
-
-                    if( u && u[ name ] ){
-
-                        u[ name ].value = p[ name ];
-
-                    }else{
-
-                        // happens when the buffers in a repr
-                        // do not suppport the same parameters
-
-                        // NGL.info( name )
-
-                    }
-
+            // buffer param
+            if( tp[ name ].buffer ){
+                if( tp[ name ].buffer === true ){
+                    bufferParams[ name ] = p[ name ];
+                }else{
+                    bufferParams[ tp[ name ].buffer ] = p[ name ];
                 }
-
-                this.bufferList.forEach( function( buffer ){
-
-                    buffer.group.children.forEach( updateUniform );
-                    if( buffer.pickingGroup ){
-                        buffer.pickingGroup.children.forEach( updateUniform );
-                    }
-
-                } );
-
             }
 
-            // update buffer material define
-
-            if( tp[ name ].define ){
-
-                var updateDefine = function( mesh ){
-
-                    if( p[ name ] ){
-
-                        mesh.material.defines[ tp[ name ].define ] = 1;
-
-                    }else{
-
-                        delete mesh.material.defines[ tp[ name ].define ];
-
-                    }
-
-                    mesh.material.needsUpdate = true;
-
-                }
-
-                this.bufferList.forEach( function( buffer ){
-
-                    buffer.group.children.forEach( updateDefine );
-                    if( buffer.pickingGroup ){
-                        buffer.pickingGroup.children.forEach( updateDefine );
-                    }
-
-                } );
-
-            }
-
-            // update buffer material property
-
-            if( tp[ name ].property ){
-
-                var propertyName = (
-                    tp[ name ].property === true ? name : tp[ name ].property
-                );
-
-                var updateProperty = function( mesh ){
-
-                    if( propertyName in mesh.material ){
-
-                        mesh.material[ propertyName ] = p[ name ];
-
-                    }else{
-
-                        // happens when the buffers in a repr
-                        // do not suppport the same parameters
-
-                        // NGL.info( name )
-
-                    }
-
-                    // FIXME generalize?
-                    //  add .buffer and .renderOrder to parameters?
-                    if( name === "transparent" ){
-
-                        var buffer = mesh.userData[ "buffer" ];
-                        buffer.transparent = p[ name ];
-
-                        mesh.renderOrder = buffer.getRenderOrder();
-
-                    }
-
-                    mesh.material.needsUpdate = true;
-
-                }
-
-                this.bufferList.forEach( function( buffer ){
-
-                    buffer.group.children.forEach( updateProperty );
-                    // FIXME is there a cleaner way to ensure
-                    //  that picking materials are not set transparent?
-                    if( buffer.pickingGroup && name !== "transparent" ){
-                        buffer.pickingGroup.children.forEach( updateProperty );
-                    }
-
-                } );
-
+            // mark for update
+            if( tp[ name ].update ){
+                what[ tp[ name ].update ] = true;
             }
 
             // mark for rebuild
-
             if( tp[ name ].rebuild &&
                 !( tp[ name ].rebuild === "impostor" &&
                     NGL.extensionFragDepth && !this.disableImpostor )
             ){
-
                 rebuild = true;
-
             }
 
-        }, this );
+        }
+
+        //
 
         if( rebuild ){
 
             this.build();
 
-        }else if( what && Object.keys( what ).length ){
+        }else{
 
-            // update buffer attribute
+            this.bufferList.forEach( function( buffer ){
+                buffer.setParameters( bufferParams );
+            } );
 
-            this.update( what );
+            if( Object.keys( what ).length ){
+                this.update( what );  // update buffer attribute
+            }
+
+            this.viewer.requestRender();
 
         }
 
@@ -30913,7 +33177,6 @@ NGL.Representation.prototype = {
         // FIXME move specific parts to subclasses
         var params = {
 
-            color: this.color,
             visible: this.visible,
             sele: this.selection ? this.selection.string : undefined,
             disableImpostor: this.disableImpostor,
@@ -30927,12 +33190,12 @@ NGL.Representation.prototype = {
 
         }, this );
 
-        if( typeof this.radius === "string" ){
+        // if( typeof this.radius === "string" ){
 
-            params[ "radiusType" ] = this.radius;
-            delete params[ "radius" ];
+        //     params[ "radiusType" ] = this.radius;
+        //     delete params[ "radius" ];
 
-        }
+        // }
 
         return params;
 
@@ -30948,15 +33211,6 @@ NGL.Representation.prototype = {
         }, this );
 
         this.bufferList.length = 0;
-
-        this.debugBufferList.forEach( function( debugBuffer ){
-
-            this.viewer.remove( debugBuffer );
-            debugBuffer.dispose();
-
-        }, this );
-
-        this.debugBufferList.length = 0;
 
         this.viewer.requestRender();
 
@@ -30991,6 +33245,18 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
     constructor: NGL.BufferRepresentation,
 
     type: "buffer",
+
+    parameters: Object.assign( {
+
+    }, NGL.Representation.prototype.parameters, {
+
+        colorScheme: null,
+        colorScale: null,
+        colorValue: null,
+        colorDomain: null,
+        colorMode: null
+
+    } ),
 
     create: function(){
 
@@ -31075,17 +33341,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        transparent: {
-            type: "boolean", property: true
-        },
-        side: {
-            type: "select", options: NGL.SideTypes, property: true,
-            int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
-        },
         assembly: null
 
     }, NGL.Representation.prototype.parameters ),
@@ -31102,13 +33357,10 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
+        p.colorScheme = p.colorScheme || "element";
 
-        this.color = p.color !== undefined ? p.color : "element";
         this.radius = p.radius || "vdw";
         this.scale = p.scale || 1.0;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.assembly = p.assembly || "";
 
         // TODO find a nicer way ...
@@ -31147,6 +33399,17 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         // console.log( "getAssemblySele", extraString );
 
         return extraString;
+
+    },
+
+    getColorParams: function(){
+
+        var p = NGL.Representation.prototype.getColorParams.call( this );
+
+        p.structure = this.structure;
+        p.atomSet = this.atomSet;
+
+        return p;
 
     },
 
@@ -31257,17 +33520,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                     callback();
                 }
 
-            }.bind( this ) );
-
-        }.bind( this ) );
-
-        this.debugBufferList.forEach( function( debugBuffer ){
-
-            if( instanceList.length > 1 ){
-                viewer.add( debugBuffer, instanceList );
-            }else{
-                viewer.add( debugBuffer );
-            }
+            } );
 
         } );
 
@@ -31333,7 +33586,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
         }else if( p.quality === "high" ){
             this.sphereDetail = 2;
         }else{
-            this.sphereDetail = p.sphereDetail || 1;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
         }
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -31344,22 +33597,15 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor( null, this.getColorParams() ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" ),
-            {
+            this.atomSet.atomPickingColor(),
+            this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -31370,6 +33616,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -31383,7 +33630,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            sphereData[ "color" ] = this.atomSet.atomColor(
+                null, this.getColorParams()
+            );
 
         }
 
@@ -31419,26 +33668,22 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         pointSize: {
-            type: "integer", max: 20, min: 1, property: "size"
+            type: "integer", max: 20, min: 1, buffer: true
         },
         sizeAttenuation: {
-            type: "boolean", property: true
+            type: "boolean", buffer: true
         },
         sort: {
             type: "boolean", rebuild: true
-        },
-        transparent: {
-            type: "boolean", property: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            property: true
         }
 
         // FIXME nearClip support missing
     }, NGL.Representation.prototype.parameters, {
 
-        nearClip: null, flatShaded: null
+        nearClip: null,
+        flatShaded: null,
+        wireframe: null,
+        linewidth: null
 
     } ),
 
@@ -31449,7 +33694,6 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
         this.sort = p.sort !== undefined ? p.sort : false;
-        p.transparent = p.transparent !== undefined ? p.transparent : true;
         p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -31460,19 +33704,14 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.pointBuffer = new NGL.PointBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
-            {
+            this.atomSet.atomColor( null, this.getColorParams() ),
+            this.getBufferParams( {
                 pointSize: this.pointSize,
                 sizeAttenuation: this.sizeAttenuation,
                 sort: this.sort,
-                transparent: this.transparent,
-                opacity: opacity,
-                nearClip: this.nearClip
-            }
+            } )
         );
 
         this.bufferList.push( this.pointBuffer );
@@ -31482,6 +33721,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -31495,7 +33735,9 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            pointData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            pointData[ "color" ] = this.atomSet.atomColor(
+                null, this.colorScheme, this.getColorParams()
+            );
 
         }
 
@@ -31532,11 +33774,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
                 "LatoBlack": "LatoBlack"
             },
             rebuild: true
-        },
-        antialias: {
-            type: "boolean", define: "ANTIALIAS"
-        },
-        flatShaded: null
+        }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -31548,12 +33786,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
 
-        p.color = p.color !== undefined ? p.color : 0xFFFFFF;
-
         this.labelType = p.labelType || "res";
         this.labelText = p.labelText || {};
         this.font = p.font || 'LatoBlack';
-        this.antialias = p.antialias !== undefined ? p.antialias : true;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -31562,8 +33797,6 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var text = [];
         var labelFactory = new NGL.LabelFactory(
@@ -31579,14 +33812,11 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         this.textBuffer = new NGL.TextBuffer(
             this.atomSet.atomPosition(),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor( null, this.getColorParams() ),
             text,
-            {
+            this.getBufferParams( {
                 font: this.font,
-                antialias: this.antialias,
-                opacity: opacity,
-                nearClip: this.nearClip
-            }
+            } )
         );
 
         this.bufferList.push( this.textBuffer );
@@ -31596,6 +33826,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -31618,7 +33849,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         if( what[ "color" ] ){
 
             textData[ "color" ] = this.atomSet.atomColor(
-                null, this.color
+                null, this.getColorParams()
             );
 
         }
@@ -31662,28 +33893,28 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = params.sphereDetail || 1;
-            this.radiusSegments = params.radiusSegments || 10;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        this.aspectRatio = params.aspectRatio || 2.0;
+        this.aspectRatio = p.aspectRatio || 2.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -31691,23 +33922,17 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
         var atomScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor( null, this.getColorParams() ),
             this.atomSet.atomRadius( null, this.radius, atomScale ),
-            this.atomSet.atomColor( null, "picking" ),
-            {
+            this.atomSet.atomPickingColor( null ),
+            this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -31716,22 +33941,17 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor( null, 0, this.getColorParams() ),
+            this.atomSet.bondColor( null, 1, this.getColorParams() ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" ),
-            {
+            this.atomSet.bondPickingColor( null, 0 ),
+            this.atomSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -31742,6 +33962,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -31765,10 +33986,16 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor( null, this.color );
+            sphereData[ "color" ] = this.atomSet.atomColor(
+                null, this.getColorParams()
+            );
 
-            cylinderData[ "color" ] = this.atomSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = this.atomSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = this.atomSet.bondColor(
+                null, 0, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = this.atomSet.bondColor(
+                null, 1, this.getColorParams()
+            );
 
         }
 
@@ -31844,26 +34071,26 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = params.sphereDetail || 1;
-            this.radiusSegments = params.radiusSegments || 10;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -31871,44 +34098,32 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor( null, this.getColorParams() ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" ),
-            {
+            this.atomSet.atomPickingColor(),
+            this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor( null, 0, this.getColorParams() ),
+            this.atomSet.bondColor( null, 1, this.getColorParams() ),
             this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" ),
-            {
+            this.atomSet.bondPickingColor( null, 0 ),
+            this.atomSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -31943,20 +34158,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
-        },
-        transparent: {
-            type: "boolean", property: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
-        }
 
     }, NGL.Representation.prototype.parameters, {
 
-        flatShaded: null
+        flatShaded: null,
+        side: null,
+        wireframe: null
 
     } ),
 
@@ -31964,9 +34171,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
 
-        this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.linewidth = p.linewidth || 1;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -31976,19 +34181,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.lineBuffer = new NGL.LineBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
-            {
-                lineWidth: this.lineWidth,
-                transparent: this.transparent,
-                opacity: opacity,
-                nearClip: this.nearClip
-            }
+            this.atomSet.bondColor( null, 0, this.getColorParams() ),
+            this.atomSet.bondColor( null, 1, this.getColorParams() ),
+            this.getBufferParams()
         );
 
         this.bufferList.push( this.lineBuffer );
@@ -31998,6 +34196,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -32012,8 +34211,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            lineData[ "color" ] = this.atomSet.bondColor( null, 0, this.color );
-            lineData[ "color2" ] = this.atomSet.bondColor( null, 1, this.color );
+            lineData[ "color" ] = this.atomSet.bondColor(
+                null, 0, this.getColorParams()
+            );
+            lineData[ "color2" ] = this.atomSet.bondColor(
+                null, 1, this.getColorParams()
+            );
 
         }
 
@@ -32043,7 +34246,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         shrink: {
-            type: "number", precision: 3, max: 1.0, min: 0.001, uniform: true
+            type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
         },
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
@@ -32056,28 +34259,28 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.scale = params.scale || 0.2;
+        var p = params || {};
+        p.scale = p.scale || 0.2;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = params.sphereDetail || 1;
-            this.radiusSegments = params.radiusSegments || 10;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        this.shrink = params.shrink || 0.12;
+        this.shrink = p.shrink || 0.12;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -32085,22 +34288,15 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.sphereBuffer = new NGL.SphereBuffer(
             this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.color ),
+            this.atomSet.atomColor( null, this.getColorParams() ),
             this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, "picking" ),
-            {
+            this.atomSet.atomPickingColor(),
+            this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -32109,22 +34305,17 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.HyperballStickBuffer(
             this.atomSet.bondPosition( null, 0 ),
             this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.color ),
-            this.atomSet.bondColor( null, 1, this.color ),
+            this.atomSet.bondColor( null, 0, this.getColorParams() ),
+            this.atomSet.bondColor( null, 1, this.getColorParams() ),
             this.atomSet.bondRadius( null, 0, this.radius, this.scale ),
             this.atomSet.bondRadius( null, 1, this.radius, this.scale ),
-            this.atomSet.bondColor( null, 0, "picking" ),
-            this.atomSet.bondColor( null, 1, "picking" ),
-            {
+            this.atomSet.bondPickingColor( null, 0 ),
+            this.atomSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shrink: this.shrink,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -32135,6 +34326,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -32160,14 +34352,14 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         if( what[ "color" ] ){
 
             sphereData[ "color" ] = this.atomSet.atomColor(
-                null, this.color
+                null, this.getColorParams()
             );
 
             cylinderData[ "color" ] = this.atomSet.bondColor(
-                null, 0, this.color
+                null, 0, this.getColorParams()
             );
             cylinderData[ "color2" ] = this.atomSet.bondColor(
-                null, 1, this.color
+                null, 1, this.getColorParams()
             );
 
         }
@@ -32227,36 +34419,34 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = params.sphereDetail || 1;
-            this.radiusSegments = params.radiusSegments || 10;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        this.aspectRatio = params.aspectRatio || 1.0;
+        this.aspectRatio = p.aspectRatio || 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var test = this.selection.test;
 
@@ -32303,40 +34493,30 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
-            baSet.atomColor( null, this.color ),
+            baSet.atomColor( null, this.getColorParams() ),
             baSet.atomRadius( null, this.radius, sphereScale ),
-            baSet.atomColor( null, "picking" ),
-            {
+            baSet.atomPickingColor(),
+            this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bbSet.bondPosition( null, 0 ),
             bbSet.bondPosition( null, 1 ),
-            bbSet.bondColor( null, 0, this.color ),
-            bbSet.bondColor( null, 1, this.color ),
+            bbSet.bondColor( null, 0, this.getColorParams() ),
+            bbSet.bondColor( null, 1, this.getColorParams() ),
             bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            bbSet.bondColor( null, 0, "picking" ),
-            bbSet.bondColor( null, 1, "picking" ),
-            {
+            bbSet.bondPickingColor( null, 0 ),
+            bbSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -32347,6 +34527,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -32375,10 +34556,16 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = baSet.atomColor( null, this.color );
+            sphereData[ "color" ] = baSet.atomColor(
+                null, this.getColorParams()
+            );
 
-            cylinderData[ "color" ] = bbSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bbSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bbSet.bondColor(
+                null, 0, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bbSet.bondColor(
+                null, 1, this.getColorParams()
+            );
 
         }
 
@@ -32466,36 +34653,34 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = params.sphereDetail || 1;
-            this.radiusSegments = params.radiusSegments || 10;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        this.aspectRatio = params.aspectRatio || 1.0;
+        this.aspectRatio = p.aspectRatio || 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var test = this.selection.test;
 
@@ -32543,40 +34728,30 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
-            baSet.atomColor( null, this.color ),
+            baSet.atomColor( null, this.getColorParams() ),
             baSet.atomRadius( null, this.radius, sphereScale ),
-            baSet.atomColor( null, "picking" ),
-            {
+            baSet.atomPickingColor(),
+            this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bbSet.bondPosition( null, 0 ),
             bbSet.bondPosition( null, 1 ),
-            bbSet.bondColor( null, 0, this.color ),
-            bbSet.bondColor( null, 1, this.color ),
+            bbSet.bondColor( null, 0, this.getColorParams() ),
+            bbSet.bondColor( null, 1, this.getColorParams() ),
             bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            bbSet.bondColor( null, 0, "picking" ),
-            bbSet.bondColor( null, 1, "picking" ),
-            {
+            bbSet.bondPickingColor( null, 0 ),
+            bbSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -32587,6 +34762,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -32615,10 +34791,16 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = baSet.atomColor( null, this.color );
+            sphereData[ "color" ] = baSet.atomColor(
+                null, this.getColorParams()
+            );
 
-            cylinderData[ "color" ] = bbSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bbSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bbSet.bondColor(
+                null, 0, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bbSet.bondColor(
+                null, 1, this.getColorParams()
+            );
 
         }
 
@@ -32704,19 +34886,13 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         capped: {
             type: "boolean", rebuild: true
         },
-        wireframe: {
-            type: "boolean", rebuild: true
-        },
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
-        }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || this.defaultSize;
 
         if( p.quality === "low" ){
@@ -32735,8 +34911,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
-        this.wireframe = p.wireframe || false;
-        this.lineWidth = p.lineWidth || 1;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -32759,8 +34933,6 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -32782,9 +34954,15 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                     var fiber = fiberList[ i ];
 
                     var spline = new NGL.Spline( fiber );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -32802,20 +34980,13 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
                             subCol.color,
                             subSize.size,
                             subCol.pickingColor,
-                            {
+                            scope.getBufferParams( {
                                 radialSegments: scope.radialSegments,
                                 rx: rx,
                                 ry: ry,
                                 capped: scope.capped,
-                                wireframe: scope.wireframe,
-                                lineWidth: scope.lineWidth,
-                                flatShaded: scope.flatShaded,
-                                transparent: scope.transparent,
-                                side: scope.side,
-                                opacity: opacity,
-                                nearClip: scope.nearClip,
                                 dullInterior: true
-                            }
+                            } )
                         )
 
                     );
@@ -32848,6 +35019,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -32888,7 +35060,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
             if( what[ "color" ] ){
 
                 var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.color
+                    this.subdiv, this.getColorParams()
                 );
 
                 bufferData[ "color" ] = subCol.color;
@@ -32957,12 +35129,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         capped: {
             type: "boolean", rebuild: true
         },
-        wireframe: {
-            type: "boolean", rebuild: true
-        },
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
-        },
         arrows: {
             type: "boolean", rebuild: true
         }
@@ -32972,7 +35138,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || "ss";
 
         if( p.quality === "low" ){
@@ -32992,8 +35158,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.aspectRatio = p.aspectRatio || 3.0;
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
-        this.wireframe = p.wireframe || false;
-        this.lineWidth = p.lineWidth || 1;
         this.arrows = p.arrows || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -33017,8 +35181,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -33038,11 +35200,17 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                 for( var i = _i; i < _n; ++i ){
 
                     var fiber = fiberList[ i ];
-
                     var spline = new NGL.Spline( fiber, scope.arrows );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -33064,20 +35232,13 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                             subCol.color,
                             subSize.size,
                             subCol.pickingColor,
-                            {
+                            scope.getBufferParams( {
                                 radialSegments: scope.radialSegments,
                                 rx: rx,
                                 ry: ry,
                                 capped: scope.capped,
-                                wireframe: scope.wireframe,
-                                lineWidth: scope.lineWidth,
-                                flatShaded: scope.flatShaded,
-                                transparent: scope.transparent,
-                                side: scope.side,
-                                opacity: opacity,
-                                nearClip: scope.nearClip,
                                 dullInterior: true
-                            }
+                            } )
                         )
 
                     );
@@ -33110,13 +35271,14 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
+
+        // NGL.time( "cartoon repr update" );
 
         what = what || {};
 
         var i = 0;
         var n = this.fiberList.length;
-
-        // NGL.time( this.name, "update" );
 
         for( i = 0; i < n; ++i ){
 
@@ -33147,7 +35309,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.getColorParams()
+                );
 
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
@@ -33156,17 +35320,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-            // if( NGL.debug ){
+        }
 
-            //     this.debugBufferList[ i * 3 + 0 ].setAttributes( bufferData );
-            //     this.debugBufferList[ i * 3 + 1 ].setAttributes( bufferData );
-            //     this.debugBufferList[ i * 3 + 2 ].setAttributes( bufferData );
-
-            // }
-
-        };
-
-        // NGL.timeEnd( this.name, "update" );
+        // NGL.timeEnd( "cartoon repr update" );
 
     },
 
@@ -33223,12 +35379,18 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 1.0, min: 0.1
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.StructureRepresentation.prototype.parameters, {
+
+        side: null,
+        wireframe: null,
+        linewidth: null
+
+    } ),
 
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || "ss";
         p.scale = p.scale || 3.0;
 
@@ -33265,8 +35427,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -33288,9 +35448,15 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     var fiber = fiberList[ i ];
 
                     var spline = new NGL.Spline( fiber );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -33304,13 +35470,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                             subCol.color,
                             subSize.size,
                             subCol.pickingColor,
-                            {
-                                transparent: scope.transparent,
-                                side: scope.side,
-                                opacity: opacity,
-                                nearClip: scope.nearClip,
-                                flatShaded: scope.flatShaded
-                            }
+                            scope.getBufferParams()
                         )
 
                     );
@@ -33343,6 +35503,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -33360,8 +35521,12 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             if( what[ "position" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
-                var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
+                var subPos = spline.getSubdividedPosition(
+                    this.subdiv, this.tension
+                );
+                var subOri = spline.getSubdividedOrientation(
+                    this.subdiv, this.tension
+                );
 
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.binormal;
@@ -33381,10 +35546,11 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.getColorParams()
+                );
 
                 bufferData[ "color" ] = subCol.color;
-                bufferData[ "pickingColor" ] = subCol.pickingColor;
 
             }
 
@@ -33437,28 +35603,20 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
-        },
-        transparent: {
-            type: "boolean", property: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            uniform: true
         }
 
     }, NGL.Representation.prototype.parameters, {
 
-        flatShaded: null
+        flatShaded: null,
+        side: null,
+        wireframe: null
 
     } ),
 
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -33471,9 +35629,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         }
 
         this.tension = p.tension || NaN;
-        this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -33496,8 +35651,6 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 ) return;
@@ -33519,20 +35672,19 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                     var fiber = fiberList[ i ];
 
                     var spline = new NGL.Spline( fiber );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.getColorParams()
+                    );
 
                     scope.__bufferList.push(
 
                         new NGL.TraceBuffer(
                             subPos.position,
                             subCol.color,
-                            {
-                                lineWidth: scope.lineWidth,
-                                transparent: scope.transparent,
-                                opacity: opacity,
-                                nearClip: scope.nearClip
-                            }
+                            scope.getBufferParams()
                         )
 
                     );
@@ -33565,6 +35717,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -33582,7 +35735,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
             if( what[ "position" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
+                var subPos = spline.getSubdividedPosition(
+                    this.subdiv, this.tension
+                );
 
                 bufferData[ "position" ] = subPos.position;
 
@@ -33590,7 +35745,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor( this.subdiv, this.color );
+                var subCol = spline.getSubdividedColor(
+                    this.subdiv, this.getColorParams()
+                );
 
                 bufferData[ "color" ] = subCol.color;
 
@@ -33645,7 +35802,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         params = params || {};
-        params.color = params.color || "ss";
+        params.colorScheme = params.colorScheme || "sstruc";
         params.radius = params.radius || 0.15;
         params.scale = params.scale || 1.0;
 
@@ -33657,8 +35814,6 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         var scope = this;
 
         // TODO reduce buffer count as in e.g. rocket repr
@@ -33669,7 +35824,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             var helixorient = new NGL.Helixorient( fiber );
             var position = helixorient.getPosition();
-            var color = helixorient.getColor( scope.color );
+            var color = helixorient.getColor( scope.getColorParams() );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
             scope.bufferList.push(
@@ -33679,15 +35834,10 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     color.color,
                     size.size,
                     color.pickingColor,
-                    {
+                    scope.getBufferParams( {
                         sphereDetail: scope.sphereDetail,
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded,
                         dullInterior: true
-                    },
+                    } ),
                     scope.disableImpostor
                 )
 
@@ -33695,22 +35845,26 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
             scope.bufferList.push(
 
-                new NGL.BufferVectorHelper(
+                new NGL.VectorBuffer(
                     position.center,
                     position.axis,
-                    "skyblue",
-                    1
+                    {
+                        color: "skyblue",
+                        scale: 1
+                    }
                 )
 
             );
 
             scope.bufferList.push(
 
-                new NGL.BufferVectorHelper(
+                new NGL.VectorBuffer(
                     position.center,
                     position.resdir,
-                    "lightgreen",
-                    1
+                    {
+                        color: "lightgreen",
+                        scale: 1
+                    }
                 )
 
             );
@@ -33724,6 +35878,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
+
+        // NGL.time( "helixorient repr update" );
 
         what = what || {};
 
@@ -33754,14 +35911,16 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                 } );
                 this.bufferList[ j + 2 ].setAttributes( {
                     "position": position.center,
-                    "vector": position.redir,
+                    "vector": position.resdir,
                 } );
 
             }
 
             this.bufferList[ j ].setAttributes( bufferData );
 
-        };
+        }
+
+        // NGL.timeEnd( "helixorient repr update" );
 
     }
 
@@ -33803,36 +35962,34 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
-        params.radius = params.radius || 1.5;
-        params.scale = params.scale || 1.0;
+        var p = params || {};
+        p.colorScheme = p.colorScheme || "sstruc";
+        p.radius = p.radius || 1.5;
+        p.scale = p.scale || 1.0;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.radiusSegments = 20;
         }else{
-            this.radiusSegments = params.radiusSegments || 10;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        this.localAngle = params.localAngle || 30;
-        this.centerDist = params.centerDist || 2.5;
-        this.ssBorder = params.ssBorder === undefined ? false : params.ssBorder;
+        this.localAngle = p.localAngle || 30;
+        this.centerDist = p.centerDist || 2.5;
+        this.ssBorder = p.ssBorder === undefined ? false : p.ssBorder;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var scope = this;
 
@@ -33846,7 +36003,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             var helixbundle = new NGL.Helixbundle( fiber );
             var axis = helixbundle.getAxis(
                 scope.localAngle, scope.centerDist, scope.ssBorder,
-                scope.color, scope.radius, scope.scale
+                scope.getColorParams(), scope.radius, scope.scale
             );
 
             length += axis.size.length;
@@ -33886,17 +36043,12 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             ad.size,
             ad.pickingColor,
             ad.pickingColor,
-            {
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -33907,6 +36059,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -33930,7 +36083,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
                 var axis = helixbundle.getAxis(
                     scope.localAngle, scope.centerDist, scope.ssBorder,
-                    scope.color, scope.radius, scope.scale
+                    scope.getColorParams(), scope.radius, scope.scale
                 );
 
                 if( what[ "color" ] ){
@@ -33999,12 +36152,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         capped: {
             type: "boolean", rebuild: true
         },
-        wireframe: {
-            type: "boolean", rebuild: true
-        },
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
-        },
         smooth: {
             type: "integer", max: 15, min: 0, rebuild: true
         }
@@ -34014,7 +36161,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.color = p.color || "ss";
+        p.colorScheme = p.colorScheme || "sstruc";
         p.radius = p.radius || this.defaultSize;
 
         if( p.quality === "low" ){
@@ -34033,8 +36180,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         this.tension = p.tension || 0.5;
         this.capped = p.capped || true;
-        this.wireframe = p.wireframe || false;
-        this.lineWidth = p.lineWidth || 1;
         this.smooth = p.smooth === undefined ? 2 : p.smooth;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
@@ -34058,8 +36203,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
         this.structure.eachFiber( function( fiber ){
 
             if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
@@ -34082,10 +36225,18 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
                     var helixorient = new NGL.Helixorient( fiber );
 
-                    var spline = new NGL.Spline( helixorient.getFiber( scope.smooth, true ) );
-                    var subPos = spline.getSubdividedPosition( scope.subdiv, scope.tension );
-                    var subOri = spline.getSubdividedOrientation( scope.subdiv, scope.tension );
-                    var subCol = spline.getSubdividedColor( scope.subdiv, scope.color );
+                    var spline = new NGL.Spline(
+                        helixorient.getFiber( scope.smooth, true )
+                    );
+                    var subPos = spline.getSubdividedPosition(
+                        scope.subdiv, scope.tension
+                    );
+                    var subOri = spline.getSubdividedOrientation(
+                        scope.subdiv, scope.tension
+                    );
+                    var subCol = spline.getSubdividedColor(
+                        scope.subdiv, scope.getColorParams()
+                    );
                     var subSize = spline.getSubdividedSize(
                         scope.subdiv, scope.radius, scope.scale
                     );
@@ -34103,20 +36254,13 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                             subCol.color,
                             subSize.size,
                             subCol.pickingColor,
-                            {
+                            scope.getBufferParams( {
                                 radialSegments: scope.radialSegments,
                                 rx: rx,
                                 ry: ry,
                                 capped: scope.capped,
-                                wireframe: scope.wireframe,
-                                lineWidth: scope.lineWidth,
-                                flatShaded: scope.flatShaded,
-                                transparent: scope.transparent,
-                                side: scope.side,
-                                opacity: opacity,
-                                nearClip: scope.nearClip,
                                 dullInterior: true
-                            }
+                            } )
                         )
 
                     );
@@ -34149,6 +36293,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
+
+        // NGL.time( "rope repr update" );
 
         what = what || {};
 
@@ -34188,7 +36335,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
             if( what[ "color" ] ){
 
                 var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.color
+                    this.subdiv, this.getColorParams()
                 );
 
                 bufferData[ "color" ] = subCol.color;
@@ -34198,7 +36345,9 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].setAttributes( bufferData );
 
-        };
+        }
+
+        // NGL.timeEnd( "rope repr update" );
 
     },
 
@@ -34266,30 +36415,30 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.color = params.color || "ss";
-        params.radius = params.radius || 0.7;
-        params.scale = params.scale || 1.0;
+        var p = params || {};
+        p.colorScheme = p.colorScheme || "sstruc";
+        p.radius = p.radius || 0.7;
+        p.scale = p.scale || 1.0;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.radiusSegments = 5;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.radiusSegments = 10;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.radiusSegments = 20;
         }else{
-            this.radiusSegments = params.radiusSegments || 10;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
-        this.localAngle = params.localAngle || 30;
-        this.centerDist = params.centerDist || 2.5;
-        this.ssBorder = params.ssBorder === undefined ? false : params.ssBorder;
-        this.helixDist = params.helixDist || 12;
-        this.displayLabel = params.displayLabel === undefined ? true : params.displayLabel;
+        this.localAngle = p.localAngle || 30;
+        this.centerDist = p.centerDist || 2.5;
+        this.ssBorder = p.ssBorder === undefined ? false : p.ssBorder;
+        this.helixDist = p.helixDist || 12;
+        this.displayLabel = p.displayLabel === undefined ? true : p.displayLabel;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -34298,8 +36447,6 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         if( this.atomSet.atomCount === 0 ) return;
 
         var scope = this;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var helixList = [];
 
@@ -34312,7 +36459,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
             var helixbundle = new NGL.Helixbundle( fiber );
             var axis = helixbundle.getAxis(
                 scope.localAngle, scope.centerDist, scope.ssBorder,
-                scope.color, scope.radius, scope.scale
+                scope.getColorParams(), scope.radius, scope.scale
             );
 
             scope.bufferList.push(
@@ -34325,17 +36472,12 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     axis.size,
                     axis.pickingColor,
                     axis.pickingColor,
-                    {
+                    scope.getBufferParams( {
                         shift: 0,
                         cap: true,
                         radiusSegments: scope.radiusSegments,
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded,
                         dullInterior: true
-                    },
+                    } ),
                     scope.disableImpostor
                 )
 
@@ -34376,9 +36518,8 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     shift: 0,
                     cap: true,
                     radiusSegments: this.radiusSegments,
-                    transparent: this.transparent,
                     side: this.side,
-                    opacity: opacity,
+                    opacity: this.opacity,
                     nearClip: this.nearClip,
                     flatShaded: this.flatShaded,
                     dullInterior: true
@@ -34466,34 +36607,32 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     init: function( params ){
 
-        params = params || {};
-        params.radius = params.radius || this.defaultSize;
+        var p = params || {};
+        p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = params.disableImpostor || false;
+        this.disableImpostor = p.disableImpostor || false;
 
-        if( params.quality === "low" ){
+        if( p.quality === "low" ){
             this.sphereDetail = 0;
-        }else if( params.quality === "medium" ){
+        }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
-        }else if( params.quality === "high" ){
+        }else if( p.quality === "high" ){
             this.sphereDetail = 2;
         }else{
-            this.sphereDetail = params.sphereDetail || 1;
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
         }
 
-        this.contactType = params.contactType || "polar";
-        this.maxDistance = params.maxDistance || 3.5;
-        this.maxAngle = params.maxAngle || 40;
+        this.contactType = p.contactType || "polar";
+        this.maxDistance = p.maxDistance || 3.5;
+        this.maxAngle = p.maxAngle || 40;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var structureSubset = new NGL.StructureSubset(
             this.structure, this.selection
@@ -34519,22 +36658,17 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bondSet.bondPosition( null, 0 ),
             bondSet.bondPosition( null, 1 ),
-            bondSet.bondColor( null, 0, this.color ),
-            bondSet.bondColor( null, 1, this.color ),
+            bondSet.bondColor( null, 0, this.getColorParams() ),
+            bondSet.bondColor( null, 1, this.getColorParams() ),
             bondSet.bondRadius( null, 0, this.radius, this.scale ),
-            bondSet.bondColor( null, 0, "picking" ),
-            bondSet.bondColor( null, 1, "picking" ),
-            {
+            bondSet.bondPickingColor( null, 0 ),
+            bondSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -34557,6 +36691,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         //
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -34583,8 +36718,12 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            cylinderData[ "color" ] = bondSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bondSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bondSet.bondColor(
+                null, 0, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bondSet.bondColor(
+                null, 1, this.getColorParams()
+            );
 
         }
 
@@ -34649,56 +36788,46 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             type: "number", precision: 1, max: 5, min: 0,
             rebuild: true
         },
-        wireframe: {
-            type: "boolean", rebuild: true
-        },
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
+        cutoff: {
+            type: "number", precision: 2, max: 50, min: 0,
+            rebuild: true
         },
         background: {
-            type: "boolean", rebuild: true
+            type: "boolean", rebuild: true  // FIXME
         },
         opaqueBack: {
-            type: "boolean", define: "OPAQUE_BACK"
+            type: "boolean", buffer: true
         },
         lowResolution: {
             type: "boolean", rebuild: true
+        },
+        filterSele: {
+            type: "text", rebuild: true
         },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
         radiusType: null,
         radius: null,
-        scale: null,
-
-        transparent: {
-            type: "boolean", rebuild: true
-        },
-        side: {
-            type: "select", options: NGL.SideTypes, rebuild: true,
-            int: true
-        }
+        scale: null
 
     } ),
 
     init: function( params ){
 
         var p = params || {};
-
-        p.color = p.color !== undefined ? p.color : 0xDDDDDD;
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue !== undefined ? p.colorValue : 0xDDDDDD;
 
         this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
         this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
         this.smooth = p.smooth !== undefined ? p.smooth : 2;
         this.scaleFactor = p.scaleFactor !== undefined ? p.scaleFactor : 2.0;
+        this.cutoff = p.cutoff || 0.0;
         this.background = p.background || false;
-        this.wireframe = p.wireframe || false;
-        this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
-        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
+        this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -34707,7 +36836,13 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     prepare: function( callback ){
 
         if( !this.molsurf || this.__forceNewMolsurf ||
-            this.__sele !== this.selection.combinedString
+            this.__sele !== this.selection.combinedString ||
+            this.__smooth !== this.smooth ||
+            this.__surfaceType !== this.surfaceType ||
+            this.__probeRadius !== this.probeRadius ||
+            this.__scaleFactor !== this.scaleFactor ||
+            this.__cutoff !== this.cutoff ||
+            this.__lowResolution !== this.lowResolution
         ){
 
             if( this.molsurf ) this.molsurf.dispose();
@@ -34715,14 +36850,28 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             this.molsurf = new NGL.MolecularSurface( this.atomSet );
             this.__forceNewMolsurf = false;
             this.__sele = this.selection.combinedString;
+            this.__smooth = this.smooth;
+            this.__surfaceType = this.surfaceType;
+            this.__probeRadius = this.probeRadius;
+            this.__scaleFactor = this.scaleFactor;
+            this.__cutoff = this.cutoff;
+            this.__lowResolution = this.lowResolution;
+
+            this.molsurf.getSurfaceWorker(
+                this.surfaceType, this.probeRadius,
+                this.scaleFactor, this.smooth,
+                this.lowResolution, this.cutoff,
+                function( surface ){
+                    this.surface = surface;
+                    callback();
+                }.bind( this )
+            );
+
+        }else{
+
+            callback();
 
         }
-
-        this.molsurf.generateSurfaceWorker(
-            this.surfaceType, this.probeRadius,
-            this.scaleFactor, this.smooth,
-            this.lowResolution, callback
-        );
 
     },
 
@@ -34730,74 +36879,27 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( this.atomSet.atomCount === 0 ) return;
 
-        var position = this.molsurf.getPosition();
-        var color = this.molsurf.getColor( this.color );
-        var normal = this.molsurf.getNormal();
-        var index = this.molsurf.getIndex();
+        var surfaceBuffer = new NGL.SurfaceBuffer(
+            this.surface.getPosition(),
+            this.surface.getColor( this.getColorParams() ),
+            this.surface.getFilteredIndex( this.filterSele, this.atomSet.atoms ),
+            this.surface.getNormal(),
+            this.surface.getPickingColor( this.getColorParams() ),
+            this.getBufferParams( {
+                background: this.background,
+                opaqueBack: this.opaqueBack,
+                dullInterior: false
+            } )
+        );
+        var doubleSidedBuffer = new NGL.DoubleSidedBuffer( surfaceBuffer );
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
-        if( this.transparent && this.side === THREE.DoubleSide ){
-
-            var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    lineWidth: this.lineWidth,
-                    transparent: this.transparent,
-                    opaqueBack: this.opaqueBack,
-                    side: THREE.FrontSide,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
-                    dullInterior: false
-                }
-            );
-
-            var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    lineWidth: this.lineWidth,
-                    transparent: this.transparent,
-                    opaqueBack: this.opaqueBack,
-                    side: THREE.BackSide,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
-                    dullInterior: false
-                }
-            );
-
-            this.bufferList.push( backBuffer, frontBuffer );
-
-        }else{
-
-            var surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    lineWidth: this.lineWidth,
-                    transparent: this.transparent,
-                    opaqueBack: this.opaqueBack,
-                    side: this.side,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
-                    dullInterior: false
-                }
-            );
-
-            this.bufferList.push( surfaceBuffer );
-
-        }
+        this.bufferList.push( doubleSidedBuffer );
 
     },
 
     update: function( what ){
+
+        if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
@@ -34813,7 +36915,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            surfaceData[ "color" ] = this.molsurf.getColor( this.color );
+            surfaceData[ "color" ] = this.surface.getColor( this.getColorParams() );
 
         }
 
@@ -34886,9 +36988,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         labelColor: {
             type: "color"
         },
-        antialias: {
-            type: "boolean", define: "ANTIALIAS"
-        },
         atomPair: {
             type: "hidden"
         },
@@ -34901,7 +37000,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
         p.radius = p.radius || this.defaultSize;
 
         this.disableImpostor = p.disableImpostor || false;
@@ -34913,7 +37011,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }else if( p.quality === "high" ){
             this.radiusSegments = 20;
         }else{
-            this.radiusSegments = p.radiusSegments || 10;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
         this.font = p.font || 'LatoBlack';
@@ -34929,8 +37027,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
     create: function(){
 
         if( this.atomSet.atomCount === 0 ) return;
-
-        var opacity = this.transparent ? this.opacity : 1.0;
 
         var n = this.atomPair.length;
         if( n === 0 ) return;
@@ -34990,12 +37086,10 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             NGL.Utils.uniformArray( n, this.labelSize ),
             NGL.Utils.uniformArray3( n, c.r, c.g, c.b ),
             text,
-            {
+            this.getBufferParams( {
                 font: this.font,
                 antialias: this.antialias,
-                opacity: opacity,
-                nearClip: this.nearClip
-            }
+            } )
         );
 
         this.__center = new Float32Array( bSet.bondCount * 3 );
@@ -35003,22 +37097,17 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         this.cylinderBuffer = new NGL.CylinderBuffer(
             bSet.bondPosition( null, 0 ),
             bSet.bondPosition( null, 1 ),
-            bSet.bondColor( null, 0, this.color ),
-            bSet.bondColor( null, 1, this.color ),
+            bSet.bondColor( null, 0, this.getColorParams() ),
+            bSet.bondColor( null, 1, this.getColorParams() ),
             bSet.bondRadius( null, null, this.radius, this.scale ),
-            bSet.bondColor( null, 0, "picking" ),
-            bSet.bondColor( null, 1, "picking" ),
-            {
+            bSet.bondPickingColor( null, 0 ),
+            bSet.bondPickingColor( null, 1 ),
+            this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
-                transparent: this.transparent,
-                side: this.side,
-                opacity: opacity,
-                nearClip: this.nearClip,
-                flatShaded: this.flatShaded,
                 dullInterior: true
-            },
+            } ),
             this.disableImpostor
         );
 
@@ -35029,6 +37118,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         if( this.atomSet.atomCount === 0 ) return;
+        if( this.bufferList.length === 0 ) return;
 
         var n = this.atomPair.length;
         if( n === 0 ) return;
@@ -35096,8 +37186,12 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            cylinderData[ "color" ] = bSet.bondColor( null, 0, this.color );
-            cylinderData[ "color2" ] = bSet.bondColor( null, 1, this.color );
+            cylinderData[ "color" ] = bSet.bondColor(
+                null, 0, this.getColorParams()
+            );
+            cylinderData[ "color2" ] = bSet.bondColor(
+                null, 1, this.getColorParams()
+            );
 
         }
 
@@ -35188,7 +37282,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
 
-        lineWidth: {
+        linewidth: {
             type: "integer", max: 20, min: 1, rebuild: true
         },
         pointSize: {
@@ -35200,40 +37294,23 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
         sort: {
             type: "boolean", rebuild: true
         },
-        transparent: {
-            type: "boolean", rebuild: true
-        },
-        side: {
-            type: "select", options: NGL.SideTypes, rebuild: true,
-            int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0,
-            // FIXME should be uniform but currently incompatible
-            // with the underlying Material
-            rebuild: true
-        },
 
     }, NGL.Representation.prototype.parameters ),
 
     init: function( params ){
 
         var p = params || {};
-
-        p.color = p.color || 0xDDDDDD;
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue || 0xDDDDDD;
 
         this.drawLine = p.drawLine || true;
         this.drawCylinder = p.drawCylinder || false;
         this.drawPoint = p.drawPoint || false;
         this.drawSphere = p.drawSphere || false;
 
-        this.lineWidth = p.lineWidth || 1;
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
         this.sort = p.sort !== undefined ? p.sort : true;
-        p.transparent = p.transparent !== undefined ? p.transparent : true;
-        p.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-        p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -35270,13 +37347,12 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
 
         var scope = this;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
         var index = this.atomSet.atoms[ 0 ].index;
 
         this.trajectory.getPath( index, function( path ){
 
             var n = path.length / 3;
-            var tc = new THREE.Color( scope.color );
+            var tc = new THREE.Color( scope.colorValue );
 
             if( scope.drawSphere ){
 
@@ -35285,15 +37361,10 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray( n, 0.2 ),
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
-                    {
+                    scope.getBufferParams( {
                         sphereDetail: scope.sphereDetail,
-                        transparent: scope.transparent,
-                        side: scope.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded,
                         dullInterior: true
-                    },
+                    } ),
                     scope.disableImpostor
                 );
 
@@ -35311,18 +37382,13 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray( n, 0.05 ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    {
+                    scope.getBufferParams( {
                         shift: 0,
                         cap: true,
-                        radiusSegments: this.radiusSegments,
-                        transparent: this.transparent,
-                        side: this.side,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded,
+                        radiusSegments: scope.radiusSegments,
                         dullInterior: true
-                    },
-                    this.disableImpostor
+                    } ),
+                    scope.disableImpostor
 
                 );
 
@@ -35335,15 +37401,11 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                 var pointBuffer = new NGL.PointBuffer(
                     path,
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
-                    {
+                    scope.getBufferParams( {
                         pointSize: scope.pointSize,
                         sizeAttenuation: scope.sizeAttenuation,
                         sort: scope.sort,
-                        transparent: scope.transparent,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
-                    }
+                    } )
                 );
 
                 scope.bufferList.push( pointBuffer );
@@ -35357,13 +37419,7 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     path.subarray( 3 ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     NGL.Utils.uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    {
-                        lineWidth: scope.lineWidth,
-                        transparent: scope.transparent,
-                        opacity: opacity,
-                        nearClip: scope.nearClip,
-                        flatShaded: scope.flatShaded
-                    }
+                    scope.getBufferParams()
                 );
 
                 scope.bufferList.push( lineBuffer );
@@ -35386,7 +37442,32 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
     NGL.Representation.call( this, surface, viewer, params );
 
-    this.surface = surface;
+    if( surface instanceof NGL.Volume ){
+        this.surface = undefined;
+        this.volume = surface;
+    }else{
+        this.surface = surface;
+        this.volume = undefined;
+    }
+
+    this.boxCenter = new THREE.Vector3();
+    this.__boxCenter = new THREE.Vector3();
+    this.box = new THREE.Box3();
+    this.__box = new THREE.Box3();
+
+    this.setBox = ( function(){
+        var position = new THREE.Vector3();
+        return function(){
+            var target = viewer.controls.target;
+            var group = viewer.rotationGroup.position;
+            position.copy( group ).negate().add( target );
+            this.setParameters( { "boxCenter": position } );
+        }.bind( this );
+    }.bind( this ) )();
+
+    this.viewer.signals.orientationChanged.add(
+        this.setBox
+    );
 
     this.build();
 
@@ -35403,39 +37484,24 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         isolevelType: {
-            type: "select", rebuild: true, options: {
+            type: "select", options: {
                 "value": "value", "sigma": "sigma"
             }
         },
         isolevel: {
-            type: "number", precision: 2, max: 1000, min: -1000,
-            rebuild: true
+            type: "number", precision: 2, max: 1000, min: -1000
         },
         smooth: {
-            type: "integer", precision: 1, max: 10, min: 0,
-            rebuild: true
-        },
-        wireframe: {
-            type: "boolean", rebuild: true
-        },
-        lineWidth: {
-            type: "integer", max: 20, min: 1, property: "linewidth"
+            type: "integer", precision: 1, max: 10, min: 0
         },
         background: {
-            type: "boolean", rebuild: true
-        },
-        transparent: {
-            type: "boolean", rebuild: true
+            type: "boolean", rebuild: true  // FIXME
         },
         opaqueBack: {
-            type: "boolean", define: "OPAQUE_BACK"
+            type: "boolean", buffer: true
         },
-        side: {
-            type: "select", options: NGL.SideTypes, rebuild: true,
-            int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0, uniform: true
+        boxSize: {
+            type: "integer", precision: 1, max: 100, min: 0
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -35443,18 +37509,15 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue !== undefined ? p.colorValue : 0xDDDDDD;
 
-        this.color = p.color || 0xDDDDDD;
         this.isolevelType  = p.isolevelType !== undefined ? p.isolevelType : "sigma";
         this.isolevel = p.isolevel !== undefined ? p.isolevel : 2.0;
         this.smooth = p.smooth !== undefined ? p.smooth : 0;
         this.background = p.background || false;
-        this.wireframe = p.wireframe || false;
-        this.lineWidth = p.lineWidth || 1;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
-        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.boxSize = p.boxSize !== undefined ? p.boxSize : 0;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -35476,117 +37539,94 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
     prepare: function( callback ){
 
-        if( this.surface instanceof NGL.Volume ){
+        if( this.volume ){
 
             var isolevel;
 
             if( this.isolevelType === "sigma" ){
-
-                isolevel = this.surface.getIsolevelForSigma( this.isolevel );
-
+                isolevel = this.volume.getValueForSigma( this.isolevel );
             }else{
-
                 isolevel = this.isolevel;
-
             }
 
-            this.surface.generateSurfaceWorker(
-                isolevel, this.smooth, callback
-            );
+            if( !this.surface ||
+                this.__isolevel !== isolevel ||
+                this.__smooth !== this.smooth ||
+                this.__boxSize !== this.boxSize ||
+                ( this.boxSize > 0 &&
+                    !this.__boxCenter.equals( this.boxCenter ) )
+            ){
+                this.__isolevel = isolevel;
+                this.__smooth = this.smooth;
+                this.__boxSize = this.boxSize;
+                this.__boxCenter.copy( this.boxCenter );
+                this.__box.copy( this.box );
+
+                this.volume.getSurfaceWorker(
+                    isolevel, this.smooth, this.boxCenter, this.boxSize,
+                    function( surface ){
+                        this.surface = surface;
+                        callback();
+                    }.bind( this )
+                );
+            }else{
+                callback();
+            }
 
         }else{
-
             callback();
-
         }
 
     },
 
     create: function(){
 
-        var position = this.surface.getPosition();
-        var color = this.surface.getColor( this.color );
-        var normal = this.surface.getNormal();
-        var index = this.surface.getIndex();
+        var surfaceBuffer = new NGL.SurfaceBuffer(
+            this.surface.getPosition(),
+            this.surface.getColor( this.getColorParams() ),
+            this.surface.getIndex(),
+            this.surface.getNormal(),
+            undefined,  // this.surface.getPickingColor( this.getColorParams() ),
+            this.getBufferParams( {
+                background: this.background,
+                opaqueBack: this.opaqueBack,
+                dullInterior: false,
+            } )
+        );
+        var doubleSidedBuffer = new NGL.DoubleSidedBuffer( surfaceBuffer );
 
-        var opacity = this.transparent ? this.opacity : 1.0;
-
-        if( this.transparent && this.side === THREE.DoubleSide ){
-
-            var frontBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    lineWidth: this.lineWidth,
-                    transparent: this.transparent,
-                    opaqueBack: this.opaqueBack,
-                    side: THREE.FrontSide,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
-                    dullInterior: false
-                }
-            );
-
-            var backBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    lineWidth: this.lineWidth,
-                    transparent: this.transparent,
-                    opaqueBack: this.opaqueBack,
-                    side: THREE.BackSide,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
-                    dullInterior: false
-                }
-            );
-
-            this.bufferList.push( backBuffer, frontBuffer );
-
-        }else{
-
-            var surfaceBuffer = new NGL.SurfaceBuffer(
-                position, color, index, normal, undefined,
-                {
-                    background: this.background,
-                    wireframe: this.wireframe,
-                    lineWidth: this.lineWidth,
-                    transparent: this.transparent,
-                    opaqueBack: this.opaqueBack,
-                    side: this.side,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
-                    dullInterior: false
-                }
-            );
-
-            this.bufferList.push( surfaceBuffer );
-
-        }
+        this.bufferList.push( doubleSidedBuffer );
 
     },
 
     update: function( what ){
 
+        if( this.bufferList.length === 0 ) return;
+
         what = what || {};
 
         var surfaceData = {};
 
+        if( what[ "position" ] ){
+            surfaceData[ "position" ] = this.surface.getPosition();
+        }
+
         if( what[ "color" ] ){
+            surfaceData[ "color" ] = this.surface.getColor(
+                this.getColorParams()
+            );
+        }
 
-            surfaceData[ "color" ] = this.surface.getColor( this.color );
+        if( what[ "index" ] ){
+            surfaceData[ "index" ] = this.surface.getIndex();
+        }
 
+        if( what[ "normal" ] ){
+            surfaceData[ "normal" ] = this.surface.getNormal();
         }
 
         this.bufferList.forEach( function( buffer ){
-
             buffer.setAttributes( surfaceData );
-
         } );
 
     },
@@ -35594,14 +37634,14 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
     setParameters: function( params, what, rebuild ){
 
         if( params && params[ "isolevelType" ] !== undefined &&
-            this.surface instanceof NGL.Volume
+            this.volume
         ){
 
             if( this.isolevelType === "value" &&
                 params[ "isolevelType" ] === "sigma"
             ){
 
-                this.isolevel = this.surface.getSigmaForIsolevel(
+                this.isolevel = this.volume.getSigmaForValue(
                     this.isolevel
                 );
 
@@ -35609,7 +37649,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 params[ "isolevelType" ] === "value"
             ){
 
-                this.isolevel = this.surface.getIsolevelForSigma(
+                this.isolevel = this.volume.getValueForSigma(
                     this.isolevel
                 );
 
@@ -35619,11 +37659,46 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
 
         }
 
+        if( params && params[ "boxCenter" ] ){
+            this.boxCenter.copy( params[ "boxCenter" ] );
+            delete params[ "boxCenter" ];
+        }
+
         NGL.Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
 
+        this.volume.getBox( this.boxCenter, this.boxSize, this.box );
+
+        if( this.surface && (
+                params[ "isolevel" ] !== undefined ||
+                params[ "smooth" ] !== undefined ||
+                params[ "boxSize" ] !== undefined ||
+                ( this.boxSize > 0 &&
+                    !this.__box.equals( this.box ) )
+            )
+        ){
+            this.build( {
+                "__update": {
+                    "position": true,
+                    "color": true,
+                    "index": true,
+                    "normal": true
+                }
+            } );
+        }
+
         return this;
+
+    },
+
+    dispose: function(){
+
+        this.viewer.signals.orientationChanged.remove(
+            this.setBox
+        );
+
+        NGL.Representation.prototype.dispose.call( this );
 
     }
 
@@ -35634,7 +37709,13 @@ NGL.DotRepresentation = function( surface, viewer, params ){
 
     NGL.Representation.call( this, surface, viewer, params );
 
-    this.surface = surface;
+    if( surface instanceof NGL.Volume ){
+        this.surface = undefined;
+        this.volume = surface;
+    }else{
+        this.surface = surface;
+        this.volume = undefined;
+    }
 
     this.build();
 
@@ -35650,11 +37731,19 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        minValue: {
+        thresholdType: {
+            type: "select", rebuild: true, options: {
+                "value": "value", "sigma": "sigma"
+            }
+        },
+        thresholdMin: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
         },
-        maxValue: {
+        thresholdMax: {
             type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+        },
+        thresholdOut: {
+            type: "boolean", rebuild: true
         },
         dotType: {
             type: "select", rebuild: true, options: {
@@ -35667,6 +37756,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             type: "select", options: {
                 "": "",
                 "value": "value",
+                "abs-value": "abs-value",
                 "value-min": "value-min",
                 "deviation": "deviation",
                 "size": "size"
@@ -35678,27 +37768,35 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
+        sort: {
+            type: "boolean", rebuild: true
+        },
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
-        transparent: {
-            type: "boolean", property: true
-        },
-        side: {
-            type: "select", options: NGL.SideTypes, property: true,
-            int: true
-        },
-        opacity: {
-            type: "number", precision: 1, max: 1, min: 0, uniform: true
-        }
 
-    }, NGL.Representation.prototype.parameters ),
+    }, NGL.Representation.prototype.parameters, {
+
+        colorScheme: {
+            type: "select", update: "color", options: {
+                "": "",
+                "value": "value",
+                "uniform": "uniform",
+                // "value-min": "value-min",
+                // "deviation": "deviation",
+                // "size": "size"
+            }
+        },
+
+    } ),
 
     defaultSize: 0.1,
 
     init: function( params ){
 
         var p = params || {};
+        p.colorScheme = p.colorScheme || "uniform";
+        p.colorValue = p.colorValue || 0xDDDDDD;
 
         this.disableImpostor = p.disableImpostor || false;
 
@@ -35712,16 +37810,14 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             this.sphereDetail = p.sphereDetail || 1;
         }
 
-        this.color = p.color || 0xDDDDDD;
-        // this.minValue = p.minValue !== undefined ? p.minValue : -Infinity;
-        this.minValue = p.minValue !== undefined ? p.minValue : NaN;
-        this.maxValue = p.maxValue !== undefined ? p.maxValue : Infinity;
+        this.thresholdType  = p.thresholdType !== undefined ? p.thresholdType : "sigma";
+        this.thresholdMin = p.thresholdMin !== undefined ? p.thresholdMin : 2.0;
+        this.thresholdMax = p.thresholdMax !== undefined ? p.thresholdMax : Infinity;
+        this.thresholdOut = p.thresholdOut !== undefined ? p.thresholdOut : false;
         this.dotType = p.dotType !== undefined ? p.dotType : "point";
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
-        this.transparent = p.transparent !== undefined ? p.transparent : false;
-        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
+        this.sort = p.sort !== undefined ? p.sort : false;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -35743,42 +37839,59 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        this.surface.filterData( this.minValue, this.maxValue );
+        var position, color, size, pickingColor;
 
-        var opacity = this.transparent ? this.opacity : 1.0;
+        if( this.volume ){
+
+            var thresholdMin, thresholdMax;
+
+            if( this.thresholdType === "sigma" ){
+                thresholdMin = this.volume.getValueForSigma( this.thresholdMin );
+                thresholdMax = this.volume.getValueForSigma( this.thresholdMax );
+            }else{
+                thresholdMin = this.thresholdMin;
+                thresholdMax = this.thresholdMax;
+            }
+            this.volume.filterData( thresholdMin, thresholdMax, this.thresholdOut );
+
+            position = this.volume.getDataPosition();
+            color = this.volume.getDataColor( this.getColorParams() );
+            size = this.volume.getDataSize( this.radius, this.scale );
+            pickingColor = this.volume.getPickingDataColor( this.getColorParams() );
+
+        }else{
+
+            position = this.surface.getPosition();
+            color = this.surface.getColor( this.getColorParams() );
+            size = this.surface.getSize( this.radius, this.scale );
+            pickingColor = this.surface.getPickingColor( this.getColorParams() );
+
+        }
 
         if( this.dotType === "sphere" ){
 
             this.dotBuffer = new NGL.SphereBuffer(
-                this.surface.getDataPosition(),
-                this.surface.getDataColor( this.color ),
-                this.surface.getDataSize( this.radius, this.scale ),
-                undefined,
-                {
+                position,
+                color,
+                size,
+                pickingColor,
+                this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
-                    transparent: this.transparent,
-                    side: this.side,
-                    opacity: opacity,
-                    nearClip: this.nearClip,
-                    flatShaded: this.flatShaded,
                     dullInterior: false
-                },
+                } ),
                 this.disableImpostor
             );
 
         }else{
 
             this.dotBuffer = new NGL.PointBuffer(
-                this.surface.getDataPosition(),
-                this.surface.getDataColor( this.color ),
-                {
+                position,
+                color,
+                this.getBufferParams( {
                     pointSize: this.radius,
                     sizeAttenuation: true,  // this.sizeAttenuation,
-                    sort: false,  // this.sort,
-                    transparent: true,  // this.transparent,
-                    opacity: opacity,
-                    nearClip: this.nearClip
-                }
+                    sort: this.sort,
+                } )
             );
 
         }
@@ -35789,21 +37902,45 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
+        if( this.bufferList.length === 0 ) return;
+
         what = what || {};
 
         var dotData = {};
 
         if( what[ "color" ] ){
 
-            dotData[ "color" ] = this.surface.getDataColor( this.color );
+            if( this.volume ){
+
+                dotData[ "color" ] = this.volume.getDataColor(
+                    this.getColorParams()
+                );
+
+            }else{
+
+                dotData[ "color" ] = this.surface.getColor(
+                    this.getColorParams()
+                );
+
+            }
 
         }
 
         if( this.dotType === "sphere" && ( what[ "radius" ] || what[ "scale" ] ) ){
 
-            dotData[ "radius" ] = this.surface.getDataSize(
-                this.radius, this.scale
-            );
+            if( this.volume ){
+
+                dotData[ "radius" ] = this.volume.getDataSize(
+                    this.radius, this.scale
+                );
+
+            }else{
+
+                dotData[ "radius" ] = this.surface.getSize(
+                    this.radius, this.scale
+                );
+
+            }
 
         }
 
@@ -35814,6 +37951,38 @@ NGL.DotRepresentation.prototype = NGL.createObject(
     setParameters: function( params, what, rebuild ){
 
         what = what || {};
+
+        if( params && params[ "thresholdType" ] !== undefined &&
+            this.volume instanceof NGL.Volume
+        ){
+
+            if( this.thresholdType === "value" &&
+                params[ "thresholdType" ] === "sigma"
+            ){
+
+                this.thresholdMin = this.volume.getSigmaForValue(
+                    this.thresholdMin
+                );
+                this.thresholdMax = this.volume.getSigmaForValue(
+                    this.thresholdMax
+                );
+
+            }else if( this.thresholdType === "sigma" &&
+                params[ "thresholdType" ] === "value"
+            ){
+
+                this.thresholdMin = this.volume.getValueForSigma(
+                    this.thresholdMin
+                );
+                this.thresholdMax = this.volume.getValueForSigma(
+                    this.thresholdMax
+                );
+
+            }
+
+            this.thresholdType = params[ "thresholdType" ];
+
+        }
 
         if( params && params[ "radiusType" ] !== undefined ){
 
@@ -35926,12 +38095,11 @@ NGL.Stage = function( eid ){
 
         atomPicked: new SIGNALS.Signal(),
         bondPicked: new SIGNALS.Signal(),
+        volumePicked: new SIGNALS.Signal(),
         nothingPicked: new SIGNALS.Signal(),
         onPicking: new SIGNALS.Signal(),
 
-        requestTheme: new SIGNALS.Signal(),
-
-        windowResize: new SIGNALS.Signal()
+        requestTheme: new SIGNALS.Signal()
 
     };
 
@@ -35944,6 +38112,8 @@ NGL.Stage = function( eid ){
     this.viewer = new NGL.Viewer( eid );
 
     this.preferences.setTheme();
+
+    this.defaultFileParams = {};
 
     this.initFileDragDrop();
 
@@ -35982,10 +38152,6 @@ NGL.Stage.prototype = {
             object.addRepresentation( "surface" );
             object.centerView();
 
-        }else if( object instanceof NGL.ScriptComponent ){
-
-            object.run();
-
         }
 
     },
@@ -36021,74 +38187,40 @@ NGL.Stage.prototype = {
 
     loadFile: function( path, params ){
 
-        var _onLoad;
-        var p = params || {};
+        var p = Object.assign( {}, this.defaultFileParams, params );
 
-        // allow loadFile( path, onLoad ) method signature
-        if( typeof params === "function" ){
+        // placeholder component
+        var component = new NGL.Component( this, p );
+        component.name = NGL.getFileInfo( path ).name;
+        this.addComponent( component );
 
-            _onLoad = params;
-            p = {};
+        var onLoadFn = function( object ){
 
-        }else{
+            // remove placeholder component
+            this.removeComponent( component );
 
-            _onLoad = p.onLoad;
+            component = this.addComponentFromObject( object, p );
 
-        }
-
-        var component;
-
-        p.onLoad = function( object, _params ){
-
-            // check for placeholder component
-            if( component ){
-
-                this.removeComponent( component );
-
+            if( component instanceof NGL.ScriptComponent ){
+                component.run();
             }
 
-            component = this.addComponentFromObject( object, _params );
-
-            if( typeof _onLoad === "function" ){
-
-                _onLoad( component );
-
-            }else{
-
+            if( p.defaultRepresentation ){
                 this.defaultFileRepresentation( component );
-
             }
+
+            return component;
 
         }.bind( this );
 
-        var _e;
-        var _onError = p.onError;
+        var onErrorFn = function( e ){
 
-        p.onError = function( e ){
-
-            _e = e;
-
-            if( component ) component.setStatus( e );
-
-            if( typeof _onError === "function" ) _onError( e );
-
-        };
-
-        NGL.autoLoad( path, p );
-
-        // ensure that component isn't ready yet
-        if( !component ){
-
-            component = new NGL.Component( this, p );
-            var path2 = ( path instanceof File ) ? path.name : path;
-            component.name = path2.replace( /^.*[\\\/]/, '' );
-
-            this.addComponent( component );
+            component.setStatus( e );
+            throw e;
 
         }
 
-        // set error status when already known
-        if( _e ) component.setStatus( _e );
+        return NGL.autoLoad( path, p ).then( onLoadFn, onErrorFn );
 
     },
 
@@ -36144,6 +38276,12 @@ NGL.Stage.prototype = {
             }
 
         }, this );
+
+    },
+
+    handleResize: function(){
+
+        this.viewer.handleResize();
 
     },
 
@@ -36440,6 +38578,7 @@ NGL.PickingControls = function( viewer, stage ){
 
         var pickedAtom = undefined;
         var pickedBond = undefined;
+        var pickedVolume = undefined;
 
         var picked = NGL.GidPool.getByGid( gid );
 
@@ -36451,11 +38590,17 @@ NGL.PickingControls = function( viewer, stage ){
 
             pickedBond = picked;
 
+        }else if( picked && picked.volume instanceof NGL.Volume ){
+
+            pickedVolume = picked;
+
         }
 
         //
 
-        if( ( pickedAtom || pickedBond ) && e.which === NGL.MiddleMouseButton ){
+        if( ( pickedAtom || pickedBond || pickedVolume ) &&
+                e.which === NGL.MiddleMouseButton
+        ){
 
             if( pickedAtom ){
 
@@ -36466,6 +38611,10 @@ NGL.PickingControls = function( viewer, stage ){
                 position.set( 0, 0, 0 )
                     .addVectors( pickedBond.atom1, pickedBond.atom2 )
                     .multiplyScalar( 0.5 );
+
+            }else if( pickedVolume ){
+
+                position.copy( pickedVolume );
 
             }
 
@@ -36489,6 +38638,10 @@ NGL.PickingControls = function( viewer, stage ){
 
             stage.signals.bondPicked.dispatch( pickedBond );
 
+        }else if( pickedVolume ){
+
+            stage.signals.volumePicked.dispatch( pickedVolume );
+
         }else{
 
             stage.signals.nothingPicked.dispatch();
@@ -36499,6 +38652,7 @@ NGL.PickingControls = function( viewer, stage ){
 
             "atom": pickedAtom,
             "bond": pickedBond,
+            "volume": pickedVolume,
             "instance": instance
 
         } );
@@ -36509,6 +38663,7 @@ NGL.PickingControls = function( viewer, stage ){
 
             NGL.log( "picked atom", pickedAtom );
             NGL.log( "picked bond", pickedBond );
+            NGL.log( "picked volume", pickedVolume );
 
         }
 
@@ -36803,6 +38958,14 @@ NGL.Component.prototype = {
 
     },
 
+    addBufferRepresentation: function( buffer, params ){
+
+        return NGL.Component.prototype.addRepresentation.call(
+            this, "buffer", buffer, params
+        );
+
+    },
+
     removeRepresentation: function( repr ){
 
         var idx = this.reprList.indexOf( repr );
@@ -37008,14 +39171,6 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    addBufferRepresentation: function( buffer, params ){
-
-        return NGL.Component.prototype.addRepresentation.call(
-            this, "buffer", buffer, params
-        );
-
-    },
-
     addTrajectory: function( trajPath, sele, i ){
 
         var params = { "i": i };
@@ -37179,6 +39334,14 @@ NGL.SurfaceComponent.prototype = NGL.createObject(
         return NGL.Component.prototype.addRepresentation.call(
             this, type, this.surface, params
         );
+
+    },
+
+    dispose: function(){
+
+        this.surface.dispose();
+
+        NGL.Component.prototype.dispose.call( this );
 
     },
 
@@ -37373,7 +39536,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
 
     signals: Object.assign( {
 
-        colorChanged: null,
         parametersChanged: null,
 
     }, NGL.Component.prototype.signals ),
@@ -37493,7 +39655,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     setColor: function( value ){
 
         this.repr.setColor( value );
-        this.signals.colorChanged.dispatch( this.repr.color );
 
         return this;
 
@@ -37646,1337 +39807,119 @@ NGL.RepresentationCollection.prototype = NGL.createObject(
 
 } );
 
-// File:js/ngl/example.js
-
-
-
-NGL.Examples = {
-
-    load: function( name, stage ){
-
-        NGL.Examples.data[ name ]( stage );
-
-    },
-
-    add: function( examples ){
-
-        Object.keys( examples ).forEach( function( name ){
-
-            NGL.Examples.data[ name ] = examples[ name ];
-
-        } );
-
-    },
-
-    data: {
-
-        "trajectory": function( stage ){
-
-            stage.loadFile( "data://md.gro", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "line", { sele: "not hydrogen and sidechainAttached" } );
-                    o.addRepresentation( "cartoon", { sele: "protein" } );
-                    // o.addRepresentation( "spacefill", { sele: "NA or CL" } );
-                    o.centerView();
-
-                    o.addTrajectory( "__example__/md.xtc" );
-
-                },
-                sele: "protein or na or cl"
-            } );
-
-            stage.loadFile( "data://md.gro", function( o ){
-
-                o.addRepresentation( "backbone", { sele: "protein", color: "ss" } );
-
-            } );
-
-        },
-
-        "trr_trajectory": function( stage ){
-
-            stage.loadFile( "data://md.gro", function( o ){
-
-                o.addRepresentation( "line" );
-                o.addRepresentation( "cartoon", { sele: "protein" } );
-                o.centerView();
-
-                o.addTrajectory( "__example__/md.trr" );
-
-            } );
-
-        },
-
-        "dcd_trajectory": function( stage ){
-
-            stage.loadFile( "data://ala3.pdb", function( o ){
-
-                o.addRepresentation( "licorice" );
-                o.addRepresentation( "cartoon", { sele: "protein" } );
-                o.centerView();
-
-                o.addTrajectory( "__example__/ala3.dcd" )
-                    .setParameters( {
-                        "centerPbc": false,
-                        "removePbc": false,
-                        "superpose": true
-                    } );
-
-            } );
-
-        },
-
-        "netcdf_trajectory": function( stage ){
-
-            stage.loadFile( "data://DPDP.pdb", function( o ){
-
-                o.addRepresentation( "licorice" );
-                o.addRepresentation( "cartoon", { sele: "protein" } );
-                o.centerView();
-
-                o.addTrajectory( "__example__/DPDP.nc" )
-                    .setParameters( {
-                        "centerPbc": false,
-                        "removePbc": false,
-                        "superpose": true
-                    } );
-
-            } );
-
-        },
-
-        "anim_trajectory": function( stage ){
-
-            stage.loadFile( "data://md.gro", function( o ){
-
-                o.addRepresentation( "line", { sele: "not hydrogen and protein" } );
-                o.addRepresentation( "cartoon", { sele: "protein" } );
-                o.centerView();
-
-                var trajComp = o.addTrajectory( "__example__/md.xtc" );
-
-                trajComp.trajectory.signals.gotNumframes.add( function(){
-
-                    var player = new NGL.TrajectoryPlayer(
-                        trajComp.trajectory, 1, 100
-                    );
-                    player.mode = "once";
-                    player.play();
-
-                } );
-
-            } );
-
-        },
-
-        "gro_trajectory": function( stage ){
-
-            stage.loadFile( "data://md_1u19_trj.gro", {
-                onLoad: function( o ){
-
-                    o.addTrajectory();
-
-                    o.addRepresentation( "cartoon" );
-                    o.addRepresentation( "line", {
-                        sele: "not hydrogen and sidechainAttached"
-                    } );
-                    o.centerView();
-
-                },
-                asTrajectory: true
-            } );
-
-        },
-
-        "3pqr": function( stage ){
-
-            stage.loadFile( "data://3pqr.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", {
-                    color: "residueindex", aspectRatio: 4, scale: 0.5
-                } );
-                o.addRepresentation( "rope", {
-                    color: "residueindex", visible: false
-                } );
-                o.addRepresentation( "ball+stick", {
-                    sele: "296 or RET", scale: 3, aspectRatio: 1.5
-                } );
-                o.addRepresentation( "surface", {
-                    sele: "RET", transparent: true, opacity: 0.4
-                } );
-                o.addRepresentation( "licorice", {
-                    sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
-                    scale: 3, aspectRatio: 1.5
-                } );
-                o.addRepresentation( "contact", {
-                    sele: "135 or 223 or 347",
-                    scale: 0.7
-                } );
-                o.addRepresentation( "label", {
-                    sele: "( 135 or 223 or 347 or 296 ) and .CB",
-                    scale: 1.7
-                } );
-                o.addRepresentation( "label", {
-                    sele: "RET and .C19",
-                    scale: 1.7, labelType: "resname"
-                } );
-
-                o.centerView();
-
-            } );
-
-        },
-
-        "1blu": function( stage ){
-
-            stage.loadFile( "data://1blu.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", { sele: "*" } );
-                o.addRepresentation( "backbone", {
-                    sele: "*", scale: 1.0, aspectRatio: 1.5,
-                    color: new THREE.Color( "lightgreen" ).getHex()
-                } );
-                o.addRepresentation( "licorice", { sele: "*", scale: 1.0 } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "multi_model": function( stage ){
-
-            stage.loadFile( "data://1LVZ.pdb", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "cartoon", { sele: "*" } );
-                    // o.addRepresentation( "licorice", { sele: "*" } );
-                    o.centerView();
-
-                    // o.addTrajectory();
-
-                },
-                firstModelOnly: true
-                // asTrajectory: true
-            } );
-
-            // stage.loadFile( "data://md_ascii_trj.gro", function( o ){
-            stage.loadFile( "data://md_1u19_trj.gro", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "cartoon", { sele: "*" } );
-                    // o.addRepresentation( "licorice", { sele: "*" } );
-                    o.centerView();
-
-                    o.addTrajectory();
-
-                },
-                asTrajectory: true
-            } );
-
-        },
-
-        "multi_struc": function( stage ){
-
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", { sele: "*" } );
-                o.addRepresentation( "ball+stick", { sele: "hetero" } );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://3pqr.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", { sele: "*" } );
-                o.addRepresentation( "ball+stick", { sele: "hetero" } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "superpose": function( stage ){
-
-            stage.loadFile( "data://1u19.pdb", {
-                onLoad: function( o1 ){
-
-                    var s = "1-320:A";
-
-                    o1.addRepresentation( "cartoon", { sele: s } );
-                    o1.addRepresentation( "ball+stick", { sele: s } );
-
-                    stage.loadFile( "data://3dqb.pdb", function( o2 ){
-
-                        o2.addRepresentation( "cartoon", { sele: s } );
-                        o2.addRepresentation( "licorice", { sele: s } );
-
-                        o1.superpose( o2, false, s );
-                        o1.centerView( true, ":A" );
-
-                    }, { sele: ":A" } );
-
-                },
-                sele: ":A"
-            } );
-
-        },
-
-        "alignment": function( stage ){
-
-            stage.loadFile( "data://3dqb.pdb", function( o1 ){
-
-                o1.addRepresentation( "cartoon" );
-                o1.addRepresentation( "ball+stick", { sele: "hetero" } );
-                o1.centerView();
-
-                stage.loadFile( "data://3sn6.pdb", function( o2 ){
-
-                    o2.addRepresentation( "cartoon" );
-                    o2.addRepresentation( "ball+stick", { sele: "hetero" } );
-
-                    var s1 = o1.structure;
-                    var s2 = o2.structure;
-
-                    NGL.superpose( s1, s2, true );
-
-                    o1.updateRepresentations();
-                    o1.centerView();
-
-                } );
-
-            } );
-
-        },
-
-        "alignment2": function( stage ){
-
-            stage.loadFile( "data://1gzm.pdb", function( o1 ){
-
-                o1.addRepresentation( "cartoon" );
-                o1.centerView();
-
-                stage.loadFile( "data://1u19.pdb", function( o2 ){
-
-                    o2.addRepresentation( "cartoon" );
-
-                    var s1 = o1.structure;
-                    var s2 = o2.structure;
-
-                    NGL.superpose( s1, s2, true );
-
-                    o1.updateRepresentations();
-                    o1.centerView();
-
-                } );
-
-            } );
-
-        },
-
-        "pbc": function( stage ){
-
-            stage.loadFile( "data://pbc.gro", function( o ){
-
-                // FIXME pbc centering and removal for files other then trajectories
-
-                /*var maxX = o.structure.box[ 0 ];
-                var maxY = o.structure.box[ 1 ];
-                var maxZ = o.structure.box[ 2 ];
-
-                o.structure.eachAtom( function( a ){
-
-                    a.x = ( a.x + maxX ) % maxX;
-                    a.y = ( a.y + maxY ) % maxY;
-                    a.z = ( a.z + maxZ ) % maxZ;
-
-                } );*/
-
-                o.addRepresentation( "cartoon", { sele: "backbone" } );
-                o.addRepresentation( "spacefill", { sele: "backbone" } );
-                o.addRepresentation( "line" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "xtc_parts": function( stage ){
-
-            stage.loadFile( "data://md_1u19.gro", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "line", {
-                    sele: "not hydrogen and sidechainAttached"
-                } );
-                // o.addRepresentation( "ball+stick" );
-                o.centerView();
-
-                o.addTrajectory( "__example__/@md_1u19.xtc" );
-
-            } );
-
-        },
-
-        "impostor": function( stage ){
-
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                var _disableImpostor = NGL.disableImpostor;
-
-                NGL.disableImpostor = true;
-                //o.addRepresentation( "spacefill", { sele: ":A" } );
-                o.addRepresentation( "ball+stick", { sele: "16" } );
-                // NGL.disableImpostor = _disableImpostor;
-                // o.addRepresentation( "spacefill", { sele: ":B" } );
-                // o.addRepresentation( "ball+stick", { sele: ":B" } );
-
-                o.centerView();
-
-            } );
-
-        },
-
-        "cg": function( stage ){
-
-            stage.loadFile( "data://BaceCg.pdb", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "rope", { sele: "helix" } );
-                o.addRepresentation( "ball+stick" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "ribosome": function( stage ){
-
-            stage.loadFile( "data://4UJD.cif.gz", function( o ){
-
-                o.addRepresentation( "cartoon", {
-
-                    color: new THREE.Color().setRGB( 0.5, 0.75, 1 ).getHex(),
-                    sele: ":A or :AA or :I or :N or :CA or :F or :V or :DA or :J or :SA or :U or :JA or :S or :GA or :H or :O or :G or :OP or :K or :Q or :C or :E or :OA or :TA or :M or :L or :B or :HA or :R or :W or :MA or :NA or :QA or :P or :KA or :Z or :LA or :KA or :X or :FA or :T or :IA or :BA or :IA or :Y or :D or :RA or :EA",
-                    name: "60S"
-
-                } );
-
-                o.addRepresentation( "cartoon", {
-
-                    color: new THREE.Color().setRGB( 1, 1, 0.5 ).getHex(),
-                    sele: ":XA or :QB or :XB or :RB or :BB or :HB or :DB or :EC or :NB or :BC or :VB or :WB or :EB or :OB or :KB or :IB or :AB or :TB or :FB or :SB or :PB or :YA or :UB or :LB or :MB or :ZA or :CC or :CB or :JB or :GB or :ZB or :PA or :DC or :YB or :AC",
-                    name: "40S"
-
-                } );
-
-                o.addRepresentation( "spacefill", {
-
-                    color: new THREE.Color().setRGB( 1, 0.5, 1 ).getHex(),
-                    sele: ":WA",
-                    name: "IRES"
-
-                } );
-
-                o.addRepresentation( "spacefill", {
-
-                    color: new THREE.Color().setRGB( 0.2, 1, 0.2 ).getHex(),
-                    sele: ":UA",
-                    name: "tRNA"
-
-                } );
-
-                o.addRepresentation( "spacefill", {
-
-                    color: new THREE.Color().setRGB( 1, 0, 0 ).getHex(),
-                    sele: ":VA",
-                    name: "EIF5B"
-
-                } );
-
-                o.centerView( true );
-
-            } );
-
-        },
-
-        "selection": function( stage ){
-
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                var sele = "not backbone or .CA or (PRO and .N)";
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice", { sele: sele } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "spline": function( stage ){
-
-            stage.loadFile( "data://BaceCgProteinAtomistic.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", { sele: "10-20" } );
-                o.addRepresentation( "tube", {
-                    sele: "not 11-19", radius: 0.07, subdiv: 25, radialSegments: 25
-                } );
-                o.addRepresentation( "licorice", { sele: "sidechainAttached" } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "autoChainName": function( stage ){
-
-            var params = {
-
-            };
-
-            stage.loadFile( "data://Bace1Trimer-inDPPC.gro", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "cartoon" );
-                    o.addRepresentation( "licorice", { sele: "DPPC" } );
-                    o.centerView();
-
-                },
-                sele: ":A or :B or DPPC"
-            } );
-
-        },
-
-        "script": function( stage ){
-
-            stage.loadFile( "data://script.ngl" );
-
-        },
-
-        "bfactor": function( stage ){
-
-            stage.loadFile( "data://1u19.pdb", function( o ){
-
-                o.addRepresentation( "tube", {
-                    sele: ":A", visible: false, bfactor: 0.005
-                } );
-
-                o.addRepresentation( "hyperball", {
-                    sele: ":A", visible: false, shrink: 0.3
-                } );
-
-                o.addRepresentation( "ball+stick", {
-                    sele: ":A and sidechainAttached",
-                    visible: true, aspectRatio: 1.5
-                } );
-
-                o.addRepresentation( "cartoon", {
-                    sele: ":A", visible: true, scale: 0.3, aspectRatio: 6.0
-                } );
-
-                o.centerView( true, ":A" );
-
-            } );
-
-        },
-
-        "1d66": function( stage ){
-
-            stage.loadFile( "data://1d66.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", {
-                    sele: "nucleic", wireframe: false
-                } );
-                o.addRepresentation( "base", {
-                    sele: "*", color: "resname"
-                } );
-                o.addRepresentation( "licorice", {
-                    sele: "nucleic", color: "element", visible: false
-                } );
-
-                o.centerView( true, "nucleic" );
-
-            } );
-
-        },
-
-        "trajReprUpdate": function( stage ){
-
-            stage.loadFile( "data://md_1u19.gro", {
-                onLoad: function( o ){
-
-                    var spacefill = o.addRepresentation( "spacefill", {
-                        sele: "1-30", color: 0x00CCFF, radius: 2.0, scale: 1.0
-                    } );
-                    var ballStick = o.addRepresentation( "ball+stick", { sele: "30-60" } );
-                    var licorice = o.addRepresentation( "licorice", { sele: "60-90" } );
-                    var hyperball = o.addRepresentation( "hyperball", {
-                        sele: "90-120", color: "resname"
-                    } );
-                    var line = o.addRepresentation( "line", { sele: "120-150" } );
-                    var contact = o.addRepresentation( "contact", {
-                        sele: "120-150", contactType: "polarBackbone"
-                    } );
-                    var backbone = o.addRepresentation( "backbone", { sele: "150-180" } );
-                    var tube = o.addRepresentation( "tube", { sele: "180-210" } );
-                    var cartoon = o.addRepresentation( "cartoon", { sele: "210-240" } );
-                    var ribbon = o.addRepresentation( "ribbon", { sele: "240-270" } );
-                    var trace = o.addRepresentation( "trace", { sele: "270-300" } );
-                    var label = o.addRepresentation( "label", { sele: "270-300 and .O" } );
-                    var rope = o.addRepresentation( "rope", {
-                        sele: "300-330", color: "residueindex"
-                    } );
-
-                    o.centerView();
-
-                    o.addTrajectory( "__example__/@md_1u19.xtc" );
-
-                    (function(){
-                        var i = 100;
-                        var j = 1;
-
-                        setInterval( function(){
-
-                            spacefill.setScale( i / 100 );
-                            stage.viewer.render();
-
-                            if( i === 100 ){
-                                j = -1;
-                            }else if( i === 10 ){
-                                j = 1;
-                            }
-                            i += j;
-
-                        }, 10 );
-                    })//();
-
-                },
-                sele: "not hydrogen"
-            } );
-
-        },
-
-        "timing": function( stage ){
-
-            NGL.time( "test" );
-
-            // stage.loadFile( "data://3l5q.pdb", function( o ){
-            stage.loadFile( "data://4UJD.cif.gz", function( o ){
-            // stage.loadFile( "data://3j3y.cif.gz", function( o ){
-
-                // o.addRepresentation( "line", { color: "chainindex" } );
-                // o.addRepresentation( "spacefill", { color: "chainindex" } );
-                o.addRepresentation( "cartoon", { color: "chainindex" } );
-                // o.addRepresentation( "trace", { color: "chainindex" } );
-                // o.addRepresentation( "point", { color: "chainindex" } );
-                stage.centerView();
-
-                NGL.timeEnd( "test" );
-
-                NGL.time( "render" );
-                o.viewer.render();
-                NGL.timeEnd( "render" );
-
-            } );
-
-        },
-
-        "capsid": function( stage ){
-
-            stage.loadFile( "data://1RB8.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
-                o.addRepresentation( "licorice" );
-                // o.addRepresentation( "hyperball" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "surface": function( stage ){
-
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "ball+stick" );
-                stage.viewer.setClip( 42, 100 );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://1crn.ply", function( o ){
-
-                o.addRepresentation( "surface", {
-                    transparent: true, opacity: 0.3, side: THREE.DoubleSide
-                } );
-
-            } );
-
-        },
-
-        "largeGro": function( stage ){
-
-            NGL.time( "test" );
-
-            // stage.loadFile( "data://1crn.gro", function( o ){
-
-            //     o.addRepresentation( "ribbon", { color: "residueindex" } );
-            //     o.centerView();
-
-            // } );
-
-            stage.loadFile( "data://water.gro", function( o ){
-
-                o.addRepresentation( "line", { color: "residueindex" } );
-                o.centerView();
-
-                o.viewer.render();
-
-                NGL.timeEnd( "test" );
-
-            } );
-
-            /*stage.loadFile( "data://3l5q.gro", function( o ){
-
-                o.addRepresentation( "trace", { color: "residueindex", subdiv: 3 } );
-                o.centerView();
-
-                o.viewer.render();
-
-                NGL.timeEnd( "test" );
-
-            } );*/
-
-        },
-
-        "helixorient": function( stage ){
-
-            stage.loadFile( "data://3dqb.pdb", function( o ){
-
-                o.addRepresentation( "crossing", {
-                    ssBorder: true, radius: 0.6
-                } );
-                o.addRepresentation( "rope", {
-                    radius: 0.2
-                } );
-
-                o.centerView();
-
-            } );
-
-        },
-
-        "norovirus": function( stage ){
-
-            stage.loadFile( "data://norovirus.ngl" );
-
-        },
-
-        "label": function( stage ){
-
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                o.addRepresentation( "tube", { radius: "ss" } );
-                o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
-                o.addRepresentation( "label", {
-                    sele: ".CA", color: "element"
-                } );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://1crn.ply", function( o ){
-
-                o.addRepresentation( "surface", {
-                    transparent: true, opacity: 0.3, side: THREE.FrontSide
-                } );
-
-            } );
-
-        },
-
-        "cif": function( stage ){
-
-            stage.loadFile( "data://3SN6.cif", function( o ){
-            // stage.loadFile( "data://1CRN.cif", function( o ){
-
-                o.addRepresentation( "cartoon", { radius: "ss" } );
-                // o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "1crn": function( stage ){
-
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                // o.addRepresentation( "line", {
-                //     lineWidth: 5, transparent: true, opacity: 0.5
-                // } );
-                // o.addRepresentation( "cartoon" );
-
-                o.addRepresentation( "licorice" );
-                o.addRepresentation( "point", {
-                    sele: "*", sizeAttenuation: true, pointSize: 12, sort: true
-                } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "decompress": function( stage ){
-
-            stage.loadFile( "data://1CRN.cif.gz", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://1CRN.cif.zip", function( o ){
-
-                o.addRepresentation( "licorice" );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://1CRN.cif.lzma", function( o ){
-
-                o.addRepresentation( "rocket", {
-                    transparent: true, opacity: 0.5
-                } );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://1CRN.cif.bz2", function( o ){
-
-                o.addRepresentation( "rope", { scale: 0.3 } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "hiv": function( stage ){
-
-            stage.loadFile( "data://3j3y.cif.gz", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "point", {
-                        color: "chainindex", pointSize: 7, sizeAttenuation: true,
-                        sort: false
-                    } );
-                    // o.addRepresentation( "ribbon", {
-                    //     color: "chainindex"
-                    // } );
-                    o.centerView();
-
-                },
-                cAlphaOnly: true
-            } );
-
-        },
-
-        "kdtree": function( stage ){
-
-            // stage.loadFile( "data://3SN6.cif", function( o ){
-            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
-            // stage.loadFile( "data://3l5q.pdb", function( o ){
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                var centerSele = "@10";
-                var centerSelection = new NGL.Selection( centerSele );
-
-                o.addRepresentation( "cartoon", {
-                    color: "chainindex"
-                } );
-                o.addRepresentation( "line" );
-                o.centerView( true, centerSele );
-
-                var kdtree = new NGL.Kdtree( o.structure );
-                var nearest = kdtree.nearest(
-                    o.structure.getAtoms( centerSelection, true ), Infinity, 4
-                )
-
-                // NGL.log( kdtree );
-                // NGL.log( nearest );
-
-                var names = [];
-                nearest.forEach( function( atomDist ){
-                    // names.push( atomDist.atom.qualifiedName( true ) );
-                    names.push( "@" + atomDist.atom.globalindex );
-                } );
-
-                var contactSele = names.join( " OR " );
-                o.addRepresentation( "licorice", {
-                    sele: contactSele
-                } );
-
-                o.addRepresentation( "spacefill", {
-                    sele: centerSele, transparent: true, opacity: 0.5
-                } );
-
-            } );
-
-        },
-
-        "contact": function( stage ){
-
-            // stage.loadFile( "data://3SN6.cif", function( o ){
-            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
-            // stage.loadFile( "data://3l5q.pdb", function( o ){
-            // stage.loadFile( "data://1blu.pdb", function( o ){
-            // stage.loadFile( "data://3pqr.pdb", function( o ){
-            stage.loadFile( "data://1crn.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", {
-                    color: "ss", flatShaded: true
-                } );
-                o.addRepresentation( "ribbon", {
-                    color: "ss", flatShaded: true
-                } );
-                o.addRepresentation( "contact", { contactType: "polarBackbone" } );
-                o.addRepresentation( "trace" );
-                o.addRepresentation( "line" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "subset": function( stage ){
-
-            stage.loadFile( "data://3pqr.pdb", function( o ){
-
-                var trace = o.addRepresentation( "trace", {}, true );
-                var cartoon = o.addRepresentation( "cartoon", {}, true );
-                var licorice = o.addRepresentation( "spacefill", {
-                    color: "element", sele: "TYR"
-                }, true );
-
-                o.centerView();
-
-                o.setSelection( "1-90" );
-                cartoon.setSelection( "4-50" );
-                licorice.setSelection( "PRO" );
-
-            } );
-
-        },
-
-        "ccp4": function( stage ){
-
-            stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
-
-                o.addRepresentation( "surface", { wireframe: true } );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://3pqr.pdb", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "map": function( stage ){
-
-            stage.loadFile( "data://emd_2682.map.gz", function( o ){
-
-                o.addRepresentation( "surface", {
-                    transparent: true,
-                    opacity: 0.5,
-                    opaqueBack: true
-                } );
-                stage.centerView();
-
-            } );
-
-            stage.loadFile( "data://4UJD.cif.gz", function( o ){
-
-                o.addRepresentation( "cartoon", { color: "chainindex" } );
-                stage.centerView();
-
-            } );
-
-        },
-
-        "molsurf": function( stage ){
-
-            stage.loadFile( "data://3dqb.pdb", function( o ){
-            // stage.loadFile( "data://3sn6.pdb", function( o ){
-            // stage.loadFile( "data://3l5q.pdb", function( o ){
-
-                o.addRepresentation( "licorice", {} );
-                o.addRepresentation( "spacefill" );
-                o.addRepresentation( "surface" );
-                stage.centerView();
-
-            } );
-
-        },
-
-        "cube": function( stage ){
-
-            stage.loadFile( "data://acrolein1gs.cube.gz", function( o ){
-
-                o.addRepresentation( "surface", {
-                    visible: false, isolevel: 0.1, wireframe: true
-                } );
-                o.addRepresentation( "dot", {
-                    visible: true, minValue: 0.1
-                } );
-                o.centerView();
-
-            } );
-
-            stage.loadFile( "data://acrolein.pdb", function( o ){
-
-                o.addRepresentation( "licorice" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "bigcube": function( stage ){
-
-            stage.loadFile( "data://rho-inactive_md-hydration.cube.gz", function( o ){
-
-                o.addRepresentation( "surface", { isolevel: 2.7 } );
-                // o.centerView();
-
-            } );
-
-            stage.loadFile( "data://rho-inactive_md-system.gro", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice", { sele: "hetero" } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "unitcell": function( stage ){
-
-            // stage.loadFile( "data://3pqr.ccp4.gz", function( o ){
-
-            //     o.addRepresentation( "surface", { wireframe: true } );
-            //     o.addRepresentation( "dot", { visible: false } );
-            //     o.centerView();
-
-            // } );
-
-            stage.loadFile( "data://3pqr.pdb", function( o ){
-
-                // var uc = o.structure.unitcell;
-                // var cellPosition = new Float32Array( 3 * 8 );
-                // var v = new THREE.Vector3();
-                // v.set( 0, 0, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 0 );
-                // v.set( 1, 0, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 3 );
-                // v.set( 0, 1, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 6 );
-                // v.set( 0, 0, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 9 );
-                // v.set( 1, 1, 0 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 12 );
-                // v.set( 1, 0, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 15 );
-                // v.set( 0, 1, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 18 );
-                // v.set( 1, 1, 1 ).applyMatrix4( uc.fracToCart ).toArray( cellPosition, 21 );
-                // var cellColor = NGL.Utils.uniformArray3( 8, 1, 0, 0 );
-                // var cellRadius = NGL.Utils.uniformArray( 8, 2 );
-                // var sphereBuffer = new NGL.SphereBuffer(
-                //     cellPosition, cellColor, cellRadius
-                // );
-                // o.addBufferRepresentation( sphereBuffer );
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "ribbon", {
-                    assembly: "UNITCELL", color: 0x00DD11, scale: 0.9
-                } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "biomol": function( stage ){
-
-            stage.loadFile( "data://1U19.cif", function( o ){
-
-                o.addRepresentation( "licorice" );
-                o.addRepresentation( "cartoon", {
-                    assembly: "BU1", color: 0xFF1111
-                } );
-                o.addRepresentation( "cartoon", {
-                    assembly: "BU2", color: 0x11FF11
-                } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "helixorient_issue-7": function( stage ){
-
-            stage.loadFile( "data://4YVS.cif", {
-                onLoad: function( o ){
-
-                    o.addRepresentation( "helixorient" );
-                    o.addRepresentation( "rope", {
-                        transparent: true, opacity: 0.4, side: THREE.FrontSide, smooth: 0
-                    } );
-                    o.addRepresentation( "licorice", { sele: "backbone" } );
-                    o.centerView();
-
-                },
-                assembly: "AU",
-                sele: "86-100:H"
-            } );
-
-        },
-
-        "selectionColoring": function( stage ){
-
-            var schemeId = NGL.ColorFactory.addSelectionScheme( [
-                [ "red", "64-74 or 134-154 or 222-254 or 310-310 or 322-326" ],
-                [ "green", "311-322" ],
-                [ "yellow", "40-63 or 75-95 or 112-133 or 155-173 or 202-221 or 255-277 or 289-309" ],
-                [ "blue", "1-39 or 96-112 or 174-201 or 278-288" ],
-                [ "white", "*" ]
-            ], "TMDET 3dqb" );
-
-            stage.loadFile( "data://3dqb.pdb", function( o ){
-
-                o.addRepresentation( "cartoon", { color: schemeId } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "backboneTypeChange": function( stage ){
-
-            // test case for inter-chain backboneType changes
-
-            stage.loadFile( "data://4V60_A.pdb", function( o ){
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "licorice" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "sdf": function( stage ){
-
-            stage.loadFile( "data://adrenalin.sdf", function( o ){
-
-                o.addRepresentation( "hyperball" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "popc": function( stage ){
-
-            stage.loadFile( "data://popc.gro", function( o ){
-
-                o.addRepresentation( "hyperball", { sele: "popc" } );
-                o.addRepresentation( "line", { sele: "water" } );
-                o.centerView();
-
-            } );
-
-        },
-
-        "mol2": function( stage ){
-
-            stage.loadFile( "data://adrenalin.mol2", function( o ){
-
-                o.addRepresentation( "hyperball" );
-                o.centerView();
-
-            } );
-
-        },
-
-        "orient": function( stage ){
-
-            stage.loadFile( "data://1blu.pdb", function( o ){
-            // stage.loadFile( "data://4UJD.cif.gz", function( o ){
-
-                o.addRepresentation( "hyperball", { sele: "hetero" } );
-                o.addRepresentation( "cartoon" );
-
-                stage.setOrientation(
-                    // center
-                    // [[-3.6467373226585127,-78.06092884928142,7.716310854616407],[-0.05615494746368257,0.10594564167857011,-0.9927850436447037],[-28.381417751312256,-13.79699957370758,-0.29250049591064453],[0,0,0]]
-
-                    // top-left
-                    // [[-28.790610931338176,-78.38821016892629,25.306856097776294],[-0.05615494746368257,0.10594564167857011,-0.9927850436447037],[-28.381417751312256,-13.79699957370758,-0.29250049591064453],[-25.143873608679655,-0.32728131964486323,17.59054524315984]]
-
-                    // zoom
-                    // [[-17.368877091269418,4.556223891659043,-19.999958948625682],[0.8121475098230106,-0.2950105349323463,-0.5033738238795953],[-28.381417751312256,-13.79699957370758,-0.29250049591064453],[0,0,0]]
-
-                    // zoom top-left
-                    [[-18.7172412022005,5.747721793036462,-18.600062456402977],[0.8674842484021494,-0.26428889267349887,-0.4214527968628538],[-28.381417751312256,-13.79699957370758,-0.29250049591064453],[-2.1223017048146358,6.1399751311880255,2.539699744389825]]
-
-                    // ribosome, zoom top-left
-                    // [[-730.877269762092,204.20640614120154,-726.0855834904532],[0.8674842484021494,-0.26428889267349887,-0.4214527968628538],[18.27252197265625,-8.194900512695312,-0.8525924682617188],[-124.43022860838295,218.54094929166942,46.44788910119658]]
-                );
-
-            } );
-
-        },
-
-        "distance": function( stage ){
-
-            stage.loadFile( "data://1blu.pdb", function( o ){
-
-                var atomPair = [
-                    [ "1.CA", "10.CA" ],
-                    [ "1.CA", "30.CA" ]
-                ];
-
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "distance", {
-                    atomPair: atomPair,
-                    color: new THREE.Color( "skyblue" ).getHex()
-                } );
-
-                o.centerView();
-
-            } );
-
-        }
-
-    }
-
-};
-
 // File:shader/CylinderImpostor.vert
 
-NGL.Resources[ '../shader/CylinderImpostor.vert'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - shift\n\n\nattribute vec3 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\nattribute float radius;\n\n// varying float vRadius;\n\n// varying vec3 point;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\n// varying float b;\nvarying vec4 w;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform mat4 modelViewMatrixInverse;\nuniform float shift;\n\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    // vRadius = radius;\n    base_radius.w = radius;\n\n    vec3 center = position;\n    vec3 dir = normalize( position2 - position1 );\n    float ext = length( position2 - position1 ) / 2.0;\n\n    vec3 cam_dir = normalize(\n        ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center\n    );\n\n    vec3 ldir;\n\n    float b = dot( cam_dir, dir );\n    end_b.w = b;\n    if( b < 0.0 ) // direction vector looks away, so flip\n        ldir = -ext * dir;\n    else // direction vector already looks in my direction\n        ldir = ext * dir;\n\n    vec3 left = normalize( cross( cam_dir, ldir ) );\n    vec3 leftShift = shift * left * radius;\n    if( b < 0.0 )\n        leftShift *= -1.0;\n    left = radius * left;\n    vec3 up = radius * normalize( cross( left, ldir ) );\n\n    // transform to modelview coordinates\n    axis =  normalize( normalMatrix * ldir );\n    U = normalize( normalMatrix * up );\n    V = normalize( normalMatrix * left );\n\n    vec4 base4 = modelViewMatrix * vec4( center - ldir + leftShift, 1.0 );\n    base_radius.xyz = base4.xyz / base4.w;\n\n    vec4 top_position = modelViewMatrix * vec4( center + ldir + leftShift, 1.0 );\n    vec4 end4 = top_position;\n    end_b.xyz = end4.xyz / end4.w;\n\n    w = modelViewMatrix * vec4(\n        center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\n    );\n\n    gl_Position = projectionMatrix * w;\n\n    // avoid clipping\n    gl_Position.z = 1.0;\n\n}\n\n\n";
+NGL.Resources[ 'shader/CylinderImpostor.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\nuniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\n\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - shift\n\nattribute vec3 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\nattribute float radius;\n\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform mat4 modelViewMatrixInverse;\nuniform float shift;\n\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    // vRadius = radius;\n    base_radius.w = radius;\n\n    vec3 center = position;\n    vec3 dir = normalize( position2 - position1 );\n    float ext = length( position2 - position1 ) / 2.0;\n\n    vec3 cam_dir = normalize(\n        ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center\n    );\n\n    vec3 ldir;\n\n    float b = dot( cam_dir, dir );\n    end_b.w = b;\n    if( b < 0.0 ) // direction vector looks away, so flip\n        ldir = -ext * dir;\n    else // direction vector already looks in my direction\n        ldir = ext * dir;\n\n    vec3 left = normalize( cross( cam_dir, ldir ) );\n    vec3 leftShift = shift * left * radius;\n    if( b < 0.0 )\n        leftShift *= -1.0;\n    left = radius * left;\n    vec3 up = radius * normalize( cross( left, ldir ) );\n\n    // transform to modelview coordinates\n    axis = normalize( normalMatrix * ldir );\n    U = normalize( normalMatrix * up );\n    V = normalize( normalMatrix * left );\n\n    vec4 base4 = modelViewMatrix * vec4( center - ldir + leftShift, 1.0 );\n    base_radius.xyz = base4.xyz / base4.w;\n\n    vec4 top_position = modelViewMatrix * vec4( center + ldir + leftShift, 1.0 );\n    vec4 end4 = top_position;\n    end_b.xyz = end4.xyz / end4.w;\n\n    w = modelViewMatrix * vec4(\n        center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\n    );\n\n    gl_Position = projectionMatrix * w;\n\n    // avoid clipping\n    gl_Position.z = 1.0;\n\n}\n\n\n";
 
 // File:shader/CylinderImpostor.frag
 
-NGL.Resources[ '../shader/CylinderImpostor.frag'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\nuniform mat3 normalMatrix;\n\n// varying float vRadius;\n\n// varying vec3 point;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\n// varying float b;\nvarying vec4 w;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nfloat distSq3( vec3 v3a, vec3 v3b ){\n\n    return (\n        ( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\n        ( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\n        ( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\n    );\n\n}\n\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos )\n{\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nfloat calcClip( vec3 cameraPos )\n{\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\n\nvoid main()\n{\n    vec3 point = w.xyz / w.w;\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    gl_FragDepthEXT = calcDepth( new_point );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( new_point ) > 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            if( calcClip( new_point ) > 0.0 )\n                discard;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #endif\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    #ifdef PICKING\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }\n    #else\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }\n        gl_FragColor.rgb *= vLightFront;\n        //gl_FragColor.rgb = transformedNormal;\n    #endif\n\n    // #include fog\n\n    #ifdef USE_FOG\n        float depth = gl_FragDepthEXT / gl_FragCoord.w;\n        #ifdef FOG_EXP2\n            const float LOG2 = 1.442695;\n            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n        #else\n            float fogFactor = smoothstep( fogNear, fogFar, depth );\n        #endif\n        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n    #endif\n}\n\n\n\n\n\n\n\n\n";
+NGL.Resources[ 'shader/CylinderImpostor.frag' ] = "\n#extension GL_EXT_frag_depth : enable\n\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\n// uniform mat3 normalMatrix;\n\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nfloat distSq3( vec3 v3a, vec3 v3b ){\n\n    return (\n        ( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\n        ( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\n        ( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\n    );\n\n}\n\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos )\n{\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nfloat calcClip( vec3 cameraPos )\n{\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\n\nvoid main()\n{\n    vec3 point = w.xyz / w.w;\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            normal = axis;\n        #else\n            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    gl_FragDepthEXT = calcDepth( new_point );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( new_point ) > 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            if( calcClip( new_point ) > 0.0 )\n                discard;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #endif\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    #ifdef PICKING\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }\n    #else\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vColor, opacity );\n            }else{\n                gl_FragColor = vec4( vColor2, opacity );\n            }\n        }\n        gl_FragColor.rgb *= vLightFront;\n        //gl_FragColor.rgb = transformedNormal;\n    #endif\n\n    // #include fog\n\n    #ifdef USE_FOG\n        float depth = gl_FragDepthEXT / gl_FragCoord.w;\n        #ifdef FOG_EXP2\n            const float LOG2 = 1.442695;\n            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n        #else\n            float fogFactor = smoothstep( fogNear, fogFar, depth );\n        #endif\n        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n    #endif\n}\n\n\n\n\n\n\n\n\n";
 
 // File:shader/HyperballStickImpostor.vert
 
-NGL.Resources[ '../shader/HyperballStickImpostor.vert'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\nattribute vec3 mapping;\nattribute float radius;\nattribute float radius2;\nattribute vec3 position1;\nattribute vec3 position2;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nvarying float vRadius;\nvarying float vRadius2;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform float shrink;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewProjectionMatrixInverse;\n\n\nvoid main()\n{\n\n    vRadius = radius;\n    vRadius2 = radius2;\n\n    vec4 spaceposition;\n    vec3 position_atom1;\n    vec3 position_atom2;\n    vec4 vertex_position;\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    float radius1 = radius;\n\n    position_atom1 = position1;\n    position_atom2 = position2;\n\n    float distance = distance( position_atom1, position_atom2 );\n\n    spaceposition.z = mapping.z * distance;\n\n    if (radius1 > radius2) {\n        spaceposition.y = mapping.y * 1.5 * radius1;\n        spaceposition.x = mapping.x * 1.5 * radius1;\n    } else {\n        spaceposition.y = mapping.y * 1.5 * radius2;\n        spaceposition.x = mapping.x * 1.5 * radius2;\n    }\n    spaceposition.w = 1.0;\n\n    vec4 e3 = vec4( 1.0 );\n    vec3 e1, e1_temp, e2, e2_temp;\n\n    // Calculation of bond direction: e3\n    e3.xyz = normalize(position_atom1-position_atom2);\n\n    // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\n    if (e3.z == 0.0) { e3.z = 0.0000000000001;}\n    if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\n    if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\n    if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\n\n    // Focus calculation\n    vec4 focus = vec4( 1.0 );\n    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x +\n        ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\n    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y +\n        ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\n    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z +\n        ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\n\n    // e1 calculation\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    // e2 calculation\n    e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\n    e2 = normalize(e2_temp);\n\n    //ROTATION:\n    // final form of change of basis matrix:\n    mat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\n    // Apply rotation and translation to the bond primitive\n    vertex_position.xyz = R * spaceposition.xyz;\n    vertex_position.w = 1.0;\n\n    // TRANSLATION:\n    vertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\n    vertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\n    vertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\n\n    // New position\n    gl_Position = modelViewProjectionMatrix * vertex_position;\n\n    vec4 i_near, i_far;\n\n    // Calculate near from position\n    vec4 near = gl_Position;\n    near.z = 0.0 ;\n    near = modelViewProjectionMatrixInverse * near;\n    i_near = near;\n\n    // Calculate far from position\n    vec4 far = gl_Position;\n    far.z = far.w ;\n    i_far = modelViewProjectionMatrixInverse * far;\n\n    prime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\n    prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\n\n    float Rsquare = (radius1*radius1/shrink) - (\n                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) +\n                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) +\n                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z)\n                    );\n\n    focus.w = Rsquare;\n\n    matrix_near = mat4( i_near, i_far, focus, e3 );\n\n    // avoid clipping\n    gl_Position.z = 1.0;\n\n}\n\n";
+NGL.Resources[ 'shader/HyperballStickImpostor.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\n// uniform mat4 modelViewMatrix;\n// uniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\n\n// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\nattribute vec3 mapping;\nattribute float radius;\nattribute float radius2;\nattribute vec3 position1;\nattribute vec3 position2;\n\nvarying mat4 matrix_near;\nvarying vec4 prime1;\nvarying vec4 prime2;\nvarying float vRadius;\nvarying float vRadius2;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    attribute vec3 pickingColor2;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    attribute vec3 color;\n    attribute vec3 color2;\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\nuniform float shrink;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewProjectionMatrixInverse;\n\n\nvoid main()\n{\n\n    vRadius = radius;\n    vRadius2 = radius2;\n\n    vec4 spaceposition;\n    vec3 position_atom1;\n    vec3 position_atom2;\n    vec4 vertex_position;\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n        vPickingColor2 = pickingColor2;\n    #else\n        vColor = color;\n        vColor2 = color2;\n    #endif\n\n    float radius1 = radius;\n\n    position_atom1 = position1;\n    position_atom2 = position2;\n\n    float distance = distance( position_atom1, position_atom2 );\n\n    spaceposition.z = mapping.z * distance;\n\n    if (radius1 > radius2) {\n        spaceposition.y = mapping.y * 1.5 * radius1;\n        spaceposition.x = mapping.x * 1.5 * radius1;\n    } else {\n        spaceposition.y = mapping.y * 1.5 * radius2;\n        spaceposition.x = mapping.x * 1.5 * radius2;\n    }\n    spaceposition.w = 1.0;\n\n    vec4 e3 = vec4( 1.0 );\n    vec3 e1, e1_temp, e2, e2_temp;\n\n    // Calculation of bond direction: e3\n    e3.xyz = normalize(position_atom1-position_atom2);\n\n    // little hack to avoid some problems of precision due to graphic card limitation using float: To improve soon\n    if (e3.z == 0.0) { e3.z = 0.0000000000001;}\n    if ( (position_atom1.x - position_atom2.x) == 0.0) { position_atom1.x += 0.001;}\n    if ( (position_atom1.y - position_atom2.y) == 0.0) { position_atom1.y += 0.001;}\n    if ( (position_atom1.z - position_atom2.z) == 0.0) { position_atom1.z += 0.001;}\n\n    // Focus calculation\n    vec4 focus = vec4( 1.0 );\n    focus.x = ( position_atom1.x*position_atom1.x - position_atom2.x*position_atom2.x +\n        ( radius2*radius2 - radius1*radius1 )*e3.x*e3.x/shrink )/(2.0*(position_atom1.x - position_atom2.x));\n    focus.y = ( position_atom1.y*position_atom1.y - position_atom2.y*position_atom2.y +\n        ( radius2*radius2 - radius1*radius1 )*e3.y*e3.y/shrink )/(2.0*(position_atom1.y - position_atom2.y));\n    focus.z = ( position_atom1.z*position_atom1.z - position_atom2.z*position_atom2.z +\n        ( radius2*radius2 - radius1*radius1 )*e3.z*e3.z/shrink )/(2.0*(position_atom1.z - position_atom2.z));\n\n    // e1 calculation\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    // e2 calculation\n    e2_temp = e1.yzx * e3.zxy - e1.zxy * e3.yzx;\n    e2 = normalize(e2_temp);\n\n    //ROTATION:\n    // final form of change of basis matrix:\n    mat3 R= mat3( e1.xyz, e2.xyz, e3.xyz );\n    // Apply rotation and translation to the bond primitive\n    vertex_position.xyz = R * spaceposition.xyz;\n    vertex_position.w = 1.0;\n\n    // TRANSLATION:\n    vertex_position.x += (position_atom1.x+position_atom2.x) / 2.0;\n    vertex_position.y += (position_atom1.y+position_atom2.y) / 2.0;\n    vertex_position.z += (position_atom1.z+position_atom2.z) / 2.0;\n\n    // New position\n    gl_Position = modelViewProjectionMatrix * vertex_position;\n\n    vec4 i_near, i_far;\n\n    // Calculate near from position\n    vec4 near = gl_Position;\n    near.z = 0.0 ;\n    near = modelViewProjectionMatrixInverse * near;\n    i_near = near;\n\n    // Calculate far from position\n    vec4 far = gl_Position;\n    far.z = far.w ;\n    i_far = modelViewProjectionMatrixInverse * far;\n\n    prime1 = vec4( position_atom1 - (position_atom1 - focus.xyz)*shrink, 1.0 );\n    prime2 = vec4( position_atom2 - (position_atom2 - focus.xyz)*shrink, 1.0 );\n\n    float Rsquare = (radius1*radius1/shrink) - (\n                        (position_atom1.x - focus.x)*(position_atom1.x - focus.x) +\n                        (position_atom1.y - focus.y)*(position_atom1.y - focus.y) +\n                        (position_atom1.z - focus.z)*(position_atom1.z - focus.z)\n                    );\n\n    focus.w = Rsquare;\n\n    matrix_near = mat4( i_near, i_far, focus, e3 );\n\n    // avoid clipping\n    gl_Position.z = 1.0;\n\n}\n\n";
 
 // File:shader/HyperballStickImpostor.frag
 
-NGL.Resources[ '../shader/HyperballStickImpostor.frag'] = "// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\n#extension GL_EXT_frag_depth : enable\n\n// varying vec3 mapping;\n\nvarying mat4 matrix_near;\n\nvarying vec4 prime1;\nvarying vec4 prime2;\n\nvarying float vRadius;\nvarying float vRadius2;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\nuniform mat4 projectionMatrix;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nfloat calcClip( vec4 cameraPos )\n{\n    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\nfloat calcClip( vec3 cameraPos )\n{\n    return calcClip( vec4( cameraPos, 1.0 ) );\n}\n\n\nfloat calcDepth( in vec3 cameraPos )\n{\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nvec3 isect_surf2(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t2 =(-b+sqrt(delta))/a;\n\n    return r.origin+t2*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    float radius = max( vRadius, vRadius2 );\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    #ifdef NEAR_CLIP\n        if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){\n            M = isect_surf2(ray, mat);\n            if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )\n                discard;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #endif\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, objectId );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n    #endif\n\n    // #include fog\n\n    #ifdef USE_FOG\n        float depth = gl_FragDepthEXT / gl_FragCoord.w;\n        #ifdef FOG_EXP2\n            const float LOG2 = 1.442695;\n            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n        #else\n            float fogFactor = smoothstep( fogNear, fogFar, depth );\n        #endif\n        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n    #endif\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n";
+NGL.Resources[ 'shader/HyperballStickImpostor.frag' ] = "\n#extension GL_EXT_frag_depth : enable\n\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\n// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n\n// License: CeCILL-C license (http://www.cecill.info/)\n\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n\n\nvarying mat4 matrix_near;\nvarying vec4 prime1;\nvarying vec4 prime2;\nvarying float vRadius;\nvarying float vRadius2;\n\nuniform float opacity;\nuniform float nearClip;\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\nuniform mat4 projectionMatrix;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor;\n    varying vec3 vColor2;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nfloat calcClip( vec4 cameraPos )\n{\n    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\nfloat calcClip( vec3 cameraPos )\n{\n    return calcClip( vec4( cameraPos, 1.0 ) );\n}\n\n\nfloat calcDepth( in vec3 cameraPos )\n{\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\n\nvec3 isect_surf2(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t2 =(-b+sqrt(delta))/a;\n\n    return r.origin+t2*r.direction;\n}\n\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );\n// }\n\n// void main(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n\nvoid main()\n{\n\n    float radius = max( vRadius, vRadius2 );\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    #ifdef NEAR_CLIP\n        if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){\n            M = isect_surf2(ray, mat);\n            if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )\n                discard;\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            normal = vec3( 0.0, 0.0, 0.4 );\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #endif\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    // Give color parameters to the Graphic card\n    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.a = 1.0;\n\n    vec3 transformedNormal = normal;\n    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n    #include light\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vPickingColor;\n        }else{\n            diffusecolor = vPickingColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, objectId );\n    #else\n        // lerp function not in GLSL. Find something else ...\n        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );\n        if( distance_ratio>0.5 ){\n            diffusecolor = vColor;\n        }else{\n            diffusecolor = vColor2;\n        }\n        gl_FragColor = vec4( diffusecolor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n    #endif\n\n    // #include fog\n\n    #ifdef USE_FOG\n        float depth = gl_FragDepthEXT / gl_FragCoord.w;\n        #ifdef FOG_EXP2\n            const float LOG2 = 1.442695;\n            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n        #else\n            float fogFactor = smoothstep( fogNear, fogFar, depth );\n        #endif\n        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n    #endif\n\n    // ############## Fog effect #####################################################\n    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;\n    // and uncomment the next lines.\n    // Color of the fog: white\n    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;\n    //float fogExponent  = fogDistance * fogDistance * 0.007;\n    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);\n    //float fogFactor   = exp2(-abs(fogExponent));\n    //fogFactor = clamp(fogFactor, 0.0, 1.0);\n\n    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;\n    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);\n    //gl_FragColor.a = 1.0;\n    // ##################################################################################\n\n}\n";
 
 // File:shader/Line.vert
 
-NGL.Resources[ '../shader/Line.vert'] = "\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec4 cameraPos;\n\n\nvoid main()\n{\n\n    vColor = color;\n\n    cameraPos =  modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
+NGL.Resources[ 'shader/Line.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec4 cameraPos;\n\n\nvoid main()\n{\n\n    vColor = color;\n\n    cameraPos =  modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
 
 // File:shader/Line.frag
 
-NGL.Resources[ '../shader/Line.frag'] = "\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vColor;\nvarying vec4 cameraPos;\n\n#include fog_params\n\n\nvoid main()\n{\n\n	#ifdef NEAR_CLIP\n		if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        	discard;\n    #endif\n\n    gl_FragColor = vec4( vColor, opacity );\n\n    #include fog\n\n}\n";
+NGL.Resources[ 'shader/Line.frag' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec3 vColor;\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n#endif\n\n#include fog_params\n\n\nvoid main()\n{\n\n	#ifdef NEAR_CLIP\n		if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n        	discard;\n    #endif\n\n    gl_FragColor = vec4( vColor, opacity );\n\n    #include fog\n\n}\n";
 
 // File:shader/LineSprite.vert
 
-NGL.Resources[ '../shader/LineSprite.vert'] = "// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Note: here the box screen aligned code from Open-Source PyMOL is used\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - adapted for line sprites\n\n\nattribute lowp vec2 inputMapping;\nattribute lowp vec3 inputColor;\nattribute lowp vec3 inputColor2;\nattribute lowp vec3 inputAxis;\nattribute lowp float inputWidth;\n\nvarying float dist;\nvarying lowp vec3 color;\nvarying lowp vec3 color2;\n\n\n// void main2(void){\n//     colorx = inputColor;\n\n//     vec2 B;\n//     vec3 C;\n//     if (inputAxis.y != 0.0 || inputAxis.z != 0.0){\n//         C = vec3(1.0, 0.0, 0.0);\n//     }else{\n//         C = vec3(0.0, 1.0, 0.0);\n//     }\n//     B = normalize(cross(inputAxis, C).xy);\n\n//     vec4 cameraCornerPos = modelViewMatrix * vec4( position, 1.0 );\n//     cameraCornerPos.xy += inputMapping * (B.xy * inputWidth);\n\n//     gl_Position = projectionMatrix * cameraCornerPos;\n// }\n\n\nvoid main(void){\n    mat4 MVMatrix = modelViewMatrix;\n    mat4 PMatrix = projectionMatrix;\n    vec4 EyePoint = vec4( cameraPosition, 1.0 );\n\n    vec3 center = position.xyz;   \n    vec3 dir = normalize(inputAxis);\n    // float ext = inputCylinderHeight/2.0;\n    vec3 ldir;\n\n    vec3 cam_dir = normalize(EyePoint.xyz - center);\n    float b = dot(cam_dir, dir);\n    if(b<0.0) // direction vector looks away, so flip\n        //ldir = -ext*dir;\n        ldir = -(length(inputAxis)/2.0) * normalize(inputAxis);\n    else // direction vector already looks in my direction\n        //ldir = ext*dir;\n        ldir = (length(inputAxis)/2.0) * normalize(inputAxis);\n\n    vec3 left = cross(cam_dir, ldir);\n    vec3 up = cross(left, ldir);\n    left = inputWidth*normalize(left);\n    up = inputWidth*normalize(up);\n\n    vec4 w = MVMatrix * vec4( \n        center + inputMapping.x*ldir + inputMapping.y*left, 1.0 \n    );\n\n    gl_Position = PMatrix * w;\n\n\n    vec4 base4 = MVMatrix * vec4(center-ldir, 1.0);\n    vec3 base = base4.xyz / base4.w;\n\n    vec4 top_position = MVMatrix*(vec4(center+ldir,1.0));\n    vec4 end4 = top_position;\n    vec3 end = end4.xyz / end4.w;\n\n    vec3 point = w.xyz / w.w;\n\n    color = inputColor;\n    color2 = inputColor2;\n    \n    // TODO compare without sqrt\n    if( distance( point, end ) < distance( point, base ) ){\n        dist = b > 0.0 ? 1.0 : 0.0;\n    }else{\n        dist = b < 0.0 ? 1.0 : 0.0;\n    }\n\n}";
+NGL.Resources[ 'shader/LineSprite.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\nuniform vec3 cameraPosition;\n\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n\n//  All Rights Reserved\n\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Note: here the box screen aligned code from Open-Source PyMOL is used\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - adapted for line sprites\n\nattribute vec3 position;\nattribute lowp vec2 inputMapping;\nattribute lowp vec3 inputColor;\nattribute lowp vec3 inputColor2;\nattribute lowp vec3 inputAxis;\nattribute lowp float inputWidth;\n\nvarying float dist;\nvarying lowp vec3 color;\nvarying lowp vec3 color2;\n\n\n// void main2(void){\n//     colorx = inputColor;\n\n//     vec2 B;\n//     vec3 C;\n//     if (inputAxis.y != 0.0 || inputAxis.z != 0.0){\n//         C = vec3(1.0, 0.0, 0.0);\n//     }else{\n//         C = vec3(0.0, 1.0, 0.0);\n//     }\n//     B = normalize(cross(inputAxis, C).xy);\n\n//     vec4 cameraCornerPos = modelViewMatrix * vec4( position, 1.0 );\n//     cameraCornerPos.xy += inputMapping * (B.xy * inputWidth);\n\n//     gl_Position = projectionMatrix * cameraCornerPos;\n// }\n\n\nvoid main(void){\n    mat4 MVMatrix = modelViewMatrix;\n    mat4 PMatrix = projectionMatrix;\n    vec4 EyePoint = vec4( cameraPosition, 1.0 );\n\n    vec3 center = position.xyz;\n    vec3 dir = normalize(inputAxis);\n    // float ext = inputCylinderHeight/2.0;\n    vec3 ldir;\n\n    vec3 cam_dir = normalize(EyePoint.xyz - center);\n    float b = dot(cam_dir, dir);\n    if(b<0.0) // direction vector looks away, so flip\n        //ldir = -ext*dir;\n        ldir = -(length(inputAxis)/2.0) * normalize(inputAxis);\n    else // direction vector already looks in my direction\n        //ldir = ext*dir;\n        ldir = (length(inputAxis)/2.0) * normalize(inputAxis);\n\n    vec3 left = cross(cam_dir, ldir);\n    vec3 up = cross(left, ldir);\n    left = inputWidth*normalize(left);\n    up = inputWidth*normalize(up);\n\n    vec4 w = MVMatrix * vec4(\n        center + inputMapping.x*ldir + inputMapping.y*left, 1.0\n    );\n\n    gl_Position = PMatrix * w;\n\n\n    vec4 base4 = MVMatrix * vec4(center-ldir, 1.0);\n    vec3 base = base4.xyz / base4.w;\n\n    vec4 top_position = MVMatrix*(vec4(center+ldir,1.0));\n    vec4 end4 = top_position;\n    vec3 end = end4.xyz / end4.w;\n\n    vec3 point = w.xyz / w.w;\n\n    color = inputColor;\n    color2 = inputColor2;\n\n    // TODO compare without sqrt\n    if( distance( point, end ) < distance( point, base ) ){\n        dist = b > 0.0 ? 1.0 : 0.0;\n    }else{\n        dist = b < 0.0 ? 1.0 : 0.0;\n    }\n\n}";
 
 // File:shader/LineSprite.frag
 
-NGL.Resources[ '../shader/LineSprite.frag'] = "\nvarying float dist;\nvarying highp vec3 color;\nvarying highp vec3 color2;\n\n#include fog_params\n\n\nvoid main() {\n\n    if( dist > 0.5 ){\n        gl_FragColor = vec4( color, 1.0 );    \n    }else{\n        gl_FragColor = vec4( color2, 1.0 );\n    }\n\n    #include fog\n}\n";
+NGL.Resources[ 'shader/LineSprite.frag' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nvarying float dist;\nvarying highp vec3 color;\nvarying highp vec3 color2;\n\n#include fog_params\n\n\nvoid main() {\n\n    if( dist > 0.5 ){\n        gl_FragColor = vec4( color, 1.0 );\n    }else{\n        gl_FragColor = vec4( color2, 1.0 );\n    }\n\n    #include fog\n}\n";
 
 // File:shader/Mesh.vert
 
-NGL.Resources[ '../shader/Mesh.vert'] = "\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n        vNormal = normalize( normalMatrix * normal );\n    #endif\n\n    cameraPos =  modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
+NGL.Resources[ 'shader/Mesh.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\nuniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    attribute vec3 normal;\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\nvoid main()\n{\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n        vNormal = normalize( normalMatrix * normal );\n    #endif\n\n    cameraPos = modelViewMatrix * vec4( position, 1.0 );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
 
 // File:shader/Mesh.frag
 
-NGL.Resources[ '../shader/Mesh.frag'] = "\n#ifdef FLAT_SHADED\n    #extension GL_OES_standard_derivatives : enable\n#endif\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        #ifdef DULL_INTERIOR\n            if( !gl_FrontFacing ){\n                transformedNormal = vec3( 0.0, 0.0, 0.4 );\n            }\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        #ifdef OPAQUE_BACK\n            #ifdef FLIP_SIDED\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }else{\n                    gl_FragColor = vec4( vColor, opacity );\n                }\n            #else\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, opacity );\n                }else{\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }\n            #endif\n        #else\n            gl_FragColor = vec4( vColor, opacity );\n        #endif\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
+NGL.Resources[ 'shader/Mesh.frag' ] = "\n#ifdef FLAT_SHADED\n    #extension GL_OES_standard_derivatives : enable\n#endif\n\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\nvoid main()\n{\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        #ifdef DULL_INTERIOR\n            if( !gl_FrontFacing ){\n                transformedNormal = vec3( 0.0, 0.0, 0.4 );\n            }\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #ifndef NOLIGHT\n            #include light\n        #endif\n\n        #ifdef OPAQUE_BACK\n            #ifdef FLIP_SIDED\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }else{\n                    gl_FragColor = vec4( vColor, opacity );\n                }\n            #else\n                if( float( gl_FrontFacing ) == 1.0 ){\n                    gl_FragColor = vec4( vColor, opacity );\n                }else{\n                    gl_FragColor = vec4( vColor, 1.0 );\n                }\n            #endif\n        #else\n            gl_FragColor = vec4( vColor, opacity );\n        #endif\n\n        #ifndef NOLIGHT\n            gl_FragColor.rgb *= vLightFront;\n        #endif\n\n    #endif\n\n    #include fog\n\n}\n";
 
 // File:shader/ParticleSprite.vert
 
-NGL.Resources[ '../shader/ParticleSprite.vert'] = "\nattribute vec2 mapping;\nattribute vec3 color;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec3 vColor;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n// \n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n    \n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n}\n\n\nvoid main(void){\n\n    vColor = color;\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    sphereRadius = radius;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    if( gl_Position.z-sphereRadius<=1.0 )\n        gl_Position.z = -10.0;\n}\n\n\n\n\n";
+NGL.Resources[ 'shader/ParticleSprite.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\n// uniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\nattribute vec2 mapping;\nattribute vec3 color;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec3 vColor;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n}\n\n\nvoid main(void){\n\n    vColor = color;\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    sphereRadius = radius;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    if( gl_Position.z-sphereRadius<=1.0 )\n        gl_Position.z = -10.0;\n}\n\n\n\n\n";
 
 // File:shader/ParticleSprite.frag
 
-NGL.Resources[ '../shader/ParticleSprite.frag'] = "\nvarying vec3 point;\nvarying vec3 vColor;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\n#include fog_params\n\n\nvoid main() {\n\n    vec3 rayDirection = normalize( point );\n    \n    float B = -2.0 * dot(rayDirection, cameraSpherePos);\n    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0)\n        discard;\n\n	gl_FragColor = vec4( vColor, 1.0 );\n\n    #include fog\n\n}\n";
+NGL.Resources[ 'shader/ParticleSprite.frag' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nvarying vec3 point;\nvarying vec3 vColor;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\n#include fog_params\n\n\nvoid main() {\n\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos);\n    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0)\n        discard;\n\n	gl_FragColor = vec4( vColor, 1.0 );\n\n    #include fog\n\n}\n";
 
 // File:shader/Quad.vert
 
-NGL.Resources[ '../shader/Quad.vert'] = "attribute vec2 position;\nattribute vec2 texture;\nvarying vec2 texCoord;\nvoid main(void) {\n    texCoord = texture;\n    gl_Position = vec4(position, 0.0, 1.0);\n}";
+NGL.Resources[ 'shader/Quad.vert' ] = "\nprecision highp float;\nprecision highp int;\n\nattribute vec2 position;\nattribute vec2 texture;\nvarying vec2 texCoord;\n\nvoid main(void) {\n    texCoord = texture;\n    gl_Position = vec4(position, 0.0, 1.0);\n}\n";
 
 // File:shader/Quad.frag
 
-NGL.Resources[ '../shader/Quad.frag'] = "precision mediump float;\nuniform sampler2D diffuse;\nvarying vec2 texCoord;\nvoid main(void) {\n    vec4 color = texture2D(diffuse, texCoord);\n    gl_FragColor = vec4(color.rgb, color.a);\n}";
+NGL.Resources[ 'shader/Quad.frag' ] = "\nprecision mediump float;\nprecision mediump int;\n\nuniform sampler2D diffuse;\nvarying vec2 texCoord;\n\nvoid main(void) {\n    vec4 color = texture2D(diffuse, texCoord);\n    gl_FragColor = vec4(color.rgb, color.a);\n}\n";
 
 // File:shader/Ribbon.vert
 
-NGL.Resources[ '../shader/Ribbon.vert'] = "\nattribute vec3 inputDir;\nattribute float inputSize;\n//attribute vec3 inputNormal;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 inputColor;\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        color = inputColor;\n        vNormal = normalize( normalMatrix * normal );\n    #endif\n\n    cameraPos = modelViewMatrix * vec4(\n        position + ( normalize( inputDir ) * inputSize ), 1.0\n    );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
+NGL.Resources[ 'shader/Ribbon.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n#ifndef PICKING\n    uniform mat3 normalMatrix;\n#endif\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\nattribute vec3 dir;\nattribute float size;\nattribute vec3 normal;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n        vNormal = normalize( normalMatrix * normal );\n    #endif\n\n    cameraPos = modelViewMatrix * vec4(\n        position + ( normalize( dir ) * size ), 1.0\n    );\n\n    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );\n\n}\n";
 
 // File:shader/Ribbon.frag
 
-NGL.Resources[ '../shader/Ribbon.frag'] = "\n#extension GL_OES_standard_derivatives : enable\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 color;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = normalize( cross( fdx, fdy ) );\n        #else\n            vec3 normal = normalize( vNormal );\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( color, opacity );\n        // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.rgb *= vLightFront;\n        // gl_FragColor.rgb = normalx;\n        //gl_FragColor.rgb = color;\n    #endif\n\n    #include fog\n}\n";
+NGL.Resources[ 'shader/Ribbon.frag' ] = "\n#ifdef FLAT_SHADED\n    #extension GL_OES_standard_derivatives : enable\n#endif\n\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nuniform float opacity;\nuniform float nearClip;\n\nvarying vec4 cameraPos;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n    varying vec3 vNormal;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvoid main() {\n\n    #ifdef NEAR_CLIP\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            discard;\n    #endif\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n\n        #ifdef FLAT_SHADED\n            vec3 fdx = dFdx( cameraPos.xyz );\n            vec3 fdy = dFdy( cameraPos.xyz );\n            vec3 normal = cross( fdx, fdy );\n        #else\n            vec3 normal = vNormal;\n        #endif\n\n        vec3 transformedNormal = normalize( normal );\n        #ifndef FLAT_SHADED\n            #ifdef DOUBLE_SIDED\n                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n            #endif\n            #ifdef FLIP_SIDED\n                transformedNormal = -transformedNormal;\n            #endif\n        #endif\n\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( vColor, opacity );\n        // gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n        gl_FragColor.rgb *= vLightFront;\n        // gl_FragColor.rgb = normalx;\n        //gl_FragColor.rgb = vColor;\n    #endif\n\n    #include fog\n}\n";
 
 // File:shader/SDFFont.vert
 
-NGL.Resources[ '../shader/SDFFont.vert'] = "\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\nuniform float nearClip;\n\n\nvoid main(void){\n\n    vColor = color;\n    texCoord = inputTexCoord;\n\n    vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );\n    vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\n    cameraCornerPos.xy += mapping * inputSize;\n\n    cameraCornerPos.z += 0.5;\n\n    gl_Position = projectionMatrix * cameraCornerPos;\n\n    #ifdef NEAR_CLIP\n        // move out of viewing frustum for custom clipping\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            gl_Position.w = -10.0;\n    #endif\n\n}\n";
+NGL.Resources[ 'shader/SDFFont.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\nattribute vec3 color;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\nuniform float nearClip;\n\n\nvoid main(void){\n\n    vColor = color;\n    texCoord = inputTexCoord;\n\n    vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );\n    vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\n    cameraCornerPos.xy += mapping * inputSize;\n\n    cameraCornerPos.z += 0.5;\n\n    gl_Position = projectionMatrix * cameraCornerPos;\n\n    #ifdef NEAR_CLIP\n        // move out of viewing frustum for custom clipping\n        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )\n            gl_Position.w = -10.0;\n    #endif\n\n}\n";
 
 // File:shader/SDFFont.frag
 
-NGL.Resources[ '../shader/SDFFont.frag'] = "\n#extension GL_OES_standard_derivatives : enable\n\nuniform vec3 backgroundColor;\nuniform sampler2D fontTexture;\n\nuniform float opacity;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\n#include fog_params\n\nconst float smoothness = 16.0;\nconst float gamma = 2.2;\n\nvoid main() {\n\n    // retrieve signed distance\n    float sdf = texture2D( fontTexture, texCoord ).a;\n\n    // perform adaptive anti-aliasing of the edges\n    float w = clamp(\n        smoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n        0.0,\n        0.5\n    );\n    float a = smoothstep( 0.5 - w, 0.5 + w, sdf );\n\n    // gamma correction for linear attenuation\n    a = pow( a, 1.0 / gamma );\n\n    if( a < 0.2 ) discard;\n\n    a *= opacity;\n\n    #ifndef ANTIALIAS\n        gl_FragColor = vec4( mix( backgroundColor, vColor, a ), 1.0 );\n    #else\n        gl_FragColor = vec4( vColor, a );\n    #endif\n\n    #include fog\n\n}\n\n";
+NGL.Resources[ 'shader/SDFFont.frag' ] = "\n#extension GL_OES_standard_derivatives : enable\n\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nuniform sampler2D fontTexture;\nuniform float opacity;\n\nvarying vec3 vColor;\nvarying vec2 texCoord;\n\n#include fog_params\n\nconst float smoothness = 16.0;\nconst float gamma = 2.2;\n\nvoid main() {\n\n    // retrieve signed distance\n    float sdf = texture2D( fontTexture, texCoord ).a;\n\n    // perform adaptive anti-aliasing of the edges\n    float w = clamp(\n        smoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n        0.0,\n        0.5\n    );\n    float a = smoothstep( 0.5 - w, 0.5 + w, sdf );\n\n    // gamma correction for linear attenuation\n    a = pow( a, 1.0 / gamma );\n\n    if( a < 0.2 ) discard;\n\n    a *= opacity;\n\n    gl_FragColor = vec4( vColor, a );\n\n    #include fog\n\n}\n\n";
 
 // File:shader/SphereHalo.vert
 
-NGL.Resources[ '../shader/SphereHalo.vert'] = "\nattribute vec2 mapping;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n// \n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n    \n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n}\n\n\nvoid main(void){\n\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    sphereRadius = radius * 1.3;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    if( gl_Position.z-sphereRadius<=1.0 )\n        gl_Position.z = -10.0;\n}\n\n\n\n\n\n";
+NGL.Resources[ 'shader/SphereHalo.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\nattribute vec2 mapping;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform mat4 projectionMatrixInverse;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n}\n\n\nvoid main(void){\n\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyz;\n    sphereRadius = radius * 1.3;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n    // move out of viewing frustum to avoid clipping artifacts\n    if( gl_Position.z-sphereRadius<=1.0 )\n        gl_Position.z = -10.0;\n}\n\n\n\n\n\n";
 
 // File:shader/SphereHalo.frag
 
-NGL.Resources[ '../shader/SphereHalo.frag'] = "\nvarying vec3 point;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform vec3 color;\n\n#include fog_params\n\n\nvoid main(void)\n{   \n    vec3 rayDirection = normalize( point );\n    \n    float B = -2.0 * dot(rayDirection, cameraSpherePos);\n    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0)\n        discard;\n\n    float r2 = sphereRadius*0.97;\n    B = -2.0 * dot(rayDirection, cameraSpherePos);\n    C = dot(cameraSpherePos, cameraSpherePos) - (r2*r2);\n    det = (B * B) - (4.0 * C);\n\n    if(det < 0.0){\n        gl_FragColor = vec4( color, 1.0 );\n\n    }else{\n    	gl_FragColor = vec4( color, 0.5 );\n    }\n    \n    #include fog\n}\n\n\n";
+NGL.Resources[ 'shader/SphereHalo.frag' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nvarying vec3 point;\nvarying vec3 cameraSpherePos;\nvarying float sphereRadius;\n\nuniform vec3 color;\n\n#include fog_params\n\n\nvoid main(void)\n{\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos);\n    float C = dot(cameraSpherePos, cameraSpherePos) - (sphereRadius*sphereRadius);\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0)\n        discard;\n\n    float r2 = sphereRadius*0.97;\n    B = -2.0 * dot(rayDirection, cameraSpherePos);\n    C = dot(cameraSpherePos, cameraSpherePos) - (r2*r2);\n    det = (B * B) - (4.0 * C);\n\n    if(det < 0.0){\n        gl_FragColor = vec4( color, 1.0 );\n\n    }else{\n    	gl_FragColor = vec4( color, 0.5 );\n    }\n\n    #include fog\n}\n\n\n";
 
 // File:shader/SphereImpostor.vert
 
-NGL.Resources[ '../shader/SphereImpostor.vert'] = "\nattribute vec2 mapping;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n#endif\n\nuniform mat4 projectionMatrixInverse;\nuniform float nearClip;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n\n}\n\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n    #endif\n\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyzw;\n    sphereRadius = radius;\n\n    // avoid clipping, added again in fragment shader\n    cameraSpherePos.z -= radius;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n}\n\n\n\n\n\n";
+NGL.Resources[ 'shader/SphereImpostor.vert' ] = "\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 modelMatrix;\nuniform mat4 modelViewMatrix;\nuniform mat4 projectionMatrix;\n// uniform mat4 viewMatrix;\n// uniform mat3 normalMatrix;\n// uniform vec3 cameraPosition;\n\nattribute vec3 position;\nattribute vec2 mapping;\nattribute float radius;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    attribute vec3 color;\n    varying vec3 vColor;\n#endif\n\nuniform mat4 projectionMatrixInverse;\nuniform float nearClip;\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        sphereRadius, 0.0, 0.0, 0.0,\n        0.0, sphereRadius, 0.0, 0.0,\n        0.0, 0.0, sphereRadius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n\n}\n\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        vColor = color;\n    #endif\n\n    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyzw;\n    sphereRadius = radius;\n\n    // avoid clipping, added again in fragment shader\n    cameraSpherePos.z -= radius;\n\n    gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    point = ( projectionMatrixInverse * gl_Position ).xyz;\n\n}\n\n\n\n\n\n";
 
 // File:shader/SphereImpostor.frag
 
-NGL.Resources[ '../shader/SphereImpostor.frag'] = "\n#extension GL_EXT_frag_depth : enable\n\n// not available in WebGL\n// #extension GL_ARB_conservative_depth : enable\n// layout(depth_less) out float gl_FragDepthEXT;\n\nuniform float opacity;\nuniform float nearClip;\n\nuniform mat4 projectionMatrix;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvec3 cameraPos;\nvec3 cameraNormal;\n\n\n// vec4 poly_color = gl_Color;\n\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos )\n{\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nfloat calcClip( vec3 cameraPos )\n{\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\n\nbool flag2 = false;\n\n\nbool Impostor(out vec3 cameraPos, out vec3 cameraNormal)\n{\n\n    vec3 cameraSpherePos2 = cameraSpherePos.xyz;\n    cameraSpherePos2.z += sphereRadius;\n\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos2);\n    float C = dot(cameraSpherePos2, cameraSpherePos2) - (sphereRadius*sphereRadius);\n\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt(det);\n        float posT = (-B + sqrtDet)/2.0;\n        float negT = (-B - sqrtDet)/2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n\n        #ifdef NEAR_CLIP\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max(posT, negT);\n                cameraNormal = vec3( 0.0, 0.0, 0.4 );\n                return false;\n            }else if( calcClip( cameraPos ) > 0.0 ){\n                cameraPos = rayDirection * max(posT, negT);\n                cameraNormal = vec3( 0.0, 0.0, 0.4 );\n                flag2 = true;\n                return false;\n            }else{\n                cameraNormal = normalize(cameraPos - cameraSpherePos2);\n            }\n        #else\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max(posT, negT);\n                cameraNormal = vec3( 0.0, 0.0, 0.4 );\n                return false;\n            }else{\n                cameraNormal = normalize(cameraPos - cameraSpherePos2);\n            }\n        #endif\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\n\nvoid main(void)\n{\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( cameraPos ) > 0.0 )\n            discard;\n    #endif\n\n    // FIXME not compatible with custom clipping plane\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        // clamp to near clipping plane and add a tiny value to\n        // make spheres with a greater radius occlude smaller ones\n        #ifdef NEAR_CLIP\n            if( flag2 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / sphereRadius ) );\n            }else if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );\n            }\n        #else\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );\n            }\n        #endif\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = cameraNormal;\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( vColor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n\n        // gl_FragColor.a = 0.5;\n        // gl_FragColor.rgb = transformedNormal;\n        // gl_FragColor.rgb = point;\n    #endif\n\n    // #include fog\n\n    #ifdef USE_FOG\n        float depth = gl_FragDepthEXT / gl_FragCoord.w;\n        #ifdef FOG_EXP2\n            const float LOG2 = 1.442695;\n            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n        #else\n            float fogFactor = smoothstep( fogNear, fogFar, depth );\n        #endif\n        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n    #endif\n\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( vColor, 1.0 );\n// }\n\n\n\n";
+NGL.Resources[ 'shader/SphereImpostor.frag' ] = "\n#extension GL_EXT_frag_depth : enable\n\n// not available in WebGL\n// #extension GL_ARB_conservative_depth : enable\n// layout(depth_less) out float gl_FragDepthEXT;\n\nprecision highp float;\nprecision highp int;\n\n// uniform mat4 viewMatrix;\n// uniform vec3 cameraPosition;\n\nuniform float opacity;\nuniform float nearClip;\nuniform mat4 projectionMatrix;\n\nvarying vec3 point;\nvarying vec4 cameraSpherePos;\nvarying float sphereRadius;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    varying vec3 vColor;\n#endif\n\n#include light_params\n\n#include fog_params\n\n\nvec3 cameraPos;\nvec3 cameraNormal;\n\n\n// vec4 poly_color = gl_Color;\n\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos )\n{\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\n\nfloat calcClip( vec3 cameraPos )\n{\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\n\nbool flag2 = false;\n\n\nbool Impostor(out vec3 cameraPos, out vec3 cameraNormal)\n{\n\n    vec3 cameraSpherePos2 = cameraSpherePos.xyz;\n    cameraSpherePos2.z += sphereRadius;\n\n    vec3 rayDirection = normalize( point );\n\n    float B = -2.0 * dot(rayDirection, cameraSpherePos2);\n    float C = dot(cameraSpherePos2, cameraSpherePos2) - (sphereRadius*sphereRadius);\n\n    float det = (B * B) - (4.0 * C);\n    if(det < 0.0){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt(det);\n        float posT = (-B + sqrtDet)/2.0;\n        float negT = (-B - sqrtDet)/2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n\n        #ifdef NEAR_CLIP\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max(posT, negT);\n                cameraNormal = vec3( 0.0, 0.0, 0.4 );\n                return false;\n            }else if( calcClip( cameraPos ) > 0.0 ){\n                cameraPos = rayDirection * max(posT, negT);\n                cameraNormal = vec3( 0.0, 0.0, 0.4 );\n                flag2 = true;\n                return false;\n            }else{\n                cameraNormal = normalize(cameraPos - cameraSpherePos2);\n            }\n        #else\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max(posT, negT);\n                cameraNormal = vec3( 0.0, 0.0, 0.4 );\n                return false;\n            }else{\n                cameraNormal = normalize(cameraPos - cameraSpherePos2);\n            }\n        #endif\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\n\nvoid main(void)\n{\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( cameraPos ) > 0.0 )\n            discard;\n    #endif\n\n    // FIXME not compatible with custom clipping plane\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        // clamp to near clipping plane and add a tiny value to\n        // make spheres with a greater radius occlude smaller ones\n        #ifdef NEAR_CLIP\n            if( flag2 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / sphereRadius ) );\n            }else if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );\n            }\n        #else\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / sphereRadius );\n            }\n        #endif\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n        gl_FragColor = vec4( vPickingColor, objectId );\n        //gl_FragColor.rgb = vec3( 1.0, 0.0, 0.0 );\n    #else\n        vec3 transformedNormal = cameraNormal;\n        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );\n\n        #include light\n\n        gl_FragColor = vec4( vColor, opacity );\n        gl_FragColor.rgb *= vLightFront;\n\n        // gl_FragColor.a = 0.5;\n        // gl_FragColor.rgb = transformedNormal;\n        // gl_FragColor.rgb = point;\n    #endif\n\n    // #include fog\n\n    #ifdef USE_FOG\n        float depth = gl_FragDepthEXT / gl_FragCoord.w;\n        #ifdef FOG_EXP2\n            const float LOG2 = 1.442695;\n            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n        #else\n            float fogFactor = smoothstep( fogNear, fogFar, depth );\n        #endif\n        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n    #endif\n\n}\n\n\n// void main2(void)\n// {\n//     gl_FragColor = vec4( vColor, 1.0 );\n// }\n\n\n\n";
 
 // File:shader/chunk/fog.glsl
 
-NGL.Resources[ '../shader/chunk/fog.glsl'] = "#ifdef USE_FOG\n	float depth = gl_FragCoord.z / gl_FragCoord.w;\n	#ifdef FOG_EXP2\n		const float LOG2 = 1.442695;\n		float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );\n		fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );\n	#else\n		float fogFactor = smoothstep( fogNear, fogFar, depth );\n	#endif\n	gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n#endif";
+NGL.Resources[ 'shader/chunk/fog.glsl' ] = "#ifdef USE_FOG\n	float depth = gl_FragCoord.z / gl_FragCoord.w;\n	float fogFactor = smoothstep( fogNear, fogFar, depth );\n	gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );\n#endif";
 
 // File:shader/chunk/fog_params.glsl
 
-NGL.Resources[ '../shader/chunk/fog_params.glsl'] = "#ifdef USE_FOG\n	uniform vec3 fogColor;\n	#ifdef FOG_EXP2\n		uniform float fogDensity;\n	#else\n		uniform float fogNear;\n		uniform float fogFar;\n	#endif\n#endif";
+NGL.Resources[ 'shader/chunk/fog_params.glsl' ] = "#ifdef USE_FOG\n	uniform vec3 fogColor;\n	uniform float fogNear;\n	uniform float fogFar;\n#endif";
 
 // File:shader/chunk/light.glsl
 
-NGL.Resources[ '../shader/chunk/light.glsl'] = "\n// LIGHT\n// IN: transformedNormal, vLightFront\n// OUT: vLightFront\n\n// #if MAX_DIR_LIGHTS > 0\n//     for( int i = 0; i < MAX_DIR_LIGHTS; i ++ ) {\n//         vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );\n//         vec3 dirVector = normalize( lDirection.xyz );\n//         float dotProduct = dot( transformedNormal, dirVector );\n//         vec3 directionalLightWeighting = vec3( max( dotProduct, 0.0 ) );\n//         vLightFront += directionalLightColor[ i ] * directionalLightWeighting;\n//     }\n// #endif\n// #if MAX_HEMI_LIGHTS > 0\n//     for( int i = 0; i < MAX_HEMI_LIGHTS; i ++ ) {\n//         vec4 lDirection = viewMatrix * vec4( hemisphereLightDirection[ i ], 0.0 );\n//         vec3 lVector = normalize( lDirection.xyz );\n//         float dotProduct = dot( transformedNormal, lVector );\n//         float hemiDiffuseWeight = 0.5 * dotProduct + 0.5;\n//         float hemiDiffuseWeightBack = -0.5 * dotProduct + 0.5;\n//         vLightFront += mix( hemisphereLightGroundColor[ i ], hemisphereLightSkyColor[ i ], hemiDiffuseWeight );\n//     }\n// #endif\n// // vLightFront = vLightFront * diffuse + ambient * ambientLightColor + emissive;\n// vLightFront = vLightFront + ambient * ambientLightColor + emissive;\n\n\n// Give light vector position perpendicular to the screen\nvec3 lightvec = normalize(vec3(0.0,0.0,1.2));\nvec3 eyepos = vec3(0.0,0.0,1.0);\n\n// calculate half-angle vector\nvec3 halfvec = normalize(lightvec + eyepos);\n\n// Parameters used to calculate per pixel lighting\n// see http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html\nfloat diffuse = dot(transformedNormal,lightvec);\nfloat specular = dot(transformedNormal, halfvec);\nvec4 lighting = lit(diffuse, specular, 512.0);\n\nvec3 specularcolor = vec3(1.0,1.0,1.0);\n\nvLightFront = ( vLightFront + lighting.y * vec3(1.0, 1.0, 1.0) + lighting.z * specularcolor ).xyz;\n\n\n";
+NGL.Resources[ 'shader/chunk/light.glsl' ] = "// LIGHT\n// IN: transformedNormal, vLightFront\n// OUT: vLightFront\n\n// Give light vector position perpendicular to the screen\nvec3 lightvec = normalize( vec3( 0.0, 0.0, 1.2 ) );\nvec3 eyepos = vec3( 0.0, 0.0, 1.0 );\n\n// calculate half-angle vector\nvec3 halfvec = normalize( lightvec + eyepos );\n\n// Parameters used to calculate per pixel lighting\n// see http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html\nfloat diffuse = dot( transformedNormal,lightvec );\nfloat specular = dot( transformedNormal, halfvec );\nvec4 lighting = lit( diffuse, specular, 512.0 );\n\nvec3 specularcolor = vec3( 1.0, 1.0, 1.0 );\n\nvLightFront = ( vLightFront + lighting.y * vec3( 1.0, 1.0, 1.0 ) + lighting.z * specularcolor ).xyz;";
 
 // File:shader/chunk/light_params.glsl
 
-NGL.Resources[ '../shader/chunk/light_params.glsl'] = "uniform vec3 ambient;\nuniform vec3 diffuse;\nuniform vec3 emissive;\n\nuniform vec3 ambientLightColor;\n\n#if MAX_DIR_LIGHTS > 0\n    uniform vec3 directionalLightColor[ MAX_DIR_LIGHTS ];\n    uniform vec3 directionalLightDirection[ MAX_DIR_LIGHTS ];\n#endif\n\n#if MAX_HEMI_LIGHTS > 0\n    uniform vec3 hemisphereLightSkyColor[ MAX_HEMI_LIGHTS ];\n    uniform vec3 hemisphereLightGroundColor[ MAX_HEMI_LIGHTS ];\n    uniform vec3 hemisphereLightDirection[ MAX_HEMI_LIGHTS ];\n#endif\n\n\n\nvec4 lit(float NdotL, float NdotH, float m) {\n    float ambient = 1.0;\n    float diffuse = max(NdotL, 0.0);\n    float specular = pow(abs(NdotH),m);\n    if(NdotL < 0.0 || NdotH < 0.0)\n        specular = 0.0;\n    return vec4(ambient, diffuse, specular, 1.0);\n}\n\n";
+NGL.Resources[ 'shader/chunk/light_params.glsl' ] = "vec4 lit( float NdotL, float NdotH, float m ){\n    float ambient = 1.0;\n    float diffuse = max( NdotL, 0.0 );\n    float specular = pow( abs( NdotH ), m );\n    if( NdotL < 0.0 || NdotH < 0.0 )\n        specular = 0.0;\n    return vec4( ambient, diffuse, specular, 1.0 );\n}";
 
 // File:fonts/LatoBlack.fnt
 
-NGL.Resources[ '../fonts/LatoBlack.fnt'] = "info face=\"Lato Black\" size=32 bold=0 italic=0 charset=\"\" unicode=0 stretchH=100 smooth=1 aa=1 padding=4,4,4,4 spacing=-8,-8\ncommon lineHeight=39 base=32 scaleW=512 scaleH=512 pages=1 packed=0\npage id=0 file=\"LatoBlack-sdf.png\"\nchars count=95\nchar id=32   x=0     y=0     width=0     height=0     xoffset=0     yoffset=32    xadvance=6     page=0  chnl=0\nchar id=41   x=0     y=0     width=17     height=41     xoffset=-3     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=40   x=17     y=0     width=17     height=41     xoffset=-3     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=36   x=34     y=0     width=27     height=40     xoffset=-4     yoffset=0    xadvance=19     page=0  chnl=0\nchar id=124   x=61     y=0     width=14     height=40     xoffset=-2     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=125   x=75     y=0     width=19     height=40     xoffset=-4     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=123   x=94     y=0     width=18     height=40     xoffset=-4     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=93   x=112     y=0     width=18     height=40     xoffset=-4     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=91   x=130     y=0     width=17     height=40     xoffset=-3     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=106   x=147     y=0     width=18     height=38     xoffset=-5     yoffset=4    xadvance=9     page=0  chnl=0\nchar id=81   x=165     y=0     width=36     height=38     xoffset=-4     yoffset=3    xadvance=26     page=0  chnl=0\nchar id=92   x=201     y=0     width=24     height=36     xoffset=-5     yoffset=3    xadvance=13     page=0  chnl=0\nchar id=64   x=225     y=0     width=35     height=36     xoffset=-4     yoffset=5    xadvance=26     page=0  chnl=0\nchar id=47   x=260     y=0     width=24     height=36     xoffset=-5     yoffset=3    xadvance=13     page=0  chnl=0\nchar id=127   x=284     y=0     width=27     height=34     xoffset=-4     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=38   x=311     y=0     width=33     height=34     xoffset=-4     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=35   x=344     y=0     width=28     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=37   x=372     y=0     width=35     height=34     xoffset=-4     yoffset=3    xadvance=26     page=0  chnl=0\nchar id=63   x=407     y=0     width=23     height=34     xoffset=-4     yoffset=3    xadvance=14     page=0  chnl=0\nchar id=33   x=430     y=0     width=15     height=34     xoffset=-1     yoffset=3    xadvance=12     page=0  chnl=0\nchar id=48   x=445     y=0     width=27     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=56   x=472     y=0     width=27     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=55   x=0     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=54   x=26     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=53   x=52     y=41     width=26     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=52   x=78     y=41     width=28     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=51   x=106     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=50   x=132     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=49   x=158     y=41     width=25     height=34     xoffset=-2     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=108   x=183     y=41     width=15     height=34     xoffset=-2     yoffset=3    xadvance=9     page=0  chnl=0\nchar id=107   x=198     y=41     width=27     height=34     xoffset=-3     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=104   x=225     y=41     width=25     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=100   x=250     y=41     width=26     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=98   x=276     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=90   x=302     y=41     width=28     height=34     xoffset=-4     yoffset=3    xadvance=20     page=0  chnl=0\nchar id=89   x=330     y=41     width=32     height=34     xoffset=-5     yoffset=3    xadvance=22     page=0  chnl=0\nchar id=88   x=362     y=41     width=32     height=34     xoffset=-4     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=87   x=394     y=41     width=44     height=34     xoffset=-4     yoffset=3    xadvance=34     page=0  chnl=0\nchar id=86   x=438     y=41     width=33     height=34     xoffset=-4     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=85   x=471     y=41     width=30     height=34     xoffset=-3     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=84   x=0     y=75     width=28     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=83   x=28     y=75     width=26     height=34     xoffset=-4     yoffset=3    xadvance=17     page=0  chnl=0\nchar id=82   x=54     y=75     width=29     height=34     xoffset=-3     yoffset=3    xadvance=21     page=0  chnl=0\nchar id=80   x=83     y=75     width=28     height=34     xoffset=-3     yoffset=3    xadvance=20     page=0  chnl=0\nchar id=79   x=111     y=75     width=34     height=34     xoffset=-4     yoffset=3    xadvance=26     page=0  chnl=0\nchar id=78   x=145     y=75     width=31     height=34     xoffset=-3     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=77   x=176     y=75     width=37     height=34     xoffset=-3     yoffset=3    xadvance=30     page=0  chnl=0\nchar id=76   x=213     y=75     width=24     height=34     xoffset=-3     yoffset=3    xadvance=17     page=0  chnl=0\nchar id=75   x=237     y=75     width=31     height=34     xoffset=-3     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=74   x=268     y=75     width=21     height=34     xoffset=-4     yoffset=3    xadvance=14     page=0  chnl=0\nchar id=73   x=289     y=75     width=15     height=34     xoffset=-2     yoffset=3    xadvance=10     page=0  chnl=0\nchar id=72   x=304     y=75     width=31     height=34     xoffset=-3     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=71   x=335     y=75     width=31     height=34     xoffset=-4     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=70   x=366     y=75     width=25     height=34     xoffset=-3     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=69   x=391     y=75     width=25     height=34     xoffset=-3     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=68   x=416     y=75     width=32     height=34     xoffset=-3     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=67   x=448     y=75     width=30     height=34     xoffset=-4     yoffset=3    xadvance=21     page=0  chnl=0\nchar id=66   x=478     y=75     width=28     height=34     xoffset=-3     yoffset=3    xadvance=21     page=0  chnl=0\nchar id=65   x=0     y=109     width=33     height=34     xoffset=-4     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=57   x=33     y=109     width=27     height=33     xoffset=-3     yoffset=4    xadvance=19     page=0  chnl=0\nchar id=105   x=60     y=109     width=16     height=33     xoffset=-3     yoffset=4    xadvance=9     page=0  chnl=0\nchar id=102   x=76     y=109     width=21     height=33     xoffset=-4     yoffset=4    xadvance=12     page=0  chnl=0\nchar id=121   x=97     y=109     width=27     height=32     xoffset=-4     yoffset=10    xadvance=18     page=0  chnl=0\nchar id=116   x=124     y=109     width=22     height=32     xoffset=-4     yoffset=5    xadvance=13     page=0  chnl=0\nchar id=113   x=146     y=109     width=26     height=32     xoffset=-4     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=112   x=172     y=109     width=26     height=32     xoffset=-3     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=103   x=198     y=109     width=26     height=32     xoffset=-4     yoffset=10    xadvance=17     page=0  chnl=0\nchar id=59   x=224     y=109     width=16     height=31     xoffset=-3     yoffset=11    xadvance=9     page=0  chnl=0\nchar id=122   x=240     y=109     width=23     height=27     xoffset=-3     yoffset=10    xadvance=15     page=0  chnl=0\nchar id=120   x=263     y=109     width=27     height=27     xoffset=-4     yoffset=10    xadvance=18     page=0  chnl=0\nchar id=119   x=290     y=109     width=35     height=27     xoffset=-4     yoffset=10    xadvance=26     page=0  chnl=0\nchar id=118   x=325     y=109     width=27     height=27     xoffset=-4     yoffset=10    xadvance=18     page=0  chnl=0\nchar id=117   x=352     y=109     width=25     height=27     xoffset=-3     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=115   x=377     y=109     width=23     height=27     xoffset=-4     yoffset=10    xadvance=14     page=0  chnl=0\nchar id=114   x=400     y=109     width=21     height=27     xoffset=-3     yoffset=10    xadvance=13     page=0  chnl=0\nchar id=110   x=421     y=109     width=25     height=27     xoffset=-3     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=109   x=446     y=109     width=34     height=27     xoffset=-3     yoffset=10    xadvance=28     page=0  chnl=0\nchar id=101   x=480     y=109     width=26     height=27     xoffset=-4     yoffset=10    xadvance=17     page=0  chnl=0\nchar id=99   x=0     y=143     width=25     height=27     xoffset=-4     yoffset=10    xadvance=16     page=0  chnl=0\nchar id=97   x=25     y=143     width=24     height=27     xoffset=-3     yoffset=10    xadvance=17     page=0  chnl=0\nchar id=43   x=49     y=143     width=26     height=26     xoffset=-3     yoffset=8    xadvance=19     page=0  chnl=0\nchar id=58   x=75     y=143     width=16     height=26     xoffset=-3     yoffset=11    xadvance=9     page=0  chnl=0\nchar id=111   x=91     y=143     width=27     height=26     xoffset=-4     yoffset=11    xadvance=19     page=0  chnl=0\nchar id=62   x=118     y=143     width=23     height=25     xoffset=-1     yoffset=9    xadvance=19     page=0  chnl=0\nchar id=60   x=141     y=143     width=23     height=25     xoffset=-2     yoffset=9    xadvance=19     page=0  chnl=0\nchar id=42   x=164     y=143     width=21     height=21     xoffset=-4     yoffset=3    xadvance=13     page=0  chnl=0\nchar id=94   x=185     y=143     width=25     height=21     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=44   x=210     y=143     width=15     height=20     xoffset=-3     yoffset=22    xadvance=8     page=0  chnl=0\nchar id=61   x=225     y=143     width=25     height=19     xoffset=-3     yoffset=12    xadvance=19     page=0  chnl=0\nchar id=39   x=250     y=143     width=15     height=19     xoffset=-3     yoffset=3    xadvance=8     page=0  chnl=0\nchar id=34   x=265     y=143     width=21     height=19     xoffset=-3     yoffset=3    xadvance=14     page=0  chnl=0\nchar id=126   x=286     y=143     width=26     height=17     xoffset=-3     yoffset=14    xadvance=19     page=0  chnl=0\nchar id=46   x=312     y=143     width=16     height=16     xoffset=-4     yoffset=21    xadvance=8     page=0  chnl=0\nchar id=96   x=328     y=143     width=18     height=15     xoffset=-5     yoffset=3    xadvance=11     page=0  chnl=0\nchar id=95   x=346     y=143     width=22     height=13     xoffset=-4     yoffset=29    xadvance=13     page=0  chnl=0\nchar id=45   x=368     y=143     width=19     height=13     xoffset=-3     yoffset=16    xadvance=12     page=0  chnl=0\n";
+NGL.Resources[ 'fonts/LatoBlack.fnt' ] = "info face=\"Lato Black\" size=32 bold=0 italic=0 charset=\"\" unicode=0 stretchH=100 smooth=1 aa=1 padding=4,4,4,4 spacing=-8,-8\ncommon lineHeight=39 base=32 scaleW=512 scaleH=512 pages=1 packed=0\npage id=0 file=\"LatoBlack-sdf.png\"\nchars count=95\nchar id=32   x=0     y=0     width=0     height=0     xoffset=0     yoffset=32    xadvance=6     page=0  chnl=0\nchar id=41   x=0     y=0     width=17     height=41     xoffset=-3     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=40   x=17     y=0     width=17     height=41     xoffset=-3     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=36   x=34     y=0     width=27     height=40     xoffset=-4     yoffset=0    xadvance=19     page=0  chnl=0\nchar id=124   x=61     y=0     width=14     height=40     xoffset=-2     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=125   x=75     y=0     width=19     height=40     xoffset=-4     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=123   x=94     y=0     width=18     height=40     xoffset=-4     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=93   x=112     y=0     width=18     height=40     xoffset=-4     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=91   x=130     y=0     width=17     height=40     xoffset=-3     yoffset=2    xadvance=10     page=0  chnl=0\nchar id=106   x=147     y=0     width=18     height=38     xoffset=-5     yoffset=4    xadvance=9     page=0  chnl=0\nchar id=81   x=165     y=0     width=36     height=38     xoffset=-4     yoffset=3    xadvance=26     page=0  chnl=0\nchar id=92   x=201     y=0     width=24     height=36     xoffset=-5     yoffset=3    xadvance=13     page=0  chnl=0\nchar id=64   x=225     y=0     width=35     height=36     xoffset=-4     yoffset=5    xadvance=26     page=0  chnl=0\nchar id=47   x=260     y=0     width=24     height=36     xoffset=-5     yoffset=3    xadvance=13     page=0  chnl=0\nchar id=127   x=284     y=0     width=27     height=34     xoffset=-4     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=38   x=311     y=0     width=33     height=34     xoffset=-4     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=35   x=344     y=0     width=28     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=37   x=372     y=0     width=35     height=34     xoffset=-4     yoffset=3    xadvance=26     page=0  chnl=0\nchar id=63   x=407     y=0     width=23     height=34     xoffset=-4     yoffset=3    xadvance=14     page=0  chnl=0\nchar id=33   x=430     y=0     width=15     height=34     xoffset=-1     yoffset=3    xadvance=12     page=0  chnl=0\nchar id=48   x=445     y=0     width=27     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=56   x=472     y=0     width=27     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=55   x=0     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=54   x=26     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=53   x=52     y=41     width=26     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=52   x=78     y=41     width=28     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=51   x=106     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=50   x=132     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=49   x=158     y=41     width=25     height=34     xoffset=-2     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=108   x=183     y=41     width=15     height=34     xoffset=-2     yoffset=3    xadvance=9     page=0  chnl=0\nchar id=107   x=198     y=41     width=27     height=34     xoffset=-3     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=104   x=225     y=41     width=25     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=100   x=250     y=41     width=26     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=98   x=276     y=41     width=26     height=34     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=90   x=302     y=41     width=28     height=34     xoffset=-4     yoffset=3    xadvance=20     page=0  chnl=0\nchar id=89   x=330     y=41     width=32     height=34     xoffset=-5     yoffset=3    xadvance=22     page=0  chnl=0\nchar id=88   x=362     y=41     width=32     height=34     xoffset=-4     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=87   x=394     y=41     width=44     height=34     xoffset=-4     yoffset=3    xadvance=34     page=0  chnl=0\nchar id=86   x=438     y=41     width=33     height=34     xoffset=-4     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=85   x=471     y=41     width=30     height=34     xoffset=-3     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=84   x=0     y=75     width=28     height=34     xoffset=-4     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=83   x=28     y=75     width=26     height=34     xoffset=-4     yoffset=3    xadvance=17     page=0  chnl=0\nchar id=82   x=54     y=75     width=29     height=34     xoffset=-3     yoffset=3    xadvance=21     page=0  chnl=0\nchar id=80   x=83     y=75     width=28     height=34     xoffset=-3     yoffset=3    xadvance=20     page=0  chnl=0\nchar id=79   x=111     y=75     width=34     height=34     xoffset=-4     yoffset=3    xadvance=26     page=0  chnl=0\nchar id=78   x=145     y=75     width=31     height=34     xoffset=-3     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=77   x=176     y=75     width=37     height=34     xoffset=-3     yoffset=3    xadvance=30     page=0  chnl=0\nchar id=76   x=213     y=75     width=24     height=34     xoffset=-3     yoffset=3    xadvance=17     page=0  chnl=0\nchar id=75   x=237     y=75     width=31     height=34     xoffset=-3     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=74   x=268     y=75     width=21     height=34     xoffset=-4     yoffset=3    xadvance=14     page=0  chnl=0\nchar id=73   x=289     y=75     width=15     height=34     xoffset=-2     yoffset=3    xadvance=10     page=0  chnl=0\nchar id=72   x=304     y=75     width=31     height=34     xoffset=-3     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=71   x=335     y=75     width=31     height=34     xoffset=-4     yoffset=3    xadvance=23     page=0  chnl=0\nchar id=70   x=366     y=75     width=25     height=34     xoffset=-3     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=69   x=391     y=75     width=25     height=34     xoffset=-3     yoffset=3    xadvance=18     page=0  chnl=0\nchar id=68   x=416     y=75     width=32     height=34     xoffset=-3     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=67   x=448     y=75     width=30     height=34     xoffset=-4     yoffset=3    xadvance=21     page=0  chnl=0\nchar id=66   x=478     y=75     width=28     height=34     xoffset=-3     yoffset=3    xadvance=21     page=0  chnl=0\nchar id=65   x=0     y=109     width=33     height=34     xoffset=-4     yoffset=3    xadvance=24     page=0  chnl=0\nchar id=57   x=33     y=109     width=27     height=33     xoffset=-3     yoffset=4    xadvance=19     page=0  chnl=0\nchar id=105   x=60     y=109     width=16     height=33     xoffset=-3     yoffset=4    xadvance=9     page=0  chnl=0\nchar id=102   x=76     y=109     width=21     height=33     xoffset=-4     yoffset=4    xadvance=12     page=0  chnl=0\nchar id=121   x=97     y=109     width=27     height=32     xoffset=-4     yoffset=10    xadvance=18     page=0  chnl=0\nchar id=116   x=124     y=109     width=22     height=32     xoffset=-4     yoffset=5    xadvance=13     page=0  chnl=0\nchar id=113   x=146     y=109     width=26     height=32     xoffset=-4     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=112   x=172     y=109     width=26     height=32     xoffset=-3     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=103   x=198     y=109     width=26     height=32     xoffset=-4     yoffset=10    xadvance=17     page=0  chnl=0\nchar id=59   x=224     y=109     width=16     height=31     xoffset=-3     yoffset=11    xadvance=9     page=0  chnl=0\nchar id=122   x=240     y=109     width=23     height=27     xoffset=-3     yoffset=10    xadvance=15     page=0  chnl=0\nchar id=120   x=263     y=109     width=27     height=27     xoffset=-4     yoffset=10    xadvance=18     page=0  chnl=0\nchar id=119   x=290     y=109     width=35     height=27     xoffset=-4     yoffset=10    xadvance=26     page=0  chnl=0\nchar id=118   x=325     y=109     width=27     height=27     xoffset=-4     yoffset=10    xadvance=18     page=0  chnl=0\nchar id=117   x=352     y=109     width=25     height=27     xoffset=-3     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=115   x=377     y=109     width=23     height=27     xoffset=-4     yoffset=10    xadvance=14     page=0  chnl=0\nchar id=114   x=400     y=109     width=21     height=27     xoffset=-3     yoffset=10    xadvance=13     page=0  chnl=0\nchar id=110   x=421     y=109     width=25     height=27     xoffset=-3     yoffset=10    xadvance=19     page=0  chnl=0\nchar id=109   x=446     y=109     width=34     height=27     xoffset=-3     yoffset=10    xadvance=28     page=0  chnl=0\nchar id=101   x=480     y=109     width=26     height=27     xoffset=-4     yoffset=10    xadvance=17     page=0  chnl=0\nchar id=99   x=0     y=143     width=25     height=27     xoffset=-4     yoffset=10    xadvance=16     page=0  chnl=0\nchar id=97   x=25     y=143     width=24     height=27     xoffset=-3     yoffset=10    xadvance=17     page=0  chnl=0\nchar id=43   x=49     y=143     width=26     height=26     xoffset=-3     yoffset=8    xadvance=19     page=0  chnl=0\nchar id=58   x=75     y=143     width=16     height=26     xoffset=-3     yoffset=11    xadvance=9     page=0  chnl=0\nchar id=111   x=91     y=143     width=27     height=26     xoffset=-4     yoffset=11    xadvance=19     page=0  chnl=0\nchar id=62   x=118     y=143     width=23     height=25     xoffset=-1     yoffset=9    xadvance=19     page=0  chnl=0\nchar id=60   x=141     y=143     width=23     height=25     xoffset=-2     yoffset=9    xadvance=19     page=0  chnl=0\nchar id=42   x=164     y=143     width=21     height=21     xoffset=-4     yoffset=3    xadvance=13     page=0  chnl=0\nchar id=94   x=185     y=143     width=25     height=21     xoffset=-3     yoffset=3    xadvance=19     page=0  chnl=0\nchar id=44   x=210     y=143     width=15     height=20     xoffset=-3     yoffset=22    xadvance=8     page=0  chnl=0\nchar id=61   x=225     y=143     width=25     height=19     xoffset=-3     yoffset=12    xadvance=19     page=0  chnl=0\nchar id=39   x=250     y=143     width=15     height=19     xoffset=-3     yoffset=3    xadvance=8     page=0  chnl=0\nchar id=34   x=265     y=143     width=21     height=19     xoffset=-3     yoffset=3    xadvance=14     page=0  chnl=0\nchar id=126   x=286     y=143     width=26     height=17     xoffset=-3     yoffset=14    xadvance=19     page=0  chnl=0\nchar id=46   x=312     y=143     width=16     height=16     xoffset=-4     yoffset=21    xadvance=8     page=0  chnl=0\nchar id=96   x=328     y=143     width=18     height=15     xoffset=-5     yoffset=3    xadvance=11     page=0  chnl=0\nchar id=95   x=346     y=143     width=22     height=13     xoffset=-4     yoffset=29    xadvance=13     page=0  chnl=0\nchar id=45   x=368     y=143     width=19     height=13     xoffset=-3     yoffset=16    xadvance=12     page=0  chnl=0\n";
 
 // File:fonts/LatoBlack.png
 
-NGL.Resources[ '../fonts/LatoBlack.png'] = NGL.dataURItoImage("data:image/png;base64,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\n+9Thmi1iSv0S6qkyke+NUMwNsga0pXgsLNOiP7ijAd4ZBZ0JIYS4JYZABRRPAxSRKaSGzFqrFHld\n264XKrp6NktFGdZGIVqpqVYRQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEKJM+X8Bl4tInGh6U68AAAAASUVORK5CYII=\n");
+NGL.Resources[ 'fonts/LatoBlack.png' ] = NGL.dataURItoImage("data:image/png;base64,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\n+9Thmi1iSv0S6qkyke+NUMwNsga0pXgsLNOiP7ijAd4ZBZ0JIYS4JYZABRRPAxSRKaSGzFqrFHld\n264XKrp6NktFGdZGIVqpqVYRQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE\nEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBC\nCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQggh\nhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQ\nQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEII\nIYQQQgghhBBCCCGEEKJM+X8Bl4tInGh6U68AAAAASUVORK5CYII=\n");
 
 // File:img/radial.png
 
-NGL.Resources[ '../img/radial.png'] = NGL.dataURItoImage("data:image/png;base64,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\n");
+NGL.Resources[ 'img/radial.png' ] = NGL.dataURItoImage("data:image/png;base64,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\n");
 

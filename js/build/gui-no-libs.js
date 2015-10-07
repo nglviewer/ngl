@@ -95,13 +95,14 @@ UI.Element.prototype = {
 var properties = [
     'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border',
     'borderLeft', 'borderTop', 'borderRight', 'borderBottom', 'borderColor',
-    'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight',
+    'display', 'overflow', 'overflowX', 'overflowY', 'margin', 'marginLeft',
+    'marginTop', 'marginRight',
     'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight',
     'paddingBottom', 'color', 'backgroundColor', 'opacity', 'fontSize',
     'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
     'verticalAlign', 'clear', 'float', 'zIndex', 'minHeight', 'maxHeight',
     'minWidth', 'maxWidth', 'wordBreak', 'wordWrap', 'spellcheck',
-    'lineHeight', 'whiteSpace', 'textOverflow'
+    'lineHeight', 'whiteSpace', 'textOverflow', 'textAlign'
 ];
 
 properties.forEach( function ( property ) {
@@ -127,8 +128,9 @@ properties.forEach( function ( property ) {
 // events
 
 var events = [
-    'KeyUp', 'KeyDown', 'KeyPress', 'MouseOver', 'MouseOut', 'Click', 'Change',
-    'Input'
+    'KeyUp', 'KeyDown', 'KeyPress',
+    'MouseOver', 'MouseOut', 'MouseDown', 'MouseUp',
+    'Click', 'Change', 'Input', 'Scroll'
 ];
 
 events.forEach( function ( event ) {
@@ -334,7 +336,6 @@ UI.Text = function ( text ) {
 
     var dom = document.createElement( 'span' );
     dom.className = 'Text';
-    dom.style.cursor = 'default';
     dom.style.display = 'inline-block';
     dom.style.verticalAlign = 'middle';
 
@@ -359,7 +360,13 @@ UI.Text.prototype.setValue = function ( value ) {
 
 };
 
+UI.Text.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
 // Input
 
 UI.Input = function () {
@@ -396,6 +403,14 @@ UI.Input.prototype.getValue = function () {
 UI.Input.prototype.setValue = function ( value ) {
 
     this.dom.value = value;
+
+    return this;
+
+};
+
+UI.Input.prototype.setName = function ( value ) {
+
+    this.dom.name = value;
 
     return this;
 
@@ -509,6 +524,14 @@ UI.Select.prototype.getValue = function () {
 UI.Select.prototype.setValue = function ( value ) {
 
     this.dom.value = value;
+
+    return this;
+
+};
+
+UI.Select.prototype.setName = function ( value ) {
+
+    this.dom.name = value;
 
     return this;
 
@@ -705,7 +728,13 @@ UI.Checkbox.prototype.setValue = function ( value ) {
 
 };
 
+UI.Checkbox.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
 // Color
 
 UI.Color = function () {
@@ -898,7 +927,11 @@ UI.Number.prototype.getValue = function () {
 
 UI.Number.prototype.setValue = function ( value ) {
 
-    if ( value !== undefined ) {
+    if( isNaN( value ) ){
+
+        this.dom.value = NaN;
+
+    }else if ( value !== undefined ) {
 
         this.dom.value = value.toFixed( this.precision );
 
@@ -925,7 +958,13 @@ UI.Number.prototype.setPrecision = function ( precision ) {
 
 };
 
+UI.Number.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
 // Integer
 
 UI.Integer = function ( number ) {
@@ -1078,7 +1117,19 @@ UI.Integer.prototype.setRange = function ( min, max ) {
 
 };
 
+UI.Integer.prototype.setName = function ( value ) {
 
+    this.dom.name = value;
+
+    return this;
+
+};
+
+UI.Integer.prototype.setStep =function ( step ) {
+    this.step = step;
+
+    return this;
+}
 // Break
 
 UI.Break = function () {
@@ -1288,6 +1339,138 @@ UI.Html.prototype.setValue = function ( value ) {
     return this;
 
 };
+
+
+// Form
+
+UI.Form = function () {
+
+    UI.Element.call( this );
+
+    var dom = document.createElement( 'form' );
+    dom.className = 'Form';
+    dom.method = "post";
+    dom.action = "";
+    dom.target = "_blank";
+    dom.enctype = "multipart/form-data";
+
+    this.dom = dom;
+
+    return this;
+};
+
+UI.Form.prototype = Object.create( UI.Panel.prototype );
+
+UI.Form.prototype.setMethod= function ( value ) {
+
+    this.dom.method = value;
+
+    return this;
+
+};
+
+UI.Form.prototype.setAction = function ( value ) {
+
+    this.dom.action = value
+
+    return this;
+
+};
+
+UI.Form.prototype.setTarget= function ( value ) {
+
+    this.dom.target = value;
+
+    return this;
+
+};
+
+UI.Form.prototype.setEnctype = function ( value ) {
+
+    this.dom.enctype = value
+
+    return this;
+
+};
+
+
+// File
+
+UI.File = function () {
+
+    UI.Input.call( this );
+
+    this.dom.className = 'File';
+    this.dom.type = "file";
+    this.dom.multiple = false;
+
+    return this;
+
+};
+
+UI.File.prototype = Object.create( UI.Input.prototype );
+
+UI.File.prototype.setMultiple = function ( value ) {
+
+    this.dom.multiple = value
+
+    return this;
+
+};
+
+UI.File.prototype.getFiles = function ( value ) {
+
+    return this.dom.files;
+
+};
+
+
+// Hidden
+
+UI.Hidden = function () {
+
+    UI.Input.call( this );
+
+    this.dom.type = 'hidden';
+
+    return this;
+
+};
+
+UI.Hidden.prototype = Object.create( UI.Input.prototype );
+
+
+// Toggle Button
+
+UI.ToggleButton = function( labelA, labelB, callbackA, callbackB ){
+
+    UI.Button.call( this, labelB );
+
+    var flag = true;
+
+    this.onClick( function(){
+
+        if( flag ){
+
+            flag = false;
+            this.setLabel( labelA );
+            callbackB();
+
+        }else{
+
+            flag = true;
+            this.setLabel( labelB );
+            callbackA();
+
+        }
+
+    }.bind( this ) );
+
+    return this;
+
+};
+
+UI.ToggleButton.prototype = Object.create( UI.Button.prototype );
 
 
 // Ellipsis Text
@@ -1673,8 +1856,6 @@ UI.AdaptiveTextArea = function () {
 
     UI.Element.call( this );
 
-    var scope = this;
-
     var container = document.createElement( 'div' );
     container.className = 'AdaptiveTextAreaContainer';
 
@@ -1735,50 +1916,350 @@ UI.AdaptiveTextArea.prototype.setBackgroundColor = function ( value ) {
 };
 
 
-// Virtual List (requires Virtual DOM list)
+// Virtual List
 
-UI.VirtualList = function( items ){
+UI.VirtualList = function( items, itemHeight, height, generatorFn ){
+
+    // based on Virtual DOM List
+    // https://github.com/sergi/virtual-list
+    // The MIT License (MIT)
+    // Copyright (C) 2013 Sergi Mansilla
 
     UI.Element.call( this );
 
+    items = items || [];
+    itemHeight = itemHeight || 20;
+    height = height || 300;
+    generatorFn = generatorFn || function(){};
+
     var dom = document.createElement( 'div' );
     dom.className = 'VirtualList';
-    // dom.style.cursor = 'default';
-    // dom.style.display = 'inline-block';
-    // dom.style.verticalAlign = 'middle';
+    dom.style.height = height + 'px';
+
+    var totalRows = items.length;
+    var screenItemsCount = Math.ceil( height / itemHeight );
+    var cachedItemsCount = screenItemsCount * 3;
+    var lastRepaintY;
+    var maxBuffer = screenItemsCount * itemHeight;
+    var lastScrolled = 0;
+    var renderChunkCallback = function(){};
+
+    var list = document.createElement('div');
+    list.style.width = '100%';
+    list.style.height = height + 'px';
+    list.style[ "overflow-y" ] = 'auto';
+    list.style.position = 'relative';
+    list.style.padding = 0;
+
+    var scroller = document.createElement('div');
+    scroller.style.opacity = 0;
+    scroller.style.position = 'absolute';
+    scroller.style.top = 0;
+    scroller.style.left = 0;
+    scroller.style.width = '1px';
+    scroller.style.height = ( itemHeight * totalRows ) + 'px';
+
+    function createRow( i ){
+        var item = generatorFn( i );
+        item.classList.add( 'VirtualListRow' );
+        item.style.height = itemHeight + 'px';
+        item.style.top = ( i * itemHeight ) + 'px';
+        return item;
+    }
+
+    function renderChunk( from ){
+        var finalItem = Math.min( totalRows, from + cachedItemsCount );
+        renderChunkCallback( from, finalItem );
+        // Append all the new rows in a document fragment
+        // that we will later append to the parent node
+        var fragment = document.createDocumentFragment();
+        for( var i = from; i < finalItem; i++ ){
+            fragment.appendChild( createRow( i ) );
+        }
+        // Hide and mark obsolete nodes for deletion.
+        for( var j = 1, l = list.childNodes.length; j < l; j++ ){
+            list.childNodes[ j ].style.display = 'none';
+            list.childNodes[ j ].setAttribute( 'data-rm', '1' );
+        }
+        list.appendChild( fragment );
+    };
+
+    // As soon as scrolling has stopped, this interval asynchronously
+    // removes all the nodes that are not used anymore
+    var rmNodeInterval = setInterval( function(){
+        // check if list is still attached to dom
+        var element = dom;
+        while( element !== document && element.parentNode ){
+            element = element.parentNode;
+        }
+        // if list not attached to dom, clear interval
+        if( element !== document ){
+            clearInterval( rmNodeInterval );
+        }
+        // remove tagged nodes
+        if( Date.now() - lastScrolled > 100 ){
+            var badNodes = list.querySelectorAll( '[data-rm="1"]' );
+            for( var i = 0, l = badNodes.length; i < l; i++ ) {
+                list.removeChild( badNodes[ i ] );
+            }
+        }
+    }, 500 );
+
+    function onScroll( e ){
+        var scrollTop = e.target.scrollTop;  // Triggers reflow
+        if( !lastRepaintY || Math.abs( scrollTop - lastRepaintY ) > maxBuffer ){
+            var first = Math.floor( scrollTop / itemHeight );
+            renderChunk( Math.max( 0, first - screenItemsCount ) );
+            lastRepaintY = scrollTop;
+        }
+        lastScrolled = Date.now();
+        e.preventDefault && e.preventDefault();
+    }
+
+    // API
+
+    this.setItems = function( value ){
+        items = value;
+        totalRows = items.length;
+        scroller.style.height = ( itemHeight * totalRows ) + 'px';
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setItemHeight = function( value ){
+        itemHeight = value;
+        screenItemsCount = Math.ceil( height / itemHeight );
+        cachedItemsCount = screenItemsCount * 3;
+        maxBuffer = screenItemsCount * itemHeight;
+        scroller.style.height = ( itemHeight * totalRows ) + 'px';
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setHeight = function( value ){
+        UI.Element.prototype.setHeight.call( this, value + "px" );
+        height = value;
+        screenItemsCount = Math.ceil( height / itemHeight );
+        cachedItemsCount = screenItemsCount * 3;
+        maxBuffer = screenItemsCount * itemHeight;
+        list.style.height = height + 'px';
+        scroller.style.height = height + 'px';
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setGeneratorFn = function( value ){
+        generatorFn = value;
+        renderChunk( 0 );
+        return this;
+    };
+
+    this.setRenderChunkCallback = function( value ){
+        renderChunkCallback = value;
+        return;
+    };
+
+    this.redraw = function(){
+        var first = Math.floor( list.scrollTop / itemHeight );
+        renderChunk( Math.max( 0, first - screenItemsCount ) );
+        lastRepaintY = list.scrollTop;
+        return this;
+    };
+
+    //
+
+    list.appendChild( scroller );
+    dom.appendChild( list );
+    list.addEventListener( 'scroll', onScroll );
+    renderChunk( 0 );
 
     this.dom = dom;
-
-    this._items = items;
-
-    this.list = new VirtualList({
-        w: 280,
-        h: 300,
-        itemHeight: 31,
-        totalRows: items.length,
-        generatorFn: function( index ) {
-
-            var panel = new UI.Panel();
-            var text = new UI.Text()
-                .setColor( "orange" )
-                .setMarginLeft( "10px" )
-                .setValue( "ITEM " + items[ index ] );
-
-            panel.add( text );
-
-            return panel.dom;
-
-        }
-    });
-
-    console.log( this.dom );
-    console.log( this.list );
-
-    this.dom.appendChild( this.list.container );
 
     return this;
 
 };
+
+UI.VirtualList.prototype = Object.create( UI.Element.prototype );
+
+
+// Virtual Table
+
+UI.VirtualTable = function( items, itemHeight, height, columns, params ){
+
+    var p = params || {};
+
+    UI.Panel.call( this );
+
+    // this.setOverflow( "scroll" );
+
+    var defaultWidth = p.defaultWidth !== undefined ? p.defaultWidth : 30;
+    var defaultMargin = p.defaultMargin !== undefined ? p.defaultMargin : 5;
+    var defaultAlign = p.defaultAlign !== undefined ? p.defaultAlign : "left";
+    var onRowSelect = p.onRowSelect;
+
+    // header
+
+    var header = new UI.Panel()
+        .setWhiteSpace( "nowrap" )
+        .setDisplay( "inline-block" )
+        .setOverflow( "" )
+        .setWidth( "100%" );
+
+    var fullWidth = 0;
+
+    var selected = [];
+
+    var numericalSort = function( a, b ){
+        return a - b;
+    };
+
+    var lexicalSort = function( a, b ){
+        return a.localeCompare( b );
+    };
+
+    var sortColumn = function( idx, flag ){
+        var sort;
+        if( typeof items[ 0 ][ idx ] === "string" ){
+            sort = lexicalSort;
+        }else{
+            sort = numericalSort;
+        }
+        items.sort( function( a, b ){
+            if( flag ){
+                return sort( b[ idx ], a[ idx ] );
+            }else{
+                return sort( a[ idx ], b[ idx ] );
+            }
+        } );
+        virtualList.redraw();
+        return this;
+    };
+
+    var selectRow = function( event, idx ){
+        selected.length = 0;
+        if( onRowSelect ) onRowSelect( event, idx );
+        if( idx !== undefined ){
+            selected.push( items[ idx ][ 0 ] );
+        }
+        virtualList.redraw();
+        return this;
+    };
+
+    columns.forEach( function( col ){
+
+        var width = col.width || defaultWidth;
+        var margin = col.margin || defaultMargin;
+
+        var text = new UI.EllipsisText()
+            .setValue( col.name )
+            .setWidth( width + "px" )
+            .setTextAlign( col.align || defaultAlign )
+            .setMarginLeft( margin + "px" )
+            .setMarginRight( margin + "px" )
+            .setCursor( "pointer" )
+            .onClick( function( e ){
+                var flag = col.__sortFlag === "ASC";
+                sortColumn( col.index, flag )
+                if( flag ){
+                    col.__sortFlag = "DESC";
+                }else{
+                    col.__sortFlag = "ASC";
+                }
+            } );
+
+        header.add( text );
+
+        fullWidth += width + 2 * margin;
+
+    } );
+
+    // list
+
+    var generatorFn = function( index ){
+
+        var panel = new UI.Panel();
+
+        columns.forEach( function( col ){
+
+            var value = items[ index ][ col.index ];
+            if( col.format ) value = col.format( value );
+
+            var width = col.width || defaultWidth;
+            var margin = col.margin || defaultMargin;
+
+            var element;
+            if( typeof value === "object" ){
+                element = value;
+            }else{
+                element = new UI.Text()
+                    .setValue( value );
+            }
+
+            element
+                .setWidth( width + "px" )
+                .setTextAlign( col.align || defaultAlign )
+                .setMarginLeft( margin + "px" )
+                .setMarginRight( margin + "px" )
+                .onClick( function( event ){
+                    if( typeof col.onClick === "function" ){
+                        col.onClick( event, index, value );
+                    }
+                } )
+                .onMouseOver( function( event ){
+                    if( typeof col.onMouseOver === "function" ){
+                        col.onMouseOver( event, index, value );
+                    }
+                } )
+                .onMouseOut( function( event ){
+                    if( typeof col.onMouseOut === "function" ){
+                        col.onMouseOut( event, index, value );
+                    }
+                } );
+
+            panel.add( element );
+
+        } );
+
+        panel
+            .setCursor( "pointer" )
+            .onClick( function( event ){
+                selectRow( event, index );
+            } );
+
+        if( selected.indexOf( items[ index ][ 0 ] ) !== -1 ){
+            panel.dom.classList.add( "highlight" )
+        }
+
+        return panel.dom;
+
+    };
+
+    var virtualList = new UI.VirtualList(
+            items, itemHeight, height, generatorFn
+        )
+        .setWidth( ( fullWidth + 20 ) + "px" );
+
+    //
+
+    this.add(
+        header,
+        virtualList
+    );
+
+    // API
+
+    this.header = header;
+    this.list = virtualList;
+    this.sortColumn = sortColumn;
+    this.selectRow = function( idx ){
+        selectRow( undefined, idx );
+    };
+
+    return this;
+
+};
+
+UI.VirtualTable.prototype = Object.create( UI.Panel.prototype );
 
 
 // Popup Menu (requires Tether)
@@ -1880,7 +2361,7 @@ UI.PopupMenu.prototype.addEntry = function( label, entry ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 
@@ -1888,7 +2369,7 @@ UI.PopupMenu.prototype.setEntryLabelWidth = function( value ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
@@ -1898,7 +2379,7 @@ UI.PopupMenu.prototype.setMenuDisplay = function( value ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.setIconTitle = function( value ){
 
@@ -1906,7 +2387,7 @@ UI.PopupMenu.prototype.setIconTitle = function( value ){
 
     return this;
 
-}
+};
 
 UI.PopupMenu.prototype.dispose = function(){
 
@@ -1914,7 +2395,7 @@ UI.PopupMenu.prototype.dispose = function(){
 
     UI.Element.prototype.dispose.call( this );
 
-}
+};
 
 
 // Collapsible Icon Panel
@@ -1930,8 +2411,8 @@ UI.CollapsibleIconPanel = function( iconClass1, iconClass2 ){
         // iconClass1 = iconClass1 || "plus-square";
         // iconClass2 = iconClass2 || "minus-square";
 
-        iconClass1 = iconClass1 || "chevron-right";
-        iconClass2 = iconClass2 || "chevron-down";
+        iconClass1 = iconClass1 || "chevron-down";
+        iconClass2 = iconClass2 || "chevron-right";
 
     }
 
@@ -2163,30 +2644,9 @@ UI.ColorPopupMenu = function(){
     var changeEvent = document.createEvent( 'Event' );
     changeEvent.initEvent( 'change', true, true );
 
-    NGL.ColorFactory.signals.typesChanged.add( function(){
-
-        this.schemeSelector.setOptions( NGL.ColorFactory.getTypes() );
-
-    }, this );
-
-    this.schemeSelector = new UI.Select()
-        .setColor( '#444' )
-        .setWidth( "" )
-        .setOptions( NGL.ColorFactory.getTypes() )
-        .onChange( function(){
-
-            scope.setScheme( scope.schemeSelector.getValue() );
-            if( scope.schemeSelector.getValue() !== "color" ){
-                scope.menu.setMenuDisplay( "none" );
-            }
-            scope.dom.dispatchEvent( changeEvent );
-
-        } );
-
     this.colorInput = new UI.Input()
         .onChange( function(){
 
-            scope.setScheme( "color" );
             scope.setColor( scope.colorInput.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
@@ -2196,14 +2656,12 @@ UI.ColorPopupMenu = function(){
         .setDisplay( "inline-block" )
         .onChange( function( e ){
 
-            scope.setScheme( "color" );
             scope.setColor( scope.colorPicker.getValue() );
             scope.dom.dispatchEvent( changeEvent );
 
         } );
 
     this.menu
-        .addEntry( "Scheme", this.schemeSelector )
         .addEntry( "Input", this.colorInput )
         .addEntry( "Picker", this.colorPicker );
 
@@ -2217,27 +2675,6 @@ UI.ColorPopupMenu = function(){
 };
 
 UI.ColorPopupMenu.prototype = Object.create( UI.Panel.prototype );
-
-UI.ColorPopupMenu.prototype.setScheme = function( value ){
-
-    value = value || "";
-
-    this.iconText.setValue( value.charAt( 0 ).toUpperCase() );
-    this.schemeSelector.setValue( value );
-
-    if( value !== "color" ){
-        this.setColor( "#888888" );
-    }
-
-    return this;
-
-};
-
-UI.ColorPopupMenu.prototype.getScheme = function(){
-
-    return this.schemeSelector.getValue();
-
-};
 
 UI.ColorPopupMenu.prototype.setColor = function(){
 
@@ -2285,18 +2722,13 @@ UI.ColorPopupMenu.prototype.getColor = function(){
 
 UI.ColorPopupMenu.prototype.getValue = function(){
 
-    return this.colorInput.getValue();
+    return this.getColor();
 
 };
 
 UI.ColorPopupMenu.prototype.setValue = function( value ){
 
-    if( parseInt( value ) === value ){
-        this.setColor( value );
-        this.setScheme( "color" );
-    }else{
-        this.setScheme( value );
-    }
+    this.setColor( value );
 
     return this;
 
@@ -2587,29 +3019,31 @@ NGL.Widget.prototype = {
 NGL.StageWidget = function( stage ){
 
     var signals = stage.signals;
-    var viewer = stage.viewer;
-    var renderer = viewer.renderer;
 
-    this.viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
-    document.body.appendChild( this.viewport.dom );
+    //
 
-    this.toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
-    document.body.appendChild( this.toolbar.dom );
+    var viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
+    document.body.appendChild( viewport.dom );
 
-    this.menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
-    document.body.appendChild( this.menubar.dom );
+    var toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
+    document.body.appendChild( toolbar.dom );
 
-    this.sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
-    document.body.appendChild( this.sidebar.dom );
+    var menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
+    document.body.appendChild( menubar.dom );
+
+    var sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
+    document.body.appendChild( sidebar.dom );
+
+    //
 
     signals.requestTheme.add( function( value ){
 
         var cssPath;
 
         if( value === "light" ){
-            cssPath = "../css/light.css";
+            cssPath = NGL.cssDirectory + "light.css";
         }else{
-            cssPath = "../css/dark.css";
+            cssPath = NGL.cssDirectory + "dark.css";
         }
 
         // FIXME element must be created by a Widget
@@ -2619,9 +3053,98 @@ NGL.StageWidget = function( stage ){
 
     stage.preferences.setTheme();
 
-    viewer.onWindowResize();
+    //
+
+    stage.handleResize();
     // FIXME hack for ie11
-    setTimeout( function(){ viewer.onWindowResize(); }, 500 );
+    setTimeout( function(){ stage.handleResize(); }, 500 );
+
+    //
+
+    var doResizeLeft = false;
+    var movedResizeLeft = false;
+    var minResizeLeft = false;
+
+    var handleResizeLeft = function( clientX ){
+        if( clientX >= 50 && clientX <= window.innerWidth - 10 ){
+            sidebar.setWidth( window.innerWidth - clientX + "px" );
+            viewport.setWidth( clientX + "px" );
+            toolbar.setWidth( clientX + "px" );
+            stage.handleResize();
+        }
+        var sidebarWidth = sidebar.dom.getBoundingClientRect().width;
+        if( clientX === undefined ){
+            var mainWidth = window.innerWidth - sidebarWidth;
+            viewport.setWidth( mainWidth + "px" );
+            toolbar.setWidth( mainWidth + "px" );
+            stage.handleResize();
+        }
+        if( sidebarWidth <= 10 ){
+            minResizeLeft = true;
+        }else{
+            minResizeLeft = false;
+        }
+    };
+    handleResizeLeft = NGL.throttle(
+        handleResizeLeft, 50, { leading: true, trailing: true }
+    );
+
+    var resizeLeft = new UI.Panel()
+        .setClass( "ResizeLeft" )
+        .onMouseDown( function(){
+            doResizeLeft = true;
+            movedResizeLeft = false;
+        } )
+        .onClick( function(){
+            if( minResizeLeft ){
+                handleResizeLeft( window.innerWidth - 300 );
+            }else if( !doResizeLeft && !movedResizeLeft ){
+                handleResizeLeft( window.innerWidth - 10 );
+            }
+        } );
+
+    sidebar.add( resizeLeft );
+
+    window.addEventListener(
+        'mousemove', function( event ){
+            if( doResizeLeft ){
+                document.body.style.cursor = "col-resize";
+                movedResizeLeft = true;
+                handleResizeLeft( event.clientX );
+            }
+        }, false
+    );
+
+    window.addEventListener(
+        'mouseup', function( event ){
+            doResizeLeft = false;
+            document.body.style.cursor = "";
+        }, false
+    );
+
+    window.addEventListener(
+        'resize', function( event ){
+            handleResizeLeft();
+        }, false
+    );
+
+    //
+
+    document.addEventListener( 'dragover', function( e ){
+        e.stopPropagation();
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'none';
+    }, false );
+
+    document.addEventListener( 'drop', function( e ){
+        e.stopPropagation();
+        e.preventDefault();
+    }, false );
+
+    this.viewport = viewport;
+    this.toolbar = toolbar;
+    this.menubar = menubar;
+    this.sidebar = sidebar;
 
     return this;
 
@@ -2656,14 +3179,15 @@ NGL.ViewportWidget = function( stage ){
         e.stopPropagation();
         e.preventDefault();
 
-        var fileList = e.dataTransfer.files;
-        var n = fileList.length;
-
-        for( var i=0; i<n; ++i ){
-
-            stage.loadFile( fileList[ i ] );
-
-        }
+        async.eachLimit(
+            e.dataTransfer.files,
+            4,
+            function( file, callback ){
+                stage.loadFile( file, {
+                    defaultRepresentation: true
+                } ).then( function(){ callback(); } );
+            }
+        );
 
     }, false );
 
@@ -2698,6 +3222,12 @@ NGL.ToolbarWidget = function( stage ){
             msg = "Picked bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.atom1.residue.chain.model.structure.name + ")";
+
+        }else if( d.volume ){
+
+            msg = "Picked volume: " +
+                d.volume.value.toPrecision( 3 ) +
+                " (" + d.volume.volume.name + ")";
 
         }else{
 
@@ -2740,7 +3270,12 @@ NGL.MenubarWidget = function( stage ){
 
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage ) );
-    container.add( new NGL.MenubarExamplesWidget( stage ) );
+    if( NGL.ExampleRegistry.count > 0 ){
+        container.add( new NGL.MenubarExamplesWidget( stage ) );
+    }
+    if( NGL.PluginRegistry.count > 0 ){
+        container.add( new NGL.MenubarPluginsWidget( stage ) );
+    }
     container.add( new NGL.MenubarHelpWidget( stage ) );
 
     container.add(
@@ -2757,36 +3292,31 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "ent", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
-        "mrc", "ccp4", "map", "cube",
+        "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
+        "mrc", "ccp4", "map", "cube", "dx",
         "obj", "ply",
-        "ngl", "ngz",
+        "ngl",
         "gz", "lzma", "bz2", "zip"
     ];
-    var fileTypesImport = fileTypesOpen + [ "ngl" ];
+    var fileTypesImport = fileTypesOpen;
+
+    function fileInputOnChange( e ){
+        async.eachLimit(
+            e.target.files, 4,
+            function( file, callback ){
+                stage.loadFile( file, {
+                    defaultRepresentation: true
+                } ).then( function(){ callback(); } );
+            }
+        );
+    }
 
     var fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.multiple = true;
-    fileInput.style.display = "hidden";
-    document.body.appendChild( fileInput );
+    fileInput.style.display = "none";
     fileInput.accept = "." + fileTypesOpen.join( ",." );
-    fileInput.addEventListener( 'change', function( e ){
-
-        var fileList = e.target.files;
-        var n = fileList.length;
-
-        for( var i=0; i<n; ++i ){
-
-            stage.loadFile( fileList[ i ], {
-                asTrajectory: asTrajectory,
-                firstModelOnly: firstModelOnly,
-                cAlphaOnly: cAlphaOnly
-            } );
-
-        }
-
-    }, false );
+    fileInput.addEventListener( 'change', fileInputOnChange, false );
 
     // export image
 
@@ -2797,39 +3327,28 @@ NGL.MenubarFileWidget = function( stage ){
     // event handlers
 
     function onOpenOptionClick () {
-
         fileInput.click();
-
     }
 
     function onImportOptionClick(){
 
-        var dirWidget = new NGL.DirectoryListingWidget(
-
-            stage, "Import file", fileTypesImport,
-
-            function( path ){
-
-                var ext = path.path.split('.').pop().toLowerCase();
-
-                if( fileTypesImport.indexOf( ext ) !== -1 ){
-
-                    stage.loadFile( path.path, {
-                        asTrajectory: asTrajectory,
-                        firstModelOnly: firstModelOnly,
-                        cAlphaOnly: cAlphaOnly
-                    } );
-
-                }else{
-
-                    NGL.log( "unknown filetype: " + ext );
-
-                }
-
+        var datasource = NGL.DatasourceRegistry.listing;
+        var dirWidget;
+        function onListingClick( info ){
+            var ext = info.path.split('.').pop().toLowerCase();
+            if( fileTypesImport.indexOf( ext ) !== -1 ){
+                stage.loadFile( datasource.getUrl( info.path ), {
+                    defaultRepresentation: true
+                } );
                 dirWidget.dispose();
-
+            }else{
+                NGL.log( "unknown filetype: " + ext );
             }
+        }
 
+        dirWidget = new NGL.DirectoryListingWidget(
+            datasource, stage, "Import file",
+            fileTypesImport, onListingClick
         );
 
         dirWidget
@@ -2866,31 +3385,28 @@ NGL.MenubarFileWidget = function( stage ){
     function onPdbInputKeyDown ( e ) {
 
         if( e.keyCode === 13 ){
-
             stage.loadFile( "rcsb://" + e.target.value, {
-                asTrajectory: asTrajectory,
-                firstModelOnly: firstModelOnly,
-                cAlphaOnly: cAlphaOnly
+                defaultRepresentation: true
             } );
             e.target.value = "";
-
         }
 
     }
 
-    var asTrajectory = false;
     function onAsTrajectoryChange ( e ) {
-        asTrajectory = e.target.checked;
+        stage.defaultFileParams.asTrajectory = e.target.checked;
     }
 
-    var firstModelOnly = false;
-    function onFirstModelOnlyyChange ( e ) {
-        firstModelOnly = e.target.checked;
+    function onFirstModelOnlyChange( e ){
+        stage.defaultFileParams.firstModelOnly = e.target.checked;
     }
 
-    var cAlphaOnly = false;
-    function onCAlphaOnlyChange ( e ) {
-        cAlphaOnly = e.target.checked;
+    function onCAlphaOnlyChange( e ){
+        stage.defaultFileParams.cAlphaOnly = e.target.checked;
+    }
+
+    function onReorderAtomsChange( e ){
+        stage.defaultFileParams.reorderAtoms = e.target.checked;
     }
 
     // configure menu contents
@@ -2902,17 +3418,24 @@ NGL.MenubarFileWidget = function( stage ){
 
     var menuConfig = [
         createOption( 'Open...', onOpenOptionClick ),
-        createOption( 'Import...', onImportOptionClick ),
         createInput( 'PDB', onPdbInputKeyDown ),
         createCheckbox( 'asTrajectory', false, onAsTrajectoryChange ),
-        createCheckbox( 'firstModelOnly', false, onFirstModelOnlyyChange ),
+        createCheckbox( 'firstModelOnly', false, onFirstModelOnlyChange ),
         createCheckbox( 'cAlphaOnly', false, onCAlphaOnlyChange ),
+        createCheckbox( 'reorderAtoms', false, onReorderAtomsChange ),
         createDivider(),
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),
     ];
 
+    if( NGL.DatasourceRegistry.listing ){
+        menuConfig.splice(
+            1, 0, createOption( 'Import...', onImportOptionClick )
+        );
+    }
+
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+    optionsPanel.dom.appendChild( fileInput );
 
     return UI.MenubarHelper.createMenuContainer( 'File', optionsPanel );
 
@@ -3006,38 +3529,43 @@ NGL.MenubarExamplesWidget = function( stage ){
 
     var createOption = UI.MenubarHelper.createOption;
     var createDivider = UI.MenubarHelper.createDivider;
-
     var menuConfig = [];
 
-    Object.keys( NGL.Examples.data ).forEach( function( name ){
-
+    NGL.ExampleRegistry.names.sort().forEach( function( name ){
         if( name === "__divider__" ){
-
             menuConfig.push( createDivider() );
-
         }else if( name.charAt( 0 ) === "_" ){
-
-            return;
-
+            return;  // hidden
         }else{
-
-            menuConfig.push(
-
-                createOption( name, function(){
-
-                    NGL.Examples.load( name, stage );
-
-                } )
-
-            );
-
+            var option = createOption( name, function(){
+                NGL.ExampleRegistry.load( name, stage );
+            } );
+            menuConfig.push( option );
         }
-
     } );
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
-
     return UI.MenubarHelper.createMenuContainer( 'Examples', optionsPanel );
+
+};
+
+
+NGL.MenubarPluginsWidget = function( stage ){
+
+    // configure menu contents
+
+    var createOption = UI.MenubarHelper.createOption;
+    var menuConfig = [];
+
+    NGL.PluginRegistry.names.sort().forEach( function( name ){
+        var option = createOption( name, function(){
+            NGL.PluginRegistry.load( name, stage );
+        } );
+        menuConfig.push( option );
+    } );
+
+    var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+    return UI.MenubarHelper.createMenuContainer( 'Plugins', optionsPanel );
 
 };
 
@@ -3636,7 +4164,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.fogNear, 1
         )
         .onInput( function(){
-            stage.viewer.setFog( null, null, fogNear.getValue(), fogFar.getValue() );
+            stage.viewer.setFog( null, fogNear.getValue(), fogFar.getValue() );
         } );
 
     var fogFar = new UI.Range(
@@ -3644,7 +4172,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.fogFar, 1
         )
         .onInput( function(){
-            stage.viewer.setFog( null, null, fogNear.getValue(), fogFar.getValue() );
+            stage.viewer.setFog( null, fogNear.getValue(), fogFar.getValue() );
         } );
 
     //
@@ -3754,48 +4282,33 @@ NGL.StructureComponentWidget = function( component, stage ){
     var trajContainer = new UI.Panel();
 
     signals.requestGuiVisibility.add( function( value ){
-
         container.setCollapsed( !value );
-
     } );
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     signals.trajectoryAdded.add( function( traj ){
-
         trajContainer.add( new NGL.TrajectoryComponentWidget( traj, stage ) );
-
     } );
 
     // Selection
 
     container.add(
-
         new UI.SelectionPanel( component.selection )
             .setMarginLeft( "20px" )
             .setInputWidth( '214px' )
-
     );
 
     // Export PDB
 
     var pdb = new UI.Button( "export" ).onClick( function(){
-
-        var blob = new Blob(
-            [ component.structure.toPdb() ],
-            { type: 'text/plain' }
-        );
-
-        NGL.download( blob, "structure.pdb" );
-
+        var pdbWriter = new NGL.PdbWriter( component.structure );
+        pdbWriter.download( "structure" );
         componentPanel.setMenuDisplay( "none" );
-
     });
 
     // Add representation
@@ -3803,20 +4316,16 @@ NGL.StructureComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = { "": "[ add ]" };
             for( var key in NGL.representationTypes ){
                 reprOptions[ key ] = key;
             }
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Assembly
@@ -3824,25 +4333,20 @@ NGL.StructureComponentWidget = function( component, stage ){
     var assembly = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var biomolDict = component.structure.biomolDict;
             var assemblyOptions = { "__AU": "AU" };
             Object.keys( biomolDict ).forEach( function( k ){
                 assemblyOptions[ k ] = k;
             } );
             return assemblyOptions;
-
         })() )
         .setValue(
             component.structure.defaultAssembly
         )
         .onChange( function(){
-
             component.structure.setDefaultAssembly( assembly.getValue() );
             component.rebuildRepresentations();
-            // component.centerView();
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Import trajectory
@@ -3852,31 +4356,22 @@ NGL.StructureComponentWidget = function( component, stage ){
         componentPanel.setMenuDisplay( "none" );
 
         var trajExt = [ "xtc", "trr", "dcd", "netcdf", "nc" ];
+        var datasource = NGL.DatasourceRegistry.listing;
+        var dirWidget;
 
-        var dirWidget = new NGL.DirectoryListingWidget(
-
-            stage, "Import trajectory", trajExt,
-
-            function( path ){
-
-                var ext = path.path.split('.').pop().toLowerCase();
-
-                if( trajExt.indexOf( ext ) !== -1 ){
-
-                    NGL.log( path );
-
-                    component.addTrajectory( path.path );
-
-                    dirWidget.dispose();
-
-                }else{
-
-                    NGL.log( "unknown trajectory type: " + ext );
-
-                }
-
+        function onListingClick( info ){
+            var ext = info.path.split('.').pop().toLowerCase();
+            if( trajExt.indexOf( ext ) !== -1 ){
+                component.addTrajectory( info.path );
+                dirWidget.dispose();
+            }else{
+                NGL.log( "unknown trajectory type: " + ext );
             }
+        }
 
+        dirWidget = new NGL.DirectoryListingWidget(
+            datasource, stage, "Import trajectory",
+            trajExt, onListingClick
         );
 
         dirWidget
@@ -3890,9 +4385,7 @@ NGL.StructureComponentWidget = function( component, stage ){
     // Superpose
 
     function setSuperposeOptions(){
-
         var superposeOptions = { "": "[ structure ]" };
-
         stage.eachComponent( function( o, i ){
 
             if( o !== component ){
@@ -3900,9 +4393,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             }
 
         }, NGL.StructureComponent );
-
         superpose.setOptions( superposeOptions );
-
     }
 
     stage.signals.componentAdded.add( setSuperposeOptions );
@@ -3911,17 +4402,13 @@ NGL.StructureComponentWidget = function( component, stage ){
     var superpose = new UI.Select()
         .setColor( '#444' )
         .onChange( function(){
-
             component.superpose(
                 stage.compList[ superpose.getValue() ],
                 true
             );
-
             component.centerView();
-
             superpose.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     setSuperposeOptions();
@@ -3929,28 +4416,21 @@ NGL.StructureComponentWidget = function( component, stage ){
     // SS calculate
 
     var ssButton = new UI.Button( "calculate" ).onClick( function(){
-
         component.structure.autoSS();
         component.rebuildRepresentations();
-
         componentPanel.setMenuDisplay( "none" );
-
     } );
 
     // duplicate structure
 
     var duplicateButton = new UI.Button( "duplicate" ).onClick( function(){
-
         stage.addComponent(
             new NGL.StructureComponent(
                 stage,
-                component.structure.clone(),
-                {}
+                component.structure.clone()
             )
         );
-
         componentPanel.setMenuDisplay( "none" );
-
     } );
 
     // Component panel
@@ -3961,14 +4441,21 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "PDB file", pdb )
         .addMenuEntry( "Representation", repr )
         .addMenuEntry( "Assembly", assembly )
-        .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
         .addMenuEntry( "Structure", duplicateButton )
         .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setOverflow( "auto" )
+                        //.setWordWrap( "break-word" )
+                        );
+
+    if( NGL.DatasourceRegistry.listing &&
+        NGL.DatasourceRegistry.trajectory
+    ){
+        componentPanel.addMenuEntry( "Trajectory", traj )
+    }
 
     // Fill container
 
@@ -4137,12 +4624,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     } );
 
-    signals.colorChanged.add( function( value ){
-
-        colorWidget.setValue( value );
-
-    } );
-
     signals.nameChanged.add( function( value ){
 
         name.setValue( NGL.unicodeHelper( value ) );
@@ -4152,7 +4633,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     signals.disposed.add( function(){
 
         menu.dispose();
-        colorWidget.dispose();
         container.dispose();
 
     } );
@@ -4160,7 +4640,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     // Name
 
     var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
-        .setWidth( "80px" );
+        .setWidth( "103px" );
 
     // Actions
 
@@ -4182,42 +4662,10 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         } );
 
-    var colorWidget = new UI.ColorPopupMenu()
-        .setMarginLeft( "10px" )
-        .setValue( component.repr.color )
-        .onChange( (function(){
-
-            var c = new THREE.Color();
-            return function( e ){
-
-                var scheme = colorWidget.getScheme();
-                if( scheme === "color" ){
-                    c.setStyle( colorWidget.getColor() );
-                    component.setColor( c.getHex() );
-                }else{
-                    component.setColor( scheme );
-                }
-                component.viewer.requestRender();
-
-            }
-
-        })() );
-
-    if( component.parent instanceof NGL.SurfaceComponent ){
-
-        colorWidget.schemeSelector.setOptions( {
-            "": "",
-            "value": "value",
-            "color": "color",
-        } );
-
-    }
-
     container
         .addStatic( name )
         .addStatic( toggle )
-        .addStatic( disposeIcon )
-        .addStatic( colorWidget );
+        .addStatic( disposeIcon );
 
     // Selection
 
@@ -4238,7 +4686,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     var menu = new UI.PopupMenu( "bars", "Representation" )
         .setMarginLeft( "45px" )
-        .setEntryLabelWidth( "110px" );
+        .setEntryLabelWidth( "130px" );
 
     menu.addEntry( "type", new UI.Text( component.repr.type ) );
 
@@ -4263,7 +4711,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
             }
 
             input.setRange( p.min, p.max )
-
 
         }else if( p.type === "boolean" ){
 
@@ -4315,40 +4762,14 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
             } );
 
-            if( p.type === "color" ){
+            input.onChange( function(){
 
-                input.onChange( (function(){
+                var po = {};
+                po[ name ] = input.getValue();
+                component.setParameters( po );
+                repr.viewer.requestRender();
 
-                    var c = new THREE.Color();
-                    return function( e ){
-
-                        var po = {};
-                        var scheme = input.getScheme();
-                        if( scheme === "color" ){
-                            c.setStyle( input.getColor() );
-                            po[ name ] = c.getHex();
-                        }else{
-                            po[ name ] = scheme;
-                        }
-                        component.setParameters( po );
-                        repr.viewer.requestRender();
-
-                    }
-
-                })() );
-
-            }else{
-
-                input.onChange( function(){
-
-                    var po = {};
-                    po[ name ] = input.getValue();
-                    component.setParameters( po );
-                    repr.viewer.requestRender();
-
-                } );
-
-            }
+            } );
 
             menu.addEntry( name, input );
 
@@ -4670,71 +5091,9 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 };
 
 
-// Directory
+// Listing
 
-NGL.lastUsedDirectory = "";
-
-NGL.DirectoryListing = function(){
-
-    var SIGNALS = signals;
-
-    this.signals = {
-
-        listingLoaded: new SIGNALS.Signal(),
-
-    };
-
-};
-
-NGL.DirectoryListing.prototype = {
-
-    constructor: NGL.DirectoryListing,
-
-    getListing: function( path ){
-
-        var scope = this;
-
-        path = path || "";
-
-        var loader = new THREE.XHRLoader();
-        var url = "../dir/" + path;
-
-        // force reload
-        THREE.Cache.remove( url );
-
-        loader.load( url, function( responseText ){
-
-            var json = JSON.parse( responseText );
-
-            // NGL.log( json );
-
-            scope.signals.listingLoaded.dispatch( path, json );
-
-        });
-
-    },
-
-    getFolderDict: function( path ){
-
-        path = path || "";
-        var options = { "": "" };
-        var full = [];
-
-        path.split( "/" ).forEach( function( chunk ){
-
-            full.push( chunk );
-            options[ full.join( "/" ) ] = chunk;
-
-        } );
-
-        return options;
-
-    }
-
-};
-
-
-NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
+NGL.DirectoryListingWidget = function( datasource, stage, heading, filter, callback ){
 
     // from http://stackoverflow.com/a/20463021/1435042
     function fileSizeSI(a,b,c,d,e){
@@ -4742,9 +5101,17 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
             +String.fromCharCode(160)+(e?'kMGTPEZY'[--e]+'B':'Bytes')
     }
 
-    var dirListing = new NGL.DirectoryListing();
+    function getFolderDict( path ){
+        path = path || "";
+        var options = { "": "" };
+        var full = [];
+        path.split( "/" ).forEach( function( chunk ){
+            full.push( chunk );
+            options[ full.join( "/" ) ] = chunk;
+        } );
+        return options;
+    }
 
-    var signals = dirListing.signals;
     var container = new UI.OverlayPanel();
 
     var headingPanel = new UI.Panel()
@@ -4755,6 +5122,7 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
         .setMarginTop( "10px" )
         .setMinHeight( "100px" )
         .setMaxHeight( "500px" )
+        .setPaddingRight( "15px" )
         .setOverflow( "auto" );
 
     var folderSelect = new UI.Select()
@@ -4762,11 +5130,10 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
         .setMarginLeft( "20px" )
         .setWidth( "" )
         .setMaxWidth( "200px" )
-        .setOptions( dirListing.getFolderDict() )
+        .setOptions( getFolderDict() )
         .onChange( function(){
-
-            dirListing.getListing( folderSelect.getValue() );
-
+            datasource.getListing( folderSelect.getValue() )
+                .then( onListingLoaded );
         } );
 
     heading = heading || "Directoy listing"
@@ -4779,64 +5146,57 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
-
                 container.dispose();
-
             } )
     );
 
     container.add( headingPanel );
     container.add( listingPanel );
 
-    signals.listingLoaded.add( function( folder, listing ){
+    function onListingLoaded( listing ){
+
+        var folder = listing.path;
+        var data = listing.data;
 
         NGL.lastUsedDirectory = folder;
-
         listingPanel.clear();
 
         folderSelect
-            .setOptions( dirListing.getFolderDict( folder ) )
+            .setOptions( getFolderDict( folder ) )
             .setValue( folder );
 
-        listing.forEach( function( path ){
+        data.forEach( function( info ){
 
-            var ext = path.path.split('.').pop().toLowerCase();
-
-            if( filter && !path.dir && filter.indexOf( ext ) === -1 ){
-
+            var ext = info.path.split('.').pop().toLowerCase();
+            if( filter && !info.dir && filter.indexOf( ext ) === -1 ){
                 return;
-
             }
 
             var icon, name;
-            if( path.dir ){
+            if( info.dir ){
                 icon = "folder-o";
-                name = path.name;
+                name = info.name;
             }else{
                 icon = "file-o";
-                name = path.name + String.fromCharCode(160) +
-                    "(" + fileSizeSI( path.size ) + ")";
+                name = info.name + String.fromCharCode( 160 ) +
+                    "(" + fileSizeSI( info.size ) + ")";
             }
 
             var pathRow = new UI.Panel()
                 .setDisplay( "block" )
+                .setWhiteSpace( "nowrap" )
                 .add( new UI.Icon( icon ).setWidth( "20px" ) )
                 .add( new UI.Text( name ) )
                 .onClick( function(){
-
-                    if( path.dir ){
-
-                        dirListing.getListing( path.path );
-
+                    if( info.dir ){
+                        datasource.getListing( info.path )
+                            .then( onListingLoaded );
                     }else{
-
-                        callback( path );
-
+                        callback( info );
                     }
-
                 } );
 
-            if( path.restricted ){
+            if( info.restricted ){
                 pathRow.add( new UI.Icon( "lock" ).setMarginLeft( "5px" ) )
             }
 
@@ -4844,9 +5204,10 @@ NGL.DirectoryListingWidget = function( stage, heading, filter, callback ){
 
         } )
 
-    } );
+    }
 
-    dirListing.getListing( NGL.lastUsedDirectory );
+    datasource.getListing( NGL.lastUsedDirectory )
+        .then( onListingLoaded );
 
     return container;
 
