@@ -4,6 +4,97 @@
  */
 
 
+///////////////
+// Datasource
+
+NGL.DatasourceRegistry = {
+
+    sourceDict: {},
+
+    listing: undefined,
+    trajectory: undefined,
+
+    __passThrough: {
+        getUrl: function( path ){
+            return path;
+        }
+    },
+
+    add: function( name, datasource ){
+        name = name.toLowerCase();
+        if( name in this.sourceDict ){
+            NGL.warn( "overwriting datasource named '" + name + "'" );
+        }
+        this.sourceDict[ name ] = datasource;
+    },
+
+    get: function( name ){
+        name = name || "";
+        name = name.toLowerCase();
+        if( name in this.sourceDict ){
+            return this.sourceDict[ name ];
+        }else if( [ "http", "https", "ftp" ].indexOf( name ) !== -1 ){
+            return this.__passThrough;
+        }else if( !name ){
+            return this.__passThrough;
+        }else{
+            NGL.error( "no datasource named '" + name + "' found" );
+        }
+    }
+
+};
+
+
+NGL.getDataInfo = function( src ){
+
+    var info = NGL.getFileInfo( src );
+    var datasource = NGL.DatasourceRegistry.get( info.protocol );
+    var url = datasource.getUrl( info.src );
+
+    return NGL.getFileInfo( url );
+
+};
+
+
+NGL.StaticDatasource = function( baseUrl ){
+
+    baseUrl = baseUrl || "";
+
+    this.getUrl = function( src ){
+        var info = NGL.getFileInfo( src );
+        return NGL.getAbsolutePath( baseUrl + info.path );
+    };
+
+};
+
+
+NGL.RcsbDatasource = function(){
+
+    var baseUrl = "http://www.rcsb.org/pdb/files/";
+
+    this.getUrl = function( src ){
+        // valid path are
+        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz
+        // XXXX defaults to XXXX.cif.gz
+        var info = NGL.getFileInfo( src );
+        var file;
+        if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
+            ( info.compressed === false || info.compressed === "gz" )
+        ){
+            file = info.path;
+        }else{
+            file = info.name + ".cif.gz";
+        }
+        return baseUrl + file;
+    };
+
+};
+
+NGL.DatasourceRegistry.add(
+    "rcsb", new NGL.RcsbDatasource()
+);
+
+
 ///////////
 // Loader
 
@@ -187,7 +278,12 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
     _load: function( resolve, reject ){
 
-        var basePath = this.protocol + "://" + this.dir;
+        var basePath;
+        if( this.protocol ){
+            basePath = this.protocol + "://" + this.dir;
+        }else{
+            basePath = this.dir;
+        }
 
         this.streamer.read( function(){
 
@@ -259,70 +355,13 @@ NGL.loaderMap = {
 
 NGL.autoLoad = function( file, params ){
 
-    var fileInfo = NGL.getFileInfo( file );
+    var p = Object.assign( NGL.getDataInfo( file ), params );
+    var loader = new NGL.loaderMap[ p.ext ]( p.src, p );
 
-    var path = fileInfo.path;
-    var name = fileInfo.name;
-    var ext = fileInfo.ext;
-    var dir = fileInfo.dir;
-    var compressed = fileInfo.compressed;
-    var protocol = fileInfo.protocol;
-
-    if( protocol === "rcsb" ){
-
-        // ext = "pdb";
-        // file = "www.rcsb.org/pdb/files/" + name + ".pdb";
-        ext = "cif";
-        compressed = "gz";
-        path = "www.rcsb.org/pdb/files/" + name + ".cif.gz";
-        protocol = "http";
-
-    }
-
-    //
-
-    var p = Object.assign( {}, params );
-
-    p.name = p.name !== undefined ? p.name : name;
-    p.ext = p.ext !== undefined ? p.ext : ext;
-    p.compressed = p.compressed !== undefined ? p.compressed : compressed;
-    p.path = p.path !== undefined ? p.path : path;
-    p.protocol = protocol;
-    p.dir = dir;
-
-    //
-
-    var src;
-
-    if( file instanceof File ){
-
-        src = file;
-
-    }else if( [ "http", "https", "ftp" ].indexOf( protocol ) !== -1 ){
-
-        src = protocol + "://" + path;
-
-    }else if( protocol === "data" ){
-
-        src = NGL.getAbsolutePath( NGL.dataProtocolRelativePath + path );
-
-    }else{
-
-        src = NGL.getAbsolutePath( NGL.fileProtocolRelativePath + path );
-
-    }
-
-    //
-
-    if( p.ext in NGL.loaderMap ){
-
-        var loader = new NGL.loaderMap[ p.ext ]( src, p );
+    if( loader ){
         return loader.load();
-
     }else{
-
         return Promise.reject( "NGL.autoLoading: ext '" + p.ext + "' unknown" );
-
     }
 
 };

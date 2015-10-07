@@ -429,8 +429,8 @@ var NGL = {
         self.location.pathname.indexOf( "dev.html" ) !== -1
     ),
     mainScriptFilePath: "../js/build/ngl.full.min.js",
-    dataProtocolRelativePath: "../data/",
-    fileProtocolRelativePath: "../file/"
+    cssDirectory: "../css/",
+    assetsDirectory: "../"
 
 };
 
@@ -510,13 +510,13 @@ NGL.GET = function( id ){
 };
 
 
-NGL.getAbsolutePath = function( path ){
+NGL.getAbsolutePath = function( relativePath ){
 
     var loc = window.location;
     var pn = loc.pathname;
-    var base = pn.substring( 0, pn.lastIndexOf("/") + 1 );
+    var basePath = pn.substring( 0, pn.lastIndexOf("/") + 1 );
 
-    return loc.origin + base + path;
+    return loc.origin + basePath + relativePath;
 
 };
 
@@ -677,18 +677,16 @@ NGL.getFileInfo = function( file ){
     var path, compressed, protocol;
 
     if( file instanceof File ){
-
         path = file.name;
-
     }else{
-
         path = file
-
     }
 
     var name = path.replace( /^.*[\\\/]/, '' );
-    var base = name.substring( 0, name.lastIndexOf('.') );
-    var ext = path.split('.').pop().toLowerCase();
+    var base = name.substring( 0, name.lastIndexOf( '.' ) );
+
+    var pathSplit = path.split( '.' );
+    var ext = pathSplit.length > 1 ? pathSplit.pop().toLowerCase() : "";
 
     var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
     if( protocolMatch ){
@@ -696,14 +694,14 @@ NGL.getFileInfo = function( file ){
         path = protocolMatch[ 2 ];
     }
 
-    var dir = path.substring( 0, path.lastIndexOf('/') + 1 );
+    var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
     if( compressedExtList.indexOf( ext ) !== -1 ){
 
         compressed = ext;
 
         var n = path.length - ext.length - 1;
-        ext = path.substr( 0, n ).split('.').pop().toLowerCase();
+        ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
 
         var m = base.length - ext.length - 1;
         base = base.substr( 0, m );
@@ -721,7 +719,8 @@ NGL.getFileInfo = function( file ){
         "base": base,
         "dir": dir,
         "compressed": compressed,
-        "protocol": protocol
+        "protocol": protocol,
+        "src": file
     };
 
 };
@@ -957,17 +956,12 @@ NGL.WorkerRegistry = {
 
 NGL.Worker = function( name ){
 
-    var worker;
     var pending = 0;
     var postCount = 0;
     var onmessageDict = {};
     var onerrorDict = {};
 
-    if( NGL.develop ){
-        worker = new Worker( "../js/ngl/core.js" );
-    }else{
-        worker = new Worker( NGL.mainScriptFilePath );
-    }
+    var worker = new Worker( NGL.mainScriptFilePath );
 
     NGL.WorkerRegistry.activeWorkerCount += 1;
 
@@ -1449,6 +1443,78 @@ NGL.Counter.prototype = {
 
         this.clear();
 
+    }
+
+};
+
+
+// Registry
+
+NGL.PluginRegistry = {
+
+    dict: {},
+
+    add: function( name, path ){
+        this.dict[ name ] = path;
+    },
+
+    get: function( name ){
+        if( name in this.dict ){
+            return this.dict[ name ];
+        }else{
+            throw "NGL.PluginRegistry '" + name + "' not defined";
+        }
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var path = this.get( name );
+        stage.loadFile( path, { name: name + " plugin" } );
+    }
+
+};
+
+
+NGL.ExampleRegistry = {
+
+    dict: {},
+
+    add: function( name, fn ){
+        this.dict[ name ] = fn;
+    },
+
+    addDict: function( dict ){
+        Object.keys( dict ).forEach( function( name ){
+            this.add( name, dict[ name ] );
+        }.bind( this ) );
+    },
+
+    get: function( name ){
+        return this.dict[ name ];
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var fn = this.get( name );
+        if( typeof fn === "function" ){
+            fn( stage );
+        }else{
+            NGL.warn( "NGL.ExampleRegistry.load not available:", name );
+        }
     }
 
 };

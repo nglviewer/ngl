@@ -1,93 +1,73 @@
 
-load( "data://1LVZ.pdb", {
-    onLoad: function( o ){
+Promise.all( [
 
+    stage.loadFile( "data://1LVZ.pdb", {
+        firstModelOnly: true
+    } ).then( function( o ){
         o.addRepresentation( "cartoon" );
         o.centerView();
-    },
-    firstModelOnly: true
-} );
+    } ),
 
+    stage.loadFile( "data://1u19.pdb", {
+        firstModelOnly: true
+    } ).then( function( o ){
+        o.addRepresentation( "cartoon" );
+        o.centerView();
+        o.setName( "1U19" );
+    } ),
 
-load( "data://1u19.pdb", function( o ){
-
-    o.addRepresentation( "cartoon" );
-    o.centerView();
-
-    o.setName( "1U19" );
-
-} );
-
-
-load( "data://3dqb.pdb", {
-
-    onLoad: function( o ){
-
+    stage.loadFile( "data://3dqb.pdb", {
+        name: "PDB entry 3DQB"
+    } ).then( function( o ){
         o.addRepresentation( "cartoon" );
         o.addRepresentation( "hyperball", { sele: "1-100", name: "resno 1-100" } );
         o.centerView();
+    } ),
 
-    },
+    stage.loadFile( "data://1blu.pdb" ).then( function( o ){
 
-    name: "PDB entry 3DQB"
+        o.addRepresentation( "cartoon" );
+        o.addRepresentation( "licorice", {
+            sele: "sidechainAttached and not( SF4 or CYS )", visible: false
+        } );
+        o.addRepresentation( "hyperball", {
+            sele: "( sidechainAttached and CYS ) or SF4"
+        } );
+        o.setName( "1BLU" );
+        stage.getRepresentationsByName( { comp: "1BLU" } )
+            .requestGuiVisibility( false );
 
-} );
+    } )
 
+] ).then( function(){
 
-then( function(){
+    stage.getComponentsByName( "1U19" ).list[ 0 ].superpose(
+        stage.getComponentsByName( "3DQB" ).list[ 0 ], true
+    );
+    stage.getComponentsByName( "3DQB" ).centerView();
 
-    structures( "1U19" ).list[ 0 ].superpose( structures( "3DQB" ).list[ 0 ], true );
-    structures( "3DQB" ).centerView();
-
-} );
-
-
-load( "data://1blu.pdb", function( o ){
-
-    o.addRepresentation( "cartoon" );
-    o.addRepresentation( "licorice", {
-        sele: "sidechainAttached and not( SF4 or CYS )", visible: false
-    } );
-    o.addRepresentation( "hyperball", {
-        sele: "( sidechainAttached and CYS ) or SF4"
-    } );
-    // o.centerView();
-
-    o.setName( "1BLU" );
-
-    // o.eachRepresentation( function( repr ){
-    //     repr.requestGuiVisibility( false );
-    // } );
-
-    stage.getRepresentationsByName( { comp: "1BLU" } )
-        .requestGuiVisibility( false );
-
-} );
-
-
-then( function(){
-
-    structures( "1U19" ).addRepresentation( "licorice", {
+    stage.getComponentsByName( "1U19" ).addRepresentation( "licorice", {
         sele: "RET or 296", visible: false
     } );
 
-    uiText( "moin", 1 );
-
-    uiToggleButton(
+    panel.add( new UI.ToggleButton(
         "hide retinal",
         "show retinal",
         function(){
-            hide( representations( { comp: "1U19", repr: "licorice" } ) );
+            stage.getRepresentationsByName( { comp: "1U19", repr: "licorice" } )
+                .setVisibility( false );
         },
         function(){
-            show( structures( "1U19" ) );
-            show( representations( { comp: "1U19", repr: "licorice" } ) );
-            structures( "1U19" ).centerView( true, "RET and :A" );
+            stage.getRepresentationsByName( { comp: "1U19", repr: "licorice" } )
+                .setVisibility( true );
+            stage.getComponentsByName( "1U19" )
+                .setVisibility( true )
+                .centerView( true, "RET and :A" );
         }
-    );
+    ) );
 
     stage.centerView();
-
-    representations().requestGuiVisibility( false );
+    stage.getComponentsByName( undefined, NGL.StructureComponent )
+        .requestGuiVisibility( false );
 
 } );

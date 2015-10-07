@@ -2,7 +2,7 @@
 ![Gallery](gallery.png)
 
 
-NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations. Further, a server is included that enables remote access and animation of coordinate trajectories, for instance, from molecular dynamics simulations.
+NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations.
 
 
 See it in action:

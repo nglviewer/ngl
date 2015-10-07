@@ -87,8 +87,10 @@ if (!Array.from) {
 // NGL.develop = true;
 NGL.useWorker = false;
 NGL.mainScriptFilePath = "../../js/ngl/core.js";
-NGL.dataProtocolRelativePath = "../../data/";
-NGL.fileProtocolRelativePath = "../../file/";
+
+NGL.DatasourceRegistry.add(
+    "data", new NGL.StaticDatasource( "../../data/" )
+);
 
 
 ////////////////////

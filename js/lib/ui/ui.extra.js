@@ -136,6 +136,39 @@ UI.Hidden = function () {
 UI.Hidden.prototype = Object.create( UI.Input.prototype );
 
 
+// Toggle Button
+
+UI.ToggleButton = function( labelA, labelB, callbackA, callbackB ){
+
+    UI.Button.call( this, labelB );
+
+    var flag = true;
+
+    this.onClick( function(){
+
+        if( flag ){
+
+            flag = false;
+            this.setLabel( labelA );
+            callbackB();
+
+        }else{
+
+            flag = true;
+            this.setLabel( labelB );
+            callbackA();
+
+        }
+
+    }.bind( this ) );
+
+    return this;
+
+};
+
+UI.ToggleButton.prototype = Object.create( UI.Button.prototype );
+
+
 // Ellipsis Text
 
 UI.EllipsisText = function ( text ) {

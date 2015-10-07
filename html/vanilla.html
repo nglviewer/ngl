@@ -19,42 +19,16 @@
 
         <script src="../js/build/ngl.full.min.js"></script>
 
-        <!-- EXTRA -->
-        <script src="../js/extra/examples.js"></script>
-
         <script>
 
             if( !Detector.webgl ) Detector.addGetWebGLMessage();
-
-            // Datasources
-
-            NGL.DatasourceRegistry.add(
-                "data", new NGL.StaticDatasource( "../data/" )
-            );
-
-            // Plugins
-
-            NGL.PluginRegistry.add(
-                "apbs", "../plugins/apbs.plugin"
-            );
-            NGL.PluginRegistry.add(
-                "crosslink", "../plugins/crosslink.plugin"
-            );
-
-            //
 
             function onInit(){
                 var stage = new NGL.Stage();
                 NGL.StageWidget( stage );
 
-                var example = NGL.GET( "example" );
-                if( example ) NGL.ExampleRegistry.load( example, stage );
-
                 var load = NGL.GET( "load" );
                 if( load ) stage.loadFile( load, { defaultRepresentation: true } );
-
-                var plugin = NGL.GET( "plugin" );
-                if( plugin ) NGL.PluginRegistry.load( plugin, stage );
             }
 
             document.addEventListener( "DOMContentLoaded", function(){

@@ -2738,7 +2738,7 @@ NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, 
 
 NGL.getFont = function( name ){
 
-    var fnt = NGL.Resources[ '../fonts/' + name + '.fnt' ].split('\n');
+    var fnt = NGL.Resources[ 'fonts/' + name + '.fnt' ].split('\n');
     var font = {};
     var m, tWidth, tHeight, base, lineHeight;
 
@@ -2807,7 +2807,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     this.font = NGL.getFont( fontName );
 
     this.tex = new THREE.Texture(
-        NGL.Resources[ '../fonts/' + fontName + '.png' ]
+        NGL.Resources[ 'fonts/' + fontName + '.png' ]
     );
     this.tex.needsUpdate = true;
 

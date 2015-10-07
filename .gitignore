@@ -2,12 +2,6 @@
 *.sublime-project
 *.sublime-workspace
 
-*.pyc
-app.cfg
 js/tracking.js
-js/examples.js
 
 *.offsets
-
-lib/build/*
-*.so

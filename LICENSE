@@ -5,7 +5,7 @@ For license texts see at the end of this document.
 ////////
 // NGL
 
-	The MIT License, Copyright &copy; 2013-2014 Alexander S. Rose
+	The MIT License, Copyright &copy; 2013-2015 Alexander S. Rose
 
 	applies to all files unless otherwise noted (excluding files in tmp/*)
 
@@ -117,18 +117,6 @@ For license texts see at the end of this document.
 	Modified by John-David Dalton <http://allyoucanleet.com/>
 
 	test/bench/benchmark-1.0.0.js
-
-
-////////////////
-// libxdrfile2
-
-	http://www.gromacs.org/
-	http://mdanalysis.googlecode.com
-
-	GNU GENERAL PUBLIC LICENSE Version 2 (lib/xdrfile/COPYING)
-
-	lib/setup.py
-	lib/xdrfile/*
 
 
 //////////////
