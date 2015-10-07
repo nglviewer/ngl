@@ -1212,10 +1212,20 @@ NGL.ElementColorMaker = function( params ){
 
     var elemColors = NGL.ElementColors;
     var defaultElemColor = NGL.ElementColors[""];
+    var colorValue = this.value;
+    if( params.value === undefined ){
+        colorValue = NGL.ElementColors[ "C" ];
+    }
 
     this.atomColor = function( a ){
 
-        return elemColors[ a.element ] || defaultElemColor;
+        var element = a.element;
+
+        if( element === "C" ){
+            return colorValue;
+        }else{
+            return elemColors[ element ] || defaultElemColor;
+        }
 
     };
 
