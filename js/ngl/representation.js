@@ -154,7 +154,7 @@ NGL.Representation.prototype = {
 
         this.colorScheme = p.colorScheme || "uniform";
         this.colorScale = p.colorScale || "";
-        this.colorValue = p.colorValue || 0xFFFFFF;
+        this.colorValue = p.colorValue || 0x909090;
         this.colorDomain = p.colorDomain || "";
         this.colorMode = p.colorMode || "hcl";
 
