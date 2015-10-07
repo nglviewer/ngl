@@ -3454,17 +3454,15 @@ NGL.MenubarViewWidget = function( stage ){
 
     function onLightThemeOptionClick () {
 
-        setTheme( '../css/light.css' );
+        setTheme( NGL.cssDirectory + 'light.css' );
         stage.viewer.setBackground( "white" );
-        // editor.config.setKey( 'theme', 'css/light.css' );
 
     }
 
     function onDarkThemeOptionClick () {
 
-        setTheme( '../css/dark.css' );
+        setTheme( NGL.cssDirectory + 'dark.css' );
         stage.viewer.setBackground( "black" );
-        // editor.config.setKey( 'theme', 'css/dark.css' );
 
     }
 
@@ -3575,15 +3573,7 @@ NGL.MenubarHelpWidget = function( stage ){
     // event handlers
 
     function onDocOptionClick () {
-        window.open( '../doc/index.html', '_blank' );
-    }
-
-    function onUnittestsOptionClick () {
-        window.open( '../test/unit/unittests.html', '_blank' );
-    }
-
-    function onBenchmarksOptionClick () {
-        window.open( '../test/bench/benchmarks.html', '_blank' );
+        window.open( NGL.assetsDirectory + 'doc/index.html', '_blank' );
     }
 
     function onPreferencesOptionClick () {
@@ -3634,9 +3624,6 @@ NGL.MenubarHelpWidget = function( stage ){
     var menuConfig = [
         createOption( 'Overview', onOverviewOptionClick ),
         createOption( 'Documentation', onDocOptionClick ),
-        createDivider(),
-        createOption( 'Unittests', onUnittestsOptionClick ),
-        createOption( 'Benchmarks', onBenchmarksOptionClick ),
         createDivider(),
         createOption( 'Prefereces', onPreferencesOptionClick, 'sliders' )
     ];
@@ -3732,9 +3719,11 @@ NGL.OverviewWidget = function( stage ){
             "</ul>"
         ) );
 
+    var docUrl = NGL.assetsDirectory + "doc/index.html";
     listingPanel
         .add( new UI.Panel().add( new UI.Html(
-            "For more information please visit the <a href='../doc/index.html' target='_blank'>documentation pages</a>."
+            "For more information please visit the " +
+            "<a href='" + docUrl + "' target='_blank'>documentation pages</a>."
         ) ) );
 
     var overview = stage.preferences.getKey( "overview" );
