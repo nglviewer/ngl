@@ -403,7 +403,13 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         xhr.addEventListener( 'load', function ( event ) {
 
-            if ( xhr.status === 200 || xhr.status === 304 ) {
+            console.log( xhr )
+
+            if( xhr.status === 200 || xhr.status === 304 ||
+                // when requesting from local file system
+                // the status in Google Chrome/Chromium is 0
+                xhr.status === 0
+             ){
 
                 callback( xhr.response );
 
@@ -415,7 +421,7 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
                 }
 
-                throw "NGL.NetworkStreamer._read: " + xhr.status;
+                throw "NGL.NetworkStreamer._read: status code " + xhr.status;
 
             }
 
