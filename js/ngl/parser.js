@@ -361,9 +361,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
                     var r = c.residues[ j ];
 
-                    // console.log( i, chainChange, done, helixRun )
-
-                    if( chainChange || done ) return;
+                    if( r.resno === helix[ 1 ] ){  // resnoBeg
+                        helixRun = true;
+                    }
 
                     if( helixRun ){
 
@@ -372,31 +372,23 @@ NGL.assignSecondaryStructure = function( structure, callback ){
                         if( r.resno === helix[ 3 ] ){  // resnoEnd
 
                             helixRun = false
-
                             i += 1;
 
                             if( i < n ){
-
+                                // must look at previous residues as
+                                // residues may not be ordered by resno
+                                j = -1;
                                 helix = helices[ i ];
                                 chainChange = c.chainname !== helix[ 0 ];
-
                             }else{
-
                                 done = true;
-
                             }
 
                         }
 
                     }
 
-                    if( r.resno === helix[ 1 ] ){  // resnoBeg
-
-                        helixRun = true;
-
-                        r.ss = helix[ 4 ];
-
-                    }
+                    if( chainChange || done ) return;
 
                 }
 
@@ -428,7 +420,7 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var n = sheets.length;
         if( n === 0 ) return;
         var sheet = sheets[ i ];
-        var run = false;
+        var sheetRun = false;
         var done = false;
 
         m.eachChain( function( c ){
@@ -444,42 +436,34 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
                     var r = c.residues[ j ];
 
-                    if( chainChange || done ) return;
+                    if( r.resno === sheet[ 1 ] ){  // resnoBeg
+                        sheetRun = true;
+                    }
 
-                    if( run ){
+                    if( sheetRun ){
 
                         r.ss = "s";
 
                         if( r.resno === sheet[ 3 ] ){  // resnoEnd
 
-                            run = false
+                            sheetRun = false
                             i += 1;
 
                             if( i < n ){
-
                                 // must look at previous residues as
-                                // sheet definitions are not ordered
-                                // by resno
-                                j = 0;
+                                // residues may not be ordered by resno
+                                j = -1;
                                 sheet = sheets[ i ];
                                 chainChange = c.chainname !== sheet[ 0 ];
-
                             }else{
-
                                 done = true;
-
                             }
 
                         }
 
                     }
 
-                    if( r.resno === sheet[ 1 ] ){  // resnoBeg
-
-                        run = true;
-                        r.ss = "s";
-
-                    }
+                    if( chainChange || done ) return;
 
                 }
 
