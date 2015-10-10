@@ -1,9 +1,0 @@
-<VirtualHost *:80>
-    ServerName localhost
-
-    <Directory /var/www/html/ngl>
-        Order allow,deny
-        Allow from all
-        Require all granted
-    </Directory>
-</VirtualHost>
