@@ -28,7 +28,6 @@ var list = {
             [ "Repository", "manual/development/Repository" ],
             [ "Unittest", "manual/development/Unittest" ],
             [ "Benchmark", "manual/development/Benchmark" ],
-            [ "Font", "manual/development/Font" ],
             [ "Acknowledgment", "manual/development/Acknowledgment" ]
         ]
     },
