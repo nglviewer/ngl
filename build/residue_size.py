@@ -10,7 +10,7 @@ def main( argv=None ):
 
     res_radii = OrderedDict();
 
-    with open( "../data/CAlphaRadiusMed.txt", "rb" ) as fp:
+    with open( "data/CAlphaRadiusMed.txt", "rb" ) as fp:
         for line in fp:
             row = line.split()
             res = row[ 0 ].upper()

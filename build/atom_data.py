@@ -11,7 +11,7 @@ def main( argv=None ):
     vdw_radii = OrderedDict();
     covalent_radii = OrderedDict();
 
-    with open( "../data/element.txt", "rb" ) as fp:
+    with open( "data/element.txt", "rb" ) as fp:
         for line in fp:
             if line.startswith("#num"):
                 print line

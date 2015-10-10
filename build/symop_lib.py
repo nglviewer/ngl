@@ -12,7 +12,7 @@ def main( argv=None ):
     symop_dict = OrderedDict();
     HM = ""
 
-    with open( "../data/symop.lib", "rb" ) as fp:
+    with open( "data/symop.lib", "rb" ) as fp:
         for line in fp:
             if line.strip() == "":
                 continue
