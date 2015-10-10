@@ -6,7 +6,7 @@ NGL Viewer is a web application for molecular visualization. [WebGL](https://get
 
 See it in action:
 
-* [Web application](http://arose.github.io/ngl/)
+* [Web application](http://arose.github.io/ngl/?example=3pqr)
 * [API documentation](http://arose.github.io/ngl/doc/)
 
 
@@ -19,7 +19,6 @@ Features
 * User interaction (mouse picking, selection language, image export)
 * Coordinate trajectories (animation, server)
 * Embeddable (single file, API)
-
 
 
 
@@ -43,7 +42,7 @@ Since the NGL Viewer is a set of static files to be viewed in a web-browser ther
 Browser
 -------
 
-NGL requires your browser to support WebGL. To see if your browser supports WebGL and what you might need to do to activate it, visit the [Get WebGL](https://get.webgl.org/) page.
+The NGL Viewer requires your browser to support WebGL. To see if your browser supports WebGL and what you might need to do to activate it, visit the [Get WebGL](https://get.webgl.org/) page.
 
 Generally, WebGL is available in recent browser versions of Mozilla Firefox (>29) or Google Chrome (>27). The Internet Explorer supports WebGL only since version 11. The Safari Browser since version 8 (though WebGL can be activated in earlier version: first enable the Develop menu in Safari’s Advanced preferences, then secondly in the now visible Develop menu enable WebGL).
 
@@ -55,6 +54,16 @@ __WebGL draft extensions__: For a smoother appearance of cylinders and spheres y
 * Firefox: browse to `about:config` and set `webgl.enable-draft-extensions` to `true`.
 * Safari: Currently, the `EXT_frag_depth` extension is not supported.
 * Internet Explorer: Currently, the `EXT_frag_depth` extension is not supported.
+
+
+Trajectories
+------------
+
+The NGL Viewer can be configured to interactively display molecular dynamics trajectories served by [MDSrv](https://github.com/arose/mdsrv/). After installing MDSrv please look at the following files on how to set everything up.
+
+* [js/extra/mdsrv.js](https://github.com/arose/ngl/tree/dev/js/extra/mdsrv.js) - Implementation of `NGL.MdsrvDatasource` that is used to access trajectory data in `NGL.RemoteTrajectory`.
+* [js/extra/examples_mdsrv.js](https://github.com/arose/ngl/tree/dev/js/extra/examples_mdsrv.js) - A number of examples of molecular dynamics trajectories.
+* [html/mdsrv.dev.html](https://github.com/arose/ngl/tree/dev/html/mdsrv.dev.html) - Example html showing the configuration for viewing trajectories in the NGL Viewer.
 
 
 
