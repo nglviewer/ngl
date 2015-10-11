@@ -4,6 +4,7 @@
     "js/ngl/alignment.js",
     "js/ngl/geometry.js",
     "js/ngl/selection.js",
+    "js/ngl/superposition.js",
     "js/ngl/structure.js",
     "js/ngl/trajectory.js",
     "js/ngl/surface.js",
