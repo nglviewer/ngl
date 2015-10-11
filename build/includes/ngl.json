@@ -1,4 +1,5 @@
 [
+    "js/ngl/shims.js",
     "js/ngl/core.js",
     "js/ngl/utils.js",
     "js/ngl/symmetry.js",
