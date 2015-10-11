@@ -1,5 +1,5 @@
 
-panel.setName( "Noro virus" );
+panel.setName( "Norovirus" );
 var loadingInfo = new UI.Text( "loading..." );
 panel.add( loadingInfo );
 
@@ -48,7 +48,7 @@ Promise.all( promiseList ).then( function(){
     loadingInfo.dispose();
 
     var html1 = new UI.Html(
-        "Structure of the Noro virus capsid " +
+        "Structure of the Norovirus capsid " +
         "(" + pdbLink( "1IHM" ) + "), " +
         "that forms the outer shell of the virus."
     ).setMarginBottom( "10px" );
@@ -64,12 +64,19 @@ Promise.all( promiseList ).then( function(){
     ).setMarginBottom( "10px" );
 
     var html2 = new UI.Html(
-        "Inside the virus capsid is the " +
+        "Inside the virus capsid is the 65 base pair " +
         "structure of a conserved retroviral RNA packaging element " +
         "from the Moloney murine leukemia virus " +
-        "(" + pdbLink( "2LIF" ) + "), for size comparision."
+        "(" + pdbLink( "2LIF" ) + "), for size comparison."
+    ).setMarginBottom( "10px" );
+
+    var html3 = new UI.Html(
+        "The capsid is composed of 60 identical protein and " +
+        "normally hosts a RNA genome of about 7.500 base pairs. " +
+        "Read more on <a href='https://en.wikipedia.org/wiki/Norovirus'>" +
+        "Wikipedia</a>."
     );
 
-    panel.add( html1, btn, html2 );
+    panel.add( html1, btn, html2, html3 );
 
 } );
