@@ -14,10 +14,10 @@ See it in action:
 Features
 --------
 
-* Molecular structures (mmCIF, PDB, GRO, SDF, MOL2)
-* Density volumes (MRC/MAP/CCP4)
+* Molecular structures (mmCIF, PDB, PQR, GRO, SDF, MOL2)
+* Density volumes (MRC/MAP/CCP4, DX, CUBE)
 * User interaction (mouse picking, selection language, image export)
-* Coordinate trajectories (animation, server)
+* Coordinate trajectories (animation, remote access via [MDSrv](https://github.com/arose/mdsrv/))
 * Embeddable (single file, API)
 
 
