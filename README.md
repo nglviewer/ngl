@@ -36,7 +36,7 @@ Table of contents
 Installation
 ============
 
-Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). The  When embedding the NGL Viewer as a library it is sufficient to include the self contained [embedded build](https://github.com/arose/ngl/blob/dev/js/build/ngl.embedded.min.js). The full web application including the GUI requires the full build and some static assets - have a look at the example [html files](https://github.com/arose/ngl/tree/dev/html) for what is required.
+Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). The  When embedding the NGL Viewer as a library it is sufficient to include the self contained [embedded build](js/build/ngl.embedded.min.js). The full web application including the GUI requires the full build and some static assets - have a look at the example [html files](html/) for what is required.
 
 
 Browser
@@ -61,9 +61,9 @@ Trajectories
 
 The NGL Viewer can be configured to interactively display molecular dynamics trajectories served by [MDSrv](https://github.com/arose/mdsrv/). After installing MDSrv please look at the following files on how to set everything up.
 
-* [js/extra/mdsrv.js](https://github.com/arose/ngl/tree/dev/js/extra/mdsrv.js) - Implementation of `NGL.MdsrvDatasource` that is used to access trajectory data in `NGL.RemoteTrajectory`.
-* [js/extra/examples_mdsrv.js](https://github.com/arose/ngl/tree/dev/js/extra/examples_mdsrv.js) - A number of examples of molecular dynamics trajectories.
-* [html/mdsrv.dev.html](https://github.com/arose/ngl/tree/dev/html/mdsrv.dev.html) - Example html showing the configuration for viewing trajectories in the NGL Viewer.
+* [js/extra/mdsrv.js](js/extra/mdsrv.js) - Implementation of `NGL.MdsrvDatasource` that is used to access trajectory data in `NGL.RemoteTrajectory`.
+* [js/extra/examples_mdsrv.js](js/extra/examples_mdsrv.js) - A number of examples of molecular dynamics trajectories.
+* [html/mdsrv.dev.html](html/mdsrv.dev.html) - Example html showing the configuration for viewing trajectories in the NGL Viewer.
 
 
 
@@ -83,13 +83,13 @@ A (Python based) local development server can be started with the shell script
     sh serve.sh
 
 
-Limited (due to browser security restrictions) functionality is available when directly opening one of the [html files](https://github.com/arose/ngl/tree/dev/html) from the local file system. For Google Chrome/Chromium it can be helpful to start the browser with the `--allow-file-access-from-files` command line flag.
+Limited (due to browser security restrictions) functionality is available when directly opening one of the [html files](html/) from the local file system. For Google Chrome/Chromium it can be helpful to start the browser with the `--allow-file-access-from-files` command line flag.
 
 
 Unit tests
 ----------
 
-[QUnit](http://qunitjs.com/) is used for unit testing. The unit tests can be found [here](https://github.com/arose/ngl/tree/dev/test/unit).
+[QUnit](http://qunitjs.com/) is used for unit testing. The unit tests can be found [here](test/unit/).
 
 
 
