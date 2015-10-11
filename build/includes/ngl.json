@@ -1,5 +1,6 @@
 [
     "js/ngl/core.js",
+    "js/ngl/utils.js",
     "js/ngl/symmetry.js",
     "js/ngl/alignment.js",
     "js/ngl/geometry.js",
