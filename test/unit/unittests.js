@@ -84,13 +84,17 @@ if (!Array.from) {
 }
 
 
-// NGL.develop = true;
-NGL.useWorker = false;
-NGL.mainScriptFilePath = "../../js/ngl/core.js";
+function setupNGL(){
 
-NGL.DatasourceRegistry.add(
-    "data", new NGL.StaticDatasource( "../../data/" )
-);
+    // NGL.develop = true;
+    NGL.useWorker = false;
+    NGL.mainScriptFilePath = "../../js/ngl/core.js";
+
+    NGL.DatasourceRegistry.add(
+        "data", new NGL.StaticDatasource( "../../data/" )
+    );
+
+};
 
 
 ////////////////////
@@ -860,12 +864,13 @@ QUnit.test( "(CYS and .CA) or (CYS and hydrogen)", function( assert ) {
 QUnit.module( "selection test" );
 
 
-QUnit.asyncTest( "backbone", function( assert ) {
+QUnit.test( "backbone", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = "backbone";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -875,22 +880,23 @@ QUnit.asyncTest( "backbone", function( assert ) {
         assert.equal( atomSet.atomCount, 184, "Passed!" );
         assert.equal( atomSet.atoms[ 0 ].atomname, "N", "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "backbone [atomArray]", function( assert ) {
+QUnit.test( "backbone [atomArray]", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var _useAtomArrayThreshold = NGL.useAtomArrayThreshold;
     NGL.useAtomArrayThreshold = 100;
 
     var sele = "backbone";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -902,19 +908,20 @@ QUnit.asyncTest( "backbone [atomArray]", function( assert ) {
 
         NGL.useAtomArrayThreshold = _useAtomArrayThreshold;
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( ".CA", function( assert ) {
+QUnit.test( ".CA", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = ".CA";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -924,19 +931,20 @@ QUnit.asyncTest( ".CA", function( assert ) {
         assert.equal( atomSet.atomCount, 46, "Passed!" );
         assert.equal( atomSet.atoms[ 30 ].atomname, "CA", "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "ARG or .N", function( assert ) {
+QUnit.test( "ARG or .N", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = "ARG or .N";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -945,19 +953,20 @@ QUnit.asyncTest( "ARG or .N", function( assert ) {
 
         assert.equal( atomSet.atomCount, 22 + 46 - 2, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "not backbone", function( assert ) {
+QUnit.test( "not backbone", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = "not backbone";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -967,19 +976,20 @@ QUnit.asyncTest( "not backbone", function( assert ) {
         assert.equal( atomSet.atomCount, 143, "Passed!" );
         assert.equal( atomSet.atoms[ 0 ].atomname, "CB", "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "not backbone or .CA", function( assert ) {
+QUnit.test( "not backbone or .CA", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = "not backbone or .CA";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -990,18 +1000,20 @@ QUnit.asyncTest( "not backbone or .CA", function( assert ) {
         assert.equal( atomSet.atoms[ 0 ].atomname, "CA", "Passed!" );
         assert.equal( atomSet.atoms[ 1 ].atomname, "CB", "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
+QUnit.test( "TYR vs not not TYR", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var selection1 = new NGL.Selection( "TYR" );
     var selection2 = new NGL.Selection( "not not TYR" );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -1011,18 +1023,20 @@ QUnit.asyncTest( "TYR vs not not TYR", function( assert ) {
 
         assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
+QUnit.test( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var selection1 = new NGL.Selection( "not ( 12 and .CA )" );
     var selection2 = new NGL.Selection( "not ( 12.CA )" );
-
     var path = "data://1crn.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -1032,19 +1046,20 @@ QUnit.asyncTest( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
 
         assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "/1 PDB", function( assert ) {
+QUnit.test( "/1 PDB", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = "/1";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1LVZ.pdb";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -1055,19 +1070,20 @@ QUnit.asyncTest( "/1 PDB", function( assert ) {
         assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
         assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "/1 CIF", function( assert ) {
+QUnit.test( "/1 CIF", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var sele = "/1";
-
     var selection = new NGL.Selection( sele );
-
     var path = "data://1LVZ.cif";
 
     NGL.autoLoad( path ).then( function( structure ){
@@ -1078,7 +1094,7 @@ QUnit.asyncTest( "/1 CIF", function( assert ) {
         assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
         assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
@@ -1091,7 +1107,10 @@ QUnit.asyncTest( "/1 CIF", function( assert ) {
 QUnit.module( "structure" );
 
 
-QUnit.asyncTest( "structure subset", function( assert ) {
+QUnit.test( "structure subset", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://BaceCgProteinAtomistic.pdb";
 
@@ -1104,14 +1123,17 @@ QUnit.asyncTest( "structure subset", function( assert ) {
         assert.equal( structure.atomCount, 774, "Passed!" );
         assert.equal( subset.atomCount, 211, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "structure subset not", function( assert ) {
+QUnit.test( "structure subset not", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://BaceCgProteinAtomistic.pdb";
 
@@ -1124,14 +1146,17 @@ QUnit.asyncTest( "structure subset not", function( assert ) {
         assert.equal( structure.atomCount, 774, "Passed!" );
         assert.equal( subset.atomCount, 563, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
+QUnit.test( "structure subset autoChainName", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://Bace1Trimer-inDPPC.gro";
 
@@ -1144,14 +1169,17 @@ QUnit.asyncTest( "structure subset autoChainName", function( assert ) {
         assert.equal( structure.atomCount, 52661, "Passed!" );
         assert.equal( subset.atomCount, 258, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "structure subset atomset chain", function( assert ) {
+QUnit.test( "structure subset atomset chain", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://3SN6.cif";
 
@@ -1165,14 +1193,17 @@ QUnit.asyncTest( "structure subset atomset chain", function( assert ) {
         assert.equal( subset.atomCount, 2292, "Passed!" );
         assert.equal( subset.atomCount, atomSet.atomCount, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "structure fiber no chains", function( assert ) {
+QUnit.test( "structure fiber no chains", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://BaceCgProteinAtomistic.pdb";
 
@@ -1188,14 +1219,17 @@ QUnit.asyncTest( "structure fiber no chains", function( assert ) {
 
         assert.equal( i, 3, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
+QUnit.test( "structure fiber no chains padded", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://BaceCgProteinAtomistic.pdb";
 
@@ -1211,14 +1245,17 @@ QUnit.asyncTest( "structure fiber no chains padded", function( assert ) {
 
         assert.equal( i, 3, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "clone", function( assert ) {
+QUnit.test( "clone", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://1crn.pdb";
 
@@ -1237,14 +1274,17 @@ QUnit.asyncTest( "clone", function( assert ) {
 
         assert.equal( structure.bondSet.bondCount, clone.bondSet.bondCount, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "clone multimodel", function( assert ) {
+QUnit.test( "clone multimodel", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://1LVZ.pdb";
 
@@ -1263,7 +1303,7 @@ QUnit.asyncTest( "clone multimodel", function( assert ) {
 
         assert.equal( structure.bondSet.bondCount, clone.bondSet.bondCount, "Passed!" );
 
-        QUnit.start()
+        done();
 
     } );
 
@@ -1411,7 +1451,10 @@ QUnit.test( "Uint8ToLines multiple chunks", function( assert ) {
 });
 
 
-QUnit.asyncTest( "text parser", function( assert ) {
+QUnit.test( "text parser", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://sample.txt";
     var sampleText = "Moin world!";
@@ -1420,14 +1463,17 @@ QUnit.asyncTest( "text parser", function( assert ) {
 
         assert.equal( sampleText, text.data, "Passed!" );
 
-        QUnit.start();
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "csv parser", function( assert ) {
+QUnit.test( "csv parser", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://sample.csv";
     var sampleText = "Moin world!";
@@ -1437,14 +1483,17 @@ QUnit.asyncTest( "csv parser", function( assert ) {
         assert.equal( "col1row1Value", csv.data[ 0 ][ 0 ], "Passed!" );
         assert.equal( "col2row3Value", csv.data[ 2 ][ 1 ], "Passed!" );
 
-        QUnit.start();
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "json parser", function( assert ) {
+QUnit.test( "json parser", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://sample.json";
     var sampleText = "Moin world!";
@@ -1453,14 +1502,17 @@ QUnit.asyncTest( "json parser", function( assert ) {
 
         assert.equal( 42, json.data.foo, "Passed!" );
 
-        QUnit.start();
+        done();
 
     } );
 
 });
 
 
-QUnit.asyncTest( "xml parser", function( assert ) {
+QUnit.test( "xml parser", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
 
     var path = "data://3dqbInfo.xml";
 
@@ -1474,7 +1526,7 @@ QUnit.asyncTest( "xml parser", function( assert ) {
 
         assert.equal( "3DQB", id, "Passed!" );
 
-        QUnit.start();
+        done();
 
     } );
 
