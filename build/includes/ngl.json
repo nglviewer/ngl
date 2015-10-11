@@ -1,6 +1,7 @@
 [
     "js/ngl/shims.js",
     "js/ngl/core.js",
+    "js/ngl/worker.js",
     "js/ngl/utils.js",
     "js/ngl/symmetry.js",
     "js/ngl/alignment.js",
