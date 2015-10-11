@@ -99,21 +99,52 @@ Changelog
 Version 0.6dev
 --------------
 
-* CODE: clearer atomnames handling for fiber creation
-* FIX: residues at the end of fibers may not require all backbone atoms
+* MIGRATION: `Stage.loadFile` signature changed, now returns a `Promise` and does not accept callbacks
+* MIGRATION: moved trajectory server into its own repository: [MDSrv](https://github.com/arose/mdsrv/)
+* ADD: Support for MOL2 and SDF files
+* ADD: Support for DX files
+* ADD: Support for PQR files
+* ADD: `ExampleRegistry` singleton
+* ADD: `PluginRegistry` singleton
+* ADD: `Datasource` class to use instead of hard-coded paths
+* ADD: `GidPool`
+* ADD: simple xml parser
+* ADD: APBS plugin to load PQR and DX file, simple GUI
+* ADD: bond and surface picking
 * ADD: User-defined color schemes (API)
+* EXAMPLES: general fixes and enhancements
+* DOC: moved installation and development information into the README
+* GUI/DOC: Higher color contrast for GUI and documentation pages
+* GUI: `VirtualList` and `VirtualTable`
+* GUI: re-sizable sidebar (contents still need to be made responsive)
+* DEL: removed FragFit plugins
+* CODE: qunit updated
+* CODE: moved logical units of code into their own files
+* CODE: speeded up secondary structure assignment from PDB/mmCIF files; fixed bugs leading to wrong assignment
+* CODE: element color scheme now uses colorValue parameter to color carbon elements
+* CODE: script and assets paths are now configurable
+* CODE: more forgiving pdb parsing wrt to model records
+* CODE: helper function for re-ordering atoms
+* CODE: enhancements to handling Web Workers (`WorkerPool`, lazy Worker creation)
+* CODE: enhancements to volume triangulation (limit to given box, skip empty parts)
+* CODE: all `*Buffer` classes now inherit from `Buffer` and share common code
+* CODE: BufferAttributes can be re-used or grown
+* CODE: moved Buffer-specific code out of Representation class
+* CODE: molecular surface enhancements (color by atom, filter by atom)
+* CODE: nicer clipping of meshes and impostors (unlit interior to make them appear solid)
+* CODE: optimized kdtree building
+* CODE: clearer atomnames handling for fiber creation
 * CODE: Color handling code refactored exposing more parameters
-* FIX: Issue #7
-* DOC: pull request instruction for developers
-* Higher color contrast for GUI and documentation pages
 * CODE: Basic support for async creation of representations (so far used for molecular surfaces and volume triangulation)
-* WIP: scripting API
 * CODE: chunked data loading and parsing via streamer class
-* MIGRATION: Stage.loadFile signature changed
 * CODE: faster autobonding of large residues (e.g. hydrated lipids)
 * CODE: WebWorker support while using development and build files
 * CODE: WebWorker used for decompression, parsing and surface generation
-* ADD: Support for MOL2 and SDF files
+* FIX: Issue #7
+* FIX: residues at the end of fibers may not require all backbone atoms
+* FIX: standard compatible atom names when writing pdb files
+* FIX: origin coordinates not used/read from mrc header
+* WIP: scripting API
 
 
 Version 0.5
