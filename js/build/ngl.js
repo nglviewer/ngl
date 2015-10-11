@@ -1,7 +1,7 @@
-// File:js/ngl/core.js
+// File:js/ngl/shims.js
 
 /**
- * @file Core
+ * @file Shims
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
@@ -414,6 +414,13 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
 }
 
+// File:js/ngl/core.js
+
+/**
+ * @file Core
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
 
 ////////
 // NGL
@@ -449,6 +456,379 @@ NGL.timeEnd = Function.prototype.bind.call( console.timeEnd, console );
 NGL.LeftMouseButton = 1;
 NGL.MiddleMouseButton = 2;
 NGL.RightMouseButton = 3;
+
+
+if( typeof importScripts === 'function' ){
+
+    if( NGL.develop ){
+
+        importScripts(
+
+            "../three/three.js",
+            "../three/Detector.js",
+            "../three/TypedArrayUtils.js",
+            "../three/controls/TrackballControls.js",
+            "../three/loaders/OBJLoader.js",
+            "../three/loaders/PLYLoader.js",
+
+            "../lib/async.js",
+            "../lib/promise.min.js",
+            "../lib/sprintf.min.js",
+            "../lib/jszip.min.js",
+            "../lib/pako.min.js",
+            "../lib/lzma.min.js",
+            "../lib/bzip2.min.js",
+            "../lib/chroma.min.js",
+            "../lib/svd.js",
+            "../lib/signals.min.js",
+
+            "../ngl/shims.js",
+            // "../ngl/core.js",
+            "../ngl/worker.js",
+            "../ngl/utils.js",
+            "../ngl/symmetry.js",
+            "../ngl/alignment.js",
+            "../ngl/geometry.js",
+            "../ngl/selection.js",
+            "../ngl/superposition.js",
+            "../ngl/structure.js",
+            "../ngl/trajectory.js",
+            "../ngl/surface.js",
+            "../ngl/script.js",
+            "../ngl/streamer.js",
+            "../ngl/parser.js",
+            "../ngl/writer.js",
+            "../ngl/loader.js",
+            "../ngl/viewer.js",
+            "../ngl/buffer.js",
+            "../ngl/representation.js",
+            "../ngl/stage.js"
+
+        );
+
+    }
+
+}
+
+
+// Registry
+
+NGL.PluginRegistry = {
+
+    dict: {},
+
+    add: function( name, path ){
+        this.dict[ name ] = path;
+    },
+
+    get: function( name ){
+        if( name in this.dict ){
+            return this.dict[ name ];
+        }else{
+            throw "NGL.PluginRegistry '" + name + "' not defined";
+        }
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var path = this.get( name );
+        stage.loadFile( path, { name: name + " plugin" } );
+    }
+
+};
+
+
+NGL.ExampleRegistry = {
+
+    dict: {},
+
+    add: function( name, fn ){
+        this.dict[ name ] = fn;
+    },
+
+    addDict: function( dict ){
+        Object.keys( dict ).forEach( function( name ){
+            this.add( name, dict[ name ] );
+        }.bind( this ) );
+    },
+
+    get: function( name ){
+        return this.dict[ name ];
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var fn = this.get( name );
+        if( typeof fn === "function" ){
+            fn( stage );
+        }else{
+            NGL.warn( "NGL.ExampleRegistry.load not available:", name );
+        }
+    }
+
+};
+
+// File:js/ngl/worker.js
+
+/**
+ * @file Worker
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+// Worker
+
+NGL.WorkerRegistry = {
+
+    activeWorkerCount: 0,
+
+    funcDict: {},
+
+    add: function( name, func ){
+
+        NGL.WorkerRegistry.funcDict[ name ] = func;
+
+    },
+
+};
+
+
+NGL.Worker = function( name ){
+
+    var pending = 0;
+    var postCount = 0;
+    var onmessageDict = {};
+    var onerrorDict = {};
+
+    var worker = new Worker( NGL.mainScriptFilePath );
+
+    NGL.WorkerRegistry.activeWorkerCount += 1;
+
+    worker.onmessage = function( event ){
+
+        pending -= 1;
+        var postId = event.data.__postId;
+
+        NGL.timeEnd( "NGL.Worker.postMessage " + name + " #" + postId );
+
+        if( onmessageDict[ postId ] ){
+            onmessageDict[ postId ].call( worker, event );
+        }else{
+            // NGL.debug( "No onmessage", postId, name );
+        }
+
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
+
+    };
+
+    worker.onerror = function( event ){
+
+        pending -= 1;
+        var postId = event.data.__postId;
+
+        if( onerrorDict[ postId ] ){
+            onerrorDict[ postId ].call( worker, event );
+        }else{
+            NGL.error( "NGL.Worker.onerror", postId, name, event );
+        }
+
+        delete onmessageDict[ postId ];
+        delete onerrorDict[ postId ];
+
+    };
+
+    // API
+
+    this.name = name;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        onmessageDict[ postCount ] = onmessage;
+        onerrorDict[ postCount ] = onerror;
+
+        aMessage = aMessage || {};
+        aMessage.__name = name;
+        aMessage.__postId = postCount;
+
+        NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
+
+        try{
+            worker.postMessage.call( worker, aMessage, transferList );
+        }catch( error ){
+            NGL.error( "NGL.worker.post:", error );
+            worker.postMessage.call( worker, aMessage );
+        }
+
+        pending += 1;
+        postCount += 1;
+
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        if( worker ){
+            worker.terminate();
+            NGL.WorkerRegistry.activeWorkerCount -= 1;
+        }else{
+            console.log( "no worker to terminate" );
+        }
+
+    };
+
+    Object.defineProperties( this, {
+        postCount: {
+            get: function(){ return postCount; }
+        },
+        pending: {
+            get: function(){ return pending; }
+        }
+    } );
+
+};
+
+NGL.Worker.prototype.constructor = NGL.Worker;
+
+
+NGL.WorkerPool = function( name, maxCount ){
+
+    maxCount = Math.min( 8, maxCount || 2 );
+
+    var pool = [];
+    var count = 0;
+
+    // API
+
+    this.name = name;
+
+    this.maxCount = maxCount;
+
+    this.post = function( aMessage, transferList, onmessage, onerror ){
+
+        var worker = this.getNextWorker();
+        worker.post( aMessage, transferList, onmessage, onerror );
+
+        return this;
+
+    };
+
+    this.terminate = function(){
+
+        pool.forEach( function( worker ){
+            worker.terminate();
+        } );
+
+    };
+
+    this.getNextWorker = function(){
+
+        var nextWorker;
+        var minPending = Infinity;
+
+        for( var i = 0; i < maxCount; ++i ){
+
+            if( i >= count ){
+
+                nextWorker = new NGL.Worker( name );
+                pool.push( nextWorker );
+                count += 1;
+                break;
+
+            }
+
+            var worker = pool[ i ];
+
+            if( worker.pending === 0 ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+                break;
+
+            }else if( worker.pending < minPending ){
+
+                minPending = worker.pending;
+                nextWorker = worker;
+
+            }
+
+        }
+
+        return nextWorker;
+
+    };
+
+    Object.defineProperties( this, {
+        count: {
+            get: function(){ return count; }
+        }
+    } );
+
+};
+
+NGL.WorkerPool.prototype.constructor = NGL.WorkerPool;
+
+
+if( typeof importScripts === 'function' ){
+
+    self.onmessage = function( e ){
+
+        var name = e.data.__name;
+        var postId = e.data.__postId;
+
+        if( name === undefined ){
+
+            NGL.error( "message __name undefined" );
+
+        }else if( NGL.WorkerRegistry.funcDict[ name ] === undefined ){
+
+            NGL.error( "funcDict[ __name ] undefined", name );
+
+        }else{
+
+            var callback = function( aMessage, transferList ){
+
+                aMessage = aMessage || {};
+                if( postId !== undefined ) aMessage.__postId = postId;
+
+                try{
+                    self.postMessage( aMessage, transferList );
+                }catch( error ){
+                    NGL.error( "self.postMessage:", error );
+                    self.postMessage( aMessage );
+                }
+
+            };
+
+            NGL.WorkerRegistry.funcDict[ name ]( e, callback );
+
+        }
+
+    }
+
+}
+
+// File:js/ngl/utils.js
+
+/**
+ * @file Utils
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
 
 
 NGL.browser = function(){
@@ -939,282 +1319,6 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 };
 
 
-// Worker
-
-NGL.WorkerRegistry = {
-
-    activeWorkerCount: 0,
-
-    funcDict: {},
-
-    add: function( name, func ){
-
-        NGL.WorkerRegistry.funcDict[ name ] = func;
-
-    },
-
-};
-
-
-NGL.Worker = function( name ){
-
-    var pending = 0;
-    var postCount = 0;
-    var onmessageDict = {};
-    var onerrorDict = {};
-
-    var worker = new Worker( NGL.mainScriptFilePath );
-
-    NGL.WorkerRegistry.activeWorkerCount += 1;
-
-    worker.onmessage = function( event ){
-
-        pending -= 1;
-        var postId = event.data.__postId;
-
-        NGL.timeEnd( "NGL.Worker.postMessage " + name + " #" + postId );
-
-        if( onmessageDict[ postId ] ){
-            onmessageDict[ postId ].call( worker, event );
-        }else{
-            // NGL.debug( "No onmessage", postId, name );
-        }
-
-        delete onmessageDict[ postId ];
-        delete onerrorDict[ postId ];
-
-    };
-
-    worker.onerror = function( event ){
-
-        pending -= 1;
-        var postId = event.data.__postId;
-
-        if( onerrorDict[ postId ] ){
-            onerrorDict[ postId ].call( worker, event );
-        }else{
-            NGL.error( "NGL.Worker.onerror", postId, name, event );
-        }
-
-        delete onmessageDict[ postId ];
-        delete onerrorDict[ postId ];
-
-    };
-
-    // API
-
-    this.name = name;
-
-    this.post = function( aMessage, transferList, onmessage, onerror ){
-
-        onmessageDict[ postCount ] = onmessage;
-        onerrorDict[ postCount ] = onerror;
-
-        aMessage = aMessage || {};
-        aMessage.__name = name;
-        aMessage.__postId = postCount;
-
-        NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
-
-        try{
-            worker.postMessage.call( worker, aMessage, transferList );
-        }catch( error ){
-            NGL.error( "NGL.worker.post:", error );
-            worker.postMessage.call( worker, aMessage );
-        }
-
-        pending += 1;
-        postCount += 1;
-
-        return this;
-
-    };
-
-    this.terminate = function(){
-
-        if( worker ){
-            worker.terminate();
-            NGL.WorkerRegistry.activeWorkerCount -= 1;
-        }else{
-            console.log( "no worker to terminate" );
-        }
-
-    };
-
-    Object.defineProperties( this, {
-        postCount: {
-            get: function(){ return postCount; }
-        },
-        pending: {
-            get: function(){ return pending; }
-        }
-    } );
-
-};
-
-NGL.Worker.prototype.constructor = NGL.Worker;
-
-
-NGL.WorkerPool = function( name, maxCount ){
-
-    maxCount = Math.min( 8, maxCount || 2 );
-
-    var pool = [];
-    var count = 0;
-
-    // API
-
-    this.name = name;
-
-    this.maxCount = maxCount;
-
-    this.post = function( aMessage, transferList, onmessage, onerror ){
-
-        var worker = this.getNextWorker();
-        worker.post( aMessage, transferList, onmessage, onerror );
-
-        return this;
-
-    };
-
-    this.terminate = function(){
-
-        pool.forEach( function( worker ){
-            worker.terminate();
-        } );
-
-    };
-
-    this.getNextWorker = function(){
-
-        var nextWorker;
-        var minPending = Infinity;
-
-        for( var i = 0; i < maxCount; ++i ){
-
-            if( i >= count ){
-
-                nextWorker = new NGL.Worker( name );
-                pool.push( nextWorker );
-                count += 1;
-                break;
-
-            }
-
-            var worker = pool[ i ];
-
-            if( worker.pending === 0 ){
-
-                minPending = worker.pending;
-                nextWorker = worker;
-                break;
-
-            }else if( worker.pending < minPending ){
-
-                minPending = worker.pending;
-                nextWorker = worker;
-
-            }
-
-        }
-
-        return nextWorker;
-
-    };
-
-    Object.defineProperties( this, {
-        count: {
-            get: function(){ return count; }
-        }
-    } );
-
-};
-
-NGL.WorkerPool.prototype.constructor = NGL.WorkerPool;
-
-
-if( typeof importScripts === 'function' ){
-
-    if( NGL.develop ){
-
-        importScripts(
-
-            "../three/three.js",
-            "../three/Detector.js",
-            "../three/TypedArrayUtils.js",
-            "../three/controls/TrackballControls.js",
-            "../three/loaders/OBJLoader.js",
-            "../three/loaders/PLYLoader.js",
-
-            "../lib/async.js",
-            "../lib/promise.min.js",
-            "../lib/sprintf.min.js",
-            "../lib/jszip.min.js",
-            "../lib/pako.min.js",
-            "../lib/lzma.min.js",
-            "../lib/bzip2.min.js",
-            "../lib/chroma.min.js",
-            "../lib/svd.js",
-            "../lib/signals.min.js",
-
-            // "../ngl/core.js",
-            "../ngl/symmetry.js",
-            "../ngl/geometry.js",
-            "../ngl/structure.js",
-            "../ngl/trajectory.js",
-            "../ngl/surface.js",
-            "../ngl/script.js",
-            "../ngl/streamer.js",
-            "../ngl/parser.js",
-            "../ngl/writer.js",
-            "../ngl/loader.js",
-            "../ngl/viewer.js",
-            "../ngl/buffer.js",
-            "../ngl/representation.js",
-            "../ngl/stage.js"
-
-        );
-
-    }
-
-    self.onmessage = function( e ){
-
-        var name = e.data.__name;
-        var postId = e.data.__postId;
-
-        if( name === undefined ){
-
-            NGL.error( "message __name undefined" );
-
-        }else if( NGL.WorkerRegistry.funcDict[ name ] === undefined ){
-
-            NGL.error( "funcDict[ __name ] undefined", name );
-
-        }else{
-
-            var callback = function( aMessage, transferList ){
-
-                aMessage = aMessage || {};
-                if( postId !== undefined ) aMessage.__postId = postId;
-
-                try{
-                    self.postMessage( aMessage, transferList );
-                }catch( error ){
-                    NGL.error( "self.postMessage:", error );
-                    self.postMessage( aMessage );
-                }
-
-            };
-
-            NGL.WorkerRegistry.funcDict[ name ]( e, callback );
-
-        }
-
-    }
-
-}
-
-
 // Decompress
 
 NGL.decompress = function( data, file, asBinary, callback ){
@@ -1445,78 +1549,6 @@ NGL.Counter.prototype = {
 
         this.clear();
 
-    }
-
-};
-
-
-// Registry
-
-NGL.PluginRegistry = {
-
-    dict: {},
-
-    add: function( name, path ){
-        this.dict[ name ] = path;
-    },
-
-    get: function( name ){
-        if( name in this.dict ){
-            return this.dict[ name ];
-        }else{
-            throw "NGL.PluginRegistry '" + name + "' not defined";
-        }
-    },
-
-    get names(){
-        return Object.keys( this.dict );
-    },
-
-    get count(){
-        return this.names.length;
-    },
-
-    load: function( name, stage ){
-        var path = this.get( name );
-        stage.loadFile( path, { name: name + " plugin" } );
-    }
-
-};
-
-
-NGL.ExampleRegistry = {
-
-    dict: {},
-
-    add: function( name, fn ){
-        this.dict[ name ] = fn;
-    },
-
-    addDict: function( dict ){
-        Object.keys( dict ).forEach( function( name ){
-            this.add( name, dict[ name ] );
-        }.bind( this ) );
-    },
-
-    get: function( name ){
-        return this.dict[ name ];
-    },
-
-    get names(){
-        return Object.keys( this.dict );
-    },
-
-    get count(){
-        return this.names.length;
-    },
-
-    load: function( name, stage ){
-        var fn = this.get( name );
-        if( typeof fn === "function" ){
-            fn( stage );
-        }else{
-            NGL.warn( "NGL.ExampleRegistry.load not available:", name );
-        }
     }
 
 };
@@ -6932,6 +6964,404 @@ NGL.SymOp = {
     ]
 };
 
+// File:js/ngl/alignment.js
+
+/**
+ * @file Alignment
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+//////////////
+// Alignment
+
+NGL.SubstitutionMatrices = function(){
+
+    var blosum62x = [
+        [4,0,-2,-1,-2,0,-2,-1,-1,-1,-1,-2,-1,-1,-1,1,0,0,-3,-2],        // A
+        [0,9,-3,-4,-2,-3,-3,-1,-3,-1,-1,-3,-3,-3,-3,-1,-1,-1,-2,-2],    // C
+        [-2,-3,6,2,-3,-1,-1,-3,-1,-4,-3,1,-1,0,-2,0,-1,-3,-4,-3],       // D
+        [-1,-4,2,5,-3,-2,0,-3,1,-3,-2,0,-1,2,0,0,-1,-2,-3,-2],          // E
+        [-2,-2,-3,-3,6,-3,-1,0,-3,0,0,-3,-4,-3,-3,-2,-2,-1,1,3],        // F
+        [0,-3,-1,-2,-3,6,-2,-4,-2,-4,-3,0,-2,-2,-2,0,-2,-3,-2,-3],      // G
+        [-2,-3,-1,0,-1,-2,8,-3,-1,-3,-2,1,-2,0,0,-1,-2,-3,-2,2],        // H
+        [-1,-1,-3,-3,0,-4,-3,4,-3,2,1,-3,-3,-3,-3,-2,-1,3,-3,-1],       // I
+        [-1,-3,-1,1,-3,-2,-1,-3,5,-2,-1,0,-1,1,2,0,-1,-2,-3,-2],        // K
+        [-1,-1,-4,-3,0,-4,-3,2,-2,4,2,-3,-3,-2,-2,-2,-1,1,-2,-1],       // L
+        [-1,-1,-3,-2,0,-3,-2,1,-1,2,5,-2,-2,0,-1,-1,-1,1,-1,-1],        // M
+        [-2,-3,1,0,-3,0,1,-3,0,-3,-2,6,-2,0,0,1,0,-3,-4,-2],            // N
+        [-1,-3,-1,-1,-4,-2,-2,-3,-1,-3,-2,-2,7,-1,-2,-1,-1,-2,-4,-3],   // P
+        [-1,-3,0,2,-3,-2,0,-3,1,-2,0,0,-1,5,1,0,-1,-2,-2,-1],           // Q
+        [-1,-3,-2,0,-3,-2,0,-3,2,-2,-1,0,-2,1,5,-1,-1,-3,-3,-2],        // R
+        [1,-1,0,0,-2,0,-1,-2,0,-2,-1,1,-1,0,-1,4,1,-2,-3,-2],           // S
+        [0,-1,-1,-1,-2,-2,-2,-1,-1,-1,-1,0,-1,-1,-1,1,5,0,-2,-2],       // T
+        [0,-1,-3,-2,-1,-3,-3,3,-2,1,1,-3,-2,-2,-3,-2,0,4,-3,-1],        // V
+        [-3,-2,-4,-3,1,-2,-2,-3,-3,-2,-1,-4,-4,-2,-3,-3,-2,-3,11,2],    // W
+        [-2,-2,-3,-2,3,-3,2,-1,-2,-1,-1,-2,-3,-1,-2,-2,-2,-1,2,7]       // Y
+    ];
+
+    var blosum62 = [
+        //A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X
+        [ 4,-1,-2,-2, 0,-1,-1, 0,-2,-1,-1,-1,-1,-2,-1, 1, 0,-3,-2, 0,-2,-1, 0], // A
+        [-1, 5, 0,-2,-3, 1, 0,-2, 0,-3,-2, 2,-1,-3,-2,-1,-1,-3,-2,-3,-1, 0,-1], // R
+        [-2, 0, 6, 1,-3, 0, 0, 0, 1,-3,-3, 0,-2,-3,-2, 1, 0,-4,-2,-3, 3, 0,-1], // N
+        [-2,-2, 1, 6,-3, 0, 2,-1,-1,-3,-4,-1,-3,-3,-1, 0,-1,-4,-3,-3, 4, 1,-1], // D
+        [ 0,-3,-3,-3, 9,-3,-4,-3,-3,-1,-1,-3,-1,-2,-3,-1,-1,-2,-2,-1,-3,-3,-2], // C
+        [-1, 1, 0, 0,-3, 5, 2,-2, 0,-3,-2, 1, 0,-3,-1, 0,-1,-2,-1,-2, 0, 3,-1], // Q
+        [-1, 0, 0, 2,-4, 2, 5,-2, 0,-3,-3, 1,-2,-3,-1, 0,-1,-3,-2,-2, 1, 4,-1], // E
+        [ 0,-2, 0,-1,-3,-2,-2, 6,-2,-4,-4,-2,-3,-3,-2, 0,-2,-2,-3,-3,-1,-2,-1], // G
+        [-2, 0, 1,-1,-3, 0, 0,-2, 8,-3,-3,-1,-2,-1,-2,-1,-2,-2, 2,-3, 0, 0,-1], // H
+        [-1,-3,-3,-3,-1,-3,-3,-4,-3, 4, 2,-3, 1, 0,-3,-2,-1,-3,-1, 3,-3,-3,-1], // I
+        [-1,-2,-3,-4,-1,-2,-3,-4,-3, 2, 4,-2, 2, 0,-3,-2,-1,-2,-1, 1,-4,-3,-1], // L
+        [-1, 2, 0,-1,-3, 1, 1,-2,-1,-3,-2, 5,-1,-3,-1, 0,-1,-3,-2,-2, 0, 1,-1], // K
+        [-1,-1,-2,-3,-1, 0,-2,-3,-2, 1, 2,-1, 5, 0,-2,-1,-1,-1,-1, 1,-3,-1,-1], // M
+        [-2,-3,-3,-3,-2,-3,-3,-3,-1, 0, 0,-3, 0, 6,-4,-2,-2, 1, 3,-1,-3,-3,-1], // F
+        [-1,-2,-2,-1,-3,-1,-1,-2,-2,-3,-3,-1,-2,-4, 7,-1,-1,-4,-3,-2,-2,-1,-2], // P
+        [ 1,-1, 1, 0,-1, 0, 0, 0,-1,-2,-2, 0,-1,-2,-1, 4, 1,-3,-2,-2, 0, 0, 0], // S
+        [ 0,-1, 0,-1,-1,-1,-1,-2,-2,-1,-1,-1,-1,-2,-1, 1, 5,-2,-2, 0,-1,-1, 0], // T
+        [-3,-3,-4,-4,-2,-2,-3,-2,-2,-3,-2,-3,-1, 1,-4,-3,-2,11, 2,-3,-4,-3,-2], // W
+        [-2,-2,-2,-3,-2,-1,-2,-3, 2,-1,-1,-2,-1, 3,-3,-2,-2, 2, 7,-1,-3,-2,-1], // Y
+        [ 0,-3,-3,-3,-1,-2,-2,-3,-3, 3, 1,-2, 1,-1,-2,-2, 0,-3,-1, 4,-3,-2,-1], // V
+        [-2,-1, 3, 4,-3, 0, 1,-1, 0,-3,-4, 0,-3,-3,-2, 0,-1,-4,-3,-3, 4, 1,-1], // B
+        [-1, 0, 0, 1,-3, 3, 4,-2, 0,-3,-3, 1,-1,-3,-1, 0,-1,-3,-2,-2, 1, 4,-1], // Z
+        [ 0,-1,-1,-1,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2, 0, 0,-2,-1,-1,-1,-1,-1]  // X
+    ];
+
+    var nucleotides = 'ACTG';
+
+    var aminoacidsX = 'ACDEFGHIKLMNPQRSTVWY';
+
+    var aminoacids = 'ARNDCQEGHILKMFPSTWYVBZ?';
+
+    function prepareMatrix( cellNames, mat ){
+
+        var j;
+        var i = 0;
+        var matDict = {};
+
+        mat.forEach( function( row ){
+
+            j = 0;
+            var rowDict = {};
+
+            row.forEach( function( elm ){
+
+                rowDict[ cellNames[ j++ ] ] = elm;
+
+            } );
+
+            matDict[ cellNames[ i++ ] ] = rowDict;
+
+        } );
+
+        return matDict;
+
+    }
+
+    return {
+
+        blosum62: prepareMatrix( aminoacids, blosum62 ),
+
+        blosum62x: prepareMatrix( aminoacidsX, blosum62x ),
+
+    };
+
+}();
+
+
+NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix ){
+
+    // TODO try encoding seqs as integers and use array subst matrix, maybe faster
+
+    this.seq1 = seq1;
+    this.seq2 = seq2;
+
+    this.gapPenalty = gapPenalty || -10;
+    this.gapExtensionPenalty = gapExtensionPenalty || -1;
+    this.substMatrix = substMatrix || "blosum62";
+
+    if( this.substMatrix ){
+        this.substMatrix = NGL.SubstitutionMatrices[ this.substMatrix ];
+    }
+
+};
+
+NGL.Alignment.prototype = {
+
+    constructor: NGL.Alignment,
+
+    initMatrices: function(){
+
+        this.n = this.seq1.length;
+        this.m = this.seq2.length;
+
+        // NGL.log(this.n, this.m);
+
+        this.score = undefined;
+        this.ali = '';
+
+        this.S = [];
+        this.V = [];
+        this.H = [];
+
+        for( var i = 0; i <= this.n; ++i ){
+
+            this.S[ i ] = [];
+            this.V[ i ] = [];
+            this.H[ i ] = [];
+
+            for( var j = 0; j <= this.m; ++j ){
+
+                this.S[ i ][ j ] = 0;
+                this.V[ i ][ j ] = 0;
+                this.H[ i ][ j ] = 0;
+
+            }
+
+        }
+
+        for( var i = 0; i <= this.n; ++i ){
+
+            this.S[ i ][ 0 ] = this.gap( 0 );
+            this.H[ i ][ 0 ] = -Infinity;
+
+        }
+
+        for( var j = 0; j <= this.m; ++j ){
+
+            this.S[ 0 ][ j ] = this.gap( 0 );
+            this.V[ 0 ][ j ] = -Infinity;
+
+        }
+
+        this.S[ 0 ][ 0 ] = 0;
+
+        // NGL.log(this.S, this.V, this.H);
+
+    },
+
+    gap: function( len ){
+
+        return this.gapPenalty + len * this.gapExtensionPenalty;
+
+    },
+
+    makeScoreFn: function(){
+
+        var seq1 = this.seq1;
+        var seq2 = this.seq2;
+
+        var substMatrix = this.substMatrix;
+
+        var c1, c2;
+
+        if( substMatrix ){
+
+            return function( i, j ){
+
+                c1 = seq1[ i ];
+                c2 = seq2[ j ];
+
+                try{
+
+                    return substMatrix[ c1 ][ c2 ];
+
+                }catch( e ){
+
+                    return -4;
+
+                }
+
+            }
+
+        } else {
+
+            NGL.warn('NGL.Alignment: no subst matrix');
+
+            return function( i, j ){
+
+                c1 = seq1[ i ];
+                c2 = seq2[ j ];
+
+                return c1 === c2 ? 5 : -3;
+
+            }
+
+        }
+
+    },
+
+    calc: function(){
+
+        NGL.time( "NGL.Alignment.calc" );
+
+        this.initMatrices();
+
+        var gap0 = this.gap(0);
+        var scoreFn = this.makeScoreFn();
+        var gapExtensionPenalty = this.gapExtensionPenalty;
+
+        var V = this.V;
+        var H = this.H;
+        var S = this.S;
+
+        var n = this.n;
+        var m = this.m;
+
+        var Vi1, Si1, Vi, Hi, Si;
+
+        var i, j;
+
+        for( i = 1; i <= n; ++i ){
+
+            Si1 = S[ i - 1 ];
+            Vi1 = V[ i - 1 ];
+
+            Vi = V[ i ];
+            Hi = H[ i ];
+            Si = S[ i ];
+
+            for( j = 1; j <= m; ++j ){
+
+                Vi[j] = Math.max(
+                    Si1[ j ] + gap0,
+                    Vi1[ j ] + gapExtensionPenalty
+                );
+
+                Hi[j] = Math.max(
+                    Si[ j - 1 ] + gap0,
+                    Hi[ j - 1 ] + gapExtensionPenalty
+                );
+
+                Si[j] = Math.max(
+                    Si1[ j - 1 ] + scoreFn( i - 1, j - 1 ), // match
+                    Vi[ j ], //del
+                    Hi[ j ]  // ins
+                );
+
+            }
+
+        }
+
+        NGL.timeEnd( "NGL.Alignment.calc" );
+
+        // NGL.log(this.S, this.V, this.H);
+
+    },
+
+    trace: function(){
+
+        // NGL.time( "NGL.Alignment.trace" );
+
+        this.ali1 = '';
+        this.ali2 = '';
+
+        var scoreFn = this.makeScoreFn();
+
+        var i = this.n;
+        var j = this.m;
+        var mat = "S";
+
+        if( this.S[i][j] >= this.V[i][j] && this.S[i][j] >= this.V[i][j] ){
+            mat = "S";
+            this.score = this.S[i][j];
+        }else if( this.V[i][j] >= this.H[i][j] ){
+            mat = "V";
+            this.score = this.V[i][j];
+        }else{
+            mat = "H";
+            this.score = this.H[i][j];
+        }
+
+        // NGL.log("NGL.Alignment: SCORE", this.score);
+        // NGL.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
+
+        while( i > 0 && j > 0 ){
+
+            if( mat=="S" ){
+
+                if( this.S[i][j]==this.S[i-1][j-1] + scoreFn(i-1, j-1) ){
+                    this.ali1 = this.seq1[i-1] + this.ali1;
+                    this.ali2 = this.seq2[j-1] + this.ali2;
+                    --i;
+                    --j;
+                    mat = "S";
+                }else if( this.S[i][j]==this.V[i][j] ){
+                    mat = "V";
+                }else if( this.S[i][j]==this.H[i][j] ){
+                    mat = "H";
+                }else{
+                    NGL.error('NGL.Alignment: S');
+                    --i;
+                    --j;
+                }
+
+            }else if( mat=="V" ){
+
+                if( this.V[i][j]==this.V[i-1][j] + this.gapExtensionPenalty ){
+                    this.ali1 = this.seq1[i-1] + this.ali1;
+                    this.ali2 = '-' + this.ali2;
+                    --i;
+                    mat = "V";
+                }else if( this.V[i][j]==this.S[i-1][j] + this.gap(0) ){
+                    this.ali1 = this.seq1[i-1] + this.ali1;
+                    this.ali2 = '-' + this.ali2;
+                    --i;
+                    mat = "S";
+                }else{
+                    NGL.error('NGL.Alignment: V');
+                    --i;
+                }
+
+            }else if( mat=="H" ){
+
+                if( this.H[i][j] == this.H[i][j-1] + this.gapExtensionPenalty ){
+                    this.ali1 = '-' + this.ali1;
+                    this.ali2 = this.seq2[j-1] + this.ali2;
+                    --j;
+                    mat = "H";
+                }else if( this.H[i][j] == this.S[i][j-1] + this.gap(0) ){
+                    this.ali1 = '-' + this.ali1;
+                    this.ali2 = this.seq2[j-1] + this.ali2;
+                    --j;
+                    mat = "S";
+                }else{
+                    NGL.error('NGL.Alignment: H');
+                    --j;
+                }
+
+            }else{
+
+                NGL.error('NGL.Alignment: no matrix');
+
+            }
+
+        }
+
+        while( i > 0 ){
+
+            this.ali1 = this.seq1[ i - 1 ] + this.ali1;
+            this.ali2 = '-' + this.ali2;
+            --i;
+
+        }
+
+        while( j > 0 ){
+
+            this.ali1 = '-' + this.ali1;
+            this.ali2 = this.seq2[ j - 1 ] + this.ali2;
+            --j;
+
+        }
+
+        // NGL.timeEnd( "NGL.Alignment.trace" );
+
+        // NGL.log([this.ali1, this.ali2]);
+
+    }
+
+};
+
 // File:js/ngl/geometry.js
 
 /**
@@ -8666,6 +9096,1429 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
         atomSet: data.atomSet,
         bondSet: bondSet
     };
+
+}
+
+// File:js/ngl/selection.js
+
+/**
+ * @file Selection
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+//////////////
+// Selection
+
+NGL.Selection = function( string, extraString ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+
+        stringChanged: new SIGNALS.Signal(),
+
+    };
+
+    this.setString( string, extraString );
+
+};
+
+
+NGL.Selection.prototype = {
+
+    constructor: NGL.Selection,
+
+    setString: function( string, extraString, silent ){
+
+        if( string === undefined ){
+            string = this.string || "";
+        }
+
+        if( extraString === undefined ){
+            extraString = this.extraString || "";
+        }
+
+        if( string === this.string && extraString === this.extraString ){
+            return;
+        }
+
+        //
+
+        var combinedString;
+
+        if( !string && !extraString ){
+
+            combinedString = "";
+
+        }else if( !string ){
+
+            combinedString = extraString;
+
+        }else if( !extraString ){
+
+            combinedString = string;
+
+        }else{
+
+            combinedString = (
+                "( " + string + " ) and " +
+                "( " + extraString + " )"
+            );
+
+        }
+
+        if( combinedString === this.combinedString ){
+            return;
+        }
+
+        //
+
+        try{
+
+            this.parse( combinedString );
+
+        }catch( e ){
+
+            // NGL.error( e.stack );
+            this.selection = { "error": e.message };
+
+        }
+
+        this.string = string;
+        this.extraString = extraString;
+        this.combinedString = combinedString;
+
+        this.test = this.makeAtomTest();
+        this.residueTest = this.makeResidueTest();
+        this.chainTest = this.makeChainTest();
+        this.modelTest = this.makeModelTest();
+
+        this.atomOnlyTest = this.makeAtomTest( true );
+        this.residueOnlyTest = this.makeResidueTest( true );
+        this.chainOnlyTest = this.makeChainTest( true )
+        this.modelOnlyTest = this.makeModelTest( true );
+
+        if( !silent ){
+            this.signals.stringChanged.dispatch( this.string );
+        }
+
+    },
+
+    parse: function( string ){
+
+        this.selection = {
+            operator: undefined,
+            rules: []
+        };
+
+        if( !string ) return;
+
+        var scope = this;
+
+        var selection = this.selection;
+        var selectionStack = [];
+        var newSelection, oldSelection;
+        var andContext = null;
+
+        string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
+        if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
+            string = string.slice( 1, -1 ).trim();
+        }
+        var chunks = string.split( /\s+/ );
+
+        // NGL.log( string, chunks )
+
+        var all = [ "*", "", "ALL" ];
+
+        var c, sele, i, error, not;
+        var atomname, chain, resno, resname, model, resi;
+        var j = 0;
+
+        var createNewContext = function( operator ){
+
+            newSelection = {
+                operator: operator,
+                rules: []
+            };
+            if( selection === undefined ){
+                selection = newSelection;
+                scope.selection = newSelection;
+            }else{
+                selection.rules.push( newSelection );
+                selectionStack.push( selection );
+                selection = newSelection;
+            }
+            j = 0;
+
+        }
+
+        var getPrevContext = function( operator ){
+
+            oldSelection = selection;
+            selection = selectionStack.pop();
+            if( selection === undefined ){
+                createNewContext( operator );
+                pushRule( oldSelection );
+            }else{
+                j = selection.rules.length;
+            }
+
+        }
+
+        var pushRule = function( rule ){
+
+            selection.rules.push( rule );
+            j += 1;
+
+        }
+
+        for( i = 0; i < chunks.length; ++i ){
+
+            c = chunks[ i ];
+
+            // handle parens
+
+            if( c === "(" ){
+
+                // NGL.log( "(" );
+
+                not = false;
+                createNewContext();
+                continue;
+
+            }else if( c === ")" ){
+
+                // NGL.log( ")" );
+
+                getPrevContext();
+                if( selection.negate ){
+                    getPrevContext();
+                }
+                continue;
+
+            }
+
+            // leave 'not' context
+
+            if( not > 0 ){
+
+                if( c.toUpperCase() === "NOT" ){
+
+                    not = 1;
+
+                }else if( not === 1 ){
+
+                    not = 2;
+
+                }else if( not === 2 ){
+
+                    not = false;
+                    getPrevContext();
+
+                }else{
+
+                    throw new Error( "something went wrong with 'not'" );
+
+                }
+
+            }
+
+            // handle logic operators
+
+            if( c.toUpperCase() === "AND" ){
+
+                // NGL.log( "AND" );
+
+                if( selection.operator === "OR" ){
+                    var lastRule = selection.rules.pop();
+                    createNewContext( "AND" );
+                    pushRule( lastRule );
+                }else{
+                    selection.operator = "AND";
+                }
+                continue;
+
+            }else if( c.toUpperCase() === "OR" ){
+
+                // NGL.log( "OR" );
+
+                if( selection.operator === "AND" ){
+                    getPrevContext( "OR" );
+                }else{
+                    selection.operator = "OR";
+                }
+                continue;
+
+            }else if( c.toUpperCase() === "NOT" ){
+
+                // NGL.log( "NOT", j );
+
+                not = 1;
+                createNewContext();
+                selection.negate = true;
+                continue;
+
+            }else{
+
+                // NGL.log( "chunk", c, j, selection );
+
+            }
+
+            // handle keyword attributes
+
+            sele = {};
+
+            if( c.toUpperCase() === "HETERO" ){
+                sele.keyword = "HETERO";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "WATER" ){
+                sele.keyword = "WATER";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "PROTEIN" ){
+                sele.keyword = "PROTEIN";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NUCLEIC" ){
+                sele.keyword = "NUCLEIC";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "RNA" ){
+                sele.keyword = "RNA";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "DNA" ){
+                sele.keyword = "DNA";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "POLYMER" ){
+                sele.keyword = "POLYMER";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "HYDROGEN" ){
+                sele.element = "H";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SMALL" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "GLY" },
+                        { resname: "ALA" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NUCLEOPHILIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "SER" },
+                        { resname: "THR" },
+                        { resname: "CYS" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "HYDROPHOBIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "VAL" },
+                        { resname: "LEU" },
+                        { resname: "ILE" },
+                        { resname: "MET" },
+                        { resname: "PRO" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "AROMATIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "PHE" },
+                        { resname: "TYR" },
+                        { resname: "TRP" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "AMIDE" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASN" },
+                        { resname: "GLN" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "ACIDIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "BASIC" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "CHARGED" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" },
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "POLAR" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ASP" },
+                        { resname: "GLU" },
+                        { resname: "HIS" },
+                        { resname: "LYS" },
+                        { resname: "ARG" },
+                        { resname: "ASN" },
+                        { resname: "GLN" },
+                        { resname: "SER" },
+                        { resname: "THR" },
+                        { resname: "TYR" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "NONPOLAR" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        { resname: "ALA" },
+                        { resname: "CYS" },
+                        { resname: "GLY" },
+                        { resname: "ILE" },
+                        { resname: "LEU" },
+                        { resname: "MET" },
+                        { resname: "PHE" },
+                        { resname: "PRO" },
+                        { resname: "VAL" },
+                        { resname: "TRP" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "HELIX" ){
+                sele.keyword = "HELIX";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SHEET" ){
+                sele.keyword = "SHEET";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "TURN" ){
+                sele = {
+                    operator: "OR",
+                    negate: true,
+                    rules: [
+                        { keyword: "HELIX" },
+                        { keyword: "SHEET" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "BACKBONE" ){
+                sele.keyword = "BACKBONE";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SIDECHAIN" ){
+                sele.keyword = "SIDECHAIN";
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SIDECHAINATTACHED" ){
+                sele = {
+                    operator: "OR",
+                    rules: [
+                        {
+                            operator: "AND",
+                            negate: false,
+                            rules: [
+                                { resname: "PRO" },
+                                { atomname: "N" },
+                            ]
+                        },
+                        { keyword: "SIDECHAIN" },
+                        { atomname: "CA" },
+                        { atomname: "BB" }
+                    ]
+                };
+                pushRule( sele );
+                continue;
+            }
+
+            if( all.indexOf( c.toUpperCase() )!==-1 ){
+                sele.keyword = "ALL";
+                pushRule( sele );
+                continue;
+            }
+
+            // handle atom expressions
+
+            // TODO make replacement
+            // if( c.charAt( 0 ) === "@" ){
+            //     sele.globalindex = parseInt( c.substr( 1 ) );
+            //     pushRule( sele );
+            //     continue;
+            // }
+
+            if( c.charAt( 0 ) === "#" ){
+                sele.element = c.substr( 1 ).toUpperCase();
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.charAt( 0 ) === "~" ){
+                sele.altloc = c.substr( 1 );
+                pushRule( sele );
+                continue;
+            }
+
+            if( ( c.length >= 1 && c.length <= 4 ) &&
+                    c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
+                    isNaN( parseInt( c ) ) ){
+
+                sele.resname = c.toUpperCase();
+                pushRule( sele );
+                continue;
+            }
+
+            // there must be only one constraint per rule
+            // otherwise a test quickly becomes not applicable
+            // e.g. chainTest for chainname when resno is present too
+
+            sele = {
+                operator: "AND",
+                rules: []
+            };
+
+            model = c.split("/");
+            if( model.length > 1 && model[1] ){
+                if( isNaN( parseInt( model[1] ) ) ){
+                    throw new Error( "model must be an integer" );
+                }
+                sele.rules.push( {
+                    model: parseInt( model[1] )
+                } );
+            }
+
+            atomname = model[0].split(".");
+            if( atomname.length > 1 && atomname[1] ){
+                if( atomname[1].length > 4 ){
+                    throw new Error( "atomname must be one to four characters" );
+                }
+                sele.rules.push( {
+                    atomname: atomname[1].substring( 0, 4 ).toUpperCase()
+                } );
+            }
+
+            chain = atomname[0].split(":");
+            if( chain.length > 1 && chain[1] ){
+                sele.rules.push( {
+                    chainname: chain[1]
+                } );
+            }
+
+            if( chain[0] ){
+                resi = chain[0].split("-");
+                if( resi.length === 1 ){
+                    resi = parseInt( resi[0] );
+                    if( isNaN( resi ) ){
+                        throw new Error( "resi must be an integer" );
+                    }
+                    sele.rules.push( {
+                        resno: resi
+                    } );
+                }else if( resi.length === 2 ){
+                    sele.rules.push( {
+                        resno: [ parseInt( resi[0] ), parseInt( resi[1] ) ]
+                    } );
+                }else{
+                    throw new Error( "resi range must contain one '-'" );
+                }
+            }
+
+            // round up
+
+            if( sele.rules.length === 1 ){
+                pushRule( sele.rules[ 0 ] );
+            }else if( sele.rules.length > 1 ){
+                pushRule( sele );
+            }else{
+                throw new Error( "empty selection chunk" );
+            }
+
+        }
+
+        // cleanup
+
+        if( this.selection.operator === undefined &&
+                this.selection.rules.length === 1 &&
+                this.selection.rules[ 0 ].hasOwnProperty( "operator" ) ){
+
+            this.selection = this.selection.rules[ 0 ];
+
+        }
+
+    },
+
+    _makeTest: function( fn, selection ){
+
+        if( selection === undefined ) selection = this.selection;
+        if( selection === null ) return false;
+        if( selection.error ) return false;
+
+        var n = selection.rules.length;
+        if( n === 0 ) return false;
+
+        var t = selection.negate ? false : true;
+        var f = selection.negate ? true : false;
+
+        var s, and, ret, na;
+
+        var subTests = [];
+
+        for( var i = 0; i < n; ++i ){
+
+            s = selection.rules[ i ];
+
+            if( s.hasOwnProperty( "operator" ) ){
+
+                subTests[ i ] = this._makeTest( fn, s );
+
+            }
+
+        }
+
+        return function( entity ){
+
+            and = selection.operator === "AND";
+            na = false;
+
+            for( var i = 0; i < n; ++i ){
+
+                s = selection.rules[ i ];
+
+                if( s.hasOwnProperty( "operator" ) ){
+
+                    if( subTests[ i ] ){
+
+                        ret = subTests[ i ]( entity );
+
+                    }else{
+
+                        ret = -1;
+
+                    }
+
+                    if( ret === -1 ){
+
+                        // return -1;
+                        na = true;
+                        continue;
+
+                    }else if( ret === true){
+
+                        if( and ){ continue; }else{ return t; }
+
+                    }else{
+
+                        if( and ){ return f; }else{ continue; }
+
+                    }
+
+                }else{
+
+                    if( s.keyword!==undefined && s.keyword==="ALL" ){
+
+                        if( and ){ continue; }else{ return t; }
+
+                    }
+
+                    ret = fn( entity, s );
+
+                    if( ret === -1 ){
+
+                        // return -1;
+                        na = true;
+                        continue;
+
+                    }else if( ret === true){
+
+                        if( and ){ continue; }else{ return t; }
+
+                    }else{
+
+                        if( and ){ return f; }else{ continue; }
+
+                    }
+
+                }
+
+            }
+
+            if( na ){
+
+                return -1;
+
+            }else{
+
+                if( and ){ return t; }else{ return f; }
+
+            }
+
+        }
+
+    },
+
+    _filter: function( fn, selection ){
+
+        if( selection === undefined ) selection = this.selection;
+        if( selection.error ) return selection;
+
+        var n = selection.rules.length;
+        if( n === 0 ) return selection;
+
+        var filtered = {
+            operator: selection.operator,
+            rules: []
+        };
+        if( selection.hasOwnProperty( "negate" ) ){
+            filtered.negate = selection.negate;
+        }
+
+        for( var i = 0; i < n; ++i ){
+
+            var s = selection.rules[ i ];
+
+            if( s.hasOwnProperty( "operator" ) ){
+
+                var fs = this._filter( fn, s );
+                if( fs !== null ) filtered.rules.push( fs );
+
+            }else if( !fn( s ) ){
+
+                filtered.rules.push( s );
+
+            }
+
+        }
+
+        if( filtered.rules.length > 0 ){
+
+            // TODO maybe the filtered rules could be returned
+            // in some case, but the way how tests are applied
+            // e.g. when traversing a structure would also need
+            // to change
+            return selection;
+
+        }else{
+
+            return null;
+
+        }
+
+    },
+
+    makeAtomTest: function( atomOnly ){
+
+        var backboneProtein = [
+            "CA", "C", "N", "O",
+            "O1", "O2", "OC1", "OC2",
+            "H", "H1", "H2", "H3", "HA"
+        ];
+        var backboneNucleic = [
+            "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
+            "O3*", "O5*", "C5*", "C4*", "C3*"
+        ];
+        var backboneCg = [
+            "CA", "BB"
+        ];
+
+        var helixTypes = [
+            "h", "g", "i"
+        ];
+
+        var selection;
+
+        if( atomOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.chainname!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
+
+        var fn = function( a, s ){
+
+            // returning -1 means the rule is not applicable
+
+            if( s.keyword!==undefined ){
+
+                if( s.keyword==="HETERO" && a.hetero===1 ) return true;
+                if( s.keyword==="PROTEIN" && (
+                        a.residue.isProtein() || a.residue.isCg()
+                    )
+                ) return true;
+                if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
+                if( s.keyword==="RNA" && a.residue.isRna() ) return true;
+                if( s.keyword==="DNA" && a.residue.isDna() ) return true;
+                if( s.keyword==="POLYMER" && (
+                        a.residue.isProtein() ||
+                        a.residue.isNucleic() ||
+                        a.residue.isCg()
+                    )
+                ) return true;
+                if( s.keyword==="WATER" && a.residue.isWater() ) return true;
+                if( s.keyword==="HELIX" && helixTypes.indexOf( a.ss )!==-1 ) return true;
+                if( s.keyword==="SHEET" && a.ss==="s" ) return true;
+                if( s.keyword==="BACKBONE" && (
+                        ( a.residue.isProtein() &&
+                            backboneProtein.indexOf( a.atomname )!==-1 ) ||
+                        ( a.residue.isNucleic() &&
+                            backboneNucleic.indexOf( a.atomname )!==-1 ) ||
+                        ( a.residue.isCg() &&
+                            backboneCg.indexOf( a.atomname )!==-1 )
+                    )
+                ) return true;
+                if( s.keyword==="SIDECHAIN" && (
+                        ( a.residue.isProtein() &&
+                            backboneProtein.indexOf( a.atomname )===-1 ) ||
+                        ( a.residue.isNucleic() &&
+                            backboneNucleic.indexOf( a.atomname )===-1 ) ||
+                        ( a.residue.isCg() &&
+                            backboneCg.indexOf( a.atomname )===-1 )
+                    )
+                ) return true;
+
+                return false;
+
+            }
+
+            // TODO make replacement
+            // if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
+            if( s.resname!==undefined && s.resname!==a.resname ) return false;
+            if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
+            if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
+            if( s.model!==undefined && s.model!==a.residue.chain.model.index ) return false;
+
+            if( s.resno!==undefined ){
+                if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) return false;
+                }else{
+                    if( s.resno!==a.resno ) return false;
+                }
+            }
+
+            if( s.element!==undefined && s.element!==a.element ) return false;
+
+            if( s.altloc!==undefined && s.altloc!==a.altloc ) return false;
+
+            return true;
+
+        }
+
+        return this._makeTest( fn, selection );
+
+    },
+
+    makeResidueTest: function( residueOnly ){
+
+        var selection;
+
+        if( residueOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
+                if( s.chainname!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
+
+        var fn = function( r, s ){
+
+            // returning -1 means the rule is not applicable
+
+            if( s.keyword!==undefined ){
+
+                if( s.keyword==="HETERO" && r.isHetero() ) return true;
+                if( s.keyword==="PROTEIN" && (
+                        r.isProtein() || r.isCg() )
+                ) return true;
+                if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
+                if( s.keyword==="RNA" && r.isRna() ) return true;
+                if( s.keyword==="DNA" && r.isDna() ) return true;
+                if( s.keyword==="POLYMER" && (
+                        r.isProtein() || r.isNucleic() || r.isCg() )
+                ) return true;
+                if( s.keyword==="WATER" && r.isWater() ) return true;
+
+            }
+
+            if( s.chainname===undefined && s.model===undefined &&
+                    s.resname===undefined && s.resno===undefined
+            ) return -1;
+            if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
+
+            // support autoChainNames which work only on atoms
+            if( s.chainname!==undefined && r.chain.chainname==="" ) return -1;
+
+            if( s.resname!==undefined && s.resname!==r.resname ) return false;
+            if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
+            if( s.model!==undefined && s.model!==r.chain.model.index ) return false;
+
+            if( s.resno!==undefined ){
+                if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                    if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return false;
+                }else{
+                    if( s.resno!==r.resno ) return false;
+                }
+            }
+
+            return true;
+
+        }
+
+        return this._makeTest( fn, selection );
+
+    },
+
+    makeChainTest: function( chainOnly ){
+
+        var selection;
+
+        if( chainOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.model!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
+
+        var fn = function( c, s ){
+
+            // returning -1 means the rule is not applicable
+
+            if( s.chainname!==undefined && c.chainname===undefined ) return -1;
+            if( s.chainname===undefined && s.model===undefined ) return -1;
+
+            // support autoChainNames which work only on atoms
+            if( s.chainname!==undefined && c.chainname==="" ) return -1;
+
+            if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
+            if( s.model!==undefined && s.model!==c.model.index ) return false;
+
+            return true;
+
+        }
+
+        return this._makeTest( fn, selection );
+
+    },
+
+    makeModelTest: function( modelOnly ){
+
+        var selection;
+
+        if( modelOnly ){
+
+            // console.log( this.selection )
+
+            selection = this._filter( function( s ){
+
+                if( s.chainname!==undefined ) return true;
+                if( s.resname!==undefined ) return true;
+                if( s.resno!==undefined ) return true;
+                // TODO make replacement
+                // if( s.globalindex!==undefined ) return true;
+                if( s.atomname!==undefined ) return true;
+                if( s.element!==undefined ) return true;
+                if( s.altloc!==undefined ) return true;
+
+                return false;
+
+            } );
+
+        }else{
+
+            selection = this.selection;
+
+        }
+
+        var fn = function( m, s ){
+
+            // returning -1 means the rule is not applicable
+
+            if( s.model===undefined ) return -1;
+            if( s.model!==m.index ) return false;
+
+            return true;
+
+        }
+
+        return this._makeTest( fn, selection );
+
+    }
+
+};
+
+// File:js/ngl/superposition.js
+
+/**
+ * @file Superposition
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+/////////
+// Math
+
+NGL.Matrix = function( columns, rows ){
+
+    var dtype = jsfeat.F32_t | jsfeat.C1_t;
+
+    return new jsfeat.matrix_t( columns, rows, dtype );
+
+};
+
+
+//////////////////
+// Superposition
+
+NGL.Superposition = function( atoms1, atoms2 ){
+
+    // allocate & init data structures
+
+    var n;
+    if( typeof atoms1.eachAtom === "function" ){
+        n = atoms1.atomCount;
+    }else if( atoms1 instanceof Float32Array ){
+        n = atoms1.length / 3;
+    }
+
+    var coords1 = new NGL.Matrix( 3, n );
+    var coords2 = new NGL.Matrix( 3, n );
+
+    this.coords1t = new NGL.Matrix( n, 3 );
+    this.coords2t = new NGL.Matrix( n, 3 );
+
+    this.A = new NGL.Matrix( 3, 3 );
+    this.W = new NGL.Matrix( 1, 3 );
+    this.U = new NGL.Matrix( 3, 3 );
+    this.V = new NGL.Matrix( 3, 3 );
+    this.VH = new NGL.Matrix( 3, 3 );
+    this.R = new NGL.Matrix( 3, 3 );
+
+    this.tmp = new NGL.Matrix( 3, 3 );
+    this.c = new NGL.Matrix( 3, 3 );
+    this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ]);
+
+    // prep coords
+
+    this.prepCoords( atoms1, coords1 );
+    this.prepCoords( atoms2, coords2 );
+
+    // superpose
+
+    this._superpose( coords1, coords2 );
+
+};
+
+NGL.Superposition.prototype = {
+
+    constructor: NGL.Superposition,
+
+    _superpose: function( coords1, coords2 ){
+
+        // NGL.time( "superpose" );
+
+        this.mean1 = jsfeat.matmath.mean_rows( coords1 );
+        this.mean2 = jsfeat.matmath.mean_rows( coords2 );
+
+        jsfeat.matmath.sub_rows( coords1, this.mean1 );
+        jsfeat.matmath.sub_rows( coords2, this.mean2 );
+
+        jsfeat.matmath.transpose( this.coords1t, coords1 );
+        jsfeat.matmath.transpose( this.coords2t, coords2 );
+
+        jsfeat.matmath.multiply_ABt( this.A, this.coords2t, this.coords1t );
+
+        var svd = jsfeat.linalg.svd_decompose(
+            this.A, this.W, this.U, this.V
+        );
+
+        jsfeat.matmath.invert_3x3( this.V, this.VH );
+        jsfeat.matmath.multiply_3x3( this.R, this.U, this.VH );
+
+        if( jsfeat.matmath.mat3x3_determinant( this.R ) < 0.0 ){
+
+            NGL.log( "R not a right handed system" );
+
+            jsfeat.matmath.multiply_3x3( this.tmp, this.c, this.VH );
+            jsfeat.matmath.multiply_3x3( this.R, this.U, this.tmp );
+
+        }
+
+        // NGL.timeEnd( "superpose" );
+
+    },
+
+    prepCoords: function( atoms, coords ){
+
+        var i = 0;
+        var cd = coords.data;
+
+        if( typeof atoms.eachAtom === "function" ){
+
+            atoms.eachAtom( function( a ){
+
+                cd[ i + 0 ] = a.x;
+                cd[ i + 1 ] = a.y;
+                cd[ i + 2 ] = a.z;
+
+                i += 3;
+
+            } );
+
+        }else if( atoms instanceof Float32Array ){
+
+            cd.set( atoms );
+
+        }else{
+
+            NGL.warn( "prepCoords: input type unknown" );
+
+        }
+
+    },
+
+    transform: function( atoms ){
+
+        // allocate data structures
+
+        var n;
+        if( typeof atoms.eachAtom === "function" ){
+            n = atoms.atomCount;
+        }else if( atoms instanceof Float32Array ){
+            n = atoms.length / 3;
+        }
+
+        var coords = new NGL.Matrix( 3, n );
+        var tmp = new NGL.Matrix( n, 3 );
+
+        // prep coords
+
+        this.prepCoords( atoms, coords );
+
+        // do transform
+
+        jsfeat.matmath.sub_rows( coords, this.mean1 );
+        jsfeat.matmath.multiply_ABt( tmp, this.R, coords );
+        jsfeat.matmath.transpose( coords, tmp );
+        jsfeat.matmath.add_rows( coords, this.mean2 );
+
+        var i = 0;
+        var cd = coords.data;
+
+        if( typeof atoms.eachAtom === "function" ){
+
+            atoms.eachAtom( function( a ){
+
+                a.x = cd[ i + 0 ];
+                a.y = cd[ i + 1 ];
+                a.z = cd[ i + 2 ];
+
+                i += 3;
+
+            } );
+
+        }else if( atoms instanceof Float32Array ){
+
+            atoms.set( cd.subarray( 0, n * 3 ) );
+
+        }else{
+
+            NGL.warn( "transform: input type unknown" );
+
+        }
+
+    }
+
+};
+
+
+NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
+
+    align = align || false;
+    sele1 = sele1 || "";
+    sele2 = sele2 || "";
+    xsele1 = xsele1 || "";
+    xsele2 = xsele2 || "";
+
+    var atoms1, atoms2;
+
+    if( align ){
+
+        var _s1 = s1;
+        var _s2 = s2;
+
+        if( sele1 && sele2 ){
+            _s1 = new NGL.StructureSubset( s1, new NGL.Selection( sele1 ) );
+            _s2 = new NGL.StructureSubset( s2, new NGL.Selection( sele2 ) );
+        }
+
+        var seq1 = _s1.getSequence();
+        var seq2 = _s2.getSequence();
+
+        // NGL.log( seq1.join("") );
+        // NGL.log( seq2.join("") );
+
+        var ali = new NGL.Alignment( seq1.join(""), seq2.join("") );
+
+        ali.calc();
+        ali.trace();
+
+        // NGL.log( "superpose alignment score", ali.score );
+
+        // NGL.log( ali.ali1 );
+        // NGL.log( ali.ali2 );
+
+        var l, _i, _j, x, y;
+        var i = 0;
+        var j = 0;
+        var n = ali.ali1.length;
+        var aliIdx1 = [];
+        var aliIdx2 = [];
+
+        for( l = 0; l < n; ++l ){
+
+            x = ali.ali1[ l ];
+            y = ali.ali2[ l ];
+
+            _i = 0;
+            _j = 0;
+
+            if( x === "-" ){
+                aliIdx2[ j ] = false;
+            }else{
+                aliIdx2[ j ] = true;
+                _i = 1;
+            }
+
+            if( y === "-" ){
+                aliIdx1[ i ] = false;
+            }else{
+                aliIdx1[ i ] = true;
+                _j = 1;
+            }
+
+            i += _i;
+            j += _j;
+
+        }
+
+        // NGL.log( i, j );
+
+        // NGL.log( aliIdx1 );
+        // NGL.log( aliIdx2 );
+
+        atoms1 = new NGL.AtomSet();
+        atoms2 = new NGL.AtomSet();
+
+        i = 0;
+        _s1.eachResidue( function( r ){
+
+            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
+
+            if( aliIdx1[ i ] ){
+                atoms1.addAtom( r.getAtomByName( "CA" ) );
+            }
+            i += 1;
+
+        } );
+
+        i = 0;
+        _s2.eachResidue( function( r ){
+
+            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
+
+            if( aliIdx2[ i ] ){
+                atoms2.addAtom( r.getAtomByName( "CA" ) );
+            }
+            i += 1;
+
+        } );
+
+    }else{
+
+        atoms1 = new NGL.AtomSet(
+            s1, new NGL.Selection( sele1 + " and .CA" )
+        );
+        atoms2 = new NGL.AtomSet(
+            s2, new NGL.Selection( sele2 + " and .CA" )
+        );
+
+    }
+
+    if( xsele1 && xsele2 ){
+
+        var _atoms1 = new NGL.AtomSet();
+        var _atoms2 = new NGL.AtomSet();
+
+        var xselection1 = new NGL.Selection( xsele1 );
+        var xselection2 = new NGL.Selection( xsele2 );
+
+        var test1 = xselection1.test;
+        var test2 = xselection2.test;
+
+        var i, a1, a2;
+        var n = atoms1.atomCount;
+
+        for( i = 0; i < n; ++i ){
+
+            a1 = atoms1.atoms[ i ];
+            a2 = atoms2.atoms[ i ];
+
+            if( test1( a1 ) && test2( a2 ) ){
+
+                _atoms1.addAtom( a1 );
+                _atoms2.addAtom( a2 );
+
+                // NGL.log( a1.qualifiedName(), a2.qualifiedName() )
+
+            }
+
+        }
+
+        atoms1 = _atoms1;
+        atoms2 = _atoms2;
+
+    }
+
+    var superpose = new NGL.Superposition( atoms1, atoms2 );
+
+    var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
+    superpose.transform( atoms );
+
+    s1.center = s1.atomCenter();
 
 }
 
@@ -11224,183 +13077,6 @@ NGL.Bond.prototype = {
     qualifiedName: function(){
 
         return this.atom1.index + "=" + this.atom2.index;
-
-    }
-
-};
-
-
-/////////
-// Math
-
-NGL.Matrix = function( columns, rows ){
-
-    var dtype = jsfeat.F32_t | jsfeat.C1_t;
-
-    return new jsfeat.matrix_t( columns, rows, dtype );
-
-};
-
-
-//////////////////
-// Superposition
-
-NGL.Superposition = function( atoms1, atoms2 ){
-
-    // allocate & init data structures
-
-    var n;
-    if( typeof atoms1.eachAtom === "function" ){
-        n = atoms1.atomCount;
-    }else if( atoms1 instanceof Float32Array ){
-        n = atoms1.length / 3;
-    }
-
-    var coords1 = new NGL.Matrix( 3, n );
-    var coords2 = new NGL.Matrix( 3, n );
-
-    this.coords1t = new NGL.Matrix( n, 3 );
-    this.coords2t = new NGL.Matrix( n, 3 );
-
-    this.A = new NGL.Matrix( 3, 3 );
-    this.W = new NGL.Matrix( 1, 3 );
-    this.U = new NGL.Matrix( 3, 3 );
-    this.V = new NGL.Matrix( 3, 3 );
-    this.VH = new NGL.Matrix( 3, 3 );
-    this.R = new NGL.Matrix( 3, 3 );
-
-    this.tmp = new NGL.Matrix( 3, 3 );
-    this.c = new NGL.Matrix( 3, 3 );
-    this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ]);
-
-    // prep coords
-
-    this.prepCoords( atoms1, coords1 );
-    this.prepCoords( atoms2, coords2 );
-
-    // superpose
-
-    this._superpose( coords1, coords2 );
-
-};
-
-NGL.Superposition.prototype = {
-
-    constructor: NGL.Superposition,
-
-    _superpose: function( coords1, coords2 ){
-
-        // NGL.time( "superpose" );
-
-        this.mean1 = jsfeat.matmath.mean_rows( coords1 );
-        this.mean2 = jsfeat.matmath.mean_rows( coords2 );
-
-        jsfeat.matmath.sub_rows( coords1, this.mean1 );
-        jsfeat.matmath.sub_rows( coords2, this.mean2 );
-
-        jsfeat.matmath.transpose( this.coords1t, coords1 );
-        jsfeat.matmath.transpose( this.coords2t, coords2 );
-
-        jsfeat.matmath.multiply_ABt( this.A, this.coords2t, this.coords1t );
-
-        var svd = jsfeat.linalg.svd_decompose(
-            this.A, this.W, this.U, this.V
-        );
-
-        jsfeat.matmath.invert_3x3( this.V, this.VH );
-        jsfeat.matmath.multiply_3x3( this.R, this.U, this.VH );
-
-        if( jsfeat.matmath.mat3x3_determinant( this.R ) < 0.0 ){
-
-            NGL.log( "R not a right handed system" );
-
-            jsfeat.matmath.multiply_3x3( this.tmp, this.c, this.VH );
-            jsfeat.matmath.multiply_3x3( this.R, this.U, this.tmp );
-
-        }
-
-        // NGL.timeEnd( "superpose" );
-
-    },
-
-    prepCoords: function( atoms, coords ){
-
-        var i = 0;
-        var cd = coords.data;
-
-        if( typeof atoms.eachAtom === "function" ){
-
-            atoms.eachAtom( function( a ){
-
-                cd[ i + 0 ] = a.x;
-                cd[ i + 1 ] = a.y;
-                cd[ i + 2 ] = a.z;
-
-                i += 3;
-
-            } );
-
-        }else if( atoms instanceof Float32Array ){
-
-            cd.set( atoms );
-
-        }else{
-
-            NGL.warn( "prepCoords: input type unknown" );
-
-        }
-
-    },
-
-    transform: function( atoms ){
-
-        // allocate data structures
-
-        var n;
-        if( typeof atoms.eachAtom === "function" ){
-            n = atoms.atomCount;
-        }else if( atoms instanceof Float32Array ){
-            n = atoms.length / 3;
-        }
-
-        var coords = new NGL.Matrix( 3, n );
-        var tmp = new NGL.Matrix( n, 3 );
-
-        // prep coords
-
-        this.prepCoords( atoms, coords );
-
-        // do transform
-
-        jsfeat.matmath.sub_rows( coords, this.mean1 );
-        jsfeat.matmath.multiply_ABt( tmp, this.R, coords );
-        jsfeat.matmath.transpose( coords, tmp );
-        jsfeat.matmath.add_rows( coords, this.mean2 );
-
-        var i = 0;
-        var cd = coords.data;
-
-        if( typeof atoms.eachAtom === "function" ){
-
-            atoms.eachAtom( function( a ){
-
-                a.x = cd[ i + 0 ];
-                a.y = cd[ i + 1 ];
-                a.z = cd[ i + 2 ];
-
-                i += 3;
-
-            } );
-
-        }else if( atoms instanceof Float32Array ){
-
-            atoms.set( cd.subarray( 0, n * 3 ) );
-
-        }else{
-
-            NGL.warn( "transform: input type unknown" );
-
-        }
 
     }
 
@@ -14976,1629 +16652,6 @@ NGL.StructureSubset.prototype._build = function(){
     NGL.timeEnd( "NGL.StructureSubset._build" );
 
 };
-
-
-//////////////
-// Selection
-
-NGL.Selection = function( string, extraString ){
-
-    var SIGNALS = signals;
-
-    this.signals = {
-
-        stringChanged: new SIGNALS.Signal(),
-
-    };
-
-    this.setString( string, extraString );
-
-};
-
-
-NGL.Selection.prototype = {
-
-    constructor: NGL.Selection,
-
-    setString: function( string, extraString, silent ){
-
-        if( string === undefined ){
-            string = this.string || "";
-        }
-
-        if( extraString === undefined ){
-            extraString = this.extraString || "";
-        }
-
-        if( string === this.string && extraString === this.extraString ){
-            return;
-        }
-
-        //
-
-        var combinedString;
-
-        if( !string && !extraString ){
-
-            combinedString = "";
-
-        }else if( !string ){
-
-            combinedString = extraString;
-
-        }else if( !extraString ){
-
-            combinedString = string;
-
-        }else{
-
-            combinedString = (
-                "( " + string + " ) and " +
-                "( " + extraString + " )"
-            );
-
-        }
-
-        if( combinedString === this.combinedString ){
-            return;
-        }
-
-        //
-
-        try{
-
-            this.parse( combinedString );
-
-        }catch( e ){
-
-            // NGL.error( e.stack );
-            this.selection = { "error": e.message };
-
-        }
-
-        this.string = string;
-        this.extraString = extraString;
-        this.combinedString = combinedString;
-
-        this.test = this.makeAtomTest();
-        this.residueTest = this.makeResidueTest();
-        this.chainTest = this.makeChainTest();
-        this.modelTest = this.makeModelTest();
-
-        this.atomOnlyTest = this.makeAtomTest( true );
-        this.residueOnlyTest = this.makeResidueTest( true );
-        this.chainOnlyTest = this.makeChainTest( true )
-        this.modelOnlyTest = this.makeModelTest( true );
-
-        if( !silent ){
-            this.signals.stringChanged.dispatch( this.string );
-        }
-
-    },
-
-    parse: function( string ){
-
-        this.selection = {
-            operator: undefined,
-            rules: []
-        };
-
-        if( !string ) return;
-
-        var scope = this;
-
-        var selection = this.selection;
-        var selectionStack = [];
-        var newSelection, oldSelection;
-        var andContext = null;
-
-        string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
-        if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
-            string = string.slice( 1, -1 ).trim();
-        }
-        var chunks = string.split( /\s+/ );
-
-        // NGL.log( string, chunks )
-
-        var all = [ "*", "", "ALL" ];
-
-        var c, sele, i, error, not;
-        var atomname, chain, resno, resname, model, resi;
-        var j = 0;
-
-        var createNewContext = function( operator ){
-
-            newSelection = {
-                operator: operator,
-                rules: []
-            };
-            if( selection === undefined ){
-                selection = newSelection;
-                scope.selection = newSelection;
-            }else{
-                selection.rules.push( newSelection );
-                selectionStack.push( selection );
-                selection = newSelection;
-            }
-            j = 0;
-
-        }
-
-        var getPrevContext = function( operator ){
-
-            oldSelection = selection;
-            selection = selectionStack.pop();
-            if( selection === undefined ){
-                createNewContext( operator );
-                pushRule( oldSelection );
-            }else{
-                j = selection.rules.length;
-            }
-
-        }
-
-        var pushRule = function( rule ){
-
-            selection.rules.push( rule );
-            j += 1;
-
-        }
-
-        for( i = 0; i < chunks.length; ++i ){
-
-            c = chunks[ i ];
-
-            // handle parens
-
-            if( c === "(" ){
-
-                // NGL.log( "(" );
-
-                not = false;
-                createNewContext();
-                continue;
-
-            }else if( c === ")" ){
-
-                // NGL.log( ")" );
-
-                getPrevContext();
-                if( selection.negate ){
-                    getPrevContext();
-                }
-                continue;
-
-            }
-
-            // leave 'not' context
-
-            if( not > 0 ){
-
-                if( c.toUpperCase() === "NOT" ){
-
-                    not = 1;
-
-                }else if( not === 1 ){
-
-                    not = 2;
-
-                }else if( not === 2 ){
-
-                    not = false;
-                    getPrevContext();
-
-                }else{
-
-                    throw new Error( "something went wrong with 'not'" );
-
-                }
-
-            }
-
-            // handle logic operators
-
-            if( c.toUpperCase() === "AND" ){
-
-                // NGL.log( "AND" );
-
-                if( selection.operator === "OR" ){
-                    var lastRule = selection.rules.pop();
-                    createNewContext( "AND" );
-                    pushRule( lastRule );
-                }else{
-                    selection.operator = "AND";
-                }
-                continue;
-
-            }else if( c.toUpperCase() === "OR" ){
-
-                // NGL.log( "OR" );
-
-                if( selection.operator === "AND" ){
-                    getPrevContext( "OR" );
-                }else{
-                    selection.operator = "OR";
-                }
-                continue;
-
-            }else if( c.toUpperCase() === "NOT" ){
-
-                // NGL.log( "NOT", j );
-
-                not = 1;
-                createNewContext();
-                selection.negate = true;
-                continue;
-
-            }else{
-
-                // NGL.log( "chunk", c, j, selection );
-
-            }
-
-            // handle keyword attributes
-
-            sele = {};
-
-            if( c.toUpperCase() === "HETERO" ){
-                sele.keyword = "HETERO";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "WATER" ){
-                sele.keyword = "WATER";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "PROTEIN" ){
-                sele.keyword = "PROTEIN";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "NUCLEIC" ){
-                sele.keyword = "NUCLEIC";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "RNA" ){
-                sele.keyword = "RNA";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "DNA" ){
-                sele.keyword = "DNA";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "POLYMER" ){
-                sele.keyword = "POLYMER";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "HYDROGEN" ){
-                sele.element = "H";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "SMALL" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "GLY" },
-                        { resname: "ALA" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "NUCLEOPHILIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "SER" },
-                        { resname: "THR" },
-                        { resname: "CYS" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "HYDROPHOBIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "VAL" },
-                        { resname: "LEU" },
-                        { resname: "ILE" },
-                        { resname: "MET" },
-                        { resname: "PRO" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "AROMATIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "PHE" },
-                        { resname: "TYR" },
-                        { resname: "TRP" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "AMIDE" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASN" },
-                        { resname: "GLN" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "ACIDIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "BASIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "CHARGED" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" },
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "POLAR" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" },
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" },
-                        { resname: "ASN" },
-                        { resname: "GLN" },
-                        { resname: "SER" },
-                        { resname: "THR" },
-                        { resname: "TYR" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "NONPOLAR" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ALA" },
-                        { resname: "CYS" },
-                        { resname: "GLY" },
-                        { resname: "ILE" },
-                        { resname: "LEU" },
-                        { resname: "MET" },
-                        { resname: "PHE" },
-                        { resname: "PRO" },
-                        { resname: "VAL" },
-                        { resname: "TRP" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "HELIX" ){
-                sele.keyword = "HELIX";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "SHEET" ){
-                sele.keyword = "SHEET";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "TURN" ){
-                sele = {
-                    operator: "OR",
-                    negate: true,
-                    rules: [
-                        { keyword: "HELIX" },
-                        { keyword: "SHEET" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "BACKBONE" ){
-                sele.keyword = "BACKBONE";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "SIDECHAIN" ){
-                sele.keyword = "SIDECHAIN";
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.toUpperCase() === "SIDECHAINATTACHED" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        {
-                            operator: "AND",
-                            negate: false,
-                            rules: [
-                                { resname: "PRO" },
-                                { atomname: "N" },
-                            ]
-                        },
-                        { keyword: "SIDECHAIN" },
-                        { atomname: "CA" },
-                        { atomname: "BB" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
-
-            if( all.indexOf( c.toUpperCase() )!==-1 ){
-                sele.keyword = "ALL";
-                pushRule( sele );
-                continue;
-            }
-
-            // handle atom expressions
-
-            // TODO make replacement
-            // if( c.charAt( 0 ) === "@" ){
-            //     sele.globalindex = parseInt( c.substr( 1 ) );
-            //     pushRule( sele );
-            //     continue;
-            // }
-
-            if( c.charAt( 0 ) === "#" ){
-                sele.element = c.substr( 1 ).toUpperCase();
-                pushRule( sele );
-                continue;
-            }
-
-            if( c.charAt( 0 ) === "~" ){
-                sele.altloc = c.substr( 1 );
-                pushRule( sele );
-                continue;
-            }
-
-            if( ( c.length >= 1 && c.length <= 4 ) &&
-                    c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
-                    isNaN( parseInt( c ) ) ){
-
-                sele.resname = c.toUpperCase();
-                pushRule( sele );
-                continue;
-            }
-
-            // there must be only one constraint per rule
-            // otherwise a test quickly becomes not applicable
-            // e.g. chainTest for chainname when resno is present too
-
-            sele = {
-                operator: "AND",
-                rules: []
-            };
-
-            model = c.split("/");
-            if( model.length > 1 && model[1] ){
-                if( isNaN( parseInt( model[1] ) ) ){
-                    throw new Error( "model must be an integer" );
-                }
-                sele.rules.push( {
-                    model: parseInt( model[1] )
-                } );
-            }
-
-            atomname = model[0].split(".");
-            if( atomname.length > 1 && atomname[1] ){
-                if( atomname[1].length > 4 ){
-                    throw new Error( "atomname must be one to four characters" );
-                }
-                sele.rules.push( {
-                    atomname: atomname[1].substring( 0, 4 ).toUpperCase()
-                } );
-            }
-
-            chain = atomname[0].split(":");
-            if( chain.length > 1 && chain[1] ){
-                sele.rules.push( {
-                    chainname: chain[1]
-                } );
-            }
-
-            if( chain[0] ){
-                resi = chain[0].split("-");
-                if( resi.length === 1 ){
-                    resi = parseInt( resi[0] );
-                    if( isNaN( resi ) ){
-                        throw new Error( "resi must be an integer" );
-                    }
-                    sele.rules.push( {
-                        resno: resi
-                    } );
-                }else if( resi.length === 2 ){
-                    sele.rules.push( {
-                        resno: [ parseInt( resi[0] ), parseInt( resi[1] ) ]
-                    } );
-                }else{
-                    throw new Error( "resi range must contain one '-'" );
-                }
-            }
-
-            // round up
-
-            if( sele.rules.length === 1 ){
-                pushRule( sele.rules[ 0 ] );
-            }else if( sele.rules.length > 1 ){
-                pushRule( sele );
-            }else{
-                throw new Error( "empty selection chunk" );
-            }
-
-        }
-
-        // cleanup
-
-        if( this.selection.operator === undefined &&
-                this.selection.rules.length === 1 &&
-                this.selection.rules[ 0 ].hasOwnProperty( "operator" ) ){
-
-            this.selection = this.selection.rules[ 0 ];
-
-        }
-
-    },
-
-    _makeTest: function( fn, selection ){
-
-        if( selection === undefined ) selection = this.selection;
-        if( selection === null ) return false;
-        if( selection.error ) return false;
-
-        var n = selection.rules.length;
-        if( n === 0 ) return false;
-
-        var t = selection.negate ? false : true;
-        var f = selection.negate ? true : false;
-
-        var s, and, ret, na;
-
-        var subTests = [];
-
-        for( var i = 0; i < n; ++i ){
-
-            s = selection.rules[ i ];
-
-            if( s.hasOwnProperty( "operator" ) ){
-
-                subTests[ i ] = this._makeTest( fn, s );
-
-            }
-
-        }
-
-        return function( entity ){
-
-            and = selection.operator === "AND";
-            na = false;
-
-            for( var i = 0; i < n; ++i ){
-
-                s = selection.rules[ i ];
-
-                if( s.hasOwnProperty( "operator" ) ){
-
-                    if( subTests[ i ] ){
-
-                        ret = subTests[ i ]( entity );
-
-                    }else{
-
-                        ret = -1;
-
-                    }
-
-                    if( ret === -1 ){
-
-                        // return -1;
-                        na = true;
-                        continue;
-
-                    }else if( ret === true){
-
-                        if( and ){ continue; }else{ return t; }
-
-                    }else{
-
-                        if( and ){ return f; }else{ continue; }
-
-                    }
-
-                }else{
-
-                    if( s.keyword!==undefined && s.keyword==="ALL" ){
-
-                        if( and ){ continue; }else{ return t; }
-
-                    }
-
-                    ret = fn( entity, s );
-
-                    if( ret === -1 ){
-
-                        // return -1;
-                        na = true;
-                        continue;
-
-                    }else if( ret === true){
-
-                        if( and ){ continue; }else{ return t; }
-
-                    }else{
-
-                        if( and ){ return f; }else{ continue; }
-
-                    }
-
-                }
-
-            }
-
-            if( na ){
-
-                return -1;
-
-            }else{
-
-                if( and ){ return t; }else{ return f; }
-
-            }
-
-        }
-
-    },
-
-    _filter: function( fn, selection ){
-
-        if( selection === undefined ) selection = this.selection;
-        if( selection.error ) return selection;
-
-        var n = selection.rules.length;
-        if( n === 0 ) return selection;
-
-        var filtered = {
-            operator: selection.operator,
-            rules: []
-        };
-        if( selection.hasOwnProperty( "negate" ) ){
-            filtered.negate = selection.negate;
-        }
-
-        for( var i = 0; i < n; ++i ){
-
-            var s = selection.rules[ i ];
-
-            if( s.hasOwnProperty( "operator" ) ){
-
-                var fs = this._filter( fn, s );
-                if( fs !== null ) filtered.rules.push( fs );
-
-            }else if( !fn( s ) ){
-
-                filtered.rules.push( s );
-
-            }
-
-        }
-
-        if( filtered.rules.length > 0 ){
-
-            // TODO maybe the filtered rules could be returned
-            // in some case, but the way how tests are applied
-            // e.g. when traversing a structure would also need
-            // to change
-            return selection;
-
-        }else{
-
-            return null;
-
-        }
-
-    },
-
-    makeAtomTest: function( atomOnly ){
-
-        var backboneProtein = [
-            "CA", "C", "N", "O",
-            "O1", "O2", "OC1", "OC2",
-            "H", "H1", "H2", "H3", "HA"
-        ];
-        var backboneNucleic = [
-            "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
-            "O3*", "O5*", "C5*", "C4*", "C3*"
-        ];
-        var backboneCg = [
-            "CA", "BB"
-        ];
-
-        var helixTypes = [
-            "h", "g", "i"
-        ];
-
-        var selection;
-
-        if( atomOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-
-                if( s.model!==undefined ) return true;
-                if( s.chainname!==undefined ) return true;
-                if( s.resname!==undefined ) return true;
-                if( s.resno!==undefined ) return true;
-
-                return false;
-
-            } );
-
-        }else{
-
-            selection = this.selection;
-
-        }
-
-        var fn = function( a, s ){
-
-            // returning -1 means the rule is not applicable
-
-            if( s.keyword!==undefined ){
-
-                if( s.keyword==="HETERO" && a.hetero===1 ) return true;
-                if( s.keyword==="PROTEIN" && (
-                        a.residue.isProtein() || a.residue.isCg()
-                    )
-                ) return true;
-                if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
-                if( s.keyword==="RNA" && a.residue.isRna() ) return true;
-                if( s.keyword==="DNA" && a.residue.isDna() ) return true;
-                if( s.keyword==="POLYMER" && (
-                        a.residue.isProtein() ||
-                        a.residue.isNucleic() ||
-                        a.residue.isCg()
-                    )
-                ) return true;
-                if( s.keyword==="WATER" && a.residue.isWater() ) return true;
-                if( s.keyword==="HELIX" && helixTypes.indexOf( a.ss )!==-1 ) return true;
-                if( s.keyword==="SHEET" && a.ss==="s" ) return true;
-                if( s.keyword==="BACKBONE" && (
-                        ( a.residue.isProtein() &&
-                            backboneProtein.indexOf( a.atomname )!==-1 ) ||
-                        ( a.residue.isNucleic() &&
-                            backboneNucleic.indexOf( a.atomname )!==-1 ) ||
-                        ( a.residue.isCg() &&
-                            backboneCg.indexOf( a.atomname )!==-1 )
-                    )
-                ) return true;
-                if( s.keyword==="SIDECHAIN" && (
-                        ( a.residue.isProtein() &&
-                            backboneProtein.indexOf( a.atomname )===-1 ) ||
-                        ( a.residue.isNucleic() &&
-                            backboneNucleic.indexOf( a.atomname )===-1 ) ||
-                        ( a.residue.isCg() &&
-                            backboneCg.indexOf( a.atomname )===-1 )
-                    )
-                ) return true;
-
-                return false;
-
-            }
-
-            // TODO make replacement
-            // if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
-            if( s.resname!==undefined && s.resname!==a.resname ) return false;
-            if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
-            if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
-            if( s.model!==undefined && s.model!==a.residue.chain.model.index ) return false;
-
-            if( s.resno!==undefined ){
-                if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) return false;
-                }else{
-                    if( s.resno!==a.resno ) return false;
-                }
-            }
-
-            if( s.element!==undefined && s.element!==a.element ) return false;
-
-            if( s.altloc!==undefined && s.altloc!==a.altloc ) return false;
-
-            return true;
-
-        }
-
-        return this._makeTest( fn, selection );
-
-    },
-
-    makeResidueTest: function( residueOnly ){
-
-        var selection;
-
-        if( residueOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-
-                if( s.model!==undefined ) return true;
-                // TODO make replacement
-                // if( s.globalindex!==undefined ) return true;
-                if( s.chainname!==undefined ) return true;
-                if( s.atomname!==undefined ) return true;
-                if( s.element!==undefined ) return true;
-                if( s.altloc!==undefined ) return true;
-
-                return false;
-
-            } );
-
-        }else{
-
-            selection = this.selection;
-
-        }
-
-        var fn = function( r, s ){
-
-            // returning -1 means the rule is not applicable
-
-            if( s.keyword!==undefined ){
-
-                if( s.keyword==="HETERO" && r.isHetero() ) return true;
-                if( s.keyword==="PROTEIN" && (
-                        r.isProtein() || r.isCg() )
-                ) return true;
-                if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
-                if( s.keyword==="RNA" && r.isRna() ) return true;
-                if( s.keyword==="DNA" && r.isDna() ) return true;
-                if( s.keyword==="POLYMER" && (
-                        r.isProtein() || r.isNucleic() || r.isCg() )
-                ) return true;
-                if( s.keyword==="WATER" && r.isWater() ) return true;
-
-            }
-
-            if( s.chainname===undefined && s.model===undefined &&
-                    s.resname===undefined && s.resno===undefined
-            ) return -1;
-            if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
-
-            // support autoChainNames which work only on atoms
-            if( s.chainname!==undefined && r.chain.chainname==="" ) return -1;
-
-            if( s.resname!==undefined && s.resname!==r.resname ) return false;
-            if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
-            if( s.model!==undefined && s.model!==r.chain.model.index ) return false;
-
-            if( s.resno!==undefined ){
-                if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                    if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return false;
-                }else{
-                    if( s.resno!==r.resno ) return false;
-                }
-            }
-
-            return true;
-
-        }
-
-        return this._makeTest( fn, selection );
-
-    },
-
-    makeChainTest: function( chainOnly ){
-
-        var selection;
-
-        if( chainOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-
-                if( s.model!==undefined ) return true;
-                if( s.resname!==undefined ) return true;
-                if( s.resno!==undefined ) return true;
-                // TODO make replacement
-                // if( s.globalindex!==undefined ) return true;
-                if( s.atomname!==undefined ) return true;
-                if( s.element!==undefined ) return true;
-                if( s.altloc!==undefined ) return true;
-
-                return false;
-
-            } );
-
-        }else{
-
-            selection = this.selection;
-
-        }
-
-        var fn = function( c, s ){
-
-            // returning -1 means the rule is not applicable
-
-            if( s.chainname!==undefined && c.chainname===undefined ) return -1;
-            if( s.chainname===undefined && s.model===undefined ) return -1;
-
-            // support autoChainNames which work only on atoms
-            if( s.chainname!==undefined && c.chainname==="" ) return -1;
-
-            if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
-            if( s.model!==undefined && s.model!==c.model.index ) return false;
-
-            return true;
-
-        }
-
-        return this._makeTest( fn, selection );
-
-    },
-
-    makeModelTest: function( modelOnly ){
-
-        var selection;
-
-        if( modelOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-
-                if( s.chainname!==undefined ) return true;
-                if( s.resname!==undefined ) return true;
-                if( s.resno!==undefined ) return true;
-                // TODO make replacement
-                // if( s.globalindex!==undefined ) return true;
-                if( s.atomname!==undefined ) return true;
-                if( s.element!==undefined ) return true;
-                if( s.altloc!==undefined ) return true;
-
-                return false;
-
-            } );
-
-        }else{
-
-            selection = this.selection;
-
-        }
-
-        var fn = function( m, s ){
-
-            // returning -1 means the rule is not applicable
-
-            if( s.model===undefined ) return -1;
-            if( s.model!==m.index ) return false;
-
-            return true;
-
-        }
-
-        return this._makeTest( fn, selection );
-
-    }
-
-};
-
-
-//////////////
-// Alignment
-
-NGL.SubstitutionMatrices = function(){
-
-    var blosum62x = [
-        [4,0,-2,-1,-2,0,-2,-1,-1,-1,-1,-2,-1,-1,-1,1,0,0,-3,-2],        // A
-        [0,9,-3,-4,-2,-3,-3,-1,-3,-1,-1,-3,-3,-3,-3,-1,-1,-1,-2,-2],    // C
-        [-2,-3,6,2,-3,-1,-1,-3,-1,-4,-3,1,-1,0,-2,0,-1,-3,-4,-3],       // D
-        [-1,-4,2,5,-3,-2,0,-3,1,-3,-2,0,-1,2,0,0,-1,-2,-3,-2],          // E
-        [-2,-2,-3,-3,6,-3,-1,0,-3,0,0,-3,-4,-3,-3,-2,-2,-1,1,3],        // F
-        [0,-3,-1,-2,-3,6,-2,-4,-2,-4,-3,0,-2,-2,-2,0,-2,-3,-2,-3],      // G
-        [-2,-3,-1,0,-1,-2,8,-3,-1,-3,-2,1,-2,0,0,-1,-2,-3,-2,2],        // H
-        [-1,-1,-3,-3,0,-4,-3,4,-3,2,1,-3,-3,-3,-3,-2,-1,3,-3,-1],       // I
-        [-1,-3,-1,1,-3,-2,-1,-3,5,-2,-1,0,-1,1,2,0,-1,-2,-3,-2],        // K
-        [-1,-1,-4,-3,0,-4,-3,2,-2,4,2,-3,-3,-2,-2,-2,-1,1,-2,-1],       // L
-        [-1,-1,-3,-2,0,-3,-2,1,-1,2,5,-2,-2,0,-1,-1,-1,1,-1,-1],        // M
-        [-2,-3,1,0,-3,0,1,-3,0,-3,-2,6,-2,0,0,1,0,-3,-4,-2],            // N
-        [-1,-3,-1,-1,-4,-2,-2,-3,-1,-3,-2,-2,7,-1,-2,-1,-1,-2,-4,-3],   // P
-        [-1,-3,0,2,-3,-2,0,-3,1,-2,0,0,-1,5,1,0,-1,-2,-2,-1],           // Q
-        [-1,-3,-2,0,-3,-2,0,-3,2,-2,-1,0,-2,1,5,-1,-1,-3,-3,-2],        // R
-        [1,-1,0,0,-2,0,-1,-2,0,-2,-1,1,-1,0,-1,4,1,-2,-3,-2],           // S
-        [0,-1,-1,-1,-2,-2,-2,-1,-1,-1,-1,0,-1,-1,-1,1,5,0,-2,-2],       // T
-        [0,-1,-3,-2,-1,-3,-3,3,-2,1,1,-3,-2,-2,-3,-2,0,4,-3,-1],        // V
-        [-3,-2,-4,-3,1,-2,-2,-3,-3,-2,-1,-4,-4,-2,-3,-3,-2,-3,11,2],    // W
-        [-2,-2,-3,-2,3,-3,2,-1,-2,-1,-1,-2,-3,-1,-2,-2,-2,-1,2,7]       // Y
-    ];
-
-    var blosum62 = [
-        //A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X
-        [ 4,-1,-2,-2, 0,-1,-1, 0,-2,-1,-1,-1,-1,-2,-1, 1, 0,-3,-2, 0,-2,-1, 0], // A
-        [-1, 5, 0,-2,-3, 1, 0,-2, 0,-3,-2, 2,-1,-3,-2,-1,-1,-3,-2,-3,-1, 0,-1], // R
-        [-2, 0, 6, 1,-3, 0, 0, 0, 1,-3,-3, 0,-2,-3,-2, 1, 0,-4,-2,-3, 3, 0,-1], // N
-        [-2,-2, 1, 6,-3, 0, 2,-1,-1,-3,-4,-1,-3,-3,-1, 0,-1,-4,-3,-3, 4, 1,-1], // D
-        [ 0,-3,-3,-3, 9,-3,-4,-3,-3,-1,-1,-3,-1,-2,-3,-1,-1,-2,-2,-1,-3,-3,-2], // C
-        [-1, 1, 0, 0,-3, 5, 2,-2, 0,-3,-2, 1, 0,-3,-1, 0,-1,-2,-1,-2, 0, 3,-1], // Q
-        [-1, 0, 0, 2,-4, 2, 5,-2, 0,-3,-3, 1,-2,-3,-1, 0,-1,-3,-2,-2, 1, 4,-1], // E
-        [ 0,-2, 0,-1,-3,-2,-2, 6,-2,-4,-4,-2,-3,-3,-2, 0,-2,-2,-3,-3,-1,-2,-1], // G
-        [-2, 0, 1,-1,-3, 0, 0,-2, 8,-3,-3,-1,-2,-1,-2,-1,-2,-2, 2,-3, 0, 0,-1], // H
-        [-1,-3,-3,-3,-1,-3,-3,-4,-3, 4, 2,-3, 1, 0,-3,-2,-1,-3,-1, 3,-3,-3,-1], // I
-        [-1,-2,-3,-4,-1,-2,-3,-4,-3, 2, 4,-2, 2, 0,-3,-2,-1,-2,-1, 1,-4,-3,-1], // L
-        [-1, 2, 0,-1,-3, 1, 1,-2,-1,-3,-2, 5,-1,-3,-1, 0,-1,-3,-2,-2, 0, 1,-1], // K
-        [-1,-1,-2,-3,-1, 0,-2,-3,-2, 1, 2,-1, 5, 0,-2,-1,-1,-1,-1, 1,-3,-1,-1], // M
-        [-2,-3,-3,-3,-2,-3,-3,-3,-1, 0, 0,-3, 0, 6,-4,-2,-2, 1, 3,-1,-3,-3,-1], // F
-        [-1,-2,-2,-1,-3,-1,-1,-2,-2,-3,-3,-1,-2,-4, 7,-1,-1,-4,-3,-2,-2,-1,-2], // P
-        [ 1,-1, 1, 0,-1, 0, 0, 0,-1,-2,-2, 0,-1,-2,-1, 4, 1,-3,-2,-2, 0, 0, 0], // S
-        [ 0,-1, 0,-1,-1,-1,-1,-2,-2,-1,-1,-1,-1,-2,-1, 1, 5,-2,-2, 0,-1,-1, 0], // T
-        [-3,-3,-4,-4,-2,-2,-3,-2,-2,-3,-2,-3,-1, 1,-4,-3,-2,11, 2,-3,-4,-3,-2], // W
-        [-2,-2,-2,-3,-2,-1,-2,-3, 2,-1,-1,-2,-1, 3,-3,-2,-2, 2, 7,-1,-3,-2,-1], // Y
-        [ 0,-3,-3,-3,-1,-2,-2,-3,-3, 3, 1,-2, 1,-1,-2,-2, 0,-3,-1, 4,-3,-2,-1], // V
-        [-2,-1, 3, 4,-3, 0, 1,-1, 0,-3,-4, 0,-3,-3,-2, 0,-1,-4,-3,-3, 4, 1,-1], // B
-        [-1, 0, 0, 1,-3, 3, 4,-2, 0,-3,-3, 1,-1,-3,-1, 0,-1,-3,-2,-2, 1, 4,-1], // Z
-        [ 0,-1,-1,-1,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2, 0, 0,-2,-1,-1,-1,-1,-1]  // X
-    ];
-
-    var nucleotides = 'ACTG';
-
-    var aminoacidsX = 'ACDEFGHIKLMNPQRSTVWY';
-
-    var aminoacids = 'ARNDCQEGHILKMFPSTWYVBZ?';
-
-    function prepareMatrix( cellNames, mat ){
-
-        var j;
-        var i = 0;
-        var matDict = {};
-
-        mat.forEach( function( row ){
-
-            j = 0;
-            var rowDict = {};
-
-            row.forEach( function( elm ){
-
-                rowDict[ cellNames[ j++ ] ] = elm;
-
-            } );
-
-            matDict[ cellNames[ i++ ] ] = rowDict;
-
-        } );
-
-        return matDict;
-
-    }
-
-    return {
-
-        blosum62: prepareMatrix( aminoacids, blosum62 ),
-
-        blosum62x: prepareMatrix( aminoacidsX, blosum62x ),
-
-    };
-
-}();
-
-
-NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix ){
-
-    // TODO try encoding seqs as integers and use array subst matrix, maybe faster
-
-    this.seq1 = seq1;
-    this.seq2 = seq2;
-
-    this.gapPenalty = gapPenalty || -10;
-    this.gapExtensionPenalty = gapExtensionPenalty || -1;
-    this.substMatrix = substMatrix || "blosum62";
-
-    if( this.substMatrix ){
-        this.substMatrix = NGL.SubstitutionMatrices[ this.substMatrix ];
-    }
-
-};
-
-NGL.Alignment.prototype = {
-
-    constructor: NGL.Alignment,
-
-    initMatrices: function(){
-
-        this.n = this.seq1.length;
-        this.m = this.seq2.length;
-
-        // NGL.log(this.n, this.m);
-
-        this.score = undefined;
-        this.ali = '';
-
-        this.S = [];
-        this.V = [];
-        this.H = [];
-
-        for( var i = 0; i <= this.n; ++i ){
-
-            this.S[ i ] = [];
-            this.V[ i ] = [];
-            this.H[ i ] = [];
-
-            for( var j = 0; j <= this.m; ++j ){
-
-                this.S[ i ][ j ] = 0;
-                this.V[ i ][ j ] = 0;
-                this.H[ i ][ j ] = 0;
-
-            }
-
-        }
-
-        for( var i = 0; i <= this.n; ++i ){
-
-            this.S[ i ][ 0 ] = this.gap( 0 );
-            this.H[ i ][ 0 ] = -Infinity;
-
-        }
-
-        for( var j = 0; j <= this.m; ++j ){
-
-            this.S[ 0 ][ j ] = this.gap( 0 );
-            this.V[ 0 ][ j ] = -Infinity;
-
-        }
-
-        this.S[ 0 ][ 0 ] = 0;
-
-        // NGL.log(this.S, this.V, this.H);
-
-    },
-
-    gap: function( len ){
-
-        return this.gapPenalty + len * this.gapExtensionPenalty;
-
-    },
-
-    makeScoreFn: function(){
-
-        var seq1 = this.seq1;
-        var seq2 = this.seq2;
-
-        var substMatrix = this.substMatrix;
-
-        var c1, c2;
-
-        if( substMatrix ){
-
-            return function( i, j ){
-
-                c1 = seq1[ i ];
-                c2 = seq2[ j ];
-
-                try{
-
-                    return substMatrix[ c1 ][ c2 ];
-
-                }catch( e ){
-
-                    return -4;
-
-                }
-
-            }
-
-        } else {
-
-            NGL.warn('NGL.Alignment: no subst matrix');
-
-            return function( i, j ){
-
-                c1 = seq1[ i ];
-                c2 = seq2[ j ];
-
-                return c1 === c2 ? 5 : -3;
-
-            }
-
-        }
-
-    },
-
-    calc: function(){
-
-        NGL.time( "NGL.Alignment.calc" );
-
-        this.initMatrices();
-
-        var gap0 = this.gap(0);
-        var scoreFn = this.makeScoreFn();
-        var gapExtensionPenalty = this.gapExtensionPenalty;
-
-        var V = this.V;
-        var H = this.H;
-        var S = this.S;
-
-        var n = this.n;
-        var m = this.m;
-
-        var Vi1, Si1, Vi, Hi, Si;
-
-        var i, j;
-
-        for( i = 1; i <= n; ++i ){
-
-            Si1 = S[ i - 1 ];
-            Vi1 = V[ i - 1 ];
-
-            Vi = V[ i ];
-            Hi = H[ i ];
-            Si = S[ i ];
-
-            for( j = 1; j <= m; ++j ){
-
-                Vi[j] = Math.max(
-                    Si1[ j ] + gap0,
-                    Vi1[ j ] + gapExtensionPenalty
-                );
-
-                Hi[j] = Math.max(
-                    Si[ j - 1 ] + gap0,
-                    Hi[ j - 1 ] + gapExtensionPenalty
-                );
-
-                Si[j] = Math.max(
-                    Si1[ j - 1 ] + scoreFn( i - 1, j - 1 ), // match
-                    Vi[ j ], //del
-                    Hi[ j ]  // ins
-                );
-
-            }
-
-        }
-
-        NGL.timeEnd( "NGL.Alignment.calc" );
-
-        // NGL.log(this.S, this.V, this.H);
-
-    },
-
-    trace: function(){
-
-        // NGL.time( "NGL.Alignment.trace" );
-
-        this.ali1 = '';
-        this.ali2 = '';
-
-        var scoreFn = this.makeScoreFn();
-
-        var i = this.n;
-        var j = this.m;
-        var mat = "S";
-
-        if( this.S[i][j] >= this.V[i][j] && this.S[i][j] >= this.V[i][j] ){
-            mat = "S";
-            this.score = this.S[i][j];
-        }else if( this.V[i][j] >= this.H[i][j] ){
-            mat = "V";
-            this.score = this.V[i][j];
-        }else{
-            mat = "H";
-            this.score = this.H[i][j];
-        }
-
-        // NGL.log("NGL.Alignment: SCORE", this.score);
-        // NGL.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
-
-        while( i > 0 && j > 0 ){
-
-            if( mat=="S" ){
-
-                if( this.S[i][j]==this.S[i-1][j-1] + scoreFn(i-1, j-1) ){
-                    this.ali1 = this.seq1[i-1] + this.ali1;
-                    this.ali2 = this.seq2[j-1] + this.ali2;
-                    --i;
-                    --j;
-                    mat = "S";
-                }else if( this.S[i][j]==this.V[i][j] ){
-                    mat = "V";
-                }else if( this.S[i][j]==this.H[i][j] ){
-                    mat = "H";
-                }else{
-                    NGL.error('NGL.Alignment: S');
-                    --i;
-                    --j;
-                }
-
-            }else if( mat=="V" ){
-
-                if( this.V[i][j]==this.V[i-1][j] + this.gapExtensionPenalty ){
-                    this.ali1 = this.seq1[i-1] + this.ali1;
-                    this.ali2 = '-' + this.ali2;
-                    --i;
-                    mat = "V";
-                }else if( this.V[i][j]==this.S[i-1][j] + this.gap(0) ){
-                    this.ali1 = this.seq1[i-1] + this.ali1;
-                    this.ali2 = '-' + this.ali2;
-                    --i;
-                    mat = "S";
-                }else{
-                    NGL.error('NGL.Alignment: V');
-                    --i;
-                }
-
-            }else if( mat=="H" ){
-
-                if( this.H[i][j] == this.H[i][j-1] + this.gapExtensionPenalty ){
-                    this.ali1 = '-' + this.ali1;
-                    this.ali2 = this.seq2[j-1] + this.ali2;
-                    --j;
-                    mat = "H";
-                }else if( this.H[i][j] == this.S[i][j-1] + this.gap(0) ){
-                    this.ali1 = '-' + this.ali1;
-                    this.ali2 = this.seq2[j-1] + this.ali2;
-                    --j;
-                    mat = "S";
-                }else{
-                    NGL.error('NGL.Alignment: H');
-                    --j;
-                }
-
-            }else{
-
-                NGL.error('NGL.Alignment: no matrix');
-
-            }
-
-        }
-
-        while( i > 0 ){
-
-            this.ali1 = this.seq1[ i - 1 ] + this.ali1;
-            this.ali2 = '-' + this.ali2;
-            --i;
-
-        }
-
-        while( j > 0 ){
-
-            this.ali1 = '-' + this.ali1;
-            this.ali2 = this.seq2[ j - 1 ] + this.ali2;
-            --j;
-
-        }
-
-        // NGL.timeEnd( "NGL.Alignment.trace" );
-
-        // NGL.log([this.ali1, this.ali2]);
-
-    }
-
-};
-
-
-NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
-
-    align = align || false;
-    sele1 = sele1 || "";
-    sele2 = sele2 || "";
-    xsele1 = xsele1 || "";
-    xsele2 = xsele2 || "";
-
-    var atoms1, atoms2;
-
-    if( align ){
-
-        var _s1 = s1;
-        var _s2 = s2;
-
-        if( sele1 && sele2 ){
-            _s1 = new NGL.StructureSubset( s1, new NGL.Selection( sele1 ) );
-            _s2 = new NGL.StructureSubset( s2, new NGL.Selection( sele2 ) );
-        }
-
-        var seq1 = _s1.getSequence();
-        var seq2 = _s2.getSequence();
-
-        // NGL.log( seq1.join("") );
-        // NGL.log( seq2.join("") );
-
-        var ali = new NGL.Alignment( seq1.join(""), seq2.join("") );
-
-        ali.calc();
-        ali.trace();
-
-        // NGL.log( "superpose alignment score", ali.score );
-
-        // NGL.log( ali.ali1 );
-        // NGL.log( ali.ali2 );
-
-        var l, _i, _j, x, y;
-        var i = 0;
-        var j = 0;
-        var n = ali.ali1.length;
-        var aliIdx1 = [];
-        var aliIdx2 = [];
-
-        for( l = 0; l < n; ++l ){
-
-            x = ali.ali1[ l ];
-            y = ali.ali2[ l ];
-
-            _i = 0;
-            _j = 0;
-
-            if( x === "-" ){
-                aliIdx2[ j ] = false;
-            }else{
-                aliIdx2[ j ] = true;
-                _i = 1;
-            }
-
-            if( y === "-" ){
-                aliIdx1[ i ] = false;
-            }else{
-                aliIdx1[ i ] = true;
-                _j = 1;
-            }
-
-            i += _i;
-            j += _j;
-
-        }
-
-        // NGL.log( i, j );
-
-        // NGL.log( aliIdx1 );
-        // NGL.log( aliIdx2 );
-
-        atoms1 = new NGL.AtomSet();
-        atoms2 = new NGL.AtomSet();
-
-        i = 0;
-        _s1.eachResidue( function( r ){
-
-            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
-
-            if( aliIdx1[ i ] ){
-                atoms1.addAtom( r.getAtomByName( "CA" ) );
-            }
-            i += 1;
-
-        } );
-
-        i = 0;
-        _s2.eachResidue( function( r ){
-
-            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
-
-            if( aliIdx2[ i ] ){
-                atoms2.addAtom( r.getAtomByName( "CA" ) );
-            }
-            i += 1;
-
-        } );
-
-    }else{
-
-        atoms1 = new NGL.AtomSet(
-            s1, new NGL.Selection( sele1 + " and .CA" )
-        );
-        atoms2 = new NGL.AtomSet(
-            s2, new NGL.Selection( sele2 + " and .CA" )
-        );
-
-    }
-
-    if( xsele1 && xsele2 ){
-
-        var _atoms1 = new NGL.AtomSet();
-        var _atoms2 = new NGL.AtomSet();
-
-        var xselection1 = new NGL.Selection( xsele1 );
-        var xselection2 = new NGL.Selection( xsele2 );
-
-        var test1 = xselection1.test;
-        var test2 = xselection2.test;
-
-        var i, a1, a2;
-        var n = atoms1.atomCount;
-
-        for( i = 0; i < n; ++i ){
-
-            a1 = atoms1.atoms[ i ];
-            a2 = atoms2.atoms[ i ];
-
-            if( test1( a1 ) && test2( a2 ) ){
-
-                _atoms1.addAtom( a1 );
-                _atoms2.addAtom( a2 );
-
-                // NGL.log( a1.qualifiedName(), a2.qualifiedName() )
-
-            }
-
-        }
-
-        atoms1 = _atoms1;
-        atoms2 = _atoms2;
-
-    }
-
-    var superpose = new NGL.Superposition( atoms1, atoms2 );
-
-    var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
-    superpose.transform( atoms );
-
-    s1.center = s1.atomCenter();
-
-}
 
 // File:js/ngl/trajectory.js
 
@@ -22556,8 +22609,6 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         xhr.addEventListener( 'load', function ( event ) {
 
-            console.log( xhr )
-
             if( xhr.status === 200 || xhr.status === 304 ||
                 // when requesting from local file system
                 // the status in Google Chrome/Chromium is 0
@@ -23126,9 +23177,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
                     var r = c.residues[ j ];
 
-                    // console.log( i, chainChange, done, helixRun )
-
-                    if( chainChange || done ) return;
+                    if( r.resno === helix[ 1 ] ){  // resnoBeg
+                        helixRun = true;
+                    }
 
                     if( helixRun ){
 
@@ -23137,31 +23188,23 @@ NGL.assignSecondaryStructure = function( structure, callback ){
                         if( r.resno === helix[ 3 ] ){  // resnoEnd
 
                             helixRun = false
-
                             i += 1;
 
                             if( i < n ){
-
+                                // must look at previous residues as
+                                // residues may not be ordered by resno
+                                j = -1;
                                 helix = helices[ i ];
                                 chainChange = c.chainname !== helix[ 0 ];
-
                             }else{
-
                                 done = true;
-
                             }
 
                         }
 
                     }
 
-                    if( r.resno === helix[ 1 ] ){  // resnoBeg
-
-                        helixRun = true;
-
-                        r.ss = helix[ 4 ];
-
-                    }
+                    if( chainChange || done ) return;
 
                 }
 
@@ -23193,7 +23236,7 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var n = sheets.length;
         if( n === 0 ) return;
         var sheet = sheets[ i ];
-        var run = false;
+        var sheetRun = false;
         var done = false;
 
         m.eachChain( function( c ){
@@ -23209,42 +23252,34 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
                     var r = c.residues[ j ];
 
-                    if( chainChange || done ) return;
+                    if( r.resno === sheet[ 1 ] ){  // resnoBeg
+                        sheetRun = true;
+                    }
 
-                    if( run ){
+                    if( sheetRun ){
 
                         r.ss = "s";
 
                         if( r.resno === sheet[ 3 ] ){  // resnoEnd
 
-                            run = false
+                            sheetRun = false
                             i += 1;
 
                             if( i < n ){
-
                                 // must look at previous residues as
-                                // sheet definitions are not ordered
-                                // by resno
-                                j = 0;
+                                // residues may not be ordered by resno
+                                j = -1;
                                 sheet = sheets[ i ];
                                 chainChange = c.chainname !== sheet[ 0 ];
-
                             }else{
-
                                 done = true;
-
                             }
 
                         }
 
                     }
 
-                    if( r.resno === sheet[ 1 ] ){  // resnoBeg
-
-                        run = true;
-                        r.ss = "s";
-
-                    }
+                    if( chainChange || done ) return;
 
                 }
 
