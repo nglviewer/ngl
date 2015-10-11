@@ -1,6 +1,6 @@
 [
-	"js/lib/ui/ui.js",
-	"js/lib/ui/ui.extra.js",
-	"js/lib/ui/ui.ngl.js",
-	"js/ngl/gui.js"
+    "js/lib/ui/ui.js",
+    "js/lib/ui/ui.extra.js",
+    "js/lib/ui/ui.ngl.js",
+    "js/ngl/gui.js"
 ]
