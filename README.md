@@ -109,8 +109,8 @@ Read more about getting started with the Apache webserver [here](http://httpd.ap
 Changelog
 =========
 
-Version 0.6dev
---------------
+Version 0.6
+-----------
 
 * MIGRATION: `Stage.loadFile` signature changed, now returns a `Promise` and does not accept callbacks
 * MIGRATION: moved trajectory server into its own repository: [MDSrv](https://github.com/arose/mdsrv/)
