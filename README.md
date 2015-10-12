@@ -27,6 +27,7 @@ Table of contents
 
 * [Installation](#installation)
 * [Development](#development)
+* [Deployment](#deployment)
 * [Changelog](#changelog)
 * [Acknowledgments](#acknowledgments)
 * [License](#license)
@@ -82,6 +83,7 @@ A (Python based) local development server can be started with the shell script
 
     sh serve.sh
 
+to serve the NGL Viewer at http://localhost:8000/.
 
 Limited (due to browser security restrictions) functionality is available when directly opening one of the [html files](html/) from the local file system. For Google Chrome/Chromium it can be helpful to start the browser with the `--allow-file-access-from-files` command line flag.
 
@@ -90,6 +92,17 @@ Unit tests
 ----------
 
 [QUnit](http://qunitjs.com/) is used for unit testing. The unit tests can be found [here](test/unit/).
+
+
+
+Deployment
+==========
+
+Any webserver that serves static files will do. If you want to serve the NGL Viewer directly from the repository with the Apache webserver you can do so by creating a symlink:
+
+	ln -s /path/to/ngl-repository/ /var/www/html/ngl
+
+Read more about getting started with the Apache webserver [here](http://httpd.apache.org/docs/trunk/getting-started.html).
 
 
 
