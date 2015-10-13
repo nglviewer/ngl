@@ -100,7 +100,21 @@ Deployment
 
 Any webserver that serves static files will do. If you want to serve the NGL Viewer directly from the repository with the Apache webserver you can do so by creating a symlink:
 
-	ln -s /path/to/ngl-repository/ /var/www/html/ngl
+	ln -s /path/to/ngl-repository/ /var/www/ngl
+
+This assumes the Apache configuration includes somthing like
+
+	DocumentRoot /var/www
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+    </Directory>
+    <Directory /var/www/>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+        Order allow,deny
+        allow from all
+    </Directory>
 
 Read more about getting started with the Apache webserver [here](http://httpd.apache.org/docs/trunk/getting-started.html).
 
@@ -108,6 +122,13 @@ Read more about getting started with the Apache webserver [here](http://httpd.ap
 
 Changelog
 =========
+
+Version dev
+-----------
+
+* DOC: clarified apache configuration for deployment
+
+
 
 Version 0.6
 -----------
