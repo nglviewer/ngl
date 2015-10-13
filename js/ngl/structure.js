@@ -6067,6 +6067,7 @@ NGL.StructureSubset.prototype._build = function(){
 
                     _a = _r.addAtom();
                     _a.copy( a );
+                    _a.bonds.length = 0;
                     _a.index = atoms.length;
 
                     atomIndexDict[ a.index ] = _a;

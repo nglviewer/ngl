@@ -127,6 +127,7 @@ Version dev
 -----------
 
 * DOC: clarified apache configuration for deployment
+* FIX: bonds not reset when building a NGL.StructureSubset
 
 
 
