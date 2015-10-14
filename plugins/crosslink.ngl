@@ -18,7 +18,7 @@ uiBreak( 2 );
 
 uiOpenButton( "open structure...", function( files ){
 
-    stage.loadFile( files[ 0 ], prepareStructure )
+    stage.loadFile( files[ 0 ] ).then( prepareStructure )
 
 }, [ "pdb", "cif", "mmcif", "gro", "ent" ] );
 
@@ -26,7 +26,7 @@ uiBreak( 2 );
 
 uiOpenButton( "open crosslink data...", function( files ){
 
-    NGL.autoLoad( files[ 0 ], prepareCrosslinkData );
+    NGL.autoLoad( files[ 0 ] ).then( prepareCrosslinkData );
 
 }, [ "csv" ] );
 
