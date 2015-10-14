@@ -5,5 +5,5 @@
 	"files": [
 		"crosslink.ngl"
 	],
-	"source": ""
+	"source": "crosslinkLoader();"
 }
