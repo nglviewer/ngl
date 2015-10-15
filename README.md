@@ -130,6 +130,7 @@ Version dev
 * FIX: bonds not reset when building a NGL.StructureSubset
 * FIX: cif parser, ignore non-displayable bonds between symmetry mates
 * FIX: cif parser, struct_conn bonds not added for multiple altloc atoms
+* LIB: updated signals.js
 
 
 
