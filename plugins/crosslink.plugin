@@ -3,6 +3,7 @@
 	"description": "...",
 	"version": "0.1",
 	"files": [
+		"crosslink.js",
 		"crosslink.ngl"
 	],
 	"source": "crosslinkLoader();"

@@ -1,286 +1,4 @@
 
-// Constructor
-
-var CrosslinkRepresentation = function( stage, structureComp, xlList ){
-
-    this.stage = stage;
-    this.structureComp = structureComp;
-    this.xlList = xlList;
-
-    this.colorOptions = {};
-    this._initColorSchemes();
-
-    this._prepareStructure();
-    this._prepareCrosslinkData();
-
-    //
-
-    var xlRes = this.xlRes;
-    var xlBond = this.xlBond;
-    var resToSele = CrosslinkRepresentation.resToSele;
-    var getBondName = CrosslinkRepresentation.getBondName;
-
-    this.stage.signals.onPicking.add( handlePicking );
-
-    function handlePicking( d ){
-
-        var focusedComp = stage.getRepresentationsByName( "focusedRes" );
-        var linkedComp = stage.getRepresentationsByName( "linkedRes" );
-        var focusedBondComp = stage.getRepresentationsByName( "focusedBond" );
-
-        if( !focusedComp || !linkedComp || !focusedBondComp ) return;
-
-        if( d.atom !== undefined && d.bond === undefined ){
-
-            var linkedRes = xlRes[ d.atom.resno ];
-
-            if( linkedRes ){
-
-                focusedComp.setSelection( resToSele( d.atom.resno ) );
-                linkedComp.setSelection( resToSele( linkedRes ) );
-
-                // textElm.setValue( "[" + d.atom.resno + "] " + linkedRes.join( ", " ) );
-
-            }else{
-
-                focusedComp.setSelection( "none" );
-                linkedComp.setSelection( "none" );
-
-                textElm.setValue( "none" );
-
-            }
-
-            focusedBondComp.setSelection( "none" );
-
-        }else if( d.bond !== undefined ){
-
-            var bondedRes = xlBond[ getBondName( d.bond ) ];
-
-            if( bondedRes ){
-
-                focusedBondComp.setSelection( resToSele( bondedRes ) );
-
-                // textElm.setValue( bondedRes.join( ", " ) );
-
-            }else{
-
-                focusedBondComp.setSelection( "none" );
-
-                // textElm.setValue( "none" );
-
-            }
-
-            focusedComp.setSelection( "none" );
-            linkedComp.setSelection( "none" );
-
-        }else{
-
-            focusedComp.setSelection( "none" );
-            linkedComp.setSelection( "none" );
-            focusedBondComp.setSelection( "none" );
-
-            // textElm.setValue( "none" );
-
-        }
-
-    }
-
-};
-
-// Static functions
-
-CrosslinkRepresentation.resToSele = function( resnoList, asSelection ){
-
-    if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
-    var sele = "( " + resnoList.join( " OR " ) + " ) AND .CA";
-    return asSelection ? new NGL.Selection( sele ) : sele;
-
-};
-
-CrosslinkRepresentation.getBondName = function( bond ){
-
-    var resno1, resno2;
-
-    if( arguments.length > 1 ){
-        resno1 = arguments[ 0 ];
-        resno2 = arguments[ 1 ];
-    }else{
-        resno1 = bond.atom1.resno;
-        resno2 = bond.atom2.resno;
-    }
-
-    if( resno1 > resno2 ){
-        var tmp = resno1
-        resno1 = resno2;
-        resno2 = tmp;
-    }
-
-    return resno1 + "|" + resno2;
-
-};
-
-// Methods
-
-CrosslinkRepresentation.prototype = {
-
-    constructor: CrosslinkRepresentation,
-
-    _prepareStructure: function(){
-
-        var comp = this.structureComp;
-
-        comp.addRepresentation( "cartoon", {
-            color: "residueindex"
-        } );
-
-        comp.addRepresentation( "spacefill", {
-            sele: "none",
-            color: this.linkCountScheme,
-            scale: 0.6,
-            name: "allRes"
-        } );
-
-        comp.addRepresentation( "spacefill", {
-            sele: "none",
-            color: "fuchsia",
-            scale: 1.2,
-            opacity: 0.7,
-            name: "focusedRes"
-        } );
-
-        comp.addRepresentation( "spacefill", {
-            sele: "none",
-            color: "fuchsia",
-            scale: 0.9,
-            name: "linkedRes"
-        } );
-
-        this.stage.centerView( true );
-        comp.centerView( true );
-
-    },
-
-    _prepareCrosslinkData: function(){
-
-        var xlList = this.xlList;
-        var structure = this.structureComp.structure;
-
-        var xlRes = {};
-        var xlBond = {};
-        var xlPair = [];
-
-        var resToSele = CrosslinkRepresentation.resToSele;
-        var getBondName = CrosslinkRepresentation.getBondName;
-
-        xlList.forEach( function( rl ){
-
-            var resno1 = rl.fromResidue;
-            var resno2 = rl.toResidue;
-
-            if( xlRes[ resno1 ] === undefined ){
-                xlRes[ resno1 ] = [];
-            }
-            xlRes[ resno1 ].push( resno2 );
-
-            if( xlRes[ resno2 ] === undefined ){
-                xlRes[ resno2 ] = [];
-            }
-            xlRes[ resno2 ].push( resno1 );
-
-            xlBond[ getBondName( resno1, resno2 ) ] = [ resno2, resno1 ];
-
-            var a1 = structure.getAtoms( resToSele( resno1, true ), true );
-            var a2 = structure.getAtoms( resToSele( resno2, true ), true );
-
-            if( a1 && a2 ){
-                xlPair.push( [ resToSele( resno1 ), resToSele( resno2 ) ] );
-            }
-
-        } );
-
-        var xlResList = Object.keys( xlRes );
-
-        //
-
-        this.stage.getRepresentationsByName( "allRes" )
-            .setSelection( resToSele( xlResList ) );
-
-        this.structureComp.addRepresentation( "distance", {
-            atomPair: xlPair,
-            color: new THREE.Color( "lightgrey" ).getHex(),
-            labelSize: 0.001,
-            name: "bond"
-        } );
-
-        this.structureComp.addRepresentation( "distance", {
-            atomPair: xlPair,
-            sele: "none",
-            color: new THREE.Color( "fuchsia" ).getHex(),
-            labelSize: 2.0,
-            scale: 2.5,
-            opacity: 0.6,
-            name: "focusedBond"
-        } );
-
-        //
-
-        this.xlRes = xlRes;
-        this.xlBond = xlBond;
-        this.xlPair = xlPair;
-        this.xlResList = xlResList;
-
-    },
-
-    _initColorSchemes: function(){
-
-        var self = this;
-
-        var linkCountScale = chroma
-            .scale( 'YlGn' )
-            .mode('lch')
-            .domain( [ 0, 8 ] );
-
-        this.linkCountScheme = NGL.ColorMakerRegistry.addScheme( function( params ){
-
-            this.atomColor = function( atom ){
-
-                var count = self.xlRes[ atom.resno ].length;
-
-                var _c = linkCountScale( count )._rgb;
-                var c = _c[0] << 16 | _c[1] << 8 | _c[2];
-
-                return c;
-
-            }
-
-        }, "linkCount" );
-
-        this.colorOptions[ "linkCount" ] = this.linkCountScheme;
-        this.colorOptions[ "white" ] = new THREE.Color( "white" ).getHex();
-        this.colorOptions[ "lightgrey" ] = new THREE.Color( "lightgrey" ).getHex();
-
-    },
-
-};
-
-
-
-// uiSelect( Object.keys( colorOptions ), function( select ){
-
-//     var color = colorOptions[ select.getValue() ];
-
-//     if( color ){
-
-//         stage.getRepresentationsByName( "allRes" )
-//             .setColor( color );
-
-//     }
-
-// } );
-
-
-//
-
 
 var CrosslinkWidget = function( structureComp, csvData ){
 
@@ -297,8 +15,29 @@ var CrosslinkWidget = function( structureComp, csvData ){
 
     } );
 
-    var crosslinkRepresentation = new CrosslinkRepresentation(
+    var xlRepr = new CrosslinkRepresentation(
         stage, structureComp, xlList
+    );
+
+    var colorOptions = {};
+    for( var name in xlRepr.colorOptions ){
+        colorOptions[ name ] = name;
+    }
+
+    var colorSelect = new UI.Select()
+        .setOptions( colorOptions )
+        .setValue( "linkCount" )
+        .onChange( function(){
+            var color = xlRepr.colorOptions[ colorSelect.getValue() ];
+            if( color ){
+                stage.getRepresentationsByName( "allRes" )
+                    .setColor( color );
+            }
+        } );
+
+    container.add(
+        new UI.Text( "color" ).setMarginRight( "10px" ),
+        colorSelect
     );
 
     return container;
@@ -314,7 +53,7 @@ var CrosslinkLoader = function(){
     var csvFile = new UI.File().setWidth( "200px" );
     var infoText = new UI.Text();
     var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
-    // var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
+    var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
     //
 
@@ -357,14 +96,14 @@ var CrosslinkLoader = function(){
 
     }
 
-    // function loadExample(){
+    function loadExample(){
 
-    //     load(
-    //         "data://1crn_apbs.pqr",
-    //         "data://1crn_apbs_pot.dx.gz"
-    //     );
+        load(
+            "data://1AO6.pdb",
+            "data://HSA_BS3_90links.csv"
+        );
 
-    // }
+    }
 
     //
 
@@ -383,7 +122,7 @@ var CrosslinkLoader = function(){
         new UI.Break(),
         new UI.Break(),
         loadBtn.setMarginRight( "10px" ),
-        // exampleBtn.setMarginRight( "10px" ),
+        exampleBtn.setMarginRight( "10px" ),
         infoText
     );
 
