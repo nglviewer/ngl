@@ -2591,6 +2591,10 @@ NGL.CifParser.prototype = NGL.createObject(
                                 conn_type_id === "mismat" ||
                                 conn_type_id === "saltbr" ) continue;
 
+                            // ignore bonds between symmetry mates
+                            if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
+                                sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
+
                             // process:
                             // covale - covalent bond
                             // covale_base -
