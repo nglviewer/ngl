@@ -2635,13 +2635,27 @@ NGL.CifParser.prototype = NGL.createObject(
                             }
                             var atoms2 = s.getAtoms( selection2 );
 
-                            var a1, a2;
-                            var m = atoms1.length;
+                            // cases with more than one atom per selection
+                            // - #altloc1 to #altloc2
+                            // - #model to #model
+                            // - #altloc1 * #model to #altloc2 * #model
 
-                            for( var j = 0; j < m; ++j ){
+                            var k = atoms1.length;
+                            var l = atoms2.length;
 
-                                a1 = atoms1[ j ];
-                                a2 = atoms2[ j ];
+                            if( k > l ){
+                                var tmpA = k;
+                                k = l;
+                                l = tmpA;
+                                var tmpB = atoms1;
+                                atoms1 = atoms2;
+                                atoms2 = tmpB;
+                            }
+
+                            for( var j = 0; j < l; ++j ){
+
+                                var a1 = atoms1[ j % k ];
+                                var a2 = atoms2[ j ];
 
                                 if( a1 && a2 ){
 
