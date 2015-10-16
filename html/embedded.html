@@ -18,6 +18,8 @@
 
             if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
+            NGL.mainScriptFilePath = "../js/build/ngl.embedded.min.js";
+
             function onInit(){
                 var stage = new NGL.Stage( "viewport" );
                 stage.loadFile( "rcsb://1crn" ).then( function( o ){
