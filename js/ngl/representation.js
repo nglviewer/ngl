@@ -4220,7 +4220,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             type: "color"
         },
         atomPair: {
-            type: "hidden"
+            type: "hidden", rebuild: true
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
