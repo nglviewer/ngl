@@ -427,7 +427,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
 var NGL = {
 
-    REVISION: '0.6dev',
+    REVISION: '0.6',
     EPS: 0.0000001,
     disableImpostor: false,
     useWorker: true,
@@ -16593,6 +16593,7 @@ NGL.StructureSubset.prototype._build = function(){
 
                     _a = _r.addAtom();
                     _a.copy( a );
+                    _a.bonds.length = 0;
                     _a.index = atoms.length;
 
                     atomIndexDict[ a.index ] = _a;
@@ -25407,6 +25408,10 @@ NGL.CifParser.prototype = NGL.createObject(
                                 conn_type_id === "mismat" ||
                                 conn_type_id === "saltbr" ) continue;
 
+                            // ignore bonds between symmetry mates
+                            if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
+                                sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
+
                             // process:
                             // covale - covalent bond
                             // covale_base -
@@ -25447,13 +25452,27 @@ NGL.CifParser.prototype = NGL.createObject(
                             }
                             var atoms2 = s.getAtoms( selection2 );
 
-                            var a1, a2;
-                            var m = atoms1.length;
+                            // cases with more than one atom per selection
+                            // - #altloc1 to #altloc2
+                            // - #model to #model
+                            // - #altloc1 * #model to #altloc2 * #model
 
-                            for( var j = 0; j < m; ++j ){
+                            var k = atoms1.length;
+                            var l = atoms2.length;
 
-                                a1 = atoms1[ j ];
-                                a2 = atoms2[ j ];
+                            if( k > l ){
+                                var tmpA = k;
+                                k = l;
+                                l = tmpA;
+                                var tmpB = atoms1;
+                                atoms1 = atoms2;
+                                atoms2 = tmpB;
+                            }
+
+                            for( var j = 0; j < l; ++j ){
+
+                                var a1 = atoms1[ j % k ];
+                                var a2 = atoms2[ j ];
 
                                 if( a1 && a2 ){
 
@@ -37030,7 +37049,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             type: "color"
         },
         atomPair: {
-            type: "hidden"
+            type: "hidden", rebuild: true
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
