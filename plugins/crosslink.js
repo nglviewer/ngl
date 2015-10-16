@@ -5,11 +5,11 @@ var CrosslinkData = function( linkList ){
     var linkHash = {};
 
     function insertLink( from, to ){
-        if ( from > to ){
-            var tmp = from;
-            from = to;
-            to = tmp;
-        }
+        // if ( from > to ){
+        //     var tmp = from;
+        //     from = to;
+        //     to = tmp;
+        // }
         var list = linkHash[ from ];
         if( list === undefined ){
             linkHash[ from ] = [ to ];
@@ -25,6 +25,7 @@ var CrosslinkData = function( linkList ){
         var from = rl.fromResidue;
         var to = rl.toResidue;
         insertLink( from, to );
+        insertLink( to, from );
     } );
 
     //
@@ -133,7 +134,7 @@ var CrosslinkRepresentation = function( stage, structureComp, xlList ){
     this._initColorSchemes();
 
     this._initStructureRepr();
-    this._initReslinkRepr();
+    this._initLinkRepr();
 
     this.stage.signals.onPicking.add( this._handlePicking, this );
 
@@ -143,18 +144,16 @@ CrosslinkRepresentation.prototype = {
 
     constructor: CrosslinkRepresentation,
 
-    _getAtomPairs: function( residue ){
+    _getAtomPairsFromLink: function( linkList ){
+
+        if( !linkList ) return [];
 
         var atomPairs = [];
         var structure = this.structureComp.structure;
-        var linkList = this.xlData.getLinks( residue );
+        var resToSele = this._getSelectionFromResidue;
 
-        function resToSele( resnoList, asSelection ){
-
-            if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
-            var sele = "( " + resnoList.join( " OR " ) + " ) AND .CA";
-            return asSelection ? new NGL.Selection( sele ) : sele;
-
+        if( linkList === "all" ){
+            atomPairs = this._getAtomPairsFromResidue();
         }
 
         linkList.forEach( function( rl ){
@@ -175,9 +174,43 @@ CrosslinkRepresentation.prototype = {
 
     },
 
+    _getAtomPairsFromResidue: function( residue ){
+
+        var linkList = this.xlData.getLinks( residue );
+
+        return this._getAtomPairsFromLink( linkList );
+
+    },
+
+    _getSelectionFromResidue: function( resnoList, asSelection ){
+
+        var sele;
+
+        if( !resnoList ){
+
+            sele = "none";
+
+        }else{
+
+            if( resnoList === "all" ){
+                resnoList = this.xlData.getResidues();
+            }
+
+            if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
+            sele = "( " + resnoList.join( " OR " ) + " ) AND .CA";
+
+        }
+
+        return asSelection ? new NGL.Selection( sele ) : sele;
+
+    },
+
     _initStructureRepr: function(){
 
         var comp = this.structureComp;
+        var resSele = this._getSelectionFromResidue(
+            this.xlData.getResidues()
+        );
 
         this.sstrucRepr = comp.addRepresentation( "cartoon", {
             color: "residueindex",
@@ -185,8 +218,8 @@ CrosslinkRepresentation.prototype = {
         } );
 
         this.resRepr = comp.addRepresentation( "spacefill", {
-            sele: "none",
-            color: this.linkCountScheme,
+            sele: resSele,
+            color: "lightgrey",  // this.linkCountScheme,
             scale: 0.6,
             name: "res"
         } );
@@ -194,7 +227,7 @@ CrosslinkRepresentation.prototype = {
         this.resEmphRepr = comp.addRepresentation( "spacefill", {
             sele: "none",
             color: "fuchsia",
-            scale: 1.2,
+            scale: 0.9,
             opacity: 0.7,
             name: "resEmph"
         } );
@@ -204,25 +237,21 @@ CrosslinkRepresentation.prototype = {
 
     },
 
-    _initReslinkRepr: function(){
+    _initLinkRepr: function(){
 
         var comp = this.structureComp;
-        var xlPair = this._getAtomPairs();
-
-        // this.stage.getRepresentationsByName( "allRes" )
-        //     .setSelection( resToSele( xlResList ) );
+        var xlPair = this._getAtomPairsFromResidue();
 
         this.linkRepr = comp.addRepresentation( "distance", {
             atomPair: xlPair,
-            color: new THREE.Color( "lightgrey" ).getHex(),
+            color: "lightgrey",
             labelSize: 0.001,
             name: "link"
         } );
 
         this.linkEmphRepr = comp.addRepresentation( "distance", {
-            atomPair: xlPair,
-            sele: "none",
-            color: new THREE.Color( "fuchsia" ).getHex(),
+            atomPair: [],
+            color: "fuchsia",
             labelSize: 2.0,
             scale: 2.5,
             opacity: 0.6,
@@ -279,8 +308,8 @@ CrosslinkRepresentation.prototype = {
         }else if( pd.bond !== undefined ){
 
             var link = {
-                fromResidue: bond.atom1.resno,
-                toResidue: bond.atom2.resno
+                fromResidue: pd.bond.atom1.resno,
+                toResidue: pd.bond.atom2.resno
             };
             pd2.link = xlData.hasLink( link ) ? link : undefined;
 
@@ -308,75 +337,33 @@ CrosslinkRepresentation.prototype = {
 
     setDisplayedResidues: function( residues ){
 
+        this.resRepr.setSelection(
+            this._getSelectionFromResidue( residues )
+        );
+
     },
 
     setHighlightedResidues: function( residues ){
+
+        this.resEmphRepr.setSelection(
+            this._getSelectionFromResidue( residues )
+        );
 
     },
 
     setDisplayedLinks: function( links ){
 
+        this.linkRepr.setParameters( {
+            atomPair: this._getAtomPairsFromLink( links ),
+        } );
+
     },
 
     setHighlightedLinks: function( links ){
 
-        links.forEach( function( rl ){
-
-
+        this.linkEmphRepr.setParameters( {
+            atomPair: this._getAtomPairsFromLink( links ),
         } );
-
-        if( d.atom !== undefined && d.bond === undefined ){
-
-            var linkedRes = xlData.getLinkedResidues( d.atom.resno );
-
-            if( linkedRes ){
-
-                focusedComp.setSelection( resToSele( d.atom.resno ) );
-                linkedComp.setSelection( resToSele( linkedRes ) );
-
-                // textElm.setValue( "[" + d.atom.resno + "] " + linkedRes.join( ", " ) );
-
-            }else{
-
-                focusedComp.setSelection( "none" );
-                linkedComp.setSelection( "none" );
-
-                textElm.setValue( "none" );
-
-            }
-
-            focusedBondComp.setSelection( "none" );
-
-        }else if( d.bond !== undefined ){
-
-            var bondedRes = xlBond[ getBondName( d.bond ) ];
-
-            if( bondedRes ){
-
-                focusedBondComp.setSelection( resToSele( bondedRes ) );
-
-                // textElm.setValue( bondedRes.join( ", " ) );
-
-            }else{
-
-                focusedBondComp.setSelection( "none" );
-
-                // textElm.setValue( "none" );
-
-            }
-
-            focusedComp.setSelection( "none" );
-            linkedComp.setSelection( "none" );
-
-        }else{
-
-            focusedComp.setSelection( "none" );
-            linkedComp.setSelection( "none" );
-            focusedBondComp.setSelection( "none" );
-
-            // textElm.setValue( "none" );
-
-        }
 
     },
 
@@ -384,6 +371,7 @@ CrosslinkRepresentation.prototype = {
 
         // highlightColor
         // linkColor
+        // distance label display
 
     },
 

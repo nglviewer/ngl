@@ -19,6 +19,37 @@ var CrosslinkWidget = function( structureComp, csvData ){
         stage, structureComp, xlList
     );
 
+    //
+
+    function handlePicking( pickingData ){
+
+        if( pickingData.residue ){
+
+            xlRepr.setHighlightedResidues( [ pickingData.residue ] );
+            xlRepr.setHighlightedLinks(
+                xlRepr.xlData.getLinks( pickingData.residue )
+            );
+
+        }else if( pickingData.link ){
+
+            xlRepr.setHighlightedResidues( [
+                pickingData.link.fromResidue, pickingData.link.toResidue
+            ] );
+            xlRepr.setHighlightedLinks( [ pickingData.link ] );
+
+        }else{
+
+            xlRepr.setHighlightedResidues( false );
+            xlRepr.setHighlightedLinks( false );
+
+        }
+
+    }
+
+    xlRepr.signals.onPicking.add( handlePicking );
+
+    //
+
     var colorOptions = {};
     for( var name in xlRepr.colorOptions ){
         colorOptions[ name ] = name;
