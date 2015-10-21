@@ -3445,6 +3445,8 @@ NGL.CubeParser = function( streamer, params ){
 
     NGL.VolumeParser.call( this, streamer, params );
 
+    this.structure = new NGL.Structure();
+
 };
 
 NGL.CubeParser.prototype = NGL.createObject(
@@ -3464,6 +3466,7 @@ NGL.CubeParser.prototype = NGL.createObject(
         NGL.time( __timeName );
 
         var v = this.volume;
+        var s = this.structure;
         var headerLines = this.streamer.peekLines( 6 );
         var header = {};
         var reWhitespace = /\s+/;
@@ -3488,12 +3491,56 @@ NGL.CubeParser.prototype = NGL.createObject(
         var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
         var count = 0;
         var lineNo = 0;
+        var idx = 0;
+        var guessElem = NGL.guessElement;
+        var covRadii = NGL.CovalentRadii;
+        var vdwRadii = NGL.VdwRadii;
+        var atoms = s.atoms;
+
+        var invertDict = function( obj ){
+            var newObj = {};
+            for( var prop in obj ){
+                if( obj.hasOwnProperty( prop ) ){
+                    newObj[ obj [ prop ] ] = prop;
+                }
+            }
+            return newObj;
+        };
+
+        var atomicNumbersInv = invertDict( NGL.AtomicNumbers );
 
         function _parseChunkOfLines( _i, _n, lines ){
 
             for( var i = _i; i < _n; ++i ){
 
                 var line = lines[ i ].trim();
+
+                if( line !== "" && lineNo < header.atomCount + 6 && lineNo > 5 ){
+                    line = line.split( reWhitespace );
+                    if ( line.length !==1 ) {
+                        element = guessElem( atomicNumbersInv[ Number(line[0]) ] );
+                        a = new NGL.Atom();
+                        a.index = idx;
+                        a.x = line[2];
+                        a.y = line[3];
+                        a.z = line[4];
+                        a.element = element;
+                        a.chainname = '';
+                        a.resno = idx//resno;
+                        a.resname = "UNK";
+                        //a.serial = //serial;
+                        a.atomname = atomicNumbersInv[ Number(line[0]) ];
+                        a.ss = 'c';
+                        a.altloc = '';
+                        a.vdw = vdwRadii[ element ];
+                        a.covalent = covRadii[ element ];
+                        a.modelindex = 0;//modelIdx;
+
+                        idx += 1;
+                        atoms.push( a );
+                    };
+
+                }
 
                 if( line !== "" && lineNo >= header.atomCount + 6 ){
 
@@ -3509,9 +3556,9 @@ NGL.CubeParser.prototype = NGL.createObject(
 
                 ++lineNo;
 
-            };
+            }
 
-        };
+        }
 
         this.streamer.eachChunkOfLinesAsync(
 
@@ -3522,9 +3569,10 @@ NGL.CubeParser.prototype = NGL.createObject(
                 v.header = header;
                 v.setData( data, header.NVZ, header.NVY, header.NVX );
                 NGL.timeEnd( __timeName );
-                callback();
 
-            }
+                NGL.StructureParser.prototype._afterParse.call( this, callback );
+
+            }.bind( this )
 
         );
 
@@ -3552,6 +3600,12 @@ NGL.CubeParser.prototype = NGL.createObject(
         );
 
         return matrix;
+
+    },
+
+    _postProcess: function( callback ){
+
+        callback();
 
     }
 
