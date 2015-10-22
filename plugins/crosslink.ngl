@@ -16,7 +16,11 @@ var CrosslinkWidget = function( structureComp, csvData ){
     } );
 
     var xlRepr = new CrosslinkRepresentation(
-        stage, structureComp, xlList
+        stage, structureComp, xlList, {
+            // highlightedColor: "lightgreen",
+            // sstrucColor: "wheat",
+            // displayedDistanceColor: "tomato"
+        }
     );
 
     //
@@ -66,9 +70,31 @@ var CrosslinkWidget = function( structureComp, csvData ){
             }
         } );
 
+    var displayedColor = new UI.ColorPopupMenu( "displayedColor" )
+        .setValue( xlRepr.displayedResiduesColor )
+        .onChange( function(){
+            xlRepr.setParameters( {
+                displayedColor: displayedColor.getValue()
+            } );
+        } );
+
+    var labelVisible = new UI.Checkbox()
+        .setValue( xlRepr.displayedDistanceVisible )
+        .onChange( function(){
+            xlRepr.setParameters( {
+                displayedDistanceVisible: labelVisible.getValue()
+            } );
+        } );
+
     container.add(
         new UI.Text( "color" ).setMarginRight( "10px" ),
-        colorSelect
+        colorSelect,
+        new UI.Break(),
+        new UI.Text( "displayed color" ).setMarginRight( "10px" ),
+        displayedColor,
+        new UI.Break(),
+        new UI.Text( "label visible" ).setMarginRight( "10px" ),
+        labelVisible
     );
 
     return container;
