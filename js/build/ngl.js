@@ -11157,7 +11157,7 @@ NGL.ColorMakerRegistry = {
 
     signals: {
 
-        typesChanged: new signals.Signal(),
+        // typesChanged: new signals.Signal(),
 
     },
 
@@ -11305,7 +11305,7 @@ NGL.ColorMakerRegistry = {
         var id = "" + THREE.Math.generateUUID() + "|" + label;
 
         NGL.ColorMakerRegistry.userSchemes[ id ] = scheme;
-        NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
+        // NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
 
         return id;
 
@@ -11314,7 +11314,7 @@ NGL.ColorMakerRegistry = {
     removeScheme: function( id ){
 
         delete NGL.ColorMakerRegistry.userSchemes[ id ];
-        NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
+        // NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
 
     },
 
@@ -33145,7 +33145,7 @@ NGL.Representation.prototype = {
 
     },
 
-    setVisibility: function( value ){
+    setVisibility: function( value, noRenderRequest ){
 
         this.visible = value;
 
@@ -33155,7 +33155,7 @@ NGL.Representation.prototype = {
 
         } );
 
-        this.viewer.requestRender();
+        if( !noRenderRequest ) this.viewer.requestRender();
 
         return this;
 
@@ -37048,6 +37048,9 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         labelColor: {
             type: "color"
         },
+        labelVisible: {
+            type: "boolean"
+        },
         atomPair: {
             type: "hidden", rebuild: true
         },
@@ -37077,6 +37080,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         this.font = p.font || 'LatoBlack';
         this.labelSize = p.labelSize || 1.0;
         this.labelColor = p.labelColor || 0xFFFFFF;
+        this.labelVisible = p.labelVisible !== undefined ? p.labelVisible : true;
         this.antialias = p.antialias !== undefined ? p.antialias : true;
         this.atomPair = p.atomPair || [];
 
@@ -37149,6 +37153,8 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             this.getBufferParams( {
                 font: this.font,
                 antialias: this.antialias,
+                opacity: 1.0,
+                visible: this.labelVisible
             } )
         );
 
@@ -37268,6 +37274,26 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
     },
 
+    setVisibility: function( value, noRenderRequest ){
+
+        NGL.StructureRepresentation.prototype.setVisibility.call(
+            this, value, true
+        );
+
+        if( this.textBuffer ){
+
+            this.textBuffer.setVisibility(
+                this.labelVisible && this.visible
+            );
+
+        }
+
+        if( !noRenderRequest ) this.viewer.requestRender();
+
+        return this;
+
+    },
+
     setParameters: function( params ){
 
         var rebuild = false;
@@ -37288,6 +37314,12 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
+
+        if( params && params[ "labelVisible" ] !== undefined ){
+
+            this.setVisibility( this.visible );
+
+        }
 
         return this;
 
