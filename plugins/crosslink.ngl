@@ -30,6 +30,7 @@ var CrosslinkWidget = function( structureComp, csvData ){
         if( pickingData.residue ){
 
             xlRepr.setHighlightedResidues( [ pickingData.residue ] );
+            console.log( xlRepr.xlData.getLinks( pickingData.residue ) )
             xlRepr.setHighlightedLinks(
                 xlRepr.xlData.getLinks( pickingData.residue )
             );
@@ -37,7 +38,7 @@ var CrosslinkWidget = function( structureComp, csvData ){
         }else if( pickingData.link ){
 
             xlRepr.setHighlightedResidues( [
-                pickingData.link.fromResidue, pickingData.link.toResidue
+                pickingData.link.residueA, pickingData.link.residueB
             ] );
             xlRepr.setHighlightedLinks( [ pickingData.link ] );
 

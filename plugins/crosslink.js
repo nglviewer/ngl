@@ -1,64 +1,123 @@
 
 
-var CrosslinkData = function( linkList ){
+function transformLinkList( linkList, chainname, structureId ){
 
-    var linkHash = {};
+    chainname = chainname === undefined ? "A" : chainname;
 
-    function insertLink( from, to ){
-        // if ( from > to ){
-        //     var tmp = from;
-        //     from = to;
-        //     to = tmp;
-        // }
-        var list = linkHash[ from ];
-        if( list === undefined ){
-            linkHash[ from ] = [ to ];
-            return true;
-        }else if( list.indexOf( to ) === -1 ){
-            list.push( to );
-            return true;
+    var tLinkList = [];
+    var nextLinkId = 0;
+    var nextResidueId = 0;
+
+    var residueDict = {};
+    function getResidueId( resno ){
+        // TODO add structureId to key
+        // TODO in NMR structures there are multiple models
+        var key = resno + ":" + chainname;
+        if( residueDict[ key ] === undefined ){
+            residueDict[ key ] = nextResidueId
+            nextResidueId += 1;
         }
-        return false;
+        return residueDict[ key ];
     }
 
     linkList.forEach( function( rl ){
-        var from = rl.fromResidue;
-        var to = rl.toResidue;
-        insertLink( from, to );
-        insertLink( to, from );
+
+        tLinkList.push( {
+            linkId: nextLinkId,
+            residueA: {
+                residueId: getResidueId( rl.fromResidue ),
+                resno: rl.fromResidue,
+                chainname: chainname,
+                structureId: structureId
+            },
+            residueB: {
+                residueId: getResidueId( rl.toResidue ),
+                resno: rl.toResidue,
+                chainname: chainname,
+                structureId: structureId
+            }
+        } );
+
+        nextLinkId += 1;
+
     } );
+
+    return tLinkList;
+
+}
+
+
+var CrosslinkData = function( linkList ){
+
+    linkList = transformLinkList( linkList, "A" );
+
+    var linkIdToResidueIds = {};
+    var residueIdToLinkIds = {};
+
+    var linkIdToLink = {};
+    var residueIdToResidue = {};
+
+    var residueList = [];
 
     //
 
+    linkList.forEach( function( rl ){
+        linkIdToResidueIds[ rl.linkId ] = [
+            rl.residueA.residueId,
+            rl.residueB.residueId
+        ];
+        linkIdToLink[ rl.linkId ] = rl;
+    } );
+
+    function insertResidue( residue, link ){
+        var list = residueIdToLinkIds[ residue.residueId ];
+        if( list === undefined ){
+            residueIdToLinkIds[ residue.residueId ] = [ link.linkId ];
+        }else if( list.indexOf( link.linkId ) === -1 ){
+            list.push( link.linkId );
+        }
+        residueIdToResidue[ residue.residueId ] = residue;
+    }
+
+    linkList.forEach( function( rl ){
+        insertResidue( rl.residueA, rl );
+        insertResidue( rl.residueB, rl );
+    } );
+
+    for( var residueId in residueIdToResidue ){
+        residueList.push( residueIdToResidue[ residueId ] );
+    }
+
+    //
+
+    this._linkIdToResidueIds = linkIdToResidueIds;
+    this._residueIdToLinkIds = residueIdToLinkIds;
+
+    this._linkIdToLink = linkIdToLink;
+    this._residueIdToResidue = residueIdToResidue;
+
     this._linkList = linkList;
-    this._linkHash = linkHash;
-    this._residueList = Object.keys( linkHash );
+    this._residueList = residueList;
 
 };
 
 CrosslinkData.prototype = {
 
-    getLinkedResidues: function( residue ){
-
-        return this._linkHash[ residue ];
-
-    },
-
     getLinks: function( residue ){
 
-        if( !residue ){
+        if( residue === undefined ){
 
             return this._linkList;
 
         }else{
 
             var links = [];
-            var linkedResidues = this._linkHash[ residue ];
+            var linkIds = this._residueIdToLinkIds[ residue.residueId ];
 
-            if( linkedResidues ){
-                linkedResidues.forEach( function( to ){
-                    links.push( { fromResidue: residue, toResidue: to } );
-                } );
+            if( linkIds ){
+                for( var i = 0, il = linkIds.length; i < il; ++i ){
+                    links.push( this._linkIdToLink[ linkIds[ i ] ] );
+                }
             }
 
             return links;
@@ -69,7 +128,7 @@ CrosslinkData.prototype = {
 
     getResidues: function( link ){
 
-        if( !link ){
+        if( link === undefined ){
 
             return this._residueList;
 
@@ -77,43 +136,65 @@ CrosslinkData.prototype = {
 
             var residues = [];
             link.forEach( function( l ){
-                residues.push( l.fromResidue, l.toResidue );
+                residues.push( l.residueA, l.residueB );
             } );
             return residues;
 
         }else{
 
-            return [ link.fromResidue, link.toResidue ];
+            return [ link.residueA, link.residueB ];
 
         }
+
+    },
+
+    findLinks: function( residueA, residueB ){
+
+        var idA = residueA.residueId;
+        var idB = residueB.residueId;
+        var linklist = this._linkList;
+
+        var links = []
+
+        for( var i = 0, il = linklist.length; i < il; ++i ){
+            var l = linklist[ i ];
+            if( l.residueA.residueId === idA && l.residueB.residueId === idB ){
+                links.push( l );
+            }
+        }
+
+        return links.length ? links : false;
+
+    },
+
+    findResidues: function( resno, chainname ){
+
+        var residueList = this._residueList;
+
+        var residues = [];
+
+        for( var i = 0, il = residueList.length; i < il; ++i ){
+            var r = residueList[ i ];
+            if( r.resno === resno && r.chainname === chainname ){
+                residues.push( r );
+            }
+        }
+
+        return residues.length ? residues : false;
 
     },
 
     hasResidue: function( residue ){
 
-        return this._linkHash[ residue ] === undefined ? false : true;
+        var id = residue.residueId;
+        return this._residueIdToResidue[ id ] === undefined ? false : true;
 
     },
 
     hasLink: function( link ){
 
-        var linkHash = this._linkHash;
-        var from = link.fromResidue;
-        var to = link.toResidue;
-
-        if( from > to ){
-            var tmp = from;
-            from = to;
-            to = tmp;
-        }
-
-        var list = linkHash[ from ];
-        if( list === undefined ){
-            return false;
-        }else if( list.indexOf( to ) === -1 ){
-            return false;
-        }
-        return true;
+        var id = link.linkId;
+        return this._linkIdToLink[ id ] === undefined ? false : true;
 
     }
 
@@ -192,14 +273,14 @@ CrosslinkRepresentation.prototype = {
 
         linkList.forEach( function( rl ){
 
-            var from = rl.fromResidue;
-            var to = rl.toResidue;
+            var resA = rl.residueA;
+            var resB = rl.residueB;
 
-            var a1 = structure.getAtoms( resToSele( from, true ), true );
-            var a2 = structure.getAtoms( resToSele( to, true ), true );
+            var a1 = structure.getAtoms( resToSele( resA, true ), true );
+            var a2 = structure.getAtoms( resToSele( resB, true ), true );
 
             if( a1 && a2 ){
-                atomPairs.push( [ resToSele( from ), resToSele( to ) ] );
+                atomPairs.push( [ resToSele( resA ), resToSele( resB ) ] );
             }
 
         } );
@@ -231,7 +312,16 @@ CrosslinkRepresentation.prototype = {
             }
 
             if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
-            sele = "( " + resnoList.join( " OR " ) + " ) AND .CA";
+
+            var tmp = [];
+
+            resnoList.forEach( function( r ){
+                var rsele = r.resno;
+                if( r.chainname ) rsele + ":" + r.chainname;
+                tmp.push( rsele );
+            } );
+
+            sele = "( " + tmp.join( " OR " ) + " ) AND .CA";
 
         }
 
@@ -340,16 +430,31 @@ CrosslinkRepresentation.prototype = {
 
         if( pd.atom !== undefined && pd.bond === undefined ){
 
-            var residue = pd.atom.resno;
-            pd2.residue = xlData.hasResidue( residue ) ? residue : undefined;
+            var residues = xlData.findResidues(
+                pd.atom.resno, pd.atom.chainname
+            );
+            if( residues ){
+                pd2.residue = residues[ 0 ];
+            }
 
         }else if( pd.bond !== undefined ){
 
-            var link = {
-                fromResidue: pd.bond.atom1.resno,
-                toResidue: pd.bond.atom2.resno
-            };
-            pd2.link = xlData.hasLink( link ) ? link : undefined;
+            var residuesA = xlData.findResidues(
+                pd.bond.atom1.resno, pd.bond.atom1.chainname
+            );
+
+            var residuesB = xlData.findResidues(
+                pd.bond.atom2.resno, pd.bond.atom2.chainname
+            );
+
+            if( residuesA && residuesB ){
+                var links = xlData.findLinks(
+                    residuesA[ 0 ], residuesB[ 0 ]
+                );
+                if( links ){
+                    pd2.link = links[ 0 ];
+                }
+            }
 
         }
 
