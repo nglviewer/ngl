@@ -631,7 +631,7 @@ NGL.ColorMakerRegistry = {
 
     signals: {
 
-        typesChanged: new signals.Signal(),
+        // typesChanged: new signals.Signal(),
 
     },
 
@@ -779,7 +779,7 @@ NGL.ColorMakerRegistry = {
         var id = "" + THREE.Math.generateUUID() + "|" + label;
 
         NGL.ColorMakerRegistry.userSchemes[ id ] = scheme;
-        NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
+        // NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
 
         return id;
 
@@ -788,7 +788,7 @@ NGL.ColorMakerRegistry = {
     removeScheme: function( id ){
 
         delete NGL.ColorMakerRegistry.userSchemes[ id ];
-        NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
+        // NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
 
     },
 
