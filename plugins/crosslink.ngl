@@ -4,24 +4,48 @@ var CrosslinkWidget = function( structureComp, csvData ){
 
     var container = new UI.Panel();
 
-    var xlList = [];
+    var linkList = [];
 
     csvData.data.forEach( function( row ){
 
-        xlList.push( {
+        linkList.push( {
             fromResidue: parseInt( row[ 0 ] ),
             toResidue: parseInt( row[ 2 ] )
         } );
 
     } );
 
+    linkList = transformLinkList( linkList, "A" );
+
+    var crosslinkData = new CrosslinkData( linkList );
+
     var xlRepr = new CrosslinkRepresentation(
-        stage, structureComp, xlList, {
+        stage, structureComp, crosslinkData, {
             // highlightedColor: "lightgreen",
             // sstrucColor: "wheat",
             // displayedDistanceColor: "tomato"
         }
     );
+
+    setTimeout( function(){
+
+        var newLinkList = [];
+
+        for( var i = 0, il = linkList.length; i < il; ++i ){
+            if( i < 10 ){
+                newLinkList.push( linkList[ i ] );
+            }
+        }
+
+        crosslinkData.setLinkList( newLinkList );
+
+    }, 2000 );
+
+    setTimeout( function(){
+
+        crosslinkData.setLinkList( linkList );
+
+    }, 5000 );
 
     //
 
@@ -30,9 +54,8 @@ var CrosslinkWidget = function( structureComp, csvData ){
         if( pickingData.residue ){
 
             xlRepr.setHighlightedResidues( [ pickingData.residue ] );
-            console.log( xlRepr.xlData.getLinks( pickingData.residue ) )
             xlRepr.setHighlightedLinks(
-                xlRepr.xlData.getLinks( pickingData.residue )
+                xlRepr.crosslinkData.getLinks( pickingData.residue )
             );
 
         }else if( pickingData.link ){

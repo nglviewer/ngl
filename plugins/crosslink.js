@@ -49,59 +49,69 @@ function transformLinkList( linkList, chainname, structureId ){
 
 var CrosslinkData = function( linkList ){
 
-    linkList = transformLinkList( linkList, "A" );
+    this.signals = {
+        linkListChanged: new signals.Signal()
+    };
 
-    var linkIdToResidueIds = {};
-    var residueIdToLinkIds = {};
-
-    var linkIdToLink = {};
-    var residueIdToResidue = {};
-
-    var residueList = [];
-
-    //
-
-    linkList.forEach( function( rl ){
-        linkIdToResidueIds[ rl.linkId ] = [
-            rl.residueA.residueId,
-            rl.residueB.residueId
-        ];
-        linkIdToLink[ rl.linkId ] = rl;
-    } );
-
-    function insertResidue( residue, link ){
-        var list = residueIdToLinkIds[ residue.residueId ];
-        if( list === undefined ){
-            residueIdToLinkIds[ residue.residueId ] = [ link.linkId ];
-        }else if( list.indexOf( link.linkId ) === -1 ){
-            list.push( link.linkId );
-        }
-        residueIdToResidue[ residue.residueId ] = residue;
-    }
-
-    linkList.forEach( function( rl ){
-        insertResidue( rl.residueA, rl );
-        insertResidue( rl.residueB, rl );
-    } );
-
-    for( var residueId in residueIdToResidue ){
-        residueList.push( residueIdToResidue[ residueId ] );
-    }
-
-    //
-
-    this._linkIdToResidueIds = linkIdToResidueIds;
-    this._residueIdToLinkIds = residueIdToLinkIds;
-
-    this._linkIdToLink = linkIdToLink;
-    this._residueIdToResidue = residueIdToResidue;
-
-    this._linkList = linkList;
-    this._residueList = residueList;
+    this.setLinkList( linkList );
 
 };
 
 CrosslinkData.prototype = {
+
+    setLinkList: function( linkList ){
+
+        var linkIdToResidueIds = {};
+        var residueIdToLinkIds = {};
+
+        var linkIdToLink = {};
+        var residueIdToResidue = {};
+
+        var residueList = [];
+
+        //
+
+        linkList.forEach( function( rl ){
+            linkIdToResidueIds[ rl.linkId ] = [
+                rl.residueA.residueId,
+                rl.residueB.residueId
+            ];
+            linkIdToLink[ rl.linkId ] = rl;
+        } );
+
+        function insertResidue( residue, link ){
+            var list = residueIdToLinkIds[ residue.residueId ];
+            if( list === undefined ){
+                residueIdToLinkIds[ residue.residueId ] = [ link.linkId ];
+            }else if( list.indexOf( link.linkId ) === -1 ){
+                list.push( link.linkId );
+            }
+            residueIdToResidue[ residue.residueId ] = residue;
+        }
+
+        linkList.forEach( function( rl ){
+            insertResidue( rl.residueA, rl );
+            insertResidue( rl.residueB, rl );
+        } );
+
+        for( var residueId in residueIdToResidue ){
+            residueList.push( residueIdToResidue[ residueId ] );
+        }
+
+        //
+
+        this._linkIdToResidueIds = linkIdToResidueIds;
+        this._residueIdToLinkIds = residueIdToLinkIds;
+
+        this._linkIdToLink = linkIdToLink;
+        this._residueIdToResidue = residueIdToResidue;
+
+        this._linkList = linkList;
+        this._residueList = residueList;
+
+        this.signals.linkListChanged.dispatch();
+
+    },
 
     getLinks: function( residue ){
 
@@ -201,7 +211,7 @@ CrosslinkData.prototype = {
 };
 
 
-var CrosslinkRepresentation = function( stage, structureComp, xlList, params ){
+var CrosslinkRepresentation = function( stage, structureComp, crosslinkData, params ){
 
     var p = Object.assign( {}, params );
 
@@ -243,7 +253,17 @@ var CrosslinkRepresentation = function( stage, structureComp, xlList, params ){
 
     this.stage = stage;
     this.structureComp = structureComp;
-    this.xlData = new CrosslinkData( xlList );
+    this.crosslinkData = crosslinkData;
+
+    //
+
+    this._displayedResidues = this.crosslinkData.getResidues();
+    this._highlightedResidues = [];
+
+    this._displayedLinks = this.crosslinkData.getLinks();
+    this._highlightedLinks = [];
+
+    //
 
     this.colorOptions = {};
     this._initColorSchemes();
@@ -251,7 +271,12 @@ var CrosslinkRepresentation = function( stage, structureComp, xlList, params ){
     this._initStructureRepr();
     this._initLinkRepr();
 
-    this.stage.signals.onPicking.add( this._handlePicking, this );
+    this.stage.signals.onPicking.add(
+        this._handlePicking, this
+    );
+    this.crosslinkData.signals.linkListChanged.add(
+        this._handleDataChange, this
+    );
 
 };
 
@@ -261,29 +286,36 @@ CrosslinkRepresentation.prototype = {
 
     _getAtomPairsFromLink: function( linkList ){
 
-        if( !linkList ) return [];
-
         var atomPairs = [];
-        var structure = this.structureComp.structure;
-        var resToSele = this._getSelectionFromResidue;
 
-        if( linkList === "all" ){
+        if( !linkList || ( Array.isArray( linkList ) && !linkList.length ) ){
+
+            // atomPairs = [];
+
+        }else if( linkList === "all" ){
+
             atomPairs = this._getAtomPairsFromResidue();
+
+        }else{
+
+            var structure = this.structureComp.structure;
+            var resToSele = this._getSelectionFromResidue;
+
+            linkList.forEach( function( rl ){
+
+                var resA = rl.residueA;
+                var resB = rl.residueB;
+
+                var a1 = structure.getAtoms( resToSele( resA, true ), true );
+                var a2 = structure.getAtoms( resToSele( resB, true ), true );
+
+                if( a1 && a2 ){
+                    atomPairs.push( [ resToSele( resA ), resToSele( resB ) ] );
+                }
+
+            } );
+
         }
-
-        linkList.forEach( function( rl ){
-
-            var resA = rl.residueA;
-            var resB = rl.residueB;
-
-            var a1 = structure.getAtoms( resToSele( resA, true ), true );
-            var a2 = structure.getAtoms( resToSele( resB, true ), true );
-
-            if( a1 && a2 ){
-                atomPairs.push( [ resToSele( resA ), resToSele( resB ) ] );
-            }
-
-        } );
 
         return atomPairs;
 
@@ -291,7 +323,7 @@ CrosslinkRepresentation.prototype = {
 
     _getAtomPairsFromResidue: function( residue ){
 
-        var linkList = this.xlData.getLinks( residue );
+        var linkList = this.crosslinkData.getLinks( residue );
 
         return this._getAtomPairsFromLink( linkList );
 
@@ -301,14 +333,14 @@ CrosslinkRepresentation.prototype = {
 
         var sele;
 
-        if( !resnoList ){
+        if( !resnoList || ( Array.isArray( resnoList ) && !resnoList.length ) ){
 
             sele = "none";
 
         }else{
 
             if( resnoList === "all" ){
-                resnoList = this.xlData.getResidues();
+                resnoList = this.crosslinkData.getResidues();
             }
 
             if( !Array.isArray( resnoList ) ) resnoList = [ resnoList ];
@@ -332,8 +364,12 @@ CrosslinkRepresentation.prototype = {
     _initStructureRepr: function(){
 
         var comp = this.structureComp;
+
         var resSele = this._getSelectionFromResidue(
-            this.xlData.getResidues()
+            this._displayedResidues
+        );
+        var resEmphSele = this._getSelectionFromResidue(
+            this._highlightedResidues
         );
 
         this.sstrucRepr = comp.addRepresentation( "cartoon", {
@@ -349,7 +385,7 @@ CrosslinkRepresentation.prototype = {
         } );
 
         this.resEmphRepr = comp.addRepresentation( "spacefill", {
-            sele: "none",
+            sele: resEmphSele,
             color: this.highlightedResiduesColor,
             scale: 0.9,
             opacity: 0.7,
@@ -364,7 +400,13 @@ CrosslinkRepresentation.prototype = {
     _initLinkRepr: function(){
 
         var comp = this.structureComp;
-        var xlPair = this._getAtomPairsFromResidue();
+
+        var xlPair = this._getAtomPairsFromLink(
+            this._displayedLinks
+        );
+        var xlPairEmph = this._getAtomPairsFromLink(
+            this._highlightedLinks
+        );
 
         this.linkRepr = comp.addRepresentation( "distance", {
             atomPair: xlPair,
@@ -376,7 +418,7 @@ CrosslinkRepresentation.prototype = {
         } );
 
         this.linkEmphRepr = comp.addRepresentation( "distance", {
-            atomPair: [],
+            atomPair: xlPairEmph,
             color: this.highlightedLinksColor,
             labelSize: 2.0,
             labelColor: this.highlightedDistanceColor,
@@ -421,7 +463,7 @@ CrosslinkRepresentation.prototype = {
     _handlePicking: function( pickingData ){
 
         var pd = pickingData;
-        var xlData = this.xlData;
+        var crosslinkData = this.crosslinkData;
 
         var pd2 = {
             residue: undefined,
@@ -430,7 +472,7 @@ CrosslinkRepresentation.prototype = {
 
         if( pd.atom !== undefined && pd.bond === undefined ){
 
-            var residues = xlData.findResidues(
+            var residues = crosslinkData.findResidues(
                 pd.atom.resno, pd.atom.chainname
             );
             if( residues ){
@@ -439,16 +481,16 @@ CrosslinkRepresentation.prototype = {
 
         }else if( pd.bond !== undefined ){
 
-            var residuesA = xlData.findResidues(
+            var residuesA = crosslinkData.findResidues(
                 pd.bond.atom1.resno, pd.bond.atom1.chainname
             );
 
-            var residuesB = xlData.findResidues(
+            var residuesB = crosslinkData.findResidues(
                 pd.bond.atom2.resno, pd.bond.atom2.chainname
             );
 
             if( residuesA && residuesB ){
-                var links = xlData.findLinks(
+                var links = crosslinkData.findLinks(
                     residuesA[ 0 ], residuesB[ 0 ]
                 );
                 if( links ){
@@ -459,6 +501,50 @@ CrosslinkRepresentation.prototype = {
         }
 
         this.signals.onPicking.dispatch( pd2 );
+
+    },
+
+    _handleDataChange: function(){
+
+        this.setDisplayedResidues( this._displayedResidues );
+        this.setHighlightedResidues( this._highlightedResidues );
+
+        this.setDisplayedLinks( this._displayedLinks );
+        this.setHighlightedLinks( this._highlightedLinks );
+
+    },
+
+    _getAvailableResidues: function( residues ){
+
+        if( !residues ) return residues;
+
+        var crosslinkData = this.crosslinkData;
+        var availableResidues = [];
+
+        residues.forEach( function( r ){
+            if( crosslinkData.hasResidue( r ) ){
+                availableResidues.push( r );
+            }
+        } );
+
+        return availableResidues;
+
+    },
+
+    _getAvailableLinks: function( links ){
+
+        if( !links ) return links;
+
+        var crosslinkData = this.crosslinkData;
+        var availableLinks = [];
+
+        links.forEach( function( l ){
+            if( crosslinkData.hasLink( l ) ){
+                availableLinks.push( l );
+            }
+        } );
+
+        return availableLinks;
 
     },
 
@@ -480,32 +566,44 @@ CrosslinkRepresentation.prototype = {
 
     setDisplayedResidues: function( residues ){
 
+        this._displayedResidues = residues;
+        var availableResidues = this._getAvailableResidues( residues );
+
         this.resRepr.setSelection(
-            this._getSelectionFromResidue( residues )
+            this._getSelectionFromResidue( availableResidues )
         );
 
     },
 
     setHighlightedResidues: function( residues ){
 
+        this._highlightedResidues = residues;
+        var availableResidues = this._getAvailableResidues( residues );
+
         this.resEmphRepr.setSelection(
-            this._getSelectionFromResidue( residues )
+            this._getSelectionFromResidue( availableResidues )
         );
 
     },
 
     setDisplayedLinks: function( links ){
 
+        this._displayedLinks = links;
+        var availableLinks = this._getAvailableLinks( links );
+
         this.linkRepr.setParameters( {
-            atomPair: this._getAtomPairsFromLink( links ),
+            atomPair: this._getAtomPairsFromLink( availableLinks ),
         } );
 
     },
 
     setHighlightedLinks: function( links ){
 
+        this._highlightedLinks = links;
+        var availableLinks = this._getAvailableLinks( links );
+
         this.linkEmphRepr.setParameters( {
-            atomPair: this._getAtomPairsFromLink( links ),
+            atomPair: this._getAtomPairsFromLink( availableLinks ),
         } );
 
     },
@@ -616,7 +714,12 @@ CrosslinkRepresentation.prototype = {
 
     dispose: function(){
 
-        this.stage.signals.onPicking.remove( this._handlePicking, this );
+        this.stage.signals.onPicking.remove(
+            this._handlePicking, this
+        );
+        this.crosslinkData.signals.linkListChanged.remove(
+            this._handleDataChange, this
+        );
 
         this.stage.removeRepresentation( this.sstrucRepr );
         this.stage.removeRepresentation( this.resRepr );
