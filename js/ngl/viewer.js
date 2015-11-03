@@ -1315,22 +1315,6 @@ NGL.Viewer.prototype = {
 
     },
 
-    fullscreen: function(){
-
-        var elem = this.container;
-
-        if( elem.requestFullscreen ){
-            elem.requestFullscreen();
-        }else if( elem.msRequestFullscreen ){
-            elem.msRequestFullscreen();
-        }else if( elem.mozRequestFullScreen ){
-            elem.mozRequestFullScreen();
-        }else if( elem.webkitRequestFullscreen ){
-            elem.webkitRequestFullscreen();
-        }
-
-    },
-
     getImage: function( type, quality ){
 
         return this.renderer.domElement.toBlob( type, quality );

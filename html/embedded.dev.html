@@ -64,6 +64,9 @@
 
             function onInit(){
                 stage = new NGL.Stage( "viewport" );
+                stage.viewer.container.addEventListener( "dblclick", function(){
+                    stage.toggleFullscreen();
+                } );
                 stage.loadFile( "rcsb://1crn" ).then( function( o ){
                     o.addRepresentation( "cartoon" );
                     o.addRepresentation( "licorice" );
