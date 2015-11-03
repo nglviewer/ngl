@@ -119,7 +119,7 @@ NGL.Loader = function( src, params ){
 
     };
 
-    if( src instanceof File ){
+    if( src instanceof File || src instanceof Blob ){
 
         this.streamer = new NGL.FileStreamer( src, streamerParams );
 

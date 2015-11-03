@@ -231,8 +231,8 @@ NGL.getFileInfo = function( file ){
 
     var path, compressed, protocol;
 
-    if( file instanceof File ){
-        path = file.name;
+    if( file instanceof File || file instanceof Blob ){
+        path = file.name || "";
     }else{
         path = file
     }
