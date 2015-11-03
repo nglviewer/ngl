@@ -28765,22 +28765,6 @@ NGL.Viewer.prototype = {
 
     },
 
-    fullscreen: function(){
-
-        var elem = this.container;
-
-        if( elem.requestFullscreen ){
-            elem.requestFullscreen();
-        }else if( elem.msRequestFullscreen ){
-            elem.msRequestFullscreen();
-        }else if( elem.mozRequestFullScreen ){
-            elem.mozRequestFullScreen();
-        }else if( elem.webkitRequestFullscreen ){
-            elem.webkitRequestFullscreen();
-        }
-
-    },
-
     getImage: function( type, quality ){
 
         return this.renderer.domElement.toBlob( type, quality );
@@ -38374,6 +38358,87 @@ NGL.Stage.prototype = {
     handleResize: function(){
 
         this.viewer.handleResize();
+
+    },
+
+    toggleFullscreen: function( element ){
+
+        if( !document.fullscreenEnabled && !document.mozFullscreenEnabled &&
+            !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
+        ){
+            console.log( "fullscreen mode (currently) not possible" );
+            return;
+        }
+
+        var self = this;
+        element = element || this.viewer.container;
+        this.lastFullscreenElement = element;
+
+        //
+
+        function getFullscreenElement(){
+            return document.fullscreenElement || document.mozFullScreenElement ||
+                document.webkitFullscreenElement || document.msFullscreenElement;
+        }
+
+        function resizeElement(){
+
+            if( !getFullscreenElement() && self.lastFullscreenElement ){
+
+                var element = self.lastFullscreenElement;
+                element.style.width = element.dataset.normalWidth;
+                element.style.height = element.dataset.normalHeight;
+
+                document.removeEventListener( "fullscreenchange", resizeElement );
+                document.removeEventListener( "mozfullscreenchange", resizeElement );
+                document.removeEventListener( "webkitfullscreenchange", resizeElement );
+                document.removeEventListener( "msfullscreenchange", resizeElement );
+
+                self.handleResize();
+
+            }
+
+        }
+
+        //
+
+        if( !getFullscreenElement() ){
+
+            element.dataset.normalWidth = element.style.width;
+            element.dataset.normalHeight = element.style.height;
+            element.style.width = screen.width + "px";
+            element.style.height = screen.height + "px";
+
+            self.handleResize();
+
+            if( element.requestFullscreen ){
+                element.requestFullscreen();
+            }else if( element.msRequestFullscreen ){
+                element.msRequestFullscreen();
+            }else if( element.mozRequestFullScreen ){
+                element.mozRequestFullScreen();
+            }else if( element.webkitRequestFullscreen ){
+                element.webkitRequestFullscreen();
+            }
+
+            document.addEventListener( "fullscreenchange", resizeElement );
+            document.addEventListener( "mozfullscreenchange", resizeElement );
+            document.addEventListener( "webkitfullscreenchange", resizeElement );
+            document.addEventListener( "msfullscreenchange", resizeElement );
+
+        }else{
+
+            if( document.exitFullscreen ){
+                document.exitFullscreen();
+            }else if( document.msExitFullscreen ){
+                document.msExitFullscreen();
+            }else if( document.mozCancelFullScreen ){
+                document.mozCancelFullScreen();
+            }else if( document.webkitExitFullscreen ){
+                document.webkitExitFullscreen();
+            }
+
+        }
 
     },
 
