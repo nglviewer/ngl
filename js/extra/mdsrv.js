@@ -3,7 +3,8 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-NGL.MdsrvDatasource = function( baseUrl ){
+
+var MdsrvDatasource = function( baseUrl ){
 
     baseUrl = baseUrl || "";
 
