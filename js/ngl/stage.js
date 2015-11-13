@@ -998,7 +998,7 @@ NGL.Component.prototype = {
 
     },
 
-    dispose: function(){
+    clearRepresentations: function(){
 
         // copy via .slice because side effects may change reprList
         this.reprList.slice().forEach( function( repr ){
@@ -1006,6 +1006,12 @@ NGL.Component.prototype = {
             repr.dispose();
 
         } );
+
+    },
+
+    dispose: function(){
+
+        this.clearRepresentations();
 
         delete this.reprList;
 
