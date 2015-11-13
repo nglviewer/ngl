@@ -123,15 +123,17 @@ Read more about getting started with the Apache webserver [here](http://httpd.ap
 Changelog
 =========
 
-Version dev
------------
+Version 0.7dev
+--------------
 
+* ADD: `stage.toggleFullscreen` method
 * DOC: clarified apache configuration for deployment
 * FIX: bonds not reset when building a NGL.StructureSubset
 * FIX: cif parser, ignore non-displayable bonds between symmetry mates
 * FIX: cif parser, struct_conn bonds not added for multiple altloc atoms
 * LIB: updated signals.js
-
+* CODE: support loading of Blob objects in addition to File objects
+* CODE: tweaked DistanceRepresentation visibility params
 
 
 Version 0.6

@@ -9,7 +9,7 @@
 
 var NGL = {
 
-    REVISION: '0.6',
+    REVISION: '0.7dev',
     EPS: 0.0000001,
     disableImpostor: false,
     useWorker: true,

@@ -427,7 +427,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
 var NGL = {
 
-    REVISION: '0.6',
+    REVISION: '0.7dev',
     EPS: 0.0000001,
     disableImpostor: false,
     useWorker: true,
@@ -1058,8 +1058,8 @@ NGL.getFileInfo = function( file ){
 
     var path, compressed, protocol;
 
-    if( file instanceof File ){
-        path = file.name;
+    if( file instanceof File || file instanceof Blob ){
+        path = file.name || "";
     }else{
         path = file
     }
@@ -27199,7 +27199,7 @@ NGL.Loader = function( src, params ){
 
     };
 
-    if( src instanceof File ){
+    if( src instanceof File || src instanceof Blob ){
 
         this.streamer = new NGL.FileStreamer( src, streamerParams );
 
