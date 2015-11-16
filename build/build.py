@@ -13,6 +13,7 @@ import os
 import re
 import shutil
 import tempfile
+import base64
 
 from io import open
 
@@ -67,7 +68,10 @@ def main( argv=None ):
                 with open( filename2, 'rb' ) as f:
                     tmp.write( u'NGL.Resources[ \'' + filename + '\' ] = ' )
                     tmp.write( u'NGL.dataURItoImage("data:image/png;base64,' )
-                    tmp.write( unicode( f.read().encode( "base64" ).replace( '\n', '\\n' ) ) )
+                    if sys.hexversion < 0x03000000:
+                        tmp.write( unicode( f.read().encode( "base64" ).replace( '\n', '\\n' ) ) )
+                    else:
+                        tmp.write( base64.b64encode( f.read() ).replace( b'\n', b'\\n' ).decode( 'utf8' ) )
                     tmp.write( u'");\n\n' )
 
     tmp.close()
