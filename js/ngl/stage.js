@@ -212,7 +212,7 @@ NGL.Stage.prototype = {
 
     toggleFullscreen: function( element ){
 
-        if( !document.fullscreenEnabled && !document.mozFullscreenEnabled &&
+        if( !document.fullscreenEnabled && !document.mozFullScreenEnabled &&
             !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
         ){
             console.log( "fullscreen mode (currently) not possible" );
