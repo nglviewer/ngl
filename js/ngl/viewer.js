@@ -583,6 +583,7 @@ NGL.initResources = function( onLoad ){
     var imageLoader = new THREE.ImageLoader( loadingManager );
 
     var xhrLoader = new THREE.XHRLoader( loadingManager );
+    xhrLoader.setResponseType( "text" );
 
     var resourceKeys = Object.keys( NGL.Resources );
     var i = 0;
