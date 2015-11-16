@@ -858,6 +858,43 @@ QUnit.test( "(CYS and .CA) or (CYS and hydrogen)", function( assert ) {
 });
 
 
+QUnit.test( "atomindex @1,2,3", function( assert ) {
+
+    var sele = "@1,2,3";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "rules": [
+            { "atomindex": [ 1, 2, 3 ] }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "atomindex @1,13,2 OR protein", function( assert ) {
+
+    var sele = "@1,13,2 OR protein";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "OR",
+        "rules": [
+            { "atomindex": [ 1, 2, 13 ] },
+            { "keyword": "PROTEIN" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
 ///////////////////
 // Selection test
 //
@@ -1093,6 +1130,32 @@ QUnit.test( "/1 CIF", function( assert ) {
 
         assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
         assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
+
+        done();
+
+    } );
+
+});
+
+
+QUnit.test( "atomindex ", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
+
+    var sele = "@1,8,12";
+    var selection = new NGL.Selection( sele );
+    var path = "data://1crn.pdb";
+
+    NGL.autoLoad( path ).then( function( structure ){
+
+        var atomSet = new NGL.AtomSet( structure, selection );
+
+        assert.equal( atomSet.atoms.length, 3, "Passed!" );
+
+        assert.equal( atomSet.atoms[ 0 ].index, 1, "Passed!" );
+        assert.equal( atomSet.atoms[ 1 ].index, 8, "Passed!" );
+        assert.equal( atomSet.atoms[ 2 ].index, 12, "Passed!" );
 
         done();
 

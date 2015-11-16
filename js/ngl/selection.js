@@ -525,12 +525,17 @@ NGL.Selection.prototype = {
 
             // handle atom expressions
 
-            // TODO make replacement
-            // if( c.charAt( 0 ) === "@" ){
-            //     sele.globalindex = parseInt( c.substr( 1 ) );
-            //     pushRule( sele );
-            //     continue;
-            // }
+            if( c.charAt( 0 ) === "@" ){
+                console.log( c )
+                var indexList = c.substr( 1 ).split( "," );
+                for( var k = 0, kl = indexList.length; k < kl; ++k ){
+                    indexList[ k ] = parseInt( indexList[ k ] );
+                }
+                indexList.sort( function( a, b ){ return a > b; } );
+                sele.atomindex = indexList;
+                pushRule( sele );
+                continue;
+            }
 
             if( c.charAt( 0 ) === "#" ){
                 sele.element = c.substr( 1 ).toUpperCase();
@@ -896,6 +901,10 @@ NGL.Selection.prototype = {
             if( s.element!==undefined && s.element!==a.element ) return false;
 
             if( s.altloc!==undefined && s.altloc!==a.altloc ) return false;
+
+            if( s.atomindex!==undefined &&
+                NGL.binarySearchIndexOf( s.atomindex, a.index ) < 0
+            ) return false;
 
             return true;
 
