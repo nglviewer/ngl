@@ -1167,6 +1167,28 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
+    },
+
+    "dcd2": function( stage ){
+
+        stage.loadFile( "data://md_1u19.gro" ).then( function( o ){
+
+            o.addRepresentation( "cartoon" );
+            o.centerView();
+
+            NGL.autoLoad( "data://md_1u19.dcd" ).then( function( frames ){
+
+                o.addTrajectory( frames )
+                    .setParameters( {
+                        "centerPbc": false,
+                        "removePbc": false,
+                        "superpose": true
+                    } );
+
+            } );
+
+        } );
+
     }
 
 } );

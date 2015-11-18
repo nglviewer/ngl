@@ -3269,8 +3269,8 @@ NGL.DcdParser.prototype = NGL.createObject(
         // version field in charmm, unused in X-PLOR
         if( intView[ 22 ] !== 0 ){
             isCharmm = true;
-            if( intView[ 13 ] !== 0 ) extraBlock = true;
-            if( intView[ 14 ] === 1 ) fourDims = true;
+            if( intView[ 12 ] !== 0 ) extraBlock = true;
+            if( intView[ 13 ] === 1 ) fourDims = true;
         }
         header.NSET = intView[ 2 ];
         header.ISTART = intView[ 3 ];
@@ -3316,8 +3316,9 @@ NGL.DcdParser.prototype = NGL.createObject(
 
         if( header.NAMNF > 0 ){
             // TODO read coordinates and indices of fixed atoms
-            NGL.error( "dcd format has fixed atoms, unsupported" );
+            NGL.error( "dcd format with fixed atoms unsupported, aborting" );
             callback();
+            return;
         }
 
         // frames
@@ -3329,12 +3330,11 @@ NGL.DcdParser.prototype = NGL.createObject(
 
             if( extraBlock ){
                 nextPos += 4;  // block start
-                // A, alpha, B, beta, gamma, C (doubles)
-                var unitcell = new Float64Array( bin, nextPos, 6 );
+                // unitcell: A, alpha, B, beta, gamma, C (doubles)
                 var box = new Float32Array( 9 );
-                box[ 0 ] = unitcell[ 0 ];
-                box[ 4 ] = unitcell[ 2 ];
-                box[ 8 ] = unitcell[ 5 ];
+                box[ 0 ] = dv.getFloat64( nextPos        , ef );
+                box[ 4 ] = dv.getFloat64( nextPos + 2 * 8, ef );
+                box[ 8 ] = dv.getFloat64( nextPos + 5 * 8, ef );
                 boxes.push( box );
                 nextPos += 48;
                 nextPos += 4;  // block end
@@ -3343,12 +3343,18 @@ NGL.DcdParser.prototype = NGL.createObject(
             // xyz coordinates
             var coord = new Float32Array( natom * 3 );
             for( var j = 0; j < 3; ++j ){
+                if( dv.getInt32( nextPos, ef ) !== natom4 ){
+                    NGL.error( "dcd bad format, coord block start", i, j );
+                }
                 nextPos += 4;  // block start
                 var c = new Float32Array( bin, nextPos, natom );
                 for( var k = 0; k < natom; ++k ){
                     coord[ 3 * k + j ] = c[ k ];
                 }
                 nextPos += natom4;
+                if( dv.getInt32( nextPos, ef ) !== natom4 ){
+                    NGL.error( "dcd bad format, coord block end", i, j );
+                }
                 nextPos += 4;  // block end
             }
             coordinates.push( coord );
@@ -3359,6 +3365,10 @@ NGL.DcdParser.prototype = NGL.createObject(
             }
 
         }
+
+        // console.log( header );
+        // console.log( header.TITLE );
+        // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
 
         NGL.timeEnd( __timeName );
 
