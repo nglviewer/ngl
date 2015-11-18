@@ -198,10 +198,11 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "sdf": NGL.SdfParser,
             "mol2": NGL.Mol2Parser,
 
+            "dcd": NGL.DcdParser,
+
             "mrc": NGL.MrcParser,
             "ccp4": NGL.MrcParser,
             "map": NGL.MrcParser,
-
             "cube": NGL.CubeParser,
             "dx": NGL.DxParser,
 
@@ -331,6 +332,8 @@ NGL.loaderMap = {
     "mmcif": NGL.ParserLoader,
     "sdf": NGL.ParserLoader,
     "mol2": NGL.ParserLoader,
+
+    "dcd": NGL.ParserLoader,
 
     "mrc": NGL.ParserLoader,
     "ccp4": NGL.ParserLoader,

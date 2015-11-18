@@ -1144,6 +1144,29 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
+    },
+
+    "dcd": function( stage ){
+
+        stage.loadFile( "data://ala3.pdb" ).then( function( o ){
+
+            o.addRepresentation( "licorice" );
+            o.addRepresentation( "cartoon", { sele: "protein" } );
+            o.centerView();
+
+            NGL.autoLoad( "data://ala3.dcd" ).then( function( frames ){
+
+                o.addTrajectory( frames )
+                    .setParameters( {
+                        "centerPbc": false,
+                        "removePbc": false,
+                        "superpose": true
+                    } );
+
+            } );
+
+        } );
+
     }
 
 } );

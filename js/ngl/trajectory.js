@@ -5,23 +5,96 @@
 
 
 
-NGL.makeTrajectory = function( trajPath, structure, sele ){
+NGL.makeTrajectory = function( trajSrc, structure, sele ){
 
     var traj;
 
-    if( !trajPath && structure.frames ){
+    if( trajSrc instanceof NGL.Frames ){
 
-        traj = new NGL.StructureTrajectory( trajPath, structure, sele );
+        structure.frames = trajSrc.coordinates;
+        structure.boxes = trajSrc.boxes;
+
+        traj = new NGL.StructureTrajectory( undefined, structure, sele );
+
+    }else if( !trajSrc && structure.frames ){
+
+        traj = new NGL.StructureTrajectory( trajSrc, structure, sele );
 
     }else{
 
-        traj = new NGL.RemoteTrajectory( trajPath, structure, sele );
+        traj = new NGL.RemoteTrajectory( trajSrc, structure, sele );
 
     }
 
     return traj;
 
-}
+};
+
+
+NGL.Frames = function( name, path ){
+
+    this.name = name;
+    this.path = path;
+
+    this.coordinates = [];
+    this.boxes = [];
+
+};
+
+NGL.Frames.prototype = {
+
+    constructor: NGL.Frames,
+
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'Frames',
+                generator: 'FramesExporter'
+            },
+
+            name: this.name,
+            path: this.path,
+
+            coordinates: this.coordinates,
+            boxes: this.boxes
+
+        };
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.name = input.name;
+        this.path = input.path;
+
+        this.coordinates = input.coordinates;
+        this.boxes = input.boxes;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [];
+
+        var coordinates = this.coordinates;
+        var n = coordinates.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            transferable.push( coordinates[ i ].buffer );
+
+        }
+
+        return transferable;
+
+    }
+
+};
 
 
 ///////////////
@@ -653,7 +726,7 @@ NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-}
+};
 
 NGL.RemoteTrajectory.prototype = NGL.createObject(
 
@@ -812,7 +885,7 @@ NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-}
+};
 
 NGL.StructureTrajectory.prototype = NGL.createObject(
 

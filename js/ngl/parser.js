@@ -3159,6 +3159,218 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 } );
 
 
+//////////////////////
+// Trajectory parser
+
+NGL.TrajectoryParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.frames = new NGL.Frames( this.name, this.path );
+
+};
+
+NGL.TrajectoryParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.TrajectoryParser,
+
+    type: "trajectory",
+
+    __objName: "frames"
+
+} );
+
+
+NGL.DcdParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.TrajectoryParser.call( this, streamer, p );
+
+};
+
+NGL.DcdParser.prototype = NGL.createObject(
+
+    NGL.TrajectoryParser.prototype, {
+
+    constructor: NGL.DcdParser,
+
+    type: "dcd",
+
+    _parse: function( callback ){
+
+        // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
+
+        // The DCD format is structured as follows
+        //   (FORTRAN UNFORMATTED, with Fortran data type descriptions):
+        // HDR     NSET    ISTRT   NSAVC   5-ZEROS NATOM-NFREAT    DELTA   9-ZEROS
+        // `CORD'  #files  step 1  step    zeroes  (zero)          timestep  (zeroes)
+        //                         interval
+        // C*4     INT     INT     INT     5INT    INT             DOUBLE  9INT
+        // ==========================================================================
+        // NTITLE          TITLE
+        // INT (=2)        C*MAXTITL
+        //                 (=32)
+        // ==========================================================================
+        // NATOM
+        // #atoms
+        // INT
+        // ==========================================================================
+        // X(I), I=1,NATOM         (DOUBLE)
+        // Y(I), I=1,NATOM
+        // Z(I), I=1,NATOM
+        // ==========================================================================
+
+        var __timeName = "NGL.DcdParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var bin = this.streamer.data;
+        if( bin instanceof Uint8Array ){
+            bin = bin.buffer;
+        }
+        var dv = new DataView( bin );
+
+        var f = this.frames;
+        var coordinates = f.coordinates;
+        var boxes = f.boxes;
+        var header = {};
+        var nextPos = 0;
+
+        // header block
+
+        var intView = new Int32Array( bin, 0, 23 );
+        var ef = intView[ 0 ] !== dv.getInt32( 0 );  // endianess flag
+        // swap byte order when big endian (84 indicates little endian)
+        if( intView[ 0 ] !== 84 ){
+            var n = bin.byteLength;
+            for( var i = 0; i < n; i+=4 ){
+                dv.setFloat32( i, dv.getFloat32( i ), true );
+            }
+        }
+        if( intView[ 0 ] !== 84 ){
+            NGL.error( "dcd bad format, header block start" );
+        }
+        // format indicator, should read 'CORD'
+        var formatString = String.fromCharCode(
+            dv.getUint8( 4 ), dv.getUint8( 5 ),
+            dv.getUint8( 6 ), dv.getUint8( 7 )
+        );
+        if( formatString !== "CORD" ){
+            NGL.error( "dcd bad format, format string" );
+        }
+        var isCharmm = false;
+        var extraBlock = false;
+        var fourDims = false;
+        // version field in charmm, unused in X-PLOR
+        if( intView[ 22 ] !== 0 ){
+            isCharmm = true;
+            if( intView[ 13 ] !== 0 ) extraBlock = true;
+            if( intView[ 14 ] === 1 ) fourDims = true;
+        }
+        header.NSET = intView[ 2 ];
+        header.ISTART = intView[ 3 ];
+        header.NSAVC = intView[ 4 ];
+        header.NAMNF = intView[ 10 ];
+        if( isCharmm ){
+            header.DELTA = dv.getFloat32( 44, ef );
+        }else{
+            header.DELTA = dv.getFloat64( 44, ef );
+        }
+        if( intView[ 22 ] !== 84 ){
+            NGL.error( "dcd bad format, header block end" );
+        }
+        nextPos = nextPos + 21 * 4 + 8;
+
+        // title block
+
+        var titleLength = dv.getInt32( nextPos, ef );
+        var titlePos = nextPos + 1;
+        if( ( titleLength - 4 ) % 80 !== 0 ){
+            NGL.error( "dcd bad format, title block start" );
+        }
+        header.TITLE = NGL.Uint8ToString(
+            new Uint8Array( bin, titlePos, titleLength )
+        );
+        if( dv.getInt32( titlePos + titleLength + 4 - 1, ef ) !== titleLength ){
+            NGL.error( "dcd bad format, title block end" );
+        }
+        nextPos = nextPos + titleLength + 8;
+
+        // natom block
+
+        if( dv.getInt32( nextPos, ef ) !== 4 ){
+            NGL.error( "dcd bad format, natom block start" );
+        }
+        header.NATOM = dv.getInt32( nextPos + 4, ef );
+        if( dv.getInt32( nextPos + 8, ef ) !== 4 ){
+            NGL.error( "dcd bad format, natom block end" );
+        }
+        nextPos = nextPos + 4 + 8;
+
+        // fixed atoms block
+
+        if( header.NAMNF > 0 ){
+            // TODO read coordinates and indices of fixed atoms
+            NGL.error( "dcd format has fixed atoms, unsupported" );
+            callback();
+        }
+
+        // frames
+
+        var natom = header.NATOM;
+        var natom4 = natom * 4;
+
+        for( var i = 0, n = header.NSET; i < n; ++i ){
+
+            if( extraBlock ){
+                nextPos += 4;  // block start
+                // A, alpha, B, beta, gamma, C (doubles)
+                var unitcell = new Float64Array( bin, nextPos, 6 );
+                var box = new Float32Array( 9 );
+                box[ 0 ] = unitcell[ 0 ];
+                box[ 4 ] = unitcell[ 2 ];
+                box[ 8 ] = unitcell[ 5 ];
+                boxes.push( box );
+                nextPos += 48;
+                nextPos += 4;  // block end
+            }
+
+            // xyz coordinates
+            var coord = new Float32Array( natom * 3 );
+            for( var j = 0; j < 3; ++j ){
+                nextPos += 4;  // block start
+                var c = new Float32Array( bin, nextPos, natom );
+                for( var k = 0; k < natom; ++k ){
+                    coord[ 3 * k + j ] = c[ k ];
+                }
+                nextPos += natom4;
+                nextPos += 4;  // block end
+            }
+            coordinates.push( coord );
+
+            if( fourDims ){
+                var bytes = dv.getInt32( nextPos, ef );
+                nextPos += 4 + bytes + 4;  // block start + skip + block end
+            }
+
+        }
+
+        NGL.timeEnd( __timeName );
+
+        callback();
+
+        return;
+
+    },
+
+} );
+
+
 //////////////////
 // Volume parser
 
