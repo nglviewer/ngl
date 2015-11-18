@@ -1176,7 +1176,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             o.centerView();
 
-            NGL.autoLoad( "data://md_1u19.dcd" ).then( function( frames ){
+            NGL.autoLoad( "data://md_1u19.dcd.gz" ).then( function( frames ){
 
                 o.addTrajectory( frames )
                     .setParameters( {

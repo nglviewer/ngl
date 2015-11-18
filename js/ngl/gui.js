@@ -1329,7 +1329,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Import trajectory
 
-    var trajExt = [ "dcd" ];
+    var trajExt = [ "dcd", "dcd.gz" ];
 
     function fileInputOnChange( e ){
         NGL.autoLoad( e.target.files[ 0 ] ).then( function( frames ){
