@@ -1329,17 +1329,39 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Import trajectory
 
+    var trajExt = [ "dcd" ];
+
+    function fileInputOnChange( e ){
+        NGL.autoLoad( e.target.files[ 0 ] ).then( function( frames ){
+            component.addTrajectory( frames );
+        } );
+    }
+
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.multiple = false;
+    fileInput.style.display = "none";
+    fileInput.accept = "." + trajExt.join( ",." );
+    fileInput.addEventListener( 'change', fileInputOnChange, false );
+
     var traj = new UI.Button( "import" ).onClick( function(){
+        fileInput.click();
+        componentPanel.setMenuDisplay( "none" );
+    } );
+
+    // Import remote trajectory
+
+    var remoteTraj = new UI.Button( "import" ).onClick( function(){
 
         componentPanel.setMenuDisplay( "none" );
 
-        var trajExt = [ "xtc", "trr", "dcd", "netcdf", "nc" ];
+        var remoteTrajExt = [ "xtc", "trr", "dcd", "netcdf", "nc" ];
         var datasource = NGL.DatasourceRegistry.listing;
         var dirWidget;
 
         function onListingClick( info ){
             var ext = info.path.split('.').pop().toLowerCase();
-            if( trajExt.indexOf( ext ) !== -1 ){
+            if( remoteTrajExt.indexOf( ext ) !== -1 ){
                 component.addTrajectory( info.path );
                 dirWidget.dispose();
             }else{
@@ -1349,7 +1371,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
         dirWidget = new NGL.DirectoryListingWidget(
             datasource, stage, "Import trajectory",
-            trajExt, onListingClick
+            remoteTrajExt, onListingClick
         );
 
         dirWidget
@@ -1427,12 +1449,13 @@ NGL.StructureComponentWidget = function( component, stage ){
                         .setMaxWidth( "100px" )
                         .setOverflow( "auto" )
                         //.setWordWrap( "break-word" )
-                        );
+        )
+        .addMenuEntry( "Trajectory", traj );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory
     ){
-        componentPanel.addMenuEntry( "Trajectory", traj )
+        componentPanel.addMenuEntry( "Remote trajectory", remoteTraj )
     }
 
     // Fill container
