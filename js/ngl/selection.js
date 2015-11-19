@@ -526,12 +526,11 @@ NGL.Selection.prototype = {
             // handle atom expressions
 
             if( c.charAt( 0 ) === "@" ){
-                console.log( c )
                 var indexList = c.substr( 1 ).split( "," );
                 for( var k = 0, kl = indexList.length; k < kl; ++k ){
                     indexList[ k ] = parseInt( indexList[ k ] );
                 }
-                indexList.sort( function( a, b ){ return a > b; } );
+                indexList.sort( function( a, b ){ return a - b; } );
                 sele.atomindex = indexList;
                 pushRule( sele );
                 continue;

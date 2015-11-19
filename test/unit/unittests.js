@@ -895,6 +895,24 @@ QUnit.test( "atomindex @1,13,2 OR protein", function( assert ) {
 });
 
 
+QUnit.test( "atomindex @0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19", function( assert ) {
+
+    var sele = "@0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "rules": [
+            { "atomindex": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ] }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
 ///////////////////
 // Selection test
 //
