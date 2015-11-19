@@ -1154,16 +1154,15 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { sele: "protein" } );
             o.centerView();
 
-            NGL.autoLoad( "data://ala3.dcd" ).then( function( frames ){
+            var framesPromise = NGL.autoLoad( "data://ala3.dcd" );
+            o.addTrajectory( framesPromise );
 
-                o.addTrajectory( frames )
-                    .setParameters( {
-                        "centerPbc": false,
-                        "removePbc": false,
-                        "superpose": true
-                    } );
-
-            } );
+            // FIXME
+            // .setParameters( {
+            //     "centerPbc": false,
+            //     "removePbc": false,
+            //     "superpose": true
+            // } );
 
         } );
 
@@ -1176,16 +1175,20 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             o.centerView();
 
-            NGL.autoLoad( "data://md_1u19.dcd.gz" ).then( function( frames ){
+            var framesPromise = NGL.autoLoad( "data://md_1u19.dcd.gz" );
+            o.addTrajectory( framesPromise );
 
-                o.addTrajectory( frames )
-                    .setParameters( {
-                        "centerPbc": false,
-                        "removePbc": false,
-                        "superpose": true
-                    } );
+            // var framesPromise = NGL.autoLoad( "data://md_1u19.dcd.gz" )
+            //     .then( function( frames ){
+            //         o.addTrajectory( frames );
+            //     } )
 
-            } );
+            // FIXME
+            // .setParameters( {
+            //     "centerPbc": false,
+            //     "removePbc": false,
+            //     "superpose": true
+            // } );
 
         } );
 

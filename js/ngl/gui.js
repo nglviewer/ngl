@@ -1332,14 +1332,22 @@ NGL.StructureComponentWidget = function( component, stage ){
     var trajExt = [ "dcd", "dcd.gz" ];
 
     function fileInputOnChange( e ){
-        NGL.autoLoad( e.target.files[ 0 ] ).then( function( frames ){
-            component.addTrajectory( frames );
-        } );
+        async.eachLimit(
+            e.target.files, 4,
+            function( file, callback ){
+                var framesPromise = NGL.autoLoad( file )
+                    .then( function( frames ){
+                        callback();
+                        return frames;  // pass through
+                    } );
+                component.addTrajectory( framesPromise );
+            }
+        );
     }
 
     var fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.multiple = false;
+    fileInput.multiple = true;
     fileInput.style.display = "none";
     fileInput.accept = "." + trajExt.join( ",." );
     fileInput.addEventListener( 'change', fileInputOnChange, false );
