@@ -941,7 +941,7 @@ NGL.Viewer.prototype = {
 
             clipNear: 0,
             clipFar: 100,
-            clipDist: 20,
+            clipDist: 10,
 
         };
 
