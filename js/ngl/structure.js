@@ -2552,6 +2552,20 @@ NGL.Bond.prototype = {
 
         return this.atom1.index + "=" + this.atom2.index;
 
+    },
+
+    toJSON: function(){
+
+        return {
+
+            atom1: this.atom1.toJSON(),
+            atom2: this.atom2.toJSON(),
+            bondOrder: this.bondOrder,
+
+            index: this.index
+
+        }
+
     }
 
 };
@@ -5191,7 +5205,7 @@ NGL.Atom.prototype = {
 
         var output = {
 
-            // index: this.index,
+            index: this.index,
             atomno: this.atomno,
             resname: this.resname,
             x: this.x,
@@ -5993,11 +6007,7 @@ NGL.ProxyAtom.prototype = {
 
     },
 
-    toJSON: function(){
-
-        return {};
-
-    },
+    toJSON: NGL.Atom.prototype.toJSON,
 
     fromJSON: function( input ){
 
