@@ -580,7 +580,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         "vdw": 1.0,
         "covalent": 1.0,
         "bfactor": 0.01,
-        "ss": 1.0
+        "sstruc": 1.0
     },
 
     defaultSize: 1.0,
@@ -2370,7 +2370,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || "ss";
+        p.radius = p.radius || "sstruc";
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -2589,7 +2589,7 @@ NGL.RibbonRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
-    this.defaultScale[ "ss" ] *= 3.0;
+    this.defaultScale[ "sstruc" ] *= 3.0;
 
 };
 
@@ -2622,7 +2622,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || "ss";
+        p.radius = p.radius || "sstruc";
         p.scale = p.scale || 3.0;
 
         if( p.quality === "low" ){
