@@ -901,6 +901,7 @@ NGL.Viewer = function( eid ){
     this.setFog();
 
     this.boundingBox = new THREE.Box3();
+    this.distVector = new THREE.Vector3();
 
     this.info = {
 
@@ -1268,6 +1269,12 @@ NGL.Viewer.prototype = {
                 gbb = geometry.boundingBox;
             }
 
+            if( gbb.min.equals( gbb.max ) ){
+                // mainly to give a single impostor geometry some volume
+                // as it is only expanded in the shader on the GPU
+                gbb.expandByScalar( 5 );
+            }
+
             bb.expandByPoint( gbb.min );
             bb.expandByPoint( gbb.max );
 
@@ -1288,6 +1295,12 @@ NGL.Viewer.prototype = {
                         gbb.applyMatrix4( node.userData[ "instance" ].matrix );
                     }else{
                         gbb = node.geometry.boundingBox;
+                    }
+
+                    if( gbb.min.equals( gbb.max ) ){
+                        // mainly to give a single impostor geometry some volume
+                        // as it is only expanded in the shader on the GPU
+                        gbb.expandByScalar( 5 );
                     }
 
                     bb.expandByPoint( gbb.min );
@@ -1579,9 +1592,18 @@ NGL.Viewer.prototype = {
         if( !cDist ){
             // recover from a broken (NaN) camera position
             this.camera.position.set( 0, 0, this.params.cameraZ );
+            cDist = Math.abs( this.params.cameraZ );
         }
 
-        var bRadius = this.boundingBox.size().length() * 0.5;
+        var bRadius = Math.max( 10, this.boundingBox.size().length() * 0.5 );
+        if( bRadius === Infinity || bRadius === -Infinity ){
+            // console.warn( "something wrong with bRadius" );
+            bRadius = 50;
+        }
+        bRadius += this.boundingBox.center( this.distVector )
+            .add( this.rotationGroup.position )
+            .length();
+
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
         var farFactor = - ( 50 - this.params.clipFar ) / 50;
         var nearClip = cDist - ( bRadius * nearFactor );
