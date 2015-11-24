@@ -1192,6 +1192,12 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
+    },
+
+    "ferritin": function( stage ){
+
+        stage.loadFile( "data://ferritin/ferritin.ngl" );
+
     }
 
 } );
