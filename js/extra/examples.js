@@ -563,7 +563,7 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
-            o.addRepresentation( "tube", { radius: "ss" } );
+            o.addRepresentation( "tube", { radius: "sstruc" } );
             o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
             o.addRepresentation( "label", {
                 sele: ".CA", color: "element"
@@ -587,7 +587,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://3SN6.cif" ).then( function( o ){
         // stage.loadFile( "data://1CRN.cif", function( o ){
 
-            o.addRepresentation( "cartoon", { radius: "ss" } );
+            o.addRepresentation( "cartoon", { radius: "sstruc" } );
             // o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
             o.centerView();
 

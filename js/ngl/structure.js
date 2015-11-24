@@ -1402,7 +1402,7 @@ NGL.RadiusFactory.types = {
     "": "",
     "vdw": "by vdW radius",
     "covalent": "by covalent radius",
-    "ss": "by secondary structure",
+    "sstruc": "by secondary structure",
     "bfactor": "by bfactor",
     "size": "size"
 
@@ -1444,7 +1444,7 @@ NGL.RadiusFactory.prototype = {
                 r = a.bfactor || defaultBfactor;
                 break;
 
-            case "ss":
+            case "sstruc":
 
                 if( a.ss === "h" ){
                     r = 0.25;
