@@ -23,6 +23,26 @@ NGL.StageWidget = function( stage ){
 
     //
 
+    var cssLinkElement = document.createElement( "link" );
+    cssLinkElement.rel = "stylesheet";
+    cssLinkElement.id = "theme";
+
+    function setTheme( value ){
+        var cssPath;
+        if( value === "light" ){
+            cssPath = NGL.cssDirectory + "light.css";
+        }else{
+            cssPath = NGL.cssDirectory + "dark.css";
+        }
+        cssLinkElement.href = cssPath;
+    }
+
+    setTheme( stage.preferences.getKey( "theme" ) );
+    document.head.appendChild( cssLinkElement );
+    signals.themeChanged.add( setTheme );
+
+    //
+
     var viewport = new NGL.ViewportWidget( stage ).setId( "viewport" );
     document.body.appendChild( viewport.dom );
 
@@ -34,22 +54,6 @@ NGL.StageWidget = function( stage ){
 
     var sidebar = new NGL.SidebarWidget( stage ).setId( "sidebar" );
     document.body.appendChild( sidebar.dom );
-
-    //
-
-    function setTheme( value ){
-        var cssPath;
-        if( value === "light" ){
-            cssPath = NGL.cssDirectory + "light.css";
-        }else{
-            cssPath = NGL.cssDirectory + "dark.css";
-        }
-        // FIXME element must be created by a Widget
-        document.getElementById( "theme" ).href = cssPath;
-    }
-
-    signals.requestTheme.add( setTheme );
-    setTheme( stage.preferences.getKey( "theme" ) );
 
     //
 

@@ -22,9 +22,7 @@ NGL.Stage = function( eid ){
         bondPicked: new SIGNALS.Signal(),
         volumePicked: new SIGNALS.Signal(),
         nothingPicked: new SIGNALS.Signal(),
-        onPicking: new SIGNALS.Signal(),
-
-        requestTheme: new SIGNALS.Signal()
+        onPicking: new SIGNALS.Signal()
 
     };
 
@@ -428,7 +426,7 @@ NGL.Stage.prototype = {
             viewerBackground = "black";
         }
 
-        this.signals.requestTheme.dispatch( value );
+        this.signals.themeChanged.dispatch( value );
         this.viewer.setBackground( viewerBackground );
 
     },
