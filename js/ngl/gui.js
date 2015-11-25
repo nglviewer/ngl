@@ -1115,7 +1115,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.clipNear, 1
         )
         .onInput( function(){
-            stage.viewer.setClip( clipNear.getValue(), clipFar.getValue() );
+            stage.viewer.setClip( clipNear.getValue() );
         } );
 
     var clipFar = new UI.Range(
@@ -1123,7 +1123,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.clipFar, 1
         )
         .onInput( function(){
-            stage.viewer.setClip( clipNear.getValue(), clipFar.getValue() );
+            stage.viewer.setClip( undefined, clipFar.getValue() );
         } );
 
     var clipDist = new UI.Range(
@@ -1131,8 +1131,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.clipDist, 1
         )
         .onInput( function(){
-            stage.viewer.params.clipDist = clipDist.getValue();
-            stage.viewer.requestRender();
+            stage.viewer.setClip( undefined, undefined, clipDist.getValue() );
         } );
 
     // fog
@@ -1142,7 +1141,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.fogNear, 1
         )
         .onInput( function(){
-            stage.viewer.setFog( null, fogNear.getValue(), fogFar.getValue() );
+            stage.viewer.setFog( undefined, fogNear.getValue() );
         } );
 
     var fogFar = new UI.Range(
@@ -1150,7 +1149,7 @@ NGL.SidebarWidget = function( stage ){
             stage.viewer.params.fogFar, 1
         )
         .onInput( function(){
-            stage.viewer.setFog( null, fogNear.getValue(), fogFar.getValue() );
+            stage.viewer.setFog( undefined, undefined, fogFar.getValue() );
         } );
 
     //
