@@ -171,10 +171,10 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     } );
 
     if( index ){
-        this.geometry.addIndex(
+        this.geometry.setIndex(
             new THREE.BufferAttribute( index, 1 )
         );
-        this.geometry.index.setDynamic( this.dynamic );
+        this.geometry.getIndex().setDynamic( this.dynamic );
     }
 
     if( pickingColor ){
@@ -192,9 +192,14 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
         "nearClip": { type: "f", value: 0.0 }
     };
 
+    var objectId = new THREE.Uniform( "f", 0.0 )
+        .onUpdate( function( object, camera ){
+            this.value = NGL.supportsReadPixelsFloat ? object.id : object.id / 255;
+        } );
+
     this.pickingUniforms = {
         "nearClip": { type: "f", value: 0.0 },
-        "objectId": { type: "f", value: 0.0 },
+        "objectId": objectId
     };
 
     this.group = new THREE.Group();
@@ -284,11 +289,11 @@ NGL.Buffer.prototype = {
 
         wireframeGeometry.attributes = geometry.attributes;
         if( wireframeIndex ){
-            wireframeGeometry.addIndex(
+            wireframeGeometry.setIndex(
                 new THREE.BufferAttribute( wireframeIndex, 1 )
                     .setDynamic( this.dynamic )
             );
-            wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+            wireframeGeometry.setDrawRange( 0, this.wireframeIndexCount );
         }
 
         this.wireframeGeometry = wireframeGeometry;
@@ -335,8 +340,8 @@ NGL.Buffer.prototype = {
 
                 var array = index.array;
                 var n = array.length;
-                if( this.geometry.groups.length ){
-                    n = this.geometry.groups[ 0 ].count;
+                if( this.geometry.drawRange.count !== Infinity ){
+                    n = this.geometry.drawRange.count;
                 }
                 var wireframeIndex;
                 if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
@@ -383,25 +388,26 @@ NGL.Buffer.prototype = {
 
     updateWireframeIndex: function(){
 
-        this.wireframeGeometry.clearGroups();
+        this.wireframeGeometry.setDrawRange( 0, Infinity );
         this.makeWireframeIndex();
 
         if( this.wireframeIndex.length > this.wireframeGeometry.index.array.length ){
 
-            this.wireframeGeometry.addIndex(
+            this.wireframeGeometry.setIndex(
                 new THREE.BufferAttribute( this.wireframeIndex, 1 )
                     .setDynamic( this.dynamic )
             );
 
         }else{
 
-            this.wireframeGeometry.index.set( this.wireframeIndex );
-            this.wireframeGeometry.index.needsUpdate = this.wireframeIndexCount > 0;
-            this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
+            var index = this.wireframeGeometry.getIndex();
+            index.set( this.wireframeIndex );
+            index.needsUpdate = this.wireframeIndexCount > 0;
+            index.updateRange.count = this.wireframeIndexCount;
 
         }
 
-        this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+        this.wireframeGeometry.setDrawRange( 0, this.wireframeIndexCount );
 
     },
 
@@ -439,7 +445,7 @@ NGL.Buffer.prototype = {
 
         }else if( this.point ){
 
-            mesh = new THREE.PointCloud( this.geometry, this.material );
+            mesh = new THREE.Points( this.geometry, this.material );
             if( this.sort ) mesh.sortParticles = true;
 
         }else{
@@ -718,21 +724,22 @@ NGL.Buffer.prototype = {
 
             if( name === "index" ){
 
-                geometry.clearGroups();
+                var index = geometry.getIndex();
+                geometry.setDrawRange( 0, Infinity );
 
-                if( length > geometry.index.array.length ){
+                if( length > index.array.length ){
 
-                    geometry.addIndex(
+                    geometry.setIndex(
                         new THREE.BufferAttribute( array, 1 )
                             .setDynamic( this.dynamic )
                     );
 
                 }else{
 
-                    geometry.index.set( array );
-                    geometry.index.needsUpdate = length > 0;
-                    geometry.index.updateRange.count = length;
-                    geometry.addGroup( 0, length );
+                    index.set( array );
+                    index.needsUpdate = length > 0;
+                    index.updateRange.count = length;
+                    geometry.setDrawRange( 0, length );
 
                 }
 
@@ -1115,13 +1122,13 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
     this.count = position.length / 3;
-    this.vertexShader = 'SphereImpostor.vert';
-    this.fragmentShader = 'SphereImpostor.frag';
+    this.vertexShader = "SphereImpostor.vert";
+    this.fragmentShader = "SphereImpostor.frag";
 
     NGL.QuadBuffer.call( this, params );
 
     this.addUniforms( {
-        'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+        "projectionMatrixInverse": { type: "m4", value: new THREE.Matrix4() }
     } );
 
     this.addAttributes( {
@@ -1168,14 +1175,19 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
     this.cap = p.cap !== undefined ? p.cap : true;
 
     this.count = from.length / 3;
-    this.vertexShader = 'CylinderImpostor.vert';
-    this.fragmentShader = 'CylinderImpostor.frag';
+    this.vertexShader = "CylinderImpostor.vert";
+    this.fragmentShader = "CylinderImpostor.frag";
 
     NGL.AlignedBoxBuffer.call( this, p );
 
+    var modelViewMatrixInverse = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( function( object, camera ){
+            this.value.getInverse( object.modelViewMatrix );
+        } );
+
     this.addUniforms( {
-        'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'shift': { type: "f", value: this.shift },
+        "modelViewMatrixInverse": modelViewMatrixInverse,
+        "shift": { type: "f", value: this.shift },
     } );
 
     this.addAttributes( {
@@ -1244,16 +1256,73 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
     this.count = position1.length / 3;
-    this.vertexShader = 'HyperballStickImpostor.vert';
-    this.fragmentShader = 'HyperballStickImpostor.frag';
+    this.vertexShader = "HyperballStickImpostor.vert";
+    this.fragmentShader = "HyperballStickImpostor.frag";
 
     NGL.BoxBuffer.call( this, p );
 
+    var matrix = new THREE.Matrix4();
+
+    function matrixCalc( object, camera ){
+
+        var u = object.material.uniforms;
+
+        if( u.modelViewMatrixInverse ){
+            u.modelViewMatrixInverse.value.getInverse(
+                object.modelViewMatrix
+            );
+        }
+
+        if( u.modelViewMatrixInverseTranspose ){
+            if( u.modelViewMatrixInverse ){
+                u.modelViewMatrixInverseTranspose.value.copy(
+                    u.modelViewMatrixInverse.value
+                ).transpose();
+            }else{
+                u.modelViewMatrixInverseTranspose.value
+                    .getInverse( object.modelViewMatrix )
+                    .transpose();
+            }
+        }
+
+        if( u.modelViewProjectionMatrix ){
+            u.modelViewProjectionMatrix.value.multiplyMatrices(
+                camera.projectionMatrix, object.modelViewMatrix
+            );
+        }
+
+        if( u.modelViewProjectionMatrixInverse ){
+            if( u.modelViewProjectionMatrix ){
+                matrix.copy(
+                    u.modelViewProjectionMatrix.value
+                );
+                u.modelViewProjectionMatrixInverse.value.getInverse(
+                    matrix
+                );
+            }else{
+                matrix.multiplyMatrices(
+                    camera.projectionMatrix, object.modelViewMatrix
+                );
+                u.modelViewProjectionMatrixInverse.value.getInverse(
+                    matrix
+                );
+            }
+        }
+
+    }
+
+    var modelViewProjectionMatrix = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( matrixCalc );
+    var modelViewProjectionMatrixInverse = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( matrixCalc );
+    var modelViewMatrixInverseTranspose = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( matrixCalc );
+
     this.addUniforms( {
-        'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
-        'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
-        'shrink': { type: "f", value: shrink },
+        "modelViewProjectionMatrix": modelViewProjectionMatrix,
+        "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
+        "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
+        "shrink": { type: "f", value: shrink },
     } );
 
     this.addAttributes( {
@@ -1696,9 +1765,9 @@ NGL.PointBuffer = function( position, color, params ){
     // this.fragmentShader = 'Point.frag';
 
     this.tex = new THREE.Texture(
-        NGL.Resources[ '../img/radial.png' ]
-        // NGL.Resources[ '../img/spark1.png' ]
-        // NGL.Resources[ '../img/circle.png' ]
+        NGL.Resources[ "img/radial.png" ]
+        // NGL.Resources[ "img/spark1.png" ]
+        // NGL.Resources[ "img/circle.png" ]
     );
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
@@ -1729,7 +1798,7 @@ NGL.PointBuffer.prototype.makeMaterial = function(){
 
     if( this.sort ){
 
-        material = new THREE.PointCloudMaterial({
+        material = new THREE.PointsMaterial({
             map: this.tex,
             blending: THREE.NormalBlending,
             // blending: THREE.AdditiveBlending,
@@ -1746,7 +1815,7 @@ NGL.PointBuffer.prototype.makeMaterial = function(){
 
     }else{
 
-        material = new THREE.PointCloudMaterial({
+        material = new THREE.PointsMaterial({
             map: this.tex,
             // blending:       THREE.AdditiveBlending,
             depthTest:      false,

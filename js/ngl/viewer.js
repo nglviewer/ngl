@@ -993,29 +993,14 @@ NGL.Viewer.prototype = {
             NGL.info( "OES_element_index_uint not supported" );
         }
 
+        NGL.supportsReadPixelsFloat = (
+            ( NGL.browser === "Chrome" &&
+                this.renderer.extensions.get( 'OES_texture_float' ) ) ||
+            ( this.renderer.extensions.get( 'OES_texture_float' ) &&
+                gl.getExtension( "WEBGL_color_buffer_float" ) )
+        );
+
         this.container.appendChild( this.renderer.domElement );
-
-        //
-
-        var scope = this;
-
-        var originalSetProgram = this.renderer.setProgram;
-
-        this.renderer.setProgram = function( camera, lights, fog, material, object ){
-
-            var program = originalSetProgram(
-                camera, lights, fog, material, object
-            );
-
-            scope.updateObjectUniforms( object, material, camera );
-
-            scope.renderer.loadUniformsGeneric(
-                scope.renderer.properties.get( material ).uniformsList
-            );
-
-            return program;
-
-        };
 
         // picking texture
 
@@ -1027,7 +1012,7 @@ NGL.Viewer.prototype = {
             NGL.warn( "WEBGL_color_buffer_float not supported" );
         }
 
-        this.pickingTexture = new THREE.WebGLRenderTarget(
+        this.pickingTarget = new THREE.WebGLRenderTarget(
             this.width * window.devicePixelRatio,
             this.height * window.devicePixelRatio,
             {
@@ -1035,40 +1020,12 @@ NGL.Viewer.prototype = {
                 magFilter: THREE.NearestFilter,
                 stencilBuffer: false,
                 format: THREE.RGBAFormat,
-                type: this.supportsReadPixelsFloat() ? THREE.FloatType : THREE.UnsignedByteType
+                type: NGL.supportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
             }
         );
-        this.pickingTexture.generateMipmaps = false;
+        this.pickingTarget.texture.generateMipmaps = false;
 
     },
-
-    supportsReadPixelsFloat: function(){
-
-        var value = undefined;
-
-        return function(){
-
-            if( value === undefined ){
-
-                var gl = this.renderer.context;
-
-                value = (
-
-                    ( NGL.browser === "Chrome" &&
-                        this.renderer.extensions.get( 'OES_texture_float' ) ) ||
-
-                    ( this.renderer.extensions.get( 'OES_texture_float' ) &&
-                        gl.getExtension( "WEBGL_color_buffer_float" ) )
-
-                );
-
-            }
-
-            return value;
-
-        }
-
-    }(),
 
     initScene: function(){
 
@@ -1107,7 +1064,6 @@ NGL.Viewer.prototype = {
         this.controls.panSpeed = 0.8;
         this.controls.staticMoving = true;
         // this.controls.dynamicDampingFactor = 0.3;
-        this.controls.cylindricalRotation = true;
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener(
@@ -1416,7 +1372,7 @@ NGL.Viewer.prototype = {
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
 
-        this.pickingTexture.setSize(
+        this.pickingTarget.setSize(
             this.width * window.devicePixelRatio,
             this.height * window.devicePixelRatio
         );
@@ -1487,13 +1443,13 @@ NGL.Viewer.prototype = {
 
             var gid, object, instance, bondId;
 
-            var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
+            var pixelBuffer = NGL.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             this.render( null, true );
 
             var gl = this.renderer.context;
 
-            this.renderer.setRenderTarget( this.pickingTexture );
+            this.renderer.setRenderTarget( this.pickingTarget );
 
             gl.readPixels(
                 x * window.devicePixelRatio,
@@ -1501,13 +1457,13 @@ NGL.Viewer.prototype = {
                 1,
                 1,
                 gl.RGBA,
-                this.supportsReadPixelsFloat() ? gl.FLOAT : gl.UNSIGNED_BYTE,
+                NGL.supportsReadPixelsFloat ? gl.FLOAT : gl.UNSIGNED_BYTE,
                 pixelBuffer
             );
 
             this.renderer.setRenderTarget();
 
-            if( this.supportsReadPixelsFloat() ){
+            if( NGL.supportsReadPixelsFloat ){
 
                 gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
@@ -1644,10 +1600,10 @@ NGL.Viewer.prototype = {
 
         if( picking ){
 
-            this.renderer.clearTarget( this.pickingTexture );
+            this.renderer.clearTarget( this.pickingTarget );
 
             this.renderer.render(
-                this.pickingGroup, this.camera, this.pickingTexture
+                this.pickingGroup, this.camera, this.pickingTarget
             );
             this.updateInfo();
 
@@ -1723,69 +1679,6 @@ NGL.Viewer.prototype = {
                 }
 
             } );
-
-        }
-
-    }(),
-
-    updateObjectUniforms: function(){
-
-        var matrix = new THREE.Matrix4();
-
-        return function( object, material, camera ){
-
-            var o = object;
-
-            if( !o.material ) return;
-
-            var u = o.material.uniforms;
-            if( !u ) return;
-
-            if( u.objectId ){
-                u.objectId.value = this.supportsReadPixelsFloat() ? o.id : o.id / 255;
-            }
-
-            if( u.modelViewMatrixInverse ){
-                u.modelViewMatrixInverse.value.getInverse(
-                    o.modelViewMatrix
-                );
-            }
-
-            if( u.modelViewMatrixInverseTranspose ){
-                if( u.modelViewMatrixInverse ){
-                    u.modelViewMatrixInverseTranspose.value.copy(
-                        u.modelViewMatrixInverse.value
-                    ).transpose();
-                }else{
-                    u.modelViewMatrixInverseTranspose.value
-                        .getInverse( o.modelViewMatrix )
-                        .transpose();
-                }
-            }
-
-            if( u.modelViewProjectionMatrix ){
-                u.modelViewProjectionMatrix.value.multiplyMatrices(
-                    camera.projectionMatrix, o.modelViewMatrix
-                );
-            }
-
-            if( u.modelViewProjectionMatrixInverse ){
-                if( u.modelViewProjectionMatrix ){
-                    matrix.copy(
-                        u.modelViewProjectionMatrix.value
-                    );
-                    u.modelViewProjectionMatrixInverse.value.getInverse(
-                        matrix
-                    );
-                }else{
-                    matrix.multiplyMatrices(
-                        camera.projectionMatrix, o.modelViewMatrix
-                    );
-                    u.modelViewProjectionMatrixInverse.value.getInverse(
-                        matrix
-                    );
-                }
-            }
 
         }
 
