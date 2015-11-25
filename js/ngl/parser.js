@@ -824,6 +824,7 @@ NGL.StructureParser = function( streamer, params ){
     this.asTrajectory = p.asTrajectory || false;
     this.cAlphaOnly = p.cAlphaOnly || false;
     this.reorderAtoms = p.reorderAtoms || false;
+    this.dontAutoBond = p.dontAutoBond || false;
 
     NGL.Parser.call( this, streamer, p );
 
@@ -895,6 +896,10 @@ NGL.StructureParser.prototype = NGL.createObject(
 
                 var s = self.structure;
 
+                if( self.dontAutoBond ){
+                    s._dontAutoBond = true;
+                }
+
                 // check for secondary structure
                 if( s.helices.length === 0 && s.sheets.length === 0 ){
                     s._doAutoSS = true;
@@ -943,6 +948,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         output.asTrajectory = this.asTrajectory;
         output.cAlphaOnly = this.cAlphaOnly;
         output.reorderAtoms = this.reorderAtoms;
+        output.dontAutoBond = this.dontAutoBond;
 
         return output;
 
@@ -956,6 +962,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         this.asTrajectory = input.asTrajectory;
         this.cAlphaOnly = input.cAlphaOnly;
         this.reorderAtoms = input.reorderAtoms;
+        this.dontAutoBond = input.dontAutoBond;
 
         return this;
 

@@ -410,6 +410,10 @@ NGL.MenubarFileWidget = function( stage ){
         stage.defaultFileParams.reorderAtoms = e.target.checked;
     }
 
+    function onDontAutoBondChange( e ){
+        stage.defaultFileParams.dontAutoBond = e.target.checked;
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -424,6 +428,7 @@ NGL.MenubarFileWidget = function( stage ){
         createCheckbox( 'firstModelOnly', false, onFirstModelOnlyChange ),
         createCheckbox( 'cAlphaOnly', false, onCAlphaOnlyChange ),
         createCheckbox( 'reorderAtoms', false, onReorderAtomsChange ),
+        createCheckbox( 'dontAutoBond', false, onDontAutoBondChange ),
         createDivider(),
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),
