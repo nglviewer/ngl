@@ -34,11 +34,11 @@ NGL.Stage = function( eid ){
 
     this.viewer = new NGL.Viewer( eid );
 
-    this.preferences =  new NGL.Preferences( this );
-    this.preferences.setTheme();
-    this.preferences.setRotateSpeed();
-    this.preferences.setZoomSpeed();
-    this.preferences.setPanSpeed();
+    this.preferences = new NGL.Preferences();
+    this.setTheme( this.preferences.getKey( "theme" ) );
+    this.viewer.controls.rotateSpeed = this.preferences.getKey( "rotateSpeed" );
+    this.viewer.controls.zoomSpeed = this.preferences.getKey( "zoomSpeed" );
+    this.viewer.controls.panSpeed = this.preferences.getKey( "panSpeed" );
 
     this.defaultFileParams = {};
 
@@ -433,6 +433,72 @@ NGL.Stage.prototype = {
 
     },
 
+    setImpostor: function( value ) {
+
+        value = value !== undefined ? value : true;
+
+        var types = [
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
+        ];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
+
+            if( types.indexOf( repr.getType() ) === -1 ){
+                return;
+            }
+
+            var p = repr.getParameters();
+            p.disableImpostor = !value;
+            repr.build( p );
+
+        } );
+
+    },
+
+    setQuality: function( value ) {
+
+        value = value || "medium";
+
+        var types = [
+            "tube", "cartoon", "ribbon", "trace", "rope"
+        ];
+
+        var impostorTypes = [
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
+        ];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
+
+            var p = repr.getParameters();
+
+            if( types.indexOf( repr.getType() ) === -1 ){
+
+                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
+                    return;
+                }
+
+                if( NGL.extensionFragDepth && !p.disableImpostor ){
+                    repr.repr.quality = value;
+                    return;
+                }
+
+            }
+
+            p.quality = value;
+            repr.build( p );
+
+        } );
+
+    },
+
     eachComponent: function( callback, type ){
 
         this.compList.forEach( function( o, i ){
@@ -683,11 +749,9 @@ NGL.PickingControls = function( viewer, stage ){
 ////////////////
 // Preferences
 
-NGL.Preferences = function( stage, id ){
+NGL.Preferences = function( id ){
 
     this.id = id || "ngl-stage";
-
-    this.stage = stage;
 
     this.storage = {
 
@@ -700,7 +764,6 @@ NGL.Preferences = function( stage, id ){
         panSpeed: 0.8,
 
     };
-
 
     try{
 
@@ -731,128 +794,6 @@ NGL.Preferences = function( stage, id ){
 NGL.Preferences.prototype = {
 
     constructor: NGL.Preferences,
-
-    setImpostor: function( value ) {
-
-        if( value !== undefined ){
-            this.setKey( "impostor", value );
-        }else{
-            value = this.getKey( "impostor" );
-        }
-
-        var types = [
-            "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
-            "dot"
-        ];
-
-        this.stage.eachRepresentation( function( repr ){
-
-            if( repr instanceof NGL.ScriptComponent ) return;
-
-            if( types.indexOf( repr.getType() ) === -1 ){
-                return;
-            }
-
-            var p = repr.getParameters();
-            p.disableImpostor = !value;
-            repr.build( p );
-
-        } );
-
-    },
-
-    setQuality: function( value ) {
-
-        if( value !== undefined ){
-            this.setKey( "quality", value );
-        }else{
-            value = this.getKey( "quality" );
-        }
-
-        var types = [
-            "tube", "cartoon", "ribbon", "trace", "rope"
-        ];
-
-        var impostorTypes = [
-            "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
-            "dot"
-        ];
-
-        this.stage.eachRepresentation( function( repr ){
-
-            if( repr instanceof NGL.ScriptComponent ) return;
-
-            var p = repr.getParameters();
-
-            if( types.indexOf( repr.getType() ) === -1 ){
-
-                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
-                    return;
-                }
-
-                if( NGL.extensionFragDepth && !p.disableImpostor ){
-                    repr.repr.quality = value;
-                    return;
-                }
-
-            }
-
-            p.quality = value;
-            repr.build( p );
-
-        } );
-
-    },
-
-    setTheme: function( value ) {
-
-        if( value !== undefined ){
-            this.setKey( "theme", value );
-        }else{
-            value = this.getKey( "theme" );
-        }
-
-        this.stage.setTheme( value );
-
-    },
-
-    setRotateSpeed: function( value ){
-
-        if( value !== undefined ){
-            this.setKey( "rotateSpeed", value );
-        }else{
-            value = this.getKey( "rotateSpeed" );
-        }
-
-        this.stage.viewer.controls.rotateSpeed = value;
-
-    },
-
-    setZoomSpeed: function( value ){
-
-        if( value !== undefined ){
-            this.setKey( "zoomSpeed", value );
-        }else{
-            value = this.getKey( "zoomSpeed" );
-        }
-
-        this.stage.viewer.controls.zoomSpeed = value;
-
-    },
-
-    setPanSpeed: function( value ){
-
-        if( value !== undefined ){
-            this.setKey( "panSpeed", value );
-        }else{
-            value = this.getKey( "panSpeed" );
-        }
-
-        this.stage.viewer.controls.panSpeed = value;
-
-    },
 
     getKey: function( key ){
 

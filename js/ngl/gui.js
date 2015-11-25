@@ -23,36 +23,33 @@ NGL.StageWidget = function( stage ){
 
     //
 
-    var viewport = new NGL.ViewportWidget( stage ).setId( 'viewport' );
+    var viewport = new NGL.ViewportWidget( stage ).setId( "viewport" );
     document.body.appendChild( viewport.dom );
 
-    var toolbar = new NGL.ToolbarWidget( stage ).setId( 'toolbar' );
+    var toolbar = new NGL.ToolbarWidget( stage ).setId( "toolbar" );
     document.body.appendChild( toolbar.dom );
 
-    var menubar = new NGL.MenubarWidget( stage ).setId( 'menubar' );
+    var menubar = new NGL.MenubarWidget( stage ).setId( "menubar" );
     document.body.appendChild( menubar.dom );
 
-    var sidebar = new NGL.SidebarWidget( stage ).setId( 'sidebar' );
+    var sidebar = new NGL.SidebarWidget( stage ).setId( "sidebar" );
     document.body.appendChild( sidebar.dom );
 
     //
 
-    signals.requestTheme.add( function( value ){
-
+    function setTheme( value ){
         var cssPath;
-
         if( value === "light" ){
             cssPath = NGL.cssDirectory + "light.css";
         }else{
             cssPath = NGL.cssDirectory + "dark.css";
         }
-
         // FIXME element must be created by a Widget
-        document.getElementById( 'theme' ).href = cssPath;
+        document.getElementById( "theme" ).href = cssPath;
+    }
 
-    } );
-
-    stage.preferences.setTheme();
+    signals.requestTheme.add( setTheme );
+    setTheme( stage.preferences.getKey( "theme" ) );
 
     //
 
@@ -107,7 +104,7 @@ NGL.StageWidget = function( stage ){
     sidebar.add( resizeLeft );
 
     window.addEventListener(
-        'mousemove', function( event ){
+        "mousemove", function( event ){
             if( doResizeLeft ){
                 document.body.style.cursor = "col-resize";
                 movedResizeLeft = true;
@@ -117,27 +114,27 @@ NGL.StageWidget = function( stage ){
     );
 
     window.addEventListener(
-        'mouseup', function( event ){
+        "mouseup", function( event ){
             doResizeLeft = false;
             document.body.style.cursor = "";
         }, false
     );
 
     window.addEventListener(
-        'resize', function( event ){
+        "resize", function( event ){
             handleResizeLeft();
         }, false
     );
 
     //
 
-    document.addEventListener( 'dragover', function( e ){
+    document.addEventListener( "dragover", function( e ){
         e.stopPropagation();
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'none';
+        e.dataTransfer.dropEffect = "none";
     }, false );
 
-    document.addEventListener( 'drop', function( e ){
+    document.addEventListener( "drop", function( e ){
         e.stopPropagation();
         e.preventDefault();
     }, false );
@@ -790,7 +787,9 @@ NGL.PreferencesWidget = function( stage ){
         .setOptions( { "dark": "dark", "light": "light" } )
         .setValue( preferences.getKey( "theme" ) )
         .onChange( function(){
-            preferences.setTheme( themeSelect.getValue() );
+            var value = themeSelect.getValue();
+            preferences.setKey( "theme", value );
+            stage.setTheme( value );
         } );
 
     //
@@ -803,7 +802,9 @@ NGL.PreferencesWidget = function( stage ){
         } )
         .setValue( preferences.getKey( "quality" ) )
         .onChange( function(){
-            preferences.setQuality( qualitySelect.getValue() );
+            var value = qualitySelect.getValue();
+            preferences.setKey( "quality", value );
+            stage.setQuality( value );
         } );
 
     //
@@ -811,7 +812,9 @@ NGL.PreferencesWidget = function( stage ){
     var impostorCheckbox = new UI.Checkbox()
         .setValue( preferences.getKey( "impostor" ) )
         .onChange( function(){
-            preferences.setImpostor( impostorCheckbox.getValue() );
+            var value = impostorCheckbox.getValue();
+            preferences.setKey( "impostor", value );
+            stage.setImpostor( value );
         } );
 
     //
@@ -820,21 +823,27 @@ NGL.PreferencesWidget = function( stage ){
             0.1, 10, stage.viewer.controls.rotateSpeed, 0.1
         )
         .onInput( function(){
-            preferences.setRotateSpeed( rotateSpeedRange.getValue() );
+            var value = rotateSpeedRange.getValue();
+            preferences.setKey( "rotateSpeed", value );
+            stage.viewer.controls.rotateSpeed = value;
         } );
 
     var zoomSpeedRange = new UI.Range(
             0.1, 10, stage.viewer.controls.zoomSpeed, 0.1
         )
         .onInput( function(){
-            preferences.setZoomSpeed( zoomSpeedRange.getValue() );
+            var value = zoomSpeedRange.getValue();
+            preferences.setKey( "zoomSpeed", value );
+            stage.viewer.controls.zoomSpeed = value;
         } );
 
     var panSpeedRange = new UI.Range(
             0.1, 10, stage.viewer.controls.panSpeed, 0.1
         )
         .onInput( function(){
-            preferences.setPanSpeed( panSpeedRange.getValue() );
+            var value = panSpeedRange.getValue();
+            preferences.setKey( "panSpeed", value );
+            stage.viewer.controls.panSpeed = value;
         } );
 
     //
