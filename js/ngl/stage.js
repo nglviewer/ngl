@@ -32,11 +32,13 @@ NGL.Stage = function( eid ){
 
     this.compList = [];
 
-    this.preferences =  new NGL.Preferences( this );
-
     this.viewer = new NGL.Viewer( eid );
 
+    this.preferences =  new NGL.Preferences( this );
     this.preferences.setTheme();
+    this.preferences.setRotateSpeed();
+    this.preferences.setZoomSpeed();
+    this.preferences.setPanSpeed();
 
     this.defaultFileParams = {};
 
@@ -692,7 +694,10 @@ NGL.Preferences = function( stage, id ){
         impostor: true,
         quality: "medium",
         theme: "dark",
-        overview: true
+        overview: true,
+        rotateSpeed: 2.0,
+        zoomSpeed: 1.2,
+        panSpeed: 0.8,
 
     };
 
@@ -810,6 +815,42 @@ NGL.Preferences.prototype = {
         }
 
         this.stage.setTheme( value );
+
+    },
+
+    setRotateSpeed: function( value ){
+
+        if( value !== undefined ){
+            this.setKey( "rotateSpeed", value );
+        }else{
+            value = this.getKey( "rotateSpeed" );
+        }
+
+        this.stage.viewer.controls.rotateSpeed = value;
+
+    },
+
+    setZoomSpeed: function( value ){
+
+        if( value !== undefined ){
+            this.setKey( "zoomSpeed", value );
+        }else{
+            value = this.getKey( "zoomSpeed" );
+        }
+
+        this.stage.viewer.controls.zoomSpeed = value;
+
+    },
+
+    setPanSpeed: function( value ){
+
+        if( value !== undefined ){
+            this.setKey( "panSpeed", value );
+        }else{
+            value = this.getKey( "panSpeed" );
+        }
+
+        this.stage.viewer.controls.panSpeed = value;
 
     },
 

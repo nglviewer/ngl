@@ -777,9 +777,7 @@ NGL.PreferencesWidget = function( stage ){
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
-
                 container.setDisplay( "none" );
-
             } )
     );
 
@@ -792,9 +790,7 @@ NGL.PreferencesWidget = function( stage ){
         .setOptions( { "dark": "dark", "light": "light" } )
         .setValue( preferences.getKey( "theme" ) )
         .onChange( function(){
-
             preferences.setTheme( themeSelect.getValue() );
-
         } );
 
     //
@@ -807,9 +803,7 @@ NGL.PreferencesWidget = function( stage ){
         } )
         .setValue( preferences.getKey( "quality" ) )
         .onChange( function(){
-
             preferences.setQuality( qualitySelect.getValue() );
-
         } );
 
     //
@@ -817,9 +811,30 @@ NGL.PreferencesWidget = function( stage ){
     var impostorCheckbox = new UI.Checkbox()
         .setValue( preferences.getKey( "impostor" ) )
         .onChange( function(){
-
             preferences.setImpostor( impostorCheckbox.getValue() );
+        } );
 
+    //
+
+    var rotateSpeedRange = new UI.Range(
+            0.1, 10, stage.viewer.controls.rotateSpeed, 0.1
+        )
+        .onInput( function(){
+            preferences.setRotateSpeed( rotateSpeedRange.getValue() );
+        } );
+
+    var zoomSpeedRange = new UI.Range(
+            0.1, 10, stage.viewer.controls.zoomSpeed, 0.1
+        )
+        .onInput( function(){
+            preferences.setZoomSpeed( zoomSpeedRange.getValue() );
+        } );
+
+    var panSpeedRange = new UI.Range(
+            0.1, 10, stage.viewer.controls.panSpeed, 0.1
+        )
+        .onInput( function(){
+            preferences.setPanSpeed( panSpeedRange.getValue() );
         } );
 
     //
@@ -827,7 +842,7 @@ NGL.PreferencesWidget = function( stage ){
     function addEntry( label, entry ){
 
         listingPanel
-            .add( new UI.Text( label ).setWidth( "80px" ) )
+            .add( new UI.Text( label ).setWidth( "90px" ) )
             .add( entry || new UI.Panel() )
             .add( new UI.Break() );
 
@@ -836,6 +851,9 @@ NGL.PreferencesWidget = function( stage ){
     addEntry( "theme", themeSelect );
     addEntry( "quality", qualitySelect );
     addEntry( "impostor", impostorCheckbox );
+    addEntry( "rotate speed", rotateSpeedRange );
+    addEntry( "zoom speed", zoomSpeedRange );
+    addEntry( "pan speed", panSpeedRange );
 
     return container;
 
