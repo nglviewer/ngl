@@ -84,6 +84,21 @@ NGL.Stage.prototype = {
         panSpeed: {
             type: "number", precision: 1, max: 10, min: 0
         },
+        clipNear: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        clipFar: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        clipDist: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        fogNear: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        fogFar: {
+            type: "range", step: 1, max: 100, min: 0
+        },
 
     },
 
@@ -828,6 +843,11 @@ NGL.Preferences = function( id, defaultParams ){
         rotateSpeed: 2.0,
         zoomSpeed: 1.2,
         panSpeed: 0.8,
+        clipNear: 0,
+        clipFar: 100,
+        clipDist: 10,
+        fogNear: 50,
+        fogFar: 100,
     };
 
     // overwrite default values with params
