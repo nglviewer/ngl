@@ -22,6 +22,12 @@ NGL.Stage = function( eid, params ){
         }
     }
 
+    this.preferences.signals.keyChanged.add( function( key, value ){
+        var sp = {};
+        sp[ key ] = value;
+        this.setParameters( sp );
+    }, this );
+
     //
 
     var SIGNALS = signals;
@@ -29,6 +35,7 @@ NGL.Stage = function( eid, params ){
     this.signals = {
 
         themeChanged: new SIGNALS.Signal(),
+        parametersChanged: new SIGNALS.Signal(),
 
         componentAdded: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
@@ -105,13 +112,20 @@ NGL.Stage.prototype = {
     setParameters: function( params ){
 
         var p = Object.assign( {}, params );
+        var tp = this.parameters;
         var viewer = this.viewer;
         var controls = viewer.controls;
 
         for( var name in p ){
-            if( p[ name ] !== undefined && this.parameters[ name ] ){
-                this.parameters[ name ].value = p[ name ];
-            }
+
+            if( p[ name ] === undefined ) continue;
+            if( !tp[ name ] ) continue;
+
+            if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
+            if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
+
+            tp[ name ].value = p[ name ];
+
         }
 
         // apply parameters
@@ -121,6 +135,14 @@ NGL.Stage.prototype = {
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
+        viewer.setFog( undefined, p.fogNear, p.fogFar );
+
+        this.signals.parametersChanged.dispatch(
+            this.getParameters()
+        );
+
+        return this;
 
     },
 
@@ -832,6 +854,12 @@ NGL.PickingControls = function( viewer, stage ){
 
 NGL.Preferences = function( id, defaultParams ){
 
+    var SIGNALS = signals;
+
+    this.signals = {
+        keyChanged: new SIGNALS.Signal(),
+    };
+
     this.id = id || "ngl-stage";
     var dp = Object.assign( {}, defaultParams );
 
@@ -888,12 +916,13 @@ NGL.Preferences.prototype = {
 
         try{
             window.localStorage[ this.id ] = JSON.stringify( this.storage );
+            this.signals.keyChanged.dispatch( key, value );
         }catch( e ){
             // Webkit === 22 / Firefox === 1014
             if( e.code === 22 || e.code === 1014 ){
                 NGL.error( "localStorage full" );
             }else{
-                NGL.error( "localStorage not accessible/available" );
+                NGL.error( "localStorage not accessible/available", e );
             }
         }
 

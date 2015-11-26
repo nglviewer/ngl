@@ -857,12 +857,21 @@ NGL.PreferencesWidget = function( stage ){
 
         if( !input ) return;
 
-        input.onChange( function( event ){
+        stage.preferences.signals.keyChanged.add( function( key, value ){
+            if( key === name ) input.setValue( value );
+        } );
+
+        function setParam(){
             var sp = {};
             sp[ name ] = input.getValue();
             stage.preferences.setKey( name, sp[ name ] );
-            stage.setParameters( sp );
-        } );
+        }
+
+        if( p.type === "range" ){
+            input.onInput( setParam );
+        }else{
+            input.onChange( setParam );
+        }
 
         listingPanel
             .add( new UI.Text( name ).setWidth( "90px" ) )
@@ -1147,58 +1156,37 @@ NGL.SidebarWidget = function( stage ){
 
     } );
 
-    // clipping
+    var paramNames = [ "clipNear", "clipFar", "clipDist", "fogNear", "fogFar" ];
 
-    var clipNear = new UI.Range(
-            1, 100,
-            stage.viewer.params.clipNear, 1
-        )
-        .onInput( function(){
-            stage.viewer.setClip( clipNear.getValue() );
+    paramNames.forEach( function( name ){
+
+        var p = stage.parameters[ name ];
+        if( p.label === undefined ) p.label = name;
+        var input = NGL.createParameterInput( p );
+
+        if( !input ) return;
+
+        stage.signals.parametersChanged.add( function( params ){
+            input.setValue( params[ name ] );
         } );
 
-    var clipFar = new UI.Range(
-            1, 100,
-            stage.viewer.params.clipFar, 1
-        )
-        .onInput( function(){
-            stage.viewer.setClip( undefined, clipFar.getValue() );
-        } );
+        function setParam(){
+            var sp = {};
+            sp[ name ] = input.getValue();
+            stage.setParameters( sp );
+        }
 
-    var clipDist = new UI.Range(
-            1, 100,
-            stage.viewer.params.clipDist, 1
-        )
-        .onInput( function(){
-            stage.viewer.setClip( undefined, undefined, clipDist.getValue() );
-        } );
+        if( p.type === "range" ){
+            input.onInput( setParam );
+        }else{
+            input.onChange( setParam );
+        }
 
-    // fog
+        settingsMenu.addEntry( name, input );
 
-    var fogNear = new UI.Range(
-            1, 100,
-            stage.viewer.params.fogNear, 1
-        )
-        .onInput( function(){
-            stage.viewer.setFog( undefined, fogNear.getValue() );
-        } );
-
-    var fogFar = new UI.Range(
-            1, 100,
-            stage.viewer.params.fogFar, 1
-        )
-        .onInput( function(){
-            stage.viewer.setFog( undefined, undefined, fogFar.getValue() );
-        } );
+    } );
 
     //
-
-    settingsMenu
-        .addEntry( "clip near", clipNear )
-        .addEntry( "clip far", clipFar )
-        .addEntry( "clip distance", clipDist )
-        .addEntry( "fog near", fogNear )
-        .addEntry( "fog far", fogFar );
 
     var actions = new UI.Panel()
         .setClass( "Panel Sticky" )
