@@ -1441,42 +1441,27 @@ NGL.Viewer.prototype = {
 
         return function( x, y ){
 
-            var gid, object, instance, bondId;
+            x *= window.devicePixelRatio;
+            y *= window.devicePixelRatio;
 
+            var gid, object, instance, bondId;
             var pixelBuffer = NGL.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             this.render( null, true );
-
-            var gl = this.renderer.context;
-
-            this.renderer.setRenderTarget( this.pickingTarget );
-
-            gl.readPixels(
-                x * window.devicePixelRatio,
-                y * window.devicePixelRatio,
-                1,
-                1,
-                gl.RGBA,
-                NGL.supportsReadPixelsFloat ? gl.FLOAT : gl.UNSIGNED_BYTE,
-                pixelBuffer
+            this.renderer.readRenderTargetPixels(
+                this.pickingTarget, x, y, 1, 1, pixelBuffer
             );
 
-            this.renderer.setRenderTarget();
-
             if( NGL.supportsReadPixelsFloat ){
-
                 gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                     ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
                     ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
-
             }else{
-
                 gid =
                     ( pixelBuffer[0] << 16 ) |
                     ( pixelBuffer[1] << 8 ) |
                     ( pixelBuffer[2] );
-
             }
 
             object = this.pickingGroup.getObjectById(
@@ -1484,17 +1469,12 @@ NGL.Viewer.prototype = {
             );
 
             if( object && object.userData.instance ){
-
                 instance = object.userData.instance;
-
             }
 
             if( NGL.debug ){
-
                 var rgba = Array.apply( [], pixelBuffer );
-
                 NGL.log( pixelBuffer );
-
                 NGL.log(
                     "picked color",
                     [
@@ -1508,7 +1488,6 @@ NGL.Viewer.prototype = {
                 NGL.log( "picked instance", instance );
                 NGL.log( "picked position", x, y );
                 NGL.log( "devicePixelRatio", window.devicePixelRatio );
-
             }
 
             return {
@@ -1601,20 +1580,15 @@ NGL.Viewer.prototype = {
         if( picking ){
 
             this.renderer.clearTarget( this.pickingTarget );
-
             this.renderer.render(
                 this.pickingGroup, this.camera, this.pickingTarget
             );
             this.updateInfo();
-
-            // FIXME required, maybe a three.js bug
-            this.renderer.setRenderTarget();
+            this.renderer.setRenderTarget();  // back to standard render target
 
             if( NGL.debug ){
-
                 this.renderer.clear();
                 this.renderer.render( this.pickingGroup, this.camera );
-
             }
 
         }else{
