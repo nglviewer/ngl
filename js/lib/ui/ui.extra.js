@@ -514,7 +514,7 @@ UI.Range.prototype = Object.create( UI.Element.prototype );
 
 UI.Range.prototype.getValue = function(){
 
-    return this.dom.value;
+    return parseFloat( this.dom.value );
 
 };
 
