@@ -515,47 +515,29 @@ NGL.MenubarFileWidget = function( stage ){
 
 NGL.MenubarViewWidget = function( stage ){
 
-    function setTheme( value ) {
-
-        document.getElementById( 'theme' ).href = value;
-
-    }
-
     // event handlers
 
-    function onLightThemeOptionClick () {
-
-        setTheme( NGL.cssDirectory + 'light.css' );
-        stage.viewer.setBackground( "white" );
-
+    function onLightThemeOptionClick(){
+        stage.setParameters( { theme: "light" } );
     }
 
-    function onDarkThemeOptionClick () {
-
-        setTheme( NGL.cssDirectory + 'dark.css' );
-        stage.viewer.setBackground( "black" );
-
+    function onDarkThemeOptionClick(){
+        stage.setParameters( { theme: "dark" } );
     }
 
-    function onFullScreenOptionClick () {
-
+    function onFullScreenOptionClick(){
         stage.toggleFullscreen( document.body );
-
     }
 
-    function onCenterOptionClick () {
-
+    function onCenterOptionClick(){
         stage.centerView();
-
     }
 
-    function onGetOrientationClick () {
-
+    function onGetOrientationClick(){
         window.prompt(
             "Orientation",
             JSON.stringify( stage.viewer.getOrientation() )
         );
-
     }
 
     // configure menu contents
