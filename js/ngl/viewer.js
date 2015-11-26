@@ -977,40 +977,22 @@ NGL.Viewer.prototype = {
         this.renderer.autoClear = false;
         this.renderer.sortObjects = true;
 
-        var gl = this.renderer.context;
-
-        NGL.extensionFragDepth = gl.getExtension( 'EXT_frag_depth' );
-        if( !NGL.extensionFragDepth ){
-            NGL.info( "EXT_frag_depth not supported" );
-        }
-
-        if( !this.renderer.extensions.get( 'OES_standard_derivatives' ) ){
-            NGL.warn( "OES_standard_derivatives not supported" );
-        }
-
-        if( !gl.getExtension( 'OES_element_index_uint' ) ){
-            NGL.indexUint16 = true;
-            NGL.info( "OES_element_index_uint not supported" );
-        }
+        NGL.extensionFragDepth = this.renderer.extensions.get( "EXT_frag_depth" );
+        NGL.indexUint16 = !this.renderer.extensions.get( 'OES_element_index_uint' );
 
         NGL.supportsReadPixelsFloat = (
             ( NGL.browser === "Chrome" &&
                 this.renderer.extensions.get( 'OES_texture_float' ) ) ||
             ( this.renderer.extensions.get( 'OES_texture_float' ) &&
-                gl.getExtension( "WEBGL_color_buffer_float" ) )
+                this.renderer.extensions.get( "WEBGL_color_buffer_float" ) )
         );
 
         this.container.appendChild( this.renderer.domElement );
 
         // picking texture
 
-        if( !this.renderer.extensions.get( 'OES_texture_float' ) ){
-            NGL.warn( "OES_texture_float not supported" );
-        }
-
-        if( !gl.getExtension( "WEBGL_color_buffer_float" ) ){
-            NGL.warn( "WEBGL_color_buffer_float not supported" );
-        }
+        this.renderer.extensions.get( 'OES_texture_float' );
+        this.renderer.extensions.get( "WEBGL_color_buffer_float" );
 
         this.pickingTarget = new THREE.WebGLRenderTarget(
             this.width * window.devicePixelRatio,
