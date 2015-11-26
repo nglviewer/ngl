@@ -15,6 +15,70 @@ NGL.Widget.prototype = {
 };
 
 
+NGL.createParameterInput = function( p ){
+
+    if( !p ) return;
+
+    var input;
+
+    if( p.type === "number" || p.type === "integer" ){
+
+        if( p.type === "number" ){
+            input = new UI.Number( parseFloat( p.value ) || NaN )
+                .setPrecision( p.precision );
+        }else{
+            input = new UI.Integer( parseInt( p.value ) || NaN );
+        }
+
+        input.setRange( p.min, p.max )
+
+    }else if( p.type === "range" ){
+
+        input = new UI.Range( p.min, p.max, p.value, p.step );
+
+    }else if( p.type === "boolean" ){
+
+        input = new UI.Checkbox( p.value );
+
+    }else if( p.type === "text" ){
+
+        input = new UI.Input( p.value );
+
+    }else if( p.type === "select" ){
+
+        input = new UI.Select()
+            .setWidth( "" )
+            .setOptions( p.options )
+            .setValue( p.value );
+
+    }else if( p.type === "button" ){
+
+        input = new UI.Button( p.label )
+            .onClick( function(){ p.value(); } );
+
+    }else if( p.type === "color" ){
+
+        input = new UI.ColorPopupMenu( p.label )
+            .setValue( p.value );
+
+    }else if( p.type === "hidden" ){
+
+        // nothing to display
+
+    }else{
+
+        NGL.warn(
+            "NGL.createParameterInput: unknown parameter type " +
+            "'" + p.type + "'"
+        );
+
+    }
+
+    return input;
+
+};
+
+
 // Stage
 
 NGL.StageWidget = function( stage ){
@@ -37,7 +101,7 @@ NGL.StageWidget = function( stage ){
         cssLinkElement.href = cssPath;
     }
 
-    setTheme( stage.preferences.getKey( "theme" ) );
+    setTheme( stage.getParameters().theme );
     document.head.appendChild( cssLinkElement );
     signals.themeChanged.add( setTheme );
 
@@ -757,8 +821,6 @@ NGL.OverviewWidget = function( stage ){
 
 NGL.PreferencesWidget = function( stage ){
 
-    var preferences = stage.preferences;
-
     var container = new UI.OverlayPanel();
 
     var headingPanel = new UI.Panel()
@@ -787,86 +849,27 @@ NGL.PreferencesWidget = function( stage ){
 
     //
 
-    var themeSelect = new UI.Select()
-        .setOptions( { "dark": "dark", "light": "light" } )
-        .setValue( preferences.getKey( "theme" ) )
-        .onChange( function(){
-            var value = themeSelect.getValue();
-            preferences.setKey( "theme", value );
-            stage.setTheme( value );
+    Object.keys( stage.parameters ).forEach( function( name ){
+
+        var p = stage.parameters[ name ];
+        if( p.label === undefined ) p.label = name;
+        var input = NGL.createParameterInput( p );
+
+        if( !input ) return;
+
+        input.onChange( function( event ){
+            var sp = {};
+            sp[ name ] = input.getValue();
+            stage.preferences.setKey( name, sp[ name ] );
+            stage.setParameters( sp );
         } );
-
-    //
-
-    var qualitySelect = new UI.Select()
-        .setOptions( {
-            "low": "low",
-            "medium": "medium",
-            "high": "high"
-        } )
-        .setValue( preferences.getKey( "quality" ) )
-        .onChange( function(){
-            var value = qualitySelect.getValue();
-            preferences.setKey( "quality", value );
-            stage.setQuality( value );
-        } );
-
-    //
-
-    var impostorCheckbox = new UI.Checkbox()
-        .setValue( preferences.getKey( "impostor" ) )
-        .onChange( function(){
-            var value = impostorCheckbox.getValue();
-            preferences.setKey( "impostor", value );
-            stage.setImpostor( value );
-        } );
-
-    //
-
-    var rotateSpeedRange = new UI.Range(
-            0.1, 10, stage.viewer.controls.rotateSpeed, 0.1
-        )
-        .onInput( function(){
-            var value = rotateSpeedRange.getValue();
-            preferences.setKey( "rotateSpeed", value );
-            stage.viewer.controls.rotateSpeed = value;
-        } );
-
-    var zoomSpeedRange = new UI.Range(
-            0.1, 10, stage.viewer.controls.zoomSpeed, 0.1
-        )
-        .onInput( function(){
-            var value = zoomSpeedRange.getValue();
-            preferences.setKey( "zoomSpeed", value );
-            stage.viewer.controls.zoomSpeed = value;
-        } );
-
-    var panSpeedRange = new UI.Range(
-            0.1, 10, stage.viewer.controls.panSpeed, 0.1
-        )
-        .onInput( function(){
-            var value = panSpeedRange.getValue();
-            preferences.setKey( "panSpeed", value );
-            stage.viewer.controls.panSpeed = value;
-        } );
-
-    //
-
-    function addEntry( label, entry ){
 
         listingPanel
-            .add( new UI.Text( label ).setWidth( "90px" ) )
-            .add( entry || new UI.Panel() )
+            .add( new UI.Text( name ).setWidth( "90px" ) )
+            .add( input )
             .add( new UI.Break() );
 
-    }
-
-    addEntry( "theme", themeSelect );
-    addEntry( "quality", qualitySelect );
-    addEntry( "impostor", impostorCheckbox );
-    addEntry( "rotate speed", rotateSpeedRange );
-    addEntry( "zoom speed", zoomSpeedRange );
-    addEntry( "pan speed", panSpeedRange );
+    } );
 
     return container;
 
@@ -1657,28 +1660,20 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         .setMarginLeft( "20px" );
 
     signals.requestGuiVisibility.add( function( value ){
-
         container.setCollapsed( !value );
-
     } );
 
     signals.visibilityChanged.add( function( value ){
-
         toggle.setValue( value );
-
     } );
 
     signals.nameChanged.add( function( value ){
-
         name.setValue( NGL.unicodeHelper( value ) );
-
     } );
 
     signals.disposed.add( function(){
-
         menu.dispose();
         container.dispose();
-
     } );
 
     // Name
@@ -1693,17 +1688,13 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         .setCursor( "pointer" )
         .setMarginLeft( "25px" )
         .onClick( function(){
-
             component.setVisibility( !component.visible )
-
         } );
 
     var disposeIcon = new UI.DisposeIcon()
         .setMarginLeft( "10px" )
         .setDisposeFunction( function(){
-
             component.dispose();
-
         } );
 
     container
@@ -1739,85 +1730,27 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     Object.keys( component.repr.parameters ).forEach( function( name ){
 
         var repr = component.repr;
-
-        var input;
         var p = repr.parameters[ name ];
 
         if( !p ) return;
 
-        if( p.type === "number" || p.type === "integer" ){
+        if( p.label === undefined ) p.label = name;
+        var input = NGL.createParameterInput( p );
 
-            if( p.type === "number" ){
-                input = new UI.Number( parseFloat( repr[ name ] ) || NaN )
-                    .setPrecision( p.precision );
-            }else{
-                input = new UI.Integer( parseInt( repr[ name ] ) || NaN );
-            }
+        if( !input ) return;
 
-            input.setRange( p.min, p.max )
+        signals.parametersChanged.add( function( params ){
+            input.setValue( params[ name ] );
+        } );
 
-        }else if( p.type === "boolean" ){
+        input.onChange( function(){
+            var po = {};
+            po[ name ] = input.getValue();
+            component.setParameters( po );
+            repr.viewer.requestRender();
+        } );
 
-            input = new UI.Checkbox( repr[ name ] );
-
-        }else if( p.type === "text" ){
-
-            input = new UI.Input( repr[ name ] );
-
-        }else if( p.type === "select" ){
-
-            input = new UI.Select()
-                .setWidth( "" )
-                .setOptions( p.options )
-                .setValue( repr[ name ] );
-
-        }else if( p.type === "button" ){
-
-            input = new UI.Button( name )
-                .onClick( function(){
-
-                    repr[ name ]();
-
-                } );
-
-        }else if( p.type === "color" ){
-
-            input = new UI.ColorPopupMenu( name )
-                .setValue( repr[ name ] );
-
-        }else if( p.type === "hidden" ){
-
-            // nothing to display
-
-        }else{
-
-            NGL.warn(
-                "NGL.RepresentationComponentWidget: unknown parameter type " +
-                "'" + p.type + "'"
-            );
-
-        }
-
-        if( input ){
-
-            signals.parametersChanged.add( function( params ){
-
-                input.setValue( params[ name ] );
-
-            } );
-
-            input.onChange( function(){
-
-                var po = {};
-                po[ name ] = input.getValue();
-                component.setParameters( po );
-                repr.viewer.requestRender();
-
-            } );
-
-            menu.addEntry( name, input );
-
-        }
+        menu.addEntry( name, input );
 
     } );
 

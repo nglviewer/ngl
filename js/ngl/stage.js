@@ -7,7 +7,22 @@
 //////////
 // Stage
 
-NGL.Stage = function( eid ){
+NGL.Stage = function( eid, params ){
+
+    var p = Object.assign( {}, params );
+    var preferencesId = p.preferencesId || "ngl-stage";
+
+    this.parameters = NGL.deepCopy( NGL.Stage.prototype.parameters );
+    this.preferences = new NGL.Preferences( preferencesId, p );
+
+    for( var name in this.parameters ){
+        p[ name ] = this.preferences.getKey( name );
+        if( p.overwritePreferences && params[ name ] !== undefined ){
+            p[ name ] = params[ name ];
+        }
+    }
+
+    //
 
     var SIGNALS = signals;
 
@@ -26,31 +41,83 @@ NGL.Stage = function( eid ){
 
     };
 
+    //
+
     this.tasks = new NGL.Counter();
-
     this.compList = [];
-
-    this.viewer = new NGL.Viewer( eid );
-
-    this.preferences = new NGL.Preferences();
-    this.setTheme( this.preferences.getKey( "theme" ) );
-    this.viewer.controls.rotateSpeed = this.preferences.getKey( "rotateSpeed" );
-    this.viewer.controls.zoomSpeed = this.preferences.getKey( "zoomSpeed" );
-    this.viewer.controls.panSpeed = this.preferences.getKey( "panSpeed" );
-
     this.defaultFileParams = {};
 
+    //
+
+    this.viewer = new NGL.Viewer( eid );
+    this.setParameters( p );
     this.initFileDragDrop();
-
     this.viewer.animate();
-
     this.pickingControls = new NGL.PickingControls( this.viewer, this );
 
-}
+};
 
 NGL.Stage.prototype = {
 
     constructor: NGL.Stage,
+
+    parameters: {
+
+        theme: {
+            type: "select", options: { "light": "light", "dark": "dark" }
+        },
+        quality: {
+            type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
+        },
+        impostor: {
+            type: "boolean"
+        },
+        overview: {
+            type: "boolean"
+        },
+        rotateSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        zoomSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        panSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+
+    },
+
+    setParameters: function( params ){
+
+        var p = Object.assign( {}, params );
+        var viewer = this.viewer;
+        var controls = viewer.controls;
+
+        for( var name in p ){
+            if( p[ name ] !== undefined && this.parameters[ name ] ){
+                this.parameters[ name ].value = p[ name ];
+            }
+        }
+
+        // apply parameters
+        if( p.theme !== undefined ) this.setTheme( p.theme );
+        if( p.quality !== undefined ) this.setQuality( p.quality );
+        if( p.impostor !== undefined ) this.setImpostor( p.impostor );
+        if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
+        if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
+        if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+
+    },
+
+    getParameters: function(){
+
+        var params = {};
+        for( var name in this.parameters ){
+            params[ name ] = this.parameters[ name ].value;
+        }
+        return params;
+
+    },
 
     defaultFileRepresentation: function( object ){
 
@@ -418,8 +485,9 @@ NGL.Stage.prototype = {
 
     setTheme: function( value ){
 
-        var viewerBackground;
+        this.parameters.theme.value = value;
 
+        var viewerBackground;
         if( value === "light" ){
             viewerBackground = "white";
         }else{
@@ -433,7 +501,7 @@ NGL.Stage.prototype = {
 
     setImpostor: function( value ) {
 
-        value = value !== undefined ? value : true;
+        this.parameters.impostor.value = value;
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
@@ -459,7 +527,7 @@ NGL.Stage.prototype = {
 
     setQuality: function( value ) {
 
-        value = value || "medium";
+        this.parameters.quality.value = value;
 
         var types = [
             "tube", "cartoon", "ribbon", "trace", "rope"
@@ -586,7 +654,7 @@ NGL.Stage.prototype = {
 
     }
 
-}
+};
 
 
 ////////////
@@ -747,12 +815,12 @@ NGL.PickingControls = function( viewer, stage ){
 ////////////////
 // Preferences
 
-NGL.Preferences = function( id ){
+NGL.Preferences = function( id, defaultParams ){
 
     this.id = id || "ngl-stage";
+    var dp = Object.assign( {}, defaultParams );
 
     this.storage = {
-
         impostor: true,
         quality: "medium",
         theme: "dark",
@@ -760,31 +828,26 @@ NGL.Preferences = function( id ){
         rotateSpeed: 2.0,
         zoomSpeed: 1.2,
         panSpeed: 0.8,
-
     };
 
-    try{
-
-        if ( window.localStorage[ this.id ] === undefined ) {
-
-            window.localStorage[ this.id ] = JSON.stringify( this.storage );
-
-        } else {
-
-            var data = JSON.parse( window.localStorage[ this.id ] );
-
-            for ( var key in data ) {
-
-                this.storage[ key ] = data[ key ];
-
-            }
-
+    // overwrite default values with params
+    for( var key in this.storage ){
+        if( dp[ key ] !== undefined ){
+            this.storage[ key ] = dp[ key ];
         }
+    }
 
+    try{
+        if ( window.localStorage[ this.id ] === undefined ) {
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+        } else {
+            var data = JSON.parse( window.localStorage[ this.id ] );
+            for ( var key in data ) {
+                this.storage[ key ] = data[ key ];
+            }
+        }
     }catch( e ){
-
         NGL.error( "localStorage not accessible/available" );
-
     }
 
 };
@@ -804,23 +867,14 @@ NGL.Preferences.prototype = {
         this.storage[ key ] = value;
 
         try{
-
             window.localStorage[ this.id ] = JSON.stringify( this.storage );
-
         }catch( e ){
-
             // Webkit === 22 / Firefox === 1014
-
             if( e.code === 22 || e.code === 1014 ){
-
                 NGL.error( "localStorage full" );
-
             }else{
-
                 NGL.error( "localStorage not accessible/available" );
-
             }
-
         }
 
     },
@@ -828,13 +882,9 @@ NGL.Preferences.prototype = {
     clear: function(){
 
         try{
-
             delete window.localStorage[ this.id ];
-
         }catch( e ){
-
             NGL.error( "localStorage not accessible/available" );
-
         }
 
     }
@@ -920,11 +970,11 @@ NGL.Component.prototype = {
 
     addRepresentation: function( type, object, params ){
 
-        var pref = this.stage.preferences;
         var p = params || {};
-        p.quality = p.quality || pref.getKey( "quality" );
-        p.disableImpostor = p.disableImpostor !== undefined ? p.disableImpostor : !pref.getKey( "impostor" );
-        p.visible = p.visible !== undefined ? p.visible : true;
+        var sp = this.stage.getParameters();
+        p.quality = p.quality || sp.quality;
+        p.disableImpostor = NGL.defaults( p.disableImpostor, !sp.impostor );
+        p.visible = NGL.defaults( p.visible, true );
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
 

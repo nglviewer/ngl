@@ -3,6 +3,12 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+NGL.defaults = function( value, defaultValue ){
+
+    return value !== undefined ? value : defaultValue;
+
+};
+
 
 NGL.browser = function(){
 
