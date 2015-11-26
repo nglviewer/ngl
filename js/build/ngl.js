@@ -830,6 +830,12 @@ if( typeof importScripts === 'function' ){
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+NGL.defaults = function( value, defaultValue ){
+
+    return value !== undefined ? value : defaultValue;
+
+};
+
 
 NGL.browser = function(){
 
@@ -9629,12 +9635,11 @@ NGL.Selection.prototype = {
             // handle atom expressions
 
             if( c.charAt( 0 ) === "@" ){
-                console.log( c )
                 var indexList = c.substr( 1 ).split( "," );
                 for( var k = 0, kl = indexList.length; k < kl; ++k ){
                     indexList[ k ] = parseInt( indexList[ k ] );
                 }
-                indexList.sort( function( a, b ){ return a > b; } );
+                indexList.sort( function( a, b ){ return a - b; } );
                 sele.atomindex = indexList;
                 pushRule( sele );
                 continue;
@@ -10369,6 +10374,41 @@ NGL.Superposition.prototype = {
 
         }
 
+    },
+
+    transformMatrix4: function( _mat4 ){
+
+        console.log( "raw", _mat4.elements )
+
+        var mat4 = new THREE.Matrix4().fromArray( _mat4.elements );
+        var v3 = new THREE.Vector3().fromArray( this.mean1 );
+        var pos = new THREE.Vector3().setFromMatrixPosition( mat4 );
+
+        pos.sub( v3 );
+        mat4.setPosition( pos );
+
+        var rd = this.R.data;
+        var R = new THREE.Matrix4().set(
+            rd[0], rd[1], rd[2], 0,
+            rd[3], rd[4], rd[5], 0,
+            rd[6], rd[7], rd[8], 0,
+            0, 0, 0, 1
+        );
+        // mat4.transpose();
+        // R.transpose();
+
+        //mat4.multiply( R );
+
+        v3.fromArray( this.mean2 );
+        pos.setFromMatrixPosition( mat4 );
+        pos.add( v3 );
+        mat4.setPosition( pos );
+
+        mat4.transpose();
+        _mat4.elements.set( mat4.elements );
+
+        console.log( "super", _mat4.elements )
+
     }
 
 };
@@ -10526,6 +10566,29 @@ NGL.superpose = function( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
 
     var atoms = new NGL.AtomSet( s1, new NGL.Selection( "*" ) );
     superpose.transform( atoms );
+
+    // if( s1.biomolDict ){
+
+    //     console.log( s1.biomolDict );
+    //     for( var biomolName in s1.biomolDict ){
+
+    //         if( biomolName !== "BU1" ) return;
+
+    //         var biomol = s1.biomolDict[ biomolName ];
+    //         console.log( biomol )
+
+    //         for( var matrixName in biomol.matrixDict ){
+
+    //             var matrix = biomol.matrixDict[ matrixName ];
+    //             console.log( matrix );
+
+    //             superpose.transformMatrix4( matrix );
+
+    //         }
+
+    //     }
+
+    // }
 
     s1.center = s1.atomCenter();
 
@@ -11937,7 +12000,7 @@ NGL.RadiusFactory.types = {
     "": "",
     "vdw": "by vdW radius",
     "covalent": "by covalent radius",
-    "ss": "by secondary structure",
+    "sstruc": "by secondary structure",
     "bfactor": "by bfactor",
     "size": "size"
 
@@ -11979,7 +12042,7 @@ NGL.RadiusFactory.prototype = {
                 r = a.bfactor || defaultBfactor;
                 break;
 
-            case "ss":
+            case "sstruc":
 
                 if( a.ss === "h" ){
                     r = 0.25;
@@ -13086,6 +13149,20 @@ NGL.Bond.prototype = {
     qualifiedName: function(){
 
         return this.atom1.index + "=" + this.atom2.index;
+
+    },
+
+    toJSON: function(){
+
+        return {
+
+            atom1: this.atom1.toJSON(),
+            atom2: this.atom2.toJSON(),
+            bondOrder: this.bondOrder,
+
+            index: this.index
+
+        }
 
     }
 
@@ -15726,7 +15803,7 @@ NGL.Atom.prototype = {
 
         var output = {
 
-            // index: this.index,
+            index: this.index,
             atomno: this.atomno,
             resname: this.resname,
             x: this.x,
@@ -16528,11 +16605,7 @@ NGL.ProxyAtom.prototype = {
 
     },
 
-    toJSON: function(){
-
-        return {};
-
-    },
+    toJSON: NGL.Atom.prototype.toJSON,
 
     fromJSON: function( input ){
 
@@ -16672,23 +16745,96 @@ NGL.StructureSubset.prototype._build = function(){
 
 
 
-NGL.makeTrajectory = function( trajPath, structure, sele ){
+NGL.makeTrajectory = function( trajSrc, structure, sele ){
 
     var traj;
 
-    if( !trajPath && structure.frames ){
+    if( trajSrc instanceof NGL.Frames || trajSrc instanceof Promise ){
 
-        traj = new NGL.StructureTrajectory( trajPath, structure, sele );
+        traj = new NGL.FramesTrajectory( trajSrc, structure, sele );
+
+    }else if( !trajSrc && structure.frames ){
+
+        traj = new NGL.StructureTrajectory( trajSrc, structure, sele );
 
     }else{
 
-        traj = new NGL.RemoteTrajectory( trajPath, structure, sele );
+        traj = new NGL.RemoteTrajectory( trajSrc, structure, sele );
 
     }
 
     return traj;
 
-}
+};
+
+
+///////////
+// Frames
+
+NGL.Frames = function( name, path ){
+
+    this.name = name;
+    this.path = path;
+
+    this.coordinates = [];
+    this.boxes = [];
+
+};
+
+NGL.Frames.prototype = {
+
+    constructor: NGL.Frames,
+
+    toJSON: function(){
+
+        var output = {
+
+            metadata: {
+                version: 0.1,
+                type: 'Frames',
+                generator: 'FramesExporter'
+            },
+
+            name: this.name,
+            path: this.path,
+
+            coordinates: this.coordinates,
+            boxes: this.boxes
+
+        };
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.name = input.name;
+        this.path = input.path;
+
+        this.coordinates = input.coordinates;
+        this.boxes = input.boxes;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [];
+
+        var coordinates = this.coordinates;
+        var n = coordinates.length;
+
+        for( var i = 0; i < n; ++i ){
+
+            transferable.push( coordinates[ i ].buffer );
+
+        }
+
+        return transferable;
+
+    }
+
+};
 
 
 ///////////////
@@ -17320,7 +17466,7 @@ NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-}
+};
 
 NGL.RemoteTrajectory.prototype = NGL.createObject(
 
@@ -17479,7 +17625,7 @@ NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
     NGL.Trajectory.call( this, trajPath, structure, selectionString );
 
-}
+};
 
 NGL.StructureTrajectory.prototype = NGL.createObject(
 
@@ -17552,8 +17698,7 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
     getNumframes: function(){
 
-        this.numframes = this.structure.frames.length;
-        this.signals.gotNumframes.dispatch( this.numframes );
+        this.setNumframes( this.structure.frames.length );
 
     },
 
@@ -17569,6 +17714,142 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
 
             j = 3 * i;
             f = this.structure.frames[ i ];
+
+            path[ j + 0 ] = f[ k + 0 ];
+            path[ j + 1 ] = f[ k + 1 ];
+            path[ j + 2 ] = f[ k + 2 ];
+
+        }
+
+        callback( path );
+
+    }
+
+} );
+
+
+NGL.FramesTrajectory = function( frames, structure, selectionString ){
+
+    if( frames instanceof Promise ){
+
+        frames.then( function( _frames ){
+
+            this.setFrames( _frames );
+            this.getNumframes();
+
+        }.bind( this ) );
+
+    }else{
+
+        this.setFrames( frames );
+
+    }
+
+    NGL.Trajectory.call( this, "", structure, selectionString );
+
+};
+
+NGL.FramesTrajectory.prototype = NGL.createObject(
+
+    NGL.Trajectory.prototype, {
+
+    constructor: NGL.FramesTrajectory,
+
+    type: "frames",
+
+    setFrames: function( frames ){
+
+        this.name = frames.name;
+        this.path = frames.path;
+
+        this.frames = frames.coordinates;
+        this.boxes = frames.boxes;
+
+    },
+
+    makeAtomIndices:  function(){
+
+        var structure = this.structure;
+
+        if( structure instanceof NGL.StructureSubset ){
+
+            this.atomIndices = structure.structure.atomIndex(
+                structure.selection
+            );
+
+        }else{
+
+            this.atomIndices = null;
+
+        }
+
+    },
+
+    _loadFrame: function( i, callback ){
+
+        var coords;
+        var structure = this.structure;
+        var frame = this.frames[ i ];
+
+        if( this.atomIndices ){
+
+            var indices = this.atomIndices;
+            var m = indices.length;
+
+            coords = new Float32Array( m * 3 );
+
+            for( var j = 0; j < m; ++j ){
+
+                var j3 = j * 3;
+                var idx3 = indices[ j ] * 3;
+
+                coords[ j3 + 0 ] = frame[ idx3 + 0 ];
+                coords[ j3 + 1 ] = frame[ idx3 + 1 ];
+                coords[ j3 + 2 ] = frame[ idx3 + 2 ];
+
+            }
+
+        }else{
+
+            coords = new Float32Array( frame );
+
+        }
+
+        var box = this.boxes[ i ];
+        var numframes = this.frames.length;
+
+        this.process( i, box, coords, numframes );
+
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    },
+
+    getNumframes: function(){
+
+        if( this.frames ){
+
+            this.setNumframes( this.frames.length );
+
+        }
+
+    },
+
+    getPath: function( index, callback ){
+
+        var i, j, f;
+        var n = this.numframes;
+        var k = index * 3;
+
+        var path = new Float32Array( n * 3 );
+
+        for( i = 0; i < n; ++i ){
+
+            j = 3 * i;
+            f = this.frames[ i ];
 
             path[ j + 0 ] = f[ k + 0 ];
             path[ j + 1 ] = f[ k + 1 ];
@@ -18407,7 +18688,7 @@ NGL.Volume.prototype = {
 
             var bg = new THREE.BufferGeometry();
             bg.addAttribute( "position", new THREE.BufferAttribute( sd.position, 3 ) );
-            bg.addIndex( new THREE.BufferAttribute( sd.index, 1 ) );
+            bg.setIndex( new THREE.BufferAttribute( sd.index, 1 ) );
             bg.computeVertexNormals();
             sd.normal = bg.attributes.normal.array;
             bg.dispose();
@@ -20278,7 +20559,7 @@ NGL.laplacianSmooth = function( verts, faces, numiter, inflate ){
 
         var bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
-        bg.addIndex( new THREE.BufferAttribute( faces, 1 ) );
+        bg.setIndex( new THREE.BufferAttribute( faces, 1 ) );
 
     }
 
@@ -23650,6 +23931,7 @@ NGL.StructureParser = function( streamer, params ){
     this.asTrajectory = p.asTrajectory || false;
     this.cAlphaOnly = p.cAlphaOnly || false;
     this.reorderAtoms = p.reorderAtoms || false;
+    this.dontAutoBond = p.dontAutoBond || false;
 
     NGL.Parser.call( this, streamer, p );
 
@@ -23721,6 +24003,10 @@ NGL.StructureParser.prototype = NGL.createObject(
 
                 var s = self.structure;
 
+                if( self.dontAutoBond ){
+                    s._dontAutoBond = true;
+                }
+
                 // check for secondary structure
                 if( s.helices.length === 0 && s.sheets.length === 0 ){
                     s._doAutoSS = true;
@@ -23769,6 +24055,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         output.asTrajectory = this.asTrajectory;
         output.cAlphaOnly = this.cAlphaOnly;
         output.reorderAtoms = this.reorderAtoms;
+        output.dontAutoBond = this.dontAutoBond;
 
         return output;
 
@@ -23782,6 +24069,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         this.asTrajectory = input.asTrajectory;
         this.cAlphaOnly = input.cAlphaOnly;
         this.reorderAtoms = input.reorderAtoms;
+        this.dontAutoBond = input.dontAutoBond;
 
         return this;
 
@@ -25985,6 +26273,228 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 } );
 
 
+//////////////////////
+// Trajectory parser
+
+NGL.TrajectoryParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.Parser.call( this, streamer, p );
+
+    this.frames = new NGL.Frames( this.name, this.path );
+
+};
+
+NGL.TrajectoryParser.prototype = NGL.createObject(
+
+    NGL.Parser.prototype, {
+
+    constructor: NGL.TrajectoryParser,
+
+    type: "trajectory",
+
+    __objName: "frames"
+
+} );
+
+
+NGL.DcdParser = function( streamer, params ){
+
+    var p = params || {};
+
+    NGL.TrajectoryParser.call( this, streamer, p );
+
+};
+
+NGL.DcdParser.prototype = NGL.createObject(
+
+    NGL.TrajectoryParser.prototype, {
+
+    constructor: NGL.DcdParser,
+
+    type: "dcd",
+
+    _parse: function( callback ){
+
+        // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
+
+        // The DCD format is structured as follows
+        //   (FORTRAN UNFORMATTED, with Fortran data type descriptions):
+        // HDR     NSET    ISTRT   NSAVC   5-ZEROS NATOM-NFREAT    DELTA   9-ZEROS
+        // `CORD'  #files  step 1  step    zeroes  (zero)          timestep  (zeroes)
+        //                         interval
+        // C*4     INT     INT     INT     5INT    INT             DOUBLE  9INT
+        // ==========================================================================
+        // NTITLE          TITLE
+        // INT (=2)        C*MAXTITL
+        //                 (=32)
+        // ==========================================================================
+        // NATOM
+        // #atoms
+        // INT
+        // ==========================================================================
+        // X(I), I=1,NATOM         (DOUBLE)
+        // Y(I), I=1,NATOM
+        // Z(I), I=1,NATOM
+        // ==========================================================================
+
+        var __timeName = "NGL.DcdParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var bin = this.streamer.data;
+        if( bin instanceof Uint8Array ){
+            bin = bin.buffer;
+        }
+        var dv = new DataView( bin );
+
+        var f = this.frames;
+        var coordinates = f.coordinates;
+        var boxes = f.boxes;
+        var header = {};
+        var nextPos = 0;
+
+        // header block
+
+        var intView = new Int32Array( bin, 0, 23 );
+        var ef = intView[ 0 ] !== dv.getInt32( 0 );  // endianess flag
+        // swap byte order when big endian (84 indicates little endian)
+        if( intView[ 0 ] !== 84 ){
+            var n = bin.byteLength;
+            for( var i = 0; i < n; i+=4 ){
+                dv.setFloat32( i, dv.getFloat32( i ), true );
+            }
+        }
+        if( intView[ 0 ] !== 84 ){
+            NGL.error( "dcd bad format, header block start" );
+        }
+        // format indicator, should read 'CORD'
+        var formatString = String.fromCharCode(
+            dv.getUint8( 4 ), dv.getUint8( 5 ),
+            dv.getUint8( 6 ), dv.getUint8( 7 )
+        );
+        if( formatString !== "CORD" ){
+            NGL.error( "dcd bad format, format string" );
+        }
+        var isCharmm = false;
+        var extraBlock = false;
+        var fourDims = false;
+        // version field in charmm, unused in X-PLOR
+        if( intView[ 22 ] !== 0 ){
+            isCharmm = true;
+            if( intView[ 12 ] !== 0 ) extraBlock = true;
+            if( intView[ 13 ] === 1 ) fourDims = true;
+        }
+        header.NSET = intView[ 2 ];
+        header.ISTART = intView[ 3 ];
+        header.NSAVC = intView[ 4 ];
+        header.NAMNF = intView[ 10 ];
+        if( isCharmm ){
+            header.DELTA = dv.getFloat32( 44, ef );
+        }else{
+            header.DELTA = dv.getFloat64( 44, ef );
+        }
+        if( intView[ 22 ] !== 84 ){
+            NGL.error( "dcd bad format, header block end" );
+        }
+        nextPos = nextPos + 21 * 4 + 8;
+
+        // title block
+
+        var titleLength = dv.getInt32( nextPos, ef );
+        var titlePos = nextPos + 1;
+        if( ( titleLength - 4 ) % 80 !== 0 ){
+            NGL.error( "dcd bad format, title block start" );
+        }
+        header.TITLE = NGL.Uint8ToString(
+            new Uint8Array( bin, titlePos, titleLength )
+        );
+        if( dv.getInt32( titlePos + titleLength + 4 - 1, ef ) !== titleLength ){
+            NGL.error( "dcd bad format, title block end" );
+        }
+        nextPos = nextPos + titleLength + 8;
+
+        // natom block
+
+        if( dv.getInt32( nextPos, ef ) !== 4 ){
+            NGL.error( "dcd bad format, natom block start" );
+        }
+        header.NATOM = dv.getInt32( nextPos + 4, ef );
+        if( dv.getInt32( nextPos + 8, ef ) !== 4 ){
+            NGL.error( "dcd bad format, natom block end" );
+        }
+        nextPos = nextPos + 4 + 8;
+
+        // fixed atoms block
+
+        if( header.NAMNF > 0 ){
+            // TODO read coordinates and indices of fixed atoms
+            NGL.error( "dcd format with fixed atoms unsupported, aborting" );
+            callback();
+            return;
+        }
+
+        // frames
+
+        var natom = header.NATOM;
+        var natom4 = natom * 4;
+
+        for( var i = 0, n = header.NSET; i < n; ++i ){
+
+            if( extraBlock ){
+                nextPos += 4;  // block start
+                // unitcell: A, alpha, B, beta, gamma, C (doubles)
+                var box = new Float32Array( 9 );
+                box[ 0 ] = dv.getFloat64( nextPos        , ef );
+                box[ 4 ] = dv.getFloat64( nextPos + 2 * 8, ef );
+                box[ 8 ] = dv.getFloat64( nextPos + 5 * 8, ef );
+                boxes.push( box );
+                nextPos += 48;
+                nextPos += 4;  // block end
+            }
+
+            // xyz coordinates
+            var coord = new Float32Array( natom * 3 );
+            for( var j = 0; j < 3; ++j ){
+                if( dv.getInt32( nextPos, ef ) !== natom4 ){
+                    NGL.error( "dcd bad format, coord block start", i, j );
+                }
+                nextPos += 4;  // block start
+                var c = new Float32Array( bin, nextPos, natom );
+                for( var k = 0; k < natom; ++k ){
+                    coord[ 3 * k + j ] = c[ k ];
+                }
+                nextPos += natom4;
+                if( dv.getInt32( nextPos, ef ) !== natom4 ){
+                    NGL.error( "dcd bad format, coord block end", i, j );
+                }
+                nextPos += 4;  // block end
+            }
+            coordinates.push( coord );
+
+            if( fourDims ){
+                var bytes = dv.getInt32( nextPos, ef );
+                nextPos += 4 + bytes + 4;  // block start + skip + block end
+            }
+
+        }
+
+        // console.log( header );
+        // console.log( header.TITLE );
+        // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
+
+        NGL.timeEnd( __timeName );
+
+        callback();
+
+        return;
+
+    },
+
+} );
+
+
 //////////////////
 // Volume parser
 
@@ -27287,10 +27797,11 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "sdf": NGL.SdfParser,
             "mol2": NGL.Mol2Parser,
 
+            "dcd": NGL.DcdParser,
+
             "mrc": NGL.MrcParser,
             "ccp4": NGL.MrcParser,
             "map": NGL.MrcParser,
-
             "cube": NGL.CubeParser,
             "dx": NGL.DxParser,
 
@@ -27420,6 +27931,8 @@ NGL.loaderMap = {
     "mmcif": NGL.ParserLoader,
     "sdf": NGL.ParserLoader,
     "mol2": NGL.ParserLoader,
+
+    "dcd": NGL.ParserLoader,
 
     "mrc": NGL.ParserLoader,
     "ccp4": NGL.ParserLoader,
@@ -28360,6 +28873,7 @@ NGL.Viewer = function( eid ){
     this.setFog();
 
     this.boundingBox = new THREE.Box3();
+    this.distVector = new THREE.Vector3();
 
     this.info = {
 
@@ -28400,7 +28914,7 @@ NGL.Viewer.prototype = {
 
             clipNear: 0,
             clipFar: 100,
-            clipDist: 20,
+            clipDist: 10,
 
         };
 
@@ -28451,29 +28965,14 @@ NGL.Viewer.prototype = {
             NGL.info( "OES_element_index_uint not supported" );
         }
 
+        NGL.supportsReadPixelsFloat = (
+            ( NGL.browser === "Chrome" &&
+                this.renderer.extensions.get( 'OES_texture_float' ) ) ||
+            ( this.renderer.extensions.get( 'OES_texture_float' ) &&
+                gl.getExtension( "WEBGL_color_buffer_float" ) )
+        );
+
         this.container.appendChild( this.renderer.domElement );
-
-        //
-
-        var scope = this;
-
-        var originalSetProgram = this.renderer.setProgram;
-
-        this.renderer.setProgram = function( camera, lights, fog, material, object ){
-
-            var program = originalSetProgram(
-                camera, lights, fog, material, object
-            );
-
-            scope.updateObjectUniforms( object, material, camera );
-
-            scope.renderer.loadUniformsGeneric(
-                scope.renderer.properties.get( material ).uniformsList
-            );
-
-            return program;
-
-        };
 
         // picking texture
 
@@ -28485,7 +28984,7 @@ NGL.Viewer.prototype = {
             NGL.warn( "WEBGL_color_buffer_float not supported" );
         }
 
-        this.pickingTexture = new THREE.WebGLRenderTarget(
+        this.pickingTarget = new THREE.WebGLRenderTarget(
             this.width * window.devicePixelRatio,
             this.height * window.devicePixelRatio,
             {
@@ -28493,40 +28992,12 @@ NGL.Viewer.prototype = {
                 magFilter: THREE.NearestFilter,
                 stencilBuffer: false,
                 format: THREE.RGBAFormat,
-                type: this.supportsReadPixelsFloat() ? THREE.FloatType : THREE.UnsignedByteType
+                type: NGL.supportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
             }
         );
-        this.pickingTexture.generateMipmaps = false;
+        this.pickingTarget.texture.generateMipmaps = false;
 
     },
-
-    supportsReadPixelsFloat: function(){
-
-        var value = undefined;
-
-        return function(){
-
-            if( value === undefined ){
-
-                var gl = this.renderer.context;
-
-                value = (
-
-                    ( NGL.browser === "Chrome" &&
-                        this.renderer.extensions.get( 'OES_texture_float' ) ) ||
-
-                    ( this.renderer.extensions.get( 'OES_texture_float' ) &&
-                        gl.getExtension( "WEBGL_color_buffer_float" ) )
-
-                );
-
-            }
-
-            return value;
-
-        }
-
-    }(),
 
     initScene: function(){
 
@@ -28565,7 +29036,6 @@ NGL.Viewer.prototype = {
         this.controls.panSpeed = 0.8;
         this.controls.staticMoving = true;
         // this.controls.dynamicDampingFactor = 0.3;
-        this.controls.cylindricalRotation = true;
         this.controls.keys = [ 65, 83, 68 ];
 
         this.controls.addEventListener(
@@ -28727,6 +29197,12 @@ NGL.Viewer.prototype = {
                 gbb = geometry.boundingBox;
             }
 
+            if( gbb.min.equals( gbb.max ) ){
+                // mainly to give a single impostor geometry some volume
+                // as it is only expanded in the shader on the GPU
+                gbb.expandByScalar( 5 );
+            }
+
             bb.expandByPoint( gbb.min );
             bb.expandByPoint( gbb.max );
 
@@ -28747,6 +29223,12 @@ NGL.Viewer.prototype = {
                         gbb.applyMatrix4( node.userData[ "instance" ].matrix );
                     }else{
                         gbb = node.geometry.boundingBox;
+                    }
+
+                    if( gbb.min.equals( gbb.max ) ){
+                        // mainly to give a single impostor geometry some volume
+                        // as it is only expanded in the shader on the GPU
+                        gbb.expandByScalar( 5 );
                     }
 
                     bb.expandByPoint( gbb.min );
@@ -28785,9 +29267,9 @@ NGL.Viewer.prototype = {
 
         var p = this.params;
 
-        if( color ) p.fogColor.set( color );
-        if( near ) p.fogNear = near;
-        if( far ) p.fogFar = far;
+        if( color !== undefined ) p.fogColor.set( color );
+        if( near !== undefined ) p.fogNear = near;
+        if( far !== undefined ) p.fogFar = far;
 
         this.requestRender();
 
@@ -28828,12 +29310,13 @@ NGL.Viewer.prototype = {
 
     },
 
-    setClip: function( near, far ){
+    setClip: function( near, far, dist ){
 
         var p = this.params;
 
-        if( near ) p.clipNear = near;
-        if( far ) p.clipFar = far;
+        if( near !== undefined ) p.clipNear = near;
+        if( far !== undefined ) p.clipFar = far;
+        if( dist !== undefined ) p.clipDist = dist;
 
         this.requestRender();
 
@@ -28861,7 +29344,7 @@ NGL.Viewer.prototype = {
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
 
-        this.pickingTexture.setSize(
+        this.pickingTarget.setSize(
             this.width * window.devicePixelRatio,
             this.height * window.devicePixelRatio
         );
@@ -28932,13 +29415,13 @@ NGL.Viewer.prototype = {
 
             var gid, object, instance, bondId;
 
-            var pixelBuffer = this.supportsReadPixelsFloat() ? pixelBufferFloat : pixelBufferUint;
+            var pixelBuffer = NGL.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             this.render( null, true );
 
             var gl = this.renderer.context;
 
-            this.renderer.setRenderTarget( this.pickingTexture );
+            this.renderer.setRenderTarget( this.pickingTarget );
 
             gl.readPixels(
                 x * window.devicePixelRatio,
@@ -28946,13 +29429,13 @@ NGL.Viewer.prototype = {
                 1,
                 1,
                 gl.RGBA,
-                this.supportsReadPixelsFloat() ? gl.FLOAT : gl.UNSIGNED_BYTE,
+                NGL.supportsReadPixelsFloat ? gl.FLOAT : gl.UNSIGNED_BYTE,
                 pixelBuffer
             );
 
             this.renderer.setRenderTarget();
 
-            if( this.supportsReadPixelsFloat() ){
+            if( NGL.supportsReadPixelsFloat ){
 
                 gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
@@ -29038,9 +29521,18 @@ NGL.Viewer.prototype = {
         if( !cDist ){
             // recover from a broken (NaN) camera position
             this.camera.position.set( 0, 0, this.params.cameraZ );
+            cDist = Math.abs( this.params.cameraZ );
         }
 
-        var bRadius = this.boundingBox.size().length() * 0.5;
+        var bRadius = Math.max( 10, this.boundingBox.size().length() * 0.5 );
+        if( bRadius === Infinity || bRadius === -Infinity ){
+            // console.warn( "something wrong with bRadius" );
+            bRadius = 50;
+        }
+        bRadius += this.boundingBox.center( this.distVector )
+            .add( this.rotationGroup.position )
+            .length();
+
         var nearFactor = ( 50 - this.params.clipNear ) / 50;
         var farFactor = - ( 50 - this.params.clipFar ) / 50;
         var nearClip = cDist - ( bRadius * nearFactor );
@@ -29080,10 +29572,10 @@ NGL.Viewer.prototype = {
 
         if( picking ){
 
-            this.renderer.clearTarget( this.pickingTexture );
+            this.renderer.clearTarget( this.pickingTarget );
 
             this.renderer.render(
-                this.pickingGroup, this.camera, this.pickingTexture
+                this.pickingGroup, this.camera, this.pickingTarget
             );
             this.updateInfo();
 
@@ -29159,69 +29651,6 @@ NGL.Viewer.prototype = {
                 }
 
             } );
-
-        }
-
-    }(),
-
-    updateObjectUniforms: function(){
-
-        var matrix = new THREE.Matrix4();
-
-        return function( object, material, camera ){
-
-            var o = object;
-
-            if( !o.material ) return;
-
-            var u = o.material.uniforms;
-            if( !u ) return;
-
-            if( u.objectId ){
-                u.objectId.value = this.supportsReadPixelsFloat() ? o.id : o.id / 255;
-            }
-
-            if( u.modelViewMatrixInverse ){
-                u.modelViewMatrixInverse.value.getInverse(
-                    o.modelViewMatrix
-                );
-            }
-
-            if( u.modelViewMatrixInverseTranspose ){
-                if( u.modelViewMatrixInverse ){
-                    u.modelViewMatrixInverseTranspose.value.copy(
-                        u.modelViewMatrixInverse.value
-                    ).transpose();
-                }else{
-                    u.modelViewMatrixInverseTranspose.value
-                        .getInverse( o.modelViewMatrix )
-                        .transpose();
-                }
-            }
-
-            if( u.modelViewProjectionMatrix ){
-                u.modelViewProjectionMatrix.value.multiplyMatrices(
-                    camera.projectionMatrix, o.modelViewMatrix
-                );
-            }
-
-            if( u.modelViewProjectionMatrixInverse ){
-                if( u.modelViewProjectionMatrix ){
-                    matrix.copy(
-                        u.modelViewProjectionMatrix.value
-                    );
-                    u.modelViewProjectionMatrixInverse.value.getInverse(
-                        matrix
-                    );
-                }else{
-                    matrix.multiplyMatrices(
-                        camera.projectionMatrix, o.modelViewMatrix
-                    );
-                    u.modelViewProjectionMatrixInverse.value.getInverse(
-                        matrix
-                    );
-                }
-            }
 
         }
 
@@ -29908,10 +30337,10 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     } );
 
     if( index ){
-        this.geometry.addIndex(
+        this.geometry.setIndex(
             new THREE.BufferAttribute( index, 1 )
         );
-        this.geometry.index.setDynamic( this.dynamic );
+        this.geometry.getIndex().setDynamic( this.dynamic );
     }
 
     if( pickingColor ){
@@ -29929,9 +30358,14 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
         "nearClip": { type: "f", value: 0.0 }
     };
 
+    var objectId = new THREE.Uniform( "f", 0.0 )
+        .onUpdate( function( object, camera ){
+            this.value = NGL.supportsReadPixelsFloat ? object.id : object.id / 255;
+        } );
+
     this.pickingUniforms = {
         "nearClip": { type: "f", value: 0.0 },
-        "objectId": { type: "f", value: 0.0 },
+        "objectId": objectId
     };
 
     this.group = new THREE.Group();
@@ -30021,11 +30455,11 @@ NGL.Buffer.prototype = {
 
         wireframeGeometry.attributes = geometry.attributes;
         if( wireframeIndex ){
-            wireframeGeometry.addIndex(
+            wireframeGeometry.setIndex(
                 new THREE.BufferAttribute( wireframeIndex, 1 )
                     .setDynamic( this.dynamic )
             );
-            wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+            wireframeGeometry.setDrawRange( 0, this.wireframeIndexCount );
         }
 
         this.wireframeGeometry = wireframeGeometry;
@@ -30072,8 +30506,8 @@ NGL.Buffer.prototype = {
 
                 var array = index.array;
                 var n = array.length;
-                if( this.geometry.groups.length ){
-                    n = this.geometry.groups[ 0 ].count;
+                if( this.geometry.drawRange.count !== Infinity ){
+                    n = this.geometry.drawRange.count;
                 }
                 var wireframeIndex;
                 if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
@@ -30120,25 +30554,26 @@ NGL.Buffer.prototype = {
 
     updateWireframeIndex: function(){
 
-        this.wireframeGeometry.clearGroups();
+        this.wireframeGeometry.setDrawRange( 0, Infinity );
         this.makeWireframeIndex();
 
         if( this.wireframeIndex.length > this.wireframeGeometry.index.array.length ){
 
-            this.wireframeGeometry.addIndex(
+            this.wireframeGeometry.setIndex(
                 new THREE.BufferAttribute( this.wireframeIndex, 1 )
                     .setDynamic( this.dynamic )
             );
 
         }else{
 
-            this.wireframeGeometry.index.set( this.wireframeIndex );
-            this.wireframeGeometry.index.needsUpdate = this.wireframeIndexCount > 0;
-            this.wireframeGeometry.index.updateRange.count = this.wireframeIndexCount;
+            var index = this.wireframeGeometry.getIndex();
+            index.set( this.wireframeIndex );
+            index.needsUpdate = this.wireframeIndexCount > 0;
+            index.updateRange.count = this.wireframeIndexCount;
 
         }
 
-        this.wireframeGeometry.addGroup( 0, this.wireframeIndexCount );
+        this.wireframeGeometry.setDrawRange( 0, this.wireframeIndexCount );
 
     },
 
@@ -30176,7 +30611,7 @@ NGL.Buffer.prototype = {
 
         }else if( this.point ){
 
-            mesh = new THREE.PointCloud( this.geometry, this.material );
+            mesh = new THREE.Points( this.geometry, this.material );
             if( this.sort ) mesh.sortParticles = true;
 
         }else{
@@ -30455,21 +30890,22 @@ NGL.Buffer.prototype = {
 
             if( name === "index" ){
 
-                geometry.clearGroups();
+                var index = geometry.getIndex();
+                geometry.setDrawRange( 0, Infinity );
 
-                if( length > geometry.index.array.length ){
+                if( length > index.array.length ){
 
-                    geometry.addIndex(
+                    geometry.setIndex(
                         new THREE.BufferAttribute( array, 1 )
                             .setDynamic( this.dynamic )
                     );
 
                 }else{
 
-                    geometry.index.set( array );
-                    geometry.index.needsUpdate = length > 0;
-                    geometry.index.updateRange.count = length;
-                    geometry.addGroup( 0, length );
+                    index.set( array );
+                    index.needsUpdate = length > 0;
+                    index.updateRange.count = length;
+                    geometry.setDrawRange( 0, length );
 
                 }
 
@@ -30852,13 +31288,13 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
     this.count = position.length / 3;
-    this.vertexShader = 'SphereImpostor.vert';
-    this.fragmentShader = 'SphereImpostor.frag';
+    this.vertexShader = "SphereImpostor.vert";
+    this.fragmentShader = "SphereImpostor.frag";
 
     NGL.QuadBuffer.call( this, params );
 
     this.addUniforms( {
-        'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+        "projectionMatrixInverse": { type: "m4", value: new THREE.Matrix4() }
     } );
 
     this.addAttributes( {
@@ -30905,14 +31341,19 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
     this.cap = p.cap !== undefined ? p.cap : true;
 
     this.count = from.length / 3;
-    this.vertexShader = 'CylinderImpostor.vert';
-    this.fragmentShader = 'CylinderImpostor.frag';
+    this.vertexShader = "CylinderImpostor.vert";
+    this.fragmentShader = "CylinderImpostor.frag";
 
     NGL.AlignedBoxBuffer.call( this, p );
 
+    var modelViewMatrixInverse = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( function( object, camera ){
+            this.value.getInverse( object.modelViewMatrix );
+        } );
+
     this.addUniforms( {
-        'modelViewMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'shift': { type: "f", value: this.shift },
+        "modelViewMatrixInverse": modelViewMatrixInverse,
+        "shift": { type: "f", value: this.shift },
     } );
 
     this.addAttributes( {
@@ -30981,16 +31422,73 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
     this.count = position1.length / 3;
-    this.vertexShader = 'HyperballStickImpostor.vert';
-    this.fragmentShader = 'HyperballStickImpostor.frag';
+    this.vertexShader = "HyperballStickImpostor.vert";
+    this.fragmentShader = "HyperballStickImpostor.frag";
 
     NGL.BoxBuffer.call( this, p );
 
+    var matrix = new THREE.Matrix4();
+
+    function matrixCalc( object, camera ){
+
+        var u = object.material.uniforms;
+
+        if( u.modelViewMatrixInverse ){
+            u.modelViewMatrixInverse.value.getInverse(
+                object.modelViewMatrix
+            );
+        }
+
+        if( u.modelViewMatrixInverseTranspose ){
+            if( u.modelViewMatrixInverse ){
+                u.modelViewMatrixInverseTranspose.value.copy(
+                    u.modelViewMatrixInverse.value
+                ).transpose();
+            }else{
+                u.modelViewMatrixInverseTranspose.value
+                    .getInverse( object.modelViewMatrix )
+                    .transpose();
+            }
+        }
+
+        if( u.modelViewProjectionMatrix ){
+            u.modelViewProjectionMatrix.value.multiplyMatrices(
+                camera.projectionMatrix, object.modelViewMatrix
+            );
+        }
+
+        if( u.modelViewProjectionMatrixInverse ){
+            if( u.modelViewProjectionMatrix ){
+                matrix.copy(
+                    u.modelViewProjectionMatrix.value
+                );
+                u.modelViewProjectionMatrixInverse.value.getInverse(
+                    matrix
+                );
+            }else{
+                matrix.multiplyMatrices(
+                    camera.projectionMatrix, object.modelViewMatrix
+                );
+                u.modelViewProjectionMatrixInverse.value.getInverse(
+                    matrix
+                );
+            }
+        }
+
+    }
+
+    var modelViewProjectionMatrix = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( matrixCalc );
+    var modelViewProjectionMatrixInverse = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( matrixCalc );
+    var modelViewMatrixInverseTranspose = new THREE.Uniform( "m4", new THREE.Matrix4() )
+        .onUpdate( matrixCalc );
+
     this.addUniforms( {
-        'modelViewProjectionMatrix': { type: "m4", value: new THREE.Matrix4() },
-        'modelViewProjectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-        'modelViewMatrixInverseTranspose': { type: "m4", value: new THREE.Matrix4() },
-        'shrink': { type: "f", value: shrink },
+        "modelViewProjectionMatrix": modelViewProjectionMatrix,
+        "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
+        "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
+        "shrink": { type: "f", value: shrink },
     } );
 
     this.addAttributes( {
@@ -31433,9 +31931,9 @@ NGL.PointBuffer = function( position, color, params ){
     // this.fragmentShader = 'Point.frag';
 
     this.tex = new THREE.Texture(
-        NGL.Resources[ '../img/radial.png' ]
-        // NGL.Resources[ '../img/spark1.png' ]
-        // NGL.Resources[ '../img/circle.png' ]
+        NGL.Resources[ "img/radial.png" ]
+        // NGL.Resources[ "img/spark1.png" ]
+        // NGL.Resources[ "img/circle.png" ]
     );
     this.tex.needsUpdate = true;
     if( !this.sort ) this.tex.premultiplyAlpha = true;
@@ -31466,7 +31964,7 @@ NGL.PointBuffer.prototype.makeMaterial = function(){
 
     if( this.sort ){
 
-        material = new THREE.PointCloudMaterial({
+        material = new THREE.PointsMaterial({
             map: this.tex,
             blending: THREE.NormalBlending,
             // blending: THREE.AdditiveBlending,
@@ -31483,7 +31981,7 @@ NGL.PointBuffer.prototype.makeMaterial = function(){
 
     }else{
 
-        material = new THREE.PointCloudMaterial({
+        material = new THREE.PointsMaterial({
             map: this.tex,
             // blending:       THREE.AdditiveBlending,
             depthTest:      false,
@@ -33403,7 +33901,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         "vdw": 1.0,
         "covalent": 1.0,
         "bfactor": 0.01,
-        "ss": 1.0
+        "sstruc": 1.0
     },
 
     defaultSize: 1.0,
@@ -35193,7 +35691,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || "ss";
+        p.radius = p.radius || "sstruc";
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -35412,7 +35910,7 @@ NGL.RibbonRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
-    this.defaultScale[ "ss" ] *= 3.0;
+    this.defaultScale[ "sstruc" ] *= 3.0;
 
 };
 
@@ -35445,7 +35943,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || "ss";
+        p.radius = p.radius || "sstruc";
         p.scale = p.scale || 3.0;
 
         if( p.quality === "low" ){
@@ -38168,13 +38666,35 @@ NGL.DotRepresentation.prototype = NGL.createObject(
 //////////
 // Stage
 
-NGL.Stage = function( eid ){
+NGL.Stage = function( eid, params ){
+
+    var p = Object.assign( {}, params );
+    var preferencesId = p.preferencesId || "ngl-stage";
+
+    this.parameters = NGL.deepCopy( NGL.Stage.prototype.parameters );
+    this.preferences = new NGL.Preferences( preferencesId, p );
+
+    for( var name in this.parameters ){
+        p[ name ] = this.preferences.getKey( name );
+        if( p.overwritePreferences && params[ name ] !== undefined ){
+            p[ name ] = params[ name ];
+        }
+    }
+
+    this.preferences.signals.keyChanged.add( function( key, value ){
+        var sp = {};
+        sp[ key ] = value;
+        this.setParameters( sp );
+    }, this );
+
+    //
 
     var SIGNALS = signals;
 
     this.signals = {
 
         themeChanged: new SIGNALS.Signal(),
+        parametersChanged: new SIGNALS.Signal(),
 
         componentAdded: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
@@ -38183,35 +38703,117 @@ NGL.Stage = function( eid ){
         bondPicked: new SIGNALS.Signal(),
         volumePicked: new SIGNALS.Signal(),
         nothingPicked: new SIGNALS.Signal(),
-        onPicking: new SIGNALS.Signal(),
-
-        requestTheme: new SIGNALS.Signal()
+        onPicking: new SIGNALS.Signal()
 
     };
 
+    //
+
     this.tasks = new NGL.Counter();
-
     this.compList = [];
-
-    this.preferences =  new NGL.Preferences( this );
-
-    this.viewer = new NGL.Viewer( eid );
-
-    this.preferences.setTheme();
-
     this.defaultFileParams = {};
 
+    //
+
+    this.viewer = new NGL.Viewer( eid );
+    this.setParameters( p );
     this.initFileDragDrop();
-
     this.viewer.animate();
-
     this.pickingControls = new NGL.PickingControls( this.viewer, this );
 
-}
+};
 
 NGL.Stage.prototype = {
 
     constructor: NGL.Stage,
+
+    parameters: {
+
+        theme: {
+            type: "select", options: { "light": "light", "dark": "dark" }
+        },
+        quality: {
+            type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
+        },
+        impostor: {
+            type: "boolean"
+        },
+        overview: {
+            type: "boolean"
+        },
+        rotateSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        zoomSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        panSpeed: {
+            type: "number", precision: 1, max: 10, min: 0
+        },
+        clipNear: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        clipFar: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        clipDist: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        fogNear: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+        fogFar: {
+            type: "range", step: 1, max: 100, min: 0
+        },
+
+    },
+
+    setParameters: function( params ){
+
+        var p = Object.assign( {}, params );
+        var tp = this.parameters;
+        var viewer = this.viewer;
+        var controls = viewer.controls;
+
+        for( var name in p ){
+
+            if( p[ name ] === undefined ) continue;
+            if( !tp[ name ] ) continue;
+
+            if( tp[ name ].int ) p[ name ] = parseInt( p[ name ] );
+            if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
+
+            tp[ name ].value = p[ name ];
+
+        }
+
+        // apply parameters
+        if( p.theme !== undefined ) this.setTheme( p.theme );
+        if( p.quality !== undefined ) this.setQuality( p.quality );
+        if( p.impostor !== undefined ) this.setImpostor( p.impostor );
+        if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
+        if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
+        if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
+        viewer.setFog( undefined, p.fogNear, p.fogFar );
+
+        this.signals.parametersChanged.dispatch(
+            this.getParameters()
+        );
+
+        return this;
+
+    },
+
+    getParameters: function(){
+
+        var params = {};
+        for( var name in this.parameters ){
+            params[ name ] = this.parameters[ name ].value;
+        }
+        return params;
+
+    },
 
     defaultFileRepresentation: function( object ){
 
@@ -38579,16 +39181,83 @@ NGL.Stage.prototype = {
 
     setTheme: function( value ){
 
-        var viewerBackground;
+        this.parameters.theme.value = value;
 
+        var viewerBackground;
         if( value === "light" ){
             viewerBackground = "white";
         }else{
             viewerBackground = "black";
         }
 
-        this.signals.requestTheme.dispatch( value );
+        this.signals.themeChanged.dispatch( value );
         this.viewer.setBackground( viewerBackground );
+
+    },
+
+    setImpostor: function( value ) {
+
+        this.parameters.impostor.value = value;
+
+        var types = [
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
+        ];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
+
+            if( types.indexOf( repr.getType() ) === -1 ){
+                return;
+            }
+
+            var p = repr.getParameters();
+            p.disableImpostor = !value;
+            repr.build( p );
+
+        } );
+
+    },
+
+    setQuality: function( value ) {
+
+        this.parameters.quality.value = value;
+
+        var types = [
+            "tube", "cartoon", "ribbon", "trace", "rope"
+        ];
+
+        var impostorTypes = [
+            "spacefill", "ball+stick", "licorice", "hyperball",
+            "backbone", "rocket", "crossing", "contact",
+            "dot"
+        ];
+
+        this.eachRepresentation( function( repr ){
+
+            if( repr instanceof NGL.ScriptComponent ) return;
+
+            var p = repr.getParameters();
+
+            if( types.indexOf( repr.getType() ) === -1 ){
+
+                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
+                    return;
+                }
+
+                if( NGL.extensionFragDepth && !p.disableImpostor ){
+                    repr.repr.quality = value;
+                    return;
+                }
+
+            }
+
+            p.quality = value;
+            repr.build( p );
+
+        } );
 
     },
 
@@ -38681,7 +39350,7 @@ NGL.Stage.prototype = {
 
     }
 
-}
+};
 
 
 ////////////
@@ -38842,44 +39511,50 @@ NGL.PickingControls = function( viewer, stage ){
 ////////////////
 // Preferences
 
-NGL.Preferences = function( stage, id ){
+NGL.Preferences = function( id, defaultParams ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+        keyChanged: new SIGNALS.Signal(),
+    };
 
     this.id = id || "ngl-stage";
-
-    this.stage = stage;
+    var dp = Object.assign( {}, defaultParams );
 
     this.storage = {
-
         impostor: true,
         quality: "medium",
         theme: "dark",
-        overview: true
-
+        overview: true,
+        rotateSpeed: 2.0,
+        zoomSpeed: 1.2,
+        panSpeed: 0.8,
+        clipNear: 0,
+        clipFar: 100,
+        clipDist: 10,
+        fogNear: 50,
+        fogFar: 100,
     };
 
+    // overwrite default values with params
+    for( var key in this.storage ){
+        if( dp[ key ] !== undefined ){
+            this.storage[ key ] = dp[ key ];
+        }
+    }
 
     try{
-
         if ( window.localStorage[ this.id ] === undefined ) {
-
             window.localStorage[ this.id ] = JSON.stringify( this.storage );
-
         } else {
-
             var data = JSON.parse( window.localStorage[ this.id ] );
-
             for ( var key in data ) {
-
                 this.storage[ key ] = data[ key ];
-
             }
-
         }
-
     }catch( e ){
-
         NGL.error( "localStorage not accessible/available" );
-
     }
 
 };
@@ -38887,92 +39562,6 @@ NGL.Preferences = function( stage, id ){
 NGL.Preferences.prototype = {
 
     constructor: NGL.Preferences,
-
-    setImpostor: function( value ) {
-
-        if( value !== undefined ){
-            this.setKey( "impostor", value );
-        }else{
-            value = this.getKey( "impostor" );
-        }
-
-        var types = [
-            "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
-            "dot"
-        ];
-
-        this.stage.eachRepresentation( function( repr ){
-
-            if( repr instanceof NGL.ScriptComponent ) return;
-
-            if( types.indexOf( repr.getType() ) === -1 ){
-                return;
-            }
-
-            var p = repr.getParameters();
-            p.disableImpostor = !value;
-            repr.build( p );
-
-        } );
-
-    },
-
-    setQuality: function( value ) {
-
-        if( value !== undefined ){
-            this.setKey( "quality", value );
-        }else{
-            value = this.getKey( "quality" );
-        }
-
-        var types = [
-            "tube", "cartoon", "ribbon", "trace", "rope"
-        ];
-
-        var impostorTypes = [
-            "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
-            "dot"
-        ];
-
-        this.stage.eachRepresentation( function( repr ){
-
-            if( repr instanceof NGL.ScriptComponent ) return;
-
-            var p = repr.getParameters();
-
-            if( types.indexOf( repr.getType() ) === -1 ){
-
-                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
-                    return;
-                }
-
-                if( NGL.extensionFragDepth && !p.disableImpostor ){
-                    repr.repr.quality = value;
-                    return;
-                }
-
-            }
-
-            p.quality = value;
-            repr.build( p );
-
-        } );
-
-    },
-
-    setTheme: function( value ) {
-
-        if( value !== undefined ){
-            this.setKey( "theme", value );
-        }else{
-            value = this.getKey( "theme" );
-        }
-
-        this.stage.setTheme( value );
-
-    },
 
     getKey: function( key ){
 
@@ -38985,23 +39574,15 @@ NGL.Preferences.prototype = {
         this.storage[ key ] = value;
 
         try{
-
             window.localStorage[ this.id ] = JSON.stringify( this.storage );
-
+            this.signals.keyChanged.dispatch( key, value );
         }catch( e ){
-
             // Webkit === 22 / Firefox === 1014
-
             if( e.code === 22 || e.code === 1014 ){
-
                 NGL.error( "localStorage full" );
-
             }else{
-
-                NGL.error( "localStorage not accessible/available" );
-
+                NGL.error( "localStorage not accessible/available", e );
             }
-
         }
 
     },
@@ -39009,13 +39590,9 @@ NGL.Preferences.prototype = {
     clear: function(){
 
         try{
-
             delete window.localStorage[ this.id ];
-
         }catch( e ){
-
             NGL.error( "localStorage not accessible/available" );
-
         }
 
     }
@@ -39101,11 +39678,11 @@ NGL.Component.prototype = {
 
     addRepresentation: function( type, object, params ){
 
-        var pref = this.stage.preferences;
         var p = params || {};
-        p.quality = p.quality || pref.getKey( "quality" );
-        p.disableImpostor = p.disableImpostor !== undefined ? p.disableImpostor : !pref.getKey( "impostor" );
-        p.visible = p.visible !== undefined ? p.visible : true;
+        var sp = this.stage.getParameters();
+        p.quality = p.quality || sp.quality;
+        p.disableImpostor = NGL.defaults( p.disableImpostor, !sp.impostor );
+        p.visible = NGL.defaults( p.visible, true );
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
 
