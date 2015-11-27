@@ -540,6 +540,15 @@ NGL.MenubarViewWidget = function( stage ){
         );
     }
 
+    stage.signals.fullscreenChanged.add( function( isFullscreen ){
+        var icon = menuConfig[ 3 ].children[ 0 ];
+        if( isFullscreen ){
+            icon.switchClass( "compress", "expand" );
+        }else{
+            icon.switchClass( "expand", "compress" );
+        }
+    } );
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
