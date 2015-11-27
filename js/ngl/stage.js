@@ -36,6 +36,7 @@ NGL.Stage = function( eid, params ){
 
         themeChanged: new SIGNALS.Signal(),
         parametersChanged: new SIGNALS.Signal(),
+        fullscreenChanged: new SIGNALS.Signal(),
 
         componentAdded: new SIGNALS.Signal(),
         componentRemoved: new SIGNALS.Signal(),
@@ -348,6 +349,7 @@ NGL.Stage.prototype = {
                 document.removeEventListener( "msfullscreenchange", resizeElement );
 
                 self.handleResize();
+                self.signals.fullscreenChanged.dispatch( false );
 
             }
 
@@ -361,8 +363,6 @@ NGL.Stage.prototype = {
             element.dataset.normalHeight = element.style.height;
             element.style.width = screen.width + "px";
             element.style.height = screen.height + "px";
-
-            self.handleResize();
 
             if( element.requestFullscreen ){
                 element.requestFullscreen();
@@ -378,6 +378,9 @@ NGL.Stage.prototype = {
             document.addEventListener( "mozfullscreenchange", resizeElement );
             document.addEventListener( "webkitfullscreenchange", resizeElement );
             document.addEventListener( "msfullscreenchange", resizeElement );
+
+            this.handleResize();
+            this.signals.fullscreenChanged.dispatch( true );
 
         }else{
 
