@@ -156,6 +156,7 @@ UI.Panel = function () {
     dom.className = 'Panel';
 
     this.dom = dom;
+    this.children = [];
 
     return this;
 };
@@ -167,6 +168,7 @@ UI.Panel.prototype.add = function () {
     for ( var i = 0; i < arguments.length; i ++ ) {
 
         this.dom.appendChild( arguments[ i ].dom );
+        this.children.push( arguments[ i ] );
 
     }
 
@@ -179,6 +181,9 @@ UI.Panel.prototype.remove = function () {
     for ( var i = 0; i < arguments.length; i ++ ) {
 
         this.dom.removeChild( arguments[ i ].dom );
+
+        var idx = this.children.indexOf( arguments[ i ] );
+        if( idx !== -1 ) this.children.splice( idx, 1 );
 
     }
 
@@ -193,6 +198,8 @@ UI.Panel.prototype.clear = function () {
         this.dom.removeChild( this.dom.lastChild );
 
     }
+
+    this.children.length = 0;
 
     return this;
 
