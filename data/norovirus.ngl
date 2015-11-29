@@ -56,10 +56,10 @@ Promise.all( promiseList ).then( function(){
     var btn = new UI.ToggleButton(
         "show full virus capsid", "look inside virus capsid",
         function(){
-            stage.viewer.setClip( 1, 100 );
+            stage.setParameters( { clipNear: 0 } );
         },
         function(){
-            stage.viewer.setClip( 42, 100 );
+            stage.setParameters( { clipNear: 42 } );
         }
     ).setMarginBottom( "10px" );
 
