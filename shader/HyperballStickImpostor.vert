@@ -1,23 +1,10 @@
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 modelMatrix;
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
-// uniform mat4 viewMatrix;
-// uniform mat3 normalMatrix;
-// uniform vec3 cameraPosition;
-
-attribute vec3 position;
-
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
 // Departement des Sciences de la Simulation et de l'Information (CEA).
-
+//
 // License: CeCILL-C license (http://www.cecill.info/)
-
+//
 // Contact: Marc Baaden
 // E-mail: baaden@smplinux.de
 // Webpage: http://hyperballs.sourceforge.net
@@ -45,9 +32,9 @@ varying float vRadius2;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
-    attribute vec3 color;
+    // attribute vec3 color;
     attribute vec3 color2;
-    varying vec3 vColor;
+    varying vec3 vColor1;
     varying vec3 vColor2;
 #endif
 
@@ -55,9 +42,7 @@ uniform float shrink;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewProjectionMatrixInverse;
 
-
-void main()
-{
+void main(){
 
     vRadius = radius;
     vRadius2 = radius2;
@@ -71,7 +56,7 @@ void main()
         vPickingColor = pickingColor;
         vPickingColor2 = pickingColor2;
     #else
-        vColor = color;
+        vColor1 = color;
         vColor2 = color2;
     #endif
 
@@ -170,4 +155,3 @@ void main()
     gl_Position.z = 1.0;
 
 }
-

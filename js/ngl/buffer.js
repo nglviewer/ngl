@@ -1286,6 +1286,7 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
+    this.impostor = true;
     this.count = position1.length / 3;
     this.vertexShader = "HyperballStickImpostor.vert";
     this.fragmentShader = "HyperballStickImpostor.frag";

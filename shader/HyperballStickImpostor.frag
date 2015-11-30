@@ -1,19 +1,13 @@
-
-#extension GL_EXT_frag_depth : enable
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 viewMatrix;
-// uniform vec3 cameraPosition;
+#define STANDARD
+#define IMPOSTOR
 
 // Copyright (C) 2010-2011 by
 // Laboratoire de Biochimie Theorique (CNRS),
 // Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and
 // Departement des Sciences de la Simulation et de l'Information (CEA).
-
+//
 // License: CeCILL-C license (http://www.cecill.info/)
-
+//
 // Contact: Marc Baaden
 // E-mail: baaden@smplinux.de
 // Webpage: http://hyperballs.sourceforge.net
@@ -22,14 +16,13 @@ precision highp int;
 // - ported to WebGL
 // - dual color
 // - picking color
+// - custom clipping
+// - three.js lighting
 
-
-varying mat4 matrix_near;
-varying vec4 prime1;
-varying vec4 prime2;
-varying float vRadius;
-varying float vRadius2;
-
+uniform vec3 diffuse;
+uniform vec3 emissive;
+uniform float roughness;
+uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
 uniform float shrink;
@@ -38,42 +31,45 @@ uniform mat4 modelViewProjectionMatrix;
 uniform mat4 modelViewMatrixInverseTranspose;
 uniform mat4 projectionMatrix;
 
+varying mat4 matrix_near;
+varying vec4 prime1;
+varying vec4 prime2;
+varying float vRadius;
+varying float vRadius2;
+
 #ifdef PICKING
     uniform float objectId;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
-    varying vec3 vColor;
+    varying vec3 vColor1;
     varying vec3 vColor2;
+    #include common
+    #include fog_pars_fragment
+    #include bsdfs
+    #include lights_pars
+    #include lights_standard_pars_fragment
 #endif
 
-#include light_params
+bool interior = false;
 
-#include fog_params
-
-
-float calcClip( vec4 cameraPos )
-{
+float calcClip( vec4 cameraPos ){
     return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
 }
-float calcClip( vec3 cameraPos )
-{
+
+float calcClip( vec3 cameraPos ){
     return calcClip( vec4( cameraPos, 1.0 ) );
 }
 
-
-float calcDepth( in vec3 cameraPos )
-{
+float calcDepth( in vec3 cameraPos ){
     vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
     return 0.5 + 0.5 * clipZW.x / clipZW.y;
 }
-
 
 struct Ray {
     vec3 origin ;
     vec3 direction ;
 };
-
 
 bool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){
     float a = x3.x;
@@ -84,7 +80,6 @@ bool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){
     if (l<0.0) {return true;}
     else{return false;}
 }
-
 
 vec3 isect_surf(Ray r, mat4 matrix_coef){
     vec4 direction = vec4(r.direction, 0.0);
@@ -108,7 +103,6 @@ vec3 isect_surf(Ray r, mat4 matrix_coef){
     return r.origin+t1*r.direction;
 }
 
-
 vec3 isect_surf2(Ray r, mat4 matrix_coef){
     vec4 direction = vec4(r.direction, 0.0);
     vec4 origin = vec4(r.origin, 1.0);
@@ -126,13 +120,11 @@ vec3 isect_surf2(Ray r, mat4 matrix_coef){
     return r.origin+t2*r.direction;
 }
 
-
 Ray primary_ray(vec4 near1, vec4 far1){
     vec3 near=near1.xyz/near1.w;
     vec3 far=far1.xyz/far1.w;
     return Ray(near,far-near);
 }
-
 
 float update_z_buffer(vec3 M, mat4 ModelViewP){
     float  depth1;
@@ -140,24 +132,7 @@ float update_z_buffer(vec3 M, mat4 ModelViewP){
     return depth1=(1.0+Ms.z/Ms.w)/2.0;
 }
 
-
-// void main2(void)
-// {
-//     gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-// }
-
-// void main(void)
-// {
-//     #ifdef PICKING
-//         gl_FragColor = vec4( vPickingColor, 1.0 );
-//     #else
-//         gl_FragColor = vec4( vColor, 1.0 );
-//     #endif
-// }
-
-
-void main()
-{
+void main(){
 
     float radius = max( vRadius, vRadius2 );
 
@@ -177,7 +152,6 @@ void main()
 
     e2 = normalize(cross(e1,e3));
 
-
     vec4 equation = focus;
 
     float shrinkfactor = shrink;
@@ -189,7 +163,6 @@ void main()
     mat4 mat;
 
     vec3 equation1 = vec3(t2,t2,t1);
-
 
     float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;
     float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;
@@ -216,8 +189,6 @@ void main()
 
     mat = mat4(colonne1,colonne2,colonne3,colonne4);
 
-
-
     // Ray calculation using near and far
     Ray ray = primary_ray(i_near,i_far) ;
 
@@ -231,7 +202,8 @@ void main()
     // Transform normal to model space to view-space
     vec4 M1 = vec4(M,1.0);
     vec4 M2 =  mat*M1;
-    vec3 normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );
+    // vec3 _normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );
+    vec3 _normal = ( modelViewMatrixInverseTranspose * M2 ).xyz;
 
     // Recalculate the depth in function of the new pixel position
     gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
@@ -241,14 +213,14 @@ void main()
             M = isect_surf2(ray, mat);
             if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )
                 discard;
-            normal = vec3( 0.0, 0.0, 0.4 );
+            interior = true;
             gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
             if( gl_FragDepthEXT >= 0.0 ){
                 gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );
             }
         }else if( gl_FragDepthEXT <= 0.0 ){
             M = isect_surf2(ray, mat);
-            normal = vec3( 0.0, 0.0, 0.4 );
+            interior = true;
             gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);
             if( gl_FragDepthEXT >= 0.0 ){
                 gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );
@@ -257,7 +229,7 @@ void main()
     #else
         if( gl_FragDepthEXT <= 0.0 ){
             M = isect_surf2(ray, mat);
-            normal = vec3( 0.0, 0.0, 0.4 );
+            interior = true;
             gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
             if( gl_FragDepthEXT >= 0.0 ){
                 gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );
@@ -273,67 +245,53 @@ void main()
     if (gl_FragDepthEXT > 1.0)
         discard;
 
-    // Give color parameters to the Graphic card
-    //gl_FragColor.rgb = lighting.y * diffusecolor + lighting.z * specularcolor;
-    //gl_FragColor.a = 1.0;
-
-    vec3 transformedNormal = normal;
-    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-
-    #include light
-
     // Mix the color bond in function of the two atom colors
     float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /
                                 distance(prime2.xyz,prime1.xyz);
 
     #ifdef PICKING
-        // lerp function not in GLSL. Find something else ...
-        vec3 diffusecolor = mix( vPickingColor2, vPickingColor, distance_ratio );
-        if( distance_ratio>0.5 ){
-            diffusecolor = vPickingColor;
+
+        if( distance_ratio > 0.5 ){
+            gl_FragColor = vec4( vPickingColor, objectId );
         }else{
-            diffusecolor = vPickingColor2;
+            gl_FragColor = vec4( vPickingColor2, objectId );
         }
-        gl_FragColor = vec4( diffusecolor, objectId );
+
     #else
-        // lerp function not in GLSL. Find something else ...
-        vec3 diffusecolor = mix( vColor2, vColor, distance_ratio );
+
+        vec3 vViewPosition = -( modelViewMatrix * vec4( M, 1.0 ) ).xyz;
+        vec3 vNormal = _normal;
+        vec3 vColor;
+
         if( distance_ratio>0.5 ){
-            diffusecolor = vColor;
+            vColor = vColor1;
         }else{
-            diffusecolor = vColor2;
+            vColor = vColor2;
         }
-        gl_FragColor = vec4( diffusecolor, opacity );
-        gl_FragColor.rgb *= vLightFront;
+
+        vec4 diffuseColor = vec4( diffuse, opacity );
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.01 ), vec3( 0.01 ), vec3( 0.01 ), vec3( 0.0 ) );
+        vec3 totalEmissiveLight = emissive;
+
+        #include color_fragment
+        #include roughnessmap_fragment
+        #include metalnessmap_fragment
+        //#include normal_fragment
+        vec3 normal = normalize( vNormal );
+        if( interior ){
+            normal = vec3( 0.0, 0.0, 0.4 );
+        }
+
+        #include lights_standard_fragment
+        #include lights_template
+
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
+
+        #include linear_to_gamma_fragment
+        #include fog_fragment
+
+        gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+
     #endif
-
-    // #include fog
-
-    #ifdef USE_FOG
-        float depth = gl_FragDepthEXT / gl_FragCoord.w;
-        #ifdef FOG_EXP2
-            const float LOG2 = 1.442695;
-            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
-            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );
-        #else
-            float fogFactor = smoothstep( fogNear, fogFar, depth );
-        #endif
-        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
-    #endif
-
-    // ############## Fog effect #####################################################
-    // To use fog comment the two previous lines: ie  gl_FragColor.rgb = E and   gl_FragColor.a = 1.0;
-    // and uncomment the next lines.
-    // Color of the fog: white
-    //float fogDistance  = update_z_buffer(M, gl_ModelViewMatrix) ;
-    //float fogExponent  = fogDistance * fogDistance * 0.007;
-    //vec3 fogColor   = vec3(1.0, 1.0, 1.0);
-    //float fogFactor   = exp2(-abs(fogExponent));
-    //fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-    //vec3 final_color = lighting.y * diffusecolor + lighting.z * specularcolor;
-    //gl_FragColor.rgb = mix(fogColor,final_color,fogFactor);
-    //gl_FragColor.a = 1.0;
-    // ##################################################################################
 
 }
