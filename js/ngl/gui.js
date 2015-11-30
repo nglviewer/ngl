@@ -866,7 +866,7 @@ NGL.PreferencesWidget = function( stage ){
         }
 
         listingPanel
-            .add( new UI.Text( name ).setWidth( "90px" ) )
+            .add( new UI.Text( name ).setWidth( "120px" ) )
             .add( input )
             .add( new UI.Break() );
 
@@ -1115,6 +1115,7 @@ NGL.SidebarWidget = function( stage ){
     var settingsMenu = new UI.PopupMenu( "cogs", "Settings", "window" )
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
+    settingsMenu.entryLabelWidth = "120px";
 
     // Busy indicator
 
@@ -1148,7 +1149,10 @@ NGL.SidebarWidget = function( stage ){
 
     } );
 
-    var paramNames = [ "clipNear", "clipFar", "clipDist", "fogNear", "fogFar" ];
+    var paramNames = [
+        "clipNear", "clipFar", "clipDist", "fogNear", "fogFar",
+        "lightColor", "lightIntensity", "ambientColor", "ambientIntensity"
+    ];
 
     paramNames.forEach( function( name ){
 

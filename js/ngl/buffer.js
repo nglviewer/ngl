@@ -162,6 +162,9 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
     this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
     this.wireframeLinewidth = p.wireframeLinewidth || 1;
+    this.roughness = p.roughness !== undefined ? p.roughness : 0.4;
+    this.metalness = p.metalness !== undefined ? p.metalness : 0.0;
+    this.diffuse = p.diffuse !== undefined ? p.diffuse : 0xffffff;
 
     this.geometry = new THREE.BufferGeometry();
 
@@ -184,13 +187,25 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
         this.pickable = true;
     }
 
-    this.uniforms = {
-        "fogColor": { type: "c", value: null },
-        "fogNear": { type: "f", value: 0.0 },
-        "fogFar": { type: "f", value: 0.0 },
-        "opacity": { type: "f", value: this.opacity },
-        "nearClip": { type: "f", value: 0.0 }
-    };
+    this.uniforms = THREE.UniformsUtils.merge( [
+        THREE.UniformsLib[ "common" ],
+        {
+            "fogColor": { type: "c", value: null },
+            "fogNear": { type: "f", value: 0.0 },
+            "fogFar": { type: "f", value: 0.0 },
+            "opacity": { type: "f", value: this.opacity },
+            "nearClip": { type: "f", value: 0.0 }
+        },
+        {
+            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
+            "roughness": { type: "f", value: this.roughness },
+            "metalness": { type: "f", value: this.metalness },
+            "envMapIntensity" : { type: "f", value: 1 } // temporary
+        },
+        THREE.UniformsLib[ "lights" ]
+    ] );
+
+    this.uniforms[ "diffuse" ].value.set( this.diffuse );
 
     var objectId = new THREE.Uniform( "f", 0.0 )
         .onUpdate( function( object, camera ){
@@ -224,7 +239,10 @@ NGL.Buffer.prototype = {
         flatShaded: { updateShader: true },
         background: { updateShader: true },
         linewidth: { property: true },
-        wireframe: { updateVisibility: true }
+        wireframe: { updateVisibility: true },
+        roughness: { uniform: true },
+        metalness: { uniform: true },
+        diffuse: { uniform: true },
 
     },
 
@@ -236,20 +254,23 @@ NGL.Buffer.prototype = {
 
     makeMaterial: function(){
 
-        this.material = new THREE.RawShaderMaterial( {
+        this.material = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
             fragmentShader: "",
             depthTest: true,
             transparent: this.transparent,
             depthWrite: true,
-            lights: false,
+            lights: true,
             fog: true,
             side: this.side,
             linewidth: this.linewidth
         } );
+        this.material.vertexColors = THREE.VertexColors;
+        this.material.extensions.derivatives = this.flatShaded;
+        // this.material.extensions.fragDepth = false;
 
-        this.wireframeMaterial = new THREE.RawShaderMaterial( {
+        this.wireframeMaterial = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "Line.vert",
             fragmentShader: "Line.frag",
@@ -261,8 +282,9 @@ NGL.Buffer.prototype = {
             side: this.side,
             linewidth: this.linewidth
         } );
+        this.wireframeMaterial.vertexColors = THREE.VertexColors;
 
-        this.pickingMaterial = new THREE.RawShaderMaterial( {
+        this.pickingMaterial = new THREE.ShaderMaterial( {
             uniforms: this.pickingUniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -274,6 +296,7 @@ NGL.Buffer.prototype = {
             side: this.side,
             linewidth: this.linewidth
         } );
+        this.pickingMaterial.vertexColors = THREE.VertexColors;
 
         this.updateShader();
 
@@ -522,20 +545,10 @@ NGL.Buffer.prototype = {
 
         if( type === "picking" ){
 
-            if( this.side === THREE.DoubleSide ){
-                defines[ "DOUBLE_SIDED" ] = 1;
-            }else if( this.side === THREE.BackSide ){
-                defines[ "FLIP_SIDED" ] = 1;
-            }
             defines[ "PICKING" ] = 1;
 
         }else{
 
-            if( this.side === THREE.DoubleSide ){
-                defines[ "DOUBLE_SIDED" ] = 1;
-            }else if( this.side === THREE.BackSide ){
-                defines[ "FLIP_SIDED" ] = 1;
-            }
             if( type === "background" || this.background ){
                 defines[ "NOLIGHT" ] = 1;
             }
@@ -548,7 +561,6 @@ NGL.Buffer.prototype = {
             if( this.dullInterior ){
                 defines[ "DULL_INTERIOR" ] = 1;
             }
-            defines[ "USE_FOG" ] = 1;
 
         }
 
@@ -694,6 +706,10 @@ NGL.Buffer.prototype = {
                 this.updateWireframeIndex();
             }
 
+            if( name === "flatShaded" ){
+                this.material.extensions.derivatives = this.flatShaded;
+            }
+
         }
 
         this.setProperties( propertyData );
@@ -786,15 +802,27 @@ NGL.Buffer.prototype = {
             }
 
             if( u[ name ] !== undefined ){
-                u[ name ].value = data[ name ];
+                if( u[ name ].type === "c" ){
+                    u[ name ].value.set( data[ name ] );
+                }else{
+                    u[ name ].value = data[ name ];
+                }
             }
 
             if( wu[ name ] !== undefined ){
-                wu[ name ].value = data[ name ];
+                if( wu[ name ].type === "c" ){
+                    wu[ name ].value.set( data[ name ] );
+                }else{
+                    wu[ name ].value = data[ name ];
+                }
             }
 
             if( pu[ name ] !== undefined ){
-                pu[ name ].value = data[ name ];
+                if( pu[ name ].type === "c" ){
+                    pu[ name ].value.set( data[ name ] );
+                }else{
+                    pu[ name ].value = data[ name ];
+                }
             }
 
         }
@@ -2121,7 +2149,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     );
 
     this.vertexShader = 'Ribbon.vert';
-    this.fragmentShader = 'Ribbon.frag';
+    this.fragmentShader = 'Mesh.frag';
 
     this.geometry.addAttribute(
         'dir', new THREE.BufferAttribute( new Float32Array( x ), 3 )
@@ -2923,6 +2951,7 @@ NGL.TextBuffer.prototype.makeMaterial = function(){
 
     NGL.Buffer.prototype.makeMaterial.call( this );
 
+    this.material.extensions.derivatives = true;
     this.material.lights = false;
     this.material.transparent = true;
     this.material.uniforms.fontTexture.value = this.tex;

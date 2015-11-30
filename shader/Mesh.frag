@@ -1,99 +1,68 @@
+#define STANDARD
 
-#ifdef FLAT_SHADED
-    #extension GL_OES_standard_derivatives : enable
-#endif
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 viewMatrix;
-// uniform vec3 cameraPosition;
-
+uniform vec3 diffuse;
+uniform vec3 emissive;
+uniform float roughness;
+uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
 
-varying vec4 cameraPos;
+varying vec3 vViewPosition;
 
-#ifdef PICKING
+#if defined( PICKING )
     uniform float objectId;
     varying vec3 vPickingColor;
-#else
+#elif defined( NOLIGHT )
     varying vec3 vColor;
-    varying vec3 vNormal;
+#else
+    #ifndef FLAT_SHADED
+        varying vec3 vNormal;
+    #endif
+    #include common
+    #include color_pars_fragment
+    #include fog_pars_fragment
+    #include bsdfs
+    #include lights_pars
+    #include lights_standard_pars_fragment
 #endif
 
-#include light_params
+void main(){
 
-#include fog_params
+    #include nearclip_fragment
 
-void main()
-{
-
-    #ifdef NEAR_CLIP
-        if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-            discard;
-    #endif
-
-    #ifdef PICKING
+    #if defined( PICKING )
 
         gl_FragColor = vec4( vPickingColor, objectId );
 
+    #elif defined( NOLIGHT )
+
+        gl_FragColor = vec4( vColor, 1.0 );
+
     #else
 
-        #ifdef FLAT_SHADED
-            vec3 fdx = dFdx( cameraPos.xyz );
-            vec3 fdy = dFdy( cameraPos.xyz );
-            vec3 normal = normalize( cross( fdx, fdy ) );
-        #else
-            vec3 normal = normalize( vNormal );
-        #endif
+        vec4 diffuseColor = vec4( diffuse, opacity );
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+        vec3 totalEmissiveLight = emissive;
 
-        vec3 transformedNormal = normalize( normal );
-        #ifndef FLAT_SHADED
-            #ifdef DOUBLE_SIDED
-                transformedNormal = transformedNormal * ( -1.0 + 2.0 * float( gl_FrontFacing ) );
-            #endif
-            #ifdef FLIP_SIDED
-                transformedNormal = -transformedNormal;
-            #endif
-        #endif
+        #include color_fragment
+        #include roughnessmap_fragment
+        #include metalnessmap_fragment
+        #include normal_fragment
 
-        #ifdef DULL_INTERIOR
-            if( !gl_FrontFacing ){
-                transformedNormal = vec3( 0.0, 0.0, 0.4 );
-            }
-        #endif
+        #include dull_interior_fragment
 
-        vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
+        #include lights_standard_fragment
+        #include lights_template
 
-        #ifndef NOLIGHT
-            #include light
-        #endif
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
 
-        #ifdef OPAQUE_BACK
-            #ifdef FLIP_SIDED
-                if( float( gl_FrontFacing ) == 1.0 ){
-                    gl_FragColor = vec4( vColor, 1.0 );
-                }else{
-                    gl_FragColor = vec4( vColor, opacity );
-                }
-            #else
-                if( float( gl_FrontFacing ) == 1.0 ){
-                    gl_FragColor = vec4( vColor, opacity );
-                }else{
-                    gl_FragColor = vec4( vColor, 1.0 );
-                }
-            #endif
-        #else
-            gl_FragColor = vec4( vColor, opacity );
-        #endif
+        #include linear_to_gamma_fragment
+        #include fog_fragment
 
-        #ifndef NOLIGHT
-            gl_FragColor.rgb *= vLightFront;
-        #endif
+        gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+
+        #include opaque_back_fragment
 
     #endif
-
-    #include fog
 
 }

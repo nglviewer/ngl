@@ -1,33 +1,21 @@
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 viewMatrix;
-// uniform vec3 cameraPosition;
-
 uniform float opacity;
 uniform float nearClip;
 
-varying vec3 vColor;
-varying vec4 cameraPos;
+varying vec3 vViewPosition;
 
-#ifdef PICKING
-    uniform float objectId;
-#endif
+#include common
+#include color_pars_fragment
+#include fog_pars_fragment
 
-#include fog_params
+void main(){
 
+	#include nearclip_fragment
 
-void main()
-{
+	vec3 outgoingLight = vColor;
 
-	#ifdef NEAR_CLIP
-		if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-        	discard;
-    #endif
+	#include linear_to_gamma_fragment
+    #include fog_fragment
 
-    gl_FragColor = vec4( vColor, opacity );
-
-    #include fog
+    gl_FragColor = vec4( outgoingLight, opacity );
 
 }

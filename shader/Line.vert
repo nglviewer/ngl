@@ -1,28 +1,13 @@
+varying vec3 vViewPosition;
 
-precision highp float;
-precision highp int;
+#include color_pars_vertex
 
-// uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-// uniform mat4 viewMatrix;
-// uniform mat3 normalMatrix;
-// uniform vec3 cameraPosition;
+void main(){
 
-attribute vec3 position;
-attribute vec3 color;
+	#include color_vertex
+    #include begin_vertex
+    #include project_vertex
 
-varying vec3 vColor;
-varying vec4 cameraPos;
-
-
-void main()
-{
-
-    vColor = color;
-
-    cameraPos =  modelViewMatrix * vec4( position, 1.0 );
-
-    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );
+    vViewPosition = -mvPosition.xyz;
 
 }

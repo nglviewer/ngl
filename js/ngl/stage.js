@@ -107,6 +107,18 @@ NGL.Stage.prototype = {
         fogFar: {
             type: "range", step: 1, max: 100, min: 0
         },
+        lightColor: {
+            type: "color"
+        },
+        lightIntensity: {
+            type: "number", precision: 2, max: 10, min: 0
+        },
+        ambientColor: {
+            type: "color"
+        },
+        ambientIntensity: {
+            type: "number", precision: 2, max: 10, min: 0
+        },
 
     },
 
@@ -138,6 +150,9 @@ NGL.Stage.prototype = {
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
+        viewer.setLight(
+            p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
+        );
 
         this.signals.parametersChanged.dispatch(
             this.getParameters()
@@ -879,6 +894,10 @@ NGL.Preferences = function( id, defaultParams ){
         clipDist: 10,
         fogNear: 50,
         fogFar: 100,
+        lightColor: 0xdddddd,
+        lightIntensity: 1.0,
+        ambientColor: 0xdddddd,
+        ambientIntensity: 0.2
     };
 
     // overwrite default values with params

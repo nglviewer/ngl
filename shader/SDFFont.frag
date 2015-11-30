@@ -1,24 +1,16 @@
-
-#extension GL_OES_standard_derivatives : enable
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 viewMatrix;
-// uniform vec3 cameraPosition;
-
 uniform sampler2D fontTexture;
 uniform float opacity;
 
-varying vec3 vColor;
 varying vec2 texCoord;
 
-#include fog_params
+#include common
+#include color_pars_fragment
+#include fog_pars_fragment
 
 const float smoothness = 16.0;
 const float gamma = 2.2;
 
-void main() {
+void main(){
 
     // retrieve signed distance
     float sdf = texture2D( fontTexture, texCoord ).a;
@@ -33,14 +25,14 @@ void main() {
 
     // gamma correction for linear attenuation
     a = pow( a, 1.0 / gamma );
-
     if( a < 0.2 ) discard;
-
     a *= opacity;
 
-    gl_FragColor = vec4( vColor, a );
+    vec3 outgoingLight = vColor;
 
-    #include fog
+    #include linear_to_gamma_fragment
+    #include fog_fragment
+
+    gl_FragColor = vec4( outgoingLight, a );
 
 }
-

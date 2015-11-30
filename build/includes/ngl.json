@@ -36,7 +36,6 @@
     "shader/Quad.vert",
     "shader/Quad.frag",
     "shader/Ribbon.vert",
-    "shader/Ribbon.frag",
     "shader/SDFFont.vert",
     "shader/SDFFont.frag",
     "shader/SphereHalo.vert",
@@ -44,10 +43,10 @@
     "shader/SphereImpostor.vert",
     "shader/SphereImpostor.frag",
 
-    "shader/chunk/fog.glsl",
-    "shader/chunk/fog_params.glsl",
-    "shader/chunk/light.glsl",
-    "shader/chunk/light_params.glsl",
+    "shader/chunk/dull_interior_fragment.glsl",
+    "shader/chunk/nearclip_fragment.glsl",
+    "shader/chunk/nearclip_vertex.glsl",
+    "shader/chunk/opaque_back_fragment.glsl",
 
     "fonts/LatoBlack.fnt",
     "fonts/LatoBlack.png",

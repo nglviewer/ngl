@@ -40,7 +40,6 @@ NGL.Resources = {
     'shader/Quad.vert': null,
     'shader/Quad.frag': null,
     'shader/Ribbon.vert': null,
-    'shader/Ribbon.frag': null,
     'shader/SDFFont.vert': null,
     'shader/SDFFont.frag': null,
     'shader/SphereHalo.vert': null,
@@ -49,10 +48,10 @@ NGL.Resources = {
     'shader/SphereImpostor.frag': null,
 
     // shader chunks
-    'shader/chunk/fog.glsl': null,
-    'shader/chunk/fog_params.glsl': null,
-    'shader/chunk/light.glsl': null,
-    'shader/chunk/light_params.glsl': null,
+    'shader/chunk/dull_interior_fragment.glsl': null,
+    'shader/chunk/nearclip_fragment.glsl': null,
+    'shader/chunk/nearclip_vertex.glsl': null,
+    'shader/chunk/opaque_back_fragment.glsl': null,
 
 };
 
@@ -648,7 +647,7 @@ NGL.getShader = function(){
 
         }
 
-        return lines.join( '\n' );
+        return lines.join( '\n' ) + "\n";
 
     }
 
@@ -944,6 +943,11 @@ NGL.Viewer.prototype = {
             clipFar: 100,
             clipDist: 10,
 
+            lightColor: new THREE.Color( 0xdddddd ),
+            lightIntensity: 1.0,
+            ambientColor: new THREE.Color( 0xdddddd ),
+            ambientIntensity: 0.2,
+
         };
 
     },
@@ -1031,7 +1035,21 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
+        // fog
+
         this.modelGroup.fog = new THREE.Fog();
+
+        // light
+
+        this.pointLight = new THREE.SpotLight(
+            this.params.lightColor, this.params.lightIntensity, 0, 1
+        );
+        this.modelGroup.add( this.pointLight );
+
+        this.ambientLight = new THREE.AmbientLight(
+            this.params.ambientLight, this.params.ambientIntensity
+        );
+        this.modelGroup.add( this.ambientLight );
 
     },
 
@@ -1273,6 +1291,19 @@ NGL.Viewer.prototype = {
 
     },
 
+    setLight: function( color, intensity, ambientColor, ambientIntensity ){
+
+        var p = this.params;
+
+        if( color !== undefined ) p.lightColor.set( color );
+        if( intensity !== undefined ) p.lightIntensity = intensity;
+        if( ambientColor !== undefined ) p.ambientColor.set( ambientColor );
+        if( ambientIntensity !== undefined ) p.ambientIntensity = ambientIntensity;
+
+        this.requestRender();
+
+    },
+
     setFog: function( color, near, far ){
 
         var p = this.params;
@@ -1504,13 +1535,17 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
+        var p = this.params;
+        var camera = this.camera;
+
         // clipping
 
-        var cDist = this.camera.position.length();
+        var cDist = camera.position.length();
+        // console.log( "cDist", cDist )
         if( !cDist ){
             // recover from a broken (NaN) camera position
-            this.camera.position.set( 0, 0, this.params.cameraZ );
-            cDist = Math.abs( this.params.cameraZ );
+            camera.position.set( 0, 0, p.cameraZ );
+            cDist = Math.abs( p.cameraZ );
         }
 
         var bRadius = Math.max( 10, this.boundingBox.size().length() * 0.5 );
@@ -1522,15 +1557,15 @@ NGL.Viewer.prototype = {
             .add( this.rotationGroup.position )
             .length();
 
-        var nearFactor = ( 50 - this.params.clipNear ) / 50;
-        var farFactor = - ( 50 - this.params.clipFar ) / 50;
+        var nearFactor = ( 50 - p.clipNear ) / 50;
+        var farFactor = - ( 50 - p.clipFar ) / 50;
         var nearClip = cDist - ( bRadius * nearFactor );
-        this.camera.near = Math.max(
+        camera.near = Math.max(
             0.1,
             // cDist - ( bRadius * nearFactor ),
-            this.params.clipDist
+            p.clipDist
         );
-        this.camera.far = Math.max(
+        camera.far = Math.max(
             1,
             cDist + ( bRadius * farFactor )
         );
@@ -1538,22 +1573,34 @@ NGL.Viewer.prototype = {
 
         // fog
 
-        var fogNearFactor = ( 50 - this.params.fogNear ) / 50;
-        var fogFarFactor = - ( 50 - this.params.fogFar ) / 50;
+        var fogNearFactor = ( 50 - p.fogNear ) / 50;
+        var fogFarFactor = - ( 50 - p.fogFar ) / 50;
         var fog = this.modelGroup.fog;
-        fog.color.set( this.params.fogColor );
+        fog.color.set( p.fogColor );
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
-        //
+        // camera
 
-        this.camera.updateMatrix();
-        this.camera.updateMatrixWorld( true );
-        this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
+        camera.updateMatrix();
+        camera.updateMatrixWorld( true );
+        camera.matrixWorldInverse.getInverse( camera.matrixWorld );
         if( !tileing ) this.camera.updateProjectionMatrix();
 
-        this.updateMaterialUniforms( this.scene, this.camera );
-        this.sortProjectedPosition( this.scene, this.camera );
+        this.updateMaterialUniforms( this.scene, camera );
+        this.sortProjectedPosition( this.scene, camera );
+
+        // light
+
+        var pointLight = this.pointLight;
+        pointLight.position.copy( camera.position ).multiplyScalar( 100 );
+        pointLight.updateMatrixWorld();
+        pointLight.color.set( p.lightColor );
+        pointLight.intensity = p.lightIntensity;
+
+        var ambientLight = this.ambientLight;
+        ambientLight.color.set( p.ambientColor );
+        ambientLight.intensity = p.ambientIntensity;
 
         // render
 
@@ -1563,25 +1610,25 @@ NGL.Viewer.prototype = {
 
             this.renderer.clearTarget( this.pickingTarget );
             this.renderer.render(
-                this.pickingGroup, this.camera, this.pickingTarget
+                this.pickingGroup, camera, this.pickingTarget
             );
             this.updateInfo();
             this.renderer.setRenderTarget();  // back to standard render target
 
             if( NGL.debug ){
                 this.renderer.clear();
-                this.renderer.render( this.pickingGroup, this.camera );
+                this.renderer.render( this.pickingGroup, camera );
             }
 
         }else{
 
             this.renderer.clear();
 
-            this.renderer.render( this.backgroundGroup, this.camera );
+            this.renderer.render( this.backgroundGroup, camera );
             this.renderer.clearDepth();
             this.updateInfo();
 
-            this.renderer.render( this.modelGroup, this.camera );
+            this.renderer.render( this.modelGroup, camera );
             this.updateInfo();
 
         }

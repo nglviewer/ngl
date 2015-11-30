@@ -136,6 +136,16 @@ NGL.Representation.prototype = {
             options: NGL.ColorMakerRegistry.getModes()
         },
 
+        roughness: {
+            type: "range", step: 0.01, max: 1, min: 0, buffer: true
+        },
+        metalness: {
+            type: "range", step: 0.01, max: 1, min: 0, buffer: true
+        },
+        diffuse: {
+            type: "color", buffer: true
+        },
+
     },
 
     init: function( params ){
@@ -159,6 +169,10 @@ NGL.Representation.prototype = {
 
         this.visible = p.visible !== undefined ? p.visible : true;
         this.quality = p.quality;
+
+        this.roughness = p.roughness !== undefined ? p.roughness : 0.4;
+        this.metalness = p.metalness !== undefined ? p.metalness : 0.0;
+        this.diffuse = p.diffuse !== undefined ? p.diffuse : 0xffffff;
 
     },
 
@@ -186,6 +200,10 @@ NGL.Representation.prototype = {
             side: this.side,
             wireframe: this.wireframe,
             linewidth: this.linewidth,
+
+            roughness: this.roughness,
+            metalness: this.metalness,
+            diffuse: this.diffuse,
 
         }, p );
 
@@ -1009,7 +1027,12 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
-        side: null, flatShaded: null
+        side: null,
+        flatShaded: null,
+
+        roughness: null,
+        metalness: null,
+        diffuse: null,
 
     } ),
 
@@ -1394,7 +1417,11 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         flatShaded: null,
         side: null,
-        wireframe: null
+        wireframe: null,
+
+        roughness: null,
+        metalness: null,
+        diffuse: null,
 
     } ),
 
