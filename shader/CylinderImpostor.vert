@@ -1,20 +1,7 @@
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-// uniform mat4 viewMatrix;
-uniform mat3 normalMatrix;
-// uniform vec3 cameraPosition;
-
-attribute vec3 position;
-
 // Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
-
+//
 //  All Rights Reserved
-
+//
 //  Permission to use, copy, modify, distribute, and distribute modified
 //  versions of this software and its built-in documentation for any
 //  purpose and without fee is hereby granted, provided that the above
@@ -23,7 +10,7 @@ attribute vec3 position;
 //  and that the name of Schrodinger, LLC not be used in advertising or
 //  publicity pertaining to distribution of the software without specific,
 //  written prior permission.
-
+//
 //  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 //  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
 //  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -56,24 +43,22 @@ varying vec4 w;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
-    attribute vec3 color;
+    // attribute vec3 color;
     attribute vec3 color2;
-    varying vec3 vColor;
+    varying vec3 vColor1;
     varying vec3 vColor2;
 #endif
 
 uniform mat4 modelViewMatrixInverse;
 uniform float shift;
 
-
-void main()
-{
+void main(){
 
     #ifdef PICKING
         vPickingColor = pickingColor;
         vPickingColor2 = pickingColor2;
     #else
-        vColor = color;
+        vColor1 = color;
         vColor2 = color2;
     #endif
 
@@ -126,5 +111,3 @@ void main()
     gl_Position.z = 1.0;
 
 }
-
-

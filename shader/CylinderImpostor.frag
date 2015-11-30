@@ -1,16 +1,10 @@
-
-#extension GL_EXT_frag_depth : enable
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 viewMatrix;
-// uniform vec3 cameraPosition;
+#define STANDARD
+#define IMPOSTOR
 
 // Open-Source PyMOL is Copyright (C) Schrodinger, LLC.
-
+//
 //  All Rights Reserved
-
+//
 //  Permission to use, copy, modify, distribute, and distribute modified
 //  versions of this software and its built-in documentation for any
 //  purpose and without fee is hereby granted, provided that the above
@@ -19,7 +13,7 @@ precision highp int;
 //  and that the name of Schrodinger, LLC not be used in advertising or
 //  publicity pertaining to distribution of the software without specific,
 //  written prior permission.
-
+//
 //  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 //  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
 //  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -32,12 +26,16 @@ precision highp int;
 // - ported to WebGL
 // - dual color
 // - picking color
+// - custom clipping
+// - three.js lighting
 
+uniform vec3 diffuse;
+uniform vec3 emissive;
+uniform float roughness;
+uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
-
 uniform mat4 projectionMatrix;
-// uniform mat3 normalMatrix;
 
 varying vec3 axis;
 varying vec4 base_radius;
@@ -51,14 +49,16 @@ varying vec4 w;
     varying vec3 vPickingColor;
     varying vec3 vPickingColor2;
 #else
-    varying vec3 vColor;
+    varying vec3 vColor1;
     varying vec3 vColor2;
+    #include common
+    #include fog_pars_fragment
+    #include bsdfs
+    #include lights_pars
+    #include lights_standard_pars_fragment
 #endif
 
-#include light_params
-
-#include fog_params
-
+bool interior = false;
 
 float distSq3( vec3 v3a, vec3 v3b ){
 
@@ -70,10 +70,8 @@ float distSq3( vec3 v3a, vec3 v3b ){
 
 }
 
-
 // round caps
 // http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs
-
 
 // void main2(void)
 // {
@@ -85,21 +83,17 @@ float distSq3( vec3 v3a, vec3 v3b ){
 // }
 
 // Calculate depth based on the given camera position.
-float calcDepth( in vec3 cameraPos )
-{
+float calcDepth( in vec3 cameraPos ){
     vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;
     return 0.5 + 0.5 * clipZW.x / clipZW.y;
 }
 
-
-float calcClip( vec3 cameraPos )
-{
+float calcClip( vec3 cameraPos ){
     return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
 }
 
+void main(){
 
-void main()
-{
     vec3 point = w.xyz / w.w;
 
     // unpacking
@@ -146,7 +140,7 @@ void main()
     vec3 new_point = ray_target + dist * ray_direction;
 
     vec3 tmp_point = new_point - base;
-    vec3 normal = normalize( tmp_point - axis * dot(tmp_point, axis) );
+    vec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );
 
     ray_origin = mix( ray_origin, surface_point, ortho );
 
@@ -178,9 +172,9 @@ void main()
             discard;
 
         #ifdef CAP
-            normal = axis;
+            _normal = axis;
         #else
-            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
+            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
         #endif
     }
 
@@ -201,9 +195,9 @@ void main()
             discard;
 
         #ifdef CAP
-            normal = axis;
+            _normal = axis;
         #else
-            normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
+            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
         #endif
     }
 
@@ -215,7 +209,7 @@ void main()
             new_point = ray_target + dist * ray_direction;
             if( calcClip( new_point ) > 0.0 )
                 discard;
-            normal = vec3( 0.0, 0.0, 0.4 );
+            interior = true;
             gl_FragDepthEXT = calcDepth( new_point );
             if( gl_FragDepthEXT >= 0.0 ){
                 gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );
@@ -223,7 +217,7 @@ void main()
         }else if( gl_FragDepthEXT <= 0.0 ){
             dist = (-a1 - sqrt(d)) / a2;
             new_point = ray_target + dist * ray_direction;
-            normal = vec3( 0.0, 0.0, 0.4 );
+            interior = true;
             gl_FragDepthEXT = calcDepth( new_point );
             if( gl_FragDepthEXT >= 0.0 ){
                 gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );
@@ -233,7 +227,7 @@ void main()
         if( gl_FragDepthEXT <= 0.0 ){
             dist = (-a1 - sqrt(d)) / a2;
             new_point = ray_target + dist * ray_direction;
-            normal = vec3( 0.0, 0.0, 0.4 );
+            interior = true;
             gl_FragDepthEXT = calcDepth( new_point );
             if( gl_FragDepthEXT >= 0.0 ){
                 gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );
@@ -248,13 +242,8 @@ void main()
     if (gl_FragDepthEXT > 1.0)
         discard;
 
-
-    vec3 transformedNormal = normal;
-    vec3 vLightFront = vec3( 0.0, 0.0, 0.0 );
-
-    #include light
-
     #ifdef PICKING
+
         if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){
             if( b < 0.0 ){
                 gl_FragColor = vec4( vPickingColor, objectId );
@@ -268,43 +257,49 @@ void main()
                 gl_FragColor = vec4( vPickingColor2, objectId );
             }
         }
+
     #else
+
+        vec3 vViewPosition = -new_point;
+        vec3 vNormal = _normal;
+        vec3 vColor;
+
         if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){
             if( b < 0.0 ){
-                gl_FragColor = vec4( vColor, opacity );
+                vColor = vColor1;
             }else{
-                gl_FragColor = vec4( vColor2, opacity );
+                vColor = vColor2;
             }
         }else{
             if( b > 0.0 ){
-                gl_FragColor = vec4( vColor, opacity );
+                vColor = vColor1;
             }else{
-                gl_FragColor = vec4( vColor2, opacity );
+                vColor = vColor2;
             }
         }
-        gl_FragColor.rgb *= vLightFront;
-        //gl_FragColor.rgb = transformedNormal;
+
+        vec4 diffuseColor = vec4( diffuse, opacity );
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+        vec3 totalEmissiveLight = emissive;
+
+        #include color_fragment
+        #include roughnessmap_fragment
+        #include metalnessmap_fragment
+        #include normal_fragment
+        if( interior ){
+            normal = vec3( 0.0, 0.0, 0.4 );
+        }
+
+        #include lights_standard_fragment
+        #include lights_template
+
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
+
+        #include linear_to_gamma_fragment
+        #include fog_fragment
+
+        gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+
     #endif
 
-    // #include fog
-
-    #ifdef USE_FOG
-        float depth = gl_FragDepthEXT / gl_FragCoord.w;
-        #ifdef FOG_EXP2
-            const float LOG2 = 1.442695;
-            float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
-            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );
-        #else
-            float fogFactor = smoothstep( fogNear, fogFar, depth );
-        #endif
-        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
-    #endif
 }
-
-
-
-
-
-
-
-

@@ -1204,6 +1204,7 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
 
     this.cap = p.cap !== undefined ? p.cap : true;
 
+    this.impostor = true;
     this.count = from.length / 3;
     this.vertexShader = "CylinderImpostor.vert";
     this.fragmentShader = "CylinderImpostor.frag";
