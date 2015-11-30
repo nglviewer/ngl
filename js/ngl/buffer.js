@@ -268,7 +268,7 @@ NGL.Buffer.prototype = {
         } );
         this.material.vertexColors = THREE.VertexColors;
         this.material.extensions.derivatives = this.flatShaded;
-        // this.material.extensions.fragDepth = false;
+        this.material.extensions.fragDepth = this.impostor;
 
         this.wireframeMaterial = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
@@ -297,6 +297,7 @@ NGL.Buffer.prototype = {
             linewidth: this.linewidth
         } );
         this.pickingMaterial.vertexColors = THREE.VertexColors;
+        this.pickingMaterial.extensions.fragDepth = this.impostor;
 
         this.updateShader();
 
@@ -1149,6 +1150,7 @@ NGL.AlignedBoxBuffer.prototype.constructor = NGL.AlignedBoxBuffer;
 
 NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, params ){
 
+    this.impostor = true;
     this.count = position.length / 3;
     this.vertexShader = "SphereImpostor.vert";
     this.fragmentShader = "SphereImpostor.frag";

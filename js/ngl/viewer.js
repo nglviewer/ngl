@@ -49,6 +49,7 @@ NGL.Resources = {
 
     // shader chunks
     'shader/chunk/dull_interior_fragment.glsl': null,
+    'shader/chunk/fog_fragment.glsl': null,
     'shader/chunk/nearclip_fragment.glsl': null,
     'shader/chunk/nearclip_vertex.glsl': null,
     'shader/chunk/opaque_back_fragment.glsl': null,

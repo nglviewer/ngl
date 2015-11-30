@@ -1,32 +1,19 @@
+uniform mat4 projectionMatrixInverse;
+uniform float nearClip;
 
-precision highp float;
-precision highp int;
+varying float vRadius;
+varying vec3 vPoint;
+varying vec3 vViewPosition;
 
-// uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-// uniform mat4 viewMatrix;
-// uniform mat3 normalMatrix;
-// uniform vec3 cameraPosition;
-
-attribute vec3 position;
 attribute vec2 mapping;
 attribute float radius;
-
-varying vec3 point;
-varying vec4 cameraSpherePos;
-varying float sphereRadius;
 
 #ifdef PICKING
     attribute vec3 pickingColor;
     varying vec3 vPickingColor;
 #else
-    attribute vec3 color;
-    varying vec3 vColor;
+    #include color_pars_vertex
 #endif
-
-uniform mat4 projectionMatrixInverse;
-uniform float nearClip;
 
 const mat4 D = mat4(
     1.0, 0.0, 0.0, 0.0,
@@ -49,7 +36,6 @@ mat4 transpose( in mat4 inMatrix ) {
     );
     return outMatrix;
 }
-
 
 //------------------------------------------------------------------------------
 // Compute point size and center using the technique described in:
@@ -95,9 +81,9 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
     vec2 ybc;
 
     mat4 T = mat4(
-        sphereRadius, 0.0, 0.0, 0.0,
-        0.0, sphereRadius, 0.0, 0.0,
-        0.0, 0.0, sphereRadius, 0.0,
+        radius, 0.0, 0.0, 0.0,
+        0.0, radius, 0.0, 0.0,
+        0.0, 0.0, radius, 0.0,
         position.x, position.y, position.z, 1.0
     );
 
@@ -122,29 +108,22 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
 
 }
 
-
 void main(void){
 
     #ifdef PICKING
         vPickingColor = pickingColor;
     #else
-        vColor = color;
+        #include color_vertex
     #endif
 
-    cameraSpherePos = ( modelViewMatrix * vec4( position, 1.0 ) ).xyzw;
-    sphereRadius = radius;
+    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    mvPosition.z -= radius;  // avoid clipping, added again in fragment shader
 
-    // avoid clipping, added again in fragment shader
-    cameraSpherePos.z -= radius;
-
-    gl_Position = projectionMatrix * vec4( cameraSpherePos.xyz, 1.0 );
+    gl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();
 
-    point = ( projectionMatrixInverse * gl_Position ).xyz;
+    vRadius = radius;
+    vPoint = ( projectionMatrixInverse * gl_Position ).xyz;
+    vViewPosition = -mvPosition.xyz;
 
 }
-
-
-
-
-

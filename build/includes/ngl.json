@@ -44,6 +44,7 @@
     "shader/SphereImpostor.frag",
 
     "shader/chunk/dull_interior_fragment.glsl",
+    "shader/chunk/fog_fragment.glsl",
     "shader/chunk/nearclip_fragment.glsl",
     "shader/chunk/nearclip_vertex.glsl",
     "shader/chunk/opaque_back_fragment.glsl",
