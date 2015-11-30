@@ -958,6 +958,7 @@ UI.Number.prototype.setRange = function ( min, max ) {
 UI.Number.prototype.setPrecision = function ( precision ) {
 
     this.precision = precision;
+    this.setValue( parseFloat( this.dom.value ) );
 
     return this;
 

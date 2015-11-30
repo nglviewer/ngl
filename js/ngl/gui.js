@@ -21,20 +21,21 @@ NGL.createParameterInput = function( p ){
 
     var input;
 
-    if( p.type === "number" || p.type === "integer" ){
+    if( p.type === "number" ){
 
-        if( p.type === "number" ){
-            input = new UI.Number( parseFloat( p.value ) || NaN )
-                .setPrecision( p.precision );
-        }else{
-            input = new UI.Integer( parseInt( p.value ) || NaN );
-        }
+        input = new UI.Number( parseFloat( p.value ) || NaN )
+            .setRange( p.min, p.max )
+            .setPrecision( p.precision );
 
-        input.setRange( p.min, p.max )
+    }else if( p.type === "integer" ){
+
+        input = new UI.Integer( parseInt( p.value ) || NaN )
+            .setRange( p.min, p.max );
 
     }else if( p.type === "range" ){
 
-        input = new UI.Range( p.min, p.max, p.value, p.step );
+        input = new UI.Range( p.min, p.max, p.value, p.step )
+            .setValue( parseFloat( p.value ) );
 
     }else if( p.type === "boolean" ){
 
@@ -1706,13 +1707,16 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Parameters
 
-    Object.keys( component.repr.parameters ).forEach( function( name ){
+    var repr = component.repr;
+    var rp = repr.getParameters();
+    console.log( rp )
 
-        var repr = component.repr;
-        var p = repr.parameters[ name ];
+    Object.keys( repr.parameters ).forEach( function( name ){
 
-        if( !p ) return;
+        if( !repr.parameters[ name ] ) return;
+        var p = Object.assign( {}, repr.parameters[ name ] );
 
+        p.value = rp[ name ];
         if( p.label === undefined ) p.label = name;
         var input = NGL.createParameterInput( p );
 
@@ -1722,12 +1726,18 @@ NGL.RepresentationComponentWidget = function( component, stage ){
             input.setValue( params[ name ] );
         } );
 
-        input.onChange( function(){
+        function setParam(){
             var po = {};
             po[ name ] = input.getValue();
             component.setParameters( po );
             repr.viewer.requestRender();
-        } );
+        }
+
+        if( p.type === "range" ){
+            input.onInput( setParam );
+        }else{
+            input.onChange( setParam );
+        }
 
         menu.addEntry( name, input );
 

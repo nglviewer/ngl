@@ -104,7 +104,7 @@ NGL.Representation.prototype = {
             type: "boolean", buffer: true
         },
         opacity: {
-            type: "number", precision: 1, max: 1, min: 0, buffer: true
+            type: "range", step: 0.01, max: 1, min: 0, buffer: true
         },
         side: {
             type: "select", options: NGL.SideTypes, buffer: true,
