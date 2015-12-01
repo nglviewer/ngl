@@ -37,6 +37,8 @@ NGL.Resources = {
     'shader/Mesh.frag': null,
     'shader/ParticleSprite.vert': null,
     'shader/ParticleSprite.frag': null,
+    'shader/Point.vert': null,
+    'shader/Point.frag': null,
     'shader/Quad.vert': null,
     'shader/Quad.frag': null,
     'shader/Ribbon.vert': null,
@@ -668,6 +670,9 @@ NGL.getShader = function(){
             var definesText = getDefines( defines );
 
             var shaderText = NGL.Resources[ 'shader/' + name ];
+            if( !shaderText ){
+                throw "empty shader, '" + name + "'";
+            }
             shaderText = shaderText.replace( re, function( match, p1 ){
 
                 var path = 'shader/chunk/' + p1 + '.glsl';
@@ -1650,6 +1655,8 @@ NGL.Viewer.prototype = {
         return function( group, camera ){
 
             var nearClip = this.nearClip;
+            var canvasHeight = this.height;
+            var pixelRatio = this.renderer.getPixelRatio();
 
             projectionMatrixInverse.getInverse(
                 camera.projectionMatrix
@@ -1668,6 +1675,14 @@ NGL.Viewer.prototype = {
 
                 if( u.nearClip ){
                     u.nearClip.value = nearClip;
+                }
+
+                if( u.canvasHeight ){
+                    u.canvasHeight.value = canvasHeight;
+                }
+
+                if( u.pixelRatio ){
+                    u.pixelRatio.value = pixelRatio;
                 }
 
                 if( u.projectionMatrixInverse ){
@@ -1702,10 +1717,8 @@ NGL.Viewer.prototype = {
 
             scene.traverseVisible( function ( o ){
 
-                if( ! ( o instanceof THREE.PointCloud ) || ! o.sortParticles ){
-
+                if( !( o instanceof THREE.Points ) || !o.sortParticles ){
                     return;
-
                 }
 
                 matrix.multiplyMatrices(

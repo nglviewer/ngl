@@ -33,6 +33,8 @@
     "shader/Mesh.frag",
     "shader/ParticleSprite.vert",
     "shader/ParticleSprite.frag",
+    "shader/Point.vert",
+    "shader/Point.frag",
     "shader/Quad.vert",
     "shader/Quad.frag",
     "shader/Ribbon.vert",

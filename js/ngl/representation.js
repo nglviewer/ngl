@@ -917,22 +917,33 @@ NGL.PointRepresentation.prototype = NGL.createObject(
     parameters: Object.assign( {
 
         pointSize: {
-            type: "integer", max: 20, min: 1, buffer: true
+            type: "number", precision: 1, max: 100, min: 0, buffer: true
         },
         sizeAttenuation: {
             type: "boolean", buffer: true
         },
-        sort: {
+        sortParticles: {
             type: "boolean", rebuild: true
-        }
+        },
+        useTexture: {
+            type: "boolean", buffer: true
+        },
+        alphaTest: {
+            type: "range", step: 0.001, max: 1, min: 0, buffer: true
+        },
+        forceTransparent: {
+            type: "boolean", buffer: true
+        },
 
-        // FIXME nearClip support missing
     }, NGL.Representation.prototype.parameters, {
 
         nearClip: null,
         flatShaded: null,
         wireframe: null,
-        linewidth: null
+        linewidth: null,
+
+        roughness: null,
+        metalness: null
 
     } ),
 
@@ -942,8 +953,10 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         this.pointSize = p.pointSize || 1;
         this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
-        this.sort = p.sort !== undefined ? p.sort : false;
-        p.opacity = p.opacity !== undefined ? p.opacity : 0.6;
+        this.sortParticles = p.sortParticles !== undefined ? p.sortParticles : false;
+        this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
+        this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
+        this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -959,7 +972,10 @@ NGL.PointRepresentation.prototype = NGL.createObject(
             this.getBufferParams( {
                 pointSize: this.pointSize,
                 sizeAttenuation: this.sizeAttenuation,
-                sort: this.sort,
+                sortParticles: this.sortParticles,
+                useTexture: this.useTexture,
+                alphaTest: this.alphaTest,
+                forceTransparent: this.forceTransparent
             } )
         );
 
@@ -985,7 +1001,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
         if( what[ "color" ] ){
 
             pointData[ "color" ] = this.atomSet.atomColor(
-                null, this.colorScheme, this.getColorParams()
+                null, this.getColorParams()
             );
 
         }

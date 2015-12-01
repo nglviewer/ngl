@@ -1,33 +1,27 @@
-
-precision highp float;
-precision highp int;
-
-// uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-// uniform mat4 viewMatrix;
-// uniform mat3 normalMatrix;
-// uniform vec3 cameraPosition;
-
-attribute vec3 position;
-attribute vec3 color;
-
-varying vec3 vColor;
-
 uniform float nearClip;
+uniform float size;
+uniform float canvasHeight;
+uniform float pixelRatio;
 
+#include color_pars_vertex
+#include common
 
-void main()
-{
+void main(){
 
-    vColor = color;
+    #include color_vertex
 
-    vec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );
+    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-    gl_Position = projectionMatrix * vec4( cameraPos.xyz, 1.0 );
+    #ifdef USE_SIZEATTENUATION
+        gl_PointSize = size * pixelRatio * ( ( canvasHeight / 2.0 ) / -mvPosition.z );
+    #else
+        gl_PointSize = size * pixelRatio;
+    #endif
 
-    // move out of viewing frustum for custom clipping
-    if( dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip ) ) > 0.0 )
-       gl_Position.w = -10.0;
+    gl_Position = projectionMatrix * mvPosition;
+
+    vec3 vViewPosition = -mvPosition.xyz;
+
+    #include nearclip_vertex
 
 }

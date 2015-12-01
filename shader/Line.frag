@@ -9,11 +9,11 @@ varying vec3 vViewPosition;
 
 void main(){
 
-	#include nearclip_fragment
+    #include nearclip_fragment
 
-	vec3 outgoingLight = vColor;
+    vec3 outgoingLight = vColor;
 
-	#include linear_to_gamma_fragment
+    #include linear_to_gamma_fragment
     #include fog_fragment
 
     gl_FragColor = vec4( outgoingLight, opacity );

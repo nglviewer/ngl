@@ -165,6 +165,7 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     this.roughness = p.roughness !== undefined ? p.roughness : 0.4;
     this.metalness = p.metalness !== undefined ? p.metalness : 0.0;
     this.diffuse = p.diffuse !== undefined ? p.diffuse : 0xffffff;
+    this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
 
     this.geometry = new THREE.BufferGeometry();
 
@@ -248,7 +249,7 @@ NGL.Buffer.prototype = {
 
     get transparent () {
 
-        return this.opacity < 1;
+        return this.opacity < 1 || this.forceTransparent;
 
     },
 
@@ -470,7 +471,7 @@ NGL.Buffer.prototype = {
         }else if( this.point ){
 
             mesh = new THREE.Points( this.geometry, this.material );
-            if( this.sort ) mesh.sortParticles = true;
+            if( this.sortParticles ) mesh.sortParticles = true;
 
         }else{
 
@@ -692,7 +693,11 @@ NGL.Buffer.prototype = {
             }
 
             if( tp[ name ].uniform ){
-                uniformData[ name ] = p[ name ];
+                if( tp[ name ].uniform !== true ){
+                    uniformData[ tp[ name ].uniform ] = p[ name ];
+                }else{
+                    uniformData[ name ] = p[ name ];
+                }
             }
 
             if( tp[ name ].updateShader ){
@@ -709,6 +714,10 @@ NGL.Buffer.prototype = {
 
             if( name === "flatShaded" ){
                 this.material.extensions.derivatives = this.flatShaded;
+            }
+
+            if( name === "forceTransparent" ){
+                propertyData[ "transparent" ] = this.transparent;
             }
 
         }
@@ -799,7 +808,7 @@ NGL.Buffer.prototype = {
         for( var name in data ){
 
             if( name === "opacity" ){
-                this.setProperties( { transparent: data[ name ] < 1 } );
+                this.setProperties( { transparent: this.transparent } );
             }
 
             if( u[ name ] !== undefined ){
@@ -1789,12 +1798,15 @@ NGL.PointBuffer = function( position, color, params ){
     this.point = true;
     this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
     this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
-    this.sort = p.sort !== undefined ? p.sort : false;
+    this.sortParticles = p.sortParticles !== undefined ? p.sortParticles : false;
+    this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
+    this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
+    this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
-    // this.vertexShader = 'Point.vert';
-    // this.fragmentShader = 'Point.frag';
+    this.vertexShader = 'Point.vert';
+    this.fragmentShader = 'Point.frag';
 
     this.tex = new THREE.Texture(
         NGL.Resources[ "img/radial.png" ]
@@ -1802,9 +1814,16 @@ NGL.PointBuffer = function( position, color, params ){
         // NGL.Resources[ "img/circle.png" ]
     );
     this.tex.needsUpdate = true;
-    if( !this.sort ) this.tex.premultiplyAlpha = true;
+    // if( !this.sortParticles ) this.tex.premultiplyAlpha = true;
 
     NGL.Buffer.call( this, position, color, undefined, undefined, p );
+
+    this.addUniforms( {
+        "size": { type: "f", value: this.pointSize },
+        "canvasHeight": { type: "f", value: 1.0 },
+        "pixelRatio": { type: "f", value: 1.0 },
+        "map": { type: "t", value: null },
+    } );
 
 };
 
@@ -1814,68 +1833,89 @@ NGL.PointBuffer.prototype.constructor = NGL.PointBuffer;
 
 NGL.PointBuffer.prototype.parameters = Object.assign( {
 
-    pointSize: { property: "size" },
-    sizeAttenuation: { property: true },
-    sort: {}
+    pointSize: { uniform: "size" },
+    sizeAttenuation: { updateShader: true },
+    sortParticles: {},
+    alphaTest: { updateShader: true },
+    useTexture: { updateShader: true },
+    forceTransparent: {},
 
-}, NGL.Buffer.prototype.parameters, {
-
-    opacity: { property: true },
-
-} );
+}, NGL.Buffer.prototype.parameters );
 
 NGL.PointBuffer.prototype.makeMaterial = function(){
 
-    var material;
+    NGL.Buffer.prototype.makeMaterial.call( this );
 
-    if( this.sort ){
+    this.material.uniforms.map.value = this.tex;
+    this.material.blending = THREE.NormalBlending;
+    this.material.needsUpdate = true;
 
-        material = new THREE.PointsMaterial({
-            map: this.tex,
-            blending: THREE.NormalBlending,
-            // blending: THREE.AdditiveBlending,
-            depthTest:      true,
-            transparent:    true,
+    /*
+        if( this.sortParticles ){
 
-            vertexColors: true,
-            size: this.pointSize,
-            sizeAttenuation: this.sizeAttenuation,
-            // transparent: this.transparent,
-            opacity: this.opacity,
-            fog: true
-        });
+            material = new THREE.PointsMaterial({
+                map: this.tex,
+                blending: THREE.NormalBlending,
+                // blending: THREE.AdditiveBlending,
+                depthTest:      true,
+                transparent:    true,
 
-    }else{
+                vertexColors: true,
+                size: this.pointSize,
+                sizeAttenuation: this.sizeAttenuation,
+                // transparent: this.transparent,
+                opacity: this.opacity,
+                fog: true
+            });
 
-        material = new THREE.PointsMaterial({
-            map: this.tex,
-            // blending:       THREE.AdditiveBlending,
-            depthTest:      false,
-            // alphaTest:      0.001,
-            transparent:    true,
+        }else{
 
-            blending: THREE.CustomBlending,
-            // blendSrc: THREE.SrcAlphaFactor,
-            // blendDst: THREE.OneMinusSrcAlphaFactor,
-            blendEquation: THREE.AddEquation,
+            material = new THREE.PointsMaterial({
+                map: this.tex,
+                // blending:       THREE.AdditiveBlending,
+                depthTest:      false,
+                // alphaTest:      0.001,
+                transparent:    true,
 
-            // requires premultiplied alpha
-            blendSrc: THREE.OneFactor,
-            blendDst: THREE.OneMinusSrcAlphaFactor,
+                blending: THREE.CustomBlending,
+                // blendSrc: THREE.SrcAlphaFactor,
+                // blendDst: THREE.OneMinusSrcAlphaFactor,
+                blendEquation: THREE.AddEquation,
 
-            vertexColors: true,
-            size: this.pointSize,
-            sizeAttenuation: this.sizeAttenuation,
-            // transparent: this.transparent,
-            opacity: this.opacity,
-            fog: true
-        });
+                // requires premultiplied alpha
+                blendSrc: THREE.OneFactor,
+                blendDst: THREE.OneMinusSrcAlphaFactor,
 
+                vertexColors: true,
+                size: this.pointSize,
+                sizeAttenuation: this.sizeAttenuation,
+                // transparent: this.transparent,
+                opacity: this.opacity,
+                fog: true
+            });
+
+        }
+    */
+
+};
+
+NGL.PointBuffer.prototype.getDefines = function( type ){
+
+    var defines = NGL.Buffer.prototype.getDefines.call( this, type );
+
+    if( this.sizeAttenuation ){
+        defines[ "USE_SIZEATTENUATION" ] = 1;
     }
 
-    this.material = material;
-    this.wireframeMaterial = material;
-    this.pickingMaterial = material;
+    if( this.useTexture ){
+        defines[ "USE_MAP" ] = 1;
+    }
+
+    if( this.alphaTest > 0 && this.alphaTest <= 1 ){
+        defines[ "ALPHATEST" ] = this.alphaTest.toPrecision( 2 );
+    }
+
+    return defines;
 
 };
 

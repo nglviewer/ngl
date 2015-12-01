@@ -4,7 +4,7 @@ varying vec3 vViewPosition;
 
 void main(){
 
-	#include color_vertex
+    #include color_vertex
     #include begin_vertex
     #include project_vertex
 
