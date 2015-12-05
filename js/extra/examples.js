@@ -599,14 +599,17 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
-            // o.addRepresentation( "line", {
-            //     lineWidth: 5, opacity: 0.5
-            // } );
-            // o.addRepresentation( "cartoon" );
-
             o.addRepresentation( "licorice" );
             o.addRepresentation( "point", {
-                sele: "*", sizeAttenuation: true, pointSize: 12, sort: true
+                sele: "*",
+                sizeAttenuation: true,
+                pointSize: 7,
+                opacity: 0.6,
+                useTexture: true,
+                alphaTest: 0.0,
+                edgeBleach: 1.0,
+                forceTransparent: true,
+                sortParticles: true
             } );
             o.centerView();
 
