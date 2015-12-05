@@ -158,6 +158,7 @@ UI.Panel = function () {
     dom.className = 'Panel';
 
     this.dom = dom;
+    this.children = [];
 
     return this;
 };
@@ -169,6 +170,7 @@ UI.Panel.prototype.add = function () {
     for ( var i = 0; i < arguments.length; i ++ ) {
 
         this.dom.appendChild( arguments[ i ].dom );
+        this.children.push( arguments[ i ] );
 
     }
 
@@ -181,6 +183,9 @@ UI.Panel.prototype.remove = function () {
     for ( var i = 0; i < arguments.length; i ++ ) {
 
         this.dom.removeChild( arguments[ i ].dom );
+
+        var idx = this.children.indexOf( arguments[ i ] );
+        if( idx !== -1 ) this.children.splice( idx, 1 );
 
     }
 
@@ -195,6 +200,8 @@ UI.Panel.prototype.clear = function () {
         this.dom.removeChild( this.dom.lastChild );
 
     }
+
+    this.children.length = 0;
 
     return this;
 
@@ -953,6 +960,7 @@ UI.Number.prototype.setRange = function ( min, max ) {
 UI.Number.prototype.setPrecision = function ( precision ) {
 
     this.precision = precision;
+    this.setValue( parseFloat( this.dom.value ) );
 
     return this;
 
@@ -1802,7 +1810,7 @@ UI.Range = function( min, max, value, step ) {
     dom.step = step;
 
     this.dom = dom;
-    this.dom.textContent = value;
+    this.dom.value = value;
 
     this.onInput( function(){
 
@@ -3020,20 +3028,21 @@ NGL.createParameterInput = function( p ){
 
     var input;
 
-    if( p.type === "number" || p.type === "integer" ){
+    if( p.type === "number" ){
 
-        if( p.type === "number" ){
-            input = new UI.Number( parseFloat( p.value ) || NaN )
-                .setPrecision( p.precision );
-        }else{
-            input = new UI.Integer( parseInt( p.value ) || NaN );
-        }
+        input = new UI.Number( parseFloat( p.value ) || NaN )
+            .setRange( p.min, p.max )
+            .setPrecision( p.precision );
 
-        input.setRange( p.min, p.max )
+    }else if( p.type === "integer" ){
+
+        input = new UI.Integer( parseInt( p.value ) || NaN )
+            .setRange( p.min, p.max );
 
     }else if( p.type === "range" ){
 
-        input = new UI.Range( p.min, p.max, p.value, p.step );
+        input = new UI.Range( p.min, p.max, p.value, p.step )
+            .setValue( parseFloat( p.value ) );
 
     }else if( p.type === "boolean" ){
 
@@ -3539,6 +3548,15 @@ NGL.MenubarViewWidget = function( stage ){
         );
     }
 
+    stage.signals.fullscreenChanged.add( function( isFullscreen ){
+        var icon = menuConfig[ 3 ].children[ 0 ];
+        if( isFullscreen ){
+            icon.switchClass( "compress", "expand" );
+        }else{
+            icon.switchClass( "expand", "compress" );
+        }
+    } );
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -3855,7 +3873,7 @@ NGL.PreferencesWidget = function( stage ){
         }
 
         listingPanel
-            .add( new UI.Text( name ).setWidth( "90px" ) )
+            .add( new UI.Text( name ).setWidth( "120px" ) )
             .add( input )
             .add( new UI.Break() );
 
@@ -4104,6 +4122,7 @@ NGL.SidebarWidget = function( stage ){
     var settingsMenu = new UI.PopupMenu( "cogs", "Settings", "window" )
         .setIconTitle( "settings" )
         .setMarginLeft( "10px" );
+    settingsMenu.entryLabelWidth = "120px";
 
     // Busy indicator
 
@@ -4137,7 +4156,10 @@ NGL.SidebarWidget = function( stage ){
 
     } );
 
-    var paramNames = [ "clipNear", "clipFar", "clipDist", "fogNear", "fogFar" ];
+    var paramNames = [
+        "clipNear", "clipFar", "clipDist", "fogNear", "fogFar",
+        "lightColor", "lightIntensity", "ambientColor", "ambientIntensity"
+    ];
 
     paramNames.forEach( function( name ){
 
@@ -4586,6 +4608,12 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     } );
 
+    component.script.signals.elementRemoved.add( function( value ){
+
+        panel.remove.apply( panel, value );
+
+    } );
+
     // Actions
 
     var dispose = new UI.DisposeIcon()
@@ -4696,13 +4724,15 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Parameters
 
-    Object.keys( component.repr.parameters ).forEach( function( name ){
+    var repr = component.repr;
+    var rp = repr.getParameters();
 
-        var repr = component.repr;
-        var p = repr.parameters[ name ];
+    Object.keys( repr.parameters ).forEach( function( name ){
 
-        if( !p ) return;
+        if( !repr.parameters[ name ] ) return;
+        var p = Object.assign( {}, repr.parameters[ name ] );
 
+        p.value = rp[ name ];
         if( p.label === undefined ) p.label = name;
         var input = NGL.createParameterInput( p );
 
@@ -4712,12 +4742,18 @@ NGL.RepresentationComponentWidget = function( component, stage ){
             input.setValue( params[ name ] );
         } );
 
-        input.onChange( function(){
+        function setParam(){
             var po = {};
             po[ name ] = input.getValue();
             component.setParameters( po );
             repr.viewer.requestRender();
-        } );
+        }
+
+        if( p.type === "range" ){
+            input.onInput( setParam );
+        }else{
+            input.onChange( setParam );
+        }
 
         menu.addEntry( name, input );
 
