@@ -2173,35 +2173,35 @@ NGL.TraceBuffer.prototype.setAttributes = function( data ){
 //////////////////////
 // Sprite Primitives
 
-NGL.ParticleSpriteBuffer = function( position, color, radius ){
+// NGL.ParticleSpriteBuffer = function( position, color, radius ){
 
-    this.count = position.length / 3;
-    this.vertexShader = 'ParticleSprite.vert';
-    this.fragmentShader = 'ParticleSprite.frag';
+//     this.count = position.length / 3;
+//     this.vertexShader = 'ParticleSprite.vert';
+//     this.fragmentShader = 'ParticleSprite.frag';
 
-    NGL.QuadBuffer.call( this );
+//     NGL.QuadBuffer.call( this );
 
-    this.addUniforms({
-        'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
-    });
+//     this.addUniforms({
+//         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+//     });
 
-    this.addAttributes( {
-        "radius": { type: "f", value: null },
-    } );
+//     this.addAttributes( {
+//         "radius": { type: "f", value: null },
+//     } );
 
-    this.setAttributes( {
-        "position": position,
-        "color": color,
-        "radius": radius,
-    } );
+//     this.setAttributes( {
+//         "position": position,
+//         "color": color,
+//         "radius": radius,
+//     } );
 
-    this.material.lights = false;
+//     this.material.lights = false;
 
-};
+// };
 
-NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
+// NGL.ParticleSpriteBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
-NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
+// NGL.ParticleSpriteBuffer.prototype.constructor = NGL.ParticleSpriteBuffer;
 
 
 NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, params ){

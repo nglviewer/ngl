@@ -27,21 +27,13 @@
     "shader/HyperballStickImpostor.frag",
     "shader/Line.vert",
     "shader/Line.frag",
-    "shader/LineSprite.vert",
-    "shader/LineSprite.frag",
     "shader/Mesh.vert",
     "shader/Mesh.frag",
-    "shader/ParticleSprite.vert",
-    "shader/ParticleSprite.frag",
     "shader/Point.vert",
     "shader/Point.frag",
-    "shader/Quad.vert",
-    "shader/Quad.frag",
     "shader/Ribbon.vert",
     "shader/SDFFont.vert",
     "shader/SDFFont.frag",
-    "shader/SphereHalo.vert",
-    "shader/SphereHalo.frag",
     "shader/SphereImpostor.vert",
     "shader/SphereImpostor.frag",
 
@@ -52,5 +44,5 @@
     "shader/chunk/opaque_back_fragment.glsl",
 
     "fonts/LatoBlack.fnt",
-    "fonts/LatoBlack.png",
+    "fonts/LatoBlack.png"
 ]
