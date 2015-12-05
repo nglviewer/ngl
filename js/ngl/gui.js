@@ -1719,7 +1719,6 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     var repr = component.repr;
     var rp = repr.getParameters();
-    console.log( rp )
 
     Object.keys( repr.parameters ).forEach( function( name ){
 

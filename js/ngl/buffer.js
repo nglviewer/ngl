@@ -1791,6 +1791,69 @@ NGL.CylinderGeometryBuffer.prototype.setAttributes = function( data ){
 //////////////////////
 // Pixel Primitives
 
+NGL.makePointTexture = function( params ){
+
+    var p = Object.assign( {}, params );
+
+    var width = NGL.defaults( p.width, 128 );
+    var height = NGL.defaults( p.height, 128 );
+    var center = [ width / 2, height / 2 ];
+    var radius = Math.min( width / 2, height / 2 );
+    var delta = NGL.defaults( p.delta, 1 / ( radius + 1 ) ) * radius;
+
+    //
+
+    function clamp( value, min, max ){
+        return Math.min( Math.max( value, min ), max );
+    }
+
+    function distance( x0, y0, x1, y1 ){
+        var dx = x1 - x0, dy = y1 - y0;
+        return Math.sqrt( dx * dx + dy * dy );
+    }
+
+    function smoothStep( edge0, edge1, x ){
+        // Scale, bias and saturate x to 0..1 range
+        x = clamp( ( x - edge0 ) / ( edge1 - edge0 ), 0, 1 );
+        // Evaluate polynomial
+        return x * x * ( 3 - 2 * x );
+    }
+
+    //
+
+    var canvas = document.createElement( 'canvas' );
+    canvas.width = width;
+    canvas.height = height;
+
+    var context = canvas.getContext( '2d' );
+    var imageData = context.createImageData( width, height );
+    var data = imageData.data;
+
+    var x = 0
+    var y = 0;
+    var array = new Float32Array( width * height * 4 );
+
+    for ( var i = 0, il = array.length; i < il; i += 4 ) {
+
+        var dist = distance( x, y, center[ 0 ], center[ 1 ] );
+        var value = 1 - smoothStep( radius - delta, radius, dist );
+
+        data[ i     ] = value * 255;
+        data[ i + 1 ] = value * 255;
+        data[ i + 2 ] = value * 255;
+        data[ i + 3 ] = value * 255;
+
+        if ( ++x === width ) { x = 0; y ++; }
+
+    }
+
+    context.putImageData( imageData, 0, 0 );
+
+    return new THREE.CanvasTexture( canvas );
+
+};
+
+
 NGL.PointBuffer = function( position, color, params ){
 
     var p = params || {};
@@ -1802,19 +1865,12 @@ NGL.PointBuffer = function( position, color, params ){
     this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
     this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
     this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
+    this.edgeBleach = p.edgeBleach !== undefined ? p.edgeBleach : 0.0;
 
     this.size = position.length / 3;
     this.attributeSize = this.size;
     this.vertexShader = 'Point.vert';
     this.fragmentShader = 'Point.frag';
-
-    this.tex = new THREE.Texture(
-        NGL.Resources[ "img/radial.png" ]
-        // NGL.Resources[ "img/spark1.png" ]
-        // NGL.Resources[ "img/circle.png" ]
-    );
-    this.tex.needsUpdate = true;
-    // if( !this.sortParticles ) this.tex.premultiplyAlpha = true;
 
     NGL.Buffer.call( this, position, color, undefined, undefined, p );
 
@@ -1839,6 +1895,7 @@ NGL.PointBuffer.prototype.parameters = Object.assign( {
     alphaTest: { updateShader: true },
     useTexture: { updateShader: true },
     forceTransparent: {},
+    edgeBleach: { uniform: true },
 
 }, NGL.Buffer.prototype.parameters );
 
@@ -1846,63 +1903,18 @@ NGL.PointBuffer.prototype.makeMaterial = function(){
 
     NGL.Buffer.prototype.makeMaterial.call( this );
 
+    this.makeTexture();
+
     this.material.uniforms.map.value = this.tex;
     this.material.blending = THREE.NormalBlending;
-    // this.material.blending = THREE.AdditiveBlending;
-    // this.material.blending = THREE.SubtractiveBlending;
-    // this.material.blending = THREE.MultiplyBlending;
-    // this.material.blending = THREE.CustomBlending;
-    // this.material.blendEquation = THREE.AddEquation;
-    // this.material.blendSrc = THREE.OneFactor;
-    // this.material.blendDst = THREE.OneMinusSrcAlphaFactor;
     this.material.needsUpdate = true;
 
-    /*
-        if( this.sortParticles ){
+};
 
-            material = new THREE.PointsMaterial({
-                map: this.tex,
-                blending: THREE.NormalBlending,
-                // blending: THREE.AdditiveBlending,
-                depthTest:      true,
-                transparent:    true,
+NGL.PointBuffer.prototype.makeTexture = function(){
 
-                vertexColors: true,
-                size: this.pointSize,
-                sizeAttenuation: this.sizeAttenuation,
-                // transparent: this.transparent,
-                opacity: this.opacity,
-                fog: true
-            });
-
-        }else{
-
-            material = new THREE.PointsMaterial({
-                map: this.tex,
-                // blending:       THREE.AdditiveBlending,
-                depthTest:      false,
-                // alphaTest:      0.001,
-                transparent:    true,
-
-                blending: THREE.CustomBlending,
-                // blendSrc: THREE.SrcAlphaFactor,
-                // blendDst: THREE.OneMinusSrcAlphaFactor,
-                blendEquation: THREE.AddEquation,
-
-                // requires premultiplied alpha
-                blendSrc: THREE.OneFactor,
-                blendDst: THREE.OneMinusSrcAlphaFactor,
-
-                vertexColors: true,
-                size: this.pointSize,
-                sizeAttenuation: this.sizeAttenuation,
-                // transparent: this.transparent,
-                opacity: this.opacity,
-                fog: true
-            });
-
-        }
-    */
+    if( this.tex ) this.tex.dispose();
+    this.tex = NGL.makePointTexture( { delta: this.edgeBleach } );
 
 };
 
@@ -1926,11 +1938,25 @@ NGL.PointBuffer.prototype.getDefines = function( type ){
 
 };
 
+NGL.PointBuffer.prototype.setUniforms = function( data ){
+
+    if( data && data[ "edgeBleach" ] !== undefined ){
+
+        this.edgeBleach = data[ "edgeBleach" ];
+        this.makeTexture();
+        data[ "map" ] = this.tex;
+
+    }
+
+    NGL.Buffer.prototype.setUniforms.call( this, data );
+
+};
+
 NGL.PointBuffer.prototype.dispose = function(){
 
     NGL.Buffer.prototype.dispose.call( this );
 
-    this.tex.dispose();
+    if( this.tex ) this.tex.dispose();
 
 };
 

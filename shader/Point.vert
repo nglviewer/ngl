@@ -9,16 +9,14 @@ uniform float pixelRatio;
 void main(){
 
     #include color_vertex
-
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    #include begin_vertex
+    #include project_vertex
 
     #ifdef USE_SIZEATTENUATION
         gl_PointSize = size * pixelRatio * ( ( canvasHeight / 2.0 ) / -mvPosition.z );
     #else
         gl_PointSize = size * pixelRatio;
     #endif
-
-    gl_Position = projectionMatrix * mvPosition;
 
     vec3 vViewPosition = -mvPosition.xyz;
 

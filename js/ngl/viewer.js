@@ -19,11 +19,6 @@ NGL.Resources = {
     'fonts/LatoBlack.fnt': null,
     'fonts/LatoBlack.png': 'image',
 
-    // sprites
-    // 'img/circle.png': 'image',
-    // 'img/spark1.png': 'image',
-    'img/radial.png': 'image',
-
     // shaders
     'shader/CylinderImpostor.vert': null,
     'shader/CylinderImpostor.frag': null,
