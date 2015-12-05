@@ -14,6 +14,7 @@ NGL.Script = function( functionBody, name, path ){
     this.signals = {
 
         elementAdded: new SIGNALS.Signal(),
+        elementRemoved: new SIGNALS.Signal(),
         nameChanged: new SIGNALS.Signal(),
 
     };
@@ -55,6 +56,12 @@ NGL.Script.prototype = {
             add: function( element ){
 
                 this.signals.elementAdded.dispatch( arguments );
+
+            }.bind( this ),
+
+            remove: function( element ){
+
+                this.signals.elementRemoved.dispatch( arguments );
 
             }.bind( this ),
 

@@ -1601,6 +1601,12 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     } );
 
+    component.script.signals.elementRemoved.add( function( value ){
+
+        panel.remove.apply( panel, value );
+
+    } );
+
     // Actions
 
     var dispose = new UI.DisposeIcon()
