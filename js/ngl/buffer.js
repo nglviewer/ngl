@@ -1848,6 +1848,13 @@ NGL.PointBuffer.prototype.makeMaterial = function(){
 
     this.material.uniforms.map.value = this.tex;
     this.material.blending = THREE.NormalBlending;
+    // this.material.blending = THREE.AdditiveBlending;
+    // this.material.blending = THREE.SubtractiveBlending;
+    // this.material.blending = THREE.MultiplyBlending;
+    // this.material.blending = THREE.CustomBlending;
+    // this.material.blendEquation = THREE.AddEquation;
+    // this.material.blendSrc = THREE.OneFactor;
+    // this.material.blendDst = THREE.OneMinusSrcAlphaFactor;
     this.material.needsUpdate = true;
 
     /*

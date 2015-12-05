@@ -5043,10 +5043,10 @@ NGL.DotRepresentation.prototype = NGL.createObject(
             }
         },
         thresholdMin: {
-            type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
         },
         thresholdMax: {
-            type: "number", precision: 3, max: 1000, min: -1000, rebuild: true
+            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
         },
         thresholdOut: {
             type: "boolean", rebuild: true
@@ -5074,11 +5074,27 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        sort: {
-            type: "boolean", rebuild: true
-        },
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+
+        pointSize: {
+            type: "number", precision: 1, max: 100, min: 0, buffer: true
+        },
+        sizeAttenuation: {
+            type: "boolean", buffer: true
+        },
+        sortParticles: {
+            type: "boolean", rebuild: true
+        },
+        useTexture: {
+            type: "boolean", buffer: true
+        },
+        alphaTest: {
+            type: "range", step: 0.001, max: 1, min: 0, buffer: true
+        },
+        forceTransparent: {
+            type: "boolean", buffer: true
         },
 
     }, NGL.Representation.prototype.parameters, {
@@ -5123,7 +5139,13 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.dotType = p.dotType !== undefined ? p.dotType : "point";
         this.radius = p.radius !== undefined ? p.radius : 0.1;
         this.scale = p.scale !== undefined ? p.scale : 1.0;
-        this.sort = p.sort !== undefined ? p.sort : false;
+
+        this.pointSize = p.pointSize || 1;
+        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
+        this.sortParticles = p.sortParticles !== undefined ? p.sortParticles : false;
+        this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
+        this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
+        this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -5194,9 +5216,12 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 position,
                 color,
                 this.getBufferParams( {
-                    pointSize: this.radius,
-                    sizeAttenuation: true,  // this.sizeAttenuation,
-                    sort: this.sort,
+                    pointSize: this.pointSize,
+                    sizeAttenuation: this.sizeAttenuation,
+                    sortParticles: this.sortParticles,
+                    useTexture: this.useTexture,
+                    alphaTest: this.alphaTest,
+                    forceTransparent: this.forceTransparent
                 } )
             );
 
