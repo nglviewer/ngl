@@ -4,6 +4,8 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
     var p = params || {};
 
     var isolevel = p.isolevel !== undefined ? p.isolevel : 0.4;
+    var isosurfOpacity = p.isosurfOpacity !== undefined ? p.isosurfOpacity : 0.6;
+    var molsurfOpacity = p.molsurfOpacity !== undefined ? p.molsurfOpacity : 1.0;
 
     // pqr
 
@@ -23,7 +25,8 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         surfaceType: "ms",
         colorScheme: "bfactor",
         colorScale: "rwb",
-        colorDomain: [ -1, 0, 1 ]
+        colorDomain: [ -1, 0, 1 ],
+        opacity: molsurfOpacity,
     } );
 
     // dx
@@ -34,8 +37,8 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         isolevel: -Math.abs( isolevel ),
         smooth: 1,
         color: "red",
-        opacity: 0.6,
-        side: THREE.BackSide,
+        opacity: isosurfOpacity,
+        side: THREE.DoubleSide,
         opaqueBack: false
     } );
 
@@ -45,8 +48,8 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         isolevel: Math.abs( isolevel ),
         smooth: 1,
         color: "blue",
-        opacity: 0.6,
-        side: THREE.FrontSide,
+        opacity: isosurfOpacity,
+        side: THREE.DoubleSide,
         opaqueBack: false
     } );
 
@@ -104,34 +107,38 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
 var ApbsWidget = function( pqrComp, dxComp ){
 
     var isolevel = 0.5;
+    var isosurfOpacity = 0.6;
+    var molsurfOpacity = 1.0;
 
     var container = new UI.Panel();
 
     var apbsPreset = new ApbsPreset(
         pqrComp, dxComp, {
-            isolevel: isolevel
+            isolevel: isolevel,
+            isosurfOpacity: isosurfOpacity,
+            molsurfOpacity: molsurfOpacity
         }
     );
 
     var isolevelNumber = new UI.Number( isolevel )
+        .setRange( 0, Infinity )
         .onChange( function(){
             apbsPreset.setIsosurfParams( {
                 isolevel: isolevelNumber.getValue()
             } );
         } );
 
-    var isolevelSelect = new UI.Select()
-        .setOptions( {
-            "0.1": 0.1, "0.2": 0.2, "0.3": 0.3,
-            "0.4": 0.4, "0.5": 0.5, "0.7": 0.7,
-            "1.0": 1.0, "2.0": 2.0, "3.0": 3.0,
-            "4.0": 4.0, "5.0": 5.0, "7.0": 7.0,
-            "10.0": 10.0, "20.0": 20.0, "30.0": 30.0,
-        } )
-        .setValue( isolevel )
-        .onChange( function(){
+    var isosurfOpacityRange = new UI.Range( 0, 1, isosurfOpacity, 0.01 )
+        .onInput( function(){
             apbsPreset.setIsosurfParams( {
-                isolevel: parseFloat( isolevelSelect.getValue() )
+                opacity: isosurfOpacityRange.getValue()
+            } );
+        } );
+
+    var molsurfOpacityRange = new UI.Range( 0, 1, molsurfOpacity, 0.01 )
+        .onInput( function(){
+            apbsPreset.setMolsurfParams( {
+                opacity: molsurfOpacityRange.getValue()
             } );
         } );
 
@@ -139,6 +146,12 @@ var ApbsWidget = function( pqrComp, dxComp ){
         new UI.Text( "isolevel" ).setMarginRight( "10px" ),
         isolevelNumber,
         // isolevelSelect,
+        new UI.Break(),
+        new UI.Text( "isosurf opacity" ).setMarginRight( "10px" ),
+        isosurfOpacityRange,
+        new UI.Break(),
+        new UI.Text( "molsurf opacity" ).setMarginRight( "10px" ),
+        molsurfOpacityRange,
         new UI.Break(),
         uiVisibilityButton(
             "electrostatic isosurface", apbsPreset.isosurfRepr
@@ -195,20 +208,11 @@ var ApbsLoader = function(){
 
     var pqrFile = new UI.File().setWidth( "200px" );
     var dxFile = new UI.File().setWidth( "200px" );
-
+    var infoText = new UI.Text();
     var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
     //
-
-    function load( pqr, dx ){
-
-        infoText.setValue( "loading..." );
-        loadApbs( pqr, dx ).then( function(){
-            infoText.setValue( "" );
-        } );
-
-    }
 
     function loadFiles(){
 
@@ -218,15 +222,17 @@ var ApbsLoader = function(){
         if( !pqr || !dx ){
             infoText.setValue( "please supply PQR and DX files" );
             return;
+        }else{
+            infoText.setValue( "" );
         }
 
-        load( pqr, dx );
+        loadApbs( pqr, dx );
 
     }
 
     function loadExample(){
 
-        load(
+        loadApbs(
             "data://1crn_apbs.pqr",
             "data://1crn_apbs_pot.dx.gz"
         );
