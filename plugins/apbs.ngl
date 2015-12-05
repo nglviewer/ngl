@@ -162,13 +162,40 @@ var ApbsWidget = function( pqrComp, dxComp ){
 };
 
 
+function loadApbs( pqr, dx ){
+
+    var infoText = new UI.Text( "loading..." );
+    panel.add( infoText );
+
+    var initComp = function( comp ){
+        comp.requestGuiVisibility( false );
+        comp.centerView();
+        return comp;
+    }
+
+    var promiseList = [
+        stage.loadFile( pqr, { ext: "pqr" } ).then( initComp ),
+        stage.loadFile( dx, { ext: "dx" } ).then( initComp )
+    ];
+
+    return Promise.all( promiseList ).then( function( compList ){
+        apbsWidget = new ApbsWidget(
+            compList[ 0 ], compList[ 1 ]
+        );
+        panel.remove( infoText );
+        panel.add( apbsWidget );
+    } );
+
+}
+
+
 var ApbsLoader = function(){
 
     var container = new UI.Panel();
 
     var pqrFile = new UI.File().setWidth( "200px" );
     var dxFile = new UI.File().setWidth( "200px" );
-    var infoText = new UI.Text();
+
     var loadBtn = new UI.Button( "Load" ).onClick( loadFiles );
     var exampleBtn = new UI.Button( "Example" ).onClick( loadExample );
 
@@ -177,24 +204,8 @@ var ApbsLoader = function(){
     function load( pqr, dx ){
 
         infoText.setValue( "loading..." );
-
-        var initComp = function( comp ){
-            comp.requestGuiVisibility( false );
-            comp.centerView();
-            return comp;
-        }
-
-        var promiseList = [
-            stage.loadFile( pqr, { ext: "pqr" } ).then( initComp ),
-            stage.loadFile( dx, { ext: "dx" } ).then( initComp )
-        ];
-
-        Promise.all( promiseList ).then( function( compList ){
+        loadApbs( pqr, dx ).then( function(){
             infoText.setValue( "" );
-            apbsWidget = new ApbsWidget(
-                compList[ 0 ], compList[ 1 ]
-            );
-            panel.add( apbsWidget );
         } );
 
     }
@@ -251,7 +262,14 @@ var ApbsLoader = function(){
 
 function apbsLoader(){
 
-    var apbsLoader = new ApbsLoader();
-    panel.add( apbsLoader );
+    var pqr = NGL.GET( "pqr" );
+    var dx = NGL.GET( "dx" );
+
+    if( pqr, dx ){
+        loadApbs( pqr, dx );
+    }else{
+        var apbsLoader = new ApbsLoader();
+        panel.add( apbsLoader );
+    }
 
 }
