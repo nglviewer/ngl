@@ -4997,7 +4997,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
             this, params, what, rebuild
         );
 
-        this.volume.getBox( this.boxCenter, this.boxSize, this.box );
+        if( this.volume ){
+            this.volume.getBox( this.boxCenter, this.boxSize, this.box );
+        }
 
         if( this.surface && (
                 params[ "isolevel" ] !== undefined ||
