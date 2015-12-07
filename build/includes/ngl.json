@@ -41,8 +41,6 @@
     "shader/chunk/fog_fragment.glsl",
     "shader/chunk/nearclip_fragment.glsl",
     "shader/chunk/nearclip_vertex.glsl",
-    "shader/chunk/opaque_back_fragment.glsl",
+    "shader/chunk/opaque_back_fragment.glsl"
 
-    "fonts/LatoBlack.fnt",
-    "fonts/LatoBlack.png"
 ]

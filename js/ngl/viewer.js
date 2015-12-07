@@ -11,14 +11,6 @@
  */
 NGL.Resources = {
 
-    // fonts
-    // 'fonts/Arial.fnt': null,
-    // 'fonts/Arial.png': 'image',
-    // 'fonts/DejaVu.fnt': null,
-    // 'fonts/DejaVu.png': 'image',
-    'fonts/LatoBlack.fnt': null,
-    'fonts/LatoBlack.png': 'image',
-
     // shaders
     'shader/CylinderImpostor.vert': null,
     'shader/CylinderImpostor.frag': null,

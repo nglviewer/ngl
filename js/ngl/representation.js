@@ -1037,11 +1037,25 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         labelType: {
             type: "select", options: NGL.LabelFactory.types, rebuild: true
         },
-        font: {
+        fontFamily: {
             type: "select", options: {
-                // "Arial": "Arial",
-                // "DejaVu": "DejaVu",
-                "LatoBlack": "LatoBlack"
+                "sans-serif": "sans-serif",
+                "monospace": "monospace",
+                "serif": "serif"
+            },
+            rebuild: true
+        },
+        fontStyle: {
+            type: "select", options: {
+                "normal": "normal",
+                "italic": "italic"
+            },
+            rebuild: true
+        },
+        fontWeight: {
+            type: "select", options: {
+                "normal": "normal",
+                "bold": "bold"
             },
             rebuild: true
         }
@@ -1063,7 +1077,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         this.labelType = p.labelType || "res";
         this.labelText = p.labelText || {};
-        this.font = p.font || 'LatoBlack';
+        this.fontFamily = p.fontFamily || "sans-serif";
+        this.fontStyle = p.fontStyle || "normal";
+        this.fontWeight = p.fontWeight || "bold";
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1090,7 +1106,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             this.atomSet.atomColor( null, this.getColorParams() ),
             text,
             this.getBufferParams( {
-                font: this.font,
+                fontFamily: this.fontFamily,
+                fontStyle: this.fontStyle,
+                fontWeight: this.fontWeight,
             } )
         );
 

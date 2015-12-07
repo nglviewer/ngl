@@ -17,7 +17,7 @@ void main(void){
 
     vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
-    cameraCornerPos.xy += mapping * inputSize;
+    cameraCornerPos.xy += mapping * inputSize * 0.01;
     cameraCornerPos.z += 0.5;
 
     gl_Position = projectionMatrix * cameraCornerPos;

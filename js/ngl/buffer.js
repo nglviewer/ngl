@@ -1795,8 +1795,8 @@ NGL.makePointTexture = function( params ){
 
     var p = Object.assign( {}, params );
 
-    var width = NGL.defaults( p.width, 128 );
-    var height = NGL.defaults( p.height, 128 );
+    var width = NGL.defaults( p.width, 256 );
+    var height = NGL.defaults( p.height, 256 );
     var center = [ width / 2, height / 2 ];
     var radius = Math.min( width / 2, height / 2 );
     var delta = NGL.defaults( p.delta, 1 / ( radius + 1 ) ) * radius;
@@ -1821,19 +1821,11 @@ NGL.makePointTexture = function( params ){
 
     //
 
-    var canvas = document.createElement( 'canvas' );
-    canvas.width = width;
-    canvas.height = height;
-
-    var context = canvas.getContext( '2d' );
-    var imageData = context.createImageData( width, height );
-    var data = imageData.data;
-
     var x = 0
     var y = 0;
-    var array = new Float32Array( width * height * 4 );
+    var data = new Uint8Array( width * height * 4 );
 
-    for ( var i = 0, il = array.length; i < il; i += 4 ) {
+    for ( var i = 0, il = data.length; i < il; i += 4 ) {
 
         var dist = distance( x, y, center[ 0 ], center[ 1 ] );
         var value = 1 - smoothStep( radius - delta, radius, dist );
@@ -1843,13 +1835,17 @@ NGL.makePointTexture = function( params ){
         data[ i + 2 ] = value * 255;
         data[ i + 3 ] = value * 255;
 
-        if ( ++x === width ) { x = 0; y ++; }
+        if( ++x === width ){
+            x = 0;
+            y++;
+        }
 
     }
 
-    context.putImageData( imageData, 0, 0 );
+    var tex = new THREE.DataTexture( data, width, height );
+    tex.needsUpdate = true;
 
-    return new THREE.CanvasTexture( canvas );
+    return tex;
 
 };
 
@@ -2909,66 +2905,214 @@ NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, 
 ////////////////
 // Text & Font
 
+NGL.TextAtlas = function( params ){
 
-NGL.getFont = function( name ){
+    // adapted from https://github.com/unconed/mathbox
+    // MIT License Copyright (C) 2013+ Steven Wittens and contributors
 
-    var fnt = NGL.Resources[ 'fonts/' + name + '.fnt' ].split('\n');
-    var font = {};
-    var m, tWidth, tHeight, base, lineHeight;
+    var p = Object.assign( {}, params );
 
-    fnt.forEach( function( line ){
+    this.font = p.font !== undefined ? p.font : [ 'sans-serif' ];
+    this.size = p.size || 36;
+    this.style = p.style !== undefined ? p.style : 'normal';
+    this.variant = p.variant !== undefined ? p.variant : 'normal';
+    this.weight = p.weight !== undefined ? p.weight : 'normal';
+    this.outline = p.outline !== undefined ? p.outline : 0;
+    this.width = p.width || 1024;
+    this.height = p.height || 1024;
 
-        if( line.substr( 0, 5 ) === 'char ' ){
+    this.gamma = 1;
+    if (typeof navigator !== 'undefined') {
+        var ua = navigator.userAgent;
+        if (ua.match(/Chrome/) && ua.match(/OS X/)) {
+            this.gamma = 0.5;
+        }
+    }
 
-            var character = {};
-            var ls = line.substr( 5 ).split( /\s+/ );
-            ls.forEach( function( field ){
-                var fs = field.split( '=' );
-                character[ fs[ 0 ] ] = parseInt( fs[ 1 ] );
-            });
-            var x = character.x;
-            var y = character.y;
-            var width = character.width;
-            var height = character.height;
-            character.textureCoords = new Float32Array([
-                x/tWidth            ,1 - y/tHeight,                 // top left
-                x/tWidth            ,1 - (y+height)/tHeight,        // bottom left
-                (x+width)/tWidth    ,1 - y/tHeight,                 // top right
-                (x+width)/tWidth    ,1 - (y+height)/tHeight,        // bottom right
-            ]);
-            character.width2 = (10*width)/tWidth;
-            character.height2 = (10*height)/tHeight;
-            character.xadvance2 = (10*(character.xadvance))/tWidth;
-            character.xoffset2 = (10*(character.xoffset))/tWidth;
-            character.yoffset2 = (10*(character.yoffset))/tHeight;
-            character.lineHeight = (10*lineHeight)/tHeight;
-            font[ character[ 'id' ] ] = character;
+    this.mapped = {};
+    this.scratchW = 0;
+    this.scratchH = 0;
+    this.currentX = 0;
+    this.currentY = 0;
 
-        }else if( line.substr( 0, 7 ) === 'common ' ){
+    this.build( p );
 
-            // common lineHeight=38 base=30 scaleW=512 scaleH=512 pages=1 packed=0
+}
 
-            m = line.match( /scaleW=([0-9]+)/ );
-            if( m !== null ) tWidth = m[ 1 ];
+NGL.TextAtlas.prototype = {
 
-            m = line.match( /scaleH=([0-9]+)/ );
-            if( m !== null ) tHeight = m[ 1 ];
+    build: function( params ){
 
-            m = line.match( /base=([0-9]+)/ );
-            if( m !== null ) base = m[ 1 ];
+        // Prepare line-height with room for outline and descenders/ascenders
+        var lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
+        var maxWidth = ( 512 / 16 ) * lineHeight;
 
-            m = line.match( /lineHeight=([0-9]+)/ );
-            if( m !== null ) lineHeight = m[ 1 ];
+        // Prepare scratch canvas
+        var canvas = document.createElement( "canvas" );
+        canvas.width = maxWidth;
+        canvas.height = lineHeight;
 
-        }else{
+        // Font string
+        var quote = function(str) {
+            return "\"" + ( str.replace( /(['"\\])/g, "\\$1" ) ) + "\"";
+        };
+        var font = this.font.map( quote ).join( ", " );
 
-            //NGL.log( i, line );
+        var ctx = canvas.getContext( "2d" );
+        ctx.font = this.style + " " + this.variant + " " + this.weight + " " + this.size + "px " + this.font;
+        ctx.fillStyle = "#FF0000";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.lineJoin = "round";
+
+        // document.body.appendChild( canvas );
+        // canvas.setAttribute( "style", "position: absolute; top: 0; left: 0; z-index: 100; border: 1px solid red; background: rgba(255,0,255,.25);" );
+
+        var colors = [];
+        var dilate = this.outline * 3;
+        for( var i = 0; i < dilate; ++i ){
+            // 8 rgb levels = 1 step = .5 pixel increase
+            var val = Math.max( 0, -i * 8 + 128 - ( !i ) * 8 );
+            var hex = ( "00" + val.toString( 16 ) ).slice( -2 );
+            colors.push( "#" + hex + hex + hex );
+        }
+        var scratch = new Uint8Array( maxWidth * lineHeight * 2 );
+
+        this.canvas = canvas;
+        this.context = ctx;
+        this.lineHeight = lineHeight;
+        this.maxWidth = maxWidth;
+        this.colors = colors;
+        this.scratch = scratch;
+
+        this.data = new Uint8Array( this.width * this.height * 4 );
+
+        this.canvas2 = document.createElement( 'canvas' );
+        this.canvas2.width = this.width;
+        this.canvas2.height = this.height;
+        this.context2 = this.canvas2.getContext( '2d' );
+        // document.body.appendChild( this.canvas2 );
+        // this.canvas2.setAttribute( "style", "position: absolute; bottom: 0; right: 0; z-index: 100; border: 1px solid green; background: rgba(255,0,255,.25);" );
+
+    },
+
+    map: function( text ){
+
+        if( this.mapped[ text ] === undefined ){
+
+            this.draw( text );
+
+            // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+
+            if( this.currentX + this.scratchW > this.width ){
+                this.currentX = 0;
+                this.currentY += this.scratchH;
+            }
+            if( this.currentY + this.scratchH > this.height ){
+                console.warn( "canvas to small" );
+            }
+
+            this.mapped[ text ] = {
+                x: this.currentX,
+                y: this.currentY,
+                w: this.scratchW,
+                h: this.scratchH
+            };
+
+            this.context2.drawImage(
+                this.canvas,
+                0, 0,
+                this.scratchW, this.scratchH,
+                this.currentX, this.currentY,
+                this.scratchW, this.scratchH
+            );
+
+            this.currentX += this.scratchW;
 
         }
 
-    })
+        return this.mapped[ text ];
 
-    return font;
+    },
+
+    draw: function( text ){
+
+        var h = this.lineHeight;
+        var o = this.outline;
+        var ctx = this.context;
+        var dst = this.scratch;
+        var max = this.maxWidth;
+        var colors = this.colors;
+
+        // Bottom aligned ???
+        var x = o;
+        var y = h - Math.round( this.size / 8 );
+
+        // Measure text
+        var m = ctx.measureText( text );
+        var w = Math.min( max, Math.ceil( m.width + 2 * x + 1 ) );
+
+        // Clear scratch area
+        ctx.clearRect(0, 0, w, h);
+
+        if( this.outline === 0 ){
+
+            ctx.fillText(text, x, y);
+            var imageData = ctx.getImageData( 0, 0, w, h );
+            var data = imageData.data;
+
+            var j = 3;  // Skip to alpha channel
+            for( var i = 0, il = data.length / 4; i < il; ++i ){
+                dst[ i ] = data[ j ];
+                j += 4;
+            }
+
+        }else{
+
+            ctx.globalCompositeOperation = "source-over";
+            // Draw strokes of decreasing width to create
+            // nested outlines (absolute distance)
+            for( var i = o + 1; i > 0; --i ){
+                // Eliminate odd strokes once past > 1px,
+                // don't need the detail
+                var j = i > 1 ? i * 2 - 2 : i;
+                ctx.strokeStyle = colors[ j - 1 ];
+                ctx.lineWidth = j;
+                ctx.strokeText( text, x, y );
+            }
+            ctx.globalCompositeOperation = "multiply";
+            ctx.fillText(text, x, y);
+            var imageData = ctx.getImageData( 0, 0, w, h );
+            var data = imageData.data;
+
+            var j = 0;
+            var gamma = this.gamma;
+            for( var i = 0, il = data.length / 4; i < il; ++i ){
+                // Get value + mask
+                var a = data[ j ];
+                var mask = a ? data[ j + 1 ] / a : 1;
+                if( gamma === 0.5 ){
+                    mask = Math.sqrt( mask );
+                }
+                mask = Math.min( 1, Math.max( 0, mask ) );
+
+                // Blend between positive/outside and negative/inside
+                var b = 256 - a;
+                var c = b + ( a - b ) * mask;
+
+                // Clamp (slight expansion to hide errors around the transition)
+                dst[ i ] = Math.max( 0, Math.min( 255, c + 2 ) );
+                data[ j + 3 ] = dst[ i ];
+                j += 4;
+            }
+
+        }
+
+        ctx.putImageData( imageData, 0, 0 );
+        this.scratchW = w;
+        this.scratchH = h;
+
+    }
 
 };
 
@@ -2977,13 +3121,31 @@ NGL.TextBuffer = function( position, size, color, text, params ){
 
     var p = params || {};
 
-    var fontName = p.font !== undefined ? p.font : 'LatoBlack';
-    this.font = NGL.getFont( fontName );
+    this.fontFamily = p.fontFamily !== undefined ? p.fontFamily : "sans-serif";
+    this.fontStyle = p.fontStyle !== undefined ? p.fontStyle : "normal";
+    this.fontWeight = p.fontWeight !== undefined ? p.fontWeight : "bold";
 
-    this.tex = new THREE.Texture(
-        NGL.Resources[ 'fonts/' + fontName + '.png' ]
-    );
+    //
+
+    var ta = new NGL.TextAtlas( {
+        font: [ this.fontFamily ],
+        style: this.fontStyle,
+        weight: this.fontWeight,
+        outline: 5,
+        size: 48
+    } );
+
+    for( var i = 0; i < 256; ++i ){
+        ta.map( String.fromCharCode( i ) );
+    }
+
+    this.ta = ta;
+
+    this.tex = new THREE.CanvasTexture( ta.canvas2 );
+    this.tex.flipY = false;
     this.tex.needsUpdate = true;
+
+    //
 
     var n = position.length / 3;
 
@@ -2996,8 +3158,8 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     this.count = charCount;
     this.positionCount = n;
 
-    this.vertexShader = 'SDFFont.vert';
-    this.fragmentShader = 'SDFFont.frag';
+    this.vertexShader = "SDFFont.vert";
+    this.fragmentShader = "SDFFont.frag";
 
     NGL.QuadBuffer.call( this, p );
 
@@ -3123,7 +3285,7 @@ NGL.TextBuffer.prototype.setProperties = function( data ){
 
 NGL.TextBuffer.prototype.makeMapping = function(){
 
-    var font = this.font;
+    var ta = this.ta;
     var text = this.text;
 
     var inputTexCoord = this.geometry.attributes[ "inputTexCoord" ].array;
@@ -3145,25 +3307,34 @@ NGL.TextBuffer.prototype.makeMapping = function(){
 
         for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
 
-            c = font[ txt.charCodeAt( iChar ) ];
+            c = ta.mapped[ txt[ iChar ] ];
             i = iCharAll * 2 * 4;
 
             // top left
-            inputMapping[ i + 0 ] = xadvance + c.xoffset2;
-            inputMapping[ i + 1 ] = c.lineHeight - c.yoffset2;
+            inputMapping[ i + 0 ] = xadvance;
+            inputMapping[ i + 1 ] = c.h;
             // bottom left
-            inputMapping[ i + 2 ] = xadvance + c.xoffset2;
-            inputMapping[ i + 3 ] = c.lineHeight - c.yoffset2 - c.height2;
+            inputMapping[ i + 2 ] = xadvance;
+            inputMapping[ i + 3 ] = 0;
             // top right
-            inputMapping[ i + 4 ] = xadvance + c.xoffset2 + c.width2;
-            inputMapping[ i + 5 ] = c.lineHeight - c.yoffset2;
+            inputMapping[ i + 4 ] = xadvance + c.w;
+            inputMapping[ i + 5 ] = c.h;
             // bottom right
-            inputMapping[ i + 6 ] = xadvance + c.xoffset2 + c.width2;
-            inputMapping[ i + 7 ] = c.lineHeight - c.yoffset2 - c.height2;
+            inputMapping[ i + 6 ] = xadvance + c.w;
+            inputMapping[ i + 7 ] = 0;
 
-            inputTexCoord.set( c.textureCoords, i );
+            var texWidth = ta.width;
+            var texHeight = ta.height;
 
-            xadvance += c.xadvance2;
+            var texCoords = [
+                c.x/texWidth, c.y/texHeight,
+                c.x/texWidth, (c.y+c.h)/texHeight,
+                (c.x+c.w)/texWidth, c.y/texHeight,
+                (c.x+c.w)/texWidth, (c.y+c.h)/texHeight
+            ];
+            inputTexCoord.set( texCoords, i );
+
+            xadvance += c.w - 2 * ta.outline;
 
         }
 
