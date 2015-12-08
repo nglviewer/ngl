@@ -595,6 +595,17 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "crystalline_cif": function( stage ){
+
+        stage.loadFile( "data://cif/adsorption.cif" ).then( function( o ){
+
+            o.addRepresentation( "ball+stick", { sele: "*" } );
+            o.centerView();
+
+        } );
+
+    },
+
     "1crn": function( stage ){
 
         stage.loadFile( "data://1crn.pdb" ).then( function( o ){

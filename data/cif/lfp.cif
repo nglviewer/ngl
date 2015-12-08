@@ -1,0 +1,31 @@
+data_global
+_cell_length_a 10.31
+_cell_length_b 6.00
+_cell_length_c 4.69
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 90
+_symmetry_space_group_name_H-M 'Pnma'
+_space_group_IT_number 62
+loop_
+_space_group_symop_operation_xyz
+x,y,z
+-x+1/2,-y,z+1/2
+x+1/2,-y+1/2,-z+1/2
+-x,y+1/2,-z
+-x,-y,-z
+x-1/2,y,-z-1/2
+-x-1/2,y-1/2,z-1/2
+x,-y-1/2,z
+loop_
+_atom_site_type_symbol
+_atom_site_label
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+Fe Fe2 0.21795 0.7500 0.02445
+P P1 0.40493 0.7500 -0.41852
+O O1 0.04312 0.7500 -0.2049
+O O2 0.40280 0.7500 0.2574
+O O3 0.16569 0.4536 0.2149
+Li Li1 0.0000 0.5000 -0.5000
