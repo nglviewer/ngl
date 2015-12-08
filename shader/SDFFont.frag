@@ -7,7 +7,11 @@ varying vec2 texCoord;
 #include color_pars_fragment
 #include fog_pars_fragment
 
-const float smoothness = 16.0;
+#ifdef SDF
+    const float smoothness = 16.0;
+#else
+    const float smoothness = 256.0;
+#endif
 const float gamma = 2.2;
 
 void main(){

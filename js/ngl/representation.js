@@ -1043,22 +1043,25 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
                 "monospace": "monospace",
                 "serif": "serif"
             },
-            rebuild: true
+            buffer: true
         },
         fontStyle: {
             type: "select", options: {
                 "normal": "normal",
                 "italic": "italic"
             },
-            rebuild: true
+            buffer: true
         },
         fontWeight: {
             type: "select", options: {
                 "normal": "normal",
                 "bold": "bold"
             },
-            rebuild: true
-        }
+            buffer: true
+        },
+        sdf: {
+            type: "boolean", buffer: true
+        },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -1080,6 +1083,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         this.fontFamily = p.fontFamily || "sans-serif";
         this.fontStyle = p.fontStyle || "normal";
         this.fontWeight = p.fontWeight || "bold";
+        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser !== "Firefox";  // FIXME
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1109,6 +1113,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
                 fontFamily: this.fontFamily,
                 fontStyle: this.fontStyle,
                 fontWeight: this.fontWeight,
+                sdf: this.sdf
             } )
         );
 

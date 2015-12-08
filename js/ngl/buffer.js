@@ -1938,7 +1938,6 @@ NGL.PointBuffer.prototype.setUniforms = function( data ){
 
     if( data && data[ "edgeBleach" ] !== undefined ){
 
-        this.edgeBleach = data[ "edgeBleach" ];
         this.makeTexture();
         data[ "map" ] = this.tex;
 
@@ -2922,9 +2921,9 @@ NGL.TextAtlas = function( params ){
     this.height = p.height || 1024;
 
     this.gamma = 1;
-    if (typeof navigator !== 'undefined') {
+    if( typeof navigator !== 'undefined' ){
         var ua = navigator.userAgent;
-        if (ua.match(/Chrome/) && ua.match(/OS X/)) {
+        if( ua.match( /Chrome/ ) && ua.match( /OS X/ ) ){
             this.gamma = 0.5;
         }
     }
@@ -2945,7 +2944,7 @@ NGL.TextAtlas.prototype = {
 
         // Prepare line-height with room for outline and descenders/ascenders
         var lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
-        var maxWidth = ( 512 / 16 ) * lineHeight;
+        var maxWidth = this.width / 4;
 
         // Prepare scratch canvas
         var canvas = document.createElement( "canvas" );
@@ -3044,9 +3043,9 @@ NGL.TextAtlas.prototype = {
         var max = this.maxWidth;
         var colors = this.colors;
 
-        // Bottom aligned ???
+        // Bottom aligned, take outline into account
         var x = o;
-        var y = h - Math.round( this.size / 8 );
+        var y = h - this.outline;
 
         // Measure text
         var m = ctx.measureText( text );
@@ -3057,7 +3056,7 @@ NGL.TextAtlas.prototype = {
 
         if( this.outline === 0 ){
 
-            ctx.fillText(text, x, y);
+            ctx.fillText( text, x, y );
             var imageData = ctx.getImageData( 0, 0, w, h );
             var data = imageData.data;
 
@@ -3081,7 +3080,8 @@ NGL.TextAtlas.prototype = {
                 ctx.strokeText( text, x, y );
             }
             ctx.globalCompositeOperation = "multiply";
-            ctx.fillText(text, x, y);
+            ctx.fillStyle = "#FF00FF";
+            ctx.fillText( text, x, y );
             var imageData = ctx.getImageData( 0, 0, w, h );
             var data = imageData.data;
 
@@ -3112,6 +3112,13 @@ NGL.TextAtlas.prototype = {
         this.scratchW = w;
         this.scratchH = h;
 
+    },
+
+    dispose: function(){
+
+        // document.body.removeChild( this.canvas );
+        // document.body.removeChild( this.canvas2 );
+
     }
 
 };
@@ -3120,32 +3127,13 @@ NGL.TextAtlas.prototype = {
 NGL.TextBuffer = function( position, size, color, text, params ){
 
     var p = params || {};
+    p.forceTransparent = true;
 
     this.fontFamily = p.fontFamily !== undefined ? p.fontFamily : "sans-serif";
     this.fontStyle = p.fontStyle !== undefined ? p.fontStyle : "normal";
     this.fontWeight = p.fontWeight !== undefined ? p.fontWeight : "bold";
-
-    //
-
-    var ta = new NGL.TextAtlas( {
-        font: [ this.fontFamily ],
-        style: this.fontStyle,
-        weight: this.fontWeight,
-        outline: 5,
-        size: 48
-    } );
-
-    for( var i = 0; i < 256; ++i ){
-        ta.map( String.fromCharCode( i ) );
-    }
-
-    this.ta = ta;
-
-    this.tex = new THREE.CanvasTexture( ta.canvas2 );
-    this.tex.flipY = false;
-    this.tex.needsUpdate = true;
-
-    //
+    this.fontSize = p.fontSize !== undefined ? p.fontSize : 48;
+    this.sdf = p.sdf !== undefined ? p.sdf : true;
 
     var n = position.length / 3;
 
@@ -3164,7 +3152,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     NGL.QuadBuffer.call( this, p );
 
     this.addUniforms( {
-        "fontTexture"  : { type: "t", value: this.tex }
+        "fontTexture"  : { type: "t", value: null }
     } );
 
     this.addAttributes( {
@@ -3178,6 +3166,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
         "color": color
     } );
 
+    this.makeTexture();
     this.makeMapping();
 
 };
@@ -3186,13 +3175,22 @@ NGL.TextBuffer.prototype = Object.create( NGL.QuadBuffer.prototype );
 
 NGL.TextBuffer.prototype.constructor = NGL.TextBuffer;
 
+NGL.TextBuffer.prototype.parameters = Object.assign( {
+
+    fontFamily: { uniform: true },
+    fontStyle: { uniform: true },
+    fontWeight: { uniform: true },
+    fontSize: { uniform: true },
+    sdf: { updateShader: true, uniform: true },
+
+}, NGL.Buffer.prototype.parameters );
+
 NGL.TextBuffer.prototype.makeMaterial = function(){
 
     NGL.Buffer.prototype.makeMaterial.call( this );
 
     this.material.extensions.derivatives = true;
     this.material.lights = false;
-    this.material.transparent = true;
     this.material.uniforms.fontTexture.value = this.tex;
     this.material.needsUpdate = true;
 
@@ -3274,12 +3272,28 @@ NGL.TextBuffer.prototype.setAttributes = function( data ){
 
 };
 
-NGL.TextBuffer.prototype.setProperties = function( data ){
+NGL.TextBuffer.prototype.makeTexture = function(){
 
-    // alpha channel must stay enabled for anti-aliasing
-    if( data && data.transparent !== undefined ) data.transparent = true;
+    if( this.tex ) this.tex.dispose();
+    if( this.ta ) this.ta.dispose();
 
-    NGL.QuadBuffer.prototype.setProperties.call( this, data );
+    var ta = new NGL.TextAtlas( {
+        font: [ this.fontFamily ],
+        style: this.fontStyle,
+        weight: this.fontWeight,
+        size: this.fontSize,
+        outline: this.sdf ? 5 : 0
+    } );
+
+    for( var i = 0; i < 256; ++i ){
+        ta.map( String.fromCharCode( i ) );
+    }
+
+    this.ta = ta;
+
+    this.tex = new THREE.CanvasTexture( ta.canvas2 );
+    this.tex.flipY = false;
+    this.tex.needsUpdate = true;
 
 };
 
@@ -3311,26 +3325,26 @@ NGL.TextBuffer.prototype.makeMapping = function(){
             i = iCharAll * 2 * 4;
 
             // top left
-            inputMapping[ i + 0 ] = xadvance;
-            inputMapping[ i + 1 ] = c.h;
+            inputMapping[ i + 0 ] = xadvance - ta.outline;
+            inputMapping[ i + 1 ] = c.h - ta.outline;
             // bottom left
-            inputMapping[ i + 2 ] = xadvance;
-            inputMapping[ i + 3 ] = 0;
+            inputMapping[ i + 2 ] = xadvance - ta.outline;
+            inputMapping[ i + 3 ] = 0 - ta.outline;
             // top right
-            inputMapping[ i + 4 ] = xadvance + c.w;
-            inputMapping[ i + 5 ] = c.h;
+            inputMapping[ i + 4 ] = xadvance + c.w - ta.outline;
+            inputMapping[ i + 5 ] = c.h - ta.outline;
             // bottom right
-            inputMapping[ i + 6 ] = xadvance + c.w;
-            inputMapping[ i + 7 ] = 0;
+            inputMapping[ i + 6 ] = xadvance + c.w - ta.outline;
+            inputMapping[ i + 7 ] = 0 - ta.outline;
 
             var texWidth = ta.width;
             var texHeight = ta.height;
 
             var texCoords = [
-                c.x/texWidth, c.y/texHeight,
-                c.x/texWidth, (c.y+c.h)/texHeight,
-                (c.x+c.w)/texWidth, c.y/texHeight,
-                (c.x+c.w)/texWidth, (c.y+c.h)/texHeight
+                c.x/texWidth, c.y/texHeight,             // top left
+                c.x/texWidth, (c.y+c.h)/texHeight,       // bottom left
+                (c.x+c.w)/texWidth, c.y/texHeight,       // top right
+                (c.x+c.w)/texWidth, (c.y+c.h)/texHeight  // bottom right
             ];
             inputTexCoord.set( texCoords, i );
 
@@ -3340,13 +3354,50 @@ NGL.TextBuffer.prototype.makeMapping = function(){
 
     }
 
+    this.geometry.attributes[ "inputTexCoord" ].needsUpdate = true;
+    this.geometry.attributes[ "mapping" ].needsUpdate = true;
+
+};
+
+NGL.TextBuffer.prototype.getDefines = function( type ){
+
+    var defines = NGL.Buffer.prototype.getDefines.call( this, type );
+
+    if( this.sdf ){
+        defines[ "SDF" ] = 1;
+    }
+
+    return defines;
+
+};
+
+NGL.TextBuffer.prototype.setUniforms = function( data ){
+
+    if( data && (
+            data[ "fontFamily" ] !== undefined ||
+            data[ "fontStyle" ] !== undefined ||
+            data[ "fontWeight" ] !== undefined ||
+            data[ "fontSize" ] !== undefined ||
+            data[ "sdf" ] !== undefined
+        )
+    ){
+
+        this.makeTexture();
+        this.makeMapping();
+        data[ "fontTexture" ] = this.tex;
+
+    }
+
+    NGL.Buffer.prototype.setUniforms.call( this, data );
+
 };
 
 NGL.TextBuffer.prototype.dispose = function(){
 
     NGL.Buffer.prototype.dispose.call( this );
 
-    this.tex.dispose();
+    if( this.tex ) this.tex.dispose();
+    if( this.ta ) this.ta.dispose();
 
 };
 
