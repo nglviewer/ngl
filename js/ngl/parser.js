@@ -1846,13 +1846,23 @@ NGL.CifParser.prototype = NGL.createObject(
                         var category = ks[ 0 ].substring( 1 );
                         var name = ks[ 1 ];
 
-                        if( !cif[ category ] ) cif[ category ] = {};
-                        if( cif[ category ][ name ] ){
-                            NGL.warn( category, name, "already exists" );
+                        if( ks.length === 1 ){
+
+                            name = false;
+                            if( !cif[ category ] ) cif[ category ] = [];
+                            loopPointers.push( cif[ category ] );
+
                         }else{
-                            cif[ category ][ name ] = [];
-                            loopPointers.push( cif[ category ][ name ] );
-                            pointerNames.push( name );
+
+                            if( !cif[ category ] ) cif[ category ] = {};
+                            if( cif[ category ][ name ] ){
+                                NGL.warn( category, name, "already exists" );
+                            }else{
+                                cif[ category ][ name ] = [];
+                                loopPointers.push( cif[ category ][ name ] );
+                                pointerNames.push( name );
+                            }
+
                         }
 
                         currentCategory = category;
@@ -1868,12 +1878,22 @@ NGL.CifParser.prototype = NGL.createObject(
                         var category = ks[ 0 ].substring( 1 );
                         var name = ks[ 1 ];
 
-                        if( !cif[ category ] ) cif[ category ] = {};
+                        if( ks.length === 1 ){
 
-                        if( cif[ category ][ name ] ){
-                            NGL.warn( category, name, "already exists" );
+                            name = false;
+                            if( !cif[ category ] ) cif[ category ] = [];
+                            cif[ category ] = value
+
                         }else{
-                            cif[ category ][ name ] = value;
+
+                            if( !cif[ category ] ) cif[ category ] = {};
+
+                            if( cif[ category ][ name ] ){
+                                NGL.warn( category, name, "already exists" );
+                            }else{
+                                cif[ category ][ name ] = value;
+                            }
+
                         }
 
                         if( !value ) pendingValue = true;
@@ -2085,15 +2105,23 @@ NGL.CifParser.prototype = NGL.createObject(
 
                         // NGL.log( "NEWLINE STRING", line );
 
-                        cif[ currentCategory ][ currentName ] = line.substring(
-                            1, line.length - 2
-                        );
+                        var str = line.substring( 1, line.length - 2 );
+
+                        if( currentName === false ){
+                            cif[ currentCategory ] = str;
+                        }else{
+                            cif[ currentCategory ][ currentName ] = str;
+                        }
 
                     }else if( pendingValue ){
 
                         // NGL.log( "NEWLINE VALUE", line );
 
-                        cif[ currentCategory ][ currentName ] = line.trim();
+                        if( currentName === false ){
+                            cif[ currentCategory ] = line.trim();
+                        }else{
+                            cif[ currentCategory ][ currentName ] = line.trim();
+                        }
 
                     }else{
 
