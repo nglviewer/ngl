@@ -280,7 +280,8 @@ NGL.Utils = {
 
         var j, f;
         var n = faces.length;
-        var index = new Uint32Array( n * 3 );
+        var TypedArray = n * 3 > 65535 ? Uint32Array : Uint16Array;
+        var index = new TypedArray( n * 3 );
 
         for( var v = 0; v < n; v++ ){
 

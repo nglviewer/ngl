@@ -372,7 +372,8 @@ NGL.Buffer.prototype = {
                 if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
                     wireframeIndex = this.wireframeIndex;
                 }else{
-                    wireframeIndex = new Uint32Array( n * 2 );
+                    var TypedArray = n * 2 > 65535 ? Uint32Array : Uint16Array;
+                    wireframeIndex = new TypedArray( n * 2 );
                 }
 
                 var j = 0;
@@ -950,8 +951,9 @@ NGL.MappedBuffer = function( params ){
     this.size = this.count;
     this.attributeSize = this.count * this.mappingSize;
 
-    this.index = new Uint32Array( this.count * this.mappingIndicesSize );
-
+    var n = this.count * this.mappingIndicesSize;
+    var TypedArray = n > 65535 ? Uint32Array : Uint16Array;
+    this.index = new TypedArray( n );
     this.makeIndex();
 
     NGL.Buffer.call( this, null, null, this.index, null, params );
@@ -1061,7 +1063,7 @@ NGL.QuadBuffer = function( params ){
          1.0, -1.0
     ]);
 
-    this.mappingIndices = new Uint32Array([
+    this.mappingIndices = new Uint16Array([
         0, 1, 2,
         1, 3, 2
     ]);
@@ -1093,7 +1095,7 @@ NGL.BoxBuffer = function( params ){
         -1.0,  1.0,  1.0
     ]);
 
-    this.mappingIndices = new Uint32Array([
+    this.mappingIndices = new Uint16Array([
         0, 1, 2,
         0, 2, 3,
         1, 5, 6,
@@ -1133,7 +1135,7 @@ NGL.AlignedBoxBuffer = function( params ){
          1.0, -1.0,  1.0
     ]);
 
-    this.mappingIndices = new Uint32Array([
+    this.mappingIndices = new Uint16Array([
         0, 1, 2,
         1, 4, 2,
         2, 4, 3,
@@ -1445,10 +1447,11 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
 
     this.meshPosition = new Float32Array( this.size * 3 );
     this.meshNormal = new Float32Array( this.size * 3 );
-    this.meshIndex = new Uint32Array( n * o * 3 );
     this.meshColor = new Float32Array( this.size * 3 );
     this.meshPickingColor = new Float32Array( this.size * 3 );
 
+    var TypedArray = n * o * 3 > 65535 ? Uint32Array : Uint16Array;
+    this.meshIndex = new TypedArray( n * o * 3 );
     this.makeIndex();
 
     NGL.MeshBuffer.call(
@@ -2211,8 +2214,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
-    this.meshIndex = new Uint32Array( x );
 
+    var TypedArray = x > 65535 ? Uint32Array : Uint16Array;
+    this.meshIndex = new TypedArray( x );
     this.makeIndex();
 
     NGL.MeshBuffer.call(
@@ -2401,7 +2405,7 @@ NGL.RibbonBuffer.prototype.makeIndex = function(){
     var meshIndex = this.meshIndex;
     var n = meshIndex.length / 4 / 3;
 
-    var quadIndices = new Uint32Array([
+    var quadIndices = new Uint16Array([
         0, 1, 2,
         1, 3, 2
     ]);
@@ -2450,10 +2454,10 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
-    this.meshIndex = new Uint32Array(
-        n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
-    );
 
+    var xi = n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
+    var TypedArray = xi > 65535 ? Uint32Array : Uint16Array;
+    this.meshIndex = new TypedArray( xi );
     this.makeIndex();
 
     NGL.MeshBuffer.call(
