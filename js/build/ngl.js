@@ -18251,7 +18251,8 @@ NGL.Surface.prototype = {
 
             }
 
-            return new Uint32Array( filteredIndex );
+            var TypedArray = filteredIndex.length > 65535 ? Uint32Array : Uint16Array;
+            return new TypedArray( filteredIndex );
 
         }else{
 
@@ -19287,10 +19288,11 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
     NGL.timeEnd( "NGL.MarchingCubes" );
 
+    var TypedArray = faces.length > 65535 ? Uint32Array : Uint16Array;
     return {
         position: new Float32Array( vertices ),
         normal: undefined,
-        index: new Uint32Array( faces )
+        index: new TypedArray( faces )
     };
 
 };
@@ -19369,10 +19371,11 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
         NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
 
+        var TypedArray = indexArray.length > 65535 ? Uint32Array : Uint16Array;
         return {
             position: new Float32Array( positionArray ),
             normal: noNormals ? undefined : new Float32Array( normalArray ),
-            index: new Uint32Array( indexArray ),
+            index: new TypedArray( indexArray ),
             atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
         };
 
@@ -24902,13 +24905,23 @@ NGL.CifParser.prototype = NGL.createObject(
                         var category = ks[ 0 ].substring( 1 );
                         var name = ks[ 1 ];
 
-                        if( !cif[ category ] ) cif[ category ] = {};
-                        if( cif[ category ][ name ] ){
-                            NGL.warn( category, name, "already exists" );
+                        if( ks.length === 1 ){
+
+                            name = false;
+                            if( !cif[ category ] ) cif[ category ] = [];
+                            loopPointers.push( cif[ category ] );
+
                         }else{
-                            cif[ category ][ name ] = [];
-                            loopPointers.push( cif[ category ][ name ] );
-                            pointerNames.push( name );
+
+                            if( !cif[ category ] ) cif[ category ] = {};
+                            if( cif[ category ][ name ] ){
+                                NGL.warn( category, name, "already exists" );
+                            }else{
+                                cif[ category ][ name ] = [];
+                                loopPointers.push( cif[ category ][ name ] );
+                                pointerNames.push( name );
+                            }
+
                         }
 
                         currentCategory = category;
@@ -24924,12 +24937,22 @@ NGL.CifParser.prototype = NGL.createObject(
                         var category = ks[ 0 ].substring( 1 );
                         var name = ks[ 1 ];
 
-                        if( !cif[ category ] ) cif[ category ] = {};
+                        if( ks.length === 1 ){
 
-                        if( cif[ category ][ name ] ){
-                            NGL.warn( category, name, "already exists" );
+                            name = false;
+                            if( !cif[ category ] ) cif[ category ] = [];
+                            cif[ category ] = value
+
                         }else{
-                            cif[ category ][ name ] = value;
+
+                            if( !cif[ category ] ) cif[ category ] = {};
+
+                            if( cif[ category ][ name ] ){
+                                NGL.warn( category, name, "already exists" );
+                            }else{
+                                cif[ category ][ name ] = value;
+                            }
+
                         }
 
                         if( !value ) pendingValue = true;
@@ -25141,15 +25164,23 @@ NGL.CifParser.prototype = NGL.createObject(
 
                         // NGL.log( "NEWLINE STRING", line );
 
-                        cif[ currentCategory ][ currentName ] = line.substring(
-                            1, line.length - 2
-                        );
+                        var str = line.substring( 1, line.length - 2 );
+
+                        if( currentName === false ){
+                            cif[ currentCategory ] = str;
+                        }else{
+                            cif[ currentCategory ][ currentName ] = str;
+                        }
 
                     }else if( pendingValue ){
 
                         // NGL.log( "NEWLINE VALUE", line );
 
-                        cif[ currentCategory ][ currentName ] = line.trim();
+                        if( currentName === false ){
+                            cif[ currentCategory ] = line.trim();
+                        }else{
+                            cif[ currentCategory ][ currentName ] = line.trim();
+                        }
 
                     }else{
 
@@ -28201,7 +28232,8 @@ NGL.Utils = {
 
         var j, f;
         var n = faces.length;
-        var index = new Uint32Array( n * 3 );
+        var TypedArray = n * 3 > 65535 ? Uint32Array : Uint16Array;
+        var index = new TypedArray( n * 3 );
 
         for( var v = 0; v < n; v++ ){
 
@@ -30491,7 +30523,8 @@ NGL.Buffer.prototype = {
                 if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
                     wireframeIndex = this.wireframeIndex;
                 }else{
-                    wireframeIndex = new Uint32Array( n * 2 );
+                    var TypedArray = n * 2 > 65535 ? Uint32Array : Uint16Array;
+                    wireframeIndex = new TypedArray( n * 2 );
                 }
 
                 var j = 0;
@@ -31069,8 +31102,9 @@ NGL.MappedBuffer = function( params ){
     this.size = this.count;
     this.attributeSize = this.count * this.mappingSize;
 
-    this.index = new Uint32Array( this.count * this.mappingIndicesSize );
-
+    var n = this.count * this.mappingIndicesSize;
+    var TypedArray = n > 65535 ? Uint32Array : Uint16Array;
+    this.index = new TypedArray( n );
     this.makeIndex();
 
     NGL.Buffer.call( this, null, null, this.index, null, params );
@@ -31180,7 +31214,7 @@ NGL.QuadBuffer = function( params ){
          1.0, -1.0
     ]);
 
-    this.mappingIndices = new Uint32Array([
+    this.mappingIndices = new Uint16Array([
         0, 1, 2,
         1, 3, 2
     ]);
@@ -31212,7 +31246,7 @@ NGL.BoxBuffer = function( params ){
         -1.0,  1.0,  1.0
     ]);
 
-    this.mappingIndices = new Uint32Array([
+    this.mappingIndices = new Uint16Array([
         0, 1, 2,
         0, 2, 3,
         1, 5, 6,
@@ -31252,7 +31286,7 @@ NGL.AlignedBoxBuffer = function( params ){
          1.0, -1.0,  1.0
     ]);
 
-    this.mappingIndices = new Uint32Array([
+    this.mappingIndices = new Uint16Array([
         0, 1, 2,
         1, 4, 2,
         2, 4, 3,
@@ -31564,10 +31598,11 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
 
     this.meshPosition = new Float32Array( this.size * 3 );
     this.meshNormal = new Float32Array( this.size * 3 );
-    this.meshIndex = new Uint32Array( n * o * 3 );
     this.meshColor = new Float32Array( this.size * 3 );
     this.meshPickingColor = new Float32Array( this.size * 3 );
 
+    var TypedArray = n * o * 3 > 65535 ? Uint32Array : Uint16Array;
+    this.meshIndex = new TypedArray( n * o * 3 );
     this.makeIndex();
 
     NGL.MeshBuffer.call(
@@ -32330,8 +32365,9 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
-    this.meshIndex = new Uint32Array( x );
 
+    var TypedArray = x > 65535 ? Uint32Array : Uint16Array;
+    this.meshIndex = new TypedArray( x );
     this.makeIndex();
 
     NGL.MeshBuffer.call(
@@ -32520,7 +32556,7 @@ NGL.RibbonBuffer.prototype.makeIndex = function(){
     var meshIndex = this.meshIndex;
     var n = meshIndex.length / 4 / 3;
 
-    var quadIndices = new Uint32Array([
+    var quadIndices = new Uint16Array([
         0, 1, 2,
         1, 3, 2
     ]);
@@ -32569,10 +32605,10 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshColor = new Float32Array( x );
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
-    this.meshIndex = new Uint32Array(
-        n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
-    );
 
+    var xi = n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
+    var TypedArray = xi > 65535 ? Uint32Array : Uint16Array;
+    this.meshIndex = new TypedArray( xi );
     this.makeIndex();
 
     NGL.MeshBuffer.call(
