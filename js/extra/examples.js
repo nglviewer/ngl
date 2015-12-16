@@ -1193,6 +1193,93 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://ferritin/ferritin.ngl" );
 
-    }
+    },
+
+    "small": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/4CUP.cif.gz" ).then( function( o ){
+            o.centerView();
+            o.addRepresentation( "cartoon" );
+            o.addRepresentation( "ball+stick" );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
+
+    "large": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/4V5A.cif.gz" ).then( function( o ){
+            o.centerView();
+            o.addRepresentation( "cartoon", { sele: "polymer" } );
+            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
+
+    "nmr": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/2L6N.cif.gz" ).then( function( o ){
+            o.centerView();
+            o.addRepresentation( "cartoon", { sele: "polymer" } );
+            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
+
+    "medium": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
+            o.centerView();
+            o.addRepresentation( "cartoon", { sele: "polymer" } );
+            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
+
+    "biomol": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/1RB8.cif.gz" ).then( function( o ){
+            o.centerView();
+            o.addRepresentation( "cartoon", { sele: "polymer" } );
+            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
+
+    "quality": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
+            o.centerView();
+            //o.addRepresentation( "cartoon" );
+            //o.addRepresentation( "ball+stick" );
+            //o.addRepresentation( "spacefill" );
+            //o.addRepresentation( "line" );
+            o.addRepresentation( "surface" );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
 
 } );
