@@ -2905,7 +2905,7 @@ NGL.Structure.prototype = {
             n1 = n - 1;
 
             if( n > 500 ){
-                NGL.warn( "more than 500 atoms, skip residue for auto-bonding" );
+                NGL.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );
                 return;
             }
 
