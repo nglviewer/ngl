@@ -1187,11 +1187,11 @@ NGL.SstrucColorMaker = function( params ){
             return strucColors[ "3_10Helix" ];
         }else if( a.ss === "i" ){
             return strucColors[ "piHelix" ];
-        }else if( a.ss === "s" ){
+        }else if( a.ss === "e" || a.ss === "b" ){
             return strucColors[ "betaStrand" ];
         }else if( a.residue.isNucleic() ){
             return strucColors[ "dna" ];
-        }else if( a.residue.isProtein() || a.ss === "c" ){
+        }else if( a.residue.isProtein() || a.ss === "s" || a.ss === "t" || a.ss === "l" ){
             return strucColors[ "coil" ];
         }else{
             return defaultStrucColor;
@@ -1452,7 +1452,9 @@ NGL.RadiusFactory.prototype = {
                     r = 0.25;
                 }else if( a.ss === "i" ){
                     r = 0.25;
-                }else if( a.ss === "s" ){
+                }else if( a.ss === "e" ){
+                    r = 0.25;
+                }else if( a.ss === "b" ){
                     r = 0.25;
                 // }else if( a.atomname === "P" ){
                 }else if( nucleic.indexOf( a.atomname ) !== -1 ){

@@ -442,7 +442,7 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
                     if( sheetRun ){
 
-                        r.ss = "s";
+                        r.ss = "e";
 
                         if( r.resno === sheet[ 3 ] ){  // resnoEnd
 
@@ -1156,7 +1156,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         atomArray.resno[ idx ] = resno;
                         atomArray.serial[ idx ] = serial;
                         atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
                         atomArray.bfactor[ idx ] = bfactor;
                         atomArray.altloc[ idx ] = altloc.charCodeAt( 0 );
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
@@ -1180,7 +1180,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         a.resno = resno;
                         a.serial = serial;
                         a.atomname = atomname;
-                        a.ss = 'c';
+                        a.ss = 'l';
                         a.bfactor = bfactor;
                         a.altloc = altloc;
                         a.vdw = vdwRadii[ element ];
@@ -1624,7 +1624,7 @@ NGL.GroParser.prototype = NGL.createObject(
                         atomArray.resno[ idx ] = resno;
                         atomArray.serial[ idx ] = serial;
                         atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
                         atomArray.setAltloc( idx, '' );
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
                         atomArray.covalent[ idx ] = covRadii[ element ];
@@ -1646,7 +1646,7 @@ NGL.GroParser.prototype = NGL.createObject(
                         a.resno = resno;
                         a.serial = serial;
                         a.atomname = atomname;
-                        a.ss = 'c';
+                        a.ss = 'l';
                         a.altloc = '';
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
@@ -2034,7 +2034,7 @@ NGL.CifParser.prototype = NGL.createObject(
                                 atomArray.resno[ idx ] = resno;
                                 atomArray.serial[ idx ] = serial;
                                 atomArray.setAtomname( idx, atomname );
-                                atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                                atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
                                 atomArray.bfactor[ idx ] = bfactor;
                                 atomArray.altloc[ idx ] = altloc.charCodeAt( 0 );
                                 atomArray.vdw[ idx ] = vdwRadii[ element ];
@@ -2058,7 +2058,7 @@ NGL.CifParser.prototype = NGL.createObject(
                                 a.resno = resno;
                                 a.serial = serial;
                                 a.atomname = atomname;
-                                a.ss = 'c';
+                                a.ss = 'l';
                                 a.bfactor = bfactor;
                                 a.altloc = altloc;
                                 a.vdw = vdwRadii[ element ];
@@ -2852,7 +2852,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                         atomArray.resno[ idx ] = 1;
                         atomArray.serial[ idx ] = idx;
                         atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
                         atomArray.setAltloc( idx, '' );
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
                         atomArray.covalent[ idx ] = covRadii[ element ];
@@ -2875,7 +2875,7 @@ NGL.SdfParser.prototype = NGL.createObject(
                         a.resno = 1;
                         a.serial = idx;
                         a.atomname = atomname;
-                        a.ss = 'c';
+                        a.ss = 'l';
                         a.altloc = '';
                         a.vdw = vdwRadii[ element ];
                         a.covalent = covRadii[ element ];
@@ -3115,7 +3115,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                         atomArray.resno[ idx ] = resno;
                         atomArray.serial[ idx ] = idx;
                         atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'c'.charCodeAt( 0 );
+                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
                         atomArray.setAltloc( idx, '' );
                         atomArray.bfactor[ idx ] = bfactor;
                         atomArray.vdw[ idx ] = vdwRadii[ element ];
@@ -3139,7 +3139,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                         a.resno = resno;
                         a.serial = idx;
                         a.atomname = atomname;
-                        a.ss = 'c';
+                        a.ss = 'l';
                         a.altloc = '';
                         a.bfactor = bfactor;
                         a.vdw = vdwRadii[ element ];

@@ -141,7 +141,8 @@ NGL.Spline.prototype = {
             s3 = radiusFactory.atomRadius( a3 );
 
             if( arrows && (
-                    ( a2.ss==="s" && a3.ss!=="s" ) ||
+                    ( a2.ss==="e" && a3.ss!=="e" ) ||
+                    ( a2.ss==="b" && a3.ss!=="b" ) ||
                     ( a2.ss==="h" && a3.ss!=="h" ) ||
                     ( a2.ss==="g" && a3.ss!=="g" ) ||
                     ( a2.ss==="i" && a3.ss!=="i" )
