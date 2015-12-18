@@ -1223,6 +1223,22 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "huge": function( stage ){
+
+        console.time( "load-to-render" );
+        stage.loadFile( "data://perf/4V99.cif.gz", {
+            cAlphaOnly: true
+        } ).then( function( o ){
+            o.centerView();
+            o.addRepresentation( "ribbon", { sele: "polymer" } );
+            // o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.tasks.onZeroOnce( function(){
+                console.timeEnd( "load-to-render" );
+            } );
+        } );
+
+    },
+
     "nmr": function( stage ){
 
         console.time( "load-to-render" );
@@ -1270,10 +1286,10 @@ NGL.ExampleRegistry.addDict( {
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
             o.centerView();
-            //o.addRepresentation( "cartoon" );
-            //o.addRepresentation( "ball+stick" );
-            //o.addRepresentation( "spacefill" );
-            //o.addRepresentation( "line" );
+            // o.addRepresentation( "cartoon" );
+            // o.addRepresentation( "ball+stick" );
+            // o.addRepresentation( "spacefill" );
+            // o.addRepresentation( "line" );
             o.addRepresentation( "surface" );
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
