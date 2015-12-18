@@ -403,6 +403,10 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         xhr.addEventListener( 'load', function ( event ) {
 
+            // console.log( xhr );
+            // var str = NGL.Uint8ToString( new Uint8Array( xhr.response ) )
+            // console.log( str )
+
             if( xhr.status === 200 || xhr.status === 304 ||
                 // when requesting from local file system
                 // the status in Google Chrome/Chromium is 0

@@ -3192,6 +3192,190 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 } );
 
 
+NGL.MsgpackParser = function( streamer, params ){
+
+    NGL.StructureParser.call( this, streamer, params );
+
+    this.doAutoSS = false;
+
+};
+
+NGL.MsgpackParser.prototype = NGL.createObject(
+
+    NGL.StructureParser.prototype, {
+
+    constructor: NGL.MsgpackParser,
+
+    type: "msgpack",
+
+    _parse: function( callback ){
+
+        var __timeName = "NGL.MsgpackParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var bin = this.streamer.data;
+        if( bin instanceof ArrayBuffer ){
+            bin = new Uint8Array( bin );
+        }
+        var msg = decode( bin );
+
+        console.log( msg );
+
+        function getBuffer( view ){
+            var buf = view.buffer;
+            var offset = view.byteOffset;
+            var length = view.byteLength;
+            return buf.slice( offset, offset + length );
+        }
+
+        function getInt32( view ){
+            var buf = getBuffer( view );
+            var dv = new DataView( buf );
+            var n = buf.byteLength;
+            var coordInt = new Int32Array( n / 4 );
+            for( var i = 0; i < n; i+=4 ){
+                coordInt[ i / 4 ] = dv.getInt32( i, false );
+            }
+            return coordInt;
+        }
+
+        function getCoord( view ){
+            var buf = getBuffer( view );
+            var dv = new DataView( buf );
+            var n = buf.byteLength;
+            var coordFloat = new Float32Array( n / 4 );
+            for( var i = 0; i < n; i+=4 ){
+                coordFloat[ i / 4 ] = dv.getInt32( i, false ) / 1000;
+            }
+            return coordFloat;
+        }
+        
+        msg.cartn_x = getCoord( msg.cartn_x );
+        msg.cartn_y = getCoord( msg.cartn_y );
+        msg.cartn_z = getCoord( msg.cartn_z );
+        msg.seqInfo = getInt32( msg.seqInfo );
+        msg.secStruct = getInt32( msg.secStruct );
+        // msg.secStruct = new Int8Array( getBuffer( msg.secStruct ) );
+        // msg.secStruct = new Int8Array(
+        //     msg.secStruct.buffer, msg.secStruct.byteOffset, msg.secStruct.byteLength
+        // );
+
+        console.log( msg );
+
+        var s = this.structure;
+
+        var atoms = s.atoms;
+        var bondSet = s.bondSet;
+
+        var covRadii = NGL.CovalentRadii;
+        var vdwRadii = NGL.VdwRadii;
+
+        var atomArray;
+        var atomCount = msg.cartn_x.length;
+        if( atomCount > NGL.useAtomArrayThreshold ){
+            atomArray = new NGL.AtomArray( atomCount );
+            s.atomArray = atomArray;
+        }
+
+        var idx = 0;
+        var modelIdx = 0;
+
+        var sstrucMap = {
+            "0": "i",  // pi helix
+            "1": "s",  // bend
+            "2": "h",  // alpha helix
+            "3": "e",  // extended
+            "4": "g",  // 3-10 helix
+            "5": "b",  // bridge
+            "6": "t",  // turn
+            "7": "l",  // coil
+            "-1": "",  // NA
+        }
+
+        for( var i = 0; i < atomCount; ++i ){
+
+            var x = msg.cartn_x[ i ];
+            var y = msg.cartn_y[ i ];
+            var z = msg.cartn_z[ i ];
+            var resname = msg.resName[ i ];
+            var resno = msg.seqInfo[ i ];
+            var atomname;
+            if( [ "A", "G", "C", "T", "U" ].indexOf( resname ) !== -1 ){
+                atomname = "C4'";
+            }else{
+                atomname = "CA";
+            }
+            var element = "C";
+            var bfactor = 0.0;
+            var hetero = 0;
+            var ss = sstrucMap[ msg.secStruct[ i ] ];
+            if( ss === undefined ){
+                // console.log( msg.secStruct[ i ] )
+                ss = "l";
+            }
+
+            var a;
+
+            if( atomArray ){
+
+                a = new NGL.ProxyAtom( atomArray, idx );
+
+                atomArray.setResname( idx, resname );
+                atomArray.x[ idx ] = x;
+                atomArray.y[ idx ] = y;
+                atomArray.z[ idx ] = z;
+                atomArray.setElement( idx, element );
+                atomArray.setChainname( idx, '' );
+                atomArray.resno[ idx ] = resno;
+                atomArray.serial[ idx ] = idx;
+                atomArray.setAtomname( idx, atomname );
+                atomArray.ss[ idx ] = ss.charCodeAt( 0 );
+                atomArray.setAltloc( idx, '' );
+                atomArray.bfactor[ idx ] = bfactor;
+                atomArray.vdw[ idx ] = vdwRadii[ element ];
+                atomArray.covalent[ idx ] = covRadii[ element ];
+                atomArray.modelindex[ idx ] = modelIdx;
+
+                atomArray.usedLength += 1;
+
+            }else{
+
+                a = new NGL.Atom();
+                a.index = idx;
+
+                a.resname = resname;
+                a.x = x;
+                a.y = y;
+                a.z = z;
+                a.element = element;
+                a.hetero = hetero
+                a.chainname = '';
+                a.resno = resno;
+                a.serial = idx;
+                a.atomname = atomname;
+                a.ss = ss;
+                a.altloc = '';
+                a.bfactor = bfactor;
+                a.vdw = vdwRadii[ element ];
+                a.covalent = covRadii[ element ];
+                a.modelindex = modelIdx;
+
+            }
+
+            idx += 1;
+            atoms.push( a );
+
+        }
+
+        NGL.timeEnd( __timeName );
+        callback();
+
+    }
+
+} );
+
+
 //////////////////////
 // Trajectory parser
 

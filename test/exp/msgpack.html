@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>msgpack</title>
+</head>
+<body>
+
+<script src="../../js/lib/bops.js"></script>
+    <script src="../../js/lib/msgpack.js"></script>
+
+    <script>
+
+        // var url = "http://codec.rcsb.org:8080/servemessageheader/4CUP";
+        var url = "http://codec.rcsb.org:8080/servemessagepack/4CUP";
+        // var url = "http://codec.rcsb.org:8080/servemessagecalpha/4CUP";
+
+        var xhr = new XMLHttpRequest();
+        xhr.open( "GET", url, true );
+
+        xhr.addEventListener( 'load', function ( event ) {
+
+            console.log( "loaded" );
+
+            var bin = new Uint8Array( xhr.response );
+            console.log( bin );
+
+            var msg = decode( bin );
+            console.log( msg );
+
+        }, false );
+
+        xhr.responseType = "arraybuffer";
+        xhr.send( null );
+
+        console.log( "start" );
+
+    </script>
+
+</body>
+</html>

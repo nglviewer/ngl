@@ -65,6 +65,9 @@ if( typeof importScripts === 'function' ){
             "../lib/svd.js",
             "../lib/signals.min.js",
 
+            "../lib/bops.js",
+            "../lib/msgpack.js",
+
             "../ngl/shims.js",
             // "../ngl/core.js",
             "../ngl/worker.js",
