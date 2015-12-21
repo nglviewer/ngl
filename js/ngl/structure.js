@@ -3256,39 +3256,43 @@ NGL.Structure.prototype = {
 
     autoChainName: function(){
 
-        var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-                    "abcdefghijklmnopqrstuvwxyz" +
-                    "0123456789";
+        // var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        //             "abcdefghijklmnopqrstuvwxyz" +
+        //             "0123456789";
+        var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         var n = names.length;
 
         return function(){
 
             NGL.time( "NGL.Structure.autoChainName" );
 
-            var i, name;
-
             this.eachModel( function( m ){
 
-                i = 0;
+                var i = 0;
 
                 m.eachFiber( function( f ){
 
-                    name = names[ i ];
+                    var j = i;
+                    var k = 0;
+                    var name = names[ j % n ];
+
+                    while( j >= n ){
+                        j = Math.floor( j / n );
+                        name += names[ j % n ];
+                        k += 1;
+                    }
+
+                    // console.log( i, k, name )
 
                     f.eachAtom( function( a ){
-
                         a.chainname = name;
-
                     } );
 
                     i += 1;
 
-                    if( i === n ){
-
+                    if( k >= 5 ){
                         NGL.warn( "out of chain names" );
-
                         i = 0;
-
                     }
 
                 } )
