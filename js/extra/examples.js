@@ -1301,25 +1301,26 @@ NGL.ExampleRegistry.addDict( {
     "msgpack": function( stage ){
 
         console.time( "load-to-render" );
-        stage.loadFile( "data://perf/3SN6.msgpack", {
-        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagecalpha/4V99", {
-        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagecalpha/3SN6", {
-        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagecalpha/4CUP", {
-        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagecalpha/2L6N", {
+        // stage.loadFile( "data://perf/3SN6.msgpack", {
+        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4V99", {
+        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/3SN6", {
+        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4CUP", {
+        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/2L6N", {
+        stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4V5A", {
             ext: "msgpack"
         } ).then( function( o ){
             o.centerView();
             // o.addRepresentation( "ribbon" );
-            o.addRepresentation( "cartoon" );
-            // o.addRepresentation( "ball+stick" );
+            // o.addRepresentation( "cartoon" );
+            // o.addRepresentation( "ball+stick", { sele: "~A or ~B" } );
             // o.addRepresentation( "spacefill" );
-            // o.addRepresentation( "line" );
+            o.addRepresentation( "line" );
             // o.addRepresentation( "surface" );
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
         } );
 
-    },
+    }
 
 } );

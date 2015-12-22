@@ -3196,7 +3196,7 @@ NGL.MsgpackParser = function( streamer, params ){
 
     NGL.StructureParser.call( this, streamer, params );
 
-    this.doAutoSS = false;
+    this.doAutoSS = true;
 
 };
 
@@ -3214,11 +3214,13 @@ NGL.MsgpackParser.prototype = NGL.createObject(
 
         NGL.time( __timeName );
 
+        console.time( "decode msgpack" );
         var bin = this.streamer.data;
         if( bin instanceof ArrayBuffer ){
             bin = new Uint8Array( bin );
         }
         var msg = decode( bin );
+        console.timeEnd( "decode msgpack" );
 
         console.log( msg );
 
@@ -3229,37 +3231,170 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             return buf.slice( offset, offset + length );
         }
 
-        function getInt32( view ){
+        function getInt16( view, dataArray ){
             var buf = getBuffer( view );
             var dv = new DataView( buf );
             var n = buf.byteLength;
-            var coordInt = new Int32Array( n / 4 );
-            for( var i = 0; i < n; i+=4 ){
-                coordInt[ i / 4 ] = dv.getInt32( i, false );
+            if( !dataArray ) dataArray = new Int16Array( n / 2 );
+            for( var i = 0; i < n; i+=2 ){
+                dataArray[ i / 2 ] = dv.getInt16( i, false );
             }
-            return coordInt;
+            return dataArray;
         }
 
-        function getCoord( view ){
+        function getInt32( view, dataArray ){
             var buf = getBuffer( view );
             var dv = new DataView( buf );
             var n = buf.byteLength;
-            var coordFloat = new Float32Array( n / 4 );
+            if( !dataArray ) dataArray = new Int32Array( n / 4 );
             for( var i = 0; i < n; i+=4 ){
-                coordFloat[ i / 4 ] = dv.getInt32( i, false ) / 1000;
+                dataArray[ i / 4 ] = dv.getInt32( i, false );
             }
-            return coordFloat;
+            return dataArray;
+        }
+
+        function getCoord( view, dataArray ){
+            var buf = getBuffer( view );
+            var dv = new DataView( buf );
+            var n = buf.byteLength;
+            if( !dataArray ) dataArray = new Float32Array( n / 4 );
+            for( var i = 0; i < n; i+=4 ){
+                dataArray[ i / 4 ] = dv.getInt32( i, false ) / 1000;
+            }
+            return dataArray;
+        }
+
+        function decodeFloat( intArray, divisor, dataArray ){
+            var n = intArray.length;
+            if( !dataArray ) dataArray = new Float32Array( n );
+            for( var i = 0; i < n; ++i ){
+                dataArray[ i ] = intArray[ i ] / divisor;
+            }
+            return dataArray;
+        }
+
+        function decodeRunLength( array, dataArray ){
+            // FIXME input should be in a format such that parseInt is not needed
+            if( !dataArray ){
+                var fullLength = 0;
+                for( var i = 0, il = array.length; i < il; i+=2 ){
+                    fullLength += parseInt( array[ i + 1 ] );
+                }
+                dataArray = new array.constructor( fullLength );
+            }
+            var dataOffset = 0;
+            for( var i = 0, il = array.length; i < il; i+=2 ){
+                var value = array[ i ];
+                var length = parseInt( array[ i + 1 ] );
+                for( var j = 0; j < length; ++j ){
+                    dataArray[ dataOffset ] = value;
+                    dataOffset += 1;
+                }
+            }
+            return dataArray;
+        }
+
+        function decodeDelta( dataArray ){
+            for( var i = 1, il = dataArray.length; i < il; ++i ){
+                dataArray[ i ] += dataArray[ i - 1 ];
+            }
+            return dataArray;
+        }
+
+        function decodeDeltaMulti( bigArray, smallArray, dataArray ){
+            var fullLength = ( bigArray.length / 2 ) + smallArray.length;
+            if( !dataArray ) dataArray = new Int32Array( fullLength );
+            var dataOffset = 0;
+            var smallOffset = 0;
+            for( var i = 0, il = bigArray.length; i < il; i+=2 ){
+                var value = bigArray[ i ];
+                var length = bigArray[ i + 1 ];
+                dataArray[ dataOffset ] = value;
+                if( i !== 0 ){
+                    dataArray[ dataOffset ] += dataArray[ dataOffset - 1 ];
+                }
+                dataOffset += 1;
+                for( var j = 0; j < length; ++j ){
+                    dataArray[ dataOffset ] = dataArray[ dataOffset - 1 ] + smallArray[ smallOffset ];
+                    dataOffset += 1;
+                    smallOffset += 1;
+                }
+            }
+            return dataArray;
         }
         
-        msg.cartn_x = getCoord( msg.cartn_x );
-        msg.cartn_y = getCoord( msg.cartn_y );
-        msg.cartn_z = getCoord( msg.cartn_z );
-        msg.seqInfo = getInt32( msg.seqInfo );
-        msg.secStruct = getInt32( msg.secStruct );
+        console.time( "decode per atom data" );
+
+        msg._atom_site_id = decodeDelta( decodeRunLength( msg._atom_site_id ) );
+
+        msg.cartn_x_big = getInt32( msg.cartn_x_big );
+        msg.cartn_x_small = getInt16( msg.cartn_x_small );
+        msg.cartn_x = decodeFloat( decodeDeltaMulti( msg.cartn_x_big, msg.cartn_x_small ), 1000 );
+
+        msg.cartn_y_big = getInt32( msg.cartn_y_big );
+        msg.cartn_y_small = getInt16( msg.cartn_y_small );
+        msg.cartn_y = decodeFloat( decodeDeltaMulti( msg.cartn_y_big, msg.cartn_y_small ), 1000 );
+
+        msg.cartn_z_big = getInt32( msg.cartn_z_big );
+        msg.cartn_z_small = getInt16( msg.cartn_z_small );
+        msg.cartn_z = decodeFloat( decodeDeltaMulti( msg.cartn_z_big, msg.cartn_z_small ), 1000 );
+
+        msg.b_factor_big = getInt32( msg.b_factor_big );
+        msg.b_factor_small = getInt16( msg.b_factor_small );
+        msg.b_factor = decodeFloat( decodeDeltaMulti( msg.b_factor_big, msg.b_factor_small ), 100 );
+
+        for( var i = 0, il = msg._atom_site_label_alt_id.length; i < il; i+=2 ){
+            var value = msg._atom_site_label_alt_id[ i ];
+            if( value === "?" ) msg._atom_site_label_alt_id[ i ] = "";
+        }
+        msg._atom_site_label_alt_id = decodeRunLength( msg._atom_site_label_alt_id );
+
+        console.timeEnd( "decode per atom data" );
+
+        //
+
+        console.time( "decode per residue data" );
+        
+        msg._atom_site_auth_seq_id = decodeDelta( decodeRunLength( msg._atom_site_auth_seq_id ) );
+        
         // msg.secStruct = new Int8Array( getBuffer( msg.secStruct ) );
         // msg.secStruct = new Int8Array(
         //     msg.secStruct.buffer, msg.secStruct.byteOffset, msg.secStruct.byteLength
         // );
+        
+        console.timeEnd( "decode per residue data" );
+
+        //
+
+        console.time( "decode from residue" );
+
+        msg.resOrder = getInt32( msg.resOrder );
+        msg.atomname = new Uint8Array( msg.cartn_x.length * 4 );
+        msg.element = new Uint8Array( msg.cartn_x.length * 3 );
+        msg.resname = new Uint8Array( msg.cartn_x.length * 5 );
+        msg.hetero = new Uint8Array( msg.cartn_x.length );
+        var atomDataOffset = 0;
+        for( var i = 0, il = msg.resOrder.length; i < il; ++i ){
+            var resData = msg.resToInfo[ msg.resOrder[ i ] ];
+            var resAtomCount = ( resData.length - 2 ) / 2;
+            for( var j = 0; j < resAtomCount; ++j ){
+                for( var k = 0; k < 4; ++k ){
+                    msg.atomname[ atomDataOffset * 4 + k ] = resData[ j * 2 + 2 ].charCodeAt( k );
+                }
+                for( var k = 0; k < 3; ++k ){
+                    msg.element[ atomDataOffset * 3 + k ] = resData[ j * 2 + 3 ].charCodeAt( k );
+                }
+                for( var k = 0; k < 5; ++k ){
+                    msg.resname[ atomDataOffset * 5 + k ] = resData[ 1 ].charCodeAt( k );
+                }
+                msg.hetero[ atomDataOffset ] = resData[ 0 ] === "HETATM" ? 1 : 0;
+                atomDataOffset += 1;
+            }
+        }
+
+        console.timeEnd( "decode from residue" );
+
+        //
 
         console.log( msg );
 
@@ -3271,12 +3406,10 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         var covRadii = NGL.CovalentRadii;
         var vdwRadii = NGL.VdwRadii;
 
-        var atomArray;
-        var atomCount = msg.cartn_x.length;
-        if( atomCount > NGL.useAtomArrayThreshold ){
-            atomArray = new NGL.AtomArray( atomCount );
-            s.atomArray = atomArray;
-        }
+        // always use atomArray for msgpack data
+        var atomCount = msg._atom_site_id.length;
+        var atomArray = new NGL.AtomArray( atomCount );
+        s.atomArray = atomArray;
 
         var idx = 0;
         var modelIdx = 0;
@@ -3293,80 +3426,58 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             "-1": "",  // NA
         }
 
+        //
+
+        console.time( "set atomArray directly" )
+        
+        atomArray.x.set( msg.cartn_x );
+        atomArray.y.set( msg.cartn_y );
+        atomArray.z.set( msg.cartn_z );
+        atomArray.bfactor.set( msg.b_factor );
+        atomArray.resno.set( msg._atom_site_auth_seq_id );
+        atomArray.atomname.set( msg.atomname );
+        atomArray.element.set( msg.element );
+        atomArray.resname.set( msg.resname );
+        atomArray.hetero.set( msg.hetero );
+        
+        console.timeEnd( "set atomArray directly" )
+
+        //
+
+        console.time( "set atoms" );
+
         for( var i = 0; i < atomCount; ++i ){
 
-            var x = msg.cartn_x[ i ];
-            var y = msg.cartn_y[ i ];
-            var z = msg.cartn_z[ i ];
-            var resname = msg.resName[ i ];
-            var resno = msg.seqInfo[ i ];
-            var atomname;
-            if( [ "A", "G", "C", "T", "U" ].indexOf( resname ) !== -1 ){
-                atomname = "C4'";
-            }else{
-                atomname = "CA";
-            }
-            var element = "C";
-            var bfactor = 0.0;
-            var hetero = 0;
-            var ss = sstrucMap[ msg.secStruct[ i ] ];
-            if( ss === undefined ){
-                // console.log( msg.secStruct[ i ] )
-                ss = "l";
-            }
+            // var resname = msg.resname[ i ];
+            var resno = msg._atom_site_auth_seq_id[ i ];
+            // var atomname = msg.atomname[ i ];
+            var element = String.fromCharCode( msg.element[ i * 3 ] );
+            var altloc = msg._atom_site_label_alt_id[ i ];
+            var ss = "l";
+            // var ss = sstrucMap[ msg.secStruct[ i ] ];
+            // if( ss === undefined ){
+            //     // console.log( msg.secStruct[ i ] )
+            //     ss = "l";
+            // }
 
-            var a;
+            var a = new NGL.ProxyAtom( atomArray, idx );
 
-            if( atomArray ){
+            atomArray.setChainname( idx, '' );
+            atomArray.serial[ idx ] = idx;
+            atomArray.ss[ idx ] = ss.charCodeAt( 0 );
+            atomArray.setAltloc( idx, altloc );
+            atomArray.vdw[ idx ] = vdwRadii[ element ];
+            atomArray.covalent[ idx ] = covRadii[ element ];
+            atomArray.modelindex[ idx ] = modelIdx;
 
-                a = new NGL.ProxyAtom( atomArray, idx );
-
-                atomArray.setResname( idx, resname );
-                atomArray.x[ idx ] = x;
-                atomArray.y[ idx ] = y;
-                atomArray.z[ idx ] = z;
-                atomArray.setElement( idx, element );
-                atomArray.setChainname( idx, '' );
-                atomArray.resno[ idx ] = resno;
-                atomArray.serial[ idx ] = idx;
-                atomArray.setAtomname( idx, atomname );
-                atomArray.ss[ idx ] = ss.charCodeAt( 0 );
-                atomArray.setAltloc( idx, '' );
-                atomArray.bfactor[ idx ] = bfactor;
-                atomArray.vdw[ idx ] = vdwRadii[ element ];
-                atomArray.covalent[ idx ] = covRadii[ element ];
-                atomArray.modelindex[ idx ] = modelIdx;
-
-                atomArray.usedLength += 1;
-
-            }else{
-
-                a = new NGL.Atom();
-                a.index = idx;
-
-                a.resname = resname;
-                a.x = x;
-                a.y = y;
-                a.z = z;
-                a.element = element;
-                a.hetero = hetero
-                a.chainname = '';
-                a.resno = resno;
-                a.serial = idx;
-                a.atomname = atomname;
-                a.ss = ss;
-                a.altloc = '';
-                a.bfactor = bfactor;
-                a.vdw = vdwRadii[ element ];
-                a.covalent = covRadii[ element ];
-                a.modelindex = modelIdx;
-
-            }
+            atomArray.usedLength += 1;
 
             idx += 1;
             atoms.push( a );
 
         }
+
+        console.timeEnd( "set atoms" );
 
         NGL.timeEnd( __timeName );
         callback();
