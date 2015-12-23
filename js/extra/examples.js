@@ -1303,18 +1303,19 @@ NGL.ExampleRegistry.addDict( {
         console.time( "load-to-render" );
         // stage.loadFile( "data://perf/3SN6.msgpack", {
         // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4V99", {
-        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/3SN6", {
+        stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/3SN6", {
         // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4CUP", {
         // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/2L6N", {
-        stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4V5A", {
+        // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4V5A", {
             ext: "msgpack"
         } ).then( function( o ){
             o.centerView();
             // o.addRepresentation( "ribbon" );
             // o.addRepresentation( "cartoon" );
-            // o.addRepresentation( "ball+stick", { sele: "~A or ~B" } );
+            // o.addRepresentation( "ball+stick" );
             // o.addRepresentation( "spacefill" );
             o.addRepresentation( "line" );
+            // o.addRepresentation( "point" );
             // o.addRepresentation( "surface" );
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
