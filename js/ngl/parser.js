@@ -112,6 +112,13 @@ NGL.buildStructure = function( structure, callback ){
 
     NGL.time( "NGL.buildStructure" );
 
+    // make sure there is no hierarchy
+    structure.atomCount = 0;
+    structure.residueCount = 0;
+    structure.chainCount = 0;
+    structure.modelCount = 0;
+    structure.models.length = 0;
+
     var m, c, r, a;
     var i, chainDict;
 
@@ -482,6 +489,428 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 };
 
 
+NGL.calculateSecondaryStructure = function(){
+
+    // Implementation for proteins based on "pv"
+    //
+    // assigns secondary structure information based on a simple and very fast
+    // algorithm published by Zhang and Skolnick in their TM-align paper.
+    // Reference:
+    //
+    // TM-align: a protein structure alignment algorithm based on the Tm-score
+    // (2005) NAR, 33(7) 2302-2309
+
+    var zhangSkolnickSS = function(){
+
+        var d;
+
+        var ca1 = new THREE.Vector3();
+        var ca2 = new THREE.Vector3();
+
+        return function( fiber, i, distances, delta ){
+
+            for( var j = Math.max( 0, i - 2 ); j <= i; ++j ){
+
+                for( var k = 2;  k < 5; ++k ){
+
+                    if( j + k >= fiber.residueCount ){
+                        continue;
+                    }
+
+                    ca1.copy( fiber.residues[ j ].getTraceAtom() );
+                    ca2.copy( fiber.residues[ j + k ].getTraceAtom() );
+
+                    d = ca1.distanceTo( ca2 );
+                    // NGL.log( d )
+
+                    if( Math.abs( d - distances[ k - 2 ] ) > delta ){
+                        return false;
+                    }
+
+                }
+
+            }
+
+            return true;
+
+        };
+
+    }();
+
+    var isHelical = function( fiber, i ){
+
+        var helixDistances = [ 5.45, 5.18, 6.37 ];
+        var helixDelta = 2.1;
+
+        return zhangSkolnickSS( fiber, i, helixDistances, helixDelta );
+
+    };
+
+    var isSheet = function( fiber, i ){
+
+        var sheetDistances = [ 6.1, 10.4, 13.0 ];
+        var sheetDelta = 1.42;
+
+        return zhangSkolnickSS( fiber, i, sheetDistances, sheetDelta );
+
+    };
+
+    var proteinFiber = function( f ){
+
+        var i;
+
+        var n = f.residueCount;
+
+        for( i = 0; i < n; ++i ){
+
+            if( isHelical( f, i ) ){
+
+                f.residues[ i ].ss = "h";
+
+            }else if( isSheet( f, i ) ){
+
+                f.residues[ i ].ss = "s";
+
+            }else{
+
+                f.residues[ i ].ss = "c";
+
+            }
+
+        }
+
+    }
+
+    var cgFiber = function( f ){
+
+        var localAngle = 20;
+        var centerDist = 2.0;
+
+        var helixbundle = new NGL.Helixbundle( f );
+
+        var pos = helixbundle.position;
+        var res = helixbundle.fiber.residues;
+
+        var n = helixbundle.size;
+
+        var c = new THREE.Vector3();
+        var c2 = new THREE.Vector3();
+
+        var i, d, r, r2;
+
+        for( i = 0; i < n - 1; ++i ){
+
+            r = res[ i ];
+            r2 = res[ i + 1 ];
+
+            c.fromArray( pos.center, i * 3 );
+            c2.fromArray( pos.center, i * 3 + 3 );
+
+            d = c.distanceTo( c2 );
+
+            // NGL.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
+
+            if( d < centerDist && d > 1.0 &&
+                    pos.bending[ i ] < localAngle ){
+
+                r.ss = "h";
+                r2.ss = "h";
+
+            }
+
+        }
+
+    }
+
+    return function( structure, callback ){
+
+        NGL.time( "NGL.Structure.autoSS" );
+
+        // assign secondary structure
+
+        structure.eachFiber( function( f ){
+
+            if( f.residueCount < 4 ) return;
+
+            if( f.isProtein() ){
+
+                proteinFiber( f );
+
+            }else if( f.isCg() ){
+
+                cgFiber( f );
+
+            }
+
+        } );
+
+        // set lone secondary structure assignments to "c"
+
+        structure.eachFiber( function( f ){
+
+            if( !f.isProtein() && !f.isCg ) return;
+
+            var r;
+            var ssType = undefined;
+            var ssCount = 0;
+
+            f.eachResidueN( 2, function( r1, r2 ){
+
+                if( r1.ss===r2.ss ){
+
+                    ssCount += 1;
+
+                }else{
+
+                    if( ssCount===1 ){
+
+                        r1.ss = "c";
+
+                    }
+
+                    ssCount = 1;
+
+                }
+
+                r = r2;
+
+            } );
+
+            if( ssCount===1 ){
+
+                r.ss = "c";
+
+            }
+
+        } );
+
+        NGL.timeEnd( "NGL.Structure.autoSS" );
+
+        callback();
+
+    }
+
+}();
+
+
+NGL.calculateChainnames = function( structure, callback ){
+
+    NGL.time( "NGL.calculateChainnames" );
+
+    // var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+    //             "abcdefghijklmnopqrstuvwxyz" +
+    //             "0123456789";
+    var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var n = names.length;
+
+    structure.eachModel( function( m ){
+
+        var i = 0;
+
+        m.eachFiber( function( f ){
+
+            var j = i;
+            var k = 0;
+            var name = names[ j % n ];
+
+            while( j >= n ){
+                j = Math.floor( j / n );
+                name += names[ j % n ];
+                k += 1;
+            }
+
+            f.eachAtom( function( a ){
+                a.chainname = name;
+            } );
+
+            i += 1;
+
+            if( k >= 5 ){
+                NGL.warn( "out of chain names" );
+                i = 0;
+            }
+
+        } )
+
+    } );
+
+    NGL.timeEnd( "NGL.calculateChainnames" );
+
+    callback();
+
+};
+
+
+NGL.calculateBonds = function( structure, callback ){
+
+    NGL.time( "NGL.Structure.autoBond" );
+
+    var bondSet = structure.bondSet;
+
+    var i, j, n, n1, m, ra, a1, a2;
+    var kdtree, nearestAtoms, radius, maxd;
+    var resname, atomnameList, bonding, equalAtomnames;
+
+    var bondingDict = {};
+
+    NGL.time( "NGL.Structure.autoBond within" );
+
+    structure.eachResidue( function( r ){
+
+        ra = r.atoms;
+        n = r.atomCount;
+        n1 = n - 1;
+
+        if( n > 500 ){
+            NGL.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );
+            return;
+        }
+
+        resname = r.resname;
+        equalAtomnames = false;
+
+        if( bondingDict[ resname ] ){
+
+            atomnameList = bondingDict[ resname ].atomnameList;
+
+            if( n === atomnameList.length ){
+
+                equalAtomnames = true;
+
+                for( i = 0; i < n; ++i ){
+
+                    if( ra[ i ].atomname !== atomnameList[ i ] ){
+
+                        equalAtomnames = false;
+                        break;
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        if( equalAtomnames ){
+
+            var atomIndices1 = bondingDict[ resname ].atomIndices1;
+            var atomIndices2 = bondingDict[ resname ].atomIndices2;
+            var nn = atomIndices1.length;
+
+            for( i = 0; i < nn; ++i ){
+
+                bondSet.addBond(
+                    ra[ atomIndices1[ i ] ], ra[ atomIndices2[ i ] ]
+                );
+
+            }
+
+        }else{
+
+            var atomIndices1 = [];
+            var atomIndices2 = [];
+
+            if( n > 20 ){
+
+                kdtree = new NGL.Kdtree( ra, true );
+                radius = r.hasBackbone() ? 1.2 : 2.3;
+
+                for( i = 0; i <= n1; ++i ){
+
+                    a1 = ra[ i ];
+
+                    maxd = a1.covalent + radius + 0.3;
+                    nearestAtoms = kdtree.nearest(
+                        a1, Infinity, maxd * maxd
+                    );
+                    m = nearestAtoms.length;
+
+                    for( j = 0; j < m; ++j ){
+
+                        a2 = nearestAtoms[ j ].atom;
+
+                        if( a1.index < a2.index ){
+
+                            if( bondSet.addBondIfConnected( a1, a2 ) ){
+
+                                atomIndices1.push( i );
+                                atomIndices2.push( ra.indexOf( a2 ) );
+
+                            };
+
+                        }
+
+                    }
+
+                }
+
+            }else{
+
+                for( i = 0; i < n1; ++i ){
+
+                    a1 = ra[ i ];
+
+                    for( j = i + 1; j <= n1; ++j ){
+
+                        a2 = ra[ j ];
+
+                        if( bondSet.addBondIfConnected( a1, a2 ) ){
+
+                            atomIndices1.push( i );
+                            atomIndices2.push( j );
+
+                        };
+
+                    }
+
+                }
+
+            }
+
+            bondingDict[ resname ] = {
+
+                atomnameList: r.getAtomnameList(),
+                atomIndices1: atomIndices1,
+                atomIndices2: atomIndices2
+
+            };
+
+        }
+
+    } );
+
+    NGL.timeEnd( "NGL.Structure.autoBond within" );
+
+    // bonds between residues
+
+    NGL.time( "NGL.Structure.autoBond between" );
+
+    structure.eachResidueN( 2, function( r1, r2 ){
+
+        var bbType1 = r1.getBackboneType();
+        var bbType2 = r2.getBackboneType();
+
+        if( bbType1 !== NGL.UnknownType && bbType1 === bbType2 ){
+
+            bondSet.addBondIfConnected(
+                r1.getBackboneAtomStart(),
+                r2.getBackboneAtomEnd()
+            );
+
+        }
+
+    } );
+
+    NGL.timeEnd( "NGL.Structure.autoBond between" );
+
+    NGL.timeEnd( "NGL.Structure.autoBond" );
+
+    callback();
+
+};
+
+
 NGL.buildUnitcellAssembly = function( structure, callback ){
 
     var uc = structure.unitcell;
@@ -581,7 +1010,7 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 
     return structure;
 
-}
+};
 
 
 ///////////
@@ -858,13 +1287,9 @@ NGL.StructureParser.prototype = NGL.createObject(
                 if( !self.structure.atomArray &&
                     self.structure.atoms.length > NGL.useAtomArrayThreshold
                 ){
-
                     NGL.createAtomArray( self.structure, wcallback );
-
                 }else{
-
                     wcallback();
-
                 }
 
             },
@@ -872,6 +1297,45 @@ NGL.StructureParser.prototype = NGL.createObject(
             function( wcallback ){
 
                 NGL.buildStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                // check for chain names
+                var doAutoChainName = true;
+                self.structure.eachChain( function( c ){
+                    if( c.chainname ) doAutoChainName = false;
+                } );
+                if( doAutoChainName ){
+                    NGL.calculateChainnames( self.structure, function(){
+                        NGL.buildStructure( self.structure, wcallback );
+                    } );
+                }else{
+                    wcallback();
+                }
+
+            },
+
+            function( wcallback ){
+
+                if( !self.dontAutoBond ){
+                    NGL.calculateBonds( self.structure, wcallback );
+                }else{
+                    wcallback();
+                }
+
+            },
+
+            function( wcallback ){
+
+                // check for secondary structure
+                var s = self.structure;
+                if( self.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
+                    NGL.calculateSecondaryStructure( self.structure, wcallback );
+                }else{
+                    wcallback();
+                }
 
             },
 
@@ -895,25 +1359,8 @@ NGL.StructureParser.prototype = NGL.createObject(
 
             function( wcallback ){
 
-                var s = self.structure;
-
-                if( self.dontAutoBond ){
-                    s._dontAutoBond = true;
-                }
-
-                // check for secondary structure
-                if( self.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
-                    s._doAutoSS = true;
-                }
-
-                // check for chain names
-                var _doAutoChainName = true;
-                s.eachChain( function( c ){
-                    if( c.chainname ) _doAutoChainName = false;
-                } );
-                s._doAutoChainName = _doAutoChainName;
-
-                self.structure.postProcess( wcallback );
+                self.structure.postProcess();
+                wcallback();
 
             }
 
