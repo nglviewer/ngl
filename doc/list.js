@@ -43,7 +43,10 @@ var list = {
             [ "Component", "api/component/Component" ],
             [ "StructureComponent", "api/component/StructureComponent" ],
             [ "SurfaceComponent", "api/component/SurfaceComponent" ],
-            [ "RepresentationComponent", "api/component/RepresentationComponent" ]
+            [ "RepresentationComponent", "api/component/RepresentationComponent" ],
+            [ "Collection", "api/component/Collection" ],
+            [ "ComponentCollection", "api/component/ComponentCollection" ],
+            [ "RepresentationCollection", "api/component/RepresentationCollection" ]
         ],
         "Representation": [
             [ "Representation", "api/representation/Representation" ],

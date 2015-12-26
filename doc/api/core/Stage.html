@@ -16,58 +16,137 @@
 
 		<h2>Constructor</h2>
 
-		<h3>[name]( eid )</h3>
+		<h3>[name]( eid, params )</h3>
 
 		<div>The *eid* is the id of an html element where the viewer canvas should reside (optional).</div>
+
+		<div>The *params* argument allows customizing the stage object at creation-time. The options are described in the section *Parameters*.</div>
 
 
 		<h2>Signals</h2>
 
 		<h3>themeChanged</h3>
-		<div></div>
+		<div>Fired when the *theme* parameter is changed. The *theme* parameter value is passed as the first argument.</div>
+
+		<h3>parametersChanged</h3>
+		<div>Fired when a parameter is changed through the <b>.setParameters()</b> method. A plain object with all (not just the one that changed) parameter values is passed as the first argument.</div>
+
+		<h3>fullscreenChanged</h3>
+		<div>Fired when the fullscreen mode is entered/left via the <b>.toggleFullscreen()</b> method. Also triggered when the fullscreen mode is left through other means (e.g. when the user presses the "escape" key) but only after it has been entered via the <b>.toggleFullscreen()</b> method.</div>
 
 		<h3>componentAdded</h3>
-		<div></div>
+		<div>Fired when a component is added by <b>.addComponent()</b>. The added component is passed as the first argument.</div>
 
 		<h3>componentRemoved</h3>
-		<div></div>
+		<div>Fired when a component is removed by <b>.removeComponent()</b>. The removed component is passed as the first argument.</div>
 
 		<h3>atomPicked</h3>
-		<div></div>
+		<div>Fired when the user clicks on a representation of an [page:Atom atom]. The picked atom is passed as the first argument.</div>
+
+		<h3>bondPicked</h3>
+		<div>Fired when the user clicks on a representation of a [page:Bond bond]. The picked bond is passed as the first argument.</div>
+
+		<h3>volumePicked</h3>
+		<div>Fired when the user clicks on a representation of a [page:Volume volume]. The picked volume is passed as the first argument.</div>
+
+		<h3>nothingPicked</h3>
+		<div>Fired when the user clicks on the screen but there is no representation or the representations is not associated with a pick-able object.</div>
+
+		<h3>onPicking</h3>
+		<div>Fired when the user clicks on the screen. An object with the following keys is passed as the first argument: *atom*, *bond*, *volume*, *instance*. The *instance* includes the applied transformation matrix.</div>
+
+
+		<h2>Parameters</h2>
+
+		<div>The parameters can be set by the <b>.setParameters()</b> method and their values retrieved by the <b>.getParameters()</b> method.</div>
+
+		<h3>theme</h3>
+		<div>One of *dark*, *light*. Sets the background color of the viewer canvas and emmits a *themeChanged* signal for use by GUIs.</div>
+
+		<h3>quality</h3>
+		<div>One of *high*, *medium*, *low*. Controls how detailed the geometry of mesh/triangle based representations like cartoon tubes or spheres is rendered.</div>
+
+		<h3>impostor</h3>
+		<div>Boolean, sets whether spheres, cylinders, hyperballs are rendered via raycasted imposters. Note, impostor rendering may not be available on older machines in which case this setting is ignored.</div>
+
+		<!-- <h3>overview</h3>
+		<div>Boolean, whether to show a splash screen describing the user interface. Only used for the GUI.</div> -->
+
+		<h3>rotateSpeed, zoomSpeed, panSpeed</h3>
+		<div>Float values between 0 and 10, controlling how fast the scene is rotated, zoomed or panned through mouse movements.</div>
+
+		<h3>clipNear, clipFar</h3>
+		<div>Integer value between 0 and 100 to set the position of the front and back clipping planes. Value is in percent of the bounding sphere diameter of the scene.</div>
+
+		<h3>clipDist</h3>
+		<div>Integer value setting the minimum distance in Angstrom between camera position and the front clipping plane (*nearClip*) </div>
+
+		<h3>fogNear, fogFar</h3>
+		<div>Integer value between 0 and 100 to set the depth at which the fog effect starts and where it reaches full strength. Value is in percent of the bounding sphere diameter of the scene.</div>
+
+		<h3>lightColor, ambientColor</h3>
+		<div>Color (css string or hex value). Sets color of the point light located at the camera and the color of the ambient light, effecting the diffuse light.</div>
+
+		<h3>lightIntensity, ambientIntensity</h3>
+		<div>Float value between 0 and 10. Set light strength of the point light and the ambient light.</div>
 
 
 		<h2>Methods</h2>
 
+		<h3>.setParameters( params )</h3>
+		<div>The *params* argument sets the corresponding parameters as described in section *Parameters*.</div>
+
+		<h3>.getParameters()</h3>
+		<div>Returns a plain object with the values of all parameters as described in section *Parameters*.</div>
+
 		<h3>.loadFile( path, params )</h3>
-		<div>Loads the file from *path*, creates a corresponding [page:Component component] and executes *params.onLoad*( [page:Component] ). TODO document all properties of the params object.</div>
+		<div>Loads the file from *path*, creates a corresponding [page:Component component] and returns a *Promise*. The *path* argument can be a URL string, a *File* object or a *Blob* object. The *params* argument is passed to the *NGL.autoLoad()* function.</div>
+		<div>
+			Options for *params*:
+			<ul>
+				<li>*defaultRepresentation*: add a set of default representations after loading, defaults to *false*</li>
+				<li>*name*: name given to the loaded components, useful for methods <b>.getComponentsByName()</b>, <b>.getRepresentationsByName()</b> and <b>.getAnythingByName()</b></li>
+				<li>*ext*: file extension to identify file type, by default determined from path or file name but can be set explicitly</li>
+				<li>*compressed*: flag to identify compression type (if any, set to *false* for none), by default determined from path or file name but can be set explicitly</li>
+				<li>*firstModelOnly*: boolean, load only the first model of a structure file, defaults to *false*</li>
+				<li>*asTrajectory*: boolean, load the structure file as a trajectory, first model as structure and the the remaining models as coordinate frames, defaults to *false*</li>
+				<li>*cAlphaOnly*: boolean, load only the c-alpha atoms of structure file, defaults to *false*</li>
+				<li>*reorderAtoms*: boolean, reorder atoms (based on *modelindex*, *chainname*, *resno*) to help correctly build the structure-model-chain-residue hierarchy, defaults to *false*</li>
+				<li>*dontAutoBond*: boolean, prevent automatic bond determination, defaults to *false*</li>
+			</ul>
+		</div>
 
 
 		<h3>.addComponent( [page:Component] )</h3>
-		<div></div>
+		<div>Add the [page:Component] to the stage.</div>
+
+
+		<h3>.addComponentFromObject( object, params )</h3>
+		<div>Convenience method to add a [page:Structure], [page:Surface], [page:Volume] or [page:Script] object as a [page:Component] to the stage.</div>
 
 
 		<h3>.removeComponent( [page:Component] )</h3>
-		<div></div>
+		<div>Remove the [page:Component] from the stage.</div>
 
 
 		<h3>.removeAllComponents( type )</h3>
-		<div></div>
+		<div>Convenience method to remove all components from the stage.</div>
 
 
 		<h3>.eachComponents( callback, type )</h3>
-		<div></div>
+		<div>Iterates over all components of an optional *type* and call *callback* on each of them.</div>
 
 
 		<h3>.eachRepresentation( callback, componentType )</h3>
-		<div></div>
+		<div>Iterates over all representations of an optional *componentType* and call *callback* on each of them.</div>
 
 
 		<h3>.exportImage( factor, antialias, transparent, trim, onProgress )</h3>
-		<div></div>
+		<div>Triggers creation and subsequent download of an image of the current scene.</div>
 
 
 		<h3>.centerView()</h3>
-		<div></div>
+		<div>Centers the view on the center of the bounding box of all representations (regardless off visibility). When there are pending tasks (like creation of a representation) then the view is repeatedly centered until all tasks have finished.</div>
 
 
 		<h3>.getOrientation()</h3>
@@ -76,7 +155,6 @@
 
 		<h3>.setOrientation( orientation )</h3>
 		<div>Restores the passed orientation of a scene. In contrast to [page:Viewer viewer].*setOrientation*, this method waits for all pending representations to be added.</div>
-
 		<code>
 		// get orientation
 		var orientation = stage.getOrientation();
@@ -85,8 +163,36 @@
 		</code>
 
 
+		<h3>.handleResize()</h3>
+		<div>Must be called whenever the size of the viewer canvas element changes.</div>
+
+
 		<h3>.setTheme( value )</h3>
-		<div></div>
+		<div>Set the theme to *value* without changing the corresponding stage parameter.</div>
+
+
+		<h3>.setImpostor( value )</h3>
+		<div>Set the impostor option to *value* without changing the corresponding stage parameter.</div>
+
+
+		<h3>.setQuality( value )</h3>
+		<div>Set the quality option to *value* without changing the corresponding stage parameter.</div>
+
+
+		<h3>.getComponentsByName( name, componentType )</h3>
+		<div>Returns a [page:ComponentCollection] with all components that satisfy the *name* and *componentType* condition.</div>
+
+
+		<h3>.getRepresentationsByName( name, componentType )</h3>
+		<div>Returns a [page:RepresentationCollection] with all representations that satisfy the *name* and *componentType* condition.</div>
+
+
+		<h3>.getAnythingByName( name )</h3>
+		<div>Returns a [page:Collection] with all components that satisfy the *name* condition.</div>
+
+
+		<h3>.dispose()</h3>
+		<div>Clean-up.</div>
 
 
 	</body>
