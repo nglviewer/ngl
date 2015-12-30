@@ -2380,8 +2380,8 @@ NGL.CifParser.prototype = NGL.createObject(
                         if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
 
                         var chainList = gen.asym_id_list[ i ].split( "," );
-                        for( var i = 0, il = chainList.length; i < il; ++i ){
-                            chainList[ i ] = asymIdDict[ chainList[ i ] ];
+                        for( var j = 0, jl = chainList.length; j < jl; ++j ){
+                            chainList[ j ] = asymIdDict[ chainList[ j ] ];
                         }
 
                         biomolDict[ name ] = {
