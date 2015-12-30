@@ -1746,7 +1746,6 @@ NGL.CifParser.prototype = NGL.createObject(
         var currentCategory = null;
         var currentName = null;
         var first = null;
-        var indexList = [];
         var pointerNames = [];
 
         var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
@@ -1786,7 +1785,6 @@ NGL.CifParser.prototype = NGL.createObject(
                     currentCategory = null;
                     currentName = null;
                     first = null;
-                    indexList.length = 0;
                     pointerNames.length = 0;
 
                 }else if( line.substring( 0, 5 )==="data_" ){
@@ -1931,16 +1929,6 @@ NGL.CifParser.prototype = NGL.createObject(
                                     "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
                                     "label_alt_id", "auth_seq_id", "pdbx_PDB_model_num"
                                 ];
-
-                                indexList.length = 0;
-
-                                for( var j = 0; j < nn; ++j ){
-
-                                    if( names.indexOf( pointerNames[ j ] ) !== -1 ){
-                                        indexList.push( j );
-                                    }
-
-                                }
 
                                 label_atom_id = pointerNames.indexOf( "label_atom_id" );
                                 label_alt_id = pointerNames.indexOf( "label_alt_id" );
