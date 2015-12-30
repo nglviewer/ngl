@@ -1266,7 +1266,7 @@ QUnit.test( "structure subset atomset chain", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var selection = new NGL.Selection( "30-341:D or 384-394:A" );
+        var selection = new NGL.Selection( "30-341:R or 384-394:A" );
         var subset = new NGL.StructureSubset( structure, selection );
         var atomSet = new NGL.AtomSet( structure, selection );
 

@@ -277,7 +277,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", {
 
                 color: "rgb( 127, 191, 255 )",
-                sele: ":A or :AA or :I or :N or :CA or :F or :V or :DA or :J or :SA or :U or :JA or :S or :GA or :H or :O or :G or :OP or :K or :Q or :C or :E or :OA or :TA or :M or :L or :B or :HA or :R or :W or :MA or :NA or :QA or :P or :KA or :Z or :LA or :KA or :X or :FA or :T or :IA or :BA or :IA or :Y or :D or :RA or :EA",
+                sele: ":A2 or :A3 or :A4 or :AA or :AB or :AC or :AD or :AF or :AG or :AH or :AI or :AJ or :AK or :AL or :AM or :AN or :AO or :AP or :AQ or :AR or :AS or :AT or :AU or :AV or :AW or :AX or :AY or :AZ or :Aa or :Ab or :Ac or :Ad or :Ae or :Af or :Ag or :Ah or :Ai or :Aj or :Ak or :Al or :Am or :An or :Ao or :Ap or :Aq or :Ar or :As or :At or :Au",
                 name: "60S"
 
             } );
@@ -285,7 +285,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", {
 
                 color: "rgb( 255, 255, 127 )",
-                sele: ":XA or :QB or :XB or :RB or :BB or :HB or :DB or :EC or :NB or :BC or :VB or :WB or :EB or :OB or :KB or :IB or :AB or :TB or :FB or :SB or :PB or :YA or :UB or :LB or :MB or :ZA or :CC or :CB or :JB or :GB or :ZB or :PA or :DC or :YB or :AC",
+                sele: ":C1 or :CA or :CB or :CC or :CD or :CE or :CF or :CG or :CH or :CI or :CJ or :CK or :CL or :CM or :CN or :CO or :CP or :CQ or :CR or :CS or :CT or :CU or :CV or :CW or :CX or :CY or :CZ or :Ca or :Cb or :Cc or :Cd or :Ce or :Cf or :Cg",
                 name: "40S"
 
             } );
@@ -293,7 +293,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "spacefill", {
 
                 color: "rgb( 255, 127, 255 )",
-                sele: ":WA",
+                sele: ":BC",
                 name: "IRES"
 
             } );
@@ -301,7 +301,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "spacefill", {
 
                 color: "rgb( 51, 255, 51 )",
-                sele: ":UA",
+                sele: ":BA",
                 name: "tRNA"
 
             } );
@@ -309,7 +309,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "spacefill", {
 
                 color: "rgb( 255, 0, 0 )",
-                sele: ":VA",
+                sele: ":BB",
                 name: "EIF5B"
 
             } );

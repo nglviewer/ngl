@@ -1748,11 +1748,13 @@ NGL.CifParser.prototype = NGL.createObject(
         var first = null;
         var pointerNames = [];
 
-        var label_atom_id, label_alt_id, Cartn_x, Cartn_y, Cartn_z, id,
-            type_symbol, label_asym_id,
-            // label_seq_id,
-            label_comp_id,
-            group_PDB, B_iso_or_equiv, auth_seq_id, pdbx_PDB_model_num;
+        var auth_asym_id, auth_seq_id,
+            label_atom_id, label_comp_id, label_asym_id, label_alt_id,
+            group_PDB, id, type_symbol, pdbx_PDB_model_num,
+            Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv;
+
+        var asymIdDict = {};
+        this.asymIdDict = asymIdDict;
 
         //
 
@@ -1923,26 +1925,25 @@ NGL.CifParser.prototype = NGL.createObject(
                             if( first ){
 
                                 var names = [
-                                    "group_PDB", "id", "label_atom_id",
-                                    // "label_seq_id",
-                                    "label_comp_id", "type_symbol", "label_asym_id",
-                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
-                                    "label_alt_id", "auth_seq_id", "pdbx_PDB_model_num"
+                                    "auth_asym_id", "auth_seq_id",
+                                    "label_atom_id", "label_comp_id", "label_asym_id", "label_alt_id",
+                                    "group_PDB", "id", "type_symbol", "pdbx_PDB_model_num",
+                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv"
                                 ];
 
+                                auth_asym_id = pointerNames.indexOf( "auth_asym_id" );
+                                auth_seq_id = pointerNames.indexOf( "auth_seq_id" );
                                 label_atom_id = pointerNames.indexOf( "label_atom_id" );
+                                label_comp_id = pointerNames.indexOf( "label_comp_id" );
+                                label_asym_id = pointerNames.indexOf( "label_asym_id" );
                                 label_alt_id = pointerNames.indexOf( "label_alt_id" );
                                 Cartn_x = pointerNames.indexOf( "Cartn_x" );
                                 Cartn_y = pointerNames.indexOf( "Cartn_y" );
                                 Cartn_z = pointerNames.indexOf( "Cartn_z" );
                                 id = pointerNames.indexOf( "id" );
                                 type_symbol = pointerNames.indexOf( "type_symbol" );
-                                label_asym_id = pointerNames.indexOf( "label_asym_id" );
-                                // label_seq_id = pointerNames.indexOf( "label_seq_id" );
-                                label_comp_id = pointerNames.indexOf( "label_comp_id" );
                                 group_PDB = pointerNames.indexOf( "group_PDB" );
                                 B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
-                                auth_seq_id = pointerNames.indexOf( "auth_seq_id" );
                                 pdbx_PDB_model_num = pointerNames.indexOf( "pdbx_PDB_model_num" );
 
                                 first = false;
@@ -2010,8 +2011,7 @@ NGL.CifParser.prototype = NGL.createObject(
                             var serial = parseInt( ls[ id ] );
                             var element = ls[ type_symbol ];
                             var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
-                            var chainname = ls[ label_asym_id ];
-                            // var resno = parseInt( ls[ label_seq_id ] );
+                            var chainname = ls[ auth_asym_id ];
                             var resno = parseInt( ls[ auth_seq_id ] );
                             var resname = ls[ label_comp_id ];
                             var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
@@ -2069,6 +2069,9 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             idx += 1;
                             atoms.push( a );
+
+                            // chainname mapping: label_asym_id -> auth_asym_id
+                            asymIdDict[ ls[ label_asym_id ] ] = chainname;
 
                         }else{
 
@@ -2192,9 +2195,9 @@ NGL.CifParser.prototype = NGL.createObject(
 
                                 helices.push( [
 
-                                    sc.beg_label_asym_id[ i ],
+                                    asymIdDict[ sc.beg_label_asym_id[ i ] ],
                                     parseInt( sc.beg_auth_seq_id[ i ] ),
-                                    sc.end_label_asym_id[ i ],
+                                    asymIdDict[ sc.end_label_asym_id[ i ] ],
                                     parseInt( sc.end_auth_seq_id[ i ] ),
                                     helixTypes[ helixType ] || helixTypes[""]
 
@@ -2241,9 +2244,9 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             sheets.push( [
 
-                                ssr.beg_label_asym_id[ i ],
+                                asymIdDict[ ssr.beg_label_asym_id[ i ] ],
                                 parseInt( ssr.beg_auth_seq_id[ i ] ),
-                                ssr.end_label_asym_id[ i ],
+                                asymIdDict[ ssr.end_label_asym_id[ i ] ],
                                 parseInt( ssr.end_auth_seq_id[ i ] )
 
                             ] );
@@ -2376,11 +2379,14 @@ NGL.CifParser.prototype = NGL.createObject(
                         var name = id;
                         if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
 
+                        var chainList = gen.asym_id_list[ i ].split( "," );
+                        for( var i = 0, il = chainList.length; i < il; ++i ){
+                            chainList[ i ] = asymIdDict[ chainList[ i ] ];
+                        }
+
                         biomolDict[ name ] = {
-
                             matrixDict: md,
-                            chainList: gen.asym_id_list[ i ].split( "," )
-
+                            chainList: chainList
                         };
 
                     } );
@@ -2566,6 +2572,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
         var s = this.structure;
         var cif = this.cif;
+        var asymIdDict = this.asymIdDict;
 
         function _ensureArray( dict, field ){
 
@@ -2632,7 +2639,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             var sele1 = (
                                 sc.ptnr1_auth_seq_id[ i ] + ":" +
-                                sc.ptnr1_label_asym_id[ i ] + "." +
+                                asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] + "." +
                                 sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
                             );
                             var selection1 = new NGL.Selection( sele1 );
@@ -2646,7 +2653,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             var sele2 = (
                                 sc.ptnr2_auth_seq_id[ i ] + ":" +
-                                sc.ptnr2_label_asym_id[ i ] + "." +
+                                asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] + "." +
                                 sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
                             );
                             var selection2 = new NGL.Selection( sele2 );

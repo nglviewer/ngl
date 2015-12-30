@@ -126,6 +126,7 @@ Changelog
 Version 0.7dev
 --------------
 
+* MIGRATION: chainname read from `auth_asym_id` instead of from `label_asym_id` field
 * ADD: `stage.toggleFullscreen` method
 * DOC: clarified apache configuration for deployment
 * FIX: bonds not reset when building a NGL.StructureSubset
