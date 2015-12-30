@@ -372,20 +372,12 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://1u19.pdb" ).then( function( o ){
 
             o.addRepresentation( "tube", {
-                sele: ":A", visible: false, bfactor: 0.005
-            } );
-
-            o.addRepresentation( "hyperball", {
-                sele: ":A", visible: false, shrink: 0.3
+                sele: ":A", bfactor: 0.005, color: "bfactor"
             } );
 
             o.addRepresentation( "ball+stick", {
-                sele: ":A and sidechainAttached",
-                visible: true, aspectRatio: 1.5
-            } );
-
-            o.addRepresentation( "cartoon", {
-                sele: ":A", visible: true, scale: 0.3, aspectRatio: 6.0
+                sele: ":A and sidechainAttached", aspectRatio: 1.5,
+                color: "bfactor"
             } );
 
             o.centerView( true, ":A" );
