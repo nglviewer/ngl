@@ -21,7 +21,8 @@ var NGL = {
     ),
     mainScriptFilePath: "../js/build/ngl.full.min.js",
     cssDirectory: "../css/",
-    assetsDirectory: "../"
+    assetsDirectory: "../",
+    documentationUrl: "../doc/index.html"
 
 };
 
