@@ -1554,15 +1554,8 @@ NGL.Viewer.prototype = {
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
         var nearClip = cDist - ( bRadius * nearFactor );
-        camera.near = Math.max(
-            0.1,
-            // cDist - ( bRadius * nearFactor ),
-            p.clipDist
-        );
-        camera.far = Math.max(
-            1,
-            cDist + ( bRadius * farFactor )
-        );
+        camera.near = Math.max( 0.1, nearClip, p.clipDist );
+        camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
         this.nearClip = nearClip;
 
         // fog
@@ -1714,7 +1707,7 @@ NGL.Viewer.prototype = {
                 );
                 modelViewProjectionMatrix.multiplyMatrices(
                     camera.projectionMatrix, matrix
-                )
+                );
 
                 var attributes = o.geometry.attributes;
                 var n = attributes.position.count;

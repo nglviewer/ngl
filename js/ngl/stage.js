@@ -99,7 +99,7 @@ NGL.Stage.prototype = {
             type: "range", step: 1, max: 100, min: 0
         },
         clipDist: {
-            type: "range", step: 1, max: 100, min: 0
+            type: "number", precision: 0, max: 200, min: 0
         },
         fogNear: {
             type: "range", step: 1, max: 100, min: 0

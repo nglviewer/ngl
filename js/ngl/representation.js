@@ -97,9 +97,9 @@ NGL.Representation.prototype = {
 
     parameters: {
 
-        nearClip: {
-            type: "boolean", buffer: true
-        },
+        // nearClip: {
+        //     type: "boolean", buffer: true
+        // },
         flatShaded: {
             type: "boolean", buffer: true
         },
@@ -152,7 +152,7 @@ NGL.Representation.prototype = {
 
         var p = params || {};
 
-        this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+        this.nearClip = p.nearClip !== undefined ? p.nearClip : false;
         this.flatShaded = p.flatShaded || false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
