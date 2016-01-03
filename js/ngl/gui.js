@@ -322,7 +322,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    // container.add( statsPanel );
+    if( NGL.debug ) container.add( statsPanel );
 
     return container;
 
