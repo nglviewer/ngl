@@ -1,14 +1,16 @@
 #ifdef USE_FOG
 
-	#if defined( USE_LOGDEPTHBUF_EXT ) || defined( IMPOSTOR )
+	// #if defined( USE_LOGDEPTHBUF_EXT ) || defined( IMPOSTOR )
+	//
+	// 	float depth = gl_FragDepthEXT / gl_FragCoord.w;
+	//
+	// #else
+	//
+	// 	float depth = gl_FragCoord.z / gl_FragCoord.w;
+	//
+	// #endif
 
-		float depth = gl_FragDepthEXT / gl_FragCoord.w;
-
-	#else
-
-		float depth = gl_FragCoord.z / gl_FragCoord.w;
-
-	#endif
+	float depth = length( vViewPosition );
 
 	#ifdef FOG_EXP2
 
