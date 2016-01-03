@@ -47,6 +47,7 @@ varying float vRadius2;
     #include common
     #include fog_pars_fragment
     #include bsdfs
+    #include ambient_pars
     #include lights_pars
     #include lights_standard_pars_fragment
 #endif

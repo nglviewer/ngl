@@ -203,6 +203,7 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
             "metalness": { type: "f", value: this.metalness },
             "envMapIntensity" : { type: "f", value: 1 } // temporary
         },
+        THREE.UniformsLib[ "ambient" ],
         THREE.UniformsLib[ "lights" ]
     ] );
 

@@ -21,6 +21,7 @@ varying vec3 vViewPosition;
     #include color_pars_fragment
     #include fog_pars_fragment
     #include bsdfs
+    #include ambient_pars
     #include lights_pars
     #include lights_standard_pars_fragment
 #endif
