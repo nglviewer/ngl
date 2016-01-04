@@ -156,7 +156,7 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
     this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
     this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.nearClip = p.nearClip !== undefined ? p.nearClip : true;
+    this.clipNear = p.clipNear !== undefined ? p.clipNear : 0;
     this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
     this.background = p.background !== undefined ? p.background : false;
     this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
@@ -237,7 +237,7 @@ NGL.Buffer.prototype = {
         dullInterior: { updateShader: true },
         side: { updateShader: true, property: true },
         opacity: { uniform: true },
-        nearClip: { updateShader: true },
+        clipNear: { updateShader: true, property: true },
         flatShaded: { updateShader: true },
         background: { updateShader: true },
         linewidth: { property: true },
@@ -271,6 +271,7 @@ NGL.Buffer.prototype = {
         this.material.vertexColors = THREE.VertexColors;
         this.material.extensions.derivatives = this.flatShaded;
         this.material.extensions.fragDepth = this.impostor;
+        this.material.clipNear = this.clipNear;
 
         this.wireframeMaterial = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
@@ -285,6 +286,7 @@ NGL.Buffer.prototype = {
             linewidth: this.linewidth
         } );
         this.wireframeMaterial.vertexColors = THREE.VertexColors;
+        this.wireframeMaterial.clipNear = this.clipNear;
 
         this.pickingMaterial = new THREE.ShaderMaterial( {
             uniforms: this.pickingUniforms,
@@ -300,6 +302,7 @@ NGL.Buffer.prototype = {
         } );
         this.pickingMaterial.vertexColors = THREE.VertexColors;
         this.pickingMaterial.extensions.fragDepth = this.impostor;
+        this.pickingMaterial.clipNear = this.clipNear;
 
         this.updateShader();
 
@@ -543,7 +546,7 @@ NGL.Buffer.prototype = {
 
         var defines = {};
 
-        if( this.nearClip ){
+        if( this.clipNear ){
             defines[ "NEAR_CLIP" ] = 1;
         }
 

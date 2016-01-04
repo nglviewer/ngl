@@ -1541,6 +1541,7 @@ NGL.Viewer.prototype = {
             camera.position.set( 0, 0, p.cameraZ );
             cDist = Math.abs( p.cameraZ );
         }
+        this.cDist = cDist;
 
         var bRadius = Math.max( 10, this.boundingBox.size().length() * 0.5 );
         if( bRadius === Infinity || bRadius === -Infinity ){
@@ -1550,13 +1551,12 @@ NGL.Viewer.prototype = {
         bRadius += this.boundingBox.center( this.distVector )
             .add( this.rotationGroup.position )
             .length();
+        this.bRadius = bRadius;
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
-        var nearClip = cDist - ( bRadius * nearFactor );
-        camera.near = Math.max( 0.1, nearClip, p.clipDist );
+        camera.near = Math.max( 0.1, p.clipDist, cDist - ( bRadius * nearFactor ) );
         camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
-        this.nearClip = nearClip;
 
         // fog
 
@@ -1635,7 +1635,8 @@ NGL.Viewer.prototype = {
 
         return function( group, camera ){
 
-            var nearClip = this.nearClip;
+            var cDist = this.cDist;
+            var bRadius = this.bRadius;
             var canvasHeight = this.height;
             var pixelRatio = this.renderer.getPixelRatio();
 
@@ -1649,12 +1650,15 @@ NGL.Viewer.prototype = {
 
             group.traverse( function ( o ){
 
-                if( !o.material ) return;
+                var m = o.material;
+                if( !m ) return;
 
                 var u = o.material.uniforms;
                 if( !u ) return;
 
-                if( u.nearClip ){
+                if( m.clipNear ){
+                    var nearFactor = ( 50 - m.clipNear ) / 50;
+                    var nearClip = cDist - ( bRadius * nearFactor );
                     u.nearClip.value = nearClip;
                 }
 

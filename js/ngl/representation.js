@@ -97,9 +97,9 @@ NGL.Representation.prototype = {
 
     parameters: {
 
-        // nearClip: {
-        //     type: "boolean", buffer: true
-        // },
+        clipNear: {
+            type: "range", step: 1, max: 100, min: 0, buffer: true
+        },
         flatShaded: {
             type: "boolean", buffer: true
         },
@@ -152,7 +152,7 @@ NGL.Representation.prototype = {
 
         var p = params || {};
 
-        this.nearClip = p.nearClip !== undefined ? p.nearClip : false;
+        this.clipNear = p.clipNear !== undefined ? p.clipNear : 0;
         this.flatShaded = p.flatShaded || false;
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
@@ -194,7 +194,7 @@ NGL.Representation.prototype = {
 
         return Object.assign( {
 
-            nearClip: this.nearClip,
+            clipNear: this.clipNear,
             flatShaded: this.flatShaded,
             opacity: this.opacity,
             side: this.side,
@@ -940,7 +940,6 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
     }, NGL.Representation.prototype.parameters, {
 
-        nearClip: null,
         flatShaded: null,
         wireframe: null,
         linewidth: null,
@@ -3822,7 +3821,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     radiusSegments: this.radiusSegments,
                     side: this.side,
                     opacity: this.opacity,
-                    nearClip: this.nearClip,
+                    clipNear: this.clipNear,
                     flatShaded: this.flatShaded,
                     dullInterior: true
                 },
@@ -3843,7 +3842,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( m, 1.0, 1.0, 1.0 ),
                     crossing.helixLabel,
                     {
-                        nearClip: this.nearClip
+                        clipNear: this.clipNear
                     }
                 )
 
