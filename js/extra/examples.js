@@ -1199,9 +1199,10 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/4CUP.cif.gz" ).then( function( o ){
-            o.centerView();
-            o.addRepresentation( "cartoon" );
-            o.addRepresentation( "ball+stick" );
+            o.addRepresentation( "spacefill" );
+            // o.addRepresentation( "cartoon" );
+            // o.addRepresentation( "ball+stick" );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1213,9 +1214,10 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/4V5A.cif.gz" ).then( function( o ){
-            o.centerView();
-            o.addRepresentation( "cartoon", { sele: "polymer" } );
-            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            o.addRepresentation( "point" );
+            // o.addRepresentation( "cartoon", { sele: "polymer" } );
+            // o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1227,11 +1229,12 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/4V99.cif.gz", {
-            cAlphaOnly: true
+            cAlphaOnly: false
         } ).then( function( o ){
-            o.centerView();
-            o.addRepresentation( "ribbon", { sele: "polymer" } );
+            o.addRepresentation( "point" );
+            // o.addRepresentation( "ribbon", { sele: "polymer" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1243,9 +1246,9 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/2L6N.cif.gz" ).then( function( o ){
-            o.centerView();
             o.addRepresentation( "cartoon", { sele: "polymer" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1257,9 +1260,10 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
-            o.centerView();
-            o.addRepresentation( "cartoon", { sele: "polymer" } );
-            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            o.addRepresentation( "spacefill" );
+            // o.addRepresentation( "cartoon", { sele: "polymer" } );
+            // o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1271,9 +1275,9 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/1RB8.cif.gz" ).then( function( o ){
-            o.centerView();
             o.addRepresentation( "cartoon", { sele: "polymer" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1285,12 +1289,12 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
-            o.centerView();
             // o.addRepresentation( "cartoon" );
             // o.addRepresentation( "ball+stick" );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "line" );
             o.addRepresentation( "surface" );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );
@@ -1309,7 +1313,6 @@ NGL.ExampleRegistry.addDict( {
         // stage.loadFile( "http://codec.rcsb.org:8080/servemessagepack/4V5A", {
             ext: "msgpack"
         } ).then( function( o ){
-            o.centerView();
             // o.addRepresentation( "ribbon" );
             // o.addRepresentation( "cartoon" );
             // o.addRepresentation( "ball+stick" );
@@ -1317,6 +1320,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "line" );
             // o.addRepresentation( "point" );
             // o.addRepresentation( "surface" );
+            stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
             } );

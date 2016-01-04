@@ -1177,7 +1177,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
             this.applySelection();
 
-            this.rebuildRepresentations( true );
+            this.rebuildRepresentations();
             this.rebuildTrajectories();
 
         }, this );
@@ -1188,17 +1188,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     applySelection: function(){
 
-        if( this.selection.string ){
-
-            this.structure = new NGL.StructureSubset(
-                this.__structure, this.selection
-            );
-
-        }else{
-
-            this.structure = this.__structure;
-
-        }
+        this.structure.setSelection( this.selection );
 
     },
 
@@ -1210,13 +1200,9 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
-    rebuildRepresentations: function( setStructure ){
+    rebuildRepresentations: function(){
 
         this.reprList.forEach( function( repr ){
-
-            if( setStructure ){
-                repr.setStructure( this.structure );
-            }
 
             repr.build( repr.getParameters() );
 
@@ -1685,14 +1671,6 @@ NGL.RepresentationComponent.prototype = NGL.createObject(
     build: function( params ){
 
         this.repr.build( params );
-
-        return this;
-
-    },
-
-    setStructure: function( structure ){
-
-        this.repr.setStructure( structure );
 
         return this;
 

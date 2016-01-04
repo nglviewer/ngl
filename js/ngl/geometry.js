@@ -1369,8 +1369,7 @@ NGL.Kdtree = function( atoms, useSquaredDist ){
     }
 
     if( atoms instanceof NGL.AtomSet ||
-        atoms instanceof NGL.Structure ||
-        atoms instanceof NGL.StructureSubset
+        atoms instanceof NGL.Structure
     ){
 
         var atomSet = atoms;

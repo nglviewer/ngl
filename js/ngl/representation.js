@@ -537,12 +537,11 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
     this.fiberList = [];
 
+    this.structure = structure;
     this.selection = new NGL.Selection(
         params.sele, this.getAssemblySele( params.assembly, structure )
     );
-    this.atomSet = new NGL.AtomSet();
-
-    this.setStructure( structure );
+    this.atomSet = new NGL.AtomSet( structure, this.selection );
 
     NGL.Representation.call( this, structure, viewer, params );
 
@@ -620,15 +619,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         }
 
         NGL.Representation.prototype.init.call( this, p );
-
-    },
-
-    setStructure: function( structure ){
-
-        this.structure = structure || this.structure;
-        this.atomSet.fromStructure( this.structure, this.selection );
-
-        return this;
 
     },
 

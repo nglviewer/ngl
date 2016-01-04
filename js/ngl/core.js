@@ -68,6 +68,8 @@ if( typeof importScripts === 'function' ){
             "../lib/bops.js",
             "../lib/msgpack.js",
 
+            "../lib/TypedFastBitSet.js",
+
             "../ngl/shims.js",
             // "../ngl/core.js",
             "../ngl/worker.js",
