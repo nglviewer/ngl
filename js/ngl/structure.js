@@ -1737,40 +1737,13 @@ NGL.AtomSet.prototype = {
 
     getBoundingBox: function( selection ){
 
+        var vec = new THREE.Vector3();
         var box = new THREE.Box3();
-        var vector = new THREE.Vector3();
 
-        var a;
-        var i = 0;
-        var n = this.atoms.length;
-
-        if( selection ){
-
-            var test = selection.test;
-
-            for( i = 0; i < n; ++i ){
-
-                a = this.atoms[ i ];
-
-                if( test( a ) ){
-
-                    vector.copy( a );
-                    box.expandByPoint( vector );
-
-                }
-
-            };
-
-        }else{
-
-            for( i = 0; i < n; ++i ){
-
-                vector.copy( this.atoms[ i ] );
-                box.expandByPoint( vector );
-
-            };
-
-        }
+        this.eachAtom( function( a ){
+            vec.copy( a );
+            box.expandByPoint( vec );
+        }, selection );
 
         return box;
 
