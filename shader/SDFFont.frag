@@ -1,6 +1,7 @@
 uniform sampler2D fontTexture;
 uniform float opacity;
 
+varying vec3 vViewPosition;
 varying vec2 texCoord;
 
 #include common

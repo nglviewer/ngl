@@ -1,6 +1,8 @@
 uniform vec3 diffuse;
 uniform float opacity;
 
+varying vec3 vViewPosition;
+
 #ifdef USE_MAP
     uniform sampler2D map;
 #endif

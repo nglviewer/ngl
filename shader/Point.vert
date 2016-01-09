@@ -3,6 +3,8 @@ uniform float size;
 uniform float canvasHeight;
 uniform float pixelRatio;
 
+varying vec3 vViewPosition;
+
 #include color_pars_vertex
 #include common
 
@@ -18,7 +20,7 @@ void main(){
         gl_PointSize = size * pixelRatio;
     #endif
 
-    vec3 vViewPosition = -mvPosition.xyz;
+    vViewPosition = -mvPosition.xyz;
 
     #include nearclip_vertex
 
