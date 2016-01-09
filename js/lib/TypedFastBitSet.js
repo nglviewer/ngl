@@ -54,7 +54,7 @@ function TypedFastBitSet(iterableOrSize, flip) {
       this.add(key);
     }
   } else if (Number.isInteger(iterableOrSize)) {
-    this.resize(iterableOrSize-1);
+    this.resize(iterableOrSize);
   }
   if (flip) {
     this.flip_all();
@@ -91,10 +91,11 @@ TypedFastBitSet.prototype.flip_unsafe = function(index) {
 
 // Flip all bits, added by ASR
 TypedFastBitSet.prototype.flip_all = function() {
+  // FIXME sets values beyond this.length
   var count = this.count;
   var k = 0 | 0;
   for (; k + 7 < count; k += 8) {
-    this.words[k] = ~this.words[k];
+    this.words[k    ] = ~this.words[k    ];
     this.words[k + 1] = ~this.words[k + 1];
     this.words[k + 2] = ~this.words[k + 2];
     this.words[k + 3] = ~this.words[k + 3];
@@ -106,28 +107,12 @@ TypedFastBitSet.prototype.flip_all = function() {
   for (; k < count; ++k) {
     this.words[k] = ~this.words[k];
   }
-  return this;
 };
 
 // Set all bits to value, added by ASR
 TypedFastBitSet.prototype.set_all = function(value) {
-  value = value ? 0xFFFFFFFF : 0x00000000;
-  var count = this.count;
-  var k = 0 | 0;
-  for (; k + 7 < count; k += 8) {
-    this.words[k] = value;
-    this.words[k + 1] = value;
-    this.words[k + 2] = value;
-    this.words[k + 3] = value;
-    this.words[k + 4] = value;
-    this.words[k + 5] = value;
-    this.words[k + 6] = value;
-    this.words[k + 7] = value;
-  }
-  for (; k < count; ++k) {
-    this.words[k] = value;
-  }
-  return this;
+  if (this.length <= 0) return;
+  this.set_range( 0, this.length-1, value );
 };
 
 // Set all bits in range to value, added by ASR
@@ -138,7 +123,7 @@ TypedFastBitSet.prototype.set_range = function(from, to, value) {
   var wordEnd = (to >>> 5) - 1;
   var k = wordStart | 0;
   for (; k + 7 < wordEnd; k += 8) {
-    this.words[k] = value;
+    this.words[k    ] = value;
     this.words[k + 1] = value;
     this.words[k + 2] = value;
     this.words[k + 3] = value;
@@ -176,16 +161,16 @@ TypedFastBitSet.prototype.clear = function() {
 
 // Set the bit at index to false
 TypedFastBitSet.prototype.remove = function(index) {
-  if ((this.count  << 5) <= index) {
+  if ((this.count << 5) <= index) {
     this.resize(index);
   }
-  this.words[index  >>> 5] &= ~(1 << index);
+  this.words[index >>> 5] &= ~(1 << index);
 };
 
 // Set the bit at index to false
 // - unsafe because size is not checked, added by ASR
 TypedFastBitSet.prototype.remove_unsafe = function(index) {
-  this.words[index  >>> 5] &= ~(1 << index);
+  this.words[index >>> 5] &= ~(1 << index);
 };
 
 // Return true if no bit is set
@@ -199,7 +184,7 @@ TypedFastBitSet.prototype.isEmpty = function(index) {
 
 // Is the value contained in the set? Is the bit at index true or false? Returns a boolean
 TypedFastBitSet.prototype.has = function(index) {
-  return (this.words[index  >>> 5] & (1 << index)) !== 0;
+  return (this.words[index >>> 5] & (1 << index)) !== 0;
 };
 
 // Reduce the memory usage to a minimum
@@ -213,11 +198,12 @@ TypedFastBitSet.prototype.trim = function(index) {
 
 // Resize the bitset so that we can write a value at index
 TypedFastBitSet.prototype.resize = function(index) {
-  if ((this.count  << 5) > index) {
+  this.length = index;
+  if ((this.count << 5) > index) {
     return; //nothing to do
   }
   this.count = (index + 32) >>> 5;// just what is needed
-  if ((this.words.length  << 5) <= index) {
+  if ((this.words.length << 5) <= index) {
     var newwords = new Uint32Array(this.count << 1);
     newwords.set(this.words);// hopefully, this copy is fast
     this.words = newwords;
@@ -298,7 +284,7 @@ TypedFastBitSet.prototype.intersection = function(otherbitmap) {
   var newcount = Math.min(this.count,otherbitmap.count);
   var k = 0 | 0;
   for (; k + 7 < newcount; k += 8) {
-    this.words[k] &= otherbitmap.words[k];
+    this.words[k    ] &= otherbitmap.words[k    ];
     this.words[k + 1] &= otherbitmap.words[k + 1];
     this.words[k + 2] &= otherbitmap.words[k + 2];
     this.words[k + 3] &= otherbitmap.words[k + 3];
@@ -368,7 +354,7 @@ TypedFastBitSet.prototype.difference = function(otherbitmap) {
   var newcount = Math.min(this.count,otherbitmap.count);
   var k = 0 | 0;
   for (; k + 7 < newcount; k += 8) {
-    this.words[k] &= ~otherbitmap.words[k];
+    this.words[k    ] &= ~otherbitmap.words[k    ];
     this.words[k + 1] &= ~otherbitmap.words[k + 1];
     this.words[k + 2] &= ~otherbitmap.words[k + 2];
     this.words[k + 3] &= ~otherbitmap.words[k + 3];
@@ -409,7 +395,7 @@ TypedFastBitSet.prototype.union = function(otherbitmap) {
   var mcount = Math.min(this.count,otherbitmap.count);
   var k = 0 | 0;
   for (; k + 7  < mcount; k += 8) {
-    this.words[k] |= otherbitmap.words[k];
+    this.words[k    ] |= otherbitmap.words[k    ];
     this.words[k + 1] |= otherbitmap.words[k + 1];
     this.words[k + 2] |= otherbitmap.words[k + 2];
     this.words[k + 3] |= otherbitmap.words[k + 3];
