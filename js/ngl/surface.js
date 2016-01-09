@@ -219,7 +219,7 @@ NGL.Surface.prototype = {
 
             }
 
-            var TypedArray = filteredIndex.length > 65535 ? Uint32Array : Uint16Array;
+            var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
             return new TypedArray( filteredIndex );
 
         }else{
@@ -1256,7 +1256,7 @@ NGL.MarchingCubes = function( data, nx, ny, nz, isolevel ){
 
     NGL.timeEnd( "NGL.MarchingCubes" );
 
-    var TypedArray = faces.length > 65535 ? Uint32Array : Uint16Array;
+    var TypedArray = vertices.length / 3 > 65535 ? Uint32Array : Uint16Array;
     return {
         position: new Float32Array( vertices ),
         normal: undefined,
@@ -1339,7 +1339,7 @@ NGL.MarchingCubes2 = function( field, nx, ny, nz, atomindex ){
 
         NGL.timeEnd( "NGL.MarchingCubes2.triangulate" );
 
-        var TypedArray = indexArray.length > 65535 ? Uint32Array : Uint16Array;
+        var TypedArray = positionArray.length / 3 > 65535 ? Uint32Array : Uint16Array;
         return {
             position: new Float32Array( positionArray ),
             normal: noNormals ? undefined : new Float32Array( normalArray ),

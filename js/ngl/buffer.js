@@ -336,25 +336,19 @@ NGL.Buffer.prototype = {
         function checkEdge( a, b ) {
 
             if ( a > b ){
-
                 var tmp = a;
                 a = b;
                 b = tmp;
-
             }
 
             var list = edges[ a ];
 
             if( list === undefined ){
-
                 edges[ a ] = [ b ];
                 return true;
-
             }else if( list.indexOf( b ) === -1 ){
-
                 list.push( b );
                 return true;
-
             }
 
             return false;
@@ -376,7 +370,7 @@ NGL.Buffer.prototype = {
                 if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
                     wireframeIndex = this.wireframeIndex;
                 }else{
-                    var TypedArray = n * 2 > 65535 ? Uint32Array : Uint16Array;
+                    var TypedArray = this.position / 3 > 65535 ? Uint32Array : Uint16Array;
                     wireframeIndex = new TypedArray( n * 2 );
                 }
 
@@ -956,7 +950,7 @@ NGL.MappedBuffer = function( params ){
     this.attributeSize = this.count * this.mappingSize;
 
     var n = this.count * this.mappingIndicesSize;
-    var TypedArray = n > 65535 ? Uint32Array : Uint16Array;
+    var TypedArray = this.attributeSize > 65535 ? Uint32Array : Uint16Array;
     this.index = new TypedArray( n );
     this.makeIndex();
 
@@ -1454,7 +1448,7 @@ NGL.GeometryBuffer = function( position, color, pickingColor, params ){
     this.meshColor = new Float32Array( this.size * 3 );
     this.meshPickingColor = new Float32Array( this.size * 3 );
 
-    var TypedArray = n * o * 3 > 65535 ? Uint32Array : Uint16Array;
+    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
     this.meshIndex = new TypedArray( n * o * 3 );
     this.makeIndex();
 
@@ -2219,7 +2213,7 @@ NGL.RibbonBuffer = function( position, normal, dir, color, size, pickingColor, p
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
 
-    var TypedArray = x > 65535 ? Uint32Array : Uint16Array;
+    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
     this.meshIndex = new TypedArray( x );
     this.makeIndex();
 
@@ -2460,7 +2454,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
 
     var xi = n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
-    var TypedArray = xi > 65535 ? Uint32Array : Uint16Array;
+    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
     this.meshIndex = new TypedArray( xi );
     this.makeIndex();
 
