@@ -374,7 +374,7 @@ UI.Text.prototype.setName = function ( value ) {
 };
 // Input
 
-UI.Input = function () {
+UI.Input = function ( value ) {
 
     UI.Element.call( this );
 
@@ -392,6 +392,7 @@ UI.Input = function () {
     }, false );
 
     this.dom = dom;
+    this.setValue( value );
 
     return this;
 
