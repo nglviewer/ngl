@@ -4197,23 +4197,21 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         var surfaceData = {};
 
         if( what[ "position" ] ){
-
             this.__forceNewMolsurf = true;
             this.build();
             return;
-
         }
 
         if( what[ "color" ] ){
-
             surfaceData[ "color" ] = this.surface.getColor( this.getColorParams() );
+        }
 
+        if( what[ "index" ] ){
+            surfaceData[ "index" ] = this.surface.getFilteredIndex( this.filterSele, this.structureView );
         }
 
         this.bufferList.forEach( function( buffer ){
-
             buffer.setAttributes( surfaceData );
-
         } );
 
     },
@@ -4221,6 +4219,10 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     setParameters: function( params, what, rebuild ){
 
         what = what || {};
+
+        if( params && params[ "filterSele" ] ){
+            what[ "index" ] = true;
+        }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
