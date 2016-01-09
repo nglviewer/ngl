@@ -40,6 +40,7 @@ NGL.Surface = function( name, path, data ){
 NGL.Surface.prototype = {
 
     constructor: NGL.Surface,
+    type: "Surface",
 
     set: function( position, index, normal, color, atomindex ){
 
@@ -132,26 +133,20 @@ NGL.Surface.prototype = {
 
         if( this.atomindex ){
 
-            p.volume = this;
-
-            var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
-
+            p.surface = this;  // FIXME should this be p.surface???
             array = new Float32Array( n * 3 );
-
-            var atoms = p.structure.atoms;
+            var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
+            var atomProxy = p.structure.getAtomProxy();
             var atomindex = this.atomindex;
 
             for( var i = 0, a; i < n; ++i ){
-
-                a = atoms[ atomindex[ i ] ];
-                colorMaker.atomColorToArray( a, array, i * 3 );
-
+                atomProxy.index = atomindex[ i ];
+                colorMaker.atomColorToArray( atomProxy, array, i * 3 );
             }
 
         }else{
 
             var tc = new THREE.Color( p.value );
-
             array = NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b );
 
         }
@@ -187,17 +182,22 @@ NGL.Surface.prototype = {
 
     },
 
-    getFilteredIndex: function( sele, atoms ){
+    getFilteredIndex: function( sele, structure ){
 
         if( sele && this.atomindex ){
 
             var selection = new NGL.Selection( sele );
+            var abs = structure.getAtomBitSet( selection );
             var filteredIndex = [];
 
             var atomindex = this.atomindex;
             var index = this.index;
             var n = index.length;
-            var test = selection.test;
+            var j = 0;
+            
+            var ap1 = structure.getAtomProxy();
+            var ap2 = structure.getAtomProxy();
+            var ap3 = structure.getAtomProxy();
 
             for( var i = 0; i < n; i+=3 ){
 
@@ -205,16 +205,15 @@ NGL.Surface.prototype = {
                 var idx2 = index[ i + 1 ];
                 var idx3 = index[ i + 2 ];
 
-                var a1 = atoms[ atomindex[ idx1 ] ];
-                var a2 = atoms[ atomindex[ idx2 ] ];
-                var a3 = atoms[ atomindex[ idx3 ] ];
+                var ai1 = atomindex[ idx1 ];
+                var ai2 = atomindex[ idx2 ];
+                var ai3 = atomindex[ idx3 ];
 
-                if( test( a1 ) && test( a2 ) && test( a3 ) ){
-
-                    filteredIndex.push( idx1 );
-                    filteredIndex.push( idx2 );
-                    filteredIndex.push( idx3 );
-
+                if( abs.has( ai1 ) && abs.has( ai2 ) && abs.has( ai3 ) ){
+                    filteredIndex[ j     ] = idx1;
+                    filteredIndex[ j + 1 ] = idx2;
+                    filteredIndex[ j + 2 ] = idx3;
+                    j += 3;
                 }
 
             }
@@ -447,6 +446,7 @@ NGL.Volume = function( name, path, data, nx, ny, nz, dataAtomindex ){
 NGL.Volume.prototype = {
 
     constructor: NGL.Volume,
+    type: "Volume",
 
     setData: function( data, nx, ny, nz, dataAtomindex ){
 
@@ -2696,10 +2696,10 @@ NGL.WorkerRegistry.add( "molsurf", function( e, callback ){
     var d = e.data;
     var p = d.params;
 
-    if( d.atomSet ){
+    if( d.structure ){
 
         self.molsurf = new NGL.MolecularSurface(
-            new NGL.AtomSet().fromJSON( d.atomSet )
+            new NGL.StructureView().fromJSON( d.structure )
         );
 
     }
@@ -2717,9 +2717,9 @@ NGL.WorkerRegistry.add( "molsurf", function( e, callback ){
 } );
 
 
-NGL.MolecularSurface = function( atomSet ){
+NGL.MolecularSurface = function( structure ){
 
-    this.atomSet = atomSet;
+    this.structure = structure;
 
 };
 
@@ -2727,7 +2727,7 @@ NGL.MolecularSurface.prototype = {
 
     getSurface: function( type, probeRadius, scaleFactor, smooth, lowRes, cutoff ){
 
-        var edtsurf = new NGL.EDTSurface( this.atomSet );
+        var edtsurf = new NGL.EDTSurface( this.structure );
         var vol = edtsurf.getVolume(
             type, probeRadius, scaleFactor, lowRes, cutoff
         );
@@ -2752,11 +2752,11 @@ NGL.MolecularSurface.prototype = {
             typeof importScripts !== 'function'
         ){
 
-            var atomSet = undefined;
+            var structure = undefined;
 
             if( this.worker === undefined ){
 
-                atomSet = this.atomSet.toJSON();
+                structure = this.structure.toJSON();
                 this.worker = new NGL.Worker( "molsurf" );
 
             }
@@ -2764,7 +2764,7 @@ NGL.MolecularSurface.prototype = {
             this.worker.post(
 
                 {
-                    atomSet: atomSet,
+                    structure: structure,
                     params: {
                         type: type,
                         probeRadius: probeRadius,
@@ -2821,7 +2821,7 @@ NGL.MolecularSurface.prototype = {
 };
 
 
-NGL.EDTSurface = function( atomSet ){
+NGL.EDTSurface = function( structure ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -2838,8 +2838,9 @@ NGL.EDTSurface = function( atomSet ){
     //
     // adapted to NGL by Alexander Rose
 
-    var atoms = atomSet.atoms;
-    var bbox = atomSet.getBoundingBox();
+    var bbox = structure.getBoundingBox();
+    var atomProxy1 = structure.getAtomProxy();
+    var atomProxy2 = structure.getAtomProxy();
 
     var probeRadius, scaleFactor, cutoff, lowRes;
     var pLength, pWidth, pHeight;
@@ -3037,15 +3038,15 @@ NGL.EDTSurface = function( atomSet ){
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk;
 
-        var atom = atoms[ atomIndex ];
+        atomProxy1.index = atomIndex;
 
-        if( selection && !selection.test( atom ) ) return;
+        if( selection && !selection.test( atomProxy1 ) ) return;
 
-        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
-        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
-        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran.z ) );
 
-        var at = atom[ radiusProperty ];
+        var at = atomProxy1[ radiusProperty ];
         var depty_at = depty[ at ];
         var nind = 0;
         var cnt = 0;
@@ -3099,13 +3100,13 @@ NGL.EDTSurface = function( atomSet ){
                                 }else if( vpBits[ index ] & INOUT ){
                                 // }else{
 
-                                    var atom2 = atoms[ vpAtomID[ index ] ];
+                                    atomProxy2.index = vpAtomID[ index ];
 
-                                    if( atom2 !== atom ){
+                                    if( atomProxy2.index !== atomProxy1.index ){
 
-                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
-                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
-                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran.x ) );
+                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran.y ) );
+                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran.z ) );
 
                                         if( mi * mi + mj * mj + mk * mk <
                                             ox * ox + oy * oy + oz * oz
@@ -3148,9 +3149,9 @@ NGL.EDTSurface = function( atomSet ){
             if( setAtomID ) vpAtomID[ i ] = -1;
         }
 
-        for( i = 0, il = atoms.length; i < il; ++i ){
-            fillatom( i );
-        }
+        structure.eachAtom( function( ap ){
+            fillatom( ap.index );
+        } );
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
             if( vpBits[ i ] & INOUT ){
@@ -3167,15 +3168,15 @@ NGL.EDTSurface = function( atomSet ){
         var cx, cy, cz, ox, oy, oz, nind = 0;
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
 
-        var atom = atoms[ atomIndex ];
+        atomProxy1.index = atomIndex;
 
-        if( selection && !selection.test( atom ) ) return;
+        if( selection && !selection.test( atomProxy1 ) ) return;
 
-        cx = Math.floor( 0.5 + scaleFactor * ( atom.x + ptran.x ) );
-        cy = Math.floor( 0.5 + scaleFactor * ( atom.y + ptran.y ) );
-        cz = Math.floor( 0.5 + scaleFactor * ( atom.z + ptran.z ) );
+        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran.x ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran.y ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran.z ) );
 
-        var at = atom[ radiusProperty ];
+        var at = atomProxy1[ radiusProperty ];
         var pWH = pWidth * pHeight;
 
         for( i = 0, n = widxz[at]; i < n; ++i ){
@@ -3210,7 +3211,7 @@ NGL.EDTSurface = function( atomSet ){
                             if( !( vpBits[ index ] & ISDONE ) ){
 
                                 vpBits[ index ] |= ISDONE;
-                                if( setAtomID ) vpAtomID[ index ] = atom.index;
+                                if( setAtomID ) vpAtomID[ index ] = atomProxy1.index;
 
                             }else if( setAtomID ){
 
@@ -3222,7 +3223,7 @@ NGL.EDTSurface = function( atomSet ){
                                 if( mi * mi + mj * mj + mk * mk <
                                     ox * ox + oy * oy + oz * oz
                                 ){
-                                    vpAtomID[ index ] = atom.index;
+                                    vpAtomID[ index ] = atomProxy1.index;
                                 }
 
                             }
@@ -3252,9 +3253,9 @@ NGL.EDTSurface = function( atomSet ){
             vpBits[ i ] &= ~ISDONE;  // not isdone
         }
 
-        for( i = 0, il = atoms.length; i < il; ++i ){
-            fillAtomWaals( i );
-        }
+        structure.eachAtom( function( ap ){
+            fillAtomWaals( ap.index );
+        } );
 
     }
 

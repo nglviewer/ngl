@@ -541,7 +541,7 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     this.selection = new NGL.Selection(
         params.sele, this.getAssemblySele( params.assembly, structure )
     );
-    this.atomSet = new NGL.AtomSet( structure, this.selection );
+    this.structureView = this.structure.getView( this.selection );
 
     NGL.Representation.call( this, structure, viewer, params );
 
@@ -644,9 +644,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
     getColorParams: function(){
 
         var p = NGL.Representation.prototype.getColorParams.call( this );
-
         p.structure = this.structure;
-        p.atomSet = this.atomSet;
 
         return p;
 
@@ -779,9 +777,10 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     dispose: function(){
 
-        this.atomSet.dispose();
+        this.structureView.dispose();
 
         delete this.structure;
+        delete this.structureView;
 
         NGL.Representation.prototype.dispose.call( this );
 
@@ -834,13 +833,13 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         this.sphereBuffer = new NGL.SphereBuffer(
-            this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.getColorParams() ),
-            this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomPickingColor(),
+            this.structureView.atomPosition(),
+            this.structureView.atomColor( this.getColorParams() ),
+            this.structureView.atomRadius( this.radius, this.scale ),
+            this.structureView.atomPickingColor(),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -854,7 +853,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -863,13 +862,13 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            sphereData[ "position" ] = this.atomSet.atomPosition();
+            sphereData[ "position" ] = this.structureView.atomPosition();
 
         }
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor(
+            sphereData[ "color" ] = this.structureView.atomColor(
                 null, this.getColorParams()
             );
 
@@ -877,7 +876,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         if( what[ "radius" ] || what[ "scale" ] ){
 
-            sphereData[ "radius" ] = this.atomSet.atomRadius(
+            sphereData[ "radius" ] = this.structureView.atomRadius(
                 null, this.radius, this.scale
             );
 
@@ -957,11 +956,11 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         this.pointBuffer = new NGL.PointBuffer(
-            this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.getColorParams() ),
+            this.structureView.atomPosition(),
+            this.structureView.atomColor( this.getColorParams() ),
             this.getBufferParams( {
                 pointSize: this.pointSize,
                 sizeAttenuation: this.sizeAttenuation,
@@ -979,7 +978,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -988,14 +987,14 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            pointData[ "position" ] = this.atomSet.atomPosition();
+            pointData[ "position" ] = this.structureView.atomPosition();
 
         }
 
         if( what[ "color" ] ){
 
-            pointData[ "color" ] = this.atomSet.atomColor(
-                null, this.getColorParams()
+            pointData[ "color" ] = this.structureView.atomColor(
+                this.getColorParams()
             );
 
         }
@@ -1056,6 +1055,8 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         side: null,
         flatShaded: null,
+        wireframe: null,
+        linewidth: null,
 
         roughness: null,
         metalness: null,
@@ -1080,23 +1081,21 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var text = [];
         var labelFactory = new NGL.LabelFactory(
             this.labelType, this.labelText
         );
 
-        this.atomSet.eachAtom( function( a ){
-
-            text.push( labelFactory.atomLabel( a ) );
-
+        this.structureView.eachAtom( function( ap ){
+            text.push( labelFactory.atomLabel( ap ) );
         } );
 
         this.textBuffer = new NGL.TextBuffer(
-            this.atomSet.atomPosition(),
-            this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomColor( null, this.getColorParams() ),
+            this.structureView.atomPosition(),
+            this.structureView.atomRadius( this.radius, this.scale ),
+            this.structureView.atomColor( this.getColorParams() ),
             text,
             this.getBufferParams( {
                 fontFamily: this.fontFamily,
@@ -1112,7 +1111,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -1121,22 +1120,22 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            textData[ "position" ] = this.atomSet.atomPosition();
+            textData[ "position" ] = this.structureView.atomPosition();
 
         }
 
         if( what[ "radius" ] || what[ "scale" ] ){
 
-            textData[ "size" ] = this.atomSet.atomRadius(
-                null, this.radius, this.scale
+            textData[ "size" ] = this.structureView.atomRadius(
+                this.radius, this.scale
             );
 
         }
 
         if( what[ "color" ] ){
 
-            textData[ "color" ] = this.atomSet.atomColor(
-                null, this.getColorParams()
+            textData[ "color" ] = this.structureView.atomColor(
+                this.getColorParams()
             );
 
         }
@@ -1207,15 +1206,15 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var atomScale = this.scale * this.aspectRatio;
 
         this.sphereBuffer = new NGL.SphereBuffer(
-            this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.getColorParams() ),
-            this.atomSet.atomRadius( null, this.radius, atomScale ),
-            this.atomSet.atomPickingColor( null ),
+            this.structureView.atomPosition(),
+            this.structureView.atomColor( this.getColorParams() ),
+            this.structureView.atomRadius( this.radius, atomScale ),
+            this.structureView.atomPickingColor(),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -1223,16 +1222,16 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.__center = new Float32Array( this.atomSet.bondCount * 3 );
+        this.__center = new Float32Array( this.structureView.bondCount * 3 );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            this.atomSet.bondPosition( null, 0 ),
-            this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.getColorParams() ),
-            this.atomSet.bondColor( null, 1, this.getColorParams() ),
-            this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            this.atomSet.bondPickingColor( null, 0 ),
-            this.atomSet.bondPickingColor( null, 1 ),
+            this.structureView.bondPosition( 0 ),
+            this.structureView.bondPosition( 1 ),
+            this.structureView.bondColor( 0, this.getColorParams() ),
+            this.structureView.bondColor( 1, this.getColorParams() ),
+            this.structureView.bondRadius( 0, this.radius, this.scale ),
+            this.structureView.bondPickingColor( 0 ),
+            this.structureView.bondPickingColor( 1 ),
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -1248,7 +1247,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -1258,10 +1257,10 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            sphereData[ "position" ] = this.atomSet.atomPosition();
+            sphereData[ "position" ] = this.structureView.atomPosition();
 
-            var from = this.atomSet.bondPosition( null, 0 );
-            var to = this.atomSet.bondPosition( null, 1 );
+            var from = this.structureView.bondPosition( 0 );
+            var to = this.structureView.bondPosition( 1 );
 
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
                 from, to, this.__center
@@ -1273,27 +1272,27 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor(
-                null, this.getColorParams()
+            sphereData[ "color" ] = this.structureView.atomColor(
+                this.getColorParams()
             );
 
-            cylinderData[ "color" ] = this.atomSet.bondColor(
-                null, 0, this.getColorParams()
+            cylinderData[ "color" ] = this.structureView.bondColor(
+                0, this.getColorParams()
             );
-            cylinderData[ "color2" ] = this.atomSet.bondColor(
-                null, 1, this.getColorParams()
+            cylinderData[ "color2" ] = this.structureView.bondColor(
+                1, this.getColorParams()
             );
 
         }
 
         if( what[ "radius" ] || what[ "scale" ] ){
 
-            sphereData[ "radius" ] = this.atomSet.atomRadius(
-                null, this.radius, this.scale * this.aspectRatio
+            sphereData[ "radius" ] = this.structureView.atomRadius(
+                this.radius, this.scale * this.aspectRatio
             );
 
-            cylinderData[ "radius" ] = this.atomSet.bondRadius(
-                null, null, this.radius, this.scale
+            cylinderData[ "radius" ] = this.structureView.bondRadius(
+                0, this.radius, this.scale
             );
 
         }
@@ -1383,13 +1382,13 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         this.sphereBuffer = new NGL.SphereBuffer(
-            this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.getColorParams() ),
-            this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomPickingColor(),
+            this.structureView.atomPosition(),
+            this.structureView.atomColor( this.getColorParams() ),
+            this.structureView.atomRadius( this.radius, this.scale ),
+            this.structureView.atomPickingColor(),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -1398,13 +1397,13 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            this.atomSet.bondPosition( null, 0 ),
-            this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.getColorParams() ),
-            this.atomSet.bondColor( null, 1, this.getColorParams() ),
-            this.atomSet.bondRadius( null, null, this.radius, this.scale ),
-            this.atomSet.bondPickingColor( null, 0 ),
-            this.atomSet.bondPickingColor( null, 1 ),
+            this.structureView.bondPosition( 0 ),
+            this.structureView.bondPosition( 1 ),
+            this.structureView.bondColor( 0, this.getColorParams() ),
+            this.structureView.bondColor( 1, this.getColorParams() ),
+            this.structureView.bondRadius( 0, this.radius, this.scale ),
+            this.structureView.bondPickingColor( 0 ),
+            this.structureView.bondPickingColor( 1 ),
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -1470,13 +1469,13 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         this.lineBuffer = new NGL.LineBuffer(
-            this.atomSet.bondPosition( null, 0 ),
-            this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.getColorParams() ),
-            this.atomSet.bondColor( null, 1, this.getColorParams() ),
+            this.structureView.bondPosition( 0 ),
+            this.structureView.bondPosition( 1 ),
+            this.structureView.bondColor( 0, this.getColorParams() ),
+            this.structureView.bondColor( 1, this.getColorParams() ),
             this.getBufferParams()
         );
 
@@ -1486,7 +1485,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -1495,18 +1494,18 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            lineData[ "from" ] = this.atomSet.bondPosition( null, 0 );
-            lineData[ "to" ] = this.atomSet.bondPosition( null, 1 );
+            lineData[ "from" ] = this.structureView.bondPosition( 0 );
+            lineData[ "to" ] = this.structureView.bondPosition( 1 );
 
         }
 
         if( what[ "color" ] ){
 
-            lineData[ "color" ] = this.atomSet.bondColor(
-                null, 0, this.getColorParams()
+            lineData[ "color" ] = this.structureView.bondColor(
+                0, this.getColorParams()
             );
-            lineData[ "color2" ] = this.atomSet.bondColor(
-                null, 1, this.getColorParams()
+            lineData[ "color2" ] = this.structureView.bondColor(
+                1, this.getColorParams()
             );
 
         }
@@ -1577,13 +1576,13 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         this.sphereBuffer = new NGL.SphereBuffer(
-            this.atomSet.atomPosition(),
-            this.atomSet.atomColor( null, this.getColorParams() ),
-            this.atomSet.atomRadius( null, this.radius, this.scale ),
-            this.atomSet.atomPickingColor(),
+            this.structureView.atomPosition(),
+            this.structureView.atomColor( this.getColorParams() ),
+            this.structureView.atomRadius( this.radius, this.scale ),
+            this.structureView.atomPickingColor(),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -1591,17 +1590,17 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.__center = new Float32Array( this.atomSet.bondCount * 3 );
+        this.__center = new Float32Array( this.structureView.bondCount * 3 );
 
         this.cylinderBuffer = new NGL.HyperballStickBuffer(
-            this.atomSet.bondPosition( null, 0 ),
-            this.atomSet.bondPosition( null, 1 ),
-            this.atomSet.bondColor( null, 0, this.getColorParams() ),
-            this.atomSet.bondColor( null, 1, this.getColorParams() ),
-            this.atomSet.bondRadius( null, 0, this.radius, this.scale ),
-            this.atomSet.bondRadius( null, 1, this.radius, this.scale ),
-            this.atomSet.bondPickingColor( null, 0 ),
-            this.atomSet.bondPickingColor( null, 1 ),
+            this.structureView.bondPosition( 0 ),
+            this.structureView.bondPosition( 1 ),
+            this.structureView.bondColor( 0, this.getColorParams() ),
+            this.structureView.bondColor( 1, this.getColorParams() ),
+            this.structureView.bondRadius( 0, this.radius, this.scale ),
+            this.structureView.bondRadius( 1, this.radius, this.scale ),
+            this.structureView.bondPickingColor( 0 ),
+            this.structureView.bondPickingColor( 1 ),
             this.getBufferParams( {
                 shrink: this.shrink,
                 radiusSegments: this.radiusSegments,
@@ -1616,7 +1615,7 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -1626,10 +1625,10 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         if( what[ "position" ] ){
 
-            sphereData[ "position" ] = this.atomSet.atomPosition();
+            sphereData[ "position" ] = this.structureView.atomPosition();
 
-            var from = this.atomSet.bondPosition( null, 0 );
-            var to = this.atomSet.bondPosition( null, 1 );
+            var from = this.structureView.bondPosition( 0 );
+            var to = this.structureView.bondPosition( 1 );
 
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
                 from, to, this.__center
@@ -1642,30 +1641,30 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
         if( what[ "color" ] ){
 
-            sphereData[ "color" ] = this.atomSet.atomColor(
-                null, this.getColorParams()
+            sphereData[ "color" ] = this.structureView.atomColor(
+                this.getColorParams()
             );
 
-            cylinderData[ "color" ] = this.atomSet.bondColor(
-                null, 0, this.getColorParams()
+            cylinderData[ "color" ] = this.structureView.bondColor(
+                0, this.getColorParams()
             );
-            cylinderData[ "color2" ] = this.atomSet.bondColor(
-                null, 1, this.getColorParams()
+            cylinderData[ "color2" ] = this.structureView.bondColor(
+                1, this.getColorParams()
             );
 
         }
 
         if( what[ "radius" ] || what[ "scale" ] ){
 
-            sphereData[ "radius" ] = this.atomSet.atomRadius(
-                null, this.radius, this.scale
+            sphereData[ "radius" ] = this.structureView.atomRadius(
+                this.radius, this.scale
             );
 
-            cylinderData[ "radius" ] = this.atomSet.bondRadius(
-                null, 0, this.radius, this.scale
+            cylinderData[ "radius" ] = this.structureView.bondRadius(
+                0, this.radius, this.scale
             );
-            cylinderData[ "radius2" ] = this.atomSet.bondRadius(
-                null, 1, this.radius, this.scale
+            cylinderData[ "radius2" ] = this.structureView.bondRadius(
+                1, this.radius, this.scale
             );
 
         }
@@ -1737,7 +1736,7 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var test = this.selection.test;
 
@@ -1784,8 +1783,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         this.sphereBuffer = new NGL.SphereBuffer(
             baSet.atomPosition(),
-            baSet.atomColor( null, this.getColorParams() ),
-            baSet.atomRadius( null, this.radius, sphereScale ),
+            baSet.atomColor( this.getColorParams() ),
+            baSet.atomRadius( this.radius, sphereScale ),
             baSet.atomPickingColor(),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
@@ -1795,13 +1794,13 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            bbSet.bondPosition( null, 0 ),
-            bbSet.bondPosition( null, 1 ),
-            bbSet.bondColor( null, 0, this.getColorParams() ),
-            bbSet.bondColor( null, 1, this.getColorParams() ),
-            bbSet.bondRadius( null, 0, this.radius, this.scale ),
-            bbSet.bondPickingColor( null, 0 ),
-            bbSet.bondPickingColor( null, 1 ),
+            bbSet.bondPosition( 0 ),
+            bbSet.bondPosition( 1 ),
+            bbSet.bondColor( 0, this.getColorParams() ),
+            bbSet.bondColor( 1, this.getColorParams() ),
+            bbSet.bondRadius( 0, this.radius, this.scale ),
+            bbSet.bondPickingColor( 0 ),
+            bbSet.bondPickingColor( 1 ),
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -1834,8 +1833,8 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
             sphereData[ "position" ] = baSet.atomPosition();
 
-            var from = bbSet.bondPosition( null, 0 );
-            var to = bbSet.bondPosition( null, 1 );
+            var from = bbSet.bondPosition( 0 );
+            var to = bbSet.bondPosition( 1 );
 
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
                 from, to
@@ -1848,14 +1847,14 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         if( what[ "color" ] ){
 
             sphereData[ "color" ] = baSet.atomColor(
-                null, this.getColorParams()
+                this.getColorParams()
             );
 
             cylinderData[ "color" ] = bbSet.bondColor(
-                null, 0, this.getColorParams()
+                0, this.getColorParams()
             );
             cylinderData[ "color2" ] = bbSet.bondColor(
-                null, 1, this.getColorParams()
+                1, this.getColorParams()
             );
 
         }
@@ -1863,11 +1862,11 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         if( what[ "radius" ] || what[ "scale" ] ){
 
             sphereData[ "radius" ] = baSet.atomRadius(
-                null, this.radius, this.scale * this.aspectRatio
+                this.radius, this.scale * this.aspectRatio
             );
 
             cylinderData[ "radius" ] = bbSet.bondRadius(
-                null, 0, this.radius, this.scale
+                0, this.radius, this.scale
             );
 
         }
@@ -4093,7 +4092,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         },
         filterSele: {
-            type: "text", rebuild: true
+            type: "text"
         },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -4138,25 +4137,33 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
             if( this.molsurf ) this.molsurf.dispose();
 
-            this.molsurf = new NGL.MolecularSurface( this.atomSet );
-            this.__forceNewMolsurf = false;
-            this.__sele = this.selection.combinedString;
-            this.__smooth = this.smooth;
-            this.__surfaceType = this.surfaceType;
-            this.__probeRadius = this.probeRadius;
-            this.__scaleFactor = this.scaleFactor;
-            this.__cutoff = this.cutoff;
-            this.__lowResolution = this.lowResolution;
+            if( this.structureView.atomCount === 0 ){
 
-            this.molsurf.getSurfaceWorker(
-                this.surfaceType, this.probeRadius,
-                this.scaleFactor, this.smooth,
-                this.lowResolution, this.cutoff,
-                function( surface ){
-                    this.surface = surface;
-                    callback();
-                }.bind( this )
-            );
+                callback();
+
+            }else{
+
+                this.molsurf = new NGL.MolecularSurface( this.structureView );
+                this.__forceNewMolsurf = false;
+                this.__sele = this.selection.combinedString;
+                this.__smooth = this.smooth;
+                this.__surfaceType = this.surfaceType;
+                this.__probeRadius = this.probeRadius;
+                this.__scaleFactor = this.scaleFactor;
+                this.__cutoff = this.cutoff;
+                this.__lowResolution = this.lowResolution;
+
+                this.molsurf.getSurfaceWorker(
+                    this.surfaceType, this.probeRadius,
+                    this.scaleFactor, this.smooth,
+                    this.lowResolution, this.cutoff,
+                    function( surface ){
+                        this.surface = surface;
+                        callback();
+                    }.bind( this )
+                );
+
+            }
 
         }else{
 
@@ -4168,12 +4175,12 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var surfaceBuffer = new NGL.SurfaceBuffer(
             this.surface.getPosition(),
             this.surface.getColor( this.getColorParams() ),
-            this.surface.getFilteredIndex( this.filterSele, this.atomSet.atoms ),
+            this.surface.getFilteredIndex( this.filterSele, this.structureView ),
             this.surface.getNormal(),
             this.surface.getPickingColor( this.getColorParams() ),
             this.getBufferParams( {

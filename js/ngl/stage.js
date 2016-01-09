@@ -735,15 +735,15 @@ NGL.PickingControls = function( viewer, stage ){
 
         var picked = NGL.GidPool.getByGid( gid );
 
-        if( picked instanceof NGL.Atom || picked instanceof NGL.ProxyAtom ){
+        if( picked && picked.type === "AtomProxy" ){
 
             pickedAtom = picked;
 
-        }else if( picked instanceof NGL.Bond ){
+        }else if( picked && picked.type === "BondProxy" ){
 
             pickedBond = picked;
 
-        }else if( picked && picked.volume instanceof NGL.Volume ){
+        }else if( picked && picked && picked.volume.type === "Volume" ){
 
             pickedVolume = picked;
 
@@ -1142,9 +1142,7 @@ NGL.StructureComponent = function( stage, structure, params ){
 
     NGL.Component.call( this, stage, p );
 
-    this.__structure = structure;
     this.structure = structure;
-
     this.trajList = [];
     this.initSelection( p.sele );
 
@@ -1280,9 +1278,7 @@ NGL.StructureComponent.prototype = NGL.createObject(
         } );
 
         this.trajList = [];
-
         this.structure.dispose();
-        this.__structure.dispose();
 
         NGL.Component.prototype.dispose.call( this );
 
@@ -1327,21 +1323,12 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     superpose: function( component, align, sele1, sele2, xsele1, xsele2 ){
 
+        // FIXME does not account for structure.atomBitSet
+
         NGL.superpose(
             this.structure, component.structure,
             align, sele1, sele2, xsele1, xsele2
         );
-
-
-        // FIXME there should be a better way
-        if( this.structure !== this.__structure ){
-
-            NGL.superpose(
-                this.__structure, component.structure,
-                align, sele1, sele2, xsele1, xsele2
-            );
-
-        }
 
         this.updateRepresentations( { "position": true } );
 

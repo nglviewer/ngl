@@ -1199,7 +1199,7 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/4CUP.cif.gz" ).then( function( o ){
-            o.addRepresentation( "spacefill" );
+            o.addRepresentation( "ball+stick", { color: "atomindex" } );
             // o.addRepresentation( "cartoon" );
             // o.addRepresentation( "ball+stick" );
             stage.centerView();
@@ -1214,7 +1214,8 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/4V5A.cif.gz" ).then( function( o ){
-            o.addRepresentation( "point" );
+            // o.addRepresentation( "point" );
+            o.addRepresentation( "line" );
             // o.addRepresentation( "cartoon", { sele: "polymer" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();
@@ -1231,7 +1232,8 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://perf/4V99.cif.gz", {
             cAlphaOnly: false
         } ).then( function( o ){
-            o.addRepresentation( "point" );
+            // o.addRepresentation( "point" );
+            o.addRepresentation( "line" );
             // o.addRepresentation( "ribbon", { sele: "polymer" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();
@@ -1260,7 +1262,9 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
-            o.addRepresentation( "spacefill" );
+            // o.addRepresentation( "spacefill" );
+            // o.addRepresentation( "hyperball" );
+            o.addRepresentation( "line" );
             // o.addRepresentation( "cartoon", { sele: "polymer" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();

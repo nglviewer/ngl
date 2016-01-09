@@ -74,6 +74,8 @@ if( typeof importScripts === 'function' ){
             // "../ngl/core.js",
             "../ngl/worker.js",
             "../ngl/utils.js",
+            "../ngl/proxy.js",
+            "../ngl/store.js",
             "../ngl/symmetry.js",
             "../ngl/alignment.js",
             "../ngl/geometry.js",
