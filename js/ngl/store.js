@@ -94,9 +94,8 @@ NGL.Store.prototype = {
             var name = this.__fields[ i ][ 0 ];
             var itemSize = this.__fields[ i ][ 1 ];
             var arraySize = this.length * itemSize;
-
             var tmpArray = new this[ name ].constructor( arraySize );
-            // console.log(tmpArray, name, this.type)
+
             if( this[ name ].length > arraySize ){
                 tmpArray.set( this[ name ].subarray( 0, arraySize ) );
             }else{
@@ -129,10 +128,10 @@ NGL.Store.prototype = {
             var otherField = other[ name ];
 
             for( var j = 0; j < length; ++j ){
+                var thisIndex = itemSize * ( thisOffset + j );
+                var otherIndex = itemSize * ( otherOffset + j );
                 for( var k = 0; k < itemSize; ++k ){
-                    var thisIndex = itemSize * ( thisOffset + j );
-                    var otherIndex = itemSize * ( otherOffset + j );
-                    thisField[ thisIndex ] = otherField[ otherIndex ];
+                    thisField[ thisIndex + k ] = otherField[ otherIndex + k ];
                 }
             }
 
@@ -149,10 +148,10 @@ NGL.Store.prototype = {
             var thisField = this[ name ];
 
             for( var j = 0; j < length; ++j ){
+                var targetIndex = itemSize * ( offsetTarget + j );
+                var sourceIndex = itemSize * ( offsetSource + j );
                 for( var k = 0; k < itemSize; ++k ){
-                    var targetIndex = itemSize * ( offsetTarget + j );
-                    var sourceIndex = itemSize * ( offsetSource + j );
-                    thisField[ targetIndex ] = thisField[ sourceIndex ];
+                    thisField[ targetIndex + k ] = thisField[ sourceIndex + k ];
                 }
             }
 
