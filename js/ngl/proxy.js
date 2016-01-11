@@ -1511,28 +1511,22 @@ NGL.ChainProxy.prototype = {
 
     eachResidue: function( callback, selection ){
 
-        var i, r;
-        var n = this.residueCount;
+        var count = this.residueCount;
+        var offset = this.residueOffset;
+        var rp = this.structure.getResidueProxy();
+        var end = offset + count;
 
         if( selection && selection.residueOnlyTest ){
-
-            var test = selection.residueOnlyTest;
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                if( test( r ) ) callback( r );
-
+            var residueOnlyTest = selection.residueOnlyTest;
+            for( var i = offset; i < end; ++i ){
+                rp.index = i;
+                if( residueOnlyTest( rp ) ) callback( rp );
             }
-
         }else{
-
-            for( i = 0; i < n; ++i ){
-
-                callback( this.residues[ i ] );
-
+            for( var i = offset; i < end; ++i ){
+                rp.index = i;
+                callback( rp );
             }
-
         }
 
     },

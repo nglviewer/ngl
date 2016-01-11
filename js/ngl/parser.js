@@ -240,7 +240,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     } );
 
-    structure.eachModel( function( m ){
+    var rp = structure.getResidueProxy();
+
+    structure.eachModel( function( mp ){
 
         var i = 0;
         var n = helices.length;
@@ -249,28 +251,29 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var helixRun = false;
         var done = false;
 
-        m.eachChain( function( c ){
+        mp.eachChain( function( cp ){
 
             var chainChange = false;
 
-            if( c.chainname === helix[ 0 ] ){
+            if( cp.chainname === helix[ 0 ] ){
 
-                var j = 0;
-                var m = c.residueCount;
+                var count = cp.residueCount;
+                var offset = cp.residueOffset;
+                var end = offset + count;
 
-                for( j = 0; j < m; ++j ){
+                for( var j = offset; j < end; ++j ){
+                    
+                    rp.index = j;
 
-                    var r = c.residues[ j ];
-
-                    if( r.resno === helix[ 1 ] ){  // resnoBeg
+                    if( rp.resno === helix[ 1 ] ){  // resnoBeg
                         helixRun = true;
                     }
 
                     if( helixRun ){
 
-                        r.ss = helix[ 4 ];
+                        rp.sstruc = helix[ 4 ];
 
-                        if( r.resno === helix[ 3 ] ){  // resnoEnd
+                        if( rp.resno === helix[ 3 ] ){  // resnoEnd
 
                             helixRun = false
                             i += 1;
@@ -278,9 +281,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
                             if( i < n ){
                                 // must look at previous residues as
                                 // residues may not be ordered by resno
-                                j = -1;
+                                j = offset - 1;
                                 helix = helices[ i ];
-                                chainChange = c.chainname !== helix[ 0 ];
+                                chainChange = cp.chainname !== helix[ 0 ];
                             }else{
                                 done = true;
                             }
@@ -315,7 +318,7 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     } );
 
-    structure.eachModel( function( m ){
+    structure.eachModel( function( mp ){
 
         var i = 0;
         var n = sheets.length;
@@ -324,28 +327,29 @@ NGL.assignSecondaryStructure = function( structure, callback ){
         var sheetRun = false;
         var done = false;
 
-        m.eachChain( function( c ){
+        mp.eachChain( function( cp ){
 
             var chainChange = false;
 
-            if( c.chainname === sheet[ 0 ] ){
+            if( cp.chainname === sheet[ 0 ] ){
 
-                var j = 0;
-                var m = c.residueCount;
+                var count = cp.residueCount;
+                var offset = cp.residueOffset;
+                var end = offset + count;
 
-                for( j = 0; j < m; ++j ){
+                for( var j = offset; j < end; ++j ){
 
-                    var r = c.residues[ j ];
+                    rp.index = j;
 
-                    if( r.resno === sheet[ 1 ] ){  // resnoBeg
+                    if( rp.resno === sheet[ 1 ] ){  // resnoBeg
                         sheetRun = true;
                     }
 
                     if( sheetRun ){
 
-                        r.ss = "e";
+                        rp.sstruc = "e";
 
-                        if( r.resno === sheet[ 3 ] ){  // resnoEnd
+                        if( rp.resno === sheet[ 3 ] ){  // resnoEnd
 
                             sheetRun = false
                             i += 1;
@@ -353,9 +357,9 @@ NGL.assignSecondaryStructure = function( structure, callback ){
                             if( i < n ){
                                 // must look at previous residues as
                                 // residues may not be ordered by resno
-                                j = -1;
+                                j = offset - 1;
                                 sheet = sheets[ i ];
-                                chainChange = c.chainname !== sheet[ 0 ];
+                                chainChange = cp.chainname !== sheet[ 0 ];
                             }else{
                                 done = true;
                             }
@@ -695,7 +699,7 @@ NGL.calculateBonds = function( structure, callback ){
             var atomIndices1 = [];
             var atomIndices2 = [];
 
-            if( count > 20 ){  // TODO
+            if( count > 20 ){
 
                 var kdtree = new NGL.Kdtree( r, true );
                 var radius = r.hasBackbone() ? 1.2 : 2.3;
@@ -1143,7 +1147,7 @@ NGL.StructureParser.prototype = NGL.createObject(
 
             function( wcallback ){
 
-                if( self.reorderAtoms || false ){
+                if( self.reorderAtoms ){
                     NGL.reorderAtoms( self.structure );
                 }
                 wcallback();
@@ -2302,6 +2306,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             // atomStore.growIfFull();
 
+                            var chainname = ls[ auth_asym_id ];
                             var element = ls[ type_symbol ];
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
@@ -2312,7 +2317,7 @@ NGL.CifParser.prototype = NGL.createObject(
                             atomStore.z[ idx ] = z;
                             atomStore.setElement( idx, element );
                             atomStore.hetero[ idx ] = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
-                            atomStore.setChainname( idx, ls[ auth_asym_id ] );
+                            atomStore.setChainname( idx, chainname );
                             atomStore.resno[ idx ] = parseInt( ls[ auth_seq_id ] );
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
                             atomStore.setAtomname( idx, atomname );

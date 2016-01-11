@@ -775,20 +775,23 @@ NGL.SstrucColorMaker = function( params ){
 
     var strucColors = NGL.StructureColors;
     var defaultStrucColor = NGL.StructureColors[""];
+    var rp = this.structure.getResidueProxy();
 
-    this.atomColor = function( a ){
+    this.atomColor = function( ap ){
 
-        if( a.sstruc === "h" ){
+        rp.index = ap.residueIndex;
+
+        if( rp.sstruc === "h" ){
             return strucColors[ "alphaHelix" ];
-        }else if( a.sstruc === "g" ){
+        }else if( rp.sstruc === "g" ){
             return strucColors[ "3_10Helix" ];
-        }else if( a.sstruc === "i" ){
+        }else if( rp.sstruc === "i" ){
             return strucColors[ "piHelix" ];
-        }else if( a.sstruc === "e" || a.sstruc === "b" ){
+        }else if( rp.sstruc === "e" || rp.sstruc === "b" ){
             return strucColors[ "betaStrand" ];
-        }else if( a.residue.isNucleic() ){
+        }else if( rp.isNucleic() ){
             return strucColors[ "dna" ];
-        }else if( a.residue.isProtein() || a.sstruc === "s" || a.sstruc === "t" || a.sstruc === "l" ){
+        }else if( rp.isProtein() || rp.sstruc === "s" || rp.sstruc === "t" || rp.sstruc === "l" ){
             return strucColors[ "coil" ];
         }else{
             return defaultStrucColor;

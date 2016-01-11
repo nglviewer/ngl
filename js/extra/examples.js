@@ -1264,7 +1264,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "hyperball" );
-            o.addRepresentation( "line" );
+            o.addRepresentation( "line", { color: "sstruc" } );
             // o.addRepresentation( "cartoon", { sele: "polymer" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();
