@@ -148,7 +148,7 @@ NGL.buildStructure = function( structure, callback ){
             residueStore.resno[ ri ] = resno;
             residueStore.setResname( ri, resname );
             residueStore.atomOffset[ ri ] = ai;
-            residueStore.atomCount[ ri ] = 0 ;
+            residueStore.atomCount[ ri ] = 1 ;
             residueStore.count += 1;
             residueStore.chainIndex[ ri ] = ci;
             chainStore.residueCount[ ci ] += 1;
@@ -159,7 +159,7 @@ NGL.buildStructure = function( structure, callback ){
             chainStore.growIfFull();
             chainStore.setChainname( ci, chainname );
             chainStore.residueOffset[ ci ] = ri;
-            chainStore.residueCount[ ci ] = 0 ;
+            chainStore.residueCount[ ci ] = 1 ;
             chainStore.count += 1;
             chainStore.modelIndex[ ci ] = mi;
             modelStore.chainCount[ mi ] += 1;
@@ -170,7 +170,7 @@ NGL.buildStructure = function( structure, callback ){
             mi += 1;
             modelStore.growIfFull();
             modelStore.chainOffset[ mi ] = ci;
-            modelStore.chainCount[ mi ] = 0 ;
+            modelStore.chainCount[ mi ] = 1 ;
             modelStore.count += 1;
             chainStore.modelIndex[ ci ] = mi;
         }
