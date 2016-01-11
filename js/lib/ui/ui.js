@@ -392,7 +392,7 @@ UI.Input = function ( value ) {
     }, false );
 
     this.dom = dom;
-    this.setValue( value );
+    this.setValue( value || "" );
 
     return this;
 
