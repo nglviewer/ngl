@@ -198,103 +198,14 @@ NGL.buildStructure = function( structure, callback ){
 };
 
 
-NGL.createAtomArray = function( structure, callback ){
-
-    NGL.time( "NGL.createAtomArray" );
-
-    var s = structure;
-    var atoms = s.atoms;
-    var n = atoms.length;
-
-    s.atomArray = new NGL.AtomArray( n );
-    var atomArray = s.atomArray;
-
-    function _chunked( _i, _n ){
-
-        for( var i = _i; i < _n; ++i ){
-
-            var ai = atoms[ i ];
-
-            var a = new NGL.ProxyAtom( atomArray, i );
-
-            atomArray.setResname( i, ai.resname );
-            atomArray.x[ i ] = ai.x;
-            atomArray.y[ i ] = ai.y;
-            atomArray.z[ i ] = ai.z;
-            atomArray.setElement( i, ai.element );
-            atomArray.hetero[ i ] = ai.hetero;
-            atomArray.setChainname( i, ai.chainname );
-            atomArray.resno[ i ] = ai.resno;
-            atomArray.serial[ i ] = ai.serial;
-            atomArray.setAtomname( i, ai.atomname );
-            atomArray.ss[ i ] = ai.ss.charCodeAt( 0 );
-            atomArray.bfactor[ i ] = ai.bfactor;
-            atomArray.altloc[ i ] = ai.altloc.charCodeAt( 0 );
-            atomArray.vdw[ i ] = ai.vdw;
-            atomArray.covalent[ i ] = ai.covalent;
-            atomArray.modelindex[ i ] = ai.modelindex;
-
-            atomArray.usedLength += 1;
-
-            // set proxy atoms in already existing bonds
-
-            if( ai.bonds.length ){
-
-                a.bonds = ai.bonds;
-
-                a.bonds.forEach( function( b ){
-
-                    if( b.atom1.index === a.index ){
-                        b.atom1 = a;
-                    }else if( b.atom2.index === a.index ){
-                        b.atom2 = a;
-                    }else{
-                        NGL.warn(
-                            "NGL.createAtomArray: bond atom not found"
-                        );
-                    }
-
-                } );
-
-            }
-
-            atoms[ i ] = a;
-
-        }
-
-    }
-
-    NGL.processArray(
-
-        atoms,
-
-        _chunked,
-
-        function(){
-
-            NGL.timeEnd( "NGL.createAtomArray" );
-
-            callback();
-
-        },
-
-        50000
-
-    );
-
-    return structure;
-
-};
-
-
 NGL.assignSecondaryStructure = function( structure, callback ){
 
     NGL.time( "NGL.assignSecondaryStructure" );
 
     var chainnames = [];
-    structure.eachModel( function( m ){
-        m.eachChain( function( c ){
-            chainnames.push( c.chainname );
+    structure.eachModel( function( mp ){
+        mp.eachChain( function( cp ){
+            chainnames.push( cp.chainname );
         } );
     } );
 
