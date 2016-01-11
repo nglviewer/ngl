@@ -159,6 +159,54 @@ NGL.Store.prototype = {
 
     },
 
+    sort: function( compareFunction ){
+
+        NGL.time( "NGL.Store.sort" );
+
+        var thisStore = this;
+        var tmpStore = new this.constructor( 1 );
+
+        function swap( index1, index2 ){
+            if( index1 === index2 ) return;
+            tmpStore.copyFrom( thisStore, 0, index1, 1 );
+            thisStore.copyWithin( index1, index2, 1 );
+            thisStore.copyFrom( tmpStore, index2, 0, 1 );
+        }
+
+        function quicksort( left, right ){
+            if( left < right ){
+                var pivot = Math.floor( ( left + right ) / 2 );
+                var left_new = left;
+                var right_new = right;
+                do{
+                    while( compareFunction( left_new, pivot ) < 0 ){
+                        left_new += 1;
+                    }
+                    while( compareFunction( right_new, pivot ) > 0 ){
+                        right_new -= 1;
+                    }
+                    if( left_new <= right_new ){
+                        if( left_new === pivot ){
+                            pivot = right_new;
+                        }else if( right_new === pivot ){
+                            pivot = left_new;
+                        }
+                        swap( left_new, right_new );
+                        left_new += 1;
+                        right_new -= 1;
+                    }
+                }while( left_new <= right_new );
+                quicksort( left, right_new );
+                quicksort( left_new, right );
+            }
+        }
+
+        quicksort( 0, this.count - 1 );
+
+        NGL.timeEnd( "NGL.Store.sort" );
+
+    },
+
     toJSON: function(){
 
         var output = {

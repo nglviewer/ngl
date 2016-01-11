@@ -4,81 +4,29 @@
  */
 
 
-NGL.atomStoreQuicksort = function( structure, compareFunction ){
-
-    NGL.time( "NGL.atomArrayQuicksort" );
-
-    var atomStore = structure.atomStore;
-    var tmpStore = new atomStore.constructor( 1 );
-    var atomProxy1 = new NGL.AtomProxy( structure );
-    var atomProxy2 = new NGL.AtomProxy( structure );
-
-    function cmp( index1, index2 ){
-        atomProxy1.index = index1;
-        atomProxy2.index = index2;
-        return compareFunction( atomProxy1, atomProxy2 );
-    }
-
-    function swap( index1, index2 ){
-        if( index1 === index2 ) return;
-        tmpStore.copyFrom( atomStore, 0, index1, 1 );
-        atomStore.copyWithin( index1, index2, 1 );
-        atomStore.copyFrom( tmpStore, index2, 0, 1 );
-    }
-
-    function quicksort( left, right ){
-        if( left < right ){
-            var pivot = Math.floor( ( left + right ) / 2 );
-            var left_new = left;
-            var right_new = right;
-            do{
-                while( cmp( left_new, pivot ) < 0 ){
-                    left_new += 1;
-                }
-                while( cmp( right_new, pivot ) > 0 ){
-                    right_new -= 1;
-                }
-                if( left_new <= right_new ){
-                    if( left_new === pivot ){
-                        pivot = right_new;
-                    }else if( right_new === pivot ){
-                        pivot = left_new;
-                    }
-                    swap( left_new, right_new );
-                    left_new += 1;
-                    right_new -= 1;
-                }
-            }while( left_new <= right_new );
-            quicksort( left, right_new );
-            quicksort( left_new, right );
-        }
-    }
-
-    quicksort( 0, atomStore.count - 1 );
-
-    NGL.timeEnd( "NGL.atomArrayQuicksort" );
-
-};
-
-
 NGL.reorderAtoms = function( structure ){
 
     NGL.time( "NGL.reorderAtoms" );
 
-    function compareModelChainResno( a1, a2 ){
-        if( a1.modelindex < a2.modelindex ){
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+
+    function compareModelChainResno( index1, index2 ){
+        ap1.index = index1;
+        ap2.index = index2;
+        if( ap1.modelindex < ap2.modelindex ){
             return -1;
-        }else if( a1.modelindex > a2.modelindex ){
+        }else if( ap1.modelindex > ap2.modelindex ){
             return 1;
         }else{
-            if( a1.chainname < a2.chainname ){
+            if( ap1.chainname < ap2.chainname ){
                 return -1;
-            }else if( a1.chainname > a2.chainname ){
+            }else if( ap1.chainname > ap2.chainname ){
                 return 1;
             }else{
-                if( a1.resno < a2.resno ){
+                if( ap1.resno < ap2.resno ){
                     return -1;
-                }else if( a1.resno > a2.resno ){
+                }else if( ap1.resno > ap2.resno ){
                     return 1;
                 }else{
                     return 0;
@@ -87,7 +35,7 @@ NGL.reorderAtoms = function( structure ){
         }
     }
 
-    NGL.atomStoreQuicksort( structure, compareModelChainResno );
+    structure.atomStore.sort( compareModelChainResno );
 
     NGL.timeEnd( "NGL.reorderAtoms" );
 
