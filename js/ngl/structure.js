@@ -1201,8 +1201,8 @@ NGL.Structure.prototype = {
         this.center.set( 0, 0, 0 );
         this.boundingBox.makeEmpty();
 
-        this.atomBitSet = this.getAtomBitSet();
-        this.bondBitSet = this.getBondBitSet();
+        this.atomSet = this.getAtomSet();
+        this.bondSet = this.getBondSet();
 
         NGL.GidPool.updateObject( this, true );
 
@@ -1245,11 +1245,11 @@ NGL.Structure.prototype = {
 
     },
 
-    getAtomBitSet: function( selection ){
+    getAtomSet: function( selection ){
 
         // caching???
 
-        NGL.time( "NGL.Structure.getAtomBitSet" );
+        NGL.time( "NGL.Structure.getAtomSet" );
 
         var n = this.atomStore.count;
         var bs = new TypedFastBitSet( n );
@@ -1293,47 +1293,47 @@ NGL.Structure.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.Structure.getAtomBitSet" );
+        NGL.timeEnd( "NGL.Structure.getAtomSet" );
 
         return bs;
 
     },
 
-    getBondBitSet: function( selection ){
+    getBondSet: function( selection ){
 
-        NGL.time( "NGL.Structure.getBondBitSet" );
+        NGL.time( "NGL.Structure.getBondSet" );
 
         var n = this.bondStore.count;
-        var bbs = new TypedFastBitSet( n );
+        var bs = new TypedFastBitSet( n );
         var bp = this.getBondProxy();
 
         if( selection && selection.test ){
 
-            var abs = this.getAtomBitSet( selection );
+            var as = this.getAtomSet( selection );
 
             for( var i = 0; i < n; ++i ){
                 bp.index = i;
-                if( abs.has( bp.atomIndex1 ) && abs.has( bp.atomIndex2 ) ){
-                    bbs.add_unsafe( bp.index );
+                if( as.has( bp.atomIndex1 ) && as.has( bp.atomIndex2 ) ){
+                    bs.add_unsafe( bp.index );
                 }
             }
 
         }else{
 
-            bbs.set_all( true );
+            bs.set_all( true );
 
         }
 
-        NGL.timeEnd( "NGL.Structure.getBondBitSet" );
+        NGL.timeEnd( "NGL.Structure.getBondSet" );
 
-        return bbs;
+        return bs;
 
     },
 
     setSelection: function( selection ){
 
-        this.atomBitSet = this.getAtomBitSet( selection );
-        this.bondBitSet = this.getBondBitSet( selection );
+        this.atomSet = this.getAtomSet( selection );
+        this.bondSet = this.getBondSet( selection );
 
     },
 
@@ -1345,7 +1345,7 @@ NGL.Structure.prototype = {
 
     postProcess: function( callback ){
 
-        this.atomBitSet = this.getAtomBitSet();
+        this.atomSet = this.getAtomSet();
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
 
@@ -1358,18 +1358,18 @@ NGL.Structure.prototype = {
     eachAtom: function( callback, selection ){
 
         var ap = this.getAtomProxy();
-        var abs = this.atomBitSet;
+        var as = this.atomSet;
 
         if( selection && selection.test ){
-            if( abs ){
-                abs = this.getAtomBitSet( selection ).intersection( abs );
+            if( as ){
+                as = this.getAtomSet( selection ).intersection( as );
             }else{
-                abs = this.getAtomBitSet( selection );
+                as = this.getAtomSet( selection );
             }
         }
 
-        if( abs ){
-            abs.forEach( function( index ){
+        if( as ){
+            as.forEach( function( index ){
                 ap.index = index;
                 callback( ap );
             } );
@@ -1662,18 +1662,18 @@ NGL.Structure.prototype = {
     eachBond: function( callback, selection ){
 
         var bp = this.getBondProxy();
-        var bbs = this.bondBitSet;
+        var bs = this.bondSet;
 
         if( selection && selection.test ){
-            if( bbs ){
-                bbs = this.getBondBitSet( selection ).intersection( bbs );
+            if( bs ){
+                bs = this.getBondSet( selection ).intersection( bs );
             }else{
-                bbs = this.getBondBitSet( selection );
+                bs = this.getBondSet( selection );
             }
         }
 
-        if( bbs ){
-            bbs.forEach( function( index ){
+        if( bs ){
+            bs.forEach( function( index ){
                 bp.index = index;
                 callback( bp );
             } );
@@ -1808,8 +1808,8 @@ NGL.Structure.prototype = {
             chainStore: this.chainStore.toJSON(),
             modelStore: this.modelStore.toJSON(),
 
-            atomBitSet: this.atomBitSet.toJSON(),
-            bondBitSet: this.bondBitSet.toJSON(),
+            atomSet: this.atomSet.toJSON(),
+            bondSet: this.bondSet.toJSON(),
 
         };
 
@@ -1850,8 +1850,8 @@ NGL.Structure.prototype = {
         this.chainStore.fromJSON( input.chainStore );
         this.modelStore.fromJSON( input.modelStore );
 
-        this.atomBitSet.fromJSON( input.atomBitSet );
-        this.bondBitSet.fromJSON( input.bondBitSet );
+        this.atomSet.fromJSON( input.atomSet );
+        this.bondSet.fromJSON( input.bondSet );
 
         NGL.GidPool.updateObject( this );
 
@@ -1886,11 +1886,11 @@ NGL.Structure.prototype = {
             }
         }
 
-        if( this.atomBitSet ){
-            transferable.concat( this.atomBitSet.getTransferable() );
+        if( this.atomSet ){
+            transferable.concat( this.atomSet.getTransferable() );
         }
-        if( this.bondBitSet ){
-            transferable.concat( this.bondBitSet.getTransferable() );
+        if( this.bondSet ){
+            transferable.concat( this.bondSet.getTransferable() );
         }
 
         return transferable;
@@ -1920,8 +1920,8 @@ NGL.Structure.prototype = {
         delete this.boxes;
         delete this.cif;
 
-        delete this.atomBitSet;
-        delete this.bondBitSet;
+        delete this.atomSet;
+        delete this.bondSet;
 
     }
 
@@ -2007,11 +2007,11 @@ NGL.StructureView.prototype = NGL.createObject(
 
         NGL.time( "NGL.StructureView.applySelection" );
 
-        this.atomBitSet = this.structure.getAtomBitSet( this.selection );
-        this.bondBitSet = this.structure.getBondBitSet( this.selection );
+        this.atomSet = this.structure.getAtomSet( this.selection );
+        this.bondSet = this.structure.getBondSet( this.selection );
 
-        this.atomCount = this.atomBitSet.size();
-        this.bondCount = this.bondBitSet.size();
+        this.atomCount = this.atomSet.size();
+        this.bondCount = this.bondSet.size();
 
         this.center = this.atomCenter();
 
@@ -2022,17 +2022,17 @@ NGL.StructureView.prototype = NGL.createObject(
     eachAtom: function( callback, selection ){
 
         var ap = this.getAtomProxy();
-        var abs = this.atomBitSet.clone();
+        var as = this.atomSet.clone();
 
         if( selection && selection.test ){
-            abs = this.structure.getAtomBitSet( selection ).intersection( abs );
+            as = this.structure.getAtomSet( selection ).intersection( as );
         }
 
-        if( this.structure.atomBitSet ){
-            abs = abs.intersection( this.structure.atomBitSet );
+        if( this.structure.atomSet ){
+            as = as.intersection( this.structure.atomSet );
         }
 
-        abs.forEach( function( index ){
+        as.forEach( function( index ){
             ap.index = index;
             callback( ap );
         } );
@@ -2042,16 +2042,16 @@ NGL.StructureView.prototype = NGL.createObject(
     eachBond: function( callback, selection ){
 
         var bp = this.getBondProxy();
-        var bbs = this.bondBitSet.clone();
+        var bs = this.bondSet.clone();
 
         if( selection && selection.test ){
-            bbs = this.structure.getBondBitSet( selection ).intersection( bbs );
+            bs = this.structure.getBondSet( selection ).intersection( bs );
         }
-        if( this.structure.bondBitSet ){
-            bbs = bbs.intersection( this.structure.bondBitSet );
+        if( this.structure.bondSet ){
+            bs = bs.intersection( this.structure.bondSet );
         }
 
-        bbs.forEach( function( index ){
+        bs.forEach( function( index ){
             bp.index = index;
             callback( bp );
         } );
@@ -2070,8 +2070,8 @@ NGL.StructureView.prototype = NGL.createObject(
 
             structure: this.structure.toJSON(),
 
-            atomBitSet: this.atomBitSet.toJSON(),
-            bondBitSet: this.bondBitSet.toJSON(),
+            atomSet: this.atomSet.toJSON(),
+            bondSet: this.bondSet.toJSON(),
 
             atomCount: this.atomCount,
             bondCount: this.bondCount
@@ -2086,8 +2086,8 @@ NGL.StructureView.prototype = NGL.createObject(
 
         this.structure = new NGL.Structure().fromJSON( input.structure );
 
-        this.atomBitSet = new TypedFastBitSet().fromJSON( input.atomBitSet );
-        this.bondBitSet = new TypedFastBitSet().fromJSON( input.bondBitSet );
+        this.atomSet = new TypedFastBitSet().fromJSON( input.atomSet );
+        this.bondSet = new TypedFastBitSet().fromJSON( input.bondSet );
 
         this.atomCount = input.atomCount;
         this.bondCount = input.bondCount;
@@ -2100,8 +2100,8 @@ NGL.StructureView.prototype = NGL.createObject(
 
         delete this.structure;
 
-        delete this.atomBitSet;
-        delete this.bondBitSet;
+        delete this.atomSet;
+        delete this.bondSet;
 
         delete this.atomCount;
         delete this.bondCount;

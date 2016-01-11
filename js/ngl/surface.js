@@ -187,7 +187,7 @@ NGL.Surface.prototype = {
         if( sele && this.atomindex ){
 
             var selection = new NGL.Selection( sele );
-            var abs = structure.getAtomBitSet( selection );
+            var as = structure.getAtomSet( selection );
             var filteredIndex = [];
 
             var atomindex = this.atomindex;
@@ -209,7 +209,7 @@ NGL.Surface.prototype = {
                 var ai2 = atomindex[ idx2 ];
                 var ai3 = atomindex[ idx3 ];
 
-                if( abs.has( ai1 ) && abs.has( ai2 ) && abs.has( ai3 ) ){
+                if( as.has( ai1 ) && as.has( ai2 ) && as.has( ai3 ) ){
                     filteredIndex[ j     ] = idx1;
                     filteredIndex[ j + 1 ] = idx2;
                     filteredIndex[ j + 2 ] = idx3;
