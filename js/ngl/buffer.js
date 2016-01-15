@@ -174,6 +174,9 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
         "color": { type: "c", value: color },
     } );
 
+    this.indexVersion = 0;
+    this.wireframeIndexVersion = -1;
+
     if( index ){
         this.geometry.setIndex(
             new THREE.BufferAttribute( index, 1 )
@@ -359,7 +362,12 @@ NGL.Buffer.prototype = {
 
             var index = this.geometry.index;
 
-            if( index ){
+            if( !this.wireframe ){
+
+                this.wireframeIndex = new Uint16Array( 0 );
+                this.wireframeIndexCount = 0;
+
+            }else if( index ){
 
                 var array = index.array;
                 var n = array.length;
@@ -403,6 +411,7 @@ NGL.Buffer.prototype = {
 
                 this.wireframeIndex = wireframeIndex;
                 this.wireframeIndexCount = j;
+                this.wireframeIndexVersion = this.indexVersion;
 
             }
 
@@ -413,7 +422,7 @@ NGL.Buffer.prototype = {
     updateWireframeIndex: function(){
 
         this.wireframeGeometry.setDrawRange( 0, Infinity );
-        this.makeWireframeIndex();
+        if( this.wireframeIndexVersion < this.indexVersion ) this.makeWireframeIndex();
 
         if( this.wireframeIndex.length > this.wireframeGeometry.index.array.length ){
 
@@ -768,6 +777,7 @@ NGL.Buffer.prototype = {
 
                 }
 
+                this.indexVersion++;
                 if( this.wireframe ) this.updateWireframeIndex();
 
             }else{
