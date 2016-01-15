@@ -3215,10 +3215,11 @@ NGL.EDTSurface = function( structure ){
 
                             }else if( setAtomID ){
 
-                                var atom2 = atoms[ vpAtomID[ index ] ];
-                                ox = Math.floor( 0.5 + scaleFactor * ( atom2.x + ptran.x ) );
-                                oy = Math.floor( 0.5 + scaleFactor * ( atom2.y + ptran.y ) );
-                                oz = Math.floor( 0.5 + scaleFactor * ( atom2.z + ptran.z ) );
+                                atomProxy2.index = vpAtomID[ index ];
+
+                                ox = Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran.x ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran.y ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran.z ) );
 
                                 if( mi * mi + mj * mj + mk * mk <
                                     ox * ox + oy * oy + oz * oz
