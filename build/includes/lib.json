@@ -8,5 +8,9 @@
     "js/lib/async.min.js",
     "js/lib/signals.min.js",
     "js/lib/sprintf.min.js",
-    "js/lib/svd.min.js"
+    "js/lib/svd.min.js",
+
+    "js/lib/bops.js",
+    "js/lib/msgpack.js",
+    "js/lib/TypedFastBitSet.js"
 ]

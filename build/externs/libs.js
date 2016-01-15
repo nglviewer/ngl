@@ -12,3 +12,5 @@ var ColorPicker;
 var VirtualList
 var Tether;
 var async;
+var TypedFastBitSet;
+var decode;  // FIXME

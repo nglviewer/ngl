@@ -3,6 +3,8 @@
     "js/ngl/core.js",
     "js/ngl/worker.js",
     "js/ngl/utils.js",
+    "js/ngl/proxy.js",
+    "js/ngl/store.js",
     "js/ngl/symmetry.js",
     "js/ngl/alignment.js",
     "js/ngl/geometry.js",
@@ -42,5 +44,4 @@
     "shader/chunk/nearclip_fragment.glsl",
     "shader/chunk/nearclip_vertex.glsl",
     "shader/chunk/opaque_back_fragment.glsl"
-
 ]
