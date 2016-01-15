@@ -1532,12 +1532,10 @@ NGL.GeometryBuffer.prototype.setAttributes = function(){
         var n = this.positionCount;
         var m = this.geo.vertices.length;
 
-        var i, j, k, l, i3;
+        for( var i = 0; i < n; ++i ){
 
-        for( i = 0; i < n; ++i ){
-
-            k = i * m * 3;
-            i3 = i * 3;
+            var k = i * m * 3;
+            var i3 = i * 3;
 
             if( position ){
 
@@ -1568,9 +1566,9 @@ NGL.GeometryBuffer.prototype.setAttributes = function(){
 
             if( color ){
 
-                for( j = 0; j < m; ++j ){
+                for( var j = 0; j < m; ++j ){
 
-                    l = k + 3 * j;
+                    var l = k + 3 * j;
 
                     meshColor[ l     ] = color[ i3     ];
                     meshColor[ l + 1 ] = color[ i3 + 1 ];
@@ -1582,9 +1580,9 @@ NGL.GeometryBuffer.prototype.setAttributes = function(){
 
             if( pickingColor ){
 
-                for( j = 0; j < m; ++j ){
+                for( var j = 0; j < m; ++j ){
 
-                    l = k + 3 * j;
+                    var l = k + 3 * j;
 
                     meshPickingColor[ l     ] = pickingColor[ i3     ];
                     meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];

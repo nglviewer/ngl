@@ -393,24 +393,20 @@ NGL.Utils = {
     replicateArray3Entries: function( array, m ){
 
         var n = array.length / 3;
-
         var repArr = new Float32Array( n * m * 3 );
 
-        var i, j, k, l, v;
-        var a, b, c;
+        for( var i = 0; i < n; ++i ){
 
-        for( i = 0; i < n; ++i ){
+            var v = i * 3;
+            var k = i * m * 3;
 
-            v = i * 3;
-            k = i * m * 3;
+            var a = array[ v + 0 ];
+            var b = array[ v + 1 ];
+            var c = array[ v + 2 ];
 
-            a = array[ v + 0 ];
-            b = array[ v + 1 ];
-            c = array[ v + 2 ];
+            for( var j = 0; j < m; ++j ){
 
-            for( j = 0; j < m; ++j ){
-
-                l = k + j * 3;
+                var l = k + j * 3;
 
                 repArr[ l + 0 ] = a;
                 repArr[ l + 1 ] = b;
@@ -1200,7 +1196,7 @@ NGL.Viewer.prototype = {
         var gbb;
         var bb = this.boundingBox;
 
-        if( this.boundingBoxMesh ){
+        if( NGL.debug && this.boundingBoxMesh ){
             this.modelGroup.remove( this.boundingBoxMesh );
             this.boundingBoxMesh.material.dispose();
             this.boundingBoxMesh.geometry.dispose();
