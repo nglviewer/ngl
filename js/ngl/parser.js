@@ -46,9 +46,6 @@ NGL.buildStructure = function( structure, callback ){
 
     NGL.time( "NGL.buildStructure" );
 
-    var m, c, r, a;
-    var chainDict;
-
     var currentModelindex = null;
     var currentChainname;
     var currentResname;
@@ -79,19 +76,42 @@ NGL.buildStructure = function( structure, callback ){
         var addResidue = false;
 
         if( currentModelindex !== modelindex ){
-            chainDict = {};
             addModel = true;
             addChain = true;
             addResidue = true;
+            mi += 1;
+            ci += 1;
+            ri += 1;
         }else if( currentChainname !== chainname ){
             addChain = true;
             addResidue = true;
+            ci += 1;
+            ri += 1;
         }else if( currentResno !== resno || currentResname !== resname ){
             addResidue = true;
+            ri += 1;
+        }
+
+        if( addModel ){
+            modelStore.growIfFull();
+            modelStore.chainOffset[ mi ] = ci;
+            modelStore.chainCount[ mi ] = 0;
+            modelStore.count += 1;
+            chainStore.modelIndex[ ci ] = mi;
+        }
+
+        if( addChain ){
+            chainStore.growIfFull();
+            chainStore.setChainname( ci, chainname );
+            chainStore.residueOffset[ ci ] = ri;
+            chainStore.residueCount[ ci ] = 0;
+            chainStore.count += 1;
+            chainStore.modelIndex[ ci ] = mi;
+            modelStore.chainCount[ mi ] += 1;
+            residueStore.chainIndex[ ri ] = ci;
         }
 
         if( addResidue ){
-            ri += 1;
             residueStore.growIfFull();
             residueStore.resno[ ri ] = resno;
             residueStore.setResname( ri, resname );
@@ -100,27 +120,6 @@ NGL.buildStructure = function( structure, callback ){
             residueStore.count += 1;
             residueStore.chainIndex[ ri ] = ci;
             chainStore.residueCount[ ci ] += 1;
-        }
-
-        if( addChain ){
-            ci += 1;
-            chainStore.growIfFull();
-            chainStore.setChainname( ci, chainname );
-            chainStore.residueOffset[ ci ] = ri;
-            chainStore.residueCount[ ci ] = 1;
-            chainStore.count += 1;
-            chainStore.modelIndex[ ci ] = mi;
-            modelStore.chainCount[ mi ] += 1;
-            residueStore.chainIndex[ ri ] = ci;
-        }
-
-        if( addModel ){
-            mi += 1;
-            modelStore.growIfFull();
-            modelStore.chainOffset[ mi ] = ci;
-            modelStore.chainCount[ mi ] = 1;
-            modelStore.count += 1;
-            chainStore.modelIndex[ ci ] = mi;
         }
 
         atomStore.residueIndex[ ai ] = ri;
