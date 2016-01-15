@@ -7,7 +7,7 @@
 //////////////
 // Selection
 
-NGL.Selection = function( string, extraString ){
+NGL.Selection = function( string ){
 
     var SIGNALS = signals;
 
@@ -17,7 +17,7 @@ NGL.Selection = function( string, extraString ){
 
     };
 
-    this.setString( string, extraString );
+    this.setString( string );
 
 };
 
@@ -26,54 +26,16 @@ NGL.Selection.prototype = {
 
     constructor: NGL.Selection,
 
-    setString: function( string, extraString, silent ){
+    setString: function( string, silent ){
 
-        if( string === undefined ){
-            string = this.string || "";
-        }
-
-        if( extraString === undefined ){
-            extraString = this.extraString || "";
-        }
-
-        if( string === this.string && extraString === this.extraString ){
-            return;
-        }
-
-        //
-
-        var combinedString;
-
-        if( !string && !extraString ){
-
-            combinedString = "";
-
-        }else if( !string ){
-
-            combinedString = extraString;
-
-        }else if( !extraString ){
-
-            combinedString = string;
-
-        }else{
-
-            combinedString = (
-                "( " + string + " ) and " +
-                "( " + extraString + " )"
-            );
-
-        }
-
-        if( combinedString === this.combinedString ){
-            return;
-        }
+        if( string === undefined ) string = this.string || "";
+        if( string === this.string ) return;
 
         //
 
         try{
 
-            this.parse( combinedString );
+            this.parse( string );
 
         }catch( e ){
 
@@ -83,8 +45,6 @@ NGL.Selection.prototype = {
         }
 
         this.string = string;
-        this.extraString = extraString;
-        this.combinedString = combinedString;
 
         this.test = this.makeAtomTest();
         this.residueTest = this.makeResidueTest();

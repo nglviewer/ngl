@@ -560,8 +560,8 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
         this.parameters.assembly = null;
     }
 
-    // must come after atomSet to ensure selection change signals
-    // have already updated the atomSet
+    // must come after structureView to ensure selection change signals
+    // have already updated the structureView
     this.selection.signals.stringChanged.add( function(){
         this.build();
     }.bind( this ) );
@@ -612,11 +612,11 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         this.assembly = p.assembly || "";
 
         // TODO find a nicer way ...
-        var combinedString = this.selection.combinedString;
-        this.setSelection( p.sele, this.getAssemblySele( p.assembly ), true );
-        if( combinedString !== this.selection.combinedString ){
-            this.atomSet.applySelection();
-        }
+        // var combinedString = this.selection.combinedString;
+        // this.setSelection( p.sele, this.getAssemblySele( p.assembly ), true );
+        // if( combinedString !== this.selection.combinedString ){
+        //     this.atomSet.applySelection();
+        // }
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -650,9 +650,9 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
-    setSelection: function( string, extraString, silent ){
+    setSelection: function( string, silent ){
 
-        this.selection.setString( string, extraString, silent );
+        this.selection.setString( string, silent );
 
         return this;
 
@@ -4126,7 +4126,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
     prepare: function( callback ){
 
         if( !this.molsurf || this.__forceNewMolsurf ||
-            this.__sele !== this.selection.combinedString ||
+            this.__sele !== this.selection.string ||
             this.__smooth !== this.smooth ||
             this.__surfaceType !== this.surfaceType ||
             this.__probeRadius !== this.probeRadius ||
@@ -4145,7 +4145,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
                 this.molsurf = new NGL.MolecularSurface( this.structureView );
                 this.__forceNewMolsurf = false;
-                this.__sele = this.selection.combinedString;
+                this.__sele = this.selection.string;
                 this.__smooth = this.smooth;
                 this.__surfaceType = this.surfaceType;
                 this.__probeRadius = this.probeRadius;
