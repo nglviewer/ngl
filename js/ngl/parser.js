@@ -614,7 +614,7 @@ NGL.calculateBonds = function( structure, callback ){
 
         if( bondingDict[ resname ] ){
 
-            atomnameList = bondingDict[ resname ].atomnameList;
+            var atomnameList = bondingDict[ resname ].atomnameList;
 
             if( count === atomnameList.length ){
                 equalAtomnames = true;
@@ -704,16 +704,20 @@ NGL.calculateBonds = function( structure, callback ){
 
     NGL.time( "NGL.Structure.autoBond between" );
 
-    structure.eachResidueN( 2, function( r1, r2 ){
+    // TODO maybe move into calculatePolymers
 
-        var bbType1 = r1.getBackboneType();
-        var bbType2 = r2.getBackboneType();
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+
+    structure.eachResidueN( 2, function( rp1, rp2 ){
+
+        var bbType1 = rp1.backboneType;
+        var bbType2 = rp2.backboneType;
 
         if( bbType1 !== NGL.UnknownType && bbType1 === bbType2 ){
-            bondStore.addBondIfConnected(
-                r1.getBackboneAtomStart(),
-                r2.getBackboneAtomEnd()
-            );
+            ap1.index = rp1.backboneStartAtomIndex;
+            ap2.index = rp2.backboneEndAtomIndex;
+            bondStore.addBondIfConnected( ap1, ap2 );
         }
 
     } );
@@ -1044,6 +1048,7 @@ NGL.Parser.prototype = {
 
     _afterWorker: function( callback ){
 
+        console.log( this[ this.__objName ] );
         callback( this[ this.__objName ] );
 
     },
@@ -1235,13 +1240,6 @@ NGL.StructureParser.prototype = NGL.createObject(
             function( wcallback ){
 
                 self._postProcess( wcallback );
-
-            },
-
-            function( wcallback ){
-
-                self.structure.postProcess();
-                wcallback();
 
             }
 
@@ -2342,7 +2340,6 @@ NGL.CifParser.prototype = NGL.createObject(
                             atomStore.resno[ idx ] = parseInt( ls[ auth_seq_id ] );
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
                             atomStore.setAtomname( idx, atomname );
-                            atomStore.sstruc[ idx ] = 'l'.charCodeAt( 0 );
                             atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
                             atomStore.vdw[ idx ] = vdwRadii[ element ];
@@ -2874,9 +2871,6 @@ NGL.CifParser.prototype = NGL.createObject(
             // add connections
             function( wcallback ){
 
-                wcallback();
-                return;
-
                 var sc = cif.struct_conn;
 
                 if( !sc ){
@@ -2890,6 +2884,9 @@ NGL.CifParser.prototype = NGL.createObject(
                 _ensureArray( sc, "id" );
 
                 var reDoubleQuote = /"/g;
+                var ap1 = s.getAtomProxy();
+                var ap2 = s.getAtomProxy();
+                var atomIndicesCache = {};
 
                 NGL.processArray(
 
@@ -2930,59 +2927,66 @@ NGL.CifParser.prototype = NGL.createObject(
                                 asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] + "." +
                                 sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
                             );
-                            var selection1 = new NGL.Selection( sele1 );
-                            if( selection1.selection[ "error" ] ){
-                                NGL.warn(
-                                    "invalid selection for connection", sele1
-                                );
-                                continue;
+                            var atomIndices1 = atomIndicesCache[ sele1 ];
+                            if( !atomIndices1 ){
+                                var selection1 = new NGL.Selection( sele1 );
+                                if( selection1.selection[ "error" ] ){
+                                    NGL.warn( "invalid selection for connection", sele1 );
+                                    continue;
+                                }
+                                atomIndices1 = s.getAtomIndices( selection1 );
+                                atomIndicesCache[ sele1 ] = atomIndices1;
                             }
-                            var atoms1 = s.getAtoms( selection1 );
 
                             var sele2 = (
                                 sc.ptnr2_auth_seq_id[ i ] + ":" +
                                 asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] + "." +
                                 sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
                             );
-                            var selection2 = new NGL.Selection( sele2 );
-                            if( selection2.selection[ "error" ] ){
-                                NGL.warn(
-                                    "invalid selection for connection", sele2
-                                );
-                                continue;
+                            var atomIndices2 = atomIndicesCache[ sele2 ];
+                            if( !atomIndices2 ){
+                                var selection2 = new NGL.Selection( sele2 );
+                                if( selection2.selection[ "error" ] ){
+                                    NGL.warn( "invalid selection for connection", sele2 );
+                                    continue;
+                                }
+                                atomIndices2 = s.getAtomIndices( selection2 );
+                                atomIndicesCache[ sele2 ] = atomIndices2;
                             }
-                            var atoms2 = s.getAtoms( selection2 );
 
                             // cases with more than one atom per selection
                             // - #altloc1 to #altloc2
                             // - #model to #model
                             // - #altloc1 * #model to #altloc2 * #model
 
-                            var k = atoms1.length;
-                            var l = atoms2.length;
+                            var k = atomIndices1.length;
+                            var l = atomIndices2.length;
 
                             if( k > l ){
                                 var tmpA = k;
                                 k = l;
                                 l = tmpA;
-                                var tmpB = atoms1;
-                                atoms1 = atoms2;
-                                atoms2 = tmpB;
+                                var tmpB = atomIndices1;
+                                atomIndices1 = atomIndices2;
+                                atomIndices2 = tmpB;
+                            }
+
+                            // console.log( k, l );
+
+                            if( k === 0 || l === 0 ){
+                                NGL.warn( "no atoms found for", sele1, sele2 );
+                                continue;
                             }
 
                             for( var j = 0; j < l; ++j ){
 
-                                var a1 = atoms1[ j % k ];
-                                var a2 = atoms2[ j ];
+                                ap1.index = atomIndices1[ j % k ];
+                                ap2.index = atomIndices2[ j ];
 
-                                if( a1 && a2 ){
-
-                                    s.bondSet.addBond( a1, a2 );
-
+                                if( ap1 && ap2 ){
+                                    s.bondStore.addBond( ap1, ap2 );
                                 }else{
-
                                     NGL.log( "atoms for connection not found" );
-
                                 }
 
                             }

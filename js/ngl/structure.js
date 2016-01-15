@@ -1160,12 +1160,17 @@ NGL.Structure = function( name, path ){
     this.chainStore = new NGL.ChainStore( 0 );
     this.modelStore = new NGL.ModelStore( 0 );
 
+    this.bondSet = this.getBondSet();
+    this.atomSet = this.getAtomSet( this.selection );
+
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
-    this.reset();
-
     NGL.GidPool.addObject( this );
+
+    this._ap = this.getAtomProxy();
+    this._rp = this.getResidueProxy();
+    this._cp = this.getChainProxy();
 
 };
 
@@ -1237,71 +1242,17 @@ NGL.Structure.prototype = {
 
     },
 
-    getAtomSet: function( selection ){
-
-        // caching???
-
-        NGL.time( "NGL.Structure.getAtomSet" );
-
-        var n = this.atomStore.count;
-        var bs = new TypedFastBitSet( n );
-        var ap = this.getAtomProxy();
-
-        if( selection && selection.test ){
-
-            // TODO can be faster by setting ranges of atoms
-            //      but for that must loop over hierarchy itself
-
-            // function callback( a ){
-            //     bs.add_unsafe( a.index );
-            // }
-
-            // if( selection.modelOnlyTest ){
-
-            //     var test = selection.modelOnlyTest;
-
-            //     this.models.forEach( function( m ){
-            //         if( test( m ) ) m.eachAtom( callback, selection );
-            //     } );
-
-            // }else{
-
-            //     this.models.forEach( function( m ){
-            //         m.eachAtom( callback, selection );
-            //     } );
-
-            // }
-
-            var test = selection.test;
-
-            for( var i = 0; i < n; ++i ){
-                ap.index = i;
-                if( test( ap ) ) bs.add_unsafe( ap.index );
-            }
-
-        }else{
-
-            bs.set_all( true );
-
-        }
-
-        NGL.timeEnd( "NGL.Structure.getAtomSet" );
-
-        return bs;
-
-    },
-
     getBondSet: function( selection ){
 
         NGL.time( "NGL.Structure.getBondSet" );
 
         var n = this.bondStore.count;
         var bs = new TypedFastBitSet( n );
-        var bp = this.getBondProxy();
+        var as = this.atomSet;
+        
+        if( as ){
 
-        if( selection && selection.test ){
-
-            var as = this.getAtomSet( selection );
+            var bp = this.getBondProxy();    
 
             for( var i = 0; i < n; ++i ){
                 bp.index = i;
@@ -1322,10 +1273,116 @@ NGL.Structure.prototype = {
 
     },
 
+    getAtomSet: function( selection ){
+
+        NGL.time( "NGL.Structure.getAtomSet" );
+
+        var as;
+        var n = this.atomStore.count;
+
+        if( selection === false ){
+
+            as = new TypedFastBitSet( n );
+
+        }else if( selection === true ){
+
+            as = new TypedFastBitSet( n );
+            as.set_all( true );
+
+        }else if( selection && selection.test ){
+
+            var seleString = selection.string;
+            as = this.atomSetCache[ seleString ];
+
+            if( !seleString ) console.warn( "empty seleString" );
+
+            if( as === undefined ){
+
+                // TODO can be faster by setting ranges of atoms
+                //      but for that must loop over hierarchy itself
+                as = new TypedFastBitSet( n );
+                var ap = this.getAtomProxy();
+                var test = selection.test;
+                for( var i = 0; i < n; ++i ){
+                    ap.index = i;
+                    if( test( ap ) ) as.add_unsafe( ap.index );
+                }
+                this.atomSetCache[ seleString ] = as;
+
+            }else{
+
+                // console.log( "getting atomSet from cache", seleString );
+
+            }
+
+        }else{
+
+            as = new TypedFastBitSet( n );
+            as.set_all( true );
+
+        }
+
+        NGL.timeEnd( "NGL.Structure.getAtomSet" );
+
+        return as;
+
+    },
+
+    getAtomSet2: function( selection ){
+
+        // NGL.time( "NGL.Structure.getAtomSet2" );
+
+        var as;
+        var n = this.atomStore.count;
+
+        if( selection === false ){
+
+            as = new TypedFastBitSet( n );
+
+        }else if( selection === true ){
+
+            as = new TypedFastBitSet( n );
+            as.set_all( true );
+
+        }else if( selection && selection.test ){
+
+            var seleString = selection.string;
+            as = this.atomSetCache[ seleString ];
+
+            if( !seleString ) console.warn( "empty seleString" );
+
+            if( as === undefined ){
+
+                as = new TypedFastBitSet( n );
+                this.eachAtom2( function( ap ){
+                    as.add_unsafe( ap.index );
+                }, selection );
+                this.atomSetCache[ seleString ] = as;
+
+            }else{
+
+                // console.log( "getting atomSet from cache", seleString );
+
+            }
+
+        }else{
+
+            as = new TypedFastBitSet( n );
+            as.set_all( true );
+
+        }
+
+        // NGL.timeEnd( "NGL.Structure.getAtomSet2" );
+
+        return as;
+
+    },
+
     setSelection: function( selection ){
 
-        this.atomSet = this.getAtomSet( selection );
-        this.bondSet = this.getBondSet( selection );
+        this.selection = selection;
+
+        this.refresh();
 
     },
 
@@ -1335,17 +1392,35 @@ NGL.Structure.prototype = {
 
     },
 
-    postProcess: function( callback ){
+    //
 
-        this.atomSet = this.getAtomSet();
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
+    eachBond: function( callback, selection ){
 
-        NGL.GidPool.updateObject( this );
+        var bp = this.getBondProxy();
+        var bs = this.bondSet;
+
+        if( selection && selection.test ){
+            if( bs ){
+                bs = bs.new_intersection( this.getBondSet( selection ) );
+            }else{
+                bs = this.getBondSet( selection );
+            }
+        }
+
+        if( bs ){
+            bs.forEach( function( index ){
+                bp.index = index;
+                callback( bp );
+            } );
+        }else{
+            var n = this.bondStore.count;
+            for( var i = 0; i < n; ++i ){
+                bp.index = i;
+                callback( bp );
+            }
+        }
 
     },
-
-    //
 
     eachAtom: function( callback, selection ){
 
@@ -1354,7 +1429,7 @@ NGL.Structure.prototype = {
 
         if( selection && selection.test ){
             if( as ){
-                as = this.getAtomSet( selection ).intersection( as );
+                as = as.new_intersection( this.getAtomSet( selection ) );
             }else{
                 as = this.getAtomSet( selection );
             }
@@ -1368,6 +1443,23 @@ NGL.Structure.prototype = {
         }else{
             var n = this.atomStore.count;
             for( var i = 0; i < n; ++i ){
+                ap.index = i;
+                callback( ap );
+            }
+        }
+
+    },
+
+    eachAtom2: function( callback, selection ){
+
+        if( selection && selection.test ){
+            this.eachModel( function( mp ){
+                mp.eachAtom2( callback, selection )
+            }, selection );
+        }else{
+            var an = this.atomStore.count;
+            var ap = this.getAtomProxy();
+            for( var i = 0; i < an; ++i ){
                 ap.index = i;
                 callback( ap );
             }
@@ -1450,22 +1542,9 @@ NGL.Structure.prototype = {
     eachChain: function( callback, selection ){
 
         if( selection && selection.test ){
-            var mn = this.modelStore.count;
-            var mp = this.getModelProxy();
-            if( selection.modelOnlyTest ){
-                var modelOnlyTest = selection.modelOnlyTest;
-                for( var i = 0; i < mn; ++i ){
-                    mp.index = i;
-                    if( modelOnlyTest( mp ) ){
-                        mp.eachChain( callback, selection );
-                    }
-                }
-            }else{
-                for( var i = 0; i < mn; ++i ){
-                    mp.index = i;
-                    mp.eachChain( callback, selection );
-                }
-            }
+            this.eachModel( function( mp ){
+                mp.eachChain( callback, selection );
+            } );
         }else{
             var cn = this.chainStore.count;
             var cp = this.getChainProxy();
@@ -1482,11 +1561,20 @@ NGL.Structure.prototype = {
         var n = this.modelStore.count;
         var mp = this.getModelProxy();
 
-        if( selection && selection.modelOnlyTest ){
+        if( selection && selection.test ){
             var modelOnlyTest = selection.modelOnlyTest;
-            for( var i = 0; i < n; ++i ){
-                mp.index = i;
-                if( modelOnlyTest( mp ) ) callback( mp );
+            if( modelOnlyTest ){
+                for( var i = 0; i < n; ++i ){
+                    mp.index = i;
+                    if( modelOnlyTest( mp ) ){
+                        callback( mp, selection );
+                    }
+                }
+            }else{
+                for( var i = 0; i < n; ++i ){
+                    mp.index = i;
+                    callback( mp, selection );
+                }
             }
         }else{
             for( var i = 0; i < n; ++i ){
@@ -1510,8 +1598,8 @@ NGL.Structure.prototype = {
         var vec = new THREE.Vector3();
         var box = new THREE.Box3();
 
-        this.eachAtom( function( a ){
-            vec.copy( a );
+        this.eachAtom( function( ap ){
+            vec.copy( ap );
             box.expandByPoint( vec );
         }, selection );
 
@@ -1543,29 +1631,17 @@ NGL.Structure.prototype = {
 
     },
 
-    getAtoms: function( selection, first ){
+    getAtomIndices: function( selection ){
 
-        var atoms;
+        // Best to use only when the selection resolves to just a few indices!!!
 
-        if( selection && selection.test ){
+        var indices = [];
 
-            atoms = [];
-            this.eachAtom( function( pa ){
-                atoms.push( pa.copy() );
-            }, selection );
+        this.eachAtom2( function( ap ){
+            indices.push( ap.index );
+        }, selection );
 
-        }else{
-
-            atoms = this.atoms;
-
-        }
-
-        if( first ){
-            // TODO early exit after first atom is found
-            return atoms[ 0 ];
-        }else{
-            return atoms;
-        }
+        return indices;
 
     },
 
@@ -1647,34 +1723,6 @@ NGL.Structure.prototype = {
     },
 
     //
-
-    eachBond: function( callback, selection ){
-
-        var bp = this.getBondProxy();
-        var bs = this.bondSet;
-
-        if( selection && selection.test ){
-            if( bs ){
-                bs = this.getBondSet( selection ).intersection( bs );
-            }else{
-                bs = this.getBondSet( selection );
-            }
-        }
-
-        if( bs ){
-            bs.forEach( function( index ){
-                bp.index = index;
-                callback( bp );
-            } );
-        }else{
-            var n = this.atomStore.count;
-            for( var i = 0; i < n; ++i ){
-                bp.index = i;
-                callback( bp );
-            }
-        }
-
-    },
 
     bondPosition: function( fromTo ){
 

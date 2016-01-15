@@ -1038,6 +1038,28 @@ NGL.ResidueProxy.prototype = {
 
     },
 
+    eachAtom2: function( callback, selection ){
+
+        var count = this.atomCount;
+        var offset = this.atomOffset;
+        var ap = this.structure._ap;
+        var end = offset + count;
+
+        if( selection && selection.test ){
+            var test = selection.test;
+            for( var i = offset; i < end; ++i ){
+                ap.index = i;
+                if( test( ap ) ) callback( ap );
+            }
+        }else{
+            for( var i = offset; i < end; ++i ){
+                ap.index = i;
+                callback( ap );
+            }
+        }
+
+    },
+
     //
 
     isProtein: function(){
@@ -1646,8 +1668,6 @@ NGL.ChainProxy.prototype = {
 
         if( selection && selection.residueOnlyTest ){
 
-            // NGL.log( "chain.eachAtom#residue", selection.selection )
-
             var test = selection.residueOnlyTest;
 
             for( i = 0; i < n; ++i ){
@@ -1656,25 +1676,6 @@ NGL.ChainProxy.prototype = {
                 if( test( r ) ) r.eachAtom( callback, selection );
 
             }
-
-            // for( i = 0; i < n; ++i ){
-
-            //     r = this.residues[ i ];
-
-            //     if( !test( r ) ) continue;
-
-            //     o = r.atomCount;
-
-            //     var atomTest = selection.atomOnlyTest;
-
-            //     for( j = 0; j < o; ++j ){
-
-            //         a = r.atoms[ j ];
-            //         if( atomTest( a ) ) callback( a );
-
-            //     }
-
-            // }
 
         }else if( selection && (
                 selection.atomOnlyTest ||
@@ -1690,8 +1691,6 @@ NGL.ChainProxy.prototype = {
             }
 
         }else{
-
-            // console.log( "moin" )
 
             for( i = 0; i < n; ++i ){
 
@@ -1710,18 +1709,35 @@ NGL.ChainProxy.prototype = {
 
     },
 
+    eachAtom2: function( callback, selection ){
+
+        this.eachResidue( function( rp ){
+            rp.eachAtom2( callback, selection )
+        }, selection );
+
+    },
+
     eachResidue: function( callback, selection ){
 
         var count = this.residueCount;
         var offset = this.residueOffset;
-        var rp = this.structure.getResidueProxy();
+        var rp = this.structure._rp;
         var end = offset + count;
 
-        if( selection && selection.residueOnlyTest ){
+        if( selection && selection.test ){
             var residueOnlyTest = selection.residueOnlyTest;
-            for( var i = offset; i < end; ++i ){
-                rp.index = i;
-                if( residueOnlyTest( rp ) ) callback( rp );
+            if( residueOnlyTest ){
+                for( var i = offset; i < end; ++i ){
+                    rp.index = i;
+                    if( residueOnlyTest( rp ) ){
+                        callback( rp, selection );
+                    }
+                }
+            }else{
+                for( var i = offset; i < end; ++i ){
+                    rp.index = i;
+                    callback( rp, selection );
+                }
             }
         }else{
             for( var i = offset; i < end; ++i ){
@@ -1918,6 +1934,14 @@ NGL.ModelProxy.prototype = {
 
     },
 
+    eachAtom2: function( callback, selection ){
+
+        this.eachChain( function( cp ){
+            cp.eachAtom2( callback, selection )
+        }, selection );
+
+    },
+
     eachResidue: function( callback, selection ){
 
         var i, j, o, c, r;
@@ -1994,14 +2018,23 @@ NGL.ModelProxy.prototype = {
 
         var count = this.chainCount;
         var offset = this.chainOffset;
-        var cp = this.structure.getChainProxy();
+        var cp = this.structure._cp;
         var end = offset + count;
 
-        if( selection && selection.chainOnlyTest ){
+        if( selection && selection.test ){
             var chainOnlyTest = selection.chainOnlyTest;
-            for( var i = offset; i < end; ++i ){
-                cp.index = i;
-                if( chainOnlyTest( cp ) ) callback( cp );
+            if( chainOnlyTest ){
+                for( var i = offset; i < end; ++i ){
+                    cp.index = i;
+                    if( chainOnlyTest( cp ) ){
+                        callback( cp, selection );
+                    }
+                }
+            }else{
+                for( var i = offset; i < end; ++i ){
+                    cp.index = i;
+                    callback( cp, selection );
+                }
             }
         }else{
             for( var i = offset; i < end; ++i ){
