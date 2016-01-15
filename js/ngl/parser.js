@@ -132,7 +132,7 @@ NGL.buildStructure = function( structure, callback ){
 
     }
 
-    NGL.GidPool.updateObject( structure );
+    structure.refresh();
 
     NGL.timeEnd( "NGL.buildStructure" );
 
@@ -2852,6 +2852,8 @@ NGL.CifParser.prototype = NGL.createObject(
     _postProcess: function( callback ){
 
         NGL.time( "NGL.CifParser._postProcess" );
+
+        this.structure.refresh();
 
         var s = this.structure;
         var cif = this.cif;

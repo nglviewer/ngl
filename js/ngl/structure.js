@@ -1132,15 +1132,24 @@ NGL.LabelFactory.prototype = {
 
 NGL.Structure = function( name, path ){
 
+    var SIGNALS = signals;
+    this.signals = {
+        refreshed: new SIGNALS.Signal(),
+    };
+
     this.name = name;
     this.path = path;
     this.title = "";
     this.id = "";
 
+    this.atomSetCache = {};
+    this.atomSetDict = {};
     this.biomolDict = {};
     this.defaultAssembly = "BU1";
     this.helices = [];
     this.sheets = [];
+    this.unitcell = new NGL.Unitcell();
+    this.selection = undefined;
 
     this.frames = [];
     this.boxes = [];
@@ -1163,32 +1172,31 @@ NGL.Structure = function( name, path ){
 NGL.Structure.prototype = {
 
     constructor: NGL.Structure,
-
     type: "Structure",
 
-    reset: function(){
+    refresh: function(){
 
-        this.biomolDict = {};
-        this.helices.length = 0;
-        this.sheets.length = 0;
-        this.unitcell = new NGL.Unitcell();
+        NGL.time( "NGL.Structure.refresh" );
 
-        this.frames.length = 0;
-        this.boxes.length = 0;
+        this.atomSetCache = {};
 
-        this.bondStore.clear();
-        this.atomStore.clear();
-        this.residueStore.clear();
-        this.chainStore.clear();
-        this.modelStore.clear();
-
-        this.center.set( 0, 0, 0 );
-        this.boundingBox.makeEmpty();
-
-        this.atomSet = this.getAtomSet();
         this.bondSet = this.getBondSet();
+        this.atomSet = this.getAtomSet( this.selection );
 
-        NGL.GidPool.updateObject( this, true );
+        for( var name in this.atomSetDict ){
+            var as = this.atomSetDict[ name ];
+            var as2 = this.getAtomSet( false );
+            this.atomSetCache[ "__" + name ] = as2.intersection( as );;
+        }
+
+        this.boundingBox = this.getBoundingBox();
+        this.center = this.boundingBox.center();
+
+        NGL.GidPool.updateObject( this );
+
+        NGL.timeEnd( "NGL.Structure.refresh" );
+
+        this.signals.refreshed.dispatch();
 
     },
 
@@ -1580,8 +1588,7 @@ NGL.Structure.prototype = {
     getColorMaker: function( params ){
 
         var p = params || {};
-        p.structure = this.structure;
-        p.bondStore = this.structure.bondStore;
+        p.structure = this;
 
         return NGL.ColorMakerRegistry.getScheme( p );
 
@@ -1790,10 +1797,20 @@ NGL.Structure.prototype = {
             chainStore: this.chainStore.toJSON(),
             modelStore: this.modelStore.toJSON(),
 
-            atomSet: this.atomSet.toJSON(),
             bondSet: this.bondSet.toJSON(),
+            atomSet: this.atomSet.toJSON(),
+
+            atomSetDict: {},
+            atomSetCache: {}
 
         };
+
+        for( var name in this.atomSetDict ){
+            output.atomSetDict[ name ] = this.atomSetDict[ name ].toJSON()
+        }
+        for( var name in this.atomSetCache ){
+            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
+        }
 
         NGL.timeEnd( "NGL.Structure.toJSON" );
 
@@ -1804,8 +1821,6 @@ NGL.Structure.prototype = {
     fromJSON: function( input ){
 
         NGL.time( "NGL.Structure.fromJSON" );
-
-        this.reset();
 
         this.name = input.name;
         this.path = input.path;
@@ -1832,8 +1847,19 @@ NGL.Structure.prototype = {
         this.chainStore.fromJSON( input.chainStore );
         this.modelStore.fromJSON( input.modelStore );
 
-        this.atomSet.fromJSON( input.atomSet );
         this.bondSet.fromJSON( input.bondSet );
+        this.atomSet.fromJSON( input.atomSet );
+
+        this.atomSetDict = {};
+        for( var name in input.atomSetDict ){
+            var as = new TypedFastBitSet();
+            this.atomSetDict[ name ] = as.fromJSON( input.atomSetDict[ name ] );
+        }
+        this.atomSetCache = {};
+        for( var name in input.atomSetCache ){
+            var as = new TypedFastBitSet();
+            this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
+        }
 
         NGL.GidPool.updateObject( this );
 
@@ -1868,11 +1894,14 @@ NGL.Structure.prototype = {
             }
         }
 
-        if( this.atomSet ){
-            transferable.concat( this.atomSet.getTransferable() );
+        transferable.concat( this.bondSet.getTransferable() );
+        transferable.concat( this.atomSet.getTransferable() );
+
+        for( var name in this.atomSetDict ){
+            transferable.concat( this.atomSetDict[ name ].getTransferable() );
         }
-        if( this.bondSet ){
-            transferable.concat( this.bondSet.getTransferable() );
+        for( var name in this.atomSetCache ){
+            transferable.concat( this.atomSetCache[ name ].getTransferable() );
         }
 
         return transferable;
@@ -1886,14 +1915,14 @@ NGL.Structure.prototype = {
         if( this.frames ) this.frames.length = 0;
         if( this.boxes ) this.boxes.length = 0;
 
-        this.atomStore.dispose();
         this.bondStore.dispose();
+        this.atomStore.dispose();
         this.residueStore.dispose();
         this.chainStore.dispose();
         this.modelStore.dispose();
 
-        delete this.atomStore;
         delete this.bondStore;
+        delete this.atomStore;
         delete this.residueStore;
         delete this.chainStore;
         delete this.modelStore;
@@ -1902,8 +1931,8 @@ NGL.Structure.prototype = {
         delete this.boxes;
         delete this.cif;
 
-        delete this.atomSet;
         delete this.bondSet;
+        delete this.atomSet;
 
     }
 
@@ -1916,6 +1945,9 @@ NGL.StructureView = function( structure, selection ){
     this.selection = selection;
 
     Object.defineProperties( this, {
+        atomSetDict: {
+            get: function(){ return this.structure.atomSetDict }
+        },
         bondStore: {
             get: function(){ return this.structure.bondStore }
         },
@@ -1933,12 +1965,16 @@ NGL.StructureView = function( structure, selection ){
         }
     } );
 
-    if( selection ){
-        this.selection.signals.stringChanged.add( function( string ){
-            this.applySelection();
-        }, this );
-        this.applySelection();
-    }
+    // to allow creating an empty object to call .fromJSON onto
+    if( !structure && !selection ) return;
+
+    this.selection.signals.stringChanged.add( function( string ){
+        this.refresh();
+    }, this );
+
+    this.structure.signals.refreshed.add( this.refresh, this );
+
+    this.refresh();
 
 };
 
@@ -1955,88 +1991,29 @@ NGL.StructureView.prototype = NGL.createObject(
 
     },
 
-    getBondProxy: function(){
+    refresh: function(){
 
-        return this.structure.getBondProxy();
+        NGL.time( "NGL.StructureView.refresh" );
 
-    },
+        this.atomSetCache = {};
 
-    getAtomProxy: function(){
+        this.atomSet = this.getAtomSet( this.selection );
+        if( this.structure.atomSet ){
+            this.atomSet = this.atomSet.intersection( this.structure.atomSet );
+        }
+        this.bondSet = this.getBondSet();
 
-        return this.structure.getAtomProxy();
-
-    },
-
-    getResidueProxy: function(){
-
-        return this.structure.getResidueProxy();
-
-    },
-
-    getChainProxy: function(){
-
-        return this.structure.getChainProxy();
-
-    },
-
-    getModelProxy: function(){
-
-        return this.structure.getModelProxy();
-
-    },
-
-    applySelection: function(){
-
-        NGL.time( "NGL.StructureView.applySelection" );
-
-        this.atomSet = this.structure.getAtomSet( this.selection );
-        this.bondSet = this.structure.getBondSet( this.selection );
+        for( var name in this.atomSetDict ){
+            var as = this.atomSetDict[ name ];
+            this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
+        }
 
         this.atomCount = this.atomSet.size();
         this.bondCount = this.bondSet.size();
 
         this.center = this.atomCenter();
 
-        NGL.timeEnd( "NGL.StructureView.applySelection" );
-
-    },
-
-    eachAtom: function( callback, selection ){
-
-        var ap = this.getAtomProxy();
-        var as = this.atomSet.clone();
-
-        if( selection && selection.test ){
-            as = this.structure.getAtomSet( selection ).intersection( as );
-        }
-
-        if( this.structure.atomSet ){
-            as = as.intersection( this.structure.atomSet );
-        }
-
-        as.forEach( function( index ){
-            ap.index = index;
-            callback( ap );
-        } );
-
-    },
-
-    eachBond: function( callback, selection ){
-
-        var bp = this.getBondProxy();
-        var bs = this.bondSet.clone();
-
-        if( selection && selection.test ){
-            bs = this.structure.getBondSet( selection ).intersection( bs );
-        }
-        if( this.structure.bondSet ){
-            bs = bs.intersection( this.structure.bondSet );
-        }
-
-        bs.forEach( function( index ){
-            bp.index = index;
-            callback( bp );
-        } );
+        NGL.timeEnd( "NGL.StructureView.refresh" );
 
     },
 
@@ -2056,9 +2033,15 @@ NGL.StructureView.prototype = NGL.createObject(
             bondSet: this.bondSet.toJSON(),
 
             atomCount: this.atomCount,
-            bondCount: this.bondCount
+            bondCount: this.bondCount,
+
+            atomSetCache: {}
 
         };
+
+        for( var name in this.atomSetCache ){
+            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
+        }
 
         return output;
 

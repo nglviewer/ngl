@@ -3972,6 +3972,11 @@ NGL.MolecularSurfaceRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
+    // TODO find a more direct way
+    this.structure.signals.refreshed.add( function(){
+        this.__forceNewMolsurf = true;
+    }, this );
+
 };
 
 NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
