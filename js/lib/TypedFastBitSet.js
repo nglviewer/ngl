@@ -107,12 +107,14 @@ TypedFastBitSet.prototype.flip_all = function() {
   for (; k < count; ++k) {
     this.words[k] = ~this.words[k];
   }
+  return this;
 };
 
 // Set all bits to value, added by ASR
 TypedFastBitSet.prototype.set_all = function(value) {
-  if (this.length <= 0) return;
+  if (this.length <= 0) return this;
   this.set_range( 0, this.length-1, value );
+  return this;
 };
 
 // Set all bits in range to value, added by ASR
@@ -151,12 +153,15 @@ TypedFastBitSet.prototype.set_range = function(from, to, value) {
       this.words[i >>> 5] &= ~(1 << i);
     }
   }
+  return this;
 };
 
 // Remove all values, reset memory usage
 TypedFastBitSet.prototype.clear = function() {
   this.count = 0 | 0;
+  this.length = 0 | 0;
   this.words = new Uint32Array(count);
+  return this;
 };
 
 // Set the bit at index to false
@@ -251,7 +256,7 @@ TypedFastBitSet.prototype.array = function() {
 TypedFastBitSet.prototype.forEach = function(fnc) {
   var c = this.count | 0;
   for (var k = 0; k < c; ++k) {
-    var w =  this.words[k];
+    var w = this.words[k];
     while (w != 0) {
       var t = w & -w;
       fnc((k << 5) + this.hammingWeight((t - 1) | 0));
@@ -264,6 +269,7 @@ TypedFastBitSet.prototype.forEach = function(fnc) {
 TypedFastBitSet.prototype.clone = function() {
   var clone = Object.create(TypedFastBitSet.prototype);
   clone.count = this.count;
+  clone.length = this.length;
   clone.words = new Uint32Array(this.words);
   return clone;
 };
@@ -320,6 +326,7 @@ TypedFastBitSet.prototype.new_intersection = function(otherbitmap) {
   var answer = Object.create(TypedFastBitSet.prototype);
   answer.count = Math.min(this.count,otherbitmap.count);
   answer.words = new Uint32Array(answer.count);
+  answer.length = Math.min(this.length,otherbitmap.length);
   var c = answer.count;
   for (var k = 0 | 0; k < c; ++k) {
     answer.words[k] = this.words[k] & otherbitmap.words[k];
@@ -475,6 +482,7 @@ TypedFastBitSet.prototype.getTransferable = function() {
 TypedFastBitSet.prototype.toJSON = function() {
   return {
     count: this.count,
+    length: this.length,
     words: this.words
   };
 };
@@ -482,6 +490,7 @@ TypedFastBitSet.prototype.toJSON = function() {
 // De-serialize from JSON, added by ASR
 TypedFastBitSet.prototype.fromJSON = function(input) {
   this.count = input.count;
-  this.words = new Uint32Array(input.words);
+  this.length = input.length;
+  this.words = input.words;
   return this;
 };
