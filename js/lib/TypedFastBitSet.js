@@ -233,6 +233,17 @@ TypedFastBitSet.prototype.size = function() {
   return answer;
 };
 
+// How many bits are set in the given range of the set?
+// - added by ASR
+TypedFastBitSet.prototype.sizeRange = function(offset, count) {
+  var size = 0;
+  var end = offset + count;
+  this.forEach( function( index ){
+      if( index >= offset && index < end ) ++size;
+  } );
+  return size;
+};
+
 // Return an array with the set bit locations (values)
 // - use Uint32Array instead of Array, ASR
 TypedFastBitSet.prototype.array = function() {
@@ -261,6 +272,25 @@ TypedFastBitSet.prototype.forEach = function(fnc) {
       var t = w & -w;
       fnc((k << 5) + this.hammingWeight((t - 1) | 0));
       w ^= t;
+    }
+  }
+};
+
+TypedFastBitSet.forEach = function(fnc, bitmap1, bitmap2) {
+  var c = Math.min(bitmap1.count, bitmap2.count) | 0;
+  for (var k = 0; k < c; ++k) {
+    var w1 = bitmap1.words[k];
+    var w2 = bitmap2.words[k];
+    while (w1 != 0 && w2 != 0) {
+      var t1 = w1 & -w1;
+      var t2 = w2 & -w2;
+      var kShift = k << 5;
+      fnc(
+        kShift + bitmap1.hammingWeight((t1 - 1) | 0),
+        kShift + bitmap2.hammingWeight((t2 - 1) | 0)
+      );
+      w1 ^= t1;
+      w2 ^= t2;
     }
   }
 };
