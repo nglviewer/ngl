@@ -17,10 +17,21 @@ NGL.GidPool = {
 
     rangeList: [],
 
+    getBaseObject: function( object ){
+
+        if( object.type === "StructureView" ){
+            object = object.structure;
+        }
+
+        return object;
+
+    },
+
     addObject: function( object ){
 
-        NGL.GidPool.objectList.push( object );
+        object = this.getBaseObject( object );
 
+        NGL.GidPool.objectList.push( object );
         NGL.GidPool.rangeList.push( NGL.GidPool.allocateGidRange( object ) );
 
         return NGL.GidPool;
@@ -28,6 +39,8 @@ NGL.GidPool = {
     },
 
     removeObject: function( object ){
+
+        object = this.getBaseObject( object );
 
         var idx = NGL.GidPool.objectList.indexOf( object );
 
@@ -48,6 +61,8 @@ NGL.GidPool = {
 
     updateObject: function( object, silent ){
 
+        object = this.getBaseObject( object );
+
         var idx = NGL.GidPool.objectList.indexOf( object );
 
         if( idx !== -1 ){
@@ -55,23 +70,17 @@ NGL.GidPool = {
             var range = NGL.GidPool.rangeList[ idx ];
 
             if( range[1] === NGL.GidPool.nextGid ){
-
                 var count = NGL.GidPool.getGidCount( object );
                 NGL.GidPool.nextGid += count - ( range[1] - range[0] );
                 range[ 1 ] = NGL.GidPool.nextGid;
-
             }else{
-
                 NGL.GidPool.rangeList[ idx ] = NGL.GidPool.allocateGidRange( object );
-
             }
 
         }else{
 
             if( !silent ){
-
                 NGL.warn( "NGL.GidPool.updateObject: object not found." );
-
             }
 
         }
@@ -82,20 +91,16 @@ NGL.GidPool = {
 
     getGidCount: function( object ){
 
+        object = this.getBaseObject( object );
+
         var count = 0;
 
         if( object.type === "Structure" ){
-
             count = object.atomStore.count + object.bondStore.count;
-
         }else if( object.type === "Volume" ){
-
             count = object.__data.length;
-
         }else{
-
             NGL.warn( "NGL.GidPool.getGidCount: unknown object type" );
-
         }
 
         return count;
@@ -103,6 +108,8 @@ NGL.GidPool = {
     },
 
     allocateGidRange: function( object ){
+
+        object = this.getBaseObject( object );
 
         var firstGid = NGL.GidPool.nextGid;
 
@@ -118,6 +125,7 @@ NGL.GidPool = {
 
     freeGidRange: function( object ){
 
+        object = this.getBaseObject( object );
         // TODO
 
     },
@@ -130,6 +138,7 @@ NGL.GidPool = {
 
     getGid: function( object, offset ){
 
+        object = this.getBaseObject( object );
         offset = offset || 0;
 
         var gid = 0;
