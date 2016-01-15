@@ -665,17 +665,13 @@ NGL.AtomindexColorMaker = function( params ){
     if( !params.scale ){
         this.scale = "roygb";
     }
-
     if( !params.domain ){
         this.domain = [ 0, this.structure.atomStore.count ];
     }
-
     var atomindexScale = this.getScale();
 
     this.atomColor = function( a ){
-
         return atomindexScale( a.index );
-
     };
 
 };
@@ -692,17 +688,13 @@ NGL.ResidueindexColorMaker = function( params ){
     if( !params.scale ){
         this.scale = "roygb";
     }
-
     if( !params.domain ){
         this.domain = [ 0, this.structure.residueStore.count ];
     }
-
     var residueindexScale = this.getScale();
 
     this.atomColor = function( a ){
-
-        return residueindexScale( a.residue.index );
-
+        return residueindexScale( a.residueIndex );
     };
 
 };
@@ -719,29 +711,13 @@ NGL.ChainindexColorMaker = function( params ){
     if( !params.scale ){
         this.scale = "Spectral";
     }
-
     if( !params.domain ){
         this.domain = [ 0, this.structure.chainStore.count ];
     }
-
     var chainindexScale = this.getScale();
 
-    var chainNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-                      "abcdefghijklmnopqrstuvwxyz" +
-                      "0123456789";
-
-    var chainnameScale = this.getScale( { domain: [ 0, 26 ] } );
-
     this.atomColor = function( a ){
-
-        if( a.residue.chain.chainname === "" ){
-            return chainnameScale(
-                chainNames.indexOf( a.chainname ) * 10
-            );
-        }else{
-            return chainindexScale( a.residue.chain.index );
-        }
-
+        return chainindexScale( a.chainIndex );
     };
 
 };
@@ -758,17 +734,13 @@ NGL.ModelindexColorMaker = function( params ){
     if( !params.scale ){
         this.scale = "roygb";
     }
-
     if( !params.domain ){
         this.domain = [ 0, this.structure.modelStore.count ];
     }
-
     var modelindexScale = this.getScale();
 
     this.atomColor = function( a ){
-
-        return modelindexScale( a.residue.chain.model.index );
-
+        return modelindexScale( a.modelIndex );
     };
 
 };
@@ -788,22 +760,25 @@ NGL.SstrucColorMaker = function( params ){
 
     this.atomColor = function( ap ){
 
-        rp.index = ap.residueIndex;
+        var sstruc = ap.sstruc;
 
-        if( rp.sstruc === "h" ){
+        if( sstruc === "h" ){
             return strucColors[ "alphaHelix" ];
-        }else if( rp.sstruc === "g" ){
+        }else if( sstruc === "g" ){
             return strucColors[ "3_10Helix" ];
-        }else if( rp.sstruc === "i" ){
+        }else if( sstruc === "i" ){
             return strucColors[ "piHelix" ];
-        }else if( rp.sstruc === "e" || rp.sstruc === "b" ){
+        }else if( sstruc === "e" || sstruc === "b" ){
             return strucColors[ "betaStrand" ];
-        }else if( rp.isNucleic() ){
-            return strucColors[ "dna" ];
-        }else if( rp.isProtein() || rp.sstruc === "s" || rp.sstruc === "t" || rp.sstruc === "l" ){
-            return strucColors[ "coil" ];
         }else{
-            return defaultStrucColor;
+            rp.index = ap.residueIndex;
+            if( rp.isNucleic() ){
+                return strucColors[ "dna" ];
+            }else if( rp.isProtein() || sstruc === "s" || sstruc === "t" || sstruc === "l" ){
+                return strucColors[ "coil" ];
+            }else{
+                return defaultStrucColor;
+            }
         }
 
     };
@@ -1038,17 +1013,17 @@ NGL.RadiusFactory.prototype = {
 
             case "sstruc":
 
-                if( a.sstruc === "h" ){
+                var sstruc = a.sstruc;
+                if( sstruc === "h" ){
                     r = 0.25;
-                }else if( a.sstruc === "g" ){
+                }else if( sstruc === "g" ){
                     r = 0.25;
-                }else if( a.sstruc === "i" ){
+                }else if( sstruc === "i" ){
                     r = 0.25;
-                }else if( a.sstruc === "e" ){
+                }else if( sstruc === "e" ){
                     r = 0.25;
-                }else if( a.sstruc === "b" ){
+                }else if( sstruc === "b" ){
                     r = 0.25;
-                // }else if( a.atomname === "P" ){
                 }else if( nucleic.indexOf( a.atomname ) !== -1 ){
                     r = 0.4;
                 }else{

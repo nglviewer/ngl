@@ -503,6 +503,8 @@ NGL.BondProxy.prototype = {
 NGL.AtomProxy = function( structure, index ){
 
     this.structure = structure;
+    this.chainStore = structure.chainStore;
+    this.residueStore = structure.residueStore;
     this.atomStore = structure.atomStore;
     this.index = index;
 
@@ -514,9 +516,16 @@ NGL.AtomProxy.prototype = {
     type: "AtomProxy",
 
     structure: undefined,
+    residueStore: undefined,
     atomStore: undefined,
     index: undefined,
 
+    get modelIndex () {
+        return this.chainStore.modelIndex[ this.chainIndex ];
+    },
+    get chainIndex () {
+        return this.residueStore.chainIndex[ this.residueIndex ];
+    },
     get residue () {
         return this.structure.getResidueProxy( this.residueIndex );
     },
@@ -526,6 +535,12 @@ NGL.AtomProxy.prototype = {
     },
     set residueIndex ( value ) {
         this.atomStore.residueIndex[ this.index ] = value;
+    },
+
+    //
+
+    get sstruc () {
+        return this.residueStore.getSstruc( this.residueIndex );
     },
 
     // 
@@ -591,13 +606,6 @@ NGL.AtomProxy.prototype = {
     },
     set serial ( value ) {
         this.atomStore.serial[ this.index ] = value;
-    },
-
-    get sstruc () {
-        return this.atomStore.getSstruc( this.index );
-    },
-    set sstruc ( value ) {
-        this.atomStore.setSstruc( this.index, value );
     },
 
     get vdw () {
@@ -792,7 +800,6 @@ NGL.AtomProxy.prototype = {
             chainname: this.chainname,
             resno: this.resno,
             serial: this.serial,
-            sstruc: this.sstruc,
             vdw: this.vdw,
             covalent: this.covalent,
             hetero: this.hetero,
@@ -913,8 +920,9 @@ NGL.Residue = {
 NGL.ResidueProxy = function( structure, index ){
 
     this.structure = structure;
-    this.atomStore = structure.atomStore;
+    this.chainStore = structure.chainStore;
     this.residueStore = structure.residueStore;
+    this.atomStore = structure.atomStore;
     this.index = index;
 
 };
@@ -925,7 +933,9 @@ NGL.ResidueProxy.prototype = {
     type: "ResidueProxy",
 
     structure: undefined,
+    chainStore: undefined,
     residueStore: undefined,
+    atomStore: undefined,
     index: undefined,
 
     get chain () {
@@ -974,6 +984,34 @@ NGL.ResidueProxy.prototype = {
     },
     set sstruc ( value ) {
         this.residueStore.setSstruc( this.index, value );
+    },
+
+    get moleculeType () {
+        return this.residueStore.moleculeType[ this.index ];
+    },
+    set moleculeType ( value ) {
+        this.residueStore.moleculeType[ this.index ] = value;
+    },
+
+    get backboneType () {
+        return this.residueStore.backboneType[ this.index ];
+    },
+    set backboneType ( value ) {
+        this.residueStore.backboneType[ this.index ] = value;
+    },
+
+    get backboneStartAtomIndex () {
+        return this.residueStore.backboneStartAtomIndex[ this.index ];
+    },
+    set backboneStartAtomIndex ( value ) {
+        this.residueStore.backboneStartAtomIndex[ this.index ] = value;
+    },
+
+    get backboneEndAtomIndex () {
+        return this.residueStore.backboneEndAtomIndex[ this.index ];
+    },
+    set backboneEndAtomIndex ( value ) {
+        this.residueStore.backboneEndAtomIndex[ this.index ] = value;
     },
 
     //
@@ -1138,79 +1176,43 @@ NGL.ResidueProxy.prototype = {
 
     },
 
-    getType: function(){
-
-        if( this.isProtein() ){
-
-            return NGL.ProteinType;
-
-        }else if( this.isNucleic() ){
-
-            return NGL.NucleicType;
-
-        }else if( this.isCg() ){
-
-            return NGL.CgType;
-
-        }else if( this.isWater() ){
-
-            return NGL.WaterType;
-
-        }else{
-
-            return NGL.UnknownType;
-
-        }
-
-    },
-
     getBackboneType: function( position ){
 
+        if( position === undefined ) return this.backboneType;
+
         if( this.hasProteinBackbone( position ) ){
-
             return NGL.ProteinBackboneType;
-
         }else if( this.hasRnaBackbone( position ) ){
-
             return NGL.RnaBackboneType;
-
         }else if( this.hasDnaBackbone( position ) ){
-
             return NGL.DnaBackboneType;
-
         }else if( this.isCg() ){
-
             return NGL.CgType;
-
         }else{
-
             return NGL.UnknownType;
-
         }
 
     },
 
-    getAtomByName: function( atomname, atomProxy ){
+    getAtomIndexByName: function( atomname ){
 
         var n = this.atomCount;
         var offset = this.atomOffset;
-        var ap = atomProxy || this.structure.getAtomProxy();
+        var atomStore = this.atomStore;
 
         if( Array.isArray( atomname ) ){
 
             for( var i = 0; i < n; ++i ){
-                ap.index = offset + i;
-                if( atomname.indexOf( ap.atomname ) !== -1 ){
-                    return ap;
+                if( atomname.indexOf( atomStore.getAtomname( offset + i ) ) !== -1 ){
+                    return offset + i;
                 }
             }
 
         }else{
 
             for( var i = 0; i < n; ++i ){
-                ap.index = offset + i;
-                if( atomname === ap.atomname ){
-                    return ap;
+                if( atomname === atomStore.getAtomname( offset + i ) ){
+                    return offset + i;
                 }
             }
 
@@ -1220,13 +1222,24 @@ NGL.ResidueProxy.prototype = {
 
     },
 
+    getAtomByName: function( atomname ){
+
+        var index = this.getAtomIndexByName( atomname );
+
+        if( index === undefined ){
+            return undefined;
+        }else{
+            return this.structure.getAtomProxy( index );
+        }
+
+    },
+
     hasAtomWithName: function( atomname ){
 
-        var ap = this.structure.getAtomProxy( undefined, true );
         var n = arguments.length;
 
         for( var i = 0; i < n; ++i ){
-            if( this.getAtomByName( arguments[ i ], ap ) === undefined ){
+            if( this.getAtomIndexByName( arguments[ i ] ) === undefined ){
                 return false;
             }
         }
@@ -1240,79 +1253,40 @@ NGL.ResidueProxy.prototype = {
         var n = this.atomCount;
         var offset = this.atomOffset;
         var atomStore = this.atomStore;
-        var list = [];
+        var list = new Array( n );
 
         for( var i = 0; i < n; ++i ){
-            list.push( atomStore.getAtomname( offset + i ) );
+            list[ i ] = atomStore.getAtomname( offset + i );
         }
 
         return list;
 
     },
 
-    getTraceAtom: function(){
-
-        return this.getAtomByName(
-            NGL.Residue.atomnames[ this.getBackboneType( 0 ) ].trace
-        );
-
-    },
-
-    getDirectionAtom1: function(){
-
-        return this.getAtomByName(
-            NGL.Residue.atomnames[ this.getBackboneType( 0 ) ].direction1
-        );
-
-    },
-
-    getDirectionAtom2: function(){
-
-        return this.getAtomByName(
-            NGL.Residue.atomnames[ this.getBackboneType( 0 ) ].direction2
-        );
-
-    },
-
-    getBackboneAtomStart: function(){
-
-        return this.getAtomByName(
-            NGL.Residue.atomnames[ this.getBackboneType( -1 ) ].backboneStart
-        );
-
-    },
-
-    getBackboneAtomEnd: function(){
-
-        return this.getAtomByName(
-            NGL.Residue.atomnames[ this.getBackboneType( 1 ) ].backboneEnd
-        );
-
-    },
-
     connectedTo: function( rNext ){
 
-        return this.getBackboneAtomStart().connectedTo(
-            rNext.getBackboneAtomEnd()
-        );
+        var bbAtomStart = this.structure.getAtomProxy( this.backboneStartAtomIndex );
+        var bbAtomEnd = this.structure.getAtomProxy( this.backboneEndAtomIndex );
+
+        if( bbAtomStart && bbAtomEnd ){
+            return bbAtomStart.connectedTo( bbAtomEnd );
+        }else{
+             return false;
+        }
 
     },
 
     getNextConnectedResidue: function(){
 
-        var chainResidues = this.chain.residues;
-        var idx = chainResidues.indexOf( this );
+        var rOffset = this.chainStore.residueOffset[ this.chainIndex ];
+        var rCount = this.chainStore.residueCount[ this.chainIndex ];
+        var nextIndex = this.index + 1;
 
-        if( idx !== -1 && idx < chainResidues.length ){
-
-            var nextResidue = chainResidues[ idx + 1 ];
-
-            if( this.connectedTo( nextResidue ) ){
-
-                return nextResidue;
-
+        if( nextIndex < rOffset + rCount ){
+            var rpNext = this.structure.getResidueProxy( nextIndex );
+            if( this.connectedTo( rpNext ) ){
+                return rpNext;
             }
-
         }
 
         return undefined;
@@ -1321,19 +1295,14 @@ NGL.ResidueProxy.prototype = {
 
     getPreviousConnectedResidue: function(){
 
-        var chainResidues = this.chain.residues;
-        var idx = chainResidues.indexOf( this );
+        var rOffset = this.chainStore.residueOffset[ this.chainIndex ];
+        var prevIndex = this.index - 1;
 
-        if( idx !== -1 && idx > 0 ){
-
-            var prevResidue = chainResidues[ idx - 1 ];
-
-            if( prevResidue.connectedTo( this ) ){
-
-                return prevResidue;
-
+        if( prevIndex >= rOffset ){
+            var rpPrev = this.structure.getResidueProxy( prevIndex );
+            if( rpPrev.connectedTo( this ) ){
+                return rpPrev;
             }
-
         }
 
         return undefined;

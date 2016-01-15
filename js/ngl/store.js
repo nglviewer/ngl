@@ -84,7 +84,7 @@ NGL.Store.prototype = {
 
     resize: function( size ){
 
-        NGL.time( "NGL.Store.resize" );
+        // NGL.time( "NGL.Store.resize" );
 
         this.length = size;
         this.count = Math.min( this.count, this.length );
@@ -105,7 +105,7 @@ NGL.Store.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.Store.resize" );
+        // NGL.timeEnd( "NGL.Store.resize" );
 
     },
 
@@ -369,7 +369,6 @@ NGL.AtomStore.prototype = NGL.createObject(
         [ "chainname", 4, "uint8" ],
         [ "resno", 1, "int32" ],
         [ "serial", 1, "int32" ],
-        [ "sstruc", 1, "uint8" ],
         [ "vdw", 1, "float32" ],
         [ "covalent", 1, "float32" ],
         [ "hetero", 1, "int8" ],
@@ -461,19 +460,6 @@ NGL.AtomStore.prototype = NGL.createObject(
 
     },
 
-    setSstruc: function( i, str ){
-
-        this.sstruc[ i ] = str.charCodeAt( 0 );
-
-    },
-
-    getSstruc: function( i ){
-
-        var code = this.sstruc[ i ];
-        return code ? String.fromCharCode( code ) : "";
-
-    },
-
     setAltloc: function( i, str ){
 
         this.altloc[ i ] = str.charCodeAt( 0 );
@@ -542,7 +528,17 @@ NGL.ResidueStore.prototype = NGL.createObject(
 
         [ "resno", 1, "int32" ],
         [ "resname", 5, "uint8" ],
-        [ "sstruc", 1, "uint8" ]
+        [ "sstruc", 1, "uint8" ],
+
+        // TODO these coult be int16 when relative to the residue atomOffset
+        [ "traceAtomIndex", 1, "int32" ],
+        [ "direction1AtomIndex", 1, "int32" ],
+        [ "direction2AtomIndex", 1, "int32" ],
+        [ "backboneStartAtomIndex", 1, "int32" ],
+        [ "backboneEndAtomIndex", 1, "int32" ],
+
+        [ "moleculeType", 1, "uint8" ],
+        [ "backboneType", 1, "uint8" ],
 
     ],
 

@@ -829,6 +829,74 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
 };
 
 
+NGL.calculatePolymerData = function( structure, callback ){
+
+    NGL.time( "NGL.calculatePolymerData" );
+
+    var atomnames = NGL.Residue.atomnames;
+    var residueStore = structure.residueStore;
+
+    function getMoleculeType( rp ){
+        if( rp.isProtein() ){
+            return NGL.ProteinType;
+        }else if( rp.isNucleic() ){
+            return NGL.NucleicType;
+        }else if( rp.isCg() ){
+            return NGL.CgType;
+        }else if( rp.isWater() ){
+            return NGL.WaterType;
+        }else{
+            return NGL.UnknownType;
+        }
+    }
+
+    function getBackboneType( rp, position ){
+        if( rp.hasProteinBackbone( position ) ){
+            return NGL.ProteinBackboneType;
+        }else if( rp.hasRnaBackbone( position ) ){
+            return NGL.RnaBackboneType;
+        }else if( rp.hasDnaBackbone( position ) ){
+            return NGL.DnaBackboneType;
+        }else if( rp.isCg() ){
+            return NGL.CgType;
+        }else{
+            return NGL.UnknownType;
+        }
+    }
+
+    structure.eachResidue( function( rp ){
+
+        var rAtomnames = atomnames[ rp.getBackboneType( 0 ) ];
+        var rAtomnamesStart = atomnames[ rp.getBackboneType( -1 ) ];
+        var rAtomnamesEnd = atomnames[ rp.getBackboneType( 1 ) ];
+
+        var traceIndex = rp.getAtomIndexByName( rAtomnames.trace );
+        residueStore.traceAtomIndex[ rp.index ] = traceIndex !== undefined ? traceIndex : -1;
+
+        var dir1Index = rp.getAtomIndexByName( rAtomnames.direction1 );
+        residueStore.direction1AtomIndex[ rp.index ] = dir1Index !== undefined ? dir1Index : -1;
+
+        var dir2Index = rp.getAtomIndexByName( rAtomnames.direction2 );
+        residueStore.direction2AtomIndex[ rp.index ] = dir2Index !== undefined ? dir2Index : -1;
+
+        var bbStartIndex = rp.getAtomIndexByName( rAtomnamesStart.backboneStart );
+        residueStore.backboneStartAtomIndex[ rp.index ] = bbStartIndex !== undefined ? bbStartIndex : -1;
+
+        var bbEndIndex = rp.getAtomIndexByName( rAtomnamesEnd.backboneEnd );
+        residueStore.backboneEndAtomIndex[ rp.index ] = bbEndIndex !== undefined ? bbEndIndex : -1;
+
+        residueStore.moleculeType[ rp.index ] = getMoleculeType( rp );
+        residueStore.backboneType[ rp.index ] = getBackboneType( rp );
+
+    } );
+
+    NGL.timeEnd( "NGL.calculatePolymerData" );
+
+    callback();
+
+};
+
+
 ///////////
 // Parser
 
@@ -1104,6 +1172,12 @@ NGL.StructureParser.prototype = NGL.createObject(
             function( wcallback ){
 
                 NGL.buildStructure( self.structure, wcallback );
+
+            },
+
+            function( wcallback ){
+
+                NGL.calculatePolymerData( self.structure, wcallback );
 
             },
 
