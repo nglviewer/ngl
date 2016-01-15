@@ -1417,24 +1417,22 @@ NGL.Structure.prototype = {
 
     },
 
-    eachFiber: function( callback, selection, padded ){
+    eachPolymer: function( callback, selection, padded ){
 
         if( selection && selection.modelOnlyTest ){
 
-            var test = selection.modelOnlyTest;
+            var modelOnlyTest = selection.modelOnlyTest;
 
-            this.models.forEach( function( m ){
-
-                if( test( m ) ) m.eachFiber( callback, selection, padded );
-
+            this.eachModel( function( mp ){
+                if( modelOnlyTest( mp ) ){
+                    mp.eachPolymer( callback, selection, padded );
+                }
             } );
 
         }else{
 
-            this.models.forEach( function( m ){
-
-                m.eachFiber( callback, selection, padded );
-
+            this.eachModel( function( mp ){
+                mp.eachPolymer( callback, selection, padded );
             } );
 
         }
@@ -2076,7 +2074,30 @@ NGL.StructureView.prototype = NGL.createObject(
         this.atomCount = input.atomCount;
         this.bondCount = input.bondCount;
 
+        this.atomSetCache = {};
+        for( var name in input.atomSetCache ){
+            var as = new TypedFastBitSet();
+            this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
+        }
+
         return this;
+
+    },
+
+    getTransferable: function(){
+
+        var transferable = [];
+
+        transferable.concat( this.structure.getTransferable() );
+
+        transferable.concat( this.bondSet.getTransferable() );
+        transferable.concat( this.atomSet.getTransferable() );
+
+        for( var name in this.atomSetCache ){
+            transferable.concat( this.atomSetCache[ name ].getTransferable() );
+        }
+
+        return transferable;
 
     },
 
@@ -2093,150 +2114,3 @@ NGL.StructureView.prototype = NGL.createObject(
     }
 
 } );
-
-
-NGL.Fiber = function( residues, structure ){
-
-    this.structure = structure;
-
-    this.residues = residues;
-    this.residueCount = residues.length;
-
-    if( !this.isProtein() &&
-        !this.isNucleic() &&
-        !this.isCg()
-    ){
-
-        NGL.error( "NGL.fiber: could not determine molecule type" );
-
-    }
-
-    this.computedAtoms = {};
-
-};
-
-NGL.Fiber.prototype = {
-
-    constructor: NGL.Fiber,
-
-    // eachAtom: NGL.Chain.prototype.eachAtom,
-
-    // eachResidue: NGL.Chain.prototype.eachResidue,
-
-    // eachResidueN: NGL.Chain.prototype.eachResidueN,
-
-    isProtein: function(){
-
-        return this.residues[ 0 ].isProtein();
-
-    },
-
-    isCg: function(){
-
-        return this.residues[ 0 ].isCg();
-
-    },
-
-    isNucleic: function(){
-
-        return this.residues[ 0 ].isNucleic();
-
-    },
-
-    getType: function(){
-
-        return this.residues[ 0 ].getType();
-
-    },
-
-    getBackboneType: function( position ){
-
-        return this.residues[ 0 ].getBackboneType( position );
-
-    },
-
-    computeAtom: function( type ){
-
-        var getAtomFn;
-
-        switch( type ){
-
-            case "trace":
-
-                getAtomFn = function( r ){
-                    return r.getTraceAtom();
-                }
-                break;
-
-            case "direction1":
-
-                getAtomFn = function( r ){
-                    return r.getDirectionAtom1();
-                }
-                break;
-
-            case "direction2":
-
-                getAtomFn = function( r ){
-                    return r.getDirectionAtom2();
-                }
-                break;
-
-            default:
-
-                getAtomFn = function( r ){
-                    return r.getAtomByName( type );
-                }
-                return;
-
-        }
-
-        var n = this.residueCount;
-
-        if( !this.computedAtoms[ type ] ){
-
-            this.computedAtoms[ type ] = new Array( n );
-
-        }
-
-        var ca = this.computedAtoms[ type ];
-
-        for( var i = 0, r; i < n; ++i ){
-
-            ca[ i ] = getAtomFn( this.residues[ i ] );
-
-        }
-
-    },
-
-    eachAtomN: function( n, callback, type ){
-
-        if( this.residues.length < n ) return;
-
-        if( !this.computedAtoms[ type ] ) this.computeAtom( type );
-
-        var atoms = this.computedAtoms[ type ];
-        var array = new Array( n );
-        var len = atoms.length;
-        var i;
-
-        for( i = 0; i < n; i++ ){
-
-            array[ i ] = atoms[ i ];
-
-        }
-
-        callback.apply( this, array );
-
-        for( i = n; i < len; i++ ){
-
-            array.shift();
-            array.push( atoms[ i ] );
-
-            callback.apply( this, array );
-
-        }
-
-    }
-
-};

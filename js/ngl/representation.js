@@ -535,7 +535,7 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
 
-    this.fiberList = [];
+    this.polymerList = [];
 
     this.structure = structure;
     this.selection = new NGL.Selection(
@@ -769,7 +769,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     clear: function(){
 
-        this.fiberList.length = 0;
+        this.polymerList.length = 0;
 
         NGL.Representation.prototype.clear.call( this );
 
@@ -1751,28 +1751,24 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         var a1, a2;
 
-        this.structure.eachFiber( function( f ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( f.residueCount < 2 ) return;
+            if( polymer.residueCount < 2 ) return;
 
-            f.eachResidueN( 2, function( r1, r2 ){
+            polymer.eachResidueN( 2, function( rp1, rp2 ){
 
-                a1 = r1.getTraceAtom();
-                a2 = r2.getTraceAtom();
+                a1 = rp1.getTraceAtom();
+                a2 = rp2.getTraceAtom();
 
                 if( !test || ( test( a1 ) && test( a2 ) ) ){
-
                     baSet.addAtom( a1 );
                     bbSet.addBond( a1, a2, true );
-
                 }
 
             } );
 
             if( !test || ( test( a1 ) && test( a2 ) ) ){
-
                 baSet.addAtom( a2 );
-
             }
 
         } );
@@ -2204,30 +2200,27 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__fiberList = [];
+        this.__polymerList = [];
         this.__bufferList = [];
 
     },
 
     prepare: function( callback ){
 
-        this.__fiberList.length = 0;
+        this.__polymerList.length = 0;
         this.__bufferList.length = 0;
 
-        if( this.atomSet.atomCount === 0 ){
-
+        if( this.structureView.atomCount === 0 ){
             callback();
             return;
-
         }
 
         var scope = this;
 
-        this.structure.eachFiber( function( fiber ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( fiber.residueCount < 4 ) return;
-
-            scope.__fiberList.push( fiber );
+            if( polymer.residueCount < 4 ) return;
+            scope.__polymerList.push( polymer );
 
         }, this.selection, true );
 
@@ -2235,15 +2228,15 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         NGL.processArray(
 
-            this.__fiberList,
+            this.__polymerList,
 
-            function( _i, _n, fiberList ){
+            function( _i, _n, polymerList ){
 
                 for( var i = _i; i < _n; ++i ){
 
-                    var fiber = fiberList[ i ];
+                    var polymer = polymerList[ i ];
 
-                    var spline = new NGL.Spline( fiber );
+                    var spline = new NGL.Spline( polymer );
                     var subPos = spline.getSubdividedPosition(
                         scope.subdiv, scope.tension
                     );
@@ -2295,37 +2288,35 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var n = this.__fiberList.length;
+        var n = this.__polymerList.length;
 
         for( var i = 0; i < n; ++i ){
-
-            this.fiberList.push( this.__fiberList[ i ] );
+            this.polymerList.push( this.__polymerList[ i ] );
             this.bufferList.push( this.__bufferList[ i ] );
-
         }
 
     },
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
         var i = 0;
-        var n = this.fiberList.length;
+        var n = this.polymerList.length;
 
         // NGL.time( this.name, "update" );
 
         for( i = 0; i < n; ++i ){
 
-            var fiber = this.fiberList[ i ];
+            var polymer = this.polymerList[ i ];
 
-            if( fiber.residueCount < 4 ) return;
+            if( polymer.residueCount < 4 ) return;
 
             var bufferData = {};
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( polymer );
 
             if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
 
@@ -2372,9 +2363,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
         var what = {};
 
         if( params && params[ "tension" ] ){
-
             what[ "position" ] = true;
-
         }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
@@ -2452,30 +2441,27 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__fiberList = [];
+        this.__polymerList = [];
         this.__bufferList = [];
 
     },
 
     prepare: function( callback ){
 
-        this.__fiberList.length = 0;
+        this.__polymerList.length = 0;
         this.__bufferList.length = 0;
 
-        if( this.atomSet.atomCount === 0 ){
-
+        if( this.structureView.atomCount === 0 ){
             callback();
             return;
-
         }
 
         var scope = this;
 
-        this.structure.eachFiber( function( fiber ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( fiber.residueCount < 4 ) return;
-
-            scope.__fiberList.push( fiber );
+            if( polymer.residueCount < 4 ) return;
+            scope.__polymerList.push( polymer );
 
         }, this.selection, true );
 
@@ -2483,14 +2469,14 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         NGL.processArray(
 
-            this.__fiberList,
+            this.__polymerList,
 
-            function( _i, _n, fiberList ){
+            function( _i, _n, polymerList ){
 
                 for( var i = _i; i < _n; ++i ){
 
-                    var fiber = fiberList[ i ];
-                    var spline = new NGL.Spline( fiber, scope.arrows );
+                    var polymer = polymerList[ i ];
+                    var spline = new NGL.Spline( polymer, scope.arrows );
 
                     var subPos = spline.getSubdividedPosition(
                         scope.subdiv, scope.tension
@@ -2505,15 +2491,18 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                         scope.subdiv, scope.radius, scope.scale
                     );
 
+                    var rp = polymer.structure.getResidueProxy();
+                    rp.index = polymer.residueIndexStart;
+                    // console.log( rp.qualifiedName(), polymer.residueCount, subPos.position.length, subOri.normal.length, subCol.color.length, subSize.size.length );
+
                     var rx = 1.0 * scope.aspectRatio;
                     var ry = 1.0;
 
-                    if( fiber.isCg() ){
+                    if( polymer.isCg() ){
                         ry = rx;
                     }
 
                     scope.__bufferList.push(
-
                         new NGL.TubeMeshBuffer(
                             subPos.position,
                             subOri.normal,
@@ -2530,7 +2519,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                                 dullInterior: true
                             } )
                         )
-
                     );
 
                 }
@@ -2547,37 +2535,35 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var n = this.__fiberList.length;
+        var n = this.__polymerList.length;
 
         for( var i = 0; i < n; ++i ){
-
-            this.fiberList.push( this.__fiberList[ i ] );
+            this.polymerList.push( this.__polymerList[ i ] );
             this.bufferList.push( this.__bufferList[ i ] );
-
         }
 
     },
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
-        // NGL.time( "cartoon repr update" );
+        NGL.time( "cartoon repr update" );
 
         what = what || {};
 
         var i = 0;
-        var n = this.fiberList.length;
+        var n = this.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var fiber = this.fiberList[ i ];
+            var polymer = this.polymerList[ i ];
 
-            if( fiber.residueCount < 4 ) return;
+            if( polymer.residueCount < 4 ) return;
 
             var bufferData = {};
-            var spline = new NGL.Spline( fiber, this.arrows );
+            var spline = new NGL.Spline( polymer, this.arrows );
 
             this.bufferList[ i ].rx = this.aspectRatio;
 
@@ -2612,7 +2598,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         }
 
-        // NGL.timeEnd( "cartoon repr update" );
+        NGL.timeEnd( "cartoon repr update" );
 
     },
 
@@ -2698,30 +2684,27 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__fiberList = [];
+        this.__polymerList = [];
         this.__bufferList = [];
 
     },
 
     prepare: function( callback ){
 
-        this.__fiberList.length = 0;
+        this.__polymerList.length = 0;
         this.__bufferList.length = 0;
 
-        if( this.atomSet.atomCount === 0 ){
-
+        if( this.structureView.atomCount === 0 ){
             callback();
             return;
-
         }
 
         var scope = this;
 
-        this.structure.eachFiber( function( fiber ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( fiber.residueCount < 4 ) return;
-
-            scope.__fiberList.push( fiber );
+            if( polymer.residueCount < 4 ) return;
+            scope.__polymerList.push( polymer );
 
         }, this.selection, true );
 
@@ -2729,15 +2712,15 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         NGL.processArray(
 
-            this.__fiberList,
+            this.__polymerList,
 
-            function( _i, _n, fiberList ){
+            function( _i, _n, polymerList ){
 
                 for( var i = _i; i < _n; ++i ){
 
-                    var fiber = fiberList[ i ];
+                    var polymer = polymerList[ i ];
 
-                    var spline = new NGL.Spline( fiber );
+                    var spline = new NGL.Spline( polymer );
                     var subPos = spline.getSubdividedPosition(
                         scope.subdiv, scope.tension
                     );
@@ -2752,7 +2735,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                     );
 
                     scope.__bufferList.push(
-
                         new NGL.RibbonBuffer(
                             subPos.position,
                             subOri.binormal,
@@ -2762,7 +2744,6 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                             subCol.pickingColor,
                             scope.getBufferParams()
                         )
-
                     );
 
                 }
@@ -2779,69 +2760,58 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var n = this.__fiberList.length;
+        var n = this.__polymerList.length;
 
         for( var i = 0; i < n; ++i ){
-
-            this.fiberList.push( this.__fiberList[ i ] );
+            this.polymerList.push( this.__polymerList[ i ] );
             this.bufferList.push( this.__bufferList[ i ] );
-
         }
 
     },
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
         var i = 0;
-        var n = this.fiberList.length;
+        var n = this.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var fiber = this.fiberList[ i ]
+            var polymer = this.polymerList[ i ]
 
-            if( fiber.residueCount < 4 ) return;
+            if( polymer.residueCount < 4 ) return;
 
             var bufferData = {};
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( polymer );
 
             if( what[ "position" ] ){
-
                 var subPos = spline.getSubdividedPosition(
                     this.subdiv, this.tension
                 );
                 var subOri = spline.getSubdividedOrientation(
                     this.subdiv, this.tension
                 );
-
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.binormal;
                 bufferData[ "dir" ] = subOri.normal;
-
             }
 
             if( what[ "radius" ] || what[ "scale" ] ){
-
                 var subSize = spline.getSubdividedSize(
                     this.subdiv, this.radius, this.scale
                 );
-
                 bufferData[ "size" ] = subSize.size;
-
             }
 
             if( what[ "color" ] ){
-
                 var subCol = spline.getSubdividedColor(
                     this.subdiv, this.getColorParams()
                 );
-
                 bufferData[ "color" ] = subCol.color;
-
             }
 
             this.bufferList[ i ].setAttributes( bufferData );
@@ -2856,9 +2826,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         var what = {};
 
         if( params && params[ "tension" ] ){
-
             what[ "position" ] = true;
-
         }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
@@ -2922,66 +2890,57 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__fiberList = [];
+        this.__polymerList = [];
         this.__bufferList = [];
 
     },
 
     prepare: function( callback ){
 
-        this.__fiberList.length = 0;
+        this.__polymerList.length = 0;
         this.__bufferList.length = 0;
 
-        if( this.atomSet.atomCount === 0 ){
-
+        if( this.structureView.atomCount === 0 ){
             callback();
             return;
-
         }
 
-        var scope = this;
+        this.structure.eachPolymer( function( polymer ){
 
-        this.structure.eachFiber( function( fiber ){
+            if( polymer.residueCount < 4 ) return;
+            this.__polymerList.push( polymer );
 
-            if( fiber.residueCount < 4 ) return;
-
-            scope.__fiberList.push( fiber );
-
-        }, this.selection, true );
+        }.bind( this ), this.selection, true );
 
         //
 
         NGL.processArray(
 
-            this.__fiberList,
+            this.__polymerList,
 
-            function( _i, _n, fiberList ){
+            function( _i, _n, polymerList ){
 
                 for( var i = _i; i < _n; ++i ){
 
-                    var fiber = fiberList[ i ];
-
-                    var spline = new NGL.Spline( fiber );
+                    var spline = new NGL.Spline( polymerList[ i ] );
                     var subPos = spline.getSubdividedPosition(
-                        scope.subdiv, scope.tension
+                        this.subdiv, this.tension
                     );
                     var subCol = spline.getSubdividedColor(
-                        scope.subdiv, scope.getColorParams()
+                        this.subdiv, this.getColorParams()
                     );
 
-                    scope.__bufferList.push(
-
+                    this.__bufferList.push(
                         new NGL.TraceBuffer(
                             subPos.position,
                             subCol.color,
-                            scope.getBufferParams()
+                            this.getBufferParams()
                         )
-
                     );
 
                 }
 
-            },
+            }.bind( this ),
 
             callback,
 
@@ -2993,54 +2952,46 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var n = this.__fiberList.length;
+        var n = this.__bufferList.length;
 
         for( var i = 0; i < n; ++i ){
-
-            this.fiberList.push( this.__fiberList[ i ] );
+            this.polymerList.push( this.__polymerList[ i ] );
             this.bufferList.push( this.__bufferList[ i ] );
-
         }
 
     },
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
         var i = 0;
-        var n = this.fiberList.length;
+        var n = this.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var fiber = this.fiberList[ i ]
+            var polymer = this.polymerList[ i ]
 
-            if( fiber.residueCount < 4 ) return;
+            if( polymer.residueCount < 4 ) return;
 
             var bufferData = {};
-            var spline = new NGL.Spline( fiber );
+            var spline = new NGL.Spline( polymer );
 
             if( what[ "position" ] ){
-
                 var subPos = spline.getSubdividedPosition(
                     this.subdiv, this.tension
                 );
-
                 bufferData[ "position" ] = subPos.position;
-
             }
 
             if( what[ "color" ] ){
-
                 var subCol = spline.getSubdividedColor(
                     this.subdiv, this.getColorParams()
                 );
-
                 bufferData[ "color" ] = subCol.color;
-
             }
 
             this.bufferList[ i ].setAttributes( bufferData );
@@ -3102,23 +3053,22 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var scope = this;
 
         // TODO reduce buffer count as in e.g. rocket repr
 
-        this.structure.eachFiber( function( fiber ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
+            if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
 
-            var helixorient = new NGL.Helixorient( fiber );
+            var helixorient = new NGL.Helixorient( polymer );
             var position = helixorient.getPosition();
             var color = helixorient.getColor( scope.getColorParams() );
             var size = helixorient.getSize( scope.radius, scope.scale );
 
             scope.bufferList.push(
-
                 new NGL.SphereBuffer(
                     position.center,
                     color.color,
@@ -3130,11 +3080,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     } ),
                     scope.disableImpostor
                 )
-
             );
 
             scope.bufferList.push(
-
                 new NGL.VectorBuffer(
                     position.center,
                     position.axis,
@@ -3143,11 +3091,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         scale: 1
                     }
                 )
-
             );
 
             scope.bufferList.push(
-
                 new NGL.VectorBuffer(
                     position.center,
                     position.resdir,
@@ -3156,10 +3102,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         scale: 1
                     }
                 )
-
             );
 
-            scope.fiberList.push( fiber );
+            scope.polymerList.push( polymer );
 
         }, this.selection );
 
@@ -3167,7 +3112,7 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         // NGL.time( "helixorient repr update" );
@@ -3176,18 +3121,18 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
         var j;
         var i = 0;
-        var n = this.fiberList.length;
+        var n = this.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
             j = i * 3;
 
-            var fiber = this.fiberList[ i ]
+            var polymer = this.polymerList[ i ]
 
-            if( fiber.residueCount < 4 ) return;
+            if( polymer.residueCount < 4 ) return;
 
             var bufferData = {};
-            var helixorient = new NGL.Helixorient( fiber );
+            var helixorient = new NGL.Helixorient( polymer );
 
             if( what[ "position" ] ){
 
@@ -3279,18 +3224,18 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var scope = this;
 
         var length = 0;
         var axisList = [];
 
-        this.structure.eachFiber( function( fiber ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
+            if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
 
-            var helixbundle = new NGL.Helixbundle( fiber );
+            var helixbundle = new NGL.Helixbundle( polymer );
             var axis = helixbundle.getAxis(
                 scope.localAngle, scope.centerDist, scope.ssBorder,
                 scope.getColorParams(), scope.radius, scope.scale
@@ -3348,7 +3293,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
@@ -3358,10 +3303,8 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         var cylinderData = {};
 
         if( what[ "position" ] ){
-
             this.build();
             return;
-
         }
 
         if( what[ "color" ] || what[ "radius" ] || what[ "scale" ] ){
@@ -3375,15 +3318,12 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                     scope.localAngle, scope.centerDist, scope.ssBorder,
                     scope.getColorParams(), scope.radius, scope.scale
                 );
-
                 if( what[ "color" ] ){
                     ad.color.set( axis.color, offset * 3 );
                 }
-
                 if( what[ "radius" ] || what[ "scale" ] ){
                     ad.size.set( axis.size, offset );
                 }
-
                 offset += axis.size.length;
 
             } );
@@ -3474,30 +3414,27 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__fiberList = [];
+        this.__polymerList = [];
         this.__bufferList = [];
 
     },
 
     prepare: function( callback ){
 
-        this.__fiberList.length = 0;
+        this.__polymerList.length = 0;
         this.__bufferList.length = 0;
 
-        if( this.atomSet.atomCount === 0 ){
-
+        if( this.structureView.atomCount === 0 ){
             callback();
             return;
-
         }
 
         var scope = this;
 
-        this.structure.eachFiber( function( fiber ){
+        this.structure.eachPolymer( function( polymer ){
 
-            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
-
-            scope.__fiberList.push( fiber );
+            if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
+            scope.__polymerList.push( polymer );
 
         }, this.selection, true );
 
@@ -3505,15 +3442,15 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
         NGL.processArray(
 
-            this.__fiberList,
+            this.__polymerList,
 
-            function( _i, _n, fiberList ){
+            function( _i, _n, polymerList ){
 
                 for( var i = _i; i < _n; ++i ){
 
-                    var fiber = fiberList[ i ];
+                    var polymer = polymerList[ i ];
 
-                    var helixorient = new NGL.Helixorient( fiber );
+                    var helixorient = new NGL.Helixorient( polymer );
 
                     var spline = new NGL.Spline(
                         helixorient.getFiber( scope.smooth, true )
@@ -3535,7 +3472,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                     var ry = 1.0;
 
                     scope.__bufferList.push(
-
                         new NGL.TubeMeshBuffer(
                             subPos.position,
                             subOri.normal,
@@ -3552,7 +3488,6 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                                 dullInterior: true
                             } )
                         )
-
                     );
 
                 }
@@ -3569,20 +3504,18 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        var n = this.__fiberList.length;
+        var n = this.__polymerList.length;
 
         for( var i = 0; i < n; ++i ){
-
-            this.fiberList.push( this.__fiberList[ i ] );
+            this.polymerList.push( this.__polymerList[ i ] );
             this.bufferList.push( this.__bufferList[ i ] );
-
         }
 
     },
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         // NGL.time( "rope repr update" );
@@ -3590,20 +3523,19 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         what = what || {};
 
         var i = 0;
-        var n = this.fiberList.length;
+        var n = this.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var fiber = this.fiberList[ i ]
+            var polymer = this.polymerList[ i ]
 
-            if( fiber.residueCount < 4 ) return;
+            if( polymer.residueCount < 4 ) return;
 
             var bufferData = {};
-            var helixorient = new NGL.Helixorient( fiber );
-            var spline = new NGL.Spline( helixorient.getFiber( this.smooth, true ) );
+            var helixorient = new NGL.Helixorient( polymer );
+            var spline = new NGL.Spline( helixorient.getPolymer( this.smooth, true ) );
 
             if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
-
                 var subPos = spline.getSubdividedPosition(
                     this.subdiv, this.tension
                 );
@@ -3613,24 +3545,19 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
                 var subSize = spline.getSubdividedSize(
                     this.subdiv, this.radius, this.scale
                 );
-
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.normal;
                 bufferData[ "binormal" ] = subOri.binormal;
                 bufferData[ "tangent" ] = subOri.tangent;
                 bufferData[ "size" ] = subSize.size;
-
             }
 
             if( what[ "color" ] ){
-
                 var subCol = spline.getSubdividedColor(
                     this.subdiv, this.getColorParams()
                 );
-
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
-
             }
 
             this.bufferList[ i ].setAttributes( bufferData );
@@ -3922,7 +3849,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
 
         var structureSubset = new NGL.StructureSubset(
             this.structure, this.selection
@@ -3980,7 +3907,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         //
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};

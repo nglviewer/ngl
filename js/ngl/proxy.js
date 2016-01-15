@@ -1351,6 +1351,238 @@ NGL.ResidueProxy.prototype = {
 };
 
 
+////////////
+// Polymer
+
+NGL.Polymer = function( structure, residueIndexStart, residueIndexEnd ){
+
+    this.structure = structure;
+    this.residueStore = structure.residueStore;
+    this.atomStore = structure.atomStore;
+
+    this.residueIndexStart = residueIndexStart;
+    this.residueIndexEnd = residueIndexEnd;
+    this.residueCount = residueIndexEnd - residueIndexStart + 1;
+
+    var rpStart = this.structure.getResidueProxy( this.residueIndexStart );
+    var rpEnd = this.structure.getResidueProxy( this.residueIndexEnd );
+    this.isPrevConnected = rpStart.getPreviousConnectedResidue() !== undefined;
+    var rpNext = rpEnd.getNextConnectedResidue();
+    this.isNextConnected = rpNext !== undefined;
+    this.isNextNextConnected = this.isNextConnected && rpNext.getNextConnectedResidue() !== undefined;
+
+    this.__residueProxy = this.structure.getResidueProxy();
+
+
+
+};
+
+NGL.Polymer.prototype = {
+
+    constructor: NGL.Polymer,
+    type: "Polymer",
+
+    structure: undefined,
+    residueStore: undefined,
+    atomStore: undefined,
+
+    residueIndexStart: undefined,
+    residueIndexEnd: undefined,
+    residueCount: undefined,
+
+    //
+
+    isProtein: function(){
+
+        this.__residueProxy.index = this.residueIndexStart;
+        return this.__residueProxy.isProtein();
+
+    },
+
+    isCg: function(){
+
+        this.__residueProxy.index = this.residueIndexStart;
+        return this.__residueProxy.isCg();
+
+    },
+
+    isNucleic: function(){
+
+        this.__residueProxy.index = this.residueIndexStart;
+        return this.__residueProxy.isNucleic();
+
+    },
+
+    getMoleculeType: function(){
+
+        this.__residueProxy.index = this.residueIndexStart;
+        return this.__residueProxy.moleculeType;
+
+    },
+
+    getBackboneType: function( position ){
+
+        this.__residueProxy.index = this.residueIndexStart;
+        return this.__residueProxy.getBackboneType( position );
+
+    },
+
+    getAtomIndexByType: function( index, type ){
+
+        // TODO pre-calculate, add to residueStore
+
+        if( index === -1 && !this.isPrevConnected ) index += 1;
+        if( index === this.residueCount && !this.isNextNextConnected ) index -= 1;
+        if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
+
+        var rIndex = this.residueIndexStart + index;
+        var aIndex;
+
+        switch( type ){
+            case "trace":
+                aIndex = this.residueStore.traceAtomIndex[ rIndex ];
+                break;
+            case "direction1":
+                aIndex = this.residueStore.direction1AtomIndex[ rIndex ];
+                break;
+            case "direction2":
+                aIndex = this.residueStore.direction2AtomIndex[ rIndex ];
+                break;
+            default:
+                var rp = this.__residueProxy;
+                rp.index = this.residueIndexStart + index;
+                var ap = rp.getAtomByName( type );
+                aIndex = ap ? ap.index : undefined;
+        }
+
+        // if( !ap ){
+        //     console.log( this )
+        //     console.log( rp.qualifiedName(), rp.index, index, this.residueCount - 1 )
+        //     rp.index = this.residueIndexStart;
+        //     console.log( rp.qualifiedName(), this.residueIndexStart )
+        //     rp.index = this.residueIndexEnd;
+        //     console.log( rp.qualifiedName(), this.residueIndexEnd )
+        // }
+
+        return aIndex;
+
+    },
+
+    eachAtomN: function( n, callback, type ){
+
+        var m = this.residueCount;
+
+        var array = new Array( n );
+        for( var i = 0; i < n; ++i ){
+            array[ i ] = this.structure.getAtomProxy( this.getAtomIndexByType( i, type ) );
+        }
+        callback.apply( this, array );
+
+        for( var j = n; j < m; ++j ){
+            for( var i = 1; i < n; ++i ){
+                array[ i - 1 ].index = array[ i ].index;
+            }
+            array[ n - 1 ].index = this.getAtomIndexByType( j, type );
+            callback.apply( this, array );
+        }
+
+    },
+
+    eachAtomN2: function( n, callback, type ){
+
+        // console.log(this.residueOffset,this.residueCount)
+
+        var offset = this.atomOffset;
+        var count = this.atomCount;
+        var end = offset + count;
+        if( count < n ) return;
+
+        var array = new Array( n );
+        for( var i = 0; i < n; ++i ){
+            array[ i ] = this.structure.getAtomProxy();
+        }
+        // console.log( array, offset, end, count )
+
+        var as = this.structure.atomSetCache[ "__" + type ];
+        if( as === undefined ){
+            NGL.warn( "no precomputed atomSet for: " + type );
+            as = this.structure.getAtomSet( false );
+            this.eachResidue( function( rp ){
+                var ap = rp.getAtomByName( type );
+                as.add_unsafe( ap.index );
+            } );
+        }
+        var j = 0;
+
+        as.forEach( function( index ){
+            if( index >= offset && index < end ){
+                for( var i = 1; i < n; ++i ){
+                    array[ i - 1 ].index = array[ i ].index;
+                }
+                array[ n - 1 ].index = index;
+                j += 1;
+                if( j >= n ){
+                    callback.apply( this, array );
+                }
+            }
+        } );
+
+    },
+
+    eachDirectionAtomsN: function( n, callback ){
+
+        var n2 = n * 2;
+        var offset = this.atomOffset;
+        var count = this.atomCount;
+        var end = offset + count;
+        if( count < n ) return;
+
+        var array = new Array( n2 );
+        for( var i = 0; i < n2; ++i ){
+            array[ i ] = this.structure.getAtomProxy();
+        }
+
+        var as1 = this.structure.atomSetCache[ "__direction1" ];
+        var as2 = this.structure.atomSetCache[ "__direction2" ];
+        if( as1 === undefined || as2 === undefined ){
+            NGL.error( "no precomputed atomSet for direction1 or direction2" );
+            return;
+        }
+        var j = 0;
+
+        TypedFastBitSet.forEach( function( index1, index2 ){
+            if( index1 >= offset && index1 < end && index2 >= offset && index2 < end ){
+                for( var i = 1; i < n; ++i ){
+                    array[ i - 1 ].index = array[ i ].index;
+                    array[ i - 1 + n ].index = array[ i + n ].index;
+                }
+                array[ n - 1 ].index = index1;
+                array[ n - 1 + n ].index = index2;
+                j += 1;
+                if( j >= n ){
+                    callback.apply( this, array );
+                }
+            }
+        }, as1, as2 );
+
+    },
+
+    eachResidue: function( callback ){
+
+        var rp = this.structure.getResidueProxy();
+        var n = this.residueCount;
+        var rStartIndex = this.residueIndexStart;
+
+        for( var i = 0; i < n; ++i ){
+            rp.index = rStartIndex + i;
+            callback( rp );
+        }
+
+    },
+
+};
+
+
 ///////////////
 // ChainProxy
 
@@ -1500,108 +1732,99 @@ NGL.ChainProxy.prototype = {
 
     },
 
-    getFiber: function( i, j, padded ){
+    eachResidueN: function( n, callback ){
 
-        // NGL.log( i, j, this.residueCount );
+        var count = this.residueCount;
+        var offset = this.residueOffset;
+        var end = offset + count;
+        if( count < n ) return;
+        var array = new Array( n );
 
-        var n = this.residueCount;
-        var n1 = n - 1;
-        var residues = this.residues.slice( i, j );
-
-        if( padded ){
-
-            var rPrev = this.residues[ i - 1 ];
-            var rStart = this.residues[ i ];
-            var rEnd = this.residues[ j - 1 ];
-            var rNext = this.residues[ j ];
-
-            if( i === 0 ||
-                rPrev.getBackboneType( -1 ) !== rStart.getBackboneType( 1 ) ||
-                !rPrev.connectedTo( rStart )
-            ){
-
-                residues.unshift( rStart );
-
-            }else{
-
-                residues.unshift( rPrev );
-
-            }
-
-            if( j === n ||
-                rNext.getBackboneType( 1 ) !== rStart.getBackboneType( -1 ) ||
-                !rEnd.connectedTo( rNext )
-            ){
-
-                residues.push( rEnd );
-
-            }else{
-
-                residues.push( rNext );
-
-            }
-
+        for( var i = 0; i < n; ++i ){
+            array[ i ] = this.structure.getResidueProxy( offset + i );
         }
+        callback.apply( this, array );
 
-        // NGL.log( i, j, padded, residues );
-
-        return new NGL.Fiber( residues, this.model.structure );
+        for( var j = offset + n; j < end; ++j ){
+            for( var i = 0; i < n; ++i ){
+                array[ i ].index += 1;
+            }
+            callback.apply( this, array );
+        }
 
     },
 
-    eachFiber: function( callback, selection, padded ){
+    eachPolymer: function( callback, selection ){
 
-        var scope = this;
-
-        var i = 0;
-        var j = 1;
-        var residues = this.residues;
+        var rStartIndex, rNextIndex;
         var test = selection ? selection.test : undefined;
+        var structure = this.model.structure;
 
-        var a1, a2;
-        var bbType1, bbType2
+        var count = this.residueCount;
+        var offset = this.residueOffset;
+        var end = offset + count;
 
-        this.eachResidueN( 2, function( r1, r2 ){
+        var rp1 = this.structure.getResidueProxy();
+        var rp2 = this.structure.getResidueProxy( offset );
 
-            bbType1 = r1.getBackboneType( i === j - 1 ? -1 : undefined );
-            bbType2 = r2.getBackboneType();
+        var ap1 = this.structure.getAtomProxy();
+        var ap2 = this.structure.getAtomProxy();
+
+        var first = true;
+
+        for( var i = offset + 1; i < end; ++i ){
+
+            rp1.index = rp2.index;
+            rp2.index = i;
+
+            if( first ){
+                rStartIndex = rp1.index;
+                first = false;
+            }
+            rNextIndex = rp2.index;
+
+            var bbType1 = first ? rp1.getBackboneType( -1 ) : rp1.backboneType;
+            var bbType2 = rp2.backboneType;
 
             if( bbType1 !== NGL.UnknownType && bbType1 === bbType2 ){
 
-                a1 = r1.getBackboneAtomStart();
-                a2 = r2.getBackboneAtomEnd();
+                ap1.index = rp1.backboneStartAtomIndex;
+                ap2.index = rp2.backboneEndAtomIndex;
 
             }else{
 
                 if( bbType1 !== NGL.UnknownType ){
-
-                    callback( scope.getFiber( i, j, padded ) );
-
+                    if( rp1.index - rStartIndex > 1 ){
+                        // console.log("FOO")
+                        callback( new NGL.Polymer( structure, rStartIndex, rp1.index ) );
+                    }
                 }
 
-                i = j;
-                ++j;
+                rStartIndex = rNextIndex;
 
-                return;
-
-            }
-
-            if( !a1 || !a2 || !a1.connectedTo( a2 ) ||
-                ( test && ( !test( a1 ) || !test( a2 ) ) ) ){
-
-                callback( scope.getFiber( i, j, padded ) );
-                i = j;
+                continue;
 
             }
 
-            ++j;
+            if( !ap1 || !ap2 || !ap1.connectedTo( ap2 ) ||
+                ( test && ( !test( ap1 ) || !test( ap2 ) ) ) ){
+                if( rp1.index - rStartIndex > 1 ){
+                    // rp.index = rStartIndex;
+                    // console.log( rp.qualifiedName(), rp1.qualifiedName() )
+                    // console.log("BAR", ap1, ap2,test( ap1 ), ap1.resno, ap1.chainname, test( ap2 ), ap2.resno, ap2.chainname)
+                    callback( new NGL.Polymer( structure, rStartIndex, rp1.index ) );
+                }
+                rStartIndex = rNextIndex;
 
-        } );
+            }
 
-        if( residues[ i ].hasBackbone( -1 ) ){
+        }
+        // } );
 
-            callback( scope.getFiber( i, j, padded ) );
-
+        if( this.structure.getResidueProxy( rStartIndex ).hasBackbone( -1 ) ){
+            if( rNextIndex - rStartIndex > 1 ){
+                callback( new NGL.Polymer( structure, rStartIndex, rNextIndex ) );
+            }
         }
 
     },
@@ -1745,24 +1968,22 @@ NGL.ModelProxy.prototype = {
 
     },
 
-    eachFiber: function( callback, selection, padded ){
+    eachPolymer: function( callback, selection, padded ){
 
         if( selection && selection.chainOnlyTest ){
 
-            var test = selection.chainOnlyTest;
+            var chainOnlyTest = selection.chainOnlyTest;
 
-            this.chains.forEach( function( c ){
-
-                if( test( c ) ) c.eachFiber( callback, selection, padded );
-
+            this.eachChain( function( cp ){
+                if( chainOnlyTest( cp ) ){
+                    cp.eachPolymer( callback, selection, padded );
+                }
             } );
 
         }else{
 
-            this.chains.forEach( function( c ){
-
-                c.eachFiber( callback, selection, padded );
-
+            this.eachChain( function( cp ){
+                cp.eachPolymer( callback, selection, padded );
             } );
 
         }

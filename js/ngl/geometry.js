@@ -7,14 +7,14 @@
 ///////////
 // Spline
 
-NGL.Spline = function( fiber, arrows ){
+NGL.Spline = function( polymer, arrows ){
 
     this.arrows = arrows || false;
 
-    this.fiber = fiber;
-    this.size = fiber.residueCount - 2;
+    this.polymer = polymer;
+    this.size = polymer.residueCount;
 
-    this.type = this.fiber.getType();
+    this.type = this.polymer.getMoleculeType();
     this.tension = this.type === NGL.NucleicType ? 0.5 : 0.9;
 
 };
@@ -39,46 +39,52 @@ NGL.Spline.prototype = {
 
     getSubdividedColor: function( m, params ){
 
-        var n = this.size;
+        var interpolate = this.interpolate;
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var residueStore = structure.residueStore;
+        var residueIndexStart = polymer.residueIndexStart;
+        var traceAtomIndex = residueStore.traceAtomIndex;
+
+        var n = polymer.residueCount;
         var n1 = n - 1;
 
         var col = new Float32Array( n1 * m * 3 + 3 );
         var pcol = new Float32Array( n1 * m * 3 + 3 );
 
         var p = params || {};
-        p.structure = this.fiber.structure;
+        p.structure = structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
         var k = 0;
-        var j, l, mh, a2, c2, pc2, a3, c3, pc3;
 
-        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
+        var a1 = structure.getAtomProxy();
+        var a2 = structure.getAtomProxy( traceAtomIndex[ residueIndexStart ] );
 
-            mh = Math.ceil( m / 2 );
+        for( var i = 0; i < n1; ++i ){
 
-            for( j = 0; j < mh; ++j ){
+            a1.index = a2.index;
+            a2.index = traceAtomIndex[ residueIndexStart + i + 1 ];
 
-                l = k + j * 3;
+            var mh = Math.ceil( m / 2 );
 
-                colorMaker.atomColorToArray( a2, col, l );
-                pickingColorMaker.atomColorToArray( a2, pcol, l );
-
+            for( var j = 0; j < mh; ++j ){
+                var l = k + j * 3;
+                colorMaker.atomColorToArray( a1, col, l );
+                pickingColorMaker.atomColorToArray( a1, pcol, l );
             }
 
-            for( j = mh; j < m; ++j ){
-
-                l = k + j * 3;
-
-                colorMaker.atomColorToArray( a3, col, l );
-                pickingColorMaker.atomColorToArray( a3, pcol, l );
-
+            for( var j = mh; j < m; ++j ){
+                var l = k + j * 3;
+                colorMaker.atomColorToArray( a2, col, l );
+                pickingColorMaker.atomColorToArray( a2, pcol, l );
             }
 
             k += 3 * m;
 
-        }, "trace" );
+        }
 
         col[ n1 * m * 3 + 0 ] = col[ n1 * m * 3 - 3 ];
         col[ n1 * m * 3 + 1 ] = col[ n1 * m * 3 - 2 ];
@@ -124,63 +130,66 @@ NGL.Spline.prototype = {
 
     getSubdividedSize: function( m, type, scale ){
 
-        var n = this.size;
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var residueStore = structure.residueStore;
+        var residueIndexStart = polymer.residueIndexStart;
+        var traceAtomIndex = residueStore.traceAtomIndex;
+
+        var n = polymer.residueCount;
         var n1 = n - 1;
         var arrows = this.arrows;
 
         var size = new Float32Array( n1 * m + 1 );
-
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         var k = 0;
-        var j, l, a2, a3, s2, s3, t;
+        var a1 = structure.getAtomProxy();
+        var a2 = structure.getAtomProxy( traceAtomIndex[ residueIndexStart ] );
 
-        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
+        for( var i = 0; i < n1; ++i ){
 
-            s2 = radiusFactory.atomRadius( a2 );
-            s3 = radiusFactory.atomRadius( a3 );
+            a1.index = a2.index;
+            a2.index = traceAtomIndex[ residueIndexStart + i + 1 ];
+
+            var s1 = radiusFactory.atomRadius( a1 );
+            var s2 = radiusFactory.atomRadius( a2 );
 
             if( arrows && (
-                    ( a2.ss==="e" && a3.ss!=="e" ) ||
-                    ( a2.ss==="b" && a3.ss!=="b" ) ||
-                    ( a2.ss==="h" && a3.ss!=="h" ) ||
-                    ( a2.ss==="g" && a3.ss!=="g" ) ||
-                    ( a2.ss==="i" && a3.ss!=="i" )
+                    ( a1.sstruc==="e" && a2.sstruc!=="e" ) ||
+                    ( a1.sstruc==="b" && a2.sstruc!=="b" ) ||
+                    ( a1.sstruc==="h" && a2.sstruc!=="h" ) ||
+                    ( a1.sstruc==="g" && a2.sstruc!=="g" ) ||
+                    ( a1.sstruc==="i" && a2.sstruc!=="i" )
                 )
             ){
 
-                s2 *= 1.7;
+                s1 *= 1.7;
                 var m2 = Math.ceil( m / 2 );
 
-                for( j = 0; j < m2; ++j ){
-
+                for( var j = 0; j < m2; ++j ){
                     // linear interpolation
-                    t = j / m2;
-                    size[ k + j ] = ( 1 - t ) * s2 + t * s3;
-
+                    var t = j / m2;
+                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
                 }
 
                 for( j = m2; j < m; ++j ){
-
-                    size[ k + j ] = s3;
-
+                    size[ k + j ] = s2;
                 }
 
             }else{
 
-                for( j = 0; j < m; ++j ){
-
+                for( var j = 0; j < m; ++j ){
                     // linear interpolation
-                    t = j / m;
-                    size[ k + j ] = ( 1 - t ) * s2 + t * s3;
-
+                    var t = j / m;
+                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
                 }
 
             }
 
             k += m;
 
-        }, "trace" );
+        }
 
         size[ k ] = size[ k - 1 ];
 
@@ -195,8 +204,10 @@ NGL.Spline.prototype = {
         if( isNaN( tension ) ) tension = this.tension;
 
         var interpolate = this.interpolate;
+        var polymer = this.polymer;
+        var structure = this.polymer.structure;
 
-        var n = this.size;
+        var n = polymer.residueCount;
         var n1 = n - 1;
 
         var pos = new Float32Array( n1 * m * 3 + 3 );
@@ -204,17 +215,29 @@ NGL.Spline.prototype = {
         var k = 0;
         var dt = 1.0 / m;
 
-        var j, l, d;
-        var _a3;
+        // var rpStart = structure.getResidueProxy( polymer.residueIndexStart );
+        // var rpEnd = structure.getResidueProxy( polymer.residueIndexEnd );
+        // var rpPrev = rpStart.getPreviousConnectedResidue();
+        // var rpNext = rpEnd.getNextConnectedResidue();
+        // console.log(rpStart.qualifiedName() ,rpEnd.qualifiedName())
 
-        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
+        var type = atomname || "trace";
+        var a1 = structure.getAtomProxy();
+        var a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, type ) );
+        var a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, type ) );
+        var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
 
-            _a3 = a3;
+        for( var i = 0; i < n1; ++i ){
 
-            for( j = 0; j < m; ++j ){
+            a1.index = a2.index;
+            a2.index = a3.index;
+            a3.index = a4.index;
+            a4.index = polymer.getAtomIndexByType( i + 2, type );
 
-                d = dt * j
-                l = k + j * 3;
+            for( var j = 0; j < m; ++j ){
+
+                var l = k + j * 3;
+                var d = dt * j
 
                 pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d, tension );
                 pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d, tension );
@@ -224,9 +247,9 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        }, atomname || "trace" );
+        }
 
-        _a3.positionToArray( pos, k );
+        a3.positionToArray( pos, k );
 
         return pos;
 
@@ -237,6 +260,8 @@ NGL.Spline.prototype = {
         if( isNaN( tension ) ) tension = this.tension;
 
         var interpolate = this.interpolate;
+        var polymer = this.polymer;
+        var structure = this.polymer.structure;
 
         var p1 = new THREE.Vector3();
         var p2 = new THREE.Vector3();
@@ -250,16 +275,25 @@ NGL.Spline.prototype = {
         var dt = 1.0 / m;
         var delta = 0.0001;
 
-        var j, l, d, d1, d2;
+        var type = atomname || "trace";
+        var a1 = structure.getAtomProxy();
+        var a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, type ) );
+        var a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, type ) );
+        var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
 
-        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
+        for( var i = 0; i < n1; ++i ){
 
-            for( j = 0; j < m; ++j ){
+            a1.index = a2.index;
+            a2.index = a3.index;
+            a3.index = a4.index;
+            a4.index = polymer.getAtomIndexByType( i + 2, type );
 
-                d = dt * j
-                d1 = d - delta;
-                d2 = d + delta;
-                l = k + j * 3;
+            for( var j = 0; j < m; ++j ){
+
+                var d = dt * j
+                var d1 = d - delta;
+                var d2 = d + delta;
+                var l = k + j * 3;
 
                 // capping as a precation
                 if ( d1 < 0 ) d1 = 0;
@@ -280,8 +314,7 @@ NGL.Spline.prototype = {
 
             k += 3 * m;
 
-        }, atomname || "trace" );
-
+        }
 
         p2.toArray( tan, k );
 
@@ -296,7 +329,8 @@ NGL.Spline.prototype = {
 
         var interpolate = this.interpolate;
         var type = this.type;
-        var fiber = this.fiber;
+        var polymer = this.polymer;
+        var structure = polymer.structure;
 
         var n = this.size;
         var n1 = n - 1;
@@ -333,34 +367,45 @@ NGL.Spline.prototype = {
         var first = true;
         var m2 = Math.ceil( m / 2 );
 
-        var j, l, d, d1, d2;
+        if( type !== NGL.CgType ){
 
-        if( !fiber.computedAtoms[ "direction1" ] ){
-            fiber.computeAtom( "direction1" );
+            var _d1a1 = structure.getAtomProxy();
+            var _d1a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, "direction1" ) );
+            var _d1a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, "direction1" ) );
+            var _d1a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, "direction1" ) );
+
+            var _d2a1 = structure.getAtomProxy();
+            var _d2a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, "direction2" ) );
+            var _d2a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, "direction2" ) );
+            var _d2a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, "direction2" ) );
+
         }
-        if( !fiber.computedAtoms[ "direction2" ] ){
-            fiber.computeAtom( "direction2" );
-        }
-        var direction1 = fiber.computedAtoms[ "direction1" ];
-        var direction2 = fiber.computedAtoms[ "direction2" ];
 
-        var len = direction1.length;
-
-        for( var i = 4; i <= len; i++ ){
+        for( var i = 0; i < n1; ++i ){
 
             if( type !== NGL.CgType ){
+
+                _d1a1.index = _d1a2.index;
+                _d1a2.index = _d1a3.index;
+                _d1a3.index = _d1a4.index;
+                _d1a4.index = polymer.getAtomIndexByType( i + 2, "direction1" );
+
+                _d2a1.index = _d2a2.index;
+                _d2a2.index = _d2a3.index;
+                _d2a3.index = _d2a4.index;
+                _d2a4.index = polymer.getAtomIndexByType( i + 2, "direction2" );
 
                 if( first ){
 
                     first = false;
 
-                    d1a1.copy( direction1[ i - 4 ] );
-                    d1a2.copy( direction1[ i - 3 ] );
-                    d1a3.copy( direction1[ i - 2 ] );
+                    d1a1.copy( _d1a1 );
+                    d1a2.copy( _d1a2 );
+                    d1a3.copy( _d1a3 );
 
-                    d2a1.copy( direction2[ i - 4 ] );
-                    d2a2.copy( direction2[ i - 3 ] );
-                    d2a3.copy( direction2[ i - 2 ] );
+                    d2a1.copy( _d2a1 );
+                    d2a2.copy( _d2a2 );
+                    d2a3.copy( _d2a3 );
 
                     vSub1.subVectors( d2a1, d1a1 );
                     vSub2.subVectors( d2a2, d1a2 );
@@ -389,8 +434,8 @@ NGL.Spline.prototype = {
 
                 }
 
-                d1a4.copy( direction1[ i - 1 ] );
-                d2a4.copy( direction2[ i - 1 ] );
+                d1a4.copy( _d1a4 );
+                d2a4.copy( _d2a4 );
 
                 vSub4.subVectors( d2a4, d1a4 );
                 if( vSub3.dot( vSub4 ) < 0 ){
@@ -400,9 +445,9 @@ NGL.Spline.prototype = {
 
             }
 
-            for( j = 0; j < m; ++j ){
+            for( var j = 0; j < m; ++j ){
 
-                l = k + j * 3;
+                var l = k + j * 3;
 
                 if( type === NGL.CgType ){
 
@@ -414,7 +459,7 @@ NGL.Spline.prototype = {
                         // shift half a residue
                         l += m2 * 3;
                     }
-                    d = dt * j
+                    var d = dt * j
 
                     p1.x = interpolate( d1a1.x, d1a2.x, d1a3.x, d1a4.x, d, tension );
                     p1.y = interpolate( d1a1.y, d1a2.y, d1a3.y, d1a4.y, d, tension );
@@ -444,6 +489,8 @@ NGL.Spline.prototype = {
 
         if( type === NGL.ProteinType ){
 
+            // FIXME shift requires data from one more preceeding residue
+
             vBin.fromArray( bin, m2 * 3 );
             vNorm.fromArray( norm, m2 * 3 );
 
@@ -472,11 +519,13 @@ NGL.Spline.prototype = {
 ////////////////
 // Helixorient
 
-NGL.Helixorient = function( fiber ){
+// FIXME not adapted for polymer and store
 
-    this.fiber = fiber;
+NGL.Helixorient = function( polymer ){
 
-    this.size = fiber.residueCount;
+    this.polymer = polymer;
+
+    this.size = polymer.residueCount;
 
 };
 
@@ -484,7 +533,7 @@ NGL.Helixorient.prototype = {
 
     constructor: NGL.Helixorient,
 
-    getFiber: function( smooth, padded ){
+    getPolymer: function( smooth, padded ){
 
         var center = this.getPosition().center;
 
@@ -502,7 +551,7 @@ NGL.Helixorient.prototype = {
             fr = fa.residue;
 
             r = new NGL.Residue();
-            a = new NGL.Atom( r, fa.globalindex );  // FIXME get rid of globalindex
+            a = new NGL.Atom( r ); 
 
             r.atoms.push( a );
             r.atomCount += 1;
@@ -1104,14 +1153,16 @@ NGL.Helix.prototype = {
 ////////////////
 // Helixbundle
 
-NGL.Helixbundle = function( fiber ){
+// FIXME not adapted for polymer or store
 
-    this.fiber = fiber;
+NGL.Helixbundle = function( polymer ){
 
-    this.helixorient = new NGL.Helixorient( fiber );
+    this.polymer = polymer;
+
+    this.helixorient = new NGL.Helixorient( polymer );
     this.position = this.helixorient.getPosition();
 
-    this.size = fiber.residueCount;
+    this.size = polymer.residueCount;
 
 };
 
