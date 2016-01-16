@@ -548,11 +548,11 @@ NGL.calculateChainnames = function( structure, callback ){
     var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     var n = names.length;
 
-    structure.eachModel( function( m ){
+    structure.eachModel( function( mp ){
 
         var i = 0;
 
-        m.eachFiber( function( f ){
+        mp.eachPolymer( function( p ){
 
             var j = i;
             var k = 0;
@@ -564,7 +564,7 @@ NGL.calculateChainnames = function( structure, callback ){
                 k += 1;
             }
 
-            f.eachAtom( function( a ){
+            p.eachAtom( function( a ){
                 a.chainname = name;
             } );
 

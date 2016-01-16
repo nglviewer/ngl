@@ -1490,6 +1490,14 @@ NGL.Polymer.prototype = {
 
     },
 
+    eachAtom: function( callback, selection ){
+
+        this.eachResidue( function( rp ){
+            rp.eachAtom( callback );
+        }, selection );
+
+    },
+
     eachAtomN: function( n, callback, type ){
 
         var m = this.residueCount;
