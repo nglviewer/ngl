@@ -884,6 +884,7 @@ NGL.Viewer = function( eid ){
     this.initRenderer();
     this.initControls();
     this.initStats();
+    if( NGL.debug ) this.initHelper();
 
     // fog & background
     this.setBackground();
@@ -1025,6 +1026,12 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
+        if( NGL.debug ){
+            this.helperGroup = new THREE.Group();
+            this.helperGroup.name = "helperGroup";
+            this.rotationGroup.add( this.helperGroup );
+        }
+
         // fog
 
         this.modelGroup.fog = new THREE.Fog();
@@ -1040,6 +1047,50 @@ NGL.Viewer.prototype = {
             this.params.ambientLight, this.params.ambientIntensity
         );
         this.modelGroup.add( this.ambientLight );
+
+    },
+
+    initHelper: function(){
+
+        var indices = new Uint16Array( [
+            0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 
+            6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 
+        ] );
+        var positions = new Float32Array( 8 * 3 );
+
+        var bbGeometry = new THREE.BufferGeometry();
+        bbGeometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
+        bbGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+        var bbMaterial = new THREE.LineBasicMaterial( { color: "skyblue" } );
+
+        this.boundingBoxMesh = new THREE.LineSegments( bbGeometry, bbMaterial );
+        this.helperGroup.add( this.boundingBoxMesh );
+
+    },
+
+    updateHelper: function(){
+
+        var position = this.boundingBoxMesh.geometry.attributes.position;
+        var array = position.array;
+
+        var bb = this.boundingBox;
+        var min = bb.min;
+        var max = bb.max;
+
+        array[  0 ] = max.x; array[  1 ] = max.y; array[  2 ] = max.z;
+        array[  3 ] = min.x; array[  4 ] = max.y; array[  5 ] = max.z;
+        array[  6 ] = min.x; array[  7 ] = min.y; array[  8 ] = max.z;
+        array[  9 ] = max.x; array[ 10 ] = min.y; array[ 11 ] = max.z;
+        array[ 12 ] = max.x; array[ 13 ] = max.y; array[ 14 ] = min.z;
+        array[ 15 ] = min.x; array[ 16 ] = max.y; array[ 17 ] = min.z;
+        array[ 18 ] = min.x; array[ 19 ] = min.y; array[ 20 ] = min.z;
+        array[ 21 ] = max.x; array[ 22 ] = min.y; array[ 23 ] = min.z;
+
+        position.needsUpdate = true;
+
+        if( !bb.isEmpty() ){
+            this.boundingBoxMesh.geometry.computeBoundingSphere();
+        }
 
     },
 
@@ -1119,6 +1170,7 @@ NGL.Viewer.prototype = {
         }
 
         this.rotationGroup.updateMatrixWorld();
+        if( NGL.debug ) this.updateHelper();
 
         this.requestRender();
 
@@ -1186,6 +1238,7 @@ NGL.Viewer.prototype = {
         }
 
         this.updateBoundingBox();
+        if( NGL.debug ) this.updateHelper();
 
         // this.requestRender();
 
@@ -1195,12 +1248,6 @@ NGL.Viewer.prototype = {
 
         var gbb;
         var bb = this.boundingBox;
-
-        if( NGL.debug && this.boundingBoxMesh ){
-            this.modelGroup.remove( this.boundingBoxMesh );
-            this.boundingBoxMesh.material.dispose();
-            this.boundingBoxMesh.geometry.dispose();
-        }
 
         if( geometry ){
 
@@ -1228,7 +1275,7 @@ NGL.Viewer.prototype = {
 
             bb.makeEmpty();
 
-            this.rotationGroup.traverse( function ( node ){
+            function update( node ){
 
                 if ( node.geometry !== undefined ){
 
@@ -1254,25 +1301,15 @@ NGL.Viewer.prototype = {
 
                 }
 
-            } );
+            }
+
+            this.modelGroup.traverse( update );
+            this.backgroundGroup.traverse( update );
 
         }
 
         this.controls.maxDistance = bb.size().length() * 10;
-
-        if( NGL.debug ){
-
-            var bbSize = bb.size();
-            var boxGeometry = new THREE.BoxGeometry(
-                bbSize.x, bbSize.y, bbSize.z
-            );
-            var wireframeBox = new THREE.WireframeGeometry( boxGeometry );
-            this.boundingBoxMesh = new THREE.LineSegments( wireframeBox );
-            bb.center( this.boundingBoxMesh.position );
-            this.modelGroup.add( this.boundingBoxMesh );
-
-        }
-
+        
     },
 
     getImage: function( type, quality ){
@@ -1601,6 +1638,7 @@ NGL.Viewer.prototype = {
             if( NGL.debug ){
                 this.renderer.clear();
                 this.renderer.render( this.pickingGroup, camera );
+                this.renderer.render( this.helperGroup, camera );
             }
 
         }else{
@@ -1613,6 +1651,10 @@ NGL.Viewer.prototype = {
 
             this.renderer.render( this.modelGroup, camera );
             this.updateInfo();
+
+            if( NGL.debug ){
+                this.renderer.render( this.helperGroup, camera );
+            }
 
         }
 
