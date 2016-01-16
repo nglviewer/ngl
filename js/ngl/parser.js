@@ -42,9 +42,7 @@ NGL.reorderAtoms = function( structure ){
 };
 
 
-NGL.buildStructure = function( structure, callback ){
-
-    NGL.time( "NGL.buildStructure" );
+NGL.StructureBuilder = function( structure ){
 
     var currentModelindex = null;
     var currentChainname;
@@ -56,20 +54,12 @@ NGL.buildStructure = function( structure, callback ){
     var chainStore = structure.chainStore;
     var modelStore = structure.modelStore;
 
-    residueStore.clear();
-    chainStore.clear();
-    modelStore.clear();
-
+    var ai = -1;
     var ri = -1;
     var ci = -1;
     var mi = -1;
 
-    for( var ai = 0, n = atomStore.count; ai < n; ++ai ){
-
-        var modelindex = atomStore.modelindex[ ai ];
-        var chainname = atomStore.getChainname( ai );
-        var resname = atomStore.getResname( ai );
-        var resno = atomStore.resno[ ai ];
+    this.addAtom = function( modelindex, chainname, resname, resno ){
 
         var addModel = false;
         var addChain = false;
@@ -91,6 +81,7 @@ NGL.buildStructure = function( structure, callback ){
             addResidue = true;
             ri += 1;
         }
+        ai += 1;
 
         if( addModel ){
             modelStore.growIfFull();
@@ -122,6 +113,7 @@ NGL.buildStructure = function( structure, callback ){
             chainStore.residueCount[ ci ] += 1;
         }
 
+        atomStore.count += 1;
         atomStore.residueIndex[ ai ] = ri;
         residueStore.atomCount[ ri ] += 1;
 
@@ -130,17 +122,7 @@ NGL.buildStructure = function( structure, callback ){
         currentResname = resname;
         currentResno = resno;
 
-    }
-
-    structure.refresh();
-
-    NGL.timeEnd( "NGL.buildStructure" );
-
-    if( NGL.debug ) NGL.log( structure );
-
-    callback();
-
-    return structure;
+    };
 
 };
 
@@ -563,6 +545,8 @@ NGL.calculateChainnames = function( structure, callback ){
                 name += names[ j % n ];
                 k += 1;
             }
+
+            // TODO create entries in residueStore, chainStore
 
             p.eachAtom( function( a ){
                 a.chainname = name;
@@ -1157,6 +1141,7 @@ NGL.StructureParser = function( streamer, params ){
     NGL.Parser.call( this, streamer, p );
 
     this.structure = new NGL.Structure( this.name, this.path );
+    this.structureBuilder = new NGL.StructureBuilder( this.structure );
 
 };
 
@@ -1187,11 +1172,11 @@ NGL.StructureParser.prototype = NGL.createObject(
 
             },
 
-            function( wcallback ){
+            // function( wcallback ){
 
-                NGL.buildStructure( self.structure, wcallback );
+            //     NGL.buildStructure( self.structure, wcallback );
 
-            },
+            // },
 
             function( wcallback ){
 
@@ -1207,9 +1192,10 @@ NGL.StructureParser.prototype = NGL.createObject(
                     if( c.chainname ) doAutoChainName = false;
                 } );
                 if( doAutoChainName ){
-                    NGL.calculateChainnames( self.structure, function(){
-                        NGL.buildStructure( self.structure, wcallback );
-                    } );
+                    NGL.calculateChainnames( self.structure, wcallback );
+                    // NGL.calculateChainnames( self.structure, function(){
+                    //     NGL.buildStructure( self.structure, wcallback );
+                    // } );
                 }else{
                     wcallback();
                 }
@@ -2039,6 +2025,8 @@ NGL.CifParser.prototype = NGL.createObject(
         NGL.time( __timeName );
 
         var s = this.structure;
+        var sb = this.structureBuilder;
+
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
         var cAlphaOnly = this.cAlphaOnly;
@@ -2340,28 +2328,29 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             // atomStore.growIfFull();
 
+                            var resname = ls[ label_comp_id ]; 
+                            var resno = parseInt( ls[ auth_seq_id ] );
                             var chainname = ls[ auth_asym_id ];
+                            
+                            sb.addAtom( modelIdx, chainname, resname, resno );
+
+                            // 
+
                             var element = ls[ type_symbol ];
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
-                            atomStore.setResname( idx, ls[ label_comp_id ] );
                             atomStore.x[ idx ] = x;
                             atomStore.y[ idx ] = y;
                             atomStore.z[ idx ] = z;
                             atomStore.setElement( idx, element );
                             atomStore.hetero[ idx ] = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
-                            atomStore.setChainname( idx, chainname );
-                            atomStore.resno[ idx ] = parseInt( ls[ auth_seq_id ] );
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
                             atomStore.setAtomname( idx, atomname );
                             atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
                             atomStore.vdw[ idx ] = vdwRadii[ element ];
                             atomStore.covalent[ idx ] = covRadii[ element ];
-                            atomStore.modelindex[ idx ] = modelIdx;
-
-                            atomStore.count += 1;
 
                             idx += 1;
 
@@ -3531,6 +3520,7 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         console.log( msg );
 
         var s = this.structure;
+        var sb = this.structureBuilder;
 
         var bondStore = s.bondStore;
         var atomStore = s.atomStore;
@@ -3719,16 +3709,17 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         msg.resOrder = getInt32( msg.resOrder );
         msg.atomname = new Uint8Array( msg.cartn_x.length * 4 );
         msg.element = new Uint8Array( msg.cartn_x.length * 3 );
-        msg.resname = new Uint8Array( msg.cartn_x.length * 5 );
         msg.hetero = new Uint8Array( msg.cartn_x.length );
 
         var atomDataOffset = 0;
 
         for( var i = 0, il = msg.resOrder.length; i < il; ++i ){
 
-            residueStore.sstruc[ i ] = ( sstrucMap[ msg.secStruct[ i ] ] || "l" ).charCodeAt();
-
             var resData = msg.groupMap[ msg.resOrder[ i ] ];
+
+            residueStore.sstruc[ i ] = ( sstrucMap[ msg.secStruct[ i ] ] || "l" ).charCodeAt();
+            // residueStore.setResname( i, resData.resName );
+
             var resName = resData.resName;
             var hetFlag = resData.hetFlag ? 1 : 0;
             var atomInfo = resData.atomInfo;
@@ -3743,10 +3734,11 @@ NGL.MsgpackParser.prototype = NGL.createObject(
                 for( var k = 0, kl = element.length; k < kl; ++k ){
                     msg.element[ atomDataOffset * 3 + k ] = element.charCodeAt( k );
                 }
-                for( var k = 0, kl = resName.length; k < kl; ++k ){
-                    msg.resname[ atomDataOffset * 5 + k ] = resName.charCodeAt( k );
-                }
                 msg.hetero[ atomDataOffset ] = hetFlag;
+
+                var resno = msg._atom_site_auth_seq_id[ atomDataOffset ];
+                sb.addAtom( 0, "A", resName, resno );
+
                 atomDataOffset += 1;
             }
 
@@ -3766,10 +3758,8 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         atomStore.y.set( msg.cartn_y );
         atomStore.z.set( msg.cartn_z );
         atomStore.bfactor.set( msg.b_factor );
-        atomStore.resno.set( msg._atom_site_auth_seq_id );
         atomStore.atomname.set( msg.atomname );
         atomStore.element.set( msg.element );
-        atomStore.resname.set( msg.resname );
         atomStore.hetero.set( msg.hetero );
         atomStore.altloc.set( msg._atom_site_label_alt_id );
         atomStore.serial.set( msg._atom_site_id );
@@ -3782,10 +3772,8 @@ NGL.MsgpackParser.prototype = NGL.createObject(
 
         for( var i = 0; i < atomCount; ++i ){
             var element = String.fromCharCode( msg.element[ i * 3 ] );
-            atomStore.setChainname( i, '' );
             atomStore.vdw[ i ] = vdwRadii[ element ];
             atomStore.covalent[ i ] = covRadii[ element ];
-            atomStore.modelindex[ i ] = 0;
         }
 
         console.timeEnd( "set atoms" );

@@ -516,6 +516,7 @@ NGL.AtomProxy.prototype = {
     type: "AtomProxy",
 
     structure: undefined,
+    chainStore: undefined,
     residueStore: undefined,
     atomStore: undefined,
     index: undefined,
@@ -542,6 +543,15 @@ NGL.AtomProxy.prototype = {
     get sstruc () {
         return this.residueStore.getSstruc( this.residueIndex );
     },
+    get resno () {
+        return this.residueStore.resno[ this.residueIndex ];
+    },
+    get resname () {
+        return this.residueStore.getResname( this.residueIndex );
+    },
+    get chainname () {
+        return this.chainStore.getChainname( this.chainIndex );
+    },
 
     // 
 
@@ -550,13 +560,6 @@ NGL.AtomProxy.prototype = {
     },
     set atomno ( value ) {
         this.atomStore.atomno[ this.index ] = value;
-    },
-
-    get resname () {
-        return this.atomStore.getResname( this.index );
-    },
-    set resname ( value ) {
-        this.atomStore.setResname( this.index, value );
     },
 
     get x () {
@@ -585,20 +588,6 @@ NGL.AtomProxy.prototype = {
     },
     set element ( value ) {
         this.atomStore.setElement( this.index, value );
-    },
-
-    get chainname () {
-        return this.atomStore.getChainname( this.index );
-    },
-    set chainname ( value ) {
-        this.atomStore.setChainname( this.index, value );
-    },
-
-    get resno () {
-        return this.atomStore.resno[ this.index ];
-    },
-    set resno ( value ) {
-        this.atomStore.resno[ this.index ] = value;
     },
 
     get serial () {
@@ -636,12 +625,12 @@ NGL.AtomProxy.prototype = {
         this.atomStore.bfactor[ this.index ] = value;
     },
 
-    get bonds () {
-        return this.atomStore.bonds[ this.index ];
-    },
-    set bonds ( value ) {
-        this.atomStore.bonds[ this.index ] = value;
-    },
+    // get bonds () {
+    //     return this.atomStore.bonds[ this.index ];
+    // },
+    // set bonds ( value ) {
+    //     this.atomStore.bonds[ this.index ] = value;
+    // },
 
     get altloc () {
         return this.atomStore.getAltloc( this.index );
@@ -655,13 +644,6 @@ NGL.AtomProxy.prototype = {
     },
     set atomname ( value ) {
         this.atomStore.setAtomname( this.index, value );
-    },
-
-    get modelindex () {
-        return this.atomStore.modelindex[ this.index ];
-    },
-    set modelindex ( value ) {
-        this.atomStore.modelindex[ this.index ] = value;
     },
 
     // 

@@ -361,13 +361,10 @@ NGL.AtomStore.prototype = NGL.createObject(
         [ "residueIndex", 1, "uint32" ],
 
         [ "atomno", 1, "int32" ],
-        [ "resname", 5, "uint8" ],
         [ "x", 1, "float32" ],
         [ "y", 1, "float32" ],
         [ "z", 1, "float32" ],
         [ "element", 3, "uint8" ],
-        [ "chainname", 4, "uint8" ],
-        [ "resno", 1, "int32" ],
         [ "serial", 1, "int32" ],
         [ "vdw", 1, "float32" ],
         [ "covalent", 1, "float32" ],
@@ -375,37 +372,8 @@ NGL.AtomStore.prototype = NGL.createObject(
         [ "bfactor", 1, "float32" ],
         [ "altloc", 1, "uint8" ],
         [ "atomname", 4, "uint8" ],
-        [ "modelindex", 1, "uint32" ]
 
     ],
-
-    setResname: function( i, str ){
-
-        var j = 5 * i;
-        this.resname[ j ] = str.charCodeAt( 0 );
-        this.resname[ j + 1 ] = str.charCodeAt( 1 );
-        this.resname[ j + 2 ] = str.charCodeAt( 2 );
-        this.resname[ j + 3 ] = str.charCodeAt( 3 );
-        this.resname[ j + 4 ] = str.charCodeAt( 4 );
-
-    },
-
-    getResname: function( i ){
-
-        var code;
-        var resname = "";
-        var j = 5 * i;
-        for( var k = 0; k < 5; ++k ){
-            code = this.resname[ j + k ];
-            if( code ){
-                resname += String.fromCharCode( code );
-            }else{
-                break;
-            }
-        }
-        return resname;
-
-    },
 
     setElement: function( i, str ){
 
@@ -430,33 +398,6 @@ NGL.AtomStore.prototype = NGL.createObject(
             }
         }
         return element;
-
-    },
-
-    setChainname: function( i, str ){
-
-        var j = 4 * i;
-        this.chainname[ j ] = str.charCodeAt( 0 );
-        this.chainname[ j + 1 ] = str.charCodeAt( 1 );
-        this.chainname[ j + 2 ] = str.charCodeAt( 2 );
-        this.chainname[ j + 3 ] = str.charCodeAt( 3 );
-
-    },
-
-    getChainname: function( i ){
-
-        var code;
-        var chainname = "";
-        var j = 4 * i;
-        for( var k = 0; k < 4; ++k ){
-            code = this.chainname[ j + k ];
-            if( code ){
-                chainname += String.fromCharCode( code );
-            }else{
-                break;
-            }
-        }
-        return chainname;
 
     },
 

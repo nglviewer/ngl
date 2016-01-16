@@ -1281,8 +1281,8 @@ NGL.ExampleRegistry.addDict( {
     "medium": function( stage ){
 
         console.time( "load-to-render" );
-        // stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
-        stage.loadFile( "data://3PQR.cif" ).then( function( o ){
+        stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
+        // stage.loadFile( "data://3PQR.cif" ).then( function( o ){
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "hyperball" );
             // o.addRepresentation( "ball+stick", { color: "sstruc", sele: "backbone and 230-250:A" } );
@@ -1292,7 +1292,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { color: "sstruc" } );
             // o.addRepresentation( "tube", { color: "sstruc" } );
             // o.addRepresentation( "cartoon", { sele: "polymer" } );
-            o.addRepresentation( "ball+stick", { sele: "hetero or 296" } );
+            o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();
             // o.centerView( true, "330-341:R" );
             stage.tasks.onZeroOnce( function(){

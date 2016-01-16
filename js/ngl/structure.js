@@ -1595,13 +1595,34 @@ NGL.Structure.prototype = {
 
     getBoundingBox: function( selection ){
 
-        var vec = new THREE.Vector3();
         var box = new THREE.Box3();
 
+        var minX = +Infinity;
+        var minY = +Infinity;
+        var minZ = +Infinity;
+
+        var maxX = -Infinity;
+        var maxY = -Infinity;
+        var maxZ = -Infinity;
+
         this.eachAtom( function( ap ){
-            vec.copy( ap );
-            box.expandByPoint( vec );
+            
+            var x = ap.x;
+            var y = ap.y;
+            var z = ap.z;
+
+            minX = Math.min( minX, x );
+            minY = Math.min( minY, y );
+            minZ = Math.min( minZ, z );
+
+            maxX = Math.max( maxX, x );
+            maxY = Math.max( maxY, y );
+            maxZ = Math.max( maxZ, z );
+
         }, selection );
+
+        box.min.set( minX, minY, minZ );
+        box.max.set( maxX, maxY, maxZ );
 
         return box;
 
