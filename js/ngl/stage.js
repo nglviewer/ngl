@@ -176,7 +176,7 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
-            if( object.structure.atomCount > 100000 ){
+            if( object.structure.atomStore.count > 100000 ){
 
                 object.addRepresentation( "line" );
                 object.centerView( true );
