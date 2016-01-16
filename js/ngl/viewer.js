@@ -1249,7 +1249,7 @@ NGL.Viewer.prototype = {
         var gbb;
         var bb = this.boundingBox;
 
-        if( geometry ){
+        function updateGeometry( geometry, matrix ){
 
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
@@ -1271,40 +1271,32 @@ NGL.Viewer.prototype = {
             bb.expandByPoint( gbb.min );
             bb.expandByPoint( gbb.max );
 
-        }else{
+        }
 
-            bb.makeEmpty();
+        function updateNode( node ){
 
-            function update( node ){
+            if( node.geometry !== undefined ){
 
-                if ( node.geometry !== undefined ){
-
-                    if( !node.geometry.boundingBox ){
-                        node.geometry.computeBoundingBox();
-                    }
-
-                    if( node.userData[ "instance" ] ){
-                        gbb = node.geometry.boundingBox.clone();
-                        gbb.applyMatrix4( node.userData[ "instance" ].matrix );
-                    }else{
-                        gbb = node.geometry.boundingBox;
-                    }
-
-                    if( gbb.min.equals( gbb.max ) ){
-                        // mainly to give a single impostor geometry some volume
-                        // as it is only expanded in the shader on the GPU
-                        gbb.expandByScalar( 5 );
-                    }
-
-                    bb.expandByPoint( gbb.min );
-                    bb.expandByPoint( gbb.max );
-
+                var matrix = undefined;
+                if( node.userData[ "instance" ] ){
+                    matrix = node.userData[ "instance" ].matrix;
                 }
+
+                updateGeometry( node.geometry, matrix );
 
             }
 
-            this.modelGroup.traverse( update );
-            this.backgroundGroup.traverse( update );
+        }
+
+        if( geometry ){
+
+            updateGeometry( geometry, matrix );
+
+        }else{
+
+            bb.makeEmpty();
+            this.modelGroup.traverse( updateNode );
+            this.backgroundGroup.traverse( updateNode );
 
         }
 
