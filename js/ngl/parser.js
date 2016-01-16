@@ -586,16 +586,26 @@ NGL.calculateChainnames = function( structure, callback ){
 };
 
 
-NGL.calculateBonds = function( structure, callback ){
+NGL.calculateBonds = function( structure ){
 
-    NGL.time( "NGL.Structure.autoBond" );
+    NGL.time( "NGL.calculateBonds" );
+
+    NGL.calculateBondsWithin( structure );
+    NGL.calculateBondsBetween( structure );
+
+    NGL.timeEnd( "NGL.calculateBonds" );
+
+};
+
+
+NGL.calculateBondsWithin = function( structure ){
+
+    NGL.time( "NGL.calculateBondsWithin" );
 
     var bondStore = structure.bondStore;
     var a1 = structure.getAtomProxy();
     var a2 = structure.getAtomProxy();
     var bondingDict = {};
-
-    NGL.time( "NGL.Structure.autoBond within" );
 
     structure.eachResidue( function( r ){
 
@@ -696,16 +706,16 @@ NGL.calculateBonds = function( structure, callback ){
 
     } );
 
-    // console.log( bondingDict )
+    NGL.timeEnd( "NGL.calculateBondsWithin" );
 
-    NGL.timeEnd( "NGL.Structure.autoBond within" );
+};
 
-    // bonds between residues
 
-    NGL.time( "NGL.Structure.autoBond between" );
+NGL.calculateBondsBetween = function( structure ){
 
-    // TODO maybe move into calculatePolymers
+    NGL.time( "NGL.calculateBondsBetween" );
 
+    var bondStore = structure.bondStore;
     var ap1 = structure.getAtomProxy();
     var ap2 = structure.getAtomProxy();
 
@@ -722,11 +732,7 @@ NGL.calculateBonds = function( structure, callback ){
 
     } );
 
-    NGL.timeEnd( "NGL.Structure.autoBond between" );
-
-    NGL.timeEnd( "NGL.Structure.autoBond" );
-
-    callback();
+    NGL.timeEnd( "NGL.calculateBondsBetween" );
 
 };
 
@@ -868,7 +874,12 @@ NGL.calculatePolymerData = function( structure, callback ){
         }
     }
 
-    structure.eachResidue( function( rp ){
+    var rn = residueStore.count;
+    var rp = structure.getResidueProxy();
+
+    for( var i = 0; i < rn; ++i ){
+        
+        rp.index = i;
 
         var rAtomnames = atomnames[ rp.getBackboneType( 0 ) ];
         var rAtomnamesStart = atomnames[ rp.getBackboneType( -1 ) ];
@@ -892,7 +903,7 @@ NGL.calculatePolymerData = function( structure, callback ){
         residueStore.moleculeType[ rp.index ] = getMoleculeType( rp );
         residueStore.backboneType[ rp.index ] = getBackboneType( rp );
 
-    } );
+    }
 
     NGL.timeEnd( "NGL.calculatePolymerData" );
 
@@ -1161,6 +1172,8 @@ NGL.StructureParser.prototype = NGL.createObject(
 
     _afterParse: function( callback ){
 
+        NGL.time( "NGL.StructureParser._afterParse" );
+
         var self = this;
 
         async.series( [
@@ -1206,10 +1219,11 @@ NGL.StructureParser.prototype = NGL.createObject(
             function( wcallback ){
 
                 if( !self.dontAutoBond ){
-                    NGL.calculateBonds( self.structure, wcallback );
-                }else{
-                    wcallback();
+                    NGL.calculateBonds( self.structure );
+                }else if( self.autoBondBetween ){
+                    NGL.calculateBondsBetween( self.structure );
                 }
+                wcallback();
 
             },
 
@@ -1245,6 +1259,7 @@ NGL.StructureParser.prototype = NGL.createObject(
 
         ], function(){
 
+            NGL.timeEnd( "NGL.StructureParser._afterParse" );
             callback();
 
         } );
