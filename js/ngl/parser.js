@@ -3834,54 +3834,11 @@ NGL.DxParser.prototype = NGL.createObject(
 
         var v = this.volume;
         var headerLines = this.streamer.peekLines( 30 );
-        var header = {};
+        var headerInfo = this.parseHeaderLines( headerLines );
+        var header = this.volume.header;
+        var dataLineStart = headerInfo.dataLineStart;
+
         var reWhitespace = /\s+/;
-
-        var dataLineStart = 0;
-        var deltaLineCount = 0;
-
-        for( var i = 0; i < 30; ++i ){
-
-            var line = headerLines[ i ];
-
-            if( line.startsWith( "object 1" ) ){
-
-                var ls = line.split( reWhitespace );
-
-                header.nx = parseInt( ls[ 5 ] );
-                header.ny = parseInt( ls[ 6 ] );
-                header.nz = parseInt( ls[ 7 ] );
-
-            }else if( line.startsWith( "origin" ) ){
-
-                var ls = line.split( reWhitespace );
-
-                header.xmin = parseFloat( ls[ 1 ] );
-                header.ymin = parseFloat( ls[ 2 ] );
-                header.zmin = parseFloat( ls[ 3 ] );
-
-            }else if( line.startsWith( "delta" ) ){
-
-                var ls = line.split( reWhitespace );
-
-                if( deltaLineCount === 0 ){
-                    header.hx = parseFloat( ls[ 1 ] );
-                }else if( deltaLineCount === 1 ){
-                    header.hy = parseFloat( ls[ 2 ] );
-                }else if( deltaLineCount === 2 ){
-                    header.hz = parseFloat( ls[ 3 ] );
-                }
-
-                deltaLineCount += 1;
-
-            }else if( line.startsWith( "object 3" ) ){
-
-                dataLineStart = i;
-
-            }
-
-        }
-
         var size = header.nx * header.ny * header.nz;
         var data = new Float32Array( size );
         var count = 0;
@@ -3920,7 +3877,6 @@ NGL.DxParser.prototype = NGL.createObject(
 
             function(){
 
-                v.header = header;
                 v.setData( data, header.nz, header.ny, header.nx );
                 NGL.timeEnd( __timeName );
                 callback();
@@ -3931,71 +3887,17 @@ NGL.DxParser.prototype = NGL.createObject(
 
     },
 
-    getMatrix: function(){
+    parseHeaderLines: function( headerLines ){
 
-        var h = this.volume.header;
-        var matrix = new THREE.Matrix4();
-
-        matrix.multiply(
-            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
-        );
-
-        matrix.multiply(
-            new THREE.Matrix4().makeTranslation(
-                -h.zmin, h.ymin, h.xmin
-            )
-        );
-
-        matrix.multiply(
-            new THREE.Matrix4().makeScale(
-                -h.hz, h.hy, h.hx
-            )
-        );
-
-        return matrix;
-
-    }
-
-} );
-
-
-NGL.DxbinParser = function( streamer, params ){
-
-    NGL.VolumeParser.call( this, streamer, params );
-
-};
-
-NGL.DxbinParser.prototype = NGL.createObject(
-
-    NGL.VolumeParser.prototype, {
-
-    constructor: NGL.DxbinParser,
-
-    type: "dxbin",
-
-    _parse: function( callback ){
-
-        // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
-
-        var __timeName = "NGL.DxbinParser._parse " + this.name;
-
-        NGL.time( __timeName );
-
-        var bin = this.streamer.data;
-
-        if( bin instanceof Uint8Array ){
-            bin = bin.buffer;
-        }
-
-        var v = this.volume;
-        var headerLines = NGL.Uint8ToLines( new Uint8Array( bin, 0, 1000 ) );
         var header = {};
         var reWhitespace = /\s+/;
+        var n = headerLines.length;
 
-        var deltaLineCount = 0;
+        var dataLineStart = 0;
         var headerByteCount = 0;
+        var deltaLineCount = 0;
 
-        for( var i = 0, il = headerLines.length; i < il; ++i ){
+        for( var i = 0; i < n; ++i ){
 
             var line = headerLines[ i ];
 
@@ -4031,6 +3933,7 @@ NGL.DxbinParser.prototype = NGL.createObject(
 
             }else if( line.startsWith( "object 3" ) ){
 
+                dataLineStart = i;
                 headerByteCount += line.length + 1;
                 break;
 
@@ -4040,6 +3943,75 @@ NGL.DxbinParser.prototype = NGL.createObject(
 
         }
 
+        this.volume.header = header;
+
+        return {
+            dataLineStart: dataLineStart,
+            headerByteCount: headerByteCount
+        }
+
+    },
+
+    getMatrix: function(){
+
+        var h = this.volume.header;
+        var matrix = new THREE.Matrix4();
+
+        matrix.multiply(
+            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeTranslation(
+                -h.zmin, h.ymin, h.xmin
+            )
+        );
+
+        matrix.multiply(
+            new THREE.Matrix4().makeScale(
+                -h.hz, h.hy, h.hx
+            )
+        );
+
+        return matrix;
+
+    }
+
+} );
+
+
+NGL.DxbinParser = function( streamer, params ){
+
+    NGL.DxParser.call( this, streamer, params );
+
+};
+
+NGL.DxbinParser.prototype = NGL.createObject(
+
+    NGL.DxParser.prototype, {
+
+    constructor: NGL.DxbinParser,
+
+    type: "dxbin",
+
+    _parse: function( callback ){
+
+        // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
+
+        var __timeName = "NGL.DxbinParser._parse " + this.name;
+
+        NGL.time( __timeName );
+
+        var bin = this.streamer.data;
+        if( bin instanceof Uint8Array ){
+            bin = bin.buffer;
+        }
+
+        var headerLines = NGL.Uint8ToLines( new Uint8Array( bin, 0, 1000 ) );
+        var headerInfo = this.parseHeaderLines( headerLines );
+        var header = this.volume.header;
+        var headerByteCount = headerInfo.headerByteCount;
+
         var size = header.nx * header.ny * header.nz;
         var dv = new DataView( bin );
         var data = new Float32Array( size );
@@ -4048,16 +4020,13 @@ NGL.DxbinParser.prototype = NGL.createObject(
             data[ i ] = dv.getFloat64( i * 8 + headerByteCount, true );
         }
 
-        v.header = header;
-        v.setData( data, header.nx, header.ny, header.nz );
+        this.volume.setData( data, header.nx, header.ny, header.nz );
 
         NGL.timeEnd( __timeName );
 
         callback();
 
-    },
-
-    getMatrix: NGL.DxParser.prototype.getMatrix
+    }
 
 } );
 
