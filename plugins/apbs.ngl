@@ -178,7 +178,7 @@ var ApbsWidget = function( pqrComp, dxComp ){
 function loadApbs( pqr, dx, isBinary ){
 
     var fileInfo = NGL.getDataInfo( dx );
-    var dxExt = ( isBinary || fileInfo.ext ) ? "dxbin" : "dx";
+    var dxExt = ( isBinary || fileInfo.ext === "dxbin" ) ? "dxbin" : "dx";
 
     var infoText = new UI.Text( "loading..." );
     panel.add( infoText );
