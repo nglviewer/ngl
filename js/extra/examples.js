@@ -1193,6 +1193,66 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://ferritin/ferritin.ngl" );
 
-    }
+    },
+
+    "dxbin": function( stage ){
+
+        stage.loadFile( "data://1crn_apbs.pqr" ).then( function( o ){
+
+            o.addRepresentation( "cartoon", {
+                colorScheme: "bfactor",
+                colorScale: "rwb",
+                colorDomain: [ -1, 0, 1 ]
+            } );
+            o.addRepresentation( "licorice", {
+                colorScheme: "bfactor",
+                colorScale: "rwb",
+                colorDomain: [ -1, 0, 1 ]
+            } );
+
+            o.centerView();
+
+        } );
+
+        stage.loadFile( "data://1crn_apbs_pot.dxbin" ).then( function( o ){
+
+            o.addRepresentation( "dot", {
+                thresholdType: "value",
+                thresholdMin: -5,
+                thresholdMax: 5,
+                thresholdOut: true,
+                dotType: "sphere",
+                radius: "abs-value",
+                scale: 0.001,
+                visible: true,
+                colorScheme: "value",
+                colorScale: "rwb"
+            } );
+
+            o.addRepresentation( "surface", {
+                isolevelType: "value",
+                isolevel: -0.4,
+                smooth: 1,
+                color: "red",
+                opacity: 0.6,
+                side: THREE.BackSide,
+                opaqueBack: false
+            } );
+
+            o.addRepresentation( "surface", {
+                isolevelType: "value",
+                isolevel: 0.4,
+                smooth: 1,
+                color: "blue",
+                opacity: 0.6,
+                side: THREE.FrontSide,
+                opaqueBack: false
+            } );
+
+            stage.centerView();
+
+        } );
+
+    },
 
 } );

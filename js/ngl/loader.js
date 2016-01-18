@@ -205,6 +205,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "map": NGL.MrcParser,
             "cube": NGL.CubeParser,
             "dx": NGL.DxParser,
+            "dxbin": NGL.DxbinParser,
 
             "ply": NGL.PlyParser,
             "obj": NGL.ObjParser,
@@ -340,6 +341,7 @@ NGL.loaderMap = {
     "map": NGL.ParserLoader,
     "cube": NGL.ParserLoader,
     "dx": NGL.ParserLoader,
+    "dxbin": NGL.ParserLoader,
 
     "obj": NGL.ParserLoader,
     "ply": NGL.ParserLoader,
