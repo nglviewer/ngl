@@ -890,6 +890,19 @@ NGL.ColorMaker.prototype = {
 
     },
 
+    colorToArray: function( color, array, offset ){
+
+        if( array === undefined ) array = [];
+        if( offset === undefined ) offset = 0;
+
+        array[ offset + 0 ] = ( color >> 16 & 255 ) / 255;
+        array[ offset + 1 ] = ( color >> 8 & 255 ) / 255;
+        array[ offset + 2 ] = ( color & 255 ) / 255;
+
+        return array;
+
+    },
+
     atomColor: function( a ){
 
         return 0xFFFFFF;
@@ -898,16 +911,9 @@ NGL.ColorMaker.prototype = {
 
     atomColorToArray: function( a, array, offset ){
 
-        var c = this.atomColor( a );
-
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
-
-        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
-        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
-        array[ offset + 2 ] = ( c & 255 ) / 255;
-
-        return array;
+        return this.colorToArray(
+            this.atomColor( a ), array, offset
+        );
 
     },
 
@@ -919,16 +925,9 @@ NGL.ColorMaker.prototype = {
 
     bondColorToArray: function( b, fromTo, array, offset ){
 
-        var c = this.bondColor( b, fromTo );
-
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
-
-        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
-        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
-        array[ offset + 2 ] = ( c & 255 ) / 255;
-
-        return array;
+        return this.colorToArray(
+            this.bondColor( b, fromTo ), array, offset
+        );
 
     },
 
@@ -940,16 +939,13 @@ NGL.ColorMaker.prototype = {
 
     volumeColorToArray: function( i, array, offset ){
 
-        var c = this.volumeColor( i );
+        return this.colorToArray(
+            this.volumeColor( i ), array, offset
+        );
 
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
+    },
 
-        array[ offset + 0 ] = ( c >> 16 & 255 ) / 255;
-        array[ offset + 1 ] = ( c >> 8 & 255 ) / 255;
-        array[ offset + 2 ] = ( c & 255 ) / 255;
 
-        return array;
 
     }
 
