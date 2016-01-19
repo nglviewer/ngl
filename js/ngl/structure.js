@@ -945,11 +945,53 @@ NGL.ColorMaker.prototype = {
 
     },
 
+    positionColor: function( v ){
 
+        return 0xFFFFFF;
+
+    },
+
+    positionColorToArray: function( v, array, offset ){
+
+        return this.colorToArray(
+            this.positionColor( v ), array, offset
+        );
 
     }
 
 };
+
+
+NGL.VolumeColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    var valueScale = this.getScale();
+    var volume = this.volume;
+    var inverseMatrix = volume.inverseMatrix;
+    var data = volume.__data;
+    var nx = volume.nx;
+    var ny = volume.ny;
+    var nz = volume.nz;
+    var vec = new THREE.Vector3();
+
+    this.positionColor = function( v ){
+
+        vec.copy( v );
+        vec.applyMatrix4( inverseMatrix );
+        vec.round();
+
+        var index = ( ( ( ( vec.z * nz ) + vec.y ) * ny ) + vec.x );
+
+        return valueScale( data[ index ] );
+
+    };
+
+};
+
+NGL.VolumeColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.VolumeColorMaker.prototype.constructor = NGL.VolumeColorMaker;
 
 
 NGL.ValueColorMaker = function( params ){
@@ -1377,6 +1419,7 @@ NGL.ColorMakerRegistry.types = {
     "bfactor": NGL.BfactorColorMaker,
     "hydrophobicity": NGL.HydrophobicityColorMaker,
     "value": NGL.ValueColorMaker,
+    "volume": NGL.VolumeColorMaker,
 
 };
 
