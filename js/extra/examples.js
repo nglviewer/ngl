@@ -1226,22 +1226,9 @@ NGL.ExampleRegistry.addDict( {
 
             pqr.centerView();
 
-            dxbin.addRepresentation( "dot", {
-                thresholdType: "value",
-                thresholdMin: -5,
-                thresholdMax: 5,
-                thresholdOut: true,
-                dotType: "sphere",
-                radius: "abs-value",
-                scale: 0.001,
-                visible: true,
-                colorScheme: "value",
-                colorScale: "rwb"
-            } );
-
             dxbin.addRepresentation( "surface", {
                 isolevelType: "value",
-                isolevel: -0.4,
+                isolevel: -1.5,
                 smooth: 1,
                 color: "red",
                 opacity: 0.6,
@@ -1251,7 +1238,7 @@ NGL.ExampleRegistry.addDict( {
 
             dxbin.addRepresentation( "surface", {
                 isolevelType: "value",
-                isolevel: 0.4,
+                isolevel: 1.5,
                 smooth: 1,
                 color: "blue",
                 opacity: 0.6,
