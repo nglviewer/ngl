@@ -981,7 +981,7 @@ NGL.VolumeColorMaker = function( params ){
         vec.applyMatrix4( inverseMatrix );
         vec.round();
 
-        var index = ( ( ( ( vec.z * nz ) + vec.y ) * ny ) + vec.x );
+        var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
 
         return valueScale( data[ index ] );
 
