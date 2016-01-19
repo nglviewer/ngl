@@ -1198,8 +1198,8 @@ NGL.ExampleRegistry.addDict( {
     "dxbin": function( stage ){
 
         var promiseList = [
-            stage.loadFile( "data://1crn_apbs.pqr" ),
-            stage.loadFile( "data://1crn_apbs_pot.dxbin" )
+            stage.loadFile( "data://3pqr.pqr" ),
+            stage.loadFile( "data://3pqr-pot.dxbin" )
         ];
 
         Promise.all( promiseList ).then( function( compList ){
