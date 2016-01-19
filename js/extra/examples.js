@@ -1197,26 +1197,36 @@ NGL.ExampleRegistry.addDict( {
 
     "dxbin": function( stage ){
 
-        stage.loadFile( "data://1crn_apbs.pqr" ).then( function( o ){
+        var promiseList = [
+            stage.loadFile( "data://1crn_apbs.pqr" ),
+            stage.loadFile( "data://1crn_apbs_pot.dxbin" )
+        ];
 
-            o.addRepresentation( "cartoon", {
+        Promise.all( promiseList ).then( function( compList ){
+
+            var pqr = compList[ 0 ];
+            var dxbin = compList[ 1 ];
+
+            pqr.addRepresentation( "cartoon", {
                 colorScheme: "bfactor",
                 colorScale: "rwb",
                 colorDomain: [ -1, 0, 1 ]
             } );
-            o.addRepresentation( "licorice", {
+            pqr.addRepresentation( "licorice", {
                 colorScheme: "bfactor",
                 colorScale: "rwb",
                 colorDomain: [ -1, 0, 1 ]
             } );
+            pqr.addRepresentation( "surface", {
+                volume: dxbin.surface,
+                colorScheme: "volume",
+                colorScale: "rwb",
+                colorDomain: [ -5, 0, 5 ]
+            } );
 
-            o.centerView();
+            pqr.centerView();
 
-        } );
-
-        stage.loadFile( "data://1crn_apbs_pot.dxbin" ).then( function( o ){
-
-            o.addRepresentation( "dot", {
+            dxbin.addRepresentation( "dot", {
                 thresholdType: "value",
                 thresholdMin: -5,
                 thresholdMax: 5,
@@ -1229,7 +1239,7 @@ NGL.ExampleRegistry.addDict( {
                 colorScale: "rwb"
             } );
 
-            o.addRepresentation( "surface", {
+            dxbin.addRepresentation( "surface", {
                 isolevelType: "value",
                 isolevel: -0.4,
                 smooth: 1,
@@ -1239,7 +1249,7 @@ NGL.ExampleRegistry.addDict( {
                 opaqueBack: false
             } );
 
-            o.addRepresentation( "surface", {
+            dxbin.addRepresentation( "surface", {
                 isolevelType: "value",
                 isolevel: 0.4,
                 smooth: 1,
