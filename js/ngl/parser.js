@@ -4020,7 +4020,7 @@ NGL.DxbinParser.prototype = NGL.createObject(
             data[ i ] = dv.getFloat64( i * 8 + headerByteCount, true );
         }
 
-        this.volume.setData( data, header.nx, header.ny, header.nz );
+        this.volume.setData( data, header.nz, header.ny, header.nx );
 
         NGL.timeEnd( __timeName );
 
