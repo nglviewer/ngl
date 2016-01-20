@@ -700,6 +700,8 @@ NGL.calculateBondsBetween = function( structure ){
     NGL.time( "NGL.calculateBondsBetween" );
 
     var bondStore = structure.bondStore;
+    var backboneBondStore = structure.backboneBondStore;
+    var backboneAtomSet = structure.getAtomSet( false );
     var ap1 = structure.getAtomProxy();
     var ap2 = structure.getAtomProxy();
 
@@ -711,10 +713,18 @@ NGL.calculateBondsBetween = function( structure ){
         if( bbType1 !== NGL.UnknownType && bbType1 === bbType2 ){
             ap1.index = rp1.backboneStartAtomIndex;
             ap2.index = rp2.backboneEndAtomIndex;
-            bondStore.addBondIfConnected( ap1, ap2 );
+            if( bondStore.addBondIfConnected( ap1, ap2 ) ){
+                ap1.index = rp1.traceAtomIndex;
+                ap2.index = rp2.traceAtomIndex;
+                backboneBondStore.addBond( ap1, ap2 );
+                backboneAtomSet.add_unsafe( ap1.index );
+                backboneAtomSet.add_unsafe( ap2.index );
+            }
         }
 
     } );
+
+    structure.atomSetDict[ "backbone" ] = backboneAtomSet;
 
     NGL.timeEnd( "NGL.calculateBondsBetween" );
 
@@ -1037,6 +1047,7 @@ NGL.Parser.prototype = {
 
     _afterParse: function( callback ){
 
+        console.log( this[ this.__objName ] );
         callback();
 
     },
@@ -1165,18 +1176,19 @@ NGL.StructureParser.prototype = NGL.createObject(
 
             function( wcallback ){
 
+                self.structure.refresh();
+                wcallback();
+
+            },
+
+            function( wcallback ){
+
                 if( self.reorderAtoms ){
                     NGL.reorderAtoms( self.structure );
                 }
                 wcallback();
 
             },
-
-            // function( wcallback ){
-
-            //     NGL.buildStructure( self.structure, wcallback );
-
-            // },
 
             function( wcallback ){
 
@@ -1246,6 +1258,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         ], function(){
 
             NGL.timeEnd( "NGL.StructureParser._afterParse" );
+            console.log( self[ self.__objName ] );
             callback();
 
         } );
@@ -2853,8 +2866,6 @@ NGL.CifParser.prototype = NGL.createObject(
     _postProcess: function( callback ){
 
         NGL.time( "NGL.CifParser._postProcess" );
-
-        this.structure.refresh();
 
         var s = this.structure;
         var cif = this.cif;

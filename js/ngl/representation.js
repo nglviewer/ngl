@@ -1738,50 +1738,38 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
         if( this.structureView.atomCount === 0 ) return;
 
-        var test = this.selection.test;
-
-        this.backboneAtomSet = new NGL.AtomSet();
-        this.backboneBondSet = new NGL.BondSet();
-
-        var baSet = this.backboneAtomSet;
-        var bbSet = this.backboneBondSet;
-
-        baSet.structure = this.structure;
-        bbSet.structure = this.structure;
-
-        var a1, a2;
-
-        this.structure.eachPolymer( function( polymer ){
-
-            if( polymer.residueCount < 2 ) return;
-
-            polymer.eachResidueN( 2, function( rp1, rp2 ){
-
-                a1 = rp1.getTraceAtom();
-                a2 = rp2.getTraceAtom();
-
-                if( !test || ( test( a1 ) && test( a2 ) ) ){
-                    baSet.addAtom( a1 );
-                    bbSet.addBond( a1, a2, true );
-                }
-
-            } );
-
-            if( !test || ( test( a1 ) && test( a2 ) ) ){
-                baSet.addAtom( a2 );
-            }
-
-        } );
-
-        if( baSet.atomCount === 0 ) return;
-
         var sphereScale = this.scale * this.aspectRatio;
 
+        var radiusFactory = new NGL.RadiusFactory( this.radius, sphereScale );
+        var colorParams = this.getColorParams();
+        var colorMaker = this.structure.getColorMaker( colorParams );
+        var pickingColorParams = Object.assign( colorParams, { scheme: "picking" } );
+        var pickingColorMaker = this.structure.getColorMaker( pickingColorParams );
+
+        //
+
+        var backboneAtomSet = this.structureView.atomSetCache[ "__backbone" ];
+        var ap = this.structure.getAtomProxy();
+
+        var atomCount = backboneAtomSet.size();
+        var atomPosition = new Float32Array( atomCount * 3 );
+        var atomColor = new Float32Array( atomCount * 3 );
+        var atomRadius = new Float32Array( atomCount );
+        var atomPickingColor = new Float32Array( atomCount * 3 );
+        
+        backboneAtomSet.forEach( function( index, i ){
+            ap.index = index;
+            ap.positionToArray( atomPosition, i * 3 );
+            colorMaker.atomColorToArray( ap, atomColor, i * 3 );
+            pickingColorMaker.atomColorToArray( ap, atomPickingColor, i * 3 );
+            atomRadius[ i ] = radiusFactory.atomRadius( ap );
+        } );
+
         this.sphereBuffer = new NGL.SphereBuffer(
-            baSet.atomPosition(),
-            baSet.atomColor( this.getColorParams() ),
-            baSet.atomRadius( this.radius, sphereScale ),
-            baSet.atomPickingColor(),
+            atomPosition,
+            atomColor,
+            atomRadius,
+            atomPickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -1789,14 +1777,44 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
+        //
+
+        var backboneBondSet = this.structureView.getBackboneBondSet();
+        var bp = this.structure.getBondProxy();
+        bp.bondStore = this.structure.backboneBondStore;
+        var ap1 = this.structure.getAtomProxy();
+        var ap2 = this.structure.getAtomProxy();
+
+        var bondCount = backboneBondSet.size();
+        var bondPosition1 = new Float32Array( bondCount * 3 );
+        var bondPosition2 = new Float32Array( bondCount * 3 );
+        var bondColor1 = new Float32Array( bondCount * 3 );
+        var bondColor2 = new Float32Array( bondCount * 3 );
+        var bondRadius = new Float32Array( bondCount );
+        var bondPickingColor1 = new Float32Array( bondCount * 3 );
+        var bondPickingColor2 = new Float32Array( bondCount * 3 );
+
+        backboneBondSet.forEach( function( index, i ){
+            bp.index = index
+            ap1.index = bp.atomIndex1;
+            ap2.index = bp.atomIndex2;
+            ap1.positionToArray( bondPosition1, i * 3 );
+            ap2.positionToArray( bondPosition2, i * 3 );
+            colorMaker.bondColorToArray( bp, 0, bondColor1, i * 3 );
+            colorMaker.bondColorToArray( bp, 1, bondColor2, i * 3 );
+            pickingColorMaker.bondColorToArray( bp, 0, bondPickingColor1, i * 3 );
+            pickingColorMaker.bondColorToArray( bp, 1, bondPickingColor2, i * 3 );
+            bondRadius[ i ] = radiusFactory.atomRadius( ap1 );
+        } );
+
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            bbSet.bondPosition( 0 ),
-            bbSet.bondPosition( 1 ),
-            bbSet.bondColor( 0, this.getColorParams() ),
-            bbSet.bondColor( 1, this.getColorParams() ),
-            bbSet.bondRadius( 0, this.radius, this.scale ),
-            bbSet.bondPickingColor( 0 ),
-            bbSet.bondPickingColor( 1 ),
+            bondPosition1,
+            bondPosition2,
+            bondColor1,
+            bondColor2,
+            bondRadius,
+            bondPickingColor1,
+            bondPickingColor2,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,

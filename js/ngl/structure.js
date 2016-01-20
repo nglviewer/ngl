@@ -1155,13 +1155,15 @@ NGL.Structure = function( name, path ){
     this.boxes = [];
 
     this.bondStore = new NGL.BondStore( 0 );
+    this.backboneBondStore = new NGL.BondStore( 0 );
     this.atomStore = new NGL.AtomStore( 0 );
     this.residueStore = new NGL.ResidueStore( 0 );
     this.chainStore = new NGL.ChainStore( 0 );
     this.modelStore = new NGL.ModelStore( 0 );
 
-    this.bondSet = this.getBondSet();
     this.atomSet = this.getAtomSet( this.selection );
+    this.bondSet = this.getBondSet();
+    this.backboneAtomSet = this.getAtomSet( false );
 
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
@@ -1185,13 +1187,13 @@ NGL.Structure.prototype = {
 
         this.atomSetCache = {};
 
-        this.bondSet = this.getBondSet();
         this.atomSet = this.getAtomSet( this.selection );
+        this.bondSet = this.getBondSet();
 
         for( var name in this.atomSetDict ){
             var as = this.atomSetDict[ name ];
             var as2 = this.getAtomSet( false );
-            this.atomSetCache[ "__" + name ] = as2.intersection( as );;
+            this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
 
         this.boundingBox = this.getBoundingBox();
@@ -1268,6 +1270,38 @@ NGL.Structure.prototype = {
         }
 
         NGL.timeEnd( "NGL.Structure.getBondSet" );
+
+        return bs;
+
+    },
+
+    getBackboneBondSet: function( selection ){
+
+        NGL.time( "NGL.Structure.getBackboneBondSet" );
+
+        var n = this.backboneBondStore.count;
+        var bs = new TypedFastBitSet( n );
+        var as = this.atomSetCache[ "__backbone" ];
+
+        if( as ){
+
+            var bp = this.getBondProxy();
+            bp.bondStore = this.backboneBondStore;
+
+            for( var i = 0; i < n; ++i ){
+                bp.index = i;
+                if( as.has( bp.atomIndex1 ) && as.has( bp.atomIndex2 ) ){
+                    bs.add_unsafe( bp.index );
+                }
+            }
+
+        }else{
+
+            bs.set_all( true );
+
+        }
+
+        NGL.timeEnd( "NGL.Structure.getBackboneBondSet" );
 
         return bs;
 
@@ -1861,6 +1895,7 @@ NGL.Structure.prototype = {
             ],
 
             bondStore: this.bondStore.toJSON(),
+            backboneBondStore: this.backboneBondStore.toJSON(),
             atomStore: this.atomStore.toJSON(),
             residueStore: this.residueStore.toJSON(),
             chainStore: this.chainStore.toJSON(),
@@ -1911,6 +1946,7 @@ NGL.Structure.prototype = {
         );
 
         this.bondStore.fromJSON( input.bondStore );
+        this.backboneBondStore.fromJSON( input.backboneBondStore );
         this.atomStore.fromJSON( input.atomStore );
         this.residueStore.fromJSON( input.residueStore );
         this.chainStore.fromJSON( input.chainStore );
@@ -1943,6 +1979,7 @@ NGL.Structure.prototype = {
         var transferable = [];
 
         transferable.concat( this.bondStore.getTransferable() );
+        transferable.concat( this.backboneBondStore.getTransferable() );
         transferable.concat( this.atomStore.getTransferable() );
         transferable.concat( this.residueStore.getTransferable() );
         transferable.concat( this.chainStore.getTransferable() );
@@ -1985,6 +2022,7 @@ NGL.Structure.prototype = {
         if( this.boxes ) this.boxes.length = 0;
 
         this.bondStore.dispose();
+        this.backboneBondStore.dispose();
         this.atomStore.dispose();
         this.residueStore.dispose();
         this.chainStore.dispose();
@@ -2019,6 +2057,9 @@ NGL.StructureView = function( structure, selection ){
         },
         bondStore: {
             get: function(){ return this.structure.bondStore }
+        },
+        backboneBondStore: {
+            get: function(){ return this.structure.backboneBondStore }
         },
         atomStore: {
             get: function(){ return this.structure.atomStore }
