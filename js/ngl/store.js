@@ -360,7 +360,6 @@ NGL.AtomStore.prototype = NGL.createObject(
 
         [ "residueIndex", 1, "uint32" ],
 
-        [ "atomno", 1, "int32" ],
         [ "x", 1, "float32" ],
         [ "y", 1, "float32" ],
         [ "z", 1, "float32" ],

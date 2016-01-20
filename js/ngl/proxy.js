@@ -555,13 +555,6 @@ NGL.AtomProxy.prototype = {
 
     // 
 
-    get atomno () {
-        return this.atomStore.atomno[ this.index ];
-    },
-    set atomno ( value ) {
-        this.atomStore.atomno[ this.index ] = value;
-    },
-
     get x () {
         return this.atomStore.x[ this.index ];
     },
@@ -968,32 +961,28 @@ NGL.ResidueProxy.prototype = {
         this.residueStore.setSstruc( this.index, value );
     },
 
-    get moleculeType () {
-        return this.residueStore.moleculeType[ this.index ];
-    },
-    set moleculeType ( value ) {
-        this.residueStore.moleculeType[ this.index ] = value;
-    },
-
-    get backboneType () {
-        return this.residueStore.backboneType[ this.index ];
-    },
-    set backboneType ( value ) {
-        this.residueStore.backboneType[ this.index ] = value;
-    },
+    //
 
     get backboneStartAtomIndex () {
         return this.residueStore.backboneStartAtomIndex[ this.index ];
     },
-    set backboneStartAtomIndex ( value ) {
-        this.residueStore.backboneStartAtomIndex[ this.index ] = value;
-    },
-
     get backboneEndAtomIndex () {
         return this.residueStore.backboneEndAtomIndex[ this.index ];
     },
-    set backboneEndAtomIndex ( value ) {
-        this.residueStore.backboneEndAtomIndex[ this.index ] = value;
+    get traceAtomIndex () {
+        return this.residueStore.traceAtomIndex[ this.index ];
+    },
+    get direction1AtomIndex () {
+        return this.residueStore.direction1AtomIndex[ this.index ];
+    },
+    get direction2AtomIndex () {
+        return this.residueStore.direction2AtomIndex[ this.index ];
+    },
+    get moleculeType () {
+        return this.residueStore.moleculeType[ this.index ];
+    },
+    get backboneType () {
+        return this.residueStore.backboneType[ this.index ];
     },
 
     //
