@@ -3525,6 +3525,8 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         var bondStore = s.bondStore;
         var atomStore = s.atomStore;
         var residueStore = s.residueStore;
+        var chainStore = s.chainStore;
+        var modelStore = s.modelStore;
 
         var covRadii = NGL.CovalentRadii;
         var vdwRadii = NGL.VdwRadii;
@@ -3636,35 +3638,36 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             return dataArray;
         }
         
+        function decodeFloatCombined( bigArray, smallArray, divisor, dataArray ){
+            var int32 = decodeDeltaMulti( getInt32( bigArray ), getInt16( smallArray ) );
+            return decodeFloat( int32, divisor, dataArray );
+        }
+
         console.time( "decode per atom data" );
 
-        msg._atom_site_id = decodeDelta( decodeRunLength( getInt32( msg._atom_site_id ) ) );
-
-        var atomCount = msg._atom_site_id.length;
+        var atomCount = msg.numAtoms;
         atomStore.resize( atomCount );
         atomStore.count = atomCount;
 
-        var residueCount = msg.resOrder.length;
+        var residueCount = msg.resOrder.length / 4;
         residueStore.resize( residueCount );
         residueStore.count = residueCount;
 
+        var chainCount = msg.chainList.length / 4;
+        chainStore.resize( chainCount );
+        chainStore.count = chainCount;
+
+        var modelCount = msg.chainsPerModel.length;
+        modelStore.resize( modelCount );
+        modelStore.count = modelCount;        
+
         //
 
-        msg.cartn_x_big = getInt32( msg.cartn_x_big );
-        msg.cartn_x_small = getInt16( msg.cartn_x_small );
-        msg.cartn_x = decodeFloat( decodeDeltaMulti( msg.cartn_x_big, msg.cartn_x_small ), 1000 );
-
-        msg.cartn_y_big = getInt32( msg.cartn_y_big );
-        msg.cartn_y_small = getInt16( msg.cartn_y_small );
-        msg.cartn_y = decodeFloat( decodeDeltaMulti( msg.cartn_y_big, msg.cartn_y_small ), 1000 );
-
-        msg.cartn_z_big = getInt32( msg.cartn_z_big );
-        msg.cartn_z_small = getInt16( msg.cartn_z_small );
-        msg.cartn_z = decodeFloat( decodeDeltaMulti( msg.cartn_z_big, msg.cartn_z_small ), 1000 );
-
-        msg.b_factor_big = getInt32( msg.b_factor_big );
-        msg.b_factor_small = getInt16( msg.b_factor_small );
-        msg.b_factor = decodeFloat( decodeDeltaMulti( msg.b_factor_big, msg.b_factor_small ), 100 );
+        decodeFloatCombined( msg.cartn_x_big, msg.cartn_x_small, 1000, atomStore.x );
+        decodeFloatCombined( msg.cartn_y_big, msg.cartn_y_small, 1000, atomStore.y );
+        decodeFloatCombined( msg.cartn_z_big, msg.cartn_z_small, 1000, atomStore.z );
+        decodeFloatCombined( msg.b_factor_big, msg.b_factor_small, 100, atomStore.bfactor );
+        decodeDelta( decodeRunLength( getInt32( msg._atom_site_id ) ), atomStore.serial );
 
         for( var i = 0, il = msg._atom_site_label_alt_id.length; i < il; i+=2 ){
             var value = msg._atom_site_label_alt_id[ i ];
@@ -3675,22 +3678,39 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             }
             msg._atom_site_label_alt_id[ i + 1 ] = parseInt( msg._atom_site_label_alt_id[ i + 1 ] );
         }
-        msg._atom_site_label_alt_id = decodeRunLength(
-            msg._atom_site_label_alt_id, new Uint8Array( msg.cartn_x.length )
-        );
+        decodeRunLength( msg._atom_site_label_alt_id, atomStore.altloc );
 
         console.timeEnd( "decode per atom data" );
 
         //
 
-        console.time( "decode per residue data" );
-        
-        msg._atom_site_auth_seq_id = decodeDelta( decodeRunLength( getInt32( msg._atom_site_auth_seq_id ) ) );
-        msg.secStruct = getInt8( msg.secStruct );
+        console.time( "build hierarchy" );
 
-        console.timeEnd( "decode per residue data" );
+        chainStore.chainname.set( getInt8( msg.chainList ) );
 
-        //
+        var chainOffset = 0;
+        msg.chainsPerModel.forEach( function( chainCount, i ){
+            modelStore.chainOffset[ i ] = chainOffset;
+            modelStore.chainCount[ i ] = chainCount;
+            for( var j = 0; j < chainCount; ++j ){
+                chainStore.modelIndex[ j + chainOffset ] = i;
+            }
+            chainOffset += chainCount;
+        } );
+
+        var residueOffset = 0;
+        msg.groupsPerChain.forEach( function( residueCount, i ){
+            chainStore.residueOffset[ i ] = residueOffset;
+            chainStore.residueCount[ i ] = residueCount;
+            for( var j = 0; j < residueCount; ++j ){
+                residueStore.chainIndex[ j + residueOffset ] = i;
+            }
+            residueOffset += residueCount;
+        } );
+
+        console.timeEnd( "build hierarchy" );
+
+        // 
 
         console.time( "decode from residue" );
 
@@ -3706,40 +3726,54 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             "-1": "",  // NA
         }
 
-        msg.resOrder = getInt32( msg.resOrder );
-        msg.atomname = new Uint8Array( msg.cartn_x.length * 4 );
-        msg.element = new Uint8Array( msg.cartn_x.length * 3 );
-        msg.hetero = new Uint8Array( msg.cartn_x.length );
+        decodeDelta( decodeRunLength( getInt32( msg._atom_site_auth_seq_id ) ), residueStore.resno );
 
-        var atomDataOffset = 0;
+        var resOrder = getInt32( msg.resOrder );
+        var secStruct = getInt8( msg.secStruct );
+        var ap1 = s.getAtomProxy();
+        var ap2 = s.getAtomProxy();
+        var atomOffset = 0;
 
-        for( var i = 0, il = msg.resOrder.length; i < il; ++i ){
+        for( var i = 0; i < residueCount; ++i ){
 
-            var resData = msg.groupMap[ msg.resOrder[ i ] ];
-
-            residueStore.sstruc[ i ] = ( sstrucMap[ msg.secStruct[ i ] ] || "l" ).charCodeAt();
-            // residueStore.setResname( i, resData.resName );
-
-            var resName = resData.resName;
+            var resData = msg.groupMap[ resOrder[ i ] ];
             var hetFlag = resData.hetFlag ? 1 : 0;
             var atomInfo = resData.atomInfo;
             var resAtomCount = atomInfo.length / 2;
 
+            var bondIndices = resData.bondIndices;
+            var bondOrders = resData.bondOrders;
+
+            for( var j = 0, jl = bondOrders.length; j < jl; ++j ){
+                ap1.index = atomOffset + bondIndices[ j * 2 ];
+                ap2.index = atomOffset + bondIndices[ j * 2 + 1 ];
+                bondStore.addBond( ap1, ap2, bondOrders[ j ] );
+            }
+
+            //
+
+            residueStore.sstruc[ i ] = ( sstrucMap[ secStruct[ i ] ] || "l" ).charCodeAt();
+            residueStore.setResname( i, resData.resName );
+            residueStore.atomOffset[ i ] = atomOffset;
+            residueStore.atomCount[ i ] = resAtomCount;
+
             for( var j = 0; j < resAtomCount; ++j ){
+
                 var atomname = atomInfo[ j * 2 + 1 ];
                 for( var k = 0, kl = atomname.length; k < kl; ++k ){
-                    msg.atomname[ atomDataOffset * 4 + k ] = atomname.charCodeAt( k );
+                    atomStore.atomname[ atomOffset * 4 + k ] = atomname.charCodeAt( k );
                 }
+
                 var element = atomInfo[ j * 2 ];
                 for( var k = 0, kl = element.length; k < kl; ++k ){
-                    msg.element[ atomDataOffset * 3 + k ] = element.charCodeAt( k );
+                    atomStore.element[ atomOffset * 3 + k ] = element.charCodeAt( k );
                 }
-                msg.hetero[ atomDataOffset ] = hetFlag;
 
-                var resno = msg._atom_site_auth_seq_id[ atomDataOffset ];
-                sb.addAtom( 0, "A", resName, resno );
+                atomStore.hetero[ atomOffset ] = hetFlag;
+                atomStore.residueIndex[ atomOffset ] = i;
 
-                atomDataOffset += 1;
+                atomOffset += 1;
+
             }
 
         }
@@ -3747,65 +3781,16 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         console.timeEnd( "decode from residue" );
 
         //
-
-        console.log( msg );
-
-        //
-
-        console.time( "set atomStore directly" )
-        
-        atomStore.x.set( msg.cartn_x );
-        atomStore.y.set( msg.cartn_y );
-        atomStore.z.set( msg.cartn_z );
-        atomStore.bfactor.set( msg.b_factor );
-        atomStore.atomname.set( msg.atomname );
-        atomStore.element.set( msg.element );
-        atomStore.hetero.set( msg.hetero );
-        atomStore.altloc.set( msg._atom_site_label_alt_id );
-        atomStore.serial.set( msg._atom_site_id );
-        
-        console.timeEnd( "set atomStore directly" )
-
-        //
         
         console.time( "set atoms" );
 
         for( var i = 0; i < atomCount; ++i ){
-            var element = String.fromCharCode( msg.element[ i * 3 ] );
+            var element = String.fromCharCode( atomStore.element[ i * 3 ] );
             atomStore.vdw[ i ] = vdwRadii[ element ];
             atomStore.covalent[ i ] = covRadii[ element ];
         }
 
         console.timeEnd( "set atoms" );
-
-        //
-
-        console.time( "set bonds" );
-
-        atomDataOffset = 0;
-        var ap1 = s.getAtomProxy();
-        var ap2 = s.getAtomProxy();
-
-        for( var i = 0, il = msg.resOrder.length; i < il; ++i ){
-
-            var resData = msg.groupMap[ msg.resOrder[ i ] ];
-            var atomInfo = resData.atomInfo;
-            var bondIndices = resData.bondIndices;
-            var bondOrders = resData.bondOrders;
-
-            for( var j = 0, jl = bondOrders.length; j < jl; ++j ){
-                ap1.index = atomDataOffset + bondIndices[ j * 2 ];
-                ap2.index = atomDataOffset + bondIndices[ j * 2 + 1 ];
-                bondStore.addBond( ap1, ap2, bondOrders[ j ] );
-            }
-
-            atomDataOffset += resData.atomInfo.length / 2;
-
-        }
-
-        console.timeEnd( "set bonds" );
-
-        //
 
         NGL.timeEnd( __timeName );
         callback();
