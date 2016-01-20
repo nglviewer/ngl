@@ -266,12 +266,14 @@ TypedFastBitSet.prototype.array = function() {
 // - fixed method description, ASR
 TypedFastBitSet.prototype.forEach = function(fnc) {
   var c = this.count | 0;
+  var i = 0 | 0;
   for (var k = 0; k < c; ++k) {
     var w = this.words[k];
     while (w != 0) {
       var t = w & -w;
-      fnc((k << 5) + this.hammingWeight((t - 1) | 0));
+      fnc((k << 5) + this.hammingWeight((t - 1) | 0),i);
       w ^= t;
+      i += 1;
     }
   }
 };
