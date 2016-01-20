@@ -1337,17 +1337,18 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         // stage.loadFile( "data://perf/3SN6.msgpack", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4v99", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/3sn6", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4poh", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4cup", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/2l6n", {
-        stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4v5a", {
+        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V99", {
+        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/3SN6", {
+        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4POH", {
+        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4CUP", {
+        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/2L6N", {
+        stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V5A", {
             ext: "msgpack"
         } ).then( function( o ){
             // o.addRepresentation( "ribbon" );
-            o.addRepresentation( "cartoon" );
-            // o.addRepresentation( "ball+stick" );
+            o.addRepresentation( "backbone", { color: "chainindex", scale: 2.0 } );
+            // o.addRepresentation( "cartoon" );
+            o.addRepresentation( "ball+stick", { sele: "hetero" } );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "line" );
             // o.addRepresentation( "point" );
