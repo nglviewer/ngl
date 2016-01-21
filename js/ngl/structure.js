@@ -1127,6 +1127,135 @@ NGL.LabelFactory.prototype = {
 };
 
 
+
+NGL.getAtomData = function( structure, params ){
+
+    var p = Object.assign( {}, params );
+
+    var what = p.what;
+    var atomSet = p.atomSet || structure.atomSet;
+
+    var radiusFactory, colorMaker, pickingColorMaker;
+    var position, color, pickingColor, radius;
+
+    var atomData = {};
+    var ap = structure.getAtomProxy();
+    var atomCount = atomSet.size();
+
+    if( !what || what[ "position" ] ){
+        position = new Float32Array( atomCount * 3 );
+        atomData[ "position" ] = position;
+    }
+    if( !what || what[ "color" ] ){
+        color = new Float32Array( atomCount * 3 );
+        atomData[ "color" ] = color;
+        colorMaker = structure.getColorMaker( p.colorParams );
+    }
+    if( !what || what[ "pickingColor" ] ){
+        pickingColor = new Float32Array( atomCount * 3 );
+        atomData[ "pickingColor" ] = pickingColor;
+        var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
+        pickingColorMaker = structure.getColorMaker( pickingColorParams );
+    }
+    if( !what || what[ "radius" ] ){
+        radius = new Float32Array( atomCount );
+        atomData[ "radius" ] = radius;
+        radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
+    }
+
+    atomSet.forEach( function( index, i ){
+        var i3 = i * 3;
+        ap.index = index;
+        if( position ){
+            ap.positionToArray( position, i3 );    
+        }
+        if( color ){
+            colorMaker.atomColorToArray( ap, color, i3 );
+        }
+        if( pickingColor ){
+            pickingColorMaker.atomColorToArray( ap, pickingColor, i3 );
+        }
+        if( radius ){
+            radius[ i ] = radiusFactory.atomRadius( ap );
+        }
+    } );
+
+    return atomData;
+
+};
+
+
+NGL.getBondData = function( structure, params ){
+
+    var p = Object.assign( {}, params );
+
+    var what = p.what;
+    var bondSet = p.bondSet || structure.bondSet;
+
+    var radiusFactory, colorMaker, pickingColorMaker;
+    var position1, position2, color1, color2, pickingColor1, pickingColor2, radius;
+
+    var bondData = {};
+    var bp = structure.getBondProxy();
+    if( p.bondStore ) bp.bondStore = p.bondStore;
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+    var bondCount = bondSet.size();
+
+    if( !what || what[ "position" ] ){
+        position1 = new Float32Array( bondCount * 3 );
+        position2 = new Float32Array( bondCount * 3 );
+        bondData[ "position1" ] = position1;
+        bondData[ "position2" ] = position2;
+    }
+    if( !what || what[ "color" ] ){
+        color1 = new Float32Array( bondCount * 3 );
+        color2 = new Float32Array( bondCount * 3 );
+        bondData[ "color1" ] = color1;
+        bondData[ "color2" ] = color2;
+        colorMaker = structure.getColorMaker( p.colorParams );
+    }
+    if( !what || what[ "pickingColor" ] ){
+        pickingColor1 = new Float32Array( bondCount * 3 );
+        pickingColor2 = new Float32Array( bondCount * 3 );
+        bondData[ "pickingColor1" ] = pickingColor1;
+        bondData[ "pickingColor2" ] = pickingColor2;
+        var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
+        pickingColorMaker = structure.getColorMaker( pickingColorParams );
+    }
+    if( !what || what[ "radius" ] ){
+        radius = new Float32Array( bondCount );
+        bondData[ "radius" ] = radius;
+        radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
+    }
+
+    bondSet.forEach( function( index, i ){
+        var i3 = i * 3;
+        bp.index = index
+        ap1.index = bp.atomIndex1;
+        ap2.index = bp.atomIndex2;
+        if( position1 ){
+            ap1.positionToArray( position1, i3 );
+            ap2.positionToArray( position2, i3 );
+        }
+        if( color1 ){
+            colorMaker.bondColorToArray( bp, 0, color1, i3 );
+            colorMaker.bondColorToArray( bp, 1, color2, i3 );
+        }
+        if( pickingColor1 ){
+            pickingColorMaker.bondColorToArray( bp, 0, pickingColor1, i3 );
+            pickingColorMaker.bondColorToArray( bp, 1, pickingColor2, i3 );
+        }
+        if( radius ){
+            radius[ i ] = radiusFactory.atomRadius( ap1 );
+        }
+    } );
+
+    return bondData;
+
+};
+
+
 //////////////
 // Structure
 

@@ -1348,7 +1348,7 @@ NGL.ExampleRegistry.addDict( {
             // o.addRepresentation( "ribbon" );
             o.addRepresentation( "backbone", { color: "chainindex", scale: 2.0 } );
             // o.addRepresentation( "cartoon" );
-            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "line" );
             // o.addRepresentation( "point" );

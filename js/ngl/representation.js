@@ -687,7 +687,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( params && params[ "scale" ] !== undefined ){
 
-            what[ "scale" ] = true;
+            what[ "radius" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
@@ -1734,42 +1734,45 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     },
 
+    getData: function( what ){
+
+        var sphereScale = this.scale * this.aspectRatio;
+
+        var atomDataParams = {
+            what: what,
+            atomSet: this.structureView.atomSetCache[ "__backbone" ],
+            colorParams: this.getColorParams(),
+            radiusParams: { "radius": this.radius, "scale": sphereScale }
+        };
+        var atomData = NGL.getAtomData( this.structureView, atomDataParams );
+
+        var bondDataParams = {
+            what: what,
+            bondSet: this.structureView.getBackboneBondSet(),
+            bondStore: this.structure.backboneBondStore,
+            colorParams: this.getColorParams(),
+            radiusParams: { "radius": this.radius, "scale": sphereScale }
+        };
+        var bondData = NGL.getBondData( this.structureView, bondDataParams );
+
+        return {
+            "atom": atomData,
+            "bond": bondData
+        };
+
+    },
+
     create: function(){
 
         if( this.structureView.atomCount === 0 ) return;
 
-        var sphereScale = this.scale * this.aspectRatio;
-
-        var radiusFactory = new NGL.RadiusFactory( this.radius, sphereScale );
-        var colorParams = this.getColorParams();
-        var colorMaker = this.structure.getColorMaker( colorParams );
-        var pickingColorParams = Object.assign( colorParams, { scheme: "picking" } );
-        var pickingColorMaker = this.structure.getColorMaker( pickingColorParams );
-
-        //
-
-        var backboneAtomSet = this.structureView.atomSetCache[ "__backbone" ];
-        var ap = this.structure.getAtomProxy();
-
-        var atomCount = backboneAtomSet.size();
-        var atomPosition = new Float32Array( atomCount * 3 );
-        var atomColor = new Float32Array( atomCount * 3 );
-        var atomRadius = new Float32Array( atomCount );
-        var atomPickingColor = new Float32Array( atomCount * 3 );
-        
-        backboneAtomSet.forEach( function( index, i ){
-            ap.index = index;
-            ap.positionToArray( atomPosition, i * 3 );
-            colorMaker.atomColorToArray( ap, atomColor, i * 3 );
-            pickingColorMaker.atomColorToArray( ap, atomPickingColor, i * 3 );
-            atomRadius[ i ] = radiusFactory.atomRadius( ap );
-        } );
+        var data = this.getData();
 
         this.sphereBuffer = new NGL.SphereBuffer(
-            atomPosition,
-            atomColor,
-            atomRadius,
-            atomPickingColor,
+            data.atom.position,
+            data.atom.color,
+            data.atom.radius,
+            data.atom.pickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -1777,44 +1780,14 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        //
-
-        var backboneBondSet = this.structureView.getBackboneBondSet();
-        var bp = this.structure.getBondProxy();
-        bp.bondStore = this.structure.backboneBondStore;
-        var ap1 = this.structure.getAtomProxy();
-        var ap2 = this.structure.getAtomProxy();
-
-        var bondCount = backboneBondSet.size();
-        var bondPosition1 = new Float32Array( bondCount * 3 );
-        var bondPosition2 = new Float32Array( bondCount * 3 );
-        var bondColor1 = new Float32Array( bondCount * 3 );
-        var bondColor2 = new Float32Array( bondCount * 3 );
-        var bondRadius = new Float32Array( bondCount );
-        var bondPickingColor1 = new Float32Array( bondCount * 3 );
-        var bondPickingColor2 = new Float32Array( bondCount * 3 );
-
-        backboneBondSet.forEach( function( index, i ){
-            bp.index = index
-            ap1.index = bp.atomIndex1;
-            ap2.index = bp.atomIndex2;
-            ap1.positionToArray( bondPosition1, i * 3 );
-            ap2.positionToArray( bondPosition2, i * 3 );
-            colorMaker.bondColorToArray( bp, 0, bondColor1, i * 3 );
-            colorMaker.bondColorToArray( bp, 1, bondColor2, i * 3 );
-            pickingColorMaker.bondColorToArray( bp, 0, bondPickingColor1, i * 3 );
-            pickingColorMaker.bondColorToArray( bp, 1, bondPickingColor2, i * 3 );
-            bondRadius[ i ] = radiusFactory.atomRadius( ap1 );
-        } );
-
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            bondPosition1,
-            bondPosition2,
-            bondColor1,
-            bondColor2,
-            bondRadius,
-            bondPickingColor1,
-            bondPickingColor2,
+            data.bond.position1,
+            data.bond.position2,
+            data.bond.color1,
+            data.bond.color2,
+            data.bond.radius,
+            data.bond.pickingColor1,
+            data.bond.pickingColor2,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -1830,59 +1803,32 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     update: function( what ){
 
-        if( this.atomSet.atomCount === 0 ) return;
+        if( this.structureView.atomCount === 0 ) return;
         if( this.bufferList.length === 0 ) return;
-
-        what = what || {};
-
-        var baSet = this.backboneAtomSet;
-        var bbSet = this.backboneBondSet;
-
-        if( baSet.atomCount === 0 ) return;
 
         var sphereData = {};
         var cylinderData = {};
 
+        var data = this.getData( what );
+
         if( what[ "position" ] ){
-
-            sphereData[ "position" ] = baSet.atomPosition();
-
-            var from = bbSet.bondPosition( 0 );
-            var to = bbSet.bondPosition( 1 );
-
+            sphereData[ "position" ] = data.atom.position;
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to
+                data.bond.position1, data.bond.position2
             );
-            cylinderData[ "position1" ] = from;
-            cylinderData[ "position2" ] = to;
-
+            cylinderData[ "position1" ] = data.bond.position1;
+            cylinderData[ "position2" ] = data.bond.position2;
         }
 
         if( what[ "color" ] ){
-
-            sphereData[ "color" ] = baSet.atomColor(
-                this.getColorParams()
-            );
-
-            cylinderData[ "color" ] = bbSet.bondColor(
-                0, this.getColorParams()
-            );
-            cylinderData[ "color2" ] = bbSet.bondColor(
-                1, this.getColorParams()
-            );
-
+            sphereData[ "color" ] = data.atom.color;
+            cylinderData[ "color" ] = data.bond.color1;
+            cylinderData[ "color2" ] = data.bond.color2;
         }
 
-        if( what[ "radius" ] || what[ "scale" ] ){
-
-            sphereData[ "radius" ] = baSet.atomRadius(
-                this.radius, this.scale * this.aspectRatio
-            );
-
-            cylinderData[ "radius" ] = bbSet.bondRadius(
-                0, this.radius, this.scale
-            );
-
+        if( what[ "radius" ] ){
+            sphereData[ "radius" ] = data.atom.radius;
+            cylinderData[ "radius" ] = data.bond.radius;
         }
 
         this.sphereBuffer.setAttributes( sphereData );
@@ -1896,13 +1842,10 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
         var what = {};
 
         if( params && params[ "aspectRatio" ] ){
-
             what[ "radius" ] = true;
-            what[ "scale" ] = true;
             if( !NGL.extensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
-
         }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
@@ -2585,7 +2528,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             this.bufferList[ i ].rx = this.aspectRatio;
 
-            if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
+            if( what[ "position" ] || what[ "radius" ] ){
 
                 var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
                 var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
@@ -2626,15 +2569,11 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         var what = {};
 
         if( params && params[ "aspectRatio" ] ){
-
             what[ "radius" ] = true;
-
         }
 
         if( params && params[ "tension" ] ){
-
             what[ "position" ] = true;
-
         }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
