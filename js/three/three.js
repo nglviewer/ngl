@@ -18,80 +18,6 @@ if ( typeof define === 'function' && define.amd ) {
 
 }
 
-
-// polyfills
-
-if ( self.requestAnimationFrame === undefined || self.cancelAnimationFrame === undefined ) {
-
-	// Missing in Android stock browser.
-
-	( function () {
-
-		var lastTime = 0;
-		var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
-
-		for ( var x = 0; x < vendors.length && ! self.requestAnimationFrame; ++ x ) {
-
-			self.requestAnimationFrame = self[ vendors[ x ] + 'RequestAnimationFrame' ];
-			self.cancelAnimationFrame = self[ vendors[ x ] + 'CancelAnimationFrame' ] || self[ vendors[ x ] + 'CancelRequestAnimationFrame' ];
-
-		}
-
-		if ( self.requestAnimationFrame === undefined && self.setTimeout !== undefined ) {
-
-			self.requestAnimationFrame = function ( callback ) {
-
-				var currTime = Date.now(), timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
-				var id = self.setTimeout( function () {
-
-					callback( currTime + timeToCall );
-
-				}, timeToCall );
-				lastTime = currTime + timeToCall;
-				return id;
-
-			};
-
-		}
-
-		if ( self.cancelAnimationFrame === undefined && self.clearTimeout !== undefined ) {
-
-			self.cancelAnimationFrame = function ( id ) {
-
-				self.clearTimeout( id );
-
-			};
-
-		}
-
-	} )();
-
-}
-
-//
-
-if ( self.performance === undefined ) {
-
-	self.performance = {};
-
-}
-
-if ( self.performance.now === undefined ) {
-
-	( function () {
-
-		var start = Date.now();
-
-		self.performance.now = function () {
-
-			return Date.now() - start;
-
-		}
-
-	} )();
-
-}
-
 //
 
 if ( Number.EPSILON === undefined ) {
@@ -353,6 +279,10 @@ THREE.RGB_PVRTC_4BPPV1_Format = 2100;
 THREE.RGB_PVRTC_2BPPV1_Format = 2101;
 THREE.RGBA_PVRTC_4BPPV1_Format = 2102;
 THREE.RGBA_PVRTC_2BPPV1_Format = 2103;
+
+// ETC compressed texture formats
+
+THREE.RGB_ETC1_Format = 2151;
 
 // Loop styles for AnimationAction
 
@@ -1837,6 +1767,18 @@ THREE.Vector2.prototype = {
 	normalize: function () {
 
 		return this.divideScalar( this.length() );
+
+	},
+
+	angle: function () {
+
+		// computes the angle in radians with respect to the positive x-axis
+
+		var angle = Math.atan2( this.y, this.x );
+
+		if ( angle < 0 ) angle += 2 * Math.PI;
+
+		return angle;
 
 	},
 
@@ -3815,7 +3757,7 @@ THREE.Line3.prototype = {
 
 THREE.Box2 = function ( min, max ) {
 
-	this.min = ( min !== undefined ) ? min : new THREE.Vector2( Infinity, Infinity );
+	this.min = ( min !== undefined ) ? min : new THREE.Vector2( + Infinity, + Infinity );
 	this.max = ( max !== undefined ) ? max : new THREE.Vector2( - Infinity, - Infinity );
 
 };
@@ -3880,7 +3822,7 @@ THREE.Box2.prototype = {
 
 	makeEmpty: function () {
 
-		this.min.x = this.min.y = Infinity;
+		this.min.x = this.min.y = + Infinity;
 		this.max.x = this.max.y = - Infinity;
 
 		return this;
@@ -4055,7 +3997,7 @@ THREE.Box2.prototype = {
 
 THREE.Box3 = function ( min, max ) {
 
-	this.min = ( min !== undefined ) ? min : new THREE.Vector3( Infinity, Infinity, Infinity );
+	this.min = ( min !== undefined ) ? min : new THREE.Vector3( + Infinity, + Infinity, + Infinity );
 	this.max = ( max !== undefined ) ? max : new THREE.Vector3( - Infinity, - Infinity, - Infinity );
 
 };
@@ -4070,6 +4012,39 @@ THREE.Box3.prototype = {
 		this.max.copy( max );
 
 		return this;
+
+	},
+
+	setFromArray: function ( array ) {
+
+		this.makeEmpty();
+
+		var minX = + Infinity;
+		var minY = + Infinity;
+		var minZ = + Infinity;
+
+		var maxX = - Infinity;
+		var maxY = - Infinity;
+		var maxZ = - Infinity;
+
+		for ( var i = 0, il = array.length; i < il; i += 3 ) {
+
+			var x = array[ i ];
+			var y = array[ i + 1 ];
+			var z = array[ i + 2 ];
+
+			minX = Math.min( minX, x );
+			minY = Math.min( minY, y );
+			minZ = Math.min( minZ, z );
+
+			maxX = Math.max( maxX, x );
+			maxY = Math.max( maxY, y );
+			maxZ = Math.max( maxZ, z );
+
+		}
+
+		this.min.set( minX, minY, minZ );
+		this.max.set( maxX, maxY, maxZ );
 
 	},
 
@@ -4164,7 +4139,7 @@ THREE.Box3.prototype = {
 
 	makeEmpty: function () {
 
-		this.min.x = this.min.y = this.min.z = Infinity;
+		this.min.x = this.min.y = this.min.z = + Infinity;
 		this.max.x = this.max.y = this.max.z = - Infinity;
 
 		return this;
@@ -7930,7 +7905,7 @@ THREE.Clock.prototype = {
 
 	start: function () {
 
-		this.startTime = self.performance.now();
+		this.startTime = performance.now();
 
 		this.oldTime = this.startTime;
 		this.running = true;
@@ -7963,7 +7938,7 @@ THREE.Clock.prototype = {
 
 		if ( this.running ) {
 
-			var newTime = self.performance.now();
+			var newTime = performance.now();
 
 			diff = 0.001 * ( newTime - this.oldTime );
 			this.oldTime = newTime;
@@ -11787,42 +11762,7 @@ THREE.BufferGeometry.prototype = {
 
 			if ( positions ) {
 
-				var bb = this.boundingBox;
-				bb.makeEmpty();
-
-				var minX = +Infinity;
-				var minY = +Infinity;
-				var minZ = +Infinity;
-
-				var maxX = -Infinity;
-				var maxY = -Infinity;
-				var maxZ = -Infinity;
-
-				for ( var i = 0, il = positions.length; i < il; i += 3 ) {
-
-					var x = positions[ i     ];
-					var y = positions[ i + 1 ];
-					var z = positions[ i + 2 ];
-
-					minX = Math.min( minX, x );
-					minY = Math.min( minY, y );
-					minZ = Math.min( minZ, z );
-
-					maxX = Math.max( maxX, x );
-					maxY = Math.max( maxY, y );
-					maxZ = Math.max( maxZ, z );
-
-				}
-
-				this.boundingBox.min.set( minX, minY, minZ );
-				this.boundingBox.max.set( maxX, maxY, maxZ );
-
-				// for ( var i = 0, il = positions.length; i < il; i += 3 ) {
-
-				// 	vector.fromArray( positions, i );
-				// 	bb.expandByPoint( vector );
-
-				// }
+				this.boundingBox.setFromArray( positions );
 
 			}
 
@@ -11860,17 +11800,9 @@ THREE.BufferGeometry.prototype = {
 
 			if ( positions ) {
 
-				box.makeEmpty();
-
 				var center = this.boundingSphere.center;
 
-				for ( var i = 0, il = positions.length; i < il; i += 3 ) {
-
-					vector.fromArray( positions, i );
-					box.expandByPoint( vector );
-
-				}
-
+				box.setFromArray( positions );
 				box.center( center );
 
 				// hoping to find a boundingSphere with a radius smaller than the
@@ -13436,7 +13368,6 @@ THREE.AnimationMixer._Action.prototype = {
 		switch ( loop ) {
 
 			case THREE.LoopOnce:
-			case THREE.LoopOnceClamp:
 
 				if ( loopCount === -1 ) {
 
@@ -14819,35 +14750,25 @@ THREE.KeyframeTrack.prototype = {
 	// IMPORTANT: We do not shift around keys to the start of the track time, because for interpolated keys this will change their values
 	trim: function( startTime, endTime ) {
 
-		var times = this.times;
-		var nKeys = times.length;
+		var times = this.times,
+			nKeys = times.length,
+			from = 0,
+			to = nKeys - 1;
 
-		var firstKeysToRemove = 0;
-		for ( var i = 1; i !== nKeys; ++ i ) {
+		while ( from !== nKeys && times[ from ] < startTime ) ++ from;
+		while ( to !== -1 && times[ to ] > endTime ) -- to;
 
-			if ( times[i] <= startTime ) ++ firstKeysToRemove;
+		++ to; // inclusive -> exclusive bound
 
-		}
+		if( from !== 0 || to !== nKeys ) {
 
-		var lastKeysToRemove = 0;
-		for ( var i = nKeys - 2; i !== 0; -- i ) {
+			// empty tracks are forbidden, so keep at least one keyframe
+			if ( from >= to ) to = Math.max( to , 1 ), from = to - 1;
 
-			if ( times[i] >= endTime ) ++ lastKeysToRemove;
-			else break;
-
-		}
-
-		// remove last keys first because it doesn't affect the position of the first keys (the otherway around doesn't work as easily)
-		if( ( firstKeysToRemove + lastKeysToRemove ) !== 0 ) {
-
-			var from = firstKeysToRemove;
-			var to = nKeys - lastKeysToRemove - firstKeysToRemove;
-
-			this.times = THREE.AnimationUtils.arraySlice( times, from, to );
-
-			var values = this.values;
 			var stride = this.getValueSize();
-			this.values = THREE.AnimationUtils.arraySlice( values, from * stride, to * stride );
+			this.times = THREE.AnimationUtils.arraySlice( times, from, to );
+			this.values = THREE.AnimationUtils.
+					arraySlice( this.values, from * stride, to * stride );
 
 		}
 
@@ -17746,8 +17667,6 @@ THREE.Loader.prototype = {
 						break;
 					case 'depthTest':
 					case 'depthWrite':
-					case 'stencilTest':
-					case 'stencilWrite':
 					case 'colorWrite':
 					case 'opacity':
 					case 'reflectivity':
@@ -18738,9 +18657,21 @@ THREE.BufferGeometryLoader.prototype = {
 
 		var index = json.data.index;
 
+		var TYPED_ARRAYS = {
+			'Int8Array': Int8Array,
+			'Uint8Array': Uint8Array,
+			'Uint8ClampedArray': Uint8ClampedArray,
+			'Int16Array': Int16Array,
+			'Uint16Array': Uint16Array,
+			'Int32Array': Int32Array,
+			'Uint32Array': Uint32Array,
+			'Float32Array': Float32Array,
+			'Float64Array': Float64Array
+		};
+
 		if ( index !== undefined ) {
 
-			var typedArray = new self[ index.type ]( index.array );
+			var typedArray = new TYPED_ARRAYS[ index.type ]( index.array );
 			geometry.setIndex( new THREE.BufferAttribute( typedArray, 1 ) );
 
 		}
@@ -18750,7 +18681,7 @@ THREE.BufferGeometryLoader.prototype = {
 		for ( var key in attributes ) {
 
 			var attribute = attributes[ key ];
-			var typedArray = new self[ attribute.type ]( attribute.array );
+			var typedArray = new TYPED_ARRAYS[ attribute.type ]( attribute.array );
 
 			geometry.addAttribute( key, new THREE.BufferAttribute( typedArray, attribute.itemSize ) );
 
@@ -18866,8 +18797,6 @@ THREE.MaterialLoader.prototype = {
 		if ( json.alphaTest !== undefined ) material.alphaTest = json.alphaTest;
 		if ( json.depthTest !== undefined ) material.depthTest = json.depthTest;
 		if ( json.depthWrite !== undefined ) material.depthWrite = json.depthWrite;
-		if ( json.stencilTest !== undefined ) material.stencilTest = json.stencilTest;
-		if ( json.stencilWrite !== undefined ) material.stencilWrite = json.stencilWrite;
 		if ( json.colorWrite !== undefined ) material.colorWrite = json.colorWrite;
 		if ( json.wireframe !== undefined ) material.wireframe = json.wireframe;
 		if ( json.wireframeLinewidth !== undefined ) material.wireframeLinewidth = json.wireframeLinewidth;
@@ -18915,7 +18844,7 @@ THREE.MaterialLoader.prototype = {
 		if ( json.metalnessMap !== undefined ) material.metalnessMap = this.getTexture( json.metalnessMap );
 
 		if ( json.emissiveMap !== undefined ) material.emissiveMap = this.getTexture( json.emissiveMap );
-		if ( json.emissiveMapIntensity !== undefined ) material.emissiveMapIntensity = json.emissiveMapIntensity;
+		if ( json.emissiveIntensity !== undefined ) material.emissiveIntensity = json.emissiveIntensity;
 
 		if ( json.specularMap !== undefined ) material.specularMap = this.getTexture( json.specularMap );
 
@@ -18934,7 +18863,7 @@ THREE.MaterialLoader.prototype = {
 		if ( json.aoMap !== undefined ) material.aoMap = this.getTexture( json.aoMap );
 		if ( json.aoMapIntensity !== undefined ) material.aoMapIntensity = json.aoMapIntensity;
 
-		// MeshFaceMaterial
+		// MultiMaterial
 
 		if ( json.materials !== undefined ) {
 
@@ -19209,6 +19138,17 @@ THREE.ObjectLoader.prototype = {
 							data.p,
 							data.q,
 							data.heightScale
+						);
+
+						break;
+
+					case 'LatheGeometry':
+
+						geometry = new THREE.LatheGeometry(
+							data.points,
+							data.segments,
+							data.phiStart,
+							data.phiLength
 						);
 
 						break;
@@ -19970,9 +19910,6 @@ THREE.Material = function () {
 	this.depthTest = true;
 	this.depthWrite = true;
 
-	this.stencilTest = false;
-	this.stencilWrite = false;
-
 	this.colorWrite = true;
 
 	this.precision = null; // override the renderer's default precision for this material
@@ -20199,9 +20136,6 @@ THREE.Material.prototype = {
 		this.depthFunc = source.depthFunc;
 		this.depthTest = source.depthTest;
 		this.depthWrite = source.depthWrite;
-
-		this.stencilTest = source.stencilTest;
-		this.stencilWrite = source.stencilWrite;
 
 		this.colorWrite = source.colorWrite;
 
@@ -20503,7 +20437,6 @@ THREE.MeshBasicMaterial.prototype.copy = function ( source ) {
  *
  * parameters = {
  *  color: <hex>,
- *  emissive: <hex>,
  *  opacity: <float>,
  *
  *  map: new THREE.Texture( <Image> ),
@@ -20514,8 +20447,9 @@ THREE.MeshBasicMaterial.prototype.copy = function ( source ) {
  *  aoMap: new THREE.Texture( <Image> ),
  *  aoMapIntensity: <float>
  *
+ *  emissive: <hex>,
+ *  emissiveIntensity: <float>
  *  emissiveMap: new THREE.Texture( <Image> ),
- *  emissiveMapIntensity: <float>
  *
  *  specularMap: new THREE.Texture( <Image> ),
  *
@@ -20550,7 +20484,6 @@ THREE.MeshLambertMaterial = function ( parameters ) {
 	this.type = 'MeshLambertMaterial';
 
 	this.color = new THREE.Color( 0xffffff ); // diffuse
-	this.emissive = new THREE.Color( 0x000000 );
 
 	this.map = null;
 
@@ -20560,8 +20493,9 @@ THREE.MeshLambertMaterial = function ( parameters ) {
 	this.aoMap = null;
 	this.aoMapIntensity = 1.0;
 
+	this.emissive = new THREE.Color( 0x000000 );
+	this.emissiveIntensity = 1.0;
 	this.emissiveMap = null;
-	this.emissiveMapIntensity = 1.0;
 
 	this.specularMap = null;
 
@@ -20597,7 +20531,6 @@ THREE.MeshLambertMaterial.prototype.copy = function ( source ) {
 	THREE.Material.prototype.copy.call( this, source );
 
 	this.color.copy( source.color );
-	this.emissive.copy( source.emissive );
 
 	this.map = source.map;
 
@@ -20607,8 +20540,9 @@ THREE.MeshLambertMaterial.prototype.copy = function ( source ) {
 	this.aoMap = source.aoMap;
 	this.aoMapIntensity = source.aoMapIntensity;
 
+	this.emissive.copy( source.emissive );
 	this.emissiveMap = source.emissiveMap;
-	this.emissiveMapIntensity = source.emissiveMapIntensity;
+	this.emissiveIntensity = source.emissiveIntensity;
 
 	this.specularMap = source.specularMap;
 
@@ -20644,7 +20578,6 @@ THREE.MeshLambertMaterial.prototype.copy = function ( source ) {
  *
  * parameters = {
  *  color: <hex>,
- *  emissive: <hex>,
  *  specular: <hex>,
  *  shininess: <float>,
  *  opacity: <float>,
@@ -20657,8 +20590,9 @@ THREE.MeshLambertMaterial.prototype.copy = function ( source ) {
  *  aoMap: new THREE.Texture( <Image> ),
  *  aoMapIntensity: <float>
  *
+ *  emissive: <hex>,
+ *  emissiveIntensity: <float>
  *  emissiveMap: new THREE.Texture( <Image> ),
- *  emissiveMapIntensity: <float>
  *
  *  bumpMap: new THREE.Texture( <Image> ),
  *  bumpScale: <float>,
@@ -20704,7 +20638,6 @@ THREE.MeshPhongMaterial = function ( parameters ) {
 	this.type = 'MeshPhongMaterial';
 
 	this.color = new THREE.Color( 0xffffff ); // diffuse
-	this.emissive = new THREE.Color( 0x000000 );
 	this.specular = new THREE.Color( 0x111111 );
 	this.shininess = 30;
 
@@ -20716,8 +20649,9 @@ THREE.MeshPhongMaterial = function ( parameters ) {
 	this.aoMap = null;
 	this.aoMapIntensity = 1.0;
 
+	this.emissive = new THREE.Color( 0x000000 );
+	this.emissiveIntensity = 1.0;
 	this.emissiveMap = null;
-	this.emissiveMapIntensity = 1.0;
 
 	this.bumpMap = null;
 	this.bumpScale = 1;
@@ -20765,7 +20699,6 @@ THREE.MeshPhongMaterial.prototype.copy = function ( source ) {
 	THREE.Material.prototype.copy.call( this, source );
 
 	this.color.copy( source.color );
-	this.emissive.copy( source.emissive );
 	this.specular.copy( source.specular );
 	this.shininess = source.shininess;
 
@@ -20777,8 +20710,9 @@ THREE.MeshPhongMaterial.prototype.copy = function ( source ) {
 	this.aoMap = source.aoMap;
 	this.aoMapIntensity = source.aoMapIntensity;
 
+	this.emissive.copy( source.emissive );
 	this.emissiveMap = source.emissiveMap;
-	this.emissiveMapIntensity = source.emissiveMapIntensity;
+	this.emissiveIntensity = source.emissiveIntensity;
 
 	this.bumpMap = source.bumpMap;
 	this.bumpScale = source.bumpScale;
@@ -20827,8 +20761,6 @@ THREE.MeshPhongMaterial.prototype.copy = function ( source ) {
  *  color: <hex>,
  *  roughness: <float>,
  *  metalness: <float>,
-
- *  emissive: <hex>,
  *  opacity: <float>,
  *
  *  map: new THREE.Texture( <Image> ),
@@ -20839,8 +20771,9 @@ THREE.MeshPhongMaterial.prototype.copy = function ( source ) {
  *  aoMap: new THREE.Texture( <Image> ),
  *  aoMapIntensity: <float>
  *
+ *  emissive: <hex>,
+ *  emissiveIntensity: <float>
  *  emissiveMap: new THREE.Texture( <Image> ),
- *  emissiveMapIntensity: <float>
  *
  *  bumpMap: new THREE.Texture( <Image> ),
  *  bumpScale: <float>,
@@ -20891,8 +20824,6 @@ THREE.MeshStandardMaterial = function ( parameters ) {
 	this.roughness = 0.5;
 	this.metalness = 0.5;
 
-	this.emissive = new THREE.Color( 0x000000 );
-
 	this.map = null;
 
 	this.lightMap = null;
@@ -20901,8 +20832,9 @@ THREE.MeshStandardMaterial = function ( parameters ) {
 	this.aoMap = null;
 	this.aoMapIntensity = 1.0;
 
+	this.emissive = new THREE.Color( 0x000000 );
+	this.emissiveIntensity = 1.0;
 	this.emissiveMap = null;
-	this.emissiveMapIntensity = 1.0;
 
 	this.bumpMap = null;
 	this.bumpScale = 1;
@@ -20955,8 +20887,6 @@ THREE.MeshStandardMaterial.prototype.copy = function ( source ) {
 	this.roughness = source.roughness;
 	this.metalness = source.metalness;
 
-	this.emissive.copy( source.emissive );
-
 	this.map = source.map;
 
 	this.lightMap = source.lightMap;
@@ -20965,8 +20895,9 @@ THREE.MeshStandardMaterial.prototype.copy = function ( source ) {
 	this.aoMap = source.aoMap;
 	this.aoMapIntensity = source.aoMapIntensity;
 
+	this.emissive.copy( source.emissive );
 	this.emissiveMap = source.emissiveMap;
-	this.emissiveMapIntensity = source.emissiveMapIntensity;
+	this.emissiveIntensity = source.emissiveIntensity;
 
 	this.bumpMap = source.bumpMap;
 	this.bumpScale = source.bumpScale;
@@ -21767,12 +21698,13 @@ THREE.CubeTexture.prototype.constructor = THREE.CubeTexture;
 THREE.CubeTexture.prototype.copy = function ( source ) {
 
 	THREE.Texture.prototype.copy.call( this, source );
-	
+
 	this.images = source.images;
-	
+
 	return this;
 
 };
+
 // File:src/textures/CompressedTexture.js
 
 /**
@@ -22466,7 +22398,7 @@ THREE.Mesh.prototype.raycast = ( function () {
 		} else if ( geometry instanceof THREE.Geometry ) {
 
 			var fvA, fvB, fvC;
-			var isFaceMaterial = material instanceof THREE.MeshFaceMaterial;
+			var isFaceMaterial = material instanceof THREE.MultiMaterial;
 			var materials = isFaceMaterial === true ? material.materials : null;
 
 			var vertices = geometry.vertices;
@@ -23453,11 +23385,11 @@ THREE.ShaderChunk[ 'displacementmap_pars_vertex' ] = "#ifdef USE_DISPLACEMENTMAP
 
 // File:src/renderers/shaders/ShaderChunk/emissivemap_fragment.glsl
 
-THREE.ShaderChunk[ 'emissivemap_fragment' ] = "#ifdef USE_EMISSIVEMAP\n	vec4 emissiveColor = texture2D( emissiveMap, vUv );\n	emissiveColor.rgb = inputToLinear( emissiveColor.rgb );\n	totalEmissiveLight *= emissiveColor.rgb * emissiveMapIntensity;\n#endif\n";
+THREE.ShaderChunk[ 'emissivemap_fragment' ] = "#ifdef USE_EMISSIVEMAP\n	vec4 emissiveColor = texture2D( emissiveMap, vUv );\n	emissiveColor.rgb = inputToLinear( emissiveColor.rgb );\n	totalEmissiveLight *= emissiveColor.rgb;\n#endif\n";
 
 // File:src/renderers/shaders/ShaderChunk/emissivemap_pars_fragment.glsl
 
-THREE.ShaderChunk[ 'emissivemap_pars_fragment' ] = "#ifdef USE_EMISSIVEMAP\n	uniform sampler2D emissiveMap;\n	uniform float emissiveMapIntensity;\n#endif\n";
+THREE.ShaderChunk[ 'emissivemap_pars_fragment' ] = "#ifdef USE_EMISSIVEMAP\n	uniform sampler2D emissiveMap;\n#endif\n";
 
 // File:src/renderers/shaders/ShaderChunk/envmap_fragment.glsl
 
@@ -23751,107 +23683,106 @@ THREE.UniformsLib = {
 
 	common: {
 
-		"diffuse" : { type: "c", value: new THREE.Color( 0xeeeeee ) },
-		"opacity" : { type: "f", value: 1.0 },
+		"diffuse": { type: "c", value: new THREE.Color( 0xeeeeee ) },
+		"opacity": { type: "f", value: 1.0 },
 
-		"map" : { type: "t", value: null },
-		"offsetRepeat" : { type: "v4", value: new THREE.Vector4( 0, 0, 1, 1 ) },
+		"map": { type: "t", value: null },
+		"offsetRepeat": { type: "v4", value: new THREE.Vector4( 0, 0, 1, 1 ) },
 
-		"specularMap" : { type: "t", value: null },
-		"alphaMap" : { type: "t", value: null },
+		"specularMap": { type: "t", value: null },
+		"alphaMap": { type: "t", value: null },
 
-		"envMap" : { type: "t", value: null },
-		"flipEnvMap" : { type: "f", value: - 1 },
-		"reflectivity" : { type: "f", value: 1.0 },
-		"refractionRatio" : { type: "f", value: 0.98 }
+		"envMap": { type: "t", value: null },
+		"flipEnvMap": { type: "f", value: - 1 },
+		"reflectivity": { type: "f", value: 1.0 },
+		"refractionRatio": { type: "f", value: 0.98 }
 
 	},
 
 	aomap: {
 
-		"aoMap" : { type: "t", value: null },
-		"aoMapIntensity" : { type: "f", value: 1 },
+		"aoMap": { type: "t", value: null },
+		"aoMapIntensity": { type: "f", value: 1 }
 
 	},
 
 	lightmap: {
 
-		"lightMap" : { type: "t", value: null },
-		"lightMapIntensity" : { type: "f", value: 1 },
+		"lightMap": { type: "t", value: null },
+		"lightMapIntensity": { type: "f", value: 1 }
 
 	},
 
 	emissivemap: {
 
-		"emissiveMap" : { type: "t", value: null },
-		"emissiveMapIntensity" : { type: "f", value: 1 },
+		"emissiveMap": { type: "t", value: null }
 
 	},
 
 	bumpmap: {
 
-		"bumpMap" : { type: "t", value: null },
-		"bumpScale" : { type: "f", value: 1 }
+		"bumpMap": { type: "t", value: null },
+		"bumpScale": { type: "f", value: 1 }
 
 	},
 
 	normalmap: {
 
-		"normalMap" : { type: "t", value: null },
-		"normalScale" : { type: "v2", value: new THREE.Vector2( 1, 1 ) }
+		"normalMap": { type: "t", value: null },
+		"normalScale": { type: "v2", value: new THREE.Vector2( 1, 1 ) }
 
 	},
 
 	displacementmap: {
 
-		"displacementMap" : { type: "t", value: null },
-		"displacementScale" : { type: "f", value: 1 },
-		"displacementBias" : { type: "f", value: 0 }
+		"displacementMap": { type: "t", value: null },
+		"displacementScale": { type: "f", value: 1 },
+		"displacementBias": { type: "f", value: 0 }
 
 	},
 
 	roughnessmap: {
 
-		"roughnessMap" : { type: "t", value: null }
+		"roughnessMap": { type: "t", value: null }
 
 	},
 
 	metalnessmap: {
 
-		"metalnessMap" : { type: "t", value: null }
+		"metalnessMap": { type: "t", value: null }
 
 	},
 
 	fog: {
 
-		"fogDensity" : { type: "f", value: 0.00025 },
-		"fogNear" : { type: "f", value: 1 },
-		"fogFar" : { type: "f", value: 2000 },
-		"fogColor" : { type: "c", value: new THREE.Color( 0xffffff ) }
+		"fogDensity": { type: "f", value: 0.00025 },
+		"fogNear": { type: "f", value: 1 },
+		"fogFar": { type: "f", value: 2000 },
+		"fogColor": { type: "c", value: new THREE.Color( 0xffffff ) }
 
 	},
 
 	ambient: {
 
-		"ambientLightColor" : { type: "fv", value: [] }
+		"ambientLightColor": { type: "fv", value: [] }
 
 	},
 
 	lights: {
 
-		"directionalLights" : { type: "sa", value: [], properties: {
+		"directionalLights": { type: "sa", value: [], properties: {
 			"direction": { type: "v3" },
 			"color": { type: "c" },
 			"shadow": { type: "i" }
 		} },
 
-		"hemisphereLights" : { type: "sa", value: [], properties: {
+		"hemisphereLights": { type: "sa", value: [], properties: {
 			"direction": { type: "v3" },
 			"skyColor": { type: "c" },
 			"groundColor": { type: "c" }
 		} },
 
-		"pointLights" : { type: "sa", value: [], properties: {
+		"pointLights": { type: "sa", value: [], properties: {
 			"color": { type: "c" },
 			"position": { type: "v3" },
 			"decay": { type: "f" },
@@ -23859,7 +23790,7 @@ THREE.UniformsLib = {
 			"shadow": { type: "i" }
 		} },
 
-		"spotLights" : { type: "sa", value: [], properties: {
+		"spotLights": { type: "sa", value: [], properties: {
 			"color": { type: "c" },
 			"position": { type: "v3" },
 			"direction": { type: "v3" },
@@ -23874,12 +23805,12 @@ THREE.UniformsLib = {
 
 	points: {
 
-		"diffuse" : { type: "c", value: new THREE.Color( 0xeeeeee ) },
-		"opacity" : { type: "f", value: 1.0 },
-		"size" : { type: "f", value: 1.0 },
-		"scale" : { type: "f", value: 1.0 },
-		"map" : { type: "t", value: null },
-		"offsetRepeat" : { type: "v4", value: new THREE.Vector4( 0, 0, 1, 1 ) }
+		"diffuse": { type: "c", value: new THREE.Color( 0xeeeeee ) },
+		"opacity": { type: "f", value: 1.0 },
+		"size": { type: "f", value: 1.0 },
+		"scale": { type: "f", value: 1.0 },
+		"map": { type: "t", value: null },
+		"offsetRepeat": { type: "v4", value: new THREE.Vector4( 0, 0, 1, 1 ) }
 
 	},
 
@@ -23888,10 +23819,10 @@ THREE.UniformsLib = {
 		"shadowMap": { type: "tv", value: [] },
 		"shadowMapSize": { type: "v2v", value: [] },
 
-		"shadowBias" : { type: "fv1", value: [] },
+		"shadowBias": { type: "fv1", value: [] },
 		"shadowDarkness": { type: "fv1", value: [] },
 
-		"shadowMatrix" : { type: "m4v", value: [] }
+		"shadowMatrix": { type: "m4v", value: [] }
 
 	}
 
@@ -25042,12 +24973,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 	_stencil = parameters.stencil !== undefined ? parameters.stencil : true,
 	_antialias = parameters.antialias !== undefined ? parameters.antialias : false,
 	_premultipliedAlpha = parameters.premultipliedAlpha !== undefined ? parameters.premultipliedAlpha : true,
-	_preserveDrawingBuffer = parameters.preserveDrawingBuffer !== undefined ? parameters.preserveDrawingBuffer : false,
-
-	_clearColor = new THREE.Color( 0x000000 ),
-	_clearAlpha = 0,
-
-	_pixelRatio = 1;
+	_preserveDrawingBuffer = parameters.preserveDrawingBuffer !== undefined ? parameters.preserveDrawingBuffer : false;
 
 	var lights = [];
 
@@ -25057,7 +24983,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 	var transparentObjectsLastIndex = - 1;
 
 	var morphInfluences = new Float32Array( 8 );
-
 
 	var sprites = [];
 	var lensFlares = [];
@@ -25115,16 +25040,26 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	_usedTextureUnits = 0,
 
-	_scissor = new THREE.Vector4( 0, 0, _canvas.width, _canvas.height ),
+	//
+
+	_clearColor = new THREE.Color( 0x000000 ),
+	_clearAlpha = 0,
+
+	_width = _canvas.width,
+	_height = _canvas.height,
+
+	_pixelRatio = 1,
+
+	_scissor = new THREE.Vector4( 0, 0, _width, _height ),
 	_scissorTest = false,
 
-	_viewport = new THREE.Vector4( 0, 0, _canvas.width, _canvas.height ),
+	_viewport = new THREE.Vector4( 0, 0, _width, _height ),
 
 	// frustum
 
 	_frustum = new THREE.Frustum(),
 
-	 // camera matrices cache
+	// camera matrices cache
 
 	_projScreenMatrix = new THREE.Matrix4(),
 
@@ -25257,7 +25192,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
-		_gl.clearColor( r, g, b, a );
+		state.clearColor( r, g, b, a );
 
 	}
 
@@ -25375,13 +25310,16 @@ THREE.WebGLRenderer = function ( parameters ) {
 	this.getSize = function () {
 
 		return {
-			width: _canvas.width / _pixelRatio,
-			height: _canvas.height / _pixelRatio
+			width: _width,
+			height: _height
 		};
 
 	};
 
 	this.setSize = function ( width, height, updateStyle ) {
+
+		_width = width;
+		_height = height;
 
 		_canvas.width = width * _pixelRatio;
 		_canvas.height = height * _pixelRatio;
@@ -25399,19 +25337,19 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	this.setViewport = function ( x, y, width, height ) {
 
-		_viewport.set( x, y, width, height );
+		state.viewport( _viewport.set( x, y, width, height ) );
 
 	};
 
 	this.setScissor = function ( x, y, width, height ) {
 
-		_scissor.set( x, y, width, height );
+		state.scissor( _scissor.set( x, y, width, height ) );
 
 	};
 
 	this.setScissorTest = function ( boolean ) {
 
-		_scissorTest = boolean;
+		state.setScissorTest( _scissorTest = boolean );
 
 	};
 
@@ -25461,19 +25399,19 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	this.clearColor = function () {
 
-		_gl.clear( _gl.COLOR_BUFFER_BIT );
+		this.clear( true, false, false );
 
 	};
 
 	this.clearDepth = function () {
 
-		_gl.clear( _gl.DEPTH_BUFFER_BIT );
+		this.clear( false, true, false );
 
 	};
 
 	this.clearStencil = function () {
 
-		_gl.clear( _gl.STENCIL_BUFFER_BIT );
+		this.clear( false, false, true );
 
 	};
 
@@ -26212,12 +26150,10 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
-		// Ensure buffer writing is enabled so they can be cleared on next render
+		// Ensure depth buffer writing is enabled so it can be cleared on next render
 
 		state.setDepthTest( true );
 		state.setDepthWrite( true );
-		state.setStencilTest( true );
-		state.setStencilWrite( true );
 		state.setColorWrite( true );
 
 		// _gl.finish();
@@ -26580,8 +26516,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 		state.setDepthFunc( material.depthFunc );
 		state.setDepthTest( material.depthTest );
 		state.setDepthWrite( material.depthWrite );
-		state.setStencilTest( material.stencilTest );
-		state.setStencilWrite( material.stencilWrite );
 		state.setColorWrite( material.colorWrite );
 		state.setPolygonOffset( material.polygonOffset, material.polygonOffsetFactor, material.polygonOffsetUnits );
 
@@ -26900,7 +26834,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		if ( material.emissive ) {
 
-			uniforms.emissive.value = material.emissive;
+			uniforms.emissive.value.copy( material.emissive ).multiplyScalar( material.emissiveIntensity );
 
 		}
 
@@ -27005,8 +26939,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		uniforms.diffuse.value = material.color;
 		uniforms.opacity.value = material.opacity;
-		uniforms.size.value = material.size;
-		uniforms.scale.value = _canvas.height / 2.0; // TODO: Cache this.
+		uniforms.size.value = material.size * _pixelRatio;
+		uniforms.scale.value = _canvas.clientHeight / 2.0; // TODO: Cache this.
 
 		uniforms.map.value = material.map;
 
@@ -27050,7 +26984,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 		if ( material.emissiveMap ) {
 
 			uniforms.emissiveMap.value = material.emissiveMap;
-			uniforms.emissiveMapIntensity.value = material.emissiveMapIntensity;
 
 		}
 
@@ -27071,7 +27004,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 		if ( material.emissiveMap ) {
 
 			uniforms.emissiveMap.value = material.emissiveMap;
-			uniforms.emissiveMapIntensity.value = material.emissiveMapIntensity;
 
 		}
 
@@ -27126,7 +27058,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 		if ( material.emissiveMap ) {
 
 			uniforms.emissiveMap.value = material.emissiveMap;
-			uniforms.emissiveMapIntensity.value = material.emissiveMapIntensity;
 
 		}
 
@@ -27872,11 +27803,11 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	// Textures
 
-	function setTextureParameters ( textureType, texture, isImagePowerOfTwo ) {
+	function setTextureParameters ( textureType, texture, isPowerOfTwoImage ) {
 
 		var extension;
 
-		if ( isImagePowerOfTwo ) {
+		if ( isPowerOfTwoImage ) {
 
 			_gl.texParameteri( textureType, _gl.TEXTURE_WRAP_S, paramThreeToGL( texture.wrapS ) );
 			_gl.texParameteri( textureType, _gl.TEXTURE_WRAP_T, paramThreeToGL( texture.wrapT ) );
@@ -27945,20 +27876,19 @@ THREE.WebGLRenderer = function ( parameters ) {
 		_gl.pixelStorei( _gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha );
 		_gl.pixelStorei( _gl.UNPACK_ALIGNMENT, texture.unpackAlignment );
 
-		texture.image = clampToMaxSize( texture.image, capabilities.maxTextureSize );
+		var image = clampToMaxSize( texture.image, capabilities.maxTextureSize );
 
-		if ( textureNeedsPowerOfTwo( texture ) && isPowerOfTwo( texture.image ) === false ) {
+		if ( textureNeedsPowerOfTwo( texture ) && isPowerOfTwo( image ) === false ) {
 
-			texture.image = makePowerOfTwo( texture.image );
+			image = makePowerOfTwo( image );
 
 		}
 
-		var image = texture.image,
-		isImagePowerOfTwo = isPowerOfTwo( image ),
+		var isPowerOfTwoImage = isPowerOfTwo( image ),
 		glFormat = paramThreeToGL( texture.format ),
 		glType = paramThreeToGL( texture.type );
 
-		setTextureParameters( _gl.TEXTURE_2D, texture, isImagePowerOfTwo );
+		setTextureParameters( _gl.TEXTURE_2D, texture, isPowerOfTwoImage );
 
 		var mipmap, mipmaps = texture.mipmaps;
 
@@ -27968,7 +27898,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			// if there are no manual mipmaps
 			// set 0 level mipmap and then use GL to generate other mipmap levels
 
-			if ( mipmaps.length > 0 && isImagePowerOfTwo ) {
+			if ( mipmaps.length > 0 && isPowerOfTwoImage ) {
 
 				for ( var i = 0, il = mipmaps.length; i < il; i ++ ) {
 
@@ -28019,7 +27949,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			// if there are no manual mipmaps
 			// set 0 level mipmap and then use GL to generate other mipmap levels
 
-			if ( mipmaps.length > 0 && isImagePowerOfTwo ) {
+			if ( mipmaps.length > 0 && isPowerOfTwoImage ) {
 
 				for ( var i = 0, il = mipmaps.length; i < il; i ++ ) {
 
@@ -28032,13 +27962,13 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			} else {
 
-				state.texImage2D( _gl.TEXTURE_2D, 0, glFormat, glFormat, glType, texture.image );
+				state.texImage2D( _gl.TEXTURE_2D, 0, glFormat, glFormat, glType, image );
 
 			}
 
 		}
 
-		if ( texture.generateMipmaps && isImagePowerOfTwo ) _gl.generateMipmap( _gl.TEXTURE_2D );
+		if ( texture.generateMipmaps && isPowerOfTwoImage ) _gl.generateMipmap( _gl.TEXTURE_2D );
 
 		textureProperties.__version = texture.version;
 
@@ -28184,11 +28114,11 @@ THREE.WebGLRenderer = function ( parameters ) {
 				}
 
 				var image = cubeImage[ 0 ],
-				isImagePowerOfTwo = isPowerOfTwo( image ),
+				isPowerOfTwoImage = isPowerOfTwo( image ),
 				glFormat = paramThreeToGL( texture.format ),
 				glType = paramThreeToGL( texture.type );
 
-				setTextureParameters( _gl.TEXTURE_CUBE_MAP, texture, isImagePowerOfTwo );
+				setTextureParameters( _gl.TEXTURE_CUBE_MAP, texture, isPowerOfTwoImage );
 
 				for ( var i = 0; i < 6; i ++ ) {
 
@@ -28236,7 +28166,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 				}
 
-				if ( texture.generateMipmaps && isImagePowerOfTwo ) {
+				if ( texture.generateMipmaps && isPowerOfTwoImage ) {
 
 					_gl.generateMipmap( _gl.TEXTURE_CUBE_MAP );
 
@@ -28448,10 +28378,9 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
-		if ( framebuffer !== _currentFramebuffer ) {
+		if ( _currentFramebuffer !== framebuffer ) {
 
 			_gl.bindFramebuffer( _gl.FRAMEBUFFER, framebuffer );
-
 			_currentFramebuffer = framebuffer;
 
 		}
@@ -28647,6 +28576,14 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
+		extension = extensions.get( 'WEBGL_compressed_texture_etc1' );
+
+		if ( extension !== null ) {
+
+			if ( p === THREE.RGB_ETC1_Format ) return extension.COMPRESSED_RGB_ETC1_WEBGL;
+
+		}
+
 		extension = extensions.get( 'EXT_blend_minmax' );
 
 		if ( extension !== null ) {
@@ -28808,15 +28745,25 @@ THREE.WebGLBufferRenderer = function ( _gl, extensions, _infoRender ) {
 
 		var position = geometry.attributes.position;
 
+		var count = 0;
+
 		if ( position instanceof THREE.InterleavedBufferAttribute ) {
 
-			extension.drawArraysInstancedANGLE( mode, 0, position.data.count, geometry.maxInstancedCount );
+			count = position.data.count;
+
+			extension.drawArraysInstancedANGLE( mode, 0, count, geometry.maxInstancedCount );
 
 		} else {
 
-			extension.drawArraysInstancedANGLE( mode, 0, position.count, geometry.maxInstancedCount );
+			count = position.count;
+
+			extension.drawArraysInstancedANGLE( mode, 0, count, geometry.maxInstancedCount );
 
 		}
+
+		_infoRender.calls ++;
+		_infoRender.vertices += count * geometry.maxInstancedCount;
+		if ( mode === _gl.TRIANGLES ) _infoRender.faces += geometry.maxInstancedCount * count / 3;
 
 	}
 
@@ -28883,6 +28830,9 @@ THREE.WebGLIndexedBufferRenderer = function ( _gl, extensions, _infoRender ) {
 
 		extension.drawElementsInstancedANGLE( mode, count, type, start * size, geometry.maxInstancedCount );
 
+		_infoRender.calls ++;
+		_infoRender.vertices += count * geometry.maxInstancedCount;
+		if ( mode === _gl.TRIANGLES ) _infoRender.faces += geometry.maxInstancedCount * count / 3;
 	}
 
 	this.setMode = setMode;
@@ -28924,6 +28874,10 @@ THREE.WebGLExtensions = function ( gl ) {
 
 			case 'WEBGL_compressed_texture_pvrtc':
 				extension = gl.getExtension( 'WEBGL_compressed_texture_pvrtc' ) || gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_pvrtc' );
+				break;
+
+			case 'WEBGL_compressed_texture_etc1':
+				extension = gl.getExtension( 'WEBGL_compressed_texture_etc1' );
 				break;
 
 			default:
@@ -30486,7 +30440,7 @@ THREE.WebGLShadowMap = function ( _renderer, _lights, _objects ) {
 		if ( scope.autoUpdate === false && scope.needsUpdate === false ) return;
 
 		// Set GL state for depth map.
-		_gl.clearColor( 1, 1, 1, 1 );
+		_state.clearColor( 1, 1, 1, 1 );
 		_state.disable( _gl.BLEND );
 		_state.enable( _gl.CULL_FACE );
 		_gl.frontFace( _gl.CCW );
@@ -30640,7 +30594,7 @@ THREE.WebGLShadowMap = function ( _renderer, _lights, _objects ) {
 					var geometry = _objects.update( object );
 					var material = object.material;
 
-					if ( material instanceof THREE.MeshFaceMaterial ) {
+					if ( material instanceof THREE.MultiMaterial ) {
 
 						var groups = geometry.groups;
 						var materials = material.materials;
@@ -30788,6 +30742,8 @@ THREE.WebGLState = function ( gl, extensions, paramThreeToGL ) {
 
 	var _this = this;
 
+	var color = new THREE.Vector4();
+
 	var newAttributes = new Uint8Array( 16 );
 	var enabledAttributes = new Uint8Array( 16 );
 	var attributeDivisors = new Uint8Array( 16 );
@@ -30831,12 +30787,13 @@ THREE.WebGLState = function ( gl, extensions, paramThreeToGL ) {
 	var currentTextureSlot = undefined;
 	var currentBoundTextures = {};
 
+	var currentClearColor = new THREE.Vector4();
 	var currentScissor = new THREE.Vector4();
 	var currentViewport = new THREE.Vector4();
 
 	this.init = function () {
 
-		gl.clearColor( 0, 0, 0, 1 );
+		this.clearColor( 0, 0, 0, 1 );
 		gl.clearDepth( 1 );
 		gl.clearStencil( 0 );
 
@@ -30949,7 +30906,8 @@ THREE.WebGLState = function ( gl, extensions, paramThreeToGL ) {
 			compressedTextureFormats = [];
 
 			if ( extensions.get( 'WEBGL_compressed_texture_pvrtc' ) ||
-			     extensions.get( 'WEBGL_compressed_texture_s3tc' ) ) {
+			     extensions.get( 'WEBGL_compressed_texture_s3tc' ) ||
+			     extensions.get( 'WEBGL_compressed_texture_etc1' )) {
 
 				var formats = gl.getParameter( gl.COMPRESSED_TEXTURE_FORMATS );
 
@@ -31305,7 +31263,7 @@ THREE.WebGLState = function ( gl, extensions, paramThreeToGL ) {
 
 		}
 
-	}
+	};
 
 	this.bindTexture = function ( webglType, webglTexture ) {
 
@@ -31365,6 +31323,19 @@ THREE.WebGLState = function ( gl, extensions, paramThreeToGL ) {
 
 	//
 
+	this.clearColor = function ( r, g, b, a ) {
+
+		color.set( r, g, b, a );
+
+		if ( currentClearColor.equals( color ) === false ) {
+
+			gl.clearColor( r, g, b, a );
+			currentClearColor.copy( color );
+
+		}
+
+	};
+
 	this.scissor = function ( scissor ) {
 
 		if ( currentScissor.equals( scissor ) === false ) {
@@ -31409,7 +31380,6 @@ THREE.WebGLState = function ( gl, extensions, paramThreeToGL ) {
 		currentBlending = null;
 
 		currentDepthWrite = null;
-		currentStencilWrite = null;
 		currentColorWrite = null;
 
 		currentFlipSided = null;
@@ -37269,7 +37239,7 @@ THREE.ShapeGeometry.prototype.addShape = function ( shape, options ) {
  * @author bhouston / http://clara.io
  */
 
-// points - to create a closed torus, one must use a set of points 
+// points - to create a closed torus, one must use a set of points
 //    like so: [ a, b, c, d, a ], see first is the same as last.
 // segments - the number of circumference segments to create
 // phiStart - the starting radian
@@ -37300,18 +37270,18 @@ THREE.LatheGeometry = function ( points, segments, phiStart, phiLength ) {
 
 		var phi = phiStart + i * inverseSegments * phiLength;
 
-		var c = Math.cos( phi ),
-			s = Math.sin( phi );
+		var sin = Math.sin( phi );
+		var cos = Math.cos( phi );
 
 		for ( var j = 0, jl = points.length; j < jl; j ++ ) {
 
-			var pt = points[ j ];
+			var point = points[ j ];
 
 			var vertex = new THREE.Vector3();
 
-			vertex.x = c * pt.x - s * pt.y;
-			vertex.y = s * pt.x + c * pt.y;
-			vertex.z = pt.z;
+			vertex.x = point.x * sin;
+			vertex.y = point.y;
+			vertex.z = point.x * cos;
 
 			this.vertices.push( vertex );
 
@@ -40486,4 +40456,3 @@ THREE.MorphBlendMesh.prototype.update = function ( delta ) {
 	}
 
 };
-
