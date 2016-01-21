@@ -1338,11 +1338,11 @@ NGL.ExampleRegistry.addDict( {
         console.time( "load-to-render" );
         // stage.loadFile( "data://perf/3SN6.msgpack", {
         // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V99", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/3SN6", {
+        stage.loadFile( "http://132.249.213.67:8080/servemessagepack/3SN6", {
         // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4POH", {
         // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4CUP", {
         // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/2L6N", {
-        stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V5A", {
+        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V5A", {
             ext: "msgpack"
         } ).then( function( o ){
             // o.addRepresentation( "ribbon" );
@@ -1351,7 +1351,11 @@ NGL.ExampleRegistry.addDict( {
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "line" );
+            // o.addRepresentation( "licorice" );
+            // o.addRepresentation( "ball+stick" );
+            // o.addRepresentation( "hyperball" );
             // o.addRepresentation( "point" );
+            // o.addRepresentation( "label" );
             // o.addRepresentation( "surface" );
             stage.centerView();
             stage.tasks.onZeroOnce( function(){
