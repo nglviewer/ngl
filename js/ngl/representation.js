@@ -1150,19 +1150,19 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 } );
 
 
-NGL.LicoriceRepresentation = function( structure, viewer, params ){
+NGL.BallAndStickRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
 
 };
 
-NGL.LicoriceRepresentation.prototype = NGL.createObject(
+NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     NGL.StructureRepresentation.prototype, {
 
-    constructor: NGL.LicoriceRepresentation,
+    constructor: NGL.BallAndStickRepresentation,
 
-    type: "licorice",
+    type: "ball+stick",
 
     defaultSize: 0.15,
 
@@ -1173,6 +1173,9 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        aspectRatio: {
+            type: "number", precision: 1, max: 10.0, min: 1.0
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1198,7 +1201,22 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
 
+        this.aspectRatio = p.aspectRatio || 2.0;
+
         NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    getData: function( what ){
+
+        var atomDataParams = {
+            radiusParams: { "radius": this.radius, "scale": this.scale * this.aspectRatio }
+        };
+
+        return {
+            "atom": this.getAtomData( what, atomDataParams ),
+            "bond": this.getBondData( what )
+        };
 
     },
 
@@ -1279,54 +1297,6 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
 
     },
 
-} );
-
-
-NGL.BallAndStickRepresentation = function( structure, viewer, params ){
-
-    NGL.LicoriceRepresentation.call( this, structure, viewer, params );
-
-};
-
-NGL.BallAndStickRepresentation.prototype = NGL.createObject(
-
-    NGL.LicoriceRepresentation.prototype, {
-
-    constructor: NGL.BallAndStickRepresentation,
-
-    type: "ball+stick",
-
-    parameters: Object.assign( {
-
-        aspectRatio: {
-            type: "number", precision: 1, max: 10.0, min: 1.0
-        }
-
-    }, NGL.LicoriceRepresentation.prototype.parameters ),
-
-    init: function( params ){
-
-        var p = params || {};
-
-        this.aspectRatio = p.aspectRatio || 2.0;
-
-        NGL.LicoriceRepresentation.prototype.init.call( this, p );
-
-    },
-
-    getData: function( what ){
-
-        var atomDataParams = {
-            radiusParams: { "radius": this.radius, "scale": this.scale * this.aspectRatio }
-        };
-
-        return {
-            "atom": this.getAtomData( what, atomDataParams ),
-            "bond": this.getBondData( what )
-        };
-
-    },
-
     setParameters: function( params ){
 
         var rebuild = false;
@@ -1346,6 +1316,36 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    }
+
+} );
+
+
+NGL.LicoriceRepresentation = function( structure, viewer, params ){
+
+    NGL.BallAndStickRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.LicoriceRepresentation.prototype = NGL.createObject(
+
+    NGL.BallAndStickRepresentation.prototype, {
+
+    constructor: NGL.LicoriceRepresentation,
+
+    type: "licorice",
+
+    parameters: Object.assign(
+        {}, NGL.BallAndStickRepresentation.prototype.parameters, { aspectRatio: null } 
+    ),
+
+    init: function( params ){
+
+        var p = params || {};
+        p.aspectRatio = 1.0;
+
+        NGL.BallAndStickRepresentation.prototype.init.call( this, p );
 
     }
 
@@ -1856,241 +1856,6 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 } );
 
 
-NGL.TubeRepresentation = function( structure, viewer, params ){
-
-    NGL.StructureRepresentation.call( this, structure, viewer, params );
-
-};
-
-NGL.TubeRepresentation.prototype = NGL.createObject(
-
-    NGL.StructureRepresentation.prototype, {
-
-    constructor: NGL.TubeRepresentation,
-
-    type: "tube",
-
-    defaultSize: 0.25,
-
-    parameters: Object.assign( {
-
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        radialSegments: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        capped: {
-            type: "boolean", rebuild: true
-        },
-
-    }, NGL.StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
-
-        var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || this.defaultSize;
-
-        if( p.quality === "low" ){
-            this.subdiv = 3;
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.subdiv = 6;
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.subdiv = 12;
-            this.radialSegments = 20;
-        }else{
-            this.subdiv = p.subdiv || 6;
-            this.radialSegments = p.radialSegments || 10;
-        }
-
-        this.tension = p.tension || NaN;
-        this.capped = p.capped || true;
-
-        NGL.StructureRepresentation.prototype.init.call( this, p );
-
-        this.__polymerList = [];
-        this.__bufferList = [];
-
-    },
-
-    prepare: function( callback ){
-
-        this.__polymerList.length = 0;
-        this.__bufferList.length = 0;
-
-        if( this.structureView.atomCount === 0 ){
-            callback();
-            return;
-        }
-
-        var scope = this;
-
-        this.structure.eachPolymer( function( polymer ){
-
-            if( polymer.residueCount < 4 ) return;
-            scope.__polymerList.push( polymer );
-
-        }, this.selection, true );
-
-        //
-
-        NGL.processArray(
-
-            this.__polymerList,
-
-            function( _i, _n, polymerList ){
-
-                for( var i = _i; i < _n; ++i ){
-
-                    var polymer = polymerList[ i ];
-
-                    var spline = new NGL.Spline( polymer );
-                    var subPos = spline.getSubdividedPosition(
-                        scope.subdiv, scope.tension
-                    );
-                    var subOri = spline.getSubdividedOrientation(
-                        scope.subdiv, scope.tension
-                    );
-                    var subCol = spline.getSubdividedColor(
-                        scope.subdiv, scope.getColorParams()
-                    );
-                    var subSize = spline.getSubdividedSize(
-                        scope.subdiv, scope.radius, scope.scale
-                    );
-
-                    var rx = 1.0;
-                    var ry = 1.0;
-
-                    scope.__bufferList.push(
-
-                        new NGL.TubeMeshBuffer(
-                            subPos.position,
-                            subOri.normal,
-                            subOri.binormal,
-                            subOri.tangent,
-                            subCol.color,
-                            subSize.size,
-                            subCol.pickingColor,
-                            scope.getBufferParams( {
-                                radialSegments: scope.radialSegments,
-                                rx: rx,
-                                ry: ry,
-                                capped: scope.capped,
-                                dullInterior: true
-                            } )
-                        )
-
-                    );
-
-                }
-
-            },
-
-            callback,
-
-            50
-
-        );
-
-    },
-
-    create: function(){
-
-        var n = this.__polymerList.length;
-
-        for( var i = 0; i < n; ++i ){
-            this.polymerList.push( this.__polymerList[ i ] );
-            this.bufferList.push( this.__bufferList[ i ] );
-        }
-
-    },
-
-    update: function( what ){
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        what = what || {};
-
-        var i = 0;
-        var n = this.polymerList.length;
-
-        // NGL.time( this.name, "update" );
-
-        for( i = 0; i < n; ++i ){
-
-            var polymer = this.polymerList[ i ];
-
-            if( polymer.residueCount < 4 ) return;
-
-            var bufferData = {};
-            var spline = new NGL.Spline( polymer );
-
-            if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
-
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
-                var subOri = spline.getSubdividedOrientation(
-                    this.subdiv, this.tension
-                );
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
-
-                bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subOri.normal;
-                bufferData[ "binormal" ] = subOri.binormal;
-                bufferData[ "tangent" ] = subOri.tangent;
-                bufferData[ "size" ] = subSize.size;
-
-            }
-
-            if( what[ "color" ] ){
-
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
-
-                bufferData[ "color" ] = subCol.color;
-                bufferData[ "pickingColor" ] = subCol.pickingColor;
-
-            }
-
-            this.bufferList[ i ].setAttributes( bufferData );
-
-        };
-
-        // NGL.timeEnd( this.name, "update" );
-
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "tension" ] ){
-            what[ "position" ] = true;
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
-    }
-
-} );
-
-
 NGL.CartoonRepresentation = function( structure, viewer, params ){
 
     NGL.StructureRepresentation.call( this, structure, viewer, params );
@@ -2334,6 +2099,36 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    }
+
+} );
+
+
+NGL.TubeRepresentation = function( structure, viewer, params ){
+
+    NGL.CartoonRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.TubeRepresentation.prototype = NGL.createObject(
+
+    NGL.CartoonRepresentation.prototype, {
+
+    constructor: NGL.TubeRepresentation,
+
+    type: "tube",
+
+    parameters: Object.assign(
+        {}, NGL.CartoonRepresentation.prototype.parameters, { aspectRatio: null }
+    ),
+
+    init: function( params ){
+
+        var p = params || {};
+        p.aspectRatio = 1.0;
+
+        NGL.CartoonRepresentation.prototype.init.call( this, p );
 
     }
 

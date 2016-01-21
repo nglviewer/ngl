@@ -1346,7 +1346,8 @@ NGL.ExampleRegistry.addDict( {
             ext: "msgpack"
         } ).then( function( o ){
             // o.addRepresentation( "ribbon" );
-            o.addRepresentation( "backbone", { color: "chainindex", scale: 2.0 } );
+            // o.addRepresentation( "backbone", { color: "chainindex", scale: 2.0 } );
+            o.addRepresentation( "tube" );
             // o.addRepresentation( "cartoon" );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             // o.addRepresentation( "spacefill" );
