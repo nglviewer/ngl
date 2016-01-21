@@ -3678,7 +3678,7 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         decodeFloatCombined( msg.cartn_y_big, msg.cartn_y_small, 1000, atomStore.y );
         decodeFloatCombined( msg.cartn_z_big, msg.cartn_z_small, 1000, atomStore.z );
         decodeFloatCombined( msg.b_factor_big, msg.b_factor_small, 100, atomStore.bfactor );
-        decodeDelta( decodeRunLength( getInt32( msg._atom_site_id ) ), atomStore.serial );
+        decodeDelta( decodeRunLength( getInt32( msg._atom_site_id ), atomStore.serial ) );
 
         for( var i = 0, il = msg._atom_site_label_alt_id.length; i < il; i+=2 ){
             var value = msg._atom_site_label_alt_id[ i ];
@@ -3737,7 +3737,7 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             "-1": "",  // NA
         }
 
-        decodeDelta( decodeRunLength( getInt32( msg._atom_site_auth_seq_id ) ), residueStore.resno );
+        decodeDelta( decodeRunLength( getInt32( msg._atom_site_auth_seq_id ), residueStore.resno ) );
 
         var resOrder = getInt32( msg.resOrder );
         var secStruct = getInt8( msg.secStruct );
