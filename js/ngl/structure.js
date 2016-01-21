@@ -1078,43 +1078,34 @@ NGL.LabelFactory.prototype = {
         switch( type ){
 
             case "atomname":
-
                 l = a.atomname;
                 break;
 
             case "atomindex":
-
                 l = "" + a.index;
                 break;
 
             case "atom":
-
                 l = a.atomname + "|" + a.index;
                 break;
 
             case "resname":
-
                 l = a.resname;
                 break;
 
             case "resno":
-
                 l = "" + a.resno;
                 break;
 
             case "res":
-
                 l = ( NGL.AA1[ a.resname.toUpperCase() ] || '' ) + a.resno;
                 break;
 
             case "text":
-
-                // TODO
-                l = this.text[ a.globalindex ];
+                l = this.text[ a.index ];
                 break;
 
             default:
-
                 l = a.qualifiedName();
                 break;
 

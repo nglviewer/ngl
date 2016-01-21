@@ -696,10 +696,7 @@ NGL.AtomProxy.prototype = {
         if( this.resno ) name += this.resno;
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
-        if( this.residue && this.residue.chain &&
-                this.residue.chain.model ){
-            name += "/" + this.residue.chain.model.index;
-        }
+        if( this.modelIndex ) name += "/" + this.modelIndex;
 
         return name;
 
