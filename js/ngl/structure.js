@@ -1122,6 +1122,7 @@ NGL.LabelFactory.prototype = {
 NGL.getAtomData = function( structure, params ){
 
     var p = Object.assign( {}, params );
+    if( p.colorParams ) p.colorParams.structure = structure;
 
     var what = p.what;
     var atomSet = p.atomSet || structure.atomSet;
@@ -1140,13 +1141,13 @@ NGL.getAtomData = function( structure, params ){
     if( !what || what[ "color" ] ){
         color = new Float32Array( atomCount * 3 );
         atomData[ "color" ] = color;
-        colorMaker = structure.getColorMaker( p.colorParams );
+        colorMaker = NGL.ColorMakerRegistry.getScheme( p.colorParams );
     }
     if( !what || what[ "pickingColor" ] ){
         pickingColor = new Float32Array( atomCount * 3 );
         atomData[ "pickingColor" ] = pickingColor;
         var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-        pickingColorMaker = structure.getColorMaker( pickingColorParams );
+        pickingColorMaker = NGL.ColorMakerRegistry.getScheme( pickingColorParams );
     }
     if( !what || what[ "radius" ] ){
         radius = new Float32Array( atomCount );
@@ -1179,6 +1180,7 @@ NGL.getAtomData = function( structure, params ){
 NGL.getBondData = function( structure, params ){
 
     var p = Object.assign( {}, params );
+    if( p.colorParams ) p.colorParams.structure = structure;
 
     var what = p.what;
     var bondSet = p.bondSet || structure.bondSet;
@@ -1204,7 +1206,7 @@ NGL.getBondData = function( structure, params ){
         color2 = new Float32Array( bondCount * 3 );
         bondData[ "color1" ] = color1;
         bondData[ "color2" ] = color2;
-        colorMaker = structure.getColorMaker( p.colorParams );
+        colorMaker = NGL.ColorMakerRegistry.getScheme( p.colorParams );
     }
     if( !what || what[ "pickingColor" ] ){
         pickingColor1 = new Float32Array( bondCount * 3 );
@@ -1212,7 +1214,7 @@ NGL.getBondData = function( structure, params ){
         bondData[ "pickingColor1" ] = pickingColor1;
         bondData[ "pickingColor2" ] = pickingColor2;
         var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-        pickingColorMaker = structure.getColorMaker( pickingColorParams );
+        pickingColorMaker = NGL.ColorMakerRegistry.getScheme( pickingColorParams );
     }
     if( !what || what[ "radius" ] ){
         radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
@@ -1831,70 +1833,6 @@ NGL.Structure.prototype = {
 
     },
 
-    //
-
-    atomPosition: function(){
-
-        var i = 0;
-        var position = new Float32Array( this.atomCount * 3 );
-
-        this.eachAtom( function( ap ){
-            ap.positionToArray( position, i );
-            i += 3;
-        } );
-
-        return position;
-
-    },
-
-    getColorMaker: function( params ){
-
-        var p = params || {};
-        p.structure = this;
-
-        return NGL.ColorMakerRegistry.getScheme( p );
-
-    },
-
-    atomColor: function( params ){
-
-        var i = 0;
-        var colorMaker = this.getColorMaker( params );
-        var color = new Float32Array( this.atomCount * 3 );
-
-        this.eachAtom( function( ap ){
-            colorMaker.atomColorToArray( ap, color, i );
-            i += 3;
-        } );
-
-        return color;
-
-    },
-
-    atomPickingColor: function( params ){
-
-        var p = Object.assign( params || {} );
-        p.scheme = "picking";
-
-        return this.atomColor( p );
-
-    },
-
-    atomRadius: function( type, scale ){
-
-        var i = 0;
-        var radiusFactory = new NGL.RadiusFactory( type, scale );
-        var radius = new Float32Array( this.atomCount );
-
-        this.eachAtom( function( ap ){
-            radius[ i ] = radiusFactory.atomRadius( ap );
-            i += 1;
-        } );
-
-        return radius;
-
-    },
-
     atomIndex: function(){
 
         var i = 0;
@@ -1905,77 +1843,6 @@ NGL.Structure.prototype = {
         } );
 
         return index;
-
-    },
-
-    //
-
-    bondPosition: function( fromTo ){
-
-        // NGL.time( "NGL.AtomSet.bondPosition" );
-
-        var position = new Float32Array( this.bondCount * 3 );
-        var ap = this.getAtomProxy();
-        var i = 0;
-
-        this.eachBond( function( bp ){
-            ap.index = fromTo ? bp.atomIndex1 : bp.atomIndex2;
-            ap.positionToArray( position, i );
-            i += 3;
-        } );
-
-        // NGL.timeEnd( "NGL.AtomSet.bondPosition" );
-
-        return position;
-
-    },
-
-    bondColor: function( fromTo, params ){
-
-        // NGL.time( "NGL.AtomSet.bondColor" );
-
-        var colorMaker = this.getColorMaker( params );
-        var color = new Float32Array( this.bondCount * 3 );
-        var i = 0;
-
-        this.eachBond( function( bp ){
-            colorMaker.bondColorToArray( bp, fromTo, color, i );
-            i += 3;
-        } );
-
-        // NGL.timeEnd( "NGL.AtomSet.bondColor" );
-
-        return color;
-
-    },
-
-    bondPickingColor: function( fromTo, params ){
-
-        var p = Object.assign( {}, params );
-        p.scheme = "picking";
-
-        return this.bondColor( fromTo, p );
-
-    },
-
-    bondRadius: function( fromTo, type, scale ){
-
-        // NGL.time( "NGL.AtomSet.bondRadius" );
-
-        var radiusFactory = new NGL.RadiusFactory( type, scale );
-        var radius = new Float32Array( this.bondCount );
-        var ap = this.getAtomProxy();
-        var i = 0;
-
-        this.eachBond( function( bp ){
-            ap.index = fromTo ? bp.atomIndex1 : bp.atomIndex2;
-            radius[ i ] = radiusFactory.atomRadius( ap );
-            i += 1;
-        } );
-
-        // NGL.timeEnd( "NGL.AtomSet.bondRadius" );
-
-        return radius;
 
     },
 
