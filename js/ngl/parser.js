@@ -3580,17 +3580,6 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             return dataArray;
         }
 
-        function getCoord( view, dataArray ){
-            var buf = getBuffer( view );
-            var dv = new DataView( buf );
-            var n = buf.byteLength;
-            if( !dataArray ) dataArray = new Float32Array( n / 4 );
-            for( var i = 0; i < n; i+=4 ){
-                dataArray[ i / 4 ] = dv.getInt32( i, false ) / 1000;
-            }
-            return dataArray;
-        }
-
         function decodeFloat( intArray, divisor, dataArray ){
             var n = intArray.length;
             if( !dataArray ) dataArray = new Float32Array( n );
