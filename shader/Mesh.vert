@@ -1,11 +1,12 @@
 #define STANDARD
 
-varying vec3 vViewPosition;
-
-#ifdef PICKING
+#if defined( PICKING )
     attribute vec3 pickingColor;
     varying vec3 vPickingColor;
+#elif defined( NOLIGHT )
+    varying vec3 vColor;
 #else
+    varying vec3 vViewPosition;
     #include color_pars_vertex
     #ifndef FLAT_SHADED
         varying vec3 vNormal;
@@ -16,8 +17,10 @@ varying vec3 vViewPosition;
 
 void main(){
 
-    #ifdef PICKING
+    #if defined( PICKING )
         vPickingColor = pickingColor;
+    #elif defined( NOLIGHT )
+        vColor = color;
     #else
         #include color_vertex
         #include beginnormal_vertex
@@ -29,6 +32,8 @@ void main(){
 
     #include begin_vertex
     #include project_vertex
-    vViewPosition = -mvPosition.xyz;
 
+    #if !defined( PICKING ) && !defined( NOLIGHT )
+        vViewPosition = -mvPosition.xyz;
+    #endif
 }
