@@ -3645,6 +3645,14 @@ NGL.MsgpackParser.prototype = NGL.createObject(
 
         console.time( "decode per atom data" );
 
+        var resOrder = getInt32( msg.resOrder );
+        var bondCount = 0;
+        for( var i = 0, il = resOrder.length; i < il; ++i ){
+            bondCount += msg.groupMap[ resOrder[ i ] ].bondOrders.length;
+        }
+        bondStore.resize( bondCount );
+        bondStore.count = bondCount;
+
         var atomCount = msg.numAtoms;
         atomStore.resize( atomCount );
         atomStore.count = atomCount;
@@ -3728,11 +3736,9 @@ NGL.MsgpackParser.prototype = NGL.createObject(
 
         decodeDelta( decodeRunLength( getInt32( msg._atom_site_auth_seq_id ), residueStore.resno ) );
 
-        var resOrder = getInt32( msg.resOrder );
         var secStruct = getInt8( msg.secStruct );
-        var ap1 = s.getAtomProxy();
-        var ap2 = s.getAtomProxy();
         var atomOffset = 0;
+        var bondOffset = 0;
 
         for( var i = 0; i < residueCount; ++i ){
 
@@ -3745,17 +3751,22 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             var bondOrders = resData.bondOrders;
 
             for( var j = 0, jl = bondOrders.length; j < jl; ++j ){
-                ap1.index = atomOffset + bondIndices[ j * 2 ];
-                ap2.index = atomOffset + bondIndices[ j * 2 + 1 ];
-                bondStore.addBond( ap1, ap2, bondOrders[ j ] );
+                bondStore.atomIndex1[ bondOffset ] = atomOffset + bondIndices[ j * 2 ];
+                bondStore.atomIndex2[ bondOffset ] = atomOffset + bondIndices[ j * 2 + 1 ];
+                bondStore.bondOrder[ bondOffset ] = bondOrders[ j ];
+                bondOffset += 1;
             }
 
             //
 
             residueStore.sstruc[ i ] = ( sstrucMap[ secStruct[ i ] ] || "l" ).charCodeAt();
-            residueStore.setResname( i, resData.resName );
             residueStore.atomOffset[ i ] = atomOffset;
             residueStore.atomCount[ i ] = resAtomCount;
+
+            var resName = resData.resName;
+            for( var j = 0, jl = resName.length; j < jl; ++j ){
+                residueStore.resname[ i * 5 + j ] = resName.charCodeAt( j );
+            }
 
             for( var j = 0; j < resAtomCount; ++j ){
 
