@@ -9,4 +9,4 @@ var ColorPicker;
 var VirtualList
 var Tether;
 var TypedFastBitSet;
-var decode;  // FIXME
+var StructureDecoder;

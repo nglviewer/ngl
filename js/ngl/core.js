@@ -60,11 +60,8 @@ if( typeof importScripts === 'function' ){
             "../lib/chroma.min.js",
             "../lib/svd.js",
             "../lib/signals.min.js",
-
-            "../lib/bops.js",
-            "../lib/msgpack.js",
-
             "../lib/TypedFastBitSet.js",
+            "../lib/structure-decoder.js",
 
             "../ngl/shims.js",
             // "../ngl/core.js",
