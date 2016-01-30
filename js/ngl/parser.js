@@ -148,28 +148,29 @@ NGL.assignSecondaryStructure = function( structure ){
 
     var helices = structure.helices || [];
 
-    helices.sort( function( h1, h2 ){
+    // helices.sort( function( h1, h2 ){
 
-        var c1 = h1[ 0 ];
-        var c2 = h2[ 0 ];
-        var r1 = h1[ 1 ];
-        var r2 = h2[ 1 ];
+    //     var c1 = h1[ 0 ];
+    //     var c2 = h2[ 0 ];
+    //     var r1 = h1[ 1 ];
+    //     var r2 = h2[ 1 ];
 
-        if( c1 === c2 ){
-            if( r1 === r2 ){
-                return 0;
-            }else{
-                return r1 < r2 ? -1 : 1;
-            }
-        }else{
-            var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
-            var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
-            return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
-        }
+    //     if( c1 === c2 ){
+    //         if( r1 === r2 ){
+    //             return 0;
+    //         }else{
+    //             return r1 < r2 ? -1 : 1;
+    //         }
+    //     }else{
+    //         var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+    //         var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+    //         return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
+    //     }
 
-    } );
+    // } );
 
-    var rp = structure.getResidueProxy();
+    // var rp = structure.getResidueProxy();
+    var residueStore = structure.residueStore;
 
     structure.eachModel( function( mp ){
 
@@ -177,6 +178,7 @@ NGL.assignSecondaryStructure = function( structure ){
         var n = helices.length;
         if( n === 0 ) return;
         var helix = helices[ i ];
+        helix[ 4 ] = helix[ 4 ].charCodeAt( 0 );
         var helixRun = false;
         var done = false;
 
@@ -191,18 +193,21 @@ NGL.assignSecondaryStructure = function( structure ){
                 var end = offset + count;
 
                 for( var j = offset; j < end; ++j ){
-                    
-                    rp.index = j;
 
-                    if( rp.resno === helix[ 1 ] ){  // resnoBeg
+                    // rp.index = j;
+
+                    if( residueStore.resno[ j ] === helix[ 1 ] ){  // resnoBeg
+                    // if( rp.resno === helix[ 1 ] ){  // resnoBeg
                         helixRun = true;
                     }
 
                     if( helixRun ){
 
-                        rp.sstruc = helix[ 4 ];
+                        residueStore.sstruc[ j ] = helix[ 4 ];
+                        // rp.sstruc = helix[ 4 ];
 
-                        if( rp.resno === helix[ 3 ] ){  // resnoEnd
+                        if( residueStore.resno[ j ] === helix[ 3 ] ){  // resnoEnd
+                        // if( rp.resno === helix[ 3 ] ){  // resnoEnd
 
                             helixRun = false
                             i += 1;
@@ -210,8 +215,10 @@ NGL.assignSecondaryStructure = function( structure ){
                             if( i < n ){
                                 // must look at previous residues as
                                 // residues may not be ordered by resno
-                                j = offset - 1;
+                                // j = offset - 1;
+                                --j;
                                 helix = helices[ i ];
+                                helix[ 4 ] = helix[ 4 ].charCodeAt( 0 );
                                 chainChange = cp.chainname !== helix[ 0 ];
                             }else{
                                 done = true;
@@ -247,6 +254,7 @@ NGL.assignSecondaryStructure = function( structure ){
 
     } );
 
+    var strandCharCode = "e".charCodeAt( 0 );
     structure.eachModel( function( mp ){
 
         var i = 0;
@@ -268,17 +276,20 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    rp.index = j;
+                    // rp.index = j;
 
-                    if( rp.resno === sheet[ 1 ] ){  // resnoBeg
+                    if( residueStore.resno[ j ] === sheet[ 1 ] ){  // resnoBeg
+                    // if( rp.resno === sheet[ 1 ] ){  // resnoBeg
                         sheetRun = true;
                     }
 
                     if( sheetRun ){
 
-                        rp.sstruc = "e";
+                        residueStore.sstruc[ j ] = strandCharCode;
+                        // rp.sstruc = "e";
 
-                        if( rp.resno === sheet[ 3 ] ){  // resnoEnd
+                        if( residueStore.resno[ j ] === sheet[ 3 ] ){  // resnoEnd
+                        // if( rp.resno === sheet[ 3 ] ){  // resnoEnd
 
                             sheetRun = false
                             i += 1;
