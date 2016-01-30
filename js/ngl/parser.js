@@ -1964,7 +1964,7 @@ NGL.CifParser.prototype = NGL.createObject(
         //
 
         var atomStore = s.atomStore;
-        atomStore.resize( this.streamer.lineCount() );
+        atomStore.resize( this.streamer.data.length / 100 );
 
         var idx = 0;
         var modelIdx = 0;
@@ -2211,18 +2211,19 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             // atomStore.growIfFull();
 
-                            var resname = ls[ label_comp_id ]; 
+                            var resname = ls[ label_comp_id ];
                             var resno = parseInt( ls[ auth_seq_id ] );
                             var chainname = ls[ auth_asym_id ];
-                            
+
                             sb.addAtom( modelIdx, chainname, resname, resno );
 
-                            // 
+                            //
 
                             var element = ls[ type_symbol ];
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
+                            atomStore.growIfFull();
                             atomStore.x[ idx ] = x;
                             atomStore.y[ idx ] = y;
                             atomStore.z[ idx ] = z;
