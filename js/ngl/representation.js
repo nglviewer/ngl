@@ -672,7 +672,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         return NGL.getBondData( this.structureView, bondDataParams );
 
-    },    
+    },
 
     getData: function( what ){
 
@@ -1337,7 +1337,7 @@ NGL.LicoriceRepresentation.prototype = NGL.createObject(
     type: "licorice",
 
     parameters: Object.assign(
-        {}, NGL.BallAndStickRepresentation.prototype.parameters, { aspectRatio: null } 
+        {}, NGL.BallAndStickRepresentation.prototype.parameters, { aspectRatio: null }
     ),
 
     init: function( params ){

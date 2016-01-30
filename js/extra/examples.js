@@ -1281,15 +1281,18 @@ NGL.ExampleRegistry.addDict( {
     "medium": function( stage ){
 
         console.time( "load-to-render" );
-        stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
+        // stage.loadFile( "data://perf/3SN6.cif.gz" ).then( function( o ){
+        // stage.loadFile( "data://perf/3sn6.cif" ).then( function( o ){
+        stage.loadFile( "data://3sn6.pdb" ).then( function( o ){
         // stage.loadFile( "data://3PQR.cif" ).then( function( o ){
+            // o.addRepresentation( "line" );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "hyperball" );
             // o.addRepresentation( "ball+stick", { color: "sstruc", sele: "backbone and 230-250:A" } );
-            // o.addRepresentation( "cartoon", { color: "sstruc" } );
+            o.addRepresentation( "cartoon", { color: "sstruc" } );
             // o.addRepresentation( "cartoon", { color: "sstruc", linewidth: 5, sele: "230-240:A" } );
             // o.addRepresentation( "cartoon", { color: "sstruc", linewidth: 5, sele: "240-250:A" } );
-            o.addRepresentation( "cartoon", { color: "sstruc" } );
+            // o.addRepresentation( "cartoon", { color: "sstruc" } );
             // o.addRepresentation( "tube", { color: "sstruc" } );
             // o.addRepresentation( "cartoon", { sele: "polymer" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
@@ -1336,19 +1339,19 @@ NGL.ExampleRegistry.addDict( {
     "msgpack": function( stage ){
 
         console.time( "load-to-render" );
-        // stage.loadFile( "data://perf/3SN6.msgpack", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V99", {
-        stage.loadFile( "http://132.249.213.67:8080/servemessagepack/3SN6", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4POH", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4CUP", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/2L6N", {
-        // stage.loadFile( "http://132.249.213.67:8080/servemessagepack/4V5A", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4V99", {
+        stage.loadFile( "http://132.249.213.68:8080/servemessagepack/3SN6", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4POH", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4CUP", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/2L6N", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4V5A", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/3J3Q", {
             ext: "msgpack"
         } ).then( function( o ){
-            // o.addRepresentation( "ribbon" );
+            // o.addRepresentation( "ribbon", { color: "chainindex" } );
             // o.addRepresentation( "backbone", { color: "chainindex", scale: 2.0 } );
-            o.addRepresentation( "tube" );
-            // o.addRepresentation( "cartoon" );
+            // o.addRepresentation( "tube" );
+            o.addRepresentation( "cartoon" );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "line" );

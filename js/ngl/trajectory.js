@@ -1014,7 +1014,7 @@ NGL.FramesTrajectory.prototype = NGL.createObject(
 
         var structure = this.structure;
 
-        if( structure instanceof NGL.StructureSubset ){
+        if( structure instanceof NGL.StructureView ){
 
             this.atomIndices = structure.structure.atomIndex(
                 structure.selection
