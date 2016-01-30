@@ -632,7 +632,7 @@ NGL.calculateBondsWithin = function( structure ){
             var atomIndices1 = [];
             var atomIndices2 = [];
 
-            if( count > 20 ){
+            if( count > 50 ){
 
                 var kdtree = new NGL.Kdtree( r, true );
                 var radius = r.hasBackbone() ? 1.2 : 2.3;
