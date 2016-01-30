@@ -281,24 +281,26 @@ NGL.Streamer.prototype = {
     eachChunkOfLinesAsync: function( callback, onfinish ){
 
         var self = this;
+        var n = self.chunkCount();
+        var _i = 0;
 
-        async.timesSeries(
+        function fn(){
+            ++_i;
+            NGL.processArray(
+                self.nextChunkOfLines(),
+                callback,
+                function(){
+                    if( _i >= n ){
+                        onfinish();
+                    }else{
+                        // requestAnimationFrame( fn );
+                        setTimeout( fn );
+                    }
+                }
+            );
+        }
 
-            self.chunkCount(),
-
-            function( i, wcallback ){
-
-                NGL.processArray(
-                    self.nextChunkOfLines(),
-                    callback,
-                    wcallback
-                );
-
-            },
-
-            onfinish
-
-        );
+        fn();
 
     },
 

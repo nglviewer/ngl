@@ -414,29 +414,12 @@ NGL.Trajectory.prototype = {
 
         if( Array.isArray( i ) ){
 
-            var scope = this;
-
-            async.eachLimit(
-
-                i, 4,
-
-                function( j, wcallback ){
-
-                    scope._loadFrame( j, wcallback );
-
-                },
-
-                function( error ){
-
-                    if( typeof callback === "function" ){
-
-                        callback();
-
-                    }
-
-                }
-
-            );
+            var queue;
+            var fn = function( j, wcallback ){
+                this._loadFrame( j, wcallback );
+                if( queue.length() === 0 && typeof callback === "function" ) callback();
+            }.bind( this );
+            queue = new NGL.Queue( fn, i );
 
         }else{
 

@@ -258,19 +258,13 @@ NGL.getFileInfo = function( file ){
     var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
     if( compressedExtList.indexOf( ext ) !== -1 ){
-
         compressed = ext;
-
         var n = path.length - ext.length - 1;
         ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
-
         var m = base.length - ext.length - 1;
         base = base.substr( 0, m );
-
     }else{
-
         compressed = false;
-
     }
 
     return {
@@ -297,8 +291,9 @@ NGL.fromJSON = function( input ){
 NGL.processArray = function( array, fn, callback, chunkSize ){
 
     var n = array.length;
+    chunkSize = chunkSize !== undefined ? chunkSize : 1000000;
 
-    if( typeof importScripts === 'function' ){
+    if( typeof importScripts === 'function' || chunkSize >= n ){
 
         // no chunking required when inside a web worker
         fn( 0, n, array );
@@ -306,48 +301,26 @@ NGL.processArray = function( array, fn, callback, chunkSize ){
 
     }else{
 
-        chunkSize = chunkSize !== undefined ? chunkSize : 10000;
-
         var _i = 0;
         var _step = chunkSize;
         var _n = Math.min( _step, n );
 
-        async.until(
+        var fn2 = function(){
+            var stop = fn( _i, _n, array );
+            if( stop ){
+                _i = n;
+            }else{
+                _i += _step;
+                _n = Math.min( _n + _step, n );
+            }
+            if( _i >= n ){
+                callback();
+            }else{
+                setTimeout( fn2 );
+            }
+        };
 
-            function(){
-
-                return _i >= n;
-
-            },
-
-            function( wcallback ){
-
-                requestAnimationFrame( function(){
-
-                    // NGL.log( _i, _n, n );
-
-                    var stop = fn( _i, _n, array );
-
-                    if( stop ){
-
-                        _i = n;
-
-                    }else{
-
-                        _i += _step;
-                        _n = Math.min( _n + _step, n );
-
-                    }
-
-                    wcallback();
-
-                } );
-
-            },
-
-            callback
-
-        );
+        fn2();
 
     }
 
@@ -729,5 +702,51 @@ NGL.Counter.prototype = {
         this.clear();
 
     }
+
+};
+
+
+// Queue
+
+NGL.Queue = function( fn, argList ){
+
+    var queue = [];
+    var pending = false;
+
+    if( argList ){
+        for( var i = 0, il = argList.length; i < il; ++i ){
+            queue.push( argList[ i ] );
+        }
+        next();
+    }
+
+    function run( arg ){
+        fn( arg, next );
+    }
+
+    function next(){
+        var arg = queue.shift();
+        if( arg !== undefined ){
+            pending = true;
+            setTimeout( function(){ run( arg ); } );
+        }else{
+            pending = false;
+        }
+    }
+
+    // API
+
+    this.push = function( arg ){
+        queue.push( arg );
+        if( !pending ) next();
+    }
+
+    this.kill = function( arg ){
+        queue.length = 0;
+    };
+
+    this.length = function(){
+        return queue.length;
+    };
 
 };

@@ -54,7 +54,6 @@ if( typeof importScripts === 'function' ){
             "../three/loaders/OBJLoader.js",
             "../three/loaders/PLYLoader.js",
 
-            "../lib/async.js",
             "../lib/promise.min.js",
             "../lib/sprintf.min.js",
             "../lib/jszip.min.js",

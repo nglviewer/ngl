@@ -81,7 +81,7 @@ NGL.Representation = function( object, viewer, params ){
 
     this.viewer = viewer;
 
-    this.queue = async.queue( this.make.bind( this ), 1 );
+    this.queue = new NGL.Queue( this.make.bind( this ) );
     this.tasks = new NGL.Counter();
     this.bufferList = [];
 

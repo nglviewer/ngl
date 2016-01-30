@@ -246,15 +246,13 @@ NGL.ViewportWidget = function( stage ){
         e.stopPropagation();
         e.preventDefault();
 
-        async.eachLimit(
-            e.dataTransfer.files,
-            4,
-            function( file, callback ){
-                stage.loadFile( file, {
-                    defaultRepresentation: true
-                } ).then( function(){ callback(); } );
-            }
-        );
+        var fn = function( file, callback ){
+            stage.loadFile( file, {
+                defaultRepresentation: true
+            } ).then( function(){ callback(); } );
+        }
+        var queue = new NGL.Queue( fn, e.dataTransfer.files );
+
 
     }, false );
 
@@ -368,14 +366,12 @@ NGL.MenubarFileWidget = function( stage ){
     var fileTypesImport = fileTypesOpen;
 
     function fileInputOnChange( e ){
-        async.eachLimit(
-            e.target.files, 4,
-            function( file, callback ){
-                stage.loadFile( file, {
-                    defaultRepresentation: true
-                } ).then( function(){ callback(); } );
-            }
-        );
+        var fn = function( file, callback ){
+            stage.loadFile( file, {
+                defaultRepresentation: true
+            } ).then( function(){ callback(); } );
+        }
+        var queue = new NGL.Queue( fn, e.target.files );
     }
 
     var fileInput = document.createElement("input");
@@ -1353,17 +1349,15 @@ NGL.StructureComponentWidget = function( component, stage ){
     var trajExt = [ "dcd", "dcd.gz" ];
 
     function fileInputOnChange( e ){
-        async.eachLimit(
-            e.target.files, 4,
-            function( file, callback ){
-                var framesPromise = NGL.autoLoad( file )
-                    .then( function( frames ){
-                        callback();
-                        return frames;  // pass through
-                    } );
-                component.addTrajectory( framesPromise );
-            }
-        );
+        var fn = function( file, callback ){
+            var framesPromise = NGL.autoLoad( file )
+                .then( function( frames ){
+                    callback();
+                    return frames;  // pass through
+                } );
+            component.addTrajectory( framesPromise );
+        }
+        var queue = new NGL.Queue( fn, e.target.files );
     }
 
     var fileInput = document.createElement("input");

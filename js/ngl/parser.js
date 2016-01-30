@@ -952,37 +952,13 @@ NGL.Parser.prototype = {
 
         var self = this;
 
-        async.series( [
-
-            function( wcallback ){
-
-                self.streamer.read( wcallback );
-
-            },
-
-            function( wcallback ){
-
-                self._beforeParse( wcallback );
-
-            },
-
-            function( wcallback ){
-
-                self._parse( wcallback );
-
-            },
-
-            function( wcallback ){
-
-                self._afterParse( wcallback );
-
-            }
-
-        ], function(){
-
-            callback( this[ this.__objName ] );
-
-        }.bind( this ) );
+        this.streamer.read( function(){
+            self._beforeParse();
+            self._parse( function(){
+                self._afterParse();
+                callback( self[ self.__objName ] );
+            } );
+        } );
 
         return this[ this.__objName ];
 
@@ -1039,23 +1015,17 @@ NGL.Parser.prototype = {
 
     },
 
-    _beforeParse: function( callback ){
+    _beforeParse: function(){},
 
-        callback();
+    _afterParse: function(){
 
-    },
-
-    _afterParse: function( callback ){
-
-        console.log( this[ this.__objName ] );
-        callback();
+        if( NGL.debug ) NGL.log( this[ this.__objName ] );
 
     },
 
-    _afterWorker: function( callback ){
+    _afterWorker: function(){
 
-        console.log( this[ this.__objName ] );
-        callback( this[ this.__objName ] );
+        if( NGL.debug ) NGL.log( this[ this.__objName ] );
 
     },
 
@@ -1166,110 +1136,53 @@ NGL.StructureParser.prototype = NGL.createObject(
 
     __objName: "structure",
 
-    _afterParse: function( callback ){
+    _afterParse: function(){
 
-        NGL.time( "NGL.StructureParser._afterParse" );
+        if( NGL.debug ) NGL.time( "NGL.StructureParser._afterParse" );
 
-        var self = this;
+        var s = this.structure;
+        s.refresh();
 
-        async.series( [
+        if( this.reorderAtoms ){
+            NGL.reorderAtoms( s );
+        }
 
-            function( wcallback ){
+        NGL.calculatePolymerData( s );
 
-                self.structure.refresh();
-                wcallback();
-
-            },
-
-            function( wcallback ){
-
-                if( self.reorderAtoms ){
-                    NGL.reorderAtoms( self.structure );
-                }
-                wcallback();
-
-            },
-
-            function( wcallback ){
-
-                NGL.calculatePolymerData( self.structure, wcallback );
-
-            },
-
-            function( wcallback ){
-
-                // check for chain names
-                var doAutoChainName = true;
-                self.structure.eachChain( function( c ){
-                    if( c.chainname ) doAutoChainName = false;
-                } );
-                if( doAutoChainName ){
-                    NGL.calculateChainnames( self.structure, wcallback );
-                    // NGL.calculateChainnames( self.structure, function(){
-                    //     NGL.buildStructure( self.structure, wcallback );
-                    // } );
-                }else{
-                    wcallback();
-                }
-
-            },
-
-            function( wcallback ){
-
-                if( !self.dontAutoBond ){
-                    NGL.calculateBonds( self.structure );
-                }else if( self.autoBondBetween ){
-                    NGL.calculateBondsBetween( self.structure );
-                }
-                wcallback();
-
-            },
-
-            function( wcallback ){
-
-                // check for secondary structure
-                var s = self.structure;
-                if( self.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
-                    NGL.calculateSecondaryStructure( self.structure, wcallback );
-                }else{
-                    wcallback();
-                }
-
-            },
-
-            function( wcallback ){
-
-                NGL.assignSecondaryStructure( self.structure, wcallback );
-
-            },
-
-            function( wcallback ){
-
-                NGL.buildUnitcellAssembly( self.structure, wcallback );
-
-            },
-
-            function( wcallback ){
-
-                self._postProcess( wcallback );
-
-            }
-
-        ], function(){
-
-            NGL.timeEnd( "NGL.StructureParser._afterParse" );
-            console.log( self[ self.__objName ] );
-            callback();
-
+        // check for chain names
+        var doAutoChainName = true;
+        s.eachChain( function( c ){
+            if( c.chainname ) doAutoChainName = false;
         } );
+        if( doAutoChainName ){
+            NGL.calculateChainnames( s );
+        }
+
+        if( !this.dontAutoBond ){
+            NGL.calculateBonds( s );
+        }else if( this.autoBondBetween ){
+            NGL.calculateBondsBetween( s );
+        }
+
+        // check for secondary structure
+        // TODO
+        // if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
+        //     NGL.calculateSecondaryStructure( s );
+        // }
+
+        if( s.helices.length > 0 || s.sheets.length > 0 ){
+            NGL.assignSecondaryStructure( s );
+        }
+        NGL.buildUnitcellAssembly( s );
+
+        this._postProcess();
+
+        if( NGL.debug ) NGL.timeEnd( "NGL.StructureParser._afterParse" );
+        if( NGL.debug ) NGL.log( self[ self.__objName ] );
 
     },
 
-    _postProcess: function( callback ){
-
-        callback();
-
-    },
+    _postProcess: function(){},
 
     toJSON: function(){
 
@@ -2424,53 +2337,41 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        function _ensureArray( dict, field ){
+        this.streamer.eachChunkOfLinesAsync(
 
-            if( !Array.isArray( dict[ field ] ) ){
-                Object.keys( dict ).forEach( function( key ){
-                    dict[ key ] = [ dict[ key ] ];
-                } );
+            _parseChunkOfLines,
+
+            function(){
+
+                if( cif.struct && cif.struct.title ){
+                    s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
+                }
+
+                postProcess();
+
+                NGL.timeEnd( __timeName );
+                callback();
+
             }
 
-        }
+        );
 
-        async.series( [
+        function postProcess(){
 
-            // parse lines
-            function( wcallback ){
+            function _ensureArray( dict, field ){
 
-                this.streamer.eachChunkOfLinesAsync(
+                if( !Array.isArray( dict[ field ] ) ){
+                    Object.keys( dict ).forEach( function( key ){
+                        dict[ key ] = [ dict[ key ] ];
+                    } );
+                }
 
-                    _parseChunkOfLines,
-
-                    function(){
-
-                        if( cif.struct && cif.struct.title ){
-
-                            s.title = cif.struct.title.trim()
-                                        .replace( /^['"]+|['"]+$/g, "" );
-
-                        }
-
-                        wcallback();
-
-                    }
-
-                );
-
-            }.bind( this ),
+            }
 
             // get helices
-            function( wcallback ){
+            var sc = cif.struct_conf;
 
-                var sc = cif.struct_conf;
-
-                if( !sc ){
-
-                    wcallback();
-                    return;
-
-                }
+            if( sc ){
 
                 var helices = s.helices;
                 var helixTypes = NGL.HelixTypes;
@@ -2478,396 +2379,53 @@ NGL.CifParser.prototype = NGL.createObject(
                 // ensure data is in lists
                 _ensureArray( sc, "id" );
 
-                NGL.processArray(
+                for( var i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
+                    var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
+                    if( !Number.isNaN( helixType ) ){
+                        helices.push( [
+                            asymIdDict[ sc.beg_label_asym_id[ i ] ],
+                            parseInt( sc.beg_auth_seq_id[ i ] ),
+                            asymIdDict[ sc.end_label_asym_id[ i ] ],
+                            parseInt( sc.end_auth_seq_id[ i ] ),
+                            helixTypes[ helixType ] || helixTypes[""]
+                        ] );
+                    }
+                }
 
-                    sc.beg_auth_seq_id,
-
-                    function( _i, _n ){
-
-                        for( var i = _i; i < _n; ++i ){
-
-                            var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
-
-                            if( !Number.isNaN( helixType ) ){
-
-                                helices.push( [
-
-                                    asymIdDict[ sc.beg_label_asym_id[ i ] ],
-                                    parseInt( sc.beg_auth_seq_id[ i ] ),
-                                    asymIdDict[ sc.end_label_asym_id[ i ] ],
-                                    parseInt( sc.end_auth_seq_id[ i ] ),
-                                    helixTypes[ helixType ] || helixTypes[""]
-
-                                ] );
-
-                            }
-
-                        }
-
-                    },
-
-                    wcallback,
-
-                    1000
-
-                );
-
-            },
+            }
 
             // get sheets
-            function( wcallback ){
+            var ssr = cif.struct_sheet_range;
 
-                var ssr = cif.struct_sheet_range;
-
-                if( !ssr ){
-
-                    wcallback();
-                    return;
-
-                }
+            if( ssr ){
 
                 var sheets = s.sheets;
 
                 // ensure data is in lists
                 _ensureArray( ssr, "id" );
 
-                NGL.processArray(
+                for( var i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
+                    sheets.push( [
+                        asymIdDict[ ssr.beg_label_asym_id[ i ] ],
+                        parseInt( ssr.beg_auth_seq_id[ i ] ),
+                        asymIdDict[ ssr.end_label_asym_id[ i ] ],
+                        parseInt( ssr.end_auth_seq_id[ i ] )
 
-                    ssr.beg_auth_seq_id,
-
-                    function( _i, _n ){
-
-                        for( var i = _i; i < _n; ++i ){
-
-                            sheets.push( [
-
-                                asymIdDict[ ssr.beg_label_asym_id[ i ] ],
-                                parseInt( ssr.beg_auth_seq_id[ i ] ),
-                                asymIdDict[ ssr.end_label_asym_id[ i ] ],
-                                parseInt( ssr.end_auth_seq_id[ i ] )
-
-                            ] );
-
-                        }
-
-                    },
-
-                    wcallback,
-
-                    1000
-
-                );
-
-            },
-
-            // biomol & ncs processing
-            function( wcallback ){
-
-                var operDict = {};
-                var biomolDict = s.biomolDict;
-
-                if( cif.pdbx_struct_oper_list ){
-
-                    var op = cif.pdbx_struct_oper_list;
-
-                    // ensure data is in lists
-                    _ensureArray( op, "id" );
-
-                    op.id.forEach( function( id, i ){
-
-                        var m = new THREE.Matrix4();
-                        var elms = m.elements;
-
-                        elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
-                        elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
-                        elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
-
-                        elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
-                        elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
-                        elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
-
-                        elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
-                        elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
-                        elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
-
-                        elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                        elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                        elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
-
-                        m.transpose();
-
-                        operDict[ id ] = m;
-
-                    } );
-
+                    ] );
                 }
-
-                if( cif.pdbx_struct_assembly_gen ){
-
-                    var gen = cif.pdbx_struct_assembly_gen;
-
-                    // ensure data is in lists
-                    _ensureArray( gen, "assembly_id" );
-
-                    var getMatrixDict = function( expr ){
-
-                        var matDict = {};
-
-                        var l = expr.replace( /[\(\)']/g, "" ).split( "," );
-
-                        l.forEach( function( e ){
-
-                            if( e.indexOf( "-" ) !== -1 ){
-
-                                var es = e.split( "-" );
-
-                                var j = parseInt( es[ 0 ] );
-                                var m = parseInt( es[ 1 ] );
-
-                                for( ; j <= m; ++j ){
-
-                                    matDict[ j ] = operDict[ j ];
-
-                                }
-
-                            }else{
-
-                                matDict[ e ] = operDict[ e ];
-
-                            }
-
-                        } );
-
-                        return matDict;
-
-                    }
-
-                    gen.assembly_id.forEach( function( id, i ){
-
-                        var md = {};
-                        var oe = gen.oper_expression[ i ];
-
-                        if( oe.indexOf( ")(" ) !== -1 ){
-
-                            oe = oe.split( ")(" );
-
-                            var md1 = getMatrixDict( oe[ 0 ] );
-                            var md2 = getMatrixDict( oe[ 1 ] );
-
-                            Object.keys( md1 ).forEach( function( k1 ){
-
-                                Object.keys( md2 ).forEach( function( k2 ){
-
-                                    var mat = new THREE.Matrix4();
-
-                                    mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
-                                    md[ k1 + "x" + k2 ] = mat;
-
-                                } );
-
-                            } );
-
-                        }else{
-
-                            md = getMatrixDict( oe );
-
-                        }
-
-                        var name = id;
-                        if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
-
-                        var chainList = gen.asym_id_list[ i ].split( "," );
-                        for( var j = 0, jl = chainList.length; j < jl; ++j ){
-                            chainList[ j ] = asymIdDict[ chainList[ j ] ];
-                        }
-
-                        biomolDict[ name ] = {
-                            matrixDict: md,
-                            chainList: chainList
-                        };
-
-                    } );
-
-                }
-
-                // non-crystallographic symmetry operations
-                if( cif.struct_ncs_oper ){
-
-                    var op = cif.struct_ncs_oper;
-
-                    // ensure data is in lists
-                    _ensureArray( op, "id" );
-
-                    var md = {};
-
-                    biomolDict[ "NCS" ] = {
-
-                        matrixDict: md,
-                        chainList: undefined
-
-                    };
-
-                    op.id.forEach( function( id, i ){
-
-                        var m = new THREE.Matrix4();
-                        var elms = m.elements;
-
-                        elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
-                        elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
-                        elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
-
-                        elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
-                        elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
-                        elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
-
-                        elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
-                        elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
-                        elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
-
-                        elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                        elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                        elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
-
-                        m.transpose();
-
-                        md[ id ] = m;
-
-                    } );
-
-                }
-
-                // cell
-
-                var unitcellDict = {};
-
-                if( cif.cell ){
-
-                    var cell = cif.cell;
-                    var symmetry = cif.symmetry || {};
-
-                    var a = parseFloat( cell.length_a );
-                    var b = parseFloat( cell.length_b );
-                    var c = parseFloat( cell.length_c );
-
-                    var alpha = parseFloat( cell.angle_alpha );
-                    var beta = parseFloat( cell.angle_beta );
-                    var gamma = parseFloat( cell.angle_gamma );
-
-                    var sGroup = symmetry[ "space_group_name_H-M" ];
-                    if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-                        ( sGroup[0] === "'" || sGroup[0] === '"' )
-                    ){
-                        sGroup = sGroup.substring( 1, sGroup.length-1 );
-                    }
-                    var z = parseInt( cell.Z_PDB );
-
-                    var box = new Float32Array( 9 );
-                    box[ 0 ] = a;
-                    box[ 4 ] = b;
-                    box[ 8 ] = c;
-                    boxes.push( box );
-
-                    unitcellDict.a = a;
-                    unitcellDict.b = b;
-                    unitcellDict.c = c;
-                    unitcellDict.alpha = alpha;
-                    unitcellDict.beta = beta;
-                    unitcellDict.gamma = gamma;
-                    unitcellDict.spacegroup = sGroup;
-
-                }
-
-                // origx
-
-                var origx = new THREE.Matrix4();
-
-                if( cif.database_PDB_matrix ){
-
-                    var mat = cif.database_PDB_matrix;
-                    var elms = origx.elements;
-
-                    elms[  0 ] = parseFloat( mat[ "origx[1][1]" ] );
-                    elms[  1 ] = parseFloat( mat[ "origx[1][2]" ] );
-                    elms[  2 ] = parseFloat( mat[ "origx[1][3]" ] );
-
-                    elms[  4 ] = parseFloat( mat[ "origx[2][1]" ] );
-                    elms[  5 ] = parseFloat( mat[ "origx[2][2]" ] );
-                    elms[  6 ] = parseFloat( mat[ "origx[2][3]" ] );
-
-                    elms[  8 ] = parseFloat( mat[ "origx[3][1]" ] );
-                    elms[  9 ] = parseFloat( mat[ "origx[3][2]" ] );
-                    elms[ 10 ] = parseFloat( mat[ "origx[3][3]" ] );
-
-                    elms[  3 ] = parseFloat( mat[ "origx_vector[1]" ] );
-                    elms[  7 ] = parseFloat( mat[ "origx_vector[2]" ] );
-                    elms[ 11 ] = parseFloat( mat[ "origx_vector[3]" ] );
-
-                    origx.transpose();
-
-                    unitcellDict.origx = origx;
-
-                }
-
-                // scale
-
-                var scale = new THREE.Matrix4();
-
-                if( cif.atom_sites ){
-
-                    var mat = cif.atom_sites;
-                    var elms = scale.elements;
-
-                    elms[  0 ] = parseFloat( mat[ "fract_transf_matrix[1][1]" ] );
-                    elms[  1 ] = parseFloat( mat[ "fract_transf_matrix[1][2]" ] );
-                    elms[  2 ] = parseFloat( mat[ "fract_transf_matrix[1][3]" ] );
-
-                    elms[  4 ] = parseFloat( mat[ "fract_transf_matrix[2][1]" ] );
-                    elms[  5 ] = parseFloat( mat[ "fract_transf_matrix[2][2]" ] );
-                    elms[  6 ] = parseFloat( mat[ "fract_transf_matrix[2][3]" ] );
-
-                    elms[  8 ] = parseFloat( mat[ "fract_transf_matrix[3][1]" ] );
-                    elms[  9 ] = parseFloat( mat[ "fract_transf_matrix[3][2]" ] );
-                    elms[ 10 ] = parseFloat( mat[ "fract_transf_matrix[3][3]" ] );
-
-                    elms[  3 ] = parseFloat( mat[ "fract_transf_vector[1]" ] );
-                    elms[  7 ] = parseFloat( mat[ "fract_transf_vector[2]" ] );
-                    elms[ 11 ] = parseFloat( mat[ "fract_transf_vector[3]" ] );
-
-                    scale.transpose();
-
-                    unitcellDict.scale = scale;
-
-                }
-
-                s.unitcell = new NGL.Unitcell(
-                    unitcellDict.a,
-                    unitcellDict.b,
-                    unitcellDict.c,
-                    unitcellDict.alpha,
-                    unitcellDict.beta,
-                    unitcellDict.gamma,
-                    unitcellDict.spacegroup,
-                    unitcellDict.scale
-                );
-
-                wcallback();
 
             }
 
-        ], function(){
-
-            NGL.timeEnd( __timeName );
-            callback();
-
-        } );
+        }
 
     },
 
-    _postProcess: function( callback ){
+    _postProcess: function(){
 
         NGL.time( "NGL.CifParser._postProcess" );
 
         var s = this.structure;
+        var structure = this.structure;
         var cif = this.cif;
         var asymIdDict = this.asymIdDict;
 
@@ -2881,149 +2439,406 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        async.series( [
+        // biomol & ncs processing
+        var operDict = {};
+        var biomolDict = s.biomolDict;
 
-            // add connections
-            function( wcallback ){
+        if( cif.pdbx_struct_oper_list ){
 
-                var sc = cif.struct_conn;
+            var op = cif.pdbx_struct_oper_list;
 
-                if( !sc ){
+            // ensure data is in lists
+            _ensureArray( op, "id" );
 
-                    wcallback();
-                    return;
+            op.id.forEach( function( id, i ){
 
-                }
+                var m = new THREE.Matrix4();
+                var elms = m.elements;
 
-                // ensure data is in lists
-                _ensureArray( sc, "id" );
+                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
 
-                var reDoubleQuote = /"/g;
-                var ap1 = s.getAtomProxy();
-                var ap2 = s.getAtomProxy();
-                var atomIndicesCache = {};
+                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
 
-                NGL.processArray(
+                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
 
-                    sc.id,
+                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
 
-                    function( _i, _n ){
+                m.transpose();
 
-                        for( var i = _i; i < _n; ++i ){
+                operDict[ id ] = m;
 
-                            // ignore:
-                            // hydrog - hydrogen bond
-                            // mismat - mismatched base pairs
-                            // saltbr - ionic interaction
+            } );
 
-                            var conn_type_id = sc.conn_type_id[ i ]
-                            if( conn_type_id === "hydrog" ||
-                                conn_type_id === "mismat" ||
-                                conn_type_id === "saltbr" ) continue;
+        }
 
-                            // ignore bonds between symmetry mates
-                            if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
-                                sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
+        if( cif.pdbx_struct_assembly_gen ){
 
-                            // process:
-                            // covale - covalent bond
-                            // covale_base -
-                            //      covalent modification of a nucleotide base
-                            // covale_phosphate -
-                            //      covalent modification of a nucleotide phosphate
-                            // covale_sugar -
-                            //      covalent modification of a nucleotide sugar
-                            // disulf - disulfide bridge
-                            // metalc - metal coordination
-                            // modres - covalent residue modification
+            var gen = cif.pdbx_struct_assembly_gen;
 
-                            var sele1 = (
-                                sc.ptnr1_auth_seq_id[ i ] + ":" +
-                                asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] + "." +
-                                sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
-                            );
-                            var atomIndices1 = atomIndicesCache[ sele1 ];
-                            if( !atomIndices1 ){
-                                var selection1 = new NGL.Selection( sele1 );
-                                if( selection1.selection[ "error" ] ){
-                                    NGL.warn( "invalid selection for connection", sele1 );
-                                    continue;
-                                }
-                                atomIndices1 = s.getAtomIndices( selection1 );
-                                atomIndicesCache[ sele1 ] = atomIndices1;
-                            }
+            // ensure data is in lists
+            _ensureArray( gen, "assembly_id" );
 
-                            var sele2 = (
-                                sc.ptnr2_auth_seq_id[ i ] + ":" +
-                                asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] + "." +
-                                sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
-                            );
-                            var atomIndices2 = atomIndicesCache[ sele2 ];
-                            if( !atomIndices2 ){
-                                var selection2 = new NGL.Selection( sele2 );
-                                if( selection2.selection[ "error" ] ){
-                                    NGL.warn( "invalid selection for connection", sele2 );
-                                    continue;
-                                }
-                                atomIndices2 = s.getAtomIndices( selection2 );
-                                atomIndicesCache[ sele2 ] = atomIndices2;
-                            }
+            var getMatrixDict = function( expr ){
 
-                            // cases with more than one atom per selection
-                            // - #altloc1 to #altloc2
-                            // - #model to #model
-                            // - #altloc1 * #model to #altloc2 * #model
+                var matDict = {};
 
-                            var k = atomIndices1.length;
-                            var l = atomIndices2.length;
+                var l = expr.replace( /[\(\)']/g, "" ).split( "," );
 
-                            if( k > l ){
-                                var tmpA = k;
-                                k = l;
-                                l = tmpA;
-                                var tmpB = atomIndices1;
-                                atomIndices1 = atomIndices2;
-                                atomIndices2 = tmpB;
-                            }
+                l.forEach( function( e ){
 
-                            // console.log( k, l );
+                    if( e.indexOf( "-" ) !== -1 ){
 
-                            if( k === 0 || l === 0 ){
-                                NGL.warn( "no atoms found for", sele1, sele2 );
-                                continue;
-                            }
+                        var es = e.split( "-" );
 
-                            for( var j = 0; j < l; ++j ){
+                        var j = parseInt( es[ 0 ] );
+                        var m = parseInt( es[ 1 ] );
 
-                                ap1.index = atomIndices1[ j % k ];
-                                ap2.index = atomIndices2[ j ];
+                        for( ; j <= m; ++j ){
 
-                                if( ap1 && ap2 ){
-                                    s.bondStore.addBond( ap1, ap2 );
-                                }else{
-                                    NGL.log( "atoms for connection not found" );
-                                }
-
-                            }
+                            matDict[ j ] = operDict[ j ];
 
                         }
 
-                    },
+                    }else{
 
-                    wcallback,
+                        matDict[ e ] = operDict[ e ];
 
-                    500
+                    }
 
-                );
+                } );
+
+                return matDict;
 
             }
 
-        ], function(){
+            gen.assembly_id.forEach( function( id, i ){
 
-            NGL.timeEnd( "NGL.CifParser._postProcess" );
-            callback();
+                var md = {};
+                var oe = gen.oper_expression[ i ];
 
-        } );
+                if( oe.indexOf( ")(" ) !== -1 ){
+
+                    oe = oe.split( ")(" );
+
+                    var md1 = getMatrixDict( oe[ 0 ] );
+                    var md2 = getMatrixDict( oe[ 1 ] );
+
+                    Object.keys( md1 ).forEach( function( k1 ){
+
+                        Object.keys( md2 ).forEach( function( k2 ){
+
+                            var mat = new THREE.Matrix4();
+
+                            mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
+                            md[ k1 + "x" + k2 ] = mat;
+
+                        } );
+
+                    } );
+
+                }else{
+
+                    md = getMatrixDict( oe );
+
+                }
+
+                var name = id;
+                if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
+
+                var chainList = gen.asym_id_list[ i ].split( "," );
+                for( var j = 0, jl = chainList.length; j < jl; ++j ){
+                    chainList[ j ] = asymIdDict[ chainList[ j ] ];
+                }
+
+                biomolDict[ name ] = {
+                    matrixDict: md,
+                    chainList: chainList
+                };
+
+            } );
+
+        }
+
+        // non-crystallographic symmetry operations
+        if( cif.struct_ncs_oper ){
+
+            var op = cif.struct_ncs_oper;
+
+            // ensure data is in lists
+            _ensureArray( op, "id" );
+
+            var md = {};
+
+            biomolDict[ "NCS" ] = {
+
+                matrixDict: md,
+                chainList: undefined
+
+            };
+
+            op.id.forEach( function( id, i ){
+
+                var m = new THREE.Matrix4();
+                var elms = m.elements;
+
+                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
+                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
+                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+
+                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
+                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
+                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+
+                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
+                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
+                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+
+                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
+                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
+                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+
+                m.transpose();
+
+                md[ id ] = m;
+
+            } );
+
+        }
+
+        // cell
+        var unitcellDict = {};
+
+        if( cif.cell ){
+
+            var cell = cif.cell;
+            var symmetry = cif.symmetry || {};
+
+            var a = parseFloat( cell.length_a );
+            var b = parseFloat( cell.length_b );
+            var c = parseFloat( cell.length_c );
+
+            var alpha = parseFloat( cell.angle_alpha );
+            var beta = parseFloat( cell.angle_beta );
+            var gamma = parseFloat( cell.angle_gamma );
+
+            var sGroup = symmetry[ "space_group_name_H-M" ];
+            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+                ( sGroup[0] === "'" || sGroup[0] === '"' )
+            ){
+                sGroup = sGroup.substring( 1, sGroup.length-1 );
+            }
+            var z = parseInt( cell.Z_PDB );
+
+            var box = new Float32Array( 9 );
+            box[ 0 ] = a;
+            box[ 4 ] = b;
+            box[ 8 ] = c;
+            structure.boxes.push( box );
+
+            unitcellDict.a = a;
+            unitcellDict.b = b;
+            unitcellDict.c = c;
+            unitcellDict.alpha = alpha;
+            unitcellDict.beta = beta;
+            unitcellDict.gamma = gamma;
+            unitcellDict.spacegroup = sGroup;
+
+        }
+
+        // origx
+        var origx = new THREE.Matrix4();
+
+        if( cif.database_PDB_matrix ){
+
+            var mat = cif.database_PDB_matrix;
+            var elms = origx.elements;
+
+            elms[  0 ] = parseFloat( mat[ "origx[1][1]" ] );
+            elms[  1 ] = parseFloat( mat[ "origx[1][2]" ] );
+            elms[  2 ] = parseFloat( mat[ "origx[1][3]" ] );
+
+            elms[  4 ] = parseFloat( mat[ "origx[2][1]" ] );
+            elms[  5 ] = parseFloat( mat[ "origx[2][2]" ] );
+            elms[  6 ] = parseFloat( mat[ "origx[2][3]" ] );
+
+            elms[  8 ] = parseFloat( mat[ "origx[3][1]" ] );
+            elms[  9 ] = parseFloat( mat[ "origx[3][2]" ] );
+            elms[ 10 ] = parseFloat( mat[ "origx[3][3]" ] );
+
+            elms[  3 ] = parseFloat( mat[ "origx_vector[1]" ] );
+            elms[  7 ] = parseFloat( mat[ "origx_vector[2]" ] );
+            elms[ 11 ] = parseFloat( mat[ "origx_vector[3]" ] );
+
+            origx.transpose();
+
+            unitcellDict.origx = origx;
+
+        }
+
+        // scale
+        var scale = new THREE.Matrix4();
+
+        if( cif.atom_sites ){
+
+            var mat = cif.atom_sites;
+            var elms = scale.elements;
+
+            elms[  0 ] = parseFloat( mat[ "fract_transf_matrix[1][1]" ] );
+            elms[  1 ] = parseFloat( mat[ "fract_transf_matrix[1][2]" ] );
+            elms[  2 ] = parseFloat( mat[ "fract_transf_matrix[1][3]" ] );
+
+            elms[  4 ] = parseFloat( mat[ "fract_transf_matrix[2][1]" ] );
+            elms[  5 ] = parseFloat( mat[ "fract_transf_matrix[2][2]" ] );
+            elms[  6 ] = parseFloat( mat[ "fract_transf_matrix[2][3]" ] );
+
+            elms[  8 ] = parseFloat( mat[ "fract_transf_matrix[3][1]" ] );
+            elms[  9 ] = parseFloat( mat[ "fract_transf_matrix[3][2]" ] );
+            elms[ 10 ] = parseFloat( mat[ "fract_transf_matrix[3][3]" ] );
+
+            elms[  3 ] = parseFloat( mat[ "fract_transf_vector[1]" ] );
+            elms[  7 ] = parseFloat( mat[ "fract_transf_vector[2]" ] );
+            elms[ 11 ] = parseFloat( mat[ "fract_transf_vector[3]" ] );
+
+            scale.transpose();
+
+            unitcellDict.scale = scale;
+
+        }
+
+        s.unitcell = new NGL.Unitcell(
+            unitcellDict.a,
+            unitcellDict.b,
+            unitcellDict.c,
+            unitcellDict.alpha,
+            unitcellDict.beta,
+            unitcellDict.gamma,
+            unitcellDict.spacegroup,
+            unitcellDict.scale
+        );
+
+        // add connections
+        var sc = cif.struct_conn;
+
+        if( sc ){
+
+            // ensure data is in lists
+            _ensureArray( sc, "id" );
+
+            var reDoubleQuote = /"/g;
+            var ap1 = s.getAtomProxy();
+            var ap2 = s.getAtomProxy();
+            var atomIndicesCache = {};
+
+            for( var i = 0, il = sc.id.length; i < il; ++i ){
+
+                // ignore:
+                // hydrog - hydrogen bond
+                // mismat - mismatched base pairs
+                // saltbr - ionic interaction
+
+                var conn_type_id = sc.conn_type_id[ i ]
+                if( conn_type_id === "hydrog" ||
+                    conn_type_id === "mismat" ||
+                    conn_type_id === "saltbr" ) continue;
+
+                // ignore bonds between symmetry mates
+                if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
+                    sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
+
+                // process:
+                // covale - covalent bond
+                // covale_base -
+                //      covalent modification of a nucleotide base
+                // covale_phosphate -
+                //      covalent modification of a nucleotide phosphate
+                // covale_sugar -
+                //      covalent modification of a nucleotide sugar
+                // disulf - disulfide bridge
+                // metalc - metal coordination
+                // modres - covalent residue modification
+
+                var sele1 = (
+                    sc.ptnr1_auth_seq_id[ i ] + ":" +
+                    asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] + "." +
+                    sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
+                );
+                var atomIndices1 = atomIndicesCache[ sele1 ];
+                if( !atomIndices1 ){
+                    var selection1 = new NGL.Selection( sele1 );
+                    if( selection1.selection[ "error" ] ){
+                        NGL.warn( "invalid selection for connection", sele1 );
+                        continue;
+                    }
+                    atomIndices1 = s.getAtomIndices( selection1 );
+                    atomIndicesCache[ sele1 ] = atomIndices1;
+                }
+
+                var sele2 = (
+                    sc.ptnr2_auth_seq_id[ i ] + ":" +
+                    asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] + "." +
+                    sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
+                );
+                var atomIndices2 = atomIndicesCache[ sele2 ];
+                if( !atomIndices2 ){
+                    var selection2 = new NGL.Selection( sele2 );
+                    if( selection2.selection[ "error" ] ){
+                        NGL.warn( "invalid selection for connection", sele2 );
+                        continue;
+                    }
+                    atomIndices2 = s.getAtomIndices( selection2 );
+                    atomIndicesCache[ sele2 ] = atomIndices2;
+                }
+
+                // cases with more than one atom per selection
+                // - #altloc1 to #altloc2
+                // - #model to #model
+                // - #altloc1 * #model to #altloc2 * #model
+
+                var k = atomIndices1.length;
+                var l = atomIndices2.length;
+
+                if( k > l ){
+                    var tmpA = k;
+                    k = l;
+                    l = tmpA;
+                    var tmpB = atomIndices1;
+                    atomIndices1 = atomIndices2;
+                    atomIndices2 = tmpB;
+                }
+
+                // console.log( k, l );
+
+                if( k === 0 || l === 0 ){
+                    NGL.warn( "no atoms found for", sele1, sele2 );
+                    continue;
+                }
+
+                for( var j = 0; j < l; ++j ){
+
+                    ap1.index = atomIndices1[ j % k ];
+                    ap2.index = atomIndices2[ j ];
+
+                    if( ap1 && ap2 ){
+                        s.bondStore.addBond( ap1, ap2 );
+                    }else{
+                        NGL.log( "atoms for connection not found" );
+                    }
+
+                }
+
+            }
+
+        }
+
+        NGL.timeEnd( "NGL.CifParser._postProcess" );
 
     }
 
@@ -4056,11 +3871,9 @@ NGL.VolumeParser.prototype = NGL.createObject(
 
     __objName: "volume",
 
-    _afterParse: function( callback ){
+    _afterParse: function(){
 
         this.volume.setMatrix( this.getMatrix() );
-
-        callback();
 
     },
 
