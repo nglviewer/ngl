@@ -1301,7 +1301,7 @@ NGL.Viewer.prototype = {
         }
 
         this.controls.maxDistance = bb.size().length() * 10;
-        
+
     },
 
     getImage: function( type, quality ){
