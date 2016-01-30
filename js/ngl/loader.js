@@ -102,7 +102,11 @@ NGL.Loader = function( src, params ){
 
     var p = Object.assign( {}, params );
 
+    var binaryExtList = [ "msgpack", "dcd", "mrc", "ccp4", "map" ];
+    var binary = binaryExtList.indexOf( p.ext ) !== -1;
+
     this.compressed = p.compressed || false;
+    this.binary = p.binary !== undefined ? p.binary : binary;
     this.name = p.name || "";
     this.ext = p.ext || "";
     this.dir = p.dir || "";
@@ -114,25 +118,18 @@ NGL.Loader = function( src, params ){
     //
 
     var streamerParams = {
-
-        compressed: this.compressed
-
+        compressed: this.compressed,
+        binary: this.binary
     };
 
     if( src instanceof File || src instanceof Blob ){
-
         this.streamer = new NGL.FileStreamer( src, streamerParams );
-
     }else{
-
         this.streamer = new NGL.NetworkStreamer( src, streamerParams );
-
     }
 
     if( typeof p.onProgress === "function" ){
-
         this.streamer.onprogress = p.onprogress;
-
     }
 
 };
@@ -290,8 +287,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
         this.streamer.read( function(){
 
-            var text = NGL.Uint8ToString( this.streamer.data );
-            var manifest = JSON.parse( text );
+            var manifest = JSON.parse( this.streamer.data );
             var promiseList = [];
 
             manifest.files.map( function( name ){

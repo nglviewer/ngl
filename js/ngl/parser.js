@@ -4262,7 +4262,7 @@ NGL.TextParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        this.text.data = NGL.Uint8ToString( this.streamer.data );
+        this.text.data = this.streamer.data;
 
         callback();
 

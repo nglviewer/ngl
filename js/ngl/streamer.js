@@ -12,6 +12,7 @@ NGL.Streamer = function( src, params ){
     var p = params || {};
 
     this.compressed = p.compressed !== undefined ? p.compressed : false;
+    this.binary = p.binary !== undefined ? p.binary : false;
 
     this.src = src;
     this.chunkSize = 1024 * 1024 * 10;
@@ -67,7 +68,7 @@ NGL.Streamer.prototype = {
 
             }else{
 
-                if( data instanceof ArrayBuffer ){
+                if( this.binary && data instanceof ArrayBuffer ){
                     data = new Uint8Array( data );
                 }
 
@@ -93,9 +94,21 @@ NGL.Streamer.prototype = {
 
     _chunk: function( start, end ){
 
-        // overwrite this method when this.data is no Uint8Array
+        end = Math.min( this.data.length, end );
 
-        return this.data.subarray( start, end );
+        if( start === 0 && this.data.length === end ){
+
+            return this.data;
+
+        }else{
+
+            if( this.binary || this.compressed ){
+                return this.data.subarray( start, end );
+            }else{
+                return this.data.substr( start, end );
+            }
+
+        }
 
     },
 
@@ -113,7 +126,7 @@ NGL.Streamer.prototype = {
         var n = data.length;
 
         // FIXME does not work for multi-char newline
-        var newline = this.newline.charCodeAt( 0 );
+        var newline = ( this.binary || this.compressed ) ? this.newline.charCodeAt( 0 ) : this.newline;
 
         var i;
         var count = 0;
@@ -133,21 +146,17 @@ NGL.Streamer.prototype = {
     },
 
     lineCount: function(){
-
+        console.error("ARGH")
         var data = this.data;
         var n = data.length;
 
         // FIXME does not work for multi-char newline
-        var newline = this.newline.charCodeAt( 0 );
+        var newline = ( this.binary || this.compressed ) ? this.newline.charCodeAt( 0 ) : this.newline;
 
         var count = 0;
-
         for( var i = 0; i < n; ++i ){
-
             if( data[ i ] === newline ) ++count;
-
         }
-
         if( data[ n - 1 ] !== newline ) ++count;
 
         return count;
@@ -169,7 +178,15 @@ NGL.Streamer.prototype = {
     chunkToLines: function( chunk, partialLine, isLast ){
 
         var newline = this.newline;
-        var str = NGL.Uint8ToString( chunk );
+
+        if( !this.binary && !this.compressed && chunk.length === this.data.length ){
+            return {
+                lines: chunk.split( newline ),
+                partialLine: ""
+            };
+        }
+
+        var str = ( this.binary || this.compressed ) ? NGL.Uint8ToString( chunk ) : chunk;
         var lines = [];
         var idx = str.lastIndexOf( newline );
 
@@ -183,28 +200,20 @@ NGL.Streamer.prototype = {
             lines = lines.concat( str2.split( newline ) );
 
             if( idx === str.length - newline.length ){
-
                 partialLine = "";
-
             }else{
-
                 partialLine = str.substr( idx + newline.length );
-
             }
 
         }
 
         if( isLast && partialLine !== "" ){
-
             lines.push( partialLine );
-
         }
 
         return {
-
             lines: lines,
             partialLine: partialLine
-
         };
 
     },
@@ -214,9 +223,7 @@ NGL.Streamer.prototype = {
         var start = this.__pointer;
 
         if( start > this.data.length ){
-
             return undefined;
-
         }
 
         this.__pointer += this.chunkSize;
@@ -229,9 +236,7 @@ NGL.Streamer.prototype = {
         var chunk = this.nextChunk();
 
         if( chunk === undefined ){
-
             return undefined;
-
         }
 
         var isLast = this.__pointer > this.data.length;
@@ -319,6 +324,7 @@ NGL.Streamer.prototype = {
 
             src: this.src,
             compressed: this.compressed,
+            binary: this.binary,
             chunkSize: this.chunkSize,
             newline: this.newline,
 
@@ -338,6 +344,7 @@ NGL.Streamer.prototype = {
 
         this.src = input.src;
         this.compressed = input.compressed;
+        this.binary = input.binary;
         this.chunkSize = input.chunkSize;
         this.newline = input.newline;
 
@@ -457,7 +464,9 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         //
 
-        xhr.responseType = "arraybuffer";
+        if( this.compressed || this.binary ){
+            xhr.responseType = "arraybuffer";
+        }
         // xhr.crossOrigin = true;
 
         try {
@@ -502,7 +511,12 @@ NGL.FileStreamer.prototype = NGL.createObject(
             // Use FileReaderSync within Worker
 
             var reader = new FileReaderSync();
-            var data = reader.readAsArrayBuffer( this.file );
+            var data;
+            if( this.binary || this.compressed ){
+                data = reader.readAsArrayBuffer( this.file );
+            }else{
+                data = reader.readAsText( this.file );
+            }
 
             //
 
@@ -546,7 +560,11 @@ NGL.FileStreamer.prototype = NGL.createObject(
 
             //
 
-            reader.readAsArrayBuffer( this.file );
+            if( this.binary || this.compressed ){
+                reader.readAsArrayBuffer( this.file );
+            }else{
+                reader.readAsText( this.file );
+            }
 
         }
 
