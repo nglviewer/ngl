@@ -1231,6 +1231,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         if( NGL.debug ) NGL.time( "NGL.PdbParser._parse " + this.name );
 
         var s = this.structure;
+        var sb = this.structureBuilder;
+
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
         var cAlphaOnly = this.cAlphaOnly;
@@ -1264,12 +1266,11 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         s.hasConnect = false;
 
-        var atomArray;
-        var lineCount = this.streamer.lineCount();
-        if( lineCount > NGL.useAtomArrayThreshold ){
-            atomArray = new NGL.AtomArray( lineCount );
-            s.atomArray = atomArray;
-        }
+        var atomStore = s.atomStore;
+        atomStore.resize( Math.round( this.streamer.data.length / 80 ) );
+
+        var ap1 = s.getAtomProxy();
+        var ap2 = s.getAtomProxy();
 
         var idx = 0;
         var modelIdx = 0;
@@ -1374,59 +1375,24 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     if( !element ) element = guessElem( atomname );
 
-                    var a;
+                    sb.addAtom( modelIdx, chainname, resname, resno );
 
-                    if( atomArray ){
+                    atomStore.growIfFull();
+                    atomStore.x[ idx ] = x;
+                    atomStore.y[ idx ] = y;
+                    atomStore.z[ idx ] = z;
+                    atomStore.setElement( idx, element );
+                    atomStore.hetero[ idx ] = hetero;
+                    atomStore.serial[ idx ] = serial;
+                    atomStore.setAtomname( idx, atomname );
+                    atomStore.bfactor[ idx ] = bfactor;
+                    atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
+                    atomStore.vdw[ idx ] = vdwRadii[ element ];
+                    atomStore.covalent[ idx ] = covRadii[ element ];
 
-                        a = new NGL.ProxyAtom( atomArray, idx );
-
-                        atomArray.setResname( idx, resname );
-                        atomArray.x[ idx ] = x;
-                        atomArray.y[ idx ] = y;
-                        atomArray.z[ idx ] = z;
-                        atomArray.setElement( idx, element );
-                        atomArray.hetero[ idx ] = hetero;
-                        atomArray.setChainname( idx, chainname );
-                        atomArray.resno[ idx ] = resno;
-                        atomArray.serial[ idx ] = serial;
-                        atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
-                        atomArray.bfactor[ idx ] = bfactor;
-                        atomArray.altloc[ idx ] = altloc.charCodeAt( 0 );
-                        atomArray.vdw[ idx ] = vdwRadii[ element ];
-                        atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = modelIdx;
-
-                        atomArray.usedLength += 1;
-
-                    }else{
-
-                        a = new NGL.Atom();
-                        a.index = idx;
-
-                        a.resname = resname;
-                        a.x = x;
-                        a.y = y;
-                        a.z = z;
-                        a.element = element;
-                        a.hetero = hetero;
-                        a.chainname = chainname;
-                        a.resno = resno;
-                        a.serial = serial;
-                        a.atomname = atomname;
-                        a.ss = 'l';
-                        a.bfactor = bfactor;
-                        a.altloc = altloc;
-                        a.vdw = vdwRadii[ element ];
-                        a.covalent = covRadii[ element ];
-                        a.modelindex = modelIdx;
-
-                    }
-
-                    serialDict[ serial ] = a;
+                    serialDict[ serial ] = idx;
 
                     idx += 1;
-                    atoms.push( a );
 
                 }else if( recordName === 'CONECT' ){
 
@@ -1453,7 +1419,10 @@ NGL.PdbParser.prototype = NGL.createObject(
                             continue;
                         }*/
 
-                        bondSet.addBond( from, to );
+                        ap1.index = from;
+                        ap2.index = to;
+
+                        s.bondStore.addBond( ap1, ap2 );
 
                     }
 
