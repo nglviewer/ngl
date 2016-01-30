@@ -56,10 +56,7 @@ if( typeof importScripts === 'function' ){
 
             "../lib/promise.min.js",
             "../lib/sprintf.min.js",
-            "../lib/jszip.min.js",
-            "../lib/pako.min.js",
-            "../lib/lzma.min.js",
-            "../lib/bzip2.min.js",
+            "../lib/pako_inflate.min.js",
             "../lib/chroma.min.js",
             "../lib/svd.js",
             "../lib/signals.min.js",

@@ -361,7 +361,7 @@ NGL.MenubarFileWidget = function( stage ){
         "mrc", "ccp4", "map", "cube", "dx",
         "obj", "ply",
         "ngl",
-        "gz", "lzma", "bz2", "zip"
+        "gz"
     ];
     var fileTypesImport = fileTypesOpen;
 

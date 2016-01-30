@@ -490,39 +490,6 @@ NGL.decompress = function( data, file, asBinary, callback ){
 
         binData = pako.ungzip( data );
 
-    }else if( ext === "zip" ){
-
-        var zip = new JSZip( data );
-        var name = Object.keys( zip.files )[ 0 ];
-        binData = zip.files[ name ].asUint8Array();
-
-    }else if( ext === "lzma" ){
-
-        var inStream = {
-            data: data,
-            offset: 0,
-            readByte: function(){
-                return this.data[ this.offset++ ];
-            }
-        };
-
-        var outStream = {
-            data: [ /* Uncompressed data will be putted here */ ],
-            offset: 0,
-            writeByte: function( value ){
-                this.data[ this.offset++ ] = value;
-            }
-        };
-
-        LZMA.decompressFile( inStream, outStream );
-        binData = new Uint8Array( outStream.data );
-
-    }else if( ext === "bz2" ){
-
-        // FIXME need to get binData
-        var bitstream = bzip2.array( data );
-        decompressedData = bzip2.simple( bitstream )
-
     }else{
 
         NGL.warn( "no decompression method available for '" + ext + "'" );
