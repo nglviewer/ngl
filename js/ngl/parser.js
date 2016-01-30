@@ -6,7 +6,7 @@
 
 NGL.reorderAtoms = function( structure ){
 
-    NGL.time( "NGL.reorderAtoms" );
+    if( NGL.debug ) NGL.time( "NGL.reorderAtoms" );
 
     var ap1 = structure.getAtomProxy();
     var ap2 = structure.getAtomProxy();
@@ -37,7 +37,7 @@ NGL.reorderAtoms = function( structure ){
 
     structure.atomStore.sort( compareModelChainResno );
 
-    NGL.timeEnd( "NGL.reorderAtoms" );
+    if( NGL.debug ) NGL.timeEnd( "NGL.reorderAtoms" );
 
 };
 
@@ -127,9 +127,9 @@ NGL.StructureBuilder = function( structure ){
 };
 
 
-NGL.assignSecondaryStructure = function( structure, callback ){
+NGL.assignSecondaryStructure = function( structure ){
 
-    NGL.time( "NGL.assignSecondaryStructure" );
+    if( NGL.debug ) NGL.time( "NGL.assignSecondaryStructure" );
 
     var chainnames = [];
     structure.eachModel( function( mp ){
@@ -307,11 +307,7 @@ NGL.assignSecondaryStructure = function( structure, callback ){
 
     } );
 
-    NGL.timeEnd( "NGL.assignSecondaryStructure" );
-
-    callback();
-
-    return structure;
+    if( NGL.debug ) NGL.timeEnd( "NGL.assignSecondaryStructure" );
 
 };
 
@@ -449,9 +445,9 @@ NGL.calculateSecondaryStructure = function(){
 
     }
 
-    return function( structure, callback ){
+    return function( structure ){
 
-        NGL.time( "NGL.Structure.autoSS" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.autoSS" );
 
         // assign secondary structure
 
@@ -511,18 +507,16 @@ NGL.calculateSecondaryStructure = function(){
 
         } );
 
-        NGL.timeEnd( "NGL.Structure.autoSS" );
-
-        callback();
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.autoSS" );
 
     }
 
 }();
 
 
-NGL.calculateChainnames = function( structure, callback ){
+NGL.calculateChainnames = function( structure ){
 
-    NGL.time( "NGL.calculateChainnames" );
+    if( NGL.debug ) NGL.time( "NGL.calculateChainnames" );
 
     // var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
     //             "abcdefghijklmnopqrstuvwxyz" +
@@ -563,28 +557,26 @@ NGL.calculateChainnames = function( structure, callback ){
 
     } );
 
-    NGL.timeEnd( "NGL.calculateChainnames" );
-
-    callback();
+    if( NGL.debug ) NGL.timeEnd( "NGL.calculateChainnames" );
 
 };
 
 
 NGL.calculateBonds = function( structure ){
 
-    NGL.time( "NGL.calculateBonds" );
+    if( NGL.debug ) NGL.time( "NGL.calculateBonds" );
 
     NGL.calculateBondsWithin( structure );
     NGL.calculateBondsBetween( structure );
 
-    NGL.timeEnd( "NGL.calculateBonds" );
+    if( NGL.debug ) NGL.timeEnd( "NGL.calculateBonds" );
 
 };
 
 
 NGL.calculateBondsWithin = function( structure ){
 
-    NGL.time( "NGL.calculateBondsWithin" );
+    if( NGL.debug ) NGL.time( "NGL.calculateBondsWithin" );
 
     var bondStore = structure.bondStore;
     var a1 = structure.getAtomProxy();
@@ -690,14 +682,14 @@ NGL.calculateBondsWithin = function( structure ){
 
     } );
 
-    NGL.timeEnd( "NGL.calculateBondsWithin" );
+    if( NGL.debug ) NGL.timeEnd( "NGL.calculateBondsWithin" );
 
 };
 
 
 NGL.calculateBondsBetween = function( structure ){
 
-    NGL.time( "NGL.calculateBondsBetween" );
+    if( NGL.debug ) NGL.time( "NGL.calculateBondsBetween" );
 
     var bondStore = structure.bondStore;
     var backboneBondStore = structure.backboneBondStore;
@@ -726,12 +718,14 @@ NGL.calculateBondsBetween = function( structure ){
 
     structure.atomSetDict[ "backbone" ] = backboneAtomSet;
 
-    NGL.timeEnd( "NGL.calculateBondsBetween" );
+    if( NGL.debug ) NGL.timeEnd( "NGL.calculateBondsBetween" );
 
 };
 
 
-NGL.buildUnitcellAssembly = function( structure, callback ){
+NGL.buildUnitcellAssembly = function( structure ){
+
+    if( NGL.debug ) NGL.time( "NGL.buildUnitcellAssembly" );
 
     var uc = structure.unitcell;
     var biomolDict = structure.biomolDict;
@@ -826,16 +820,14 @@ NGL.buildUnitcellAssembly = function( structure, callback ){
         chainList: undefined
     };
 
-    callback();
-
-    return structure;
+    if( NGL.debug ) NGL.timeEnd( "NGL.buildUnitcellAssembly" );
 
 };
 
 
-NGL.calculatePolymerData = function( structure, callback ){
+NGL.calculatePolymerData = function( structure ){
 
-    NGL.time( "NGL.calculatePolymerData" );
+    if( NGL.debug ) NGL.time( "NGL.calculatePolymerData" );
 
     var atomnames = NGL.Residue.atomnames;
     var residueStore = structure.residueStore;
@@ -872,7 +864,7 @@ NGL.calculatePolymerData = function( structure, callback ){
     var rp = structure.getResidueProxy();
 
     for( var i = 0; i < rn; ++i ){
-        
+
         rp.index = i;
 
         var rAtomnames = atomnames[ rp.getBackboneType( 0 ) ];
@@ -899,9 +891,7 @@ NGL.calculatePolymerData = function( structure, callback ){
 
     }
 
-    NGL.timeEnd( "NGL.calculatePolymerData" );
-
-    callback();
+    if( NGL.debug ) NGL.timeEnd( "NGL.calculatePolymerData" );
 
 };
 
@@ -1238,9 +1228,7 @@ NGL.PdbParser.prototype = NGL.createObject(
         var isPqr = this.type === "pqr";
         var reWhitespace = /\s+/;
 
-        var __timeName = "NGL.PdbParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.PdbParser._parse " + this.name );
 
         var s = this.structure;
         var firstModelOnly = this.firstModelOnly;
@@ -1684,7 +1672,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     unitcellDict.scale
                 );
 
-                NGL.timeEnd( __timeName );
+                if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
                 callback();
 
             }

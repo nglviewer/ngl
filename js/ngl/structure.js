@@ -1159,7 +1159,7 @@ NGL.getAtomData = function( structure, params ){
         var i3 = i * 3;
         ap.index = index;
         if( position ){
-            ap.positionToArray( position, i3 );    
+            ap.positionToArray( position, i3 );
         }
         if( color ){
             colorMaker.atomColorToArray( ap, color, i3 );
@@ -1316,7 +1316,7 @@ NGL.Structure.prototype = {
 
     refresh: function(){
 
-        NGL.time( "NGL.Structure.refresh" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.refresh" );
 
         this.atomSetCache = {};
 
@@ -1334,7 +1334,7 @@ NGL.Structure.prototype = {
 
         NGL.GidPool.updateObject( this );
 
-        NGL.timeEnd( "NGL.Structure.refresh" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.refresh" );
 
         this.signals.refreshed.dispatch();
 
@@ -1379,15 +1379,15 @@ NGL.Structure.prototype = {
 
     getBondSet: function( selection ){
 
-        NGL.time( "NGL.Structure.getBondSet" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.getBondSet" );
 
         var n = this.bondStore.count;
         var bs = new TypedFastBitSet( n );
         var as = this.atomSet;
-        
+
         if( as ){
 
-            var bp = this.getBondProxy();    
+            var bp = this.getBondProxy();
 
             for( var i = 0; i < n; ++i ){
                 bp.index = i;
@@ -1402,7 +1402,7 @@ NGL.Structure.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.Structure.getBondSet" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getBondSet" );
 
         return bs;
 
@@ -1410,7 +1410,7 @@ NGL.Structure.prototype = {
 
     getBackboneBondSet: function( selection ){
 
-        NGL.time( "NGL.Structure.getBackboneBondSet" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.getBackboneBondSet" );
 
         var n = this.backboneBondStore.count;
         var bs = new TypedFastBitSet( n );
@@ -1434,7 +1434,7 @@ NGL.Structure.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.Structure.getBackboneBondSet" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getBackboneBondSet" );
 
         return bs;
 
@@ -1442,7 +1442,7 @@ NGL.Structure.prototype = {
 
     getAtomSet: function( selection ){
 
-        NGL.time( "NGL.Structure.getAtomSet" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.getAtomSet" );
 
         var as;
         var n = this.atomStore.count;
@@ -1489,7 +1489,7 @@ NGL.Structure.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.Structure.getAtomSet" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getAtomSet" );
 
         return as;
 
@@ -1497,7 +1497,7 @@ NGL.Structure.prototype = {
 
     getAtomSet2: function( selection ){
 
-        // NGL.time( "NGL.Structure.getAtomSet2" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.getAtomSet2" );
 
         var as;
         var n = this.atomStore.count;
@@ -1539,7 +1539,7 @@ NGL.Structure.prototype = {
 
         }
 
-        // NGL.timeEnd( "NGL.Structure.getAtomSet2" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getAtomSet2" );
 
         return as;
 
@@ -1773,7 +1773,7 @@ NGL.Structure.prototype = {
         var maxZ = -Infinity;
 
         this.eachAtom( function( ap ){
-            
+
             var x = ap.x;
             var y = ap.y;
             var z = ap.z;
@@ -2101,7 +2101,7 @@ NGL.StructureView.prototype = NGL.createObject(
 
     refresh: function(){
 
-        NGL.time( "NGL.StructureView.refresh" );
+        if( NGL.debug ) NGL.time( "NGL.StructureView.refresh" );
 
         this.atomSetCache = {};
 
@@ -2121,7 +2121,7 @@ NGL.StructureView.prototype = NGL.createObject(
 
         this.center = this.atomCenter();
 
-        NGL.timeEnd( "NGL.StructureView.refresh" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh" );
 
     },
 

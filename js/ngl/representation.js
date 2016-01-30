@@ -12,7 +12,7 @@ NGL.SideTypes[ THREE.DoubleSide ] = "double";
 
 NGL.makeRepresentation = function( type, object, viewer, params ){
 
-    NGL.time( "NGL.makeRepresentation " + type );
+    if( NGL.debug ) NGL.time( "NGL.makeRepresentation " + type );
 
     var ReprClass;
 
@@ -67,7 +67,7 @@ NGL.makeRepresentation = function( type, object, viewer, params ){
 
     var repr = new ReprClass( object, viewer, params );
 
-    NGL.timeEnd( "NGL.makeRepresentation " + type );
+    if( NGL.debug ) NGL.timeEnd( "NGL.makeRepresentation " + type );
 
     return repr;
 
@@ -282,7 +282,7 @@ NGL.Representation.prototype = {
 
     make: function( params, callback ){
 
-        NGL.time( "NGL.Representation.make " + this.type );
+        if( NGL.debug ) NGL.time( "NGL.Representation.make " + this.type );
 
         if( params && !params.__update ){
             this.init( params );
@@ -305,11 +305,11 @@ NGL.Representation.prototype = {
 
                 if( !this.manualAttach && !this.disposed ){
 
-                    NGL.time( "NGL.Representation.attach " + this.type );
+                    if( NGL.debug ) NGL.time( "NGL.Representation.attach " + this.type );
 
                     this.attach( function(){
 
-                        NGL.timeEnd( "NGL.Representation.attach " + this.type );
+                        if( NGL.debug ) NGL.timeEnd( "NGL.Representation.attach " + this.type );
 
                         this.tasks.decrement();
                         callback();
@@ -320,7 +320,7 @@ NGL.Representation.prototype = {
 
             }
 
-            NGL.timeEnd( "NGL.Representation.make " + this.type );
+            if( NGL.debug ) NGL.timeEnd( "NGL.Representation.make " + this.type );
 
         }.bind( this ) );
 
