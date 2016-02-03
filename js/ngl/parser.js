@@ -1584,29 +1584,28 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         }
 
-        this.streamer.eachChunkOfLinesAsync(
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
 
-            _parseChunkOfLines,
+        sb.finalize();
 
-            function(){
+        if( NGL.debug ) console.log( atomMap );
+        if( NGL.debug ) console.log( s.residueMap );
 
-                s.unitcell = new NGL.Unitcell(
-                    unitcellDict.a,
-                    unitcellDict.b,
-                    unitcellDict.c,
-                    unitcellDict.alpha,
-                    unitcellDict.beta,
-                    unitcellDict.gamma,
-                    unitcellDict.spacegroup,
-                    unitcellDict.scale
-                );
-
-                if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
-                callback();
-
-            }
-
+        s.unitcell = new NGL.Unitcell(
+            unitcellDict.a,
+            unitcellDict.b,
+            unitcellDict.c,
+            unitcellDict.alpha,
+            unitcellDict.beta,
+            unitcellDict.gamma,
+            unitcellDict.spacegroup,
+            unitcellDict.scale
         );
+
+        if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
+        callback();
 
     }
 
@@ -2249,25 +2248,6 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        this.streamer.eachChunkOfLinesAsync(
-
-            _parseChunkOfLines,
-
-            function(){
-
-                if( cif.struct && cif.struct.title ){
-                    s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
-                }
-
-                postProcess();
-
-                NGL.timeEnd( __timeName );
-                callback();
-
-            }
-
-        );
-
         function postProcess(){
 
             function _ensureArray( dict, field ){
@@ -2330,11 +2310,29 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
+
+        sb.finalize();
+
+        if( NGL.debug ) console.log( atomMap );
+        if( NGL.debug ) console.log( s.residueMap );
+
+        if( cif.struct && cif.struct.title ){
+            s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
+        }
+
+        postProcess();
+
+        if( NGL.debug ) NGL.timeEnd( "NGL.CifParser._parse " + this.name );
+        callback();
+
     },
 
     _postProcess: function(){
 
-        NGL.time( "NGL.CifParser._postProcess" );
+        if( NGL.debug ) NGL.time( "NGL.CifParser._postProcess" );
 
         var s = this.structure;
         var structure = this.structure;
@@ -2750,7 +2748,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        NGL.timeEnd( "NGL.CifParser._postProcess" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.CifParser._postProcess" );
 
     }
 
