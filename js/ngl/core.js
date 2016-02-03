@@ -48,7 +48,6 @@ if( typeof importScripts === 'function' ){
         importScripts(
 
             "../three/three.js",
-            "../three/Detector.js",
             "../three/TypedArrayUtils.js",
             "../three/controls/TrackballControls.js",
             "../three/loaders/OBJLoader.js",
