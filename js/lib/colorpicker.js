@@ -236,14 +236,15 @@
         var slideClone = slide.cloneNode(true);
         var pickerClone = picker.cloneNode(true);
 
-        var hsvGradient = slideClone.getElementById('gradient-hsv');
+        var hsvGradient = slideClone.getElementsByTagName('defs')[0].firstChild;
 
         var hsvRect = slideClone.getElementsByTagName('rect')[0];
 
         hsvGradient.id = 'gradient-hsv-' + uniqID;
         hsvRect.setAttribute('fill', 'url(#' + hsvGradient.id + ')');
 
-        var blackAndWhiteGradients = [pickerClone.getElementById('gradient-black'), pickerClone.getElementById('gradient-white')];
+        var gradientDefs = pickerClone.getElementsByTagName('defs')[0];
+        var blackAndWhiteGradients = [gradientDefs.firstChild, gradientDefs.lastChild];
         var whiteAndBlackRects = pickerClone.getElementsByTagName('rect');
 
         blackAndWhiteGradients[0].id = 'gradient-black-' + uniqID;
