@@ -105,7 +105,7 @@ NGL.Streamer.prototype = {
             if( this.binary || this.compressed ){
                 return this.data.subarray( start, end );
             }else{
-                return this.data.substr( start, end );
+                return this.data.substring( start, end );
             }
 
         }
@@ -146,7 +146,7 @@ NGL.Streamer.prototype = {
     },
 
     lineCount: function(){
-        console.error("ARGH")
+        console.warn("lineCount")
         var data = this.data;
         var n = data.length;
 
@@ -268,14 +268,13 @@ NGL.Streamer.prototype = {
     eachChunkOfLines: function( callback ){
 
         var newline = this.newline;
-        var partialLine = "";
 
         this.eachChunk( function( chunk, chunkNo, chunkCount ){
 
             var isLast = chunkNo === chunkCount + 1;
-            var d = this.chunkToLines( chunk, partialLine, isLast );
+            var d = this.chunkToLines( chunk, this.__partialLine, isLast );
 
-            partialLine = d.partialLine;
+            this.__partialLine = d.partialLine;
 
             callback( d.lines, chunkNo, chunkCount );
 
@@ -284,7 +283,7 @@ NGL.Streamer.prototype = {
     },
 
     eachChunkOfLinesAsync: function( callback, onfinish ){
-
+        console.warn("eachChunkOfLinesAsync")
         var self = this;
         var n = self.chunkCount();
         var _i = 0;
@@ -411,10 +410,6 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
         //
 
         xhr.addEventListener( 'load', function ( event ) {
-
-            // console.log( xhr );
-            // var str = NGL.Uint8ToString( new Uint8Array( xhr.response ) )
-            // console.log( str )
 
             if( xhr.status === 200 || xhr.status === 304 ||
                 // when requesting from local file system
