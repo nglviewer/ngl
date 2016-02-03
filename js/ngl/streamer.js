@@ -435,15 +435,15 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         //
 
-        if( typeof this.onprogress === "function" ){
+        // if( typeof this.onprogress === "function" ){
 
-            xhr.addEventListener( 'progress', function ( event ) {
+        //     xhr.addEventListener( 'progress', function ( event ) {
 
-                this.onprogress( event );
+        //         this.onprogress( event );
 
-            }.bind( this ), false );
+        //     }.bind( this ), false );
 
-        }
+        // }
 
         //
 
@@ -464,19 +464,15 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
         }
         // xhr.crossOrigin = true;
 
-        try {
+        xhr.send( null );
 
-            xhr.send( null );
-
-        }catch( e ){
-
-            if( typeof this.onerror === "function" ){
-
-                this.onerror( e.message );
-
-            }
-
-        }
+        // try {
+        //     xhr.send( null );
+        // }catch( e ){
+        //     if( typeof this.onerror === "function" ){
+        //         this.onerror( e.message );
+        //     }
+        // }
 
     }
 
