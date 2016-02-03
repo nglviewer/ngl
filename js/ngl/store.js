@@ -359,46 +359,16 @@ NGL.AtomStore.prototype = NGL.createObject(
     __fields: [
 
         [ "residueIndex", 1, "uint32" ],
+        [ "atomTypeId", 1, "uint16" ],
 
         [ "x", 1, "float32" ],
         [ "y", 1, "float32" ],
         [ "z", 1, "float32" ],
-        [ "element", 3, "uint8" ],
         [ "serial", 1, "int32" ],
-        [ "vdw", 1, "float32" ],
-        [ "covalent", 1, "float32" ],
-        [ "hetero", 1, "int8" ],
         [ "bfactor", 1, "float32" ],
-        [ "altloc", 1, "uint8" ],
-        [ "atomname", 4, "uint8" ],
+        [ "altloc", 1, "uint8" ]
 
     ],
-
-    setElement: function( i, str ){
-
-        var j = 3 * i;
-        this.element[ j ] = str.charCodeAt( 0 );
-        this.element[ j + 1 ] = str.charCodeAt( 1 );
-        this.element[ j + 2 ] = str.charCodeAt( 2 );
-
-    },
-
-    getElement: function( i ){
-
-        var code;
-        var element = "";
-        var j = 3 * i;
-        for( var k = 0; k < 3; ++k ){
-            code = this.element[ j + k ];
-            if( code ){
-                element += String.fromCharCode( code );
-            }else{
-                break;
-            }
-        }
-        return element;
-
-    },
 
     setAltloc: function( i, str ){
 
@@ -410,33 +380,6 @@ NGL.AtomStore.prototype = NGL.createObject(
 
         var code = this.altloc[ i ];
         return code ? String.fromCharCode( code ) : "";
-
-    },
-
-    setAtomname: function( i, str ){
-
-        var j = 4 * i;
-        this.atomname[ j ] = str.charCodeAt( 0 );
-        this.atomname[ j + 1 ] = str.charCodeAt( 1 );
-        this.atomname[ j + 2 ] = str.charCodeAt( 2 );
-        this.atomname[ j + 3 ] = str.charCodeAt( 3 );
-
-    },
-
-    getAtomname: function( i ){
-
-        var code;
-        var atomname = "";
-        var j = 4 * i;
-        for( var k = 0; k < 4; ++k ){
-            code = this.atomname[ j + k ];
-            if( code ){
-                atomname += String.fromCharCode( code );
-            }else{
-                break;
-            }
-        }
-        return atomname;
 
     }
 
@@ -465,50 +408,12 @@ NGL.ResidueStore.prototype = NGL.createObject(
         [ "chainIndex", 1, "uint32" ],
         [ "atomOffset", 1, "uint32" ],
         [ "atomCount", 1, "uint16" ],
+        [ "residueTypeId", 1, "uint16" ],
 
         [ "resno", 1, "int32" ],
-        [ "resname", 5, "uint8" ],
-        [ "sstruc", 1, "uint8" ],
-
-        // TODO these coult be int16 when relative to the residue atomOffset
-        [ "traceAtomIndex", 1, "int32" ],
-        [ "direction1AtomIndex", 1, "int32" ],
-        [ "direction2AtomIndex", 1, "int32" ],
-        [ "backboneStartAtomIndex", 1, "int32" ],
-        [ "backboneEndAtomIndex", 1, "int32" ],
-
-        [ "moleculeType", 1, "uint8" ],
-        [ "backboneType", 1, "uint8" ],
+        [ "sstruc", 1, "uint8" ]
 
     ],
-
-    setResname: function( i, str ){
-
-        var j = 5 * i;
-        this.resname[ j ] = str.charCodeAt( 0 );
-        this.resname[ j + 1 ] = str.charCodeAt( 1 );
-        this.resname[ j + 2 ] = str.charCodeAt( 2 );
-        this.resname[ j + 3 ] = str.charCodeAt( 3 );
-        this.resname[ j + 4 ] = str.charCodeAt( 4 );
-
-    },
-
-    getResname: function( i ){
-
-        var code;
-        var resname = "";
-        var j = 5 * i;
-        for( var k = 0; k < 5; ++k ){
-            code = this.resname[ j + k ];
-            if( code ){
-                resname += String.fromCharCode( code );
-            }else{
-                break;
-            }
-        }
-        return resname;
-
-    },
 
     setSstruc: function( i, str ){
 

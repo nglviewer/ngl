@@ -60,26 +60,29 @@ NGL.Spline.prototype = {
 
         var k = 0;
 
-        var a1 = structure.getAtomProxy();
-        var a2 = structure.getAtomProxy( traceAtomIndex[ residueIndexStart ] );
+        var rp = structure.getResidueProxy();
+        rp.index = residueIndexStart;
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy( rp.traceAtomIndex );
 
         for( var i = 0; i < n1; ++i ){
 
-            a1.index = a2.index;
-            a2.index = traceAtomIndex[ residueIndexStart + i + 1 ];
+            rp.index = residueIndexStart + i + 1;
+            ap1.index = ap2.index;
+            ap2.index = rp.traceAtomIndex;
 
             var mh = Math.ceil( m / 2 );
 
             for( var j = 0; j < mh; ++j ){
                 var l = k + j * 3;
-                colorMaker.atomColorToArray( a1, col, l );
-                pickingColorMaker.atomColorToArray( a1, pcol, l );
+                colorMaker.atomColorToArray( ap1, col, l );
+                pickingColorMaker.atomColorToArray( ap1, pcol, l );
             }
 
             for( var j = mh; j < m; ++j ){
                 var l = k + j * 3;
-                colorMaker.atomColorToArray( a2, col, l );
-                pickingColorMaker.atomColorToArray( a2, pcol, l );
+                colorMaker.atomColorToArray( ap2, col, l );
+                pickingColorMaker.atomColorToArray( ap2, pcol, l );
             }
 
             k += 3 * m;
@@ -144,23 +147,26 @@ NGL.Spline.prototype = {
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         var k = 0;
-        var a1 = structure.getAtomProxy();
-        var a2 = structure.getAtomProxy( traceAtomIndex[ residueIndexStart ] );
+        var rp = structure.getResidueProxy();
+        rp.index = residueIndexStart;
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy( rp.traceAtomIndex );
 
         for( var i = 0; i < n1; ++i ){
 
-            a1.index = a2.index;
-            a2.index = traceAtomIndex[ residueIndexStart + i + 1 ];
+            rp.index = residueIndexStart + i + 1;
+            ap1.index = ap2.index;
+            ap2.index = rp.traceAtomIndex;
 
-            var s1 = radiusFactory.atomRadius( a1 );
-            var s2 = radiusFactory.atomRadius( a2 );
+            var s1 = radiusFactory.atomRadius( ap1 );
+            var s2 = radiusFactory.atomRadius( ap2 );
 
             if( arrows && (
-                    ( a1.sstruc==="e" && a2.sstruc!=="e" ) ||
-                    ( a1.sstruc==="b" && a2.sstruc!=="b" ) ||
-                    ( a1.sstruc==="h" && a2.sstruc!=="h" ) ||
-                    ( a1.sstruc==="g" && a2.sstruc!=="g" ) ||
-                    ( a1.sstruc==="i" && a2.sstruc!=="i" )
+                    ( ap1.sstruc==="e" && ap2.sstruc!=="e" ) ||
+                    ( ap1.sstruc==="b" && ap2.sstruc!=="b" ) ||
+                    ( ap1.sstruc==="h" && ap2.sstruc!=="h" ) ||
+                    ( ap1.sstruc==="g" && ap2.sstruc!=="g" ) ||
+                    ( ap1.sstruc==="i" && ap2.sstruc!=="i" )
                 )
             ){
 
@@ -551,7 +557,7 @@ NGL.Helixorient.prototype = {
             fr = fa.residue;
 
             r = new NGL.Residue();
-            a = new NGL.Atom( r ); 
+            a = new NGL.Atom( r );
 
             r.atoms.push( a );
             r.atomCount += 1;
@@ -1415,9 +1421,9 @@ NGL.Kdtree = function( entity, useSquaredDist ){
 
     var points = new Float32Array( entity.atomCount * 4 );
     var i = 0;
-    
+
     entity.eachAtom( function( ap ){
-        
+
         var i3 = i * 3;
         var i4 = i * 4;
 

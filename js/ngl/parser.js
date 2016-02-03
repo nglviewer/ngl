@@ -48,18 +48,36 @@ NGL.StructureBuilder = function( structure ){
     var currentChainname;
     var currentResname;
     var currentResno;
+    var currentHetero;
+
+    var previousResname;
+    var previousHetero
 
     var atomStore = structure.atomStore;
     var residueStore = structure.residueStore;
     var chainStore = structure.chainStore;
     var modelStore = structure.modelStore;
 
+    var residueMap = structure.residueMap;
+
     var ai = -1;
     var ri = -1;
     var ci = -1;
     var mi = -1;
 
-    this.addAtom = function( modelindex, chainname, resname, resno ){
+    function addResidueType( ri ){
+        var count = residueStore.atomCount[ ri ];
+        var offset = residueStore.atomOffset[ ri ];
+        var atomTypeIdList = new Array( count );
+        for( var i = 0; i < count; ++i ){
+            atomTypeIdList[ i ] = atomStore.atomTypeId[ offset + i ];
+        }
+        residueStore.residueTypeId[ ri ] = residueMap.add(
+            previousResname, atomTypeIdList, previousHetero
+        );
+    }
+
+    this.addAtom = function( modelindex, chainname, resname, resno, hetero ){
 
         var addModel = false;
         var addChain = false;
@@ -103,9 +121,11 @@ NGL.StructureBuilder = function( structure ){
         }
 
         if( addResidue ){
+            previousResname = currentResname;
+            previousHetero = currentHetero;
+            if( ri > 0 ) addResidueType( ri - 1 );
             residueStore.growIfFull();
             residueStore.resno[ ri ] = resno;
-            residueStore.setResname( ri, resname );
             residueStore.atomOffset[ ri ] = ai;
             residueStore.atomCount[ ri ] = 0;
             residueStore.count += 1;
@@ -121,7 +141,12 @@ NGL.StructureBuilder = function( structure ){
         currentChainname = chainname;
         currentResname = resname;
         currentResno = resno;
+        currentHetero = hetero;
 
+    };
+
+    this.finalize = function(){
+        addResidueType( ri );
     };
 
 };
@@ -529,44 +554,53 @@ NGL.calculateChainnames = function( structure ){
 
     if( NGL.debug ) NGL.time( "NGL.calculateChainnames" );
 
-    // var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-    //             "abcdefghijklmnopqrstuvwxyz" +
-    //             "0123456789";
-    var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    var n = names.length;
-
-    structure.eachModel( function( mp ){
-
-        var i = 0;
-
-        mp.eachPolymer( function( p ){
-
-            var j = i;
-            var k = 0;
-            var name = names[ j % n ];
-
-            while( j >= n ){
-                j = Math.floor( j / n );
-                name += names[ j % n ];
-                k += 1;
-            }
-
-            // TODO create entries in residueStore, chainStore
-
-            p.eachAtom( function( a ){
-                a.chainname = name;
-            } );
-
-            i += 1;
-
-            if( k >= 5 ){
-                NGL.warn( "out of chain names" );
-                i = 0;
-            }
-
-        } )
-
+    var doAutoChainName = true;
+    structure.eachChain( function( c ){
+        if( c.chainname ) doAutoChainName = false;
     } );
+
+    if( doAutoChainName ){
+
+        // var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        //             "abcdefghijklmnopqrstuvwxyz" +
+        //             "0123456789";
+        var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var n = names.length;
+
+        structure.eachModel( function( mp ){
+
+            var i = 0;
+
+            mp.eachPolymer( function( p ){
+
+                var j = i;
+                var k = 0;
+                var name = names[ j % n ];
+
+                while( j >= n ){
+                    j = Math.floor( j / n );
+                    name += names[ j % n ];
+                    k += 1;
+                }
+
+                // TODO create entries in residueStore, chainStore
+
+                p.eachAtom( function( a ){
+                    a.chainname = name;
+                } );
+
+                i += 1;
+
+                if( k >= 5 ){
+                    NGL.warn( "out of chain names" );
+                    i = 0;
+                }
+
+            } )
+
+        } );
+
+    }
 
     if( NGL.debug ) NGL.timeEnd( "NGL.calculateChainnames" );
 
@@ -585,6 +619,75 @@ NGL.calculateBonds = function( structure ){
 };
 
 
+NGL.calculateResidueBonds = function( r ){
+
+    // if( NGL.debug ) NGL.time( "NGL.calculateResidueBonds" );
+
+    var structure = r.structure;
+    var a1 = structure.getAtomProxy();
+    var a2 = structure.getAtomProxy();
+
+    var count = r.atomCount;
+    var offset = r.atomOffset;
+    var end = offset + count;
+    var end1 = end - 1;
+
+    if( count > 500 ){
+        if( NGL.debug ) NGL.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );
+        return;
+    }
+
+    var atomIndices1 = [];
+    var atomIndices2 = [];
+
+    if( count > 50 ){
+
+        var kdtree = new NGL.Kdtree( r, true );
+        var radius = r.hasBackbone() ? 1.2 : 2.3;
+
+        for( var i = offset; i < end1; ++i ){
+            a1.index = i;
+            var maxd = a1.covalent + radius + 0.3;
+            var nearestAtoms = kdtree.nearest(
+                a1, Infinity, maxd * maxd
+            );
+            var m = nearestAtoms.length;
+            for( var j = 0; j < m; ++j ){
+                a2.index = nearestAtoms[ j ].index;
+                if( a1.index < a2.index ){
+                    if( a1.connectedTo( a2 ) ){
+                        atomIndices1.push( a1.index - offset );
+                        atomIndices2.push( a2.index - offset );
+                    };
+                }
+            }
+        }
+
+    }else{
+
+        for( var i = offset; i < end1; ++i ){
+            a1.index = i;
+            for( var j = i + 1; j <= end1; ++j ){
+                a2.index = j;
+                if( a1.connectedTo( a2 ) ){
+                    atomIndices1.push( i - offset );
+                    atomIndices2.push( j - offset );
+                }
+            }
+        }
+
+    }
+
+    // if( NGL.debug ) NGL.timeEnd( "NGL.calculateResidueBonds" );
+
+    return {
+        atomIndices1: atomIndices1,
+        atomIndices2: atomIndices2
+    };
+
+};
+
+
 NGL.calculateBondsWithin = function( structure ){
 
     if( NGL.debug ) NGL.time( "NGL.calculateBondsWithin" );
@@ -592,7 +695,6 @@ NGL.calculateBondsWithin = function( structure ){
     var bondStore = structure.bondStore;
     var a1 = structure.getAtomProxy();
     var a2 = structure.getAtomProxy();
-    var bondingDict = {};
 
     structure.eachResidue( function( r ){
 
@@ -609,86 +711,16 @@ NGL.calculateBondsWithin = function( structure ){
         var resname = r.resname;
         var equalAtomnames = false;
 
-        if( bondingDict[ resname ] ){
+        var bonds = r.getBonds();
 
-            var atomnameList = bondingDict[ resname ].atomnameList;
+        var atomIndices1 = bonds.atomIndices1;
+        var atomIndices2 = bonds.atomIndices2;
+        var nn = atomIndices1.length;
 
-            if( count === atomnameList.length ){
-                equalAtomnames = true;
-                for( var i = offset; i < end; ++i ){
-                    a1.index = i;
-                    if( a1.atomname !== atomnameList[ i - offset ] ){
-                        equalAtomnames = false;
-                        break;
-                    }
-                }
-            }
-
-        }
-
-        if( equalAtomnames ){
-
-            var atomIndices1 = bondingDict[ resname ].atomIndices1;
-            var atomIndices2 = bondingDict[ resname ].atomIndices2;
-            var nn = atomIndices1.length;
-
-            for( var i = 0; i < nn; ++i ){
-                a1.index = atomIndices1[ i ] + offset;
-                a2.index = atomIndices2[ i ] + offset;
-                bondStore.addBond( a1, a2 );
-            }
-
-        }else{
-
-            var atomIndices1 = [];
-            var atomIndices2 = [];
-
-            if( count > 50 ){
-
-                var kdtree = new NGL.Kdtree( r, true );
-                var radius = r.hasBackbone() ? 1.2 : 2.3;
-
-                for( var i = offset; i < end1; ++i ){
-                    a1.index = i;
-                    var maxd = a1.covalent + radius + 0.3;
-                    var nearestAtoms = kdtree.nearest(
-                        a1, Infinity, maxd * maxd
-                    );
-                    var m = nearestAtoms.length;
-                    for( var j = 0; j < m; ++j ){
-                        a2.index = nearestAtoms[ j ].index;
-                        if( a1.index < a2.index ){
-                            if( bondStore.addBondIfConnected( a1, a2 ) ){
-                                atomIndices1.push( a1.index - offset );
-                                atomIndices2.push( a2.index - offset );
-                            };
-                        }
-                    }
-                }
-
-            }else{
-
-                for( var i = offset; i < end1; ++i ){
-                    a1.index = i;
-                    for( var j = i + 1; j <= end1; ++j ){
-                        a2.index = j;
-                        if( bondStore.addBondIfConnected( a1, a2 ) ){
-                            atomIndices1.push( i - offset );
-                            atomIndices2.push( j - offset );
-                        }
-                    }
-                }
-
-            }
-
-            bondingDict[ resname ] = {
-
-                atomnameList: r.getAtomnameList(),
-                atomIndices1: atomIndices1,
-                atomIndices2: atomIndices2
-
-            };
-
+        for( var i = 0; i < nn; ++i ){
+            a1.index = atomIndices1[ i ] + offset;
+            a2.index = atomIndices2[ i ] + offset;
+            bondStore.addBond( a1, a2 );
         }
 
     } );
@@ -834,77 +866,6 @@ NGL.buildUnitcellAssembly = function( structure ){
     };
 
     if( NGL.debug ) NGL.timeEnd( "NGL.buildUnitcellAssembly" );
-
-};
-
-
-NGL.calculatePolymerData = function( structure ){
-
-    if( NGL.debug ) NGL.time( "NGL.calculatePolymerData" );
-
-    var atomnames = NGL.Residue.atomnames;
-    var residueStore = structure.residueStore;
-
-    function getMoleculeType( rp ){
-        if( rp.isProtein() ){
-            return NGL.ProteinType;
-        }else if( rp.isNucleic() ){
-            return NGL.NucleicType;
-        }else if( rp.isCg() ){
-            return NGL.CgType;
-        }else if( rp.isWater() ){
-            return NGL.WaterType;
-        }else{
-            return NGL.UnknownType;
-        }
-    }
-
-    function getBackboneType( rp, position ){
-        if( rp.hasProteinBackbone( position ) ){
-            return NGL.ProteinBackboneType;
-        }else if( rp.hasRnaBackbone( position ) ){
-            return NGL.RnaBackboneType;
-        }else if( rp.hasDnaBackbone( position ) ){
-            return NGL.DnaBackboneType;
-        }else if( rp.isCg() ){
-            return NGL.CgType;
-        }else{
-            return NGL.UnknownType;
-        }
-    }
-
-    var rn = residueStore.count;
-    var rp = structure.getResidueProxy();
-
-    for( var i = 0; i < rn; ++i ){
-
-        rp.index = i;
-
-        var rAtomnames = atomnames[ rp.getBackboneType( 0 ) ];
-        var rAtomnamesStart = atomnames[ rp.getBackboneType( -1 ) ];
-        var rAtomnamesEnd = atomnames[ rp.getBackboneType( 1 ) ];
-
-        var traceIndex = rp.getAtomIndexByName( rAtomnames.trace );
-        residueStore.traceAtomIndex[ rp.index ] = traceIndex !== undefined ? traceIndex : -1;
-
-        var dir1Index = rp.getAtomIndexByName( rAtomnames.direction1 );
-        residueStore.direction1AtomIndex[ rp.index ] = dir1Index !== undefined ? dir1Index : -1;
-
-        var dir2Index = rp.getAtomIndexByName( rAtomnames.direction2 );
-        residueStore.direction2AtomIndex[ rp.index ] = dir2Index !== undefined ? dir2Index : -1;
-
-        var bbStartIndex = rp.getAtomIndexByName( rAtomnamesStart.backboneStart );
-        residueStore.backboneStartAtomIndex[ rp.index ] = bbStartIndex !== undefined ? bbStartIndex : -1;
-
-        var bbEndIndex = rp.getAtomIndexByName( rAtomnamesEnd.backboneEnd );
-        residueStore.backboneEndAtomIndex[ rp.index ] = bbEndIndex !== undefined ? bbEndIndex : -1;
-
-        residueStore.moleculeType[ rp.index ] = getMoleculeType( rp );
-        residueStore.backboneType[ rp.index ] = getBackboneType( rp );
-
-    }
-
-    if( NGL.debug ) NGL.timeEnd( "NGL.calculatePolymerData" );
 
 };
 
@@ -1150,16 +1111,8 @@ NGL.StructureParser.prototype = NGL.createObject(
             NGL.reorderAtoms( s );
         }
 
-        NGL.calculatePolymerData( s );
-
         // check for chain names
-        var doAutoChainName = true;
-        s.eachChain( function( c ){
-            if( c.chainname ) doAutoChainName = false;
-        } );
-        if( doAutoChainName ){
-            NGL.calculateChainnames( s );
-        }
+        NGL.calculateChainnames( s );
 
         if( !this.dontAutoBond ){
             NGL.calculateBonds( s );
@@ -1167,8 +1120,8 @@ NGL.StructureParser.prototype = NGL.createObject(
             NGL.calculateBondsBetween( s );
         }
 
-        // check for secondary structure
         // TODO
+        // check for secondary structure
         // if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
         //     NGL.calculateSecondaryStructure( s );
         // }
@@ -1181,7 +1134,7 @@ NGL.StructureParser.prototype = NGL.createObject(
         this._postProcess();
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureParser._afterParse" );
-        if( NGL.debug ) NGL.log( self[ self.__objName ] );
+        if( NGL.debug ) NGL.log( this[ this.__objName ] );
 
     },
 
@@ -1279,6 +1232,7 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         s.hasConnect = false;
 
+        var atomMap = s.atomMap;
         var atomStore = s.atomStore;
         atomStore.resize( Math.round( this.streamer.data.length / 80 ) );
 
@@ -1364,7 +1318,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                     if( isPqr ){
 
                         serial = parseInt( ls[ 1 ] );
-                        element = "";
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = dd ? "" : ls[ 4 ];
                         resno = parseInt( ls[ 5 - dd ] );
@@ -1375,7 +1328,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                     }else{
 
                         serial = parseInt( line.substr( 6, 5 ) );
-                        element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
                         resno = parseInt( line.substr( 22, 4 ) );
@@ -1386,22 +1338,17 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     }
 
-                    if( !element ) element = guessElem( atomname );
-
-                    sb.addAtom( modelIdx, chainname, resname, resno );
-
                     atomStore.growIfFull();
+                    atomStore.atomTypeId[ idx ] = atomMap.add( atomname );
+
                     atomStore.x[ idx ] = x;
                     atomStore.y[ idx ] = y;
                     atomStore.z[ idx ] = z;
-                    atomStore.setElement( idx, element );
-                    atomStore.hetero[ idx ] = hetero;
                     atomStore.serial[ idx ] = serial;
-                    atomStore.setAtomname( idx, atomname );
                     atomStore.bfactor[ idx ] = bfactor;
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
-                    atomStore.vdw[ idx ] = vdwRadii[ element ];
-                    atomStore.covalent[ idx ] = covRadii[ element ];
+
+                    sb.addAtom( modelIdx, chainname, resname, resno, hetero );
 
                     serialDict[ serial ] = idx;
 
@@ -1532,7 +1479,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     modelIdx += 1;
                     pendingStart = true;
 
-                }else if( line.substr( 0, 5 ) === 'MTRIX' ){
+                }else if( recordName === 'MTRIX ' ){
 
                     var ls = line.split( /\s+/ );
                     var mat = ls[ 1 ].trim();
@@ -1560,7 +1507,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     elms[ 4 * 2 + row ] = parseFloat( ls[ 4 ] );
                     elms[ 4 * 3 + row ] = parseFloat( ls[ 5 ] );
 
-                }else if( line.substr( 0, 5 ) === 'ORIGX' ){
+                }else if( recordName === 'ORIGX ' ){
 
                     if( !unitcellDict.origx ){
                         unitcellDict.origx = new THREE.Matrix4();
@@ -1575,7 +1522,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
                     elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
 
-                }else if( line.substr( 0, 5 ) === 'SCALE' ){
+                }else if( recordName === 'SCALE ' ){
 
                     if( !unitcellDict.scale ){
                         unitcellDict.scale = new THREE.Matrix4();
@@ -1916,9 +1863,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
         // http://mmcif.wwpdb.org/
 
-        var __timeName = "NGL.CifParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        NGL.time( "NGL.CifParser._parse " + this.name );
 
         var s = this.structure;
         var sb = this.structureBuilder;
@@ -1976,6 +1921,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
         //
 
+        var atomMap = s.atomMap;
         var atomStore = s.atomStore;
         atomStore.resize( this.streamer.data.length / 100 );
 
@@ -2222,37 +2168,32 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             //
 
-                            // atomStore.growIfFull();
-
                             var resname = ls[ label_comp_id ];
                             var resno = parseInt( ls[ auth_seq_id ] );
                             var chainname = ls[ auth_asym_id ];
-
-                            sb.addAtom( modelIdx, chainname, resname, resno );
+                            var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
                             //
 
-                            var element = ls[ type_symbol ];
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
                             atomStore.growIfFull();
+                            atomStore.atomTypeId[ idx ] = atomMap.add( atomname );
+
                             atomStore.x[ idx ] = x;
                             atomStore.y[ idx ] = y;
                             atomStore.z[ idx ] = z;
-                            atomStore.setElement( idx, element );
-                            atomStore.hetero[ idx ] = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
-                            atomStore.setAtomname( idx, atomname );
                             atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
-                            atomStore.vdw[ idx ] = vdwRadii[ element ];
-                            atomStore.covalent[ idx ] = covRadii[ element ];
 
-                            idx += 1;
+                            sb.addAtom( modelIdx, chainname, resname, resno, hetero );
 
                             // chainname mapping: label_asym_id -> auth_asym_id
                             asymIdDict[ ls[ label_asym_id ] ] = chainname;
+
+                            idx += 1;
 
                         }else{
 
@@ -2297,7 +2238,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                     }else{
 
-                        NGL.log( "NGL.CifParser._parse: unknown state", line );
+                        if( NGL.debug ) NGL.log( "NGL.CifParser._parse: unknown state", line );
 
                     }
 

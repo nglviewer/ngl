@@ -1294,6 +1294,9 @@ NGL.Structure = function( name, path ){
     this.chainStore = new NGL.ChainStore( 0 );
     this.modelStore = new NGL.ModelStore( 0 );
 
+    this.atomMap = new NGL.AtomMap( this );
+    this.residueMap = new NGL.ResidueMap( this );
+
     this.atomSet = this.getAtomSet( this.selection );
     this.bondSet = this.getBondSet();
     this.backboneAtomSet = this.getAtomSet( false );
@@ -2078,6 +2081,12 @@ NGL.StructureView = function( structure, selection ){
         },
         modelStore: {
             get: function(){ return this.structure.modelStore }
+        },
+        atomMap: {
+            get: function(){ return this.structure.atomMap }
+        },
+        residueMap: {
+            get: function(){ return this.structure.residueMap }
         }
     } );
 
