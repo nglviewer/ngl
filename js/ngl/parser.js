@@ -3244,46 +3244,75 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         if( NGL.debug ) NGL.time( "NGL.MsgpackParser._parse " + this.name );
 
         var s = this.structure;
-        var sd = new StructureDecoder( this.streamer.data );
+        var sd = decodeStructure( this.streamer.data );
+        // console.log(sd)
 
-        s.bondStore.resize( sd.bondCount );
+        s.bondStore.length = sd.bondCount;
         s.bondStore.count = sd.bondCount;
+        s.bondStore.atomIndex1 = sd.bondStore.atomIndex1;
+        s.bondStore.atomIndex2 = sd.bondStore.atomIndex2;
+        s.bondStore.bondOrder = sd.bondStore.bondOrder;
 
-        s.atomStore.resize( sd.atomCount );
+        s.atomStore.length = sd.atomCount;
         s.atomStore.count = sd.atomCount;
+        s.atomStore.residueIndex = sd.atomStore.groupIndex;
+        s.atomStore.atomTypeId = new Uint16Array( sd.atomCount );
+        s.atomStore.x = sd.atomStore.x;
+        s.atomStore.y = sd.atomStore.y;
+        s.atomStore.z = sd.atomStore.z;
+        s.atomStore.serial = sd.atomStore.serial;
+        s.atomStore.bfactor = sd.atomStore.bfactor;
+        s.atomStore.altloc = sd.atomStore.altloc;
 
-        s.residueStore.resize( sd.residueCount );
-        s.residueStore.count = sd.residueCount;
+        s.residueStore.length = sd.groupCount;
+        s.residueStore.count = sd.groupCount;
+        s.residueStore.chainIndex = sd.groupStore.chainIndex;
+        s.residueStore.residueTypeId = sd.groupStore.groupTypeId;
+        s.residueStore.atomOffset = sd.groupStore.atomOffset;
+        s.residueStore.atomCount = sd.groupStore.atomCount;
+        s.residueStore.resno = sd.groupStore.resno;
+        s.residueStore.sstruc = sd.groupStore.sstruc;
 
-        s.chainStore.resize( sd.chainCount );
+        s.chainStore.length = sd.chainCount;
         s.chainStore.count = sd.chainCount;
+        s.chainStore.modelIndex = sd.chainStore.modelIndex;
+        s.chainStore.residueOffset = sd.chainStore.groupOffset;
+        s.chainStore.residueCount = sd.chainStore.groupCount;
+        s.chainStore.chainname = sd.chainStore.chainname;
 
-        s.modelStore.resize( sd.modelCount );
+        s.modelStore.length = sd.modelCount;
         s.modelStore.count = sd.modelCount;
+        s.modelStore.chainOffset = sd.modelStore.chainOffset;
+        s.modelStore.chainCount = sd.modelStore.chainCount;
 
-        sd.decode( {
-            bondStore: s.bondStore,
-            atomStore: s.atomStore,
-            residueStore: s.residueStore,
-            chainStore: s.chainStore,
-            modelStore: s.modelStore
-        } );
+        if( NGL.debug ) console.time( "process map data" );
 
-        //
+        var groupTypeIdList = Object.keys( sd.groupMap )
+            .map( function( id ){ return parseInt( id ); } )
+            .sort( function( a, b ){ return a - b; } );
 
-        if( NGL.debug ) console.time( "set atoms" );
-
-        var atomStore = s.atomStore;
-        var covRadii = NGL.CovalentRadii;
-        var vdwRadii = NGL.VdwRadii;
-
-        for( var i = 0, il = sd.atomCount; i < il; ++i ){
-            var element = String.fromCharCode( atomStore.element[ i * 3 ] );
-            atomStore.vdw[ i ] = vdwRadii[ element ];
-            atomStore.covalent[ i ] = covRadii[ element ];
+        for( var i = 0, il = groupTypeIdList.length; i < il; ++i ){
+            var groupTypeId = groupTypeIdList[ i ];
+            var groupType = sd.groupMap[ groupTypeId ];
+            var atomTypeIdList = [];
+            for( var j = 0, jl = groupType.atomInfo.length; j < jl; j+=2 ){
+                var element = groupType.atomInfo[ j ];
+                var atomname = groupType.atomInfo[ j + 1 ];
+                atomTypeIdList.push( s.atomMap.add( atomname, element ) );
+            }
+            s.residueMap.add( groupType.resName, atomTypeIdList, groupType.hetFlag );
         }
 
-        if( NGL.debug ) console.timeEnd( "set atoms" );
+        for( var i = 0, il = s.atomStore.count; i < il; ++i ){
+            var residueIndex = s.atomStore.residueIndex[ i ];
+            var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
+            var atomOffset = s.residueStore.atomOffset[ residueIndex ];
+            s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
+        }
+
+        if( NGL.debug ) console.timeEnd( "process map data" );
+
+        //
 
         if( NGL.debug ) NGL.timeEnd( "NGL.MsgpackParser._parse " + this.name );
         callback();
