@@ -1762,6 +1762,8 @@ NGL.Structure.prototype = {
 
     getBoundingBox: function( selection ){
 
+        if( NGL.debug ) console.time( "getBoundingBox" );
+
         var box = new THREE.Box3();
 
         var minX = +Infinity;
@@ -1791,13 +1793,19 @@ NGL.Structure.prototype = {
         box.min.set( minX, minY, minZ );
         box.max.set( maxX, maxY, maxZ );
 
+        if( NGL.debug ) console.timeEnd( "getBoundingBox" );
+
         return box;
 
     },
 
     atomCenter: function( selection ){
 
-        return this.getBoundingBox( selection ).center();
+        if( selection ){
+            return this.getBoundingBox( selection ).center();
+        }else{
+            return this.center.clone();
+        }
 
     },
 
@@ -2082,6 +2090,9 @@ NGL.StructureView = function( structure, selection ){
 
     this.structure.signals.refreshed.add( this.refresh, this );
 
+    this.center = new THREE.Vector3();
+    this.boundingBox = new THREE.Box3();
+
     this.refresh();
 
 };
@@ -2119,7 +2130,8 @@ NGL.StructureView.prototype = NGL.createObject(
         this.atomCount = this.atomSet.size();
         this.bondCount = this.bondSet.size();
 
-        this.center = this.atomCenter();
+        this.boundingBox = this.getBoundingBox();
+        this.center = this.boundingBox.center();
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh" );
 
