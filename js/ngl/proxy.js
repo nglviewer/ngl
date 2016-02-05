@@ -2294,15 +2294,14 @@ NGL.ResidueMap = function( structure ){
     var typeList = [];
 
     function getHash( resname, atomTypeIdList, hetero ){
-        var hash = resname + "|" + atomTypeIdList.join( "," ) + "|" + hetero;
+        var hash = resname + "|" + atomTypeIdList.join( "," ) + "|" + ( hetero ? 1 : 0 );
         return hash;
     }
 
     function add( resname, atomTypeIdList, hetero ){
         var hash = getHash( resname, atomTypeIdList, hetero );
-        // console.log( hash )
         var id = idDict[ hash ];
-        if( !id ){
+        if( id === undefined ){
             var residueType = new NGL.ResidueType(
                 structure, resname, atomTypeIdList, hetero
             );
