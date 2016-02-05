@@ -1874,7 +1874,7 @@ NGL.Structure.prototype = {
 
     toJSON: function(){
 
-        NGL.time( "NGL.Structure.toJSON" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.toJSON" );
 
         var output = {
 
@@ -1925,7 +1925,7 @@ NGL.Structure.prototype = {
             output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
         }
 
-        NGL.timeEnd( "NGL.Structure.toJSON" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.toJSON" );
 
         return output;
 
@@ -1933,7 +1933,7 @@ NGL.Structure.prototype = {
 
     fromJSON: function( input ){
 
-        NGL.time( "NGL.Structure.fromJSON" );
+        if( NGL.debug ) NGL.time( "NGL.Structure.fromJSON" );
 
         this.name = input.name;
         this.path = input.path;
@@ -1977,7 +1977,7 @@ NGL.Structure.prototype = {
 
         NGL.GidPool.updateObject( this );
 
-        NGL.timeEnd( "NGL.Structure.fromJSON" );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.fromJSON" );
 
         return this;
 
@@ -2127,17 +2127,24 @@ NGL.StructureView.prototype = NGL.createObject(
 
         this.atomSet = this.getAtomSet( this.selection );
         if( this.structure.atomSet ){
+            if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#atomSet.intersection" );
             this.atomSet = this.atomSet.intersection( this.structure.atomSet );
+            if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh#atomSet.intersection" );
         }
+
         this.bondSet = this.getBondSet();
 
+        if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#atomSetDict.new_intersection" );
         for( var name in this.atomSetDict ){
             var as = this.atomSetDict[ name ];
             this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
         }
+        if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh#atomSetDict.new_intersection" );
 
+        if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#size" );
         this.atomCount = this.atomSet.size();
         this.bondCount = this.bondSet.size();
+        if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh#size" );
 
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
