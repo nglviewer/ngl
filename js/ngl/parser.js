@@ -77,7 +77,7 @@ NGL.StructureBuilder = function( structure ){
         );
     }
 
-    this.addAtom = function( modelindex, chainname, resname, resno, hetero ){
+    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc ){
 
         var addModel = false;
         var addChain = false;
@@ -126,6 +126,9 @@ NGL.StructureBuilder = function( structure ){
             if( ri > 0 ) addResidueType( ri - 1 );
             residueStore.growIfFull();
             residueStore.resno[ ri ] = resno;
+            if( sstruc !== undefined ){
+                residueStore.sstruc[ ri ] = sstruc.charCodeAt( 0 );
+            }
             residueStore.atomOffset[ ri ] = ai;
             residueStore.atomCount[ ri ] = 0;
             residueStore.count += 1;
@@ -146,6 +149,8 @@ NGL.StructureBuilder = function( structure ){
     };
 
     this.finalize = function(){
+        previousResname = currentResname;
+        previousHetero = currentHetero;
         addResidueType( ri );
     };
 
