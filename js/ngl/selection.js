@@ -22,6 +22,23 @@ NGL.Selection = function( string ){
 };
 
 
+NGL.Selection.Kewords = {
+    "PROTEIN": 1,
+    "NUCLEIC": 2,
+    "RNA": 3,
+    "DNA": 4,
+    "POLYMER": 5,
+    "WATER": 6,
+    "HELIX": 7,
+    "SHEET": 8,
+    "BACKBONE": 9,
+    "SIDECHAIN": 10,
+    "ALL": 11,
+    "HETERO": 12,
+    "ION": 13
+};
+
+
 NGL.Selection.prototype = {
 
     constructor: NGL.Selection,
@@ -73,6 +90,7 @@ NGL.Selection.prototype = {
 
         var scope = this;
 
+        var kwd = NGL.Selection.Kewords;
         var selection = this.selection;
         var selectionStack = [];
         var newSelection, oldSelection;
@@ -227,43 +245,49 @@ NGL.Selection.prototype = {
             sele = {};
 
             if( c.toUpperCase() === "HETERO" ){
-                sele.keyword = "HETERO";
+                sele.keyword = kwd.HETERO;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "WATER" ){
-                sele.keyword = "WATER";
+                sele.keyword = kwd.WATER;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "PROTEIN" ){
-                sele.keyword = "PROTEIN";
+                sele.keyword = kwd.PROTEIN;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "NUCLEIC" ){
-                sele.keyword = "NUCLEIC";
+                sele.keyword = kwd.NUCLEIC;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "RNA" ){
-                sele.keyword = "RNA";
+                sele.keyword = kwd.RNA;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "DNA" ){
-                sele.keyword = "DNA";
+                sele.keyword = kwd.DNA;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "POLYMER" ){
-                sele.keyword = "POLYMER";
+                sele.keyword = kwd.POLYMER;
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "ION" ){
+                sele.keyword = kwd.ION;
                 pushRule( sele );
                 continue;
             }
@@ -420,13 +444,13 @@ NGL.Selection.prototype = {
             }
 
             if( c.toUpperCase() === "HELIX" ){
-                sele.keyword = "HELIX";
+                sele.keyword = kwd.HELIX;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "SHEET" ){
-                sele.keyword = "SHEET";
+                sele.keyword = kwd.SHEET;
                 pushRule( sele );
                 continue;
             }
@@ -436,8 +460,8 @@ NGL.Selection.prototype = {
                     operator: "OR",
                     negate: true,
                     rules: [
-                        { keyword: "HELIX" },
-                        { keyword: "SHEET" }
+                        { keyword: kwd.HELIX },
+                        { keyword: kwd.SHEET }
                     ]
                 };
                 pushRule( sele );
@@ -445,13 +469,13 @@ NGL.Selection.prototype = {
             }
 
             if( c.toUpperCase() === "BACKBONE" ){
-                sele.keyword = "BACKBONE";
+                sele.keyword = kwd.BACKBONE;
                 pushRule( sele );
                 continue;
             }
 
             if( c.toUpperCase() === "SIDECHAIN" ){
-                sele.keyword = "SIDECHAIN";
+                sele.keyword = kwd.SIDECHAIN;
                 pushRule( sele );
                 continue;
             }
@@ -468,7 +492,7 @@ NGL.Selection.prototype = {
                                 { atomname: "N" },
                             ]
                         },
-                        { keyword: "SIDECHAIN" },
+                        { keyword: kwd.SIDECHAIN },
                         { atomname: "CA" },
                         { atomname: "BB" }
                     ]
@@ -478,7 +502,7 @@ NGL.Selection.prototype = {
             }
 
             if( all.indexOf( c.toUpperCase() )!==-1 ){
-                sele.keyword = "ALL";
+                sele.keyword = kwd.ALL;
                 pushRule( sele );
                 continue;
             }
@@ -607,6 +631,7 @@ NGL.Selection.prototype = {
 
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
+        var k = NGL.Selection.Kewords;
 
         var s, and, ret, na;
 
@@ -663,7 +688,7 @@ NGL.Selection.prototype = {
 
                 }else{
 
-                    if( s.keyword!==undefined && s.keyword==="ALL" ){
+                    if( s.keyword!==undefined && s.keyword===k.ALL ){
 
                         if( and ){ continue; }else{ return t; }
 
@@ -756,22 +781,8 @@ NGL.Selection.prototype = {
 
     makeAtomTest: function( atomOnly ){
 
-        var backboneProtein = [
-            "CA", "C", "N", "O",
-            "O1", "O2", "OC1", "OC2",
-            "H", "H1", "H2", "H3", "HA"
-        ];
-        var backboneNucleic = [
-            "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
-            "O3*", "O5*", "C5*", "C4*", "C3*"
-        ];
-        var backboneCg = [
-            "CA", "BB"
-        ];
-
-        var helixTypes = [
-            "h", "g", "i"
-        ];
+        var helixTypes = [ "h", "g", "i" ];
+        var kwd = NGL.Selection.Kewords;
 
         var selection;
 
@@ -801,49 +812,21 @@ NGL.Selection.prototype = {
             // returning -1 means the rule is not applicable
 
             if( s.keyword!==undefined ){
-
-                if( s.keyword==="HETERO" && a.hetero===1 ) return true;
-                if( s.keyword==="PROTEIN" && (
-                        a.residue.isProtein() || a.residue.isCg()
-                    )
-                ) return true;
-                if( s.keyword==="NUCLEIC" && a.residue.isNucleic() ) return true;
-                if( s.keyword==="RNA" && a.residue.isRna() ) return true;
-                if( s.keyword==="DNA" && a.residue.isDna() ) return true;
-                if( s.keyword==="POLYMER" && (
-                        a.residue.isProtein() ||
-                        a.residue.isNucleic() ||
-                        a.residue.isCg()
-                    )
-                ) return true;
-                if( s.keyword==="WATER" && a.residue.isWater() ) return true;
-                if( s.keyword==="HELIX" && helixTypes.indexOf( a.ss )!==-1 ) return true;
-                if( s.keyword==="SHEET" && a.ss==="s" ) return true;
-                if( s.keyword==="BACKBONE" && (
-                        ( a.residue.isProtein() &&
-                            backboneProtein.indexOf( a.atomname )!==-1 ) ||
-                        ( a.residue.isNucleic() &&
-                            backboneNucleic.indexOf( a.atomname )!==-1 ) ||
-                        ( a.residue.isCg() &&
-                            backboneCg.indexOf( a.atomname )!==-1 )
-                    )
-                ) return true;
-                if( s.keyword==="SIDECHAIN" && (
-                        ( a.residue.isProtein() &&
-                            backboneProtein.indexOf( a.atomname )===-1 ) ||
-                        ( a.residue.isNucleic() &&
-                            backboneNucleic.indexOf( a.atomname )===-1 ) ||
-                        ( a.residue.isCg() &&
-                            backboneCg.indexOf( a.atomname )===-1 )
-                    )
-                ) return true;
-
+                if( s.keyword===kwd.HETERO && a.hetero===true ) return true;
+                if( s.keyword===kwd.PROTEIN && a.residue.isProtein() ) return true;
+                if( s.keyword===kwd.NUCLEIC && a.residue.isNucleic() ) return true;
+                if( s.keyword===kwd.RNA && a.residue.isRna() ) return true;
+                if( s.keyword===kwd.DNA && a.residue.isDna() ) return true;
+                if( s.keyword===kwd.POLYMER && a.residue.isPolymer() ) return true;
+                if( s.keyword===kwd.WATER && a.residue.isWater() ) return true;
+                if( s.keyword===kwd.HELIX && helixTypes.indexOf( a.residue.sstruc )!==-1 ) return true;
+                if( s.keyword===kwd.SHEET && a.residue.sstruc==="s" ) return true;
+                if( s.keyword===kwd.BACKBONE && a.isBackbone() ) return true;
+                if( s.keyword===kwd.SIDECHAIN && a.isSidechain() ) return true;
+                if( s.keyword===kwd.ION && a.residue.isIon() ) return true;
                 return false;
-
             }
 
-            // TODO make replacement
-            // if( s.globalindex!==undefined && s.globalindex!==a.globalindex ) return false;
             if( s.resname!==undefined && s.resname!==a.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
             if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
@@ -875,6 +858,9 @@ NGL.Selection.prototype = {
 
     makeResidueTest: function( residueOnly ){
 
+        var helixTypes = [ "h", "g", "i" ];
+        var kwd = NGL.Selection.Kewords;
+
         var selection;
 
         if( residueOnly ){
@@ -884,8 +870,6 @@ NGL.Selection.prototype = {
             selection = this._filter( function( s ){
 
                 if( s.model!==undefined ) return true;
-                // TODO make replacement
-                // if( s.globalindex!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
@@ -906,28 +890,22 @@ NGL.Selection.prototype = {
             // returning -1 means the rule is not applicable
 
             if( s.keyword!==undefined ){
-
-                if( s.keyword==="HETERO" && r.isHetero() ) return true;
-                if( s.keyword==="PROTEIN" && (
-                        r.isProtein() || r.isCg() )
-                ) return true;
-                if( s.keyword==="NUCLEIC" && r.isNucleic() ) return true;
-                if( s.keyword==="RNA" && r.isRna() ) return true;
-                if( s.keyword==="DNA" && r.isDna() ) return true;
-                if( s.keyword==="POLYMER" && (
-                        r.isProtein() || r.isNucleic() || r.isCg() )
-                ) return true;
-                if( s.keyword==="WATER" && r.isWater() ) return true;
-
+                if( s.keyword===kwd.HETERO && r.isHetero() ) return true;
+                if( s.keyword===kwd.PROTEIN && r.isProtein() ) return true;
+                if( s.keyword===kwd.NUCLEIC && r.isNucleic() ) return true;
+                if( s.keyword===kwd.RNA && r.isRna() ) return true;
+                if( s.keyword===kwd.DNA && r.isDna() ) return true;
+                if( s.keyword===kwd.POLYMER && r.isPolymer() ) return true;
+                if( s.keyword===kwd.WATER && r.isWater() ) return true;
+                if( s.keyword===kwd.HELIX && helixTypes.indexOf( r.sstruc )!==-1 ) return true;
+                if( s.keyword===kwd.SHEET && r.sstruc==="s" ) return true;
+                if( s.keyword===kwd.ION && r.isIon() ) return true;
+                return false;
             }
 
             if( s.chainname===undefined && s.model===undefined &&
                     s.resname===undefined && s.resno===undefined
             ) return -1;
-            if( s.chainname!==undefined && r.chain.chainname===undefined ) return -1;
-
-            // support autoChainNames which work only on atoms
-            if( s.chainname!==undefined && r.chain.chainname==="" ) return -1;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.chainname!==undefined && s.chainname!==r.chain.chainname ) return false;
@@ -962,8 +940,6 @@ NGL.Selection.prototype = {
                 if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
-                // TODO make replacement
-                // if( s.globalindex!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
@@ -982,12 +958,7 @@ NGL.Selection.prototype = {
 
             // returning -1 means the rule is not applicable
 
-            if( s.chainname!==undefined && c.chainname===undefined ) return -1;
             if( s.chainname===undefined && s.model===undefined ) return -1;
-
-            // support autoChainNames which work only on atoms
-            if( s.chainname!==undefined && c.chainname==="" ) return -1;
-
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
             if( s.model!==undefined && s.model!==c.model.index ) return false;
 
@@ -1012,8 +983,6 @@ NGL.Selection.prototype = {
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
-                // TODO make replacement
-                // if( s.globalindex!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;

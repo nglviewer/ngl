@@ -14,8 +14,7 @@ NGL.Spline = function( polymer, arrows ){
     this.polymer = polymer;
     this.size = polymer.residueCount;
 
-    this.type = this.polymer.getMoleculeType();
-    this.tension = this.type === NGL.NucleicType ? 0.5 : 0.9;
+    this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
 
 };
 
@@ -334,8 +333,9 @@ NGL.Spline.prototype = {
     getNormals: function( m, tension, tan ){
 
         var interpolate = this.interpolate;
-        var type = this.type;
         var polymer = this.polymer;
+        var isCg = polymer.isCg();
+        var isProtein = polymer.isProtein();
         var structure = polymer.structure;
 
         var n = this.size;
@@ -373,7 +373,7 @@ NGL.Spline.prototype = {
         var first = true;
         var m2 = Math.ceil( m / 2 );
 
-        if( type !== NGL.CgType ){
+        if( !isCg ){
 
             var _d1a1 = structure.getAtomProxy();
             var _d1a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, "direction1" ) );
@@ -389,7 +389,7 @@ NGL.Spline.prototype = {
 
         for( var i = 0; i < n1; ++i ){
 
-            if( type !== NGL.CgType ){
+            if( !isCg ){
 
                 _d1a1.index = _d1a2.index;
                 _d1a2.index = _d1a3.index;
@@ -455,13 +455,13 @@ NGL.Spline.prototype = {
 
                 var l = k + j * 3;
 
-                if( type === NGL.CgType ){
+                if( isCg ){
 
                     vDir.copy( vNorm );
 
                 }else{
 
-                    if( type === NGL.ProteinType ){
+                    if( isProtein ){
                         // shift half a residue
                         l += m2 * 3;
                     }
@@ -493,7 +493,7 @@ NGL.Spline.prototype = {
 
         }
 
-        if( type === NGL.ProteinType ){
+        if( isProtein ){
 
             // FIXME shift requires data from one more preceeding residue
 

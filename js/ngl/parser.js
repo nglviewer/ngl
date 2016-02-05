@@ -745,9 +745,9 @@ NGL.calculateBondsBetween = function( structure ){
         var bbType1 = rp1.backboneType;
         var bbType2 = rp2.backboneType;
 
-        if( bbType1 !== NGL.UnknownType && bbType1 === bbType2 ){
-            ap1.index = rp1.backboneStartAtomIndex;
-            ap2.index = rp2.backboneEndAtomIndex;
+        if( bbType1 !== NGL.UnknownBackboneType && bbType1 === bbType2 ){
+            ap1.index = rp1.backboneEndAtomIndex;
+            ap2.index = rp2.backboneStartAtomIndex;
             if( bondStore.addBondIfConnected( ap1, ap2 ) ){
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;

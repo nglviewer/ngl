@@ -378,13 +378,19 @@ NGL.guessElement = function(){
 
 // molecule types
 NGL.UnknownType = 0;
-NGL.CgType = 1;
-NGL.ProteinType = 2;
-NGL.ProteinBackboneType = 3;
-NGL.NucleicType = 4;
-NGL.RnaBackboneType = 5;
-NGL.DnaBackboneType = 6;
-NGL.WaterType = 7;
+NGL.WaterType = 1;
+NGL.IonType = 2;
+NGL.ProteinType = 3;
+NGL.RnaType = 4;
+NGL.DnaType = 5;
+
+NGL.UnknownBackboneType = 0;
+NGL.ProteinBackboneType = 1;
+NGL.RnaBackboneType = 2;
+NGL.DnaBackboneType = 3;
+NGL.CgProteinBackboneType = 4;
+NGL.CgRnaBackboneType = 5;
+NGL.CgDnaBackboneType = 6;
 
 
 NGL.AA1 = {
@@ -417,16 +423,30 @@ NGL.AA1 = {
 
 NGL.AA3 = Object.keys( NGL.AA1 );
 
-NGL.NucleicBases = [
-    "A", "C", "T", "G", "U",
-    "DA", "DC", "DT", "DG", "DU"
-];
-
 NGL.RnaBases = [ "A", "C", "T", "G", "U" ];
 
 NGL.DnaBases = [ "DA", "DC", "DT", "DG", "DU" ];
 
-NGL.WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W" ];
+NGL.WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O" ];
+
+NGL.IonNames = [
+    "3CO", "3NI", "4MO", "6MO", "AG", "AL", "AU", "AU3", "BA", "BR", "CA",
+    "CD", "CE", "CL", "CO", "CR", "CU", "CU1", "CU3", "F", "FE", "FE2", "GA",
+    "K", "LI", "MG", "MN", "MN3", "NA", "ND4", "NH4", "NI", "OH", "RB", "SR",
+    "V", "Y1", "YT3", "ZN"
+];
+
+
+NGL.ProteinBackboneAtoms = [
+    "CA", "C", "N", "O", "O1", "O2", "OC1", "OC2",
+    "H", "H1", "H2", "H3", "HA",
+    "BB"
+];
+
+NGL.NucleicBackboneAtoms = [
+    "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
+    "O3*", "O5*", "C5*", "C4*", "C3*"
+];
 
 
 //////////
@@ -543,7 +563,7 @@ NGL.AtomProxy.prototype = {
         return this.residueStore.chainIndex[ this.residueIndex ];
     },
     get residue () {
-        return this.structure.getResidueProxy( this.residueIndex );
+        return this.structure.getResidueProxy( this.residueIndex, false );
     },
 
     get residueIndex () {
@@ -561,12 +581,6 @@ NGL.AtomProxy.prototype = {
     get resno () {
         return this.residueStore.resno[ this.residueIndex ];
     },
-    get resname () {
-        return this.residueStore.getResname( this.residueIndex );
-    },
-    get hetero () {
-        return this.residueMap.hetero;
-    },
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
     },
@@ -578,6 +592,15 @@ NGL.AtomProxy.prototype = {
     },
     get atomType () {
         return  this.atomMap.get( this.atomStore.atomTypeId[ this.index ] );
+    },
+
+    //
+
+    get resname () {
+        return this.residueType.resname;
+    },
+    get hetero () {
+        return this.residueType.hetero;
     },
 
     //
@@ -648,21 +671,39 @@ NGL.AtomProxy.prototype = {
 
     //
 
-    distanceTo: function( atom ){
+    isBackbone: function(){
+        var backboneIndexList = this.residueType.backboneIndexList;
+        if( backboneIndexList.length > 0 ){
+            var atomOffset = this.residueStore.atomOffset[ this.residueIndex ];
+            return backboneIndexList.indexOf( this.index - atomOffset ) !== -1;
+        }else{
+            return false;
+        }
+    },
 
+    isPolymer: function(){
+        var moleculeType = this.residueType.moleculeType;
+        return (
+            moleculeType === NGL.ProteinType ||
+            moleculeType === NGL.NucleicType ||
+            moleculeType === NGL.CgType
+        );
+    },
+
+    isSidechain: function(){
+        return this.isPolymer() && !this.isBackbone();
+    },
+
+    distanceTo: function( atom ){
         var taa = this.atomStore;
         var aaa = atom.atomStore;
         var ti = this.index;
         var ai = atom.index;
-
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
         var z = taa.z[ ti ] - aaa.z[ ai ];
-
         var distSquared = x * x + y * y + z * z;
-
         return Math.sqrt( distSquared );
-
     },
 
     connectedTo: function( atom ){
@@ -682,8 +723,8 @@ NGL.AtomProxy.prototype = {
 
         var distSquared = x * x + y * y + z * z;
 
-        // FIXME no more access to residue from atom
-        // if( distSquared < 28.0 && taa.residue[ ti ].isCg() ) return true;
+        // if( this.residue.isCg() ) console.log( this.qualifiedName(), Math.sqrt( distSquared ), distSquared )
+        if( distSquared < 64.0 && this.residue.isCg() ) return true;
 
         if( isNaN( distSquared ) ) return false;
 
@@ -806,92 +847,54 @@ NGL.Residue = {
             trace: "CA",
             direction1: "C",
             direction2: [ "O", "OC1", "O1" ],
-            backboneStart: "C",
-            backboneEnd: "N",
+            backboneStart: "N",
+            backboneEnd: "C",
         };
 
         atomnames[ NGL.RnaBackboneType ] = {
             trace: [ "C4'", "C4*" ],
             direction1: [ "C1'", "C1*" ],
             direction2: [ "C3'", "C3*" ],
-            backboneStart: [ "O3'", "O3*" ],
-            backboneEnd: "P",
+            backboneStart: "P",
+            backboneEnd: [ "O3'", "O3*" ]
         };
 
         atomnames[ NGL.DnaBackboneType ] = {
             trace: [ "C3'", "C3*" ],
             direction1: [ "C2'", "C2*" ],
             direction2: [ "O4'", "O4*" ],
-            backboneStart: [ "O3'", "O3*" ],
-            backboneEnd: "P",
+            backboneStart: "P",
+            backboneEnd: [ "O3'", "O3*" ]
         };
 
-        atomnames[ NGL.CgType ] = {
+        atomnames[ NGL.CgProteinBackboneType ] = {
             trace: [ "CA", "BB" ],
-            direction1: null,
-            direction2: null,
             backboneStart: [ "CA", "BB" ],
             backboneEnd: [ "CA", "BB" ],
+        };
+
+        atomnames[ NGL.CgRnaBackboneType ] = {
+            trace: [ "C4'", "C4*" ],
+            backboneStart: [ "C4'", "C4*" ],
+            backboneEnd: [ "C4'", "C4*" ],
+        };
+
+        atomnames[ NGL.CgDnaBackboneType ] = {
+            trace: [ "C3'", "C3*", "C2'" ],  // C2' is used in martini ff
+            backboneStart: [ "C3'", "C3*", "C2'" ],
+            backboneEnd: [ "C3'", "C3*", "C2'" ],
         };
 
         // workaround for missing CA only type
         atomnames[ NGL.UnknownType ] = {
             trace: "CA",
-            direction1: null,
-            direction2: null,
             backboneStart: "CA",
             backboneEnd: "CA",
         };
 
         return atomnames;
 
-    }(),
-
-    makeHasBackboneFn: function( typeFn, atomnames ){
-
-        return function( position ){
-
-            if( position === -1 ){
-
-                return typeFn.call( this ) &&
-                    this.hasAtomWithName(
-                        atomnames.backboneStart,
-                        atomnames.direction1,
-                        atomnames.direction2
-                    );
-
-            }else if( position === 0 ){
-
-                return typeFn.call( this ) &&
-                    this.hasAtomWithName(
-                        atomnames.direction1,
-                        atomnames.direction2
-                    );
-
-            }else if( position === 1 ){
-
-                return typeFn.call( this ) &&
-                    this.hasAtomWithName(
-                        atomnames.backboneEnd,
-                        atomnames.direction1,
-                        atomnames.direction2
-                    );
-
-            }else{
-
-                return typeFn.call( this ) &&
-                    this.hasAtomWithName(
-                        atomnames.backboneStart,
-                        atomnames.backboneEnd,
-                        atomnames.direction1,
-                        atomnames.direction2
-                    );
-
-            }
-
-        }
-
-    }
+    }()
 
 };
 
@@ -976,12 +979,13 @@ NGL.ResidueProxy.prototype = {
         return this.residueType.moleculeType;
     },
     get backboneType () {
-        try{
-            return this.residueType.backboneType;
-        }catch(e){
-            console.log( this.index, this.residueStore.residueTypeId[ this.index ] );
-            return 0;
-        }
+        return this.residueType.backboneType;
+    },
+    get backboneStartType () {
+        return this.residueType.backboneStartType;
+    },
+    get backboneEndType () {
+        return this.residueType.backboneEndType;
     },
     get traceAtomIndex () {
         return this.residueType.traceAtomIndex + this.atomOffset;
@@ -1051,48 +1055,49 @@ NGL.ResidueProxy.prototype = {
         return this.residueType.moleculeType === NGL.ProteinType;
     },
 
-    isCg: function(){
-        return this.residueType.moleculeType === NGL.CgType;
-    },
-
     isNucleic: function(){
-        return this.residueType.moleculeType === NGL.NucleicType;
+        var moleculeType = this.residueType.moleculeType;
+        return (
+            moleculeType === NGL.RnaType ||
+            moleculeType === NGL.DnaType
+        );
     },
 
     isRna: function(){
-        return this.residueType.isRna();
+        return this.residueType.moleculeType === NGL.RnaType;
     },
 
     isDna: function(){
-        return this.residueType.isDna();
+        return this.residueType.moleculeType === NGL.DnaType;
+    },
+
+    isCg: function(){
+        return this.residueType.isCg();
+    },
+
+    isPolymer: function(){
+        var moleculeType = this.residueType.moleculeType;
+        return (
+            moleculeType === NGL.ProteinType ||
+            moleculeType === NGL.RnaType ||
+            moleculeType === NGL.DnaType
+        );
     },
 
     isHetero: function(){
-        return this.atoms.length && this.atoms[0].hetero === 1;
+        return this.residueType.isHetero();
     },
 
     isWater: function(){
         return this.residueType.moleculeType === NGL.WaterType;
     },
 
-    hasProteinBackbone: function( position ){
-        return this.residueType.hasProteinBackbone( position );
-    },
-
-    hasRnaBackbone: function( position ){
-        return this.residueType.hasRnaBackbone( position );
-    },
-
-    hasDnaBackbone: function( position ){
-        return this.residueType.hasDnaBackbone( position );
-    },
-
-    hasCgBackbone: function(){
-        return this.residueType.moleculeType === NGL.CgType;
-        // return this.isCg();
+    isIon: function(){
+        return this.residueType.moleculeType === NGL.IonType;
     },
 
     hasBackbone: function( position ){
+        console.warn("hasBackbone")
         return this.residueType.hasBackbone( position );
     },
 
@@ -1105,7 +1110,14 @@ NGL.ResidueProxy.prototype = {
     },
 
     getBackboneType: function( position ){
-        return this.residueType.getBackboneType( position );
+        switch( position ){
+            case -1:
+                return this.residueType.backboneStartType;
+            case 1:
+                return this.residueType.backboneEndType;
+            default:
+                return this.residueType.backboneType;
+        }
     },
 
     getAtomIndexByName: function( atomname ){
@@ -1121,6 +1133,7 @@ NGL.ResidueProxy.prototype = {
     },
 
     getAtomnameList: function(){
+        console.warn("getAtomnameList")
         var n = this.atomCount;
         var offset = this.atomOffset;
         var list = new Array( n );
@@ -1131,12 +1144,12 @@ NGL.ResidueProxy.prototype = {
     },
 
     connectedTo: function( rNext ){
-        var bbAtomStart = this.structure.getAtomProxy( this.backboneStartAtomIndex );
         var bbAtomEnd = this.structure.getAtomProxy( this.backboneEndAtomIndex );
-        if( bbAtomStart && bbAtomEnd ){
-            return bbAtomStart.connectedTo( bbAtomEnd );
+        var bbAtomStart = this.structure.getAtomProxy( rNext.backboneStartAtomIndex );
+        if( bbAtomEnd && bbAtomStart ){
+            return bbAtomEnd.connectedTo( bbAtomStart );
         }else{
-             return false;
+            return false;
         }
     },
 
@@ -1224,7 +1237,7 @@ NGL.Polymer = function( structure, residueIndexStart, residueIndexEnd ){
 
     this.__residueProxy = this.structure.getResidueProxy();
 
-
+    // console.log( this.qualifiedName(), this );
 
 };
 
@@ -1244,47 +1257,37 @@ NGL.Polymer.prototype = {
     //
 
     isProtein: function(){
-
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isProtein();
-
     },
 
     isCg: function(){
-
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isCg();
-
     },
 
     isNucleic: function(){
-
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isNucleic();
-
     },
 
     getMoleculeType: function(){
-
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.moleculeType;
-
     },
 
     getBackboneType: function( position ){
-
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.getBackboneType( position );
-
     },
 
     getAtomIndexByType: function( index, type ){
 
-        // TODO pre-calculate, add to residueStore
+        // TODO pre-calculate, add to residueStore???
 
         if( index === -1 && !this.isPrevConnected ) index += 1;
         if( index === this.residueCount && !this.isNextNextConnected ) index -= 1;
-        if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
+        // if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
 
         var rp = this.__residueProxy;
         rp.index = this.residueIndexStart + index;
@@ -1437,6 +1440,12 @@ NGL.Polymer.prototype = {
         }
 
     },
+
+    qualifiedName: function(){
+        var rpStart = this.structure.getResidueProxy( this.residueIndexStart );
+        var rpEnd = this.structure.getResidueProxy( this.residueIndexEnd );
+        return rpStart.qualifiedName() + " - " + rpEnd.qualifiedName();
+    }
 
 };
 
@@ -1635,19 +1644,19 @@ NGL.ChainProxy.prototype = {
             }
             rNextIndex = rp2.index;
 
-            var bbType1 = first ? rp1.getBackboneType( -1 ) : rp1.backboneType;
+            var bbType1 = first ? rp1.backboneEndType : rp1.backboneType;
             var bbType2 = rp2.backboneType;
 
-            if( bbType1 !== NGL.UnknownType && bbType1 === bbType2 ){
+            if( bbType1 !== NGL.UnknownBackboneType && bbType1 === bbType2 ){
 
-                ap1.index = rp1.backboneStartAtomIndex;
-                ap2.index = rp2.backboneEndAtomIndex;
+                ap1.index = rp1.backboneEndAtomIndex;
+                ap2.index = rp2.backboneStartAtomIndex;
 
             }else{
 
-                if( bbType1 !== NGL.UnknownType ){
+                if( bbType1 !== NGL.UnknownBackboneType ){
                     if( rp1.index - rStartIndex > 1 ){
-                        // console.log("FOO")
+                        // console.log("FOO1",rStartIndex, rp1.index)
                         callback( new NGL.Polymer( structure, rStartIndex, rp1.index ) );
                     }
                 }
@@ -1661,9 +1670,7 @@ NGL.ChainProxy.prototype = {
             if( !ap1 || !ap2 || !ap1.connectedTo( ap2 ) ||
                 ( test && ( !test( ap1 ) || !test( ap2 ) ) ) ){
                 if( rp1.index - rStartIndex > 1 ){
-                    // rp.index = rStartIndex;
-                    // console.log( rp.qualifiedName(), rp1.qualifiedName() )
-                    // console.log("BAR", ap1, ap2,test( ap1 ), ap1.resno, ap1.chainname, test( ap2 ), ap2.resno, ap2.chainname)
+                    // console.log("FOO2",rStartIndex, rp1.index)
                     callback( new NGL.Polymer( structure, rStartIndex, rp1.index ) );
                 }
                 rStartIndex = rNextIndex;
@@ -1673,7 +1680,8 @@ NGL.ChainProxy.prototype = {
         }
 
         if( rNextIndex - rStartIndex > 1 ){
-            if( this.structure.getResidueProxy( rStartIndex ).hasBackbone( -1 ) ){
+            if( this.structure.getResidueProxy( rStartIndex ).backboneStartType ){
+                // console.log("FOO3",rStartIndex, rNextIndex)
                 callback( new NGL.Polymer( structure, rStartIndex, rNextIndex ) );
             }
         }
@@ -1904,7 +1912,7 @@ NGL.ModelProxy.prototype = {
 ///////////////
 // Type & Map
 
-NGL.AtomType = function( structure, atomname, element, radius ){
+NGL.AtomType = function( structure, atomname, element ){
 
     this.structure = structure;
 
@@ -1912,7 +1920,7 @@ NGL.AtomType = function( structure, atomname, element, radius ){
 
     this.atomname = atomname;
     this.element = element;
-    this.vdw = radius !== undefined ? radius : NGL.VdwRadii[ element ];
+    this.vdw = NGL.VdwRadii[ element ];
     this.covalent = NGL.CovalentRadii[ element ];
 
 };
@@ -1927,6 +1935,14 @@ NGL.AtomType.prototype = {
     vdw: undefined,
     covalent: undefined,
 
+    toJSON: function(){
+        var output = {
+            atomname: this.atomname,
+            element: this.element,
+        };
+        return output;
+    }
+
 };
 
 
@@ -1935,18 +1951,17 @@ NGL.AtomMap = function( structure ){
     var idDict = {};
     var typeList = [];
 
-    function getHash( atomname, element, radius ){
+    function getHash( atomname, element ){
         var hash = atomname;
         if( element !== undefined ) hash += "|" + element;
-        if( radius !== undefined ) hash += "|" + radius;
         return hash;
     }
 
-    function add( atomname, element, radius ){
-        var hash = getHash( atomname, element, radius );
+    function add( atomname, element ){
+        var hash = getHash( atomname, element );
         var id = idDict[ hash ];
-        if( !id ){
-            var atomType = new NGL.AtomType( structure, atomname, element, radius );
+        if( id === undefined ){
+            var atomType = new NGL.AtomType( structure, atomname, element );
             id = typeList.length;
             idDict[ hash ] = id;
             typeList.push( atomType );
@@ -1966,6 +1981,30 @@ NGL.AtomMap = function( structure ){
     this.list = typeList;
     this.dict = idDict;
 
+    this.toJSON = function(){
+        var output = {
+            metadata: {
+                version: 0.1,
+                type: 'AtomMap',
+                generator: 'AtomMapExporter'
+            },
+            idDict: idDict,
+            typeList: typeList.map( function( atomType ){
+                return atomType.toJSON();
+            } )
+        };
+        return output;
+    };
+
+    this.fromJSON = function( input ){
+        idDict = input.idDict;
+        typeList = input.typeList.map( function( input ){
+            return new NGL.AtomType( structure, input.atomname, input.element );
+        } );
+        this.list = typeList;
+        this.dict = idDict;
+    };
+
 }
 
 
@@ -1979,28 +2018,31 @@ NGL.ResidueType = function( structure, resname, atomTypeIdList, hetero ){
     this.atomCount = atomTypeIdList.length;
 
     this.moleculeType = this.getMoleculeType();
-    this.backboneType = this.getBackboneType();
+    this.backboneType = this.getBackboneType( 0 );
+    this.backboneEndType = this.getBackboneType( -1 );
+    this.backboneStartType = this.getBackboneType( 1 );
+    this.backboneIndexList = this.getBackboneIndexList();
 
     //
 
-    var atomnames = NGL.Residue.atomnames;
-    var rAtomnames = atomnames[ this.getBackboneType( 0 ) ];
-    var rAtomnamesStart = atomnames[ this.getBackboneType( -1 ) ];
-    var rAtomnamesEnd = atomnames[ this.getBackboneType( 1 ) ];
+    var rAtomnames = NGL.Residue.atomnames;
+    var atomnames = rAtomnames[ this.backboneType ];
+    var atomnamesStart = rAtomnames[ this.backboneStartType ];
+    var atomnamesEnd = rAtomnames[ this.backboneEndType ];
 
-    var traceIndex = this.getAtomIndexByName( rAtomnames.trace );
+    var traceIndex = this.getAtomIndexByName( atomnames.trace );
     this.traceAtomIndex = traceIndex !== undefined ? traceIndex : -1;
 
-    var dir1Index = this.getAtomIndexByName( rAtomnames.direction1 );
+    var dir1Index = this.getAtomIndexByName( atomnames.direction1 );
     this.direction1AtomIndex = dir1Index !== undefined ? dir1Index : -1;
 
-    var dir2Index = this.getAtomIndexByName( rAtomnames.direction2 );
+    var dir2Index = this.getAtomIndexByName( atomnames.direction2 );
     this.direction2AtomIndex = dir2Index !== undefined ? dir2Index : -1;
 
-    var bbStartIndex = this.getAtomIndexByName( rAtomnamesStart.backboneStart );
+    var bbStartIndex = this.getAtomIndexByName( atomnamesStart.backboneStart );
     this.backboneStartAtomIndex = bbStartIndex !== undefined ? bbStartIndex : -1;
 
-    var bbEndIndex = this.getAtomIndexByName( rAtomnamesEnd.backboneEnd );
+    var bbEndIndex = this.getAtomIndexByName( atomnamesEnd.backboneEnd );
     this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1;
 
 };
@@ -2014,15 +2056,42 @@ NGL.ResidueType.prototype = {
     atomTypeIdList: undefined,
     atomCount: undefined,
 
+    getBackboneIndexList: function(){
+        var backboneIndexList = [];
+        var atomnameList;
+        switch( this.moleculeType ){
+            case NGL.ProteinType:
+                atomnameList = NGL.ProteinBackboneAtoms;
+                break;
+            case NGL.RnaType:
+            case NGL.DnaType:
+                atomnameList = NGL.NucleicBackboneAtoms;
+                break;
+            default:
+                return backboneIndexList;
+        }
+        var atomMap = this.structure.atomMap;
+        var atomTypeIdList = this.atomTypeIdList;
+        for( var i = 0, il = this.atomCount; i < il; ++i ){
+            var atomType = atomMap.get( atomTypeIdList[ i ] );
+            if( atomnameList.indexOf( atomType.atomname ) !== -1 ){
+                backboneIndexList.push( i );
+            }
+        }
+        return backboneIndexList;
+    },
+
     getMoleculeType: function(){
         if( this.isProtein() ){
             return NGL.ProteinType;
-        }else if( this.isNucleic() ){
-            return NGL.NucleicType;
-        }else if( this.isCg() ){
-            return NGL.CgType;
+        }else if( this.isRna() ){
+            return NGL.RnaType;
+        }else if( this.isDna() ){
+            return NGL.DnaType;
         }else if( this.isWater() ){
             return NGL.WaterType;
+        }else if( this.isIon() ){
+            return NGL.IonType;
         }else{
             return NGL.UnknownType;
         }
@@ -2035,26 +2104,35 @@ NGL.ResidueType.prototype = {
             return NGL.RnaBackboneType;
         }else if( this.hasDnaBackbone( position ) ){
             return NGL.DnaBackboneType;
-        }else if( this.isCg() ){
-            return NGL.CgType;
+        }else if( this.hasCgProteinBackbone( position ) ){
+            return NGL.CgProteinBackboneType;
+        }else if( this.hasCgRnaBackbone( position ) ){
+            return NGL.CgRnaBackboneType;
+        }else if( this.hasCgDnaBackbone( position ) ){
+            return NGL.CgDnaBackboneType;
         }else{
-            return NGL.UnknownType;
+            return NGL.UnknownBackboneType;
         }
     },
 
     isProtein: function(){
-        return this.hasAtomWithName( "CA", "C", "N" );
+        return (
+            this.hasAtomWithName( "CA", "C", "N" ) ||
+            NGL.AA3.indexOf( this.resname ) !== -1
+        );
     },
 
     isCg: function(){
-        return !this.isProtein() &&
-            this.hasAtomWithName([ "CA", "BB" ]) &&
-            this.atomCount <= 5 &&
-            NGL.AA3.indexOf( this.resname ) !== -1;
+        var backboneType = this.backboneType;
+        return (
+            backboneType === NGL.CgProteinBackboneType ||
+            backboneType === NGL.CgRnaBackboneType ||
+            backboneType === NGL.CgDnaBackboneType
+        );
     },
 
     isNucleic: function(){
-        return NGL.NucleicBases.indexOf( this.resname ) !== -1;
+        return this.isRna() || this.isDna();
     },
 
     isRna: function(){
@@ -2065,50 +2143,106 @@ NGL.ResidueType.prototype = {
         return NGL.DnaBases.indexOf( this.resname ) !== -1;
     },
 
+    isPolymer: function(){
+        return this.isProtein() || this.isNucleic();
+    },
+
     isHetero: function(){
         return this.hetero === 1;
+    },
+
+    isIon: function(){
+        return NGL.IonNames.indexOf( this.resname ) !== -1;
     },
 
     isWater: function(){
         return NGL.WaterNames.indexOf( this.resname ) !== -1;
     },
 
-    hasProteinBackbone: function(){
-        return NGL.Residue.makeHasBackboneFn(
-            function(){
-                return this.isProtein();
-            },
-            NGL.Residue.atomnames[ NGL.ProteinBackboneType ]
-        );
-    }(),
+    hasBackboneAtoms: function( position, type ){
+        var atomnames = NGL.Residue.atomnames[ type ];
+        if( position === -1 ){
+            return this.hasAtomWithName(
+                atomnames.trace,
+                atomnames.backboneEnd,
+                atomnames.direction1,
+                atomnames.direction2
+            );
+        }else if( position === 0 ){
+            return this.hasAtomWithName(
+                atomnames.trace,
+                atomnames.direction1,
+                atomnames.direction2
+            );
+        }else if( position === 1 ){
+            return this.hasAtomWithName(
+                atomnames.trace,
+                atomnames.backboneStart,
+                atomnames.direction1,
+                atomnames.direction2
+            );
+        }else{
+            return this.hasAtomWithName(
+                atomnames.trace,
+                atomnames.backboneStart,
+                atomnames.backboneEnd,
+                atomnames.direction1,
+                atomnames.direction2
+            );
+        }
+    },
 
-    hasRnaBackbone: function(){
-        return NGL.Residue.makeHasBackboneFn(
-            function(){
-                return NGL.RnaBases.indexOf( this.resname ) !== -1;
-            },
-            NGL.Residue.atomnames[ NGL.RnaBackboneType ]
+    hasProteinBackbone: function( position ){
+        return (
+            this.isProtein() &&
+            this.hasBackboneAtoms( position, NGL.ProteinBackboneType )
         );
-    }(),
+    },
 
-    hasDnaBackbone: function(){
-        return NGL.Residue.makeHasBackboneFn(
-            function(){
-                return NGL.DnaBases.indexOf( this.resname ) !== -1;
-            },
-            NGL.Residue.atomnames[ NGL.DnaBackboneType ]
+    hasRnaBackbone: function( position ){
+        return (
+            this.isRna() &&
+            this.hasBackboneAtoms( position, NGL.RnaBackboneType )
         );
-    }(),
+    },
 
-    hasCgBackbone: function(){
-        return this.isCg();
+    hasDnaBackbone: function( position ){
+        return (
+            this.isDna() &&
+            this.hasBackboneAtoms( position, NGL.DnaBackboneType )
+        );
+    },
+
+    hasCgProteinBackbone: function( position ){
+        return (
+            this.isProtein() &&
+            this.hasBackboneAtoms( position, NGL.CgProteinBackboneType )
+        );
+    },
+
+    hasCgRnaBackbone: function( position ){
+        return (
+            this.isRna() &&
+            this.hasBackboneAtoms( position, NGL.CgRnaBackboneType )
+        );
+    },
+
+    hasCgDnaBackbone: function( position ){
+        return (
+            this.isDna() &&
+            this.hasBackboneAtoms( position, NGL.CgDnaBackboneType )
+        );
     },
 
     hasBackbone: function( position ){
-        return this.hasProteinBackbone( position ) ||
-            this.hasCgBackbone() ||
+        return (
+            this.hasProteinBackbone( position ) ||
             this.hasRnaBackbone( position ) ||
-            this.hasDnaBackbone( position );
+            this.hasDnaBackbone( position ) ||
+            this.hasCgProteinBackbone( position ) ||
+            this.hasCgRnaBackbone( position ) ||
+            this.hasCgDnaBackbone( position )
+        );
     },
 
     getAtomIndexByName: function( atomname ){
@@ -2136,6 +2270,7 @@ NGL.ResidueType.prototype = {
     hasAtomWithName: function( atomname ){
         var n = arguments.length;
         for( var i = 0; i < n; ++i ){
+            if( arguments[ i ] === undefined ) continue;
             if( this.getAtomIndexByName( arguments[ i ] ) === undefined ){
                 return false;
             }
