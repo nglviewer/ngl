@@ -1315,6 +1315,8 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     }
 
+                    var element;
+
                     if( isPqr ){
 
                         serial = parseInt( ls[ 1 ] );
@@ -1328,6 +1330,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     }else{
 
                         serial = parseInt( line.substr( 6, 5 ) );
+                        element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
                         resno = parseInt( line.substr( 22, 4 ) );
@@ -1339,7 +1342,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     }
 
                     atomStore.growIfFull();
-                    atomStore.atomTypeId[ idx ] = atomMap.add( atomname );
+                    atomStore.atomTypeId[ idx ] = atomMap.add( atomname, element );
 
                     atomStore.x[ idx ] = x;
                     atomStore.y[ idx ] = y;
@@ -2174,11 +2177,12 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             //
 
+                            var element = ls[ type_symbol ];
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
                             atomStore.growIfFull();
-                            atomStore.atomTypeId[ idx ] = atomMap.add( atomname );
+                            atomStore.atomTypeId[ idx ] = atomMap.add( atomname, element );
 
                             atomStore.x[ idx ] = x;
                             atomStore.y[ idx ] = y;
@@ -3296,7 +3300,7 @@ NGL.MsgpackParser.prototype = NGL.createObject(
             var groupType = sd.groupMap[ groupTypeId ];
             var atomTypeIdList = [];
             for( var j = 0, jl = groupType.atomInfo.length; j < jl; j+=2 ){
-                var element = groupType.atomInfo[ j ];
+                var element = groupType.atomInfo[ j ].toUpperCase();
                 var atomname = groupType.atomInfo[ j + 1 ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
