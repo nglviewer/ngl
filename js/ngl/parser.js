@@ -880,13 +880,13 @@ NGL.buildUnitcellAssembly = function( structure ){
 
 NGL.WorkerRegistry.add( "parse", function( e, callback ){
 
-    NGL.time( "WORKER parse" );
+    if( NGL.debug ) NGL.time( "WORKER parse" );
 
     var parser = NGL.fromJSON( e.data );
 
     parser.parse( function(){
 
-        NGL.timeEnd( "WORKER parse" );
+        if( NGL.debug ) NGL.timeEnd( "WORKER parse" );
 
         // no need to return the streamer data
         parser.streamer.dispose();
@@ -992,9 +992,10 @@ NGL.Parser.prototype = {
 
     },
 
-    _afterWorker: function(){
+    _afterWorker: function( callback ){
 
         if( NGL.debug ) NGL.log( this[ this.__objName ] );
+        callback( this[ this.__objName ] );
 
     },
 
@@ -3256,7 +3257,7 @@ NGL.MsgpackParser.prototype = NGL.createObject(
         var sd = decodeStructure( this.streamer.data );
         // console.log(sd)
 
-        s.bondStore.length = sd.bondCount;
+        s.bondStore.length = sd.bondStore.bondOrder.length;
         s.bondStore.count = sd.bondCount;
         s.bondStore.atomIndex1 = sd.bondStore.atomIndex1;
         s.bondStore.atomIndex2 = sd.bondStore.atomIndex2;
